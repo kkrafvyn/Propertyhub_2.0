@@ -1,0 +1,105 @@
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { createMemoryRouter, RouterProvider } from "react-router";
+import { describe, expect, it, vi } from "vitest";
+import { Login } from "./Login";
+import { useAuth } from "../../context/AuthContext";
+
+vi.mock("../../context/AuthContext", () => ({
+  useAuth: vi.fn(),
+}));
+
+const useAuthMock = vi.mocked(useAuth);
+
+function createAuthState(overrides: Record<string, unknown> = {}) {
+  return {
+    user: null,
+    loading: false,
+    error: null,
+    signUp: vi.fn(),
+    signIn: vi.fn(),
+    signInWithOAuth: vi.fn(),
+    signOut: vi.fn(),
+    resetPassword: vi.fn(),
+    ...overrides,
+  };
+}
+
+function renderLogin(initialEntry = "/login?next=%2Fworkspace%3Fnext%3Dnew") {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "/login",
+        element: <Login />,
+      },
+      {
+        path: "/workspace",
+        element: <div>Workspace Landing</div>,
+      },
+      {
+        path: "/app",
+        element: <div>User App</div>,
+      },
+    ],
+    {
+      initialEntries: [initialEntry],
+    }
+  );
+
+  render(<RouterProvider router={router} />);
+  return router;
+}
+
+describe("Login", () => {
+  it("starts Google OAuth with the intended redirect target", async () => {
+    const signInWithOAuth = vi.fn().mockResolvedValue(undefined);
+    useAuthMock.mockReturnValue(createAuthState({ signInWithOAuth }) as any);
+
+    renderLogin();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: /google/i }));
+
+    await waitFor(() => {
+      expect(signInWithOAuth).toHaveBeenCalledWith(
+        "google",
+        expect.stringContaining("/login?next=%2Fworkspace%3Fnext%3Dnew")
+      );
+    });
+  });
+
+  it("starts Apple OAuth with the intended redirect target", async () => {
+    const signInWithOAuth = vi.fn().mockResolvedValue(undefined);
+    useAuthMock.mockReturnValue(createAuthState({ signInWithOAuth }) as any);
+
+    renderLogin();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: /apple/i }));
+
+    await waitFor(() => {
+      expect(signInWithOAuth).toHaveBeenCalledWith(
+        "apple",
+        expect.stringContaining("/login?next=%2Fworkspace%3Fnext%3Dnew")
+      );
+    });
+  });
+
+  it("redirects authenticated users to the requested destination", async () => {
+    useAuthMock.mockReturnValue(
+      createAuthState({
+        user: {
+          id: "user-1",
+          email: "agent@example.com",
+          user_metadata: {},
+        },
+      }) as any
+    );
+
+    const router = renderLogin("/login?next=%2Fapp");
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/app");
+    });
+  });
+});

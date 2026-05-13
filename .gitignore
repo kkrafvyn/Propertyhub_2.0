@@ -1,0 +1,31 @@
+node_modules/
+dist/
+coverage/
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# Generated contract outputs
+artifacts/
+cache/
+deployments/
+
+# Local tooling output
+.codex*
+*.log
+.tmp/
+
+# Native build output
+android/.gradle/
+android/local.properties
+android/app/build/
+ios/App/build/
+ios/DerivedData/
+
+# Supabase local temp files
+supabase/.temp/
+
+# OS/editor noise
+.DS_Store
