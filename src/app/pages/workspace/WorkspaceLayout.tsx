@@ -52,6 +52,7 @@ import { WorkspaceDashboard } from "./WorkspaceDashboard";
 import { CalendarOperations } from "./CalendarOperations";
 import { WorkspaceDocuments } from "./WorkspaceDocuments";
 import { WorkspaceFinance } from "./WorkspaceFinance";
+import { GhanaTrustCenter } from "./GhanaTrustCenter";
 import { WorkspaceLeads } from "./WorkspaceLeads";
 import { WorkspaceListings } from "./WorkspaceListings";
 import { WorkspaceNewListing } from "./WorkspaceNewListing";
@@ -78,6 +79,7 @@ const CORE_NAV_ITEMS: NavItem[] = [
   { slug: "listings", label: "Listings", icon: Building2 },
   { slug: "leads", label: "Leads & Messages", icon: MessageCircle },
   { slug: "documents", label: "Documents", icon: FileText },
+  { slug: "trust", label: "Ghana Trust", icon: Shield },
   { slug: "calendar", label: "Calendar Ops", icon: CalendarDays },
   { slug: "payments", label: "Payments", icon: CreditCard },
   { slug: "finance", label: "Finance", icon: BarChart3 },
@@ -247,6 +249,13 @@ export function WorkspaceLayout() {
       case "documents":
         return (
           <WorkspaceDocuments
+            organization={organization}
+            currentUserId={user.id}
+          />
+        );
+      case "trust":
+        return (
+          <GhanaTrustCenter
             organization={organization}
             currentUserId={user.id}
           />

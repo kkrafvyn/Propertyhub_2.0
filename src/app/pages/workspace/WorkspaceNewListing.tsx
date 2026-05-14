@@ -5,8 +5,11 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { PropertyMediaPicker } from "../../components/PropertyMediaPicker";
+import { ListingQualityPanel } from "../../components/ListingQualityPanel";
 import type { Database } from "../../../lib/database.types";
+import { ghanaMarketService } from "../../../lib/ghana-market.service";
 import { listingService } from "../../../lib/listing.service";
+import { listingQualityService } from "../../../lib/listing-quality.service";
 import { propertyMediaService } from "../../../lib/property-media.service";
 import { propertyService } from "../../../lib/property.service";
 
@@ -44,8 +47,10 @@ export function WorkspaceNewListing({
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [form, setForm] = useState({
     address: "",
+    ghanaPostGps: "",
     city: "",
     region: "",
+    neighborhood: "",
     country: "Ghana",
     category: "apartment" as PropertyCategory,
     bedrooms: "",
@@ -59,6 +64,10 @@ export function WorkspaceNewListing({
     status: "draft" as ListingStatus,
     visibility: "public" as ListingVisibility,
     featured: false,
+    whatsappEnabled: true,
+    inspectionFeeAmount: "",
+    minimumDepositAmount: "",
+    titleDocumentStatus: "missing",
   });
 
   const updateField = (field: keyof typeof form, value: string | boolean) => {
@@ -79,9 +88,21 @@ export function WorkspaceNewListing({
       const property = await propertyService.createProperty({
         organization_id: organization.id,
         address: form.address,
+        ghana_post_gps: ghanaMarketService.normalizeGhanaPostGps(form.ghanaPostGps) || null,
         city: form.city,
         region: form.region,
+        neighborhood: form.neighborhood.trim() || null,
         country: form.country,
+        location_confidence: ghanaMarketService.calculateLocationConfidence({
+          address: form.address,
+          city: form.city,
+          region: form.region,
+          neighborhood: form.neighborhood,
+          ghanaPostGps: form.ghanaPostGps,
+        }),
+        flood_risk_level:
+          ghanaMarketService.getLocationInsight(form.city, form.region, form.neighborhood)
+            ?.floodRiskLevel || "unknown",
         category: form.category,
         bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
         bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
@@ -104,6 +125,19 @@ export function WorkspaceNewListing({
         status: form.status,
         visibility: form.visibility,
         featured: form.featured,
+        whatsapp_enabled: form.whatsappEnabled,
+        inspection_fee_amount: form.inspectionFeeAmount ? Number(form.inspectionFeeAmount) : null,
+        minimum_deposit_amount: form.minimumDepositAmount
+          ? Number(form.minimumDepositAmount)
+          : null,
+        quality_score: qualityReport.score,
+        quality_breakdown: {
+          checks: qualityReport.checks,
+          titleDocumentStatus: form.titleDocumentStatus,
+          evaluatedAt: new Date().toISOString(),
+        },
+        last_quality_checked_at: new Date().toISOString(),
+        verification_status: qualityReport.score >= 75 ? "submitted" : "draft",
         published_at: form.status === "listed" ? new Date().toISOString() : null,
       });
 
@@ -135,6 +169,42 @@ export function WorkspaceNewListing({
     }
   };
 
+  const marketInsight = ghanaMarketService.getLocationInsight(
+    form.city,
+    form.region,
+    form.neighborhood
+  );
+  const locationConfidence = ghanaMarketService.calculateLocationConfidence({
+    address: form.address,
+    city: form.city,
+    region: form.region,
+    neighborhood: form.neighborhood,
+    ghanaPostGps: form.ghanaPostGps,
+  });
+  const qualityReport = listingQualityService.evaluate({
+    address: form.address,
+    city: form.city,
+    region: form.region,
+    neighborhood: form.neighborhood,
+    ghanaPostGps: form.ghanaPostGps,
+    description: form.description,
+    amenities: form.amenities
+      ? form.amenities
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [],
+    price: form.price ? Number(form.price) : null,
+    currency: form.currency,
+    mediaCount: mediaFiles.length,
+    organizationVerified: organization.verified,
+    listingVerificationStatus:
+      form.status === "listed" || form.status === "pending_review" ? "submitted" : "draft",
+    titleDocumentStatus: form.titleDocumentStatus,
+    whatsappEnabled: form.whatsappEnabled,
+    locationConfidence,
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -156,6 +226,12 @@ export function WorkspaceNewListing({
               required
             />
             <Input
+              label="GhanaPostGPS"
+              value={form.ghanaPostGps}
+              onChange={(event) => updateField("ghanaPostGps", event.target.value)}
+              placeholder="GA-123-4567"
+            />
+            <Input
               label="City"
               value={form.city}
               onChange={(event) => updateField("city", event.target.value)}
@@ -168,6 +244,12 @@ export function WorkspaceNewListing({
               onChange={(event) => updateField("region", event.target.value)}
               placeholder="Greater Accra"
               required
+            />
+            <Input
+              label="Neighborhood"
+              value={form.neighborhood}
+              onChange={(event) => updateField("neighborhood", event.target.value)}
+              placeholder="East Legon, Labone, Osu"
             />
             <Input
               label="Country"
@@ -214,6 +296,23 @@ export function WorkspaceNewListing({
               onChange={(event) => updateField("squareMeters", event.target.value)}
               placeholder="140"
             />
+          </div>
+
+          <div className="mt-4 rounded-xl border border-border bg-secondary/20 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="font-semibold">Ghana address confidence</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {locationConfidence}% confidence from address, GhanaPostGPS, and local context.
+                </p>
+              </div>
+              <span className="rounded-full bg-white px-3 py-1 text-sm font-medium">
+                Flood risk: {marketInsight?.floodRiskLevel || "unknown"}
+              </span>
+            </div>
+            {marketInsight && (
+              <p className="mt-3 text-sm text-muted-foreground">{marketInsight.notes}</p>
+            )}
           </div>
 
           <div className="mt-4">
@@ -312,6 +411,50 @@ export function WorkspaceNewListing({
         </Card>
 
         <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Ghana Trust & Mobile Money</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input
+              label="Inspection Fee (GHS)"
+              type="number"
+              min="0"
+              value={form.inspectionFeeAmount}
+              onChange={(event) => updateField("inspectionFeeAmount", event.target.value)}
+              placeholder="100"
+            />
+            <Input
+              label="Minimum Deposit (GHS)"
+              type="number"
+              min="0"
+              value={form.minimumDepositAmount}
+              onChange={(event) => updateField("minimumDepositAmount", event.target.value)}
+              placeholder="5000"
+            />
+            <div>
+              <label className="block mb-2 text-sm text-foreground">Document Status</label>
+              <select
+                className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
+                value={form.titleDocumentStatus}
+                onChange={(event) => updateField("titleDocumentStatus", event.target.value)}
+              >
+                <option value="missing">Missing</option>
+                <option value="submitted">Submitted</option>
+                <option value="in_review">In review</option>
+                <option value="verified">Verified</option>
+                <option value="signed">Signed mandate</option>
+              </select>
+            </div>
+          </div>
+          <label className="flex items-center gap-3 mt-4 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.whatsappEnabled}
+              onChange={(event) => updateField("whatsappEnabled", event.target.checked)}
+            />
+            <span className="text-sm">Enable WhatsApp follow-up for this listing</span>
+          </label>
+        </Card>
+
+        <Card className="p-6">
           <PropertyMediaPicker
             files={mediaFiles}
             onChange={setMediaFiles}
@@ -319,6 +462,8 @@ export function WorkspaceNewListing({
             helperText="Add photos now so the property is ready to publish as soon as the listing is created."
           />
         </Card>
+
+        <ListingQualityPanel report={qualityReport} />
 
         <div className="flex flex-wrap gap-3">
           <Button type="submit" size="lg" disabled={submitting}>

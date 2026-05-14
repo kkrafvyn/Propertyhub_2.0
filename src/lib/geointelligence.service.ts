@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { ghanaMarketService } from './ghana-market.service'
 
 export const geointelligenceService = {
   // Get location scores
@@ -22,14 +23,15 @@ export const geointelligenceService = {
 
   // Calculate location score
   async calculateLocationScore(city: string, region: string, latitude: number, longitude: number) {
-    // In production: use external APIs (Google Places, crime data, etc.)
+    const marketInsight = ghanaMarketService.getLocationInsight(city, region)
+
     const scores = {
-      safety_score: 3.5 + Math.random(),
-      investment_score: 3.8 + Math.random(),
-      accessibility_score: 4.0 + Math.random(),
-      walkability_score: 3.6 + Math.random(),
-      school_proximity_score: 3.9 + Math.random(),
-      healthcare_proximity_score: 4.1 + Math.random()
+      safety_score: marketInsight?.safetyScore ?? 3.5,
+      investment_score: marketInsight?.investmentScore ?? 3.6,
+      accessibility_score: marketInsight?.accessibilityScore ?? 3.5,
+      walkability_score: marketInsight?.walkabilityScore ?? 3.2,
+      school_proximity_score: marketInsight?.schoolProximityScore ?? 3.4,
+      healthcare_proximity_score: marketInsight?.healthcareProximityScore ?? 3.4
     }
     
     const overall = (

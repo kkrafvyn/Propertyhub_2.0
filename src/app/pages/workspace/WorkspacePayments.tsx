@@ -9,6 +9,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ghanaMarketService } from "../../../lib/ghana-market.service";
 import { paymentService } from "../../../lib/payment.service";
 import type { Database } from "../../../lib/database.types";
 import type { MemberRole } from "../../../lib/workspace";
@@ -34,6 +35,7 @@ interface WorkspacePaymentsProps {
 }
 
 type StatusFilter = "all" | "success" | "pending" | "attention";
+const GHANA_PAYMENT_CHANNELS = ghanaMarketService.getPaymentChannels();
 
 const moneyFormatter = new Intl.NumberFormat("en-GH", {
   style: "currency",
@@ -449,6 +451,28 @@ export function WorkspacePayments({
           </div>
         </Card>
       </div>
+
+      <Card className="p-5 mb-8 border-primary/20 bg-primary/5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Ghana Mobile Money readiness</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Paystack checkout requests mobile_money, card, bank transfer, and bank channels.
+              Keep MoMo first when guiding clients through deposits and inspection fees.
+            </p>
+          </div>
+          <Badge variant="default">GHS first</Badge>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          {GHANA_PAYMENT_CHANNELS.map((channel) => (
+            <div key={channel.id} className="rounded-xl border border-border bg-white p-3">
+              <p className="font-medium">{channel.label}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{channel.helper}</p>
+              <p className="mt-2 text-xs text-primary">{channel.settlementHint}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       <Card className="p-6 mb-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

@@ -7,8 +7,11 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { PropertyMediaPicker } from "../../components/PropertyMediaPicker";
+import { ListingQualityPanel } from "../../components/ListingQualityPanel";
 import type { Database } from "../../../lib/database.types";
+import { ghanaMarketService } from "../../../lib/ghana-market.service";
 import { getPropertyCoverImage, getPropertyMediaItems } from "../../../lib/property-media";
+import { listingQualityService } from "../../../lib/listing-quality.service";
 import { propertyMediaService } from "../../../lib/property-media.service";
 import { listingService } from "../../../lib/listing.service";
 import { propertyService } from "../../../lib/property.service";
@@ -27,8 +30,10 @@ interface WorkspaceListingsProps {
 
 type ListingDraft = {
   address: string;
+  ghanaPostGps: string;
   city: string;
   region: string;
+  neighborhood: string;
   country: string;
   category: PropertyCategory;
   bedrooms: string;
@@ -42,6 +47,10 @@ type ListingDraft = {
   status: ListingStatus;
   visibility: ListingVisibility;
   featured: boolean;
+  whatsappEnabled: boolean;
+  inspectionFeeAmount: string;
+  minimumDepositAmount: string;
+  titleDocumentStatus: string;
 };
 
 const LISTING_STATUS_OPTIONS: ListingStatus[] = [
@@ -75,8 +84,10 @@ const currencyFormatter = new Intl.NumberFormat("en-GH", {
 function createDraft(listing: any): ListingDraft {
   return {
     address: listing.property?.address || "",
+    ghanaPostGps: listing.property?.ghana_post_gps || "",
     city: listing.property?.city || "",
     region: listing.property?.region || "",
+    neighborhood: listing.property?.neighborhood || "",
     country: listing.property?.country || "Ghana",
     category: (listing.property?.category || "apartment") as PropertyCategory,
     bedrooms: listing.property?.bedrooms != null ? String(listing.property.bedrooms) : "",
@@ -93,6 +104,12 @@ function createDraft(listing: any): ListingDraft {
     status: listing.status,
     visibility: listing.visibility,
     featured: listing.featured,
+    whatsappEnabled: listing.whatsapp_enabled ?? true,
+    inspectionFeeAmount:
+      listing.inspection_fee_amount != null ? String(listing.inspection_fee_amount) : "",
+    minimumDepositAmount:
+      listing.minimum_deposit_amount != null ? String(listing.minimum_deposit_amount) : "",
+    titleDocumentStatus: listing.quality_breakdown?.titleDocumentStatus || "missing",
   };
 }
 
@@ -109,8 +126,10 @@ function isDraftDirty(listing: any, draft?: ListingDraft) {
 
   return (
     original.address !== draft.address ||
+    original.ghanaPostGps !== draft.ghanaPostGps ||
     original.city !== draft.city ||
     original.region !== draft.region ||
+    original.neighborhood !== draft.neighborhood ||
     original.country !== draft.country ||
     original.category !== draft.category ||
     original.bedrooms !== draft.bedrooms ||
@@ -123,8 +142,41 @@ function isDraftDirty(listing: any, draft?: ListingDraft) {
     original.currency !== draft.currency ||
     original.status !== draft.status ||
     original.visibility !== draft.visibility ||
-    original.featured !== draft.featured
+    original.featured !== draft.featured ||
+    original.whatsappEnabled !== draft.whatsappEnabled ||
+    original.inspectionFeeAmount !== draft.inspectionFeeAmount ||
+    original.minimumDepositAmount !== draft.minimumDepositAmount ||
+    original.titleDocumentStatus !== draft.titleDocumentStatus
   );
+}
+
+function getDraftQualityReport(listing: any, draft: ListingDraft | undefined, mediaCount: number, organizationVerified: boolean) {
+  const source = draft || createDraft(listing);
+  const locationConfidence = ghanaMarketService.calculateLocationConfidence({
+    address: source.address,
+    city: source.city,
+    region: source.region,
+    neighborhood: source.neighborhood,
+    ghanaPostGps: source.ghanaPostGps,
+  });
+
+  return listingQualityService.evaluate({
+    address: source.address,
+    city: source.city,
+    region: source.region,
+    neighborhood: source.neighborhood,
+    ghanaPostGps: source.ghanaPostGps,
+    description: source.description,
+    amenities: normalizeAmenities(source.amenities),
+    price: source.price ? Number(source.price) : null,
+    currency: source.currency,
+    mediaCount,
+    organizationVerified,
+    listingVerificationStatus: listing.verification_status,
+    titleDocumentStatus: source.titleDocumentStatus,
+    whatsappEnabled: source.whatsappEnabled,
+    locationConfidence,
+  });
 }
 
 export function WorkspaceListings({
@@ -216,12 +268,35 @@ export function WorkspaceListings({
 
     try {
       setSavingId(listing.id);
+      const locationConfidence = ghanaMarketService.calculateLocationConfidence({
+        address: draft.address,
+        city: draft.city,
+        region: draft.region,
+        neighborhood: draft.neighborhood,
+        ghanaPostGps: draft.ghanaPostGps,
+      });
+      const locationInsight = ghanaMarketService.getLocationInsight(
+        draft.city,
+        draft.region,
+        draft.neighborhood
+      );
+      const mediaItems = getPropertyMediaItems(listing.property);
+      const qualityReport = getDraftQualityReport(
+        listing,
+        draft,
+        mediaItems.length,
+        Boolean(organization.verified)
+      );
 
       await propertyService.updateProperty(listing.property_id, {
         address: draft.address.trim(),
+        ghana_post_gps: ghanaMarketService.normalizeGhanaPostGps(draft.ghanaPostGps) || null,
         city: draft.city.trim(),
         region: draft.region.trim(),
+        neighborhood: draft.neighborhood.trim() || null,
         country: draft.country.trim(),
+        location_confidence: locationConfidence,
+        flood_risk_level: locationInsight?.floodRiskLevel || listing.property?.flood_risk_level || "unknown",
         category: draft.category,
         bedrooms: draft.bedrooms ? Number(draft.bedrooms) : null,
         bathrooms: draft.bathrooms ? Number(draft.bathrooms) : null,
@@ -237,8 +312,50 @@ export function WorkspaceListings({
         status: draft.status,
         visibility: draft.visibility,
         featured: draft.featured,
+        whatsapp_enabled: draft.whatsappEnabled,
+        inspection_fee_amount: draft.inspectionFeeAmount
+          ? Number(draft.inspectionFeeAmount)
+          : null,
+        minimum_deposit_amount: draft.minimumDepositAmount
+          ? Number(draft.minimumDepositAmount)
+          : null,
+        quality_score: qualityReport.score,
+        quality_breakdown: {
+          checks: qualityReport.checks,
+          titleDocumentStatus: draft.titleDocumentStatus,
+          evaluatedAt: new Date().toISOString(),
+        },
+        last_quality_checked_at: new Date().toISOString(),
         published_at: draft.status === "listed" ? listing.published_at || new Date().toISOString() : null,
       });
+
+      await listingQualityService.syncListingQuality(
+        {
+          ...listing,
+          price: Number(draft.price),
+          currency: draft.currency.trim() || "GHS",
+          whatsapp_enabled: draft.whatsappEnabled,
+          quality_breakdown: {
+            titleDocumentStatus: draft.titleDocumentStatus,
+          },
+          property: {
+            ...listing.property,
+            address: draft.address.trim(),
+            city: draft.city.trim(),
+            region: draft.region.trim(),
+            neighborhood: draft.neighborhood.trim() || null,
+            ghana_post_gps: ghanaMarketService.normalizeGhanaPostGps(draft.ghanaPostGps) || null,
+            description: draft.description.trim() || null,
+            amenities: normalizeAmenities(draft.amenities),
+            location_confidence: locationConfidence,
+            media: mediaItems,
+          },
+          organization: {
+            verified: Boolean(organization.verified),
+          },
+        },
+        organization.id
+      );
 
       toast.success("Listing and property details updated.");
       await loadListings();
@@ -415,6 +532,12 @@ export function WorkspaceListings({
             const isDirty = isDraftDirty(listing, draft);
             const mediaItems = getPropertyMediaItems(listing.property);
             const coverImage = getPropertyCoverImage(listing.property);
+            const qualityReport = getDraftQualityReport(
+              listing,
+              draft,
+              mediaItems.length,
+              Boolean(organization.verified)
+            );
 
             return (
               <Card key={listing.id} className="p-6">
@@ -438,6 +561,12 @@ export function WorkspaceListings({
                           </Badge>
                           <Badge className="capitalize">{listing.status.replaceAll("_", " ")}</Badge>
                           {listing.featured && <Badge variant="secondary">Featured</Badge>}
+                          <Badge variant={qualityReport.score >= 75 ? "default" : "secondary"}>
+                            Quality {qualityReport.score}
+                          </Badge>
+                          {listing.verification_status === "verified" && (
+                            <Badge variant="default">Verified Listing</Badge>
+                          )}
                           <Badge variant="outline">
                             <ImagePlus className="w-3 h-3" />
                             {mediaItems.length} photo{mediaItems.length === 1 ? "" : "s"}
@@ -454,6 +583,9 @@ export function WorkspaceListings({
                             {listing.property?.square_meters ? `${listing.property.square_meters} sqm` : "Size not set"}
                           </span>
                           <span>Live price: {currencyFormatter.format(listing.price)}</span>
+                          <span>
+                            GPS: {listing.property?.ghana_post_gps || "not set"}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -528,16 +660,36 @@ export function WorkspaceListings({
                       />
                       Featured placement
                     </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={draft?.whatsappEnabled ?? true}
+                        onChange={(event) =>
+                          updateDraft(listing.id, "whatsappEnabled", event.target.checked)
+                        }
+                      />
+                      WhatsApp follow-up
+                    </label>
                     {isDirty && <span className="text-sm text-primary">You have unsaved changes.</span>}
                   </div>
 
                   {isExpanded && (
                     <div className="border-t border-border pt-6 space-y-6">
+                      <ListingQualityPanel report={qualityReport} compact />
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
                           label="Address"
                           value={draft?.address || ""}
                           onChange={(event) => updateDraft(listing.id, "address", event.target.value)}
+                        />
+                        <Input
+                          label="GhanaPostGPS"
+                          value={draft?.ghanaPostGps || ""}
+                          onChange={(event) =>
+                            updateDraft(listing.id, "ghanaPostGps", event.target.value)
+                          }
+                          placeholder="GA-123-4567"
                         />
                         <Input
                           label="City"
@@ -548,6 +700,13 @@ export function WorkspaceListings({
                           label="Region"
                           value={draft?.region || ""}
                           onChange={(event) => updateDraft(listing.id, "region", event.target.value)}
+                        />
+                        <Input
+                          label="Neighborhood"
+                          value={draft?.neighborhood || ""}
+                          onChange={(event) =>
+                            updateDraft(listing.id, "neighborhood", event.target.value)
+                          }
                         />
                         <Input
                           label="Country"
@@ -589,6 +748,42 @@ export function WorkspaceListings({
                           value={draft?.squareMeters || ""}
                           onChange={(event) => updateDraft(listing.id, "squareMeters", event.target.value)}
                         />
+                        <Input
+                          label="Inspection Fee (GHS)"
+                          type="number"
+                          min="0"
+                          value={draft?.inspectionFeeAmount || ""}
+                          onChange={(event) =>
+                            updateDraft(listing.id, "inspectionFeeAmount", event.target.value)
+                          }
+                        />
+                        <Input
+                          label="Minimum Deposit (GHS)"
+                          type="number"
+                          min="0"
+                          value={draft?.minimumDepositAmount || ""}
+                          onChange={(event) =>
+                            updateDraft(listing.id, "minimumDepositAmount", event.target.value)
+                          }
+                        />
+                        <div>
+                          <label className="block mb-2 text-sm text-foreground">
+                            Document Status
+                          </label>
+                          <select
+                            className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
+                            value={draft?.titleDocumentStatus || "missing"}
+                            onChange={(event) =>
+                              updateDraft(listing.id, "titleDocumentStatus", event.target.value)
+                            }
+                          >
+                            <option value="missing">Missing</option>
+                            <option value="submitted">Submitted</option>
+                            <option value="in_review">In review</option>
+                            <option value="verified">Verified</option>
+                            <option value="signed">Signed mandate</option>
+                          </select>
+                        </div>
                       </div>
 
                       <div>

@@ -9,6 +9,8 @@ interface AuthContextType {
   error: Error | null
   signUp: (email: string, password: string, fullName: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
+  signInWithPhoneOtp: (phone: string) => Promise<void>
+  verifyPhoneOtp: (phone: string, token: string) => Promise<void>
   signInWithOAuth: (
     provider: 'google' | 'facebook' | 'apple',
     redirectTo?: string
@@ -26,13 +28,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const ensureProfile = async (currentUser: User | null) => {
-      if (!currentUser?.email) return
+      if (!currentUser?.email && !currentUser?.phone) return
 
       try {
         await userService.ensureUserProfile(
           currentUser.id,
           currentUser.email,
-          currentUser.user_metadata?.full_name
+          currentUser.user_metadata?.full_name,
+          currentUser.phone
         )
       } catch (profileError) {
         console.error('Failed to ensure user profile:', profileError)
@@ -95,6 +98,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const signInWithPhoneOtp = async (phone: string) => {
+    try {
+      setError(null)
+      const { error } = await supabase.auth.signInWithOtp({
+        phone,
+      })
+      if (error) throw error
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Phone sign in failed'))
+      throw err
+    }
+  }
+
+  const verifyPhoneOtp = async (phone: string, token: string) => {
+    try {
+      setError(null)
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone,
+        token,
+        type: 'sms',
+      })
+      if (error) throw error
+
+      if (data.user) {
+        await userService.ensureUserProfile(
+          data.user.id,
+          data.user.email,
+          data.user.user_metadata?.full_name,
+          data.user.phone
+        )
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Phone verification failed'))
+      throw err
+    }
+  }
+
   const signInWithOAuth = async (
     provider: 'google' | 'facebook' | 'apple',
     redirectTo?: string
@@ -146,6 +186,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error,
         signUp,
         signIn,
+        signInWithPhoneOtp,
+        verifyPhoneOtp,
         signInWithOAuth,
         signOut,
         resetPassword,

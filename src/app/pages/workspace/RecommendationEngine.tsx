@@ -1,402 +1,376 @@
-import { useState, useEffect } from 'react';
-import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/badge';
+import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import {
   Heart,
-  ThumbsUp,
-  ThumbsDown,
-  Share2,
-  Star,
-  MapPin,
   Home,
-  DollarSign,
-  Filter,
+  Loader2,
+  MapPin,
   RefreshCw,
+  Share2,
+  ShieldCheck,
   Sparkles,
   TrendingUp,
-  Clock,
-} from 'lucide-react';
+} from "lucide-react";
+import { toast } from "sonner";
+import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/Card";
+import { useAuth } from "../../context/AuthContext";
+import { ghanaMarketService } from "../../../lib/ghana-market.service";
+import { getPropertyCoverImage } from "../../../lib/property-media";
+import { listingQualityService } from "../../../lib/listing-quality.service";
+import { listingService } from "../../../lib/listing.service";
+import { savedPropertyService } from "../../../lib/savedproperty.service";
 
-interface RecommendedProperty {
-  id: string;
-  address: string;
-  price: number;
-  bedrooms: number;
-  bathrooms: number;
-  category: string;
-  image?: string;
+interface Recommendation {
+  listing: any;
   matchScore: number;
-  matchReason: string;
+  matchReasons: string[];
   liked: boolean;
-  rating: number;
-  daysNew: number;
 }
 
-interface UserPreferences {
-  location: string[];
-  priceRange: [number, number];
-  propertyTypes: string[];
-  features: string[];
-  amenities: string[];
+const moneyFormatter = new Intl.NumberFormat("en-GH", {
+  style: "currency",
+  currency: "GHS",
+  maximumFractionDigits: 0,
+});
+
+function getListingLabel(type?: string) {
+  if (type === "sale") return "For sale";
+  if (type === "lease") return "Lease";
+  return "For rent";
+}
+
+function getSavedSignals(savedRows: any[]) {
+  const cities = new Set<string>();
+  const categories = new Set<string>();
+  const listingTypes = new Set<string>();
+
+  savedRows.forEach((row) => {
+    const listing = row.listing || row;
+    if (listing?.property?.city) cities.add(String(listing.property.city).toLowerCase());
+    if (listing?.property?.category) categories.add(String(listing.property.category).toLowerCase());
+    if (listing?.listing_type) listingTypes.add(String(listing.listing_type).toLowerCase());
+  });
+
+  return { cities, categories, listingTypes };
+}
+
+function scoreListing(listing: any, savedRows: any[]) {
+  const property = listing.property || {};
+  const signals = getSavedSignals(savedRows);
+  const qualityReport = listingQualityService.evaluateListing(listing);
+  const marketInsight = ghanaMarketService.getLocationInsight(
+    property.city,
+    property.region,
+    property.neighborhood
+  );
+  const reasons: string[] = [];
+  let score = 45;
+
+  if (signals.cities.has(String(property.city || "").toLowerCase())) {
+    score += 12;
+    reasons.push(`Matches saved city: ${property.city}`);
+  }
+
+  if (signals.categories.has(String(property.category || "").toLowerCase())) {
+    score += 10;
+    reasons.push(`Matches saved property type: ${property.category}`);
+  }
+
+  if (signals.listingTypes.has(String(listing.listing_type || "").toLowerCase())) {
+    score += 8;
+    reasons.push(`Matches saved intent: ${getListingLabel(listing.listing_type)}`);
+  }
+
+  score += Math.round(qualityReport.score * 0.2);
+  if (qualityReport.score >= 75) {
+    reasons.push(`Trust score ${qualityReport.score}/100`);
+  }
+
+  if (listing.organization?.verified) {
+    score += 6;
+    reasons.push("Verified agency");
+  }
+
+  if (marketInsight) {
+    score += ghanaMarketService.getDemandWeight(marketInsight.demandLevel);
+    reasons.push(`${marketInsight.neighborhood} demand is ${marketInsight.demandLevel.replace("_", " ")}`);
+  }
+
+  if (!reasons.length) {
+    reasons.push("Fresh Ghana listing with enough data for review");
+  }
+
+  return {
+    score: Math.min(98, Math.max(55, score)),
+    reasons,
+  };
 }
 
 export default function RecommendationEngine() {
-  const [recommendations, setRecommendations] = useState<RecommendedProperty[]>([
-    {
-      id: '1',
-      address: '123 Wellness Street, Central Accra',
-      price: 180000,
-      bedrooms: 3,
-      bathrooms: 2,
-      category: 'apartment',
-      matchScore: 94,
-      matchReason: 'Matches your budget & location preference with modern amenities',
-      liked: false,
-      rating: 4.8,
-      daysNew: 2,
-    },
-    {
-      id: '2',
-      address: '456 Garden Heights, North District',
-      price: 220000,
-      bedrooms: 4,
-      bathrooms: 3,
-      category: 'house',
-      matchScore: 89,
-      matchReason: 'Premium location with your preferred features',
-      liked: false,
-      rating: 4.6,
-      daysNew: 5,
-    },
-    {
-      id: '3',
-      address: '789 Sunset Plaza, East Coast',
-      price: 210000,
-      bedrooms: 3,
-      bathrooms: 2,
-      category: 'apartment',
-      matchScore: 87,
-      matchReason: 'Great investment opportunity in emerging area',
-      liked: false,
-      rating: 4.5,
-      daysNew: 1,
-    },
-    {
-      id: '4',
-      address: '321 Tech Hub Office, Business District',
-      price: 150000,
-      bedrooms: 2,
-      bathrooms: 1,
-      category: 'office',
-      matchScore: 85,
-      matchReason: 'Perfect for work-life balance seekers',
-      liked: false,
-      rating: 4.7,
-      daysNew: 3,
-    },
-  ]);
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [filterType, setFilterType] = useState("all");
+  const [sortBy, setSortBy] = useState("match");
 
-  const [filterType, setFilterType] = useState('all');
-  const [sortBy, setSortBy] = useState('match');
-  const [userPreferences, setUserPreferences] = useState<UserPreferences>({
-    location: ['Central Accra', 'North District'],
-    priceRange: [150000, 250000],
-    propertyTypes: ['apartment', 'house'],
-    features: ['modern', 'furnished'],
-    amenities: ['gym', 'parking', 'security'],
-  });
+  const loadRecommendations = async () => {
+    try {
+      setLoading(true);
+      const [listingRows, savedRows] = await Promise.all([
+        listingService.getPublicListings(50, 0),
+        user ? savedPropertyService.getSavedProperties(user.id).catch(() => []) : Promise.resolve([]),
+      ]);
+      const savedIds = new Set((savedRows || []).map((row: any) => row.listing?.id || row.listing_id));
 
-  const toggleLike = (id: string) => {
-    setRecommendations(
-      recommendations.map(rec =>
-        rec.id === id ? { ...rec, liked: !rec.liked } : rec
-      )
-    );
+      const scored = (listingRows || [])
+        .map((listing) => {
+          const score = scoreListing(listing, savedRows || []);
+          return {
+            listing,
+            matchScore: score.score,
+            matchReasons: score.reasons,
+            liked: savedIds.has(listing.id),
+          };
+        })
+        .sort((a, b) => b.matchScore - a.matchScore);
+
+      setRecommendations(scored);
+    } catch (error) {
+      console.error("Failed to load recommendations:", error);
+      toast.error("Unable to load recommendations.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRecommendation = (id: string, reaction: 'like' | 'dislike') => {
-    console.log(`User ${reaction}d property:`, id);
-    toggleLike(id);
-  };
+  useEffect(() => {
+    void loadRecommendations();
+  }, [user?.id]);
 
-  const refreshRecommendations = () => {
-    console.log('Refreshing recommendations...');
-    setRecommendations(
-      recommendations.map(rec => ({
-        ...rec,
-        matchScore: Math.floor(Math.random() * (95 - 75) + 75),
-      }))
-    );
+  const toggleLike = async (listingId: string) => {
+    if (!user) {
+      toast.error("Log in to save recommendations.");
+      return;
+    }
+
+    try {
+      const result = await savedPropertyService.toggleSavedProperty(user.id, listingId);
+      setRecommendations((current) =>
+        current.map((item) =>
+          item.listing.id === listingId ? { ...item, liked: result.saved } : item
+        )
+      );
+      toast.success(result.saved ? "Saved to favorites." : "Removed from favorites.");
+    } catch (error) {
+      console.error("Failed to save recommendation:", error);
+      toast.error("Unable to update saved property.");
+    }
   };
 
   const filteredRecommendations = recommendations
-    .filter(rec => filterType === 'all' || rec.category === filterType)
+    .filter((item) => filterType === "all" || item.listing.property?.category === filterType)
     .sort((a, b) => {
-      if (sortBy === 'match') return b.matchScore - a.matchScore;
-      if (sortBy === 'price') return a.price - b.price;
-      if (sortBy === 'new') return a.daysNew - b.daysNew;
+      if (sortBy === "match") return b.matchScore - a.matchScore;
+      if (sortBy === "price") return a.listing.price - b.listing.price;
+      if (sortBy === "quality") {
+        return (b.listing.quality_score || 0) - (a.listing.quality_score || 0);
+      }
       return 0;
     });
 
+  if (loading) {
+    return (
+      <Card className="p-8 text-center text-muted-foreground">
+        <Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin" />
+        Loading Ghana recommendations...
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Sparkles className="w-8 h-8 text-yellow-500" />
-            Smart Recommendations
+            Smart Ghana Recommendations
           </h1>
-          <p className="text-gray-500 mt-1">
-            AI-powered suggestions based on your preferences and search history
+          <p className="text-muted-foreground mt-1">
+            Real listings ranked by trust score, saved-property signals, verified agencies, and
+            Ghana demand context.
           </p>
         </div>
-        <Button onClick={refreshRecommendations} className="flex items-center gap-2">
+        <Button onClick={() => void loadRecommendations()} className="flex items-center gap-2">
           <RefreshCw className="w-4 h-4" />
           Refresh
         </Button>
       </div>
 
-      {/* Your Preferences Summary */}
-      <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50">
+      <Card className="p-6 bg-gradient-to-r from-amber-50 to-emerald-50">
         <h3 className="font-bold mb-4 flex items-center gap-2">
-          <Filter className="w-5 h-5" />
-          Your Preferences
+          <TrendingUp className="w-5 h-5" />
+          Recommendation Signals
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <span className="text-sm text-gray-600 block mb-2">Preferred Locations</span>
-            <div className="flex flex-wrap gap-2">
-              {userPreferences.location.map(loc => (
-                <Badge key={loc} variant="outline">
-                  📍 {loc}
-                </Badge>
-              ))}
-            </div>
+            <span className="text-sm text-muted-foreground block mb-1">Listings scanned</span>
+            <div className="text-2xl font-semibold">{recommendations.length}</div>
           </div>
           <div>
-            <span className="text-sm text-gray-600 block mb-2">Budget Range</span>
-            <div className="font-medium">
-              ₦{userPreferences.priceRange[0].toLocaleString()} - ₦
-              {userPreferences.priceRange[1].toLocaleString()}
-            </div>
+            <span className="text-sm text-muted-foreground block mb-1">Saved signal</span>
+            <div className="text-2xl font-semibold">{user ? "Enabled" : "Log in"}</div>
           </div>
           <div>
-            <span className="text-sm text-gray-600 block mb-2">Property Types</span>
-            <div className="flex flex-wrap gap-2">
-              {userPreferences.propertyTypes.map(type => (
-                <Badge key={type} className="bg-blue-100 text-blue-800 capitalize">
-                  {type}
-                </Badge>
-              ))}
-            </div>
+            <span className="text-sm text-muted-foreground block mb-1">Market</span>
+            <div className="text-2xl font-semibold">Ghana</div>
+          </div>
+          <div>
+            <span className="text-sm text-muted-foreground block mb-1">Currency</span>
+            <div className="text-2xl font-semibold">GHS</div>
           </div>
         </div>
       </Card>
 
-      {/* Filter & Sort Controls */}
-      <div className="flex gap-4 items-center">
-        <div>
-          <label htmlFor="recommendation-filter-type" className="sr-only">
-            Filter recommendations by property type
-          </label>
-          <select
-            id="recommendation-filter-type"
-            value={filterType}
-            onChange={e => setFilterType(e.target.value)}
-            className="border rounded-md px-3 py-2 text-sm"
-            aria-label="Filter recommendations by property type"
-            title="Filter recommendations by property type"
-          >
-            <option value="all">All Property Types</option>
-            <option value="apartment">Apartments</option>
-            <option value="house">Houses</option>
-            <option value="office">Office Spaces</option>
-            <option value="commercial">Commercial</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="recommendation-sort-by" className="sr-only">
-            Sort recommendations
-          </label>
-          <select
-            id="recommendation-sort-by"
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
-            className="border rounded-md px-3 py-2 text-sm"
-            aria-label="Sort recommendations"
-            title="Sort recommendations"
-          >
-            <option value="match">Best Match</option>
-            <option value="price">Lowest Price</option>
-            <option value="new">Newest</option>
-          </select>
-        </div>
-        <div className="ml-auto text-sm text-gray-600">
+      <div className="flex flex-wrap gap-4 items-center">
+        <select
+          value={filterType}
+          onChange={(event) => setFilterType(event.target.value)}
+          className="border rounded-md px-3 py-2 text-sm"
+          aria-label="Filter recommendations by property type"
+        >
+          <option value="all">All Property Types</option>
+          <option value="apartment">Apartments</option>
+          <option value="house">Houses</option>
+          <option value="office">Office Spaces</option>
+          <option value="commercial">Commercial</option>
+          <option value="land">Land</option>
+        </select>
+        <select
+          value={sortBy}
+          onChange={(event) => setSortBy(event.target.value)}
+          className="border rounded-md px-3 py-2 text-sm"
+          aria-label="Sort recommendations"
+        >
+          <option value="match">Best Match</option>
+          <option value="price">Lowest Price</option>
+          <option value="quality">Highest Trust Score</option>
+        </select>
+        <div className="ml-auto text-sm text-muted-foreground">
           Showing {filteredRecommendations.length} recommendations
         </div>
       </div>
 
-      {/* Recommendations Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredRecommendations.map(property => (
-          <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-            {/* Header with Image Placeholder */}
-            <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-300 relative">
-              <div className="absolute top-4 right-4 flex gap-2">
-                <Badge className="bg-blue-600">
-                  {property.matchScore}% Match
-                </Badge>
-                {property.daysNew <= 3 && (
-                  <Badge className="bg-green-600 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    New
-                  </Badge>
-                )}
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                <Home className="w-16 h-16" />
-              </div>
-            </div>
+      {filteredRecommendations.length === 0 ? (
+        <Card className="p-8 text-center text-muted-foreground">
+          No public Ghana listings match this filter yet.
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {filteredRecommendations.map(({ listing, matchScore, matchReasons, liked }) => {
+            const property = listing.property || {};
+            const qualityScore =
+              listing.quality_score || listingQualityService.evaluateListing(listing).score;
 
-            {/* Property Details */}
-            <div className="p-6 space-y-4">
-              {/* Title & Rating */}
-              <div>
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="text-lg font-bold">{property.address}</h3>
-                    <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                      <MapPin className="w-4 h-4" />
-                      {property.category.toUpperCase()}
+            return (
+              <Card key={listing.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="relative h-56 bg-secondary">
+                  <img
+                    src={getPropertyCoverImage(property)}
+                    alt={property.address || "Recommended property"}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute top-4 right-4 flex gap-2">
+                    <Badge className="bg-blue-600">{matchScore}% Match</Badge>
+                    {listing.organization?.verified && (
+                      <Badge className="bg-emerald-700">
+                        <ShieldCheck className="mr-1 h-3 w-3" />
+                        Verified
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-bold">{property.address || "Ghana listing"}</h3>
+                      <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                        <MapPin className="w-4 h-4" />
+                        {[property.neighborhood, property.city, property.region]
+                          .filter(Boolean)
+                          .join(", ") || "Ghana"}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {moneyFormatter.format(listing.price || 0)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{getListingLabel(listing.listing_type)}</p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-900 flex items-start gap-2">
+                      <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <span>{matchReasons.slice(0, 2).join(" | ")}</span>
                     </p>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-blue-600">
-                      ₦{property.price.toLocaleString()}
+
+                  <div className="grid grid-cols-3 gap-3 py-3 border-t border-b">
+                    <div className="text-center">
+                      <Home className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
+                      <div className="text-sm font-medium">{property.bedrooms || 0}</div>
+                      <div className="text-xs text-muted-foreground">Bedrooms</div>
                     </div>
-                    <div className="flex items-center gap-1 text-yellow-500 text-sm mt-1">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-4 h-4 ${
-                            i < Math.floor(property.rating)
-                              ? 'fill-yellow-500'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                      <span className="text-gray-700 ml-1">({property.rating})</span>
+                    <div className="text-center">
+                      <ShieldCheck className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
+                      <div className="text-sm font-medium">{qualityScore}</div>
+                      <div className="text-xs text-muted-foreground">Trust Score</div>
+                    </div>
+                    <div className="text-center">
+                      <TrendingUp className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
+                      <div className="text-sm font-medium">{listing.currency || "GHS"}</div>
+                      <div className="text-xs text-muted-foreground">Currency</div>
                     </div>
                   </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => void toggleLike(listing.id)}
+                      className={`flex-1 flex items-center justify-center gap-2 ${
+                        liked
+                          ? "bg-red-600 hover:bg-red-700"
+                          : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+                      }`}
+                    >
+                      <Heart className={`w-4 h-4 ${liked ? "fill-white" : ""}`} />
+                      {liked ? "Saved" : "Save"}
+                    </Button>
+                    <Link to={`/property/${listing.id}`} className="flex-1">
+                      <Button variant="outline" className="w-full">
+                        View
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      className="px-4"
+                      onClick={() => {
+                        void navigator.clipboard?.writeText(`${window.location.origin}/property/${listing.id}`);
+                        toast.success("Property link copied.");
+                      }}
+                      aria-label={`Share ${property.address || "property"}`}
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-
-              {/* Match Reason */}
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-900 flex items-start gap-2">
-                  <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>{property.matchReason}</span>
-                </p>
-              </div>
-
-              {/* Property Details */}
-              <div className="grid grid-cols-3 gap-3 py-3 border-t border-b">
-                <div className="text-center">
-                  <Home className="w-5 h-5 text-gray-400 mx-auto mb-1" />
-                  <div className="text-sm font-medium">{property.bedrooms}</div>
-                  <div className="text-xs text-gray-600">Bedrooms</div>
-                </div>
-                <div className="text-center">
-                  <Home className="w-5 h-5 text-gray-400 mx-auto mb-1" />
-                  <div className="text-sm font-medium">{property.bathrooms}</div>
-                  <div className="text-xs text-gray-600">Bathrooms</div>
-                </div>
-                <div className="text-center">
-                  <TrendingUp className="w-5 h-5 text-gray-400 mx-auto mb-1" />
-                  <div className="text-sm font-medium">{property.daysNew}d</div>
-                  <div className="text-xs text-gray-600">Days New</div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => handleRecommendation(property.id, 'like')}
-                  className={`flex-1 flex items-center justify-center gap-2 ${
-                    property.liked
-                      ? 'bg-red-600 hover:bg-red-700'
-                      : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                  }`}
-                >
-                  <Heart
-                    className={`w-4 h-4 ${property.liked ? 'fill-white' : ''}`}
-                  />
-                  {property.liked ? 'Liked' : 'Like'}
-                </Button>
-                <Button variant="outline" className="flex-1 flex items-center justify-center gap-2">
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </Button>
-                <Button
-                  variant="outline"
-                  className="px-4"
-                  aria-label={`Give positive feedback for ${property.address}`}
-                  title={`Give positive feedback for ${property.address}`}
-                >
-                  <ThumbsUp className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="px-4"
-                  aria-label={`Give negative feedback for ${property.address}`}
-                  title={`Give negative feedback for ${property.address}`}
-                >
-                  <ThumbsDown className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* Liked Properties Summary */}
-      {recommendations.some(r => r.liked) && (
-        <Card className="p-6 bg-green-50 border-2 border-green-200">
-          <h3 className="font-bold text-green-900 mb-3">❤️ Liked Properties</h3>
-          <p className="text-green-800 mb-4">
-            You've liked {recommendations.filter(r => r.liked).length} properties. 
-            Save them to create a shortlist or share with partners.
-          </p>
-          <div className="flex gap-2">
-            <Button className="bg-green-600 hover:bg-green-700">
-              Save Shortlist
-            </Button>
-            <Button variant="outline" className="border-green-300 text-green-700 hover:bg-green-50">
-              Share with Team
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      {/* Recommendation Insights */}
-      <Card className="p-6 bg-purple-50">
-        <h3 className="font-bold text-purple-900 mb-4">🤖 Recommendation Insights</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <div className="text-2xl font-bold text-purple-600">92%</div>
-            <p className="text-sm text-purple-800">Average match confidence</p>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-purple-600">4</div>
-            <p className="text-sm text-purple-800">New matches this week</p>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-purple-600">Save $12K</div>
-            <p className="text-sm text-purple-800">Average savings on your criteria</p>
-          </div>
+              </Card>
+            );
+          })}
         </div>
-      </Card>
+      )}
     </div>
   );
 }

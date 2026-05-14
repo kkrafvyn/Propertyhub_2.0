@@ -185,6 +185,19 @@ export function PropertyDetail() {
   const mapEmbedUrl = locationQuery
     ? `https://www.google.com/maps?q=${encodeURIComponent(locationQuery)}&output=embed`
     : "";
+  const listingQualityScore =
+    typeof listing?.quality_score === "number" ? Math.round(listing.quality_score) : null;
+  const listingVerificationStatus = listing?.verification_status
+    ? String(listing.verification_status).replaceAll("_", " ")
+    : "review pending";
+  const locationConfidence =
+    typeof property?.location_confidence === "number"
+      ? `${Math.round(property.location_confidence)}%`
+      : null;
+  const locationMeta = [
+    property?.neighborhood,
+    property?.ghana_post_gps ? `GhanaPostGPS ${property.ghana_post_gps}` : null,
+  ].filter((item): item is string => Boolean(item));
 
   const pageTitle = useMemo(() => {
     if (!property) return "Property";
@@ -488,6 +501,12 @@ export function PropertyDetail() {
                         Verified
                       </div>
                     )}
+                    {listingQualityScore !== null && listingQualityScore >= 75 && (
+                      <div className="bg-primary text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                        <Shield className="w-3 h-3" />
+                        Trust {listingQualityScore}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground mb-4">
                     <MapPin className="w-5 h-5" />
@@ -495,6 +514,18 @@ export function PropertyDetail() {
                       {property.address}, {property.city}, {property.region}, {property.country}
                     </span>
                   </div>
+                  {locationMeta.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {locationMeta.map((item) => (
+                        <span
+                          key={item}
+                          className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <div className="text-4xl font-semibold text-primary">
                     GHS {listing.price.toLocaleString()}
                     <span className="text-lg text-muted-foreground ml-2">
@@ -626,6 +657,47 @@ export function PropertyDetail() {
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           Completed payments can be carried into receipt verification.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                      <div className="rounded-xl border border-border bg-background p-4">
+                        <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                          <Check className="w-4 h-4 text-primary" />
+                          Listing Quality
+                        </div>
+                        <p className="text-lg font-semibold">
+                          {listingQualityScore !== null ? `${listingQualityScore}/100` : "Not scored"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Photo, price, address, and document readiness checks.
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-border bg-background p-4">
+                        <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                          <MapPin className="w-4 h-4 text-primary" />
+                          Ghana Address
+                        </div>
+                        <p className="text-lg font-semibold">
+                          {property.ghana_post_gps || locationConfidence || "Pending"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {locationConfidence
+                            ? `${locationConfidence} location confidence`
+                            : "GhanaPostGPS and area confidence improve buyer safety."}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-border bg-background p-4">
+                        <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                          <Clock3 className="w-4 h-4 text-primary" />
+                          Listing Review
+                        </div>
+                        <p className="text-lg font-semibold capitalize">
+                          {listingVerificationStatus}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Internal checks can be promoted to public verification records.
                         </p>
                       </div>
                     </div>
@@ -942,7 +1014,7 @@ export function PropertyDetail() {
                     <div>
                       <h4 className="font-semibold">Secure Payment</h4>
                       <p className="text-sm text-muted-foreground">
-                        Pay with Mobile Money, card, or bank transfer through Paystack. After confirmation, your receipt is hashed and prepared for Polygon verification.
+                        Pay with MTN MoMo, Telecel Cash, AT Money, card, or bank transfer through Paystack. After confirmation, your receipt is prepared for verification.
                       </p>
                     </div>
                   </div>

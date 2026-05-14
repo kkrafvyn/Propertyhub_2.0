@@ -38,13 +38,14 @@ export const userService = {
     return data[0]
   },
 
-  async createUserProfile(id: string, email: string, fullName?: string) {
+  async createUserProfile(id: string, email?: string | null, fullName?: string, phone?: string | null) {
     const { data, error } = await supabase
       .from('users')
       .insert({
         id,
-        email,
+        email: email || null,
         full_name: fullName,
+        phone: phone || null,
       })
       .select()
 
@@ -52,7 +53,7 @@ export const userService = {
     return data[0]
   },
 
-  async ensureUserProfile(id: string, email: string, fullName?: string) {
+  async ensureUserProfile(id: string, email?: string | null, fullName?: string, phone?: string | null) {
     const { data: existing, error } = await supabase
       .from('users')
       .select('*')
@@ -60,8 +61,17 @@ export const userService = {
       .maybeSingle()
 
     if (error) throw error
-    if (existing) return existing
+    if (existing) {
+      if ((!existing.full_name && fullName) || (!existing.phone && phone) || (!existing.email && email)) {
+        return this.updateUser(id, {
+          email: existing.email || email || null,
+          full_name: existing.full_name || fullName || null,
+          phone: existing.phone || phone || null,
+        })
+      }
+      return existing
+    }
 
-    return this.createUserProfile(id, email, fullName)
+    return this.createUserProfile(id, email, fullName, phone)
   },
 }

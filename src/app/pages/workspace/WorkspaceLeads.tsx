@@ -42,6 +42,7 @@ import { propertyViewingService } from "../../../lib/property-viewing.service";
 import { savedPropertyService } from "../../../lib/savedproperty.service";
 import { savedSearchAlertService } from "../../../lib/saved-search-alert.service";
 import { userService } from "../../../lib/user.service";
+import { ghanaWhatsappService, type LeadWhatsappTemplate } from "../../../lib/ghana-whatsapp.service";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 type PipelineStage =
@@ -199,6 +200,13 @@ function splitDateTime(value?: string | null) {
 function latestActivityDate(item: { updated_at?: string | null; created_at?: string | null }) {
   return new Date(item.updated_at || item.created_at || 0).getTime();
 }
+
+const WHATSAPP_TEMPLATES: Array<{ key: LeadWhatsappTemplate; label: string }> = [
+  { key: "first_response", label: "WhatsApp Intro" },
+  { key: "viewing_confirmation", label: "Viewing Reminder" },
+  { key: "documents_needed", label: "Request Docs" },
+  { key: "payment_followup", label: "Payment Follow-up" },
+];
 
 export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsProps) {
   const [loading, setLoading] = useState(true);
@@ -606,6 +614,29 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
     }
   };
 
+  const openWhatsAppTemplate = (template: LeadWhatsappTemplate) => {
+    if (!leadProfileForDisplay?.phone) {
+      toast.error("This lead does not have a phone number yet.");
+      return;
+    }
+
+    const message = ghanaWhatsappService.getLeadTemplate(template, {
+      leadName: leadProfileForDisplay.full_name || leadProfileForDisplay.email,
+      agentName: memberProfiles[currentUserId]?.full_name || "your agent",
+      organizationName: organization.name,
+      propertyAddress: selectedLeadPrimaryCase?.listing?.property?.address,
+      paymentPurpose: "secure Mobile Money payment",
+    });
+    const url = ghanaWhatsappService.buildUrl(leadProfileForDisplay.phone, message);
+
+    if (!url) {
+      toast.error("Unable to build a WhatsApp link for this phone number.");
+      return;
+    }
+
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   const openLeadConversation = async (dealCase: any) => {
     const existingConversation = conversationsByProspectId[dealCase.user_id];
 
@@ -1002,6 +1033,32 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
                         <UserCheck className="mr-2 h-4 w-4" />
                         Assign to Me
                       </Button>
+                    </div>
+
+                    <div className="rounded-xl border border-border bg-secondary/20 p-3">
+                      <div className="mb-3 flex items-center gap-2">
+                        <MessageCircle className="h-4 w-4 text-primary" />
+                        <p className="text-sm font-medium">Ghana WhatsApp follow-up</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {WHATSAPP_TEMPLATES.map((template) => (
+                          <Button
+                            key={template.key}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openWhatsAppTemplate(template.key)}
+                            disabled={!leadProfileForDisplay?.phone}
+                          >
+                            {template.label}
+                          </Button>
+                        ))}
+                      </div>
+                      {!leadProfileForDisplay?.phone && (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Add a phone number to this lead before using WhatsApp templates.
+                        </p>
+                      )}
                     </div>
 
                     <div className="grid gap-3">

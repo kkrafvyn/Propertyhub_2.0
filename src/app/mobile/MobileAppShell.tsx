@@ -3,16 +3,21 @@ import { Link, useNavigate } from "react-router";
 import {
   BriefcaseBusiness,
   Building2,
+  Camera,
   ChevronRight,
   Heart,
   Home,
   KeyRound,
   Loader2,
   MapPin,
+  Mic,
+  Navigation,
   Search,
   ShieldCheck,
   UserRound,
+  Wallet,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { listingService } from "../../lib/listing.service";
 import { organizationService } from "../../lib/organization.service";
@@ -65,10 +70,16 @@ function MobilePropertyCard({ listing }: { listing: any }) {
               Verified
             </span>
           )}
+          {listing.quality_score >= 75 && (
+            <span className="mobile-verified">
+              <ShieldCheck aria-hidden="true" />
+              Trust {listing.quality_score}
+            </span>
+          )}
         </div>
         <h3>{property.address || "Ghana property"}</h3>
         <p>
-          {[property.city, property.region].filter(Boolean).join(", ") || "Ghana"}
+          {[property.neighborhood, property.city, property.region].filter(Boolean).join(", ") || "Ghana"}
         </p>
         <div className="mobile-property-footer">
           <strong>{formatPrice(listing.price, listing.currency)}</strong>
@@ -139,6 +150,8 @@ export function MobileAppShell() {
   const [agencies, setAgencies] = useState<any[]>([]);
   const [saved, setSaved] = useState<any[]>([]);
   const [organizations, setOrganizations] = useState<any[]>([]);
+  const [fieldNote, setFieldNote] = useState("");
+  const [lastLocation, setLastLocation] = useState<string | null>(null);
 
   const initialsSource = user?.user_metadata?.full_name || user?.email || "Property Hub";
   const initials = initialsSource
@@ -227,6 +240,41 @@ export function MobileAppShell() {
 
     if (query.trim()) params.set("q", query.trim());
     navigate(`/search?${params.toString()}`);
+  };
+
+  const saveFieldNote = () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    const note = {
+      id: crypto.randomUUID(),
+      note: fieldNote.trim() || "Quick field note",
+      location: lastLocation,
+      createdAt: new Date().toISOString(),
+    };
+    const existing = JSON.parse(localStorage.getItem("propertyhub_mobile_field_notes") || "[]");
+    localStorage.setItem("propertyhub_mobile_field_notes", JSON.stringify([note, ...existing]));
+    setFieldNote("");
+    toast.success("Saved offline field note.");
+  };
+
+  const captureLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not available on this device.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const value = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
+        setLastLocation(value);
+        toast.success("GPS captured for this visit.");
+      },
+      () => toast.error("Unable to capture GPS. Check location permissions."),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   const renderContent = () => {
@@ -441,6 +489,42 @@ export function MobileAppShell() {
               );
             })}
           </div>
+
+          <section className="mobile-agent-kit">
+            <div className="mobile-section-heading">
+              <h2>Field agent kit</h2>
+            </div>
+            <div className="mobile-agent-grid">
+              <button type="button" onClick={captureLocation}>
+                <Navigation aria-hidden="true" />
+                <span>Capture GPS</span>
+              </button>
+              <Link to={`${WORKSPACE_ENTRY_PATH}?next=new`}>
+                <Camera aria-hidden="true" />
+                <span>Photo listing</span>
+              </Link>
+              <Link to="/app/payments">
+                <Wallet aria-hidden="true" />
+                <span>MoMo receipt</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => toast.message("Voice notes are queued for native recording setup.")}
+              >
+                <Mic aria-hidden="true" />
+                <span>Voice note</span>
+              </button>
+            </div>
+            {lastLocation && <p className="mobile-agent-location">Last GPS: {lastLocation}</p>}
+            <textarea
+              value={fieldNote}
+              onChange={(event) => setFieldNote(event.target.value)}
+              placeholder="Quick note from a viewing, inspection, or owner handoff"
+            />
+            <button type="button" className="mobile-primary-button" onClick={saveFieldNote}>
+              Save offline note
+            </button>
+          </section>
         </section>
       );
     }

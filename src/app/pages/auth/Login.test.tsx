@@ -18,6 +18,8 @@ function createAuthState(overrides: Record<string, unknown> = {}) {
     error: null,
     signUp: vi.fn(),
     signIn: vi.fn(),
+    signInWithPhoneOtp: vi.fn(),
+    verifyPhoneOtp: vi.fn(),
     signInWithOAuth: vi.fn(),
     signOut: vi.fn(),
     resetPassword: vi.fn(),
