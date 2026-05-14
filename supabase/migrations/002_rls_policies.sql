@@ -39,25 +39,12 @@ ON public.organizations FOR INSERT
 WITH CHECK (auth.uid() = owner_id);
 
 -- ============ ORGANIZATION_MEMBERS TABLE ============
-CREATE POLICY "Members can view their org members" 
+CREATE POLICY "Users can view their own membership rows"
 ON public.organization_members FOR SELECT 
-USING (
-  EXISTS (
-    SELECT 1 FROM public.organization_members om
-    WHERE om.organization_id = organization_members.organization_id
-    AND om.user_id = auth.uid()
-  )
-);
+USING (auth.uid() = user_id);
 
-CREATE POLICY "Owners can manage members" 
-ON public.organization_members FOR ALL 
-USING (
-  EXISTS (
-    SELECT 1 FROM public.organizations o
-    WHERE o.id = organization_members.organization_id
-    AND o.owner_id = auth.uid()
-  )
-);
+-- Organization member management is introduced in a later migration using
+-- a SECURITY DEFINER helper to avoid recursive RLS checks.
 
 -- ============ PROPERTIES TABLE ============
 CREATE POLICY "Anyone can view properties with public listings" 
@@ -229,10 +216,8 @@ WITH CHECK (true);
 CREATE POLICY "Only admins can view audit logs" 
 ON public.audit_logs FOR SELECT 
 USING (
-  -- This should be restricted to admins only - implement admin role check
-  auth.uid() IN (
-    SELECT user_id FROM public.audit_logs LIMIT 1
-  )
+  -- No admin role exists yet, so keep audit logs private until a real admin model is added.
+  false
 );
 
 CREATE POLICY "System can insert audit logs" 

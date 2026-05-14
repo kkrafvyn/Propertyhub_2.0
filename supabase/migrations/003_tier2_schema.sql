@@ -44,17 +44,93 @@ CREATE TABLE IF NOT EXISTS public.user_preferences (
 
 CREATE TABLE IF NOT EXISTS public.fraud_alerts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+  listing_id UUID,
+  lead_id UUID,
   target_type TEXT CHECK (target_type IN ('listing', 'user', 'organization', 'transaction')),
   target_id UUID NOT NULL,
-  alert_type TEXT CHECK (alert_type IN ('duplicate_image', 'suspicious_listing', 'suspicious_account', 'fraud_transaction', 'spam_behavior')),
+  alert_type TEXT CHECK (
+    alert_type IN (
+      'duplicate_image',
+      'suspicious_listing',
+      'suspicious_account',
+      'fraud_transaction',
+      'spam_behavior',
+      'duplicate_listing',
+      'suspicious_lead',
+      'price_mismatch',
+      'image_reuse',
+      'fake_listing',
+      'scam_pattern'
+    )
+  ),
   severity TEXT CHECK (severity IN ('low', 'medium', 'high', 'critical')) DEFAULT 'medium',
+  title TEXT,
   description TEXT,
   evidence JSONB,
-  status TEXT CHECK (status IN ('pending', 'reviewed', 'approved', 'rejected', 'resolved')) DEFAULT 'pending',
+  status TEXT CHECK (
+    status IN (
+      'pending',
+      'reviewed',
+      'approved',
+      'rejected',
+      'resolved',
+      'active',
+      'investigating',
+      'dismissed'
+    )
+  ) DEFAULT 'pending',
   reviewed_by UUID REFERENCES public.users(id) ON DELETE SET NULL,
   reviewed_at TIMESTAMP WITH TIME ZONE,
+  resolved_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+ALTER TABLE public.fraud_alerts
+  ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS listing_id UUID,
+  ADD COLUMN IF NOT EXISTS lead_id UUID,
+  ADD COLUMN IF NOT EXISTS target_type TEXT,
+  ADD COLUMN IF NOT EXISTS target_id UUID,
+  ADD COLUMN IF NOT EXISTS title TEXT,
+  ADD COLUMN IF NOT EXISTS reviewed_by UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP WITH TIME ZONE,
+  ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE public.fraud_alerts
+  DROP CONSTRAINT IF EXISTS fraud_alerts_alert_type_check,
+  ADD CONSTRAINT fraud_alerts_alert_type_check
+  CHECK (
+    alert_type IN (
+      'duplicate_image',
+      'suspicious_listing',
+      'suspicious_account',
+      'fraud_transaction',
+      'spam_behavior',
+      'duplicate_listing',
+      'suspicious_lead',
+      'price_mismatch',
+      'image_reuse',
+      'fake_listing',
+      'scam_pattern'
+    )
+  );
+
+ALTER TABLE public.fraud_alerts
+  DROP CONSTRAINT IF EXISTS fraud_alerts_status_check,
+  ADD CONSTRAINT fraud_alerts_status_check
+  CHECK (
+    status IN (
+      'pending',
+      'reviewed',
+      'approved',
+      'rejected',
+      'resolved',
+      'active',
+      'investigating',
+      'dismissed'
+    )
+  );
 
 CREATE TABLE IF NOT EXISTS public.image_hashes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -96,8 +172,7 @@ CREATE TABLE IF NOT EXISTS public.market_analytics (
   total_listings INTEGER,
   new_listings INTEGER,
   sold_listings INTEGER,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(period, location, property_type, listing_type, date_trunc('day', created_at))
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS public.location_trends (
@@ -374,21 +449,23 @@ CREATE TABLE IF NOT EXISTS public.heatmap_data (
 -- CREATE INDEXES FOR TIER 2
 -- =============================================================================
 
-CREATE INDEX idx_ai_searches_user ON public.ai_searches(user_id);
-CREATE INDEX idx_ai_recommendations_user ON public.ai_recommendations(user_id);
-CREATE INDEX idx_fraud_alerts_target ON public.fraud_alerts(target_type, target_id);
-CREATE INDEX idx_fraud_alerts_status ON public.fraud_alerts(status);
-CREATE INDEX idx_image_hashes_listing ON public.image_hashes(listing_id);
-CREATE INDEX idx_market_analytics_location ON public.market_analytics(location, period);
-CREATE INDEX idx_organization_insights_org ON public.organization_insights(organization_id);
-CREATE INDEX idx_vendor_assignments_org ON public.vendor_assignments(organization_id);
-CREATE INDEX idx_vendor_assignments_status ON public.vendor_assignments(status);
-CREATE INDEX idx_automation_workflows_org ON public.automation_workflows(organization_id);
-CREATE INDEX idx_automation_logs_workflow ON public.automation_logs(workflow_id);
-CREATE INDEX idx_recommendation_logs_user ON public.recommendation_logs(user_id);
-CREATE INDEX idx_notification_logs_user ON public.notification_logs(user_id);
-CREATE INDEX idx_location_scores_city ON public.location_scores(city, region);
-CREATE INDEX idx_nearby_services_property ON public.nearby_services(property_id);
+CREATE INDEX IF NOT EXISTS idx_ai_searches_user ON public.ai_searches(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_recommendations_user ON public.ai_recommendations(user_id);
+CREATE INDEX IF NOT EXISTS idx_fraud_alerts_target ON public.fraud_alerts(target_type, target_id);
+CREATE INDEX IF NOT EXISTS idx_fraud_alerts_status ON public.fraud_alerts(status);
+CREATE INDEX IF NOT EXISTS idx_image_hashes_listing ON public.image_hashes(listing_id);
+CREATE INDEX IF NOT EXISTS idx_market_analytics_location ON public.market_analytics(location, period);
+CREATE INDEX IF NOT EXISTS idx_market_analytics_period_day
+ON public.market_analytics(period, location, property_type, listing_type, created_at);
+CREATE INDEX IF NOT EXISTS idx_organization_insights_org ON public.organization_insights(organization_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_assignments_org ON public.vendor_assignments(organization_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_assignments_status ON public.vendor_assignments(status);
+CREATE INDEX IF NOT EXISTS idx_automation_workflows_org ON public.automation_workflows(organization_id);
+CREATE INDEX IF NOT EXISTS idx_automation_logs_workflow ON public.automation_logs(workflow_id);
+CREATE INDEX IF NOT EXISTS idx_recommendation_logs_user ON public.recommendation_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_notification_logs_user ON public.notification_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_location_scores_city ON public.location_scores(city, region);
+CREATE INDEX IF NOT EXISTS idx_nearby_services_property ON public.nearby_services(property_id);
 
 -- =============================================================================
 -- ENABLE RLS FOR TIER 2 TABLES

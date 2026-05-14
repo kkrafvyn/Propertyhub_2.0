@@ -74,6 +74,24 @@ EXECUTE FUNCTION public.set_row_updated_at();
 
 CREATE SCHEMA IF NOT EXISTS private;
 
+CREATE OR REPLACE FUNCTION private.can_manage_organization_members(target_organization_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public, private
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.organization_members membership
+    WHERE membership.organization_id = target_organization_id
+      AND membership.user_id = auth.uid()
+      AND membership.role IN ('owner', 'manager')
+  );
+$$;
+
+REVOKE ALL ON FUNCTION private.can_manage_organization_members(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION private.can_manage_organization_members(UUID) TO anon, authenticated;
+
 CREATE OR REPLACE FUNCTION private.accept_pending_organization_invitation()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -150,24 +168,8 @@ DROP POLICY IF EXISTS "Owners can manage members" ON public.organization_members
 
 CREATE POLICY "Owners and managers can manage members"
 ON public.organization_members FOR ALL
-USING (
-  EXISTS (
-    SELECT 1
-    FROM public.organization_members membership
-    WHERE membership.organization_id = organization_members.organization_id
-      AND membership.user_id = auth.uid()
-      AND membership.role IN ('owner', 'manager')
-  )
-)
-WITH CHECK (
-  EXISTS (
-    SELECT 1
-    FROM public.organization_members membership
-    WHERE membership.organization_id = organization_members.organization_id
-      AND membership.user_id = auth.uid()
-      AND membership.role IN ('owner', 'manager')
-  )
-);
+USING (private.can_manage_organization_members(organization_members.organization_id))
+WITH CHECK (private.can_manage_organization_members(organization_members.organization_id));
 
 CREATE POLICY "Invited users can join organizations"
 ON public.organization_members FOR INSERT

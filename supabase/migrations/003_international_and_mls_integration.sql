@@ -139,21 +139,21 @@ CREATE TABLE IF NOT EXISTS user_payment_methods (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_currency_rates_from_to ON currency_rates("from", "to");
-CREATE INDEX idx_mls_credentials_org ON mls_credentials(organization_id);
-CREATE INDEX idx_external_listings_org ON external_listings(organization_id);
-CREATE INDEX idx_external_listings_provider ON external_listings(provider);
-CREATE INDEX idx_listing_sync_jobs_org ON listing_sync_jobs(organization_id);
-CREATE INDEX idx_listing_sync_jobs_status ON listing_sync_jobs(status);
-CREATE INDEX idx_aggregated_leads_org ON aggregated_leads(organization_id);
-CREATE INDEX idx_aggregated_leads_source ON aggregated_leads(source);
-CREATE INDEX idx_aggregated_leads_status ON aggregated_leads(status);
-CREATE INDEX idx_aggregated_leads_email ON aggregated_leads(lead_email);
-CREATE INDEX idx_fraud_alerts_org ON fraud_alerts(organization_id);
-CREATE INDEX idx_fraud_alerts_severity ON fraud_alerts(severity);
-CREATE INDEX idx_fraud_alerts_status ON fraud_alerts(status);
-CREATE INDEX idx_payment_transactions_user ON payment_transactions(user_id);
-CREATE INDEX idx_payment_methods_user ON user_payment_methods(user_id);
+CREATE INDEX IF NOT EXISTS idx_currency_rates_from_to ON currency_rates("from", "to");
+CREATE INDEX IF NOT EXISTS idx_mls_credentials_org ON mls_credentials(organization_id);
+CREATE INDEX IF NOT EXISTS idx_external_listings_org ON external_listings(organization_id);
+CREATE INDEX IF NOT EXISTS idx_external_listings_provider ON external_listings(provider);
+CREATE INDEX IF NOT EXISTS idx_listing_sync_jobs_org ON listing_sync_jobs(organization_id);
+CREATE INDEX IF NOT EXISTS idx_listing_sync_jobs_status ON listing_sync_jobs(status);
+CREATE INDEX IF NOT EXISTS idx_aggregated_leads_org ON aggregated_leads(organization_id);
+CREATE INDEX IF NOT EXISTS idx_aggregated_leads_source ON aggregated_leads(source);
+CREATE INDEX IF NOT EXISTS idx_aggregated_leads_status ON aggregated_leads(status);
+CREATE INDEX IF NOT EXISTS idx_aggregated_leads_email ON aggregated_leads(lead_email);
+CREATE INDEX IF NOT EXISTS idx_fraud_alerts_org ON fraud_alerts(organization_id);
+CREATE INDEX IF NOT EXISTS idx_fraud_alerts_severity ON fraud_alerts(severity);
+CREATE INDEX IF NOT EXISTS idx_fraud_alerts_status ON fraud_alerts(status);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_user ON payment_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_payment_methods_user ON user_payment_methods(user_id);
 
 -- RLS Policies
 ALTER TABLE currency_rates ENABLE ROW LEVEL SECURITY;
@@ -166,9 +166,11 @@ ALTER TABLE payment_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_payment_methods ENABLE ROW LEVEL SECURITY;
 
 -- RLS: Currency rates are public
+DROP POLICY IF EXISTS currency_rates_public ON currency_rates;
 CREATE POLICY currency_rates_public ON currency_rates FOR SELECT USING (true);
 
 -- RLS: MLS credentials - org members only
+DROP POLICY IF EXISTS mls_credentials_select ON mls_credentials;
 CREATE POLICY mls_credentials_select ON mls_credentials FOR SELECT 
   USING (
     organization_id IN (
@@ -177,6 +179,7 @@ CREATE POLICY mls_credentials_select ON mls_credentials FOR SELECT
     )
   );
 
+DROP POLICY IF EXISTS mls_credentials_update ON mls_credentials;
 CREATE POLICY mls_credentials_update ON mls_credentials FOR UPDATE
   USING (
     organization_id IN (
@@ -186,6 +189,7 @@ CREATE POLICY mls_credentials_update ON mls_credentials FOR UPDATE
   );
 
 -- RLS: External listings - org members only
+DROP POLICY IF EXISTS external_listings_select ON external_listings;
 CREATE POLICY external_listings_select ON external_listings FOR SELECT
   USING (
     organization_id IN (
@@ -195,6 +199,7 @@ CREATE POLICY external_listings_select ON external_listings FOR SELECT
   );
 
 -- RLS: Aggregated leads - org members only
+DROP POLICY IF EXISTS aggregated_leads_select ON aggregated_leads;
 CREATE POLICY aggregated_leads_select ON aggregated_leads FOR SELECT
   USING (
     organization_id IN (
@@ -203,6 +208,7 @@ CREATE POLICY aggregated_leads_select ON aggregated_leads FOR SELECT
     )
   );
 
+DROP POLICY IF EXISTS aggregated_leads_insert ON aggregated_leads;
 CREATE POLICY aggregated_leads_insert ON aggregated_leads FOR INSERT
   WITH CHECK (
     organization_id IN (
@@ -212,6 +218,7 @@ CREATE POLICY aggregated_leads_insert ON aggregated_leads FOR INSERT
   );
 
 -- RLS: Fraud alerts - org admins only
+DROP POLICY IF EXISTS fraud_alerts_select ON fraud_alerts;
 CREATE POLICY fraud_alerts_select ON fraud_alerts FOR SELECT
   USING (
     organization_id IN (
@@ -221,13 +228,16 @@ CREATE POLICY fraud_alerts_select ON fraud_alerts FOR SELECT
   );
 
 -- RLS: Payment transactions - user's own only
+DROP POLICY IF EXISTS payment_transactions_select ON payment_transactions;
 CREATE POLICY payment_transactions_select ON payment_transactions FOR SELECT
   USING (user_id = auth.uid());
 
 -- RLS: User payment methods - user's own only
+DROP POLICY IF EXISTS user_payment_methods_select ON user_payment_methods;
 CREATE POLICY user_payment_methods_select ON user_payment_methods FOR SELECT
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS user_payment_methods_insert ON user_payment_methods;
 CREATE POLICY user_payment_methods_insert ON user_payment_methods FOR INSERT
   WITH CHECK (user_id = auth.uid());
 

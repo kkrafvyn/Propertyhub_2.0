@@ -5,6 +5,10 @@ const config: CapacitorConfig = {
   appName: "Property Hub",
   webDir: "dist",
   bundledWebRuntime: false,
+  backgroundColor: "#ffffff",
+  ios: {
+    contentInset: "automatic",
+  },
   server: {
     androidScheme: "https",
     iosScheme: "https",
