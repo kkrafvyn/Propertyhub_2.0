@@ -20,6 +20,7 @@ import {
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { Navbar } from "../components/Navbar";
+import { GhanaRoutePlanner } from "../components/GhanaRoutePlanner";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
@@ -789,6 +790,11 @@ export function PropertyDetail() {
                   </div>
                 )}
               </Card>
+              <GhanaRoutePlanner
+                destinationLat={property.latitude}
+                destinationLng={property.longitude}
+                destinationLabel={pageTitle}
+              />
             </div>
           </div>
 

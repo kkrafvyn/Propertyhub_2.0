@@ -8,6 +8,7 @@ import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { PropertyMediaPicker } from "../../components/PropertyMediaPicker";
 import { ListingQualityPanel } from "../../components/ListingQualityPanel";
+import { GhanaRegionInput } from "../../components/GhanaRegionInput";
 import type { Database } from "../../../lib/database.types";
 import { ghanaMarketService } from "../../../lib/ghana-market.service";
 import { getPropertyCoverImage, getPropertyMediaItems } from "../../../lib/property-media";
@@ -696,10 +697,10 @@ export function WorkspaceListings({
                           value={draft?.city || ""}
                           onChange={(event) => updateDraft(listing.id, "city", event.target.value)}
                         />
-                        <Input
+                        <GhanaRegionInput
                           label="Region"
                           value={draft?.region || ""}
-                          onChange={(event) => updateDraft(listing.id, "region", event.target.value)}
+                          onChange={(value) => updateDraft(listing.id, "region", value)}
                         />
                         <Input
                           label="Neighborhood"

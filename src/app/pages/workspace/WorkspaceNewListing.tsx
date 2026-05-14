@@ -6,6 +6,7 @@ import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { PropertyMediaPicker } from "../../components/PropertyMediaPicker";
 import { ListingQualityPanel } from "../../components/ListingQualityPanel";
+import { GhanaRegionInput } from "../../components/GhanaRegionInput";
 import type { Database } from "../../../lib/database.types";
 import { ghanaMarketService } from "../../../lib/ghana-market.service";
 import { listingService } from "../../../lib/listing.service";
@@ -238,10 +239,10 @@ export function WorkspaceNewListing({
               placeholder="Accra"
               required
             />
-            <Input
+            <GhanaRegionInput
               label="Region"
               value={form.region}
-              onChange={(event) => updateField("region", event.target.value)}
+              onChange={(value) => updateField("region", value)}
               placeholder="Greater Accra"
               required
             />

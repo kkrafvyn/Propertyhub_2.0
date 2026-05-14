@@ -146,6 +146,10 @@ function normalizeText(value?: string | null) {
     .toLowerCase();
 }
 
+function normalizeRegion(value?: string | null) {
+  return normalizeText(value).replace(/\s+region$/, "");
+}
+
 export const ghanaMarketService = {
   getPaymentChannels() {
     return GHANA_PAYMENT_CHANNELS;
@@ -174,13 +178,13 @@ export const ghanaMarketService = {
 
   getLocationInsight(city?: string | null, region?: string | null, neighborhood?: string | null) {
     const cityKey = normalizeText(city);
-    const regionKey = normalizeText(region);
+    const regionKey = normalizeRegion(region);
     const neighborhoodKey = normalizeText(neighborhood);
 
     const exact = GHANA_LOCATION_INSIGHTS.find(
       (item) =>
         normalizeText(item.city) === cityKey &&
-        normalizeText(item.region) === regionKey &&
+        normalizeRegion(item.region) === regionKey &&
         normalizeText(item.neighborhood) === neighborhoodKey
     );
 
@@ -188,7 +192,7 @@ export const ghanaMarketService = {
 
     return (
       GHANA_LOCATION_INSIGHTS.find(
-        (item) => normalizeText(item.city) === cityKey && normalizeText(item.region) === regionKey
+        (item) => normalizeText(item.city) === cityKey && normalizeRegion(item.region) === regionKey
       ) ||
       GHANA_LOCATION_INSIGHTS.find((item) => normalizeText(item.city) === cityKey) ||
       null

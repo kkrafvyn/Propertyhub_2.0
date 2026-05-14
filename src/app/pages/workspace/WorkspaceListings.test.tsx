@@ -20,6 +20,14 @@ vi.mock("../../../lib/property.service", () => ({
   },
 }));
 
+vi.mock("../../../lib/ghana-api.service", () => ({
+  FALLBACK_GHANA_REGIONS: [{ code: "GAR", label: "Greater Accra Region" }],
+  ghanaApiService: {
+    getRegions: vi.fn().mockResolvedValue([{ code: "GAR", label: "Greater Accra Region" }]),
+    getRegionDisplayName: (region: { label: string }) => region.label.replace(/\s+Region$/i, ""),
+  },
+}));
+
 const getOrganizationListingsMock = vi.mocked(listingService.getOrganizationListings);
 const updateListingMock = vi.mocked(listingService.updateListing);
 const updatePropertyMock = vi.mocked(propertyService.updateProperty);
