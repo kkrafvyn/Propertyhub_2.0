@@ -36,6 +36,8 @@ export interface ListingQualityInput {
   locationConfidence?: number | null;
 }
 
+const AUTO_MANAGED_VERIFICATION_STATUSES = new Set(["draft", "submitted"]);
+
 function createCheck(
   key: string,
   label: string,
@@ -65,6 +67,10 @@ function getMediaCount(value: unknown) {
 function normalizeTitleStatus(status?: string | null) {
   if (!status) return "missing";
   return status;
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 export const listingQualityService = {
@@ -206,19 +212,58 @@ export const listingQualityService = {
     });
   },
 
+  buildQualityBreakdown(input: {
+    existingBreakdown?: unknown;
+    checks: ListingQualityCheck[];
+    checkedAt: string;
+    titleDocumentStatus?: string | null;
+  }) {
+    const existingBreakdown = isObjectRecord(input.existingBreakdown)
+      ? input.existingBreakdown
+      : {};
+
+    return {
+      ...existingBreakdown,
+      checks: input.checks,
+      evaluatedAt: input.checkedAt,
+      titleDocumentStatus:
+        input.titleDocumentStatus ??
+        normalizeTitleStatus(
+          typeof existingBreakdown.titleDocumentStatus === "string"
+            ? existingBreakdown.titleDocumentStatus
+            : null
+        ),
+    };
+  },
+
+  getAutoVerificationStatus(score: number, currentStatus?: string | null) {
+    if (currentStatus && !AUTO_MANAGED_VERIFICATION_STATUSES.has(currentStatus)) {
+      return currentStatus;
+    }
+
+    return score >= 75 ? "submitted" : "draft";
+  },
+
   async syncListingQuality(listing: any, organizationId: string) {
     const report = this.evaluateListing(listing);
     const checkedAt = new Date().toISOString();
+    const qualityBreakdown = this.buildQualityBreakdown({
+      existingBreakdown: listing?.quality_breakdown,
+      checks: report.checks,
+      checkedAt,
+    });
+    const verificationStatus = this.getAutoVerificationStatus(
+      report.score,
+      listing?.verification_status
+    );
 
     const { error: listingError } = await supabase
       .from("listings")
       .update({
         quality_score: report.score,
-        quality_breakdown: {
-          checks: report.checks,
-          evaluatedAt: checkedAt,
-        },
+        quality_breakdown: qualityBreakdown,
         last_quality_checked_at: checkedAt,
+        verification_status: verificationStatus,
       })
       .eq("id", listing.id);
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ComponentType } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import {
+  ArrowRightLeft,
   BarChart3,
   Bell,
   Brain,
@@ -8,6 +9,7 @@ import {
   CalendarDays,
   CreditCard,
   FileText,
+  HandCoins,
   Heart,
   Home,
   LineChart,
@@ -59,6 +61,12 @@ import { WorkspaceNewListing } from "./WorkspaceNewListing";
 import { WorkspacePayments } from "./WorkspacePayments";
 import { WorkspaceSettings } from "./WorkspaceSettings";
 import { WorkspaceTeam } from "./WorkspaceTeam";
+import { WorkspaceExpansionSuite } from "../../features/workspace/WorkspaceExpansionSuite";
+import {
+  WORKSPACE_GROWTH_ROUTE_CONFIG,
+  getWorkspaceGrowthSection,
+  type WorkspaceGrowthSection,
+} from "../../features/expansion/section-navigation";
 import {
   WORKSPACE_ENTRY_PATH,
   getWorkspaceRoute,
@@ -85,6 +93,23 @@ const CORE_NAV_ITEMS: NavItem[] = [
   { slug: "finance", label: "Finance", icon: BarChart3 },
   { slug: "team", label: "Team", icon: Users },
 ];
+
+const GROWTH_NAV_ICON_BY_SLUG: Record<
+  WorkspaceGrowthSection,
+  ComponentType<{ className?: string }>
+> = {
+  offers: ArrowRightLeft,
+  "deal-rooms": FileText,
+  performance: LineChart,
+  referrals: HandCoins,
+  aftercare: Wrench,
+};
+
+const GROWTH_NAV_ITEMS: NavItem[] = WORKSPACE_GROWTH_ROUTE_CONFIG.map((item) => ({
+  slug: item.slug,
+  label: item.label,
+  icon: GROWTH_NAV_ICON_BY_SLUG[item.slug],
+}));
 
 const TIER_TWO_NAV_ITEMS: NavItem[] = [
   { slug: "market-intelligence", label: "Market Intelligence", icon: LineChart },
@@ -199,6 +224,17 @@ export function WorkspaceLayout() {
 
   const renderPage = () => {
     if (!organization || !user) return null;
+
+    const growthSection = getWorkspaceGrowthSection(currentPage);
+    if (growthSection) {
+      return (
+        <WorkspaceExpansionSuite
+          organization={organization}
+          workspaceBasePath={workspaceBasePath}
+          section={growthSection}
+        />
+      );
+    }
 
     switch (currentPage) {
       case "":
@@ -455,6 +491,25 @@ export function WorkspaceLayout() {
                   >
                     <Icon className="w-5 h-5" />
                     <span className="font-medium">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="border-t pt-6 mb-6">
+              <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
+                DEAL GROWTH
+              </h3>
+              {GROWTH_NAV_ITEMS.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.label}
+                    to={`${workspaceBasePath}/${item.slug}`}
+                    className={getFeatureNavItemClasses(currentPage === item.slug)}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="font-medium text-sm">{item.label}</span>
                   </Link>
                 );
               })}

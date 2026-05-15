@@ -11,7 +11,7 @@ const LISTING_SELECT = `
     *,
     media:property_media(*)
   ),
-  organization:organizations(name, logo_url, verified)
+  organization:organizations(name, slug, logo_url, verified)
 `;
 
 export const listingService = {
@@ -105,7 +105,7 @@ export const listingService = {
           *,
           media:property_media(*)
         ),
-        organization:organizations(name, logo_url, verified, email, phone)
+        organization:organizations(name, slug, logo_url, verified, email, phone)
       `
       )
       .eq("id", id)

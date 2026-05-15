@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { WorkspaceListings } from "./WorkspaceListings";
 import { listingService } from "../../../lib/listing.service";
+import { listingQualityService } from "../../../lib/listing-quality.service";
 import { propertyService } from "../../../lib/property.service";
 
 vi.mock("../../../lib/listing.service", () => ({
@@ -20,6 +21,20 @@ vi.mock("../../../lib/property.service", () => ({
   },
 }));
 
+vi.mock("../../../lib/listing-quality.service", async () => {
+  const actual = await vi.importActual<typeof import("../../../lib/listing-quality.service")>(
+    "../../../lib/listing-quality.service"
+  );
+
+  return {
+    ...actual,
+    listingQualityService: {
+      ...actual.listingQualityService,
+      syncListingQuality: vi.fn().mockResolvedValue({ score: 80, checks: [] }),
+    },
+  };
+});
+
 vi.mock("../../../lib/ghana-api.service", () => ({
   FALLBACK_GHANA_REGIONS: [{ code: "GAR", label: "Greater Accra Region" }],
   ghanaApiService: {
@@ -30,6 +45,7 @@ vi.mock("../../../lib/ghana-api.service", () => ({
 
 const getOrganizationListingsMock = vi.mocked(listingService.getOrganizationListings);
 const updateListingMock = vi.mocked(listingService.updateListing);
+const syncListingQualityMock = vi.mocked(listingQualityService.syncListingQuality);
 const updatePropertyMock = vi.mocked(propertyService.updateProperty);
 
 const organization = {
@@ -59,6 +75,11 @@ const listing = {
   status: "draft",
   visibility: "private",
   featured: false,
+  verification_status: "draft",
+  whatsapp_enabled: true,
+  quality_breakdown: {
+    titleDocumentStatus: "missing",
+  },
   published_at: null,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
@@ -110,6 +131,12 @@ describe("WorkspaceListings", () => {
     const priceInput = screen.getByLabelText("Price");
     await user.clear(priceInput);
     await user.type(priceInput, "300000");
+    await user.type(screen.getByLabelText("GhanaPostGPS"), "GA-123-4567");
+    await user.selectOptions(screen.getByDisplayValue("Missing"), "verified");
+    await user.type(
+      screen.getByPlaceholderText("Describe the property, its neighborhood, and standout details."),
+      " This executive apartment includes backup power, water reserve tanks, a staffed security post, covered parking, and a quick airport corridor connection for corporate clients."
+    );
 
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
@@ -125,6 +152,20 @@ describe("WorkspaceListings", () => {
       price: 300000,
       listing_type: "sale",
       visibility: "private",
+      verification_status: "submitted",
+      quality_breakdown: expect.objectContaining({
+        titleDocumentStatus: "verified",
+      }),
     }));
-  });
+
+    expect(syncListingQualityMock).toHaveBeenCalledWith(expect.objectContaining({
+      verification_status: "submitted",
+      quality_breakdown: expect.objectContaining({
+        titleDocumentStatus: "verified",
+      }),
+      property: expect.objectContaining({
+        ghana_post_gps: "GA-123-4567",
+      }),
+    }), "org-1");
+  }, 30000);
 });

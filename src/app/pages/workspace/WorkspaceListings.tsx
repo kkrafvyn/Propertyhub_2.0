@@ -288,6 +288,17 @@ export function WorkspaceListings({
         mediaItems.length,
         Boolean(organization.verified)
       );
+      const qualityCheckedAt = new Date().toISOString();
+      const verificationStatus = listingQualityService.getAutoVerificationStatus(
+        qualityReport.score,
+        listing.verification_status
+      );
+      const qualityBreakdown = listingQualityService.buildQualityBreakdown({
+        existingBreakdown: listing.quality_breakdown,
+        checks: qualityReport.checks,
+        checkedAt: qualityCheckedAt,
+        titleDocumentStatus: draft.titleDocumentStatus,
+      });
 
       await propertyService.updateProperty(listing.property_id, {
         address: draft.address.trim(),
@@ -321,12 +332,9 @@ export function WorkspaceListings({
           ? Number(draft.minimumDepositAmount)
           : null,
         quality_score: qualityReport.score,
-        quality_breakdown: {
-          checks: qualityReport.checks,
-          titleDocumentStatus: draft.titleDocumentStatus,
-          evaluatedAt: new Date().toISOString(),
-        },
-        last_quality_checked_at: new Date().toISOString(),
+        quality_breakdown: qualityBreakdown,
+        last_quality_checked_at: qualityCheckedAt,
+        verification_status: verificationStatus,
         published_at: draft.status === "listed" ? listing.published_at || new Date().toISOString() : null,
       });
 
@@ -336,9 +344,8 @@ export function WorkspaceListings({
           price: Number(draft.price),
           currency: draft.currency.trim() || "GHS",
           whatsapp_enabled: draft.whatsappEnabled,
-          quality_breakdown: {
-            titleDocumentStatus: draft.titleDocumentStatus,
-          },
+          verification_status: verificationStatus,
+          quality_breakdown: qualityBreakdown,
           property: {
             ...listing.property,
             address: draft.address.trim(),

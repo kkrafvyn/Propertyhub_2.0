@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Menu, User, Heart, Bell } from "lucide-react";
+import { Menu, User, Heart, Bell, Download } from "lucide-react";
 import { Button } from "./ui/Button";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -51,10 +51,26 @@ export function Navbar({ transparent = false }: NavbarProps) {
             <Link to="/search?listingType=lease" className="text-foreground hover:text-primary transition-colors">
               For Lease
             </Link>
+            <Link to="/agencies" className="text-foreground hover:text-primary transition-colors">
+              Agencies
+            </Link>
+            <Link to="/guides" className="text-foreground hover:text-primary transition-colors">
+              Area Guides
+            </Link>
+            <Link to="/market-trends" className="text-foreground hover:text-primary transition-colors">
+              Trends
+            </Link>
+            <Link to="/reviews" className="text-foreground hover:text-primary transition-colors">
+              Reviews
+            </Link>
           </div>
 
           {/* Right Actions */}
           <div className="hidden md:flex items-center gap-4">
+            <Link to="/get-the-app" className="text-foreground hover:text-primary transition-colors flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Get App
+            </Link>
             <Link to={workspacePath} className="text-foreground hover:text-primary transition-colors">
               List Property
             </Link>
@@ -126,6 +142,24 @@ export function Navbar({ transparent = false }: NavbarProps) {
             </Link>
             <Link to="/search?listingType=lease" className="block py-2 text-foreground hover:text-primary">
               For Lease
+            </Link>
+            <Link to="/agencies" className="block py-2 text-foreground hover:text-primary">
+              Agencies
+            </Link>
+            <Link to="/guides" className="block py-2 text-foreground hover:text-primary">
+              Area Guides
+            </Link>
+            <Link to="/market-trends" className="block py-2 text-foreground hover:text-primary">
+              Market Trends
+            </Link>
+            <Link to="/reviews" className="block py-2 text-foreground hover:text-primary">
+              Reviews
+            </Link>
+            <Link to="/buyer-requests" className="block py-2 text-foreground hover:text-primary">
+              Buyer Requests
+            </Link>
+            <Link to="/get-the-app" className="block py-2 text-foreground hover:text-primary">
+              Get The App
             </Link>
             <Link to={workspacePath} className="block py-2 text-foreground hover:text-primary">
               List Property

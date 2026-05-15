@@ -442,6 +442,23 @@ export function MobileAppShell() {
       return (
         <section className="mobile-pane">
           <h1>Saved</h1>
+          <div className="mobile-action-list">
+            <Link to="/app/compare" className="mobile-action-row">
+              <Heart aria-hidden="true" />
+              <span>Compare saved listings</span>
+              <ChevronRight aria-hidden="true" />
+            </Link>
+            <Link to="/app/buying-tools" className="mobile-action-row">
+              <Wallet aria-hidden="true" />
+              <span>Buyer toolkit</span>
+              <ChevronRight aria-hidden="true" />
+            </Link>
+            <Link to="/app/deals" className="mobile-action-row">
+              <ShieldCheck aria-hidden="true" />
+              <span>Deal rooms</span>
+              <ChevronRight aria-hidden="true" />
+            </Link>
+          </div>
           {saved.length ? (
             <div className="mobile-list">
               {saved.map((item) => (

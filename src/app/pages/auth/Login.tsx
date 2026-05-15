@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router";
-import { Mail, Loader2, Phone, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { useEffect, useMemo, useState } from "react";
@@ -9,17 +9,13 @@ import { toast } from "sonner";
 export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loginMode, setLoginMode] = useState<"email" | "phone">("email");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [oauthLoadingProvider, setOauthLoadingProvider] = useState<
     "google" | "facebook" | "apple" | null
   >(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signInWithOAuth, signInWithPhoneOtp, verifyPhoneOtp, user } = useAuth();
+  const { signIn, signInWithOAuth, user } = useAuth();
   const stateRedirectTo =
     typeof location.state === "object" &&
     location.state !== null &&
@@ -57,29 +53,6 @@ export function Login() {
     }
   };
 
-  const handlePhoneSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    try {
-      setLoading(true);
-
-      if (!otpSent) {
-        await signInWithPhoneOtp(phone);
-        setOtpSent(true);
-        toast.success("OTP sent to your phone.");
-        return;
-      }
-
-      await verifyPhoneOtp(phone, otp);
-      toast.success("Phone verified. Welcome back!");
-      navigate(redirectTo, { replace: true });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Phone login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleOAuthSignIn = async (provider: "google" | "facebook" | "apple") => {
     try {
       setOauthLoadingProvider(provider);
@@ -108,92 +81,37 @@ export function Login() {
             <p className="text-muted-foreground">Log in to access your Property Hub account</p>
           </div>
 
-          <div className="mb-6 grid grid-cols-2 rounded-xl bg-secondary p-1">
-            <button
-              type="button"
-              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                loginMode === "email" ? "bg-white shadow-sm" : "text-muted-foreground"
-              }`}
-              onClick={() => setLoginMode("email")}
-            >
-              <Mail className="h-4 w-4" />
-              Email
-            </button>
-            <button
-              type="button"
-              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                loginMode === "phone" ? "bg-white shadow-sm" : "text-muted-foreground"
-              }`}
-              onClick={() => setLoginMode("phone")}
-            >
-              <Phone className="h-4 w-4" />
-              Phone OTP
-            </button>
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <Input
+                label="Email Address"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
 
-          <form
-            onSubmit={loginMode === "email" ? handleSubmit : handlePhoneSubmit}
-            className="space-y-6"
-          >
-            {loginMode === "email" ? (
-              <>
-                <div>
-                  <Input
-                    label="Email Address"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+            <div>
+              <Input
+                label="Password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
 
-                <div>
-                  <Input
-                    label="Password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-              </>
-            ) : (
-              <div className="space-y-4 rounded-xl border border-border p-4">
-                <div className="flex gap-3 text-sm text-muted-foreground">
-                  <ShieldCheck className="mt-0.5 h-4 w-4 text-primary" />
-                  <p>
-                    Ghana launch supports phone-first access. Supabase SMS must be enabled in
-                    production before OTP delivery works live.
-                  </p>
-                </div>
-                <Input
-                  label="Phone Number"
-                  type="tel"
-                  placeholder="+233 24 123 4567"
-                  value={phone}
-                  onChange={(e) => {
-                    setPhone(e.target.value);
-                    setOtpSent(false);
-                    setOtp("");
-                  }}
-                  required
-                />
-                {otpSent && (
-                  <Input
-                    label="OTP Code"
-                    inputMode="numeric"
-                    placeholder="Enter the SMS code"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    required
-                  />
-                )}
-              </div>
-            )}
+            <div className="flex gap-3 rounded-xl border border-border bg-secondary/20 p-4 text-sm text-muted-foreground">
+              <ShieldCheck className="mt-0.5 h-4 w-4 text-primary" />
+              <p>
+                One-time codes are only used for two-step verification after your primary sign-in.
+              </p>
+            </div>
 
-            <div className={loginMode === "phone" ? "hidden" : "flex items-center justify-between"}>
+            <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" className="w-4 h-4 rounded border-border text-primary" />
                 <span className="text-sm text-muted-foreground">Remember me</span>
@@ -207,10 +125,8 @@ export function Login() {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {loginMode === "phone" ? "Verifying..." : "Logging in..."}
+                  Logging in...
                 </>
-              ) : loginMode === "phone" ? (
-                otpSent ? "Verify OTP" : "Send OTP"
               ) : (
                 "Log In"
               )}

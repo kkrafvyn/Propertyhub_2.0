@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useLocation, useNavigate, useParams } from "react-router";
 import {
   MapPin,
   Bed,
@@ -16,6 +16,9 @@ import {
   Shield,
   FileText,
   Clock3,
+  Camera,
+  Navigation,
+  ExternalLink,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
@@ -34,6 +37,17 @@ import { communicationService } from "../../lib/communication.service";
 import { organizationService } from "../../lib/organization.service";
 import { paymentService } from "../../lib/payment.service";
 import { propertyViewingService } from "../../lib/property-viewing.service";
+import {
+  buildReferralQueryString,
+  captureReferralContext,
+  formatReferralChannel,
+  hasReferralContext,
+  readReferralContext,
+} from "../../lib/referral-context";
+import {
+  appendReferralMetadata,
+  trackReferralDealCaseCreated,
+} from "../../lib/referral-attribution.service";
 import { trustCenterService } from "../../lib/trust-center.service";
 
 const fallbackImages = [
@@ -46,6 +60,7 @@ const fallbackImages = [
 
 export function PropertyDetail() {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -56,9 +71,11 @@ export function PropertyDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   const [viewingSubmitting, setViewingSubmitting] = useState(false);
+  const [offerSubmitting, setOfferSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showViewingForm, setShowViewingForm] = useState(false);
+  const [showOfferForm, setShowOfferForm] = useState(false);
   const [trustLoading, setTrustLoading] = useState(false);
   const [trustSnapshot, setTrustSnapshot] = useState<any | null>(null);
   const [contactForm, setContactForm] = useState({
@@ -80,6 +97,14 @@ export function PropertyDetail() {
     customerName: user?.user_metadata?.full_name || "",
     customerPhone: "",
   });
+  const [offerForm, setOfferForm] = useState({
+    buyerName: user?.user_metadata?.full_name || "",
+    buyerPhone: "",
+    amount: "",
+    financingStatus: "cash" as "cash" | "mortgage" | "structured" | "undecided",
+    targetCloseDate: "",
+    notes: "",
+  });
   const [viewingForm, setViewingForm] = useState(() => {
     const nextDay = new Date();
     nextDay.setDate(nextDay.getDate() + 1);
@@ -91,6 +116,10 @@ export function PropertyDetail() {
       requesterNote: "",
     };
   });
+
+  useEffect(() => {
+    captureReferralContext(location.search);
+  }, [location.search]);
 
   useEffect(() => {
     if (!id) return;
@@ -140,6 +169,15 @@ export function PropertyDetail() {
   }, [listing?.price]);
 
   useEffect(() => {
+    if (!listing?.price || listing.listing_type !== "sale") return;
+
+    setOfferForm((current) => ({
+      ...current,
+      amount: current.amount || String(Math.round(Number(listing.price) * 0.95)),
+    }));
+  }, [listing?.listing_type, listing?.price]);
+
+  useEffect(() => {
     if (!listing?.id || !listing.organization_id) {
       setTrustSnapshot(null);
       return;
@@ -186,6 +224,16 @@ export function PropertyDetail() {
   const mapEmbedUrl = locationQuery
     ? `https://www.google.com/maps?q=${encodeURIComponent(locationQuery)}&output=embed`
     : "";
+  const hasPreciseCoordinates =
+    typeof property?.latitude === "number" && typeof property?.longitude === "number";
+  const streetViewEmbedUrl = hasPreciseCoordinates
+    ? `https://www.google.com/maps?layer=c&cbll=${property.latitude},${property.longitude}&cbp=11,0,0,0,0&output=svembed`
+    : "";
+  const streetViewOpenUrl = hasPreciseCoordinates
+    ? `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${property.latitude},${property.longitude}`
+    : locationQuery
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationQuery)}`
+      : "";
   const listingQualityScore =
     typeof listing?.quality_score === "number" ? Math.round(listing.quality_score) : null;
   const listingVerificationStatus = listing?.verification_status
@@ -205,6 +253,19 @@ export function PropertyDetail() {
     return `${property.address}, ${property.city}`;
   }, [property]);
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const currentPath = `${location.pathname}${location.search}`;
+  const referralContext = useMemo(() => {
+    const directContext = {
+      ref: new URLSearchParams(location.search).get("ref"),
+      channel: new URLSearchParams(location.search).get("channel"),
+    };
+
+    return hasReferralContext(directContext) ? directContext : readReferralContext();
+  }, [location.search]);
+  const referralQueryString = useMemo(
+    () => buildReferralQueryString(referralContext),
+    [referralContext]
+  );
 
   const caseType = useMemo(() => {
     if (!listing) return "rental_application";
@@ -216,7 +277,7 @@ export function PropertyDetail() {
   const toggleSave = async () => {
     if (!user) {
       toast.error("Log in to save properties.");
-      navigate("/login", { state: { from: `/property/${id}` } });
+      navigate("/login", { state: { from: currentPath } });
       return;
     }
 
@@ -230,12 +291,54 @@ export function PropertyDetail() {
     }
   };
 
+  const ensureSavedProperty = async () => {
+    if (isSaved) return true;
+
+    if (!user) {
+      toast.error("Log in to compare properties.");
+      navigate("/login", { state: { from: currentPath } });
+      return false;
+    }
+
+    try {
+      const result = await savedPropertyService.toggleSavedProperty(user.id, listing.id);
+      setIsSaved(result.saved);
+
+      if (result.saved) {
+        toast.success("Property saved for comparison.");
+      }
+
+      return result.saved;
+    } catch (error) {
+      console.error("Failed to save property for comparison:", error);
+      toast.error("Unable to save this property for comparison.");
+      return false;
+    }
+  };
+
+  const handleSaveAndCompare = async () => {
+    const saved = await ensureSavedProperty();
+    if (saved) {
+      navigate("/app/compare");
+    }
+  };
+
+  const handleOpenBuyerTools = () => {
+    if (!user) {
+      toast.error("Log in to use buyer tools.");
+      navigate("/login", { state: { from: currentPath } });
+      return;
+    }
+
+    navigate("/app/buying-tools");
+  };
+
   const handleInquiry = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!user) {
       toast.error("Log in to contact the listing team.");
-      navigate("/login", { state: { from: `/property/${id}` } });
+      navigate("/login", { state: { from: currentPath } });
       return;
     }
 
@@ -246,12 +349,23 @@ export function PropertyDetail() {
 
     try {
       setSubmitting(true);
+      const caseMessage = appendReferralMetadata(contactForm.message, referralContext, {
+        source: "property-detail-inquiry",
+      });
       const dealCase = await dealCaseService.createDealCase({
         listing_id: listing.id,
         user_id: user.id,
         organization_id: listing.organization_id,
         case_type: caseType,
-        message: contactForm.message,
+        message: caseMessage,
+      });
+
+      trackReferralDealCaseCreated(referralContext, {
+        dealCaseId: dealCase.id,
+        caseType,
+        listingId: listing.id,
+        organizationId: listing.organization_id,
+        source: "property-detail-inquiry",
       });
 
       try {
@@ -311,6 +425,118 @@ export function PropertyDetail() {
     }
   };
 
+  const handleOfferSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!user) {
+      toast.error("Log in to submit an offer.");
+      navigate("/login", { state: { from: currentPath } });
+      return;
+    }
+
+    const amount = Number(offerForm.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error("Enter a valid offer amount in GHS.");
+      return;
+    }
+
+    const askingPrice = Number(listing.price || 0);
+    const offerPriority =
+      askingPrice && amount >= askingPrice * 0.97
+        ? "high"
+        : askingPrice && amount >= askingPrice * 0.9
+          ? "medium"
+          : "low";
+    const followUpAt = offerForm.targetCloseDate
+      ? new Date(`${offerForm.targetCloseDate}T12:00:00`).toISOString()
+      : null;
+    const offerSummaryBase = [
+      `Offer submitted for ${pageTitle}`,
+      "",
+      `Offer amount: GHS ${amount.toLocaleString()}`,
+      `Financing: ${offerForm.financingStatus.replaceAll("_", " ")}`,
+      `Target close date: ${offerForm.targetCloseDate || "Flexible"}`,
+      `Buyer: ${offerForm.buyerName || user.user_metadata?.full_name || user.email}`,
+      `Phone: ${offerForm.buyerPhone || "Not provided"}`,
+      "",
+      offerForm.notes.trim() || "No additional buyer note provided.",
+    ].join("\n");
+    const offerSummary = appendReferralMetadata(offerSummaryBase, referralContext, {
+      source: "property-detail-offer",
+    });
+
+    try {
+      setOfferSubmitting(true);
+      const dealCase = await dealCaseService.createDealCase({
+        listing_id: listing.id,
+        user_id: user.id,
+        organization_id: listing.organization_id,
+        case_type: "purchase_offer",
+        message: offerSummary,
+        pipeline_stage: "negotiation",
+        priority: offerPriority,
+        next_follow_up_at: followUpAt,
+      });
+
+      trackReferralDealCaseCreated(referralContext, {
+        dealCaseId: dealCase.id,
+        caseType: "purchase_offer",
+        listingId: listing.id,
+        organizationId: listing.organization_id,
+        source: "property-detail-offer",
+      });
+
+      try {
+        const workspaceOrganization = await organizationService.getOrganizationById(
+          listing.organization_id
+        );
+
+        if (workspaceOrganization.owner_id && workspaceOrganization.owner_id !== user.id) {
+          const sharedConversation = await messageService.createOrGetOrganizationConversation({
+            organizationId: listing.organization_id,
+            leadUserId: user.id,
+            internalParticipantId: workspaceOrganization.owner_id,
+            createdBy: user.id,
+            dealCaseId: dealCase.id,
+          });
+
+          await messageService.sendMessage(
+            sharedConversation.conversation_id,
+            user.id,
+            offerSummary
+          );
+        }
+      } catch (conversationError) {
+        console.error("Failed to create offer conversation:", conversationError);
+      }
+
+      try {
+        await communicationService.createInAppNotification({
+          userId: user.id,
+          notificationType: "offer_sent",
+          subject: `Offer sent for ${pageTitle}`,
+          content: "The listing team can review your offer and respond inside your deal room.",
+          actionUrl: "/app/deal-rooms",
+        });
+      } catch (notificationError) {
+        console.error("Failed to create offer notification:", notificationError);
+      }
+
+      toast.success("Offer submitted to the listing team.");
+      setOfferForm((current) => ({
+        ...current,
+        buyerPhone: "",
+        notes: "",
+      }));
+      setShowOfferForm(false);
+    } catch (error) {
+      console.error("Failed to submit offer:", error);
+      toast.error("Unable to submit your offer right now.");
+    } finally {
+      setOfferSubmitting(false);
+    }
+  };
+
   const handleShare = async () => {
     const payload = {
       title: pageTitle,
@@ -337,7 +563,7 @@ export function PropertyDetail() {
 
     if (!user) {
       toast.error("Log in before starting a secure payment.");
-      navigate("/login", { state: { from: `/property/${id}` } });
+      navigate("/login", { state: { from: currentPath } });
       return;
     }
 
@@ -371,7 +597,7 @@ export function PropertyDetail() {
 
     if (!user) {
       toast.error("Log in before booking a viewing.");
-      navigate("/login", { state: { from: `/property/${id}` } });
+      navigate("/login", { state: { from: currentPath } });
       return;
     }
 
@@ -494,6 +720,12 @@ export function PropertyDetail() {
             <div>
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
+                  {hasReferralContext(referralContext) && (
+                    <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-3 py-1 text-xs font-semibold text-accent">
+                      <Shield className="w-3.5 h-3.5" />
+                      Shared via {formatReferralChannel(referralContext.channel)}
+                    </div>
+                  )}
                   <div className="flex items-center gap-3 mb-2">
                     <h1 className="text-3xl font-semibold">{pageTitle}</h1>
                     {organization?.verified && (
@@ -795,6 +1027,126 @@ export function PropertyDetail() {
                 destinationLng={property.longitude}
                 destinationLabel={pageTitle}
               />
+
+              <div className="grid gap-4 mt-6 md:grid-cols-2">
+                <Card className="overflow-hidden">
+                  <div className="p-5 border-b border-border">
+                    <div className="flex items-center gap-2">
+                      <Navigation className="w-5 h-5 text-primary" />
+                      <h3 className="font-semibold">Street View & Arrival Check</h3>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Preview the street approach before booking a viewing or making an offer.
+                    </p>
+                  </div>
+                  {streetViewEmbedUrl ? (
+                    <iframe
+                      title={`Street view for ${pageTitle}`}
+                      src={streetViewEmbedUrl}
+                      className="w-full h-72 border-0"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  ) : (
+                    <div className="h-72 flex items-center justify-center bg-secondary/40 px-6 text-center">
+                      <div>
+                        <Navigation className="w-10 h-10 mx-auto text-primary mb-3" />
+                        <p className="font-medium">Street view is not ready yet</p>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          The team has not attached precise coordinates for a panorama preview yet, but the map location is still available.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="p-5 flex flex-wrap gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        streetViewOpenUrl &&
+                        window.open(streetViewOpenUrl, "_blank", "noopener,noreferrer")
+                      }
+                      disabled={!streetViewOpenUrl}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Open Street View
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        locationQuery &&
+                        window.open(
+                          `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationQuery)}`,
+                          "_blank",
+                          "noopener,noreferrer"
+                        )
+                      }
+                    >
+                      <MapPin className="w-4 h-4" />
+                      Open Map
+                    </Button>
+                  </div>
+                </Card>
+
+                <Card className="p-6">
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold">Remote Review Snapshot</h3>
+                  </div>
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
+                    <div className="rounded-xl border border-border p-4">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Photo Coverage</p>
+                      <p className="mt-2 text-lg font-semibold">{images.length} image{images.length === 1 ? "" : "s"}</p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {images.length >= 5
+                          ? "Enough visual coverage for a stronger remote first pass."
+                          : "A fuller room-by-room image set will improve remote review confidence."}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-border p-4">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Location Signal</p>
+                      <p className="mt-2 text-lg font-semibold">
+                        {locationConfidence || (hasPreciseCoordinates ? "Verified coordinates" : "Map only")}
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {property.ghana_post_gps
+                          ? `GhanaPostGPS ${property.ghana_post_gps}`
+                          : "Precise coordinates and GhanaPostGPS make street-level review easier."}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-5 space-y-3 text-sm text-muted-foreground">
+                    <p>
+                      Use the photo set, map, and trust records together before scheduling your physical inspection.
+                    </p>
+                    <p>
+                      If you&apos;re buying remotely, keep the street-view check, offer notes, and signed documents in the same deal room.
+                    </p>
+                  </div>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowViewingForm(true);
+                        setShowOfferForm(false);
+                      }}
+                    >
+                      <MapPin className="w-4 h-4" />
+                      Book Viewing
+                    </Button>
+                    {listing.listing_type === "sale" && (
+                      <Button
+                        onClick={() => {
+                          setShowOfferForm(true);
+                          setShowViewingForm(false);
+                        }}
+                      >
+                        <Shield className="w-4 h-4" />
+                        Continue to Offer
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              </div>
             </div>
           </div>
 
@@ -852,11 +1204,27 @@ export function PropertyDetail() {
                 </Button>
               )}
 
+              {listing.listing_type === "sale" && !showOfferForm && (
+                <Button
+                  className="w-full mt-3"
+                  onClick={() => {
+                    setShowOfferForm(true);
+                    setShowContactForm(false);
+                  }}
+                >
+                  <Shield className="w-4 h-4" />
+                  Make Offer
+                </Button>
+              )}
+
               {!showViewingForm && (
                 <Button
                   variant="outline"
                   className="w-full mt-3"
-                  onClick={() => setShowViewingForm(true)}
+                  onClick={() => {
+                    setShowViewingForm(true);
+                    setShowOfferForm(false);
+                  }}
                 >
                   <MapPin className="w-4 h-4" />
                   Book Viewing
@@ -867,12 +1235,33 @@ export function PropertyDetail() {
                 <Button
                   variant="outline"
                   className="w-full mt-3"
-                  onClick={() => setShowPaymentForm(true)}
+                  onClick={() => {
+                    setShowPaymentForm(true);
+                    setShowOfferForm(false);
+                  }}
                 >
                   <CreditCard className="w-4 h-4" />
                   Secure Payment via Paystack
                 </Button>
               )}
+
+              <Button
+                variant="outline"
+                className="w-full mt-3"
+                onClick={() => void handleSaveAndCompare()}
+              >
+                <Heart className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : ""}`} />
+                Save & Compare
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full mt-3"
+                onClick={handleOpenBuyerTools}
+              >
+                <FileText className="w-4 h-4" />
+                Buyer Toolkit
+              </Button>
 
               {showViewingForm && (
                 <motion.div
@@ -1007,6 +1396,119 @@ export function PropertyDetail() {
                 </motion.div>
               )}
 
+              {showOfferForm && listing.listing_type === "sale" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="border-t border-border pt-6 mt-6"
+                >
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                      <Shield className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">Submit a Purchase Offer</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Send your target price and closing timeline directly into the workspace negotiation pipeline.
+                      </p>
+                    </div>
+                  </div>
+                  <form className="space-y-4" onSubmit={handleOfferSubmit}>
+                    <Input
+                      label="Buyer Name"
+                      placeholder="Ama Mensah"
+                      value={offerForm.buyerName}
+                      onChange={(e) =>
+                        setOfferForm((current) => ({
+                          ...current,
+                          buyerName: e.target.value,
+                        }))
+                      }
+                    />
+                    <Input
+                      label="Offer Amount (GHS)"
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      value={offerForm.amount}
+                      onChange={(e) =>
+                        setOfferForm((current) => ({
+                          ...current,
+                          amount: e.target.value,
+                        }))
+                      }
+                    />
+                    <div>
+                      <label htmlFor="property-offer-financing" className="block mb-2 text-sm">
+                        Financing
+                      </label>
+                      <select
+                        id="property-offer-financing"
+                        className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        value={offerForm.financingStatus}
+                        onChange={(e) =>
+                          setOfferForm((current) => ({
+                            ...current,
+                            financingStatus: e.target.value as typeof current.financingStatus,
+                          }))
+                        }
+                      >
+                        <option value="cash">Cash ready</option>
+                        <option value="mortgage">Mortgage / financing</option>
+                        <option value="structured">Structured payment</option>
+                        <option value="undecided">Still deciding</option>
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input
+                        label="Phone"
+                        type="tel"
+                        placeholder="+233 24 123 4567"
+                        value={offerForm.buyerPhone}
+                        onChange={(e) =>
+                          setOfferForm((current) => ({
+                            ...current,
+                            buyerPhone: e.target.value,
+                          }))
+                        }
+                      />
+                      <Input
+                        label="Target Close Date"
+                        type="date"
+                        value={offerForm.targetCloseDate}
+                        onChange={(e) =>
+                          setOfferForm((current) => ({
+                            ...current,
+                            targetCloseDate: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="property-offer-notes" className="block mb-2 text-sm">
+                        Offer Notes
+                      </label>
+                      <textarea
+                        id="property-offer-notes"
+                        className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        rows={4}
+                        placeholder="Share any contingencies, document expectations, or payment structure notes."
+                        value={offerForm.notes}
+                        onChange={(e) =>
+                          setOfferForm((current) => ({
+                            ...current,
+                            notes: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <Button size="lg" className="w-full" type="submit" disabled={offerSubmitting}>
+                      {offerSubmitting ? "Submitting offer..." : "Submit Offer"}
+                    </Button>
+                  </form>
+                </motion.div>
+              )}
+
               {showPaymentForm && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
@@ -1112,7 +1614,7 @@ export function PropertyDetail() {
                 </li>
                 <li className="flex gap-2">
                   <Check className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
-                  <span>Confirm the listing team’s identity before sharing documents.</span>
+                  <span>Confirm the listing team's identity before sharing documents.</span>
                 </li>
               </ul>
             </Card>
@@ -1124,7 +1626,7 @@ export function PropertyDetail() {
             <h2 className="text-3xl font-semibold mb-8">Similar Properties</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {relatedListings.map((item) => (
-                <Link key={item.id} to={`/property/${item.id}`}>
+                <Link key={item.id} to={`/property/${item.id}${referralQueryString}`}>
                   <Card hover className="overflow-hidden">
                     <div className="relative h-48 overflow-hidden">
                       <img

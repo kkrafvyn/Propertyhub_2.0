@@ -1,6 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { Search, SlidersHorizontal, Grid3x3, List, Map, MapPin, Bed, Bath, X, Loader2, Bell } from "lucide-react";
+import {
+  Search,
+  SlidersHorizontal,
+  Grid3x3,
+  List,
+  Map,
+  MapPin,
+  Bed,
+  Bath,
+  X,
+  Loader2,
+  Bell,
+  Share2,
+  Smartphone,
+} from "lucide-react";
 import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -12,6 +26,20 @@ import { normalizePropertyCategory } from "../../lib/property-category";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { savedSearchAlertService } from "../../lib/saved-search-alert.service";
+import {
+  buildReferralQueryString,
+  captureReferralContext,
+  formatReferralChannel,
+  hasReferralContext,
+  readReferralContext,
+} from "../../lib/referral-context";
+import { trackReferralSearchAlert, trackReferralVisit } from "../../lib/referral-attribution.service";
+import {
+  buildAbsoluteSearchUrl,
+  buildSearchPath,
+  type SearchShareInput,
+  matchesAlertSearch,
+} from "../../lib/search-sharing";
 
 const PAGE_SIZE = 12;
 
@@ -53,6 +81,10 @@ export function PropertySearch() {
 
   useEffect(() => {
     loadListings();
+  }, [searchParams]);
+
+  useEffect(() => {
+    captureReferralContext(searchParams);
   }, [searchParams]);
 
   useEffect(() => {
@@ -138,6 +170,10 @@ export function PropertySearch() {
       });
 
       setUserAlerts((current) => [alert, ...current.filter((item) => item.id !== alert.id)]);
+      trackReferralSearchAlert(referralContext, {
+        source: "property-search",
+        landingPath: currentSearchPath,
+      });
       toast.success("Search alert saved.");
     } catch (error) {
       console.error("Failed to save search alert:", error);
@@ -225,6 +261,59 @@ export function PropertySearch() {
     return `Showing ${start}-${end} of ${totalResults} properties`;
   }, [currentPage, totalResults]);
 
+  const referralContext = useMemo(() => {
+    const directContext = {
+      ref: searchParams.get("ref"),
+      channel: searchParams.get("channel"),
+    };
+
+    return hasReferralContext(directContext) ? directContext : readReferralContext();
+  }, [searchParams]);
+
+  const referralQueryString = useMemo(
+    () => buildReferralQueryString(referralContext),
+    [referralContext]
+  );
+
+  const currentSearchInput = useMemo(
+    () =>
+      ({
+        q: searchParams.get("q"),
+        listingType: filters.listingType,
+        propertyType: filters.propertyType !== "all" ? filters.propertyType : null,
+        priceMin: filters.priceMin || null,
+        priceMax: filters.priceMax || null,
+        bedrooms: filters.bedrooms || null,
+        bathrooms: filters.bathrooms || null,
+        ref: referralContext?.ref || null,
+        channel: referralContext?.channel || null,
+      }) satisfies SearchShareInput,
+    [filters, referralContext?.channel, referralContext?.ref, searchParams]
+  );
+  const currentSearchPath = useMemo(
+    () => buildSearchPath(currentSearchInput),
+    [currentSearchInput]
+  );
+  const currentSearchUrl = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return buildAbsoluteSearchUrl(currentSearchInput, window.location.origin);
+  }, [currentSearchInput]);
+  const currentSearchSaved = useMemo(
+    () => userAlerts.some((alert) => matchesAlertSearch(alert, currentSearchInput)),
+    [currentSearchInput, userAlerts]
+  );
+
+  const buildPropertyHref = (listingId: string) => `/property/${listingId}${referralQueryString}`;
+
+  useEffect(() => {
+    if (!hasReferralContext(referralContext)) return;
+
+    trackReferralVisit(referralContext, {
+      source: "property-search",
+      landingPath: currentSearchPath,
+    });
+  }, [currentSearchPath, referralContext]);
+
   useEffect(() => {
     setSelectedMapListingId((current) => {
       if (current && listings.some((listing) => listing.id === current)) {
@@ -256,6 +345,27 @@ export function PropertySearch() {
     selectedMapQuery
   )}&output=embed`;
 
+  const handleShareSearch = async () => {
+    if (!currentSearchUrl) return;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: resultsTitle,
+          text: "Take a look at this Property Hub search.",
+          url: currentSearchUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(currentSearchUrl);
+        toast.success("Search link copied to your clipboard.");
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
+      console.error("Failed to share search:", error);
+      toast.error("We couldn't share this search right now.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -269,6 +379,13 @@ export function PropertySearch() {
               <p className="text-muted-foreground">{resultSummary}</p>
             </div>
             <div className="flex gap-2">
+              {user && (
+                <Link to="/app/compare">
+                  <Button variant="outline" size="sm">
+                    Compare Saved
+                  </Button>
+                </Link>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -277,6 +394,10 @@ export function PropertySearch() {
               >
                 <Bell className="w-4 h-4" />
                 {savingAlert ? "Saving..." : "Save Alert"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => void handleShareSearch()}>
+                <Share2 className="w-4 h-4" />
+                Share Search
               </Button>
               <Button
                 variant={viewMode === "grid" ? "primary" : "outline"}
@@ -329,6 +450,81 @@ export function PropertySearch() {
             </div>
           </Card>
         )}
+
+        {user && currentSearchSaved && (
+          <Card className="p-4 mb-6 bg-primary/5 border-primary/20">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="font-semibold">This search is already on watch.</p>
+                <p className="text-sm text-muted-foreground">
+                  We&apos;ll keep tracking new matches for this filter set in your saved alerts.
+                </p>
+              </div>
+              <Link to="/app/alerts">
+                <Button variant="outline" size="sm">
+                  Open Alerts
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        )}
+
+        {hasReferralContext(referralContext) && (
+          <Card className="p-4 mb-6 bg-accent/5 border-accent/20">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="font-semibold">
+                  Shared via {formatReferralChannel(referralContext.channel)}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  You&apos;re browsing with a trusted referral link. Save listings you like so you can compare them later.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {user && (
+                  <Link to="/app/compare">
+                    <Button variant="outline" size="sm">
+                      Compare Saved
+                    </Button>
+                  </Link>
+                )}
+                <Link to="/app/buying-tools">
+                  <Button variant="outline" size="sm">
+                    Buyer Toolkit
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        <Card className="p-5 mb-6 bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(246,244,238,1))] border-primary/15">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                <Smartphone className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-semibold">Built for mobile follow-up</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  On phones, the home page switches into your app-style shell automatically, so saved alerts, deal rooms, and field notes stay close.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/get-the-app">
+                <Button variant="outline" size="sm">
+                  Get The App
+                </Button>
+              </Link>
+              {user && (
+                <Link to={currentSearchPath}>
+                  <Button size="sm">Keep This Search Handy</Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        </Card>
 
         <div className="flex gap-8">
           {/* Filters Sidebar */}
@@ -509,7 +705,7 @@ export function PropertySearch() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
                       >
-                        <Link to={`/property/${listing.id}`}>
+                        <Link to={buildPropertyHref(listing.id)}>
                           <Card hover className="overflow-hidden">
                             <div className="relative h-48 overflow-hidden">
                               <img
@@ -566,7 +762,7 @@ export function PropertySearch() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05 }}
                       >
-                        <Link to={`/property/${listing.id}`}>
+                        <Link to={buildPropertyHref(listing.id)}>
                           <Card hover className="overflow-hidden">
                             <div className="flex flex-col md:flex-row">
                               <div className="relative w-full md:w-80 h-48 flex-shrink-0 overflow-hidden">

@@ -85,6 +85,10 @@ export function WorkspaceNewListing({
 
     try {
       setSubmitting(true);
+      const qualityCheckedAt = new Date().toISOString();
+      const verificationStatus = listingQualityService.getAutoVerificationStatus(
+        qualityReport.score
+      );
 
       const property = await propertyService.createProperty({
         organization_id: organization.id,
@@ -132,13 +136,13 @@ export function WorkspaceNewListing({
           ? Number(form.minimumDepositAmount)
           : null,
         quality_score: qualityReport.score,
-        quality_breakdown: {
+        quality_breakdown: listingQualityService.buildQualityBreakdown({
           checks: qualityReport.checks,
+          checkedAt: qualityCheckedAt,
           titleDocumentStatus: form.titleDocumentStatus,
-          evaluatedAt: new Date().toISOString(),
-        },
-        last_quality_checked_at: new Date().toISOString(),
-        verification_status: qualityReport.score >= 75 ? "submitted" : "draft",
+        }),
+        last_quality_checked_at: qualityCheckedAt,
+        verification_status: verificationStatus,
         published_at: form.status === "listed" ? new Date().toISOString() : null,
       });
 

@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import type { Database } from './database.types'
 
 export const vendorService = {
   // Register vendor
@@ -147,6 +148,31 @@ export const vendorService = {
       .select()
       .single()
     
+    if (error) throw error
+    return data
+  },
+
+  async updateAssignment(
+    assignmentId: string,
+    updates: Database['public']['Tables']['vendor_assignments']['Update']
+  ) {
+    const updateData: Record<string, any> = { ...updates }
+
+    if (updates.status === 'completed' && !updates.completed_date) {
+      updateData.completed_date = new Date().toISOString()
+    }
+
+    const { data, error } = await supabase
+      .from('vendor_assignments')
+      .update(updateData)
+      .eq('id', assignmentId)
+      .select(`
+        *,
+        vendor:vendors(*),
+        property:properties(*)
+      `)
+      .single()
+
     if (error) throw error
     return data
   },

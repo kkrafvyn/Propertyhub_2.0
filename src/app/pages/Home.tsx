@@ -1,5 +1,19 @@
 import { Link, useNavigate } from "react-router";
-import { Search, MapPin, Home as HomeIcon, Building2, Landmark, TrendingUp, Shield, Users, Loader2 } from "lucide-react";
+import {
+  Search,
+  MapPin,
+  Home as HomeIcon,
+  Building2,
+  Landmark,
+  TrendingUp,
+  Shield,
+  Users,
+  Loader2,
+  Smartphone,
+  Download,
+  MessageSquareQuote,
+  Star,
+} from "lucide-react";
 import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
@@ -9,6 +23,11 @@ import { motion } from "motion/react";
 import { listingService } from "../../lib/listing.service";
 import { organizationService } from "../../lib/organization.service";
 import { getPropertyCoverImage } from "../../lib/property-media";
+import {
+  publicDiscoveryService,
+  type MobileExperienceSnapshot,
+  type PublicVendorReview,
+} from "../../lib/public-discovery.service";
 import { toast } from "sonner";
 import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
 
@@ -17,6 +36,8 @@ export function Home() {
   const [searchType, setSearchType] = useState<"rental" | "sale" | "lease">("rental");
   const [featuredListings, setFeaturedListings] = useState<any[]>([]);
   const [verifiedAgencies, setVerifiedAgencies] = useState<any[]>([]);
+  const [reviewPreview, setReviewPreview] = useState<PublicVendorReview[]>([]);
+  const [mobileSnapshot, setMobileSnapshot] = useState<MobileExperienceSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const listPropertyPath = `${WORKSPACE_ENTRY_PATH}?next=new`;
@@ -30,14 +51,19 @@ export function Home() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const listings = await listingService.getPublicListings(4, 0);
+      const [listings, agencies, reputation, appSnapshot] = await Promise.all([
+        listingService.getPublicListings(4, 0),
+        organizationService.getVerifiedOrganizations(6),
+        publicDiscoveryService.getVendorReputationSnapshot(6, 3),
+        publicDiscoveryService.getMobileExperienceSnapshot(),
+      ]);
       const formattedListings = listings.map((listing: any) => ({
         ...listing,
       }));
       setFeaturedListings(formattedListings);
-
-      const agencies = await organizationService.getVerifiedOrganizations(6);
       setVerifiedAgencies(agencies);
+      setReviewPreview(reputation.testimonials);
+      setMobileSnapshot(appSnapshot);
     } catch (error) {
       console.error('Failed to load home data:', error);
       toast.error('Failed to load listings');
@@ -68,6 +94,57 @@ export function Home() {
     { name: "Labone", count: "142 properties" },
     { name: "Osu", count: "128 properties" },
     { name: "Dzorwulu", count: "98 properties" },
+  ];
+
+  const discoveryLinks = [
+    {
+      title: "Verified Agencies",
+      description: "Public company pages with trust docs and live inventory.",
+      icon: Shield,
+      href: "/agencies",
+    },
+    {
+      title: "Area Guides",
+      description: "Neighborhood pages for demand, access, and flood risk context.",
+      icon: MapPin,
+      href: "/guides",
+    },
+    {
+      title: "Market Trends",
+      description: "Average pricing and demand snapshots across active locations.",
+      icon: TrendingUp,
+      href: "/market-trends",
+    },
+    {
+      title: "Buyer Requests",
+      description: "Capture demand before a buyer ever reaches a listing page.",
+      icon: Users,
+      href: "/buyer-requests",
+    },
+    {
+      title: "Projects",
+      description: "Grouped developments and multi-unit inventory collections.",
+      icon: Building2,
+      href: "/projects",
+    },
+    {
+      title: "Home Valuation",
+      description: "Quick asking-price ranges from current public sale comps.",
+      icon: Landmark,
+      href: "/valuation",
+    },
+    {
+      title: "Public Reviews",
+      description: "Read verified service-partner feedback before you engage.",
+      icon: MessageSquareQuote,
+      href: "/reviews",
+    },
+    {
+      title: "Get The App",
+      description: "Install the public mobile builds for alerts, offers, and field follow-up.",
+      icon: Download,
+      href: "/get-the-app",
+    },
   ];
 
   return (
@@ -258,6 +335,135 @@ export function Home() {
         </div>
       </section>
 
+      {/* Discovery Grid */}
+      <section className="py-16 px-4 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-8 gap-4 flex-wrap">
+          <div>
+            <h2 className="text-3xl font-semibold">Go Beyond Search</h2>
+            <p className="mt-2 text-muted-foreground">
+              Explore the trust, market, and demand surfaces buyers expect from larger portals.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {discoveryLinks.map((item, index) => (
+            <motion.div
+              key={item.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <Link to={item.href}>
+                <Card hover className="p-6 h-full">
+                  <item.icon className="w-10 h-10 text-primary" />
+                  <h3 className="mt-4 text-xl font-semibold">{item.title}</h3>
+                  <p className="mt-2 text-muted-foreground">{item.description}</p>
+                </Card>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <section className="py-16 px-4 max-w-7xl mx-auto">
+        <Card className="overflow-hidden border-primary/15 bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(246,244,238,1))]">
+          <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="p-8 md:p-10">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+                <Smartphone className="w-3.5 h-3.5" />
+                Mobile Experience
+              </div>
+              <h2 className="mt-5 text-3xl md:text-4xl font-semibold">
+                Install the public mobile experience or keep moving on the mobile web.
+              </h2>
+              <p className="mt-4 text-muted-foreground max-w-2xl">
+                {mobileSnapshot?.releaseHeadline ||
+                  "On smaller screens, the home route switches into a mobile shell built for saved alerts, quick comparisons, field notes, and deal follow-up without leaving the product."}
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link to="/get-the-app">
+                  <Button>
+                    Get The App
+                  </Button>
+                </Link>
+                <Link to="/">
+                  <Button variant="outline">Open Mobile Web</Button>
+                </Link>
+              </div>
+            </div>
+            <div className="bg-foreground text-white p-8 md:p-10">
+              <h3 className="text-xl font-semibold">Best mobile moments</h3>
+              <div className="mt-5 space-y-4 text-white/80">
+                {(mobileSnapshot?.fieldMoments || [
+                  "Keep search alerts active while commuting or doing field tours.",
+                  "Jump from saved listings into compare and buyer tools in a couple taps.",
+                  "Track offers, viewings, and receipts without waiting to get back to a laptop.",
+                ]).map((item) => (
+                  <p key={item}>{item}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      <section className="py-16 px-4 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-8 gap-4 flex-wrap">
+          <div>
+            <h2 className="text-3xl font-semibold">Reputation You Can Read</h2>
+            <p className="mt-2 text-muted-foreground">
+              Public-facing testimonials now complement verification badges and trust docs.
+            </p>
+          </div>
+          <Link to="/reviews">
+            <Button variant="outline">Open Reviews</Button>
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin" />
+          </div>
+        ) : reviewPreview.length === 0 ? (
+          <Card className="p-8 text-muted-foreground">
+            Public testimonials will appear here as more partner reviews are completed.
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {reviewPreview.map((review) => (
+              <Card key={review.id} className="p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <MessageSquareQuote className="w-8 h-8 text-primary" />
+                  <div className="flex items-center gap-1 text-amber-500">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <Star
+                        key={`${review.id}-${index}`}
+                        className={`w-4 h-4 ${
+                          index < Math.round(review.rating) ? "fill-current" : "text-muted"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <p className="mt-5 text-foreground/90 leading-7">&ldquo;{review.reviewText}&rdquo;</p>
+                <div className="mt-5 border-t border-border pt-4">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold">{review.vendorName}</p>
+                    {review.vendorVerified && (
+                      <Shield className="w-4 h-4 text-emerald-600" />
+                    )}
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {review.vendorCategory} / {review.reviewerLabel}
+                  </p>
+                  <p className="mt-3 text-sm text-muted-foreground">{review.highlight}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* Popular Locations */}
       <section className="py-16 px-4 max-w-7xl mx-auto">
         <h2 className="text-3xl font-semibold mb-8">Popular Locations in Accra</h2>
@@ -294,28 +500,30 @@ export function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <Card className="p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
-                  {agency.logo_url ? (
-                    <img
-                      src={agency.logo_url}
-                      alt={agency.name}
-                      className="w-16 h-16 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-lg bg-primary flex items-center justify-center text-white">
-                      <Building2 className="w-8 h-8" />
+                <Link to={`/agencies/${agency.slug}`}>
+                  <Card className="p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
+                    {agency.logo_url ? (
+                      <img
+                        src={agency.logo_url}
+                        alt={agency.name}
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-lg bg-primary flex items-center justify-center text-white">
+                        <Building2 className="w-8 h-8" />
+                      </div>
+                    )}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{agency.name}</h3>
+                        <Shield className="w-4 h-4 text-green-600" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Verified Agency
+                      </p>
                     </div>
-                  )}
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{agency.name}</h3>
-                      <Shield className="w-4 h-4 text-green-600" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Verified Agency
-                    </p>
-                  </div>
-                </Card>
+                  </Card>
+                </Link>
               </motion.div>
             ))}
           </div>
@@ -363,6 +571,9 @@ export function Home() {
             <h4 className="font-semibold mb-4">For Renters</h4>
             <ul className="space-y-2 text-white/70">
               <li><Link to="/search" className="hover:text-white">Search Properties</Link></li>
+              <li><Link to="/buyer-requests" className="hover:text-white">Buyer Requests</Link></li>
+              <li><Link to="/reviews" className="hover:text-white">Public Reviews</Link></li>
+              <li><Link to="/guides" className="hover:text-white">Area Guides</Link></li>
               <li><Link to="/app" className="hover:text-white">My Dashboard</Link></li>
               <li><Link to="/app" className="hover:text-white">Saved Properties</Link></li>
             </ul>
@@ -373,14 +584,16 @@ export function Home() {
               <li><Link to={listPropertyPath} className="hover:text-white">List Property</Link></li>
               <li><Link to={manageListingsPath} className="hover:text-white">Manage Listings</Link></li>
               <li><Link to={analyticsPath} className="hover:text-white">Analytics</Link></li>
+              <li><Link to="/valuation" className="hover:text-white">Home Valuation</Link></li>
+              <li><Link to="/get-the-app" className="hover:text-white">Get The App</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-semibold mb-4">Company</h4>
             <ul className="space-y-2 text-white/70">
-              <li><a href="#" className="hover:text-white">About Us</a></li>
-              <li><a href="#" className="hover:text-white">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
+              <li><Link to="/agencies" className="hover:text-white">Verified Agencies</Link></li>
+              <li><Link to="/projects" className="hover:text-white">Projects</Link></li>
+              <li><Link to="/market-trends" className="hover:text-white">Market Trends</Link></li>
             </ul>
           </div>
         </div>

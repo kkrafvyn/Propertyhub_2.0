@@ -16,13 +16,20 @@ function createAuthState(overrides: Record<string, unknown> = {}) {
     user: null,
     loading: false,
     error: null,
+    authAssurance: {
+      currentLevel: null,
+      nextLevel: null,
+      loading: false,
+    },
     signUp: vi.fn(),
     signIn: vi.fn(),
-    signInWithPhoneOtp: vi.fn(),
-    verifyPhoneOtp: vi.fn(),
     signInWithOAuth: vi.fn(),
     signOut: vi.fn(),
     resetPassword: vi.fn(),
+    refreshAuthAssurance: vi.fn(),
+    listMfaFactors: vi.fn(),
+    challengeMfaFactor: vi.fn(),
+    verifyMfaFactor: vi.fn(),
     ...overrides,
   };
 }
@@ -53,6 +60,25 @@ function renderLogin(initialEntry = "/login?next=%2Fworkspace%3Fnext%3Dnew") {
 }
 
 describe("Login", () => {
+  it("uses email and password as the primary login flow", async () => {
+    const signIn = vi.fn().mockResolvedValue(undefined);
+    useAuthMock.mockReturnValue(createAuthState({ signIn }) as any);
+
+    const router = renderLogin();
+    const user = userEvent.setup();
+
+    expect(screen.queryByRole("button", { name: /phone otp/i })).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Email Address"), "agent@example.com");
+    await user.type(screen.getByLabelText("Password"), "secret-pass");
+    await user.click(screen.getByRole("button", { name: /^log in$/i }));
+
+    await waitFor(() => {
+      expect(signIn).toHaveBeenCalledWith("agent@example.com", "secret-pass");
+      expect(router.state.location.pathname).toBe("/workspace");
+    });
+  });
+
   it("starts Google OAuth with the intended redirect target", async () => {
     const signInWithOAuth = vi.fn().mockResolvedValue(undefined);
     useAuthMock.mockReturnValue(createAuthState({ signInWithOAuth }) as any);

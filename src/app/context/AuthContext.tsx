@@ -3,28 +3,58 @@ import { supabase } from '../../lib/supabase'
 import type { User } from '@supabase/supabase-js'
 import { userService } from '../../lib/user.service'
 
+type AuthAssuranceLevel = string | null
+
+export interface AuthAssuranceState {
+  currentLevel: AuthAssuranceLevel
+  nextLevel: AuthAssuranceLevel
+  loading: boolean
+}
+
+export interface AuthMfaFactor {
+  id: string
+  factor_type: 'totp' | 'phone' | 'webauthn' | (string & {})
+  friendly_name?: string
+  status: 'verified' | 'unverified' | (string & {})
+}
+
 interface AuthContextType {
   user: User | null
   loading: boolean
   error: Error | null
+  authAssurance: AuthAssuranceState
   signUp: (email: string, password: string, fullName: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
-  signInWithPhoneOtp: (phone: string) => Promise<void>
-  verifyPhoneOtp: (phone: string, token: string) => Promise<void>
   signInWithOAuth: (
     provider: 'google' | 'facebook' | 'apple',
     redirectTo?: string
   ) => Promise<void>
   signOut: () => Promise<void>
   resetPassword: (email: string, redirectTo?: string) => Promise<void>
+  refreshAuthAssurance: () => Promise<{ currentLevel: AuthAssuranceLevel; nextLevel: AuthAssuranceLevel }>
+  listMfaFactors: () => Promise<AuthMfaFactor[]>
+  challengeMfaFactor: (
+    factor: AuthMfaFactor,
+    options?: { channel?: 'sms' | 'whatsapp' }
+  ) => Promise<string>
+  verifyMfaFactor: (factorId: string, challengeId: string, code: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const EMPTY_AUTH_ASSURANCE: AuthAssuranceState = {
+  currentLevel: null,
+  nextLevel: null,
+  loading: false,
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const [authAssurance, setAuthAssurance] = useState<AuthAssuranceState>({
+    ...EMPTY_AUTH_ASSURANCE,
+    loading: true,
+  })
 
   useEffect(() => {
     const ensureProfile = async (currentUser: User | null) => {
@@ -42,10 +72,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    const syncAuthAssurance = async (currentUser: User | null) => {
+      if (!currentUser) {
+        setAuthAssurance(EMPTY_AUTH_ASSURANCE)
+        return
+      }
+
+      try {
+        const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+        if (error) throw error
+
+        setAuthAssurance({
+          currentLevel: data?.currentLevel ?? null,
+          nextLevel: data?.nextLevel ?? null,
+          loading: false,
+        })
+      } catch (assuranceError) {
+        console.error('Failed to load authenticator assurance level:', assuranceError)
+        setAuthAssurance(EMPTY_AUTH_ASSURANCE)
+      }
+    }
+
     // Check current user on mount
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       setUser(user)
       await ensureProfile(user)
+      await syncAuthAssurance(user)
       setLoading(false)
     })
 
@@ -55,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const nextUser = session?.user ?? null
         setUser(nextUser)
         await ensureProfile(nextUser)
+        await syncAuthAssurance(nextUser)
       }
     )
 
@@ -98,39 +151,95 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signInWithPhoneOtp = async (phone: string) => {
+  const refreshAuthAssurance = async () => {
     try {
       setError(null)
-      const { error } = await supabase.auth.signInWithOtp({
-        phone,
-      })
+      setAuthAssurance((current) => ({ ...current, loading: true }))
+      const {
+        data: { user: currentUser },
+        error: userError,
+      } = await supabase.auth.getUser()
+      if (userError) throw userError
+
+      if (!currentUser) {
+        setAuthAssurance(EMPTY_AUTH_ASSURANCE)
+        return {
+          currentLevel: null,
+          nextLevel: null,
+        }
+      }
+
+      const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
       if (error) throw error
+
+      const nextAssurance = {
+        currentLevel: data?.currentLevel ?? null,
+        nextLevel: data?.nextLevel ?? null,
+      }
+      setAuthAssurance({
+        ...nextAssurance,
+        loading: false,
+      })
+      return nextAssurance
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Phone sign in failed'))
+      setAuthAssurance(EMPTY_AUTH_ASSURANCE)
+      setError(err instanceof Error ? err : new Error('Failed to refresh authenticator assurance'))
       throw err
     }
   }
 
-  const verifyPhoneOtp = async (phone: string, token: string) => {
+  const listMfaFactors = async () => {
     try {
       setError(null)
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone,
-        token,
-        type: 'sms',
+      const { data, error } = await supabase.auth.mfa.listFactors()
+      if (error) throw error
+
+      return [...(data?.totp || []), ...(data?.phone || []), ...(data?.webauthn || [])]
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to load MFA factors'))
+      throw err
+    }
+  }
+
+  const challengeMfaFactor = async (
+    factor: AuthMfaFactor,
+    options?: { channel?: 'sms' | 'whatsapp' }
+  ) => {
+    try {
+      setError(null)
+      const challengeParams =
+        factor.factor_type === 'phone'
+          ? {
+              factorId: factor.id,
+              channel: options?.channel || 'sms',
+            }
+          : {
+              factorId: factor.id,
+            }
+
+      const { data, error } = await supabase.auth.mfa.challenge(challengeParams)
+      if (error) throw error
+
+      return data.id
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to create MFA challenge'))
+      throw err
+    }
+  }
+
+  const verifyMfaFactor = async (factorId: string, challengeId: string, code: string) => {
+    try {
+      setError(null)
+      const { error } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId,
+        code,
       })
       if (error) throw error
 
-      if (data.user) {
-        await userService.ensureUserProfile(
-          data.user.id,
-          data.user.email,
-          data.user.user_metadata?.full_name,
-          data.user.phone
-        )
-      }
+      await refreshAuthAssurance()
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Phone verification failed'))
+      setError(err instanceof Error ? err : new Error('Failed to verify MFA code'))
       throw err
     }
   }
@@ -158,6 +267,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
       setUser(null)
+      setAuthAssurance(EMPTY_AUTH_ASSURANCE)
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Sign out failed'))
       throw err
@@ -184,13 +294,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         loading,
         error,
+        authAssurance,
         signUp,
         signIn,
-        signInWithPhoneOtp,
-        verifyPhoneOtp,
         signInWithOAuth,
         signOut,
         resetPassword,
+        refreshAuthAssurance,
+        listMfaFactors,
+        challengeMfaFactor,
+        verifyMfaFactor,
       }}
     >
       {children}

@@ -30,10 +30,94 @@ export const router = createBrowserRouter([
         },
       },
       {
+        path: "agencies",
+        lazy: async () => {
+          const { AgenciesDirectory } = await import("./pages/AgenciesDirectory");
+          return { Component: AgenciesDirectory };
+        },
+      },
+      {
+        path: "agencies/:slug",
+        lazy: async () => {
+          const { AgencyProfile } = await import("./pages/AgencyProfile");
+          return { Component: AgencyProfile };
+        },
+      },
+      {
+        path: "guides",
+        lazy: async () => {
+          const { AreaGuides } = await import("./pages/AreaGuides");
+          return { Component: AreaGuides };
+        },
+      },
+      {
+        path: "guides/:slug",
+        lazy: async () => {
+          const { AreaGuideDetail } = await import("./pages/AreaGuideDetail");
+          return { Component: AreaGuideDetail };
+        },
+      },
+      {
+        path: "market-trends",
+        lazy: async () => {
+          const { MarketTrends } = await import("./pages/MarketTrends");
+          return { Component: MarketTrends };
+        },
+      },
+      {
+        path: "reviews",
+        lazy: async () => {
+          const { PublicReviews } = await import("./pages/PublicReviews");
+          return { Component: PublicReviews };
+        },
+      },
+      {
+        path: "buyer-requests",
+        lazy: async () => {
+          const { BuyerRequests } = await import("./pages/BuyerRequests");
+          return { Component: BuyerRequests };
+        },
+      },
+      {
+        path: "projects",
+        lazy: async () => {
+          const { Projects } = await import("./pages/Projects");
+          return { Component: Projects };
+        },
+      },
+      {
+        path: "projects/:slug",
+        lazy: async () => {
+          const { ProjectDetail } = await import("./pages/ProjectDetail");
+          return { Component: ProjectDetail };
+        },
+      },
+      {
+        path: "valuation",
+        lazy: async () => {
+          const { HomeValuation } = await import("./pages/HomeValuation");
+          return { Component: HomeValuation };
+        },
+      },
+      {
+        path: "get-the-app",
+        lazy: async () => {
+          const { GetTheApp } = await import("./pages/GetTheApp");
+          return { Component: GetTheApp };
+        },
+      },
+      {
         path: "login",
         lazy: async () => {
           const { Login } = await import("./pages/auth/Login");
           return { Component: Login };
+        },
+      },
+      {
+        path: "login/verify",
+        lazy: async () => {
+          const { VerifySecondFactor } = await import("./pages/auth/VerifySecondFactor");
+          return { Component: VerifySecondFactor };
         },
       },
       {

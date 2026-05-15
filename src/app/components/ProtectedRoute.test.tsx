@@ -15,11 +15,20 @@ function createAuthState(overrides: Partial<ReturnType<typeof useAuth>> = {}) {
     user: null,
     loading: false,
     error: null,
+    authAssurance: {
+      currentLevel: null,
+      nextLevel: null,
+      loading: false,
+    },
     signUp: vi.fn(),
     signIn: vi.fn(),
     signInWithOAuth: vi.fn(),
     signOut: vi.fn(),
     resetPassword: vi.fn(),
+    refreshAuthAssurance: vi.fn(),
+    listMfaFactors: vi.fn(),
+    challengeMfaFactor: vi.fn(),
+    verifyMfaFactor: vi.fn(),
     ...overrides,
   };
 }
@@ -38,6 +47,10 @@ function renderProtectedRoute() {
       {
         path: "/login",
         element: <div>Login Page</div>,
+      },
+      {
+        path: "/login/verify",
+        element: <div>Verify Second Factor</div>,
       },
     ],
     {
@@ -72,5 +85,28 @@ describe("ProtectedRoute", () => {
     renderProtectedRoute();
 
     expect(screen.getByText("Private Content")).toBeInTheDocument();
+  });
+
+  it("redirects partially authenticated users to second-factor verification", async () => {
+    useAuthMock.mockReturnValue(
+      createAuthState({
+        user: {
+          id: "user-1",
+          email: "agent@example.com",
+          user_metadata: {},
+        } as any,
+        authAssurance: {
+          currentLevel: "aal1",
+          nextLevel: "aal2",
+          loading: false,
+        },
+      })
+    );
+
+    const router = renderProtectedRoute();
+
+    expect(await screen.findByText("Verify Second Factor")).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/login/verify");
+    expect(router.state.location.search).toContain("next=%2Fprivate");
   });
 });

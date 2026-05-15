@@ -1,22 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
+  ArrowRightLeft,
   ArrowRight,
   Bell,
+  Calculator,
   CalendarDays,
   CreditCard,
   Download,
   ExternalLink,
   FileText,
+  HandCoins,
   Heart,
   Loader2,
   LogOut,
   MessageCircle,
   Search,
   Settings,
+  Share2,
   Shield,
   TrendingUp,
   UserCircle2,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Navbar } from "../../components/Navbar";
@@ -25,12 +30,33 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { useAuth } from "../../context/AuthContext";
 import { dealCaseService } from "../../../lib/dealcase.service";
+import { documentCenterService } from "../../../lib/document-center.service";
 import { messageService } from "../../../lib/message.service";
+import { organizationService } from "../../../lib/organization.service";
 import { paymentService } from "../../../lib/payment.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
 import { savedSearchAlertService } from "../../../lib/saved-search-alert.service";
 import { savedPropertyService } from "../../../lib/savedproperty.service";
+import {
+  buildAbsoluteSearchUrl,
+  buildAlertSearchInput,
+  buildSearchPath,
+} from "../../../lib/search-sharing";
 import { userService } from "../../../lib/user.service";
+import { stripReferralMetadata } from "../../../lib/referral-attribution.service";
+import { formatLabel, parseOfferSummary } from "../../features/expansion/feature-helpers";
+import {
+  BuyerToolkitPanel,
+  DealRoomsPanel,
+  PropertyComparisonPanel,
+  ReferralProgramPanel,
+  SupportPanel,
+} from "../../features/user/UserExpansionPanels";
+import {
+  getUserDashboardSection,
+  USER_DASHBOARD_ROUTE_CONFIG,
+  type UserDashboardSection,
+} from "../../features/expansion/section-navigation";
 
 function formatRelativeTime(dateString?: string | null) {
   if (!dateString) return "Recently";
@@ -60,17 +86,6 @@ function formatPaymentAmount(amountMinor?: number | null, currency = "GHS") {
     currency,
     minimumFractionDigits: 2,
   }).format(amountMinor / 100);
-}
-
-function getSection(pathname: string) {
-  if (pathname.startsWith("/app/saved")) return "saved";
-  if (pathname.startsWith("/app/messages")) return "messages";
-  if (pathname.startsWith("/app/applications")) return "applications";
-  if (pathname.startsWith("/app/viewings")) return "viewings";
-  if (pathname.startsWith("/app/alerts")) return "alerts";
-  if (pathname.startsWith("/app/payments")) return "payments";
-  if (pathname.startsWith("/app/settings")) return "settings";
-  return "overview";
 }
 
 function getCaseLabel(caseType?: string) {
@@ -169,11 +184,15 @@ export function UserDashboard() {
   const [propertyTransactions, setPropertyTransactions] = useState<any[]>([]);
   const [propertyViewings, setPropertyViewings] = useState<any[]>([]);
   const [savedAlerts, setSavedAlerts] = useState<any[]>([]);
+  const [dealDocuments, setDealDocuments] = useState<any[]>([]);
+  const [organizationContacts, setOrganizationContacts] = useState<
+    Array<{ name: string; email?: string | null; phone?: string | null }>
+  >([]);
   const [participantProfiles, setParticipantProfiles] = useState<Record<string, any>>({});
   const [verifyingReference, setVerifyingReference] = useState(false);
   const [downloadingReceiptId, setDownloadingReceiptId] = useState<string | null>(null);
 
-  const section = getSection(location.pathname);
+  const section = getUserDashboardSection(location.pathname);
 
   useEffect(() => {
     if (!user) {
@@ -349,6 +368,86 @@ export function UserDashboard() {
     };
   }, [conversations, user]);
 
+  useEffect(() => {
+    if (!user || dealCases.length === 0) {
+      setDealDocuments([]);
+      setOrganizationContacts([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadDealContext = async () => {
+      const organizationIds = Array.from(
+        new Set(dealCases.map((dealCase) => dealCase.organization_id).filter(Boolean))
+      ) as string[];
+      const dealCaseIds = new Set(dealCases.map((dealCase) => dealCase.id));
+      const listingIds = new Set(
+        dealCases.map((dealCase) => dealCase.listing_id).filter(Boolean)
+      );
+      const userEmail = user.email?.toLowerCase() || null;
+
+      try {
+        const [documentResults, organizationResults] = await Promise.all([
+          Promise.allSettled(
+            organizationIds.map((organizationId) =>
+              documentCenterService.getOrganizationDocuments(organizationId)
+            )
+          ),
+          Promise.allSettled(
+            organizationIds.map((organizationId) =>
+              organizationService.getOrganizationById(organizationId)
+            )
+          ),
+        ]);
+
+        if (cancelled) return;
+
+        const documentsForUser = documentResults
+          .flatMap((result) =>
+            result.status === "fulfilled" ? result.value || [] : []
+          )
+          .filter((document) => {
+            if (dealCaseIds.has(document.deal_case_id)) return true;
+            if (document.listing_id && listingIds.has(document.listing_id)) return true;
+            if (document.signed_by_user_id === user.id) return true;
+            if (
+              userEmail &&
+              document.external_signer_email &&
+              document.external_signer_email.toLowerCase() === userEmail
+            ) {
+              return true;
+            }
+
+            return false;
+          });
+
+        const uniqueDocuments = Array.from(
+          new Map(documentsForUser.map((document) => [document.id, document])).values()
+        );
+
+        const contacts = organizationResults
+          .flatMap((result) => (result.status === "fulfilled" ? [result.value] : []))
+          .map((organization) => ({
+            name: organization.name,
+            email: organization.email,
+            phone: organization.phone,
+          }));
+
+        setDealDocuments(uniqueDocuments);
+        setOrganizationContacts(contacts);
+      } catch (error) {
+        console.error("Failed to load user deal context:", error);
+      }
+    };
+
+    void loadDealContext();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dealCases, user]);
+
   const displayName = useMemo(() => {
     if (!user) return "there";
     return user.user_metadata?.full_name || user.email?.split("@")[0] || "there";
@@ -453,16 +552,24 @@ export function UserDashboard() {
     propertyViewings[0]?.listing?.property?.city ||
     "Accra";
 
-  const navItems = [
-    { label: "Overview", href: "/app", icon: TrendingUp },
-    { label: "Saved", href: "/app/saved", icon: Heart },
-    { label: "Messages", href: "/app/messages", icon: MessageCircle },
-    { label: "Applications", href: "/app/applications", icon: FileText },
-    { label: "Viewings", href: "/app/viewings", icon: CalendarDays },
-    { label: "Alerts", href: "/app/alerts", icon: Bell },
-    { label: "Payments", href: "/app/payments", icon: CreditCard },
-    { label: "Settings", href: "/app/settings", icon: Settings },
-  ];
+  const navIconBySection: Record<
+    UserDashboardSection,
+    typeof TrendingUp
+  > = {
+    overview: TrendingUp,
+    compare: ArrowRightLeft,
+    "buying-tools": Calculator,
+    deals: Shield,
+    referrals: HandCoins,
+    support: Wrench,
+    saved: Heart,
+    messages: MessageCircle,
+    applications: FileText,
+    viewings: CalendarDays,
+    alerts: Bell,
+    payments: CreditCard,
+    settings: Settings,
+  };
 
   const handleReceiptDownload = async (transaction: any) => {
     const receipt = Array.isArray(transaction.receipt)
@@ -512,6 +619,32 @@ export function UserDashboard() {
     } catch (error) {
       console.error("Failed to delete alert:", error);
       toast.error("We couldn't remove that alert right now.");
+    }
+  };
+
+  const handleShareAlert = async (alert: any) => {
+    if (typeof window === "undefined") return;
+
+    const searchUrl = buildAbsoluteSearchUrl(
+      buildAlertSearchInput(alert),
+      window.location.origin
+    );
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: alert.title || "Property Hub search alert",
+          text: "Take a look at this Property Hub search.",
+          url: searchUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(searchUrl);
+        toast.success("Alert search link copied.");
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
+      console.error("Failed to share alert search:", error);
+      toast.error("We couldn't share that alert right now.");
     }
   };
 
@@ -649,27 +782,60 @@ export function UserDashboard() {
 
     return (
       <div className="space-y-4">
-        {dealCases.map((item) => (
-          <Card key={item.id} className="p-5">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div>
-                <h3 className="font-semibold text-lg">{getCaseLabel(item.case_type)}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {item.listing?.property?.address || "Property"} in {item.listing?.property?.city || "Ghana"}
-                </p>
+        {dealCases.map((item) => {
+          const offerSummary =
+            item.case_type === "purchase_offer" ? parseOfferSummary(item.message) : null;
+
+          return (
+            <Card key={item.id} className="p-5">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="font-semibold text-lg">{getCaseLabel(item.case_type)}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {item.listing?.property?.address || "Property"} in {item.listing?.property?.city || "Ghana"}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 justify-end">
+                  <Badge variant={getStatusVariant(item.status)} className="capitalize">
+                    {item.status}
+                  </Badge>
+                  <Badge variant="outline" className="capitalize">
+                    {formatLabel(item.pipeline_stage || item.status)}
+                  </Badge>
+                </div>
               </div>
-              <Badge variant={getStatusVariant(item.status)} className="capitalize">
-                {item.status}
-              </Badge>
-            </div>
-            <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mb-3">
-              <span>{formatPrice(item.listing?.price)}</span>
-              <span>{item.organization?.name || "Property team"}</span>
-              <span>Updated {formatRelativeTime(item.updated_at || item.created_at)}</span>
-            </div>
-            {item.message && <p className="text-sm">{item.message}</p>}
-          </Card>
-        ))}
+              <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mb-3">
+                <span>{formatPrice(item.listing?.price)}</span>
+                <span>{item.organization?.name || "Property team"}</span>
+                <span>Updated {formatRelativeTime(item.updated_at || item.created_at)}</span>
+                {item.next_follow_up_at && (
+                  <span>Follow-up {formatRelativeTime(item.next_follow_up_at)}</span>
+                )}
+              </div>
+              {offerSummary ? (
+                <div className="grid gap-3 md:grid-cols-3 mb-4">
+                  <div className="rounded-xl border border-border bg-secondary/20 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Offer</p>
+                    <p className="mt-1 font-semibold">{formatPrice(offerSummary.amount)}</p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-secondary/20 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Financing</p>
+                    <p className="mt-1 font-semibold">{formatLabel(offerSummary.financing)}</p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-secondary/20 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Close Target</p>
+                    <p className="mt-1 font-semibold">{offerSummary.targetCloseDate || "Flexible"}</p>
+                  </div>
+                </div>
+              ) : null}
+              {item.message && (
+                <p className="text-sm whitespace-pre-line">
+                  {offerSummary?.notes || stripReferralMetadata(item.message)}
+                </p>
+              )}
+            </Card>
+          );
+        })}
       </div>
     );
   };
@@ -868,6 +1034,13 @@ export function UserDashboard() {
               </div>
 
               <div className="flex flex-wrap gap-3">
+                <Link to={buildSearchPath(buildAlertSearchInput(alert))}>
+                  <Button variant="outline">Open Search</Button>
+                </Link>
+                <Button variant="outline" onClick={() => void handleShareAlert(alert)}>
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </Button>
                 <Button variant="outline" onClick={() => void handleToggleAlert(alert)}>
                   {alert.is_active ? "Pause" : "Resume"}
                 </Button>
@@ -1046,6 +1219,24 @@ export function UserDashboard() {
                 View Messages
               </Button>
             </Link>
+            <Link to="/app/compare">
+              <Button variant="outline" className="w-full justify-start">
+                <ArrowRightLeft className="w-4 h-4" />
+                Compare Properties
+              </Button>
+            </Link>
+            <Link to="/app/buying-tools">
+              <Button variant="outline" className="w-full justify-start">
+                <Calculator className="w-4 h-4" />
+                Buyer Toolkit
+              </Button>
+            </Link>
+            <Link to="/app/deals">
+              <Button variant="outline" className="w-full justify-start">
+                <Shield className="w-4 h-4" />
+                Deal Rooms
+              </Button>
+            </Link>
             <Link to="/app/applications">
               <Button
                 variant="outline"
@@ -1097,12 +1288,16 @@ export function UserDashboard() {
           ) : (
             <div className="space-y-3">
               {savedAlerts.slice(0, 3).map((alert) => (
-                <div key={alert.id} className="rounded-lg bg-secondary/30 p-3">
+                <Link
+                  key={alert.id}
+                  to={buildSearchPath(buildAlertSearchInput(alert))}
+                  className="block rounded-lg bg-secondary/30 p-3 hover:bg-secondary/50 transition-colors"
+                >
                   <p className="font-medium">{alert.title}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {alert.last_match_count} matches · {alert.frequency}
                   </p>
-                </div>
+                </Link>
               ))}
             </div>
           )}
@@ -1216,8 +1411,8 @@ export function UserDashboard() {
         </div>
 
         <div className="flex flex-wrap gap-3 mb-8">
-          {navItems.map((item) => {
-            const Icon = item.icon;
+          {USER_DASHBOARD_ROUTE_CONFIG.map((item) => {
+            const Icon = navIconBySection[item.section];
             const active =
               (item.href === "/app" && section === "overview") ||
               item.href === `/app/${section}`;
@@ -1245,6 +1440,25 @@ export function UserDashboard() {
               {verifyingReference && <p>Verifying your Paystack payment securely...</p>}
             </div>
           </div>
+        ) : section === "compare" ? (
+          <PropertyComparisonPanel savedProperties={savedProperties} />
+        ) : section === "buying-tools" ? (
+          <BuyerToolkitPanel
+            savedProperties={savedProperties}
+            dealCases={dealCases}
+          />
+        ) : section === "deals" ? (
+          <DealRoomsPanel
+            dealCases={dealCases}
+            propertyTransactions={propertyTransactions}
+            propertyViewings={propertyViewings}
+            documents={dealDocuments}
+            conversations={conversations}
+          />
+        ) : section === "referrals" ? (
+          <ReferralProgramPanel user={user} />
+        ) : section === "support" ? (
+          <SupportPanel organizationContacts={organizationContacts} dealCases={dealCases} />
         ) : section === "saved" ? (
           <section className="space-y-6">
             <div>
