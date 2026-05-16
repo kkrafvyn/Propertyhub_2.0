@@ -1,6 +1,17 @@
 {
   "redirects": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "propertyhub-2-0.vercel.app"
+        }
+      ],
+      "destination": "https://baytmiftah-krafvyn.vercel.app",
+      "permanent": true
+    },
+    {
       "source": "/:path*",
       "has": [
         {
