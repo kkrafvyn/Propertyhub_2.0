@@ -1409,7 +1409,7 @@ export function buildAgentPerformanceSnapshot(input: {
 }
 
 export function buildReferralLink(baseUrl: string, identifier: string, channel: string) {
-  const url = new URL(baseUrl || "https://propertyhub.example");
+  const url = new URL(baseUrl || "https://baytmiftah.example");
   url.searchParams.set("ref", identifier);
   url.searchParams.set("channel", channel);
   return url.toString();

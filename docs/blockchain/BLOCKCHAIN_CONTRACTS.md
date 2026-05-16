@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Property Hub blockchain implementation includes 4 production-ready smart contracts on Polygon:
+The BaytMiftah blockchain implementation includes 4 production-ready smart contracts on Polygon:
 
 1. **PropertyToken** - ERC-20 token for fractional property ownership
 2. **PropertyEscrow** - Escrow management for property transactions

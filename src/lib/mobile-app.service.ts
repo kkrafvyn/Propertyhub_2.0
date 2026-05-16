@@ -16,14 +16,14 @@ const DEFAULT_APP_RELEASES: Record<AppPlatform, AppVersionInfo> = {
     minimum_version: '1.0.0',
     latest_version: '1.0.1',
     force_update: false,
-    update_url: 'https://apps.apple.com/app/propertyhub',
+    update_url: 'https://apps.apple.com/app/baytmiftah',
   },
   android: {
     current_version: '1.0.0',
     minimum_version: '1.0.0',
     latest_version: '1.0.1',
     force_update: false,
-    update_url: 'https://play.google.com/store/apps/details?id=com.propertyhub',
+    update_url: 'https://play.google.com/store/apps/details?id=com.baytmiftah.app',
   },
 }
 
@@ -128,7 +128,7 @@ export const mobileAppService = {
       return ''
     }
 
-    const existing = window.localStorage.getItem('propertyhub-browser-device-id')
+    const existing = window.localStorage.getItem('baytmiftah-browser-device-id')
     if (existing) return existing
 
     const nextId =
@@ -136,7 +136,7 @@ export const mobileAppService = {
         ? crypto.randomUUID()
         : `browser-${Date.now()}`
 
-    window.localStorage.setItem('propertyhub-browser-device-id', nextId)
+    window.localStorage.setItem('baytmiftah-browser-device-id', nextId)
     return nextId
   },
 

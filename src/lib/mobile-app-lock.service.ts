@@ -25,11 +25,11 @@ export interface MobileAppLockStatus {
   nativeUnlockReason?: string;
 }
 
-const APP_LOCK_KEY = "propertyhub_mobile_app_lock";
+const APP_LOCK_KEY = "baytmiftah_mobile_app_lock";
 
 function emitAppLockChange() {
   if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent("propertyhub:app-lock-change"));
+    window.dispatchEvent(new CustomEvent("baytmiftah:app-lock-change"));
   }
 }
 
@@ -217,8 +217,8 @@ export const mobileAppLockService = {
 
     try {
       await BiometricAuth.authenticate({
-        reason: "Unlock your Property Hub mobile workspace",
-        androidTitle: "Unlock Property Hub",
+        reason: "Unlock your BaytMiftah mobile workspace",
+        androidTitle: "Unlock BaytMiftah",
         androidSubtitle: "Use biometrics or your device lock",
         androidBiometryStrength: AndroidBiometryStrength.weak,
         allowDeviceCredential: true,

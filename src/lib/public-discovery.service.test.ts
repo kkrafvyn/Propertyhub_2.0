@@ -214,14 +214,14 @@ describe("publicDiscoveryService helpers", () => {
       {
         latest_version: "1.2.0",
         minimum_version: "1.0.0",
-        update_url: "https://apps.apple.com/app/propertyhub",
+        update_url: "https://apps.apple.com/app/baytmiftah",
         force_update: false,
         current_version: "1.0.0",
       },
       {
         latest_version: "1.3.0",
         minimum_version: "1.1.0",
-        update_url: "https://play.google.com/store/apps/details?id=com.propertyhub",
+        update_url: "https://play.google.com/store/apps/details?id=com.baytmiftah.app",
         force_update: true,
         current_version: "1.0.0",
       }

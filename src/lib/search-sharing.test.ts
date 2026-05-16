@@ -25,9 +25,9 @@ describe("search sharing helpers", () => {
           q: "Osu",
           listingType: "rental",
         },
-        "https://propertyhub.example/"
+        "https://baytmiftah.example/"
       )
-    ).toBe("https://propertyhub.example/search?q=Osu&listingType=rental");
+    ).toBe("https://baytmiftah.example/search?q=Osu&listingType=rental");
   });
 
   it("derives search input from a saved alert", () => {

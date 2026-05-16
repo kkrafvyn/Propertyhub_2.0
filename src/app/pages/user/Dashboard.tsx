@@ -722,8 +722,8 @@ export function UserDashboard() {
     try {
       if (navigator.share) {
         await navigator.share({
-          title: alert.title || "Property Hub search alert",
-          text: "Take a look at this Property Hub search.",
+          title: alert.title || "BaytMiftah search alert",
+          text: "Take a look at this BaytMiftah search.",
           url: searchUrl,
         });
       } else {
@@ -742,13 +742,13 @@ export function UserDashboard() {
     const address = [property.address, property.city, property.region].filter(Boolean).join(", ");
 
     return {
-      title: `Property viewing: ${property.address || "Property Hub"}`,
+      title: `Property viewing: ${property.address || "BaytMiftah"}`,
       startsAt: viewing.confirmed_datetime || viewing.requested_datetime,
       durationMinutes: viewing.duration_minutes || 45,
       location: address,
       description:
         viewing.requester_note ||
-        `Viewing with ${viewing.organization?.name || "the Property Hub team"}.`,
+        `Viewing with ${viewing.organization?.name || "the BaytMiftah team"}.`,
     };
   };
 
@@ -1325,7 +1325,7 @@ export function UserDashboard() {
         <Card className="p-6">
           <h3 className="font-semibold mb-4">Next best steps</h3>
           <p className="mb-4 text-sm text-muted-foreground">
-            Property Hub handles the calculations, reminders, and trust checks in the background.
+            BaytMiftah handles the calculations, reminders, and trust checks in the background.
           </p>
           <div className="space-y-3">
             <Link to="/search">
@@ -1835,7 +1835,7 @@ export function UserDashboard() {
     return (
       <section className="mobile-dashboard-native">
         <header className="mobile-dashboard-hero">
-          <p className="mobile-eyebrow">Your Property Hub</p>
+          <p className="mobile-eyebrow">Your BaytMiftah</p>
           <h1>{activeRoute?.label || "Dashboard"}</h1>
           <p>
             Welcome back, {displayName}. Your saved homes, viewings, messages, and payments stay

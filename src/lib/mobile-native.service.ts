@@ -43,8 +43,8 @@ export const mobileNativeService = {
       App.getInfo().catch(() => ({
         version: "web",
         build: "web",
-        name: "Property Hub",
-        id: "com.propertyhub.app",
+        name: "BaytMiftah",
+        id: "com.baytmiftah.app",
       })),
     ]);
 

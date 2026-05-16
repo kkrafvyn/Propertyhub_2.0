@@ -62,7 +62,7 @@ export function Signup() {
               </div>
             </Link>
             <h1 className="text-3xl font-semibold mb-2">Create Account</h1>
-            <p className="text-muted-foreground">Join Property Hub and start your journey</p>
+            <p className="text-muted-foreground">Join BaytMiftah and start your journey</p>
           </div>
 
           {/* Account Type Selection */}

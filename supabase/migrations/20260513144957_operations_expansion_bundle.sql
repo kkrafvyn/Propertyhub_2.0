@@ -591,7 +591,7 @@ BEGIN
   SELECT jobid
   INTO existing_job_id
   FROM cron.job
-  WHERE jobname = 'propertyhub-automation-dispatcher'
+  WHERE jobname = 'baytmiftah-automation-dispatcher'
   LIMIT 1;
 
   IF existing_job_id IS NOT NULL THEN
@@ -601,7 +601,7 @@ BEGIN
   IF EXISTS (SELECT 1 FROM vault.decrypted_secrets WHERE name = 'project_url')
     AND EXISTS (SELECT 1 FROM vault.decrypted_secrets WHERE name = 'service_role_key') THEN
     PERFORM cron.schedule(
-      'propertyhub-automation-dispatcher',
+      'baytmiftah-automation-dispatcher',
       '*/15 * * * *',
       $job$
         SELECT net.http_post(

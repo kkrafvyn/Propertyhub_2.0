@@ -3,7 +3,7 @@ export interface ReferralContext {
   channel: string | null;
 }
 
-const STORAGE_KEY = "propertyhub_referral_context";
+const STORAGE_KEY = "baytmiftah_referral_context";
 
 function normalizeValue(value?: string | null) {
   const nextValue = String(value || "").trim();

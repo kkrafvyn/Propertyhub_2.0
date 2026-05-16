@@ -147,7 +147,7 @@ The app normalizes trusted links into internal routes through `mobileDeepLinkSer
 Supported examples:
 
 ```text
-propertyhub://property/<listing-id>
-propertyhub://app/deals
-https://propertyhub.app/search?q=Labone
+baytmiftah://property/<listing-id>
+baytmiftah://app/deals
+https://baytmiftah.app/search?q=Labone
 ```

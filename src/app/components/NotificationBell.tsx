@@ -188,7 +188,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                    {notification.content || "Open Property Hub to see the latest update."}
+                    {notification.content || "Open BaytMiftah to see the latest update."}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
                     {formatRelativeTime(notification.created_at)}

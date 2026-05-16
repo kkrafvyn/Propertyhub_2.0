@@ -78,7 +78,7 @@ export function Login() {
               </div>
             </Link>
             <h1 className="text-3xl font-semibold mb-2">Welcome Back</h1>
-            <p className="text-muted-foreground">Log in to access your Property Hub account</p>
+            <p className="text-muted-foreground">Log in to access your BaytMiftah account</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">

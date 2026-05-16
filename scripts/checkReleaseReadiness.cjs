@@ -7,6 +7,9 @@ const root = process.cwd();
 const failures = [];
 const warnings = [];
 const passes = [];
+const legacySpacedBrand = ["Property", "Hub"].join(" ");
+const legacyCompactBrand = ["Property", "Hub"].join("");
+const legacySlugBrand = "property" + "hub";
 
 function filePath(relativePath) {
   return path.join(root, relativePath);
@@ -40,6 +43,20 @@ function checkContains(relativePath, needle, label) {
 
   if (!read(relativePath).includes(needle)) {
     fail(`${label}: ${relativePath} does not contain ${needle}`);
+    return;
+  }
+
+  pass(label);
+}
+
+function checkNotContains(relativePath, needle, label) {
+  if (!exists(relativePath)) {
+    fail(`${label}: missing ${relativePath}`);
+    return;
+  }
+
+  if (read(relativePath).includes(needle)) {
+    fail(`${label}: ${relativePath} still contains ${needle}`);
     return;
   }
 
@@ -98,6 +115,12 @@ function checkPackage() {
 
 function checkNativeFiles() {
   checkContains("vercel.json", '"destination": "/index.html"', "Vercel SPA fallback rewrite");
+  checkContains("capacitor.config.ts", 'appId: "com.baytmiftah.app"', "Capacitor BaytMiftah app ID");
+  checkContains("capacitor.config.ts", 'appName: "BaytMiftah"', "Capacitor BaytMiftah app name");
+  checkContains("android/app/build.gradle", 'applicationId "com.baytmiftah.app"', "Android BaytMiftah application ID");
+  checkContains("android/app/src/main/res/values/strings.xml", "<string name=\"app_name\">BaytMiftah</string>", "Android BaytMiftah app label");
+  checkContains("ios/App/App.xcodeproj/project.pbxproj", "PRODUCT_BUNDLE_IDENTIFIER = com.baytmiftah.app;", "iOS BaytMiftah bundle ID");
+  checkContains("public/manifest.webmanifest", '"name": "BaytMiftah"', "Web manifest BaytMiftah name");
   checkContains("ios/App/App/Info.plist", "NSCameraUsageDescription", "iOS camera usage description");
   checkContains("ios/App/App/Info.plist", "NSLocationWhenInUseUsageDescription", "iOS location usage description");
   checkContains("ios/App/App/Info.plist", "NSFaceIDUsageDescription", "iOS Face ID usage description");
@@ -129,8 +152,9 @@ function checkNativeFiles() {
 function checkEnvHygiene() {
   checkContains(".gitignore", ".env.local", "Local env files are ignored");
   checkContains(".env.example", "FCM_PROJECT_ID=", "FCM env placeholders documented");
-  checkContains(".env.example", "APNS_BUNDLE_ID=", "APNS env placeholders documented");
+  checkContains(".env.example", "APNS_BUNDLE_ID=com.baytmiftah.app", "APNS env placeholders documented");
   checkContains(".env.example", "WEB_PUSH_PRIVATE_KEY=", "Web push secret placeholder documented");
+  checkContains(".env.example", "WEB_PUSH_CONTACT_EMAIL=mailto:support@baytmiftah.app", "BaytMiftah support contact documented");
 
   const externalSecrets = [
     "WEB_PUSH_PRIVATE_KEY",
@@ -169,7 +193,32 @@ function checkReleaseDocs() {
   );
 }
 
+function checkBranding() {
+  const brandedFiles = [
+    "index.html",
+    "README.md",
+    "public/manifest.webmanifest",
+    "src/app/components/Navbar.tsx",
+    "src/app/pages/legal/LegalPage.tsx",
+    "src/app/mobile/MobileAppShell.tsx",
+    "docs/deployment/APP_STORE_RELEASE.md",
+  ];
+
+  for (const brandedFile of brandedFiles) {
+    checkContains(brandedFile, "BaytMiftah", `BaytMiftah branding in ${brandedFile}`);
+    checkNotContains(brandedFile, legacySpacedBrand, `Legacy spaced brand removed from ${brandedFile}`);
+    checkNotContains(brandedFile, legacyCompactBrand, `Legacy compact brand removed from ${brandedFile}`);
+    checkNotContains(brandedFile, legacySlugBrand, `Legacy slug brand removed from ${brandedFile}`);
+  }
+
+  checkContains("src/lib/mobile-deep-link.service.ts", "baytmiftah", "BaytMiftah slug branding in deep links");
+  checkNotContains("src/lib/mobile-deep-link.service.ts", legacySpacedBrand, "Legacy spaced brand removed from deep links");
+  checkNotContains("src/lib/mobile-deep-link.service.ts", legacyCompactBrand, "Legacy compact brand removed from deep links");
+  checkNotContains("src/lib/mobile-deep-link.service.ts", legacySlugBrand, "Legacy slug brand removed from deep links");
+}
+
 checkPackage();
+checkBranding();
 checkNativeFiles();
 checkEnvHygiene();
 checkReleaseDocs();

@@ -1,6 +1,6 @@
 # 🔐 Blockchain Implementation Complete
 
-Your Property Hub blockchain verification system is **100% implemented** and ready for deployment!
+Your BaytMiftah blockchain verification system is **100% implemented** and ready for deployment!
 
 ## ✅ What's Included
 

@@ -1,4 +1,4 @@
--- Row Level Security (RLS) Policies for Property Hub REOS
+-- Row Level Security (RLS) Policies for BaytMiftah REOS
 -- Run this after 001_create_schema.sql
 
 -- ============ USERS TABLE ============

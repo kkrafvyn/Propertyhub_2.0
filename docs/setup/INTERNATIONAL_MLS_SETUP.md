@@ -1,6 +1,6 @@
 # Multi-Currency, International, and MLS Integration Guide
 
-Complete guide to setting up international payment support, MLS integrations, and fraud detection for your Property Hub REOS platform.
+Complete guide to setting up international payment support, MLS integrations, and fraud detection for your BaytMiftah REOS platform.
 
 ---
 
@@ -528,7 +528,7 @@ REALTOR_API_KEY=your_realtor_key
 
 # Optional: Email service for follow-ups
 SENDGRID_API_KEY=SG_...
-SENDGRID_FROM_EMAIL=noreply@propertyhub.com
+SENDGRID_FROM_EMAIL=noreply@baytmiftah.com
 
 # Feature Flags
 VITE_FEATURE_MLS_SYNC=true

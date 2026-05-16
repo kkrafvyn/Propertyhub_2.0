@@ -163,7 +163,7 @@ export const calendarOperationsService = {
     const start = viewing.confirmed_datetime || viewing.requested_datetime;
     const durationMinutes = Number(viewing.duration_minutes || 45);
     const end = new Date(new Date(start).getTime() + durationMinutes * 60 * 1000).toISOString();
-    const title = `Property Viewing - ${viewing.listing?.property?.address || "Property Hub"}`;
+    const title = `Property Viewing - ${viewing.listing?.property?.address || "BaytMiftah"}`;
     const description = [
       `Lead: ${viewing.user?.full_name || viewing.user?.email || "Prospect"}`,
       `Status: ${viewing.status}`,
@@ -182,9 +182,9 @@ export const calendarOperationsService = {
     const content = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Property Hub//Viewing Scheduler//EN",
+      "PRODID:-//BaytMiftah//Viewing Scheduler//EN",
       "BEGIN:VEVENT",
-      `UID:${viewing.id}@propertyhub`,
+      `UID:${viewing.id}@baytmiftah`,
       `DTSTAMP:${formatIcsDate(new Date().toISOString())}`,
       `DTSTART:${formatIcsDate(start)}`,
       `DTEND:${formatIcsDate(end)}`,

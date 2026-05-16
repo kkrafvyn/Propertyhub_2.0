@@ -20,7 +20,7 @@ describe("referral attribution service", () => {
       channel: "diaspora",
     });
 
-    expect(message).toContain("propertyhub:referral");
+    expect(message).toContain("baytmiftah:referral");
     expect(stripReferralMetadata(message)).toBe("Interested in this listing.");
   });
 

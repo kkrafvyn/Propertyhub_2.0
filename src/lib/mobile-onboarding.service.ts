@@ -14,7 +14,7 @@ export interface MobileOnboardingStatus {
   record: MobileOnboardingRecord | null;
 }
 
-const MOBILE_ONBOARDING_KEY = "propertyhub_mobile_onboarding_v1";
+const MOBILE_ONBOARDING_KEY = "baytmiftah_mobile_onboarding_v1";
 const DEFAULT_ACCEPTED_ITEMS = [
   "terms-of-use",
   "privacy-notice",
@@ -52,7 +52,7 @@ async function writeRawValue(value: string | null) {
   }
 
   if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent("propertyhub:mobile-onboarding-change"));
+    window.dispatchEvent(new CustomEvent("baytmiftah:mobile-onboarding-change"));
   }
 }
 

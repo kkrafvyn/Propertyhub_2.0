@@ -1,6 +1,6 @@
 {
-  "name": "Property Hub",
-  "short_name": "PropertyHub",
+  "name": "BaytMiftah",
+  "short_name": "BaytMiftah",
   "description": "Manage listings, leads, payments, fraud alerts, and field activity in one workspace.",
   "start_url": "/",
   "scope": "/",

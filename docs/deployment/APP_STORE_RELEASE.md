@@ -4,14 +4,15 @@ This file turns the current mobile behavior into store-disclosure inputs. Final 
 
 ## Public URLs
 
-- Privacy URL: `https://propertyhub-2-0.vercel.app/legal/privacy`
-- Terms URL: `https://propertyhub-2-0.vercel.app/legal/terms`
+- Privacy URL: `https://baytmiftah.app/legal/privacy`
+- Terms URL: `https://baytmiftah.app/legal/terms`
 - Support URL: use the production support page or support email configured for launch.
 - Marketing URL: use the production landing page or app download page.
+- Configure the final `baytmiftah.app` domain before using these URLs in store submissions.
 
 ## Apple App Privacy details
 
-Property Hub should be reviewed as a property marketplace, communication, buyer workflow, and support app. Current app behavior can involve:
+BaytMiftah should be reviewed as a property marketplace, communication, buyer workflow, and support app. Current app behavior can involve:
 
 - Contact Info: name, email address, phone number.
 - User Content: messages, notes, support requests, uploaded property photos, deal documents, and scanned documents.

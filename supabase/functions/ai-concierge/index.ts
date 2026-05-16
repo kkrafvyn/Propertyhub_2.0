@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
           listingType: listing?.listing_type || null,
           dealStage: dealCase?.pipeline_stage || dealCase?.status || null,
         },
-        model: "propertyhub-rules-concierge-v1",
+        model: "baytmiftah-rules-concierge-v1",
         status: "completed",
       })
       .select()

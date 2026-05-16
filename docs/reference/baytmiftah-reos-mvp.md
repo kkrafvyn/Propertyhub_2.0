@@ -1,8 +1,8 @@
-# 🏢 Property Hub REOS — Complete MVP Description
+# 🏢 BaytMiftah REOS — Complete MVP Description
 
 ## Overview
 
-Property Hub REOS is a Ghana-first multi-tenant real estate marketplace and property operations platform that combines:
+BaytMiftah REOS is a Ghana-first multi-tenant real estate marketplace and property operations platform that combines:
 
 * Public property marketplace
 * User property transaction system

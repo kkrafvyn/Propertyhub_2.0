@@ -118,7 +118,7 @@ describe("mobileAppLockService", () => {
     expect(biometricState.authenticate).toHaveBeenCalledWith(
       expect.objectContaining({
         allowDeviceCredential: true,
-        androidTitle: "Unlock Property Hub",
+        androidTitle: "Unlock BaytMiftah",
       })
     );
     expect(await mobileAppLockService.getStatus()).toMatchObject({

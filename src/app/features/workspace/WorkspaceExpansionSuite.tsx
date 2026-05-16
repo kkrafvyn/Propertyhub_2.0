@@ -438,7 +438,7 @@ export function WorkspaceExpansionSuite({
 
   const referralCampaigns = useMemo(() => {
     const baseUrl =
-      typeof window === "undefined" ? "https://propertyhub.example/search" : `${window.location.origin}/search`;
+      typeof window === "undefined" ? "https://baytmiftah.example/search" : `${window.location.origin}/search`;
 
     return [
       {

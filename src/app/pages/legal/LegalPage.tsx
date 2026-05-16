@@ -9,7 +9,7 @@ import { useMobileShell } from "../../mobile/MobileShellContext";
 const legalUpdatedAt = "May 16, 2026";
 
 const sharedNotices = [
-  "Property Hub helps organize property discovery, communication, offers, documents, and support workflows. It does not replace licensed legal, tax, valuation, mortgage, survey, or title professionals.",
+  "BaytMiftah helps organize property discovery, communication, offers, documents, and support workflows. It does not replace licensed legal, tax, valuation, mortgage, survey, or title professionals.",
   "Users are responsible for checking property facts, identity documents, payment instructions, title records, inspection results, and professional advice before making financial decisions.",
   "Some mobile features depend on device permissions, network access, third-party providers, and workspace settings. Availability can vary by device, region, account role, and organization configuration.",
 ];
@@ -38,7 +38,7 @@ function LegalShell({
             className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Back to Property Hub
+            Back to BaytMiftah
           </Link>
 
           <section className="rounded-[2rem] border border-border bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(246,244,238,1))] p-6 shadow-[0_20px_80px_rgba(15,23,42,0.08)] md:p-10">
@@ -96,15 +96,15 @@ export function TermsOfUse() {
   return (
     <LegalShell
       eyebrow="Terms of use"
-      title="Use Property Hub with clear expectations."
-      intro="These terms explain the practical rules users accept when they use Property Hub on web or mobile."
+      title="Use BaytMiftah with clear expectations."
+      intro="These terms explain the practical rules users accept when they use BaytMiftah on web or mobile."
     >
       <LegalSection icon={FileText} title="Platform role" items={sharedNotices} />
       <LegalSection
         icon={Bell}
         title="Mobile alerts and communication"
         items={[
-          "If you turn on alerts, Property Hub may send push notifications for saved searches, messages, viewings, deal room updates, security events, and support follow-up.",
+          "If you turn on alerts, BaytMiftah may send push notifications for saved searches, messages, viewings, deal room updates, security events, and support follow-up.",
           "You can change notification permissions in device settings. Critical account or security messages may still appear in the app or be sent through permitted account channels.",
           "Message drafts, offer notes, field notes, and support requests may be saved locally first, then synced when the device is online and your account is allowed to send them.",
         ]}
@@ -114,7 +114,7 @@ export function TermsOfUse() {
         title="Account, safety, and payments"
         items={[
           "Users must keep login credentials, device access, app lock codes, payment instructions, and verification documents secure.",
-          "Property Hub may restrict, pause, or review activity that appears unsafe, fraudulent, abusive, automated, or outside the user role assigned to the account.",
+          "BaytMiftah may restrict, pause, or review activity that appears unsafe, fraudulent, abusive, automated, or outside the user role assigned to the account.",
           "Escrow, payments, inspections, title checks, and closing steps should be handled through qualified providers and verified channels. Do not rely on chat messages alone for payment instructions.",
         ]}
       />
@@ -148,7 +148,7 @@ export function PrivacyNotice() {
     >
       <LegalSection
         icon={FileText}
-        title="Information Property Hub may process"
+        title="Information BaytMiftah may process"
         items={[
           "Account details such as name, email, phone, role, organization membership, sign-in security status, support requests, and communication preferences.",
           "Property activity such as searches, saved homes, comparisons, viewing requests, offers, deal room activity, referrals, uploaded documents, media, notes, and escrow milestones.",
@@ -159,7 +159,7 @@ export function PrivacyNotice() {
         icon={Bell}
         title="Alerts, drafts, and device permissions"
         items={[
-          "Push alerts are optional and require device permission. Property Hub uses them to notify users about relevant account, listing, message, viewing, offer, and support events.",
+          "Push alerts are optional and require device permission. BaytMiftah uses them to notify users about relevant account, listing, message, viewing, offer, and support events.",
           "Offline drafts can remain on the device until they are sent, deleted, or the local app data is cleared. Sensitive information should only be added when the device is trusted.",
           "Camera, document scanning, microphone, and location permissions are requested only when users open features that need them, and can be managed through device settings.",
         ]}

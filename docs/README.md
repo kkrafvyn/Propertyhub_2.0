@@ -25,5 +25,5 @@
 
 ## Reference
 
-- `reference/property-hub-reos-mvp.md` - product planning notes
+- `reference/baytmiftah-reos-mvp.md` - product planning notes
 - `reference/default_shadcn_theme.css` - original design/theme reference

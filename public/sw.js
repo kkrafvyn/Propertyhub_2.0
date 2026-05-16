@@ -1,4 +1,4 @@
-const CACHE_NAME = "property-hub-v1";
+const CACHE_NAME = "baytmiftah-v1";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -85,7 +85,7 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
-  const title = data.title || "Property Hub";
+  const title = data.title || "BaytMiftah";
   const body = data.body || "You have a new update.";
   const url = data.url || "/";
 

@@ -1,4 +1,4 @@
--- Property Hub REOS Tier 2 Features - Extended Database Schema
+-- BaytMiftah REOS Tier 2 Features - Extended Database Schema
 -- Run this AFTER 001_create_schema.sql
 
 -- =============================================================================

@@ -19,7 +19,7 @@ type VendorRow = Database["public"]["Tables"]["vendors"]["Row"] & {
 type VendorRatingRow = Database["public"]["Tables"]["vendor_ratings"]["Row"];
 type AppVersionSnapshot = Awaited<ReturnType<typeof mobileAppService.getAppVersion>>;
 
-const BUYER_REQUEST_STORAGE_KEY = "property-hub-buyer-requests-v1";
+const BUYER_REQUEST_STORAGE_KEY = "baytmiftah-buyer-requests-v1";
 const PUBLIC_LISTING_SAMPLE_SIZE = 180;
 const PUBLIC_VENDOR_CATEGORIES = [
   "electrician",
@@ -824,7 +824,7 @@ export function groupListingsIntoProjects(listings: PublicListing[]) {
         title: `${area.label} ${lead.listing_type === "sale" ? "Development" : "Collection"}`,
         summary: `${group.length} active ${lead.listing_type === "sale" ? "sale" : lead.listing_type} opportunit${group.length === 1 ? "y" : "ies"} in ${area.label}.`,
         organizationId: lead.organization_id,
-        organizationName: organization?.name || "Property Hub Partner",
+        organizationName: organization?.name || "BaytMiftah Partner",
         organizationSlug: organization?.slug || null,
         city: property?.city || "Unknown city",
         region: property?.region || "Unknown region",

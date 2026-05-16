@@ -537,7 +537,7 @@ export function Home() {
             Ready to List Your Property?
           </h2>
           <p className="text-lg mb-8 opacity-90">
-            Join Property Hub REOS and reach thousands of qualified buyers and renters
+            Join BaytMiftah REOS and reach thousands of qualified buyers and renters
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/signup">
@@ -563,7 +563,7 @@ export function Home() {
                   <polyline points="9 22 9 12 15 12 15 22" />
                 </svg>
               </div>
-              <span className="text-xl font-semibold">Property Hub</span>
+              <span className="text-xl font-semibold">BaytMiftah</span>
             </div>
             <p className="text-white/70">Ghana's premier real estate marketplace</p>
           </div>
@@ -598,7 +598,7 @@ export function Home() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-8 pt-8 border-t border-white/20 text-center text-white/70">
-          <p>&copy; 2026 Property Hub REOS. All rights reserved.</p>
+          <p>&copy; 2026 BaytMiftah REOS. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -1,4 +1,4 @@
--- Property Hub REOS Database Schema
+-- BaytMiftah REOS Database Schema
 -- Run this in Supabase SQL Editor
 
 -- Users Table

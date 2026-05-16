@@ -149,7 +149,7 @@ function buildReceiptPayload(
 
 function buildReceiptText(payload: ReturnType<typeof buildReceiptPayload>) {
   return [
-    "Property Hub Payment Receipt",
+    "BaytMiftah Payment Receipt",
     `Receipt Number: ${payload.receiptNumber}`,
     `Receipt ID: ${payload.receiptId}`,
     `Provider: ${payload.provider}`,

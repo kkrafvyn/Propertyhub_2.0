@@ -56,7 +56,7 @@ describe("NotificationBell", () => {
         conversation_id: "conversation-1",
         notification_type: "message_received",
         channel: "in_app",
-        subject: "New message on Property Hub",
+        subject: "New message on BaytMiftah",
         content: "Can we schedule a viewing tomorrow?",
         action_url: "/app/messages",
         metadata: null,
@@ -74,9 +74,9 @@ describe("NotificationBell", () => {
 
     await user.click(screen.getByRole("button", { name: /notifications/i }));
 
-    expect(await screen.findByText("New message on Property Hub")).toBeInTheDocument();
+    expect(await screen.findByText("New message on BaytMiftah")).toBeInTheDocument();
 
-    await user.click(screen.getByText("New message on Property Hub"));
+    await user.click(screen.getByText("New message on BaytMiftah"));
 
     await waitFor(() => {
       expect(markAsReadMock).toHaveBeenCalledWith("notification-1");

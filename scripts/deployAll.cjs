@@ -4,7 +4,7 @@ const path = require("path");
 
 async function main() {
   console.log("========================================");
-  console.log("  Deploying All Property Hub Contracts");
+  console.log("  Deploying All BaytMiftah Contracts");
   console.log("========================================\n");
 
   const [deployer] = await hre.ethers.getSigners();
@@ -16,7 +16,7 @@ async function main() {
   console.log("1. Deploying PropertyToken...");
   const PropertyToken = await hre.ethers.getContractFactory("PropertyToken");
   const token = await PropertyToken.deploy(
-    "Property Hub Token",
+    "BaytMiftah Token",
     "PROP",
     hre.ethers.parseEther("1000000"),
     18,

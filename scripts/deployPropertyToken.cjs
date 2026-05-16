@@ -8,7 +8,7 @@ async function main() {
   const PropertyToken = await hre.ethers.getContractFactory("PropertyToken");
   
   const token = await PropertyToken.deploy(
-    "Property Hub Token", // name
+    "BaytMiftah Token", // name
     "PROP", // symbol
     ethers.parseEther("1000000"), // 1M tokens initial supply
     18, // decimals

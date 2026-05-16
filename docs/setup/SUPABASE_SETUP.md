@@ -1,4 +1,4 @@
-# Property Hub REOS - Supabase Setup Guide
+# BaytMiftah REOS - Supabase Setup Guide
 
 ## Initial Setup
 

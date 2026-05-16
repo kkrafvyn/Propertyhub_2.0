@@ -195,7 +195,7 @@ function getMobileRouteTitle(pathname: string) {
     return matchedRoute?.label || "Dashboard";
   }
 
-  return "Property Hub";
+  return "BaytMiftah";
 }
 
 function formatPrice(amount?: number | null, currency = "GHS") {
@@ -521,7 +521,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const pullStartY = useRef<number | null>(null);
 
-  const initialsSource = user?.user_metadata?.full_name || user?.email || "Property Hub";
+  const initialsSource = user?.user_metadata?.full_name || user?.email || "BaytMiftah";
   const initials = initialsSource
     .split(/[ @.]/)
     .filter(Boolean)
@@ -670,12 +670,12 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
 
     updateQueueCount();
     window.addEventListener("online", updateQueueCount);
-    window.addEventListener("propertyhub:offline-queue-change", updateQueueCount);
+    window.addEventListener("baytmiftah:offline-queue-change", updateQueueCount);
 
     return () => {
       cancelled = true;
       window.removeEventListener("online", updateQueueCount);
-      window.removeEventListener("propertyhub:offline-queue-change", updateQueueCount);
+      window.removeEventListener("baytmiftah:offline-queue-change", updateQueueCount);
     };
   }, []);
 
@@ -708,11 +708,11 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
     };
 
     updateAppLockStatus();
-    window.addEventListener("propertyhub:app-lock-change", updateAppLockStatus);
+    window.addEventListener("baytmiftah:app-lock-change", updateAppLockStatus);
 
     return () => {
       cancelled = true;
-      window.removeEventListener("propertyhub:app-lock-change", updateAppLockStatus);
+      window.removeEventListener("baytmiftah:app-lock-change", updateAppLockStatus);
     };
   }, []);
 
@@ -1152,7 +1152,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
       return;
     }
 
-    const content = fieldNote.trim() || "Draft saved from Property Hub mobile.";
+    const content = fieldNote.trim() || "Draft saved from BaytMiftah mobile.";
     const payload =
       type === "message-draft"
         ? { content, createdAt: new Date().toISOString() }
@@ -1343,7 +1343,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
           <MobilePaneHeader
             eyebrow="Search"
             title="Find the right fit"
-            subtitle="Start simple. Property Hub can narrow the details for you."
+            subtitle="Start simple. BaytMiftah can narrow the details for you."
             action={
               <button
                 type="button"
@@ -1596,7 +1596,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
                       <strong>{notification.subject || "Notification"}</strong>
                       {!notification.read && <span>New</span>}
                     </div>
-                    <p>{notification.content || "Open Property Hub to review the latest update."}</p>
+                    <p>{notification.content || "Open BaytMiftah to review the latest update."}</p>
                     <small>{formatRelativeTime(notification.created_at)}</small>
                   </button>
                 ))}
@@ -1701,7 +1701,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
               to="/app/buying-tools"
               icon={Wallet}
               title="Buying guide"
-              detail="Let Property Hub explain costs, timing, and remote-buyer steps."
+              detail="Let BaytMiftah explain costs, timing, and remote-buyer steps."
             />
             <MobileQuickLink
               to="/app/alerts"
@@ -1865,7 +1865,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
                   to={`${WORKSPACE_ENTRY_PATH}?next=new`}
                   icon={Camera}
                   title="Start a listing"
-                  detail="Property Hub guides the details and checks in the background."
+                  detail="BaytMiftah guides the details and checks in the background."
                 />
               </div>
             </section>
@@ -2132,7 +2132,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
             <strong>Legal acceptance</strong>
             <p>
               By continuing, you agree to the Terms of Use and Privacy Notice. You also understand
-              that Property Hub guides, AI help, alerts, drafts, support, and marketplace data are
+              that BaytMiftah guides, AI help, alerts, drafts, support, and marketplace data are
               workflow tools, not legal, tax, valuation, title, mortgage, or investment advice.
             </p>
             <div className="mobile-onboarding-legal-links">
@@ -2161,7 +2161,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
       </div>
       <MobilePaneHeader
         eyebrow="App lock"
-        title="Unlock Property Hub"
+        title="Unlock BaytMiftah"
         subtitle="Your mobile workspace is protected on this device."
       />
       <div className="mobile-app-lock-card">
@@ -2205,12 +2205,12 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
         onTouchEnd={handleTouchEnd}
       >
         {showSplash && (
-          <section className="mobile-splash" aria-label="Property Hub is opening">
+          <section className="mobile-splash" aria-label="BaytMiftah is opening">
             <div className="mobile-splash-orb">
               <Home aria-hidden="true" />
             </div>
             <div>
-              <p>Property Hub</p>
+              <p>BaytMiftah</p>
               <span>Verified homes, guided simply.</span>
             </div>
           </section>
@@ -2237,7 +2237,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
                   <ArrowLeft aria-hidden="true" />
                 </button>
                 <div>
-                  <p className="mobile-eyebrow">Property Hub mobile</p>
+                  <p className="mobile-eyebrow">BaytMiftah mobile</p>
                   <h1>{routeTitle}</h1>
                 </div>
                 {user ? (

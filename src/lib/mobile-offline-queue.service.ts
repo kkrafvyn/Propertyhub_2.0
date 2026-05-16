@@ -37,7 +37,7 @@ export interface MobileOfflineSyncResult {
   remaining: number;
 }
 
-const QUEUE_KEY = "propertyhub_mobile_offline_queue";
+const QUEUE_KEY = "baytmiftah_mobile_offline_queue";
 
 function createId() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -47,7 +47,7 @@ function createId() {
 
 function emitQueueChange() {
   if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent("propertyhub:offline-queue-change"));
+    window.dispatchEvent(new CustomEvent("baytmiftah:offline-queue-change"));
   }
 }
 

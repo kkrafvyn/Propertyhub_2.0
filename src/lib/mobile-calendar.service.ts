@@ -38,12 +38,12 @@ export const mobileCalendarService = {
     const uid =
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
-        : `propertyhub-viewing-${start.getTime()}`;
+        : `baytmiftah-viewing-${start.getTime()}`;
 
     return [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Property Hub//Mobile Viewing//EN",
+      "PRODID:-//BaytMiftah//Mobile Viewing//EN",
       "BEGIN:VEVENT",
       `UID:${uid}`,
       `DTSTAMP:${toCalendarDate(new Date())}`,
@@ -51,7 +51,7 @@ export const mobileCalendarService = {
       `DTEND:${toCalendarDate(end)}`,
       `SUMMARY:${escapeIcsText(input.title)}`,
       `LOCATION:${escapeIcsText(input.location)}`,
-      `DESCRIPTION:${escapeIcsText(input.description || "Property Hub viewing")}`,
+      `DESCRIPTION:${escapeIcsText(input.description || "BaytMiftah viewing")}`,
       "END:VEVENT",
       "END:VCALENDAR",
     ].join("\r\n");
@@ -67,7 +67,7 @@ export const mobileCalendarService = {
     const link = document.createElement("a");
 
     link.href = href;
-    link.download = "property-hub-viewing.ics";
+    link.download = "baytmiftah-viewing.ics";
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -81,7 +81,7 @@ export const mobileCalendarService = {
       action: "TEMPLATE",
       text: input.title,
       dates: `${toCalendarDate(start)}/${toCalendarDate(end)}`,
-      details: input.description || "Property Hub viewing",
+      details: input.description || "BaytMiftah viewing",
       location: input.location || "",
     });
 

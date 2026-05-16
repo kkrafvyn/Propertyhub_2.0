@@ -54,9 +54,9 @@ interface ReferralMetadataPayload {
   source?: string | null;
 }
 
-const STORAGE_KEY = "propertyhub_referral_events_v1";
+const STORAGE_KEY = "baytmiftah_referral_events_v1";
 const EVENT_LIMIT = 250;
-const REFERRAL_METADATA_PATTERN = /<!--\s*propertyhub:referral\s+(\{.*?\})\s*-->$/s;
+const REFERRAL_METADATA_PATTERN = /<!--\s*baytmiftah:referral\s+(\{.*?\})\s*-->$/s;
 
 const LEAD_REWARD_BY_CASE_TYPE: Record<string, number> = {
   purchase_offer: 15000,
@@ -161,7 +161,7 @@ export function appendReferralMetadata(
   };
 
   const baseMessage = stripReferralMetadata(message);
-  return `${baseMessage}\n\n<!-- propertyhub:referral ${JSON.stringify(payload)} -->`;
+  return `${baseMessage}\n\n<!-- baytmiftah:referral ${JSON.stringify(payload)} -->`;
 }
 
 export function parseReferralMetadata(message?: string | null) {

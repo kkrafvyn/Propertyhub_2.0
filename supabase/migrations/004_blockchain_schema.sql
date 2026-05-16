@@ -1,4 +1,4 @@
--- Blockchain Verification Layer for Property Hub
+-- Blockchain Verification Layer for BaytMiftah
 -- Polygon Network Integration for Document & Ownership Verification
 -- Run this in Supabase SQL Editor after 003_tier2_schema.sql is complete
 

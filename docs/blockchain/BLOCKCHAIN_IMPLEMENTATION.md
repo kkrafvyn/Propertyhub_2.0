@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Property Hub Blockchain Verification System is a production-ready implementation for recording property ownership, documents, and smart contracts on the Polygon blockchain network. This system provides immutable verification, transparent ownership tracking, and automated contract management.
+The BaytMiftah Blockchain Verification System is a production-ready implementation for recording property ownership, documents, and smart contracts on the Polygon blockchain network. This system provides immutable verification, transparent ownership tracking, and automated contract management.
 
 ## Architecture
 

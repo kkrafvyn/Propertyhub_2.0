@@ -433,7 +433,7 @@ If something breaks:
 
 ## 🎉 You're Done!
 
-Your Property Hub is now:
+Your BaytMiftah is now:
 ✅ Global (16 currencies, 12 languages)
 ✅ Professional (MLS integration)
 ✅ Smart (Lead aggregation & scoring)

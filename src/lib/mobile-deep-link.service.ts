@@ -1,4 +1,4 @@
-const APP_HOSTS = new Set(["propertyhub.app", "www.propertyhub.app", "propertyhub.example"]);
+const APP_HOSTS = new Set(["baytmiftah.app", "www.baytmiftah.app", "baytmiftah.example"]);
 const ALLOWED_PREFIXES = [
   "/",
   "/search",
@@ -31,12 +31,12 @@ export const mobileDeepLinkService = {
 
     try {
       if (input.startsWith("/")) {
-        const url = new URL(input, "https://propertyhub.app");
+        const url = new URL(input, "https://baytmiftah.app");
         return isAllowedPath(url.pathname) ? input : "/";
       }
 
       const url = new URL(input);
-      if (url.protocol === "propertyhub:" || url.protocol === "property-hub:") {
+      if (url.protocol === "baytmiftah:") {
         const pathname = url.host ? `/${url.host}${url.pathname || ""}` : url.pathname || "/";
         const route = `${pathname}${url.search || ""}${url.hash || ""}`;
         return isAllowedPath(pathname) ? route : "/";

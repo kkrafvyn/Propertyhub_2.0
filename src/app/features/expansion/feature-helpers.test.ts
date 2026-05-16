@@ -114,14 +114,14 @@ Ready to move after title review.`)
         {
           id: "message-1",
           content:
-            "Offer submitted for Cantonments flat\n\n<!-- propertyhub:referral {\"ref\":\"user-1\",\"channel\":\"diaspora\"} -->",
+            "Offer submitted for Cantonments flat\n\n<!-- baytmiftah:referral {\"ref\":\"user-1\",\"channel\":\"diaspora\"} -->",
           created_at: "2026-05-14T10:00:00.000Z",
         },
       ],
     });
 
     expect(timeline[0]?.description).toContain("Offer submitted for Cantonments flat");
-    expect(timeline[0]?.description).not.toContain("propertyhub:referral");
+    expect(timeline[0]?.description).not.toContain("baytmiftah:referral");
   });
 
   it("aggregates agent performance across cases, viewings, and payments", () => {

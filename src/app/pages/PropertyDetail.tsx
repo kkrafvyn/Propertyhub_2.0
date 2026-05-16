@@ -718,7 +718,7 @@ export function PropertyDetail() {
   const handleShare = async () => {
     const payload = {
       title: pageTitle,
-      text: `Take a look at ${pageTitle} on Property Hub.`,
+      text: `Take a look at ${pageTitle} on BaytMiftah.`,
       url: shareUrl,
     };
 

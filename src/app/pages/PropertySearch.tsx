@@ -354,7 +354,7 @@ export function PropertySearch() {
       if (navigator.share) {
         await navigator.share({
           title: resultsTitle,
-          text: "Take a look at this Property Hub search.",
+          text: "Take a look at this BaytMiftah search.",
           url: currentSearchUrl,
         });
       } else {

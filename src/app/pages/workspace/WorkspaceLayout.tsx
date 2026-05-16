@@ -492,7 +492,7 @@ export function WorkspaceLayout() {
                     <polyline points="9 22 9 12 15 12 15 22" />
                   </svg>
                 </div>
-                <span className="text-xl font-semibold">Property Hub</span>
+                <span className="text-xl font-semibold">BaytMiftah</span>
               </Link>
               <div className="h-8 w-px bg-border hidden md:block" />
               <div>

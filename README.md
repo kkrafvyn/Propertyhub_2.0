@@ -1,4 +1,4 @@
-# Property Hub REOS
+# BaytMiftah REOS
 
 Production-ready real estate platform for managing properties, listings, deal cases, payments, team collaboration, and trust workflows. Built with React 18, TypeScript, Vite, and Supabase.
 

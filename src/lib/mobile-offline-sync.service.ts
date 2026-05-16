@@ -263,7 +263,7 @@ async function syncDealDocument(userId: string, item: MobileOfflineQueueItem) {
     contentMarkdown: [
       `# ${title}`,
       "",
-      "Captured from the Property Hub mobile document scanner.",
+      "Captured from the BaytMiftah mobile document scanner.",
       payload.scan?.scannedAt ? `Scanned at: ${payload.scan.scannedAt}` : null,
       payload.scan?.photo?.webPath ? `Preview: ${payload.scan.photo.webPath}` : null,
     ]

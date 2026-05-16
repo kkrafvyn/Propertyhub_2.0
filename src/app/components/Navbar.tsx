@@ -37,7 +37,7 @@ export function Navbar({ transparent = false }: NavbarProps) {
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
             </div>
-            <span className="text-xl font-semibold text-foreground">Property Hub</span>
+            <span className="text-xl font-semibold text-foreground">BaytMiftah</span>
           </Link>
 
           {/* Desktop Navigation */}

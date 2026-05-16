@@ -38,7 +38,7 @@ describe("GetTheApp", () => {
           label: "Apple App Store",
           latestVersion: "1.4.0",
           minimumVersion: "1.3.0",
-          updateUrl: "https://apps.apple.com/app/propertyhub",
+          updateUrl: "https://apps.apple.com/app/baytmiftah",
           forceUpdate: false,
         },
         {
@@ -46,7 +46,7 @@ describe("GetTheApp", () => {
           label: "Google Play",
           latestVersion: "1.5.0",
           minimumVersion: "1.4.0",
-          updateUrl: "https://play.google.com/store/apps/details?id=com.propertyhub",
+          updateUrl: "https://play.google.com/store/apps/details?id=com.baytmiftah.app",
           forceUpdate: true,
         },
       ],
@@ -76,7 +76,7 @@ describe("GetTheApp", () => {
     await user.click(screen.getByRole("button", { name: /download for android/i }));
 
     expect(openSpy).toHaveBeenCalledWith(
-      "https://play.google.com/store/apps/details?id=com.propertyhub",
+      "https://play.google.com/store/apps/details?id=com.baytmiftah.app",
       "_blank",
       "noopener,noreferrer"
     );

@@ -1,4 +1,4 @@
--- Production RLS and Data API audit for Property Hub.
+-- Production RLS and Data API audit for BaytMiftah.
 -- Run this in the Supabase SQL editor after applying migrations and before launch.
 
 with expected_tables(table_name) as (
