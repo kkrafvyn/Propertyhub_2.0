@@ -5,6 +5,7 @@ import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
+import { useMobileShell } from "../mobile/MobileShellContext";
 import { publicDiscoveryService, type ValuationEstimate } from "../../lib/public-discovery.service";
 
 function formatMoney(amount?: number | null) {
@@ -17,6 +18,7 @@ function formatMoney(amount?: number | null) {
 }
 
 export function HomeValuation() {
+  const { isMobileShell } = useMobileShell();
   const [loading, setLoading] = useState(false);
   const [estimate, setEstimate] = useState<ValuationEstimate | null>(null);
   const [form, setForm] = useState({
@@ -59,9 +61,9 @@ export function HomeValuation() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {!isMobileShell && <Navbar />}
 
-      <div className="pt-24 pb-16 px-4">
+      <div className={isMobileShell ? "pt-4 pb-32 px-4" : "pt-24 pb-16 px-4"}>
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-8">
           <section>
             <Card className="p-8 rounded-[2rem] bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(246,244,238,1))]">

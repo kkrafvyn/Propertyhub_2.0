@@ -14,6 +14,7 @@ import {
 import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
+import { useMobileShell } from "../mobile/MobileShellContext";
 import { getPropertyCoverImage } from "../../lib/property-media";
 import {
   calculatePublicReputationScore,
@@ -31,6 +32,7 @@ function formatMoney(amount?: number | null) {
 }
 
 export function AgencyProfile() {
+  const { isMobileShell } = useMobileShell();
   const { slug } = useParams();
   const [agency, setAgency] = useState<AgencyProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,8 +59,8 @@ export function AgencyProfile() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="pt-24 min-h-[60vh] flex items-center justify-center">
+        {!isMobileShell && <Navbar />}
+        <div className={isMobileShell ? "pt-4 min-h-[40vh] flex items-center justify-center" : "pt-24 min-h-[60vh] flex items-center justify-center"}>
           <Loader2 className="w-8 h-8 animate-spin" />
         </div>
       </div>
@@ -68,8 +70,8 @@ export function AgencyProfile() {
   if (!agency) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="pt-24 px-4 max-w-3xl mx-auto">
+        {!isMobileShell && <Navbar />}
+        <div className={isMobileShell ? "pt-4 px-4 max-w-3xl mx-auto pb-32" : "pt-24 px-4 max-w-3xl mx-auto"}>
           <Card className="p-8 text-center">
             <h1 className="text-2xl font-semibold">Agency not found</h1>
             <p className="mt-3 text-muted-foreground">
@@ -95,9 +97,9 @@ export function AgencyProfile() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {!isMobileShell && <Navbar />}
 
-      <div className="pt-24 pb-16 px-4">
+      <div className={isMobileShell ? "pt-4 pb-32 px-4" : "pt-24 pb-16 px-4"}>
         <div className="max-w-6xl mx-auto">
           <section className="overflow-hidden rounded-[2rem] border border-border bg-white">
             <div className="h-56 md:h-72 bg-gradient-to-r from-primary/20 via-accent/10 to-chart-3/10">

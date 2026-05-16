@@ -173,6 +173,49 @@ export default function NotificationSettings() {
     }
   };
 
+  const applyPreset = (preset: "deal-critical" | "quiet-digest" | "in-app-only") => {
+    if (preset === "deal-critical") {
+      setFormData((current) => ({
+        ...current,
+        email_enabled: true,
+        push_enabled: true,
+        in_app_enabled: true,
+        sms_enabled: true,
+        whatsapp_enabled: false,
+        notification_frequency: "immediate",
+        quiet_hours_enabled: false,
+      }));
+      return;
+    }
+
+    if (preset === "quiet-digest") {
+      setFormData((current) => ({
+        ...current,
+        email_enabled: true,
+        push_enabled: true,
+        in_app_enabled: true,
+        sms_enabled: false,
+        whatsapp_enabled: false,
+        notification_frequency: "daily",
+        quiet_hours_enabled: true,
+        quiet_hours_start: "21:30",
+        quiet_hours_end: "07:30",
+      }));
+      return;
+    }
+
+    setFormData((current) => ({
+      ...current,
+      email_enabled: false,
+      sms_enabled: false,
+      push_enabled: false,
+      whatsapp_enabled: false,
+      in_app_enabled: true,
+      notification_frequency: "never",
+      quiet_hours_enabled: false,
+    }));
+  };
+
   if (loading) {
     return <div className="text-center py-12 text-muted-foreground">Loading notifications...</div>;
   }
@@ -243,6 +286,28 @@ export default function NotificationSettings() {
           Quiet hours and frequency rules apply to real-time delivery. In-app items still remain in
           your notification center so nothing gets lost.
         </p>
+      </Card>
+
+      <Card className="p-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Smart Delivery Presets</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Quickly switch between urgent deal alerts, quiet daily digests, or in-app-only mode.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => applyPreset("deal-critical")}>
+              Deal Critical
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => applyPreset("quiet-digest")}>
+              Quiet Digest
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => applyPreset("in-app-only")}>
+              In-App Only
+            </Button>
+          </div>
+        </div>
       </Card>
 
       <div className="space-y-4">

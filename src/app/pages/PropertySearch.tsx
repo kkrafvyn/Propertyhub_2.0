@@ -20,6 +20,7 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { motion, AnimatePresence } from "motion/react";
+import { useMobileShell } from "../mobile/MobileShellContext";
 import { getPropertyCoverImage } from "../../lib/property-media";
 import { listingService } from "../../lib/listing.service";
 import { normalizePropertyCategory } from "../../lib/property-category";
@@ -44,9 +45,10 @@ import {
 const PAGE_SIZE = 12;
 
 export function PropertySearch() {
+  const { isMobileShell } = useMobileShell();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "map">(isMobileShell ? "list" : "grid");
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [listings, setListings] = useState<any[]>([]);
@@ -368,9 +370,9 @@ export function PropertySearch() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {!isMobileShell && <Navbar />}
 
-      <div className="pt-24 pb-12 px-4 max-w-7xl mx-auto">
+      <div className={isMobileShell ? "pt-4 pb-32 px-4 max-w-7xl mx-auto" : "pt-24 pb-12 px-4 max-w-7xl mx-auto"}>
         {/* Search Header */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">

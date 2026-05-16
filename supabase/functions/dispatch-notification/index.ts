@@ -8,6 +8,9 @@ const corsHeaders = {
 };
 
 type NotificationChannel = "email" | "sms" | "push" | "in_app" | "whatsapp";
+type ParsedPushSubscription =
+  | { kind: "web"; p256dh: string; auth: string }
+  | { kind: "native"; provider: "apns" | "fcm"; token: string };
 
 function jsonResponse(status: number, body: Record<string, unknown>) {
   return new Response(JSON.stringify(body), {
@@ -115,15 +118,32 @@ async function sendTwilioMessage(params: {
   return { success: true };
 }
 
-function parseSubscriptionKey(raw: string | null) {
+function parseSubscriptionKey(raw: string | null): ParsedPushSubscription | null {
   if (!raw) return null;
 
   try {
     const parsed = JSON.parse(raw) as
-      | { p256dh?: string; auth?: string; keys?: { p256dh?: string; auth?: string } }
+      | {
+          p256dh?: string;
+          auth?: string;
+          keys?: { p256dh?: string; auth?: string };
+          provider?: string;
+          token?: string;
+        }
       | null;
 
     if (!parsed) return null;
+
+    if (
+      parsed.token &&
+      (parsed.provider === "apns" || parsed.provider === "fcm")
+    ) {
+      return {
+        kind: "native",
+        provider: parsed.provider,
+        token: parsed.token,
+      };
+    }
 
     const p256dh = parsed.p256dh || parsed.keys?.p256dh;
     const auth = parsed.auth || parsed.keys?.auth;
@@ -131,12 +151,160 @@ function parseSubscriptionKey(raw: string | null) {
     if (!p256dh || !auth) return null;
 
     return {
+      kind: "web",
       p256dh,
       auth,
     };
   } catch {
     return null;
   }
+}
+
+async function sendFcmNotification(params: {
+  token: string;
+  title: string;
+  body: string;
+  url: string;
+  notificationId: string;
+}) {
+  const projectId = Deno.env.get("FCM_PROJECT_ID");
+  const accessToken = Deno.env.get("FCM_ACCESS_TOKEN");
+  const serverKey = Deno.env.get("FCM_SERVER_KEY");
+
+  if (projectId && accessToken) {
+    const response = await fetch(
+      `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: {
+            token: params.token,
+            notification: {
+              title: params.title,
+              body: params.body,
+            },
+            data: {
+              url: params.url,
+              notificationId: params.notificationId,
+            },
+            android: {
+              notification: {
+                click_action: "OPEN_PROPERTY_HUB",
+              },
+            },
+            apns: {
+              payload: {
+                aps: {
+                  sound: "default",
+                },
+              },
+            },
+          },
+        }),
+      }
+    );
+
+    return {
+      ok: response.ok,
+      status: response.status,
+      error: response.ok ? undefined : await response.text(),
+    };
+  }
+
+  if (serverKey) {
+    const response = await fetch("https://fcm.googleapis.com/fcm/send", {
+      method: "POST",
+      headers: {
+        Authorization: `key=${serverKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        to: params.token,
+        notification: {
+          title: params.title,
+          body: params.body,
+        },
+        data: {
+          url: params.url,
+          notificationId: params.notificationId,
+        },
+      }),
+    });
+
+    return {
+      ok: response.ok,
+      status: response.status,
+      error: response.ok ? undefined : await response.text(),
+    };
+  }
+
+  return {
+    ok: false,
+    status: 0,
+    error: "FCM is not configured",
+  };
+}
+
+async function sendApnsNotification(params: {
+  token: string;
+  title: string;
+  body: string;
+  url: string;
+  notificationId: string;
+}) {
+  const bearerToken = Deno.env.get("APNS_BEARER_TOKEN");
+  const bundleId = Deno.env.get("APNS_BUNDLE_ID");
+  const useSandbox = Deno.env.get("APNS_USE_SANDBOX") === "true";
+  const host = useSandbox ? "api.sandbox.push.apple.com" : "api.push.apple.com";
+
+  if (!bearerToken || !bundleId) {
+    return {
+      ok: false,
+      status: 0,
+      error: "APNS is not configured",
+    };
+  }
+
+  const response = await fetch(`https://${host}/3/device/${params.token}`, {
+    method: "POST",
+    headers: {
+      Authorization: `bearer ${bearerToken}`,
+      "Content-Type": "application/json",
+      "apns-topic": bundleId,
+      "apns-push-type": "alert",
+    },
+    body: JSON.stringify({
+      aps: {
+        alert: {
+          title: params.title,
+          body: params.body,
+        },
+        sound: "default",
+      },
+      url: params.url,
+      notificationId: params.notificationId,
+    }),
+  });
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    error: response.ok ? undefined : await response.text(),
+  };
+}
+
+async function deactivatePushSubscription(
+  adminClient: ReturnType<typeof createClient>,
+  subscriptionId: string
+) {
+  await adminClient
+    .from("push_subscriptions")
+    .update({ active: false })
+    .eq("id", subscriptionId);
 }
 
 async function sendPushNotifications(params: {
@@ -151,12 +319,11 @@ async function sendPushNotifications(params: {
   const vapidPrivateKey = Deno.env.get("WEB_PUSH_PRIVATE_KEY");
   const vapidContactEmail =
     Deno.env.get("WEB_PUSH_CONTACT_EMAIL") || "mailto:support@propertyhub.app";
+  const hasWebPushConfig = Boolean(vapidPublicKey && vapidPrivateKey);
 
-  if (!vapidPublicKey || !vapidPrivateKey) {
-    return { success: false, error: "Web push is not configured" };
+  if (hasWebPushConfig) {
+    webpush.setVapidDetails(vapidContactEmail, vapidPublicKey!, vapidPrivateKey!);
   }
-
-  webpush.setVapidDetails(vapidContactEmail, vapidPublicKey, vapidPrivateKey);
 
   const { data: devices, error: devicesError } = await params.adminClient
     .from("mobile_devices")
@@ -186,31 +353,72 @@ async function sendPushNotifications(params: {
     return { success: false, error: "No active push subscriptions for this user" };
   }
 
-  const payload = JSON.stringify({
+  const payload = {
     title: params.subject,
     body: params.content,
     url: params.actionUrl || "/app/messages",
     notificationId: params.notificationId,
-  });
+  };
 
   let delivered = 0;
+  let skipped = 0;
 
   for (const subscription of subscriptions) {
-    const keys = parseSubscriptionKey(subscription.subscription_key);
+    const parsedSubscription = parseSubscriptionKey(subscription.subscription_key);
 
-    if (!subscription.subscription_endpoint || !keys) {
+    if (!subscription.subscription_endpoint || !parsedSubscription) {
+      skipped += 1;
       continue;
     }
 
     try {
-      await webpush.sendNotification(
-        {
-          endpoint: subscription.subscription_endpoint,
-          keys,
-        },
-        payload
-      );
-      delivered += 1;
+      if (parsedSubscription.kind === "web") {
+        if (!hasWebPushConfig) {
+          skipped += 1;
+          continue;
+        }
+
+        await webpush.sendNotification(
+          {
+            endpoint: subscription.subscription_endpoint,
+            keys: {
+              p256dh: parsedSubscription.p256dh,
+              auth: parsedSubscription.auth,
+            },
+          },
+          JSON.stringify(payload)
+        );
+        delivered += 1;
+        continue;
+      }
+
+      const nativeDelivery =
+        parsedSubscription.provider === "apns"
+          ? await sendApnsNotification({
+              token: parsedSubscription.token,
+              title: payload.title,
+              body: payload.body,
+              url: payload.url,
+              notificationId: payload.notificationId,
+            })
+          : await sendFcmNotification({
+              token: parsedSubscription.token,
+              title: payload.title,
+              body: payload.body,
+              url: payload.url,
+              notificationId: payload.notificationId,
+            });
+
+      if (nativeDelivery.ok) {
+        delivered += 1;
+        continue;
+      }
+
+      if ([400, 404, 410].includes(nativeDelivery.status)) {
+        await deactivatePushSubscription(params.adminClient, subscription.id);
+      }
+
+      console.error("Native push delivery failed:", nativeDelivery.error);
     } catch (error) {
       const statusCode =
         error && typeof error === "object" && "statusCode" in error
@@ -218,10 +426,7 @@ async function sendPushNotifications(params: {
           : 0;
 
       if (statusCode === 404 || statusCode === 410) {
-        await params.adminClient
-          .from("push_subscriptions")
-          .update({ active: false })
-          .eq("id", subscription.id);
+        await deactivatePushSubscription(params.adminClient, subscription.id);
       }
 
       console.error("Push delivery failed:", error);
@@ -230,7 +435,13 @@ async function sendPushNotifications(params: {
 
   return delivered > 0
     ? { success: true }
-    : { success: false, error: "No push subscriptions accepted the message" };
+    : {
+        success: false,
+        error:
+          skipped === subscriptions.length
+            ? "No configured push providers matched the active subscriptions"
+            : "No push subscriptions accepted the message",
+      };
 }
 
 Deno.serve(async (req) => {

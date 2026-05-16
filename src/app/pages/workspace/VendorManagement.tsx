@@ -50,8 +50,8 @@ export default function VendorManagement() {
   }
 
   const handleHireVendor = async (vendorId: string) => {
-    console.log('Hire vendor:', vendorId)
-    alert('Vendor hired! Check your assignments.')
+    const vendor = vendors.find((item) => item.id === vendorId)
+    alert(`${vendor?.business_name || 'Vendor'} hired! Check your assignments.`)
   }
 
   return (

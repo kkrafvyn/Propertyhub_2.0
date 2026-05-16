@@ -333,6 +333,21 @@ export const messageService = {
     if (error) throw error
   },
 
+  async getReadSummary(conversationId: string) {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('sender_id, read')
+      .eq('conversation_id', conversationId)
+
+    if (error) throw error
+
+    return {
+      total: data?.length || 0,
+      read: data?.filter((message) => message.read).length || 0,
+      unread: data?.filter((message) => !message.read).length || 0,
+    }
+  },
+
   subscribeToConversation(conversationId: string, callback: (payload: any) => void) {
     const subscription = supabase
       .channel(`messages-${conversationId}`)
@@ -349,5 +364,69 @@ export const messageService = {
       .subscribe()
 
     return subscription
+  },
+
+  subscribeToConversationActivity(
+    conversationId: string,
+    callbacks: {
+      onMessage?: (payload: any) => void
+      onReadReceipt?: (payload: any) => void
+    }
+  ) {
+    const channel = supabase
+      .channel(`conversation-activity-${conversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => callbacks.onMessage?.(payload)
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => callbacks.onReadReceipt?.(payload)
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  },
+
+  subscribeToTyping(
+    conversationId: string,
+    callback: (payload: { userId: string; typing: boolean; at: string }) => void
+  ) {
+    const channel = supabase
+      .channel(`conversation-typing-${conversationId}`)
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        callback(payload as { userId: string; typing: boolean; at: string })
+      })
+      .subscribe()
+
+    return {
+      send: (userId: string, typing: boolean) =>
+        channel.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            userId,
+            typing,
+            at: new Date().toISOString(),
+          },
+        }),
+      unsubscribe: () => {
+        void supabase.removeChannel(channel)
+      },
+    }
   },
 }

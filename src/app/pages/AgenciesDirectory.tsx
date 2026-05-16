@@ -4,6 +4,7 @@ import { ArrowRight, Building2, FileText, Loader2, MapPin, Shield } from "lucide
 import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
+import { useMobileShell } from "../mobile/MobileShellContext";
 import { publicDiscoveryService, type PublicAgencySnapshot } from "../../lib/public-discovery.service";
 
 function formatMoney(amount?: number | null) {
@@ -16,6 +17,7 @@ function formatMoney(amount?: number | null) {
 }
 
 export function AgenciesDirectory() {
+  const { isMobileShell } = useMobileShell();
   const [agencies, setAgencies] = useState<PublicAgencySnapshot[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,9 +37,9 @@ export function AgenciesDirectory() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {!isMobileShell && <Navbar />}
 
-      <div className="pt-24 pb-16">
+      <div className={isMobileShell ? "pt-4 pb-32" : "pt-24 pb-16"}>
         <section className="px-4">
           <div className="max-w-6xl mx-auto rounded-[2rem] border border-border bg-[radial-gradient(circle_at_top_left,_rgba(201,168,97,0.18),_transparent_35%),linear-gradient(135deg,rgba(255,255,255,0.98),rgba(245,241,232,0.9))] p-8 md:p-12">
             <div className="max-w-3xl">

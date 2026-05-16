@@ -9,6 +9,16 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: "automatic",
   },
+  plugins: {
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
+    },
+    Keyboard: {
+      resize: "body",
+      style: "LIGHT",
+      resizeOnFullScreen: true,
+    },
+  },
   server: {
     androidScheme: "https",
     iosScheme: "https",

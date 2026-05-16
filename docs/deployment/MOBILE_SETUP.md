@@ -30,6 +30,45 @@ npm run android:gradle:debug
 npm run android:build
 ```
 
+The mobile shell uses these Capacitor plugins after `npx cap sync`:
+
+- `@capacitor/app` for launch URLs and deep links
+- `@capacitor/camera` for field photo capture
+- `@capacitor/device` for device registration
+- `@capacitor/haptics` for lightweight native feedback
+- `@capacitor/keyboard` for keyboard-safe layout spacing
+- `@capacitor/preferences` for the offline queue
+- `@capacitor/push-notifications` for native push token registration
+- `@aparajita/capacitor-biometric-auth` for Face ID, Touch ID, Android biometrics, and device credential unlock
+
+Native push token capture is wired in the app. Production delivery still needs APNS/FCM credentials on the backend in addition to the existing web-push configuration.
+
+The `dispatch-notification` Edge Function now accepts both browser push subscriptions and native Capacitor push tokens. Configure the relevant provider environment variables before deploying push delivery:
+
+- `WEB_PUSH_PUBLIC_KEY`, `WEB_PUSH_PRIVATE_KEY`, `WEB_PUSH_CONTACT_EMAIL` for browser/PWA push.
+- `FCM_PROJECT_ID` and `FCM_ACCESS_TOKEN` for Firebase Cloud Messaging HTTP v1, or `FCM_SERVER_KEY` for legacy FCM delivery.
+- `APNS_BEARER_TOKEN`, `APNS_BUNDLE_ID`, and optional `APNS_USE_SANDBOX=true` for Apple Push Notification service delivery.
+
+The mobile app also includes app lock backed by Capacitor Preferences plus native device unlock. Users set a local backup code, and supported devices can unlock with Face ID, Touch ID, Android biometrics, or device PIN/password through `@aparajita/capacitor-biometric-auth`.
+
+Offline field notes, buyer/viewing/maintenance reports, and listing photos are queued in Capacitor Preferences. The mobile account screen includes a Sync now action; notes/reports sync into the existing in-app notification log, while listing photos upload directly when the queue payload includes organization and property context.
+
+The current mobile feature set also includes:
+
+- Near-me search sorting using device geolocation and property coordinates.
+- Google Maps direction links from mobile viewing cards and mappable listings.
+- Calendar invite generation for property viewings through downloadable `.ics` files.
+- Mobile document scanning through the Capacitor camera plugin, queued as deal documents when offline.
+- Offline drafts for messages, offers, viewing requests, and maintenance reports.
+- Supabase Realtime conversation listeners, message insert updates, and read-receipt refresh hooks.
+- Buyer-side trust/KYC request flow for Ghana Card, tax identity, title/mandate, and address verification using existing trust verification requests.
+- Notification center delivery presets for deal-critical, quiet digest, and in-app-only modes.
+- Deal-room milestone checklist and buyer insights dashboard for momentum, payments, viewings, alerts, and next best actions.
+- AI concierge prompts, shared buying groups, listing trust scoring, media readiness checks, neighborhood intelligence, and safe-payment milestone guidance.
+- Workspace seller portal health and agent CRM action queues for hot leads, stale deal rooms, viewings, and payment follow-up.
+
+For the Supabase migration, AI concierge Edge Function, escrow milestones, analytics events, buyer groups, CRM tasks, and production release checks, see `docs/deployment/PRODUCTION_DEPTH_READINESS.md`.
+
 ## Android SDK requirement
 
 Gradle needs a valid Android SDK path before it can build a debug APK.
@@ -83,4 +122,16 @@ The generated project lives at:
 
 ```text
 ios/App/App.xcodeproj
+```
+
+## Deep Links
+
+The app normalizes trusted links into internal routes through `mobileDeepLinkService`.
+
+Supported examples:
+
+```text
+propertyhub://property/<listing-id>
+propertyhub://app/deals
+https://propertyhub.app/search?q=Labone
 ```

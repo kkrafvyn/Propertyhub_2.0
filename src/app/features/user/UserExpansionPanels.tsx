@@ -1,9 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   ArrowRightLeft,
+  BarChart3,
+  Bell,
+  Brain,
   Building2,
   Calculator,
+  CalendarDays,
+  CheckCircle2,
   Copy,
+  CreditCard,
   ExternalLink,
   FileSignature,
   Globe2,
@@ -13,6 +19,8 @@ import {
   MessageSquareText,
   ShieldCheck,
   Sparkles,
+  UserCheck,
+  Users,
   Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,15 +33,33 @@ import { currencyService } from "../../../lib/currency.service";
 import { internationalPaymentService } from "../../../lib/international-payment.service";
 import { buildMaintenanceSummary, maintenanceOpsService } from "../../../lib/maintenance-ops.service";
 import {
+  aiConciergeService,
+  buyerGroupService,
+  escrowMilestoneService,
+} from "../../../lib/production-depth.service";
+import {
   buildReferralPerformanceSnapshot,
   getStoredReferralEvents,
 } from "../../../lib/referral-attribution.service";
 import {
+  trustVerificationService,
+  type TrustRequestType,
+} from "../../../lib/trust-verification.service";
+import {
   buildDealTimeline,
   buildDiasporaChecklist,
+  buildAiConciergePrompts,
+  buildBuyerNegotiationPlan,
+  buildBuyingGroupPlan,
+  buildInspectionChecklist,
+  buildRemoteBuyerReadiness,
+  buildRentVsBuyAnalysis,
+  buildViewingPrepPlan,
+  buildEscrowMilestones,
   buildPropertyComparisonRows,
   buildReferralLink,
   calculateMonthlyMortgage,
+  estimateClosingCosts,
   formatCaseType,
   formatLabel,
   formatMoney,
@@ -218,6 +244,8 @@ export function BuyerToolkitPanel({ savedProperties, dealCases }: BuyerToolkitPa
   const [depositPercent, setDepositPercent] = useState("20");
   const [termYears, setTermYears] = useState("20");
   const [annualRate, setAnnualRate] = useState("18");
+  const [rentAlternative, setRentAlternative] = useState("6000");
+  const [ownershipYears, setOwnershipYears] = useState("5");
   const [targetCurrency, setTargetCurrency] = useState("USD");
   const [region, setRegion] = useState("US");
   const [convertedPrice, setConvertedPrice] = useState<number | null>(null);
@@ -263,6 +291,56 @@ export function BuyerToolkitPanel({ savedProperties, dealCases }: BuyerToolkitPa
     Number(annualRate || 0),
     Number(termYears || 0)
   );
+  const rentVsBuy = useMemo(
+    () =>
+      buildRentVsBuyAnalysis({
+        purchasePrice: Number(focusListing?.price || 0),
+        monthlyRent: Number(rentAlternative || 0),
+        depositPercent: Number(depositPercent || 0),
+        annualRatePercent: Number(annualRate || 0),
+        termYears: Number(termYears || 0),
+        ownershipYears: Number(ownershipYears || 0),
+      }),
+    [
+      annualRate,
+      depositPercent,
+      focusListing?.price,
+      ownershipYears,
+      rentAlternative,
+      termYears,
+    ]
+  );
+  const closingCostEstimate = useMemo(
+    () =>
+      estimateClosingCosts({
+        price: Number(focusListing?.price || 0),
+        listingType: focusListing?.listing_type,
+        inspectionFee: Number(focusListing?.inspection_fee_amount || 0),
+      }),
+    [focusListing?.inspection_fee_amount, focusListing?.listing_type, focusListing?.price]
+  );
+  const focusMediaItems = useMemo(
+    () => focusProperty?.media || focusProperty?.property_media || [],
+    [focusProperty]
+  );
+  const remoteReadiness = useMemo(
+    () =>
+      buildRemoteBuyerReadiness({
+        listing: focusListing,
+        property: focusProperty,
+        mediaItems: focusMediaItems,
+      }),
+    [focusListing, focusMediaItems, focusProperty]
+  );
+  const inspectionChecklist = useMemo(
+    () =>
+      buildInspectionChecklist({
+        listing: focusListing,
+        property: focusProperty,
+        mediaItems: focusMediaItems,
+      }),
+    [focusListing, focusMediaItems, focusProperty]
+  );
   const affordabilityRatio =
     Number(monthlyIncome || 0) > 0 ? monthlyPayment / Number(monthlyIncome) : 0;
   const paymentConfig = internationalPaymentService.getPaymentConfig(targetCurrency, region);
@@ -274,6 +352,45 @@ export function BuyerToolkitPanel({ savedProperties, dealCases }: BuyerToolkitPa
           neighborhood: focusProperty.neighborhood,
         }
       : null
+  );
+  const mediaEvidenceScore = Math.min(
+    100,
+    focusMediaItems.length * 12 +
+      (focusMediaItems.some((item: any) =>
+        ["video", "virtual_tour", "floor_plan"].includes(item.media_type)
+      )
+        ? 25
+        : 0)
+  );
+  const negotiationPlan = useMemo(
+    () =>
+      buildBuyerNegotiationPlan({
+        listing: focusListing,
+        property: focusProperty,
+        trustScore: focusListing?.quality_score,
+        readinessScore: remoteReadiness.score,
+        mediaReadinessScore: mediaEvidenceScore,
+        closingReserve: closingCostEstimate.recommendedReserve,
+        activeDemand: neighborhoodInsight?.demandLevel,
+      }),
+    [
+      closingCostEstimate.recommendedReserve,
+      focusListing,
+      focusProperty,
+      mediaEvidenceScore,
+      neighborhoodInsight?.demandLevel,
+      remoteReadiness.score,
+    ]
+  );
+  const viewingPrepPlan = useMemo(
+    () =>
+      buildViewingPrepPlan({
+        listing: focusListing,
+        property: focusProperty,
+        mediaItems: focusMediaItems,
+        readinessScore: remoteReadiness.score,
+      }),
+    [focusListing, focusMediaItems, focusProperty, remoteReadiness.score]
   );
   const diasporaChecklist = buildDiasporaChecklist(focusListing?.listing_type);
 
@@ -316,6 +433,18 @@ export function BuyerToolkitPanel({ savedProperties, dealCases }: BuyerToolkitPa
               type="number"
               value={annualRate}
               onChange={(event) => setAnnualRate(event.target.value)}
+            />
+            <Input
+              label="Rent Alternative"
+              type="number"
+              value={rentAlternative}
+              onChange={(event) => setRentAlternative(event.target.value)}
+            />
+            <Input
+              label="Hold Period (Years)"
+              type="number"
+              value={ownershipYears}
+              onChange={(event) => setOwnershipYears(event.target.value)}
             />
           </div>
 
@@ -406,6 +535,192 @@ export function BuyerToolkitPanel({ savedProperties, dealCases }: BuyerToolkitPa
         </Card>
       </div>
 
+      <div className="grid gap-6 lg:grid-cols-[1.05fr,0.95fr]">
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Rent vs Buy Decision</h3>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-border p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Ownership / Month</p>
+              <p className="mt-2 text-lg font-semibold">
+                {formatMoney(rentVsBuy.monthlyOwnershipCost, focusListing?.currency || "GHS")}
+              </p>
+            </div>
+            <div className="rounded-xl border border-border p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Rent / Month</p>
+              <p className="mt-2 text-lg font-semibold">
+                {formatMoney(rentVsBuy.monthlyRentCost, focusListing?.currency || "GHS")}
+              </p>
+            </div>
+            <div className="rounded-xl border border-border p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Est. Equity</p>
+              <p className="mt-2 text-lg font-semibold">
+                {formatMoney(rentVsBuy.equityAfterPeriod, focusListing?.currency || "GHS")}
+              </p>
+            </div>
+          </div>
+          <p className="mt-4 text-sm text-muted-foreground">{rentVsBuy.recommendation}</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {rentVsBuy.breakEvenYears
+              ? `Modeled break-even: about ${rentVsBuy.breakEvenYears} year(s).`
+              : "Break-even depends on rent, price growth, financing, and closing cost assumptions."}
+          </p>
+        </Card>
+
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <FileSignature className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Closing Reserve</h3>
+          </div>
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Recommended Reserve</p>
+            <p className="mt-2 text-2xl font-semibold text-primary">
+              {formatMoney(closingCostEstimate.recommendedReserve, focusListing?.currency || "GHS")}
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">{closingCostEstimate.guidance}</p>
+          </div>
+          <div className="mt-4 space-y-3">
+            {closingCostEstimate.lineItems.map((item) => (
+              <div key={item.label} className="rounded-xl border border-border p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium">{item.label}</p>
+                  <p className="text-sm font-semibold">
+                    {formatMoney(item.amount, focusListing?.currency || "GHS")}
+                  </p>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{item.helper}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <Card className="p-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Remote Buyer Readiness</h3>
+          </div>
+          <Badge variant={remoteReadiness.label === "Ready" ? "default" : "outline"}>
+            {remoteReadiness.score}/100 {remoteReadiness.label}
+          </Badge>
+        </div>
+        <div className="grid gap-3 md:grid-cols-5">
+          {remoteReadiness.checks.map((check) => (
+            <div
+              key={check.label}
+              className={`rounded-xl border p-3 ${
+                check.complete ? "border-primary/30 bg-primary/5" : "border-border bg-secondary/20"
+              }`}
+            >
+              <div className="mb-2 flex items-center gap-2">
+                <CheckCircle2
+                  className={`h-4 w-4 ${check.complete ? "text-primary" : "text-muted-foreground"}`}
+                />
+                <p className="text-sm font-medium">{check.label}</p>
+              </div>
+              <p className="text-xs text-muted-foreground">{check.helper}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {inspectionChecklist.slice(0, 4).map((item) => (
+            <div key={item.label} className="rounded-xl border border-border p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-medium">{item.label}</p>
+                <Badge variant={item.priority === "urgent" ? "destructive" : "outline"}>
+                  {formatLabel(item.priority)}
+                </Badge>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">{item.helper}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <MessageSquareText className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Negotiation & Viewing Playbook</h3>
+          </div>
+          <Badge variant={negotiationPlan.confidence === "Strong" ? "default" : "outline"}>
+            {negotiationPlan.confidence} - {negotiationPlan.leverage}
+          </Badge>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-[0.95fr,1.05fr]">
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                { label: "Open", value: negotiationPlan.anchor },
+                { label: "Target", value: negotiationPlan.target },
+                { label: "Stretch", value: negotiationPlan.stretch },
+              ].map((item) => (
+                <div key={item.label} className="rounded-xl border border-border p-4">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">{item.label}</p>
+                  <p className="mt-2 text-lg font-semibold">
+                    {formatMoney(item.value, focusListing?.currency || "GHS")}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <p className="text-sm font-medium">Suggested message</p>
+              <p className="mt-2 text-sm text-muted-foreground">{negotiationPlan.message}</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {negotiationPlan.signals.map((signal) => (
+                <div key={signal.label} className="rounded-xl border border-border p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium">{signal.label}</p>
+                    <Badge variant={signal.stance === "risk" ? "destructive" : "outline"}>
+                      {formatLabel(signal.stance)}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">{signal.helper}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-xl border border-border p-4">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                <p className="font-medium">{viewingPrepPlan.mode} viewing plan</p>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">{viewingPrepPlan.headline}</p>
+            </div>
+            <div className="space-y-3">
+              {viewingPrepPlan.checklist.slice(0, 4).map((item) => (
+                <div key={item.label} className="rounded-xl border border-border p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium">{item.label}</p>
+                    <Badge variant={item.priority === "urgent" ? "destructive" : "outline"}>
+                      {formatLabel(item.priority)}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">{item.helper}</p>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-xl bg-secondary/30 p-4">
+              <p className="text-sm font-medium">Next best actions</p>
+              <div className="mt-3 space-y-2">
+                {negotiationPlan.nextSteps.slice(0, 3).map((step) => (
+                  <div key={step} className="flex gap-2 text-sm text-muted-foreground">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
+                    <span>{step}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
       <Card className="p-6">
         <div className="mb-4 flex items-center gap-2">
           <MapPinned className="h-5 w-5 text-primary" />
@@ -442,6 +757,7 @@ export function BuyerToolkitPanel({ savedProperties, dealCases }: BuyerToolkitPa
 }
 
 interface DealRoomsPanelProps {
+  user: { id: string; email?: string | null; user_metadata?: Record<string, any> } | null;
   dealCases: any[];
   propertyTransactions: any[];
   propertyViewings: any[];
@@ -450,6 +766,7 @@ interface DealRoomsPanelProps {
 }
 
 export function DealRoomsPanel({
+  user,
   dealCases,
   propertyTransactions,
   propertyViewings,
@@ -457,6 +774,9 @@ export function DealRoomsPanel({
   conversations,
 }: DealRoomsPanelProps) {
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(dealCases[0]?.id || null);
+  const [persistedMilestones, setPersistedMilestones] = useState<any[]>([]);
+  const [loadingMilestones, setLoadingMilestones] = useState(false);
+  const [updatingMilestoneId, setUpdatingMilestoneId] = useState<string | null>(null);
   const selectedCase = dealCases.find((dealCase) => dealCase.id === selectedCaseId) || null;
   const selectedDocuments = documents.filter((document) => document.deal_case_id === selectedCase?.id);
   const selectedPayments = propertyTransactions.filter(
@@ -491,6 +811,93 @@ export function DealRoomsPanel({
         : null,
     [selectedCase?.case_type, selectedCase?.message]
   );
+  const milestoneChecklist = useMemo(
+    () => [
+      {
+        label: "Inquiry opened",
+        complete: Boolean(selectedCase),
+        helper: "The deal room is active.",
+      },
+      {
+        label: "Viewing confirmed",
+        complete: selectedViewings.some((viewing) =>
+          ["confirmed", "completed"].includes(viewing.status)
+        ),
+        helper: "Lock the walkthrough or virtual tour.",
+      },
+      {
+        label: "Offer or terms captured",
+        complete: Boolean(selectedOfferSummary || selectedCase?.message),
+        helper: "Keep offer terms in the timeline.",
+      },
+      {
+        label: "Documents linked",
+        complete: selectedDocuments.length > 0,
+        helper: "Attach offer letters, ID, title, or lease drafts.",
+      },
+      {
+        label: "Payment proof",
+        complete: selectedPayments.some((payment) => payment.status === "success"),
+        helper: "Track receipts and verified payment status.",
+      },
+    ],
+    [selectedCase, selectedDocuments.length, selectedOfferSummary, selectedPayments, selectedViewings]
+  );
+
+  useEffect(() => {
+    if (selectedCaseId || dealCases.length === 0) return;
+    setSelectedCaseId(dealCases[0].id);
+  }, [dealCases, selectedCaseId]);
+
+  useEffect(() => {
+    if (!user || !selectedCase?.id) {
+      setPersistedMilestones([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadMilestones = async () => {
+      try {
+        setLoadingMilestones(true);
+        const milestones = await escrowMilestoneService.ensureDefaultMilestones({
+          dealCase: selectedCase,
+          createdBy: user.id,
+        });
+        if (!cancelled) setPersistedMilestones(milestones);
+      } catch (error) {
+        console.error("Failed to load escrow milestones:", error);
+        if (!cancelled) setPersistedMilestones([]);
+      } finally {
+        if (!cancelled) setLoadingMilestones(false);
+      }
+    };
+
+    void loadMilestones();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCase?.id, user?.id]);
+
+  const handleMilestoneStatus = async (
+    milestoneId: string,
+    status: "pending" | "in_progress" | "completed" | "blocked" | "waived"
+  ) => {
+    try {
+      setUpdatingMilestoneId(milestoneId);
+      const updated = await escrowMilestoneService.updateMilestoneStatus(milestoneId, status);
+      setPersistedMilestones((current) =>
+        current.map((milestone) => (milestone.id === milestoneId ? updated : milestone))
+      );
+      toast.success("Payment milestone updated.");
+    } catch (error) {
+      console.error("Failed to update escrow milestone:", error);
+      toast.error("We couldn't update that milestone yet.");
+    } finally {
+      setUpdatingMilestoneId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -589,6 +996,101 @@ export function DealRoomsPanel({
 
               <Card className="p-6">
                 <div className="mb-4 flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold">Deal Checklist</h3>
+                </div>
+                <div className="grid gap-3 md:grid-cols-5">
+                  {milestoneChecklist.map((milestone) => (
+                    <div
+                      key={milestone.label}
+                      className={`rounded-xl border p-3 ${
+                        milestone.complete
+                          ? "border-primary/30 bg-primary/5"
+                          : "border-border bg-secondary/20"
+                      }`}
+                    >
+                      <div className="mb-2 flex items-center gap-2">
+                        <CheckCircle2
+                          className={`h-4 w-4 ${
+                            milestone.complete ? "text-primary" : "text-muted-foreground"
+                          }`}
+                        />
+                        <p className="text-sm font-medium">{milestone.label}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{milestone.helper}</p>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              <Card className="p-6">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold">Protected Payment Path</h3>
+                  </div>
+                  {loadingMilestones && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                </div>
+                {!user ? (
+                  <p className="text-sm text-muted-foreground">
+                    Sign in to persist escrow and handoff milestones for this deal room.
+                  </p>
+                ) : persistedMilestones.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Safe-payment milestones will appear here once the deal room is ready.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {persistedMilestones.map((milestone) => (
+                      <div key={milestone.id} className="rounded-xl border border-border p-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-medium">{milestone.label}</p>
+                              <Badge variant={milestone.status === "completed" ? "default" : "outline"}>
+                                {formatLabel(milestone.status)}
+                              </Badge>
+                            </div>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {milestone.metadata?.guidance ||
+                                "Keep this step complete before payment release or handoff."}
+                            </p>
+                            {milestone.due_at && (
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                Target {new Date(milestone.due_at).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {milestone.status === "pending" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={updatingMilestoneId === milestone.id}
+                                onClick={() => void handleMilestoneStatus(milestone.id, "in_progress")}
+                              >
+                                Start
+                              </Button>
+                            )}
+                            {milestone.status !== "completed" && (
+                              <Button
+                                size="sm"
+                                disabled={updatingMilestoneId === milestone.id}
+                                onClick={() => void handleMilestoneStatus(milestone.id, "completed")}
+                              >
+                                Complete
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+
+              <Card className="p-6">
+                <div className="mb-4 flex items-center gap-2">
                   <FileSignature className="h-5 w-5 text-primary" />
                   <h3 className="font-semibold">Timeline</h3>
                 </div>
@@ -678,6 +1180,1119 @@ export function DealRoomsPanel({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+interface TrustVerificationPanelProps {
+  user: { id: string; email?: string | null } | null;
+  dealCases: any[];
+  documents: any[];
+}
+
+const TRUST_REQUEST_OPTIONS: Array<{
+  type: TrustRequestType;
+  label: string;
+  helper: string;
+}> = [
+  {
+    type: "ghana_card",
+    label: "Ghana Card / ID",
+    helper: "Confirm buyer identity before offers, signing, or remote close.",
+  },
+  {
+    type: "tax_identity",
+    label: "Tax Identity",
+    helper: "Useful for higher-value purchases and formal sale contracts.",
+  },
+  {
+    type: "property_title",
+    label: "Title / Mandate Check",
+    helper: "Ask the listing team to connect title, mandate, or ownership proof.",
+  },
+  {
+    type: "address_verification",
+    label: "Address Verification",
+    helper: "Confirm address confidence before viewing, payment, or handoff.",
+  },
+];
+
+export function TrustVerificationPanel({
+  user,
+  dealCases,
+  documents,
+}: TrustVerificationPanelProps) {
+  const eligibleDealCases = useMemo(
+    () => dealCases.filter((dealCase) => dealCase.organization_id),
+    [dealCases]
+  );
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [selectedDealId, setSelectedDealId] = useState(eligibleDealCases[0]?.id || "");
+  const [requestType, setRequestType] = useState<TrustRequestType>("ghana_card");
+  const [summary, setSummary] = useState(
+    "I want to complete buyer verification so the listing team can move faster on offers, documents, and payment review."
+  );
+  const selectedDeal = useMemo(
+    () => eligibleDealCases.find((dealCase) => dealCase.id === selectedDealId) || null,
+    [eligibleDealCases, selectedDealId]
+  );
+  const relatedDocuments = useMemo(
+    () =>
+      documents.filter(
+        (document) =>
+          document.deal_case_id === selectedDeal?.id ||
+          document.listing_id === selectedDeal?.listing_id
+      ),
+    [documents, selectedDeal]
+  );
+  const verifiedCount = requests.filter((request) => request.status === "verified").length;
+  const pendingCount = requests.filter((request) =>
+    ["submitted", "in_review", "needs_changes"].includes(request.status)
+  ).length;
+
+  useEffect(() => {
+    if (!user) {
+      setLoadingRequests(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadRequests = async () => {
+      try {
+        setLoadingRequests(true);
+        const rows = await trustVerificationService.getUserTrustRequests(user.id);
+        if (!cancelled) setRequests(rows);
+      } catch (error) {
+        console.error("Failed to load trust requests:", error);
+        if (!cancelled) setRequests([]);
+      } finally {
+        if (!cancelled) setLoadingRequests(false);
+      }
+    };
+
+    void loadRequests();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (selectedDealId || eligibleDealCases.length === 0) return;
+    setSelectedDealId(eligibleDealCases[0].id);
+  }, [eligibleDealCases, selectedDealId]);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!user) {
+      toast.error("Sign in before submitting verification.");
+      return;
+    }
+
+    if (!selectedDeal) {
+      toast.error("Start a deal or inquiry before requesting verification.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const request = await trustVerificationService.submitTrustRequest({
+        organizationId: selectedDeal.organization_id,
+        listingId: selectedDeal.listing_id,
+        documentId: relatedDocuments[0]?.id || null,
+        requestType,
+        submittedBy: user.id,
+        publicSummary: summary.trim(),
+        internalNotes: `Buyer-side verification request from ${user.email || user.id}`,
+        evidence: {
+          source: "user_dashboard",
+          dealCaseId: selectedDeal.id,
+          email: user.email || null,
+          listingAddress: selectedDeal.listing?.property?.address || null,
+          relatedDocumentIds: relatedDocuments.map((document) => document.id),
+        },
+      });
+
+      setRequests((current) => [request, ...current]);
+      toast.success("Verification request submitted.");
+    } catch (error) {
+      console.error("Failed to submit verification request:", error);
+      toast.error("We couldn't submit that verification request yet.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold">Trust & Verification</h2>
+        <p className="mt-1 text-muted-foreground">
+          Prepare buyer identity checks, title questions, and address verification before money or signatures move.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="p-5">
+          <p className="text-sm text-muted-foreground">Verified</p>
+          <p className="mt-2 text-2xl font-semibold">{verifiedCount}</p>
+        </Card>
+        <Card className="p-5">
+          <p className="text-sm text-muted-foreground">In Progress</p>
+          <p className="mt-2 text-2xl font-semibold">{pendingCount}</p>
+        </Card>
+        <Card className="p-5">
+          <p className="text-sm text-muted-foreground">Deal Rooms</p>
+          <p className="mt-2 text-2xl font-semibold">{eligibleDealCases.length}</p>
+        </Card>
+        <Card className="p-5">
+          <p className="text-sm text-muted-foreground">Linked Docs</p>
+          <p className="mt-2 text-2xl font-semibold">{documents.length}</p>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1.05fr,0.95fr]">
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <UserCheck className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Submit Verification Request</h3>
+          </div>
+
+          {eligibleDealCases.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Start an inquiry, application, or offer first. Verification requests need a listing team so the right workspace can review them.
+            </p>
+          ) : (
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              <div>
+                <label className="mb-2 block text-sm text-foreground" htmlFor="trust-deal-case">
+                  Deal / Listing
+                </label>
+                <select
+                  id="trust-deal-case"
+                  className="w-full rounded-lg border border-border bg-input-background px-4 py-3"
+                  value={selectedDealId}
+                  onChange={(event) => setSelectedDealId(event.target.value)}
+                >
+                  {eligibleDealCases.map((dealCase) => (
+                    <option key={dealCase.id} value={dealCase.id}>
+                      {dealCase.listing?.property?.address || formatCaseType(dealCase.case_type)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm text-foreground" htmlFor="trust-request-type">
+                  Verification Type
+                </label>
+                <select
+                  id="trust-request-type"
+                  className="w-full rounded-lg border border-border bg-input-background px-4 py-3"
+                  value={requestType}
+                  onChange={(event) => setRequestType(event.target.value as TrustRequestType)}
+                >
+                  {TRUST_REQUEST_OPTIONS.map((option) => (
+                    <option key={option.type} value={option.type}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {TRUST_REQUEST_OPTIONS.find((option) => option.type === requestType)?.helper}
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm text-foreground" htmlFor="trust-request-summary">
+                  Request Notes
+                </label>
+                <textarea
+                  id="trust-request-summary"
+                  className="min-h-[120px] w-full rounded-lg border border-border bg-input-background px-4 py-3"
+                  value={summary}
+                  onChange={(event) => setSummary(event.target.value)}
+                />
+              </div>
+
+              <Button type="submit" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Submitting
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="h-4 w-4" />
+                    Submit Verification
+                  </>
+                )}
+              </Button>
+            </form>
+          )}
+        </Card>
+
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Verification Readiness</h3>
+          </div>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            {[
+              "Upload scanned ID or proof documents from the mobile field kit.",
+              "Keep all title, mandate, or address questions in the selected deal room.",
+              "Use verified receipts and public trust documents before large transfers.",
+              "For diaspora buyers, ask for a virtual walkthrough and attorney review trail.",
+            ].map((item) => (
+              <div key={item} className="flex gap-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <Card className="p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <FileSignature className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold">Request History</h3>
+        </div>
+        {loadingRequests ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading verification requests...
+          </div>
+        ) : requests.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No verification requests yet. Submit one when a deal needs identity, title, or address review.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {requests.map((request) => (
+              <div key={request.id} className="rounded-xl border border-border p-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <p className="font-semibold">{formatLabel(request.request_type)}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {request.listing?.property?.address ||
+                        request.organization?.name ||
+                        "Verification request"}
+                    </p>
+                  </div>
+                  <Badge variant={request.status === "verified" ? "default" : "outline"}>
+                    {formatLabel(request.status)}
+                  </Badge>
+                </div>
+                {request.public_summary ? (
+                  <p className="mt-3 text-sm text-muted-foreground">{request.public_summary}</p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+interface UserInsightsPanelProps {
+  savedProperties: any[];
+  dealCases: any[];
+  propertyTransactions: any[];
+  propertyViewings: any[];
+  savedAlerts: any[];
+  conversations: any[];
+}
+
+export function UserInsightsPanel({
+  savedProperties,
+  dealCases,
+  propertyTransactions,
+  propertyViewings,
+  savedAlerts,
+  conversations,
+}: UserInsightsPanelProps) {
+  const activeDeals = dealCases.filter(
+    (dealCase) => !["closed", "rejected"].includes(dealCase.status)
+  );
+  const successfulPayments = propertyTransactions.filter(
+    (transaction) => transaction.status === "success"
+  );
+  const unreadMessages = conversations.reduce(
+    (count, conversation) =>
+      count +
+      (conversation.messages?.filter((message: any) => !message.read).length || 0),
+    0
+  );
+  const completedViewings = propertyViewings.filter(
+    (viewing) => viewing.status === "completed"
+  ).length;
+  const activeAlerts = savedAlerts.filter((alert) => alert.is_active).length;
+  const totalPaidMinor = successfulPayments.reduce(
+    (sum, transaction) => sum + Number(transaction.amount_minor || 0),
+    0
+  );
+  const nextBestActions = [
+    activeDeals.length === 0
+      ? "Start or revive a deal room from saved properties."
+      : "Review active deal rooms and push the next follow-up forward.",
+    propertyViewings.length === 0
+      ? "Book at least one viewing before negotiating."
+      : `${completedViewings}/${propertyViewings.length} viewings completed.`,
+    activeAlerts === 0
+      ? "Turn one saved search into an active alert."
+      : `${activeAlerts} alerts are watching the market for you.`,
+    unreadMessages > 0
+      ? `Reply to ${unreadMessages} unread message${unreadMessages === 1 ? "" : "s"}.`
+      : "Message inbox is currently caught up.",
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold">Buyer Insights</h2>
+        <p className="mt-1 text-muted-foreground">
+          A lightweight command center for saved demand, deal movement, payments, and follow-up health.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="p-5">
+          <div className="mb-3 flex items-center gap-2 text-primary">
+            <Building2 className="h-5 w-5" />
+            <span className="text-sm font-medium">Shortlist</span>
+          </div>
+          <p className="text-3xl font-semibold">{savedProperties.length}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Saved properties</p>
+        </Card>
+        <Card className="p-5">
+          <div className="mb-3 flex items-center gap-2 text-primary">
+            <BarChart3 className="h-5 w-5" />
+            <span className="text-sm font-medium">Pipeline</span>
+          </div>
+          <p className="text-3xl font-semibold">{activeDeals.length}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Active deal rooms</p>
+        </Card>
+        <Card className="p-5">
+          <div className="mb-3 flex items-center gap-2 text-primary">
+            <CreditCard className="h-5 w-5" />
+            <span className="text-sm font-medium">Payments</span>
+          </div>
+          <p className="text-3xl font-semibold">
+            {formatMoney(totalPaidMinor, "GHS", { isMinor: true })}
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">Verified paid volume</p>
+        </Card>
+        <Card className="p-5">
+          <div className="mb-3 flex items-center gap-2 text-primary">
+            <Bell className="h-5 w-5" />
+            <span className="text-sm font-medium">Alerts</span>
+          </div>
+          <p className="text-3xl font-semibold">{activeAlerts}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Active search watchers</p>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Next Best Actions</h3>
+          </div>
+          <div className="space-y-3">
+            {nextBestActions.map((action) => (
+              <div key={action} className="flex gap-2 rounded-xl border border-border p-3 text-sm">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 text-primary" />
+                <span>{action}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Momentum Score</h3>
+          </div>
+          <p className="text-4xl font-semibold">
+            {Math.min(
+              100,
+              savedProperties.length * 8 +
+                activeDeals.length * 18 +
+                propertyViewings.length * 12 +
+                successfulPayments.length * 20 +
+                activeAlerts * 6
+            )}
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Based on saved properties, active deals, viewings, successful payments, and market alerts.
+          </p>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+interface ConciergePanelProps {
+  user: { id: string; email?: string | null; user_metadata?: Record<string, any> } | null;
+  savedProperties: any[];
+  dealCases: any[];
+  propertyViewings: any[];
+  documents: any[];
+}
+
+export function ConciergePanel({
+  user,
+  savedProperties,
+  dealCases,
+  propertyViewings,
+  documents,
+}: ConciergePanelProps) {
+  const focusListing = savedProperties[0]?.listing || dealCases[0]?.listing || null;
+  const focusDeal = dealCases[0] || null;
+  const prompts = useMemo(() => buildAiConciergePrompts(focusListing), [focusListing]);
+  const escrowMilestones = useMemo(
+    () =>
+      buildEscrowMilestones({
+        listingType: focusListing?.listing_type,
+        hasViewing: propertyViewings.length > 0,
+        hasOffer: dealCases.some((dealCase) => dealCase.case_type === "purchase_offer"),
+        hasDocuments: documents.length > 0,
+        hasPayment: false,
+        hasVerification: documents.some((document) =>
+          ["verified", "signed", "published"].includes(document.status)
+        ),
+      }),
+    [dealCases, documents, focusListing?.listing_type, propertyViewings.length]
+  );
+  const [selectedPrompt, setSelectedPrompt] = useState(prompts[0] || "");
+  const [promptDraft, setPromptDraft] = useState("");
+  const [history, setHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [asking, setAsking] = useState(false);
+
+  useEffect(() => {
+    setSelectedPrompt((current) => current || prompts[0] || "");
+  }, [prompts]);
+
+  useEffect(() => {
+    setPromptDraft((current) => current || selectedPrompt || "");
+  }, [selectedPrompt]);
+
+  useEffect(() => {
+    if (!user) {
+      setHistory([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadHistory = async () => {
+      try {
+        setLoadingHistory(true);
+        const rows = await aiConciergeService.getHistory(user.id, 6);
+        if (!cancelled) setHistory(rows);
+      } catch (error) {
+        console.error("Failed to load concierge history:", error);
+        if (!cancelled) setHistory([]);
+      } finally {
+        if (!cancelled) setLoadingHistory(false);
+      }
+    };
+
+    void loadHistory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const handlePromptSelect = (prompt: string) => {
+    setSelectedPrompt(prompt);
+    setPromptDraft(
+      `${prompt} Please use my saved properties, deal room activity, and verification status to recommend the next safest action.`
+    );
+  };
+
+  const handleAskConcierge = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!user) {
+      toast.error("Sign in to use the AI concierge.");
+      return;
+    }
+
+    if (!promptDraft.trim()) {
+      toast.error("Add a question before asking the concierge.");
+      return;
+    }
+
+    try {
+      setAsking(true);
+      const result = await aiConciergeService.ask({
+        userId: user.id,
+        listingId: focusListing?.id || null,
+        dealCaseId: focusDeal?.id || null,
+        prompt: promptDraft.trim(),
+        context: {
+          source: "user_dashboard",
+          savedCount: savedProperties.length,
+          dealCount: dealCases.length,
+          documentCount: documents.length,
+        },
+      });
+      const conversation =
+        result.conversation || {
+          id: `local-${Date.now()}`,
+          prompt: promptDraft.trim(),
+          response: result.response,
+          created_at: new Date().toISOString(),
+        };
+      setHistory((current) => [conversation, ...current].slice(0, 8));
+      toast.success("Concierge answer saved.");
+    } catch (error) {
+      console.error("Failed to ask concierge:", error);
+      toast.error("The concierge could not answer yet. Please try again in a moment.");
+    } finally {
+      setAsking(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold">AI Property Concierge</h2>
+        <p className="mt-1 text-muted-foreground">
+          Guided buyer questions, safe-payment milestones, and handoff prompts for your current shortlist.
+        </p>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr,0.9fr]">
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Suggested Questions</h3>
+          </div>
+          <div className="space-y-3">
+            {prompts.map((prompt) => (
+              <button
+                key={prompt}
+                type="button"
+                className={`w-full rounded-xl border p-4 text-left text-sm transition-colors ${
+                  selectedPrompt === prompt
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/40"
+                }`}
+                onClick={() => handlePromptSelect(prompt)}
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+
+          <form className="mt-5 space-y-3" onSubmit={handleAskConcierge}>
+            <div>
+              <label className="mb-2 block text-sm text-foreground">Concierge Question</label>
+              <textarea
+                className="min-h-[140px] w-full rounded-lg border border-border bg-input-background px-4 py-3 text-foreground"
+                placeholder="Ask about risk, documents, payment timing, viewing prep, or offer strategy."
+                value={promptDraft}
+                onChange={(event) => setPromptDraft(event.target.value)}
+              />
+            </div>
+            <Button type="submit" disabled={asking || !user}>
+              {asking ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Asking Concierge
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  Ask & Save Answer
+                </>
+              )}
+            </Button>
+          </form>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link to="/app/messages">
+              <Button variant="outline">
+                <MessageSquareText className="h-4 w-4" />
+                Open Messages
+              </Button>
+            </Link>
+            <Link to="/search">
+              <Button variant="outline">
+                <ExternalLink className="h-4 w-4" />
+                Add Property Context
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Safe Payment Milestones</h3>
+          </div>
+          <div className="space-y-3">
+            {escrowMilestones.map((milestone) => (
+              <div key={milestone.label} className="rounded-xl border border-border p-4">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2
+                    className={`h-4 w-4 ${
+                      milestone.complete ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  />
+                  <p className="font-medium">{milestone.label}</p>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">{milestone.helper}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <Card className="p-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <MessageSquareText className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Saved Concierge Answers</h3>
+          </div>
+          {loadingHistory && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+        </div>
+        {!user ? (
+          <p className="text-sm text-muted-foreground">
+            Sign in to keep concierge answers attached to your buyer account.
+          </p>
+        ) : history.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Ask your first question and the saved answer will appear here for later review.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {history.map((item) => (
+              <div key={item.id} className="rounded-xl border border-border p-4">
+                <p className="text-sm font-medium">{item.prompt}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{item.response}</p>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {formatRelativeTime(item.created_at)}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+interface BuyingGroupPanelProps {
+  user: { id: string; email?: string | null; user_metadata?: Record<string, any> } | null;
+  savedProperties: any[];
+  dealCases: any[];
+  conversations: any[];
+}
+
+export function BuyingGroupPanel({
+  user,
+  savedProperties,
+  dealCases,
+  conversations,
+}: BuyingGroupPanelProps) {
+  const plan = useMemo(
+    () => buildBuyingGroupPlan({ savedProperties, dealCases, conversations }),
+    [conversations, dealCases, savedProperties]
+  );
+  const focusListing = savedProperties[0]?.listing || dealCases[0]?.listing || null;
+  const focusDeal = dealCases[0] || null;
+  const shareTarget =
+    savedProperties[0]?.listing?.id ? `/property/${savedProperties[0].listing.id}` : "/search";
+  const [groups, setGroups] = useState<any[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [loadingGroups, setLoadingGroups] = useState(false);
+  const [creatingGroup, setCreatingGroup] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const [commenting, setCommenting] = useState(false);
+  const [commentBody, setCommentBody] = useState("");
+  const [inviteForm, setInviteForm] = useState({
+    email: "",
+    role: "family_reviewer" as "buyer" | "family_reviewer" | "legal_reviewer" | "local_representative" | "advisor",
+    note: "",
+  });
+  const selectedGroup = groups.find((group) => group.id === selectedGroupId) || groups[0] || null;
+  const displayName = user?.user_metadata?.full_name || user?.email || "Buyer";
+
+  const loadGroups = async () => {
+    if (!user) {
+      setGroups([]);
+      return;
+    }
+
+    try {
+      setLoadingGroups(true);
+      const rows = await buyerGroupService.getVisibleGroups();
+      setGroups(rows);
+      setSelectedGroupId((current) => current || rows[0]?.id || "");
+    } catch (error) {
+      console.error("Failed to load buyer groups:", error);
+      setGroups([]);
+    } finally {
+      setLoadingGroups(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadGroups();
+  }, [user?.id]);
+
+  const handleCreateGroup = async () => {
+    if (!user) {
+      toast.error("Sign in to create a buying group.");
+      return;
+    }
+
+    const title =
+      focusListing?.property?.address
+        ? `${focusListing.property.address} buying group`
+        : "My Ghana property buying group";
+
+    try {
+      setCreatingGroup(true);
+      const created = await buyerGroupService.createGroup({
+        ownerUserId: user.id,
+        ownerEmail: user.email || null,
+        listingId: focusListing?.id || null,
+        dealCaseId: focusDeal?.id || null,
+        title,
+      });
+      await buyerGroupService.addComment({
+        groupId: created.id,
+        authorUserId: user.id,
+        authorName: displayName,
+        listingId: focusListing?.id || null,
+        dealCaseId: focusDeal?.id || null,
+        body: "Created this buying group so family, legal, and local review can happen in one place.",
+      });
+      const rows = await buyerGroupService.getVisibleGroups();
+      setGroups(rows);
+      setSelectedGroupId(created.id);
+      toast.success("Buying group created.");
+    } catch (error) {
+      console.error("Failed to create buying group:", error);
+      toast.error("We couldn't create that buying group yet.");
+    } finally {
+      setCreatingGroup(false);
+    }
+  };
+
+  const handleInvite = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!user || !selectedGroup) {
+      toast.error("Create or select a buying group first.");
+      return;
+    }
+
+    if (!inviteForm.email.trim()) {
+      toast.error("Add an email address to invite.");
+      return;
+    }
+
+    try {
+      setInviting(true);
+      await buyerGroupService.inviteMember({
+        groupId: selectedGroup.id,
+        email: inviteForm.email,
+        role: inviteForm.role,
+        invitedByUserId: user.id,
+        note: inviteForm.note.trim() || null,
+      });
+      setInviteForm((current) => ({ ...current, email: "", note: "" }));
+      await loadGroups();
+      toast.success("Reviewer invited to the buying group.");
+    } catch (error) {
+      console.error("Failed to invite buyer group member:", error);
+      toast.error("We couldn't invite that reviewer yet.");
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleAddComment = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!user || !selectedGroup) {
+      toast.error("Create or select a buying group first.");
+      return;
+    }
+
+    if (!commentBody.trim()) {
+      toast.error("Add a note before posting.");
+      return;
+    }
+
+    try {
+      setCommenting(true);
+      await buyerGroupService.addComment({
+        groupId: selectedGroup.id,
+        authorUserId: user.id,
+        authorName: displayName,
+        listingId: selectedGroup.listing_id || focusListing?.id || null,
+        dealCaseId: selectedGroup.deal_case_id || focusDeal?.id || null,
+        body: commentBody.trim(),
+      });
+      setCommentBody("");
+      await loadGroups();
+      toast.success("Group note added.");
+    } catch (error) {
+      console.error("Failed to add buyer group comment:", error);
+      toast.error("We couldn't add that note yet.");
+    } finally {
+      setCommenting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold">Shared Buying Group</h2>
+        <p className="mt-1 text-muted-foreground">
+          Bring family, a lawyer, or a local representative into the decision flow without scattering context.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {plan.actions.map((action) => (
+          <Card key={action} className="p-5">
+            <p className="text-sm text-muted-foreground">{action}</p>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr,0.9fr]">
+        <Card className="p-6">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold">Live Group Room</h3>
+            </div>
+            {loadingGroups && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          </div>
+
+          {!user ? (
+            <p className="text-sm text-muted-foreground">
+              Sign in to create a private group for family, legal, and local review.
+            </p>
+          ) : !selectedGroup ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Start a room for your current shortlist, then invite reviewers by email.
+              </p>
+              <Button onClick={() => void handleCreateGroup()} disabled={creatingGroup}>
+                {creatingGroup ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Creating Group
+                  </>
+                ) : (
+                  <>
+                    <Users className="h-4 w-4" />
+                    Create Buying Group
+                  </>
+                )}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {groups.length > 1 && (
+                <div className="flex flex-wrap gap-2">
+                  {groups.map((group) => (
+                    <Button
+                      key={group.id}
+                      size="sm"
+                      variant={group.id === selectedGroup.id ? "default" : "outline"}
+                      onClick={() => setSelectedGroupId(group.id)}
+                    >
+                      {group.title}
+                    </Button>
+                  ))}
+                </div>
+              )}
+
+              <div className="rounded-xl border border-border p-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <p className="font-semibold">{selectedGroup.title}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Share code {selectedGroup.share_code}
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => void handleCreateGroup()}>
+                    New Group
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                {(selectedGroup.members || []).map((member: any) => (
+                  <div key={member.id} className="rounded-xl border border-border p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-medium">{member.email}</p>
+                      <Badge variant={member.status === "accepted" ? "default" : "outline"}>
+                        {formatLabel(member.status)}
+                      </Badge>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">{formatLabel(member.role)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </Card>
+
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <Copy className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Share Context</h3>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Start with a shortlist link, then move legal, viewing, and payment questions into a single deal room.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link to={shareTarget}>
+              <Button>
+                <ExternalLink className="h-4 w-4" />
+                Open Share Target
+              </Button>
+            </Link>
+            <Link to="/app/deals">
+              <Button variant="outline">
+                <ShieldCheck className="h-4 w-4" />
+                Open Deal Rooms
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[0.9fr,1.1fr]">
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <UserCheck className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Invite Reviewer</h3>
+          </div>
+          <form className="space-y-4" onSubmit={handleInvite}>
+            <Input
+              label="Reviewer Email"
+              type="email"
+              placeholder="lawyer@example.com"
+              value={inviteForm.email}
+              onChange={(event) => setInviteForm((current) => ({ ...current, email: event.target.value }))}
+            />
+            <div>
+              <label className="mb-2 block text-sm text-foreground">Role</label>
+              <select
+                className="w-full rounded-lg border border-border bg-input-background px-4 py-3 text-foreground"
+                value={inviteForm.role}
+                onChange={(event) =>
+                  setInviteForm((current) => ({
+                    ...current,
+                    role: event.target.value as typeof current.role,
+                  }))
+                }
+              >
+                <option value="family_reviewer">Family reviewer</option>
+                <option value="legal_reviewer">Legal reviewer</option>
+                <option value="local_representative">Local representative</option>
+                <option value="advisor">Advisor</option>
+              </select>
+            </div>
+            <Input
+              label="Invite Note"
+              placeholder="Please review the documents before I send a deposit."
+              value={inviteForm.note}
+              onChange={(event) => setInviteForm((current) => ({ ...current, note: event.target.value }))}
+            />
+            <Button type="submit" disabled={inviting || !selectedGroup}>
+              {inviting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Inviting
+                </>
+              ) : (
+                "Send Invite"
+              )}
+            </Button>
+          </form>
+        </Card>
+
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <MessageSquareText className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Decision Trail</h3>
+          </div>
+          {selectedGroup?.comments?.length ? (
+            <div className="mb-4 space-y-3">
+              {[...selectedGroup.comments]
+                .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .slice(0, 6)
+                .map((comment: any) => (
+                  <div key={comment.id} className="rounded-xl border border-border p-4">
+                    <p className="text-sm font-medium">{comment.author_name || "Group member"}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">{comment.body}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {formatRelativeTime(comment.created_at)}
+                    </p>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <p className="mb-4 text-sm text-muted-foreground">
+              Group notes, legal questions, and local inspection updates will appear here.
+            </p>
+          )}
+          <form className="space-y-3" onSubmit={handleAddComment}>
+            <textarea
+              className="min-h-[110px] w-full rounded-lg border border-border bg-input-background px-4 py-3 text-foreground"
+              placeholder="Add a note, question, or decision for everyone reviewing this property."
+              value={commentBody}
+              onChange={(event) => setCommentBody(event.target.value)}
+            />
+            <Button type="submit" disabled={commenting || !selectedGroup}>
+              {commenting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Posting
+                </>
+              ) : (
+                "Add Group Note"
+              )}
+            </Button>
+          </form>
+        </Card>
+      </div>
+
+      <Card className="p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <Users className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold">Recommended Group Roles</h3>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {plan.roles.map((role) => (
+            <div key={role.label} className="rounded-xl border border-border p-4">
+              <p className="font-medium">{role.label}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{role.helper}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 }
@@ -941,7 +2556,7 @@ export function SupportPanel({ organizationContacts, dealCases }: SupportPanelPr
 
   const assignmentSummary = useMemo(() => buildMaintenanceSummary(assignments), [assignments]);
 
-  const handleSubmitRequest = async (event: React.FormEvent) => {
+  const handleSubmitRequest = async (event: FormEvent) => {
     event.preventDefault();
 
     if (!selectedReference) {

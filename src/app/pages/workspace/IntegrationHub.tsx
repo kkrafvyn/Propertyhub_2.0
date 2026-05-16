@@ -50,6 +50,7 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
   const [leadMetrics, setLeadMetrics] = useState<LeadMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
   const [showAddIntegration, setShowAddIntegration] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<'mls' | 'zillow' | 'realtor' | null>(null);
 
@@ -108,11 +109,10 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
       
       // Reload data
       await loadIntegrations();
-      
-      // Show success message (toast)
-      console.log(`${provider} sync completed`);
+      setSyncNotice(`${provider.toUpperCase()} sync completed successfully.`);
     } catch (error) {
       console.error(`Sync failed for ${provider}:`, error);
+      setSyncNotice(`Sync failed for ${provider}. Please check the provider credentials and try again.`);
     } finally {
       setSyncing(null);
     }
@@ -135,8 +135,10 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
       setShowAddIntegration(false);
       setSelectedProvider(null);
       await loadIntegrations();
+      setSyncNotice(`${selectedProvider.toUpperCase()} integration connected.`);
     } catch (error) {
       console.error('Failed to add integration:', error);
+      setSyncNotice('Could not connect this integration. Please verify the API credentials.');
     }
   };
 
@@ -146,8 +148,10 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
     try {
       await mlsIntegrationService.deleteMLSCredentials(organizationId, provider);
       await loadIntegrations();
+      setSyncNotice(`${provider.toUpperCase()} integration removed.`);
     } catch (error) {
       console.error('Failed to delete integration:', error);
+      setSyncNotice(`Could not remove the ${provider} integration. Please try again.`);
     }
   };
 
@@ -177,6 +181,12 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
           Add Integration
         </Button>
       </div>
+
+      {syncNotice && (
+        <Card className="border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+          {syncNotice}
+        </Card>
+      )}
 
       {/* Metrics Cards */}
       {leadMetrics && (
@@ -242,7 +252,7 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
             setShowAddIntegration(true);
           }}
           isSyncing={syncing === 'mls'}
-          logo="🏠"
+          logoText="MLS"
         />
 
         {/* Zillow */}
@@ -262,7 +272,7 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
             setShowAddIntegration(true);
           }}
           isSyncing={syncing === 'zillow'}
-          logo="🔍"
+          logoText="Z"
         />
 
         {/* Realtor.com */}
@@ -282,7 +292,7 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
             setShowAddIntegration(true);
           }}
           isSyncing={syncing === 'realtor'}
-          logo="🌐"
+          logoText="R"
         />
       </div>
 
@@ -359,7 +369,7 @@ function IntegrationCard({
   onRemove,
   onAdd,
   isSyncing,
-  logo,
+  logoText,
 }: {
   provider: 'mls' | 'zillow' | 'realtor';
   name: string;
@@ -370,12 +380,14 @@ function IntegrationCard({
   onRemove: () => void;
   onAdd: () => void;
   isSyncing: boolean;
-  logo: string;
+  logoText: string;
 }) {
   return (
     <Card className="p-6">
       <div className="flex items-start justify-between mb-4">
-        <div className="text-4xl">{logo}</div>
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white shadow-sm">
+          {logoText}
+        </div>
         {isActive && (
           <Badge className="bg-green-100 text-green-800">Connected</Badge>
         )}

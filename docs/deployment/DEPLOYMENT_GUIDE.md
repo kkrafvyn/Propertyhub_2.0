@@ -168,7 +168,7 @@ const menuItems = [
   {
     icon: AlertCircle,
     label: 'Fraud Alerts',
-    href: 'fraud-alerts', // TODO: Create this page
+    href: 'fraud-alerts',
     description: 'Monitor scams & duplicates'
   }
 ]

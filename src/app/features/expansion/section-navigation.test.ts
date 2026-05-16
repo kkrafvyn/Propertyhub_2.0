@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getUserDashboardSection,
+  getMinimalUserDashboardRoutes,
   getWorkspaceGrowthSection,
   USER_DASHBOARD_ROUTE_CONFIG,
   WORKSPACE_GROWTH_ROUTE_CONFIG,
@@ -12,6 +13,10 @@ describe("section navigation", () => {
     expect(getUserDashboardSection("/app/compare")).toBe("compare");
     expect(getUserDashboardSection("/app/buying-tools")).toBe("buying-tools");
     expect(getUserDashboardSection("/app/deals")).toBe("deals");
+    expect(getUserDashboardSection("/app/verification")).toBe("verification");
+    expect(getUserDashboardSection("/app/insights")).toBe("insights");
+    expect(getUserDashboardSection("/app/concierge")).toBe("concierge");
+    expect(getUserDashboardSection("/app/groups")).toBe("groups");
     expect(getUserDashboardSection("/app/referrals")).toBe("referrals");
     expect(getUserDashboardSection("/app/support")).toBe("support");
   });
@@ -27,6 +32,22 @@ describe("section navigation", () => {
         }),
         expect.objectContaining({ section: "deals", href: "/app/deals", label: "Deal Rooms" }),
         expect.objectContaining({
+          section: "verification",
+          href: "/app/verification",
+          label: "Verification",
+        }),
+        expect.objectContaining({ section: "insights", href: "/app/insights", label: "Insights" }),
+        expect.objectContaining({
+          section: "concierge",
+          href: "/app/concierge",
+          label: "Concierge",
+        }),
+        expect.objectContaining({
+          section: "groups",
+          href: "/app/groups",
+          label: "Buying Group",
+        }),
+        expect.objectContaining({
           section: "referrals",
           href: "/app/referrals",
           label: "Referrals",
@@ -36,10 +57,24 @@ describe("section navigation", () => {
     );
   });
 
+  it("keeps the primary user dashboard compact for the minimal UI", () => {
+    expect(getMinimalUserDashboardRoutes().map((route) => route.section)).toEqual([
+      "overview",
+      "saved",
+      "messages",
+      "viewings",
+      "deals",
+      "payments",
+      "settings",
+    ]);
+  });
+
   it("maps new workspace growth pages to the correct suite sections", () => {
     expect(getWorkspaceGrowthSection("offers")).toBe("offers");
     expect(getWorkspaceGrowthSection("deal-rooms")).toBe("deal-rooms");
     expect(getWorkspaceGrowthSection("performance")).toBe("performance");
+    expect(getWorkspaceGrowthSection("seller-portal")).toBe("seller-portal");
+    expect(getWorkspaceGrowthSection("crm")).toBe("crm");
     expect(getWorkspaceGrowthSection("referrals")).toBe("referrals");
     expect(getWorkspaceGrowthSection("aftercare")).toBe("aftercare");
     expect(getWorkspaceGrowthSection("finance")).toBeNull();
@@ -50,6 +85,8 @@ describe("section navigation", () => {
       { slug: "offers", label: "Offers" },
       { slug: "deal-rooms", label: "Deal Rooms" },
       { slug: "performance", label: "Performance" },
+      { slug: "seller-portal", label: "Seller Portal" },
+      { slug: "crm", label: "Agent CRM" },
       { slug: "referrals", label: "Referrals" },
       { slug: "aftercare", label: "Aftercare" },
     ]);

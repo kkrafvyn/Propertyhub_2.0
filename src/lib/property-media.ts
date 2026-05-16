@@ -4,6 +4,15 @@ const FALLBACK_PROPERTY_IMAGE =
 type PropertyMediaLike = {
   public_url?: string | null;
   alt_text?: string | null;
+  media_type?: string | null;
+  room_label?: string | null;
+  caption?: string | null;
+  width?: number | null;
+  height?: number | null;
+  duration_seconds?: number | null;
+  external_embed_url?: string | null;
+  processing_status?: string | null;
+  metadata?: Record<string, unknown> | null;
   sort_order?: number | null;
   is_primary?: boolean | null;
 };

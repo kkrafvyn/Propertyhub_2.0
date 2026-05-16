@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import {
   ArrowRightLeft,
+  Brain,
+  CheckCircle,
   Copy,
   FileSignature,
   HandCoins,
@@ -20,12 +22,15 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { dealCaseService } from "../../../lib/dealcase.service";
+import { leadAggregationService } from "../../../lib/lead-aggregation.service";
+import { listingService } from "../../../lib/listing.service";
 import type { Database } from "../../../lib/database.types";
 import { documentCenterService } from "../../../lib/document-center.service";
 import { buildMaintenanceSummary, maintenanceOpsService } from "../../../lib/maintenance-ops.service";
 import { messageService } from "../../../lib/message.service";
 import { organizationService } from "../../../lib/organization.service";
 import { paymentService } from "../../../lib/payment.service";
+import { crmTaskService } from "../../../lib/production-depth.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
 import {
   buildReferralPerformanceSnapshot,
@@ -34,9 +39,13 @@ import {
 } from "../../../lib/referral-attribution.service";
 import {
   buildAgentPerformanceSnapshot,
+  buildAgentCrmActions,
   buildDealTimeline,
+  buildListingLaunchPlan,
   buildOfferSuggestion,
   buildReferralLink,
+  buildSellerNetSheet,
+  buildSellerPortalHealth,
   formatCaseType,
   formatLabel,
   formatMoney,
@@ -49,6 +58,8 @@ type WorkspaceExpansionSection =
   | "offers"
   | "deal-rooms"
   | "performance"
+  | "seller-portal"
+  | "crm"
   | "referrals"
   | "aftercare";
 
@@ -107,6 +118,9 @@ export function WorkspaceExpansionSuite({
 }: WorkspaceExpansionSuiteProps) {
   const [loading, setLoading] = useState(true);
   const [cases, setCases] = useState<any[]>([]);
+  const [listings, setListings] = useState<any[]>([]);
+  const [aggregatedLeads, setAggregatedLeads] = useState<any[]>([]);
+  const [crmTasks, setCrmTasks] = useState<any[]>([]);
   const [viewings, setViewings] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
@@ -119,6 +133,8 @@ export function WorkspaceExpansionSuite({
   const [loadingMaintenanceVendors, setLoadingMaintenanceVendors] = useState(false);
   const [dispatchSubmitting, setDispatchSubmitting] = useState(false);
   const [dispatchStatusId, setDispatchStatusId] = useState<string | null>(null);
+  const [generatingCrmTasks, setGeneratingCrmTasks] = useState(false);
+  const [updatingCrmTaskId, setUpdatingCrmTaskId] = useState<string | null>(null);
   const [dispatchForm, setDispatchForm] = useState({
     propertyId: "",
     serviceType: "cleaning",
@@ -132,9 +148,23 @@ export function WorkspaceExpansionSuite({
     try {
       setLoading(true);
 
-      const [organizationCases, organizationViewings, organizationPayments, organizationDocuments, inbox, members, assignments] =
+      const [
+        organizationCases,
+        organizationListings,
+        organizationLeads,
+        organizationCrmTasks,
+        organizationViewings,
+        organizationPayments,
+        organizationDocuments,
+        inbox,
+        members,
+        assignments,
+      ] =
         await Promise.all([
           dealCaseService.getDealCasesByOrganization(organization.id),
+          listingService.getOrganizationListings(organization.id),
+          leadAggregationService.getLeads(organization.id).catch(() => []),
+          crmTaskService.getOrganizationTasks(organization.id).catch(() => []),
           propertyViewingService.getOrganizationViewings(organization.id),
           paymentService.getOrganizationPropertyTransactions(organization.id),
           documentCenterService.getOrganizationDocuments(organization.id),
@@ -144,6 +174,9 @@ export function WorkspaceExpansionSuite({
         ]);
 
       setCases(organizationCases || []);
+      setListings(organizationListings || []);
+      setAggregatedLeads(organizationLeads || []);
+      setCrmTasks(organizationCrmTasks || []);
       setViewings(organizationViewings || []);
       setPayments(organizationPayments || []);
       setDocuments(organizationDocuments || []);
@@ -366,6 +399,31 @@ export function WorkspaceExpansionSuite({
     [cases]
   );
 
+  const sellerHealth = useMemo(
+    () => buildSellerPortalHealth({ listings, cases, documents, payments }),
+    [cases, documents, listings, payments]
+  );
+
+  const sellerNetSheet = useMemo(
+    () => buildSellerNetSheet({ listings, cases, payments }),
+    [cases, listings, payments]
+  );
+
+  const listingLaunchPlan = useMemo(
+    () => buildListingLaunchPlan({ listings, cases, documents }),
+    [cases, documents, listings]
+  );
+
+  const crmActions = useMemo(
+    () => buildAgentCrmActions({ cases, leads: aggregatedLeads, viewings, payments }),
+    [aggregatedLeads, cases, payments, viewings]
+  );
+
+  const openCrmTasks = useMemo(
+    () => crmTasks.filter((task) => !["completed", "cancelled"].includes(task.status)),
+    [crmTasks]
+  );
+
   const activeMarkets = useMemo(
     () =>
       Array.from(
@@ -459,7 +517,7 @@ export function WorkspaceExpansionSuite({
     }
   };
 
-  const handleDispatchRequest = async (event: React.FormEvent) => {
+  const handleDispatchRequest = async (event: FormEvent) => {
     event.preventDefault();
 
     if (!selectedMaintenanceProperty) {
@@ -517,6 +575,45 @@ export function WorkspaceExpansionSuite({
       toast.error("We couldn't update that service job.");
     } finally {
       setDispatchStatusId(null);
+    }
+  };
+
+  const handleGenerateCrmTasks = async () => {
+    try {
+      setGeneratingCrmTasks(true);
+      const tasks = await crmTaskService.generateSuggestedTasks({
+        organizationId: organization.id,
+        cases,
+        leads: aggregatedLeads,
+        viewings,
+        payments,
+      });
+      setCrmTasks(tasks || []);
+      toast.success("CRM task queue refreshed.");
+    } catch (error) {
+      console.error("Failed to generate CRM tasks:", error);
+      toast.error("We couldn't generate CRM tasks right now.");
+    } finally {
+      setGeneratingCrmTasks(false);
+    }
+  };
+
+  const handleCrmTaskStatus = async (
+    taskId: string,
+    status: "open" | "in_progress" | "completed" | "snoozed" | "cancelled"
+  ) => {
+    try {
+      setUpdatingCrmTaskId(taskId);
+      const updated = await crmTaskService.updateTaskStatus(taskId, status);
+      setCrmTasks((current) =>
+        current.map((task) => (task.id === taskId ? updated : task))
+      );
+      toast.success("CRM task updated.");
+    } catch (error) {
+      console.error("Failed to update CRM task:", error);
+      toast.error("We couldn't update that CRM task.");
+    } finally {
+      setUpdatingCrmTaskId(null);
     }
   };
 
@@ -1008,6 +1105,373 @@ export function WorkspaceExpansionSuite({
                 <p className="text-sm text-muted-foreground">
                   Use this alongside lead response time and calendar operations to coach the team week over week.
                 </p>
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (section === "seller-portal") {
+    const topListings = [...listings]
+      .sort((a, b) => Number(b.quality_score || 0) - Number(a.quality_score || 0))
+      .slice(0, 5);
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-semibold">Seller Portal</h1>
+          <p className="mt-2 text-muted-foreground">
+            Give owners a clear read on listing health, buyer demand, proof, and next revenue moves.
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <StatCard
+            label="Seller Health"
+            value={`${sellerHealth.score}/100`}
+            helper="Quality, demand, documents, and payment evidence."
+          />
+          <StatCard
+            label="Listed Inventory"
+            value={sellerHealth.listedCount}
+            helper="Public listings currently available."
+          />
+          <StatCard
+            label="Active Buyer Demand"
+            value={sellerHealth.activeDemand}
+            helper="Open cases tied to seller inventory."
+          />
+          <StatCard
+            label="Proof Assets"
+            value={sellerHealth.signedDocs + sellerHealth.successfulPayments}
+            helper="Signed docs plus successful payment records."
+          />
+          <StatCard
+            label="Projected Owner Net"
+            value={formatMoney(sellerNetSheet.ownerNetProjection)}
+            helper="Modeled after commission and closing reserves."
+          />
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[1.05fr,0.95fr]">
+          <Card className="p-6">
+            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Wallet className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-semibold">Seller Net Sheet</h2>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  A fast owner-facing projection from live inventory, active pipeline, and collected proof.
+                </p>
+              </div>
+              <Badge variant={sellerNetSheet.ownerNetProjection > 0 ? "default" : "outline"}>
+                {formatMoney(sellerNetSheet.collectedProofValue)} proof
+              </Badge>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-xl border border-border p-4">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Inventory Gross</p>
+                <p className="mt-2 text-lg font-semibold">
+                  {formatMoney(sellerNetSheet.grossInventoryValue)}
+                </p>
+              </div>
+              <div className="rounded-xl border border-border p-4">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Pipeline Basis</p>
+                <p className="mt-2 text-lg font-semibold">
+                  {formatMoney(sellerNetSheet.activePipelineValue)}
+                </p>
+              </div>
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Owner Net</p>
+                <p className="mt-2 text-lg font-semibold text-primary">
+                  {formatMoney(sellerNetSheet.ownerNetProjection)}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {sellerNetSheet.lineItems.slice(1).map((item) => (
+                <div key={item.label} className="rounded-xl border border-border p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium">{item.label}</p>
+                    <p className="text-sm font-semibold">{formatMoney(item.amount)}</p>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{item.helper}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground">{sellerNetSheet.guidance}</p>
+          </Card>
+
+          <Card className="p-6">
+            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-semibold">Launch Readiness</h2>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Package listing proof, quality, and demand into an owner update before scaling campaigns.
+                </p>
+              </div>
+              <Badge variant={listingLaunchPlan.needsWorkCount === 0 ? "default" : "outline"}>
+                {listingLaunchPlan.readyCount} ready
+              </Badge>
+            </div>
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <p className="text-sm font-medium">Owner update draft</p>
+              <p className="mt-2 text-sm text-muted-foreground">{listingLaunchPlan.ownerUpdate}</p>
+            </div>
+            <div className="mt-4 space-y-3">
+              {listingLaunchPlan.actions.map((action) => (
+                <div key={action.label} className="rounded-xl border border-border p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium">{action.label}</p>
+                    <Badge
+                      variant={
+                        action.status === "blocked"
+                          ? "destructive"
+                          : action.status === "ready"
+                            ? "default"
+                            : "outline"
+                      }
+                    >
+                      {formatLabel(action.status)}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">{action.helper}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[1.15fr,0.85fr]">
+          <Card className="p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold">Owner Inventory Brief</h2>
+            </div>
+            {topListings.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Create or publish listings to unlock owner-facing health reporting.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {topListings.map((listing) => (
+                  <div key={listing.id} className="rounded-xl border border-border p-4">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <p className="font-semibold">{listing.property?.address || "Listing"}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {formatMoney(listing.price, listing.currency || "GHS")} /{" "}
+                          {formatLabel(listing.status)}
+                        </p>
+                      </div>
+                      <Badge variant={Number(listing.quality_score || 0) >= 75 ? "default" : "outline"}>
+                        Quality {Math.round(Number(listing.quality_score || 0))}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card className="p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold">Seller Next Steps</h2>
+            </div>
+            <div className="space-y-3">
+              {sellerHealth.actions.map((action) => (
+                <div key={action} className="rounded-xl border border-border p-4 text-sm">
+                  <CheckCircle className="mr-2 inline h-4 w-4 text-primary" />
+                  {action}
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link to={`${workspaceBasePath}/listings`}>
+                <Button variant="outline" size="sm">
+                  Improve Listings
+                </Button>
+              </Link>
+              <Link to={`${workspaceBasePath}/trust`}>
+                <Button variant="outline" size="sm">
+                  Add Trust Proof
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (section === "crm") {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold">Agent CRM Automation</h1>
+            <p className="mt-2 text-muted-foreground">
+              Prioritize hot leads, stale deal rooms, tour confirmations, and payment follow-up.
+            </p>
+          </div>
+          <Button onClick={() => void handleGenerateCrmTasks()} disabled={generatingCrmTasks}>
+            {generatingCrmTasks ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Building Queue
+              </>
+            ) : (
+              <>
+                <Brain className="h-4 w-4" />
+                Generate Tasks
+              </>
+            )}
+          </Button>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-4">
+          {crmActions.map((action) => (
+            <StatCard
+              key={action.label}
+              label={action.label}
+              value={action.count}
+              helper={action.helper}
+            />
+          ))}
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[1fr,0.9fr]">
+          <Card className="p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <Brain className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold">Automation Playbook</h2>
+            </div>
+            <div className="space-y-3">
+              {[
+                "Send same-day WhatsApp/email follow-up to leads above 75 score.",
+                "Escalate deal rooms untouched for more than 48 hours.",
+                "Confirm pending viewing requests before the next business day.",
+                "Trigger payment reminder after offer acceptance or booking-fee request.",
+              ].map((item) => (
+                <div key={item} className="rounded-xl border border-border p-4 text-sm text-muted-foreground">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold">Hot Lead Queue</h2>
+            </div>
+            {aggregatedLeads.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                External and referral leads will appear here once lead aggregation receives traffic.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {[...aggregatedLeads]
+                  .sort((a, b) => Number(b.lead_score || 0) - Number(a.lead_score || 0))
+                  .slice(0, 5)
+                  .map((lead) => (
+                    <div key={lead.id} className="rounded-xl border border-border p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold">{lead.lead_name || "Lead"}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {formatLabel(lead.source)} / {lead.requested_timeframe || "timeframe pending"}
+                          </p>
+                        </div>
+                        <Badge variant="outline">Score {Math.round(Number(lead.lead_score || 0))}</Badge>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+            <div className="mt-5">
+              <Link to={`${workspaceBasePath}/leads`}>
+                <Button variant="outline" size="sm">
+                  Open Leads & Messages
+                </Button>
+              </Link>
+            </div>
+          </Card>
+
+          <Card className="p-6 xl:col-span-2">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-primary" />
+                <h2 className="text-xl font-semibold">Persisted Task Queue</h2>
+              </div>
+              <Badge variant="outline">{openCrmTasks.length} open</Badge>
+            </div>
+            {crmTasks.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Generate tasks to persist hot lead, stale deal, viewing, and payment follow-up work for the team.
+              </p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {crmTasks.slice(0, 8).map((task) => (
+                  <div key={task.id} className="rounded-xl border border-border p-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold">{task.title}</p>
+                          <Badge variant={task.priority === "urgent" ? "destructive" : "outline"}>
+                            {formatLabel(task.priority)}
+                          </Badge>
+                        </div>
+                        <p className="mt-2 text-sm text-muted-foreground">{task.description}</p>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {formatLabel(task.task_type)}
+                          {task.due_at ? ` / due ${new Date(task.due_at).toLocaleDateString()}` : ""}
+                        </p>
+                      </div>
+                      <Badge variant={task.status === "completed" ? "default" : "secondary"}>
+                        {formatLabel(task.status)}
+                      </Badge>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {task.status === "open" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={updatingCrmTaskId === task.id}
+                          onClick={() => void handleCrmTaskStatus(task.id, "in_progress")}
+                        >
+                          Start
+                        </Button>
+                      )}
+                      {task.status !== "completed" && (
+                        <Button
+                          size="sm"
+                          disabled={updatingCrmTaskId === task.id}
+                          onClick={() => void handleCrmTaskStatus(task.id, "completed")}
+                        >
+                          Complete
+                        </Button>
+                      )}
+                      {!["completed", "cancelled"].includes(task.status) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={updatingCrmTaskId === task.id}
+                          onClick={() => void handleCrmTaskStatus(task.id, "snoozed")}
+                        >
+                          Snooze
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </Card>

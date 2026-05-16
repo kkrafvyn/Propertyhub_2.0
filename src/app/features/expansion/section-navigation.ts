@@ -3,6 +3,10 @@ export type UserDashboardSection =
   | "compare"
   | "buying-tools"
   | "deals"
+  | "verification"
+  | "insights"
+  | "concierge"
+  | "groups"
   | "referrals"
   | "support"
   | "saved"
@@ -24,6 +28,10 @@ export const USER_DASHBOARD_ROUTE_CONFIG: UserDashboardRouteConfig[] = [
   { section: "compare", href: "/app/compare", label: "Compare" },
   { section: "buying-tools", href: "/app/buying-tools", label: "Buyer Tools" },
   { section: "deals", href: "/app/deals", label: "Deal Rooms" },
+  { section: "verification", href: "/app/verification", label: "Verification" },
+  { section: "insights", href: "/app/insights", label: "Insights" },
+  { section: "concierge", href: "/app/concierge", label: "Concierge" },
+  { section: "groups", href: "/app/groups", label: "Buying Group" },
   { section: "referrals", href: "/app/referrals", label: "Referrals" },
   { section: "support", href: "/app/support", label: "Support" },
   { section: "saved", href: "/app/saved", label: "Saved" },
@@ -34,6 +42,22 @@ export const USER_DASHBOARD_ROUTE_CONFIG: UserDashboardRouteConfig[] = [
   { section: "payments", href: "/app/payments", label: "Payments" },
   { section: "settings", href: "/app/settings", label: "Settings" },
 ];
+
+const MINIMAL_USER_DASHBOARD_SECTIONS: UserDashboardSection[] = [
+  "overview",
+  "saved",
+  "messages",
+  "viewings",
+  "deals",
+  "payments",
+  "settings",
+];
+
+export function getMinimalUserDashboardRoutes() {
+  return MINIMAL_USER_DASHBOARD_SECTIONS.map((section) =>
+    USER_DASHBOARD_ROUTE_CONFIG.find((route) => route.section === section)
+  ).filter(Boolean) as UserDashboardRouteConfig[];
+}
 
 export function getUserDashboardSection(pathname: string): UserDashboardSection {
   const matchedRoute = USER_DASHBOARD_ROUTE_CONFIG.find(
@@ -47,6 +71,8 @@ export type WorkspaceGrowthSection =
   | "offers"
   | "deal-rooms"
   | "performance"
+  | "seller-portal"
+  | "crm"
   | "referrals"
   | "aftercare";
 
@@ -59,6 +85,8 @@ export const WORKSPACE_GROWTH_ROUTE_CONFIG: WorkspaceGrowthRouteConfig[] = [
   { slug: "offers", label: "Offers" },
   { slug: "deal-rooms", label: "Deal Rooms" },
   { slug: "performance", label: "Performance" },
+  { slug: "seller-portal", label: "Seller Portal" },
+  { slug: "crm", label: "Agent CRM" },
   { slug: "referrals", label: "Referrals" },
   { slug: "aftercare", label: "Aftercare" },
 ];

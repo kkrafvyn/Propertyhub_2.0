@@ -4,6 +4,7 @@ import { ArrowRight, Loader2, MapPin, Shield } from "lucide-react";
 import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
+import { useMobileShell } from "../mobile/MobileShellContext";
 import {
   buildProjectReputationSpotlights,
   publicDiscoveryService,
@@ -20,6 +21,7 @@ function formatMoney(amount?: number | null) {
 }
 
 export function Projects() {
+  const { isMobileShell } = useMobileShell();
   const [projects, setProjects] = useState<ProjectCollection[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,9 +45,9 @@ export function Projects() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {!isMobileShell && <Navbar />}
 
-      <div className="pt-24 pb-16 px-4">
+      <div className={isMobileShell ? "pt-4 pb-32 px-4" : "pt-24 pb-16 px-4"}>
         <div className="max-w-6xl mx-auto">
           <section className="rounded-[2rem] border border-border bg-secondary/30 p-8 md:p-12">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/80">

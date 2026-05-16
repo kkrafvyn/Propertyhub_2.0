@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import {
   MapPin,
@@ -19,6 +19,9 @@ import {
   Camera,
   Navigation,
   ExternalLink,
+  Brain,
+  Video,
+  Users,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
@@ -27,6 +30,7 @@ import { GhanaRoutePlanner } from "../components/GhanaRoutePlanner";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
+import { useMobileShell } from "../mobile/MobileShellContext";
 import { useAuth } from "../context/AuthContext";
 import { listingService } from "../../lib/listing.service";
 import { getPropertyCoverImage, getPropertyMediaItems } from "../../lib/property-media";
@@ -36,6 +40,10 @@ import { messageService } from "../../lib/message.service";
 import { communicationService } from "../../lib/communication.service";
 import { organizationService } from "../../lib/organization.service";
 import { paymentService } from "../../lib/payment.service";
+import {
+  analyticsService,
+  propertyMediaReadinessService,
+} from "../../lib/production-depth.service";
 import { propertyViewingService } from "../../lib/property-viewing.service";
 import {
   buildReferralQueryString,
@@ -49,6 +57,20 @@ import {
   trackReferralDealCaseCreated,
 } from "../../lib/referral-attribution.service";
 import { trustCenterService } from "../../lib/trust-center.service";
+import {
+  buildAiConciergePrompts,
+  buildBuyerNegotiationPlan,
+  buildEscrowMilestones,
+  buildInspectionChecklist,
+  buildListingTrustScore,
+  buildNeighborhoodIntelCards,
+  buildRemoteBuyerReadiness,
+  buildViewingPrepPlan,
+  estimateClosingCosts,
+  formatLabel,
+  formatMoney,
+  getNeighborhoodSnapshot,
+} from "../features/expansion/feature-helpers";
 
 const fallbackImages = [
   "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&q=80",
@@ -59,6 +81,7 @@ const fallbackImages = [
 ];
 
 export function PropertyDetail() {
+  const { isMobileShell } = useMobileShell();
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -214,10 +237,16 @@ export function PropertyDetail() {
 
   const property = listing?.property;
   const organization = listing?.organization;
-  const uploadedImages = getPropertyMediaItems(property).map(
+  const mediaItems = getPropertyMediaItems(property);
+  const mediaReadiness = useMemo(
+    () => propertyMediaReadinessService.buildReadiness(mediaItems),
+    [mediaItems]
+  );
+  const uploadedImages = mediaItems.map(
     (media) => media.public_url || fallbackImages[0]
   );
   const images = uploadedImages.length > 0 ? uploadedImages : fallbackImages;
+  const mediaPhotoCount = mediaReadiness.photos || images.length;
   const locationQuery = property
     ? [property.address, property.city, property.region, property.country].filter(Boolean).join(", ")
     : "";
@@ -247,6 +276,113 @@ export function PropertyDetail() {
     property?.neighborhood,
     property?.ghana_post_gps ? `GhanaPostGPS ${property.ghana_post_gps}` : null,
   ].filter((item): item is string => Boolean(item));
+  const listingTrust = useMemo(
+    () =>
+      buildListingTrustScore({
+        listing,
+        property,
+        organization,
+        mediaCount: mediaItems.length || images.length,
+        trustSnapshot,
+      }),
+    [images.length, listing, mediaItems.length, organization, property, trustSnapshot]
+  );
+  const conciergePrompts = useMemo(() => buildAiConciergePrompts(listing), [listing]);
+  const neighborhoodIntelCards = useMemo(
+    () => buildNeighborhoodIntelCards(property),
+    [property]
+  );
+  const safePaymentMilestones = useMemo(
+    () =>
+      buildEscrowMilestones({
+        listingType: listing?.listing_type,
+        hasViewing: false,
+        hasOffer: false,
+        hasDocuments: Boolean(trustSnapshot?.publicDocumentCount),
+        hasPayment: false,
+        hasVerification:
+          trustSnapshot?.organizationVerified ||
+          ["verified", "approved"].includes(String(listing?.verification_status || "")),
+      }),
+    [
+      listing?.listing_type,
+      listing?.verification_status,
+      trustSnapshot?.organizationVerified,
+      trustSnapshot?.publicDocumentCount,
+    ]
+  );
+  const closingCostEstimate = useMemo(
+    () =>
+      estimateClosingCosts({
+        price: Number(listing?.price || 0),
+        listingType: listing?.listing_type,
+        inspectionFee: Number(listing?.inspection_fee_amount || 0),
+      }),
+    [listing?.inspection_fee_amount, listing?.listing_type, listing?.price]
+  );
+  const remoteBuyerReadiness = useMemo(
+    () =>
+      buildRemoteBuyerReadiness({
+        listing,
+        property,
+        mediaItems,
+        trustSnapshot,
+      }),
+    [listing, mediaItems, property, trustSnapshot]
+  );
+  const inspectionChecklist = useMemo(
+    () =>
+      buildInspectionChecklist({
+        listing,
+        property,
+        mediaItems,
+      }),
+    [listing, mediaItems, property]
+  );
+  const neighborhoodInsight = useMemo(
+    () =>
+      getNeighborhoodSnapshot(
+        property
+          ? {
+              city: property.city,
+              region: property.region,
+              neighborhood: property.neighborhood,
+            }
+          : null
+      ),
+    [property]
+  );
+  const buyerNegotiationPlan = useMemo(
+    () =>
+      buildBuyerNegotiationPlan({
+        listing,
+        property,
+        trustScore: listingTrust.score,
+        readinessScore: remoteBuyerReadiness.score,
+        mediaReadinessScore: mediaReadiness.score,
+        closingReserve: closingCostEstimate.recommendedReserve,
+        activeDemand: neighborhoodInsight?.demandLevel,
+      }),
+    [
+      closingCostEstimate.recommendedReserve,
+      listing,
+      listingTrust.score,
+      mediaReadiness.score,
+      neighborhoodInsight?.demandLevel,
+      property,
+      remoteBuyerReadiness.score,
+    ]
+  );
+  const viewingPrepPlan = useMemo(
+    () =>
+      buildViewingPrepPlan({
+        listing,
+        property,
+        mediaItems,
+        readinessScore: remoteBuyerReadiness.score,
+      }),
+    [listing, mediaItems, property, remoteBuyerReadiness.score]
+  );
 
   const pageTitle = useMemo(() => {
     if (!property) return "Property";
@@ -274,6 +410,39 @@ export function PropertyDetail() {
     return "rental_application";
   }, [listing]);
 
+  const trackListingEvent = (
+    eventType: string,
+    metadata: Record<string, unknown> = {}
+  ) => {
+    if (!listing?.id) return;
+
+    void analyticsService
+      .trackEvent({
+        userId: user?.id || null,
+        organizationId: listing.organization_id || null,
+        listingId: listing.id,
+        eventType,
+        source: isMobileShell ? "mobile" : "web",
+        metadata: {
+          path: currentPath,
+          listingType: listing.listing_type,
+          ...metadata,
+        },
+      })
+      .catch((error) => {
+        console.error(`Failed to track ${eventType}:`, error);
+      });
+  };
+
+  useEffect(() => {
+    if (!listing?.id) return;
+    trackListingEvent("listing_view", {
+      hasReferral: hasReferralContext(referralContext),
+      mediaReadinessScore: mediaReadiness.score,
+      trustScore: listingTrust.score,
+    });
+  }, [listing?.id, user?.id, isMobileShell]);
+
   const toggleSave = async () => {
     if (!user) {
       toast.error("Log in to save properties.");
@@ -284,6 +453,7 @@ export function PropertyDetail() {
     try {
       const result = await savedPropertyService.toggleSavedProperty(user.id, listing.id);
       setIsSaved(result.saved);
+      trackListingEvent(result.saved ? "listing_saved" : "listing_unsaved");
       toast.success(result.saved ? "Property saved." : "Property removed from saved list.");
     } catch (error) {
       console.error("Failed to save property:", error);
@@ -319,6 +489,7 @@ export function PropertyDetail() {
   const handleSaveAndCompare = async () => {
     const saved = await ensureSavedProperty();
     if (saved) {
+      trackListingEvent("compare_opened");
       navigate("/app/compare");
     }
   };
@@ -330,10 +501,11 @@ export function PropertyDetail() {
       return;
     }
 
+    trackListingEvent("buyer_tools_opened");
     navigate("/app/buying-tools");
   };
 
-  const handleInquiry = async (e: React.FormEvent) => {
+  const handleInquiry = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!user) {
@@ -359,6 +531,7 @@ export function PropertyDetail() {
         case_type: caseType,
         message: caseMessage,
       });
+      trackListingEvent("listing_inquiry_submitted", { dealCaseId: dealCase.id, caseType });
 
       trackReferralDealCaseCreated(referralContext, {
         dealCaseId: dealCase.id,
@@ -425,7 +598,7 @@ export function PropertyDetail() {
     }
   };
 
-  const handleOfferSubmit = async (e: React.FormEvent) => {
+  const handleOfferSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!user) {
@@ -476,6 +649,11 @@ export function PropertyDetail() {
         pipeline_stage: "negotiation",
         priority: offerPriority,
         next_follow_up_at: followUpAt,
+      });
+      trackListingEvent("listing_offer_submitted", {
+        dealCaseId: dealCase.id,
+        amount,
+        financingStatus: offerForm.financingStatus,
       });
 
       trackReferralDealCaseCreated(referralContext, {
@@ -551,6 +729,7 @@ export function PropertyDetail() {
         await navigator.clipboard.writeText(shareUrl);
         toast.success("Property link copied to your clipboard.");
       }
+      trackListingEvent("listing_shared");
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") return;
       console.error("Failed to share property:", error);
@@ -558,7 +737,7 @@ export function PropertyDetail() {
     }
   };
 
-  const handleSecurePayment = async (e: React.FormEvent) => {
+  const handleSecurePayment = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!user) {
@@ -582,6 +761,10 @@ export function PropertyDetail() {
         customerName: paymentForm.customerName,
         customerPhone: paymentForm.customerPhone,
       });
+      trackListingEvent("payment_checkout_started", {
+        purpose: paymentForm.purpose,
+        amount,
+      });
 
       window.location.assign(result.authorizationUrl);
     } catch (error) {
@@ -592,7 +775,7 @@ export function PropertyDetail() {
     }
   };
 
-  const handleViewingRequest = async (e: React.FormEvent) => {
+  const handleViewingRequest = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!user) {
@@ -628,6 +811,9 @@ export function PropertyDetail() {
         contactPhone: viewingForm.contactPhone,
         contactEmail: user.email || undefined,
       });
+      trackListingEvent("viewing_requested", {
+        requestedDateTime: requestedDateTime.toISOString(),
+      });
 
       toast.success("Viewing request sent. The team can confirm it from their workspace.");
       setViewingForm((current) => ({
@@ -648,8 +834,8 @@ export function PropertyDetail() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="pt-24 min-h-[60vh] flex items-center justify-center">
+        {!isMobileShell && <Navbar />}
+        <div className={isMobileShell ? "pt-4 min-h-[40vh] flex items-center justify-center" : "pt-24 min-h-[60vh] flex items-center justify-center"}>
           <Loader2 className="w-8 h-8 animate-spin" />
         </div>
       </div>
@@ -659,8 +845,8 @@ export function PropertyDetail() {
   if (!listing || !property) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="pt-24 px-4 max-w-3xl mx-auto">
+        {!isMobileShell && <Navbar />}
+        <div className={isMobileShell ? "pt-4 px-4 max-w-3xl mx-auto pb-32" : "pt-24 px-4 max-w-3xl mx-auto"}>
           <Card className="p-8 text-center">
             <h1 className="text-2xl font-semibold mb-2">Property not found</h1>
             <p className="text-muted-foreground mb-6">
@@ -677,9 +863,9 @@ export function PropertyDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {!isMobileShell && <Navbar />}
 
-      <div className="pt-24 pb-12 px-4 max-w-7xl mx-auto">
+      <div className={isMobileShell ? "pt-4 pb-32 px-4 max-w-7xl mx-auto" : "pt-24 pb-12 px-4 max-w-7xl mx-auto"}>
         <div className="mb-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[500px]">
             <div className="md:col-span-3 h-full relative overflow-hidden rounded-xl">
@@ -833,6 +1019,220 @@ export function PropertyDetail() {
             </div>
 
             <div>
+              <h2 className="text-2xl font-semibold mb-4">AI Concierge & Media</h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card className="p-6">
+                  <div className="flex items-center gap-2">
+                    <Brain className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold">Ask before you commit</h3>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Use these prompts to pressure-test price, risk, documents, and next steps with the listing team.
+                  </p>
+                  <div className="mt-5 space-y-3">
+                    {conciergePrompts.slice(0, 4).map((prompt) => (
+                      <button
+                        key={prompt}
+                        type="button"
+                        className="w-full rounded-xl border border-border p-3 text-left text-sm transition-colors hover:border-primary/50 hover:bg-primary/5"
+                        onClick={() => {
+                          setShowContactForm(true);
+                          setShowOfferForm(false);
+                          setContactForm((current) => ({
+                            ...current,
+                            message: prompt,
+                          }));
+                        }}
+                      >
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
+                </Card>
+
+                <Card className="p-6">
+                  <div className="flex items-center gap-2">
+                    <Video className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold">3D tour, video, and floor-plan readiness</h3>
+                  </div>
+                  <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium">Remote review score</p>
+                      <p className="text-lg font-semibold text-primary">{mediaReadiness.score}/100</p>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {mediaReadiness.readyItems} ready item(s), {mediaReadiness.pendingItems} processing.
+                    </p>
+                  </div>
+                  <div className="mt-5 grid gap-3">
+                    {[
+                      {
+                        label: "Photo set",
+                        value: `${mediaPhotoCount} image${mediaPhotoCount === 1 ? "" : "s"}`,
+                        helper:
+                          mediaReadiness.photos >= 5 || images.length >= 5
+                            ? "Good remote-review coverage."
+                            : "Ask the team for a fuller room-by-room gallery.",
+                      },
+                      {
+                        label: "Video walkthrough",
+                        value: mediaReadiness.videos > 0
+                          ? "Available"
+                          : "Request from team",
+                        helper: "Useful for diaspora buyers and busy executives.",
+                      },
+                      {
+                        label: "Floor plan",
+                        value: mediaReadiness.floorPlans > 0
+                          ? "Attached"
+                          : "Not attached",
+                        helper: "Ask for dimensions before comparing layouts.",
+                      },
+                      {
+                        label: "Virtual tour",
+                        value: mediaReadiness.virtualTours > 0 ? "Ready" : "Not attached",
+                        helper: "Helpful for diaspora buyers and remote family review.",
+                      },
+                    ].map((item) => (
+                      <div key={item.label} className="rounded-xl border border-border p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="font-medium">{item.label}</p>
+                          <span className="text-sm text-primary">{item.value}</span>
+                        </div>
+                        <p className="mt-2 text-sm text-muted-foreground">{item.helper}</p>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-semibold mb-4">Buyer Decision Brief</h2>
+              <div className="grid gap-4 lg:grid-cols-3">
+                <Card className="p-6">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold">Closing Reserve</h3>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    A practical buffer for legal review, inspection, agent support, and payment handoff.
+                  </p>
+                  <p className="mt-5 text-3xl font-semibold text-primary">
+                    {formatMoney(closingCostEstimate.recommendedReserve, listing.currency || "GHS")}
+                  </p>
+                  <div className="mt-4 space-y-2">
+                    {closingCostEstimate.lineItems.slice(0, 3).map((item) => (
+                      <div key={item.label} className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2 text-sm">
+                        <span>{item.label}</span>
+                        <span className="font-medium">
+                          {formatMoney(item.amount, listing.currency || "GHS")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                <Card className="p-6">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between lg:flex-col">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <MessageCircle className="w-5 h-5 text-primary" />
+                        <h3 className="font-semibold">Offer Coach</h3>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        A buyer-first band based on trust, remote evidence, market pressure, and reserve costs.
+                      </p>
+                    </div>
+                    <div className="w-fit rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-semibold text-primary">
+                      {buyerNegotiationPlan.confidence} - {buyerNegotiationPlan.leverage}
+                    </div>
+                  </div>
+                  <div className="mt-5 grid gap-2">
+                    {[
+                      { label: "Open", value: buyerNegotiationPlan.anchor },
+                      { label: "Target", value: buyerNegotiationPlan.target },
+                      { label: "Stretch", value: buyerNegotiationPlan.stretch },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2 text-sm">
+                        <span>{item.label}</span>
+                        <span className="font-medium">
+                          {formatMoney(item.value, listing.currency || "GHS")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-4 rounded-xl bg-secondary/30 p-3 text-sm text-muted-foreground">
+                    {buyerNegotiationPlan.message}
+                  </p>
+                  <div className="mt-4 space-y-2">
+                    {buyerNegotiationPlan.nextSteps.slice(0, 2).map((step) => (
+                      <div key={step} className="flex gap-2 text-xs text-muted-foreground">
+                        <Check className="mt-0.5 w-3 h-3 text-primary" />
+                        <span>{step}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                <Card className="p-6">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-5 h-5 text-primary" />
+                        <h3 className="font-semibold">Remote Buyer Readiness</h3>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Checks whether this listing is safe enough for diaspora or out-of-town review.
+                      </p>
+                    </div>
+                    <div className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-semibold text-primary">
+                      {remoteBuyerReadiness.score}/100 {remoteBuyerReadiness.label}
+                    </div>
+                  </div>
+                  <div className="mt-5 grid gap-3 md:grid-cols-2">
+                    {remoteBuyerReadiness.checks.slice(0, 4).map((check) => (
+                      <div key={check.label} className="rounded-xl border border-border p-3">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <Check
+                            className={`w-4 h-4 ${
+                              check.complete ? "text-accent" : "text-muted-foreground"
+                            }`}
+                          />
+                          {check.label}
+                        </div>
+                        <p className="mt-2 text-xs text-muted-foreground">{check.helper}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-5 space-y-2">
+                    {inspectionChecklist.slice(0, 3).map((item) => (
+                      <div key={item.label} className="rounded-xl bg-secondary/30 px-3 py-2 text-sm">
+                        <span className="font-medium">{item.label}</span>
+                        <span className="text-muted-foreground"> - {item.helper}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-5 rounded-xl border border-border p-3">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Clock3 className="w-4 h-4 text-primary" />
+                      {viewingPrepPlan.mode} viewing prep
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">{viewingPrepPlan.headline}</p>
+                    <div className="mt-3 space-y-2">
+                      {viewingPrepPlan.checklist.slice(0, 2).map((item) => (
+                        <div key={item.label} className="text-xs">
+                          <span className="font-medium">{item.label}</span>
+                          <span className="text-muted-foreground"> - {item.helper}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            </div>
+
+            <div>
               <h2 className="text-2xl font-semibold mb-4">Verification & Trust</h2>
               <Card className="p-6 bg-primary/5 border-primary/15">
                 <div className="flex items-start gap-3 mb-5">
@@ -846,6 +1246,11 @@ export function PropertyDetail() {
                       tracked through the platform&apos;s verification layer.
                     </p>
                   </div>
+                  <div className="ml-auto hidden rounded-xl border border-primary/20 bg-background px-4 py-3 text-right md:block">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Trust score</p>
+                    <p className="text-2xl font-semibold text-primary">{listingTrust.score}/100</p>
+                    <p className="text-xs text-muted-foreground">{listingTrust.label}</p>
+                  </div>
                 </div>
 
                 {trustLoading ? (
@@ -856,6 +1261,14 @@ export function PropertyDetail() {
                 ) : (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                      <div className="rounded-xl border border-border bg-background p-4 md:hidden">
+                        <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                          <Shield className="w-4 h-4 text-primary" />
+                          Trust Score
+                        </div>
+                        <p className="text-lg font-semibold">{listingTrust.score}/100</p>
+                        <p className="text-xs text-muted-foreground mt-1">{listingTrust.label}</p>
+                      </div>
                       <div className="rounded-xl border border-border bg-background p-4">
                         <div className="flex items-center gap-2 text-sm font-medium mb-2">
                           <Shield className="w-4 h-4 text-primary" />
@@ -935,6 +1348,28 @@ export function PropertyDetail() {
                       </div>
                     </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
+                      {listingTrust.signals.map((signal) => (
+                        <div
+                          key={signal.label}
+                          className="rounded-xl border border-border bg-background px-4 py-3 text-sm"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Check
+                              className={`w-4 h-4 ${
+                                signal.complete ? "text-accent" : "text-muted-foreground"
+                              }`}
+                            />
+                            <span className="font-medium">{signal.label}</span>
+                            <span className="ml-auto text-xs text-muted-foreground">
+                              +{signal.weight}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-muted-foreground">{signal.helper}</p>
+                        </div>
+                      ))}
+                    </div>
+
                     {trustSnapshot?.trustHighlights?.length ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
                         {trustSnapshot.trustHighlights.map((highlight: string) => (
@@ -986,6 +1421,17 @@ export function PropertyDetail() {
 
             <div>
               <h2 className="text-2xl font-semibold mb-4">Location</h2>
+              <div className="grid gap-3 mb-5 md:grid-cols-4">
+                {neighborhoodIntelCards.map((item) => (
+                  <Card key={item.label} className="p-4">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 font-semibold">{item.value}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">{item.helper}</p>
+                  </Card>
+                ))}
+              </div>
               <Card className="overflow-hidden">
                 {mapEmbedUrl ? (
                   <>
@@ -1261,6 +1707,15 @@ export function PropertyDetail() {
               >
                 <FileText className="w-4 h-4" />
                 Buyer Toolkit
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full mt-3"
+                onClick={() => navigate("/app/concierge")}
+              >
+                <Brain className="w-4 h-4" />
+                AI Concierge
               </Button>
 
               {showViewingForm && (
@@ -1596,6 +2051,43 @@ export function PropertyDetail() {
                   </form>
                 </motion.div>
               )}
+            </Card>
+
+            <Card className="p-6 mt-6">
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <Shield className="w-5 h-5 text-primary" />
+                Safe Payment Milestones
+              </h4>
+              <div className="space-y-3">
+                {safePaymentMilestones.map((milestone) => (
+                  <div key={milestone.label} className="rounded-xl border border-border p-3">
+                    <div className="flex items-center gap-2">
+                      <Check
+                        className={`w-4 h-4 ${
+                          milestone.complete ? "text-accent" : "text-muted-foreground"
+                        }`}
+                      />
+                      <p className="text-sm font-medium">{milestone.label}</p>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">{milestone.helper}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="p-6 mt-6">
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                Bring Your Buying Group
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Invite family, a lawyer, or a local representative to review the shortlist and keep legal, viewing, and payment questions together.
+              </p>
+              <Link to="/app/groups">
+                <Button variant="outline" className="mt-4 w-full">
+                  Open Buying Group
+                </Button>
+              </Link>
             </Card>
 
             <Card className="p-6 mt-6 bg-accent/5 border-accent/20">

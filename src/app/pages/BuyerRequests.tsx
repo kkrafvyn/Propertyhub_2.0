@@ -7,6 +7,7 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { Textarea } from "../components/ui/textarea";
+import { useMobileShell } from "../mobile/MobileShellContext";
 import { useAuth } from "../context/AuthContext";
 import { publicDiscoveryService, type BuyerRequestBoardEntry } from "../../lib/public-discovery.service";
 import { readReferralContext } from "../../lib/referral-context";
@@ -22,6 +23,7 @@ function formatMoney(amount?: number | null) {
 }
 
 export function BuyerRequests() {
+  const { isMobileShell } = useMobileShell();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [requests, setRequests] = useState<BuyerRequestBoardEntry[]>([]);
@@ -103,9 +105,9 @@ export function BuyerRequests() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {!isMobileShell && <Navbar />}
 
-      <div className="pt-24 pb-16 px-4">
+      <div className={isMobileShell ? "pt-4 pb-32 px-4" : "pt-24 pb-16 px-4"}>
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-8">
           <section>
             <Card className="p-8 rounded-[2rem] bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(246,244,238,1))]">

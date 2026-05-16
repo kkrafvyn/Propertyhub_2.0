@@ -1,4 +1,5 @@
 import { mobileAppService } from "./mobile-app.service";
+import { mobileNativeService } from "./mobile-native.service";
 
 function decodeBase64Url(value: string) {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
@@ -69,5 +70,17 @@ export const pushNotificationService = {
     });
 
     return subscription;
+  },
+
+  async registerPush(userId: string, options: { onOpenUrl?: (url: string) => void } = {}) {
+    if (mobileNativeService.isNative()) {
+      return mobileNativeService.registerNativePush(userId, options.onOpenUrl);
+    }
+
+    const subscription = await this.registerBrowserPush(userId);
+    return {
+      status: "registered" as const,
+      endpoint: subscription.endpoint,
+    };
   },
 };

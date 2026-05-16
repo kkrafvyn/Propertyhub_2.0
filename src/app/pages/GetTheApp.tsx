@@ -10,6 +10,7 @@ import {
 import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
+import { useMobileShell } from "../mobile/MobileShellContext";
 import {
   publicDiscoveryService,
   type MobileExperienceSnapshot,
@@ -34,6 +35,7 @@ function detectPreferredPlatform(): MobileExperienceSnapshot["platforms"][number
 }
 
 export function GetTheApp() {
+  const { isMobileShell } = useMobileShell();
   const [snapshot, setSnapshot] = useState<MobileExperienceSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -64,9 +66,9 @@ export function GetTheApp() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {!isMobileShell && <Navbar />}
 
-      <div className="pt-24 pb-16 px-4">
+      <div className={isMobileShell ? "pt-4 pb-32 px-4" : "pt-24 pb-16 px-4"}>
         <div className="max-w-6xl mx-auto">
           <section className="rounded-[2rem] border border-border bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(246,244,238,1))] p-8 md:p-12">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">

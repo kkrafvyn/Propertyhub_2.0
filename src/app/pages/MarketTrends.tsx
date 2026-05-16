@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BarChart3, Loader2, MapPin, TrendingUp } from "lucide-react";
 import { Navbar } from "../components/Navbar";
 import { Card } from "../components/ui/Card";
+import { useMobileShell } from "../mobile/MobileShellContext";
 import { publicDiscoveryService, type MarketTrendSnapshot } from "../../lib/public-discovery.service";
 
 function formatMoney(amount?: number | null) {
@@ -14,6 +15,7 @@ function formatMoney(amount?: number | null) {
 }
 
 export function MarketTrends() {
+  const { isMobileShell } = useMobileShell();
   const [trends, setTrends] = useState<MarketTrendSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,9 +35,9 @@ export function MarketTrends() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {!isMobileShell && <Navbar />}
 
-      <div className="pt-24 pb-16 px-4">
+      <div className={isMobileShell ? "pt-4 pb-32 px-4" : "pt-24 pb-16 px-4"}>
         <div className="max-w-6xl mx-auto">
           <section className="rounded-[2rem] border border-border bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(246,244,238,1))] p-8 md:p-12">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/80">

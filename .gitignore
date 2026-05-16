@@ -29,3 +29,5 @@ supabase/.temp/
 
 # OS/editor noise
 .DS_Store
+
+.vercel

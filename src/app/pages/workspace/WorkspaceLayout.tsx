@@ -10,7 +10,6 @@ import {
   CreditCard,
   FileText,
   HandCoins,
-  Heart,
   Home,
   LineChart,
   Map,
@@ -18,14 +17,10 @@ import {
   AlertTriangle,
   Palette,
   Plus,
-  Search,
   Settings,
   Shield,
   Smartphone,
-  TrendingUp,
   Users,
-  Users2,
-  Workflow,
   Wrench,
   Zap,
 } from "lucide-react";
@@ -101,6 +96,8 @@ const GROWTH_NAV_ICON_BY_SLUG: Record<
   offers: ArrowRightLeft,
   "deal-rooms": FileText,
   performance: LineChart,
+  "seller-portal": Building2,
+  crm: Brain,
   referrals: HandCoins,
   aftercare: Wrench,
 };
@@ -125,16 +122,64 @@ const TIER_TWO_NAV_ITEMS: NavItem[] = [
   { slug: "blockchain", label: "Blockchain", icon: Shield },
 ];
 
-const AI_NAV_ITEMS: NavItem[] = [
-  { slug: "advanced-search", label: "Advanced Search", icon: Search },
-  { slug: "predictive-analytics", label: "Predictive Analytics", icon: TrendingUp },
-  { slug: "recommendations", label: "Recommendations", icon: Heart },
-];
+interface WorkspaceExperience {
+  headline: string;
+  helper: string;
+  coreSlugs: string[];
+  growthSlugs: string[];
+  advancedSlugs: string[];
+  showNewListing: boolean;
+}
 
-const ENTERPRISE_NAV_ITEMS: NavItem[] = [
-  { slug: "team-collaboration", label: "Team Hub", icon: Users2 },
-  { slug: "workflows", label: "Workflows", icon: Workflow },
-];
+function getWorkspaceExperience(role: MemberRole | null): WorkspaceExperience {
+  switch (role) {
+    case "owner":
+      return {
+        headline: "Owner view",
+        helper: "Listings, trust, payments, team, and setup tools stay visible for decision makers.",
+        coreSlugs: ["", "listings", "leads", "documents", "trust", "calendar", "payments", "finance", "team"],
+        growthSlugs: ["offers", "deal-rooms", "performance", "seller-portal", "referrals", "aftercare"],
+        advancedSlugs: [
+          "market-intelligence",
+          "automation",
+          "fraud-alerts",
+          "vendors",
+          "notifications",
+          "whitelabel",
+          "mobile-settings",
+        ],
+        showNewListing: true,
+      };
+    case "manager":
+      return {
+        headline: "Manager view",
+        helper: "Daily operations, approvals, and service work are prioritized.",
+        coreSlugs: ["", "listings", "leads", "documents", "trust", "calendar", "payments", "team"],
+        growthSlugs: ["offers", "deal-rooms", "performance", "seller-portal", "crm", "aftercare"],
+        advancedSlugs: ["automation", "fraud-alerts", "vendors", "notifications", "mobile-settings"],
+        showNewListing: true,
+      };
+    case "analyst":
+      return {
+        headline: "Analyst view",
+        helper: "Reporting and market context are visible without listing controls.",
+        coreSlugs: ["", "listings", "finance"],
+        growthSlugs: ["performance", "seller-portal"],
+        advancedSlugs: ["market-intelligence", "org-insights", "location-intelligence"],
+        showNewListing: false,
+      };
+    case "agent":
+    default:
+      return {
+        headline: "Agent view",
+        helper: "The tools you need most: listings, leads, viewings, documents, and deal follow-up.",
+        coreSlugs: ["", "listings", "leads", "documents", "trust", "calendar"],
+        growthSlugs: ["offers", "deal-rooms", "crm", "aftercare"],
+        advancedSlugs: ["vendors", "notifications"],
+        showNewListing: true,
+      };
+  }
+}
 
 function getNavItemClasses(isActive: boolean) {
   return `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
@@ -208,6 +253,16 @@ export function WorkspaceLayout() {
   const workspaceBasePath = organization
     ? getWorkspaceRoute(organization.slug)
     : WORKSPACE_ENTRY_PATH;
+  const workspaceExperience = getWorkspaceExperience(currentRole);
+  const visibleCoreNavItems = CORE_NAV_ITEMS.filter((item) =>
+    workspaceExperience.coreSlugs.includes(item.slug)
+  );
+  const visibleGrowthNavItems = GROWTH_NAV_ITEMS.filter((item) =>
+    workspaceExperience.growthSlugs.includes(item.slug)
+  );
+  const visibleAdvancedNavItems = TIER_TWO_NAV_ITEMS.filter((item) =>
+    workspaceExperience.advancedSlugs.includes(item.slug)
+  );
 
   const handleOrganizationChange = (organizationId: string) => {
     const nextMembership = memberships.find(
@@ -443,7 +498,7 @@ export function WorkspaceLayout() {
               <div>
                 <h2 className="font-semibold">{organization.name}</h2>
                 <p className="text-xs text-muted-foreground">
-                  Workspace - {getRoleLabel(currentRole)}
+                  {workspaceExperience.headline} - {getRoleLabel(currentRole)}
                 </p>
               </div>
             </div>
@@ -462,12 +517,14 @@ export function WorkspaceLayout() {
                   ))}
                 </select>
               )}
-              <Link to={`${workspaceBasePath}/new`}>
-                <Button>
-                  <Plus className="w-4 h-4" />
-                  New Listing
-                </Button>
-              </Link>
+              {workspaceExperience.showNewListing && (
+                <Link to={`${workspaceBasePath}/new`}>
+                  <Button>
+                    <Plus className="w-4 h-4" />
+                    Add property
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -477,8 +534,8 @@ export function WorkspaceLayout() {
         <aside className="w-64 border-r border-border bg-white min-h-[calc(100vh-73px)] p-6 overflow-y-auto">
           <nav className="space-y-2">
             <div className="mb-6">
-              <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">CORE</h3>
-              {CORE_NAV_ITEMS.map((item) => {
+              <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">ESSENTIALS</h3>
+              {visibleCoreNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = item.slug === "" ? currentPage === "" : currentPage === item.slug;
                 const href = item.slug ? `${workspaceBasePath}/${item.slug}` : workspaceBasePath;
@@ -496,81 +553,54 @@ export function WorkspaceLayout() {
               })}
             </div>
 
-            <div className="border-t pt-6 mb-6">
-              <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
-                DEAL GROWTH
-              </h3>
-              {GROWTH_NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.label}
-                    to={`${workspaceBasePath}/${item.slug}`}
-                    className={getFeatureNavItemClasses(currentPage === item.slug)}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium text-sm">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
+            {visibleGrowthNavItems.length > 0 && (
+              <div className="border-t pt-6 mb-6">
+                <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
+                  NEXT STEPS
+                </h3>
+                {visibleGrowthNavItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.label}
+                      to={`${workspaceBasePath}/${item.slug}`}
+                      className={getFeatureNavItemClasses(currentPage === item.slug)}
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span className="font-medium text-sm">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
 
-            <div className="border-t pt-6 mb-6">
-              <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
-                TIER 2 FEATURES
-              </h3>
-              {TIER_TWO_NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.label}
-                    to={`${workspaceBasePath}/${item.slug}`}
-                    className={getFeatureNavItemClasses(currentPage === item.slug)}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium text-sm">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
+            {visibleAdvancedNavItems.length > 0 && (
+              <details className="border-t pt-6 mb-6" defaultOpen={["owner", "manager"].includes(currentRole || "")}>
+                <summary className="cursor-pointer px-4 text-xs font-semibold text-muted-foreground">
+                  ADVANCED SETUP
+                </summary>
+                <div className="mt-2 space-y-2">
+                  {visibleAdvancedNavItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.label}
+                        to={`${workspaceBasePath}/${item.slug}`}
+                        className={getFeatureNavItemClasses(currentPage === item.slug)}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="font-medium text-sm">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </details>
+            )}
 
-            <div className="border-t pt-6 mb-6">
-              <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
-                PHASE 3: AI INTELLIGENCE
-              </h3>
-              {AI_NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.label}
-                    to={`${workspaceBasePath}/${item.slug}`}
-                    className={getFeatureNavItemClasses(currentPage === item.slug)}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium text-sm">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-
-            <div className="border-t pt-6 mb-6">
-              <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
-                PHASE 4: ENTERPRISE
-              </h3>
-              {ENTERPRISE_NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.label}
-                    to={`${workspaceBasePath}/${item.slug}`}
-                    className={getFeatureNavItemClasses(currentPage === item.slug)}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium text-sm">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
+            <Card className="border-primary/10 bg-primary/5 p-4 text-sm text-muted-foreground">
+              <p className="font-semibold text-foreground">{workspaceExperience.headline}</p>
+              <p className="mt-1 leading-relaxed">{workspaceExperience.helper}</p>
+            </Card>
 
             <div className="border-t pt-6">
               <Link

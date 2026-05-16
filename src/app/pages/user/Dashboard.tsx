@@ -4,6 +4,8 @@ import {
   ArrowRightLeft,
   ArrowRight,
   Bell,
+  BarChart3,
+  Brain,
   Calculator,
   CalendarDays,
   CreditCard,
@@ -21,6 +23,8 @@ import {
   Shield,
   TrendingUp,
   UserCircle2,
+  UserCheck,
+  Users,
   Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -28,10 +32,16 @@ import { Navbar } from "../../components/Navbar";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { useMobileShell } from "../../mobile/MobileShellContext";
 import { useAuth } from "../../context/AuthContext";
 import { dealCaseService } from "../../../lib/dealcase.service";
 import { documentCenterService } from "../../../lib/document-center.service";
 import { messageService } from "../../../lib/message.service";
+import { mobileCalendarService } from "../../../lib/mobile-calendar.service";
+import {
+  mobileLocationService,
+  type GeoCoordinates,
+} from "../../../lib/mobile-location.service";
 import { organizationService } from "../../../lib/organization.service";
 import { paymentService } from "../../../lib/payment.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
@@ -47,12 +57,17 @@ import { stripReferralMetadata } from "../../../lib/referral-attribution.service
 import { formatLabel, parseOfferSummary } from "../../features/expansion/feature-helpers";
 import {
   BuyerToolkitPanel,
+  BuyingGroupPanel,
+  ConciergePanel,
   DealRoomsPanel,
   PropertyComparisonPanel,
   ReferralProgramPanel,
   SupportPanel,
+  TrustVerificationPanel,
+  UserInsightsPanel,
 } from "../../features/user/UserExpansionPanels";
 import {
+  getMinimalUserDashboardRoutes,
   getUserDashboardSection,
   USER_DASHBOARD_ROUTE_CONFIG,
   type UserDashboardSection,
@@ -174,6 +189,7 @@ function formatViewingTime(value?: string | null) {
 }
 
 export function UserDashboard() {
+  const { isMobileShell } = useMobileShell();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -189,10 +205,20 @@ export function UserDashboard() {
     Array<{ name: string; email?: string | null; phone?: string | null }>
   >([]);
   const [participantProfiles, setParticipantProfiles] = useState<Record<string, any>>({});
+  const [currentCoordinates, setCurrentCoordinates] = useState<GeoCoordinates | null>(null);
   const [verifyingReference, setVerifyingReference] = useState(false);
   const [downloadingReceiptId, setDownloadingReceiptId] = useState<string | null>(null);
 
   const section = getUserDashboardSection(location.pathname);
+  const conversationIdsKey = useMemo(
+    () =>
+      conversations
+        .map((conversation) => conversation.id)
+        .filter(Boolean)
+        .sort()
+        .join(","),
+    [conversations]
+  );
 
   useEffect(() => {
     if (!user) {
@@ -367,6 +393,63 @@ export function UserDashboard() {
       cancelled = true;
     };
   }, [conversations, user]);
+
+  useEffect(() => {
+    if (!user || !conversationIdsKey) return;
+
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+    const conversationIds = conversationIdsKey.split(",").filter(Boolean);
+    const refreshConversations = () => {
+      if (refreshTimer) return;
+
+      refreshTimer = setTimeout(() => {
+        refreshTimer = null;
+        void messageService
+          .getUserConversations(user.id)
+          .then((chats) => setConversations(chats || []))
+          .catch((error) => {
+            console.error("Failed to refresh realtime conversations:", error);
+          });
+      }, 150);
+    };
+
+    const unsubscribe = conversationIds.map((conversationId) =>
+      messageService.subscribeToConversationActivity(conversationId, {
+        onMessage: refreshConversations,
+        onReadReceipt: refreshConversations,
+      })
+    );
+
+    return () => {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      unsubscribe.forEach((cleanup) => cleanup());
+    };
+  }, [conversationIdsKey, user]);
+
+  useEffect(() => {
+    if (!user || section !== "messages" || !conversationIdsKey) return;
+
+    const conversationIds = conversationIdsKey.split(",").filter(Boolean);
+
+    void Promise.all(
+      conversationIds.map((conversationId) =>
+        messageService.markMessagesAsRead(conversationId, user.id)
+      )
+    )
+      .then(() => {
+        setConversations((current) =>
+          current.map((conversation) => ({
+            ...conversation,
+            messages: conversation.messages?.map((message: any) =>
+              message.sender_id === user.id ? message : { ...message, read: true }
+            ),
+          }))
+        );
+      })
+      .catch((error) => {
+        console.error("Failed to mark messages as read:", error);
+      });
+  }, [conversationIdsKey, section, user]);
 
   useEffect(() => {
     if (!user || dealCases.length === 0) {
@@ -560,6 +643,10 @@ export function UserDashboard() {
     compare: ArrowRightLeft,
     "buying-tools": Calculator,
     deals: Shield,
+    verification: UserCheck,
+    insights: BarChart3,
+    concierge: Brain,
+    groups: Users,
     referrals: HandCoins,
     support: Wrench,
     saved: Heart,
@@ -570,6 +657,8 @@ export function UserDashboard() {
     payments: CreditCard,
     settings: Settings,
   };
+
+  const primaryDashboardRoutes = getMinimalUserDashboardRoutes();
 
   const handleReceiptDownload = async (transaction: any) => {
     const receipt = Array.isArray(transaction.receipt)
@@ -646,6 +735,45 @@ export function UserDashboard() {
       console.error("Failed to share alert search:", error);
       toast.error("We couldn't share that alert right now.");
     }
+  };
+
+  const getViewingCalendarInput = (viewing: any) => {
+    const property = viewing.listing?.property || {};
+    const address = [property.address, property.city, property.region].filter(Boolean).join(", ");
+
+    return {
+      title: `Property viewing: ${property.address || "Property Hub"}`,
+      startsAt: viewing.confirmed_datetime || viewing.requested_datetime,
+      durationMinutes: viewing.duration_minutes || 45,
+      location: address,
+      description:
+        viewing.requester_note ||
+        `Viewing with ${viewing.organization?.name || "the Property Hub team"}.`,
+    };
+  };
+
+  const handleAddViewingToCalendar = (viewing: any) => {
+    mobileCalendarService.downloadIcs(getViewingCalendarInput(viewing));
+    toast.success("Calendar invite downloaded.");
+  };
+
+  const handleOpenViewingDirections = async (viewing: any) => {
+    let origin = currentCoordinates;
+
+    if (!origin) {
+      try {
+        origin = await mobileLocationService.getCurrentPosition();
+        setCurrentCoordinates(origin);
+      } catch {
+        origin = null;
+      }
+    }
+
+    window.open(
+      mobileLocationService.getMapsUrl(viewing.listing?.property, origin),
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
   const renderSavedGrid = (items: any[]) => {
@@ -1195,7 +1323,10 @@ export function UserDashboard() {
 
       <div className="space-y-6">
         <Card className="p-6">
-          <h3 className="font-semibold mb-4">Quick Actions</h3>
+          <h3 className="font-semibold mb-4">Next best steps</h3>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Property Hub handles the calculations, reminders, and trust checks in the background.
+          </p>
           <div className="space-y-3">
             <Link to="/search">
               <Button
@@ -1205,7 +1336,24 @@ export function UserDashboard() {
                 title="Search properties"
               >
                 <Search className="w-4 h-4" />
-                Search Properties
+                Find a home
+              </Button>
+            </Link>
+            <Link to="/app/saved">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                aria-label="Open saved homes"
+                title="Open saved homes"
+              >
+                <Heart className="w-4 h-4" />
+                Review saved homes
+              </Button>
+            </Link>
+            <Link to="/app/deals">
+              <Button variant="outline" className="w-full justify-start">
+                <Shield className="w-4 h-4" />
+                Continue a deal
               </Button>
             </Link>
             <Link to="/app/messages">
@@ -1216,47 +1364,7 @@ export function UserDashboard() {
                 title="View messages"
               >
                 <MessageCircle className="w-4 h-4" />
-                View Messages
-              </Button>
-            </Link>
-            <Link to="/app/compare">
-              <Button variant="outline" className="w-full justify-start">
-                <ArrowRightLeft className="w-4 h-4" />
-                Compare Properties
-              </Button>
-            </Link>
-            <Link to="/app/buying-tools">
-              <Button variant="outline" className="w-full justify-start">
-                <Calculator className="w-4 h-4" />
-                Buyer Toolkit
-              </Button>
-            </Link>
-            <Link to="/app/deals">
-              <Button variant="outline" className="w-full justify-start">
-                <Shield className="w-4 h-4" />
-                Deal Rooms
-              </Button>
-            </Link>
-            <Link to="/app/applications">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                aria-label="View my applications"
-                title="View my applications"
-              >
-                <FileText className="w-4 h-4" />
-                My Applications
-              </Button>
-            </Link>
-            <Link to="/app/settings">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                aria-label="Open account settings"
-                title="Open account settings"
-              >
-                <Settings className="w-4 h-4" />
-                Account Settings
+                Reply to messages
               </Button>
             </Link>
             <Link to="/app/payments">
@@ -1267,13 +1375,7 @@ export function UserDashboard() {
                 title="Open payments"
               >
                 <CreditCard className="w-4 h-4" />
-                Payments
-              </Button>
-            </Link>
-            <Link to="/app/alerts">
-              <Button variant="outline" className="w-full justify-start">
-                <Bell className="w-4 h-4" />
-                Saved Alerts
+                Payments & receipts
               </Button>
             </Link>
           </div>
@@ -1322,15 +1424,488 @@ export function UserDashboard() {
     </div>
   );
 
+  const renderMobileEmpty = (
+    Icon: typeof TrendingUp,
+    title: string,
+    body: string,
+    action?: { label: string; to: string }
+  ) => (
+    <div className="mobile-dashboard-empty">
+      <Icon aria-hidden="true" />
+      <strong>{title}</strong>
+      <p>{body}</p>
+      {action ? (
+        <Link to={action.to} className="mobile-primary-link">
+          {action.label}
+          <ArrowRight aria-hidden="true" />
+        </Link>
+      ) : null}
+    </div>
+  );
+
+  const renderMobileActivityCards = () => {
+    if (recentActivity.length === 0) {
+      return renderMobileEmpty(
+        TrendingUp,
+        "No activity yet",
+        "Saved homes, messages, payments, and viewings will show up here.",
+        { label: "Browse listings", to: "/search" }
+      );
+    }
+
+    return (
+      <div className="mobile-dashboard-stack">
+        {recentActivity.map((activity) => (
+          <Link key={activity.id} to={activity.href} className="mobile-dashboard-card">
+            <span>{formatLabel(activity.type)}</span>
+            <strong>{activity.message}</strong>
+            <p>{formatRelativeTime(activity.createdAt)}</p>
+          </Link>
+        ))}
+      </div>
+    );
+  };
+
+  const renderMobileSectionContent = () => {
+    if (section === "compare") {
+      return (
+        <div className="mobile-dashboard-panel">
+          <PropertyComparisonPanel savedProperties={savedProperties} />
+        </div>
+      );
+    }
+
+    if (section === "buying-tools") {
+      return (
+        <div className="mobile-dashboard-panel">
+          <BuyerToolkitPanel savedProperties={savedProperties} dealCases={dealCases} />
+        </div>
+      );
+    }
+
+    if (section === "deals") {
+      return (
+        <div className="mobile-dashboard-panel">
+          <DealRoomsPanel
+            user={user}
+            dealCases={dealCases}
+            propertyTransactions={propertyTransactions}
+            propertyViewings={propertyViewings}
+            documents={dealDocuments}
+            conversations={conversations}
+          />
+        </div>
+      );
+    }
+
+    if (section === "verification") {
+      return (
+        <div className="mobile-dashboard-panel">
+          <TrustVerificationPanel user={user} dealCases={dealCases} documents={dealDocuments} />
+        </div>
+      );
+    }
+
+    if (section === "insights") {
+      return (
+        <div className="mobile-dashboard-panel">
+          <UserInsightsPanel
+            savedProperties={savedProperties}
+            dealCases={dealCases}
+            propertyTransactions={propertyTransactions}
+            propertyViewings={propertyViewings}
+            savedAlerts={savedAlerts}
+            conversations={conversations}
+          />
+        </div>
+      );
+    }
+
+    if (section === "concierge") {
+      return (
+        <div className="mobile-dashboard-panel">
+          <ConciergePanel
+            user={user}
+            savedProperties={savedProperties}
+            dealCases={dealCases}
+            propertyViewings={propertyViewings}
+            documents={dealDocuments}
+          />
+        </div>
+      );
+    }
+
+    if (section === "groups") {
+      return (
+        <div className="mobile-dashboard-panel">
+          <BuyingGroupPanel
+            user={user}
+            savedProperties={savedProperties}
+            dealCases={dealCases}
+            conversations={conversations}
+          />
+        </div>
+      );
+    }
+
+    if (section === "referrals") {
+      return (
+        <div className="mobile-dashboard-panel">
+          <ReferralProgramPanel user={user} />
+        </div>
+      );
+    }
+
+    if (section === "support") {
+      return (
+        <div className="mobile-dashboard-panel">
+          <SupportPanel organizationContacts={organizationContacts} dealCases={dealCases} />
+        </div>
+      );
+    }
+
+    if (section === "saved") {
+      if (savedProperties.length === 0) {
+        return renderMobileEmpty(
+          Heart,
+          "No saved properties",
+          "Save listings you love so your mobile shortlist stays ready.",
+          { label: "Browse listings", to: "/search" }
+        );
+      }
+
+      return (
+        <div className="mobile-dashboard-stack">
+          {savedProperties.map((item) => (
+            <Link key={item.id} to={`/property/${item.listing?.id}`} className="mobile-dashboard-card">
+              <span>{item.listing?.listing_type || "Listing"}</span>
+              <strong>{item.listing?.property?.address || "Saved property"}</strong>
+              <p>
+                {formatPrice(item.listing?.price)}
+                {item.listing?.property?.city ? ` in ${item.listing.property.city}` : ""}
+              </p>
+            </Link>
+          ))}
+        </div>
+      );
+    }
+
+    if (section === "messages") {
+      if (conversations.length === 0) {
+        return renderMobileEmpty(
+          MessageCircle,
+          "No conversations yet",
+          "Start an inquiry from a property page and the thread lands here.",
+          { label: "Search properties", to: "/search" }
+        );
+      }
+
+      return (
+        <div className="mobile-dashboard-stack">
+          {conversations.map((conversation) => {
+            const counterpartId =
+              conversation.participant_1_id === user?.id
+                ? conversation.participant_2_id
+                : conversation.participant_1_id;
+            const counterpart = participantProfiles[counterpartId];
+            const latestMessage = [...(conversation.messages || [])].sort(
+              (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )[0];
+
+            return (
+              <article key={conversation.id} className="mobile-dashboard-card">
+                <span>{formatRelativeTime(conversation.last_message_at || latestMessage?.created_at)}</span>
+                <strong>{counterpart?.full_name || counterpart?.email || "Conversation"}</strong>
+                <p>{latestMessage?.content || "No messages yet"}</p>
+              </article>
+            );
+          })}
+        </div>
+      );
+    }
+
+    if (section === "applications") {
+      if (dealCases.length === 0) {
+        return renderMobileEmpty(
+          FileText,
+          "No active applications",
+          "Offers and applications will appear here once you start a property flow.",
+          { label: "Find a property", to: "/search" }
+        );
+      }
+
+      return (
+        <div className="mobile-dashboard-stack">
+          {dealCases.map((item) => (
+            <article key={item.id} className="mobile-dashboard-card">
+              <span>{formatLabel(item.pipeline_stage || item.status)}</span>
+              <strong>{getCaseLabel(item.case_type)}</strong>
+              <p>
+                {item.listing?.property?.address || "Property"} ·{" "}
+                {stripReferralMetadata(item.message || "Awaiting next update")}
+              </p>
+            </article>
+          ))}
+        </div>
+      );
+    }
+
+    if (section === "viewings") {
+      if (propertyViewings.length === 0) {
+        return renderMobileEmpty(
+          CalendarDays,
+          "No viewings yet",
+          "Book a viewing from a listing and confirmations will stay here.",
+          { label: "Browse listings", to: "/search" }
+        );
+      }
+
+      return (
+        <div className="mobile-dashboard-stack">
+          {propertyViewings.map((viewing) => (
+            <article key={viewing.id} className="mobile-dashboard-card">
+              <span>{formatPaymentStatusLabel(viewing.status)}</span>
+              <strong>{viewing.listing?.property?.address || "Property viewing"}</strong>
+              <p>{formatViewingTime(viewing.confirmed_datetime || viewing.requested_datetime)}</p>
+              <div className="mobile-dashboard-actions">
+                {viewing.listing?.id ? (
+                  <Link to={`/property/${viewing.listing.id}`}>Open listing</Link>
+                ) : null}
+                <button type="button" onClick={() => void handleOpenViewingDirections(viewing)}>
+                  Directions
+                </button>
+                <button type="button" onClick={() => handleAddViewingToCalendar(viewing)}>
+                  Add calendar
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      );
+    }
+
+    if (section === "alerts") {
+      if (savedAlerts.length === 0) {
+        return renderMobileEmpty(
+          Bell,
+          "No saved alerts",
+          "Save a search and we will keep watching the market for you.",
+          { label: "Start searching", to: "/search" }
+        );
+      }
+
+      return (
+        <div className="mobile-dashboard-stack">
+          {savedAlerts.map((alert) => (
+            <Link
+              key={alert.id}
+              to={buildSearchPath(buildAlertSearchInput(alert))}
+              className="mobile-dashboard-card"
+            >
+              <span>{alert.is_active ? "Active" : "Paused"}</span>
+              <strong>{alert.title}</strong>
+              <p>
+                {alert.last_match_count} matches · {alert.frequency}
+              </p>
+            </Link>
+          ))}
+        </div>
+      );
+    }
+
+    if (section === "payments") {
+      if (propertyTransactions.length === 0) {
+        return renderMobileEmpty(
+          CreditCard,
+          "No payments yet",
+          "Receipts and secure checkout history appear here after payment.",
+          { label: "Browse listings", to: "/search" }
+        );
+      }
+
+      return (
+        <div className="mobile-dashboard-stack">
+          {propertyTransactions.map((transaction) => (
+            <article key={transaction.id} className="mobile-dashboard-card">
+              <span>{formatPaymentStatusLabel(transaction.status)}</span>
+              <strong>{getPaymentPurposeLabel(transaction.purpose)}</strong>
+              <p>
+                {formatPaymentAmount(transaction.amount_minor, transaction.currency)} ·{" "}
+                {transaction.provider_reference}
+              </p>
+            </article>
+          ))}
+        </div>
+      );
+    }
+
+    if (section === "settings") {
+      return (
+        <div className="mobile-dashboard-stack">
+          <article className="mobile-dashboard-card">
+            <span>Account</span>
+            <strong>{displayName}</strong>
+            <p>{user?.email}</p>
+          </article>
+          <Link to="/forgot-password" className="mobile-dashboard-card">
+            <span>Security</span>
+            <strong>Reset password</strong>
+            <p>Use your verified email to update sign-in credentials.</p>
+          </Link>
+          <button
+            type="button"
+            className="mobile-dashboard-card mobile-dashboard-button"
+            onClick={() => void signOut()}
+          >
+            <span>Session</span>
+            <strong>Sign out</strong>
+            <p>End this mobile session on the device.</p>
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="mobile-command-grid">
+          {[
+            {
+              to: "/app/deals",
+              icon: Shield,
+              title: "Continue deals",
+              detail: `${dealCases.length} active flow${dealCases.length === 1 ? "" : "s"}`,
+            },
+            {
+              to: "/app/messages",
+              icon: MessageCircle,
+              title: "Reply",
+              detail: `${unreadMessages} unread messages`,
+            },
+            {
+              to: "/app/saved",
+              icon: Heart,
+              title: "Saved homes",
+              detail: `${savedProperties.length} saved homes`,
+            },
+            {
+              to: "/app/buying-tools",
+              icon: Calculator,
+              title: "Buying guide",
+              detail: `Plan around ${recommendedLocation}`,
+            },
+            {
+              to: "/app/verification",
+              icon: UserCheck,
+              title: "Verify safely",
+              detail: "ID, title, and address checks",
+            },
+            {
+              to: "/app/support",
+              icon: Wrench,
+              title: "Get help",
+              detail: "Support and handoff help",
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <Link key={item.to} to={item.to} className="mobile-command-card">
+                <Icon aria-hidden="true" />
+                <strong>{item.title}</strong>
+                <p>{item.detail}</p>
+              </Link>
+            );
+          })}
+        </div>
+
+        <section className="mobile-dashboard-section">
+          <div className="mobile-section-heading">
+            <h2>Recent activity</h2>
+            <Link to="/app/messages">Inbox</Link>
+          </div>
+          {renderMobileActivityCards()}
+        </section>
+      </>
+    );
+  };
+
+  const renderMobileDashboardShell = () => {
+    const activeRoute = USER_DASHBOARD_ROUTE_CONFIG.find((item) => item.section === section);
+
+    return (
+      <section className="mobile-dashboard-native">
+        <header className="mobile-dashboard-hero">
+          <p className="mobile-eyebrow">Your Property Hub</p>
+          <h1>{activeRoute?.label || "Dashboard"}</h1>
+          <p>
+            Welcome back, {displayName}. Your saved homes, viewings, messages, and payments stay
+            grouped for one-thumb mobile use.
+          </p>
+        </header>
+
+        <div className="mobile-dashboard-metrics">
+          <div>
+            <span>Saved</span>
+            <strong>{savedProperties.length}</strong>
+          </div>
+          <div>
+            <span>Deals</span>
+            <strong>{dealCases.length}</strong>
+          </div>
+          <div>
+            <span>Viewings</span>
+            <strong>{propertyViewings.length}</strong>
+          </div>
+          <div>
+            <span>Alerts</span>
+            <strong>{savedAlerts.filter((alert) => alert.is_active).length}</strong>
+          </div>
+        </div>
+
+        <nav className="mobile-dashboard-rail" aria-label="Dashboard sections">
+          {primaryDashboardRoutes.map((item) => {
+            const Icon = navIconBySection[item.section];
+            const active = item.section === section;
+
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={active ? "is-active" : ""}
+                aria-current={active ? "page" : undefined}
+              >
+                <Icon aria-hidden="true" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {loading ? (
+          <div className="mobile-dashboard-loading">
+            <Loader2 aria-hidden="true" />
+            <p>{verifyingReference ? "Verifying payment..." : "Loading dashboard..."}</p>
+          </div>
+        ) : (
+          renderMobileSectionContent()
+        )}
+      </section>
+    );
+  };
+
+  if (isMobileShell) {
+    return renderMobileDashboardShell();
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {!isMobileShell && <Navbar />}
 
-      <div className="pt-24 pb-12 px-4 max-w-7xl mx-auto">
+      <div className={isMobileShell ? "pt-4 pb-32 px-4 max-w-7xl mx-auto" : "pt-24 pb-12 px-4 max-w-7xl mx-auto"}>
         <div className="mb-8">
           <h1 className="text-3xl font-semibold mb-2">Welcome back, {displayName}.</h1>
           <p className="text-muted-foreground">
-            Track your saved properties, conversations, and active deal flow in one place.
+            Track your saved homes, conversations, viewings, and payments without chasing tabs.
           </p>
         </div>
 
@@ -1411,7 +1986,7 @@ export function UserDashboard() {
         </div>
 
         <div className="flex flex-wrap gap-3 mb-8">
-          {USER_DASHBOARD_ROUTE_CONFIG.map((item) => {
+          {primaryDashboardRoutes.map((item) => {
             const Icon = navIconBySection[item.section];
             const active =
               (item.href === "/app" && section === "overview") ||
@@ -1449,10 +2024,37 @@ export function UserDashboard() {
           />
         ) : section === "deals" ? (
           <DealRoomsPanel
+            user={user}
             dealCases={dealCases}
             propertyTransactions={propertyTransactions}
             propertyViewings={propertyViewings}
             documents={dealDocuments}
+            conversations={conversations}
+          />
+        ) : section === "verification" ? (
+          <TrustVerificationPanel user={user} dealCases={dealCases} documents={dealDocuments} />
+        ) : section === "insights" ? (
+          <UserInsightsPanel
+            savedProperties={savedProperties}
+            dealCases={dealCases}
+            propertyTransactions={propertyTransactions}
+            propertyViewings={propertyViewings}
+            savedAlerts={savedAlerts}
+            conversations={conversations}
+          />
+        ) : section === "concierge" ? (
+          <ConciergePanel
+            user={user}
+            savedProperties={savedProperties}
+            dealCases={dealCases}
+            propertyViewings={propertyViewings}
+            documents={dealDocuments}
+          />
+        ) : section === "groups" ? (
+          <BuyingGroupPanel
+            user={user}
+            savedProperties={savedProperties}
+            dealCases={dealCases}
             conversations={conversations}
           />
         ) : section === "referrals" ? (

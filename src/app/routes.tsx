@@ -107,6 +107,20 @@ export const router = createBrowserRouter([
         },
       },
       {
+        path: "legal/terms",
+        lazy: async () => {
+          const { TermsOfUse } = await import("./pages/legal/LegalPage");
+          return { Component: TermsOfUse };
+        },
+      },
+      {
+        path: "legal/privacy",
+        lazy: async () => {
+          const { PrivacyNotice } = await import("./pages/legal/LegalPage");
+          return { Component: PrivacyNotice };
+        },
+      },
+      {
         path: "login",
         lazy: async () => {
           const { Login } = await import("./pages/auth/Login");
