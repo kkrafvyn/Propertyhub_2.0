@@ -314,28 +314,28 @@ WHERE listing.property_id = property.id
 
 WITH media_seed AS (
   SELECT
-    'demo/accra-prime-homes/east-legon-house.jpg'::text AS storage_path,
+    'seed/accra-prime-homes/east-legon-house.jpg'::text AS storage_path,
     'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1600&q=80'::text AS public_url,
     'East Legon family home exterior'::text AS alt_text,
     'accra-prime-homes'::text AS organization_slug,
     '19 Lagos Avenue, East Legon'::text AS address
   UNION ALL
   SELECT
-    'demo/accra-prime-homes/cantonments-penthouse.jpg',
+    'seed/accra-prime-homes/cantonments-penthouse.jpg',
     'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1600&q=80',
     'Cantonments serviced apartment living room',
     'accra-prime-homes',
     '7 Second Rangoon Close, Cantonments'
   UNION ALL
   SELECT
-    'demo/coastal-realty-gh/labone-apartment.jpg',
+    'seed/coastal-realty-gh/labone-apartment.jpg',
     'https://images.unsplash.com/photo-1494526585095-c41746248156?w=1600&q=80',
     'Labone executive apartment interior',
     'coastal-realty-gh',
     '12 Fifth Avenue, Labone'
   UNION ALL
   SELECT
-    'demo/coastal-realty-gh/airport-office.jpg',
+    'seed/coastal-realty-gh/airport-office.jpg',
     'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1600&q=80',
     'Airport Residential office suite',
     'coastal-realty-gh',

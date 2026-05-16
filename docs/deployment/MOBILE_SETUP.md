@@ -53,6 +53,14 @@ The mobile app also includes app lock backed by Capacitor Preferences plus nativ
 
 Offline field notes, buyer/viewing/maintenance reports, and listing photos are queued in Capacitor Preferences. The mobile account screen includes a Sync now action; notes/reports sync into the existing in-app notification log, while listing photos upload directly when the queue payload includes organization and property context.
 
+Native release disclosure files now live in the repo:
+
+- `ios/App/App/Info.plist` includes camera, location, photo library, and Face ID usage descriptions.
+- `ios/App/App/PrivacyInfo.xcprivacy` declares the baseline app privacy manifest.
+- `android/app/src/main/AndroidManifest.xml` declares camera, location, notification, media, and internet permissions.
+- `docs/deployment/APP_STORE_RELEASE.md` contains App Store and Google Play disclosure inputs.
+- `docs/deployment/RELEASE_HARDENING_CHECKLIST.md` is the final release gate.
+
 The current mobile feature set also includes:
 
 - Near-me search sorting using device geolocation and property coordinates.
@@ -89,6 +97,14 @@ If you prefer a project-local override, create `android/local.properties` with:
 ```text
 sdk.dir=C\:\\Users\\<you>\\AppData\\Local\\Android\\Sdk
 ```
+
+This repo also includes a release checker:
+
+```bash
+npm run release:check
+```
+
+The checker fails if the Android SDK path is missing, the SPA rewrite is missing, native privacy files are missing, or required native permissions are absent. It warns for external production secrets that must be configured in Vercel, Supabase, Firebase, Apple, or provider dashboards.
 
 ## iOS Native Wrapper
 

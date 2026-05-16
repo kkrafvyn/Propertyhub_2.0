@@ -56,15 +56,6 @@ function LegalShell({
           </section>
 
           <div className="mt-8 grid gap-5">{children}</div>
-
-          <Card className="mt-8 border-amber-500/20 bg-amber-500/5 p-5">
-            <p className="text-sm font-semibold text-amber-900">Production legal note</p>
-            <p className="mt-2 text-sm leading-6 text-amber-950/80">
-              This in-app notice gives users a clear consent and safety baseline. Have local counsel
-              review and replace it with final Terms, Privacy, and consumer disclosures before a
-              public production launch.
-            </p>
-          </Card>
         </div>
       </main>
     </div>

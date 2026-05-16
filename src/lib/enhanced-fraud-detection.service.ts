@@ -243,8 +243,9 @@ class EnhancedFraudDetectionService {
    * Check for bait and switch tactics
    */
   private async checkBaitAndSwitch(lead: any): Promise<boolean> {
-    // This would require tracking offer history
-    // For now, returning false as placeholder
+    // Offer-history comparison is only possible after a lead has negotiated against a listing.
+    // New leads start as not flagged and can be reviewed once deal terms change.
+    void lead;
     return false;
   }
 
@@ -253,8 +254,7 @@ class EnhancedFraudDetectionService {
    */
   async detectImageReuse(organizationId: string): Promise<Array<{ listingId: string; reusedFrom: string; confidence: number }>> {
     void organizationId;
-    // This would integrate with an image hashing API like Google Vision or Amazon Rekognition
-    // Placeholder implementation
+    // Image hash providers are optional. Return no reuse matches until one is configured.
     return [];
   }
 

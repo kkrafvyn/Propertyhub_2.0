@@ -39,6 +39,7 @@ Analytics also grants anonymous insert only, scoped to `user_id IS NULL`, so pub
 
 ## Security checks
 
+- Run `supabase/queries/production_rls_audit.sql` in the Supabase SQL editor.
 - Confirm RLS is enabled on every new public table.
 - Confirm buyer-group policies do not use `user_metadata`; invitations match the authenticated JWT email claim.
 - Confirm anonymous users can insert `analytics_events` only with `user_id IS NULL`, and cannot select analytics rows.
@@ -64,6 +65,8 @@ Analytics also grants anonymous insert only, scoped to `user_id IS NULL`, so pub
 - Run `npm run build`.
 - Run `npm test`.
 - Run `npx cap sync`.
+- Run `npm run release:check`.
 - Verify bottom navigation includes Concierge and Groups in the right mobile sections.
 - Verify listing pages still fit one-handed mobile use after the media readiness and trust cards.
 - Verify APNS and FCM credentials are configured before relying on native push delivery.
+- Complete the store and legal checklist in `docs/deployment/RELEASE_HARDENING_CHECKLIST.md`.

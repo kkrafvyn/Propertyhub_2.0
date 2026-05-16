@@ -24,6 +24,16 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Property Hub uses the camera only when you scan deal documents or capture property photos you choose to upload.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Property Hub can use Face ID to unlock your local app lock on this device.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Property Hub uses your location only when you sort listings near you or add optional visit context to field notes.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Property Hub may save generated files, images, or documents to your photo library when you choose that action.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Property Hub accesses selected photos only when you choose media for listings, deal rooms, or support requests.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

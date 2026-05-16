@@ -1,5 +1,10 @@
 # Production Deployment Checklist
 
+> Current launch gate: use `docs/deployment/RELEASE_HARDENING_CHECKLIST.md`,
+> `docs/deployment/PRODUCTION_DEPTH_READINESS.md`, and `npm run release:check`
+> for the latest production-depth/mobile release. This older checklist remains as
+> historical setup reference for the original MVP.
+
 ## Phase 1: Local Setup ✅ (Already Done)
 
 - [x] React 18 + TypeScript + Vite configured
