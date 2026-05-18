@@ -7,6 +7,7 @@ import {
   Building2,
   CalendarDays,
   Camera,
+  Check,
   ChevronRight,
   Compass,
   FileText,
@@ -27,6 +28,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
+import { APP_THEME_OPTIONS, useAppTheme } from "../context/AppThemeContext";
 import { useAuth } from "../context/AuthContext";
 import {
   getUserDashboardSection,
@@ -131,6 +133,7 @@ function getPathDrivenMobileTab(pathname: string): MobileTab {
     pathname.startsWith("/property/") ||
     pathname.startsWith("/guides") ||
     pathname.startsWith("/market-trends") ||
+    pathname.startsWith("/sold-ledger") ||
     pathname.startsWith("/buyer-requests") ||
     pathname.startsWith("/projects")
   ) {
@@ -148,6 +151,10 @@ function getPathDrivenMobileTab(pathname: string): MobileTab {
       return "saved";
     }
 
+    return "me";
+  }
+
+  if (pathname.startsWith("/workspace")) {
     return "me";
   }
 
@@ -175,6 +182,7 @@ function getMobileRouteTitle(pathname: string) {
   if (pathname.startsWith("/guides/")) return "Area guide";
   if (pathname.startsWith("/guides")) return "Area guides";
   if (pathname.startsWith("/market-trends")) return "Market trends";
+  if (pathname.startsWith("/sold-ledger")) return "Sold ledger";
   if (pathname.startsWith("/reviews")) return "Public reviews";
   if (pathname.startsWith("/buyer-requests")) return "Buyer requests";
   if (pathname.startsWith("/projects/")) return "Project";
@@ -183,6 +191,8 @@ function getMobileRouteTitle(pathname: string) {
   if (pathname.startsWith("/get-the-app")) return "Get the app";
   if (pathname.startsWith("/legal/terms")) return "Terms of Use";
   if (pathname.startsWith("/legal/privacy")) return "Privacy Notice";
+  if (pathname.startsWith("/workspace/accept")) return "Workspace invite";
+  if (pathname.startsWith("/workspace")) return "Workspace";
   if (pathname.startsWith("/app")) {
     if (pathname === "/app") return "Overview";
 
@@ -483,6 +493,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, signOut } = useAuth();
+  const { preference: themePreference, setPreference: setThemePreference } = useAppTheme();
   const [listingType, setListingType] = useState<ListingType>("rental");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -513,6 +524,10 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
     enabled: false,
     locked: false,
     lockedAt: null,
+    biometryAvailable: false,
+    biometryLabel: null,
+    deviceCredentialAvailable: false,
+    nativeUnlockAvailable: false,
   });
   const [appLockSheetOpen, setAppLockSheetOpen] = useState(false);
   const [appLockCode, setAppLockCode] = useState("");
@@ -758,6 +773,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
     openDeals.length + propertyViewings.length + propertyPayments.length + unreadNotifications;
   const savedBadgeCount = saved.length + savedAlerts.length;
   const accountBadgeCount = organizations.length;
+  const hasMobileTabBar = Boolean(user);
 
   const refreshMobileData = async () => {
     try {
@@ -1801,6 +1817,43 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
               </div>
             </div>
 
+            <section className="mobile-section mobile-theme-settings" aria-labelledby="mobile-theme-title">
+              <div className="mobile-section-heading mobile-theme-heading">
+                <div>
+                  <h2 id="mobile-theme-title">Appearance</h2>
+                  <p>Pick the mobile theme that is easiest on your eyes.</p>
+                </div>
+                <span>Settings</span>
+              </div>
+              <div className="mobile-theme-grid" role="radiogroup" aria-label="Choose app theme">
+                {APP_THEME_OPTIONS.map((option) => {
+                  const selected = themePreference === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      className={`mobile-theme-option ${selected ? "is-selected" : ""}`}
+                      onClick={() => setThemePreference(option.value)}
+                    >
+                      <span
+                        className="mobile-theme-swatch"
+                        data-theme-option={option.value}
+                        aria-hidden="true"
+                      />
+                      <span className="mobile-theme-copy">
+                        <strong>{option.label}</strong>
+                        <small>{option.detail}</small>
+                      </span>
+                      {selected ? <Check aria-hidden="true" /> : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
             <div className="mobile-action-list mobile-grouped-list">
               <MobileQuickLink
                 to="/app/referrals"
@@ -2200,7 +2253,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
   return (
     <MobileShellProvider value={{ isMobileShell: true }}>
       <main
-        className="mobile-app-shell"
+        className={`mobile-app-shell ${hasMobileTabBar ? "has-mobile-tab-bar" : "is-guest-mobile-shell"}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -2265,41 +2318,43 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
             </section>
           )}
         </div>
-        <nav className="mobile-tab-bar" aria-label="Primary mobile navigation">
-          <MobileTabButton
-            active={activeTab === "home"}
-            icon={Home}
-            label="Home"
-            to={getTabHref("home")}
-          />
-          <MobileTabButton
-            active={activeTab === "search"}
-            icon={Search}
-            label="Search"
-            to={getTabHref("search")}
-          />
-          <MobileTabButton
-            active={activeTab === "activity"}
-            icon={CalendarDays}
-            label="Activity"
-            to={getTabHref("activity")}
-            badge={activityBadgeCount}
-          />
-          <MobileTabButton
-            active={activeTab === "saved"}
-            icon={Heart}
-            label="Saved"
-            to={getTabHref("saved")}
-            badge={savedBadgeCount}
-          />
-          <MobileTabButton
-            active={activeTab === "me"}
-            icon={UserRound}
-            label="Me"
-            to={getTabHref("me")}
-            badge={accountBadgeCount}
-          />
-        </nav>
+        {hasMobileTabBar ? (
+          <nav className="mobile-tab-bar" aria-label="Primary mobile navigation">
+            <MobileTabButton
+              active={activeTab === "home"}
+              icon={Home}
+              label="Home"
+              to={getTabHref("home")}
+            />
+            <MobileTabButton
+              active={activeTab === "search"}
+              icon={Search}
+              label="Search"
+              to={getTabHref("search")}
+            />
+            <MobileTabButton
+              active={activeTab === "activity"}
+              icon={CalendarDays}
+              label="Activity"
+              to={getTabHref("activity")}
+              badge={activityBadgeCount}
+            />
+            <MobileTabButton
+              active={activeTab === "saved"}
+              icon={Heart}
+              label="Saved"
+              to={getTabHref("saved")}
+              badge={savedBadgeCount}
+            />
+            <MobileTabButton
+              active={activeTab === "me"}
+              icon={UserRound}
+              label="Me"
+              to={getTabHref("me")}
+              badge={accountBadgeCount}
+            />
+          </nav>
+        ) : null}
       </main>
     </MobileShellProvider>
   );

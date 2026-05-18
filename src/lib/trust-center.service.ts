@@ -30,8 +30,8 @@ export const trustCenterService = {
       publicDocumentCount > 0
         ? `${publicDocumentCount} public verification document${publicDocumentCount === 1 ? "" : "s"} available`
         : "No public verification documents published yet",
-      "Paystack handles Mobile Money, cards, and bank transfers",
-      "Successful receipts are prepared for Polygon verification",
+      "Approved gateways handle Mobile Money, cards, and bank transfers",
+      "Successful receipts receive internal SHA-256 integrity hashes",
     ];
 
     return {
@@ -40,7 +40,7 @@ export const trustCenterService = {
       publicDocuments: documents,
       signedDocumentCount,
       securePaymentsEnabled: true,
-      blockchainProofEnabled: true,
+      receiptIntegrityEnabled: true,
       trustHighlights,
     };
   },

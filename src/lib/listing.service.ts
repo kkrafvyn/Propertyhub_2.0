@@ -25,7 +25,7 @@ export const listingService = {
       .range(offset, offset + limit - 1);
 
     if (error) throw error;
-    return data || [];
+    return data;
   },
 
   async searchListings(
@@ -37,6 +37,7 @@ export const listingService = {
       bathrooms?: number;
       propertyType?: string;
       listingType?: string;
+      amenities?: string[];
     },
     limit = 20,
     offset = 0
@@ -54,11 +55,15 @@ export const listingService = {
       bathrooms?: number;
       propertyType?: string;
       listingType?: string;
+      amenities?: string[];
     },
     limit = 20,
     offset = 0
   ) {
     const normalizedPropertyType = normalizePropertyCategory(filters.propertyType);
+    const requiredAmenities = (filters.amenities || [])
+      .map((amenity) => amenity.trim().toLowerCase())
+      .filter(Boolean);
 
     const { data, error } = await supabase
       .from("listings")
@@ -73,6 +78,9 @@ export const listingService = {
     const filtered = (data || []).filter((listing) => {
       const property = listing.property as Database["public"]["Tables"]["properties"]["Row"] | null;
       const normalizedListingCategory = normalizePropertyCategory(property?.category);
+      const listingAmenities = (property?.amenities || []).map((amenity) =>
+        amenity.trim().toLowerCase()
+      );
       const locationHaystack = [property?.address, property?.city, property?.region, property?.country]
         .filter(Boolean)
         .join(" ")
@@ -84,6 +92,12 @@ export const listingService = {
       if (normalizedPropertyType && normalizedListingCategory !== normalizedPropertyType) return false;
       if (filters.bedrooms && (property?.bedrooms || 0) < filters.bedrooms) return false;
       if (filters.bathrooms && (property?.bathrooms || 0) < filters.bathrooms) return false;
+      if (
+        requiredAmenities.length > 0 &&
+        !requiredAmenities.every((amenity) => listingAmenities.includes(amenity))
+      ) {
+        return false;
+      }
       if (normalizedLocation && !locationHaystack.includes(normalizedLocation)) return false;
 
       return true;
@@ -112,7 +126,7 @@ export const listingService = {
       .single();
 
     if (error) throw error;
-    return data || [];
+    return data;
   },
 
   async getOrganizationListings(organizationId: string) {

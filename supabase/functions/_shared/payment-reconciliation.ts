@@ -1,11 +1,9 @@
-import { Contract, JsonRpcProvider, Wallet } from "npm:ethers@6.10.0";
 import { HttpError } from "./http.ts";
-import { PaystackTransactionData } from "./paystack.ts";
+import type {
+  PaymentGatewayProvider,
+  PaymentGatewayTransactionData,
+} from "./payment-gateways.ts";
 import { createAdminClient } from "./supabase.ts";
-
-const VERIFICATION_REGISTRY_ABI = [
-  "function recordVerification(bytes32 receiptHash, string paymentReference, string propertyId, string receiptId) external returns (bytes32)",
-];
 
 type PropertyTransactionRow = {
   id: string;
@@ -14,6 +12,7 @@ type PropertyTransactionRow = {
   organization_id: string;
   deal_case_id: string | null;
   payer_user_id: string;
+  provider: string;
   provider_reference: string;
   provider_transaction_id: string | null;
   amount_minor: number;
@@ -38,11 +37,16 @@ type TransactionReceiptRow = {
   storage_path: string;
   receipt_sha256: string;
   receipt_payload: Record<string, unknown>;
-  blockchain_record_id: string | null;
-  blockchain_status: string;
-  blockchain_network: string;
-  blockchain_txid: string | null;
+  integrity_status: string;
+  integrity_signature: string | null;
+  integrity_public_key_id: string | null;
   verification_url: string | null;
+  public_verification_token?: string | null;
+  verification_payload?: Record<string, unknown> | null;
+  verification_pdf_url?: string | null;
+  receipt_html?: string | null;
+  receipt_pdf_status?: string | null;
+  receipt_generated_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -58,7 +62,7 @@ function minorToMajorString(amountMinor: number, currency: string) {
 
 function buildReceiptNumber(reference: string) {
   const suffix = reference.replace(/[^a-zA-Z0-9]/g, "").slice(-10).toUpperCase();
-  return `PH-${new Date().getFullYear()}-${suffix}`;
+  return `BM-${new Date().getFullYear()}-${suffix}`;
 }
 
 function buildReceiptPath(organizationId: string, reference: string) {
@@ -66,10 +70,26 @@ function buildReceiptPath(organizationId: string, reference: string) {
   return `${organizationId}/${year}/${reference}.txt`;
 }
 
+function getPublicAppUrl() {
+  return (
+    Deno.env.get("PUBLIC_APP_URL") ||
+    Deno.env.get("VITE_PUBLIC_APP_URL") ||
+    Deno.env.get("SITE_URL") ||
+    "https://baytmiftah.com"
+  ).replace(/\/+$/, "");
+}
+
+function buildPublicVerificationToken() {
+  return `bmv_${crypto.randomUUID().replace(/-/g, "")}`;
+}
+
 function normalizeStatus(status?: string) {
   switch (status) {
     case "success":
+    case "successful":
       return "success";
+    case "cancelled":
+    case "canceled":
     case "abandoned":
       return "abandoned";
     case "reversed":
@@ -119,17 +139,17 @@ async function sha256Hex(content: string) {
 
 function buildReceiptPayload(
   transaction: PropertyTransactionRow,
-  paystackData: PaystackTransactionData,
+  gatewayData: PaymentGatewayTransactionData,
   receiptId: string,
   receiptNumber: string
 ) {
   return {
     receiptId,
     receiptNumber,
-    provider: "paystack",
+    provider: transaction.provider || "paystack",
     providerReference: transaction.provider_reference,
     providerTransactionId:
-      transaction.provider_transaction_id || String(paystackData.id || ""),
+      transaction.provider_transaction_id || String(gatewayData.id || ""),
     organizationId: transaction.organization_id,
     listingId: transaction.listing_id,
     propertyId: transaction.property_id,
@@ -139,10 +159,10 @@ function buildReceiptPayload(
     amountMinor: transaction.amount_minor,
     amountFormatted: minorToMajorString(transaction.amount_minor, transaction.currency),
     currency: transaction.currency,
-    paymentChannel: paystackData.channel || transaction.payment_channel,
-    gatewayResponse: paystackData.gateway_response || transaction.gateway_response,
-    customerEmail: paystackData.customer?.email,
-    paidAt: paystackData.paid_at || new Date().toISOString(),
+    paymentChannel: gatewayData.channel || transaction.payment_channel,
+    gatewayResponse: gatewayData.gateway_response || transaction.gateway_response,
+    customerEmail: gatewayData.customer?.email,
+    paidAt: gatewayData.paid_at || new Date().toISOString(),
     generatedAt: new Date().toISOString(),
   };
 }
@@ -171,65 +191,79 @@ function buildReceiptText(payload: ReturnType<typeof buildReceiptPayload>) {
   ].join("\n");
 }
 
-async function recordReceiptOnChain(input: {
-  receiptHash: string;
-  reference: string;
-  propertyId: string;
-  receiptId: string;
-}) {
-  const registryAddress =
-    Deno.env.get("VERIFICATION_REGISTRY_ADDRESS") ||
-    Deno.env.get("VITE_VERIFICATION_REGISTRY_ADDRESS");
-  const privateKey = Deno.env.get("BLOCKCHAIN_SIGNER_PRIVATE_KEY");
-  const rpcUrl =
-    Deno.env.get("POLYGON_MAINNET_RPC_URL") ||
-    Deno.env.get("POLYGON_AMOY_RPC_URL") ||
-    Deno.env.get("POLYGON_RPC_URL");
-
-  if (!registryAddress || !privateKey || !rpcUrl) {
-    return null;
-  }
-
-  const provider = new JsonRpcProvider(rpcUrl);
-  const wallet = new Wallet(privateKey, provider);
-  const registry = new Contract(registryAddress, VERIFICATION_REGISTRY_ABI, wallet);
-  const transaction = await registry.recordVerification(
-    `0x${input.receiptHash}`,
-    input.reference,
-    input.propertyId,
-    input.receiptId
-  );
-  const receipt = await transaction.wait();
-
-  return {
-    txHash: transaction.hash,
-    blockNumber: receipt?.blockNumber ? Number(receipt.blockNumber) : undefined,
-    contractAddress: registryAddress,
-    chainId: Number(Deno.env.get("PAYMENT_BLOCKCHAIN_CHAIN_ID") || "137"),
-    explorerBaseUrl:
-      Deno.env.get("PAYMENT_BLOCKCHAIN_EXPLORER_URL") || "https://polygonscan.com",
-  };
+function escapeHtml(value: unknown) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
-async function logVerification(
-  organizationId: string,
-  blockchainRecordId: string | null,
-  status: "pending" | "verified" | "failed",
-  details: Record<string, unknown>,
-  verifiedBy?: string,
-  errorMessage?: string
-) {
-  const admin = createAdminClient();
-  await admin.from("blockchain_verification_logs").insert({
-    organization_id: organizationId,
-    blockchain_record_id: blockchainRecordId,
-    verification_type: "transaction",
-    status,
-    verification_details: details,
-    verified_by: verifiedBy,
-    verified_at: status === "verified" ? new Date().toISOString() : null,
-    error_message: errorMessage || null,
-  });
+function buildReceiptHtml(payload: Record<string, unknown>, verificationUrl?: string) {
+  const rows = [
+    ["Receipt Number", payload.receiptNumber],
+    ["Receipt ID", payload.receiptId],
+    ["Provider", payload.provider],
+    ["Reference", payload.providerReference],
+    ["Provider Transaction ID", payload.providerTransactionId || "Unavailable"],
+    ["Organization ID", payload.organizationId],
+    ["Listing ID", payload.listingId],
+    ["Property ID", payload.propertyId],
+    ["Deal Case ID", payload.dealCaseId || "N/A"],
+    ["Payer User ID", payload.payerUserId],
+    ["Purpose", payload.purpose],
+    ["Amount", payload.amountFormatted],
+    ["Currency", payload.currency],
+    ["Payment Channel", payload.paymentChannel || "Unavailable"],
+    ["Gateway Response", payload.gatewayResponse || "Unavailable"],
+    ["Customer Email", payload.customerEmail || "Unavailable"],
+    ["Paid At", payload.paidAt],
+    ["Generated At", payload.generatedAt],
+  ];
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BaytMiftah Receipt ${escapeHtml(payload.receiptNumber)}</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #111827; margin: 0; padding: 32px; background: #f8fafc; }
+    main { max-width: 760px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 20px; padding: 32px; }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    p { color: #4b5563; }
+    table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+    th { width: 36%; color: #374151; background: #f9fafb; }
+    .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #ecfdf5; color: #047857; font-weight: 700; }
+    .verify { word-break: break-all; font-size: 13px; color: #2563eb; }
+    @media print { body { background: white; padding: 0; } main { border: 0; border-radius: 0; } .no-print { display: none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="badge">Verified BaytMiftah Receipt</span>
+    <h1>Payment Receipt</h1>
+    <p>This receipt is generated from BaytMiftah payment records and can be printed or saved as PDF.</p>
+    <table>
+      <tbody>
+        ${rows
+          .map(
+            ([label, value]) =>
+              `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`
+          )
+          .join("")}
+      </tbody>
+    </table>
+    ${
+      verificationUrl
+        ? `<p class="verify">Public verification: ${escapeHtml(verificationUrl)}</p>`
+        : ""
+    }
+  </main>
+</body>
+</html>`;
 }
 
 async function syncDealCasePaymentState(input: {
@@ -258,9 +292,131 @@ async function syncDealCasePaymentState(input: {
   }
 }
 
-export async function reconcilePaystackPayment(input: {
+async function logIntegrityEvent(input: {
+  organizationId: string;
+  actorUserId?: string | null;
+  eventType: string;
+  subjectType: string;
+  subjectId: string;
+  hashValue: string;
+  payload: Record<string, unknown>;
+}) {
+  const admin = createAdminClient();
+  const { data: previousEvent } = await admin
+    .from("integrity_audit_events")
+    .select("event_hash")
+    .eq("organization_id", input.organizationId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const eventPayload = {
+    ...input.payload,
+    hashValue: input.hashValue,
+    previousEventHash: previousEvent?.event_hash || null,
+    generatedAt: new Date().toISOString(),
+  };
+  const eventHash = await sha256Hex(JSON.stringify(eventPayload));
+
+  await admin.from("integrity_audit_events").insert({
+    organization_id: input.organizationId,
+    actor_user_id: input.actorUserId || null,
+    event_type: input.eventType,
+    subject_type: input.subjectType,
+    subject_id: input.subjectId,
+    hash_algorithm: "SHA-256",
+    hash_value: input.hashValue,
+    previous_event_hash: previousEvent?.event_hash || null,
+    event_payload: eventPayload,
+    event_hash: eventHash,
+  });
+}
+
+async function publishPublicReceipt(input: {
+  admin: any;
+  receipt: TransactionReceiptRow;
+  transaction: PropertyTransactionRow;
+  receiptPayload: Record<string, unknown>;
+  receiptHash: string;
+  receiptNumber: string;
+  provider: string;
+  receiptHtml?: string;
+}) {
+  const publicToken = input.receipt.public_verification_token || buildPublicVerificationToken();
+  const verificationUrl = `${getPublicAppUrl()}/verify/${publicToken}`;
+  const printUrl = `${verificationUrl}?print=1`;
+  const publicPayload = {
+    receiptId: input.receipt.id,
+    receiptNumber: input.receiptNumber,
+    transactionId: input.transaction.id,
+    organizationId: input.transaction.organization_id,
+    listingId: input.transaction.listing_id,
+    propertyId: input.transaction.property_id,
+    payerUserId: input.transaction.payer_user_id,
+    provider: input.provider,
+    providerReference: input.transaction.provider_reference,
+    amountMinor: input.transaction.amount_minor,
+    currency: input.transaction.currency,
+    purpose: input.transaction.purpose,
+    receiptSha256: input.receiptHash,
+    paidAt: input.receiptPayload.paidAt,
+    issuedAt: new Date().toISOString(),
+  };
+  const payloadHash = await sha256Hex(JSON.stringify(publicPayload));
+  const receiptHtml =
+    input.receiptHtml || buildReceiptHtml(input.receiptPayload, verificationUrl);
+
+  const { data: updatedReceipt, error: updateError } = await input.admin
+    .from("transaction_receipts")
+    .update({
+      public_verification_token: publicToken,
+      verification_payload: publicPayload,
+      verification_url: verificationUrl,
+      verification_pdf_url: printUrl,
+      receipt_html: receiptHtml,
+      receipt_pdf_status: "html_ready",
+      receipt_generated_at: new Date().toISOString(),
+    })
+    .eq("id", input.receipt.id)
+    .select("*")
+    .single();
+
+  if (updateError) {
+    throw new HttpError(500, updateError.message);
+  }
+
+  const { error: publicReceiptError } = await input.admin
+    .from("public_verification_receipts")
+    .upsert(
+      {
+        receipt_id: input.receipt.id,
+        organization_id: input.transaction.organization_id,
+        public_token: publicToken,
+        receipt_type: "payment_receipt",
+        title: `BaytMiftah receipt ${input.receiptNumber}`,
+        summary: `${input.provider.toUpperCase()} payment receipt for ${minorToMajorString(
+          input.transaction.amount_minor,
+          input.transaction.currency
+        )}.`,
+        payload: publicPayload,
+        payload_hash: payloadHash,
+        rsa_signature: input.receipt.integrity_signature || null,
+        public_key_id: input.receipt.integrity_public_key_id || null,
+      },
+      { onConflict: "public_token" }
+    );
+
+  if (publicReceiptError) {
+    throw new HttpError(500, publicReceiptError.message);
+  }
+
+  return updatedReceipt as TransactionReceiptRow;
+}
+
+export async function reconcilePropertyPayment(input: {
+  provider?: PaymentGatewayProvider | string;
   reference: string;
-  verifiedTransaction: PaystackTransactionData;
+  verifiedTransaction: PaymentGatewayTransactionData;
   verifiedByUserId?: string;
   source: "webhook" | "manual_verify";
 }) {
@@ -279,14 +435,29 @@ export async function reconcilePaystackPayment(input: {
     throw new HttpError(404, "Property transaction not found");
   }
 
+  const typedTransaction = transaction as PropertyTransactionRow;
+  const provider = input.provider || typedTransaction.provider || "paystack";
   const normalizedStatus = normalizeStatus(input.verifiedTransaction.status);
   const providerTransactionId =
     input.verifiedTransaction.id !== undefined
       ? String(input.verifiedTransaction.id)
-      : transaction.provider_transaction_id;
+      : typedTransaction.provider_transaction_id;
+  const providerMetadata = input.verifiedTransaction.metadata || {};
+  const providerColumnUpdates =
+    provider === "stripe"
+      ? {
+          stripe_checkout_session_id:
+            (providerMetadata.stripeCheckoutSessionId as string | undefined) || null,
+          stripe_payment_intent_id:
+            (providerMetadata.stripePaymentIntentId as string | undefined) ||
+            providerTransactionId ||
+            null,
+        }
+      : {};
   const mergedMetadata = {
-    ...(transaction.metadata || {}),
-    paystack: input.verifiedTransaction,
+    ...(typedTransaction.metadata || {}),
+    paymentGateway: provider,
+    [provider]: input.verifiedTransaction,
     reconciliationSource: input.source,
   };
 
@@ -295,13 +466,15 @@ export async function reconcilePaystackPayment(input: {
       .from("property_transactions")
       .update({
         status: normalizedStatus,
-        payment_channel: input.verifiedTransaction.channel || transaction.payment_channel,
+        payment_channel:
+          input.verifiedTransaction.channel || typedTransaction.payment_channel,
         provider_transaction_id: providerTransactionId,
         gateway_response:
-          input.verifiedTransaction.gateway_response || transaction.gateway_response,
+          input.verifiedTransaction.gateway_response || typedTransaction.gateway_response,
+        ...providerColumnUpdates,
         metadata: mergedMetadata,
       })
-      .eq("id", transaction.id)
+      .eq("id", typedTransaction.id)
       .select("*")
       .single();
 
@@ -312,7 +485,6 @@ export async function reconcilePaystackPayment(input: {
     return {
       transaction: updatedTransaction,
       receipt: null,
-      blockchainRecord: null,
       alreadyProcessed: false,
     };
   }
@@ -320,33 +492,38 @@ export async function reconcilePaystackPayment(input: {
   const { data: existingReceipt } = await admin
     .from("transaction_receipts")
     .select("*")
-    .eq("transaction_id", transaction.id)
+    .eq("transaction_id", typedTransaction.id)
     .maybeSingle();
 
-  if (transaction.status === "success" && existingReceipt) {
-    const blockchainRecord = existingReceipt.blockchain_record_id
-      ? await admin
-          .from("blockchain_records")
-          .select("*")
-          .eq("id", existingReceipt.blockchain_record_id)
-          .maybeSingle()
-      : { data: null };
+  if (typedTransaction.status === "success" && existingReceipt) {
+    const existingTypedReceipt = existingReceipt as TransactionReceiptRow;
+    const publicReceipt = existingTypedReceipt.public_verification_token
+      ? existingTypedReceipt
+      : await publishPublicReceipt({
+          admin,
+          receipt: existingTypedReceipt,
+          transaction: typedTransaction,
+          receiptPayload: existingTypedReceipt.receipt_payload || {},
+          receiptHash: existingTypedReceipt.receipt_sha256,
+          receiptNumber: existingTypedReceipt.receipt_number,
+          provider: String(provider),
+        });
 
     return {
-      transaction,
-      receipt: existingReceipt,
-      blockchainRecord: blockchainRecord.data,
+      transaction: typedTransaction,
+      receipt: publicReceipt,
       alreadyProcessed: true,
     };
   }
 
   const receiptId = existingReceipt?.id || crypto.randomUUID();
-  const receiptNumber = existingReceipt?.receipt_number || buildReceiptNumber(input.reference);
+  const receiptNumber =
+    existingReceipt?.receipt_number || buildReceiptNumber(input.reference);
   const storagePath =
     existingReceipt?.storage_path ||
-    buildReceiptPath(transaction.organization_id, input.reference);
+    buildReceiptPath(typedTransaction.organization_id, input.reference);
   const receiptPayload = buildReceiptPayload(
-    transaction,
+    typedTransaction,
     input.verifiedTransaction,
     receiptId,
     receiptNumber
@@ -371,13 +548,15 @@ export async function reconcilePaystackPayment(input: {
     .update({
       status: "success",
       paid_at: paidAt,
-      payment_channel: input.verifiedTransaction.channel || transaction.payment_channel,
+      payment_channel:
+        input.verifiedTransaction.channel || typedTransaction.payment_channel,
       provider_transaction_id: providerTransactionId,
       gateway_response:
-        input.verifiedTransaction.gateway_response || transaction.gateway_response,
+        input.verifiedTransaction.gateway_response || typedTransaction.gateway_response,
+      ...providerColumnUpdates,
       metadata: mergedMetadata,
     })
-    .eq("id", transaction.id)
+    .eq("id", typedTransaction.id)
     .select("*")
     .single();
 
@@ -391,20 +570,31 @@ export async function reconcilePaystackPayment(input: {
     paidAt,
   });
 
+  const finalizedPayload = {
+    ...receiptPayload,
+    integrity: {
+      algorithm: "SHA-256",
+      receiptHash,
+      status: "hashed",
+    },
+  };
+  const receiptHtml = buildReceiptHtml(finalizedPayload, undefined);
+
   const { data: receipt, error: receiptError } = await admin
     .from("transaction_receipts")
     .upsert(
       {
         id: receiptId,
-        transaction_id: transaction.id,
+        transaction_id: typedTransaction.id,
         receipt_number: receiptNumber,
         storage_bucket: "receipts",
         storage_path: storagePath,
         receipt_sha256: receiptHash,
-        receipt_payload: receiptPayload,
-        blockchain_status: existingReceipt?.blockchain_status || "pending",
-        blockchain_network: existingReceipt?.blockchain_network || "polygon",
-        blockchain_txid: existingReceipt?.blockchain_txid || null,
+        receipt_payload: finalizedPayload,
+        receipt_html: receiptHtml,
+        receipt_pdf_status: "html_ready",
+        receipt_generated_at: new Date().toISOString(),
+        integrity_status: "hashed",
         verification_url: existingReceipt?.verification_url || null,
       },
       { onConflict: "transaction_id" }
@@ -416,135 +606,69 @@ export async function reconcilePaystackPayment(input: {
     throw new HttpError(500, receiptError.message);
   }
 
-  let blockchainRecord: Record<string, unknown> | null = null;
-  let blockchainStatus: "pending" | "submitted" | "confirmed" | "failed" = "pending";
-  let blockchainTxid: string | null = existingReceipt?.blockchain_txid || null;
-  let verificationUrl: string | null = existingReceipt?.verification_url || null;
-
-  try {
-    const chainResult = await recordReceiptOnChain({
-      receiptHash,
-      reference: transaction.provider_reference,
-      propertyId: transaction.property_id,
-      receiptId,
-    });
-
-    if (chainResult) {
-      const { data: createdRecord, error: blockchainError } = await admin
-        .from("blockchain_records")
-        .insert({
-          organization_id: transaction.organization_id,
-          property_id: transaction.property_id,
-          transaction_hash: chainResult.txHash,
-          chain_id: chainResult.chainId,
-          block_number: chainResult.blockNumber,
-          timestamp: Math.floor(Date.now() / 1000),
-          record_type: "payment_receipt",
-          data_hash: receiptHash,
-          contract_address: chainResult.contractAddress,
-          status: "confirmed",
-          metadata: {
-            receiptId,
-            receiptNumber,
-            provider: "paystack",
-            providerReference: transaction.provider_reference,
-            providerTransactionId,
-            purpose: transaction.purpose,
-            amountMinor: transaction.amount_minor,
-            currency: transaction.currency,
-          },
-          created_by: transaction.payer_user_id,
-        })
-        .select("*")
-        .single();
-
-      if (blockchainError) {
-        throw blockchainError;
-      }
-
-      blockchainRecord = createdRecord;
-      blockchainStatus = "confirmed";
-      blockchainTxid = chainResult.txHash;
-      verificationUrl = `${chainResult.explorerBaseUrl}/tx/${chainResult.txHash}`;
-    }
-  } catch (error) {
-    blockchainStatus = "failed";
-    await logVerification(
-      transaction.organization_id,
-      null,
-      "failed",
-      {
-        providerReference: transaction.provider_reference,
-        receiptId,
-        receiptHash,
-      },
-      input.verifiedByUserId,
-      error instanceof Error ? error.message : "Unknown blockchain recording error"
-    );
-  }
-
-  const { data: finalizedReceipt, error: finalizedReceiptError } = await admin
-    .from("transaction_receipts")
-    .update({
-      blockchain_record_id:
-        blockchainRecord && typeof blockchainRecord.id === "string"
-          ? blockchainRecord.id
-          : receipt.blockchain_record_id,
-      blockchain_status: blockchainStatus,
-      blockchain_network:
-        blockchainStatus === "confirmed"
-          ? `polygon:${Deno.env.get("PAYMENT_BLOCKCHAIN_CHAIN_ID") || "137"}`
-          : receipt.blockchain_network,
-      blockchain_txid: blockchainTxid,
-      verification_url: verificationUrl,
-    })
-    .eq("id", receipt.id)
-    .select("*")
-    .single();
-
-  if (finalizedReceiptError) {
-    throw new HttpError(500, finalizedReceiptError.message);
-  }
-
   await admin.from("verification_hashes").upsert(
     {
-      organization_id: transaction.organization_id,
-      document_id: finalizedReceipt.id,
+      organization_id: typedTransaction.organization_id,
+      document_id: receipt.id,
       document_type: "payment_receipt",
       hash_algorithm: "SHA-256",
       hash_value: receiptHash,
-      blockchain_record_id:
-        blockchainRecord && typeof blockchainRecord.id === "string"
-          ? blockchainRecord.id
-          : null,
-      verified: blockchainStatus === "confirmed",
-      verification_timestamp: blockchainStatus === "confirmed" ? new Date().toISOString() : null,
-      uploaded_by: transaction.payer_user_id,
+      verified: true,
+      verification_timestamp: new Date().toISOString(),
+      uploaded_by: typedTransaction.payer_user_id,
+      metadata: {
+        provider,
+        providerReference: typedTransaction.provider_reference,
+        source: input.source,
+      },
     },
     {
       onConflict: "organization_id,document_id,hash_value",
     }
   );
 
-  await logVerification(
-    transaction.organization_id,
-    blockchainRecord && typeof blockchainRecord.id === "string"
-      ? blockchainRecord.id
-      : null,
-    blockchainStatus === "confirmed" ? "verified" : "pending",
-    {
-      providerReference: transaction.provider_reference,
+  await logIntegrityEvent({
+    organizationId: typedTransaction.organization_id,
+    actorUserId: input.verifiedByUserId || typedTransaction.payer_user_id,
+    eventType: "receipt_hash_created",
+    subjectType: "transaction_receipt",
+    subjectId: receipt.id,
+    hashValue: receiptHash,
+    payload: {
+      provider,
+      providerReference: typedTransaction.provider_reference,
       receiptId,
-      receiptHash,
+      receiptNumber,
       source: input.source,
     },
-    input.verifiedByUserId
-  );
+  });
+
+  const publicReceipt = await publishPublicReceipt({
+    admin,
+    receipt: receipt as TransactionReceiptRow,
+    transaction: updatedTransaction as PropertyTransactionRow,
+    receiptPayload: finalizedPayload,
+    receiptHash,
+    receiptNumber,
+    provider: String(provider),
+    receiptHtml,
+  });
 
   return {
     transaction: updatedTransaction,
-    receipt: finalizedReceipt,
-    blockchainRecord,
+    receipt: publicReceipt,
     alreadyProcessed: false,
   };
+}
+
+export async function reconcilePaystackPayment(input: {
+  reference: string;
+  verifiedTransaction: PaymentGatewayTransactionData;
+  verifiedByUserId?: string;
+  source: "webhook" | "manual_verify";
+}) {
+  return reconcilePropertyPayment({
+    ...input,
+    provider: "paystack",
+  });
 }

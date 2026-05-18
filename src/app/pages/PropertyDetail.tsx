@@ -22,10 +22,12 @@ import {
   Brain,
   Video,
   Users,
+  AlertTriangle,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { Navbar } from "../components/Navbar";
+import { DiasporaPrice } from "../components/DiasporaPrice";
 import { GhanaRoutePlanner } from "../components/GhanaRoutePlanner";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -36,10 +38,15 @@ import { listingService } from "../../lib/listing.service";
 import { getPropertyCoverImage, getPropertyMediaItems } from "../../lib/property-media";
 import { savedPropertyService } from "../../lib/savedproperty.service";
 import { dealCaseService } from "../../lib/dealcase.service";
+import { fraudDetectionService } from "../../lib/fraud-detection.service";
 import { messageService } from "../../lib/message.service";
 import { communicationService } from "../../lib/communication.service";
 import { organizationService } from "../../lib/organization.service";
-import { paymentService } from "../../lib/payment.service";
+import {
+  PAYMENT_GATEWAY_OPTIONS,
+  paymentService,
+  type PaymentGatewayProvider,
+} from "../../lib/payment.service";
 import {
   analyticsService,
   propertyMediaReadinessService,
@@ -99,8 +106,10 @@ export function PropertyDetail() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showViewingForm, setShowViewingForm] = useState(false);
   const [showOfferForm, setShowOfferForm] = useState(false);
+  const [showReportForm, setShowReportForm] = useState(false);
   const [trustLoading, setTrustLoading] = useState(false);
   const [trustSnapshot, setTrustSnapshot] = useState<any | null>(null);
+  const [reportSubmitting, setReportSubmitting] = useState(false);
   const [contactForm, setContactForm] = useState({
     fullName: user?.user_metadata?.full_name || "",
     email: user?.email || "",
@@ -109,6 +118,7 @@ export function PropertyDetail() {
   });
   const [paymentForm, setPaymentForm] = useState({
     amount: "",
+    provider: "paystack" as PaymentGatewayProvider,
     purpose: "deposit" as
       | "deposit"
       | "rent"
@@ -138,6 +148,10 @@ export function PropertyDetail() {
       contactPhone: "",
       requesterNote: "",
     };
+  });
+  const [reportForm, setReportForm] = useState({
+    reason: "fake_listing",
+    description: "",
   });
 
   useEffect(() => {
@@ -311,6 +325,9 @@ export function PropertyDetail() {
       trustSnapshot?.publicDocumentCount,
     ]
   );
+  const selectedPaymentGateway =
+    PAYMENT_GATEWAY_OPTIONS.find((option) => option.id === paymentForm.provider) ||
+    PAYMENT_GATEWAY_OPTIONS[0];
   const closingCostEstimate = useMemo(
     () =>
       estimateClosingCosts({
@@ -757,19 +774,21 @@ export function PropertyDetail() {
       const result = await paymentService.initializePropertyPayment({
         listingId: listing.id,
         amount,
+        provider: paymentForm.provider,
         purpose: paymentForm.purpose,
         customerName: paymentForm.customerName,
         customerPhone: paymentForm.customerPhone,
       });
       trackListingEvent("payment_checkout_started", {
         purpose: paymentForm.purpose,
+        provider: paymentForm.provider,
         amount,
       });
 
       window.location.assign(result.authorizationUrl);
     } catch (error) {
       console.error("Failed to initialize payment:", error);
-      toast.error("Unable to start the Paystack checkout right now.");
+      toast.error(`Unable to start ${selectedPaymentGateway.label} checkout right now.`);
     } finally {
       setPaymentSubmitting(false);
     }
@@ -831,6 +850,49 @@ export function PropertyDetail() {
     }
   };
 
+  const handleReportListing = async (e: FormEvent) => {
+    e.preventDefault();
+
+    if (!user) {
+      toast.error("Log in before reporting a listing.");
+      navigate("/login", { state: { from: currentPath } });
+      return;
+    }
+
+    if (!reportForm.description.trim()) {
+      toast.error("Add a short note so the moderation team knows what to review.");
+      return;
+    }
+
+    try {
+      setReportSubmitting(true);
+      await fraudDetectionService.reportFraud(
+        user.id,
+        "listing",
+        listing.id,
+        reportForm.reason,
+        reportForm.description.trim(),
+        {
+          organizationId: listing.organization_id,
+          listingId: listing.id,
+          listingTitle: pageTitle,
+        }
+      );
+
+      trackListingEvent("listing_reported", {
+        reason: reportForm.reason,
+      });
+      toast.success("Thanks. The BaytMiftah moderation team will review this listing.");
+      setReportForm({ reason: "fake_listing", description: "" });
+      setShowReportForm(false);
+    } catch (error) {
+      console.error("Failed to report listing:", error);
+      toast.error("We couldn't submit that report right now.");
+    } finally {
+      setReportSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -867,7 +929,7 @@ export function PropertyDetail() {
 
       <div className={isMobileShell ? "pt-4 pb-32 px-4 max-w-7xl mx-auto" : "pt-24 pb-12 px-4 max-w-7xl mx-auto"}>
         <div className="mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[500px]">
+          <div className="grid h-[320px] grid-cols-1 gap-4 sm:h-[420px] md:h-[500px] md:grid-cols-4">
             <div className="md:col-span-3 h-full relative overflow-hidden rounded-xl">
               <img src={images[currentImageIndex]} alt={pageTitle} className="w-full h-full object-cover" />
               <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white px-4 py-2 rounded-lg">
@@ -904,16 +966,16 @@ export function PropertyDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             <div>
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
+              <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1">
                   {hasReferralContext(referralContext) && (
                     <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-3 py-1 text-xs font-semibold text-accent">
                       <Shield className="w-3.5 h-3.5" />
                       Shared via {formatReferralChannel(referralContext.channel)}
                     </div>
                   )}
-                  <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-3xl font-semibold">{pageTitle}</h1>
+                  <div className="mb-2 flex flex-wrap items-center gap-3">
+                    <h1 className="text-2xl font-semibold sm:text-3xl">{pageTitle}</h1>
                     {organization?.verified && (
                       <div className="bg-accent text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
                         <Check className="w-3 h-3" />
@@ -945,12 +1007,18 @@ export function PropertyDetail() {
                       ))}
                     </div>
                   )}
-                  <div className="text-4xl font-semibold text-primary">
-                    GHS {listing.price.toLocaleString()}
-                    <span className="text-lg text-muted-foreground ml-2">
-                      {listing.listing_type === "rental" ? "/month" : listing.listing_type === "lease" ? "/lease" : ""}
-                    </span>
-                  </div>
+                  <DiasporaPrice
+                    amount={Number(listing.price || 0)}
+                    currency={listing.currency || "GHS"}
+                    suffix={
+                      listing.listing_type === "rental"
+                        ? "/month"
+                        : listing.listing_type === "lease"
+                          ? "/lease"
+                          : ""
+                    }
+                    size="lg"
+                  />
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => void handleShare()}>
@@ -1242,8 +1310,8 @@ export function PropertyDetail() {
                   <div>
                     <h3 className="text-lg font-semibold">Built for verified transactions</h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Payments run through Paystack, while receipts and agreement records can be
-                      tracked through the platform&apos;s verification layer.
+                      Payments run through approved gateways, while receipts and agreement records
+                      can be tracked through the platform&apos;s verification layer.
                     </p>
                   </div>
                   <div className="ml-auto hidden rounded-xl border border-primary/20 bg-background px-4 py-3 text-right md:block">
@@ -1299,7 +1367,7 @@ export function PropertyDetail() {
                           Payment Trail
                         </div>
                         <p className="text-lg font-semibold">
-                          {trustSnapshot?.blockchainProofEnabled ? "Receipt-ready" : "Standard"}
+                          {trustSnapshot?.receiptIntegrityEnabled ? "Receipt-ready" : "Standard"}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           Completed payments can be carried into receipt verification.
@@ -1687,7 +1755,7 @@ export function PropertyDetail() {
                   }}
                 >
                   <CreditCard className="w-4 h-4" />
-                  Secure Payment via Paystack
+                  Secure Property Payment
                 </Button>
               )}
 
@@ -1717,6 +1785,82 @@ export function PropertyDetail() {
                 <Brain className="w-4 h-4" />
                 AI Concierge
               </Button>
+
+              <Button
+                variant="outline"
+                className="w-full mt-3 border-amber-200 text-amber-700 hover:bg-amber-50"
+                onClick={() => setShowReportForm((current) => !current)}
+              >
+                <AlertTriangle className="w-4 h-4" />
+                Report Suspicious Listing
+              </Button>
+
+              {showReportForm && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="border-t border-border pt-6 mt-6"
+                >
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+                      <AlertTriangle className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">Report this listing</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Reports go to BaytMiftah admin moderation and help keep the marketplace clean.
+                      </p>
+                    </div>
+                  </div>
+                  <form className="space-y-4" onSubmit={handleReportListing}>
+                    <div>
+                      <label htmlFor="listing-report-reason" className="block mb-2 text-sm">
+                        Reason
+                      </label>
+                      <select
+                        id="listing-report-reason"
+                        className="w-full rounded-lg border border-border bg-input-background px-4 py-3"
+                        value={reportForm.reason}
+                        onChange={(event) =>
+                          setReportForm((current) => ({ ...current, reason: event.target.value }))
+                        }
+                      >
+                        <option value="fake_listing">Fake listing</option>
+                        <option value="duplicate_listing">Duplicate listing</option>
+                        <option value="scam">Scam or suspicious payment request</option>
+                        <option value="wrong_details">Wrong price, photos, or location</option>
+                        <option value="unreachable_agent">Agent or landlord is unreachable</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="listing-report-description" className="block mb-2 text-sm">
+                        What should we review?
+                      </label>
+                      <textarea
+                        id="listing-report-description"
+                        rows={4}
+                        className="w-full rounded-lg border border-border bg-input-background px-4 py-3"
+                        value={reportForm.description}
+                        onChange={(event) =>
+                          setReportForm((current) => ({
+                            ...current,
+                            description: event.target.value,
+                          }))
+                        }
+                        placeholder="Tell us what looks suspicious. Do not include private passwords or payment PINs."
+                      />
+                    </div>
+                    <Button
+                      size="lg"
+                      className="w-full"
+                      type="submit"
+                      disabled={reportSubmitting}
+                    >
+                      {reportSubmitting ? "Submitting report..." : "Submit Report"}
+                    </Button>
+                  </form>
+                </motion.div>
+              )}
 
               {showViewingForm && (
                 <motion.div
@@ -1977,7 +2121,7 @@ export function PropertyDetail() {
                     <div>
                       <h4 className="font-semibold">Secure Payment</h4>
                       <p className="text-sm text-muted-foreground">
-                        Pay with MTN MoMo, Telecel Cash, AT Money, card, or bank transfer through Paystack. After confirmation, your receipt is prepared for verification.
+                        Choose a checkout gateway, then pay with mobile money, card, bank transfer, or bank rails. After confirmation, your receipt is prepared for verification.
                       </p>
                     </div>
                   </div>
@@ -1993,6 +2137,32 @@ export function PropertyDetail() {
                         setPaymentForm((current) => ({ ...current, amount: e.target.value }))
                       }
                     />
+                    <div>
+                      <label htmlFor="property-payment-provider" className="block mb-2 text-sm">
+                        Payment Gateway
+                      </label>
+                      <select
+                        id="property-payment-provider"
+                        className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        value={paymentForm.provider}
+                        onChange={(e) =>
+                          setPaymentForm((current) => ({
+                            ...current,
+                            provider: e.target.value as PaymentGatewayProvider,
+                          }))
+                        }
+                      >
+                        {PAYMENT_GATEWAY_OPTIONS.map((option) => (
+                          <option key={option.id} value={option.id} disabled={!option.enabled}>
+                            {option.label}
+                            {option.enabled ? "" : " (ops setup required)"}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {selectedPaymentGateway.helper}
+                      </p>
+                    </div>
                     <div>
                       <label htmlFor="property-payment-purpose" className="block mb-2 text-sm">
                         Payment Purpose
@@ -2046,7 +2216,9 @@ export function PropertyDetail() {
                       type="submit"
                       disabled={paymentSubmitting}
                     >
-                      {paymentSubmitting ? "Redirecting to Paystack..." : "Continue to Paystack"}
+                      {paymentSubmitting
+                        ? `Redirecting to ${selectedPaymentGateway.label}...`
+                        : `Continue to ${selectedPaymentGateway.label}`}
                     </Button>
                   </form>
                 </motion.div>
@@ -2133,10 +2305,11 @@ export function PropertyDetail() {
                         <MapPin className="w-4 h-4" />
                         <span>{item.property?.city}, {item.property?.region}</span>
                       </div>
-                      <div className="text-2xl font-semibold text-primary">
-                        GHS {item.price.toLocaleString()}
-                        {item.listing_type === "rental" ? "/month" : ""}
-                      </div>
+                      <DiasporaPrice
+                        amount={Number(item.price || 0)}
+                        currency={item.currency || "GHS"}
+                        suffix={item.listing_type === "rental" ? "/month" : ""}
+                      />
                     </div>
                   </Card>
                 </Link>

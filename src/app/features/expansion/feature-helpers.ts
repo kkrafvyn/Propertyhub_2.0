@@ -160,6 +160,38 @@ export interface ListingLaunchPlan {
   actions: ListingLaunchAction[];
 }
 
+export type RoleTaskKey =
+  | "buyer"
+  | "diaspora_buyer"
+  | "seller"
+  | "agent"
+  | "manager"
+  | "analyst"
+  | "vendor"
+  | "family_reviewer"
+  | "legal_reviewer"
+  | "local_representative";
+
+export interface RoleTaskPlan {
+  key: RoleTaskKey;
+  label: string;
+  audience: string;
+  headline: string;
+  helper: string;
+  priority: "Today" | "Next" | "When needed";
+  metricLabel: string;
+  metricValue: string;
+  primaryAction: {
+    label: string;
+    href: string;
+  };
+  secondaryAction?: {
+    label: string;
+    href: string;
+  };
+  tasks: string[];
+}
+
 export function formatLabel(value?: string | null) {
   if (!value) return "Unknown";
   return value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
@@ -912,6 +944,213 @@ export function buildBuyingGroupPlan(input: {
   };
 }
 
+export function buildRoleTaskLaunchpad(input: {
+  savedProperties?: any[];
+  dealCases?: any[];
+  conversations?: any[];
+  propertyViewings?: any[];
+  propertyTransactions?: any[];
+  savedAlerts?: any[];
+  workspaceMemberships?: any[];
+  documents?: any[];
+}): RoleTaskPlan[] {
+  const savedCount = input.savedProperties?.length || 0;
+  const activeDeals = (input.dealCases || []).filter(
+    (dealCase) => !["closed", "rejected"].includes(String(dealCase.status || ""))
+  ).length;
+  const pendingViewings = (input.propertyViewings || []).filter((viewing) =>
+    ["requested", "pending", "rescheduled"].includes(String(viewing.status || ""))
+  ).length;
+  const confirmedViewings = (input.propertyViewings || []).filter((viewing) =>
+    ["confirmed", "completed"].includes(String(viewing.status || ""))
+  ).length;
+  const unreadThreads = (input.conversations || []).filter((conversation) =>
+    (conversation.messages || []).some((message: any) => !message.read && !message.read_at)
+  ).length;
+  const pendingPayments = (input.propertyTransactions || []).filter((payment) =>
+    ["pending", "initialized", "requires_action"].includes(String(payment.status || ""))
+  ).length;
+  const activeAlerts = (input.savedAlerts || []).filter((alert) => alert.is_active).length;
+  const signedDocuments = (input.documents || []).filter((document) =>
+    ["signed", "approved", "published"].includes(String(document.status || ""))
+  ).length;
+  const workspaceCount = input.workspaceMemberships?.length || 0;
+  const hasLiveBuyerWork = savedCount > 0 || activeDeals > 0 || pendingViewings > 0;
+
+  return [
+    {
+      key: "buyer",
+      label: "Buyer",
+      audience: "Find and close safely",
+      headline: hasLiveBuyerWork ? "Keep your home search moving." : "Start with a shortlist.",
+      helper: "BaytMiftah keeps search, viewings, offers, documents, and payments in one guided path.",
+      priority: hasLiveBuyerWork ? "Today" : "Next",
+      metricLabel: "Saved homes",
+      metricValue: String(savedCount),
+      primaryAction: { label: savedCount > 0 ? "Review saved homes" : "Find homes", href: savedCount > 0 ? "/app/saved" : "/search" },
+      secondaryAction: { label: "Buying guide", href: "/app/buying-tools" },
+      tasks: [
+        savedCount > 0 ? "Compare saved homes before contacting new listings." : "Save at least two homes to compare price, area, and trust.",
+        pendingViewings > 0 ? "Confirm requested viewings and add them to calendar." : "Book a viewing or virtual walkthrough for the strongest option.",
+        pendingPayments > 0 ? "Check payment instructions and receipts before money moves." : "Keep deposits inside the tracked deal room when ready.",
+      ],
+    },
+    {
+      key: "diaspora_buyer",
+      label: "Diaspora buyer",
+      audience: "Buy remotely with confidence",
+      headline: "Let the app organize the local checks.",
+      helper: "Remote buyers get a slower, safer flow: group review, documents, local rep notes, and protected payment milestones.",
+      priority: activeDeals > 0 ? "Today" : "Next",
+      metricLabel: "Deal rooms",
+      metricValue: String(activeDeals),
+      primaryAction: { label: activeDeals > 0 ? "Open deal room" : "Create buying group", href: activeDeals > 0 ? "/app/deals" : "/app/groups" },
+      secondaryAction: { label: "Trust checks", href: "/app/verification" },
+      tasks: [
+        "Invite a family reviewer, legal reviewer, and local representative before committing.",
+        signedDocuments > 0 ? "Review signed or approved documents in the deal room." : "Request title, mandate, lease, or ownership proof before deposits.",
+        "Use video, photos, map pin, and representative notes to verify the property matches the listing.",
+      ],
+    },
+    {
+      key: "seller",
+      label: "Seller / owner",
+      audience: "Prepare property for demand",
+      headline: workspaceCount > 0 ? "Use your workspace to track owner outcomes." : "Get listing-ready before leads arrive.",
+      helper: "Owners see simple next steps: price, proof, media, offers, and handoff, while teams handle the operational detail.",
+      priority: workspaceCount > 0 ? "Today" : "When needed",
+      metricLabel: "Workspaces",
+      metricValue: String(workspaceCount),
+      primaryAction: { label: workspaceCount > 0 ? "Open workspace" : "Start seller flow", href: workspaceCount > 0 ? "/workspace" : "/valuation" },
+      secondaryAction: { label: "Seller portal", href: "/workspace" },
+      tasks: [
+        "Confirm price, ownership authority, commission terms, and preferred handoff timeline.",
+        "Upload safe proof documents and refresh weak photos before publishing broadly.",
+        "Review offers by strength, proof, close date, and payment risk, not only headline price.",
+      ],
+    },
+    {
+      key: "agent",
+      label: "Agent",
+      audience: "Convert leads and viewings",
+      headline: unreadThreads > 0 ? "Reply while buyer intent is warm." : "Keep the day focused on lead movement.",
+      helper: "Agents get the practical queue: reply, schedule, collect proof, update deal rooms, and nudge stalled buyers.",
+      priority: unreadThreads > 0 || pendingViewings > 0 ? "Today" : "Next",
+      metricLabel: "Unread threads",
+      metricValue: String(unreadThreads),
+      primaryAction: { label: unreadThreads > 0 ? "Open inbox" : "Open workspace", href: unreadThreads > 0 ? "/app/messages" : "/workspace" },
+      secondaryAction: { label: "Viewings", href: "/app/viewings" },
+      tasks: [
+        unreadThreads > 0 ? "Reply to unanswered buyer messages first." : "Check lead quality and follow up with the warmest buyers.",
+        pendingViewings > 0 ? "Confirm pending viewings or reschedule quickly." : "Offer a clear next viewing slot.",
+        "Move serious buyers into deal rooms so documents and payments stay traceable.",
+      ],
+    },
+    {
+      key: "manager",
+      label: "Manager",
+      audience: "Approve and unblock work",
+      headline: "See the exceptions without drowning in tools.",
+      helper: "Managers get a compact operations view: stalled deals, payment gaps, service requests, team load, and owner updates.",
+      priority: pendingPayments > 0 || activeDeals > 0 ? "Today" : "Next",
+      metricLabel: "Active deals",
+      metricValue: String(activeDeals),
+      primaryAction: { label: "Open operations", href: "/workspace" },
+      secondaryAction: { label: "Payments", href: "/app/payments" },
+      tasks: [
+        activeDeals > 0 ? "Review open deal rooms for missing next steps." : "Check whether lead flow is creating enough deal rooms.",
+        pendingPayments > 0 ? "Resolve pending payment or receipt gaps." : "Review payment controls before scaling demand.",
+        "Use team performance and aftercare queues for exceptions, not every routine task.",
+      ],
+    },
+    {
+      key: "analyst",
+      label: "Analyst",
+      audience: "Explain the numbers",
+      headline: activeAlerts > 0 ? "Market signals are ready to review." : "Build the reporting habit early.",
+      helper: "Analysts focus on demand, pricing, area confidence, conversion, and owner-ready reporting.",
+      priority: activeAlerts > 0 ? "Today" : "When needed",
+      metricLabel: "Active alerts",
+      metricValue: String(activeAlerts),
+      primaryAction: { label: "Open insights", href: "/app/insights" },
+      secondaryAction: { label: "Compare homes", href: "/app/compare" },
+      tasks: [
+        "Compare saved homes by price, area, trust, flood risk, and document readiness.",
+        "Watch active alerts for pricing shifts and new comparable properties.",
+        "Summarize owner or buyer decisions in plain language with a recommended next move.",
+      ],
+    },
+    {
+      key: "vendor",
+      label: "Service vendor",
+      audience: "Handle maintenance and handoff",
+      headline: "Keep service work simple and documented.",
+      helper: "Vendors only need assignment, arrival notes, before/after media, status, and invoice handoff.",
+      priority: confirmedViewings > 0 ? "Next" : "When needed",
+      metricLabel: "Site visits",
+      metricValue: String(confirmedViewings),
+      primaryAction: { label: "Aftercare support", href: "/app/support" },
+      secondaryAction: { label: "Workspace aftercare", href: "/workspace" },
+      tasks: [
+        "Accept or decline assigned jobs quickly so managers can reassign if needed.",
+        "Capture before/after photos, arrival time, and service notes inside the work order.",
+        "Submit invoice and completion status before the tenant or owner handoff is closed.",
+      ],
+    },
+    {
+      key: "family_reviewer",
+      label: "Family reviewer",
+      audience: "Help the buyer decide",
+      headline: savedCount > 0 ? "Review the shortlist, not the whole market." : "Wait for a shortlist before weighing in.",
+      helper: "Family reviewers see the few decisions that matter: neighborhood fit, budget comfort, travel, safety, and tradeoffs.",
+      priority: savedCount > 0 ? "Next" : "When needed",
+      metricLabel: "Shortlist",
+      metricValue: String(savedCount),
+      primaryAction: { label: "Compare shortlist", href: "/app/compare" },
+      secondaryAction: { label: "Buying group", href: "/app/groups" },
+      tasks: [
+        "Comment on the top saved options instead of adding too many new choices.",
+        "Check school, commute, security, utilities, and family support nearby.",
+        "Join the buying group so advice stays visible to the buyer and agent.",
+      ],
+    },
+    {
+      key: "legal_reviewer",
+      label: "Legal reviewer",
+      audience: "Review risk before signature",
+      headline: signedDocuments > 0 ? "Documents are ready for legal review." : "Ask for proof before signatures.",
+      helper: "Legal reviewers focus on title, mandate, identity, lease or sale agreement, payment milestones, and signature readiness.",
+      priority: activeDeals > 0 ? "Today" : "When needed",
+      metricLabel: "Proof docs",
+      metricValue: String(signedDocuments),
+      primaryAction: { label: "Open verification", href: "/app/verification" },
+      secondaryAction: { label: "Deal rooms", href: "/app/deals" },
+      tasks: [
+        "Confirm the property, seller or landlord authority, buyer details, and agreement parties match.",
+        "Flag missing title, mandate, inventory, inspection, or lease terms before payment.",
+        "Keep legal notes in the deal room so everyone sees the same risk position.",
+      ],
+    },
+    {
+      key: "local_representative",
+      label: "Local representative",
+      audience: "Inspect on the buyer's behalf",
+      headline: pendingViewings > 0 ? "A visit needs confirmation." : "Be ready before the site visit.",
+      helper: "Local representatives get the route, checklist, photos, condition notes, and handoff confirmation.",
+      priority: pendingViewings > 0 || confirmedViewings > 0 ? "Today" : "When needed",
+      metricLabel: "Viewings",
+      metricValue: String(pendingViewings + confirmedViewings),
+      primaryAction: { label: "Open viewings", href: "/app/viewings" },
+      secondaryAction: { label: "Get help", href: "/app/support" },
+      tasks: [
+        "Confirm map pin, landmark, access road, and viewing time before travelling.",
+        "Capture room-by-room photos, utility checks, defects, meters, and neighborhood notes.",
+        "Avoid cash handoff and upload findings before the buyer approves next steps.",
+      ],
+    },
+  ];
+}
+
 export function buildAgentCrmActions(input: {
   cases?: any[];
   leads?: any[];
@@ -1395,7 +1634,7 @@ export function buildAgentPerformanceSnapshot(input: {
       row.collectedRevenueMinor += Number(payment.amount_minor || 0);
 
       const receipt = Array.isArray(payment.receipt) ? payment.receipt[0] : payment.receipt;
-      if (receipt?.blockchain_status === "confirmed") {
+      if (receipt?.integrity_status === "hashed" || receipt?.integrity_status === "verified") {
         row.verifiedPayments += 1;
       }
     }

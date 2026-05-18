@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type ComponentType } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import {
+  ArrowRight,
   ArrowRightLeft,
   BarChart3,
-  Bell,
   Brain,
   Building2,
   CalendarDays,
@@ -12,40 +12,28 @@ import {
   HandCoins,
   Home,
   LineChart,
-  Map,
   MessageCircle,
   AlertTriangle,
-  Palette,
   Plus,
   Settings,
   Shield,
-  Smartphone,
+  KeyRound,
   Users,
   Wrench,
-  Zap,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import type { Database } from "../../../lib/database.types";
 import { organizationService } from "../../../lib/organization.service";
-import MarketIntelligenceDashboard from "./MarketIntelligence";
-import AutomationWorkflows from "./AutomationWorkflows";
-import WhitelabelConfiguration from "./WhitelabelConfig";
-import VendorManagement from "./VendorManagement";
-import { AIAssistant } from "./AIAssistant";
-import NotificationSettings from "./NotificationSettings";
-import LocationIntelligence from "./LocationIntelligence";
-import OrganizationInsights from "./OrganizationInsights";
-import MobileAppSettings from "./MobileAppSettings";
-import BlockchainVerification from "./BlockchainVerification";
-import AdvancedSearch from "./AdvancedSearch";
-import PredictiveAnalytics from "./PredictiveAnalytics";
-import RecommendationEngine from "./RecommendationEngine";
-import TeamCollaborationHub from "./TeamCollaborationHub";
-import CustomWorkflowsBuilder from "./CustomWorkflowsBuilder";
+import {
+  getWorkspaceAccessState,
+  subscriptionService,
+  type OrganizationBillingOverview,
+} from "../../../lib/subscription.service";
 import { FraudAlerts } from "./FraudAlerts";
 import { WorkspaceDashboard } from "./WorkspaceDashboard";
+import { WorkspaceBilling } from "./WorkspaceBilling";
 import { CalendarOperations } from "./CalendarOperations";
 import { WorkspaceDocuments } from "./WorkspaceDocuments";
 import { WorkspaceFinance } from "./WorkspaceFinance";
@@ -55,6 +43,7 @@ import { WorkspaceListings } from "./WorkspaceListings";
 import { WorkspaceNewListing } from "./WorkspaceNewListing";
 import { WorkspacePayments } from "./WorkspacePayments";
 import { WorkspaceSettings } from "./WorkspaceSettings";
+import { WorkspaceSmartAccess } from "./WorkspaceSmartAccess";
 import { WorkspaceTeam } from "./WorkspaceTeam";
 import { WorkspaceExpansionSuite } from "../../features/workspace/WorkspaceExpansionSuite";
 import {
@@ -79,12 +68,14 @@ interface NavItem {
 
 const CORE_NAV_ITEMS: NavItem[] = [
   { slug: "", label: "Dashboard", icon: Home },
+  { slug: "billing", label: "Billing", icon: CreditCard },
   { slug: "listings", label: "Listings", icon: Building2 },
   { slug: "leads", label: "Leads & Messages", icon: MessageCircle },
   { slug: "documents", label: "Documents", icon: FileText },
   { slug: "trust", label: "Ghana Trust", icon: Shield },
   { slug: "calendar", label: "Calendar Ops", icon: CalendarDays },
   { slug: "payments", label: "Payments", icon: CreditCard },
+  { slug: "smart-access", label: "Smart Access", icon: KeyRound },
   { slug: "finance", label: "Finance", icon: BarChart3 },
   { slug: "team", label: "Team", icon: Users },
 ];
@@ -109,17 +100,7 @@ const GROWTH_NAV_ITEMS: NavItem[] = WORKSPACE_GROWTH_ROUTE_CONFIG.map((item) => 
 }));
 
 const TIER_TWO_NAV_ITEMS: NavItem[] = [
-  { slug: "market-intelligence", label: "Market Intelligence", icon: LineChart },
-  { slug: "automation", label: "Automation", icon: Zap },
   { slug: "fraud-alerts", label: "Fraud Alerts", icon: AlertTriangle },
-  { slug: "ai-assistant", label: "AI Assistant", icon: Brain },
-  { slug: "vendors", label: "Vendors", icon: Wrench },
-  { slug: "location-intelligence", label: "Location Intel", icon: Map },
-  { slug: "org-insights", label: "Org Insights", icon: BarChart3 },
-  { slug: "notifications", label: "Notifications", icon: Bell },
-  { slug: "whitelabel", label: "White-Label", icon: Palette },
-  { slug: "mobile-settings", label: "Mobile Apps", icon: Smartphone },
-  { slug: "blockchain", label: "Blockchain", icon: Shield },
 ];
 
 interface WorkspaceExperience {
@@ -129,6 +110,11 @@ interface WorkspaceExperience {
   growthSlugs: string[];
   advancedSlugs: string[];
   showNewListing: boolean;
+  taskCards: Array<{
+    label: string;
+    helper: string;
+    slug: string;
+  }>;
 }
 
 function getWorkspaceExperience(role: MemberRole | null): WorkspaceExperience {
@@ -136,47 +122,127 @@ function getWorkspaceExperience(role: MemberRole | null): WorkspaceExperience {
     case "owner":
       return {
         headline: "Owner view",
-        helper: "Listings, trust, payments, team, and setup tools stay visible for decision makers.",
-        coreSlugs: ["", "listings", "leads", "documents", "trust", "calendar", "payments", "finance", "team"],
+        helper: "Billing, team, verification, and core operations stay visible for decision makers.",
+        coreSlugs: ["", "billing", "listings", "leads", "documents", "trust", "calendar", "payments", "smart-access", "finance", "team"],
         growthSlugs: ["offers", "deal-rooms", "performance", "seller-portal", "referrals", "aftercare"],
-        advancedSlugs: [
-          "market-intelligence",
-          "automation",
-          "fraud-alerts",
-          "vendors",
-          "notifications",
-          "whitelabel",
-          "mobile-settings",
-        ],
+        advancedSlugs: ["fraud-alerts"],
         showNewListing: true,
+        taskCards: [
+          {
+            label: "Approve the exceptions",
+            helper: "Review open deal rooms, trust gaps, payments, and owner-facing blockers.",
+            slug: "deal-rooms",
+          },
+          {
+            label: "Check performance",
+            helper: "See which agents, listings, and channels are moving revenue.",
+            slug: "performance",
+          },
+          {
+            label: "Prepare owner updates",
+            helper: "Package seller proof, demand, net-sheet, and next actions.",
+            slug: "seller-portal",
+          },
+          {
+            label: "Watch risk",
+            helper: "Monitor for fraud alerts and suspicious listings.",
+            slug: "fraud-alerts",
+          },
+        ],
       };
     case "manager":
       return {
         headline: "Manager view",
         helper: "Daily operations, approvals, and service work are prioritized.",
-        coreSlugs: ["", "listings", "leads", "documents", "trust", "calendar", "payments", "team"],
+        coreSlugs: ["", "billing", "listings", "leads", "documents", "trust", "calendar", "payments", "smart-access", "team"],
         growthSlugs: ["offers", "deal-rooms", "performance", "seller-portal", "crm", "aftercare"],
-        advancedSlugs: ["automation", "fraud-alerts", "vendors", "notifications", "mobile-settings"],
+        advancedSlugs: ["fraud-alerts"],
         showNewListing: true,
+        taskCards: [
+          {
+            label: "Run today",
+            helper: "Move leads, viewings, payment gaps, and documents through the queue.",
+            slug: "crm",
+          },
+          {
+            label: "Clear deal blockers",
+            helper: "Use deal rooms to find what is missing before buyers go cold.",
+            slug: "deal-rooms",
+          },
+          {
+            label: "Dispatch aftercare",
+            helper: "Assign handoff, maintenance, and service work without exposing every admin tool.",
+            slug: "aftercare",
+          },
+          {
+            label: "Watch risk",
+            helper: "Monitor fraud alerts when exceptions appear.",
+            slug: "fraud-alerts",
+          },
+        ],
       };
     case "analyst":
       return {
         headline: "Analyst view",
-        helper: "Reporting and market context are visible without listing controls.",
-        coreSlugs: ["", "listings", "finance"],
+        helper: "Reporting and performance metrics are visible without listing controls.",
+        coreSlugs: ["", "billing", "listings", "finance"],
         growthSlugs: ["performance", "seller-portal"],
-        advancedSlugs: ["market-intelligence", "org-insights", "location-intelligence"],
+        advancedSlugs: [],
         showNewListing: false,
+        taskCards: [
+          {
+            label: "Read demand",
+            helper: "Compare listing demand, area movement, and conversion before recommending changes.",
+            slug: "performance",
+          },
+          {
+            label: "Explain finance",
+            helper: "Turn payment, pipeline, and net-sheet numbers into plain owner guidance.",
+            slug: "finance",
+          },
+          {
+            label: "Check performance",
+            helper: "Review sales performance and market trends.",
+            slug: "performance",
+          },
+          {
+            label: "Summarize health",
+            helper: "Create a concise organizational health report.",
+            slug: "finance",
+          },
+        ],
       };
     case "agent":
     default:
       return {
         headline: "Agent view",
         helper: "The tools you need most: listings, leads, viewings, documents, and deal follow-up.",
-        coreSlugs: ["", "listings", "leads", "documents", "trust", "calendar"],
+        coreSlugs: ["", "billing", "listings", "leads", "documents", "trust", "calendar", "smart-access"],
         growthSlugs: ["offers", "deal-rooms", "crm", "aftercare"],
-        advancedSlugs: ["vendors", "notifications"],
+        advancedSlugs: [],
         showNewListing: true,
+        taskCards: [
+          {
+            label: "Reply first",
+            helper: "Start with leads and messages while buyer intent is still warm.",
+            slug: "leads",
+          },
+          {
+            label: "Confirm tours",
+            helper: "Keep viewings, calendar notes, and follow-ups in the same workflow.",
+            slug: "calendar",
+          },
+          {
+            label: "Capture the offer",
+            helper: "Move serious buyers into offer and deal-room steps before payment.",
+            slug: "offers",
+          },
+          {
+            label: "Close the handoff",
+            helper: "Use aftercare for keys, service needs, and move-in confidence.",
+            slug: "aftercare",
+          },
+        ],
       };
   }
 }
@@ -203,7 +269,9 @@ export function WorkspaceLayout() {
   const navigate = useNavigate();
   const { organizationSlug = "", page } = useParams();
   const [loading, setLoading] = useState(true);
+  const [billingLoading, setBillingLoading] = useState(false);
   const [memberships, setMemberships] = useState<OrganizationMembership[]>([]);
+  const [billing, setBilling] = useState<OrganizationBillingOverview | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -254,15 +322,46 @@ export function WorkspaceLayout() {
     ? getWorkspaceRoute(organization.slug)
     : WORKSPACE_ENTRY_PATH;
   const workspaceExperience = getWorkspaceExperience(currentRole);
+  const workspaceAccess = getWorkspaceAccessState(billing?.subscription || null);
   const visibleCoreNavItems = CORE_NAV_ITEMS.filter((item) =>
     workspaceExperience.coreSlugs.includes(item.slug)
   );
-  const visibleGrowthNavItems = GROWTH_NAV_ITEMS.filter((item) =>
-    workspaceExperience.growthSlugs.includes(item.slug)
-  );
-  const visibleAdvancedNavItems = TIER_TWO_NAV_ITEMS.filter((item) =>
-    workspaceExperience.advancedSlugs.includes(item.slug)
-  );
+  const visibleGrowthNavItems: NavItem[] = [];
+  const visibleAdvancedNavItems: NavItem[] = [];
+
+  useEffect(() => {
+    if (!organization) {
+      setBilling(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadBilling = async () => {
+      try {
+        setBillingLoading(true);
+        const overview = await subscriptionService.getOrganizationBillingOverview(organization.id);
+        if (!cancelled) {
+          setBilling(overview);
+        }
+      } catch (error) {
+        console.error("Failed to load workspace billing state:", error);
+        if (!cancelled) {
+          setLoadError("We couldn't load the workspace billing status right now.");
+        }
+      } finally {
+        if (!cancelled) {
+          setBillingLoading(false);
+        }
+      }
+    };
+
+    void loadBilling();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [organization?.id]);
 
   const handleOrganizationChange = (organizationId: string) => {
     const nextMembership = memberships.find(
@@ -277,8 +376,92 @@ export function WorkspaceLayout() {
     navigate(nextPath);
   };
 
+  const renderWorkspaceRoleTasks = () => {
+    const allNavItems = [
+      ...CORE_NAV_ITEMS,
+      ...GROWTH_NAV_ITEMS,
+      ...TIER_TWO_NAV_ITEMS,
+      { slug: "settings", label: "Settings", icon: Settings },
+    ];
+
+    return (
+      <section className="mb-8 overflow-hidden rounded-[2rem] border border-border/70 bg-gradient-to-br from-white via-white to-secondary/35 p-6 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              {workspaceExperience.headline}
+            </span>
+            <h1 className="mt-4 text-3xl font-semibold tracking-tight">
+              Start with the work that matters today.
+            </h1>
+            <p className="mt-2 max-w-3xl text-muted-foreground">
+              BaytMiftah keeps advanced CRM, trust, finance, and automation behind the scenes so
+              each role can focus on the next practical action.
+            </p>
+          </div>
+          {workspaceExperience.showNewListing ? (
+            <Link to={`${workspaceBasePath}/new`}>
+              <Button>
+                <Plus className="h-4 w-4" />
+                Add property
+              </Button>
+            </Link>
+          ) : null}
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {workspaceExperience.taskCards.map((task) => {
+            const navItem = allNavItems.find((item) => item.slug === task.slug);
+            const Icon = navItem?.icon || ArrowRight;
+            const href = task.slug ? `${workspaceBasePath}/${task.slug}` : workspaceBasePath;
+
+            return (
+              <Link
+                key={task.label}
+                to={href}
+                className="group rounded-3xl border border-border/70 bg-background/85 p-4 text-foreground transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="grid h-10 w-10 place-items-center rounded-2xl bg-primary/10 text-primary">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
+                </div>
+                <h2 className="mt-4 text-base font-semibold">{task.label}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{task.helper}</p>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+    );
+  };
+
+  const renderBillingBlock = () => (
+    <Card className="border-amber-200 bg-amber-50 p-8 text-center">
+      <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-white text-amber-700">
+        <CreditCard className="h-6 w-6" />
+      </div>
+      <h1 className="text-2xl font-semibold">{workspaceAccess.title}</h1>
+      <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">{workspaceAccess.message}</p>
+      {currentRole === "owner" ? (
+        <Link to={`${workspaceBasePath}/billing`} className="mt-6 inline-flex">
+          <Button>Open Billing Recovery</Button>
+        </Link>
+      ) : (
+        <p className="mt-6 text-sm text-muted-foreground">
+          Ask the organization owner to restore billing access.
+        </p>
+      )}
+    </Card>
+  );
+
   const renderPage = () => {
     if (!organization || !user) return null;
+
+    if (!workspaceAccess.canAccess && currentPage !== "billing") {
+      return renderBillingBlock();
+    }
 
     const growthSection = getWorkspaceGrowthSection(currentPage);
     if (growthSection) {
@@ -330,11 +513,26 @@ export function WorkspaceLayout() {
             currentRole={currentRole}
           />
         );
+      case "billing":
+        return (
+          <WorkspaceBilling
+            organization={organization}
+            currentRole={currentRole}
+          />
+        );
       case "payments":
         return (
           <WorkspacePayments
             organization={organization}
             currentRole={currentRole}
+            currentUserId={user.id}
+          />
+        );
+      case "smart-access":
+        return (
+          <WorkspaceSmartAccess
+            organization={organization}
+            currentUserId={user.id}
           />
         );
       case "documents":
@@ -372,75 +570,14 @@ export function WorkspaceLayout() {
             currentRole={currentRole}
           />
         );
-      case "market-intelligence":
-        return <MarketIntelligenceDashboard organizationId={organization.id} />;
-      case "automation":
-        return (
-          <AutomationWorkflows
-            organizationId={organization.id}
-            currentRole={currentRole}
-          />
-        );
       case "fraud-alerts":
         return <FraudAlerts organizationId={organization.id} />;
-      case "whitelabel":
-        return (
-          <WhitelabelConfiguration
-            organizationId={organization.id}
-            currentRole={currentRole}
-          />
-        );
-      case "vendors":
-        return <VendorManagement />;
-      case "ai-assistant":
-        return <AIAssistant />;
-      case "notifications":
-        return <NotificationSettings />;
-      case "location-intelligence":
-        return <LocationIntelligence />;
-      case "org-insights":
-        return <OrganizationInsights organizationId={organization.id} />;
-      case "mobile-settings":
-        return (
-          <MobileAppSettings
-            currentUserId={user.id}
-            organizationId={organization.id}
-          />
-        );
-      case "blockchain":
-        return <BlockchainVerification organizationId={organization.id} />;
-      case "advanced-search":
-        return (
-          <AdvancedSearch
-            organizationId={organization.id}
-            currentUserId={user.id}
-          />
-        );
-      case "predictive-analytics":
-        return <PredictiveAnalytics organizationId={organization.id} />;
-      case "recommendations":
-        return <RecommendationEngine />;
-      case "team-collaboration":
-        return (
-          <TeamCollaborationHub
-            organization={organization}
-            currentUserId={user.id}
-            currentRole={currentRole}
-          />
-        );
-      case "workflows":
-        return <CustomWorkflowsBuilder />;
       default:
-        return (
-          <WorkspaceDashboard
-            organization={organization}
-            workspaceBasePath={workspaceBasePath}
-          />
-        );
+        return null;
     }
-  };
+  }
 
-  if (loading) {
+  if (loading || billingLoading || (organization && billing === null)) {
     return (
       <div className="min-h-screen bg-background p-8">
         <Card className="p-8 text-center text-muted-foreground">
@@ -477,9 +614,9 @@ export function WorkspaceLayout() {
       <nav className="bg-white border-b border-border">
         <div className="px-6 py-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
-              <Link to="/" className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+            <div className="flex min-w-0 items-center gap-4">
+              <Link to="/" className="flex min-w-0 items-center gap-2">
+                <div className="w-10 h-10 flex-shrink-0 bg-primary rounded-lg flex items-center justify-center">
                   <svg
                     width="24"
                     height="24"
@@ -492,11 +629,11 @@ export function WorkspaceLayout() {
                     <polyline points="9 22 9 12 15 12 15 22" />
                   </svg>
                 </div>
-                <span className="text-xl font-semibold">BaytMiftah</span>
+                <span className="truncate text-xl font-semibold">BaytMiftah</span>
               </Link>
               <div className="h-8 w-px bg-border hidden md:block" />
-              <div>
-                <h2 className="font-semibold">{organization.name}</h2>
+              <div className="min-w-0">
+                <h2 className="truncate font-semibold">{organization.name}</h2>
                 <p className="text-xs text-muted-foreground">
                   {workspaceExperience.headline} - {getRoleLabel(currentRole)}
                 </p>
@@ -530,8 +667,8 @@ export function WorkspaceLayout() {
         </div>
       </nav>
 
-      <div className="flex">
-        <aside className="w-64 border-r border-border bg-white min-h-[calc(100vh-73px)] p-6 overflow-y-auto">
+      <div className="flex flex-col lg:flex-row">
+        <aside className="w-full border-b border-border bg-white p-4 lg:w-64 lg:border-b-0 lg:border-r lg:min-h-[calc(100vh-73px)] lg:p-6 lg:overflow-y-auto">
           <nav className="space-y-2">
             <div className="mb-6">
               <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">ESSENTIALS</h3>
@@ -575,7 +712,7 @@ export function WorkspaceLayout() {
             )}
 
             {visibleAdvancedNavItems.length > 0 && (
-              <details className="border-t pt-6 mb-6" defaultOpen={["owner", "manager"].includes(currentRole || "")}>
+              <details className="border-t pt-6 mb-6" open={["owner", "manager"].includes(currentRole || "")}>
                 <summary className="cursor-pointer px-4 text-xs font-semibold text-muted-foreground">
                   ADVANCED SETUP
                 </summary>
@@ -614,8 +751,11 @@ export function WorkspaceLayout() {
           </nav>
         </aside>
 
-        <main className="flex-1 p-8 overflow-y-auto">
-          <div className="max-w-7xl">{renderPage()}</div>
+        <main className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl min-w-0">
+            {currentPage === "" ? renderWorkspaceRoleTasks() : null}
+            {renderPage()}
+          </div>
         </main>
       </div>
     </div>

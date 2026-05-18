@@ -14,6 +14,8 @@ import {
   FileText,
   HandCoins,
   Heart,
+  Home,
+  KeyRound,
   Loader2,
   LogOut,
   MessageCircle,
@@ -36,6 +38,7 @@ import { useMobileShell } from "../../mobile/MobileShellContext";
 import { useAuth } from "../../context/AuthContext";
 import { dealCaseService } from "../../../lib/dealcase.service";
 import { documentCenterService } from "../../../lib/document-center.service";
+import { escrowService, getEscrowStatusLabel } from "../../../lib/escrow.service";
 import { messageService } from "../../../lib/message.service";
 import { mobileCalendarService } from "../../../lib/mobile-calendar.service";
 import {
@@ -43,10 +46,11 @@ import {
   type GeoCoordinates,
 } from "../../../lib/mobile-location.service";
 import { organizationService } from "../../../lib/organization.service";
-import { paymentService } from "../../../lib/payment.service";
+import { getPaymentGatewayLabel, paymentService } from "../../../lib/payment.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
 import { savedSearchAlertService } from "../../../lib/saved-search-alert.service";
 import { savedPropertyService } from "../../../lib/savedproperty.service";
+import { smartAccessService } from "../../../lib/smart-access.service";
 import {
   buildAbsoluteSearchUrl,
   buildAlertSearchInput,
@@ -54,7 +58,12 @@ import {
 } from "../../../lib/search-sharing";
 import { userService } from "../../../lib/user.service";
 import { stripReferralMetadata } from "../../../lib/referral-attribution.service";
-import { formatLabel, parseOfferSummary } from "../../features/expansion/feature-helpers";
+import {
+  buildRoleTaskLaunchpad,
+  formatLabel,
+  parseOfferSummary,
+  type RoleTaskKey,
+} from "../../features/expansion/feature-helpers";
 import {
   BuyerToolkitPanel,
   BuyingGroupPanel,
@@ -87,6 +96,33 @@ function formatRelativeTime(dateString?: string | null) {
 
   const diffDays = Math.round(diffHours / 24);
   return formatter.format(diffDays, "day");
+}
+
+function selectConditionReportPhotos() {
+  return new Promise<File[]>((resolve) => {
+    const input = document.createElement("input");
+    let resolved = false;
+
+    const finish = (files: File[]) => {
+      if (resolved) return;
+      resolved = true;
+      window.removeEventListener("focus", handleFocus);
+      resolve(files);
+    };
+
+    const handleFocus = () => {
+      window.setTimeout(() => {
+        if (!input.files?.length) finish([]);
+      }, 300);
+    };
+
+    input.type = "file";
+    input.accept = "image/jpeg,image/png,image/webp";
+    input.multiple = true;
+    input.addEventListener("change", () => finish(Array.from(input.files || []).slice(0, 12)));
+    window.addEventListener("focus", handleFocus, { once: true });
+    input.click();
+  });
 }
 
 function formatPrice(amount?: number | null) {
@@ -188,6 +224,19 @@ function formatViewingTime(value?: string | null) {
   return new Date(value).toLocaleString();
 }
 
+const roleTaskIconByKey: Record<RoleTaskKey, typeof TrendingUp> = {
+  buyer: Heart,
+  diaspora_buyer: Users,
+  seller: Home,
+  agent: MessageCircle,
+  manager: Shield,
+  analyst: BarChart3,
+  vendor: Wrench,
+  family_reviewer: Users,
+  legal_reviewer: FileText,
+  local_representative: CalendarDays,
+};
+
 export function UserDashboard() {
   const { isMobileShell } = useMobileShell();
   const location = useLocation();
@@ -199,15 +248,18 @@ export function UserDashboard() {
   const [conversations, setConversations] = useState<any[]>([]);
   const [propertyTransactions, setPropertyTransactions] = useState<any[]>([]);
   const [propertyViewings, setPropertyViewings] = useState<any[]>([]);
+  const [smartAccessGrants, setSmartAccessGrants] = useState<any[]>([]);
   const [savedAlerts, setSavedAlerts] = useState<any[]>([]);
   const [dealDocuments, setDealDocuments] = useState<any[]>([]);
   const [organizationContacts, setOrganizationContacts] = useState<
     Array<{ name: string; email?: string | null; phone?: string | null }>
   >([]);
+  const [workspaceMemberships, setWorkspaceMemberships] = useState<any[]>([]);
   const [participantProfiles, setParticipantProfiles] = useState<Record<string, any>>({});
   const [currentCoordinates, setCurrentCoordinates] = useState<GeoCoordinates | null>(null);
   const [verifyingReference, setVerifyingReference] = useState(false);
   const [downloadingReceiptId, setDownloadingReceiptId] = useState<string | null>(null);
+  const [workingEscrowId, setWorkingEscrowId] = useState<string | null>(null);
 
   const section = getUserDashboardSection(location.pathname);
   const conversationIdsKey = useMemo(
@@ -231,13 +283,15 @@ export function UserDashboard() {
     const loadDashboard = async () => {
       try {
         if (!cancelled) setLoading(true);
-        const [saved, deals, chats, payments, viewings, alerts] = await Promise.all([
+        const [saved, deals, chats, payments, viewings, accessGrants, alerts, workspaceRows] = await Promise.all([
           savedPropertyService.getSavedProperties(user.id),
           dealCaseService.getDealCasesByUser(user.id),
           messageService.getUserConversations(user.id),
           paymentService.getUserPropertyTransactions(user.id),
           propertyViewingService.getUserViewings(user.id),
+          smartAccessService.getUserAccessGrants(user.id).catch(() => []),
           savedSearchAlertService.getUserAlerts(user.id),
+          organizationService.getUserOrganizations(user.id).catch(() => []),
         ]);
 
         if (!cancelled) {
@@ -246,7 +300,9 @@ export function UserDashboard() {
           setConversations(chats || []);
           setPropertyTransactions(payments || []);
           setPropertyViewings(viewings || []);
+          setSmartAccessGrants(accessGrants || []);
           setSavedAlerts(alerts || []);
+          setWorkspaceMemberships(workspaceRows || []);
         }
 
         void savedSearchAlertService
@@ -284,7 +340,11 @@ export function UserDashboard() {
     if (!user) return;
 
     const searchParams = new URLSearchParams(location.search);
-    const reference = searchParams.get("reference");
+    const reference =
+      searchParams.get("reference") ||
+      searchParams.get("tx_ref") ||
+      searchParams.get("trxref") ||
+      searchParams.get("transaction_id");
 
     if (!reference) return;
 
@@ -325,7 +385,7 @@ export function UserDashboard() {
           toast.message(`Payment status: ${result.status || "pending"}`);
         }
       } catch (error) {
-        console.error("Failed to verify paystack payment:", error);
+        console.error("Failed to verify property payment:", error);
         if (!cancelled) {
           toast.error("We couldn't verify that payment yet. Please refresh in a moment.");
         }
@@ -635,6 +695,30 @@ export function UserDashboard() {
     propertyViewings[0]?.listing?.property?.city ||
     "Accra";
 
+  const roleTaskPlans = useMemo(
+    () =>
+      buildRoleTaskLaunchpad({
+        savedProperties,
+        dealCases,
+        conversations,
+        propertyViewings,
+        propertyTransactions,
+        savedAlerts,
+        workspaceMemberships,
+        documents: dealDocuments,
+      }),
+    [
+      conversations,
+      dealCases,
+      dealDocuments,
+      propertyTransactions,
+      propertyViewings,
+      savedAlerts,
+      savedProperties,
+      workspaceMemberships,
+    ]
+  );
+
   const navIconBySection: Record<
     UserDashboardSection,
     typeof TrendingUp
@@ -653,6 +737,7 @@ export function UserDashboard() {
     messages: MessageCircle,
     applications: FileText,
     viewings: CalendarDays,
+    access: KeyRound,
     alerts: Bell,
     payments: CreditCard,
     settings: Settings,
@@ -682,6 +767,135 @@ export function UserDashboard() {
       toast.error("We couldn't open that receipt right now.");
     } finally {
       setDownloadingReceiptId(null);
+    }
+  };
+
+  const refreshUserPayments = async () => {
+    if (!user?.id) return;
+    const rows = await paymentService.getUserPropertyTransactions(user.id);
+    setPropertyTransactions(rows || []);
+  };
+
+  const normalizeEscrow = (transaction: any) => {
+    return Array.isArray(transaction.escrow) ? transaction.escrow[0] : transaction.escrow;
+  };
+
+  const handleConfirmEscrowRelease = async (escrow: any) => {
+    const confirmed = window.confirm(
+      "Confirm that the verified documents satisfy you and release this deposit to the agency?"
+    );
+    if (!confirmed) return;
+
+    try {
+      setWorkingEscrowId(escrow.id);
+      await escrowService.managePropertyEscrow({
+        action: "confirm_release",
+        escrowId: escrow.id,
+      });
+      await refreshUserPayments();
+      toast.success("Escrow release started through Paystack.");
+    } catch (error) {
+      console.error("Failed to confirm escrow release:", error);
+      toast.error("We couldn't release that escrow right now.");
+    } finally {
+      setWorkingEscrowId(null);
+    }
+  };
+
+  const handleCancelEscrow = async (escrow: any) => {
+    const confirmed = window.confirm(
+      "Cancel this escrow and request a Paystack refund within the active cancellation window?"
+    );
+    if (!confirmed) return;
+
+    try {
+      setWorkingEscrowId(escrow.id);
+      await escrowService.managePropertyEscrow({
+        action: "cancel_within_window",
+        escrowId: escrow.id,
+      });
+      await refreshUserPayments();
+      toast.success("Escrow cancellation refund started.");
+    } catch (error) {
+      console.error("Failed to cancel escrow:", error);
+      toast.error("We couldn't cancel that escrow right now.");
+    } finally {
+      setWorkingEscrowId(null);
+    }
+  };
+
+  const handleUserEscrowDispute = async (escrow: any) => {
+    const reason = window.prompt("What should the admin team investigate?");
+    if (!reason?.trim()) return;
+
+    try {
+      setWorkingEscrowId(escrow.id);
+      await escrowService.managePropertyEscrow({
+        action: "raise_dispute",
+        escrowId: escrow.id,
+        reason: reason.trim(),
+      });
+      await refreshUserPayments();
+      toast.success("Escrow dispute raised for admin review.");
+    } catch (error) {
+      console.error("Failed to dispute escrow:", error);
+      toast.error("We couldn't raise that dispute right now.");
+    } finally {
+      setWorkingEscrowId(null);
+    }
+  };
+
+  const handleSubmitTenantConditionReport = async (escrow: any) => {
+    if (!user?.id) return;
+
+    const notes = window.prompt(
+      "Describe the move-in property condition. You can attach photos after this prompt."
+    );
+    if (!notes?.trim()) return;
+    const photoFiles = window.confirm("Add condition photos now?")
+      ? await selectConditionReportPhotos()
+      : [];
+
+    try {
+      setWorkingEscrowId(escrow.id);
+      await escrowService.submitConditionReport({
+        escrowId: escrow.id,
+        listingId: escrow.listing_id,
+        propertyId: escrow.property_id,
+        organizationId: escrow.organization_id,
+        dealCaseId: escrow.transaction?.deal_case_id || null,
+        submittedBy: user.id,
+        submittedRole: "tenant",
+        reportStage: "move_in",
+        notes: notes.trim(),
+        photoFiles,
+        metadata: {
+          source: "user_dashboard",
+        },
+      });
+      await refreshUserPayments();
+      toast.success("Move-in condition report saved.");
+    } catch (error) {
+      console.error("Failed to submit condition report:", error);
+      toast.error("We couldn't save that condition report right now.");
+    } finally {
+      setWorkingEscrowId(null);
+    }
+  };
+
+  const handleAcknowledgeConditionReport = async (report: any) => {
+    if (!user?.id) return;
+
+    try {
+      setWorkingEscrowId(report.escrow_id);
+      await escrowService.acknowledgeConditionReport(report.id, user.id);
+      await refreshUserPayments();
+      toast.success("Condition report acknowledged.");
+    } catch (error) {
+      console.error("Failed to acknowledge condition report:", error);
+      toast.error("We couldn't acknowledge that report right now.");
+    } finally {
+      setWorkingEscrowId(null);
     }
   };
 
@@ -975,7 +1189,7 @@ export function UserDashboard() {
           <CreditCard className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
           <h3 className="text-xl font-semibold mb-2">No payments yet</h3>
           <p className="text-muted-foreground mb-5">
-            When you complete a secure Paystack checkout, your receipts and verification status will show up here.
+            When you complete a secure property checkout, your receipts and verification status will show up here.
           </p>
           <Link to="/search">
             <Button aria-label="Browse listings" title="Browse listings">
@@ -992,6 +1206,12 @@ export function UserDashboard() {
           const receipt = Array.isArray(transaction.receipt)
             ? transaction.receipt[0]
             : transaction.receipt;
+          const escrow = normalizeEscrow(transaction);
+          const escrowDocuments = Array.isArray(escrow?.documents) ? escrow.documents : [];
+          const conditionReports = Array.isArray(escrow?.condition_reports)
+            ? escrow.condition_reports
+            : [];
+          const escrowWorking = escrow ? workingEscrowId === escrow.id : false;
 
           return (
             <Card key={transaction.id} className="p-5">
@@ -1009,10 +1229,16 @@ export function UserDashboard() {
                         <Badge variant={getPaymentStatusVariant(transaction.status)} className="capitalize">
                           {formatPaymentStatusLabel(transaction.status)}
                         </Badge>
-                        {receipt?.blockchain_status === "confirmed" && (
+                        {(receipt?.integrity_status === "hashed" ||
+                          receipt?.integrity_status === "verified") && (
                           <Badge variant="outline" className="gap-1">
                             <Shield className="w-3 h-3" />
-                            Verified on Polygon
+                            Receipt hash verified
+                          </Badge>
+                        )}
+                        {escrow && (
+                          <Badge variant={escrow.status === "disputed" ? "destructive" : "secondary"}>
+                            Escrow: {getEscrowStatusLabel(escrow.status)}
                           </Badge>
                         )}
                       </div>
@@ -1021,13 +1247,15 @@ export function UserDashboard() {
                         {transaction.listing?.property?.city || "Ghana"}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Reference: {transaction.provider_reference}
+                        {getPaymentGatewayLabel(transaction.provider)} reference:{" "}
+                        {transaction.provider_reference}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                     <span>{formatPaymentAmount(transaction.amount_minor, transaction.currency)}</span>
+                    <span>{getPaymentGatewayLabel(transaction.provider)}</span>
                     <span>{transaction.payment_channel || "Awaiting channel confirmation"}</span>
                     <span>{formatRelativeTime(transaction.paid_at || transaction.created_at)}</span>
                     {(transaction.refunded_amount_minor || 0) > 0 && (
@@ -1036,9 +1264,159 @@ export function UserDashboard() {
                       </span>
                     )}
                   </div>
+
+                  {escrow && (
+                    <div className="rounded-xl border border-border bg-secondary/20 p-4 text-sm">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div>
+                          <p className="font-medium text-foreground">Escrow document gate</p>
+                          <p className="mt-1 text-muted-foreground">
+                            Funds stay held until required documents are approved and you confirm
+                            satisfaction.
+                          </p>
+                        </div>
+                        <Badge variant="outline">
+                          {formatPaymentAmount(escrow.amount_minor, escrow.currency)}
+                        </Badge>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {escrowDocuments.length === 0 ? (
+                          <span className="text-muted-foreground">Agency documents are pending.</span>
+                        ) : (
+                          escrowDocuments.map((document: any) => (
+                            <Badge
+                              key={document.id}
+                              variant={document.status === "approved" ? "default" : "outline"}
+                            >
+                              {String(document.document_type).replaceAll("_", " ")}:{" "}
+                              {getEscrowStatusLabel(document.status)}
+                            </Badge>
+                          ))
+                        )}
+                      </div>
+                      {escrowDocuments.some((document: any) => document.status === "approved") ? (
+                        <div className="mt-4 space-y-3">
+                          {escrowDocuments
+                            .filter((document: any) => document.status === "approved")
+                            .map((document: any) => (
+                              <details
+                                key={document.id}
+                                className="rounded-xl border border-border bg-white p-3"
+                              >
+                                <summary className="cursor-pointer font-medium text-foreground">
+                                  View verified {String(document.document_type).replaceAll("_", " ")}
+                                </summary>
+                                <div className="mt-3 space-y-2 text-xs text-muted-foreground">
+                                  {document.watermark_text ? (
+                                    <p className="font-semibold text-foreground">
+                                      {document.watermark_text}
+                                    </p>
+                                  ) : null}
+                                  {document.public_summary ? <p>{document.public_summary}</p> : null}
+                                  {document.watermarked_sha256 || document.document_sha256 ? (
+                                    <p className="break-all font-mono">
+                                      Hash: {document.watermarked_sha256 || document.document_sha256}
+                                    </p>
+                                  ) : null}
+                                  {document.rsa_signature ? (
+                                    <p className="break-all font-mono">
+                                      Signature: {document.rsa_signature}
+                                    </p>
+                                  ) : null}
+                                  {document.watermarked_content_markdown ? (
+                                    <pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-lg bg-secondary/50 p-3 font-mono text-[11px] text-foreground">
+                                      {document.watermarked_content_markdown}
+                                    </pre>
+                                  ) : null}
+                                </div>
+                              </details>
+                            ))}
+                        </div>
+                      ) : null}
+
+                      {conditionReports.length > 0 ? (
+                        <div className="mt-4 rounded-xl border border-border bg-white p-3">
+                          <p className="font-medium text-foreground">Condition reports</p>
+                          <div className="mt-3 space-y-3">
+                            {conditionReports.map((report: any) => (
+                              <div key={report.id} className="rounded-lg bg-secondary/35 p-3">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Badge variant="outline">
+                                    {formatPaymentStatusLabel(report.submitted_role)}
+                                  </Badge>
+                                  <Badge variant="secondary">
+                                    {formatPaymentStatusLabel(report.condition_status)}
+                                  </Badge>
+                                </div>
+                                <p className="mt-2 text-sm text-foreground">{report.notes}</p>
+                                {Array.isArray(report.photo_storage_paths) &&
+                                report.photo_storage_paths.length > 0 ? (
+                                  <p className="mt-1 text-xs text-muted-foreground">
+                                    {report.photo_storage_paths.length} condition photo
+                                    {report.photo_storage_paths.length === 1 ? "" : "s"} attached
+                                  </p>
+                                ) : null}
+                                <p className="mt-2 break-all font-mono text-xs text-muted-foreground">
+                                  Hash: {report.report_sha256}
+                                </p>
+                                {report.condition_status === "submitted" &&
+                                report.submitted_by !== user?.id ? (
+                                  <Button
+                                    className="mt-3"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => void handleAcknowledgeConditionReport(report)}
+                                    disabled={escrowWorking}
+                                  >
+                                    Acknowledge
+                                  </Button>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-3">
+                  {escrow?.status === "docs_approved" && (
+                    <Button
+                      variant="outline"
+                      onClick={() => void handleConfirmEscrowRelease(escrow)}
+                      disabled={escrowWorking}
+                    >
+                      {escrowWorking ? "Working..." : "Confirm Release"}
+                    </Button>
+                  )}
+                  {escrow && ["held", "docs_pending"].includes(escrow.status) && (
+                    <Button
+                      variant="outline"
+                      onClick={() => void handleCancelEscrow(escrow)}
+                      disabled={escrowWorking}
+                    >
+                      Cancel Escrow
+                    </Button>
+                  )}
+                  {escrow && !["released", "refunded", "cancelled", "disputed"].includes(escrow.status) && (
+                    <Button
+                      variant="outline"
+                      onClick={() => void handleUserEscrowDispute(escrow)}
+                      disabled={escrowWorking}
+                    >
+                      Raise Dispute
+                    </Button>
+                  )}
+                  {escrow?.status === "released" && (
+                    <Button
+                      variant="outline"
+                      onClick={() => void handleSubmitTenantConditionReport(escrow)}
+                      disabled={escrowWorking}
+                    >
+                      Move-in Report
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     onClick={() => void handleReceiptDownload(transaction)}
@@ -1109,6 +1487,9 @@ export function UserDashboard() {
                     Confirmed: {formatViewingTime(viewing.confirmed_datetime)}
                   </span>
                   <span>{viewing.duration_minutes} minutes</span>
+                  {viewing.smart_access_status && viewing.smart_access_status !== "not_enabled" ? (
+                    <span>Smart access: {formatPaymentStatusLabel(viewing.smart_access_status)}</span>
+                  ) : null}
                 </div>
                 {viewing.requester_note && <p className="text-sm">{viewing.requester_note}</p>}
               </div>
@@ -1118,6 +1499,69 @@ export function UserDashboard() {
                   <Button variant="outline">View Listing</Button>
                 </Link>
               )}
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
+  const renderSmartAccess = () => {
+    if (smartAccessGrants.length === 0) {
+      return (
+        <Card className="p-8 text-center">
+          <KeyRound className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+          <h3 className="text-xl font-semibold mb-2">No smart access yet</h3>
+          <p className="text-muted-foreground mb-5">
+            When an agency confirms a viewing or tenancy handoff for a smart property, your access
+            window will appear here.
+          </p>
+          <Link to="/search">
+            <Button>Find smart-ready properties</Button>
+          </Link>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {smartAccessGrants.map((grant) => (
+          <Card key={grant.id} className="p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="font-semibold text-lg">
+                    {grant.property?.address || "Smart property access"}
+                  </h3>
+                  <Badge variant={grant.status === "active" ? "default" : "secondary"}>
+                    {formatPaymentStatusLabel(grant.status)}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {grant.organization?.name || "Property team"} -{" "}
+                  {grant.property?.city || "Ghana"}
+                </p>
+                <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                  <span>Reason: {formatPaymentStatusLabel(grant.access_reason)}</span>
+                  <span>Scope: {formatPaymentStatusLabel(grant.access_scope)}</span>
+                  <span>
+                    Starts {formatViewingTime(grant.starts_at)}
+                  </span>
+                  <span>
+                    Ends {formatViewingTime(grant.ends_at)}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {grant.access_code_hint ||
+                    "The property team will send the final access code once the device provider sync completes."}
+                </p>
+              </div>
+
+              {grant.listing?.id ? (
+                <Link to={`/property/${grant.listing.id}`}>
+                  <Button variant="outline">View Listing</Button>
+                </Link>
+              ) : null}
             </div>
           </Card>
         ))}
@@ -1237,9 +1681,101 @@ export function UserDashboard() {
     </div>
   );
 
+  const renderRoleTaskLaunchpad = () => (
+    <section className="space-y-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <Badge variant="outline" className="mb-3">Role-based guidance</Badge>
+          <h2 className="text-2xl font-semibold tracking-tight">Simple tasks for every role</h2>
+          <p className="mt-2 max-w-3xl text-muted-foreground">
+            Each person sees the job they need to do next. The app keeps the calculations,
+            trust checks, CRM, and receipt integrity logs in the background.
+          </p>
+        </div>
+        <Link to="/workspace">
+          <Button variant="outline">
+            Open workspace
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {roleTaskPlans.map((plan) => {
+          const Icon = roleTaskIconByKey[plan.key];
+
+          return (
+            <Card
+              key={plan.key}
+              className="overflow-hidden border-border/70 bg-gradient-to-br from-white via-white to-secondary/35"
+            >
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-muted-foreground">{plan.audience}</p>
+                      <h3 className="text-lg font-semibold">{plan.label}</h3>
+                    </div>
+                  </div>
+                  <Badge variant={plan.priority === "Today" ? "default" : "outline"}>
+                    {plan.priority}
+                  </Badge>
+                </div>
+
+                <div className="mt-5 rounded-2xl border border-border/60 bg-background/80 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{plan.metricLabel}</p>
+                      <p className="mt-1 text-2xl font-semibold">{plan.metricValue}</p>
+                    </div>
+                    <p className="max-w-[13rem] text-sm leading-relaxed text-muted-foreground">
+                      {plan.headline}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{plan.helper}</p>
+
+                <div className="mt-4 space-y-3">
+                  {plan.tasks.map((task) => (
+                    <div key={task} className="flex gap-3 text-sm leading-relaxed">
+                      <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+                      <span>{task}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link to={plan.primaryAction.href}>
+                    <Button size="sm">
+                      {plan.primaryAction.label}
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                  {plan.secondaryAction ? (
+                    <Link to={plan.secondaryAction.href}>
+                      <Button variant="outline" size="sm">
+                        {plan.secondaryAction.label}
+                      </Button>
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    </section>
+  );
+
   const renderOverview = () => (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
+        {renderRoleTaskLaunchpad()}
+
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold">Upcoming Viewings</h2>
@@ -1466,6 +2002,48 @@ export function UserDashboard() {
     );
   };
 
+  const renderMobileRoleTasks = () => (
+    <section className="mobile-dashboard-section">
+      <div className="mobile-section-heading">
+        <h2>Role tasks</h2>
+        <Link to="/workspace">Workspace</Link>
+      </div>
+      <div className="mobile-role-task-list" aria-label="Role-based task shortcuts">
+        {roleTaskPlans.map((plan) => {
+          const Icon = roleTaskIconByKey[plan.key];
+
+          return (
+            <article key={plan.key} className="mobile-role-task-card">
+              <div className="mobile-role-task-topline">
+                <span>{plan.priority}</span>
+                <strong>{plan.metricValue}</strong>
+              </div>
+              <div className="mobile-role-task-title">
+                <Icon aria-hidden="true" />
+                <div>
+                  <small>{plan.audience}</small>
+                  <h3>{plan.label}</h3>
+                </div>
+              </div>
+              <p>{plan.headline}</p>
+              <ul>
+                {plan.tasks.slice(0, 2).map((task) => (
+                  <li key={task}>{task}</li>
+                ))}
+              </ul>
+              <div className="mobile-role-task-actions">
+                <Link to={plan.primaryAction.href}>{plan.primaryAction.label}</Link>
+                {plan.secondaryAction ? (
+                  <Link to={plan.secondaryAction.href}>{plan.secondaryAction.label}</Link>
+                ) : null}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+
   const renderMobileSectionContent = () => {
     if (section === "compare") {
       return (
@@ -1684,6 +2262,31 @@ export function UserDashboard() {
       );
     }
 
+    if (section === "access") {
+      if (smartAccessGrants.length === 0) {
+        return renderMobileEmpty(
+          KeyRound,
+          "No smart access yet",
+          "Confirmed smart-property viewings and tenancy keys will appear here.",
+          { label: "Browse listings", to: "/search" }
+        );
+      }
+
+      return (
+        <div className="mobile-dashboard-stack">
+          {smartAccessGrants.map((grant) => (
+            <article key={grant.id} className="mobile-dashboard-card">
+              <span>{formatPaymentStatusLabel(grant.status)}</span>
+              <strong>{grant.property?.address || "Smart property access"}</strong>
+              <p>
+                {formatViewingTime(grant.starts_at)} to {formatViewingTime(grant.ends_at)}
+              </p>
+            </article>
+          ))}
+        </div>
+      );
+    }
+
     if (section === "alerts") {
       if (savedAlerts.length === 0) {
         return renderMobileEmpty(
@@ -1731,7 +2334,7 @@ export function UserDashboard() {
               <strong>{getPaymentPurposeLabel(transaction.purpose)}</strong>
               <p>
                 {formatPaymentAmount(transaction.amount_minor, transaction.currency)} ·{" "}
-                {transaction.provider_reference}
+                {getPaymentGatewayLabel(transaction.provider)} · {transaction.provider_reference}
               </p>
             </article>
           ))}
@@ -1817,6 +2420,8 @@ export function UserDashboard() {
             );
           })}
         </div>
+
+        {renderMobileRoleTasks()}
 
         <section className="mobile-dashboard-section">
           <div className="mobile-section-heading">
@@ -2012,7 +2617,7 @@ export function UserDashboard() {
           <div className="min-h-[40vh] flex items-center justify-center">
             <div className="flex flex-col items-center gap-3 text-muted-foreground">
               <Loader2 className="w-8 h-8 animate-spin" />
-              {verifyingReference && <p>Verifying your Paystack payment securely...</p>}
+              {verifyingReference && <p>Verifying your property payment securely...</p>}
             </div>
           </div>
         ) : section === "compare" ? (
@@ -2101,6 +2706,16 @@ export function UserDashboard() {
             </div>
             {renderViewings()}
           </section>
+        ) : section === "access" ? (
+          <section className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-semibold">Smart Access</h2>
+              <p className="text-muted-foreground mt-1">
+                See time-boxed entry windows and tenancy access grants for smart properties.
+              </p>
+            </div>
+            {renderSmartAccess()}
+          </section>
         ) : section === "alerts" ? (
           <section className="space-y-6">
             <div>
@@ -2116,7 +2731,7 @@ export function UserDashboard() {
             <div>
               <h2 className="text-2xl font-semibold">Payments</h2>
               <p className="text-muted-foreground mt-1">
-                Review Paystack payments, open receipts, and track Polygon verification.
+                Review property payments, open receipts, and track receipt integrity.
               </p>
             </div>
             {renderPayments()}

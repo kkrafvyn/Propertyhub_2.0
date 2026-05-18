@@ -140,7 +140,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[360px] p-0">
+      <DropdownMenuContent align="end" className="w-[min(calc(100vw-2rem),360px)] p-0">
         <div className="px-4 py-3 flex items-center justify-between">
           <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
           {count > 0 && (

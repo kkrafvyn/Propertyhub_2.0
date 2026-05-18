@@ -15,4 +15,6 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
   },
 })
 
+export const supabaseAny = supabase as any
+
 export type { Database }

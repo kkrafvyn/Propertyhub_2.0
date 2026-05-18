@@ -203,7 +203,7 @@ Before production:
 - [ ] Set password requirements
 - [ ] Configure email templates
 - [ ] Create admin role and policies
-- [ ] Set up payment processor (Paystack integration)
+- [ ] Set up payment processors (Paystack, Flutterwave, and IT Consortium where enabled)
 - [ ] Enable HTTPS/SSL
 - [ ] Configure CORS
 - [ ] Set up automated backups

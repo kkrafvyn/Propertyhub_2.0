@@ -792,7 +792,7 @@ The architecture is designed to later support:
 * IoT integrations
 * White-label SaaS
 * Financing systems
-* Blockchain verification
+* Receipt and document integrity verification
 * Multi-country expansion
 
 without rebuilding the core platform.

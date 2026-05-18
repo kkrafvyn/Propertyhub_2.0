@@ -1,6 +1,6 @@
--- Paystack-backed property payments with blockchain receipt verification.
+-- Gateway-backed property payments with internal receipt integrity verification.
 -- This migration adds a dedicated property payment ledger, receipt records,
--- and extends the blockchain verification layer to support payment receipts.
+-- and extends the integrity verification layer to support payment receipts.
 
 CREATE TABLE IF NOT EXISTS public.property_transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -38,12 +38,11 @@ CREATE TABLE IF NOT EXISTS public.transaction_receipts (
   storage_path TEXT NOT NULL,
   receipt_sha256 TEXT NOT NULL,
   receipt_payload JSONB NOT NULL,
-  blockchain_record_id UUID REFERENCES public.blockchain_records(id) ON DELETE SET NULL,
-  blockchain_status TEXT NOT NULL DEFAULT 'pending' CHECK (
-    blockchain_status IN ('pending', 'submitted', 'confirmed', 'failed')
+  integrity_status TEXT NOT NULL DEFAULT 'hashed' CHECK (
+    integrity_status IN ('pending', 'hashed', 'verified', 'failed')
   ),
-  blockchain_network TEXT NOT NULL DEFAULT 'polygon',
-  blockchain_txid TEXT,
+  integrity_signature TEXT,
+  integrity_public_key_id TEXT,
   verification_url TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -61,24 +60,8 @@ ON public.property_transactions(status);
 CREATE INDEX IF NOT EXISTS idx_property_transactions_listing
 ON public.property_transactions(listing_id);
 
-CREATE INDEX IF NOT EXISTS idx_transaction_receipts_blockchain_status
-ON public.transaction_receipts(blockchain_status, created_at DESC);
-
-ALTER TABLE public.blockchain_records
-  DROP CONSTRAINT IF EXISTS blockchain_records_record_type_check;
-
-ALTER TABLE public.blockchain_records
-  ADD CONSTRAINT blockchain_records_record_type_check
-  CHECK (
-    record_type IN (
-      'ownership',
-      'document',
-      'escrow',
-      'title_deed',
-      'lease_agreement',
-      'payment_receipt'
-    )
-  );
+CREATE INDEX IF NOT EXISTS idx_transaction_receipts_integrity_status
+ON public.transaction_receipts(integrity_status, created_at DESC);
 
 ALTER TABLE public.verification_hashes
   DROP CONSTRAINT IF EXISTS verification_hashes_document_type_check;
@@ -172,5 +155,5 @@ BEFORE UPDATE ON public.transaction_receipts
 FOR EACH ROW
 EXECUTE FUNCTION public.set_row_updated_at();
 
-COMMENT ON TABLE public.property_transactions IS 'Property-specific fiat payments processed through Paystack.';
-COMMENT ON TABLE public.transaction_receipts IS 'Server-generated receipts and blockchain verification metadata for property transactions.';
+COMMENT ON TABLE public.property_transactions IS 'Property-specific fiat payments processed through configured payment gateways.';
+COMMENT ON TABLE public.transaction_receipts IS 'Server-generated receipts and internal integrity metadata for property transactions.';

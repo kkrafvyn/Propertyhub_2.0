@@ -1,7 +1,7 @@
 import type { Database } from "./database.types";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
-export type MemberRole = Database["public"]["Tables"]["organization_members"]["Row"]["role"];
+export type MemberRole = "owner" | "manager" | "agent" | "analyst";
 
 export interface MembershipRow {
   organization: Organization | Organization[] | null;

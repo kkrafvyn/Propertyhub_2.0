@@ -14,7 +14,7 @@ Production-ready real estate platform for managing properties, listings, deal ca
 ## Tech Stack
 
 - Frontend: React 18.3.1 + TypeScript
-- Build tool: Vite 6.3.5
+- Build tool: Vite 6.4.2+
 - Routing: React Router 7.13.0
 - UI: shadcn/ui, Radix UI, MUI
 - Styling: Tailwind CSS 4
@@ -63,7 +63,6 @@ docs/
 |-- setup/                 # Environment and integration setup
 |-- deployment/            # Launch and mobile deployment guides
 |-- implementation/        # Rollout notes and summaries
-|-- blockchain/            # Smart contract documentation
 `-- reference/             # Planning and design references
 ```
 
@@ -106,6 +105,28 @@ const listings = await listingService.searchListings(
 ## Deployment
 
 Use [docs/deployment/PRODUCTION_CHECKLIST.md](./docs/deployment/PRODUCTION_CHECKLIST.md) and [docs/deployment/DEPLOYMENT_GUIDE.md](./docs/deployment/DEPLOYMENT_GUIDE.md) for launch planning.
+
+## Quality And Launch Checks
+
+Run the complete local release gate:
+
+```bash
+npm run qa:local
+```
+
+Validate production credentials before deployment:
+
+```bash
+npm run prod:env:check -- --env-file=.env.production
+```
+
+For native push or Smart Property Access launch, use:
+
+```bash
+npm run prod:env:check:strict -- --env-file=.env.production
+```
+
+Provider activation steps live in [docs/deployment/PRODUCTION_PROVIDER_ACTIVATION.md](./docs/deployment/PRODUCTION_PROVIDER_ACTIVATION.md).
 
 ## Original Design
 

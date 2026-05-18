@@ -183,9 +183,12 @@ class MLSIntegrationService {
 
       return {
         ...jobData,
+        provider: jobData.provider as ListingSyncJob["provider"],
+        organizationId: jobData.organization_id,
         status: 'completed',
         listingsSync: syncResult.successful,
         listingsFailed: syncResult.failed,
+        startedAt: jobData.started_at,
         completedAt: new Date().toISOString(),
       };
     } catch (error) {

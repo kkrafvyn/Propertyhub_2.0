@@ -12,6 +12,7 @@ import {
   Smartphone,
   Download,
   MessageSquareQuote,
+  Radio,
   Star,
 } from "lucide-react";
 import { Navbar } from "../components/Navbar";
@@ -116,6 +117,12 @@ export function Home() {
       href: "/market-trends",
     },
     {
+      title: "Sold Ledger",
+      description: "Closed sales publish here with buyer identities shown only as hashes.",
+      icon: Radio,
+      href: "/sold-ledger",
+    },
+    {
       title: "Buyer Requests",
       description: "Capture demand before a buyer ever reaches a listing page.",
       icon: Users,
@@ -152,7 +159,7 @@ export function Home() {
       <Navbar transparent />
 
       {/* Hero Section */}
-      <section className="relative h-[600px] flex items-center justify-center overflow-hidden">
+      <section className="relative flex min-h-[560px] items-center justify-center overflow-hidden py-24 sm:h-[600px] sm:py-0">
         <div className="absolute inset-0 z-0">
           <img
             src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1920&q=80"
@@ -167,7 +174,7 @@ export function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-5xl md:text-6xl font-semibold text-white mb-6"
+            className="mb-6 text-4xl font-semibold text-white sm:text-5xl md:text-6xl"
           >
             Find Your Perfect Property in Ghana
           </motion.h1>
@@ -175,7 +182,7 @@ export function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-xl text-white/90 mb-10"
+            className="mb-10 text-lg text-white/90 sm:text-xl"
           >
             Discover quality homes, apartments, and commercial spaces across Accra and beyond
           </motion.p>
@@ -187,8 +194,8 @@ export function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="bg-white rounded-2xl shadow-2xl p-2 max-w-3xl mx-auto"
           >
-            <div className="flex flex-col md:flex-row gap-2">
-              <div className="flex gap-2 px-2 py-1">
+            <div className="flex min-w-0 flex-col gap-2 md:flex-row">
+              <div className="flex gap-2 overflow-x-auto px-2 py-1">
                 <button
                   onClick={() => setSearchType("rental")}
                   className={`px-4 py-2 rounded-lg transition-all ${
@@ -220,7 +227,7 @@ export function Home() {
                   Lease
                 </button>
               </div>
-              <div className="flex-1 flex items-center gap-2 px-4 py-2 bg-secondary rounded-lg">
+              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-secondary px-4 py-2">
                 <MapPin className="w-5 h-5 text-muted-foreground" />
                 <Input
                   type="text"
@@ -594,6 +601,7 @@ export function Home() {
               <li><Link to="/agencies" className="hover:text-white">Verified Agencies</Link></li>
               <li><Link to="/projects" className="hover:text-white">Projects</Link></li>
               <li><Link to="/market-trends" className="hover:text-white">Market Trends</Link></li>
+              <li><Link to="/sold-ledger" className="hover:text-white">Sold Ledger</Link></li>
             </ul>
           </div>
         </div>

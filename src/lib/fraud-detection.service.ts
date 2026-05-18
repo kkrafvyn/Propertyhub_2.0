@@ -11,6 +11,30 @@ type ReviewCaseStatus =
 type ReviewCasePriority = "low" | "medium" | "high" | "critical";
 
 const ACTIVE_CASE_STATUSES: ReviewCaseStatus[] = ["open", "investigating", "escalated"];
+const ALERT_TYPE_LABELS: Record<string, string> = {
+  duplicate_image: "Duplicate image",
+  suspicious_listing: "Suspicious listing",
+  suspicious_account: "Suspicious account",
+  fraud_transaction: "Suspicious transaction",
+  spam_behavior: "Spam behavior",
+  duplicate_listing: "Duplicate listing",
+  suspicious_lead: "Suspicious lead",
+  price_mismatch: "Price mismatch",
+  image_reuse: "Image reuse",
+  fake_listing: "Fake listing",
+  scam_pattern: "Scam pattern",
+};
+
+function normalizeAlertType(alertType: string) {
+  if (ALERT_TYPE_LABELS[alertType]) return alertType;
+
+  switch (alertType) {
+    case "user_report":
+      return "scam_pattern";
+    default:
+      return "suspicious_listing";
+  }
+}
 
 async function writeAuditLog(
   adminId: string,
@@ -24,7 +48,7 @@ async function writeAuditLog(
     action,
     target_type: targetType,
     target_id: targetId,
-    details,
+    details: details as any,
   });
 
   if (error) {
@@ -86,6 +110,28 @@ async function enrichReviewCases(rows: any[]) {
   }));
 }
 
+async function resolveOrganizationIdForAlert(
+  targetType: "listing" | "user" | "organization" | "transaction",
+  targetId: string,
+  organizationId?: string | null
+) {
+  if (organizationId) return organizationId;
+  if (targetType === "organization") return targetId;
+
+  if (targetType === "listing") {
+    const { data, error } = await supabase
+      .from("listings")
+      .select("organization_id")
+      .eq("id", targetId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data?.organization_id || null;
+  }
+
+  return null;
+}
+
 export const fraudDetectionService = {
   async createAlert(
     targetType: "listing" | "user" | "organization" | "transaction",
@@ -93,14 +139,35 @@ export const fraudDetectionService = {
     alertType: string,
     severity: "low" | "medium" | "high" | "critical",
     description: string,
-    evidence: Record<string, any> = {}
+    evidence: Record<string, any> = {},
+    context: {
+      organizationId?: string | null;
+      title?: string;
+      listingId?: string | null;
+      leadId?: string | null;
+    } = {}
   ) {
+    const normalizedAlertType = normalizeAlertType(alertType);
+    const organizationId = await resolveOrganizationIdForAlert(
+      targetType,
+      targetId,
+      context.organizationId
+    );
+
+    if (!organizationId) {
+      throw new Error("Organization context is required to create a moderation alert");
+    }
+
     const { data, error } = await supabase
       .from("fraud_alerts")
       .insert({
+        organization_id: organizationId,
+        title: context.title || ALERT_TYPE_LABELS[normalizedAlertType] || "Moderation alert",
         target_type: targetType,
         target_id: targetId,
-        alert_type: alertType,
+        listing_id: context.listingId || (targetType === "listing" ? targetId : null),
+        lead_id: context.leadId || null,
+        alert_type: normalizedAlertType,
         severity,
         description,
         evidence,
@@ -450,7 +517,7 @@ export const fraudDetectionService = {
 
     const { data, error } = await supabase
       .from("fraud_review_cases")
-      .update(updates)
+      .update(updates as any)
       .eq("id", caseId)
       .select("*")
       .single();
@@ -574,8 +641,19 @@ export const fraudDetectionService = {
     targetType: "listing" | "user" | "organization",
     targetId: string,
     reason: string,
-    description: string
+    description: string,
+    context: {
+      organizationId?: string | null;
+      listingId?: string | null;
+      listingTitle?: string | null;
+    } = {}
   ) {
+    const organizationId = await resolveOrganizationIdForAlert(
+      targetType,
+      targetId,
+      context.organizationId
+    );
+
     const { data, error } = await supabase
       .from("fraud_reports")
       .insert({
@@ -591,9 +669,25 @@ export const fraudDetectionService = {
 
     if (error) throw error;
 
-    await this.createAlert(targetType, targetId, "user_report", "medium", `User reported: ${reason}`, {
-      report_id: data.id,
-    });
+    if (organizationId) {
+      await this.createAlert(
+        targetType,
+        targetId,
+        reason === "duplicate_listing" ? "duplicate_listing" : "scam_pattern",
+        reason === "scam" || reason === "fake_listing" ? "high" : "medium",
+        `Marketplace user reported: ${reason.replaceAll("_", " ")}. ${description}`.trim(),
+        {
+          report_id: data.id,
+          reason,
+          listingTitle: context.listingTitle || null,
+        },
+        {
+          organizationId,
+          listingId: context.listingId || (targetType === "listing" ? targetId : null),
+          title: "Marketplace listing report",
+        }
+      );
+    }
 
     return data;
   },

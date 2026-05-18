@@ -125,7 +125,7 @@ export const savedSearchAlertService = {
   async updateAlert(id: string, updates: Record<string, unknown>) {
     const { data, error } = await supabase
       .from("saved_search_alerts")
-      .update(updates)
+      .update(updates as any)
       .eq("id", id)
       .select("*")
       .single();
@@ -176,7 +176,7 @@ export const savedSearchAlertService = {
   async evaluateUserAlerts(userId: string) {
     const alerts = await this.getUserAlerts(userId);
     const dueAlerts = alerts.filter(
-      (alert) => alert.is_active && isDue(alert.last_checked_at, alert.frequency)
+      (alert) => alert.is_active && isDue(alert.last_checked_at, alert.frequency as AlertFrequency)
     );
 
     const refreshed = await Promise.all(

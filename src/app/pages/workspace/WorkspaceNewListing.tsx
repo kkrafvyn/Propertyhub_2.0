@@ -13,6 +13,11 @@ import { listingService } from "../../../lib/listing.service";
 import { listingQualityService } from "../../../lib/listing-quality.service";
 import { propertyMediaService } from "../../../lib/property-media.service";
 import { propertyService } from "../../../lib/property.service";
+import {
+  getActiveListingLimitState,
+  isPublicActiveListing,
+  subscriptionService,
+} from "../../../lib/subscription.service";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 type PropertyCategory = Database["public"]["Tables"]["properties"]["Row"]["category"];
@@ -85,6 +90,23 @@ export function WorkspaceNewListing({
 
     try {
       setSubmitting(true);
+      if (form.status === "listed" && form.visibility === "public") {
+        const [billingOverview, existingListings] = await Promise.all([
+          subscriptionService.getOrganizationBillingOverview(organization.id),
+          listingService.getOrganizationListings(organization.id),
+        ]);
+        const activeListings = (existingListings || []).filter(isPublicActiveListing).length;
+        const listingLimit = getActiveListingLimitState({
+          tier: billingOverview.tier,
+          activeListings,
+        });
+
+        if (listingLimit.isAtLimit) {
+          toast.error("This subscription tier has reached its active listing limit. Upgrade billing first.");
+          return;
+        }
+      }
+
       const qualityCheckedAt = new Date().toISOString();
       const verificationStatus = listingQualityService.getAutoVerificationStatus(
         qualityReport.score

@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
-import { Building2, Loader2, Sparkles } from "lucide-react";
+import { Building2, CheckCircle2, CreditCard, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
+import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
+import {
+  formatMinorCurrency,
+  subscriptionService,
+  type SubscriptionTier,
+} from "../../../lib/subscription.service";
 import { organizationService } from "../../../lib/organization.service";
 import {
   WORKSPACE_ENTRY_PATH,
@@ -22,22 +28,47 @@ const ALLOWED_WORKSPACE_PAGES = new Set([
   "leads",
   "team",
   "settings",
-  "market-intelligence",
-  "automation",
-  "ai-assistant",
-  "vendors",
-  "location-intelligence",
-  "org-insights",
-  "notifications",
-  "whitelabel",
-  "mobile-settings",
-  "blockchain",
-  "advanced-search",
-  "predictive-analytics",
-  "recommendations",
-  "team-collaboration",
-  "workflows",
+  "billing",
+  "documents",
+  "trust",
+  "calendar",
+  "payments",
+  "smart-access",
+  "finance",
 ]);
+
+const PROPERTY_TYPE_OPTIONS = [
+  "Apartment",
+  "House",
+  "Commercial",
+  "Office",
+  "Land",
+  "Developer Projects",
+];
+
+const BILLING_LANES = [
+  {
+    id: "ghana",
+    label: "Ghana organization",
+    helper: "Bill in GHS through Paystack with Mobile Money, card, or bank transfer.",
+    provider: "paystack" as const,
+    currency: "GHS" as const,
+  },
+  {
+    id: "diaspora-usd",
+    label: "Diaspora organization - USD",
+    helper: "Bill an international agency or landlord in USD through Stripe.",
+    provider: "stripe" as const,
+    currency: "USD" as const,
+  },
+  {
+    id: "diaspora-gbp",
+    label: "Diaspora organization - GBP",
+    helper: "Bill a UK-based agency or landlord in GBP through Stripe.",
+    provider: "stripe" as const,
+    currency: "GBP" as const,
+  },
+];
 
 function sanitizeRequestedPage(value: string | null) {
   if (!value) return "";
@@ -49,7 +80,7 @@ function getErrorMessage(error: unknown) {
     return String(error.message);
   }
 
-  return "We couldn't create your workspace right now.";
+  return "We couldn't start billing right now.";
 }
 
 function getErrorCode(error: unknown) {
@@ -66,8 +97,12 @@ export function WorkspaceEntry() {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [memberships, setMemberships] = useState<OrganizationMembership[]>([]);
+  const [tiers, setTiers] = useState<SubscriptionTier[]>([]);
+  const [selectedTierId, setSelectedTierId] = useState("starter");
+  const [selectedBillingLaneId, setSelectedBillingLaneId] = useState("ghana");
   const [slugEdited, setSlugEdited] = useState(false);
   const [form, setForm] = useState({
     name: "",
@@ -76,31 +111,45 @@ export function WorkspaceEntry() {
     email: user?.email || "",
     phone: "",
     website: "",
+    businessAddress: "",
+    licenseNumber: "",
+    contactPersonName: "",
+    contactPersonPhone: "",
+    propertyTypesHandled: ["Apartment", "House"],
   });
 
   const requestedPage = useMemo(
     () => sanitizeRequestedPage(searchParams.get("next")),
     [searchParams]
   );
+  const billingMode = searchParams.get("billing");
+  const paymentReference = searchParams.get("reference") || searchParams.get("trxref");
+  const stripeSessionId = searchParams.get("stripe_session_id") || searchParams.get("session_id");
+  const isBillingReturn = billingMode === "verify";
 
-  const loadMemberships = async () => {
+  const loadEntryData = async () => {
     if (!user) return;
 
     try {
       setLoading(true);
       setLoadError(null);
-      const rows = (await organizationService.getUserOrganizations(user.id)) as MembershipRow[];
+      const [rows, tierRows] = await Promise.all([
+        organizationService.getUserOrganizations(user.id) as Promise<MembershipRow[]>,
+        subscriptionService.getSubscriptionTiers(),
+      ]);
       setMemberships(normalizeOrganizationMemberships(rows));
+      setTiers(tierRows);
+      setSelectedTierId((current) => tierRows.some((tier) => tier.id === current) ? current : tierRows[0]?.id || "starter");
     } catch (error) {
-      console.error("Failed to load workspace memberships:", error);
-      setLoadError("We couldn't load your workspace organizations right now.");
+      console.error("Failed to load workspace entry data:", error);
+      setLoadError("We couldn't load workspace billing options right now.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    void loadMemberships();
+    void loadEntryData();
   }, [user?.id]);
 
   useEffect(() => {
@@ -111,6 +160,38 @@ export function WorkspaceEntry() {
       email: current.email || user.email || "",
     }));
   }, [user?.email]);
+
+  useEffect(() => {
+    if (!user || !isBillingReturn || verifying) return;
+
+    const verifyBilling = async () => {
+      if (!paymentReference && !stripeSessionId) {
+        toast.error("The payment provider did not return a verification reference.");
+        return;
+      }
+
+      try {
+        setVerifying(true);
+        const result = await subscriptionService.verifyOrganizationSubscription(
+          paymentReference || stripeSessionId || "",
+          stripeSessionId
+        );
+        toast.success(
+          result.alreadyProcessed
+            ? "Subscription was already verified."
+            : "Subscription verified. Your workspace is active."
+        );
+        navigate(getWorkspaceRoute(result.organization.slug), { replace: true });
+      } catch (error) {
+        console.error("Failed to verify subscription:", error);
+        toast.error(getErrorMessage(error));
+      } finally {
+        setVerifying(false);
+      }
+    };
+
+    void verifyBilling();
+  }, [user?.id, isBillingReturn, paymentReference, stripeSessionId, verifying, navigate]);
 
   const handleNameChange = (value: string) => {
     setForm((current) => ({
@@ -128,6 +209,18 @@ export function WorkspaceEntry() {
     }));
   };
 
+  const togglePropertyType = (propertyType: string) => {
+    setForm((current) => {
+      const hasType = current.propertyTypesHandled.includes(propertyType);
+      return {
+        ...current,
+        propertyTypesHandled: hasType
+          ? current.propertyTypesHandled.filter((item) => item !== propertyType)
+          : [...current.propertyTypesHandled, propertyType],
+      };
+    });
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -141,6 +234,11 @@ export function WorkspaceEntry() {
       return;
     }
 
+    if (!form.businessAddress.trim() || !form.licenseNumber.trim()) {
+      toast.error("Business address and registration or license number are required.");
+      return;
+    }
+
     const nextSlug = toOrganizationSlug(form.slug || form.name);
     if (!nextSlug) {
       toast.error("Enter a valid workspace slug.");
@@ -149,22 +247,27 @@ export function WorkspaceEntry() {
 
     try {
       setCreating(true);
-      const organization = await organizationService.createOrganization({
-        name: form.name.trim(),
-        slug: nextSlug,
-        description: form.description.trim() || null,
-        email: form.email.trim() || null,
-        phone: form.phone.trim() || null,
-        website: form.website.trim() || null,
-        owner_id: user.id,
+      const selectedBillingLane =
+        BILLING_LANES.find((lane) => lane.id === selectedBillingLaneId) || BILLING_LANES[0];
+      const result = await subscriptionService.initializeOrganizationSubscription({
+        tierId: selectedTierId,
+        provider: selectedBillingLane.provider,
+        currency: selectedBillingLane.currency,
+        organization: {
+          ...form,
+          slug: nextSlug,
+          registrationNumber: form.licenseNumber,
+        },
       });
 
-      toast.success("Workspace created. You can start listing properties now.");
-      navigate(getWorkspaceRoute(organization.slug, requestedPage || undefined), {
-        replace: true,
-      });
+      toast.success(
+        `Workspace reserved. Continue to ${
+          selectedBillingLane.provider === "stripe" ? "Stripe" : "Paystack"
+        } to activate it.`
+      );
+      window.location.assign(result.authorizationUrl);
     } catch (error) {
-      console.error("Failed to create organization:", error);
+      console.error("Failed to initialize subscription:", error);
       const message = getErrorMessage(error);
       const code = getErrorCode(error);
       if (code === "23505" || message.includes("duplicate") || message.includes("slug")) {
@@ -178,12 +281,16 @@ export function WorkspaceEntry() {
   };
 
   const firstMembership = memberships[0] || null;
+  const selectedTier = tiers.find((tier) => tier.id === selectedTierId) || tiers[0] || null;
+  const selectedBillingLane =
+    BILLING_LANES.find((lane) => lane.id === selectedBillingLaneId) || BILLING_LANES[0];
 
-  if (loading) {
+  if (loading || verifying) {
     return (
       <div className="min-h-screen bg-background p-8">
-        <Card className="max-w-xl mx-auto p-8 text-center text-muted-foreground">
-          Loading workspace...
+        <Card className="mx-auto max-w-xl p-8 text-center text-muted-foreground">
+          <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-primary" />
+          {verifying ? "Verifying subscription payment..." : "Loading workspace setup..."}
         </Card>
       </div>
     );
@@ -192,11 +299,11 @@ export function WorkspaceEntry() {
   if (loadError) {
     return (
       <div className="min-h-screen bg-background p-8">
-        <Card className="max-w-xl mx-auto p-8 text-center">
-          <h1 className="text-2xl font-semibold mb-3">Workspace unavailable</h1>
-          <p className="text-muted-foreground mb-6">{loadError}</p>
+        <Card className="mx-auto max-w-xl p-8 text-center">
+          <h1 className="mb-3 text-2xl font-semibold">Workspace unavailable</h1>
+          <p className="mb-6 text-muted-foreground">{loadError}</p>
           <div className="flex justify-center gap-3">
-            <Button onClick={() => void loadMemberships()}>Try Again</Button>
+            <Button onClick={() => void loadEntryData()}>Try Again</Button>
             <Link to="/">
               <Button variant="outline">Back Home</Button>
             </Link>
@@ -206,7 +313,7 @@ export function WorkspaceEntry() {
     );
   }
 
-  if (firstMembership) {
+  if (firstMembership && !isBillingReturn) {
     return (
       <Navigate
         to={getWorkspaceRoute(
@@ -219,45 +326,46 @@ export function WorkspaceEntry() {
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-10">
-      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr,0.9fr] gap-8">
-        <Card className="p-8 lg:p-10">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-primary" />
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f0f7ee,transparent_38%),linear-gradient(135deg,#fffdf7,#f7efe5)] px-4 py-10">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-[1.1fr,0.9fr]">
+        <Card className="p-8 shadow-sm lg:p-10">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+              <Building2 className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-primary font-medium">Workspace Setup</p>
-              <h1 className="text-3xl font-semibold">Create your organization</h1>
+              <p className="text-sm font-medium text-primary">BaytMiftah Phase 1</p>
+              <h1 className="text-3xl font-semibold">Create and activate your workspace</h1>
             </div>
           </div>
 
-          <p className="text-muted-foreground mb-8">
-            Your account is ready, but you still need a workspace before you can publish
-            listings, manage leads, or invite teammates.
+          <p className="mb-8 text-muted-foreground">
+            Register the organization, choose a monthly SaaS tier, then complete the first
+            subscription payment before the workspace unlocks.
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <Input
-              label="Organization Name"
-              value={form.name}
-              onChange={(event) => handleNameChange(event.target.value)}
-              placeholder="Prime Properties Ghana"
-              required
-            />
-
-            <Input
-              label="Workspace Slug"
-              value={form.slug}
-              onChange={(event) => handleSlugChange(event.target.value)}
-              placeholder="prime-properties-ghana"
-              required
-            />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <Input
+                label="Organization Name"
+                value={form.name}
+                onChange={(event) => handleNameChange(event.target.value)}
+                placeholder="Prime Properties Ghana"
+                required
+              />
+              <Input
+                label="Workspace Slug"
+                value={form.slug}
+                onChange={(event) => handleSlugChange(event.target.value)}
+                placeholder="prime-properties-ghana"
+                required
+              />
+            </div>
 
             <div>
-              <label className="block mb-2 text-sm text-foreground">Description</label>
+              <label className="mb-2 block text-sm text-foreground">Description</label>
               <textarea
-                className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground min-h-32"
+                className="min-h-28 w-full rounded-lg border border-border bg-input-background px-4 py-3 text-foreground"
                 value={form.description}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, description: event.target.value }))
@@ -266,7 +374,25 @@ export function WorkspaceEntry() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <Input
+                label="Business Address"
+                value={form.businessAddress}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, businessAddress: event.target.value }))
+                }
+                placeholder="East Legon, Accra"
+                required
+              />
+              <Input
+                label="Registration / License Number"
+                value={form.licenseNumber}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, licenseNumber: event.target.value }))
+                }
+                placeholder="BN-0000000"
+                required
+              />
               <Input
                 label="Public Email"
                 type="email"
@@ -284,6 +410,22 @@ export function WorkspaceEntry() {
                 }
                 placeholder="+233 24 000 0000"
               />
+              <Input
+                label="Contact Person"
+                value={form.contactPersonName}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, contactPersonName: event.target.value }))
+                }
+                placeholder="Ama Mensah"
+              />
+              <Input
+                label="Contact Phone"
+                value={form.contactPersonPhone}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, contactPersonPhone: event.target.value }))
+                }
+                placeholder="+233 55 000 0000"
+              />
             </div>
 
             <Input
@@ -295,15 +437,113 @@ export function WorkspaceEntry() {
               placeholder="https://example.com"
             />
 
+            <div>
+              <label className="mb-3 block text-sm text-foreground">Property types handled</label>
+              <div className="flex flex-wrap gap-2">
+                {PROPERTY_TYPE_OPTIONS.map((propertyType) => {
+                  const selected = form.propertyTypesHandled.includes(propertyType);
+                  return (
+                    <button
+                      key={propertyType}
+                      type="button"
+                      onClick={() => togglePropertyType(propertyType)}
+                      className={`rounded-full border px-3 py-2 text-sm transition ${
+                        selected
+                          ? "border-primary bg-primary text-white"
+                          : "border-border bg-white hover:border-primary/50"
+                      }`}
+                    >
+                      {propertyType}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-3 block text-sm text-foreground">Subscription tier</label>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                {tiers.map((tier) => {
+                  const selected = tier.id === selectedTierId;
+                  return (
+                    <button
+                      key={tier.id}
+                      type="button"
+                      onClick={() => setSelectedTierId(tier.id)}
+                      className={`rounded-2xl border p-4 text-left transition ${
+                        selected
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border bg-white hover:border-primary/40"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="font-semibold">{tier.name}</h3>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {formatMinorCurrency(tier.price_minor, tier.currency)}/month
+                          </p>
+                        </div>
+                        {selected ? <CheckCircle2 className="h-5 w-5 text-primary" /> : null}
+                      </div>
+                      <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                        <p>
+                          Seats:{" "}
+                          {tier.agent_seat_limit == null ? "Unlimited" : tier.agent_seat_limit}
+                        </p>
+                        <p>
+                          Active listings:{" "}
+                          {tier.active_listing_limit == null
+                            ? "Unlimited"
+                            : tier.active_listing_limit}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-3 block text-sm text-foreground">Billing lane</label>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                {BILLING_LANES.map((lane) => {
+                  const selected = lane.id === selectedBillingLaneId;
+                  return (
+                    <button
+                      key={lane.id}
+                      type="button"
+                      onClick={() => setSelectedBillingLaneId(lane.id)}
+                      className={`rounded-2xl border p-4 text-left transition ${
+                        selected
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border bg-white hover:border-primary/40"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="font-semibold">{lane.label}</h3>
+                          <p className="mt-1 text-sm text-muted-foreground">{lane.helper}</p>
+                        </div>
+                        {selected ? <CheckCircle2 className="h-5 w-5 text-primary" /> : null}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex flex-wrap gap-3 pt-2">
-              <Button type="submit" size="lg" disabled={creating}>
+              <Button type="submit" size="lg" disabled={creating || !selectedTier}>
                 {creating ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Creating workspace...
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Opening checkout...
                   </>
                 ) : (
-                  "Create Workspace"
+                  <>
+                    <CreditCard className="h-4 w-4" />
+                    Continue to {selectedBillingLane.provider === "stripe" ? "Stripe" : "Paystack"}
+                  </>
                 )}
               </Button>
               <Link to="/">
@@ -315,41 +555,56 @@ export function WorkspaceEntry() {
           </form>
         </Card>
 
-        <Card className="p-8 lg:p-10 bg-secondary/30">
-          <div className="flex items-center gap-2 text-primary mb-6">
-            <Sparkles className="w-5 h-5" />
-            <span className="font-medium">What you unlock</span>
+        <Card className="overflow-hidden bg-white/85 p-8 shadow-sm lg:p-10">
+          <div className="mb-6 flex items-center gap-2 text-primary">
+            <ShieldCheck className="h-5 w-5" />
+            <span className="font-medium">Payment-required activation</span>
           </div>
 
           <div className="space-y-5">
             <div>
-              <h2 className="font-semibold mb-1">Publish listings quickly</h2>
-              <p className="text-sm text-muted-foreground">
-                Create properties, manage pricing, and control public visibility from one
-                dashboard.
+              <h2 className="font-semibold">Phase 1 stays focused</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Dashboard, Billing, Team, Settings, and Verification are prioritized before the
+                marketplace and escrow layers expand.
               </p>
             </div>
             <div>
-              <h2 className="font-semibold mb-1">Manage leads as a team</h2>
-              <p className="text-sm text-muted-foreground">
-                Track deal cases, stay on top of conversations, and invite teammates when
-                you&apos;re ready.
+              <h2 className="font-semibold">Admin verification starts immediately</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your business details enter the admin queue as soon as checkout is initialized.
               </p>
             </div>
             <div>
-              <h2 className="font-semibold mb-1">Grow into the full platform</h2>
-              <p className="text-sm text-muted-foreground">
-                The same workspace becomes the entry point for analytics, automation,
-                blockchain verification, and enterprise features.
+              <h2 className="font-semibold">Smart access is lined up cleanly</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Smart Property Access now has a later-phase lane, but workspace activation stays
+                focused on subscription billing first.
               </p>
             </div>
           </div>
 
-          <div className="mt-8 p-5 rounded-2xl bg-white border border-border">
+          <div className="mt-8 rounded-2xl border border-border bg-secondary/35 p-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span className="font-semibold">Selected tier</span>
+              {selectedTier ? <Badge>{selectedTier.name}</Badge> : null}
+            </div>
             <p className="text-sm text-muted-foreground">
-              After setup, you&apos;ll land in
-              <span className="font-medium text-foreground"> {WORKSPACE_ENTRY_PATH}</span>
-              and we&apos;ll route you into the right organization automatically.
+              {selectedTier
+                ? `${formatMinorCurrency(
+                    selectedTier.price_minor,
+                    selectedTier.currency
+                  )} per month, ${
+                    selectedBillingLane.provider === "stripe"
+                      ? `configured for ${selectedBillingLane.currency} Stripe billing.`
+                      : "billed through Paystack."
+                  }`
+                : "Choose a tier to continue."}
+            </p>
+            <p className="mt-3 text-xs text-muted-foreground">
+              After checkout returns to{" "}
+              <span className="font-medium text-foreground">{WORKSPACE_ENTRY_PATH}</span>, we verify
+              the reference and open the workspace.
             </p>
           </div>
         </Card>

@@ -1,5 +1,17 @@
 [functions.paystack-webhook]
 verify_jwt = false
 
+[functions.flutterwave-webhook]
+verify_jwt = false
+
+[functions.payment-webhook]
+verify_jwt = false
+
+[functions.public-verification-key]
+verify_jwt = false
+
+[functions.anchor-integrity-audit]
+verify_jwt = false
+
 [functions.automation-dispatcher]
 verify_jwt = false

@@ -23,7 +23,10 @@ export async function sha256Hex(value: BinaryLike): Promise<string> {
     throw new Error('Web Crypto API is unavailable in this environment.');
   }
 
-  const digest = await globalThis.crypto.subtle.digest('SHA-256', toUint8Array(value));
+  const digest = await globalThis.crypto.subtle.digest(
+    'SHA-256',
+    toUint8Array(value) as BufferSource
+  );
   return bytesToHex(new Uint8Array(digest));
 }
 

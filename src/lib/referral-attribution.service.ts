@@ -272,7 +272,7 @@ export function trackReferralBuyerRequest(
 }
 
 export function trackReferralDealCaseCreated(
-  context?: ReferralContext | null,
+  context: ReferralContext | null,
   details: {
     dealCaseId: string;
     caseType?: string | null;

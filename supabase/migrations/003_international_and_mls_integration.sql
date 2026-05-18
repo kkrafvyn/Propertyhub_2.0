@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS payment_transactions (
   amount DECIMAL(15, 2) NOT NULL,
   currency VARCHAR(3) DEFAULT 'USD',
   payment_provider VARCHAR(100),
-  payment_method VARCHAR(50) CHECK (payment_method IN ('card', 'bank_transfer', 'mobile_money', 'wallet', 'crypto', 'buy_now_pay_later')),
+  payment_method VARCHAR(50) CHECK (payment_method IN ('card', 'bank_transfer', 'mobile_money', 'wallet', 'buy_now_pay_later')),
   external_transaction_id VARCHAR(255),
   status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'refunded')),
   created_at TIMESTAMP DEFAULT NOW(),

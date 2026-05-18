@@ -138,7 +138,7 @@ function buildNotificationInsert(
     subject: params.subject,
     content: params.content,
     action_url: params.actionUrl || null,
-    metadata: params.metadata || null,
+    metadata: (params.metadata || null) as any,
     delivered: true,
     delivered_at: new Date().toISOString(),
     read: false,
@@ -281,7 +281,7 @@ export const communicationService = {
           subject,
           content,
           action_url: options.actionUrl || null,
-          metadata: options.metadata || null,
+          metadata: (options.metadata || null) as any,
           delivered: false,
           read: false,
         })

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { mobileDeepLinkService } from "../../lib/mobile-deep-link.service";
 import { mobileNativeService } from "../../lib/mobile-native.service";
+import { useAuth } from "../context/AuthContext";
 import { MobileAppShell } from "../mobile/MobileAppShell";
 
 const mobileShellPrefixes = [
@@ -11,25 +12,60 @@ const mobileShellPrefixes = [
   "/agencies",
   "/guides",
   "/market-trends",
+  "/sold-ledger",
   "/reviews",
   "/buyer-requests",
   "/projects",
   "/valuation",
   "/get-the-app",
   "/app",
+  "/workspace",
 ];
 
-function usePrefersMobileShell() {
+const mobileWebMediaQuery = "(max-width: 767px), (pointer: coarse) and (max-width: 900px)";
+
+function isMobileWebViewport() {
+  if (typeof window === "undefined" || !("matchMedia" in window)) return false;
+  return window.matchMedia(mobileWebMediaQuery).matches;
+}
+
+function usePrefersMobileShell(isSignedIn: boolean) {
   const [prefersMobileShell, setPrefersMobileShell] = useState(() => {
     if (Capacitor.isNativePlatform()) return true;
-    return false;
+    return isSignedIn && isMobileWebViewport();
   });
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       setPrefersMobileShell(true);
+      return;
     }
-  }, []);
+
+    if (typeof window === "undefined" || !("matchMedia" in window)) {
+      setPrefersMobileShell(false);
+      return;
+    }
+
+    const media = window.matchMedia(mobileWebMediaQuery);
+    const updatePreference = () => {
+      setPrefersMobileShell(isSignedIn && media.matches);
+    };
+
+    updatePreference();
+    if (media.addEventListener) {
+      media.addEventListener("change", updatePreference);
+
+      return () => {
+        media.removeEventListener("change", updatePreference);
+      };
+    }
+
+    media.addListener?.(updatePreference);
+
+    return () => {
+      media.removeListener?.(updatePreference);
+    };
+  }, [isSignedIn]);
 
   return prefersMobileShell;
 }
@@ -49,7 +85,8 @@ function shouldUseMobileShell(pathname: string) {
 export function Root() {
   const location = useLocation();
   const navigate = useNavigate();
-  const prefersMobileShell = usePrefersMobileShell();
+  const { user } = useAuth();
+  const prefersMobileShell = usePrefersMobileShell(Boolean(user));
 
   useEffect(() => {
     let cleanupDeepLinks: (() => void) | undefined;

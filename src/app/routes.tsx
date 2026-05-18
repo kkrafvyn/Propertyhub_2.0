@@ -30,6 +30,13 @@ export const router = createBrowserRouter([
         },
       },
       {
+        path: "verify/:token",
+        lazy: async () => {
+          const { PublicVerificationReceipt } = await import("./pages/PublicVerificationReceipt");
+          return { Component: PublicVerificationReceipt };
+        },
+      },
+      {
         path: "agencies",
         lazy: async () => {
           const { AgenciesDirectory } = await import("./pages/AgenciesDirectory");
@@ -62,6 +69,13 @@ export const router = createBrowserRouter([
         lazy: async () => {
           const { MarketTrends } = await import("./pages/MarketTrends");
           return { Component: MarketTrends };
+        },
+      },
+      {
+        path: "sold-ledger",
+        lazy: async () => {
+          const { SoldLedger } = await import("./pages/SoldLedger");
+          return { Component: SoldLedger };
         },
       },
       {

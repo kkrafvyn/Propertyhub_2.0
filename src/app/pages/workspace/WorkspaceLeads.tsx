@@ -792,7 +792,7 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Successful Payments</p>
           <p className="text-2xl font-semibold mt-1">{successfulPayments.length}</p>
-          <p className="text-xs text-muted-foreground mt-2">Collected through Paystack and linked to leads</p>
+          <p className="text-xs text-muted-foreground mt-2">Collected through gateway checkout and linked to leads</p>
         </Card>
       </div>
 

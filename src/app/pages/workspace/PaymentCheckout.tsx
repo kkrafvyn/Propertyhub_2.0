@@ -9,7 +9,6 @@ type PaymentMethodType =
   | 'bank_transfer'
   | 'mobile_money'
   | 'wallet'
-  | 'crypto'
   | 'buy_now_pay_later'
 
 interface CheckoutPaymentMethod {

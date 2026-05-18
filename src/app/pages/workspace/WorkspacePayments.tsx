@@ -9,8 +9,13 @@ import {
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  escrowService,
+  getEscrowStatusLabel,
+  type EscrowStatus,
+} from "../../../lib/escrow.service";
 import { ghanaMarketService } from "../../../lib/ghana-market.service";
-import { paymentService } from "../../../lib/payment.service";
+import { getPaymentGatewayLabel, paymentService } from "../../../lib/payment.service";
 import type { Database } from "../../../lib/database.types";
 import type { MemberRole } from "../../../lib/workspace";
 import { Badge } from "../../components/ui/badge";
@@ -32,10 +37,16 @@ type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 interface WorkspacePaymentsProps {
   organization: Organization;
   currentRole: MemberRole | null;
+  currentUserId: string;
 }
 
 type StatusFilter = "all" | "success" | "pending" | "attention";
 const GHANA_PAYMENT_CHANNELS = ghanaMarketService.getPaymentChannels();
+const REQUIRED_ESCROW_DOCUMENTS = [
+  { type: "ownership_deed", label: "Ownership Deed" },
+  { type: "tenancy_agreement", label: "Tenancy Agreement Draft" },
+  { type: "landlord_id", label: "Landlord ID" },
+];
 
 const moneyFormatter = new Intl.NumberFormat("en-GH", {
   style: "currency",
@@ -67,6 +78,33 @@ function formatRelativeTime(dateString?: string | null) {
 
   const diffDays = Math.round(diffHours / 24);
   return formatter.format(diffDays, "day");
+}
+
+function selectConditionReportPhotos() {
+  return new Promise<File[]>((resolve) => {
+    const input = document.createElement("input");
+    let resolved = false;
+
+    const finish = (files: File[]) => {
+      if (resolved) return;
+      resolved = true;
+      window.removeEventListener("focus", handleFocus);
+      resolve(files);
+    };
+
+    const handleFocus = () => {
+      window.setTimeout(() => {
+        if (!input.files?.length) finish([]);
+      }, 300);
+    };
+
+    input.type = "file";
+    input.accept = "image/jpeg,image/png,image/webp";
+    input.multiple = true;
+    input.addEventListener("change", () => finish(Array.from(input.files || []).slice(0, 12)));
+    window.addEventListener("focus", handleFocus, { once: true });
+    input.click();
+  });
 }
 
 function getPurposeLabel(purpose?: string) {
@@ -159,6 +197,10 @@ function canManageRefunds(role: MemberRole | null) {
   return role === "owner" || role === "manager";
 }
 
+function canManageEscrowDocuments(role: MemberRole | null) {
+  return role === "owner" || role === "manager" || role === "agent";
+}
+
 function mergeRefundIntoPayment(payment: any, refund: any) {
   const remainingRefunds = normalizeRefunds(payment).filter((item) => item.id !== refund.id);
   return [refund, ...remainingRefunds];
@@ -167,9 +209,11 @@ function mergeRefundIntoPayment(payment: any, refund: any) {
 export function WorkspacePayments({
   organization,
   currentRole,
+  currentUserId,
 }: WorkspacePaymentsProps) {
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<any[]>([]);
+  const [escrows, setEscrows] = useState<any[]>([]);
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [verifyingPaymentId, setVerifyingPaymentId] = useState<string | null>(null);
   const [downloadingReceiptId, setDownloadingReceiptId] = useState<string | null>(null);
@@ -179,6 +223,7 @@ export function WorkspacePayments({
   const [refundReason, setRefundReason] = useState("");
   const [customerNote, setCustomerNote] = useState("");
   const [merchantNote, setMerchantNote] = useState("");
+  const [workingEscrowId, setWorkingEscrowId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -186,10 +231,14 @@ export function WorkspacePayments({
     const loadPayments = async () => {
       try {
         if (!cancelled) setLoading(true);
-        const rows = await paymentService.getOrganizationPropertyTransactions(organization.id);
+        const [rows, escrowRows] = await Promise.all([
+          paymentService.getOrganizationPropertyTransactions(organization.id),
+          escrowService.getOrganizationEscrows(organization.id),
+        ]);
 
         if (!cancelled) {
           setPayments(rows);
+          setEscrows(escrowRows);
         }
       } catch (error) {
         console.error("Failed to load workspace payments:", error);
@@ -241,7 +290,7 @@ export function WorkspacePayments({
     );
     const verifiedReceipts = payments.filter((payment) => {
       const receipt = normalizeReceipt(payment);
-      return receipt?.blockchain_status === "confirmed";
+      return receipt?.integrity_status === "hashed" || receipt?.integrity_status === "verified";
     });
     const volumeMinor = successfulPayments.reduce(
       (total, payment) => total + (payment.amount_minor || 0),
@@ -256,6 +305,24 @@ export function WorkspacePayments({
       volumeMinor,
     };
   }, [payments]);
+
+  const escrowStats = useMemo(() => {
+    const countByStatus = (status: EscrowStatus) =>
+      escrows.filter((escrow) => escrow.status === status).length;
+    const heldVolumeMinor = escrows
+      .filter((escrow) => ["held", "docs_pending", "docs_approved", "disputed"].includes(escrow.status))
+      .reduce((total, escrow) => total + Number(escrow.amount_minor || 0), 0);
+
+    return {
+      total: escrows.length,
+      held: countByStatus("held"),
+      docsPending: countByStatus("docs_pending"),
+      docsApproved: countByStatus("docs_approved"),
+      disputed: countByStatus("disputed"),
+      released: countByStatus("released"),
+      heldVolumeMinor,
+    };
+  }, [escrows]);
 
   const handleVerify = async (payment: any) => {
     try {
@@ -377,6 +444,280 @@ export function WorkspacePayments({
     }
   };
 
+  const refreshEscrows = async () => {
+    const rows = await escrowService.getOrganizationEscrows(organization.id);
+    setEscrows(rows);
+  };
+
+  const getMissingRequiredDocument = (escrow: any) => {
+    const documents = Array.isArray(escrow.documents) ? escrow.documents : [];
+    return REQUIRED_ESCROW_DOCUMENTS.find((requiredDocument) => {
+      const existing = documents.find(
+        (document: any) =>
+          document.document_type === requiredDocument.type && document.status !== "rejected"
+      );
+      return !existing;
+    });
+  };
+
+  const handleUploadEscrowDocument = async (escrow: any) => {
+    if (!canManageEscrowDocuments(currentRole)) {
+      toast.error("Only workspace owners, managers, and assigned agents can upload escrow documents.");
+      return;
+    }
+
+    const missingDocument = getMissingRequiredDocument(escrow);
+    if (!missingDocument) {
+      toast.message("All required escrow documents have already been uploaded.");
+      return;
+    }
+
+    const contentMarkdown = window.prompt(
+      `Paste or summarize the ${missingDocument.label}. This MVP stores an internal SHA-256 hash and admin review trail.`
+    );
+    if (!contentMarkdown?.trim()) return;
+
+    try {
+      setWorkingEscrowId(escrow.id);
+      const result = await escrowService.managePropertyEscrow({
+        action: "upload_document",
+        escrowId: escrow.id,
+        documentType: missingDocument.type,
+        title: `${missingDocument.label} for escrow ${escrow.id.slice(0, 8)}`,
+        contentMarkdown: contentMarkdown.trim(),
+      });
+
+      setEscrows((current) =>
+        current.map((item) => (item.id === escrow.id ? result.escrow : item))
+      );
+      await refreshEscrows();
+      toast.success(`${missingDocument.label} uploaded for admin review.`);
+    } catch (error) {
+      console.error("Failed to upload escrow document:", error);
+      toast.error("We couldn't upload that escrow document right now.");
+    } finally {
+      setWorkingEscrowId(null);
+    }
+  };
+
+  const handleRaiseEscrowDispute = async (escrow: any) => {
+    const reason = window.prompt("Why should this escrow be disputed?");
+    if (!reason?.trim()) return;
+
+    try {
+      setWorkingEscrowId(escrow.id);
+      const result = await escrowService.managePropertyEscrow({
+        action: "raise_dispute",
+        escrowId: escrow.id,
+        reason: reason.trim(),
+      });
+
+      setEscrows((current) =>
+        current.map((item) => (item.id === escrow.id ? result.escrow : item))
+      );
+      toast.success("Escrow moved to disputed for admin resolution.");
+    } catch (error) {
+      console.error("Failed to dispute escrow:", error);
+      toast.error("We couldn't dispute that escrow right now.");
+    } finally {
+      setWorkingEscrowId(null);
+    }
+  };
+
+  const handleSubmitAgentConditionReport = async (escrow: any) => {
+    const notes = window.prompt("Describe the move-in condition and any handoff notes.");
+    if (!notes?.trim()) return;
+
+    const submittedRole = currentRole === "owner" || currentRole === "manager" ? currentRole : "agent";
+    const photoFiles = window.confirm("Add condition photos now?")
+      ? await selectConditionReportPhotos()
+      : [];
+
+    try {
+      setWorkingEscrowId(escrow.id);
+      await escrowService.submitConditionReport({
+        escrowId: escrow.id,
+        listingId: escrow.listing_id,
+        propertyId: escrow.property_id,
+        organizationId: escrow.organization_id,
+        dealCaseId: escrow.transaction?.deal_case_id || null,
+        submittedBy: currentUserId,
+        submittedRole,
+        reportStage: "move_in",
+        notes: notes.trim(),
+        photoFiles,
+        metadata: {
+          source: "workspace_payments",
+        },
+      });
+      await refreshEscrows();
+      toast.success("Move-in condition report saved.");
+    } catch (error) {
+      console.error("Failed to save condition report:", error);
+      toast.error("We couldn't save that condition report right now.");
+    } finally {
+      setWorkingEscrowId(null);
+    }
+  };
+
+  const renderEscrowQueue = () => (
+    <Card className="p-6 mb-8">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Escrow Queue</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Deposit and booking payments are held in BaytMiftah's Paystack account until required
+            documents are approved and the renter confirms satisfaction.
+          </p>
+        </div>
+        <Badge variant={escrowStats.disputed ? "destructive" : "outline"}>
+          {escrowStats.total} escrow records
+        </Badge>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-5">
+        <div className="rounded-xl border border-border bg-secondary/20 p-4">
+          <p className="text-xs text-muted-foreground">Held / Review</p>
+          <p className="mt-1 text-2xl font-semibold">
+            {escrowStats.held + escrowStats.docsPending + escrowStats.docsApproved}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border bg-secondary/20 p-4">
+          <p className="text-xs text-muted-foreground">Disputed</p>
+          <p className="mt-1 text-2xl font-semibold">{escrowStats.disputed}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-secondary/20 p-4">
+          <p className="text-xs text-muted-foreground">Released</p>
+          <p className="mt-1 text-2xl font-semibold">{escrowStats.released}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-secondary/20 p-4">
+          <p className="text-xs text-muted-foreground">Held Value</p>
+          <p className="mt-1 text-2xl font-semibold">
+            {formatPaymentAmount(escrowStats.heldVolumeMinor, "GHS")}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 space-y-4">
+        {escrows.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
+            No escrow records yet. Successful deposit or booking payments will appear here.
+          </div>
+        ) : (
+          escrows.map((escrow) => {
+            const documents = Array.isArray(escrow.documents) ? escrow.documents : [];
+            const conditionReports = Array.isArray(escrow.condition_reports)
+              ? escrow.condition_reports
+              : [];
+            const missingDocument = getMissingRequiredDocument(escrow);
+            const propertyLabel = escrow.listing?.property?.address || "Escrow property";
+            const isWorking = workingEscrowId === escrow.id;
+
+            return (
+              <div key={escrow.id} className="rounded-xl border border-border p-5">
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold">{propertyLabel}</p>
+                      <Badge variant={escrow.status === "disputed" ? "destructive" : "secondary"}>
+                        {getEscrowStatusLabel(escrow.status)}
+                      </Badge>
+                      <Badge variant="outline">
+                        {formatPaymentAmount(escrow.amount_minor, escrow.currency)}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
+                      <span>Payer: {escrow.payer?.full_name || escrow.payer?.email || "Customer"}</span>
+                      <span>Reference: {escrow.transaction?.provider_reference || "Pending"}</span>
+                      <span>Cancellation window: {formatRelativeTime(escrow.cancellation_deadline_at)}</span>
+                      <span>Created: {formatRelativeTime(escrow.created_at)}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {REQUIRED_ESCROW_DOCUMENTS.map((requiredDocument) => {
+                        const uploaded = documents.find(
+                          (document: any) => document.document_type === requiredDocument.type
+                        );
+                        return (
+                          <Badge key={requiredDocument.type} variant={uploaded?.status === "approved" ? "default" : "outline"}>
+                            {requiredDocument.label}: {uploaded ? getEscrowStatusLabel(uploaded.status) : "Missing"}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                    {documents.some((document: any) => document.status === "approved") ? (
+                      <div className="space-y-2 rounded-xl border border-border bg-secondary/20 p-3 text-xs text-muted-foreground">
+                        <p className="font-medium text-foreground">Verified document hashes</p>
+                        {documents
+                          .filter((document: any) => document.status === "approved")
+                          .map((document: any) => (
+                            <p key={document.id} className="break-all font-mono">
+                              {String(document.document_type).replaceAll("_", " ")}:{" "}
+                              {document.watermarked_sha256 || document.document_sha256}
+                            </p>
+                          ))}
+                      </div>
+                    ) : null}
+                    {conditionReports.length > 0 ? (
+                      <div className="space-y-2 rounded-xl border border-border bg-secondary/20 p-3">
+                        <p className="text-sm font-medium text-foreground">Condition reports</p>
+                        {conditionReports.map((report: any) => (
+                          <div key={report.id} className="text-sm text-muted-foreground">
+                            <span className="font-medium text-foreground">
+                              {getEscrowStatusLabel(report.submitted_role)}
+                            </span>
+                            {": "}
+                            {report.notes}
+                            {Array.isArray(report.photo_storage_paths) &&
+                            report.photo_storage_paths.length > 0 ? (
+                              <span className="ml-2 text-xs">
+                                ({report.photo_storage_paths.length} photo
+                                {report.photo_storage_paths.length === 1 ? "" : "s"})
+                              </span>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 xl:max-w-sm xl:justify-end">
+                    {missingDocument && ["held", "docs_pending", "docs_approved"].includes(escrow.status) && (
+                      <Button
+                        variant="outline"
+                        onClick={() => void handleUploadEscrowDocument(escrow)}
+                        disabled={isWorking}
+                      >
+                        {isWorking ? "Working..." : `Upload ${missingDocument.label}`}
+                      </Button>
+                    )}
+                    {!["released", "refunded", "cancelled", "disputed"].includes(escrow.status) && (
+                      <Button
+                        variant="outline"
+                        onClick={() => void handleRaiseEscrowDispute(escrow)}
+                        disabled={isWorking}
+                      >
+                        Raise Dispute
+                      </Button>
+                    )}
+                    {escrow.status === "released" && (
+                      <Button
+                        variant="outline"
+                        onClick={() => void handleSubmitAgentConditionReport(escrow)}
+                        disabled={isWorking}
+                      >
+                        Move-in Report
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </Card>
+  );
+
   if (loading) {
     return (
       <Card className="p-8 text-center text-muted-foreground">
@@ -391,8 +732,8 @@ export function WorkspacePayments({
       <div className="mb-8">
         <h1 className="text-3xl font-semibold mb-2">Payments</h1>
         <p className="text-muted-foreground">
-          Track Paystack payments, review receipts, confirm Polygon verification, and manage
-          refunds for {organization.name}.
+          Track payment gateways, review receipts, confirm integrity hashes, and manage
+          Paystack refunds for {organization.name}.
         </p>
       </div>
 
@@ -415,7 +756,7 @@ export function WorkspacePayments({
             <div>
               <p className="text-sm text-muted-foreground mb-1">Successful</p>
               <p className="text-3xl font-semibold">{stats.successful}</p>
-              <p className="text-xs text-accent mt-1">Completed through Paystack</p>
+              <p className="text-xs text-accent mt-1">Completed across gateways</p>
             </div>
             <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
               <Wallet className="w-6 h-6 text-accent" />
@@ -439,7 +780,7 @@ export function WorkspacePayments({
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Verified on Polygon</p>
+              <p className="text-sm text-muted-foreground mb-1">Verified Receipts</p>
               <p className="text-3xl font-semibold">{stats.verified}</p>
               <p className="text-xs text-accent mt-1">
                 {formatPaymentAmount(stats.volumeMinor, "GHS")} settled volume
@@ -457,7 +798,7 @@ export function WorkspacePayments({
           <div>
             <h2 className="text-lg font-semibold">Ghana Mobile Money readiness</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Paystack checkout requests mobile_money, card, bank transfer, and bank channels.
+              Gateway checkout can request mobile money, card, bank transfer, and bank channels.
               Keep MoMo first when guiding clients through deposits and inspection fees.
             </p>
           </div>
@@ -473,6 +814,8 @@ export function WorkspacePayments({
           ))}
         </div>
       </Card>
+
+      {renderEscrowQueue()}
 
       <Card className="p-6 mb-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -517,8 +860,10 @@ export function WorkspacePayments({
             const buyerLabel = payment.payer?.full_name || payment.payer?.email || "Customer";
             const propertyLabel = payment.listing?.property?.address || "Property transaction";
             const remainingRefundableMinor = getRemainingRefundableMinor(payment);
+            const gatewayLabel = getPaymentGatewayLabel(payment.provider);
             const showRefundButton =
               canManageRefunds(currentRole) &&
+              payment.provider === "paystack" &&
               payment.status === "success" &&
               !hasActiveRefund(payment) &&
               remainingRefundableMinor > 0;
@@ -532,6 +877,7 @@ export function WorkspacePayments({
                       <Badge variant={getStatusVariant(payment.status)} className="capitalize">
                         {payment.status.replace(/_/g, " ")}
                       </Badge>
+                      <Badge variant="outline">{gatewayLabel}</Badge>
                       {latestRefund && (
                         <Badge
                           variant={getRefundStatusVariant(latestRefund.status)}
@@ -540,10 +886,11 @@ export function WorkspacePayments({
                           Refund {formatRefundStatusLabel(latestRefund.status)}
                         </Badge>
                       )}
-                      {receipt?.blockchain_status === "confirmed" && (
+                      {(receipt?.integrity_status === "hashed" ||
+                        receipt?.integrity_status === "verified") && (
                         <Badge variant="outline" className="gap-1">
                           <Shield className="w-3 h-3" />
-                          Verified on Polygon
+                          Receipt hash verified
                         </Badge>
                       )}
                     </div>
@@ -558,6 +905,10 @@ export function WorkspacePayments({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-muted-foreground">
                       <p>
                         <span className="font-medium text-foreground">Payer:</span> {buyerLabel}
+                      </p>
+                      <p>
+                        <span className="font-medium text-foreground">Gateway:</span>{" "}
+                        {gatewayLabel}
                       </p>
                       <p>
                         <span className="font-medium text-foreground">Reference:</span>{" "}

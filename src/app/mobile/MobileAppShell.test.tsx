@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MobileAppShell } from "./MobileAppShell";
+import { AppThemeProvider } from "../context/AppThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { listingService } from "../../lib/listing.service";
 import { organizationService } from "../../lib/organization.service";
@@ -175,6 +176,19 @@ function createAuthState(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function createSignedInAuthState(overrides: Record<string, unknown> = {}) {
+  return createAuthState({
+    user: {
+      id: "user-1",
+      email: "buyer@example.com",
+      user_metadata: {
+        full_name: "Ama Buyer",
+      },
+    },
+    ...overrides,
+  });
+}
+
 function primePublicMocks() {
   getPublicListingsMock.mockResolvedValue([
     {
@@ -208,9 +222,11 @@ function primePublicMocks() {
 
 function renderMobileShell(initialEntry = "/", children?: ReactNode) {
   return render(
-    <MemoryRouter initialEntries={[initialEntry]}>
-      <MobileAppShell>{children}</MobileAppShell>
-    </MemoryRouter>
+    <AppThemeProvider>
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <MobileAppShell>{children}</MobileAppShell>
+      </MemoryRouter>
+    </AppThemeProvider>
   );
 }
 
@@ -230,6 +246,10 @@ describe("MobileAppShell", () => {
     isNativeMock.mockReturnValue(false);
     getOnboardingStatusMock.mockResolvedValue({ completed: true, record: null });
     completeOnboardingMock.mockClear();
+    window.localStorage.clear();
+    document.documentElement.removeAttribute("data-app-theme");
+    document.documentElement.removeAttribute("data-app-theme-preference");
+    document.documentElement.classList.remove("dark");
     countOfflineQueueMock.mockResolvedValue(0);
     enqueueOfflineMock.mockResolvedValue({ id: "queue-1" } as any);
     capturePropertyPhotoMock.mockResolvedValue({
@@ -288,7 +308,7 @@ describe("MobileAppShell", () => {
   });
 
   it("organizes public discovery pages into the relevant mobile tabs", async () => {
-    useAuthMock.mockReturnValue(createAuthState() as any);
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
 
     renderMobileShell();
     const user = userEvent.setup();
@@ -297,6 +317,10 @@ describe("MobileAppShell", () => {
     expect(await screen.findByRole("link", { name: /projects/i })).toHaveAttribute(
       "href",
       "/projects"
+    );
+    expect(screen.getByRole("link", { name: /public reviews/i })).toHaveAttribute(
+      "href",
+      "/reviews"
     );
 
     await user.click(within(tabBar).getByRole("link", { name: /^search$/i }));
@@ -313,13 +337,9 @@ describe("MobileAppShell", () => {
 
     await user.click(within(tabBar).getByRole("link", { name: /^me$/i }));
 
-    expect(screen.getByRole("link", { name: /seller tools/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /home valuation/i })).toHaveAttribute(
       "href",
       "/valuation"
-    );
-    expect(screen.getByRole("link", { name: /public reviews/i })).toHaveAttribute(
-      "href",
-      "/reviews"
     );
   });
 
@@ -524,6 +544,39 @@ describe("MobileAppShell", () => {
     expect(screen.queryByRole("button", { name: /add photos/i })).not.toBeInTheDocument();
   });
 
+  it("only shows the bottom navigation for signed-in mobile users", async () => {
+    useAuthMock.mockReturnValue(createAuthState() as any);
+
+    renderMobileShell();
+
+    await screen.findByText("Discover");
+    await waitFor(() => expect(countOfflineQueueMock).toHaveBeenCalled());
+    expect(
+      screen.queryByRole("navigation", { name: /primary mobile navigation/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps signed-in users on the restored light app palette", async () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+
+    renderMobileShell();
+    const user = userEvent.setup();
+    const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
+
+    await user.click(within(tabBar).getByRole("link", { name: /^me$/i }));
+    await user.click(await screen.findByRole("radio", { name: /miftah light/i }));
+
+    await waitFor(() => {
+      expect(document.documentElement).toHaveAttribute("data-app-theme", "light");
+    });
+    expect(document.documentElement).toHaveAttribute("data-app-theme-preference", "light");
+    expect(document.documentElement).not.toHaveClass("dark");
+    expect(screen.getByRole("radio", { name: /miftah light/i })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+  });
+
   it("opens quick filters in a bottom sheet on the search tab", async () => {
     useAuthMock.mockReturnValue(createAuthState() as any);
 
@@ -552,7 +605,7 @@ describe("MobileAppShell", () => {
   });
 
   it("wraps direct mobile routes inside the shared app frame", async () => {
-    useAuthMock.mockReturnValue(createAuthState() as any);
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
 
     renderMobileShell("/search", <div>Search route body</div>);
 
@@ -588,7 +641,7 @@ describe("MobileAppShell", () => {
     { path: "/app/groups", title: "Buying Group", activeTab: "Saved" },
     { path: "/app/referrals", title: "Referrals", activeTab: "Me" },
   ])("places $path under the relevant mobile route chrome", async ({ path, title, activeTab }) => {
-    useAuthMock.mockReturnValue(createAuthState() as any);
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
 
     renderMobileShell(path, <div>Route body for {path}</div>);
 

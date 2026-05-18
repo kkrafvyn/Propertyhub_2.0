@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import { communicationService } from "./communication.service";
 import { organizationService } from "./organization.service";
+import { smartAccessService } from "./smart-access.service";
 
 type ViewingStatus =
   | "requested"
@@ -303,6 +304,14 @@ export const propertyViewingService = {
       await Promise.all(notifications);
     } catch (notificationError) {
       console.error("Failed to notify viewing participants:", notificationError);
+    }
+
+    if (updates.status === "confirmed" || updates.status === "rescheduled") {
+      try {
+        await smartAccessService.queueViewingAccessHook(data);
+      } catch (accessError) {
+        console.error("Failed to queue smart property access for viewing:", accessError);
+      }
     }
 
     return data;

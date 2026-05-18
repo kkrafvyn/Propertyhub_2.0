@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabaseAny as supabase } from './supabase'
 
 export interface Commission {
   id: string

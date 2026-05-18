@@ -39,7 +39,6 @@ Your BaytMiftah REOS has been successfully upgraded with **enterprise-grade inte
   - **Bank Transfer**: Wise, Payoneer
   - **Digital Wallets**: Apple Pay, Google Pay
   - **BNPL**: Klarna
-  - **Crypto**: Stripe Crypto
 - ✅ Region-based payment method availability
 - ✅ Fee calculation per provider
 - ✅ Payment method saving & management

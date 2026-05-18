@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { ghanaMarketService } from "./ghana-market.service";
+import type { Json } from "./database.types";
 
 export type ListingCheckStatus = "pending" | "passed" | "failed" | "warning";
 
@@ -233,7 +234,7 @@ export const listingQualityService = {
             ? existingBreakdown.titleDocumentStatus
             : null
         ),
-    };
+    } as unknown as Json;
   },
 
   getAutoVerificationStatus(score: number, currentStatus?: string | null) {

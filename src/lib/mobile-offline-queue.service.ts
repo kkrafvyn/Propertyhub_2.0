@@ -102,7 +102,7 @@ export const mobileOfflineQueueService = {
       retries: 0,
       status: "queued",
     };
-    const queue = await this.list<TPayload>();
+    const queue = (await this.list()) as MobileOfflineQueueItem<TPayload>[];
 
     await writeRawQueue(JSON.stringify([item, ...queue]));
     emitQueueChange();

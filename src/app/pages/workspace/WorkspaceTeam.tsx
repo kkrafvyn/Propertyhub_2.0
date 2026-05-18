@@ -8,10 +8,11 @@ import { Input } from "../../components/ui/Input";
 import type { Database } from "../../../lib/database.types";
 import { communicationService } from "../../../lib/communication.service";
 import { organizationService } from "../../../lib/organization.service";
+import { getSeatLimitState, subscriptionService } from "../../../lib/subscription.service";
 import { getWorkspaceRoute } from "../../../lib/workspace";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
-type MemberRole = Database["public"]["Tables"]["organization_members"]["Row"]["role"];
+type MemberRole = "owner" | "manager" | "agent" | "analyst";
 type InvitationRole = Database["public"]["Tables"]["organization_invitations"]["Row"]["role"];
 
 interface WorkspaceTeamProps {
@@ -36,6 +37,7 @@ export function WorkspaceTeam({
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
+  const [billingOverview, setBillingOverview] = useState<any | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<InvitationRole>("agent");
   const [submitting, setSubmitting] = useState(false);
@@ -48,12 +50,14 @@ export function WorkspaceTeam({
   const loadTeamData = async () => {
     try {
       setLoading(true);
-      const [memberData, invitationData] = await Promise.all([
+      const [memberData, invitationData, billingData] = await Promise.all([
         organizationService.getOrganizationMembers(organization.id),
         organizationService.getOrganizationInvitations(organization.id),
+        subscriptionService.getOrganizationBillingOverview(organization.id),
       ]);
       setMembers(memberData || []);
       setInvitations(invitationData || []);
+      setBillingOverview(billingData);
     } catch (error) {
       console.error("Failed to load team data:", error);
       toast.error("Unable to load team members.");
@@ -72,6 +76,14 @@ export function WorkspaceTeam({
     [invitations]
   );
 
+  const activeSeatUsage = members.length + pendingInvitations.length;
+  const seatLimit = getSeatLimitState({
+    tier: billingOverview?.tier ?? null,
+    activeMembers: members.length,
+    pendingInvitations: pendingInvitations.length,
+  });
+  const seatLimitLabel = seatLimit.isUnlimited ? "Unlimited" : String(seatLimit.limit);
+
   const handleInvite = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -83,6 +95,11 @@ export function WorkspaceTeam({
     const normalizedEmail = inviteEmail.trim().toLowerCase();
     if (!normalizedEmail) {
       toast.error("Enter a team member's email.");
+      return;
+    }
+
+    if (seatLimit.isAtLimit) {
+      toast.error("This subscription tier has reached its seat limit. Upgrade billing first.");
       return;
     }
 
@@ -215,6 +232,26 @@ export function WorkspaceTeam({
             You can view the roster, but only owners and managers can change team access.
           </p>
         )}
+        <div className="mb-4 rounded-xl border border-border bg-secondary/20 p-4 text-sm">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="font-medium text-foreground">Team seats</p>
+              <p className="text-muted-foreground">
+                {activeSeatUsage} used
+                {seatLimit.isUnlimited ? " on an unlimited plan" : ` of ${seatLimitLabel}`}
+                . Pending invitations count toward this limit.
+              </p>
+            </div>
+            <Badge variant={seatLimit.isAtLimit ? "destructive" : "outline"}>
+              {billingOverview?.tier?.name || "Subscription"} plan
+            </Badge>
+          </div>
+          {seatLimit.isAtLimit && (
+            <p className="mt-3 text-destructive">
+              Upgrade from Billing before inviting another teammate.
+            </p>
+          )}
+        </div>
         <form
           onSubmit={handleInvite}
           className="grid grid-cols-1 md:grid-cols-[1fr,180px,auto] gap-4"
@@ -243,7 +280,7 @@ export function WorkspaceTeam({
             </select>
           </div>
           <div className="md:self-end">
-            <Button type="submit" disabled={!canManageTeam || submitting}>
+            <Button type="submit" disabled={!canManageTeam || submitting || seatLimit.isAtLimit}>
               {submitting ? "Sending..." : "Send Invite"}
             </Button>
           </div>

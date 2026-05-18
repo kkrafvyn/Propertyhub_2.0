@@ -119,7 +119,7 @@ export const trustVerificationService = {
         submitted_by: input.submittedBy || null,
         public_summary: input.publicSummary || null,
         internal_notes: input.internalNotes || null,
-        evidence: input.evidence || {},
+        evidence: (input.evidence || {}) as any,
         submitted_at: status === "submitted" ? new Date().toISOString() : null,
       })
       .select()

@@ -28,7 +28,7 @@ function parseAmountToMinorUnits(amount: unknown) {
 
 function buildReference() {
   const uuid = crypto.randomUUID().replace(/-/g, "").slice(0, 18);
-  return `ph_pay_${uuid}`;
+  return `bm-ps-${uuid}`;
 }
 
 function getCaseTypeFromListingType(listingType?: string) {

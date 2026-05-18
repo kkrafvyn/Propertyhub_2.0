@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { useAuth } from "../../context/AuthContext";
 import { organizationService } from "../../../lib/organization.service";
+import { subscriptionService } from "../../../lib/subscription.service";
 
 vi.mock("../../context/AuthContext", () => ({
   useAuth: vi.fn(),
@@ -16,8 +17,33 @@ vi.mock("../../../lib/organization.service", () => ({
   },
 }));
 
+vi.mock("../../../lib/subscription.service", () => ({
+  formatMinorCurrency: (amountMinor: number, currency = "GHS") =>
+    `${currency} ${amountMinor / 100}`,
+  subscriptionService: {
+    getSubscriptionTiers: vi.fn(),
+    initializeOrganizationSubscription: vi.fn(),
+    verifyOrganizationSubscription: vi.fn(),
+  },
+}));
+
 const useAuthMock = vi.mocked(useAuth);
 const getUserOrganizationsMock = vi.mocked(organizationService.getUserOrganizations);
+const getSubscriptionTiersMock = vi.mocked(subscriptionService.getSubscriptionTiers);
+
+const starterTier = {
+  id: "starter",
+  name: "Starter",
+  description: "Small teams",
+  currency: "GHS",
+  price_minor: 20000,
+  billing_interval: "monthly",
+  agent_seat_limit: 3,
+  active_listing_limit: 15,
+  feature_summary: [],
+  is_active: true,
+  sort_order: 10,
+};
 
 function createAuthState() {
   return {
@@ -62,6 +88,7 @@ function renderWorkspaceEntry(initialPath = "/workspace?next=listings") {
 describe("WorkspaceEntry", () => {
   it("redirects members into their workspace when an organization exists", async () => {
     useAuthMock.mockReturnValue(createAuthState() as any);
+    getSubscriptionTiersMock.mockResolvedValue([starterTier] as any);
     getUserOrganizationsMock.mockResolvedValue([
       {
         organization: {
@@ -93,11 +120,12 @@ describe("WorkspaceEntry", () => {
   it("shows the onboarding form when the user has no workspace yet", async () => {
     useAuthMock.mockReturnValue(createAuthState() as any);
     getUserOrganizationsMock.mockResolvedValue([]);
+    getSubscriptionTiersMock.mockResolvedValue([starterTier] as any);
 
     renderWorkspaceEntry();
 
     await waitFor(() => {
-      expect(screen.getByText("Create your organization")).toBeInTheDocument();
+      expect(screen.getByText("Create and activate your workspace")).toBeInTheDocument();
     });
     expect(screen.getByLabelText("Organization Name")).toBeInTheDocument();
   });

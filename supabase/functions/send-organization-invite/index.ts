@@ -132,6 +132,58 @@ Deno.serve(async (req) => {
     return jsonResponse(403, { error: "Only owners and managers can send invites" });
   }
 
+  const { data: subscription, error: subscriptionError } = await adminClient
+    .from("organization_subscriptions")
+    .select("status, tier:subscription_tiers(max_agent_seats)")
+    .eq("organization_id", organizationId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (subscriptionError) {
+    return jsonResponse(500, { error: subscriptionError.message });
+  }
+
+  if (!subscription || !["active", "grace_period"].includes(subscription.status)) {
+    return jsonResponse(402, {
+      error: "A paid subscription is required before inviting team members.",
+    });
+  }
+
+  const maxSeats = Array.isArray(subscription.tier)
+    ? subscription.tier[0]?.max_agent_seats
+    : subscription.tier?.max_agent_seats;
+
+  if (typeof maxSeats === "number") {
+    const [{ count: memberCount, error: memberCountError }, { count: inviteCount, error: inviteCountError }] =
+      await Promise.all([
+        adminClient
+          .from("organization_members")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", organizationId),
+        adminClient
+          .from("organization_invitations")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", organizationId)
+          .eq("status", "pending")
+          .gt("expires_at", new Date().toISOString()),
+      ]);
+
+    if (memberCountError || inviteCountError) {
+      return jsonResponse(500, {
+        error: memberCountError?.message || inviteCountError?.message || "Unable to check seats",
+      });
+    }
+
+    if ((memberCount || 0) + (inviteCount || 0) >= maxSeats) {
+      return jsonResponse(409, {
+        error: "This subscription tier has reached its team seat limit. Upgrade billing to invite more people.",
+        code: "seat_limit_reached",
+        maxSeats,
+      });
+    }
+  }
+
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const { data: invitation, error: invitationError } = await userClient

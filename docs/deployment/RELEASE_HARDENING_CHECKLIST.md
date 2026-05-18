@@ -15,6 +15,9 @@ Use this as the final release gate for the web app, native apps, Supabase, and s
 - Run `npm run release:check`.
 - Run `npm test`.
 - Run `npm run build`.
+- Run `npm run prod:env:check -- --env-file=.env.production` before deployment.
+- Run `npm run prod:env:check:strict -- --env-file=.env.production` before native push or Smart Property Access launch.
+- Follow `docs/deployment/PRODUCTION_PROVIDER_ACTIVATION.md` for Paystack, Stripe, Resend, audit anchoring, and IoT provider setup.
 - Run `npm run cap:sync`.
 - Confirm `ANDROID_HOME`, `ANDROID_SDK_ROOT`, or `android/local.properties` points to a real Android SDK.
 - Run `npm run android:build` before Play Store submission.
@@ -32,7 +35,7 @@ Use this as the final release gate for the web app, native apps, Supabase, and s
 ## Security and operations
 
 - Run `npm audit --omit=dev`; production dependencies must be clean before deploy.
-- Track the full dev audit separately if it reports Hardhat 2/toolbox findings; resolving that requires a planned Hardhat 3 contract-tooling migration.
+- Track the full dev audit separately and resolve any remaining development-tool findings before release.
 - Run `supabase/queries/production_rls_audit.sql` in Supabase SQL editor.
 - Confirm RLS is enabled on every public table exposed through the Data API.
 - Confirm anonymous users cannot select `analytics_events`.

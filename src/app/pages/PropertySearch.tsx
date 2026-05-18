@@ -13,9 +13,9 @@ import {
   Loader2,
   Bell,
   Share2,
-  Smartphone,
 } from "lucide-react";
 import { Navbar } from "../components/Navbar";
+import { DiasporaPrice } from "../components/DiasporaPrice";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
@@ -43,6 +43,14 @@ import {
 } from "../../lib/search-sharing";
 
 const PAGE_SIZE = 12;
+const AMENITY_FILTER_OPTIONS = [
+  "Air conditioning",
+  "Parking",
+  "Security",
+  "Backup power",
+  "Water storage",
+  "Furnished",
+];
 
 export function PropertySearch() {
   const { isMobileShell } = useMobileShell();
@@ -73,6 +81,7 @@ export function PropertySearch() {
       (["rental", "sale", "lease"].includes(searchParams.get("type") || "")
         ? (searchParams.get("type") as "rental" | "sale" | "lease")
         : "rental"),
+    amenities: searchParams.get("amenities") || "",
   });
 
   const [filters, setFilters] = useState(buildFiltersFromSearchParams());
@@ -132,6 +141,12 @@ export function PropertySearch() {
         bathrooms: parseCountFilter(filters.bathrooms),
         propertyType: filters.propertyType !== "all" ? filters.propertyType : undefined,
         listingType: filters.listingType as "rental" | "sale" | "lease",
+        amenities: filters.amenities
+          ? filters.amenities
+              .split(",")
+              .map((amenity) => amenity.trim())
+              .filter(Boolean)
+          : undefined,
       };
 
       const offset = (currentPage - 1) * PAGE_SIZE;
@@ -204,6 +219,10 @@ export function PropertySearch() {
     else nextParams.delete("propertyType");
 
     nextParams.set("listingType", filters.listingType);
+
+    if (filters.amenities) nextParams.set("amenities", filters.amenities);
+    else nextParams.delete("amenities");
+
     nextParams.set("page", "1");
     setSearchParams(nextParams);
   };
@@ -215,9 +234,21 @@ export function PropertySearch() {
     nextParams.delete("bedrooms");
     nextParams.delete("bathrooms");
     nextParams.delete("propertyType");
+    nextParams.delete("amenities");
     nextParams.delete("page");
     nextParams.set("listingType", "rental");
     setSearchParams(nextParams);
+  };
+
+  const toggleAmenityFilter = (amenity: string) => {
+    const currentAmenities = filters.amenities
+      ? filters.amenities.split(",").filter(Boolean)
+      : [];
+    const nextAmenities = currentAmenities.includes(amenity)
+      ? currentAmenities.filter((item) => item !== amenity)
+      : [...currentAmenities, amenity];
+
+    setFilters({ ...filters, amenities: nextAmenities.join(",") });
   };
 
   const handlePageChange = (page: number) => {
@@ -500,35 +531,7 @@ export function PropertySearch() {
           </Card>
         )}
 
-        <Card className="p-5 mb-6 bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(246,244,238,1))] border-primary/15">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                <Smartphone className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="font-semibold">Built for mobile follow-up</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  On phones, the home page switches into your app-style shell automatically, so saved alerts, deal rooms, and field notes stay close.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Link to="/get-the-app">
-                <Button variant="outline" size="sm">
-                  Get The App
-                </Button>
-              </Link>
-              {user && (
-                <Link to={currentSearchPath}>
-                  <Button size="sm">Keep This Search Handy</Button>
-                </Link>
-              )}
-            </div>
-          </div>
-        </Card>
-
-        <div className="flex gap-8">
+        <div className="flex min-w-0 gap-8">
           {/* Filters Sidebar */}
           <AnimatePresence>
             {showFilters && (
@@ -556,7 +559,7 @@ export function PropertySearch() {
                     {/* Listing Type */}
                     <div>
                       <label className="block mb-3 font-semibold">Listing Type</label>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 overflow-x-auto pb-1">
                         <button
                           onClick={() => setFilters({ ...filters, listingType: "rental" })}
                           className={`flex-1 py-2 px-3 rounded-lg transition-all ${
@@ -593,7 +596,7 @@ export function PropertySearch() {
                     {/* Price Range */}
                     <div>
                       <label className="block mb-3 font-semibold">Price Range (GHS)</label>
-                      <div className="flex gap-2">
+                      <div className="flex min-w-0 gap-2">
                         <Input
                           type="number"
                           placeholder="Min"
@@ -634,7 +637,7 @@ export function PropertySearch() {
                     {/* Bedrooms */}
                     <div>
                       <label className="block mb-3 font-semibold">Bedrooms</label>
-                      <div className="grid grid-cols-5 gap-2">
+                      <div className="grid grid-cols-5 gap-2 overflow-x-auto pb-1">
                         {["Any", "1", "2", "3", "4+"].map((bed) => (
                           <button
                             key={bed}
@@ -654,7 +657,7 @@ export function PropertySearch() {
                     {/* Bathrooms */}
                     <div>
                       <label className="block mb-3 font-semibold">Bathrooms</label>
-                      <div className="grid grid-cols-5 gap-2">
+                      <div className="grid grid-cols-5 gap-2 overflow-x-auto pb-1">
                         {["Any", "1", "2", "3", "4+"].map((bath) => (
                           <button
                             key={bath}
@@ -671,6 +674,34 @@ export function PropertySearch() {
                       </div>
                     </div>
 
+                    {/* Amenities */}
+                    <div>
+                      <label className="block mb-3 font-semibold">Amenities</label>
+                      <div className="grid grid-cols-1 gap-2">
+                        {AMENITY_FILTER_OPTIONS.map((amenity) => {
+                          const selectedAmenities = filters.amenities
+                            ? filters.amenities.split(",").filter(Boolean)
+                            : [];
+                          const isSelected = selectedAmenities.includes(amenity);
+
+                          return (
+                            <button
+                              key={amenity}
+                              type="button"
+                              onClick={() => toggleAmenityFilter(amenity)}
+                              className={`rounded-lg border px-3 py-2 text-left text-sm transition-all ${
+                                isSelected
+                                  ? "border-primary bg-primary text-white"
+                                  : "border-border bg-secondary hover:bg-muted"
+                              }`}
+                            >
+                              {amenity}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     <Button className="w-full" size="lg" onClick={handleApplyFilters}>
                       Apply Filters
                     </Button>
@@ -684,7 +715,7 @@ export function PropertySearch() {
           </AnimatePresence>
 
           {/* Properties Grid/List */}
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin" />
@@ -729,12 +760,11 @@ export function PropertySearch() {
                               </div>
                               <div className="flex items-center justify-between mb-3">
                                 <div>
-                                  <span className="text-2xl font-semibold text-primary">
-                                    GHS {listing.price.toLocaleString()}
-                                  </span>
-                                  {listing.listing_type === 'rental' && (
-                                    <span className="text-sm text-muted-foreground">/month</span>
-                                  )}
+                                  <DiasporaPrice
+                                    amount={Number(listing.price || 0)}
+                                    currency={listing.currency || "GHS"}
+                                    suffix={listing.listing_type === "rental" ? "/month" : ""}
+                                  />
                                 </div>
                               </div>
                               {listing.property?.bedrooms && (
@@ -774,27 +804,27 @@ export function PropertySearch() {
                                   className="w-full h-full object-cover"
                                 />
                               </div>
-                              <div className="flex-1 p-6 flex flex-col justify-between">
-                                <div>
+                              <div className="flex min-w-0 flex-1 flex-col justify-between p-4 sm:p-6">
+                                <div className="min-w-0">
                                   <h3 className="font-semibold text-xl mb-2">
                                     {listing.property?.address || 'Property'}
                                   </h3>
                                   <div className="flex items-center gap-1 text-muted-foreground mb-4">
-                                    <MapPin className="w-4 h-4" />
-                                    <span>{listing.property?.city}, {listing.property?.region}</span>
+                                    <MapPin className="h-4 w-4 flex-shrink-0" />
+                                    <span className="min-w-0 truncate">{listing.property?.city}, {listing.property?.region}</span>
                                   </div>
                                   <p className="text-muted-foreground text-sm mb-4">
                                     {listing.property?.description || 'Property available'}
                                   </p>
                                 </div>
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                   <div>
-                                    <span className="text-3xl font-semibold text-primary">
-                                      GHS {listing.price.toLocaleString()}
-                                    </span>
-                                    {listing.listing_type === 'rental' && (
-                                      <span className="text-sm text-muted-foreground">/month</span>
-                                    )}
+                                    <DiasporaPrice
+                                      amount={Number(listing.price || 0)}
+                                      currency={listing.currency || "GHS"}
+                                      suffix={listing.listing_type === "rental" ? "/month" : ""}
+                                      size="lg"
+                                    />
                                   </div>
                                   {listing.property?.bedrooms && (
                                     <div className="flex gap-4 text-sm text-muted-foreground">
@@ -818,7 +848,7 @@ export function PropertySearch() {
                   </div>
                 ) : (
                   <div className="grid gap-6 xl:grid-cols-[380px,1fr]">
-                    <div className="space-y-4 max-h-[880px] overflow-y-auto pr-2">
+                    <div className="max-h-[420px] space-y-4 overflow-y-auto pr-2 sm:max-h-[560px] xl:max-h-[880px]">
                       {listings.map((listing, index) => (
                         <motion.div
                           key={listing.id}
@@ -848,9 +878,14 @@ export function PropertySearch() {
                                 <p className="text-sm text-muted-foreground mt-2">
                                   {listing.property?.city}, {listing.property?.region}
                                 </p>
-                                <p className="text-lg font-semibold text-primary mt-3">
-                                  GHS {listing.price.toLocaleString()}
-                                </p>
+                                <div className="mt-3">
+                                  <DiasporaPrice
+                                    amount={Number(listing.price || 0)}
+                                    currency={listing.currency || "GHS"}
+                                    suffix={listing.listing_type === "rental" ? "/month" : ""}
+                                    size="sm"
+                                  />
+                                </div>
                               </div>
                             </div>
                           </Card>
@@ -858,7 +893,7 @@ export function PropertySearch() {
                       ))}
                     </div>
 
-                    <Card className="overflow-hidden sticky top-24 h-[880px]">
+                    <Card className="sticky top-24 h-[420px] overflow-hidden sm:h-[560px] xl:h-[880px]">
                       <iframe
                         title={`Map search for ${selectedMapQuery}`}
                         src={selectedMapEmbedUrl}

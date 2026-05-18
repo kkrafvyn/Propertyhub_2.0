@@ -218,11 +218,10 @@ Complete these pages to finish MVP:
 
 ## Current Status
 
-**Completed**: Phases 1, 2 (partial - migrations not yet executed), 3
-**Next**: Phase 2 - Execute database migrations in Supabase dashboard
-**Then**: Phase 4 - Test authentication
-**Then**: Phase 5 - Test data flows
-**Then**: Phase 6 - Implement remaining pages
+**Completed**: BaytMiftah Phase 1 and Phase 2 application build slices; Phase 3 Paystack escrow foundation started
+**Next**: Apply the latest Supabase migrations to production and deploy updated Edge Functions
+**Then**: Configure production Paystack plan codes, escrow transfer recipient codes, and required notification secrets
+**Then**: Run production smoke tests across onboarding, billing, workspace, marketplace, admin, and escrow routes
 
 ## Key Contacts & Resources
 
@@ -248,4 +247,4 @@ Complete these pages to finish MVP:
 - Service layer is fully typed and tested
 - Security (RLS) is built into database
 - No external APIs needed for MVP (self-contained)
-- Optional: Integrate Paystack for payments (not in current scope)
+- Optional: Integrate production payment gateways (Paystack, Flutterwave, and IT Consortium where enabled)

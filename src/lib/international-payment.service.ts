@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export type PaymentMethod = 'card' | 'bank_transfer' | 'mobile_money' | 'wallet' | 'crypto' | 'buy_now_pay_later';
+export type PaymentMethod = 'card' | 'bank_transfer' | 'mobile_money' | 'wallet' | 'buy_now_pay_later';
 
 export interface PaymentProvider {
   id: string;
@@ -129,18 +129,6 @@ const PAYMENT_PROVIDERS: Record<string, PaymentProvider> = {
     documentation: 'https://googlepay.com/docs',
   },
 
-  // Crypto
-  stripe_crypto: {
-    id: 'stripe_crypto',
-    name: 'Crypto (via Stripe)',
-    type: 'crypto',
-    supportedCurrencies: ['USD', 'EUR'],
-    supportedRegions: ['GLOBAL'],
-    isActive: true,
-    commissionPercentage: 3.5,
-    documentation: 'https://stripe.com/crypto',
-  },
-
   // Buy Now Pay Later
   klarna: {
     id: 'klarna',
@@ -165,6 +153,21 @@ interface PaymentTransaction {
   externalTransactionId?: string;
   createdAt: string;
   completedAt?: string;
+}
+
+function mapPaymentTransaction(data: any): PaymentTransaction {
+  return {
+    id: data.id,
+    userId: data.user_id,
+    amount: data.amount,
+    currency: data.currency,
+    paymentMethod: data.payment_method,
+    paymentProvider: data.payment_provider,
+    status: data.status,
+    externalTransactionId: data.external_transaction_id || undefined,
+    createdAt: data.created_at,
+    completedAt: data.completed_at || undefined,
+  };
 }
 
 class InternationalPaymentService {
@@ -269,7 +272,7 @@ class InternationalPaymentService {
       throw error;
     }
 
-    return data;
+    return mapPaymentTransaction(data);
   }
 
   /**

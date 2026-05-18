@@ -12,6 +12,7 @@ import {
   buildRentVsBuyAnalysis,
   buildViewingPrepPlan,
   buildListingLaunchPlan,
+  buildRoleTaskLaunchpad,
   buildSellerPortalHealth,
   buildSellerNetSheet,
   estimateClosingCosts,
@@ -153,7 +154,7 @@ Ready to move after title review.`)
           assigned_to: "agent-1",
           status: "success",
           amount_minor: 250000,
-          receipt: { blockchain_status: "confirmed" },
+          receipt: { integrity_status: "hashed" },
         },
       ],
       members: {
@@ -396,5 +397,29 @@ Ready to move after title review.`)
     expect(plan.needsWorkCount).toBe(2);
     expect(plan.actions.find((action) => action.label === "Attach seller proof")?.status).toBe("ready");
     expect(plan.ownerUpdate).toContain("1/2");
+  });
+
+  it("builds role task plans that prioritize simple next actions", () => {
+    const plans = buildRoleTaskLaunchpad({
+      savedProperties: [{ id: "saved-1" }],
+      dealCases: [{ id: "case-1", status: "pending" }],
+      conversations: [
+        {
+          id: "conversation-1",
+          messages: [{ id: "message-1", read: false }],
+        },
+      ],
+      propertyViewings: [{ id: "viewing-1", status: "requested" }],
+      propertyTransactions: [{ id: "payment-1", status: "pending" }],
+      savedAlerts: [{ id: "alert-1", is_active: true }],
+      workspaceMemberships: [{ id: "membership-1" }],
+      documents: [{ id: "document-1", status: "signed" }],
+    });
+
+    expect(plans.map((plan) => plan.key)).toContain("diaspora_buyer");
+    expect(plans.find((plan) => plan.key === "buyer")?.primaryAction.href).toBe("/app/saved");
+    expect(plans.find((plan) => plan.key === "agent")?.priority).toBe("Today");
+    expect(plans.find((plan) => plan.key === "legal_reviewer")?.metricValue).toBe("1");
+    expect(plans.every((plan) => plan.tasks.length >= 3)).toBe(true);
   });
 });

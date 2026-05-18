@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Menu, User, Heart, Bell, Download } from "lucide-react";
+import { Bell, ChevronDown, Heart, Menu, User } from "lucide-react";
 import { Button } from "./ui/Button";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -12,9 +12,21 @@ interface NavbarProps {
 
 export function Navbar({ transparent = false }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [publicMenuOpen, setPublicMenuOpen] = useState(false);
   const { user } = useAuth();
   const isAuthenticated = !!user;
   const workspacePath = `${WORKSPACE_ENTRY_PATH}?next=new`;
+  const publicMenuItems = [
+    { label: "For Rent", to: "/search", detail: "Browse rentals across Ghana" },
+    { label: "For Sale", to: "/search?listingType=sale", detail: "Find homes and investments" },
+    { label: "For Lease", to: "/search?listingType=lease", detail: "Explore longer-term leases" },
+    { label: "Agencies", to: "/agencies", detail: "Verified real estate teams" },
+    { label: "Area Guides", to: "/guides", detail: "Neighborhood insights" },
+    { label: "Trends", to: "/market-trends", detail: "Market signals and pricing" },
+    { label: "Reviews", to: "/reviews", detail: "Public agency reputation" },
+    { label: "Get App", to: "/get-the-app", detail: "Install BaytMiftah mobile" },
+    { label: "List Property", to: workspacePath, detail: "Open the agency workspace" },
+  ];
   const initials =
     user?.user_metadata?.full_name
       ?.split(" ")
@@ -28,52 +40,70 @@ export function Navbar({ transparent = false }: NavbarProps) {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${transparent ? "bg-transparent" : "bg-white border-b border-border shadow-sm"}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-            </div>
-            <span className="text-xl font-semibold text-foreground">BaytMiftah</span>
-          </Link>
+        <div className="flex h-20 min-w-0 items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-4 lg:gap-8">
+            {/* Logo */}
+            <Link to="/" className="flex min-w-0 items-center gap-2">
+              <div className="w-10 h-10 flex-shrink-0 bg-primary rounded-lg flex items-center justify-center">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </div>
+              <span className="truncate text-lg font-semibold text-foreground sm:text-xl">
+                BaytMiftah
+              </span>
+            </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link to="/search" className="text-foreground hover:text-primary transition-colors">
-              For Rent
-            </Link>
-            <Link to="/search?listingType=sale" className="text-foreground hover:text-primary transition-colors">
-              For Sale
-            </Link>
-            <Link to="/search?listingType=lease" className="text-foreground hover:text-primary transition-colors">
-              For Lease
-            </Link>
-            <Link to="/agencies" className="text-foreground hover:text-primary transition-colors">
-              Agencies
-            </Link>
-            <Link to="/guides" className="text-foreground hover:text-primary transition-colors">
-              Area Guides
-            </Link>
-            <Link to="/market-trends" className="text-foreground hover:text-primary transition-colors">
-              Trends
-            </Link>
-            <Link to="/reviews" className="text-foreground hover:text-primary transition-colors">
-              Reviews
-            </Link>
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center">
+              <div className="relative">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-foreground transition-colors hover:bg-secondary hover:text-primary"
+                  aria-haspopup="menu"
+                  aria-expanded={publicMenuOpen}
+                  onClick={() => setPublicMenuOpen((open) => !open)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      setPublicMenuOpen(false);
+                    }
+                  }}
+                >
+                  Explore
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${publicMenuOpen ? "rotate-180" : ""}`}
+                    aria-hidden="true"
+                  />
+                </button>
+
+                {publicMenuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute left-0 top-full mt-3 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border bg-white p-2 shadow-xl"
+                  >
+                    {publicMenuItems.map((item) => (
+                      <Link
+                        key={item.label}
+                        to={item.to}
+                        role="menuitem"
+                        className="group block rounded-xl px-4 py-3 transition-colors hover:bg-secondary"
+                        onClick={() => setPublicMenuOpen(false)}
+                      >
+                        <span className="block font-semibold text-foreground group-hover:text-primary">
+                          {item.label}
+                        </span>
+                        <span className="mt-0.5 block text-sm text-muted-foreground">{item.detail}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Right Actions */}
-          <div className="hidden md:flex items-center gap-4">
-            <Link to="/get-the-app" className="text-foreground hover:text-primary transition-colors flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Get App
-            </Link>
-            <Link to={workspacePath} className="text-foreground hover:text-primary transition-colors">
-              List Property
-            </Link>
+          <div className="hidden flex-shrink-0 items-center gap-4 md:flex">
             <button
               className="p-2 hover:bg-secondary rounded-full transition-colors"
               type="button"
@@ -132,38 +162,24 @@ export function Navbar({ transparent = false }: NavbarProps) {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-border">
-          <div id="mobile-navigation-menu" className="px-4 py-4 space-y-3">
-            <Link to="/search" className="block py-2 text-foreground hover:text-primary">
-              For Rent
-            </Link>
-            <Link to="/search?listingType=sale" className="block py-2 text-foreground hover:text-primary">
-              For Sale
-            </Link>
-            <Link to="/search?listingType=lease" className="block py-2 text-foreground hover:text-primary">
-              For Lease
-            </Link>
-            <Link to="/agencies" className="block py-2 text-foreground hover:text-primary">
-              Agencies
-            </Link>
-            <Link to="/guides" className="block py-2 text-foreground hover:text-primary">
-              Area Guides
-            </Link>
-            <Link to="/market-trends" className="block py-2 text-foreground hover:text-primary">
-              Market Trends
-            </Link>
-            <Link to="/reviews" className="block py-2 text-foreground hover:text-primary">
-              Reviews
-            </Link>
-            <Link to="/buyer-requests" className="block py-2 text-foreground hover:text-primary">
-              Buyer Requests
-            </Link>
-            <Link to="/get-the-app" className="block py-2 text-foreground hover:text-primary">
-              Get The App
-            </Link>
-            <Link to={workspacePath} className="block py-2 text-foreground hover:text-primary">
-              List Property
-            </Link>
+        <div className="max-h-[calc(100dvh-5rem)] overflow-y-auto border-t border-border bg-white md:hidden">
+          <div id="mobile-navigation-menu" className="space-y-4 px-4 py-4">
+            <div className="rounded-2xl border border-border bg-secondary/40 p-2">
+              <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Explore
+              </p>
+              {publicMenuItems.map((item) => (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  className="block rounded-xl px-3 py-2.5 text-foreground hover:bg-white hover:text-primary"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="block font-semibold">{item.label}</span>
+                  <span className="block text-sm text-muted-foreground">{item.detail}</span>
+                </Link>
+              ))}
+            </div>
             {isAuthenticated && (
               <Link
                 to={`${WORKSPACE_ENTRY_PATH}?next=notifications`}

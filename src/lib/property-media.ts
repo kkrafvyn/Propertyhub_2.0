@@ -1,7 +1,8 @@
 const FALLBACK_PROPERTY_IMAGE =
   "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&q=80";
 
-type PropertyMediaLike = {
+export type PropertyMediaLike = {
+  id?: string | null;
   public_url?: string | null;
   alt_text?: string | null;
   media_type?: string | null;

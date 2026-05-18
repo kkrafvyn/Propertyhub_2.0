@@ -13,6 +13,7 @@ export type UserDashboardSection =
   | "messages"
   | "applications"
   | "viewings"
+  | "access"
   | "alerts"
   | "payments"
   | "settings";
@@ -38,6 +39,7 @@ export const USER_DASHBOARD_ROUTE_CONFIG: UserDashboardRouteConfig[] = [
   { section: "messages", href: "/app/messages", label: "Messages" },
   { section: "applications", href: "/app/applications", label: "Applications" },
   { section: "viewings", href: "/app/viewings", label: "Viewings" },
+  { section: "access", href: "/app/access", label: "Smart Access" },
   { section: "alerts", href: "/app/alerts", label: "Alerts" },
   { section: "payments", href: "/app/payments", label: "Payments" },
   { section: "settings", href: "/app/settings", label: "Settings" },
@@ -48,6 +50,7 @@ const MINIMAL_USER_DASHBOARD_SECTIONS: UserDashboardSection[] = [
   "saved",
   "messages",
   "viewings",
+  "access",
   "deals",
   "payments",
   "settings",

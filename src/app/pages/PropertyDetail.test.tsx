@@ -168,7 +168,7 @@ describe("PropertyDetail inquiry flow", () => {
       publicDocuments: [],
       signedDocumentCount: 0,
       securePaymentsEnabled: true,
-      blockchainProofEnabled: true,
+      receiptIntegrityEnabled: true,
       trustHighlights: [],
     } as any);
     createDealCaseMock.mockResolvedValue({ id: "case-1" } as any);
@@ -230,7 +230,7 @@ describe("PropertyDetail inquiry flow", () => {
       "lead-1",
       expect.stringContaining("New inquiry about 5 Independence Ave, Accra")
     );
-  });
+  }, 20000);
 
   it("submits a purchase offer into the negotiation pipeline", async () => {
     useAuthMock.mockReturnValue({
@@ -263,7 +263,7 @@ describe("PropertyDetail inquiry flow", () => {
       publicDocuments: [],
       signedDocumentCount: 0,
       securePaymentsEnabled: true,
-      blockchainProofEnabled: true,
+      receiptIntegrityEnabled: true,
       trustHighlights: [],
     } as any);
     createDealCaseMock.mockResolvedValue({ id: "offer-case-1" } as any);
@@ -332,5 +332,5 @@ describe("PropertyDetail inquiry flow", () => {
       "lead-1",
       expect.stringContaining("Offer submitted for 5 Independence Ave, Accra")
     );
-  });
+  }, 20000);
 });

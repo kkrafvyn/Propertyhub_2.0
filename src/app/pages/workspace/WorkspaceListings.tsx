@@ -16,6 +16,11 @@ import { listingQualityService } from "../../../lib/listing-quality.service";
 import { propertyMediaService } from "../../../lib/property-media.service";
 import { listingService } from "../../../lib/listing.service";
 import { propertyService } from "../../../lib/property.service";
+import {
+  getActiveListingLimitState,
+  isPublicActiveListing,
+  subscriptionService,
+} from "../../../lib/subscription.service";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 type ListingStatus = Database["public"]["Tables"]["listings"]["Row"]["status"];
@@ -265,6 +270,32 @@ export function WorkspaceListings({
     if (!draft.price || Number.isNaN(Number(draft.price))) {
       toast.error("Enter a valid price before saving.");
       return;
+    }
+
+    const willBeActive = isPublicActiveListing({
+      status: draft.status,
+      visibility: draft.visibility,
+    });
+    const wasActive = isPublicActiveListing(listing);
+
+    if (willBeActive && !wasActive) {
+      try {
+        const billingOverview = await subscriptionService.getOrganizationBillingOverview(organization.id);
+        const activeListings = listings.filter((item) => item.id !== listing.id && isPublicActiveListing(item)).length;
+        const listingLimit = getActiveListingLimitState({
+          tier: billingOverview.tier,
+          activeListings,
+        });
+
+        if (listingLimit.isAtLimit) {
+          toast.error("This subscription tier has reached its active listing limit. Upgrade billing first.");
+          return;
+        }
+      } catch (error) {
+        console.error("Failed to check listing limit:", error);
+        toast.error("We couldn't confirm the subscription listing limit right now.");
+        return;
+      }
     }
 
     try {
@@ -598,7 +629,7 @@ export function WorkspaceListings({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 lg:min-w-[760px]">
+                    <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
                       <Input
                         label="Price"
                         type="number"
@@ -826,9 +857,12 @@ export function WorkspaceListings({
 
                         {mediaItems.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {mediaItems.map((media) => (
+                            {mediaItems.map((media, mediaIndex) => {
+                              const mediaId = media.id || `${listing.id}-media-${mediaIndex}`;
+
+                              return (
                               <div
-                                key={media.id}
+                                key={mediaId}
                                 className="rounded-xl border border-border overflow-hidden bg-secondary/10"
                               >
                                 <div className="relative h-40 overflow-hidden">
@@ -848,8 +882,8 @@ export function WorkspaceListings({
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => void handleSetPrimaryMedia(listing, media.id)}
-                                    disabled={Boolean(media.is_primary) || mediaActionId === media.id}
+                                    onClick={() => media.id && void handleSetPrimaryMedia(listing, media.id)}
+                                    disabled={!media.id || Boolean(media.is_primary) || mediaActionId === media.id}
                                   >
                                     Set Cover
                                   </Button>
@@ -857,14 +891,15 @@ export function WorkspaceListings({
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => void handleDeleteMedia(media.id)}
-                                    disabled={mediaActionId === media.id}
+                                    onClick={() => media.id && void handleDeleteMedia(media.id)}
+                                    disabled={!media.id || mediaActionId === media.id}
                                   >
                                     Delete
                                   </Button>
                                 </div>
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         ) : (
                           <div className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">

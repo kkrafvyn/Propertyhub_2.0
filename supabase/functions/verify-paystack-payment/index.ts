@@ -67,7 +67,6 @@ Deno.serve(async (req) => {
       status: verifiedTransaction.status || result.transaction.status,
       transaction: result.transaction,
       receipt: result.receipt,
-      blockchainRecord: result.blockchainRecord,
       alreadyProcessed: result.alreadyProcessed,
     });
   } catch (error) {

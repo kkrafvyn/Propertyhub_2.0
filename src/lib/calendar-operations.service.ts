@@ -116,7 +116,7 @@ export const calendarOperationsService = {
           status: input.status,
           external_account_email: input.externalAccountEmail || null,
           external_calendar_id: input.externalCalendarId || null,
-          connection_metadata: input.connectionMetadata || null,
+          connection_metadata: (input.connectionMetadata || null) as any,
           last_synced_at: input.status === "connected" ? new Date().toISOString() : null,
         },
         { onConflict: "organization_id,user_id,provider" }

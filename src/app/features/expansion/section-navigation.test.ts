@@ -63,6 +63,7 @@ describe("section navigation", () => {
       "saved",
       "messages",
       "viewings",
+      "access",
       "deals",
       "payments",
       "settings",

@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import {
   ArrowRightLeft,
   Brain,
+  Building2,
   CheckCircle,
   Copy,
   FileSignature,
@@ -329,7 +330,7 @@ export function WorkspaceExpansionSuite({
     () =>
       payments.filter((payment) => {
         const receipt = Array.isArray(payment.receipt) ? payment.receipt[0] : payment.receipt;
-        return receipt?.blockchain_status === "confirmed";
+        return receipt?.integrity_status === "hashed" || receipt?.integrity_status === "verified";
       }).length,
     [payments]
   );
@@ -1018,7 +1019,7 @@ export function WorkspaceExpansionSuite({
           <StatCard
             label="Verified Payments"
             value={verifiedPaymentsCount}
-            helper="Receipts confirmed on-chain."
+            helper="Receipts confirmed with integrity hashes."
           />
           <StatCard
             label="Revenue Collected"

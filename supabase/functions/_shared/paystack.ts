@@ -8,6 +8,7 @@ export interface PaystackInitializeInput {
   currency: string;
   reference: string;
   callback_url: string;
+  plan?: string;
   channels?: string[];
   metadata?: Record<string, unknown>;
 }
@@ -21,10 +22,82 @@ export interface PaystackTransactionData {
   channel?: string;
   gateway_response?: string;
   paid_at?: string | null;
+  fees?: number | null;
+  authorization?: {
+    authorization_code?: string;
+    reusable?: boolean;
+    channel?: string;
+  } | null;
   customer?: {
     email?: string;
+    customer_code?: string;
   };
+  plan?: {
+    plan_code?: string;
+    name?: string;
+    amount?: number;
+    interval?: string;
+  } | null;
+  subscription?: {
+    subscription_code?: string;
+    email_token?: string;
+    next_payment_date?: string | null;
+  } | null;
   metadata?: Record<string, unknown>;
+}
+
+export interface PaystackSubscriptionData {
+  id?: number | string;
+  status?: string;
+  amount?: number;
+  subscription_code?: string;
+  email_token?: string;
+  next_payment_date?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  customer?:
+    | {
+        email?: string;
+        customer_code?: string;
+      }
+    | number
+    | string;
+  plan?:
+    | {
+        plan_code?: string;
+        amount?: number;
+        currency?: string;
+        interval?: string;
+      }
+    | number
+    | string;
+}
+
+export interface PaystackInvoiceWebhookData {
+  invoice_code?: string;
+  subscription?: {
+    subscription_code?: string;
+    email_token?: string;
+    status?: string;
+    next_payment_date?: string | null;
+  };
+  transaction?: {
+    reference?: string;
+    amount?: number;
+    paid_at?: string | null;
+    status?: string;
+  } | null;
+  customer?: {
+    email?: string;
+    customer_code?: string;
+  };
+  amount?: number;
+  currency?: string;
+  status?: string;
+  paid?: boolean;
+  paid_at?: string | null;
+  period_start?: string | null;
+  period_end?: string | null;
 }
 
 export interface PaystackCreateRefundInput {
@@ -33,6 +106,28 @@ export interface PaystackCreateRefundInput {
   currency?: string;
   customer_note?: string;
   merchant_note?: string;
+}
+
+export interface PaystackCreateTransferInput {
+  source?: "balance";
+  amount: number;
+  recipient: string;
+  reason: string;
+  reference: string;
+  currency?: string;
+}
+
+export interface PaystackTransferData {
+  id?: number | string;
+  amount?: number;
+  currency?: string;
+  reference?: string;
+  transfer_code?: string;
+  status?: string;
+  reason?: string;
+  recipient?: string | number | Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface PaystackRefundData {
@@ -138,14 +233,14 @@ async function paystackFetch<T>(path: string, init: RequestInit = {}) {
     | { status?: boolean; message?: string; data?: T }
     | null;
 
-  if (!response.ok || !payload?.status || !payload.data) {
+  if (!response.ok || !payload?.status) {
     throw new HttpError(
       response.status || 502,
       payload?.message || "Paystack request failed"
     );
   }
 
-  return payload.data;
+  return (payload.data || {}) as T;
 }
 
 export async function initializePaystackTransaction(input: PaystackInitializeInput) {
@@ -173,4 +268,56 @@ export async function createPaystackRefund(input: PaystackCreateRefundInput) {
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+export async function createPaystackTransfer(input: PaystackCreateTransferInput) {
+  return paystackFetch<PaystackTransferData>("/transfer", {
+    method: "POST",
+    body: JSON.stringify({
+      source: input.source || "balance",
+      amount: input.amount,
+      recipient: input.recipient,
+      reason: input.reason,
+      reference: input.reference,
+      currency: input.currency || "GHS",
+    }),
+  });
+}
+
+export async function fetchPaystackSubscription(idOrCode: string) {
+  return paystackFetch<PaystackSubscriptionData>(
+    `/subscription/${encodeURIComponent(idOrCode)}`,
+    {
+      method: "GET",
+    }
+  );
+}
+
+export async function disablePaystackSubscription(input: {
+  code: string;
+  token: string;
+}) {
+  return paystackFetch<Record<string, never>>("/subscription/disable", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function enablePaystackSubscription(input: {
+  code: string;
+  token: string;
+}) {
+  return paystackFetch<Record<string, never>>("/subscription/enable", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function generatePaystackSubscriptionManageLink(code: string) {
+  return paystackFetch<{ link: string }>(
+    `/subscription/${encodeURIComponent(code)}/manage/link`,
+    {
+      method: "GET",
+    }
+  );
 }

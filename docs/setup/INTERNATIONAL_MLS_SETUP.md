@@ -89,7 +89,7 @@ The `internationalPaymentService` handles multi-region payment methods.
 
 | Region | Methods |
 |--------|---------|
-| **US** | Card (Stripe/PayPal), Apple Pay, Google Pay, Crypto |
+| **US** | Card (Stripe/PayPal), Apple Pay, Google Pay |
 | **EU** | Card, Bank Transfer (Wise), Klarna |
 | **Africa (GH/NG/ZA/KE)** | Mobile Money (MTN, Airtel, M-Pesa), Flutterwave, Card |
 | **UK** | Card, Bank Transfer, Klarna |

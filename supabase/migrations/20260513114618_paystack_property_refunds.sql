@@ -1,6 +1,6 @@
 -- Paystack refund ledger and transaction refund lifecycle support.
 -- This extends the property payment flow with partial/full refunds while
--- keeping blockchain receipts as immutable proof of the original payment.
+-- keeping immutable receipt hashes as proof of the original payment.
 
 ALTER TABLE public.property_transactions
   DROP CONSTRAINT IF EXISTS property_transactions_status_check;

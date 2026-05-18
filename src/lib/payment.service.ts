@@ -1,5 +1,54 @@
 import { supabase } from "./supabase";
 
+export type PaymentGatewayProvider = "paystack" | "stripe" | "flutterwave" | "it_consortium";
+
+export interface PaymentGatewayOption {
+  id: PaymentGatewayProvider;
+  label: string;
+  helper: string;
+  enabled: boolean;
+}
+
+export const PAYMENT_GATEWAY_OPTIONS: PaymentGatewayOption[] = [
+  {
+    id: "paystack",
+    label: "Paystack",
+    helper: "MoMo, cards, bank transfer, and bank payments.",
+    enabled: true,
+  },
+  {
+    id: "stripe",
+    label: "Stripe",
+    helper: "International cards for diaspora USD, GBP, and EUR payments.",
+    enabled: Boolean(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY),
+  },
+  {
+    id: "flutterwave",
+    label: "Flutterwave",
+    helper: "Cards, mobile money, bank transfer, and regional rails.",
+    enabled: true,
+  },
+  {
+    id: "it_consortium",
+    label: "IT Consortium",
+    helper: "Prepared for TheTeller once operations enables merchant credentials.",
+    enabled: import.meta.env.VITE_IT_CONSORTIUM_ENABLED === "true",
+  },
+];
+
+export function getPaymentGatewayLabel(provider?: string | null) {
+  switch (provider) {
+    case "stripe":
+      return "Stripe";
+    case "flutterwave":
+      return "Flutterwave";
+    case "it_consortium":
+      return "IT Consortium";
+    default:
+      return "Paystack";
+  }
+}
+
 const PROPERTY_TRANSACTION_SELECT = `
   *,
   listing:listings(
@@ -11,17 +60,13 @@ const PROPERTY_TRANSACTION_SELECT = `
   ),
   organization:organizations(name),
   payer:users(id, full_name, email, phone),
-  receipt:transaction_receipts(
+  receipt:transaction_receipts(*),
+  refunds:property_refunds(*),
+  escrow:property_escrows(
     *,
-    blockchain_record:blockchain_records(
-      id,
-      transaction_hash,
-      chain_id,
-      record_type,
-      status
-    )
-  ),
-  refunds:property_refunds(*)
+    documents:property_escrow_documents(*),
+    events:property_escrow_events(*)
+  )
 `;
 
 export interface InitializePropertyPaymentInput {
@@ -38,6 +83,7 @@ export interface InitializePropertyPaymentInput {
   dealCaseId?: string | null;
   customerName?: string;
   customerPhone?: string;
+  provider?: PaymentGatewayProvider;
 }
 
 export interface InitiatePropertyRefundInput {
@@ -50,7 +96,7 @@ export interface InitiatePropertyRefundInput {
 
 export const paymentService = {
   async initializePropertyPayment(input: InitializePropertyPaymentInput) {
-    const { data, error } = await supabase.functions.invoke("initialize-paystack-payment", {
+    const { data, error } = await supabase.functions.invoke("initialize-property-payment", {
       body: input,
     });
 
@@ -60,12 +106,13 @@ export const paymentService = {
       authorizationUrl: string;
       accessCode: string;
       reference: string;
+      provider: PaymentGatewayProvider;
       callbackUrl: string;
     };
   },
 
   async verifyPropertyPayment(reference: string) {
-    const { data, error } = await supabase.functions.invoke("verify-paystack-payment", {
+    const { data, error } = await supabase.functions.invoke("verify-property-payment", {
       body: { reference },
     });
 
@@ -74,7 +121,6 @@ export const paymentService = {
       status: string;
       transaction: any;
       receipt: any;
-      blockchainRecord: any;
       alreadyProcessed: boolean;
     };
   },

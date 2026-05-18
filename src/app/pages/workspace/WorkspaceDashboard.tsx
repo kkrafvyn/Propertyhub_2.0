@@ -4,8 +4,13 @@ import {
   BarChart3,
   Building2,
   CalendarDays,
+  CheckCircle2,
   CreditCard,
+  FileCheck2,
+  KeyRound,
+  ListChecks,
   MessageCircle,
+  Settings,
   Shield,
   TrendingUp,
   Users,
@@ -148,7 +153,7 @@ export function WorkspaceDashboard({ organization, workspaceBasePath }: Workspac
         const receipt = Array.isArray(transaction.receipt)
           ? transaction.receipt[0]
           : transaction.receipt;
-        return receipt?.blockchain_status === "confirmed";
+        return receipt?.integrity_status === "hashed" || receipt?.integrity_status === "verified";
       }),
     [propertyTransactions]
   );
@@ -201,6 +206,60 @@ export function WorkspaceDashboard({ organization, workspaceBasePath }: Workspac
       .filter((entry) => entry.count > 0)
       .slice(0, 5);
   }, [dealCases]);
+  const onboardingItems = useMemo(() => {
+    const organizationAny = organization as any;
+    return [
+      {
+        label: "Complete agency profile",
+        description: "Add public contact details, website, and agency positioning.",
+        complete: Boolean(organization.description && organization.email && organization.phone),
+        href: `${workspaceBasePath}/settings`,
+        icon: Settings,
+      },
+      {
+        label: "Set payout destination",
+        description: "Add Paystack or Stripe release details before escrow goes live.",
+        complete:
+          organizationAny.payment_setup_status === "ready" ||
+          Boolean(
+            organizationAny.paystack_transfer_recipient_code ||
+              organizationAny.stripe_connect_account_id
+          ),
+        href: `${workspaceBasePath}/settings`,
+        icon: CreditCard,
+      },
+      {
+        label: "Submit business verification",
+        description: "Keep documents ready for admin review and the verified badge.",
+        complete: Boolean(organization.verified),
+        href: `${workspaceBasePath}/verification`,
+        icon: FileCheck2,
+      },
+      {
+        label: "Invite the team",
+        description: "Bring managers, agents, and analysts into the workspace.",
+        complete: membersCount > 1,
+        href: `${workspaceBasePath}/team`,
+        icon: Users,
+      },
+      {
+        label: "Create first listing",
+        description: "Add inventory so the marketplace and lead system have supply.",
+        complete: listings.length > 0,
+        href: `${workspaceBasePath}/listings`,
+        icon: Building2,
+      },
+      {
+        label: "Prepare Smart Access",
+        description: "Optional IoT setup for viewings and tenancy handoff.",
+        complete: Boolean(organizationAny.onboarding_checklist?.smart_access_ready),
+        href: `${workspaceBasePath}/smart-access`,
+        icon: KeyRound,
+      },
+    ];
+  }, [listings.length, membersCount, organization, workspaceBasePath]);
+  const onboardingCompleteCount = onboardingItems.filter((item) => item.complete).length;
+  const onboardingPercent = Math.round((onboardingCompleteCount / onboardingItems.length) * 100);
 
   if (loading) {
     return (
@@ -218,6 +277,59 @@ export function WorkspaceDashboard({ organization, workspaceBasePath }: Workspac
           Keep an eye on listings, inbound inquiries, and team activity from one workspace.
         </p>
       </div>
+
+      <Card className="mb-8 overflow-hidden">
+        <div className="border-b border-border bg-primary/5 p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-primary text-white">
+                <ListChecks className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">Agency onboarding checklist</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Finish these setup steps to make the workspace production-ready.
+                </p>
+              </div>
+            </div>
+            <Badge variant={onboardingPercent === 100 ? "default" : "outline"}>
+              {onboardingCompleteCount}/{onboardingItems.length} complete
+            </Badge>
+          </div>
+          <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/70">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: `${onboardingPercent}%` }}
+            />
+          </div>
+        </div>
+        <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
+          {onboardingItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.label}
+                to={item.href}
+                className="rounded-2xl border border-border p-4 transition hover:border-primary/40 hover:bg-secondary/30"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-secondary">
+                    {item.complete ? (
+                      <CheckCircle2 className="h-5 w-5 text-accent" />
+                    ) : (
+                      <Icon className="h-5 w-5 text-primary" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium">{item.label}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-6 mb-8">
         <Card className="p-6">
@@ -305,7 +417,7 @@ export function WorkspaceDashboard({ organization, workspaceBasePath }: Workspac
             <div>
               <p className="text-sm text-muted-foreground mb-1">Verified Receipts</p>
               <p className="text-3xl font-semibold">{verifiedPayments.length}</p>
-              <p className="text-xs text-accent mt-1">Anchored to Polygon</p>
+              <p className="text-xs text-accent mt-1">Internal receipt hashes</p>
             </div>
             <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
               <Shield className="w-6 h-6 text-accent" />
@@ -347,7 +459,7 @@ export function WorkspaceDashboard({ organization, workspaceBasePath }: Workspac
                       {listing.property?.city}, {listing.property?.region}
                     </p>
                     <p className="text-sm mt-1">
-                      {currencyFormatter.format(listing.price)} • {listing.listing_type}
+                      {currencyFormatter.format(listing.price)} / {listing.listing_type}
                     </p>
                   </div>
                   <div className="text-right text-sm">

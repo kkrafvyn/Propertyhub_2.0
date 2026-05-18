@@ -99,10 +99,28 @@ function getAndroidSdkPath() {
 function checkPackage() {
   const packageJson = JSON.parse(read("package.json"));
 
+  if (packageJson.name === "baytmiftah") {
+    pass("Package metadata uses BaytMiftah name");
+  } else {
+    fail(`Package metadata should be baytmiftah. Current name: ${packageJson.name || "<missing>"}`);
+  }
+
   if (packageJson.dependencies?.["@supabase/ssr"]) {
     fail("Remove unused @supabase/ssr to avoid the old cookie advisory.");
   } else {
     pass("Unused @supabase/ssr dependency removed");
+  }
+
+  if (packageJson.scripts?.["prod:env:check"] === "node scripts/checkProductionEnv.cjs") {
+    pass("Production environment checker script documented in package.json");
+  } else {
+    fail("package.json should expose prod:env:check for launch credential validation.");
+  }
+
+  if (packageJson.scripts?.["qa:local"]) {
+    pass("Local QA script is available");
+  } else {
+    fail("package.json should expose qa:local for repeatable launch checks.");
   }
 
   const viteVersion = packageJson.devDependencies?.vite || "";
@@ -155,6 +173,24 @@ function checkEnvHygiene() {
   checkContains(".env.example", "APNS_BUNDLE_ID=com.baytmiftah.app", "APNS env placeholders documented");
   checkContains(".env.example", "WEB_PUSH_PRIVATE_KEY=", "Web push secret placeholder documented");
   checkContains(".env.example", "WEB_PUSH_CONTACT_EMAIL=mailto:support@baytmiftah.app", "BaytMiftah support contact documented");
+  checkContains(".env.example", "PAYSTACK_PLAN_CODE_STARTER=", "Paystack Starter plan code documented");
+  checkContains(".env.example", "PAYSTACK_PLAN_CODE_GROWTH=", "Paystack Growth plan code documented");
+  checkContains(".env.example", "PAYSTACK_PLAN_CODE_PRO=", "Paystack Pro plan code documented");
+  checkContains(".env.example", "PAYSTACK_DEFAULT_ESCROW_RECIPIENT_CODE=", "Paystack escrow recipient fallback documented");
+  checkContains(".env.example", "STRIPE_SECRET_KEY=", "Stripe secret placeholder documented");
+  checkContains(".env.example", "STRIPE_WEBHOOK_SECRET=", "Stripe webhook secret placeholder documented");
+  checkContains(".env.example", "AUDIT_RSA_PRIVATE_KEY_PEM=", "Audit RSA private key placeholder documented");
+  checkContains(".env.example", "AUDIT_RSA_PUBLIC_KEY_PEM=", "Audit RSA public key placeholder documented");
+  checkContains(".env.example", "ANCHOR_JOB_SECRET=", "Audit anchoring job secret documented");
+  checkContains(".env.example", "GITHUB_ANCHOR_REPO=", "Audit anchoring repo placeholder documented");
+  checkContains(".env.example", "VITE_CONDITION_REPORT_MEDIA_BUCKET=condition-report-media", "Condition report media bucket documented");
+  checkContains(".env.example", "TTLOCK_COMMAND_ENDPOINT=", "TTLock endpoint placeholder documented");
+  checkContains(".env.example", "YALE_COMMAND_ENDPOINT=", "Yale endpoint placeholder documented");
+  checkContains(".env.example", "TUYA_COMMAND_ENDPOINT=", "Tuya endpoint placeholder documented");
+  checkContains(".env.example", "EDGE_RATE_LIMIT_MAX_REQUESTS=30", "Edge rate limit placeholder documented");
+  checkContains(".env.example", "FLUTTERWAVE_SECRET_KEY=", "Flutterwave secret placeholder documented");
+  checkContains(".env.example", "FLUTTERWAVE_WEBHOOK_SECRET_HASH=", "Flutterwave webhook secret placeholder documented");
+  checkContains(".env.example", "IT_CONSORTIUM_MERCHANT_ID=", "IT Consortium merchant placeholder documented");
 
   const externalSecrets = [
     "WEB_PUSH_PRIVATE_KEY",
@@ -165,7 +201,18 @@ function checkEnvHygiene() {
     "APNS_BUNDLE_ID",
     "RESEND_API_KEY",
     "PAYSTACK_SECRET_KEY",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "AUDIT_RSA_PRIVATE_KEY_PEM",
+    "AUDIT_RSA_PUBLIC_KEY_PEM",
+    "ANCHOR_JOB_SECRET",
+    "FLUTTERWAVE_SECRET_KEY",
+    "FLUTTERWAVE_WEBHOOK_SECRET_HASH",
   ];
+
+  if (process.env.IT_CONSORTIUM_ENABLED === "true") {
+    externalSecrets.push("IT_CONSORTIUM_API_KEY", "IT_CONSORTIUM_MERCHANT_ID");
+  }
 
   const missing = externalSecrets.filter((key) => !process.env[key]);
   if (missing.length) {
@@ -190,6 +237,21 @@ function checkReleaseDocs() {
     "supabase/queries/production_rls_audit.sql",
     "relrowsecurity",
     "Supabase RLS audit query"
+  );
+  checkContains(
+    "docs/deployment/PRODUCTION_PROVIDER_ACTIVATION.md",
+    "Paystack Ghana Lane",
+    "Production provider activation runbook"
+  );
+  checkContains(
+    "docs/deployment/RELEASE_HARDENING_CHECKLIST.md",
+    "npm run prod:env:check",
+    "Production env checker included in release checklist"
+  );
+  checkContains(
+    "scripts/checkProductionEnv.cjs",
+    "Production environment check passed",
+    "Production environment checker implementation"
   );
 }
 
