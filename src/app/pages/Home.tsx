@@ -21,8 +21,13 @@ import { Input } from "../components/ui/Input";
 import { Card } from "../components/ui/Card";
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { listingService } from "../../lib/listing.service";
+import {
+  listingService,
+  type PublicCategorySummary,
+  type PublicLocationSummary,
+} from "../../lib/listing.service";
 import { organizationService } from "../../lib/organization.service";
+import { formatPropertyCategory } from "../../lib/property-category";
 import { getPropertyCoverImage } from "../../lib/property-media";
 import {
   publicDiscoveryService,
@@ -32,10 +37,32 @@ import {
 import { toast } from "sonner";
 import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
 
+function getCategoryIcon(category: string) {
+  switch (category) {
+    case "apartment":
+      return Building2;
+    case "house":
+      return HomeIcon;
+    case "commercial":
+    case "office":
+    case "office_complex":
+      return Landmark;
+    case "warehouse":
+      return Building2;
+    case "car_park":
+    case "land":
+      return MapPin;
+    default:
+      return HomeIcon;
+  }
+}
+
 export function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<"rental" | "sale" | "lease">("rental");
   const [featuredListings, setFeaturedListings] = useState<any[]>([]);
+  const [categoryStats, setCategoryStats] = useState<PublicCategorySummary[]>([]);
+  const [popularLocations, setPopularLocations] = useState<PublicLocationSummary[]>([]);
   const [verifiedAgencies, setVerifiedAgencies] = useState<any[]>([]);
   const [reviewPreview, setReviewPreview] = useState<PublicVendorReview[]>([]);
   const [mobileSnapshot, setMobileSnapshot] = useState<MobileExperienceSnapshot | null>(null);
@@ -52,8 +79,10 @@ export function Home() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [listings, agencies, reputation, appSnapshot] = await Promise.all([
+      const [listings, categories, locations, agencies, reputation, appSnapshot] = await Promise.all([
         listingService.getPublicListings(4, 0),
+        listingService.getPublicCategorySummaries(7),
+        listingService.getPopularLocations(6),
         organizationService.getVerifiedOrganizations(6),
         publicDiscoveryService.getVendorReputationSnapshot(6, 3),
         publicDiscoveryService.getMobileExperienceSnapshot(),
@@ -62,6 +91,8 @@ export function Home() {
         ...listing,
       }));
       setFeaturedListings(formattedListings);
+      setCategoryStats(categories);
+      setPopularLocations(locations);
       setVerifiedAgencies(agencies);
       setReviewPreview(reputation.testimonials);
       setMobileSnapshot(appSnapshot);
@@ -80,22 +111,6 @@ export function Home() {
     });
     navigate(`/search?${params.toString()}`);
   };
-
-  const categories = [
-    { name: "Apartments", searchValue: "apartment", icon: Building2, count: "1,234" },
-    { name: "Houses", searchValue: "house", icon: HomeIcon, count: "856" },
-    { name: "Commercial", searchValue: "commercial", icon: Landmark, count: "432" },
-    { name: "Land", searchValue: "land", icon: MapPin, count: "298" },
-  ];
-
-  const locations = [
-    { name: "East Legon", count: "234 properties" },
-    { name: "Airport Residential", count: "189 properties" },
-    { name: "Cantonments", count: "156 properties" },
-    { name: "Labone", count: "142 properties" },
-    { name: "Osu", count: "128 properties" },
-    { name: "Dzorwulu", count: "98 properties" },
-  ];
 
   const discoveryLinks = [
     {
@@ -184,7 +199,8 @@ export function Home() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="mb-10 text-lg text-white/90 sm:text-xl"
           >
-            Discover quality homes, apartments, and commercial spaces across Accra and beyond
+            Discover live rental, sale, lease, and commercial inventory with verified teams,
+            location signals, and buyer tools built into the marketplace.
           </motion.p>
 
           {/* Search Bar */}
@@ -192,7 +208,7 @@ export function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-white rounded-2xl shadow-2xl p-2 max-w-3xl mx-auto"
+            className="mx-auto max-w-4xl rounded-[1.75rem] border border-white/20 bg-white/95 p-3 shadow-2xl backdrop-blur"
           >
             <div className="flex min-w-0 flex-col gap-2 md:flex-row">
               <div className="flex gap-2 overflow-x-auto px-2 py-1">
@@ -247,31 +263,67 @@ export function Home() {
                 Search
               </Button>
             </div>
+            {popularLocations.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2 px-1">
+                {popularLocations.slice(0, 4).map((location) => (
+                  <button
+                    key={location.label}
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery(location.label);
+                      navigate(`/search?q=${encodeURIComponent(location.label)}&listingType=${searchType}`);
+                    }}
+                    className="rounded-full border border-border bg-secondary/70 px-3 py-1.5 text-sm text-foreground transition-colors hover:border-primary/25 hover:bg-primary/5"
+                  >
+                    {location.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </motion.div>
         </div>
       </section>
 
       {/* Categories */}
       <section className="py-16 px-4 max-w-7xl mx-auto">
-        <h2 className="text-3xl font-semibold mb-8">Browse by Category</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {categories.map((category, index) => (
-            <motion.div
-              key={category.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Link to={`/search?propertyType=${category.searchValue}`}>
-                <Card hover className="p-6 text-center">
-                  <category.icon className="w-12 h-12 mx-auto mb-4 text-primary" />
-                  <h3 className="font-semibold mb-1">{category.name}</h3>
-                  <p className="text-sm text-muted-foreground">{category.count} listings</p>
-                </Card>
-              </Link>
-            </motion.div>
-          ))}
+        <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-3xl font-semibold">Browse by Category</h2>
+            <p className="mt-2 text-muted-foreground">
+              Counts below come from the current live public inventory.
+            </p>
+          </div>
         </div>
+        {categoryStats.length === 0 ? (
+          <Card className="p-8 text-muted-foreground">
+            Public category counts will appear here once more listings are published.
+          </Card>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-7">
+            {categoryStats.map((category, index) => {
+              const Icon = getCategoryIcon(category.category);
+
+              return (
+                <motion.div
+                  key={category.category}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.06 }}
+                >
+                  <Link to={`/search?propertyType=${category.category}`}>
+                    <Card hover className="h-full p-6 text-center">
+                      <Icon className="mx-auto mb-4 h-12 w-12 text-primary" />
+                      <h3 className="mb-1 font-semibold">{category.label}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {category.count.toLocaleString()} live listings
+                      </p>
+                    </Card>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Featured Properties */}
@@ -305,7 +357,7 @@ export function Home() {
                           className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
                         />
                         <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold">
-                          {listing.property?.category || 'Property'}
+                          {formatPropertyCategory(listing.property?.category)}
                         </div>
                       </div>
                       <div className="p-4">
@@ -473,25 +525,55 @@ export function Home() {
 
       {/* Popular Locations */}
       <section className="py-16 px-4 max-w-7xl mx-auto">
-        <h2 className="text-3xl font-semibold mb-8">Popular Locations in Accra</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {locations.map((location, index) => (
-            <motion.div
-              key={location.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <Link to={`/search?q=${encodeURIComponent(location.name)}`}>
-                <Card hover className="p-4 text-center">
-                  <MapPin className="w-8 h-8 mx-auto mb-2 text-primary" />
-                  <h4 className="font-semibold mb-1">{location.name}</h4>
-                  <p className="text-xs text-muted-foreground">{location.count}</p>
-                </Card>
-              </Link>
-            </motion.div>
-          ))}
+        <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-3xl font-semibold">Active Search Locations</h2>
+            <p className="mt-2 text-muted-foreground">
+              These neighborhoods and cities are ranked from the live public marketplace feed.
+            </p>
+          </div>
         </div>
+        {popularLocations.length === 0 ? (
+          <Card className="p-8 text-muted-foreground">
+            Location cards will populate when the public feed has enough published inventory.
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {popularLocations.map((location, index) => (
+              <motion.div
+                key={location.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <Link to={`/search?q=${encodeURIComponent(location.label)}`}>
+                  <Card hover className="h-full p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+                          <MapPin className="h-3.5 w-3.5" />
+                          Live Location
+                        </div>
+                        <h4 className="mt-4 text-xl font-semibold">{location.label}</h4>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {location.listingCount.toLocaleString()} public listings
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-secondary p-3 text-right">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">From</p>
+                        <p className="mt-1 font-semibold">
+                          {location.startingPrice
+                            ? `GHS ${Math.round(location.startingPrice).toLocaleString()}`
+                            : "No price yet"}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Verified Agencies */}

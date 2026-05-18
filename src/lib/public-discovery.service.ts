@@ -4,11 +4,14 @@ import { listingService } from "./listing.service";
 import { marketIntelligenceService } from "./market-intelligence.service";
 import { mobileAppService } from "./mobile-app.service";
 import { organizationService } from "./organization.service";
+import { formatPropertyCategory, normalizePropertyCategory } from "./property-category";
+import { getPropertyCoverImage } from "./property-media";
 import { savedSearchAlertService } from "./saved-search-alert.service";
 import { supabase } from "./supabase";
 import { vendorService } from "./vendor.service";
 
 type PublicListing = Awaited<ReturnType<typeof listingService.getPublicListings>>[number];
+type BuyerRequestRow = Database["public"]["Tables"]["buyer_requests"]["Row"];
 type OrganizationRow = Database["public"]["Tables"]["organizations"]["Row"];
 type OrganizationInsightRow = Database["public"]["Tables"]["organization_insights"]["Row"];
 type LocationTrendRow = Database["public"]["Tables"]["location_trends"]["Row"];
@@ -19,7 +22,6 @@ type VendorRow = Database["public"]["Tables"]["vendors"]["Row"] & {
 type VendorRatingRow = Database["public"]["Tables"]["vendor_ratings"]["Row"];
 type AppVersionSnapshot = Awaited<ReturnType<typeof mobileAppService.getAppVersion>>;
 
-const BUYER_REQUEST_STORAGE_KEY = "baytmiftah-buyer-requests-v1";
 const PUBLIC_LISTING_SAMPLE_SIZE = 180;
 const PUBLIC_VENDOR_CATEGORIES = [
   "electrician",
@@ -31,138 +33,13 @@ const PUBLIC_VENDOR_CATEGORIES = [
   "internet_provider",
   "security",
 ] as const;
-
-interface AreaGuideSeed {
-  city: string;
-  region: string;
-  neighborhood: string;
-  title: string;
-  intro: string;
-  bestFor: string[];
-  highlights: string[];
-  caution: string;
-  imageUrl: string;
-}
-
-const AREA_GUIDE_SEEDS: AreaGuideSeed[] = [
-  {
-    city: "Accra",
-    region: "Greater Accra",
-    neighborhood: "East Legon",
-    title: "East Legon Area Guide",
-    intro: "One of Accra's busiest residential and lifestyle corridors for families, students, and diaspora buyers.",
-    bestFor: ["Executive rentals", "Student housing", "Diaspora buyers"],
-    highlights: ["Strong school access", "Large rental pool", "Reliable grocery and dining corridor"],
-    caution: "Traffic can spike around school runs and major junctions.",
-    imageUrl:
-      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1400&q=80",
-  },
-  {
-    city: "Accra",
-    region: "Greater Accra",
-    neighborhood: "Cantonments",
-    title: "Cantonments Area Guide",
-    intro: "A premium diplomatic district with strong security expectations and high-end apartment stock.",
-    bestFor: ["Embassy staff", "Corporate lets", "Premium buyers"],
-    highlights: ["Lower flood risk pockets", "Close to Airport City", "Strong serviced apartment demand"],
-    caution: "Entry pricing is high compared with most Accra neighborhoods.",
-    imageUrl:
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1400&q=80",
-  },
-  {
-    city: "Accra",
-    region: "Greater Accra",
-    neighborhood: "Labone",
-    title: "Labone Area Guide",
-    intro: "A central neighborhood balancing walkability, restaurants, and executive residential demand.",
-    bestFor: ["Professionals", "Short lets", "Walkable urban living"],
-    highlights: ["Central Accra access", "Lifestyle-led location", "Good hospitality spillover"],
-    caution: "Inventory can be tight for larger family compounds.",
-    imageUrl:
-      "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=1400&q=80",
-  },
-  {
-    city: "Accra",
-    region: "Greater Accra",
-    neighborhood: "Airport Residential",
-    title: "Airport Residential Guide",
-    intro: "A premium mixed-use zone for executives, diaspora travelers, and furnished apartment operators.",
-    bestFor: ["Corporate tenants", "Furnished apartments", "Remote buyers"],
-    highlights: ["Airport adjacency", "Strong executive demand", "Solid office and residential mix"],
-    caution: "Price sensitivity is lower here, so buyers should benchmark carefully.",
-    imageUrl:
-      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1400&q=80",
-  },
-  {
-    city: "Accra",
-    region: "Greater Accra",
-    neighborhood: "Osu",
-    title: "Osu Area Guide",
-    intro: "A lively hospitality, nightlife, and short-stay district with constant foot traffic and mixed-use demand.",
-    bestFor: ["Retail frontage", "Short stays", "Lifestyle-driven renters"],
-    highlights: ["Walkable streets", "High activity levels", "Strong hospitality adjacency"],
-    caution: "Noise, parking pressure, and flood-prone pockets vary by block.",
-    imageUrl:
-      "https://images.unsplash.com/photo-1511818966892-d7d671e672a2?w=1400&q=80",
-  },
-  {
-    city: "Kumasi",
-    region: "Ashanti",
-    neighborhood: "Ahodwo",
-    title: "Ahodwo Area Guide",
-    intro: "An established Kumasi neighborhood with consistent residential, guesthouse, and hospitality demand.",
-    bestFor: ["Long-stay renters", "Hospitality operators", "Regional investors"],
-    highlights: ["Stable local demand", "Known address profile", "Good mixed hospitality use"],
-    caution: "Buyer traffic is steadier than hyper-growth Accra corridors.",
-    imageUrl:
-      "https://images.unsplash.com/photo-1519643381401-22c77e60520e?w=1400&q=80",
-  },
-];
-
-const DEFAULT_BUYER_REQUESTS: BuyerRequestBoardEntry[] = [
-  {
-    id: "seed-east-legon-buy",
-    title: "Need a 3-bed apartment in East Legon",
-    buyerLabel: "Diaspora family",
-    location: "East Legon, Accra",
-    listingType: "sale",
-    propertyType: "apartment",
-    budgetMin: 850000,
-    budgetMax: 1200000,
-    bedrooms: 3,
-    notes: "Looking for a verified title path, parking, and easy school access.",
-    createdAt: "2026-05-10T09:15:00.000Z",
-    channel: "diaspora",
-  },
-  {
-    id: "seed-osu-rent",
-    title: "Seeking a furnished Osu rental",
-    buyerLabel: "Relocation manager",
-    location: "Osu, Accra",
-    listingType: "rental",
-    propertyType: "apartment",
-    budgetMin: 6500,
-    budgetMax: 9500,
-    bedrooms: 2,
-    notes: "Need quick move-in, secure payment path, and strong response time.",
-    createdAt: "2026-05-08T16:30:00.000Z",
-    channel: "relocation",
-  },
-  {
-    id: "seed-kumasi-land",
-    title: "Investor searching for serviced plots in Kumasi",
-    buyerLabel: "Local investor",
-    location: "Ahodwo, Kumasi",
-    listingType: "sale",
-    propertyType: "land",
-    budgetMin: 250000,
-    budgetMax: 500000,
-    bedrooms: null,
-    notes: "Prioritizing documented ownership trail and good access roads.",
-    createdAt: "2026-05-05T13:00:00.000Z",
-    channel: "investor",
-  },
-];
+const DEMAND_LEVEL_PRIORITY: Record<string, number> = {
+  very_low: 1,
+  low: 2,
+  medium: 3,
+  high: 4,
+  very_high: 5,
+};
 
 export interface PublicAgencySnapshot {
   id: string;
@@ -232,6 +109,8 @@ export interface MarketTrendSnapshot {
   title: string;
   city: string;
   region: string;
+  guideSlug: string | null;
+  searchQuery: string;
   demandLevel: string;
   growthRate: number | null;
   priceTrend: number | null;
@@ -387,6 +266,18 @@ export interface ValuationEstimate {
 
 function normalizeText(value?: string | null) {
   return String(value || "").trim().toLowerCase();
+}
+
+function buildMarketLocationKey(city?: string | null, region?: string | null) {
+  return `${normalizeText(city)}::${normalizeText(region)}`;
+}
+
+function getDemandLevelPriority(value?: string | null) {
+  return DEMAND_LEVEL_PRIORITY[normalizeText(value)] || 0;
+}
+
+function getNumericPriority(value?: number | null, fallback = Number.NEGATIVE_INFINITY) {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
 export function slugify(value: string) {
@@ -854,49 +745,227 @@ export function groupListingsIntoProjects(listings: PublicListing[]) {
     });
 }
 
+function buildAreaGuideSlug(input: {
+  city?: string | null;
+  region?: string | null;
+  neighborhood?: string | null;
+}) {
+  if (input.neighborhood) {
+    return slugify(`${input.neighborhood}-${input.city}`);
+  }
+
+  return slugify([input.city, input.region].filter(Boolean).join("-"));
+}
+
+function buildAreaGuideIntro(input: {
+  city: string;
+  neighborhood: string;
+  listingCount: number;
+  dominantCategory: string | null;
+  dominantListingType: string | null;
+  note: string | null;
+}) {
+  const demandCopy =
+    input.dominantListingType === "sale"
+      ? "buyer demand"
+      : input.dominantListingType === "lease"
+        ? "lease demand"
+        : "rental demand";
+
+  const listingCopy =
+    input.listingCount === 1
+      ? "1 public listing"
+      : `${input.listingCount} public listings`;
+
+  const categoryCopy = input.dominantCategory
+    ? `${formatPropertyCategory(input.dominantCategory).toLowerCase()} inventory`
+    : "active marketplace inventory";
+
+  return (
+    input.note ||
+    `${input.neighborhood} in ${input.city} currently shows ${listingCopy}, led by ${categoryCopy} and ${demandCopy} in the public marketplace.`
+  );
+}
+
+function buildAreaGuideBestFor(listings: PublicListing[], demandLevel?: string | null) {
+  const categories = uniqueStrings(
+    listings.map((listing) => {
+      const category = normalizePropertyCategory(getProperty(listing)?.category);
+      return category ? `${formatPropertyCategory(category)} seekers` : null;
+    })
+  );
+  const listingTypes = new Set(listings.map((listing) => listing.listing_type));
+  const audience = [
+    listingTypes.has("sale") ? "Buyers" : null,
+    listingTypes.has("rental") ? "Renters" : null,
+    listingTypes.has("lease") ? "Lease clients" : null,
+    demandLevel === "high" || demandLevel === "very_high" ? "Momentum investors" : null,
+  ];
+
+  return uniqueStrings([...categories, ...audience]).slice(0, 3);
+}
+
+function buildAreaGuideHighlights(
+  listings: PublicListing[],
+  insight: ReturnType<typeof ghanaMarketService.getLocationInsight>
+) {
+  const amenities = summarizeAmenities(listings).slice(0, 2);
+
+  return uniqueStrings([
+    insight?.accessibilityScore && insight.accessibilityScore >= 4
+      ? "Strong access score for daily movement"
+      : null,
+    insight?.safetyScore && insight.safetyScore >= 4 ? "Higher safety profile in current signals" : null,
+    amenities.length > 0 ? `Common amenities: ${amenities.join(", ")}` : null,
+    listings.length > 0 ? `${listings.length} active public listings right now` : null,
+    insight?.notes || null,
+  ]).slice(0, 3);
+}
+
+function buildAreaGuideCaution(input: {
+  floodRiskLevel?: string | null;
+  listingCount: number;
+  demandLevel?: string | null;
+}) {
+  if (input.floodRiskLevel === "high") {
+    return "Flood-risk checks should be part of due diligence before paying a deposit or booking fee.";
+  }
+
+  if (input.floodRiskLevel === "medium") {
+    return "Review drainage, road access, and rainy-season history before committing to a move.";
+  }
+
+  if (input.listingCount < 3) {
+    return "Public inventory is still light here, so compare older comps and ask for extra documentation.";
+  }
+
+  if (input.demandLevel === "very_high") {
+    return "High demand can tighten negotiation windows, so confirm documents and viewing availability early.";
+  }
+
+  return "Pair pricing with trust documents, quality scores, and location access checks before you decide.";
+}
+
+function mapBuyerRequestRow(row: BuyerRequestRow): BuyerRequestBoardEntry {
+  return {
+    id: row.id,
+    title: row.title,
+    buyerLabel: row.buyer_label,
+    location: row.location,
+    listingType: row.listing_type,
+    propertyType: row.property_type,
+    budgetMin: row.budget_min,
+    budgetMax: row.budget_max,
+    bedrooms: row.bedrooms,
+    notes: row.notes,
+    createdAt: row.created_at,
+    channel: row.channel,
+  };
+}
+
 export function buildAreaGuidesFromListings(listings: PublicListing[]) {
-  return AREA_GUIDE_SEEDS.map((seed) => {
-    const matchingListings = listings.filter((listing) => {
-      const property = getProperty(listing);
-      return (
-        normalizeText(property?.city) === normalizeText(seed.city) &&
-        normalizeText(property?.region) === normalizeText(seed.region) &&
-        (normalizeText(property?.neighborhood) === normalizeText(seed.neighborhood) ||
-          (!property?.neighborhood && normalizeText(property?.city) === normalizeText(seed.city)))
-      );
+  const grouped = new Map<
+    string,
+    {
+      city: string;
+      region: string;
+      neighborhood: string;
+      listings: PublicListing[];
+    }
+  >();
+
+  listings.forEach((listing) => {
+    const property = getProperty(listing);
+    const city = property?.city?.trim();
+    const region = property?.region?.trim();
+    const neighborhood = property?.neighborhood?.trim() || city;
+
+    if (!city || !region || !neighborhood) return;
+
+    const key = normalizeText([neighborhood, city, region].join("::"));
+    const bucket = grouped.get(key) || {
+      city,
+      region,
+      neighborhood,
+      listings: [],
+    };
+
+    bucket.listings.push(listing);
+    grouped.set(key, bucket);
+  });
+
+  return [...grouped.values()]
+    .map((bucket) => {
+      const prices = bucket.listings
+        .map((listing) => Number(listing.price || 0))
+        .filter((value) => value > 0);
+      const bedrooms = bucket.listings
+        .map((listing) => getProperty(listing)?.bedrooms)
+        .filter((value): value is number => typeof value === "number");
+      const dominantCategory =
+        bucket.listings
+          .map((listing) => normalizePropertyCategory(getProperty(listing)?.category))
+          .filter(Boolean)
+          .sort(
+            (a, b) =>
+              bucket.listings.filter((listing) => normalizePropertyCategory(getProperty(listing)?.category) === b)
+                .length -
+              bucket.listings.filter((listing) => normalizePropertyCategory(getProperty(listing)?.category) === a)
+                .length
+          )[0] || null;
+      const dominantListingType =
+        bucket.listings
+          .map((listing) => listing.listing_type)
+          .sort(
+            (a, b) =>
+              bucket.listings.filter((listing) => listing.listing_type === b).length -
+              bucket.listings.filter((listing) => listing.listing_type === a).length
+          )[0] || null;
+      const insight =
+        ghanaMarketService.getLocationInsight(bucket.city, bucket.region, bucket.neighborhood) ||
+        ghanaMarketService.getLocationInsight(bucket.city, bucket.region, null);
+
+      return {
+        slug: buildAreaGuideSlug(bucket),
+        title: `${bucket.neighborhood} Area Guide`,
+        city: bucket.city,
+        region: bucket.region,
+        neighborhood: bucket.neighborhood,
+        intro: buildAreaGuideIntro({
+          city: bucket.city,
+          neighborhood: bucket.neighborhood,
+          listingCount: bucket.listings.length,
+          dominantCategory,
+          dominantListingType,
+          note: insight?.notes || null,
+        }),
+        bestFor: buildAreaGuideBestFor(bucket.listings, insight?.demandLevel),
+        highlights: buildAreaGuideHighlights(bucket.listings, insight),
+        caution: buildAreaGuideCaution({
+          floodRiskLevel: insight?.floodRiskLevel,
+          listingCount: bucket.listings.length,
+          demandLevel: insight?.demandLevel,
+        }),
+        imageUrl: getPropertyCoverImage(getProperty(bucket.listings[0])),
+        listingCount: bucket.listings.length,
+        averagePrice: average(prices),
+        medianPrice: median(prices),
+        averageBedrooms: average(bedrooms),
+        demandLevel: insight?.demandLevel || "medium",
+        investmentScore: insight?.investmentScore || null,
+        safetyScore: insight?.safetyScore || null,
+        accessibilityScore: insight?.accessibilityScore || null,
+        floodRiskLevel: insight?.floodRiskLevel || "unknown",
+        featuredListings: bucket.listings.slice(0, 3),
+      } satisfies AreaGuide;
+    })
+    .sort((a, b) => {
+      if (b.listingCount !== a.listingCount) {
+        return b.listingCount - a.listingCount;
+      }
+
+      return Number(b.averagePrice || 0) - Number(a.averagePrice || 0);
     });
-
-    const prices = matchingListings
-      .map((listing) => Number(listing.price || 0))
-      .filter((value) => value > 0);
-    const bedrooms = matchingListings
-      .map((listing) => getProperty(listing)?.bedrooms)
-      .filter((value): value is number => typeof value === "number");
-    const insight = ghanaMarketService.getLocationInsight(seed.city, seed.region, seed.neighborhood);
-
-    return {
-      slug: slugify(`${seed.neighborhood}-${seed.city}`),
-      title: seed.title,
-      city: seed.city,
-      region: seed.region,
-      neighborhood: seed.neighborhood,
-      intro: seed.intro,
-      bestFor: seed.bestFor,
-      highlights: seed.highlights,
-      caution: seed.caution,
-      imageUrl: seed.imageUrl,
-      listingCount: matchingListings.length,
-      averagePrice: average(prices),
-      medianPrice: median(prices),
-      averageBedrooms: average(bedrooms),
-      demandLevel: insight?.demandLevel || "medium",
-      investmentScore: insight?.investmentScore || null,
-      safetyScore: insight?.safetyScore || null,
-      accessibilityScore: insight?.accessibilityScore || null,
-      floodRiskLevel: insight?.floodRiskLevel || "unknown",
-      featuredListings: matchingListings.slice(0, 3),
-    } satisfies AreaGuide;
-  }).sort((a, b) => b.listingCount - a.listingCount);
 }
 
 function buildMarketNote(
@@ -919,36 +988,29 @@ function buildMarketNote(
   return "Use recent supply, trust, and access signals together before setting pricing expectations.";
 }
 
+function compareMarketTrendSnapshots(a: MarketTrendSnapshot, b: MarketTrendSnapshot) {
+  const growthDiff = getNumericPriority(b.growthRate) - getNumericPriority(a.growthRate);
+  if (growthDiff !== 0) return growthDiff;
+
+  const demandDiff = getDemandLevelPriority(b.demandLevel) - getDemandLevelPriority(a.demandLevel);
+  if (demandDiff !== 0) return demandDiff;
+
+  const investmentDiff =
+    getNumericPriority(b.investmentScore) - getNumericPriority(a.investmentScore);
+  if (investmentDiff !== 0) return investmentDiff;
+
+  const listingDiff = (b.totalListings || 0) - (a.totalListings || 0);
+  if (listingDiff !== 0) return listingDiff;
+
+  return getNumericPriority(b.averagePrice, 0) - getNumericPriority(a.averagePrice, 0);
+}
+
 function normalizeBuyerLabel(value?: string | null) {
   const trimmed = String(value || "").trim();
   if (!trimmed) return "Anonymous buyer";
 
   const firstToken = trimmed.split(/\s+/)[0];
   return firstToken.length > 1 ? `${firstToken} buyer` : "Anonymous buyer";
-}
-
-function readBuyerRequestsFromStorage() {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const raw = window.localStorage.getItem(BUYER_REQUEST_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as BuyerRequestBoardEntry[]) : [];
-  } catch (error) {
-    console.error("Failed to read buyer request board:", error);
-    return [];
-  }
-}
-
-function writeBuyerRequestsToStorage(requests: BuyerRequestBoardEntry[]) {
-  if (typeof window === "undefined") return;
-
-  try {
-    window.localStorage.setItem(BUYER_REQUEST_STORAGE_KEY, JSON.stringify(requests));
-  } catch (error) {
-    console.error("Failed to persist buyer requests:", error);
-  }
 }
 
 export function estimateValueFromComparables(input: {
@@ -1220,20 +1282,26 @@ export const publicDiscoveryService = {
   },
 
   async getAreaGuides(limit = 6) {
+    await ghanaMarketService.getLocationInsights();
     const listings = await listingService.getPublicListings(PUBLIC_LISTING_SAMPLE_SIZE, 0);
     return buildAreaGuidesFromListings(listings).slice(0, limit);
   },
 
   async getAreaGuideBySlug(slug: string) {
-    const guides = await this.getAreaGuides(AREA_GUIDE_SEEDS.length);
+    const guides = await this.getAreaGuides(36);
     return guides.find((guide) => guide.slug === slug) || null;
   },
 
   async getMarketTrendSnapshots(limit = 6) {
+    await ghanaMarketService.getLocationInsights();
+
+    const requestedTrendCount = Math.max(limit * 2, 12);
     const [topLocations, listings, areaGuides] = await Promise.all([
-      marketIntelligenceService.getTopLocations(limit).catch(() => [] as LocationTrendRow[]),
+      marketIntelligenceService
+        .getTopLocations(requestedTrendCount)
+        .catch(() => [] as LocationTrendRow[]),
       listingService.getPublicListings(PUBLIC_LISTING_SAMPLE_SIZE, 0),
-      this.getAreaGuides(AREA_GUIDE_SEEDS.length).catch(() => [] as AreaGuide[]),
+      this.getAreaGuides(Math.max(limit * 3, 18)).catch(() => [] as AreaGuide[]),
     ]);
 
     const fallbackTrends =
@@ -1252,52 +1320,69 @@ export const publicDiscoveryService = {
             updated_at: null,
           })) as LocationTrendRow[];
 
-    const analyticsRows = await Promise.all(
-      fallbackTrends.map((trend) =>
-        marketIntelligenceService
-          .getMarketAnalytics(trend.city, "monthly")
-          .then((rows) => rows?.[0] || null)
-          .catch(() => null)
+    const analyticsByLocation = await marketIntelligenceService
+      .getLatestMarketAnalyticsByLocations(
+        fallbackTrends.map((trend) => trend.city),
+        "monthly"
       )
-    );
+      .catch(() => ({} as Record<string, MarketAnalyticsRow>));
 
     return fallbackTrends
-      .map((trend, index) => {
-        const analytics = analyticsRows[index];
+      .map((trend) => {
+        const analytics = analyticsByLocation[normalizeText(trend.city)] || null;
         const areaGuide =
-          areaGuides.find((guide) => normalizeText(guide.city) === normalizeText(trend.city)) || null;
-        const comparableListings = listings.filter(
-          (listing) => normalizeText(getProperty(listing)?.city) === normalizeText(trend.city)
-        );
-        const prices = comparableListings
-          .map((listing) => Number(listing.price || 0))
-          .filter((value) => value > 0);
+          areaGuides.find(
+            (guide) =>
+              buildMarketLocationKey(guide.city, guide.region) ===
+              buildMarketLocationKey(trend.city, trend.region)
+          ) ||
+          areaGuides.find((guide) => normalizeText(guide.city) === normalizeText(trend.city)) ||
+          null;
+        const regionalListings = listings.filter((listing) => {
+          const property = getProperty(listing);
+          return (
+            buildMarketLocationKey(property?.city, property?.region) ===
+            buildMarketLocationKey(trend.city, trend.region)
+          );
+        });
+        const comparableListings =
+          regionalListings.length > 0
+            ? regionalListings
+            : listings.filter(
+                (listing) => normalizeText(getProperty(listing)?.city) === normalizeText(trend.city)
+              );
+        const searchQuery = areaGuide?.neighborhood || trend.city;
         const locationInsight = ghanaMarketService.getLocationInsight(
           trend.city,
           trend.region,
           areaGuide?.neighborhood || null
         );
+        const prices = comparableListings
+          .map((listing) => Number(listing.price || 0))
+          .filter((value) => value > 0);
 
         return {
           slug: slugify(`${trend.city}-${trend.region}`),
           title: `${trend.city}, ${trend.region}`,
           city: trend.city,
           region: trend.region,
+          guideSlug: areaGuide?.slug || null,
+          searchQuery,
           demandLevel: trend.demand_level || areaGuide?.demandLevel || "medium",
-          growthRate: trend.growth_rate,
-          priceTrend: analytics?.price_trend || null,
-          averagePrice: analytics?.avg_price || average(prices),
-          medianPrice: analytics?.median_price || median(prices),
-          totalListings: analytics?.total_listings || comparableListings.length,
-          newListings: analytics?.new_listings || 0,
-          investmentScore: trend.investment_score || areaGuide?.investmentScore || null,
-          safetyScore: trend.safety_score || areaGuide?.safetyScore || null,
-          accessibilityScore: trend.accessibility_score || areaGuide?.accessibilityScore || null,
+          growthRate: trend.growth_rate ?? null,
+          priceTrend: analytics?.price_trend ?? null,
+          averagePrice: analytics?.avg_price ?? average(prices),
+          medianPrice: analytics?.median_price ?? median(prices),
+          totalListings: analytics?.total_listings ?? comparableListings.length,
+          newListings: analytics?.new_listings ?? 0,
+          investmentScore: trend.investment_score ?? areaGuide?.investmentScore ?? null,
+          safetyScore: trend.safety_score ?? areaGuide?.safetyScore ?? null,
+          accessibilityScore: trend.accessibility_score ?? areaGuide?.accessibilityScore ?? null,
           floodRiskLevel: locationInsight?.floodRiskLevel || areaGuide?.floodRiskLevel || "unknown",
           notes: buildMarketNote(trend, analytics, areaGuide),
         } satisfies MarketTrendSnapshot;
       })
-      .sort((a, b) => Number(b.growthRate || 0) - Number(a.growthRate || 0))
+      .sort(compareMarketTrendSnapshots)
       .slice(0, limit);
   },
 
@@ -1359,18 +1444,17 @@ export const publicDiscoveryService = {
     return buildMobileExperienceSnapshot(iosVersion, androidVersion);
   },
 
-  getBuyerRequestBoard() {
-    const stored = readBuyerRequestsFromStorage();
-    const unique = new Map<string, BuyerRequestBoardEntry>();
+  async getBuyerRequestBoard(limit = 24) {
+    const { data, error } = await supabase
+      .from("buyer_requests")
+      .select("*")
+      .eq("is_public", true)
+      .order("created_at", { ascending: false })
+      .limit(limit);
 
-    [...stored, ...DEFAULT_BUYER_REQUESTS].forEach((entry) => {
-      if (!entry?.id) return;
-      unique.set(entry.id, entry);
-    });
+    if (error) throw error;
 
-    return [...unique.values()]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 24);
+    return (data || []).map(mapBuyerRequestRow);
   },
 
   async submitBuyerRequest(input: {
@@ -1391,23 +1475,28 @@ export const publicDiscoveryService = {
       input.location ? `in ${input.location}` : null,
     ].filter(Boolean);
 
-    const entry: BuyerRequestBoardEntry = {
-      id: `buyer-request-${Date.now()}`,
-      title: titleParts.join(" "),
-      buyerLabel: normalizeBuyerLabel(input.buyerName),
-      location: input.location,
-      listingType: input.listingType,
-      propertyType: input.propertyType || null,
-      budgetMin: input.budgetMin ?? null,
-      budgetMax: input.budgetMax ?? null,
-      bedrooms: input.bedrooms ?? null,
-      notes: input.notes.trim(),
-      createdAt: new Date().toISOString(),
-      channel: input.channel || null,
-    };
+    const { data, error } = await supabase
+      .from("buyer_requests")
+      .insert({
+        user_id: input.userId || null,
+        title: titleParts.join(" "),
+        buyer_label: normalizeBuyerLabel(input.buyerName),
+        location: input.location.trim(),
+        listing_type: input.listingType,
+        property_type: normalizePropertyCategory(input.propertyType) || input.propertyType || null,
+        budget_min: input.budgetMin ?? null,
+        budget_max: input.budgetMax ?? null,
+        bedrooms: input.bedrooms ?? null,
+        notes: input.notes.trim(),
+        channel: input.channel || null,
+        is_public: true,
+      })
+      .select("*")
+      .single();
 
-    const mergedBoard = [entry, ...this.getBuyerRequestBoard()].slice(0, 24);
-    writeBuyerRequestsToStorage(mergedBoard);
+    if (error) throw error;
+
+    const entry = mapBuyerRequestRow(data as BuyerRequestRow);
 
     let alertSaved = false;
     if (input.userId) {

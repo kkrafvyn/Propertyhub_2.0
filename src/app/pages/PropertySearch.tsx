@@ -22,8 +22,12 @@ import { Input } from "../components/ui/Input";
 import { motion, AnimatePresence } from "motion/react";
 import { useMobileShell } from "../mobile/MobileShellContext";
 import { getPropertyCoverImage } from "../../lib/property-media";
-import { listingService } from "../../lib/listing.service";
-import { normalizePropertyCategory } from "../../lib/property-category";
+import { listingService, type PublicLocationSummary } from "../../lib/listing.service";
+import {
+  PROPERTY_CATEGORY_OPTIONS,
+  formatPropertyCategory,
+  normalizePropertyCategory,
+} from "../../lib/property-category";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { savedSearchAlertService } from "../../lib/saved-search-alert.service";
@@ -56,6 +60,7 @@ export function PropertySearch() {
   const { isMobileShell } = useMobileShell();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<"grid" | "list" | "map">(isMobileShell ? "list" : "grid");
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -64,39 +69,94 @@ export function PropertySearch() {
   const [savingAlert, setSavingAlert] = useState(false);
   const [userAlerts, setUserAlerts] = useState<any[]>([]);
   const [selectedMapListingId, setSelectedMapListingId] = useState<string | null>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = Math.max(parseInt(searchParams.get("page") || "1", 10) || 1, 1);
+  const amenitySearchParam = searchParams.get("amenities") || "";
 
-  const buildFiltersFromSearchParams = () => ({
-    priceMin: searchParams.get("priceMin") || "",
-    priceMax: searchParams.get("priceMax") || "",
-    bedrooms: searchParams.get("bedrooms") || "",
-    bathrooms: searchParams.get("bathrooms") || "",
+  const buildFiltersFromSearchParams = (params: URLSearchParams) => ({
+    priceMin: params.get("priceMin") || "",
+    priceMax: params.get("priceMax") || "",
+    bedrooms: params.get("bedrooms") || "",
+    bathrooms: params.get("bathrooms") || "",
     propertyType:
-      normalizePropertyCategory(searchParams.get("propertyType")) ||
-      normalizePropertyCategory(searchParams.get("category")) ||
+      normalizePropertyCategory(params.get("propertyType")) ||
+      normalizePropertyCategory(params.get("category")) ||
       "all",
     listingType:
-      searchParams.get("listingType") ||
-      (["rental", "sale", "lease"].includes(searchParams.get("type") || "")
-        ? (searchParams.get("type") as "rental" | "sale" | "lease")
+      params.get("listingType") ||
+      (["rental", "sale", "lease"].includes(params.get("type") || "")
+        ? (params.get("type") as "rental" | "sale" | "lease")
         : "rental"),
-    amenities: searchParams.get("amenities") || "",
+    amenities: params.get("amenities") || amenitySearchParam,
   });
 
-  const [filters, setFilters] = useState(buildFiltersFromSearchParams());
+  const appliedFilters = useMemo(() => buildFiltersFromSearchParams(searchParams), [searchParams]);
+  const [filters, setFilters] = useState(appliedFilters);
+  const [searchInput, setSearchInput] = useState(searchParams.get("q") || "");
+  const [locationSuggestions, setLocationSuggestions] = useState<PublicLocationSummary[]>([]);
+  const [popularLocations, setPopularLocations] = useState<PublicLocationSummary[]>([]);
 
   useEffect(() => {
-    setFilters(buildFiltersFromSearchParams());
+    setFilters(appliedFilters);
+  }, [appliedFilters]);
+
+  useEffect(() => {
+    setSearchInput(searchParams.get("q") || "");
   }, [searchParams]);
 
   useEffect(() => {
     loadListings();
-  }, [searchParams]);
+  }, [searchParams, appliedFilters]);
 
   useEffect(() => {
     captureReferralContext(searchParams);
   }, [searchParams]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    listingService
+      .getPopularLocations(6)
+      .then((data) => {
+        if (!cancelled) {
+          setPopularLocations(data);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load popular locations:", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const query = searchInput.trim();
+
+    if (query.length < 2) {
+      setLocationSuggestions([]);
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      listingService
+        .getLocationSuggestions(query, 6)
+        .then((data) => {
+          if (!cancelled) {
+            setLocationSuggestions(data);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to load location suggestions:", error);
+        });
+    }, 180);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [searchInput]);
 
   useEffect(() => {
     if (!user) {
@@ -135,14 +195,14 @@ export function PropertySearch() {
       setLoading(true);
       const searchFilter = {
         location: searchParams.get("q") || undefined,
-        priceMin: filters.priceMin ? parseInt(filters.priceMin, 10) : undefined,
-        priceMax: filters.priceMax ? parseInt(filters.priceMax, 10) : undefined,
-        bedrooms: parseCountFilter(filters.bedrooms),
-        bathrooms: parseCountFilter(filters.bathrooms),
-        propertyType: filters.propertyType !== "all" ? filters.propertyType : undefined,
-        listingType: filters.listingType as "rental" | "sale" | "lease",
-        amenities: filters.amenities
-          ? filters.amenities
+        priceMin: appliedFilters.priceMin ? parseInt(appliedFilters.priceMin, 10) : undefined,
+        priceMax: appliedFilters.priceMax ? parseInt(appliedFilters.priceMax, 10) : undefined,
+        bedrooms: parseCountFilter(appliedFilters.bedrooms),
+        bathrooms: parseCountFilter(appliedFilters.bathrooms),
+        propertyType: appliedFilters.propertyType !== "all" ? appliedFilters.propertyType : undefined,
+        listingType: appliedFilters.listingType as "rental" | "sale" | "lease",
+        amenities: appliedFilters.amenities
+          ? appliedFilters.amenities
               .split(",")
               .map((amenity) => amenity.trim())
               .filter(Boolean)
@@ -161,6 +221,31 @@ export function PropertySearch() {
     }
   };
 
+  const handleSearchSubmit = (event?: React.FormEvent) => {
+    event?.preventDefault();
+
+    const nextParams = new URLSearchParams(searchParams);
+    const trimmedQuery = searchInput.trim();
+
+    if (trimmedQuery) nextParams.set("q", trimmedQuery);
+    else nextParams.delete("q");
+
+    nextParams.set("listingType", filters.listingType);
+    nextParams.delete("page");
+    setSearchParams(nextParams);
+  };
+
+  const applyLocationSuggestion = (location: PublicLocationSummary) => {
+    setSearchInput(location.label);
+    setLocationSuggestions([]);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("q", location.label);
+    nextParams.set("listingType", filters.listingType);
+    nextParams.delete("page");
+    setSearchParams(nextParams);
+  };
+
   const handleSaveAlert = async () => {
     if (!user) {
       toast.error("Log in to save this search.");
@@ -177,12 +262,12 @@ export function PropertySearch() {
       const alert = await savedSearchAlertService.createAlert({
         userId: user.id,
         locationQuery: searchParams.get("q") || undefined,
-        listingType: filters.listingType as "rental" | "sale" | "lease",
-        propertyType: filters.propertyType !== "all" ? filters.propertyType : null,
-        priceMin: filters.priceMin ? parseInt(filters.priceMin, 10) : null,
-        priceMax: filters.priceMax ? parseInt(filters.priceMax, 10) : null,
-        bedrooms: parseCountFilter(filters.bedrooms) ?? null,
-        bathrooms: parseCountFilter(filters.bathrooms) ?? null,
+        listingType: appliedFilters.listingType as "rental" | "sale" | "lease",
+        propertyType: appliedFilters.propertyType !== "all" ? appliedFilters.propertyType : null,
+        priceMin: appliedFilters.priceMin ? parseInt(appliedFilters.priceMin, 10) : null,
+        priceMax: appliedFilters.priceMax ? parseInt(appliedFilters.priceMax, 10) : null,
+        bedrooms: parseCountFilter(appliedFilters.bedrooms) ?? null,
+        bathrooms: parseCountFilter(appliedFilters.bathrooms) ?? null,
         initialMatchCount: totalResults,
       });
 
@@ -236,7 +321,7 @@ export function PropertySearch() {
     nextParams.delete("propertyType");
     nextParams.delete("amenities");
     nextParams.delete("page");
-    nextParams.set("listingType", "rental");
+    nextParams.set("listingType", filters.listingType);
     setSearchParams(nextParams);
   };
 
@@ -264,9 +349,9 @@ export function PropertySearch() {
 
   const resultsTitle = useMemo(() => {
     const listingTypeLabel =
-      filters.listingType === "sale"
+      appliedFilters.listingType === "sale"
         ? "Sale"
-        : filters.listingType === "lease"
+        : appliedFilters.listingType === "lease"
           ? "Lease"
           : "Rent";
     const locationLabel = searchParams.get("q");
@@ -276,7 +361,7 @@ export function PropertySearch() {
     }
 
     return `Properties for ${listingTypeLabel}`;
-  }, [filters.listingType, searchParams]);
+  }, [appliedFilters.listingType, searchParams]);
 
   const totalPages = Math.max(1, Math.ceil(totalResults / PAGE_SIZE));
   const visiblePages = useMemo(() => {
@@ -312,16 +397,16 @@ export function PropertySearch() {
     () =>
       ({
         q: searchParams.get("q"),
-        listingType: filters.listingType,
-        propertyType: filters.propertyType !== "all" ? filters.propertyType : null,
-        priceMin: filters.priceMin || null,
-        priceMax: filters.priceMax || null,
-        bedrooms: filters.bedrooms || null,
-        bathrooms: filters.bathrooms || null,
+        listingType: appliedFilters.listingType,
+        propertyType: appliedFilters.propertyType !== "all" ? appliedFilters.propertyType : null,
+        priceMin: appliedFilters.priceMin || null,
+        priceMax: appliedFilters.priceMax || null,
+        bedrooms: appliedFilters.bedrooms || null,
+        bathrooms: appliedFilters.bathrooms || null,
         ref: referralContext?.ref || null,
         channel: referralContext?.channel || null,
       }) satisfies SearchShareInput,
-    [filters, referralContext?.channel, referralContext?.ref, searchParams]
+    [appliedFilters, referralContext?.channel, referralContext?.ref, searchParams]
   );
   const currentSearchPath = useMemo(
     () => buildSearchPath(currentSearchInput),
@@ -406,6 +491,94 @@ export function PropertySearch() {
       <div className={isMobileShell ? "pt-4 pb-32 px-4 max-w-7xl mx-auto" : "pt-24 pb-12 px-4 max-w-7xl mx-auto"}>
         {/* Search Header */}
         <div className="mb-8">
+          <Card className="mb-6 overflow-visible border-primary/10 bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(247,247,247,1))] p-5 sm:p-6">
+            <form onSubmit={handleSearchSubmit}>
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+                <div className="flex gap-2 overflow-x-auto">
+                  {[
+                    { label: "Rent", value: "rental" },
+                    { label: "Buy", value: "sale" },
+                    { label: "Lease", value: "lease" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() =>
+                        setFilters((current) => ({
+                          ...current,
+                          listingType: option.value as typeof current.listingType,
+                        }))
+                      }
+                      className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                        filters.listingType === option.value
+                          ? "bg-primary text-white"
+                          : "bg-secondary text-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-border bg-background px-4 py-2 shadow-sm">
+                  <MapPin className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    value={searchInput}
+                    list="property-location-suggestions"
+                    placeholder="Search by city, neighborhood, address, or GhanaPostGPS"
+                    onChange={(event) => setSearchInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        handleSearchSubmit();
+                      }
+                    }}
+                    className="border-0 bg-transparent px-0 py-2 shadow-none focus:ring-0"
+                  />
+                </div>
+
+                <Button type="submit" size="lg" className="xl:min-w-[152px]">
+                  <Search className="h-4 w-4" />
+                  Update Search
+                </Button>
+              </div>
+
+              <datalist id="property-location-suggestions">
+                {[...locationSuggestions, ...popularLocations].map((location) => (
+                  <option key={`${location.label}-${location.region}`} value={location.label} />
+                ))}
+              </datalist>
+
+              {locationSuggestions.length > 0 ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {locationSuggestions.map((location) => (
+                    <button
+                      key={`${location.label}-${location.region}`}
+                      type="button"
+                      onClick={() => applyLocationSuggestion(location)}
+                      className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5 text-sm text-primary transition-colors hover:border-primary/30 hover:bg-primary/10"
+                    >
+                      {location.label}
+                    </button>
+                  ))}
+                </div>
+              ) : popularLocations.length > 0 ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {popularLocations.map((location) => (
+                    <button
+                      key={`${location.label}-${location.region}`}
+                      type="button"
+                      onClick={() => applyLocationSuggestion(location)}
+                      className="rounded-full border border-border bg-secondary/70 px-3 py-1.5 text-sm text-foreground transition-colors hover:border-primary/25 hover:bg-primary/5"
+                    >
+                      {location.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </form>
+          </Card>
+
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             <div>
               <h1 className="text-3xl font-semibold mb-2">{resultsTitle}</h1>
@@ -531,7 +704,7 @@ export function PropertySearch() {
           </Card>
         )}
 
-        <div className="flex min-w-0 gap-8">
+        <div className="flex min-w-0 flex-col gap-6 lg:flex-row lg:gap-8">
           {/* Filters Sidebar */}
           <AnimatePresence>
             {showFilters && (
@@ -539,9 +712,9 @@ export function PropertySearch() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="hidden md:block w-80 flex-shrink-0"
+                className="w-full lg:w-80 lg:flex-shrink-0"
               >
-                <Card className="p-6 sticky top-24">
+                <Card className="p-6 lg:sticky lg:top-24">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-semibold">Filters</h3>
                     <button
@@ -626,11 +799,11 @@ export function PropertySearch() {
                         title="Property type"
                       >
                         <option value="all">All Types</option>
-                        <option value="apartment">Apartment</option>
-                        <option value="house">House</option>
-                        <option value="office">Office</option>
-                        <option value="commercial">Commercial</option>
-                        <option value="land">Land</option>
+                        {PROPERTY_CATEGORY_OPTIONS.map((category) => (
+                          <option key={category.value} value={category.value}>
+                            {category.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
@@ -747,7 +920,7 @@ export function PropertySearch() {
                                 className="w-full h-full object-cover"
                               />
                               <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold">
-                                {listing.property?.category || 'Property'}
+                                {formatPropertyCategory(listing.property?.category)}
                               </div>
                             </div>
                             <div className="p-4">

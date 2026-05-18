@@ -1,9 +1,27 @@
 import { supabase } from "./supabase";
 import type { Database } from "./database.types";
-import { normalizePropertyCategory } from "./property-category";
+import { formatPropertyCategory, normalizePropertyCategory } from "./property-category";
 
 type ListingInsert = Database["public"]["Tables"]["listings"]["Insert"];
 type ListingUpdate = Database["public"]["Tables"]["listings"]["Update"];
+type ListingRow = Database["public"]["Tables"]["listings"]["Row"];
+
+export interface PublicCategorySummary {
+  category: string;
+  label: string;
+  count: number;
+}
+
+export interface PublicLocationSummary {
+  label: string;
+  city: string;
+  region: string;
+  neighborhood: string | null;
+  listingCount: number;
+  averagePrice: number | null;
+  startingPrice: number | null;
+  listingTypes: Array<ListingRow["listing_type"]>;
+}
 
 const LISTING_SELECT = `
   *,
@@ -13,6 +31,40 @@ const LISTING_SELECT = `
   ),
   organization:organizations(name, slug, logo_url, verified)
 `;
+
+const LISTING_SEARCH_SELECT = `
+  *,
+  property:properties!inner(
+    *,
+    media:property_media(*)
+  ),
+  organization:organizations(name, slug, logo_url, verified)
+`;
+
+function normalizeLocationText(value?: string | null) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function sanitizePostgrestLikeQuery(value?: string | null) {
+  const sanitized = String(value || "")
+    .replace(/[,%(){}]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return sanitized || null;
+}
+
+function average(values: number[]) {
+  if (values.length === 0) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function sortLocationSummaries(a: PublicLocationSummary, b: PublicLocationSummary) {
+  if (b.listingCount !== a.listingCount) {
+    return b.listingCount - a.listingCount;
+  }
+
+  return Number(b.averagePrice || 0) - Number(a.averagePrice || 0);
+}
 
 export const listingService = {
   async getPublicListings(limit = 20, offset = 0) {
@@ -64,48 +116,79 @@ export const listingService = {
     const requiredAmenities = (filters.amenities || [])
       .map((amenity) => amenity.trim().toLowerCase())
       .filter(Boolean);
+    const sanitizedLocation = sanitizePostgrestLikeQuery(filters.location);
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("listings")
-      .select(LISTING_SELECT)
+      .select(LISTING_SEARCH_SELECT, { count: "exact" })
       .eq("status", "listed")
       .eq("visibility", "public")
       .order("published_at", { ascending: false });
 
+    if (filters.priceMin != null) {
+      query = query.gte("price", filters.priceMin);
+    }
+
+    if (filters.priceMax != null) {
+      query = query.lte("price", filters.priceMax);
+    }
+
+    if (filters.listingType) {
+      query = query.eq("listing_type", filters.listingType);
+    }
+
+    if (normalizedPropertyType) {
+      query = query.eq("properties.category", normalizedPropertyType);
+    }
+
+    if (filters.bedrooms != null) {
+      query = query.gte("properties.bedrooms", filters.bedrooms);
+    }
+
+    if (filters.bathrooms != null) {
+      query = query.gte("properties.bathrooms", filters.bathrooms);
+    }
+
+    if (sanitizedLocation) {
+      const locationFilters = [
+        `address.ilike.%${sanitizedLocation}%`,
+        `city.ilike.%${sanitizedLocation}%`,
+        `region.ilike.%${sanitizedLocation}%`,
+        `neighborhood.ilike.%${sanitizedLocation}%`,
+        `country.ilike.%${sanitizedLocation}%`,
+        `ghana_post_gps.ilike.%${sanitizedLocation}%`,
+      ].join(",");
+
+      query = query.or(locationFilters, { foreignTable: "properties" });
+    }
+
+    const shouldFilterAmenitiesClientSide = requiredAmenities.length > 0;
+    const finalQuery = shouldFilterAmenitiesClientSide
+      ? query
+      : query.range(offset, offset + limit - 1);
+
+    const { data, error, count } = await finalQuery;
+
     if (error) throw error;
 
-    const normalizedLocation = filters.location?.trim().toLowerCase();
-    const filtered = (data || []).filter((listing) => {
-      const property = listing.property as Database["public"]["Tables"]["properties"]["Row"] | null;
-      const normalizedListingCategory = normalizePropertyCategory(property?.category);
-      const listingAmenities = (property?.amenities || []).map((amenity) =>
-        amenity.trim().toLowerCase()
-      );
-      const locationHaystack = [property?.address, property?.city, property?.region, property?.country]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+    const amenityFilteredResults = shouldFilterAmenitiesClientSide
+      ? (data || []).filter((listing) => {
+          const property = listing.property as Database["public"]["Tables"]["properties"]["Row"] | null;
+          const listingAmenities = (property?.amenities || []).map((amenity) =>
+            amenity.trim().toLowerCase()
+          );
 
-      if (filters.priceMin && listing.price < filters.priceMin) return false;
-      if (filters.priceMax && listing.price > filters.priceMax) return false;
-      if (filters.listingType && listing.listing_type !== filters.listingType) return false;
-      if (normalizedPropertyType && normalizedListingCategory !== normalizedPropertyType) return false;
-      if (filters.bedrooms && (property?.bedrooms || 0) < filters.bedrooms) return false;
-      if (filters.bathrooms && (property?.bathrooms || 0) < filters.bathrooms) return false;
-      if (
-        requiredAmenities.length > 0 &&
-        !requiredAmenities.every((amenity) => listingAmenities.includes(amenity))
-      ) {
-        return false;
-      }
-      if (normalizedLocation && !locationHaystack.includes(normalizedLocation)) return false;
+          return requiredAmenities.every((amenity) => listingAmenities.includes(amenity));
+        })
+      : data || [];
 
-      return true;
-    });
+    const total = shouldFilterAmenitiesClientSide ? amenityFilteredResults.length : count || 0;
 
     return {
-      results: filtered.slice(offset, offset + limit),
-      total: filtered.length,
+      results: shouldFilterAmenitiesClientSide
+        ? amenityFilteredResults.slice(offset, offset + limit)
+        : amenityFilteredResults,
+      total,
     };
   },
 
@@ -173,5 +256,143 @@ export const listingService = {
 
   async toggleFeatured(id: string, featured: boolean) {
     return this.updateListing(id, { featured });
+  },
+
+  async getPublicCategorySummaries(limit = 8) {
+    const { data, error } = await supabase
+      .from("listings")
+      .select("property:properties!inner(category)")
+      .eq("status", "listed")
+      .eq("visibility", "public");
+
+    if (error) throw error;
+
+    const counts = new Map<string, number>();
+
+    (data || []).forEach((listing) => {
+      const property = listing.property as Pick<
+        Database["public"]["Tables"]["properties"]["Row"],
+        "category"
+      > | null;
+      const category = normalizePropertyCategory(property?.category) || "other";
+      counts.set(category, (counts.get(category) || 0) + 1);
+    });
+
+    return [...counts.entries()]
+      .map(([category, count]) => ({
+        category,
+        label: formatPropertyCategory(category),
+        count,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit) satisfies PublicCategorySummary[];
+  },
+
+  async getPopularLocations(limit = 6, query?: string) {
+    const sanitizedLocation = sanitizePostgrestLikeQuery(query);
+
+    let listingQuery = supabase
+      .from("listings")
+      .select("price, listing_type, property:properties!inner(city, region, neighborhood, address, country, ghana_post_gps)")
+      .eq("status", "listed")
+      .eq("visibility", "public");
+
+    if (sanitizedLocation) {
+      listingQuery = listingQuery.or(
+        [
+          `address.ilike.%${sanitizedLocation}%`,
+          `city.ilike.%${sanitizedLocation}%`,
+          `region.ilike.%${sanitizedLocation}%`,
+          `neighborhood.ilike.%${sanitizedLocation}%`,
+          `country.ilike.%${sanitizedLocation}%`,
+          `ghana_post_gps.ilike.%${sanitizedLocation}%`,
+        ].join(","),
+        { foreignTable: "properties" }
+      );
+    }
+
+    const { data, error } = await listingQuery;
+
+    if (error) throw error;
+
+    const locations = new Map<
+      string,
+      {
+        city: string;
+        region: string;
+        neighborhood: string | null;
+        prices: number[];
+        listingTypes: Set<ListingRow["listing_type"]>;
+        listingCount: number;
+      }
+    >();
+
+    (data || []).forEach((listing) => {
+      const property = listing.property as Pick<
+        Database["public"]["Tables"]["properties"]["Row"],
+        "city" | "region" | "neighborhood"
+      > | null;
+
+      const city = property?.city?.trim();
+      const region = property?.region?.trim();
+
+      if (!city || !region) return;
+
+      const neighborhood = property?.neighborhood?.trim() || null;
+      const key = normalizeLocationText([neighborhood || city, city, region].join("::"));
+      const current =
+        locations.get(key) ||
+        {
+          city,
+          region,
+          neighborhood,
+          prices: [],
+          listingTypes: new Set<ListingRow["listing_type"]>(),
+          listingCount: 0,
+        };
+
+      current.listingCount += 1;
+      current.listingTypes.add(listing.listing_type);
+
+      if (Number(listing.price) > 0) {
+        current.prices.push(Number(listing.price));
+      }
+
+      locations.set(key, current);
+    });
+
+    return [...locations.values()]
+      .map((location) => ({
+        label: location.neighborhood
+          ? `${location.neighborhood}, ${location.city}`
+          : `${location.city}, ${location.region}`,
+        city: location.city,
+        region: location.region,
+        neighborhood: location.neighborhood,
+        listingCount: location.listingCount,
+        averagePrice: average(location.prices),
+        startingPrice: location.prices.length ? Math.min(...location.prices) : null,
+        listingTypes: [...location.listingTypes],
+      }))
+      .sort(sortLocationSummaries)
+      .slice(0, limit) satisfies PublicLocationSummary[];
+  },
+
+  async getLocationSuggestions(query: string, limit = 6) {
+    const suggestions = await this.getPopularLocations(Math.max(limit * 2, limit), query);
+    const normalizedQuery = normalizeLocationText(query);
+
+    return suggestions
+      .sort((a, b) => {
+        const aStartsWith = normalizeLocationText(a.label).startsWith(normalizedQuery);
+        const bStartsWith = normalizeLocationText(b.label).startsWith(normalizedQuery);
+
+        if (aStartsWith !== bStartsWith) {
+          return aStartsWith ? -1 : 1;
+        }
+
+        return sortLocationSummaries(a, b);
+      })
+      .slice(0, limit);
   },
 };

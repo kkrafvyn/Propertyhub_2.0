@@ -12,6 +12,7 @@ import { useAuth } from "../context/AuthContext";
 import { publicDiscoveryService, type BuyerRequestBoardEntry } from "../../lib/public-discovery.service";
 import { readReferralContext } from "../../lib/referral-context";
 import { trackReferralBuyerRequest } from "../../lib/referral-attribution.service";
+import { listingService, type PublicLocationSummary } from "../../lib/listing.service";
 
 function formatMoney(amount?: number | null) {
   if (!amount) return "Flexible budget";
@@ -28,6 +29,8 @@ export function BuyerRequests() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState<BuyerRequestBoardEntry[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingBoard, setLoadingBoard] = useState(true);
+  const [popularLocations, setPopularLocations] = useState<PublicLocationSummary[]>([]);
   const [form, setForm] = useState({
     buyerName: user?.user_metadata?.full_name || "",
     location: "",
@@ -41,7 +44,37 @@ export function BuyerRequests() {
   });
 
   useEffect(() => {
-    setRequests(publicDiscoveryService.getBuyerRequestBoard());
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        setLoadingBoard(true);
+        const [board, locations] = await Promise.all([
+          publicDiscoveryService.getBuyerRequestBoard(),
+          listingService.getPopularLocations(8).catch(() => [] as PublicLocationSummary[]),
+        ]);
+
+        if (!cancelled) {
+          setRequests(board);
+          setPopularLocations(locations);
+        }
+      } catch (error) {
+        console.error("Failed to load buyer request board:", error);
+        if (!cancelled) {
+          toast.error("We could not load the buyer request board right now.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingBoard(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const helpCopy = useMemo(() => {
@@ -75,7 +108,7 @@ export function BuyerRequests() {
         channel: form.channel,
       });
 
-      setRequests(publicDiscoveryService.getBuyerRequestBoard());
+      setRequests((current) => [result.entry, ...current.filter((item) => item.id !== result.entry.id)]);
       setForm((current) => ({
         ...current,
         location: "",
@@ -108,9 +141,9 @@ export function BuyerRequests() {
       {!isMobileShell && <Navbar />}
 
       <div className={isMobileShell ? "pt-4 pb-32 px-4" : "pt-24 pb-16 px-4"}>
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-8">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-[0.95fr_1.05fr]">
           <section>
-            <Card className="p-8 rounded-[2rem] bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(246,244,238,1))]">
+            <Card className="rounded-[2rem] bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(246,244,238,1))] p-8">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/80">
                 Buyer Request Board
               </p>
@@ -129,17 +162,37 @@ export function BuyerRequests() {
                 <Input
                   label="Location"
                   placeholder="East Legon, Accra"
+                  list="buyer-request-popular-locations"
                   value={form.location}
                   onChange={(event) => setForm((current) => ({ ...current, location: event.target.value }))}
                 />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <datalist id="buyer-request-popular-locations">
+                  {popularLocations.map((location) => (
+                    <option key={`${location.label}-${location.region}`} value={location.label} />
+                  ))}
+                </datalist>
+                {popularLocations.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {popularLocations.slice(0, 6).map((location) => (
+                      <button
+                        key={`${location.label}-${location.region}`}
+                        type="button"
+                        onClick={() => setForm((current) => ({ ...current, location: location.label }))}
+                        className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:border-primary/30 hover:bg-primary/10"
+                      >
+                        {location.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <label htmlFor="buyer-request-listing-type" className="block mb-2 text-sm text-foreground">
+                    <label htmlFor="buyer-request-listing-type" className="mb-2 block text-sm text-foreground">
                       Need
                     </label>
                     <select
                       id="buyer-request-listing-type"
-                      className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full rounded-lg border border-border bg-input-background px-4 py-3 text-foreground focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
                       value={form.listingType}
                       onChange={(event) =>
                         setForm((current) => ({
@@ -160,7 +213,7 @@ export function BuyerRequests() {
                     onChange={(event) => setForm((current) => ({ ...current, propertyType: event.target.value }))}
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <Input
                     label="Budget Min"
                     type="number"
@@ -187,7 +240,7 @@ export function BuyerRequests() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="buyer-request-notes" className="block mb-2 text-sm text-foreground">
+                  <label htmlFor="buyer-request-notes" className="mb-2 block text-sm text-foreground">
                     Brief
                   </label>
                   <Textarea
@@ -198,23 +251,23 @@ export function BuyerRequests() {
                     onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
                   />
                 </div>
-                <div className="flex gap-3 flex-wrap">
+                <div className="flex flex-wrap gap-3">
                   <Button type="submit" disabled={submitting}>
                     {submitting ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         Posting...
                       </>
                     ) : (
                       <>
-                        <Megaphone className="w-4 h-4" />
+                        <Megaphone className="h-4 w-4" />
                         Post Request
                       </>
                     )}
                   </Button>
                   {!user && (
                     <Button variant="outline" type="button" onClick={() => navigate("/login")}>
-                      <Shield className="w-4 h-4" />
+                      <Shield className="h-4 w-4" />
                       Log In to Save Alerts
                     </Button>
                   )}
@@ -224,54 +277,64 @@ export function BuyerRequests() {
           </section>
 
           <section>
-            <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-primary/80 font-semibold">Live Board</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/80">Live Board</p>
                 <h2 className="mt-2 text-3xl font-semibold">Recent buyer requests</h2>
               </div>
               <Button variant="outline" onClick={() => navigate("/search")}>
-                <Search className="w-4 h-4" />
+                <Search className="h-4 w-4" />
                 Browse Listings
               </Button>
             </div>
 
             <div className="mt-6 space-y-4">
-              {requests.map((request) => (
-                <Card key={request.id} className="p-5">
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        {request.buyerLabel} · {new Date(request.createdAt).toLocaleDateString()}
-                      </p>
-                      <h3 className="mt-2 text-xl font-semibold capitalize">{request.title}</h3>
-                    </div>
-                    <span className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary capitalize">
-                      {request.listingType}
-                    </span>
-                  </div>
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="rounded-2xl border border-border bg-secondary/30 p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Location</p>
-                      <p className="mt-2 font-semibold">{request.location}</p>
-                    </div>
-                    <div className="rounded-2xl border border-border bg-secondary/30 p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Budget</p>
-                      <p className="mt-2 font-semibold">
-                        {request.budgetMin || request.budgetMax
-                          ? `${formatMoney(request.budgetMin)} - ${formatMoney(request.budgetMax)}`
-                          : "Flexible"}
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border border-border bg-secondary/30 p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Bedrooms</p>
-                      <p className="mt-2 font-semibold">
-                        {request.bedrooms != null ? request.bedrooms : "Open"}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="mt-4 text-sm text-muted-foreground">{request.notes}</p>
+              {loadingBoard ? (
+                <div className="flex items-center justify-center py-16 text-muted-foreground">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : requests.length === 0 ? (
+                <Card className="p-8 text-muted-foreground">
+                  No public buyer requests have been posted yet. Share the first one and it will appear here for the marketplace.
                 </Card>
-              ))}
+              ) : (
+                requests.map((request) => (
+                  <Card key={request.id} className="p-5">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          {request.buyerLabel} · {new Date(request.createdAt).toLocaleDateString()}
+                        </p>
+                        <h3 className="mt-2 text-xl font-semibold capitalize">{request.title}</h3>
+                      </div>
+                      <span className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-semibold capitalize text-primary">
+                        {request.listingType}
+                      </span>
+                    </div>
+                    <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+                      <div className="rounded-2xl border border-border bg-secondary/30 p-4">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Location</p>
+                        <p className="mt-2 font-semibold">{request.location}</p>
+                      </div>
+                      <div className="rounded-2xl border border-border bg-secondary/30 p-4">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Budget</p>
+                        <p className="mt-2 font-semibold">
+                          {request.budgetMin || request.budgetMax
+                            ? `${formatMoney(request.budgetMin)} - ${formatMoney(request.budgetMax)}`
+                            : "Flexible"}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-border bg-secondary/30 p-4">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Bedrooms</p>
+                        <p className="mt-2 font-semibold">
+                          {request.bedrooms != null ? request.bedrooms : "Open"}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-4 text-sm text-muted-foreground">{request.notes}</p>
+                  </Card>
+                ))
+              )}
             </div>
           </section>
         </div>

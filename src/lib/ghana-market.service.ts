@@ -1,3 +1,6 @@
+import type { Database } from "./database.types";
+import { supabase } from "./supabase";
+
 export interface GhanaLocationInsight {
   city: string;
   region: string;
@@ -140,6 +143,11 @@ const GHANA_PAYMENT_CHANNELS: GhanaPaymentChannel[] = [
   },
 ];
 
+type GhanaMarketLocationRow = Database["public"]["Tables"]["ghana_market_locations"]["Row"];
+
+let remoteLocationInsightsPromise: Promise<GhanaLocationInsight[]> | null = null;
+let cachedLocationInsights: GhanaLocationInsight[] | null = null;
+
 function normalizeText(value?: string | null) {
   return String(value || "")
     .trim()
@@ -150,9 +158,82 @@ function normalizeRegion(value?: string | null) {
   return normalizeText(value).replace(/\s+region$/, "");
 }
 
+function mapLocationInsightRow(row: GhanaMarketLocationRow): GhanaLocationInsight {
+  return {
+    city: row.city,
+    region: row.region,
+    neighborhood: row.neighborhood,
+    safetyScore: Number(row.safety_score || 0),
+    investmentScore: Number(row.investment_score || 0),
+    accessibilityScore: Number(row.accessibility_score || 0),
+    walkabilityScore: Number(row.walkability_score || 0),
+    schoolProximityScore: Number(row.school_proximity_score || 0),
+    healthcareProximityScore: Number(row.healthcare_proximity_score || 0),
+    floodRiskLevel: row.flood_risk_level as GhanaLocationInsight["floodRiskLevel"],
+    demandLevel: row.demand_level as GhanaLocationInsight["demandLevel"],
+    notes: row.notes || "",
+  };
+}
+
+function findLocationInsight(
+  insights: GhanaLocationInsight[],
+  city?: string | null,
+  region?: string | null,
+  neighborhood?: string | null
+) {
+  const cityKey = normalizeText(city);
+  const regionKey = normalizeRegion(region);
+  const neighborhoodKey = normalizeText(neighborhood);
+
+  const exact = insights.find(
+    (item) =>
+      normalizeText(item.city) === cityKey &&
+      normalizeRegion(item.region) === regionKey &&
+      normalizeText(item.neighborhood) === neighborhoodKey
+  );
+
+  if (exact) return exact;
+
+  return (
+    insights.find(
+      (item) => normalizeText(item.city) === cityKey && normalizeRegion(item.region) === regionKey
+    ) || insights.find((item) => normalizeText(item.city) === cityKey) || null
+  );
+}
+
 export const ghanaMarketService = {
   getPaymentChannels() {
     return GHANA_PAYMENT_CHANNELS;
+  },
+
+  async getLocationInsights() {
+    if (!remoteLocationInsightsPromise) {
+      remoteLocationInsightsPromise = (async () => {
+        try {
+          const { data, error } = await supabase
+            .from("ghana_market_locations")
+            .select("*")
+            .order("investment_score", { ascending: false, nullsFirst: false });
+
+          if (error) throw error;
+
+          const mapped = (data || []).map(mapLocationInsightRow);
+          cachedLocationInsights = mapped.length > 0 ? mapped : GHANA_LOCATION_INSIGHTS;
+          return cachedLocationInsights;
+        } catch (error) {
+          console.warn("Falling back to bundled Ghana market insights:", error);
+          cachedLocationInsights = GHANA_LOCATION_INSIGHTS;
+          return GHANA_LOCATION_INSIGHTS;
+        }
+      })();
+    }
+
+    return remoteLocationInsightsPromise;
+  },
+
+  async getLocationInsightAsync(city?: string | null, region?: string | null, neighborhood?: string | null) {
+    const insights = await this.getLocationInsights();
+    return findLocationInsight(insights, city, region, neighborhood);
   },
 
   normalizeGhanaPostGps(value?: string | null) {
@@ -177,26 +258,7 @@ export const ghanaMarketService = {
   },
 
   getLocationInsight(city?: string | null, region?: string | null, neighborhood?: string | null) {
-    const cityKey = normalizeText(city);
-    const regionKey = normalizeRegion(region);
-    const neighborhoodKey = normalizeText(neighborhood);
-
-    const exact = GHANA_LOCATION_INSIGHTS.find(
-      (item) =>
-        normalizeText(item.city) === cityKey &&
-        normalizeRegion(item.region) === regionKey &&
-        normalizeText(item.neighborhood) === neighborhoodKey
-    );
-
-    if (exact) return exact;
-
-    return (
-      GHANA_LOCATION_INSIGHTS.find(
-        (item) => normalizeText(item.city) === cityKey && normalizeRegion(item.region) === regionKey
-      ) ||
-      GHANA_LOCATION_INSIGHTS.find((item) => normalizeText(item.city) === cityKey) ||
-      null
-    );
+    return findLocationInsight(cachedLocationInsights || GHANA_LOCATION_INSIGHTS, city, region, neighborhood);
   },
 
   calculateLocationConfidence(input: {

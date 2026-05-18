@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { Database } from './database.types'
+import { listingService } from './listing.service'
 
 type AISearch = Database['public']['Tables']['ai_searches']['Row']
 type AIRecommendation = Database['public']['Tables']['ai_recommendations']['Row']
@@ -39,12 +40,26 @@ export const aiAssistantService = {
     if (/(house|home|villa|duplex)/i.test(query)) filters.propertyType = 'house'
     if (/(office|workspace)/i.test(query)) filters.propertyType = 'office'
     if (/(commercial|shop|retail)/i.test(query)) filters.propertyType = 'commercial'
+    if (/(warehouse|storage|logistics)/i.test(query)) filters.propertyType = 'warehouse'
+    if (/(car\s*park|carpark|parking|parking lot)/i.test(query)) filters.propertyType = 'car_park'
+    if (/(office complex|business park|corporate campus)/i.test(query)) filters.propertyType = 'office_complex'
     if (/(land|plot)/i.test(query)) filters.propertyType = 'land'
     
-    // Extract location
-    const locations = ['legon', 'osu', 'cantonments', 'accra', 'kumasi', 'tema']
-    for (const loc of locations) {
-      if (lower.includes(loc)) filters.location = loc
+    const locationSuggestions = await listingService.getLocationSuggestions(query, 8).catch(() => [])
+    for (const suggestion of locationSuggestions) {
+      const terms = [
+        suggestion.label,
+        suggestion.neighborhood,
+        suggestion.city,
+        suggestion.region,
+      ]
+        .filter(Boolean)
+        .map((value) => String(value).toLowerCase())
+
+      if (terms.some((term) => lower.includes(term))) {
+        filters.location = suggestion.label
+        break
+      }
     }
     
     return filters

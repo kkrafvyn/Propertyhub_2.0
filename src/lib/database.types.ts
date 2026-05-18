@@ -418,6 +418,65 @@ export type Database = {
           },
         ]
       }
+      buyer_requests: {
+        Row: {
+          bedrooms: number | null
+          budget_max: number | null
+          budget_min: number | null
+          buyer_label: string
+          channel: string | null
+          created_at: string
+          id: string
+          is_public: boolean
+          listing_type: string
+          location: string
+          notes: string
+          property_type: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          bedrooms?: number | null
+          budget_max?: number | null
+          budget_min?: number | null
+          buyer_label: string
+          channel?: string | null
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          listing_type: string
+          location: string
+          notes: string
+          property_type?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          bedrooms?: number | null
+          budget_max?: number | null
+          budget_min?: number | null
+          buyer_label?: string
+          channel?: string | null
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          listing_type?: string
+          location?: string
+          notes?: string
+          property_type?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_sync_connections: {
         Row: {
           connection_metadata: Json | null
@@ -1752,6 +1811,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mobile_app_releases: {
+        Row: {
+          created_at: string | null
+          current_version: string | null
+          force_update: boolean
+          id: string
+          latest_version: string
+          minimum_version: string
+          platform: string
+          update_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_version?: string | null
+          force_update?: boolean
+          id?: string
+          latest_version: string
+          minimum_version: string
+          platform: string
+          update_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_version?: string | null
+          force_update?: boolean
+          id?: string
+          latest_version?: string
+          minimum_version?: string
+          platform?: string
+          update_url?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       nearby_services: {
         Row: {

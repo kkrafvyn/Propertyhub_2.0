@@ -1,3 +1,6 @@
+import type { Database } from "./database.types";
+import { supabase } from "./supabase";
+
 export type MobilePlatform = "ios" | "android";
 
 export interface AppVersionSnapshot {
@@ -7,6 +10,9 @@ export interface AppVersionSnapshot {
   force_update: boolean;
   current_version?: string;
 }
+
+type MobileDeviceRow = Database["public"]["Tables"]["mobile_devices"]["Row"];
+type PushSubscriptionRow = Database["public"]["Tables"]["push_subscriptions"]["Row"];
 
 const FALLBACK_VERSIONS: Record<MobilePlatform, AppVersionSnapshot> = {
   ios: {
@@ -37,9 +43,47 @@ function createBrowserDeviceId() {
   return next;
 }
 
+function normalizeDevicePlatform(platform: string) {
+  const normalized = String(platform || "").trim().toLowerCase();
+  if (normalized === "ios" || normalized === "android" || normalized === "web") {
+    return normalized;
+  }
+
+  return "web";
+}
+
+function serializeSubscriptionMetadata(metadata: Record<string, unknown>) {
+  try {
+    return JSON.stringify(metadata);
+  } catch {
+    return null;
+  }
+}
+
 export const mobileAppService = {
   async getAppVersion(platform: MobilePlatform) {
-    return FALLBACK_VERSIONS[platform];
+    const { data, error } = await supabase
+      .from("mobile_app_releases")
+      .select("*")
+      .eq("platform", platform)
+      .maybeSingle();
+
+    if (error) {
+      console.warn(`Failed to load ${platform} app release metadata:`, error);
+      return FALLBACK_VERSIONS[platform];
+    }
+
+    if (!data) {
+      return FALLBACK_VERSIONS[platform];
+    }
+
+    return {
+      latest_version: data.latest_version,
+      minimum_version: data.minimum_version,
+      update_url: data.update_url,
+      force_update: data.force_update,
+      current_version: data.current_version || undefined,
+    } satisfies AppVersionSnapshot;
   },
 
   getBrowserDeviceId() {
@@ -53,14 +97,24 @@ export const mobileAppService = {
     appVersion: string,
     osVersion: string
   ) {
-    return {
-      id: deviceId,
-      user_id: userId,
-      platform,
-      app_version: appVersion,
-      os_version: osVersion,
-      registered_at: new Date().toISOString(),
-    };
+    const { data, error } = await supabase
+      .from("mobile_devices")
+      .upsert(
+        {
+          user_id: userId,
+          device_id: deviceId,
+          device_type: normalizeDevicePlatform(platform),
+          app_version: appVersion,
+          os_version: osVersion,
+          last_active_at: new Date().toISOString(),
+        },
+        { onConflict: "device_id" }
+      )
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    return data as MobileDeviceRow;
   },
 
   async subscribeToPushNotifications(
@@ -68,12 +122,41 @@ export const mobileAppService = {
     endpoint: string,
     metadata: Record<string, unknown> = {}
   ) {
-    return {
-      id: `${deviceId}:${endpoint}`,
+    const { data: existingSubscription, error: existingSubscriptionError } = await supabase
+      .from("push_subscriptions")
+      .select("*")
+      .eq("device_id", deviceId)
+      .eq("subscription_endpoint", endpoint)
+      .maybeSingle();
+
+    if (existingSubscriptionError) throw existingSubscriptionError;
+
+    const payload = {
       device_id: deviceId,
-      endpoint,
-      metadata,
-      subscribed_at: new Date().toISOString(),
+      subscription_endpoint: endpoint,
+      subscription_key: serializeSubscriptionMetadata(metadata),
+      active: true,
     };
+
+    if (existingSubscription?.id) {
+      const { data, error } = await supabase
+        .from("push_subscriptions")
+        .update(payload)
+        .eq("id", existingSubscription.id)
+        .select("*")
+        .single();
+
+      if (error) throw error;
+      return data as PushSubscriptionRow;
+    }
+
+    const { data, error } = await supabase
+      .from("push_subscriptions")
+      .insert(payload)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    return data as PushSubscriptionRow;
   },
 };
