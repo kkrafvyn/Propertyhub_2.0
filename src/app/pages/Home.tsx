@@ -5,35 +5,23 @@ import {
   Home as HomeIcon,
   Building2,
   Landmark,
-  TrendingUp,
   Shield,
-  Users,
-  Loader2,
-  Smartphone,
-  Download,
-  MessageSquareQuote,
-  Radio,
-  Star,
   Menu,
+  SlidersHorizontal,
+  Heart,
+  MessageCircle,
+  UserRound,
+  BedDouble,
+  Bath,
+  Ruler,
+  Armchair,
 } from "lucide-react";
 import { Button } from "../components/ui/Button";
-import { Input } from "../components/ui/Input";
-import { Card } from "../components/ui/Card";
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import {
-  listingService,
-  type PublicCategorySummary,
-  type PublicLocationSummary,
-} from "../../lib/listing.service";
-import { organizationService } from "../../lib/organization.service";
+import { listingService } from "../../lib/listing.service";
 import { formatPropertyCategory } from "../../lib/property-category";
 import { getPropertyCoverImage } from "../../lib/property-media";
-import {
-  publicDiscoveryService,
-  type MobileExperienceSnapshot,
-  type PublicVendorReview,
-} from "../../lib/public-discovery.service";
 import { toast } from "sonner";
 import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
 
@@ -85,38 +73,98 @@ const heroPropertySlides = [
   },
 ];
 
-function getCategoryIcon(category: string) {
-  switch (category) {
-    case "apartment":
-      return Building2;
-    case "house":
-      return HomeIcon;
-    case "commercial":
-    case "office":
-    case "office_complex":
-      return Landmark;
-    case "warehouse":
-      return Building2;
-    case "car_park":
-    case "land":
-      return MapPin;
-    default:
-      return HomeIcon;
-  }
-}
+const mobileHomeCategories = [
+  { label: "Condos", count: "120+", icon: Building2, href: "/search?propertyType=apartment" },
+  { label: "Apartments", count: "340+", icon: Landmark, href: "/search?propertyType=apartment" },
+  { label: "Offices", count: "80+", icon: Armchair, href: "/search?propertyType=office" },
+  { label: "Villas", count: "150+", icon: HomeIcon, href: "/search?propertyType=house" },
+  { label: "Lands", count: "200+", icon: MapPin, href: "/search?propertyType=land" },
+];
+
+const fallbackShowcaseProperties = [
+  {
+    id: "showcase-1",
+    title: "2 Bed Apartment",
+    price: "GHS 4,500",
+    period: "/mo",
+    location: "Cantonments, Accra",
+    image: "https://images.unsplash.com/photo-1600210492493-0946911123ea?w=600&q=80&auto=format&fit=crop",
+    beds: 2,
+    baths: 2,
+    size: "110 sqm",
+  },
+  {
+    id: "showcase-2",
+    title: "3 Bed Apartment",
+    price: "GHS 7,000",
+    period: "/mo",
+    location: "Airport Residential, Accra",
+    image: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=600&q=80&auto=format&fit=crop",
+    beds: 3,
+    baths: 3,
+    size: "160 sqm",
+  },
+  {
+    id: "showcase-3",
+    title: "4 Bed Villa",
+    price: "GHS 12,000",
+    period: "/mo",
+    location: "East Legon, Accra",
+    image: "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?w=600&q=80&auto=format&fit=crop",
+    beds: 4,
+    baths: 5,
+    size: "230 sqm",
+  },
+  {
+    id: "showcase-4",
+    title: "Office Suite",
+    price: "GHS 8,500",
+    period: "/mo",
+    location: "Osu, Accra",
+    image: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&q=80&auto=format&fit=crop",
+    beds: 0,
+    baths: 2,
+    size: "95 sqm",
+  },
+];
+
+const homeAgentPreview = [
+  {
+    name: "Kwame Mensah",
+    role: "Real Estate Advisor",
+    rating: "4.9",
+    deals: "120",
+    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=240&q=80&auto=format&fit=crop",
+  },
+  {
+    name: "Akosua Addo",
+    role: "Property Consultant",
+    rating: "4.8",
+    deals: "98",
+    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=240&q=80&auto=format&fit=crop",
+  },
+  {
+    name: "Kojo Asare",
+    role: "Senior Realtor",
+    rating: "4.7",
+    deals: "89",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&q=80&auto=format&fit=crop",
+  },
+  {
+    name: "Ama Ofori",
+    role: "Real Estate Advisor",
+    rating: "4.9",
+    deals: "110",
+    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=240&q=80&auto=format&fit=crop",
+  },
+];
 
 export function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<"rental" | "sale" | "lease">("rental");
   const [featuredListings, setFeaturedListings] = useState<any[]>([]);
-  const [categoryStats, setCategoryStats] = useState<PublicCategorySummary[]>([]);
-  const [popularLocations, setPopularLocations] = useState<PublicLocationSummary[]>([]);
-  const [verifiedAgencies, setVerifiedAgencies] = useState<any[]>([]);
-  const [reviewPreview, setReviewPreview] = useState<PublicVendorReview[]>([]);
-  const [mobileSnapshot, setMobileSnapshot] = useState<MobileExperienceSnapshot | null>(null);
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
   const [heroMenuOpen, setHeroMenuOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const listPropertyPath = `${WORKSPACE_ENTRY_PATH}?next=new`;
   const manageListingsPath = `${WORKSPACE_ENTRY_PATH}?next=listings`;
@@ -136,29 +184,14 @@ export function Home() {
 
   const loadData = async () => {
     try {
-      setLoading(true);
-      const [listings, categories, locations, agencies, reputation, appSnapshot] = await Promise.all([
-        listingService.getPublicListings(4, 0),
-        listingService.getPublicCategorySummaries(7),
-        listingService.getPopularLocations(6),
-        organizationService.getVerifiedOrganizations(6),
-        publicDiscoveryService.getVendorReputationSnapshot(6, 3),
-        publicDiscoveryService.getMobileExperienceSnapshot(),
-      ]);
+      const listings = await listingService.getPublicListings(4, 0);
       const formattedListings = listings.map((listing: any) => ({
         ...listing,
       }));
       setFeaturedListings(formattedListings);
-      setCategoryStats(categories);
-      setPopularLocations(locations);
-      setVerifiedAgencies(agencies);
-      setReviewPreview(reputation.testimonials);
-      setMobileSnapshot(appSnapshot);
     } catch (error) {
       console.error('Failed to load home data:', error);
       toast.error('Failed to load listings');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -171,6 +204,27 @@ export function Home() {
   };
 
   const activeHeroSlide = heroPropertySlides[activeHeroIndex];
+  const mobileShowcaseProperties =
+    featuredListings.length > 0
+      ? featuredListings.slice(0, 4).map((listing) => ({
+          id: listing.id,
+          title:
+            listing.property?.address ||
+            formatPropertyCategory(listing.property?.category || "property"),
+          price: `${listing.currency || "GHS"} ${Number(listing.price || 0).toLocaleString()}`,
+          period: listing.listing_type === "rental" ? "/mo" : "",
+          location: [listing.property?.city, listing.property?.region].filter(Boolean).join(", "),
+          image: getPropertyCoverImage(listing.property),
+          beds: Number(listing.property?.bedrooms || 0),
+          baths: Number(listing.property?.bathrooms || 0),
+          size: listing.property?.square_feet
+            ? `${Number(listing.property.square_feet).toLocaleString()} sqft`
+            : listing.property?.area_sqm
+              ? `${Number(listing.property.area_sqm).toLocaleString()} sqm`
+              : "Verified",
+        }))
+      : fallbackShowcaseProperties;
+  const recentlyViewedPreview = [...fallbackShowcaseProperties].reverse();
   const heroMenuItems = [
     { label: "For Rent", to: "/search" },
     { label: "For Sale", to: "/search?listingType=sale" },
@@ -181,63 +235,6 @@ export function Home() {
     { label: "Reviews", to: "/reviews" },
     { label: "Get App", to: "/get-the-app" },
     { label: "List Property", to: listPropertyPath },
-  ];
-
-  const discoveryLinks = [
-    {
-      title: "Verified Agencies",
-      description: "Public company pages with trust docs and live inventory.",
-      icon: Shield,
-      href: "/agencies",
-    },
-    {
-      title: "Area Guides",
-      description: "Neighborhood pages for demand, access, and flood risk context.",
-      icon: MapPin,
-      href: "/guides",
-    },
-    {
-      title: "Market Trends",
-      description: "Average pricing and demand snapshots across active locations.",
-      icon: TrendingUp,
-      href: "/market-trends",
-    },
-    {
-      title: "Sold Ledger",
-      description: "Closed sales publish here with buyer identities shown only as hashes.",
-      icon: Radio,
-      href: "/sold-ledger",
-    },
-    {
-      title: "Buyer Requests",
-      description: "Capture demand before a buyer ever reaches a listing page.",
-      icon: Users,
-      href: "/buyer-requests",
-    },
-    {
-      title: "Projects",
-      description: "Grouped developments and multi-unit inventory collections.",
-      icon: Building2,
-      href: "/projects",
-    },
-    {
-      title: "Home Valuation",
-      description: "Quick asking-price ranges from current public sale comps.",
-      icon: Landmark,
-      href: "/valuation",
-    },
-    {
-      title: "Public Reviews",
-      description: "Read verified service-partner feedback before you engage.",
-      icon: MessageSquareQuote,
-      href: "/reviews",
-    },
-    {
-      title: "Get The App",
-      description: "Install the public mobile builds for alerts, offers, and field follow-up.",
-      icon: Download,
-      href: "/get-the-app",
-    },
   ];
 
   return (
@@ -304,7 +301,7 @@ export function Home() {
             </div>
           </header>
 
-          <div className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.62fr)]">
+          <div className="flex flex-1 items-center py-10">
             <motion.div
               key={activeHeroSlide.title}
               initial={{ opacity: 0, y: 24 }}
@@ -365,427 +362,242 @@ export function Home() {
               </div>
             </motion.div>
 
-            <div className="hidden rounded-[2.25rem] border border-white/15 bg-white/10 p-4 shadow-2xl shadow-black/25 backdrop-blur-xl lg:block">
-              <div className="rounded-[1.75rem] bg-black/25 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">
-                  Quick Search
-                </p>
-                <div className="mt-4 flex gap-2">
-                  {[
-                    ["rental", "Rent"],
-                    ["sale", "Buy"],
-                    ["lease", "Lease"],
-                  ].map(([value, label]) => (
-                    <button
-                      key={value}
-                      onClick={() => setSearchType(value as "rental" | "sale" | "lease")}
-                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                        searchType === value
-                          ? "bg-primary text-white"
-                          : "bg-white/10 text-white/70 hover:bg-white/20"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-4 rounded-2xl bg-white/95 p-2 text-foreground">
-                  <div className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2">
-                    <MapPin className="h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type="text"
-                      placeholder="Location, address, or neighborhood"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                      className="border-0 bg-transparent py-2 focus:ring-0"
-                    />
-                  </div>
-                  <Button onClick={handleSearch} className="mt-2 w-full rounded-xl" size="lg">
-                    <Search className="mr-2 h-5 w-5" />
-                    Search Ghana
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-auto">
-            <div className="mx-auto flex w-full max-w-[min(100%,34rem)] items-center justify-between rounded-full bg-black/18 px-2 py-2 backdrop-blur-sm sm:mx-0">
-              <div className="flex items-center gap-1.5 px-2">
-                {heroPropertySlides.map((slide, index) => (
-                  <button
-                    key={slide.title}
-                    type="button"
-                    onClick={() => setActiveHeroIndex(index)}
-                    className={`h-1.5 rounded-full transition-all ${
-                      index === activeHeroIndex ? "w-6 bg-primary" : "w-1.5 bg-white/40 hover:bg-white/80"
-                    }`}
-                    aria-label={`Show property slide ${index + 1}`}
-                  />
-                ))}
-              </div>
-              <p className="px-2 text-[0.68rem] font-semibold tracking-[0.18em] text-white">
-                {String(activeHeroIndex + 1).padStart(2, "0")} / {String(heroPropertySlides.length).padStart(2, "0")}
-              </p>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="py-16 px-4 max-w-7xl mx-auto">
-        <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="text-3xl font-semibold">Browse by Category</h2>
-            <p className="mt-2 text-muted-foreground">
-              Counts below come from the current live public inventory.
+      <section className="bg-[#f7f4f2] px-0 py-0 text-[#191919] md:px-6 md:py-12">
+        <div className="mx-auto max-w-7xl md:grid md:grid-cols-[minmax(0,0.9fr)_minmax(320px,390px)] md:items-center md:gap-10">
+          <div className="hidden md:block">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-primary">
+              Scroll discovery
+            </p>
+            <h2 className="mt-4 max-w-xl text-5xl font-semibold leading-tight tracking-[-0.05em]">
+              A mobile-first marketplace right after the cinematic intro.
+            </h2>
+            <p className="mt-5 max-w-lg text-lg leading-8 text-muted-foreground">
+              Buyers can search, switch between rent/buy/lease, browse categories, compare featured
+              homes, meet agents, and jump back into recently viewed properties without feeling lost.
             </p>
           </div>
-        </div>
-        {categoryStats.length === 0 ? (
-          <Card className="p-8 text-muted-foreground">
-            Public category counts will appear here once more listings are published.
-          </Card>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-7">
-            {categoryStats.map((category, index) => {
-              const Icon = getCategoryIcon(category.category);
 
-              return (
-                <motion.div
-                  key={category.category}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.06 }}
+          <div className="relative mx-auto min-h-[100svh] w-full max-w-[430px] overflow-hidden bg-white shadow-2xl shadow-black/10 md:min-h-[820px] md:rounded-[2.25rem] md:border md:border-black/5">
+            <div className="px-5 pb-24 pt-4">
+              <div className="flex items-center justify-between text-xs font-semibold">
+                <span>20:23</span>
+                <span>LTE</span>
+              </div>
+
+              <div className="mt-6 flex items-center justify-between">
+                <Link to="/" className="flex items-center gap-2">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
+                    <HomeIcon className="h-4 w-4" />
+                  </span>
+                  <span className="text-sm font-semibold">BaytMiftah</span>
+                </Link>
+                <Link
+                  to="/search"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white shadow-sm"
+                  aria-label="Open filters"
+                  title="Open filters"
                 >
-                  <Link to={`/search?propertyType=${category.category}`}>
-                    <Card hover className="h-full p-6 text-center">
-                      <Icon className="mx-auto mb-4 h-12 w-12 text-primary" />
-                      <h3 className="mb-1 font-semibold">{category.label}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {category.count.toLocaleString()} live listings
+                  <SlidersHorizontal className="h-4 w-4" />
+                </Link>
+              </div>
+
+              <div className="mt-5 flex items-center gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-border bg-white px-4 py-3 shadow-sm">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    onKeyDown={(event) => event.key === "Enter" && handleSearch()}
+                    placeholder="Search location, address or neighborhood"
+                    className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
+                    aria-label="Search location, address or neighborhood"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSearch}
+                    className="text-foreground"
+                    aria-label="Search"
+                    title="Search"
+                  >
+                    <Search className="h-4 w-4" />
+                  </button>
+                </div>
+                <Link
+                  to="/search"
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-border bg-white shadow-sm"
+                  aria-label="Advanced filters"
+                  title="Advanced filters"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                </Link>
+              </div>
+
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                {[
+                  ["rental", "Rent"],
+                  ["sale", "Buy"],
+                  ["lease", "Lease"],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setSearchType(value as "rental" | "sale" | "lease")}
+                    className={`rounded-2xl border px-4 py-3 text-xs font-semibold transition ${
+                      searchType === value
+                        ? "border-primary bg-primary text-white shadow-lg shadow-primary/20"
+                        : "border-border bg-white text-foreground"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-6 flex items-center justify-between">
+                <h2 className="text-base font-semibold">Categories</h2>
+                <Link to="/search" className="text-xs font-semibold text-primary">
+                  See all
+                </Link>
+              </div>
+              <div className="-mx-5 mt-3 flex gap-3 overflow-x-auto px-5 pb-2">
+                {mobileHomeCategories.map((category) => (
+                  <Link
+                    key={category.label}
+                    to={category.href}
+                    className="min-w-[86px] rounded-2xl border border-primary/10 bg-primary/5 p-3 text-center"
+                  >
+                    <category.icon className="mx-auto h-7 w-7 text-primary" />
+                    <p className="mt-2 text-xs font-semibold">{category.label}</p>
+                    <p className="mt-0.5 text-[0.65rem] text-muted-foreground">{category.count}</p>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between">
+                <h2 className="text-base font-semibold">Featured Properties</h2>
+                <Link to="/search" className="text-xs font-semibold text-primary">
+                  See all
+                </Link>
+              </div>
+              <div className="-mx-5 mt-3 flex gap-3 overflow-x-auto px-5 pb-2">
+                {mobileShowcaseProperties.map((property) => (
+                  <Link
+                    key={property.id}
+                    to={String(property.id).startsWith("showcase-") ? "/search" : `/property/${property.id}`}
+                    className="min-w-[168px] overflow-hidden rounded-2xl border border-border bg-white shadow-sm"
+                  >
+                    <div className="relative h-28 overflow-hidden">
+                      <img src={property.image} alt={property.title} className="h-full w-full object-cover" />
+                      <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-primary">
+                        <Heart className="h-3.5 w-3.5" />
+                      </span>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-xs font-semibold">
+                        {property.price}
+                        <span className="text-[0.65rem] text-muted-foreground"> {property.period}</span>
                       </p>
-                    </Card>
+                      <p className="mt-1 text-[0.7rem] font-semibold text-foreground">{property.title}</p>
+                      <p className="mt-1 flex items-center gap-1 text-[0.65rem] text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        <span className="truncate">{property.location || "Accra, Ghana"}</span>
+                      </p>
+                      <div className="mt-2 flex items-center justify-between text-[0.65rem] text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <BedDouble className="h-3 w-3" />
+                          {property.beds}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Bath className="h-3 w-3" />
+                          {property.baths}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Ruler className="h-3 w-3" />
+                          {property.size}
+                        </span>
+                      </div>
+                    </div>
                   </Link>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+                ))}
+              </div>
 
-      {/* Featured Properties */}
-      <section className="py-16 px-4 max-w-7xl mx-auto bg-secondary/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-semibold">Featured Properties</h2>
-            <Link to="/search">
-              <Button variant="outline">View All</Button>
-            </Link>
-          </div>
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredListings.map((listing, index) => (
-                <motion.div
-                  key={listing.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Link to={`/property/${listing.id}`}>
-                    <Card hover className="overflow-hidden">
-                      <div className="relative h-48 overflow-hidden">
-                        <img
-                          src={getPropertyCoverImage(listing.property)}
-                          alt={listing.property?.address}
-                          className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-                        />
-                        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold">
-                          {formatPropertyCategory(listing.property?.category)}
-                        </div>
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-semibold text-lg mb-2 line-clamp-2">
-                          {listing.property?.address || 'Property'}
-                        </h3>
-                        <div className="flex items-center gap-1 text-muted-foreground mb-3">
-                          <MapPin className="w-4 h-4" />
-                          <span className="text-sm">{listing.property?.city}, {listing.property?.region}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-2xl font-semibold text-primary">
-                              GHS {listing.price.toLocaleString()}
-                            </span>
-                            {listing.listing_type === 'rental' && (
-                              <span className="text-sm text-muted-foreground">/month</span>
-                            )}
-                          </div>
-                          {listing.property?.bedrooms && (
-                            <div className="flex gap-3 text-sm text-muted-foreground">
-                              <span>{listing.property.bedrooms} beds</span>
-                              <span>{listing.property.bathrooms} baths</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
+              <div className="mt-5 flex items-center justify-between">
+                <h2 className="text-base font-semibold">Meet Our Agents</h2>
+                <Link to="/agencies" className="text-xs font-semibold text-primary">
+                  See all
+                </Link>
+              </div>
+              <div className="-mx-5 mt-3 flex gap-3 overflow-x-auto px-5 pb-2">
+                {homeAgentPreview.map((agent) => (
+                  <Link
+                    key={agent.name}
+                    to="/agencies"
+                    className="min-w-[116px] rounded-2xl border border-border bg-white p-3 text-center shadow-sm"
+                  >
+                    <img
+                      src={agent.image}
+                      alt={agent.name}
+                      className="mx-auto h-16 w-16 rounded-full object-cover"
+                    />
+                    <p className="mt-3 text-xs font-semibold">{agent.name}</p>
+                    <p className="mt-0.5 text-[0.62rem] text-muted-foreground">{agent.role}</p>
+                    <p className="mt-1 text-[0.65rem] font-semibold text-primary">
+                      {agent.rating} ({agent.deals})
+                    </p>
                   </Link>
-                </motion.div>
+                ))}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between">
+                <h2 className="text-base font-semibold">Recently Viewed</h2>
+                <Link to="/app" className="text-xs font-semibold text-primary">
+                  See all
+                </Link>
+              </div>
+              <div className="-mx-5 mt-3 flex gap-3 overflow-x-auto px-5 pb-3">
+                {recentlyViewedPreview.map((property) => (
+                  <Link
+                    key={`recent-${property.id}`}
+                    to="/search"
+                    className="relative h-20 min-w-[118px] overflow-hidden rounded-2xl bg-foreground"
+                  >
+                    <img src={property.image} alt={property.title} className="h-full w-full object-cover opacity-90" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <span className="absolute bottom-2 left-2 rounded-full bg-black/45 px-2 py-1 text-[0.62rem] font-semibold text-white backdrop-blur">
+                      {property.price} {property.period}
+                    </span>
+                    <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-primary">
+                      <Heart className="h-3 w-3" />
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 left-0 z-40 grid w-full grid-cols-4 border-t border-border bg-white/95 px-4 pb-3 pt-2 shadow-[0_-16px_40px_rgba(15,23,42,0.08)] backdrop-blur md:absolute md:bottom-0 md:left-0 md:right-0 md:rounded-b-[2.25rem]">
+              {[
+                { label: "Home", icon: HomeIcon, to: "/" },
+                { label: "Saved", icon: Heart, to: "/app" },
+                { label: "Messages", icon: MessageCircle, to: "/app" },
+                { label: "Profile", icon: UserRound, to: "/app" },
+              ].map((item, index) => (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  className={`flex flex-col items-center gap-1 text-[0.68rem] font-semibold ${
+                    index === 0 ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {item.label}
+                </Link>
               ))}
             </div>
-          )}
-        </div>
-      </section>
-
-      {/* Discovery Grid */}
-      <section className="py-16 px-4 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8 gap-4 flex-wrap">
-          <div>
-            <h2 className="text-3xl font-semibold">Go Beyond Search</h2>
-            <p className="mt-2 text-muted-foreground">
-              Explore the trust, market, and demand surfaces buyers expect from larger portals.
-            </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {discoveryLinks.map((item, index) => (
-            <motion.div
-              key={item.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <Link to={item.href}>
-                <Card hover className="p-6 h-full">
-                  <item.icon className="w-10 h-10 text-primary" />
-                  <h3 className="mt-4 text-xl font-semibold">{item.title}</h3>
-                  <p className="mt-2 text-muted-foreground">{item.description}</p>
-                </Card>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      <section className="py-16 px-4 max-w-7xl mx-auto">
-        <Card className="overflow-hidden border-primary/15 bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(246,244,238,1))]">
-          <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="p-8 md:p-10">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                <Smartphone className="w-3.5 h-3.5" />
-                Mobile Experience
-              </div>
-              <h2 className="mt-5 text-3xl md:text-4xl font-semibold">
-                Install the public mobile experience or keep moving on the mobile web.
-              </h2>
-              <p className="mt-4 text-muted-foreground max-w-2xl">
-                {mobileSnapshot?.releaseHeadline ||
-                  "On smaller screens, the home route switches into a mobile shell built for saved alerts, quick comparisons, field notes, and deal follow-up without leaving the product."}
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link to="/get-the-app">
-                  <Button>
-                    Get The App
-                  </Button>
-                </Link>
-                <Link to="/">
-                  <Button variant="outline">Open Mobile Web</Button>
-                </Link>
-              </div>
-            </div>
-            <div className="bg-foreground text-white p-8 md:p-10">
-              <h3 className="text-xl font-semibold">Best mobile moments</h3>
-              <div className="mt-5 space-y-4 text-white/80">
-                {(mobileSnapshot?.fieldMoments || [
-                  "Keep search alerts active while commuting or doing field tours.",
-                  "Jump from saved listings into compare and buyer tools in a couple taps.",
-                  "Track offers, viewings, and receipts without waiting to get back to a laptop.",
-                ]).map((item) => (
-                  <p key={item}>{item}</p>
-                ))}
-              </div>
-            </div>
-          </div>
-        </Card>
-      </section>
-
-      <section className="py-16 px-4 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8 gap-4 flex-wrap">
-          <div>
-            <h2 className="text-3xl font-semibold">Reputation You Can Read</h2>
-            <p className="mt-2 text-muted-foreground">
-              Public-facing testimonials now complement verification badges and trust docs.
-            </p>
-          </div>
-          <Link to="/reviews">
-            <Button variant="outline">Open Reviews</Button>
-          </Link>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin" />
-          </div>
-        ) : reviewPreview.length === 0 ? (
-          <Card className="p-8 text-muted-foreground">
-            Public testimonials will appear here as more partner reviews are completed.
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {reviewPreview.map((review) => (
-              <Card key={review.id} className="p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <MessageSquareQuote className="w-8 h-8 text-primary" />
-                  <div className="flex items-center gap-1 text-amber-500">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <Star
-                        key={`${review.id}-${index}`}
-                        className={`w-4 h-4 ${
-                          index < Math.round(review.rating) ? "fill-current" : "text-muted"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <p className="mt-5 text-foreground/90 leading-7">&ldquo;{review.reviewText}&rdquo;</p>
-                <div className="mt-5 border-t border-border pt-4">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold">{review.vendorName}</p>
-                    {review.vendorVerified && (
-                      <Shield className="w-4 h-4 text-emerald-600" />
-                    )}
-                  </div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {review.vendorCategory} / {review.reviewerLabel}
-                  </p>
-                  <p className="mt-3 text-sm text-muted-foreground">{review.highlight}</p>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Popular Locations */}
-      <section className="py-16 px-4 max-w-7xl mx-auto">
-        <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="text-3xl font-semibold">Active Search Locations</h2>
-            <p className="mt-2 text-muted-foreground">
-              These neighborhoods and cities are ranked from the live public marketplace feed.
-            </p>
-          </div>
-        </div>
-        {popularLocations.length === 0 ? (
-          <Card className="p-8 text-muted-foreground">
-            Location cards will populate when the public feed has enough published inventory.
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {popularLocations.map((location, index) => (
-              <motion.div
-                key={location.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Link to={`/search?q=${encodeURIComponent(location.label)}`}>
-                  <Card hover className="h-full p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-                          <MapPin className="h-3.5 w-3.5" />
-                          Live Location
-                        </div>
-                        <h4 className="mt-4 text-xl font-semibold">{location.label}</h4>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          {location.listingCount.toLocaleString()} public listings
-                        </p>
-                      </div>
-                      <div className="rounded-2xl bg-secondary p-3 text-right">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">From</p>
-                        <p className="mt-1 font-semibold">
-                          {location.startingPrice
-                            ? `GHS ${Math.round(location.startingPrice).toLocaleString()}`
-                            : "No price yet"}
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Verified Agencies */}
-      <section className="py-16 px-4 bg-secondary/50">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-semibold text-center mb-12">
-            Trusted by Verified Agencies
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {verifiedAgencies.map((agency) => (
-              <motion.div
-                key={agency.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <Link to={`/agencies/${agency.slug}`}>
-                  <Card className="p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
-                    {agency.logo_url ? (
-                      <img
-                        src={agency.logo_url}
-                        alt={agency.name}
-                        className="w-16 h-16 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-lg bg-primary flex items-center justify-center text-white">
-                        <Building2 className="w-8 h-8" />
-                      </div>
-                    )}
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{agency.name}</h3>
-                        <Shield className="w-4 h-4 text-green-600" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Verified Agency
-                      </p>
-                    </div>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-16 px-4 bg-primary text-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-semibold mb-6">
-            Ready to List Your Property?
-          </h2>
-          <p className="text-lg mb-8 opacity-90">
-            Join BaytMiftah REOS and reach thousands of qualified buyers and renters
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/signup">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                Create Free Account
-              </Button>
-            </Link>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto bg-white/10 hover:bg-white/20">
-              Learn More
-            </Button>
           </div>
         </div>
       </section>
