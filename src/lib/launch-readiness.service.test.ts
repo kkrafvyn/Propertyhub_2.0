@@ -2,8 +2,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  buildProviderActivationChecklist,
   canProviderGoLive,
+  getProviderGoLiveGaps,
   getMissingSandboxScenarios,
+  PROVIDER_GO_LIVE_REQUIREMENTS,
   REQUIRED_PAYMENT_SANDBOX_SCENARIOS,
   summarizeLaunchReadiness,
   type ExternalProviderReadiness,
@@ -137,6 +140,32 @@ describe("launch readiness foundations", () => {
     expect(canProviderGoLive(provider)).toBe(true);
     expect(canProviderGoLive({ ...provider, webhook_configured: false })).toBe(false);
     expect(canProviderGoLive({ ...provider, status: "configured" })).toBe(false);
+  });
+
+  it("explains exactly what is missing before keys are added later", () => {
+    const provider = {
+      provider_key: "stripe",
+      display_name: "Stripe",
+      provider_category: "payment",
+      fallback_provider_key: "paystack",
+      has_live_secret: false,
+      webhook_configured: false,
+      sandbox_verified_at: null,
+      status: "credentials_pending",
+    } as ExternalProviderReadiness;
+
+    const gaps = getProviderGoLiveGaps(provider);
+    const checklist = buildProviderActivationChecklist(provider);
+
+    expect(PROVIDER_GO_LIVE_REQUIREMENTS.length).toBe(4);
+    expect(gaps).toEqual([
+      "Add live/vaulted credentials",
+      "Configure webhook or callback URL",
+      "Attach sandbox or controlled live evidence",
+      "Move provider status to approved after review",
+    ]);
+    expect(checklist.canGoLive).toBe(false);
+    expect(checklist.fallbackProviderKey).toBe("paystack");
   });
 
   it("documents the new readiness foundation as locally complete", () => {

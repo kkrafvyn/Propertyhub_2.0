@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { useEffect, useMemo, useState } from "react";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [oauthLoadingProvider, setOauthLoadingProvider] = useState<
     "google" | "facebook" | "apple" | null
@@ -94,14 +95,26 @@ export function Login() {
             </div>
 
             <div>
-              <Input
-                label="Password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  label="Password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pr-12"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="absolute bottom-3 right-3 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
 
             <div className="flex gap-3 rounded-xl border border-border bg-secondary/20 p-4 text-sm text-muted-foreground">
@@ -152,7 +165,7 @@ export function Login() {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Button
                 variant="outline"
                 size="lg"
@@ -199,22 +212,6 @@ export function Login() {
                   </svg>
                 )}
                 Apple
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                type="button"
-                onClick={() => void handleOAuthSignIn("facebook")}
-                disabled={Boolean(oauthLoadingProvider)}
-              >
-                {oauthLoadingProvider === "facebook" ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-                )}
-                Facebook
               </Button>
             </div>
           </div>

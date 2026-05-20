@@ -56,6 +56,7 @@ Distributed payment and verification features are removed. Trust proof now uses 
 | Launch readiness control plane | Remaining workstreams now have auditable tables, service helpers, seeded checklist items, provider readiness rows, sandbox evidence tracking, backup drill evidence, compliance evidence, official verification checks, hyperlocal data source readiness, community contribution queues, affordability plan review, AI score review, referral reward ledger, advanced fraud signals, construction progress updates, contributor payout controls, and an admin launch-readiness console. |
 | Competitive engagement layer | Moderated listing/agency/project/vendor/deal reviews, review abuse reports, saved-search price-drop rules, social sharing, finance snapshots, rich media links, marketplace pulse, and AI listing draft helper are wired without external chain dependencies. |
 | Competitive operations layer | Document template drafts, calendar export readiness, explainable trust signals, agency trust score, smart comparison recommendation, WhatsApp alert readiness, Ghana Card/manual registry checklist, owner reporting snapshot, referral reward status labels, neighborhood Q&A prompts, human-reviewed fraud signal helpers, investment score preview, affordability guardrails, construction readiness, and contributor monetization preview are wired as gated product surfaces. |
+| Production provider gating | `.env.example`, `prod:env:check`, release checks, and the provider activation runbook now cover Paystack, Stripe, Flutterwave, SMS/WhatsApp, USSD, Ghana Card/liveness, Lands Commission/manual registry, hyperlocal data, fraud providers, monitoring, and backup evidence. Missing external keys remain warnings by default and become blockers with strict workstream flags. |
 
 ## Competitive Advantage Handoff Status
 
@@ -94,6 +95,19 @@ These items came from the Ghana-first competitive moat handoff. Anything that re
 | Competitive moat integrations | App-side readiness, review records, price-drop alerts, finance widgets, rich media, smart compare, agency trust score, WhatsApp readiness, Ghana Card/manual registry readiness, owner reporting readiness, document templates, calendar export readiness, community prompts, human-reviewed fraud signals, investment preview, affordability guardrails, construction readiness, and contributor monetization preview are wired. Add production providers/data sources for hyperlocal intelligence, Ghana Card verification, SMS/USSD, official registry checks, and community moderation. |
 | Launch-readiness admin operations | `/admin/launch` now shows readiness percent, critical blockers, workstream items, provider go-live checks, admin status actions, and evidence attachment for gated production workstreams. |
 | Compliance signoff | Replace generated compliance assumptions with counsel-reviewed launch rules for data protection, escrow/payment operations, property verification, SMS, AI, and IoT. |
+
+## API Keys Later Checklist
+
+These provider lanes are now code-ready and environment-gated. Add keys when each external account is approved, then run the matching strict check.
+
+| Lane | Strict check |
+| --- | --- |
+| Stripe and Flutterwave payments | `npm run prod:env:check -- --strict-payments --env-file=.env.production` |
+| SMS, WhatsApp, and USSD | `npm run prod:env:check -- --strict-comms --env-file=.env.production` |
+| Ghana Card, liveness, registry, and advanced fraud | `npm run prod:env:check -- --strict-identity --env-file=.env.production` |
+| Hyperlocal flood, power, water, safety, and transit data | `npm run prod:env:check -- --strict-data --env-file=.env.production` |
+| Audit anchoring, monitoring, and backup proof | `npm run prod:env:check -- --strict-ops --env-file=.env.production` |
+| Full launch gate | `npm run prod:env:check:strict -- --env-file=.env.production` |
 
 ## Open Decisions
 

@@ -197,6 +197,7 @@ function checkEnvHygiene() {
   checkContains(".env.example", "PAYSTACK_DEFAULT_ESCROW_RECIPIENT_CODE=", "Paystack escrow recipient fallback documented");
   checkContains(".env.example", "STRIPE_SECRET_KEY=", "Stripe secret placeholder documented");
   checkContains(".env.example", "STRIPE_WEBHOOK_SECRET=", "Stripe webhook secret placeholder documented");
+  checkContains(".env.example", "STRIPE_CONNECT_CLIENT_ID=", "Stripe Connect placeholder documented");
   checkContains(".env.example", "AUDIT_RSA_PRIVATE_KEY_PEM=", "Audit RSA private key placeholder documented");
   checkContains(".env.example", "AUDIT_RSA_PUBLIC_KEY_PEM=", "Audit RSA public key placeholder documented");
   checkContains(".env.example", "ANCHOR_JOB_SECRET=", "Audit anchoring job secret documented");
@@ -215,6 +216,16 @@ function checkEnvHygiene() {
   checkContains(".env.example", "FLUTTERWAVE_PLAN_ID_GROWTH=", "Flutterwave Growth plan ID documented");
   checkContains(".env.example", "FLUTTERWAVE_PLAN_ID_PRO=", "Flutterwave Pro plan ID documented");
   checkContains(".env.example", "IT_CONSORTIUM_MERCHANT_ID=", "IT Consortium merchant placeholder documented");
+  checkContains(".env.example", "SMS_PROVIDER=twilio", "SMS provider placeholder documented");
+  checkContains(".env.example", "USSD_SHORT_CODE=", "USSD short code placeholder documented");
+  checkContains(".env.example", "GHANA_CARD_API_ENDPOINT=", "Ghana Card endpoint placeholder documented");
+  checkContains(".env.example", "LIVENESS_API_KEY=", "Liveness provider placeholder documented");
+  checkContains(".env.example", "LAND_REGISTRY_API_ENDPOINT=", "Land Registry endpoint placeholder documented");
+  checkContains(".env.example", "HYPERLOCAL_DATA_PROVIDER=", "Hyperlocal data provider placeholder documented");
+  checkContains(".env.example", "FLOOD_DATA_ENDPOINT=", "Flood data endpoint placeholder documented");
+  checkContains(".env.example", "FRAUD_IMAGE_AUTH_PROVIDER=", "Fraud image provider placeholder documented");
+  checkContains(".env.example", "MONITORING_DSN=", "Monitoring DSN placeholder documented");
+  checkContains(".env.example", "BACKUP_RESTORE_EVIDENCE_URL=", "Backup restore evidence placeholder documented");
 
   const externalSecrets = [
     "WEB_PUSH_PRIVATE_KEY",
@@ -291,6 +302,41 @@ function checkReleaseDocs() {
     "scripts/checkProductionEnv.cjs",
     "replace placeholder values",
     "Production environment checker implementation"
+  );
+  checkContains(
+    "scripts/checkProductionEnv.cjs",
+    "--strict-payments",
+    "Production checker supports strict provider readiness gates"
+  );
+  checkContains(
+    "docs/deployment/PRODUCTION_PROVIDER_ACTIVATION.md",
+    "Flutterwave Fallback And Africa Lane",
+    "Flutterwave provider activation runbook"
+  );
+  checkContains(
+    "docs/deployment/PRODUCTION_PROVIDER_ACTIVATION.md",
+    "Identity, Registry, And Hyperlocal Data",
+    "Identity and data provider activation runbook"
+  );
+  checkContains(
+    "docs/operations/PRODUCTION_EVIDENCE_PACKET.md",
+    "Payment Provider Sandbox Evidence",
+    "Production evidence packet"
+  );
+  checkContains(
+    "docs/operations/PRODUCTION_EVIDENCE_PACKET.md",
+    "Backup Restore Drill Evidence",
+    "Backup restore evidence template"
+  );
+  checkContains(
+    "docs/legal/LAUNCH_POLICY_SIGNOFF_PACKET.md",
+    "Required Policies",
+    "Legal policy signoff packet"
+  );
+  checkContains(
+    "docs/legal/LAUNCH_POLICY_SIGNOFF_PACKET.md",
+    "Counsel Review Questions",
+    "Counsel review questions documented"
   );
 }
 

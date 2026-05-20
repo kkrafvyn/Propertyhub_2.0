@@ -11,6 +11,11 @@ const explicitEnvFiles = args
   .filter(Boolean);
 const strictMobile = args.includes("--strict-mobile") || args.includes("--strict-all");
 const strictIot = args.includes("--strict-iot") || args.includes("--strict-all");
+const strictPayments = args.includes("--strict-payments") || args.includes("--strict-all");
+const strictComms = args.includes("--strict-comms") || args.includes("--strict-all");
+const strictIdentity = args.includes("--strict-identity") || args.includes("--strict-all");
+const strictData = args.includes("--strict-data") || args.includes("--strict-all");
+const strictOps = args.includes("--strict-ops") || args.includes("--strict-all");
 
 const defaultEnvFiles = [
   ".env",
@@ -99,6 +104,10 @@ function getPlaceholderReason(key) {
     return "still uses Paystack test credentials";
   }
 
+  if (upperKey.includes("FLUTTERWAVE") && /\bFLW(?:PUBK|SECK)_TEST-/i.test(value)) {
+    return "still uses Flutterwave test credentials";
+  }
+
   if (!isEmailLike(value) && /^(?:ci_|dummy_|placeholder_|sample_|your_|replace[-_]?me|changeme)/i.test(value)) {
     return "still uses placeholder text";
   }
@@ -146,7 +155,15 @@ const requiredGroups = [
     ],
   },
   {
+    name: "Transactional email",
+    keys: ["RESEND_API_KEY", "NOTIFICATION_EMAIL_FROM"],
+  },
+];
+
+const advisoryGroups = [
+  {
     name: "Stripe diaspora billing and escrow",
+    strict: strictPayments,
     keys: [
       "VITE_STRIPE_PUBLISHABLE_KEY",
       "STRIPE_SECRET_KEY",
@@ -160,11 +177,8 @@ const requiredGroups = [
     ],
   },
   {
-    name: "Transactional email",
-    keys: ["RESEND_API_KEY", "NOTIFICATION_EMAIL_FROM"],
-  },
-  {
     name: "Integrity audit and public anchoring",
+    strict: strictOps,
     keys: [
       "AUDIT_RSA_PRIVATE_KEY_PEM",
       "AUDIT_RSA_PUBLIC_KEY_PEM",
@@ -174,9 +188,6 @@ const requiredGroups = [
       "GITHUB_ANCHOR_TOKEN",
     ],
   },
-];
-
-const advisoryGroups = [
   {
     name: "Browser push",
     strict: strictMobile,
@@ -194,13 +205,79 @@ const advisoryGroups = [
   },
   {
     name: "Flutterwave Nigeria expansion",
-    strict: env.FLUTTERWAVE_ENABLED === "true",
+    strict: strictPayments || env.FLUTTERWAVE_ENABLED === "true",
     keys: ["VITE_FLUTTERWAVE_PUBLIC_KEY", "FLUTTERWAVE_SECRET_KEY", "FLUTTERWAVE_WEBHOOK_SECRET_HASH"],
+  },
+  {
+    name: "Stripe Connect payout lane",
+    strict: strictPayments,
+    keys: ["STRIPE_CONNECT_CLIENT_ID", "STRIPE_CONNECT_WEBHOOK_SECRET"],
   },
   {
     name: "IT Consortium optional Ghana processor",
     strict: env.IT_CONSORTIUM_ENABLED === "true",
     keys: ["IT_CONSORTIUM_USERNAME", "IT_CONSORTIUM_API_KEY", "IT_CONSORTIUM_MERCHANT_ID"],
+  },
+  {
+    name: "SMS and WhatsApp communications",
+    strict: strictComms,
+    keys: ["SMS_PROVIDER", "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_SMS_FROM", "TWILIO_WHATSAPP_FROM"],
+  },
+  {
+    name: "USSD handoff provider",
+    strict: strictComms,
+    keys: ["USSD_PROVIDER_NAME", "USSD_SHORT_CODE", "USSD_API_ENDPOINT", "USSD_API_KEY", "USSD_WEBHOOK_SECRET"],
+  },
+  {
+    name: "Ghana Card and liveness provider",
+    strict: strictIdentity,
+    keys: [
+      "GHANA_CARD_PROVIDER",
+      "GHANA_CARD_API_ENDPOINT",
+      "GHANA_CARD_API_KEY",
+      "LIVENESS_PROVIDER",
+      "LIVENESS_API_KEY",
+    ],
+  },
+  {
+    name: "Lands Commission or manual registry provider",
+    strict: strictIdentity,
+    keys: ["LAND_REGISTRY_PROVIDER", "LAND_REGISTRY_API_ENDPOINT", "LAND_REGISTRY_API_KEY"],
+  },
+  {
+    name: "Hyperlocal data feeds",
+    strict: strictData,
+    keys: [
+      "HYPERLOCAL_DATA_PROVIDER",
+      "HYPERLOCAL_DATA_API_KEY",
+      "FLOOD_DATA_ENDPOINT",
+      "POWER_RELIABILITY_DATA_ENDPOINT",
+      "WATER_RELIABILITY_DATA_ENDPOINT",
+      "SAFETY_DATA_ENDPOINT",
+      "TRANSIT_DATA_ENDPOINT",
+    ],
+  },
+  {
+    name: "Advanced fraud providers",
+    strict: strictIdentity,
+    keys: [
+      "FRAUD_IMAGE_AUTH_PROVIDER",
+      "FRAUD_IMAGE_AUTH_API_KEY",
+      "DEVICE_RISK_PROVIDER",
+      "DEVICE_RISK_API_KEY",
+      "SANCTIONS_SCREENING_PROVIDER",
+      "SANCTIONS_SCREENING_API_KEY",
+    ],
+  },
+  {
+    name: "Monitoring and error reporting",
+    strict: strictOps,
+    keys: ["MONITORING_PROVIDER", "MONITORING_DSN", "UPTIME_MONITOR_URL", "LOG_DRAIN_ENDPOINT"],
+  },
+  {
+    name: "Backup and restore evidence",
+    strict: strictOps,
+    keys: ["BACKUP_PROVIDER", "BACKUP_RESTORE_EVIDENCE_URL", "SUPABASE_PITR_ENABLED"],
   },
 ];
 

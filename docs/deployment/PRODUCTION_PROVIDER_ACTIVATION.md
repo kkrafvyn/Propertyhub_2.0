@@ -17,6 +17,16 @@ For native app release or Smart Property Access launch, use strict mode:
 npm run prod:env:check:strict -- --env-file=.env.production
 ```
 
+You can also gate one workstream at a time while you are still adding keys:
+
+```bash
+npm run prod:env:check -- --strict-payments --env-file=.env.production
+npm run prod:env:check -- --strict-comms --env-file=.env.production
+npm run prod:env:check -- --strict-identity --env-file=.env.production
+npm run prod:env:check -- --strict-data --env-file=.env.production
+npm run prod:env:check -- --strict-ops --env-file=.env.production
+```
+
 The environment checker only reports whether values are present. It never prints secret values.
 
 ## 2. Paystack Ghana Lane
@@ -49,7 +59,17 @@ The environment checker only reports whether values are present. It never prints
 - For Android push, set either `FCM_SERVER_KEY` or `FCM_PROJECT_ID` plus `FCM_ACCESS_TOKEN`.
 - For iOS push, set `APNS_BEARER_TOKEN`, `APNS_BUNDLE_ID`, and `APNS_USE_SANDBOX` correctly per environment.
 
-## 5. Public Map Discovery
+## 5. Flutterwave Fallback And Africa Lane
+
+- Create the live Flutterwave account and confirm allowed currencies, transfer corridors, and refund support.
+- Set `VITE_FLUTTERWAVE_PUBLIC_KEY`, `FLUTTERWAVE_SECRET_KEY`, and `FLUTTERWAVE_WEBHOOK_SECRET_HASH`.
+- Create recurring plan IDs for Starter, Growth, and Pro, then set `FLUTTERWAVE_PLAN_ID_STARTER`, `FLUTTERWAVE_PLAN_ID_GROWTH`, and `FLUTTERWAVE_PLAN_ID_PRO`.
+- Configure fallback release details using `FLUTTERWAVE_DEFAULT_ESCROW_BENEFICIARY_ID` or bank account fields only for controlled launch accounts.
+- Confirm the live webhook points to the deployed unified `payment-webhook` endpoint.
+- Run `npm run prod:env:check -- --strict-payments --env-file=.env.production`.
+- Record sandbox evidence for successful payment, failed payment, duplicate webhook, subscription renewal, subscription failure, refund, chargeback, transfer release, and provider fallback.
+
+## 6. Public Map Discovery
 
 - Default public map discovery now runs on OpenStreetMap tiles with live listing pins.
 - If you want a branded hosted tile service instead, set `VITE_MAP_PROVIDER=maptiler` and store `VITE_MAPTILER_KEY` in the deployment environment.
@@ -57,7 +77,33 @@ The environment checker only reports whether values are present. It never prints
 - Confirm the deployed `/search` page loads tiles, fits bounds around plotted listings, and still handles listings without verified coordinates cleanly.
 - Confirm one public property detail page shows the live map surface, route planner, and external map handoff without console errors.
 
-## 6. Integrity Audit And Anchoring
+## 7. SMS, WhatsApp, And USSD
+
+- Choose the production SMS/WhatsApp provider and store `SMS_PROVIDER`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_SMS_FROM`, and `TWILIO_WHATSAPP_FROM` when using Twilio.
+- Register sender ID or short code with the relevant Ghana/NCA provider process before sending public messages.
+- Store `USSD_PROVIDER_NAME`, `USSD_SHORT_CODE`, `USSD_API_ENDPOINT`, `USSD_API_KEY`, and `USSD_WEBHOOK_SECRET` when the USSD partner is ready.
+- Confirm opt-in, opt-out, message templates, retry limits, and abuse throttles with Legal/Ops.
+- Run `npm run prod:env:check -- --strict-comms --env-file=.env.production`.
+- Record sandbox evidence for SMS delivery, WhatsApp template delivery, USSD handoff, opt-out, and rate-limit behavior.
+
+## 8. Identity, Registry, And Hyperlocal Data
+
+- Select Ghana Card and liveness providers, then set `GHANA_CARD_PROVIDER`, `GHANA_CARD_API_ENDPOINT`, `GHANA_CARD_API_KEY`, `LIVENESS_PROVIDER`, and `LIVENESS_API_KEY`.
+- Complete a DPIA and consent copy review before enabling automated identity or biometric checks.
+- Select official or manual land/title verification sources, then set `LAND_REGISTRY_PROVIDER`, `LAND_REGISTRY_API_ENDPOINT`, and `LAND_REGISTRY_API_KEY` if an API is available.
+- Select trusted hyperlocal data sources, then set `HYPERLOCAL_DATA_PROVIDER`, `HYPERLOCAL_DATA_API_KEY`, `FLOOD_DATA_ENDPOINT`, `POWER_RELIABILITY_DATA_ENDPOINT`, `WATER_RELIABILITY_DATA_ENDPOINT`, `SAFETY_DATA_ENDPOINT`, and `TRANSIT_DATA_ENDPOINT`.
+- Run `npm run prod:env:check -- --strict-identity --strict-data --env-file=.env.production`.
+- Record sandbox or manual-review evidence for Ghana Card, liveness, registry, flood, power, water, safety, and transit data checks before public badges depend on those signals.
+
+## 9. Fraud, Monitoring, And Backup Proof
+
+- Select image authenticity, device risk, and sanctions/PEP vendors, then set `FRAUD_IMAGE_AUTH_PROVIDER`, `FRAUD_IMAGE_AUTH_API_KEY`, `DEVICE_RISK_PROVIDER`, `DEVICE_RISK_API_KEY`, `SANCTIONS_SCREENING_PROVIDER`, and `SANCTIONS_SCREENING_API_KEY`.
+- Configure error monitoring, uptime checks, and log drains with `MONITORING_PROVIDER`, `MONITORING_DSN`, `UPTIME_MONITOR_URL`, and `LOG_DRAIN_ENDPOINT`.
+- Enable Supabase backups/PITR where plan support allows, then store `BACKUP_PROVIDER`, `SUPABASE_PITR_ENABLED`, and `BACKUP_RESTORE_EVIDENCE_URL`.
+- Run `npm run prod:env:check -- --strict-ops --strict-identity --env-file=.env.production`.
+- Record a backup restore drill and attach evidence in `/admin/launch` before treating production recovery as proven.
+
+## 10. Integrity Audit And Anchoring
 
 - Generate a production RSA key pair outside the repo.
 - Store `AUDIT_RSA_PRIVATE_KEY_PEM` only in the deployment secret manager.
@@ -68,7 +114,7 @@ The environment checker only reports whether values are present. It never prints
 - Configure a weekly cron job to call `anchor-integrity-audit` with the job secret.
 - After the first cron run, confirm the anchor hash appears in the public repository and `integrity_anchors`.
 
-## 7. Smart Property Access Providers
+## 11. Smart Property Access Providers
 
 - Decide which provider launches first: TTLock, Yale, or Tuya.
 - Store provider command endpoints and access tokens server-side only.
@@ -77,7 +123,7 @@ The environment checker only reports whether values are present. It never prints
 - Test device registry, grant creation, viewing access, tenant access, revoke, provider offline, failed unlock, and audit log events.
 - Document the human fallback path for provider outages before inviting real tenants to use Smart Property Access.
 
-## 8. Legal And Operations Decisions
+## 12. Legal And Operations Decisions
 
 - Escrow fee: set the initial percentage before public escrow launch. Recommended starting range: 1% to 2%.
 - FX handling: lock diaspora exchange rate at payment time and show the rate on receipts.
@@ -85,7 +131,7 @@ The environment checker only reports whether values are present. It never prints
 - Device support policy: define supported providers, owner responsibilities, emergency lockout, and outage handling.
 - Counsel must approve Terms, Privacy Notice, escrow language, refund language, and Smart Property Access terms.
 
-## 9. Production Smoke Test
+## 13. Production Smoke Test
 
 After deployment and provider setup:
 

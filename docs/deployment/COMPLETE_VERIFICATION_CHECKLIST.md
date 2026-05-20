@@ -96,12 +96,12 @@ This checklist separates local implementation from production launch readiness. 
 | Evidence | Owner | Due | Location |
 | --- | --- | --- | --- |
 | QA command output | Engineering | Every release | Release notes or CI artifacts. |
-| Provider sandbox screenshots/logs | Ops/Engineering | Before live payments | Internal operations folder. |
-| Legal signoff versions | Legal/Product | Before public launch | Internal legal folder. |
+| Provider sandbox screenshots/logs | Ops/Engineering | Before live payments | Use `docs/operations/PRODUCTION_EVIDENCE_PACKET.md` as the evidence template. |
+| Legal signoff versions | Legal/Product | Before public launch | Use `docs/legal/LAUNCH_POLICY_SIGNOFF_PACKET.md` as the review packet. |
 | Security audit report | Security/Engineering | Before public launch | Internal security folder. |
-| Backup/restore proof | Ops/Engineering | Before public launch | Internal operations folder. |
-| Payment incident runbook | Finance/Ops/Support | Before live payments | Internal operations folder. |
-| IoT device test logs | Ops/Engineering | Before live devices | Internal operations folder. |
+| Backup/restore proof | Ops/Engineering | Before public launch | Use `docs/operations/PRODUCTION_EVIDENCE_PACKET.md` as the drill template. |
+| Payment incident runbook | Finance/Ops/Support | Before live payments | Use `docs/deployment/PRODUCTION_PROVIDER_ACTIVATION.md` plus the evidence packet. |
+| IoT device test logs | Ops/Engineering | Before live devices | Use `docs/operations/PRODUCTION_EVIDENCE_PACKET.md` as the device test template. |
 
 ## Priority Order
 

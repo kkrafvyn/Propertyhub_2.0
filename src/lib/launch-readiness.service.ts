@@ -149,6 +149,13 @@ export const REQUIRED_PAYMENT_SANDBOX_SCENARIOS = [
   "provider_fallback",
 ] as const;
 
+export const PROVIDER_GO_LIVE_REQUIREMENTS = [
+  "Live secret or vaulted credentials are present",
+  "Webhook or callback is configured where the provider supports one",
+  "Sandbox or controlled live evidence has passed",
+  "Provider status is approved or live",
+] as const;
+
 function isReadyStatus(status: LaunchStatus) {
   return status === "approved" || status === "live";
 }
@@ -205,6 +212,41 @@ export function canProviderGoLive(provider: ExternalProviderReadiness) {
     Boolean(provider.sandbox_verified_at) &&
     ["approved", "live"].includes(provider.status)
   );
+}
+
+export function getProviderGoLiveGaps(provider: ExternalProviderReadiness) {
+  const gaps: string[] = [];
+
+  if (!provider.has_live_secret) {
+    gaps.push("Add live/vaulted credentials");
+  }
+
+  if (!provider.webhook_configured) {
+    gaps.push("Configure webhook or callback URL");
+  }
+
+  if (!provider.sandbox_verified_at) {
+    gaps.push("Attach sandbox or controlled live evidence");
+  }
+
+  if (!["approved", "live"].includes(provider.status)) {
+    gaps.push("Move provider status to approved after review");
+  }
+
+  return gaps;
+}
+
+export function buildProviderActivationChecklist(provider: ExternalProviderReadiness) {
+  const gaps = getProviderGoLiveGaps(provider);
+  return {
+    providerKey: provider.provider_key,
+    displayName: provider.display_name,
+    category: provider.provider_category,
+    canGoLive: gaps.length === 0,
+    fallbackProviderKey: provider.fallback_provider_key,
+    requirements: PROVIDER_GO_LIVE_REQUIREMENTS,
+    gaps,
+  };
 }
 
 export const launchReadinessService = {
