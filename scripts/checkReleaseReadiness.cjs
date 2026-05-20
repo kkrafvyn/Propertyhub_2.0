@@ -204,8 +204,13 @@ function checkEnvHygiene() {
   checkContains(".env.example", "GITHUB_ANCHOR_REPO=", "Audit anchoring repo placeholder documented");
   checkContains(".env.example", "VITE_CONDITION_REPORT_MEDIA_BUCKET=condition-report-media", "Condition report media bucket documented");
   checkContains(".env.example", "TTLOCK_COMMAND_ENDPOINT=", "TTLock endpoint placeholder documented");
+  checkContains(".env.example", "TTLOCK_CLIENT_ID=", "TTLock client ID placeholder documented");
+  checkContains(".env.example", "TTLOCK_GENERATE_VIEWING_CODE_ENDPOINT=", "TTLock command-specific endpoint documented");
   checkContains(".env.example", "YALE_COMMAND_ENDPOINT=", "Yale endpoint placeholder documented");
+  checkContains(".env.example", "YALE_CLIENT_ID=", "Yale client ID placeholder documented");
   checkContains(".env.example", "TUYA_COMMAND_ENDPOINT=", "Tuya endpoint placeholder documented");
+  checkContains(".env.example", "TUYA_ACCESS_ID=", "Tuya access ID placeholder documented");
+  checkContains(".env.example", "IOT_EMERGENCY_ESCALATION_PHONE=", "IoT emergency escalation placeholder documented");
   checkContains(".env.example", "EDGE_RATE_LIMIT_MAX_REQUESTS=30", "Edge rate limit placeholder documented");
   checkContains(".env.example", "FLUTTERWAVE_SECRET_KEY=", "Flutterwave secret placeholder documented");
   checkContains(".env.example", "FLUTTERWAVE_WEBHOOK_SECRET_HASH=", "Flutterwave webhook secret placeholder documented");
@@ -337,6 +342,21 @@ function checkReleaseDocs() {
     "docs/legal/LAUNCH_POLICY_SIGNOFF_PACKET.md",
     "Counsel Review Questions",
     "Counsel review questions documented"
+  );
+  checkContains(
+    "docs/iot/SMART_PROPERTY_ACCESS_ROLLOUT.md",
+    "Pilot Hardware Kit",
+    "Smart Property Access hardware rollout guide"
+  );
+  checkContains(
+    "docs/iot/SMART_PROPERTY_ACCESS_ROLLOUT.md",
+    "Live Device Test Matrix",
+    "Smart Property Access live-device test matrix"
+  );
+  checkContains(
+    "scripts/checkProductionEnv.cjs",
+    "TTLOCK_GENERATE_VIEWING_CODE_ENDPOINT",
+    "Strict IoT checker supports command-specific provider endpoints"
   );
 }
 

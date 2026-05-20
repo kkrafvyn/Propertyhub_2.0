@@ -117,6 +117,7 @@ The environment checker only reports whether values are present. It never prints
 ## 11. Smart Property Access Providers
 
 - Decide which provider launches first: TTLock, Yale, or Tuya.
+- Use `docs/iot/SMART_PROPERTY_ACCESS_ROLLOUT.md` as the buying guide, provider-account checklist, and live-device test matrix.
 - Store provider command endpoints and access tokens server-side only.
 - Run `npm run prod:env:check -- --strict-iot --env-file=.env.production` before enabling live unlock actions.
 - In the workspace Smart Access page, mark each provider connection only after secrets are vaulted, webhook signatures are verified, and a real-device code cycle passes.

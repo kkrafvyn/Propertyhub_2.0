@@ -316,14 +316,44 @@ const iotProviders = [
   {
     name: "TTLock",
     keys: ["TTLOCK_COMMAND_ENDPOINT", "TTLOCK_ACCESS_TOKEN"],
+    anyOf: [
+      ["TTLOCK_COMMAND_ENDPOINT", "TTLOCK_ACCESS_TOKEN"],
+      [
+        "TTLOCK_API_BASE_URL",
+        "TTLOCK_CLIENT_ID",
+        "TTLOCK_CLIENT_SECRET",
+        "TTLOCK_GENERATE_VIEWING_CODE_ENDPOINT",
+        "TTLOCK_REVOKE_ACCESS_GRANT_ENDPOINT",
+      ],
+    ],
   },
   {
     name: "Yale",
     keys: ["YALE_COMMAND_ENDPOINT", "YALE_ACCESS_TOKEN"],
+    anyOf: [
+      ["YALE_COMMAND_ENDPOINT", "YALE_ACCESS_TOKEN"],
+      [
+        "YALE_API_BASE_URL",
+        "YALE_CLIENT_ID",
+        "YALE_CLIENT_SECRET",
+        "YALE_GENERATE_VIEWING_CODE_ENDPOINT",
+        "YALE_REVOKE_ACCESS_GRANT_ENDPOINT",
+      ],
+    ],
   },
   {
     name: "Tuya",
     keys: ["TUYA_COMMAND_ENDPOINT", "TUYA_ACCESS_TOKEN"],
+    anyOf: [
+      ["TUYA_COMMAND_ENDPOINT", "TUYA_ACCESS_TOKEN"],
+      [
+        "TUYA_API_BASE_URL",
+        "TUYA_ACCESS_ID",
+        "TUYA_ACCESS_SECRET",
+        "TUYA_PROJECT_ID",
+        "TUYA_SYNC_DEVICE_HEALTH_ENDPOINT",
+      ],
+    ],
   },
 ];
 
@@ -380,7 +410,13 @@ for (const group of advisoryGroups) {
 
 checkMapProvider();
 
-const readyIotProviders = iotProviders.filter((provider) => provider.keys.every((key) => isPresent(key)));
+function hasIotProviderCredentialSet(provider) {
+  return provider.anyOf.some((option) =>
+    option.every((key) => isPresent(key) && !getPlaceholderReason(key))
+  );
+}
+
+const readyIotProviders = iotProviders.filter(hasIotProviderCredentialSet);
 if (readyIotProviders.length) {
   passes.push(`Smart Property Access: provider credentials present for ${readyIotProviders.map((provider) => provider.name).join(", ")}`);
 } else {
