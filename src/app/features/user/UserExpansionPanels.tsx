@@ -45,6 +45,9 @@ import {
   buildAffordabilityPlanGuardrails,
   buildContributorMonetizationPreview,
   buildInvestmentScorePreview,
+  buildManualVerificationChecklist,
+  buildSmartComparisonDecision,
+  buildWhatsAppAlertReadiness,
   getReferralRewardStatusDisplay,
 } from "../../../lib/competitive-operations.service";
 import {
@@ -126,6 +129,10 @@ export function PropertyComparisonPanel({ savedProperties }: PropertyComparisonP
     () => buildPropertyComparisonRows(selectedProperties),
     [selectedProperties]
   );
+  const comparisonDecision = useMemo(
+    () => buildSmartComparisonDecision(selectedProperties),
+    [selectedProperties]
+  );
 
   const toggleProperty = (propertyId: string) => {
     setSelectedIds((current) => {
@@ -202,35 +209,66 @@ export function PropertyComparisonPanel({ savedProperties }: PropertyComparisonP
           </div>
 
           {selectedProperties.length > 0 && (
-            <Card className="overflow-x-auto p-0">
-              <table className="min-w-full text-sm">
-                <thead className="border-b border-border bg-secondary/30">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">Metric</th>
-                    {selectedProperties.map((property) => (
-                      <th key={property.id} className="px-4 py-3 text-left">
-                        <div className="max-w-[180px]">
-                          <p className="font-semibold">{property.address}</p>
-                          <p className="text-xs text-muted-foreground">{property.city}</p>
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparisonRows.map((row) => (
-                    <tr key={row.label} className="border-b border-border last:border-b-0">
-                      <td className="px-4 py-3 font-medium">{row.label}</td>
-                      {row.values.map((value, index) => (
-                        <td key={`${row.label}-${index}`} className="px-4 py-3 text-muted-foreground">
-                          {value}
-                        </td>
+            <>
+              <Card className="p-6">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Brain className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold">Smart Compare Recommendation</h3>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">{comparisonDecision.guidance}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">{comparisonDecision.disclaimer}</p>
+                  </div>
+                  {comparisonDecision.winner && (
+                    <Badge variant="default">{comparisonDecision.winner.score}/100 match</Badge>
+                  )}
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  {comparisonDecision.scored.map((property) => (
+                    <div key={property.id} className="rounded-xl border border-border p-4">
+                      <p className="font-medium">{property.address || property.title}</p>
+                      <p className="mt-2 text-2xl font-semibold">{property.score}/100</p>
+                      <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                        {property.strengths.map((strength) => (
+                          <p key={strength}>{strength}</p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              <Card className="overflow-x-auto p-0">
+                <table className="min-w-full text-sm">
+                  <thead className="border-b border-border bg-secondary/30">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">Metric</th>
+                      {selectedProperties.map((property) => (
+                        <th key={property.id} className="px-4 py-3 text-left">
+                          <div className="max-w-[180px]">
+                            <p className="font-semibold">{property.address}</p>
+                            <p className="text-xs text-muted-foreground">{property.city}</p>
+                          </div>
+                        </th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
+                  </thead>
+                  <tbody>
+                    {comparisonRows.map((row) => (
+                      <tr key={row.label} className="border-b border-border last:border-b-0">
+                        <td className="px-4 py-3 font-medium">{row.label}</td>
+                        {row.values.map((value, index) => (
+                          <td key={`${row.label}-${index}`} className="px-4 py-3 text-muted-foreground">
+                            {value}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
+            </>
           )}
         </>
       )}
@@ -1257,6 +1295,11 @@ export function TrustVerificationPanel({
   const pendingCount = requests.filter((request) =>
     ["submitted", "in_review", "needs_changes"].includes(request.status)
   ).length;
+  const manualVerificationChecklist = buildManualVerificationChecklist({
+    hasGhanaCardProvider: false,
+    hasRegistryProvider: false,
+    legalApproved: false,
+  });
 
   useEffect(() => {
     if (!user) {
@@ -1464,6 +1507,29 @@ export function TrustVerificationPanel({
       </div>
 
       <Card className="p-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <UserCheck className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Ghana Card + Registry Gate</h3>
+          </div>
+          <Badge variant={manualVerificationChecklist.canAutomate ? "default" : "outline"}>
+            {manualVerificationChecklist.canAutomate ? "Automation ready" : "Manual review"}
+          </Badge>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          {manualVerificationChecklist.steps.map((step) => (
+            <div key={step.label} className="rounded-xl border border-border p-4">
+              <p className="font-medium">{step.label}</p>
+              <Badge className="mt-3" variant={step.status === "blocked" ? "destructive" : "outline"}>
+                {formatLabel(step.status)}
+              </Badge>
+              <p className="mt-3 text-sm text-muted-foreground">{step.helper}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card className="p-6">
         <div className="mb-4 flex items-center gap-2">
           <FileSignature className="h-5 w-5 text-primary" />
           <h3 className="font-semibold">Request History</h3>
@@ -1582,6 +1648,12 @@ export function UserInsightsPanel({
     planType: focusListing?.listing_type === "sale" ? "installment_purchase" : "weekly_rent",
     providerKey: "payment_service",
     legalReviewRequired: true,
+  });
+  const whatsappReadiness = buildWhatsAppAlertReadiness({
+    phone: null,
+    consentGiven: false,
+    providerConfigured: false,
+    alertCount: activeAlerts,
   });
 
   return (
@@ -1705,6 +1777,30 @@ export function UserInsightsPanel({
           </div>
         </Card>
       </div>
+
+      <Card className="p-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <MessageSquareText className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold">WhatsApp Alert Readiness</h3>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Route price drops, new matches, viewing reminders, and escrow updates into WhatsApp once consent and provider setup are approved.
+            </p>
+          </div>
+          <Badge variant={whatsappReadiness.canEnable ? "default" : "outline"}>
+            {whatsappReadiness.canEnable ? "Ready" : "Gated"}
+          </Badge>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {whatsappReadiness.checklist.map((item) => (
+            <div key={item} className="rounded-xl border border-border p-3 text-sm text-muted-foreground">
+              {item}
+            </div>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 }

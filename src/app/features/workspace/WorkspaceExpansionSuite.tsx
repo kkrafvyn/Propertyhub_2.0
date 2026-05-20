@@ -38,6 +38,7 @@ import {
   parseReferralMetadata,
   trackReferralDealWon,
 } from "../../../lib/referral-attribution.service";
+import { buildOwnerReportingSnapshot } from "../../../lib/competitive-operations.service";
 import {
   buildAgentPerformanceSnapshot,
   buildAgentCrmActions,
@@ -413,6 +414,21 @@ export function WorkspaceExpansionSuite({
   const listingLaunchPlan = useMemo(
     () => buildListingLaunchPlan({ listings, cases, documents }),
     [cases, documents, listings]
+  );
+
+  const ownerReportingSnapshot = useMemo(
+    () =>
+      buildOwnerReportingSnapshot({
+        listingViews: listings.reduce((sum, listing) => sum + Number(listing.view_count || 0), 0),
+        inquiries: cases.length,
+        viewings: viewings.length,
+        offers: cases.filter((dealCase) => dealCase.case_type === "offer" || dealCase.pipeline_stage === "offer").length,
+        verifiedDocuments: documents.filter((document) => ["signed", "verified", "approved"].includes(document.status)).length,
+        escrowHeldMinor: payments
+          .filter((payment) => ["held", "pending_release", "success"].includes(payment.status))
+          .reduce((sum, payment) => sum + Number(payment.amount_minor || 0), 0),
+      }),
+    [cases, documents, listings, payments, viewings]
   );
 
   const crmActions = useMemo(
@@ -1248,6 +1264,38 @@ export function WorkspaceExpansionSuite({
             </div>
           </Card>
         </div>
+
+        <Card className="p-6">
+          <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <LineChart className="h-5 w-5 text-primary" />
+                <h2 className="text-xl font-semibold">Owner Reporting Portal Readiness</h2>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                A weekly owner update can package listing views, inquiries, viewings, offers, document proof, and escrow value into one simple report.
+              </p>
+            </div>
+            <Badge variant={ownerReportingSnapshot.health >= 75 ? "default" : "outline"}>
+              {ownerReportingSnapshot.health}/100 health
+            </Badge>
+          </div>
+          <p className="rounded-xl border border-primary/15 bg-primary/5 p-4 text-sm text-muted-foreground">
+            {ownerReportingSnapshot.ownerSummary}
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {ownerReportingSnapshot.metrics.map((metric) => (
+              <div key={metric.label} className="rounded-xl border border-border p-4">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{metric.label}</p>
+                <p className="mt-2 text-lg font-semibold">
+                  {metric.label === "Escrow held"
+                    ? formatMoney(metric.value, "GHS", { isMinor: true })
+                    : metric.value.toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Card>
 
         <div className="grid gap-6 xl:grid-cols-[1.15fr,0.85fr]">
           <Card className="p-6">

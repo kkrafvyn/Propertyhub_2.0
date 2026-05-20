@@ -1,14 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildAffordabilityPlanGuardrails,
   buildCommunityPrompts,
+  buildConstructionProgressPreview,
+  buildContributorMonetizationPreview,
   buildDocumentTemplateDrafts,
   buildHumanReviewedFraudSignals,
   buildInvestmentScorePreview,
-  buildConstructionProgressPreview,
-  buildContributorMonetizationPreview,
-  buildAffordabilityPlanGuardrails,
+  buildManualVerificationChecklist,
+  buildOwnerReportingSnapshot,
+  buildSmartComparisonDecision,
   buildTrustExplanationSignals,
   buildViewingCalendarExports,
+  buildWhatsAppAlertReadiness,
+  calculateAgencyTrustScore,
   getReferralRewardStatusDisplay,
 } from "./competitive-operations.service";
 
@@ -129,5 +134,66 @@ describe("competitive operations helpers", () => {
     expect(guardrails.canGoLive).toBe(false);
     expect(guardrails.label).toBe("Weekly rent plan");
     expect(guardrails.guardrails.join(" ")).toContain("unlicensed lender");
+  });
+
+  it("calculates agency trust scores from explainable signals", () => {
+    const score = calculateAgencyTrustScore({
+      organizationVerified: true,
+      documentCount: 3,
+      responseRatePercent: 90,
+      reviewScore: 4.5,
+      paymentHistoryCount: 2,
+      fraudFlags: 0,
+    });
+
+    expect(score.score).toBeGreaterThan(70);
+    expect(score.disclosure).toContain("not a guarantee");
+  });
+
+  it("recommends a comparison winner without replacing due diligence", () => {
+    const result = buildSmartComparisonDecision([
+      { id: "a", address: "A", price: 900000, qualityScore: 70, locationConfidence: 80, floodRiskLevel: "medium" },
+      { id: "b", address: "B", price: 750000, qualityScore: 92, locationConfidence: 90, floodRiskLevel: "low" },
+    ]);
+
+    expect(result.winner?.id).toBe("b");
+    expect(result.disclaimer).toContain("inspection");
+  });
+
+  it("keeps WhatsApp alerts gated until consent and provider setup", () => {
+    const readiness = buildWhatsAppAlertReadiness({
+      phone: "+233240000000",
+      consentGiven: false,
+      providerConfigured: false,
+      alertCount: 2,
+    });
+
+    expect(readiness.canEnable).toBe(false);
+    expect(readiness.checklist.join(" ")).toContain("opt-in consent");
+  });
+
+  it("keeps Ghana Card and registry automation behind legal readiness", () => {
+    const checklist = buildManualVerificationChecklist({
+      hasGhanaCardProvider: false,
+      hasRegistryProvider: false,
+      legalApproved: false,
+    });
+
+    expect(checklist.canAutomate).toBe(false);
+    expect(checklist.steps.map((step) => step.status)).toContain("manual_review");
+  });
+
+  it("builds owner reporting health from demand and proof signals", () => {
+    const report = buildOwnerReportingSnapshot({
+      listingViews: 600,
+      inquiries: 7,
+      viewings: 3,
+      offers: 1,
+      verifiedDocuments: 2,
+      escrowHeldMinor: 2500000,
+    });
+
+    expect(report.health).toBeGreaterThan(60);
+    expect(report.metrics).toHaveLength(6);
   });
 });

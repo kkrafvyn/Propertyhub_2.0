@@ -135,6 +135,180 @@ export function buildTrustExplanationSignals(input: {
   ];
 }
 
+export function calculateAgencyTrustScore(input: {
+  organizationVerified?: boolean | null;
+  documentCount?: number | null;
+  responseRatePercent?: number | null;
+  reviewScore?: number | null;
+  fraudFlags?: number | null;
+  paymentHistoryCount?: number | null;
+}) {
+  const orgScore = input.organizationVerified ? 22 : 6;
+  const documentScore = Math.min(22, Number(input.documentCount || 0) * 7);
+  const responseScore = Math.min(18, Math.max(0, Number(input.responseRatePercent || 0) * 0.18));
+  const reviewScore = Math.min(18, Math.max(0, Number(input.reviewScore || 0) * 3.6));
+  const paymentScore = Math.min(12, Number(input.paymentHistoryCount || 0) * 3);
+  const fraudPenalty = Math.min(28, Number(input.fraudFlags || 0) * 10);
+  const score = Math.max(0, Math.min(100, Math.round(orgScore + documentScore + responseScore + reviewScore + paymentScore - fraudPenalty)));
+
+  return {
+    score,
+    label: score >= 80 ? "Strong trust signal" : score >= 60 ? "Moderate trust signal" : "Needs more verification",
+    disclosure:
+      "Trust score is an operational signal, not a guarantee. Buyers should still verify documents and use protected payment flows.",
+    drivers: buildTrustExplanationSignals(input).map((signal) => signal.helper),
+  };
+}
+
+export function buildSmartComparisonDecision(
+  properties: Array<{
+    id: string;
+    title?: string | null;
+    address?: string | null;
+    price?: number | null;
+    qualityScore?: number | null;
+    locationConfidence?: number | null;
+    floodRiskLevel?: string | null;
+    amenities?: string[] | null;
+  }>
+) {
+  const scored = properties.map((property) => {
+    const price = Number(property.price || 0);
+    const priceScore = price > 0 ? Math.max(0, 25 - Math.min(25, price / 100000)) : 8;
+    const trustScore = Math.min(35, Math.max(0, Number(property.qualityScore || 0) * 0.35));
+    const locationScore = Math.min(20, Math.max(0, Number(property.locationConfidence || 0) * 0.2));
+    const floodScore =
+      property.floodRiskLevel === "low"
+        ? 12
+        : property.floodRiskLevel === "medium"
+          ? 6
+          : property.floodRiskLevel === "high"
+            ? 0
+            : 4;
+    const amenityScore = Math.min(8, (property.amenities || []).length);
+    const score = Math.round(priceScore + trustScore + locationScore + floodScore + amenityScore);
+
+    return {
+      ...property,
+      score,
+      strengths: [
+        trustScore >= 25 ? "strong trust quality" : "trust proof needs review",
+        locationScore >= 14 ? "good address confidence" : "location should be confirmed",
+        floodScore >= 10 ? "lower flood-risk signal" : "ask about drainage and flood history",
+      ],
+    };
+  });
+  const winner = [...scored].sort((a, b) => b.score - a.score)[0] || null;
+
+  return {
+    winner,
+    scored,
+    guidance: winner
+      ? `${winner.address || winner.title || "The leading option"} currently has the strongest combined price, trust, location, and risk signal.`
+      : "Save at least two listings to generate a comparison recommendation.",
+    disclaimer: "Recommendation is informational and should not replace inspection, legal checks, or payment protection.",
+  };
+}
+
+export function buildWhatsAppAlertReadiness(input: {
+  phone?: string | null;
+  consentGiven?: boolean | null;
+  providerConfigured?: boolean | null;
+  alertCount?: number | null;
+}) {
+  const missing = [
+    input.phone ? null : "Add a WhatsApp-capable phone number.",
+    input.consentGiven ? null : "Capture WhatsApp opt-in consent and opt-out wording.",
+    input.providerConfigured ? null : "Configure WhatsApp/SMS provider credentials server-side.",
+  ].filter(Boolean) as string[];
+
+  return {
+    canEnable: missing.length === 0,
+    alertCount: Number(input.alertCount || 0),
+    status: missing.length === 0 ? "ready" : "gated",
+    checklist: missing.length
+      ? missing
+      : [
+          "Send price drops, new matches, viewing reminders, and escrow updates through approved templates.",
+          "Respect quiet hours, opt-out, and abuse controls.",
+        ],
+  };
+}
+
+export function buildManualVerificationChecklist(input: {
+  hasGhanaCardProvider?: boolean | null;
+  hasRegistryProvider?: boolean | null;
+  legalApproved?: boolean | null;
+}) {
+  return {
+    canAutomate: Boolean(input.hasGhanaCardProvider && input.hasRegistryProvider && input.legalApproved),
+    steps: [
+      {
+        label: "Ghana Card / liveness",
+        status: input.hasGhanaCardProvider ? "provider_ready" : "manual_review",
+        helper: input.hasGhanaCardProvider
+          ? "Vendor can process consented identity checks."
+          : "Use manual ID review until vendor, consent, and DPIA are approved.",
+      },
+      {
+        label: "Lands Commission / title check",
+        status: input.hasRegistryProvider ? "provider_ready" : "manual_review",
+        helper: input.hasRegistryProvider
+          ? "Registry check lane is configured."
+          : "Use manual title evidence review and counsel-approved wording.",
+      },
+      {
+        label: "Legal approval",
+        status: input.legalApproved ? "approved" : "blocked",
+        helper: input.legalApproved
+          ? "Automation can move toward live launch."
+          : "Keep high-risk verification outcomes human-reviewed until counsel signs off.",
+      },
+    ],
+  };
+}
+
+export function buildOwnerReportingSnapshot(input: {
+  listingViews?: number | null;
+  inquiries?: number | null;
+  viewings?: number | null;
+  offers?: number | null;
+  verifiedDocuments?: number | null;
+  escrowHeldMinor?: number | null;
+}) {
+  const listingViews = Number(input.listingViews || 0);
+  const inquiries = Number(input.inquiries || 0);
+  const viewings = Number(input.viewings || 0);
+  const offers = Number(input.offers || 0);
+  const verifiedDocuments = Number(input.verifiedDocuments || 0);
+  const health = Math.min(
+    100,
+    Math.round(
+      Math.min(25, listingViews / 20) +
+        Math.min(20, inquiries * 4) +
+        Math.min(20, viewings * 5) +
+        Math.min(20, offers * 10) +
+        Math.min(15, verifiedDocuments * 5)
+    )
+  );
+
+  return {
+    health,
+    ownerSummary:
+      health >= 75
+        ? "Owner report is strong enough for a confident weekly update."
+        : "Owner report needs more demand, verification, or viewing evidence before strong claims.",
+    metrics: [
+      { label: "Listing views", value: listingViews },
+      { label: "Inquiries", value: inquiries },
+      { label: "Viewings", value: viewings },
+      { label: "Offers", value: offers },
+      { label: "Verified documents", value: verifiedDocuments },
+      { label: "Escrow held", value: Number(input.escrowHeldMinor || 0) },
+    ],
+  };
+}
+
 export function getReferralRewardStatusDisplay(status: ReferralRewardStatus | string) {
   switch (status) {
     case "approved":

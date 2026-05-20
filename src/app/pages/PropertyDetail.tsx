@@ -76,6 +76,7 @@ import {
   buildCommunityPrompts,
   buildHumanReviewedFraudSignals,
   buildTrustExplanationSignals,
+  calculateAgencyTrustScore,
 } from "../../lib/competitive-operations.service";
 import {
   buildAiConciergePrompts,
@@ -420,6 +421,23 @@ export function PropertyDetail() {
   const trustExplanationSignals = useMemo(
     () =>
       buildTrustExplanationSignals({
+        organizationVerified: organization?.verified,
+        documentCount: trustSnapshot?.publicDocumentCount || 0,
+        reviewScore: reviewSummary.averageRating,
+        fraudFlags: listing?.fraud_flags_count || 0,
+        paymentHistoryCount: trustSnapshot?.paymentHistoryCount || 0,
+      }),
+    [
+      listing?.fraud_flags_count,
+      organization?.verified,
+      reviewSummary.averageRating,
+      trustSnapshot?.paymentHistoryCount,
+      trustSnapshot?.publicDocumentCount,
+    ]
+  );
+  const agencyTrustScore = useMemo(
+    () =>
+      calculateAgencyTrustScore({
         organizationVerified: organization?.verified,
         documentCount: trustSnapshot?.publicDocumentCount || 0,
         reviewScore: reviewSummary.averageRating,
@@ -1916,6 +1934,16 @@ export function PropertyDetail() {
                   <div className="flex items-center gap-2">
                     <Shield className="w-5 h-5 text-primary" />
                     <h3 className="font-semibold">Why this listing scores the way it does</h3>
+                  </div>
+                  <div className="mt-5 rounded-2xl border border-primary/15 bg-primary/5 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium">Agency Trust Score</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{agencyTrustScore.label}</p>
+                      </div>
+                      <span className="text-3xl font-semibold text-primary">{agencyTrustScore.score}</span>
+                    </div>
+                    <p className="mt-3 text-xs text-muted-foreground">{agencyTrustScore.disclosure}</p>
                   </div>
                   <div className="mt-5 grid gap-3">
                     {trustExplanationSignals.map((signal) => (
