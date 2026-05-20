@@ -366,28 +366,11 @@ export function Home() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-6 text-[#191919] md:bg-[#f7f4f2] md:px-6 md:py-12">
+      <section className="bg-[#f7f4f2] px-4 py-6 text-[#191919] md:px-6 md:py-12">
         <div className="mx-auto max-w-7xl">
-          <div className="relative mx-auto min-h-[100svh] w-full overflow-hidden bg-white md:min-h-0 md:rounded-[2rem] md:border md:border-black/5 md:p-8 md:shadow-2xl md:shadow-black/10">
+          <div className="relative mx-auto min-h-[100svh] w-full overflow-hidden bg-transparent md:min-h-0">
             <div className="px-0 pb-24 pt-0 md:pb-0">
-              <div className="flex items-center justify-between">
-                <Link to="/" className="flex items-center gap-2">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
-                    <HomeIcon className="h-4 w-4" />
-                  </span>
-                  <span className="text-sm font-semibold">BaytMiftah</span>
-                </Link>
-                <Link
-                  to="/search"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white shadow-sm"
-                  aria-label="Open filters"
-                  title="Open filters"
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                </Link>
-              </div>
-
-              <div className="mt-5 flex items-center gap-3">
+              <div className="flex items-center gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-border bg-white px-4 py-3 shadow-sm">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
                   <input
@@ -466,12 +449,12 @@ export function Home() {
                   See all
                 </Link>
               </div>
-              <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-4 md:gap-5 md:overflow-visible md:px-0">
+              <div className="-mx-4 mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-4 md:mx-0 md:gap-5 md:px-0">
                 {mobileShowcaseProperties.map((property) => (
                   <Link
                     key={property.id}
                     to={String(property.id).startsWith("showcase-") ? "/search" : `/property/${property.id}`}
-                    className="min-w-[168px] overflow-hidden rounded-2xl border border-border bg-white shadow-sm md:min-w-0"
+                    className="min-w-[168px] snap-start overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl md:min-w-[300px] lg:min-w-[320px]"
                   >
                     <div className="relative h-28 overflow-hidden md:h-44">
                       <img src={property.image} alt={property.title} className="h-full w-full object-cover" />
