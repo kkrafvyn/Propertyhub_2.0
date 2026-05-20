@@ -14,8 +14,8 @@ import {
   MessageSquareQuote,
   Radio,
   Star,
+  Menu,
 } from "lucide-react";
-import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Card } from "../components/ui/Card";
@@ -36,6 +36,54 @@ import {
 } from "../../lib/public-discovery.service";
 import { toast } from "sonner";
 import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
+
+const heroPropertySlides = [
+  {
+    eyebrow: "Unlock Life's Best Spaces",
+    title: "Find Your Perfect Property in Ghana",
+    description: "Discover verified rentals, homes, commercials, warehouses, car parks, and more.",
+    image:
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1600&q=85&auto=format&fit=crop",
+    alt: "Luxury modern home at night with warm lights and outdoor seating",
+    query: "/search?listingType=sale&propertyType=house",
+  },
+  {
+    eyebrow: "Verified City Rentals",
+    title: "Live Close to Work, School, and Everything",
+    description: "Explore apartments with trusted agencies, smart access readiness, and location signals.",
+    image:
+      "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=1600&q=85&auto=format&fit=crop",
+    alt: "Modern apartment living room with warm interior lighting",
+    query: "/search?listingType=rental&propertyType=apartment",
+  },
+  {
+    eyebrow: "Commercial Spaces",
+    title: "Offices, Shops, and Warehouses Built for Growth",
+    description: "Find verified commercial inventory for teams, retail, storage, and logistics.",
+    image:
+      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1600&q=85&auto=format&fit=crop",
+    alt: "Premium modern office space with desks and large windows",
+    query: "/search?listingType=lease&propertyType=office",
+  },
+  {
+    eyebrow: "Smart Property Access",
+    title: "Book Viewings with Safer Access Controls",
+    description: "IoT-ready listings can support timed entry codes after agency approval.",
+    image:
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1600&q=85&auto=format&fit=crop",
+    alt: "Beautiful building entryway with secure door and warm exterior lights",
+    query: "/search?amenities=smart-access",
+  },
+  {
+    eyebrow: "Diaspora Buyer Ready",
+    title: "Track Ghana Deals from Anywhere",
+    description: "Saved searches, verified agencies, receipts, reviews, and deal rooms stay in one place.",
+    image:
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1600&q=85&auto=format&fit=crop",
+    alt: "Contemporary home with glass facade and landscaped garden",
+    query: "/search?listingType=sale",
+  },
+];
 
 function getCategoryIcon(category: string) {
   switch (category) {
@@ -66,6 +114,8 @@ export function Home() {
   const [verifiedAgencies, setVerifiedAgencies] = useState<any[]>([]);
   const [reviewPreview, setReviewPreview] = useState<PublicVendorReview[]>([]);
   const [mobileSnapshot, setMobileSnapshot] = useState<MobileExperienceSnapshot | null>(null);
+  const [activeHeroIndex, setActiveHeroIndex] = useState(0);
+  const [heroMenuOpen, setHeroMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const listPropertyPath = `${WORKSPACE_ENTRY_PATH}?next=new`;
@@ -74,6 +124,14 @@ export function Home() {
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveHeroIndex((index) => (index + 1) % heroPropertySlides.length);
+    }, 6500);
+
+    return () => window.clearInterval(timer);
   }, []);
 
   const loadData = async () => {
@@ -111,6 +169,19 @@ export function Home() {
     });
     navigate(`/search?${params.toString()}`);
   };
+
+  const activeHeroSlide = heroPropertySlides[activeHeroIndex];
+  const heroMenuItems = [
+    { label: "For Rent", to: "/search" },
+    { label: "For Sale", to: "/search?listingType=sale" },
+    { label: "For Lease", to: "/search?listingType=lease" },
+    { label: "Agencies", to: "/agencies" },
+    { label: "Area Guides", to: "/guides" },
+    { label: "Trends", to: "/market-trends" },
+    { label: "Reviews", to: "/reviews" },
+    { label: "Get App", to: "/get-the-app" },
+    { label: "List Property", to: listPropertyPath },
+  ];
 
   const discoveryLinks = [
     {
@@ -171,116 +242,194 @@ export function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar transparent />
-
-      {/* Hero Section */}
-      <section className="relative flex min-h-[560px] items-center justify-center overflow-hidden py-24 sm:h-[600px] sm:py-0">
-        <div className="absolute inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1920&q=80"
-            alt="Hero background"
-            className="w-full h-full object-cover"
+      <section className="relative min-h-[100svh] overflow-hidden bg-[#090d17] text-white">
+        {heroPropertySlides.map((slide, index) => (
+          <motion.img
+            key={slide.title}
+            src={slide.image}
+            alt={slide.alt}
+            initial={false}
+            animate={{
+              opacity: index === activeHeroIndex ? 1 : 0,
+              scale: index === activeHeroIndex ? 1 : 1.04,
+            }}
+            transition={{ duration: 0.9, ease: "easeOut" }}
+            className="absolute inset-0 h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/30" />
-        </div>
+        ))}
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(4,8,17,0.72)_0%,rgba(6,9,16,0.36)_34%,rgba(5,8,14,0.42)_54%,rgba(5,8,14,0.96)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(255,43,92,0.22),transparent_22%),linear-gradient(90deg,rgba(3,7,14,0.78),rgba(3,7,14,0.22)_52%,rgba(3,7,14,0.72))]" />
 
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mb-6 text-4xl font-semibold text-white sm:text-5xl md:text-6xl"
-          >
-            Find Your Perfect Property in Ghana
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="mb-10 text-lg text-white/90 sm:text-xl"
-          >
-            Discover live rental, sale, lease, and commercial inventory with verified teams,
-            location signals, and buyer tools built into the marketplace.
-          </motion.p>
-
-          {/* Search Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mx-auto max-w-4xl rounded-[1.75rem] border border-white/20 bg-white/95 p-3 shadow-2xl backdrop-blur"
-          >
-            <div className="flex min-w-0 flex-col gap-2 md:flex-row">
-              <div className="flex gap-2 overflow-x-auto px-2 py-1">
-                <button
-                  onClick={() => setSearchType("rental")}
-                  className={`px-4 py-2 rounded-lg transition-all ${
-                    searchType === "rental"
-                      ? "bg-primary text-white"
-                      : "text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  Rent
-                </button>
-                <button
-                  onClick={() => setSearchType("sale")}
-                  className={`px-4 py-2 rounded-lg transition-all ${
-                    searchType === "sale"
-                      ? "bg-primary text-white"
-                      : "text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  Buy
-                </button>
-                <button
-                  onClick={() => setSearchType("lease")}
-                  className={`px-4 py-2 rounded-lg transition-all ${
-                    searchType === "lease"
-                      ? "bg-primary text-white"
-                      : "text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  Lease
-                </button>
-              </div>
-              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-secondary px-4 py-2">
-                <MapPin className="w-5 h-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Location, address, or neighborhood"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="bg-transparent border-0 outline-none placeholder-muted-foreground"
-                />
-              </div>
-              <Button
-                onClick={handleSearch}
-                size="lg"
-                className="px-8"
+        <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-7xl flex-col px-5 pb-8 pt-5 sm:px-8 lg:px-10">
+          <header className="flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/30">
+                <HomeIcon className="h-5 w-5 text-white" />
+              </span>
+              <span className="text-sm font-semibold sm:text-base">BaytMiftah</span>
+            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/login"
+                className="hidden rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20 sm:inline-flex"
               >
-                <Search className="w-5 h-5 mr-2" />
-                Search
-              </Button>
+                Log In
+              </Link>
+              <div className="relative">
+                <button
+                  type="button"
+                  className="rounded-full p-2 text-white/90 transition hover:bg-white/10"
+                  aria-label={heroMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                  title={heroMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                  aria-expanded={heroMenuOpen}
+                  onClick={() => setHeroMenuOpen((open) => !open)}
+                >
+                  <Menu className="h-6 w-6" />
+                </button>
+                {heroMenuOpen && (
+                  <div className="absolute right-0 top-full mt-3 w-56 overflow-hidden rounded-3xl border border-white/15 bg-[#101522]/95 p-2 text-white shadow-2xl shadow-black/40 backdrop-blur-xl">
+                    {heroMenuItems.map((item) => (
+                      <Link
+                        key={item.label}
+                        to={item.to}
+                        onClick={() => setHeroMenuOpen(false)}
+                        className="block rounded-2xl px-4 py-3 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            {popularLocations.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2 px-1">
-                {popularLocations.slice(0, 4).map((location) => (
-                  <button
-                    key={location.label}
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery(location.label);
-                      navigate(`/search?q=${encodeURIComponent(location.label)}&listingType=${searchType}`);
-                    }}
-                    className="rounded-full border border-border bg-secondary/70 px-3 py-1.5 text-sm text-foreground transition-colors hover:border-primary/25 hover:bg-primary/5"
-                  >
-                    {location.label}
-                  </button>
+          </header>
+
+          <div className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.62fr)]">
+            <motion.div
+              key={activeHeroSlide.title}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, ease: "easeOut" }}
+              className="max-w-2xl"
+            >
+              <p className="mb-5 flex items-center gap-2 text-xs font-semibold text-white/80 sm:text-sm">
+                <span className="h-0.5 w-4 rounded-full bg-primary" />
+                <span>
+                  {activeHeroSlide.eyebrow.split("Best Spaces")[0]}
+                  {activeHeroSlide.eyebrow.includes("Best Spaces") ? (
+                    <span className="text-primary">Best Spaces</span>
+                  ) : null}
+                </span>
+              </p>
+              <h1 className="max-w-xl text-4xl font-semibold leading-[1.08] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
+                {activeHeroSlide.title}
+              </h1>
+              <p className="mt-5 max-w-lg text-base leading-7 text-white/78 sm:text-lg">
+                {activeHeroSlide.description}
+              </p>
+
+              <div className="mt-7 grid max-w-xl grid-cols-3 gap-3">
+                {[
+                  { icon: Shield, label: "Verified", detail: "Listings" },
+                  { icon: MapPin, label: "Smart", detail: "Location Signals" },
+                  { icon: HomeIcon, label: "Secure", detail: "& Trusted" },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-2 rounded-2xl bg-black/20 p-2 backdrop-blur-sm">
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/25">
+                      <item.icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 text-[0.64rem] font-semibold leading-tight text-white sm:text-xs">
+                      {item.label}
+                      <br />
+                      <span className="text-white/70">{item.detail}</span>
+                    </span>
+                  </div>
                 ))}
               </div>
-            )}
-          </motion.div>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link to={activeHeroSlide.query}>
+                  <Button size="lg" className="w-full rounded-full px-7 sm:w-auto">
+                    Explore Properties
+                  </Button>
+                </Link>
+                <Link to={listPropertyPath}>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full rounded-full border-white/25 bg-white/10 px-7 text-white hover:bg-white/20 sm:w-auto"
+                  >
+                    List Property
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
+
+            <div className="hidden rounded-[2.25rem] border border-white/15 bg-white/10 p-4 shadow-2xl shadow-black/25 backdrop-blur-xl lg:block">
+              <div className="rounded-[1.75rem] bg-black/25 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/50">
+                  Quick Search
+                </p>
+                <div className="mt-4 flex gap-2">
+                  {[
+                    ["rental", "Rent"],
+                    ["sale", "Buy"],
+                    ["lease", "Lease"],
+                  ].map(([value, label]) => (
+                    <button
+                      key={value}
+                      onClick={() => setSearchType(value as "rental" | "sale" | "lease")}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        searchType === value
+                          ? "bg-primary text-white"
+                          : "bg-white/10 text-white/70 hover:bg-white/20"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-4 rounded-2xl bg-white/95 p-2 text-foreground">
+                  <div className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2">
+                    <MapPin className="h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Location, address, or neighborhood"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                      className="border-0 bg-transparent py-2 focus:ring-0"
+                    />
+                  </div>
+                  <Button onClick={handleSearch} className="mt-2 w-full rounded-xl" size="lg">
+                    <Search className="mr-2 h-5 w-5" />
+                    Search Ghana
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-auto">
+            <div className="mx-auto flex w-full max-w-[min(100%,34rem)] items-center justify-between rounded-full bg-black/18 px-2 py-2 backdrop-blur-sm sm:mx-0">
+              <div className="flex items-center gap-1.5 px-2">
+                {heroPropertySlides.map((slide, index) => (
+                  <button
+                    key={slide.title}
+                    type="button"
+                    onClick={() => setActiveHeroIndex(index)}
+                    className={`h-1.5 rounded-full transition-all ${
+                      index === activeHeroIndex ? "w-6 bg-primary" : "w-1.5 bg-white/40 hover:bg-white/80"
+                    }`}
+                    aria-label={`Show property slide ${index + 1}`}
+                  />
+                ))}
+              </div>
+              <p className="px-2 text-[0.68rem] font-semibold tracking-[0.18em] text-white">
+                {String(activeHeroIndex + 1).padStart(2, "0")} / {String(heroPropertySlides.length).padStart(2, "0")}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
