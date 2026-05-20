@@ -366,29 +366,11 @@ export function Home() {
         </div>
       </section>
 
-      <section className="bg-[#f7f4f2] px-0 py-0 text-[#191919] md:px-6 md:py-12">
-        <div className="mx-auto max-w-7xl md:grid md:grid-cols-[minmax(0,0.9fr)_minmax(320px,390px)] md:items-center md:gap-10">
-          <div className="hidden md:block">
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-primary">
-              Scroll discovery
-            </p>
-            <h2 className="mt-4 max-w-xl text-5xl font-semibold leading-tight tracking-[-0.05em]">
-              A mobile-first marketplace right after the cinematic intro.
-            </h2>
-            <p className="mt-5 max-w-lg text-lg leading-8 text-muted-foreground">
-              Buyers can search, switch between rent/buy/lease, browse categories, compare featured
-              homes, meet agents, and jump back into recently viewed properties without feeling lost.
-            </p>
-          </div>
-
-          <div className="relative mx-auto min-h-[100svh] w-full max-w-[430px] overflow-hidden bg-white shadow-2xl shadow-black/10 md:min-h-[820px] md:rounded-[2.25rem] md:border md:border-black/5">
-            <div className="px-5 pb-24 pt-4">
-              <div className="flex items-center justify-between text-xs font-semibold">
-                <span>20:23</span>
-                <span>LTE</span>
-              </div>
-
-              <div className="mt-6 flex items-center justify-between">
+      <section className="bg-white px-4 py-6 text-[#191919] md:bg-[#f7f4f2] md:px-6 md:py-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="relative mx-auto min-h-[100svh] w-full overflow-hidden bg-white md:min-h-0 md:rounded-[2rem] md:border md:border-black/5 md:p-8 md:shadow-2xl md:shadow-black/10">
+            <div className="px-0 pb-24 pt-0 md:pb-0">
+              <div className="flex items-center justify-between">
                 <Link to="/" className="flex items-center gap-2">
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
                     <HomeIcon className="h-4 w-4" />
@@ -464,12 +446,12 @@ export function Home() {
                   See all
                 </Link>
               </div>
-              <div className="-mx-5 mt-3 flex gap-3 overflow-x-auto px-5 pb-2">
+              <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-5 md:gap-4 md:overflow-visible md:px-0">
                 {mobileHomeCategories.map((category) => (
                   <Link
                     key={category.label}
                     to={category.href}
-                    className="min-w-[86px] rounded-2xl border border-primary/10 bg-primary/5 p-3 text-center"
+                    className="min-w-[86px] rounded-2xl border border-primary/10 bg-primary/5 p-3 text-center md:min-w-0 md:p-4"
                   >
                     <category.icon className="mx-auto h-7 w-7 text-primary" />
                     <p className="mt-2 text-xs font-semibold">{category.label}</p>
@@ -484,14 +466,14 @@ export function Home() {
                   See all
                 </Link>
               </div>
-              <div className="-mx-5 mt-3 flex gap-3 overflow-x-auto px-5 pb-2">
+              <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-4 md:gap-5 md:overflow-visible md:px-0">
                 {mobileShowcaseProperties.map((property) => (
                   <Link
                     key={property.id}
                     to={String(property.id).startsWith("showcase-") ? "/search" : `/property/${property.id}`}
-                    className="min-w-[168px] overflow-hidden rounded-2xl border border-border bg-white shadow-sm"
+                    className="min-w-[168px] overflow-hidden rounded-2xl border border-border bg-white shadow-sm md:min-w-0"
                   >
-                    <div className="relative h-28 overflow-hidden">
+                    <div className="relative h-28 overflow-hidden md:h-44">
                       <img src={property.image} alt={property.title} className="h-full w-full object-cover" />
                       <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-primary">
                         <Heart className="h-3.5 w-3.5" />
@@ -532,12 +514,12 @@ export function Home() {
                   See all
                 </Link>
               </div>
-              <div className="-mx-5 mt-3 flex gap-3 overflow-x-auto px-5 pb-2">
+              <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-4 md:gap-5 md:overflow-visible md:px-0">
                 {homeAgentPreview.map((agent) => (
                   <Link
                     key={agent.name}
                     to="/agencies"
-                    className="min-w-[116px] rounded-2xl border border-border bg-white p-3 text-center shadow-sm"
+                    className="min-w-[116px] rounded-2xl border border-border bg-white p-3 text-center shadow-sm md:min-w-0 md:p-5"
                   >
                     <img
                       src={agent.image}
@@ -559,12 +541,12 @@ export function Home() {
                   See all
                 </Link>
               </div>
-              <div className="-mx-5 mt-3 flex gap-3 overflow-x-auto px-5 pb-3">
+              <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-3 md:mx-0 md:grid md:grid-cols-4 md:gap-5 md:overflow-visible md:px-0">
                 {recentlyViewedPreview.map((property) => (
                   <Link
                     key={`recent-${property.id}`}
                     to="/search"
-                    className="relative h-20 min-w-[118px] overflow-hidden rounded-2xl bg-foreground"
+                    className="relative h-20 min-w-[118px] overflow-hidden rounded-2xl bg-foreground md:h-36 md:min-w-0"
                   >
                     <img src={property.image} alt={property.title} className="h-full w-full object-cover opacity-90" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
@@ -579,7 +561,7 @@ export function Home() {
               </div>
             </div>
 
-            <div className="sticky bottom-0 left-0 z-40 grid w-full grid-cols-4 border-t border-border bg-white/95 px-4 pb-3 pt-2 shadow-[0_-16px_40px_rgba(15,23,42,0.08)] backdrop-blur md:absolute md:bottom-0 md:left-0 md:right-0 md:rounded-b-[2.25rem]">
+            <div className="sticky bottom-0 left-0 z-40 grid w-full grid-cols-4 border-t border-border bg-white/95 px-4 pb-3 pt-2 shadow-[0_-16px_40px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
               {[
                 { label: "Home", icon: HomeIcon, to: "/" },
                 { label: "Saved", icon: Heart, to: "/app" },
