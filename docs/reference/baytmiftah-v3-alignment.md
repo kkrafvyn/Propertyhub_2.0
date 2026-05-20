@@ -16,7 +16,7 @@ The current codebase already contains a large portion of the operational platfor
 | A. Authentication and Accounts | Phase 1 complete | Email auth, password reset, protected routes, 2FA verification, workspace RBAC, current session visibility, MFA status, and global remote logout are in place. |
 | B. Organization Enrollment and SaaS Billing | Phase 1 complete | Organization onboarding, tier selection, Paystack subscription checkout, activation gating, invoices/history, grace/suspension states, and billing recovery screens are wired. |
 | C. Agent Enrollment and Team Management | Phase 1 complete | Email invites, invite acceptance, role changes, roster, removal, pending invitations, and subscription seat-limit enforcement are implemented. |
-| D. Listing Management | Phase 2 complete | Workspace listing creation, editing, media, visibility/status control, archive workflow, duplicate detection, and active listing cap enforcement are implemented. Phase 3 document gates remain separate. |
+| D. Listing Management | Phase 2 complete | Workspace listing creation, editing, media, visibility/status control, archive workflow, duplicate detection, active listing cap enforcement, and expanded property classes for warehouses, car parks, and office complexes are implemented. Phase 3 document gates remain separate. |
 | E. Lead and Inquiry Management | Phase 2 complete | Public inquiries, auto-assignment, manager reassignment, lead status, internal workflow notes, lead timelines, reminders, and source tracking are covered in the workspace flow. |
 | F. Viewing Workflow | Phase 2 complete | Viewing requests, approval/rejection, calendar, confirmations, status/outcome logging, rescheduling state, reminders infrastructure, and no-show tracking are implemented. |
 | G. Messaging System | Phase 2 complete | Supabase-backed message threads, shared inboxes, unread state, organization assignment/takeover, notifications, and thread history are wired. |
@@ -66,7 +66,12 @@ An owner, agency, or landlord opens a property in the workspace, selects connect
 | --- | --- |
 | Smart lock | Temporary unlock, recurring tenant access, revoke immediately. |
 | Gate access | Temporary entry code or remote open permission. |
+| Parking gate | Temporary car park entry code, capacity-controlled parking access, or remote open permission. |
+| Dock door | Time-limited warehouse loading bay or service entry access. |
+| Warehouse sensor | Vacancy, door, loading bay, or environmental status metadata. |
+| Occupancy counter | Read-only parking, office, or shared-space capacity signal. |
 | Smart meter | Read-only meter readings for tenant, landlord, or agency. |
+| CCTV link | Metadata/link record only in MVP. Avoid storing camera feeds on BaytMiftah servers unless legal review approves more. |
 | Camera | Avoid live camera control in MVP. Only allow access status, install record, or admin audit metadata unless legal review approves more. |
 | Utility switch | Post-MVP. High risk because it can affect habitability and safety. |
 | Intercom | Post-MVP. Useful but provider-specific. |
@@ -116,6 +121,8 @@ Tables to add when IoT moves into implementation:
 - `property_iot_access_grants`: who can access which property/devices, when, and why.
 - `property_iot_access_events`: immutable event log for grants, revokes, device actions, provider errors, and expiries.
 - `property_iot_access_requests`: optional workflow for a user, agent, or vendor to request access before approval.
+
+Implemented category coverage: apartments, houses, offices, commercial spaces, warehouses, car parks, office complexes, and land parcels.
 
 Important RLS rules:
 

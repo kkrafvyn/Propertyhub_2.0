@@ -50,6 +50,9 @@ export function WorkspaceSettings({
     paystackTransferRecipientCode: (organization as any).paystack_transfer_recipient_code || "",
     stripeConnectAccountId: (organization as any).stripe_connect_account_id || "",
     flutterwaveSubaccountId: (organization as any).flutterwave_subaccount_id || "",
+    flutterwaveBeneficiaryId: (organization as any).flutterwave_beneficiary_id || "",
+    flutterwaveAccountBank: (organization as any).flutterwave_account_bank || "",
+    flutterwaveAccountNumber: (organization as any).flutterwave_account_number || "",
     paymentSetupStatus: (organization as any).payment_setup_status || "not_started",
     payoutSetupNotes: (organization as any).payout_setup_notes || "",
   });
@@ -67,6 +70,9 @@ export function WorkspaceSettings({
       paystackTransferRecipientCode: (organization as any).paystack_transfer_recipient_code || "",
       stripeConnectAccountId: (organization as any).stripe_connect_account_id || "",
       flutterwaveSubaccountId: (organization as any).flutterwave_subaccount_id || "",
+      flutterwaveBeneficiaryId: (organization as any).flutterwave_beneficiary_id || "",
+      flutterwaveAccountBank: (organization as any).flutterwave_account_bank || "",
+      flutterwaveAccountNumber: (organization as any).flutterwave_account_number || "",
       paymentSetupStatus: (organization as any).payment_setup_status || "not_started",
       payoutSetupNotes: (organization as any).payout_setup_notes || "",
     });
@@ -144,6 +150,10 @@ export function WorkspaceSettings({
         paystack_transfer_recipient_code: form.paystackTransferRecipientCode.trim() || null,
         stripe_connect_account_id: form.stripeConnectAccountId.trim() || null,
         flutterwave_subaccount_id: form.flutterwaveSubaccountId.trim() || null,
+        flutterwave_beneficiary_id: form.flutterwaveBeneficiaryId.trim() || null,
+        flutterwave_transfer_beneficiary_id: form.flutterwaveBeneficiaryId.trim() || null,
+        flutterwave_account_bank: form.flutterwaveAccountBank.trim() || null,
+        flutterwave_account_number: form.flutterwaveAccountNumber.trim() || null,
         payment_setup_status: form.paymentSetupStatus,
         payout_setup_notes: form.payoutSetupNotes.trim() || null,
       } as any);
@@ -325,7 +335,28 @@ export function WorkspaceSettings({
               value={form.flutterwaveSubaccountId}
               onChange={(event) => updateField("flutterwaveSubaccountId", event.target.value)}
               disabled={!canManageSettings}
-              placeholder="Reserved for Nigeria expansion"
+              placeholder="Optional split or wallet subaccount ID"
+            />
+            <Input
+              label="Flutterwave Beneficiary ID"
+              value={form.flutterwaveBeneficiaryId}
+              onChange={(event) => updateField("flutterwaveBeneficiaryId", event.target.value)}
+              disabled={!canManageSettings}
+              placeholder="Optional saved beneficiary ID"
+            />
+            <Input
+              label="Flutterwave Bank Code"
+              value={form.flutterwaveAccountBank}
+              onChange={(event) => updateField("flutterwaveAccountBank", event.target.value)}
+              disabled={!canManageSettings}
+              placeholder="e.g. bank code from Flutterwave"
+            />
+            <Input
+              label="Flutterwave Account Number"
+              value={form.flutterwaveAccountNumber}
+              onChange={(event) => updateField("flutterwaveAccountNumber", event.target.value)}
+              disabled={!canManageSettings}
+              placeholder="Payout account number"
             />
             <div>
               <label className="block mb-2 text-sm text-foreground">Payout Setup Status</label>

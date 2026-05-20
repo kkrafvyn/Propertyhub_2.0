@@ -11,16 +11,27 @@ import {
   Settings,
   Shield,
   ShieldAlert,
+  Rocket,
   UserCheck,
   Users,
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
+import { EscrowMilestoneTimeline } from "../../components/escrow/EscrowMilestoneTimeline";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
 import { fraudDetectionService } from "../../../lib/fraud-detection.service";
+import {
+  canProviderGoLive,
+  LAUNCH_WORKSTREAM_LABELS,
+  launchReadinessService,
+  summarizeLaunchReadiness,
+  type ExternalProviderReadiness,
+  type LaunchReadinessItem,
+  type LaunchStatus,
+} from "../../../lib/launch-readiness.service";
 import {
   platformAdminService,
   type AdminEscrowRow,
@@ -39,6 +50,7 @@ type AdminSection =
   | "listings"
   | "escrow"
   | "moderation"
+  | "launch"
   | "settings";
 
 const navItems: Array<{
@@ -53,6 +65,7 @@ const navItems: Array<{
   { key: "listings", label: "Listings", href: "/admin/listings", icon: FileText },
   { key: "escrow", label: "Escrow", href: "/admin/escrow", icon: Wallet },
   { key: "moderation", label: "Moderation", href: "/admin/moderation", icon: AlertTriangle },
+  { key: "launch", label: "Launch Readiness", href: "/admin/launch", icon: Rocket },
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -82,6 +95,22 @@ function getStatusVariant(status: string) {
       return "secondary";
     case "dismissed":
       return "outline";
+    default:
+      return "outline";
+  }
+}
+
+function getLaunchStatusVariant(status: LaunchStatus) {
+  switch (status) {
+    case "approved":
+    case "live":
+      return "default";
+    case "blocked":
+    case "rejected":
+      return "destructive";
+    case "in_progress":
+    case "ready_for_review":
+      return "secondary";
     default:
       return "outline";
   }
@@ -146,9 +175,15 @@ export function AdminLayout() {
     refunded: 0,
     heldValueMinor: 0,
   });
+  const [readinessItems, setReadinessItems] = useState<LaunchReadinessItem[]>([]);
+  const [providerReadiness, setProviderReadiness] = useState<ExternalProviderReadiness[]>([]);
 
   const queueCount = triageAlerts.length + reviewCases.length;
   const canManagePlatform = currentAdmin?.role === "admin" || currentAdmin?.role === "support";
+  const readinessSummary = useMemo(
+    () => summarizeLaunchReadiness(readinessItems),
+    [readinessItems]
+  );
 
   const loadAdminState = async () => {
     try {
@@ -166,6 +201,8 @@ export function AdminLayout() {
         setAdminRoster([]);
         setBillingEvents([]);
         setEscrowQueue([]);
+        setReadinessItems([]);
+        setProviderReadiness([]);
         return;
       }
 
@@ -178,6 +215,8 @@ export function AdminLayout() {
         nextUserQueue,
         nextAdminSettings,
         nextEscrowQueue,
+        nextReadinessItems,
+        nextProviderReadiness,
       ] = await Promise.all([
         fraudDetectionService.getModerationOverview(),
         fraudDetectionService.getReviewCases("active", 12),
@@ -187,6 +226,8 @@ export function AdminLayout() {
         platformAdminService.getUserQueue(),
         platformAdminService.getAdminSettings(),
         platformAdminService.getEscrowQueue(),
+        launchReadinessService.getReadinessItems().catch(() => []),
+        launchReadinessService.getProviderReadiness().catch(() => []),
       ]);
 
       setOverview(nextOverview);
@@ -202,6 +243,8 @@ export function AdminLayout() {
       setBillingEvents(nextAdminSettings.billingEvents);
       setEscrowQueue(nextEscrowQueue.escrows);
       setEscrowMetrics(nextEscrowQueue.metrics);
+      setReadinessItems(nextReadinessItems);
+      setProviderReadiness(nextProviderReadiness);
     } catch (error) {
       console.error("Failed to load admin console:", error);
       toast.error("Unable to load the latest admin signals right now.");
@@ -400,9 +443,61 @@ export function AdminLayout() {
       });
       toast.success(
         resolution === "release_to_organization"
-          ? "Escrow release started through Paystack transfer."
-          : "Escrow refund started through Paystack."
+          ? "Escrow release started through the configured payment gateway."
+          : "Escrow refund started through the configured payment gateway."
       );
+    });
+  };
+
+  const handleReadinessStatus = async (item: LaunchReadinessItem, status: LaunchStatus) => {
+    if (!user || !canManagePlatform) return;
+
+    const note =
+      status === "blocked" || status === "rejected"
+        ? window.prompt("Add a short blocker or rejection note:") || undefined
+        : undefined;
+
+    await runAction(`readiness:${item.id}:${status}`, async () => {
+      await launchReadinessService.updateReadinessStatus({
+        itemId: item.id,
+        status,
+        reviewedBy: user.id,
+        metadata: {
+          ...item.metadata,
+          admin_note: note,
+          updated_from: "admin_launch_readiness",
+        },
+      });
+      toast.success(`Readiness item moved to ${status.replaceAll("_", " ")}.`);
+    });
+  };
+
+  const handleReadinessEvidence = async (item: LaunchReadinessItem) => {
+    if (!user || !canManagePlatform) return;
+
+    const title = window.prompt("Evidence title:");
+    if (!title?.trim()) {
+      toast.error("Evidence title is required.");
+      return;
+    }
+
+    const summary = window.prompt("Short evidence summary:") || undefined;
+    const externalUrl = window.prompt("Evidence link or dashboard URL (optional):") || undefined;
+
+    await runAction(`readiness:${item.id}:evidence`, async () => {
+      await launchReadinessService.submitEvidence({
+        readinessItemId: item.id,
+        submittedBy: user.id,
+        evidenceType: "other",
+        title: title.trim(),
+        summary,
+        externalUrl,
+        metadata: {
+          workstream: item.workstream,
+          submitted_from: "admin_launch_readiness",
+        },
+      });
+      toast.success("Launch readiness evidence attached.");
     });
   };
 
@@ -1009,9 +1104,9 @@ export function AdminLayout() {
       <Card className="p-6 bg-white">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-semibold">Paystack Escrow Control</h2>
+            <h2 className="text-xl font-semibold">Escrow Control</h2>
             <p className="text-sm text-muted-foreground">
-              Review document gates, resolve disputes, and trigger Paystack release or refund actions.
+              Review document gates, resolve disputes, and trigger payment gateway release or refund actions.
             </p>
           </div>
           <Badge variant={escrowMetrics.disputed ? "destructive" : "outline"}>
@@ -1027,6 +1122,9 @@ export function AdminLayout() {
           ) : (
             escrowQueue.map((escrow) => {
               const documents = Array.isArray(escrow.documents) ? escrow.documents : [];
+              const conditionReports = Array.isArray(escrow.condition_reports)
+                ? escrow.condition_reports
+                : [];
               const isWorking = workingId?.startsWith(`escrow:${escrow.id}:`);
               const location = [
                 escrow.listing?.property?.address,
@@ -1112,6 +1210,28 @@ export function AdminLayout() {
                           ))
                         )}
                       </div>
+
+                      <EscrowMilestoneTimeline
+                        milestones={escrow.milestones || []}
+                        title="Trust timeline"
+                        description="Support can review which checkpoints are still open before release or refund."
+                        compact
+                      />
+
+                      {conditionReports.length > 0 ? (
+                        <div className="space-y-2 rounded-xl border border-border bg-secondary/20 p-3">
+                          <p className="text-sm font-medium text-foreground">Condition reports</p>
+                          {conditionReports.map((report) => (
+                            <div key={report.id} className="text-sm text-muted-foreground">
+                              <span className="font-medium text-foreground">
+                                {String(report.submitted_role || "report").replaceAll("_", " ")}
+                              </span>
+                              {": "}
+                              {report.notes}
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="flex flex-wrap gap-2 xl:max-w-sm xl:justify-end">
@@ -1223,6 +1343,216 @@ export function AdminLayout() {
       </Card>
     </div>
   );
+
+  const renderLaunchReadiness = () => {
+    const providerLiveCount = providerReadiness.filter((provider) => canProviderGoLive(provider)).length;
+    const orderedWorkstreams = Object.entries(LAUNCH_WORKSTREAM_LABELS);
+
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          <Card className="p-6 bg-white">
+            <p className="text-sm text-muted-foreground">Ready Items</p>
+            <p className="mt-2 text-3xl font-semibold">{readinessSummary.percentReady}%</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {readinessSummary.ready}/{readinessSummary.total} approved or live
+            </p>
+          </Card>
+          <Card className="p-6 bg-white">
+            <p className="text-sm text-muted-foreground">Critical Blockers</p>
+            <p className="mt-2 text-3xl font-semibold">{readinessSummary.criticalBlocked}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Critical items still blocked or not started</p>
+          </Card>
+          <Card className="p-6 bg-white">
+            <p className="text-sm text-muted-foreground">In Progress</p>
+            <p className="mt-2 text-3xl font-semibold">{readinessSummary.inProgress}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Workstreams moving toward review</p>
+          </Card>
+          <Card className="p-6 bg-white">
+            <p className="text-sm text-muted-foreground">Providers Go-Live Ready</p>
+            <p className="mt-2 text-3xl font-semibold">{providerLiveCount}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{providerReadiness.length} providers tracked</p>
+          </Card>
+        </div>
+
+        <Card className="p-6 bg-white">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Launch Workstreams</h2>
+              <p className="text-sm text-muted-foreground">
+                Sensitive features stay gated here until evidence, legal review, provider setup, and operational
+                runbooks are approved.
+              </p>
+            </div>
+            <Badge variant={readinessSummary.criticalBlocked ? "destructive" : "default"}>
+              {readinessSummary.criticalBlocked ? "Launch blockers remain" : "No critical blockers"}
+            </Badge>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            {orderedWorkstreams.map(([workstream, label]) => {
+              const items = readinessSummary.byWorkstream[workstream as keyof typeof LAUNCH_WORKSTREAM_LABELS] || [];
+              const readyCount = items.filter((item) => ["approved", "live"].includes(item.status)).length;
+
+              return (
+                <div key={workstream} className="rounded-2xl border border-border p-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="font-semibold">{label}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {readyCount}/{items.length || 0} items approved or live
+                      </p>
+                    </div>
+                    <Badge variant={readyCount === items.length && items.length > 0 ? "default" : "outline"}>
+                      {items.length || 0} tracked
+                    </Badge>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {items.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+                        No readiness items seeded for this workstream yet.
+                      </div>
+                    ) : (
+                      items.slice(0, 3).map((item) => {
+                        const isWorking = workingId?.startsWith(`readiness:${item.id}:`);
+
+                        return (
+                          <div key={item.id} className="rounded-xl border border-border bg-secondary/20 p-4">
+                            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="font-medium">{item.title}</p>
+                                  <Badge variant={getPriorityVariant(item.priority)}>
+                                    {item.priority}
+                                  </Badge>
+                                  <Badge variant={getLaunchStatusVariant(item.status)}>
+                                    {item.status.replaceAll("_", " ")}
+                                  </Badge>
+                                </div>
+                                <p className="mt-2 text-sm text-muted-foreground">
+                                  {item.description || "No description attached yet."}
+                                </p>
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                  Owner: {item.owner_team || "Unassigned"} · Updated {formatTimestamp(item.updated_at)}
+                                </p>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2 md:justify-end">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => void handleReadinessStatus(item, "in_progress")}
+                                  disabled={isWorking || !canManagePlatform}
+                                >
+                                  Start
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => void handleReadinessStatus(item, "ready_for_review")}
+                                  disabled={isWorking || !canManagePlatform}
+                                >
+                                  Review
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => void handleReadinessStatus(item, "approved")}
+                                  disabled={isWorking || !canManagePlatform}
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => void handleReadinessEvidence(item)}
+                                  disabled={isWorking || !canManagePlatform}
+                                >
+                                  Add Evidence
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => void handleReadinessStatus(item, "blocked")}
+                                  disabled={isWorking || !canManagePlatform}
+                                >
+                                  Block
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+        <Card className="p-6 bg-white">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">External Provider Readiness</h2>
+              <p className="text-sm text-muted-foreground">
+                Payment, SMS, identity, registry, hyperlocal, AI, fraud, and IoT providers must prove secrets,
+                webhooks, sandbox evidence, and approval before live use.
+              </p>
+            </div>
+            <Badge variant="outline">{providerReadiness.length} providers</Badge>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            {providerReadiness.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground lg:col-span-2">
+                No provider readiness rows are visible yet. Run the launch-readiness migration seed before production activation.
+              </div>
+            ) : (
+              providerReadiness.map((provider) => {
+                const canGoLive = canProviderGoLive(provider);
+
+                return (
+                  <div key={provider.id} className="rounded-2xl border border-border p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="font-semibold">{provider.display_name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {provider.provider_category.replaceAll("_", " ")} · {provider.environment}
+                        </p>
+                      </div>
+                      <Badge variant={canGoLive ? "default" : "outline"}>
+                        {canGoLive ? "Go-live ready" : provider.status.replaceAll("_", " ")}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+                      <div className="rounded-xl bg-secondary/30 p-3">
+                        Secret: {provider.has_live_secret ? "present" : "missing"}
+                      </div>
+                      <div className="rounded-xl bg-secondary/30 p-3">
+                        Webhook: {provider.webhook_configured ? "configured" : "pending"}
+                      </div>
+                      <div className="rounded-xl bg-secondary/30 p-3">
+                        Sandbox: {provider.sandbox_verified_at ? "verified" : "pending"}
+                      </div>
+                      <div className="rounded-xl bg-secondary/30 p-3">
+                        Fallback: {provider.fallback_provider_key || "none"}
+                      </div>
+                    </div>
+
+                    {provider.notes ? (
+                      <p className="mt-3 text-sm text-muted-foreground">{provider.notes}</p>
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </Card>
+      </div>
+    );
+  };
 
   const renderAuditFeed = () => (
     <Card className="p-6 bg-white">
@@ -1342,6 +1672,10 @@ export function AdminLayout() {
       return renderUserQueue();
     }
 
+    if (currentSection === "launch") {
+      return renderLaunchReadiness();
+    }
+
     if (currentSection === "settings") {
       return renderAdminSettings();
     }
@@ -1356,15 +1690,19 @@ export function AdminLayout() {
         ? "Moderation & Trust"
         : currentSection === "escrow"
           ? "Escrow Control"
+        : currentSection === "launch"
+          ? "Launch Readiness"
         : `${currentSection.charAt(0).toUpperCase()}${currentSection.slice(1)}`;
 
   const sectionDescription =
     currentSection === "moderation"
       ? "Triage fraud alerts, assign investigators, escalate cases, and keep a clean audit trail."
       : currentSection === "escrow"
-        ? "Resolve Paystack escrow document gates, disputes, releases, and refunds."
+        ? "Resolve escrow document gates, disputes, releases, and refunds across configured gateways."
       : currentSection === "users"
         ? "Manage account verification, suspension, and platform admin visibility."
+        : currentSection === "launch"
+          ? "Control legal, provider, data-source, AI, IoT, SMS, fraud, and payout readiness before production launch."
         : currentSection === "settings"
           ? "Review admin access controls and recent billing/admin events."
       : "Monitor operational health, trust signals, and moderation volume across BaytMiftah.";

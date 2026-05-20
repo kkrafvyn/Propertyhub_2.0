@@ -6,10 +6,22 @@ type SmartAccessProvider = "ttlock" | "yale" | "tuya" | "manual";
 type SmartDeviceType =
   | "smart_lock"
   | "gate_access"
+  | "parking_gate"
+  | "dock_door"
   | "smart_meter"
   | "door_sensor"
   | "motion_sensor"
-  | "energy_monitor";
+  | "energy_monitor"
+  | "warehouse_sensor"
+  | "occupancy_counter"
+  | "cctv_link";
+
+const ACCESS_CAPABLE_DEVICE_TYPES: SmartDeviceType[] = [
+  "smart_lock",
+  "gate_access",
+  "parking_gate",
+  "dock_door",
+];
 
 async function sha256Hex(payload: Record<string, unknown>) {
   const encoded = new TextEncoder().encode(JSON.stringify(payload));
@@ -68,14 +80,86 @@ async function manageSmartAccess<T = any>(body: Record<string, unknown>) {
 }
 
 export const smartAccessService = {
+  async getOrganizationProviderConnections(organizationId: string) {
+    const { data, error } = await db
+      .from("property_iot_provider_connections")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .order("updated_at", { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async createProviderConnection(input: {
+    organizationId: string;
+    provider: SmartAccessProvider;
+    displayName: string;
+    providerAccountReference?: string | null;
+    status?: "configured" | "needs_attention" | "disabled";
+    createdBy?: string | null;
+  }) {
+    const { data, error } = await db
+      .from("property_iot_provider_connections")
+      .insert({
+        organization_id: input.organizationId,
+        provider: input.provider,
+        display_name: input.displayName,
+        provider_account_reference: input.providerAccountReference || null,
+        status: input.status || "configured",
+        created_by: input.createdBy || null,
+        metadata: {
+          source: "workspace_smart_access",
+        },
+      })
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async updateProviderConnection(
+    connectionId: string,
+    updates: {
+      status?: "configured" | "needs_attention" | "disabled";
+      providerAccountReference?: string | null;
+      lastHealthCheckAt?: string | null;
+      metadata?: Record<string, unknown>;
+    }
+  ) {
+    const { data, error } = await db
+      .from("property_iot_provider_connections")
+      .update({
+        status: updates.status,
+        provider_account_reference: updates.providerAccountReference,
+        last_health_check_at: updates.lastHealthCheckAt,
+        metadata: updates.metadata,
+      })
+      .eq("id", connectionId)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
   async getOrganizationDevices(organizationId: string) {
     const { data, error } = await db
       .from("property_iot_devices")
       .select(
         `
         *,
-        property:properties(id, address, city, region),
-        listing:listings(id, price, currency, listing_type)
+        property:properties(id, address, city, region, category),
+        listing:listings(id, price, currency, listing_type),
+        provider_connection:property_iot_provider_connections(
+          id,
+          provider,
+          display_name,
+          status,
+          provider_account_reference,
+          last_health_check_at
+        )
       `
       )
       .eq("organization_id", organizationId)
@@ -89,6 +173,7 @@ export const smartAccessService = {
     organizationId: string;
     propertyId: string;
     listingId?: string | null;
+    providerConnectionId?: string | null;
     provider: SmartAccessProvider;
     deviceType: SmartDeviceType;
     displayName: string;
@@ -103,6 +188,7 @@ export const smartAccessService = {
         organization_id: input.organizationId,
         property_id: input.propertyId,
         listing_id: input.listingId || null,
+        provider_connection_id: input.providerConnectionId || null,
         provider: input.provider,
         device_type: input.deviceType,
         display_name: input.displayName,
@@ -130,11 +216,51 @@ export const smartAccessService = {
         property:properties(id, address, city, region),
         listing:listings(id, price, currency, listing_type),
         viewing:property_viewings(id, status, requested_datetime, confirmed_datetime),
-        granted_to:users!property_iot_access_grants_granted_to_user_id_fkey(id, full_name, email)
+        granted_to:users!property_iot_access_grants_granted_to_user_id_fkey(id, full_name, email),
+        events:property_iot_access_events(id, event_type, event_payload, event_hash, created_at)
       `
       )
       .eq("organization_id", organizationId)
       .order("starts_at", { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getOrganizationAccessEvents(organizationId: string, limit = 40) {
+    const { data, error } = await db
+      .from("property_iot_access_events")
+      .select(
+        `
+        *,
+        property:properties(id, address, city, region),
+        actor:users!property_iot_access_events_actor_user_id_fkey(id, full_name, email),
+        grant:property_iot_access_grants(id, status, access_reason, starts_at, ends_at)
+      `
+      )
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getOrganizationCommandEvents(organizationId: string, limit = 40) {
+    const { data, error } = await db
+      .from("property_iot_command_events")
+      .select(
+        `
+        *,
+        actor:users!property_iot_command_events_actor_user_id_fkey(id, full_name, email),
+        property:properties(id, address, city, region),
+        device:property_iot_devices(id, display_name, device_type),
+        grant:property_iot_access_grants(id, status, access_reason, starts_at, ends_at)
+      `
+      )
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
 
     if (error) throw error;
     return data || [];
@@ -148,7 +274,8 @@ export const smartAccessService = {
         *,
         property:properties(id, address, city, region),
         listing:listings(id, price, currency, listing_type),
-        organization:organizations(id, name, slug)
+        organization:organizations(id, name, slug),
+        events:property_iot_access_events(id, event_type, event_payload, event_hash, created_at)
       `
       )
       .eq("granted_to_user_id", userId)
@@ -156,6 +283,33 @@ export const smartAccessService = {
 
     if (error) throw error;
     return data || [];
+  },
+
+  async getUserAccessEvents(userId: string, limit = 24) {
+    const grants = await this.getUserAccessGrants(userId);
+
+    return grants
+      .flatMap((grant: any) =>
+        (Array.isArray(grant.events) ? grant.events : []).map((event: any) => ({
+          ...event,
+          grant: {
+            id: grant.id,
+            status: grant.status,
+            access_reason: grant.access_reason,
+            access_scope: grant.access_scope,
+            starts_at: grant.starts_at,
+            ends_at: grant.ends_at,
+          },
+          property: grant.property,
+          listing: grant.listing,
+          organization: grant.organization,
+        }))
+      )
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      )
+      .slice(0, limit);
   },
 
   async createAccessGrant(input: {
@@ -259,7 +413,7 @@ export const smartAccessService = {
       .select("id, device_type, status")
       .eq("organization_id", viewing.organization_id)
       .eq("property_id", viewing.property_id)
-      .in("device_type", ["smart_lock", "gate_access"])
+      .in("device_type", ACCESS_CAPABLE_DEVICE_TYPES)
       .neq("status", "disabled");
 
     if (deviceError) throw deviceError;

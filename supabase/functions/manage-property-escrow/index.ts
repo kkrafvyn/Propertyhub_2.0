@@ -32,7 +32,17 @@ async function getEscrow(admin: any, escrowId: string) {
       `
       *,
       transaction:property_transactions(*),
-      organization:organizations(paystack_transfer_recipient_code, stripe_connect_account_id, escrow_release_account_label)
+      organization:organizations(
+        name,
+        paystack_transfer_recipient_code,
+        stripe_connect_account_id,
+        flutterwave_subaccount_id,
+        flutterwave_beneficiary_id,
+        flutterwave_transfer_beneficiary_id,
+        flutterwave_account_bank,
+        flutterwave_account_number,
+        escrow_release_account_label
+      )
     `
     )
     .eq("id", escrowId)
@@ -445,6 +455,9 @@ async function releaseEscrow(admin: any, userId: string, escrow: any, note?: str
         transfer.provider === "paystack" ? transfer.transferCode || null : escrow.paystack_transfer_code,
       stripe_transfer_id:
         transfer.provider === "stripe" ? transfer.transferCode || transfer.reference : escrow.stripe_transfer_id,
+      processor_transfer_provider: transfer.provider,
+      processor_transfer_reference: transfer.reference || transferReference,
+      processor_transfer_code: transfer.transferCode || null,
       metadata: {
         ...(escrow.metadata || {}),
         escrowRelease: transfer.raw,
@@ -537,6 +550,8 @@ async function refundEscrow(admin: any, userId: string, escrow: any, reason: str
         refund.provider === "paystack" ? refund.refundReference || null : escrow.paystack_refund_reference,
       stripe_refund_id:
         refund.provider === "stripe" ? refund.refundId || refund.refundReference : escrow.stripe_refund_id,
+      processor_refund_provider: refund.provider,
+      processor_refund_reference: refund.refundReference || refund.refundId || null,
       metadata: {
         ...(escrow.metadata || {}),
         escrowRefund: refund.raw,

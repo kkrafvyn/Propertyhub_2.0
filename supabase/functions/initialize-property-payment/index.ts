@@ -1,5 +1,7 @@
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import {
+  getPaymentGatewayFallbackOrder,
+  getPaymentGatewayLabel,
   normalizePaymentGatewayProvider,
   type PaymentGatewayProvider,
 } from "../_shared/payment-gateways.ts";
@@ -50,6 +52,10 @@ function buildCallbackUrl(req: Request, reference: string) {
   return callbackUrl.toString();
 }
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Payment gateway initialization failed";
+}
+
 function getCaseTypeFromListingType(listingType?: string) {
   switch (listingType) {
     case "sale":
@@ -88,6 +94,10 @@ Deno.serve(async (req) => {
     const customerName =
       typeof requestBody?.customerName === "string" ? requestBody.customerName.trim() : "";
     const provider = normalizePaymentGatewayProvider(requestBody?.provider);
+    const fallbackProviders = Array.isArray(requestBody?.fallbackProviders)
+      ? requestBody.fallbackProviders.map((item: unknown) => normalizePaymentGatewayProvider(item))
+      : undefined;
+    const allowGatewayFallback = requestBody?.allowGatewayFallback !== false;
 
     if (!listingId) {
       throw new HttpError(400, "listingId is required");
@@ -126,8 +136,6 @@ Deno.serve(async (req) => {
       throw new HttpError(400, "Authenticated user is missing an email address");
     }
 
-    const reference = buildReference(provider);
-    const callbackUrl = buildCallbackUrl(req, reference);
     let resolvedDealCaseId = dealCaseId;
 
     if (resolvedDealCaseId) {
@@ -207,7 +215,18 @@ Deno.serve(async (req) => {
     }
 
     const currency = listing.currency || "GHS";
-    const metadata = {
+    const providerOrder = getPaymentGatewayFallbackOrder({
+      primaryProvider: provider,
+      currency,
+      fallbackProviders,
+      enableFallback: allowGatewayFallback,
+    });
+    const failedAttempts: Array<{
+      provider: PaymentGatewayProvider;
+      reference: string;
+      error: string;
+    }> = [];
+    const baseMetadata = {
       listingId: listing.id,
       propertyId: listing.property_id,
       organizationId: listing.organization_id,
@@ -216,73 +235,121 @@ Deno.serve(async (req) => {
       purpose,
       customerPhone,
       customerName,
-      gatewayProvider: provider,
+      requestedGatewayProvider: provider,
+      gatewayFallbackEnabled: allowGatewayFallback,
+      gatewayFallbackOrder: providerOrder,
     };
 
-    const { data: propertyTransaction, error: propertyTransactionError } = await admin
-      .from("property_transactions")
-      .insert({
-        listing_id: listing.id,
-        property_id: listing.property_id,
-        organization_id: listing.organization_id,
-        deal_case_id: resolvedDealCaseId,
-        payer_user_id: user.id,
-        provider,
-        provider_reference: reference,
-        amount_minor: amountMinor,
-        currency,
-        purpose,
-        status: "initialized",
-        metadata,
-      })
-      .select("*")
-      .single();
+    for (const [attemptIndex, attemptProvider] of providerOrder.entries()) {
+      const reference = buildReference(attemptProvider);
+      const callbackUrl = buildCallbackUrl(req, reference);
+      const metadata = {
+        ...baseMetadata,
+        gatewayProvider: attemptProvider,
+        gatewayAttemptIndex: attemptIndex,
+      };
 
-    if (propertyTransactionError) {
-      throw new HttpError(500, propertyTransactionError.message);
+      const { data: propertyTransaction, error: propertyTransactionError } = await admin
+        .from("property_transactions")
+        .insert({
+          listing_id: listing.id,
+          property_id: listing.property_id,
+          organization_id: listing.organization_id,
+          deal_case_id: resolvedDealCaseId,
+          payer_user_id: user.id,
+          provider: attemptProvider,
+          provider_reference: reference,
+          amount_minor: amountMinor,
+          currency,
+          purpose,
+          status: "initialized",
+          metadata,
+        })
+        .select("*")
+        .single();
+
+      if (propertyTransactionError) {
+        throw new HttpError(500, propertyTransactionError.message);
+      }
+
+      let gateway: Awaited<ReturnType<typeof initiateEscrow>>;
+
+      try {
+        gateway = await initiateEscrow({
+          provider: attemptProvider,
+          amountMinor,
+          email: user.email,
+          currency,
+          reference,
+          callbackUrl,
+          customerName,
+          customerPhone,
+          description: `${purpose.replace(/_/g, " ")} for BaytMiftah property ${listing.id}`,
+          metadata,
+        });
+      } catch (gatewayError) {
+        const errorMessage = getErrorMessage(gatewayError);
+        failedAttempts.push({
+          provider: attemptProvider,
+          reference,
+          error: errorMessage,
+        });
+
+        await admin
+          .from("property_transactions")
+          .update({
+            status: "failed",
+            metadata: {
+              ...metadata,
+              gatewayInitializeError: errorMessage,
+              gatewayFailedAt: new Date().toISOString(),
+            },
+          })
+          .eq("id", propertyTransaction.id);
+
+        continue;
+      }
+
+      const { data: updatedTransaction, error: updatedTransactionError } = await admin
+        .from("property_transactions")
+        .update({
+          status: "pending",
+          authorization_url: gateway.authorizationUrl,
+          access_code: gateway.accessCode || null,
+          provider_transaction_id: gateway.providerTransactionId || null,
+          metadata: {
+            ...metadata,
+            gatewayInitialize: gateway.raw,
+            gatewayFallbackAttempts: failedAttempts,
+          },
+        })
+        .eq("id", propertyTransaction.id)
+        .select("*")
+        .single();
+
+      if (updatedTransactionError) {
+        throw new HttpError(500, updatedTransactionError.message);
+      }
+
+      return jsonResponse(200, {
+        transaction: updatedTransaction,
+        authorizationUrl: gateway.authorizationUrl,
+        accessCode: gateway.accessCode || null,
+        reference: gateway.reference,
+        provider: attemptProvider,
+        requestedProvider: provider,
+        fallbackAttempted: attemptIndex > 0,
+        fallbackAttempts: failedAttempts,
+        callbackUrl,
+      });
     }
 
-    const gateway = await initiateEscrow({
-      provider,
-      amountMinor,
-      email: user.email,
-      currency,
-      reference,
-      callbackUrl,
-      customerName,
-      customerPhone,
-      description: `${purpose.replace(/_/g, " ")} for BaytMiftah property ${listing.id}`,
-      metadata,
-    });
-
-    const { data: updatedTransaction, error: updatedTransactionError } = await admin
-      .from("property_transactions")
-      .update({
-        status: "pending",
-        authorization_url: gateway.authorizationUrl,
-        access_code: gateway.accessCode || null,
-        provider_transaction_id: gateway.providerTransactionId || null,
-        metadata: {
-          ...metadata,
-          gatewayInitialize: gateway.raw,
-        },
-      })
-      .eq("id", propertyTransaction.id)
-      .select("*")
-      .single();
-
-    if (updatedTransactionError) {
-      throw new HttpError(500, updatedTransactionError.message);
-    }
-
-    return jsonResponse(200, {
-      transaction: updatedTransaction,
-      authorizationUrl: gateway.authorizationUrl,
-      accessCode: gateway.accessCode || null,
-      reference: gateway.reference,
-      provider,
-      callbackUrl,
-    });
+    throw new HttpError(
+      502,
+      providerOrder.length > 1
+        ? "Unable to start checkout with any configured payment gateway. Try again shortly or choose another payment option."
+        : `Unable to start ${getPaymentGatewayLabel(provider)} checkout right now.`
+    );
   } catch (error) {
     if (error instanceof HttpError) {
       return jsonResponse(error.status, { error: error.message });

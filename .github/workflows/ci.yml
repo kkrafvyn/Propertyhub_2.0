@@ -1,0 +1,68 @@
+name: BaytMiftah CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - "codex/**"
+      - "feature/**"
+      - "release/**"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: baytmiftah-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qa:
+    name: Typecheck, Test, Build, Browser QA, Release Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_SUPABASE_URL: https://example.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: ci_publishable_key
+      VITE_PUBLIC_APP_URL: http://localhost:5173
+      PUBLIC_APP_URL: http://localhost:5173
+      VITE_PAYSTACK_PUBLIC_KEY: pk_test_ci
+      VITE_STRIPE_PUBLISHABLE_KEY: pk_test_ci
+      WEB_PUSH_PUBLIC_KEY: ci_web_push_public_key
+      WEB_PUSH_CONTACT_EMAIL: support@baytmiftah.com
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Playwright browser install
+        run: npx playwright install --with-deps chromium
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit and component tests
+        run: npm run test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Browser smoke tests
+        run: npm run test:e2e
+
+      - name: Release readiness
+        run: npm run release:check
+
+      - name: High severity dependency audit
+        run: npm audit --audit-level=high

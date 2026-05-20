@@ -21,6 +21,10 @@ export interface SubscriptionTier {
   stripe_price_id_usd?: string | null;
   stripe_price_id_gbp?: string | null;
   stripe_price_id_eur?: string | null;
+  flutterwave_plan_id_ghs?: string | null;
+  flutterwave_plan_id_usd?: string | null;
+  flutterwave_plan_id_gbp?: string | null;
+  flutterwave_plan_id_eur?: string | null;
   feature_summary: string[];
   is_active: boolean;
   sort_order: number;
@@ -32,7 +36,7 @@ export interface OrganizationSubscription {
   tier_id: string;
   pending_tier_id: string | null;
   pending_tier_effective_at: string | null;
-  provider: "paystack" | "stripe" | string;
+  provider: "paystack" | "stripe" | "flutterwave" | string;
   status: SubscriptionStatus;
   authorization_url: string | null;
   provider_reference: string | null;
@@ -322,7 +326,7 @@ export const subscriptionService = {
       propertyTypesHandled?: string[];
     };
     tierId: string;
-    provider?: "paystack" | "stripe";
+    provider?: "paystack" | "stripe" | "flutterwave";
     currency?: "GHS" | "USD" | "GBP" | "EUR";
   }) {
     const { data, error } = await supabase.functions.invoke(
@@ -341,6 +345,14 @@ export const subscriptionService = {
       accessCode: string | null;
       reference: string;
       callbackUrl: string;
+      provider?: "paystack" | "stripe" | "flutterwave" | string;
+      requestedProvider?: "paystack" | "stripe" | "flutterwave" | string;
+      fallbackAttempted?: boolean;
+      fallbackAttempts?: Array<{
+        provider: string;
+        ready: boolean;
+        missing: string | null;
+      }>;
     };
   },
 

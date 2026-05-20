@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Navbar } from "../../components/Navbar";
+import { EscrowMilestoneTimeline } from "../../components/escrow/EscrowMilestoneTimeline";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
@@ -793,7 +794,7 @@ export function UserDashboard() {
         escrowId: escrow.id,
       });
       await refreshUserPayments();
-      toast.success("Escrow release started through Paystack.");
+      toast.success("Escrow release started through the configured payment gateway.");
     } catch (error) {
       console.error("Failed to confirm escrow release:", error);
       toast.error("We couldn't release that escrow right now.");
@@ -804,7 +805,7 @@ export function UserDashboard() {
 
   const handleCancelEscrow = async (escrow: any) => {
     const confirmed = window.confirm(
-      "Cancel this escrow and request a Paystack refund within the active cancellation window?"
+      "Cancel this escrow and request a gateway refund within the active cancellation window?"
     );
     if (!confirmed) return;
 
@@ -1334,6 +1335,15 @@ export function UserDashboard() {
                         </div>
                       ) : null}
 
+                      <div className="mt-4">
+                        <EscrowMilestoneTimeline
+                          milestones={escrow.milestones}
+                          title="Your release timeline"
+                          description="See the trust checkpoints tied to this protected payment."
+                          compact
+                        />
+                      </div>
+
                       {conditionReports.length > 0 ? (
                         <div className="mt-4 rounded-xl border border-border bg-white p-3">
                           <p className="font-medium text-foreground">Condition reports</p>
@@ -1525,46 +1535,73 @@ export function UserDashboard() {
 
     return (
       <div className="space-y-4">
-        {smartAccessGrants.map((grant) => (
-          <Card key={grant.id} className="p-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-semibold text-lg">
-                    {grant.property?.address || "Smart property access"}
-                  </h3>
-                  <Badge variant={grant.status === "active" ? "default" : "secondary"}>
-                    {formatPaymentStatusLabel(grant.status)}
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {grant.organization?.name || "Property team"} -{" "}
-                  {grant.property?.city || "Ghana"}
-                </p>
-                <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                  <span>Reason: {formatPaymentStatusLabel(grant.access_reason)}</span>
-                  <span>Scope: {formatPaymentStatusLabel(grant.access_scope)}</span>
-                  <span>
-                    Starts {formatViewingTime(grant.starts_at)}
-                  </span>
-                  <span>
-                    Ends {formatViewingTime(grant.ends_at)}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {grant.access_code_hint ||
-                    "The property team will send the final access code once the device provider sync completes."}
-                </p>
-              </div>
+        {smartAccessGrants.map((grant) => {
+          const grantEvents = Array.isArray(grant.events)
+            ? [...grant.events].sort(
+                (a: any, b: any) =>
+                  new Date(b.created_at || 0).getTime() -
+                  new Date(a.created_at || 0).getTime()
+              )
+            : [];
 
-              {grant.listing?.id ? (
-                <Link to={`/property/${grant.listing.id}`}>
-                  <Button variant="outline">View Listing</Button>
-                </Link>
-              ) : null}
-            </div>
-          </Card>
-        ))}
+          return (
+              <Card key={grant.id} className="p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-semibold text-lg">
+                        {grant.property?.address || "Smart property access"}
+                      </h3>
+                      <Badge variant={grant.status === "active" ? "default" : "secondary"}>
+                        {formatPaymentStatusLabel(grant.status)}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {grant.organization?.name || "Property team"} -{" "}
+                      {grant.property?.city || "Ghana"}
+                    </p>
+                    <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                      <span>Reason: {formatPaymentStatusLabel(grant.access_reason)}</span>
+                      <span>Scope: {formatPaymentStatusLabel(grant.access_scope)}</span>
+                      <span>
+                        Starts {formatViewingTime(grant.starts_at)}
+                      </span>
+                      <span>
+                        Ends {formatViewingTime(grant.ends_at)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {grant.access_code_hint ||
+                        "The property team will send the final access code once the device provider sync completes."}
+                    </p>
+
+                    {grantEvents.length > 0 ? (
+                      <div className="rounded-xl border border-border bg-secondary/20 p-3">
+                        <p className="font-medium text-foreground">Recent access log</p>
+                        <div className="mt-3 space-y-2">
+                          {grantEvents.slice(0, 3).map((event: any) => (
+                            <div key={event.id} className="text-sm text-muted-foreground">
+                              <span className="font-medium text-foreground">
+                                {formatPaymentStatusLabel(event.event_type)}
+                              </span>
+                              {" / "}
+                              {formatRelativeTime(event.created_at)}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {grant.listing?.id ? (
+                    <Link to={`/property/${grant.listing.id}`}>
+                      <Button variant="outline">View Listing</Button>
+                    </Link>
+                  ) : null}
+                </div>
+              </Card>
+          );
+        })}
       </div>
     );
   };
@@ -2274,15 +2311,31 @@ export function UserDashboard() {
 
       return (
         <div className="mobile-dashboard-stack">
-          {smartAccessGrants.map((grant) => (
-            <article key={grant.id} className="mobile-dashboard-card">
-              <span>{formatPaymentStatusLabel(grant.status)}</span>
-              <strong>{grant.property?.address || "Smart property access"}</strong>
-              <p>
-                {formatViewingTime(grant.starts_at)} to {formatViewingTime(grant.ends_at)}
-              </p>
-            </article>
-          ))}
+          {smartAccessGrants.map((grant) => {
+            const latestEvent = Array.isArray(grant.events)
+              ? [...grant.events].sort(
+                  (a: any, b: any) =>
+                    new Date(b.created_at || 0).getTime() -
+                    new Date(a.created_at || 0).getTime()
+                )[0]
+              : null;
+
+            return (
+              <article key={grant.id} className="mobile-dashboard-card">
+                <span>{formatPaymentStatusLabel(grant.status)}</span>
+                <strong>{grant.property?.address || "Smart property access"}</strong>
+                <p>
+                  {formatViewingTime(grant.starts_at)} to {formatViewingTime(grant.ends_at)}
+                </p>
+                {latestEvent ? (
+                  <p>
+                    {formatPaymentStatusLabel(latestEvent.event_type)} /{" "}
+                    {formatRelativeTime(latestEvent.created_at)}
+                  </p>
+                ) : null}
+              </article>
+            );
+          })}
         </div>
       );
     }

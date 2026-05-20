@@ -1,14 +1,22 @@
 import { sha256Hex } from "../_shared/cryptographic-audit.ts";
 import { HttpError, jsonResponse } from "../_shared/http.ts";
 import {
+  reconcileFlutterwaveOrganizationSubscriptionPayment,
   reconcileOrganizationSubscriptionPayment,
   reconcilePaystackSubscriptionCreated,
   reconcilePaystackSubscriptionDisabled,
   reconcilePaystackSubscriptionFailure,
 } from "../_shared/organization-subscription-reconciliation.ts";
-import { reconcilePaystackPayment } from "../_shared/payment-reconciliation.ts";
+import {
+  reconcilePaystackPayment,
+  reconcilePropertyPayment,
+} from "../_shared/payment-reconciliation.ts";
 import { reconcilePaystackRefundWebhook } from "../_shared/refund-reconciliation.ts";
 import { verifyPaystackTransaction, verifyPaystackWebhookSignature } from "../_shared/paystack.ts";
+import {
+  verifyFlutterwaveWebhookSignature,
+  verifyGatewayTransaction,
+} from "../_shared/payment-gateways.ts";
 import {
   reconcileStripeCheckoutSession,
   reconcileStripeInvoiceFailed,
@@ -204,6 +212,74 @@ async function handleStripeEvent(event: { id?: string; type?: string; data?: { o
   return { received: true, ignored: true, event: eventType };
 }
 
+async function handleFlutterwaveEvent(event: {
+  event?: string;
+  data?: {
+    tx_ref?: string;
+    reference?: string;
+    status?: string;
+  };
+}) {
+  const reference = (event.data?.tx_ref || event.data?.reference || "").trim();
+  const status = (event.data?.status || "").toLowerCase();
+  const eventName = (event.event || "charge.completed").toLowerCase();
+
+  if (!reference) {
+    throw new HttpError(400, "Webhook payload is missing a transaction reference");
+  }
+
+  if (eventName && !eventName.includes("charge")) {
+    return {
+      received: true,
+      ignored: true,
+      event: event.event || "unknown",
+    };
+  }
+
+  if (status && !["successful", "success"].includes(status)) {
+    return {
+      received: true,
+      ignored: true,
+      event: event.event || "charge.completed",
+      status,
+    };
+  }
+
+  const verifiedTransaction = await verifyGatewayTransaction("flutterwave", reference);
+  const subscriptionResult = await reconcileFlutterwaveOrganizationSubscriptionPayment({
+    reference,
+    verifiedTransaction,
+    source: "webhook",
+  });
+
+  if (subscriptionResult) {
+    return {
+      received: true,
+      event: event.event || "charge.completed",
+      subscriptionId: subscriptionResult.subscription?.id || null,
+      paymentId: subscriptionResult.payment.id,
+      alreadyProcessed: subscriptionResult.alreadyProcessed,
+      paymentType: "organization_subscription",
+    };
+  }
+
+  const result = await reconcilePropertyPayment({
+    provider: "flutterwave",
+    reference,
+    verifiedTransaction,
+    source: "webhook",
+  });
+
+  return {
+    received: true,
+    event: event.event || "charge.completed",
+    transactionId: result.transaction.id,
+    receiptId: result.receipt?.id || null,
+    alreadyProcessed: result.alreadyProcessed,
+    paymentType: "property_payment",
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return jsonResponse(200, { ok: true });
@@ -220,6 +296,7 @@ Deno.serve(async (req) => {
     const rawBody = await req.text();
     const paystackSignature = req.headers.get("x-paystack-signature");
     const stripeSignature = req.headers.get("stripe-signature");
+    const flutterwaveSignature = req.headers.get("verif-hash");
 
     if (paystackSignature) {
       const isValidSignature = await verifyPaystackWebhookSignature(rawBody, paystackSignature);
@@ -270,6 +347,47 @@ Deno.serve(async (req) => {
       }
 
       const processed = await handleStripeEvent(event);
+      await finishWebhookEvent({
+        admin,
+        id: webhookRow.id,
+        status: (processed as any).ignored ? "ignored" : "processed",
+        processedPayload: processed,
+      });
+      return jsonResponse(200, processed);
+    }
+
+    if (flutterwaveSignature) {
+      if (!verifyFlutterwaveWebhookSignature(flutterwaveSignature)) {
+        throw new HttpError(401, "Invalid Flutterwave webhook signature");
+      }
+
+      const event = JSON.parse(rawBody) as {
+        event?: string;
+        data?: {
+          tx_ref?: string;
+          reference?: string;
+          status?: string;
+        };
+      };
+      const providerEventId =
+        event.data?.tx_ref ||
+        event.data?.reference ||
+        `${event.event || "unknown"}:${await sha256Hex(rawBody)}`;
+      const idempotency = await beginWebhookEvent({
+        admin,
+        provider: "flutterwave",
+        providerEventId,
+        eventType: event.event || "unknown",
+        signatureVerified: true,
+        rawPayload: event as Record<string, unknown>,
+      });
+
+      webhookRow = idempotency.row;
+      if (idempotency.alreadyProcessed) {
+        return jsonResponse(200, { received: true, duplicate: true, event: event.event || "unknown" });
+      }
+
+      const processed = await handleFlutterwaveEvent(event);
       await finishWebhookEvent({
         admin,
         id: webhookRow.id,

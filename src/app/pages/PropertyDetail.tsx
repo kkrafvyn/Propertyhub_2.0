@@ -23,18 +23,21 @@ import {
   Video,
   Users,
   AlertTriangle,
+  Star,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { Navbar } from "../components/Navbar";
 import { DiasporaPrice } from "../components/DiasporaPrice";
 import { GhanaRoutePlanner } from "../components/GhanaRoutePlanner";
+import { PropertyMap, type PropertyMapMarker } from "../components/PropertyMap";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { useMobileShell } from "../mobile/MobileShellContext";
 import { useAuth } from "../context/AuthContext";
 import { listingService } from "../../lib/listing.service";
+import { buildPublicMapUrl } from "../../lib/map-provider";
 import { getPropertyCoverImage, getPropertyMediaItems } from "../../lib/property-media";
 import { savedPropertyService } from "../../lib/savedproperty.service";
 import { dealCaseService } from "../../lib/dealcase.service";
@@ -64,6 +67,16 @@ import {
   trackReferralDealCaseCreated,
 } from "../../lib/referral-attribution.service";
 import { trustCenterService } from "../../lib/trust-center.service";
+import { marketplaceReviewService } from "../../lib/marketplace-review.service";
+import {
+  calculateBuyerFinance,
+  buildReviewSummary,
+} from "../../lib/competitive-features.service";
+import {
+  buildCommunityPrompts,
+  buildHumanReviewedFraudSignals,
+  buildTrustExplanationSignals,
+} from "../../lib/competitive-operations.service";
 import {
   buildAiConciergePrompts,
   buildBuyerNegotiationPlan,
@@ -110,6 +123,8 @@ export function PropertyDetail() {
   const [trustLoading, setTrustLoading] = useState(false);
   const [trustSnapshot, setTrustSnapshot] = useState<any | null>(null);
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [contactForm, setContactForm] = useState({
     fullName: user?.user_metadata?.full_name || "",
     email: user?.email || "",
@@ -152,6 +167,11 @@ export function PropertyDetail() {
   const [reportForm, setReportForm] = useState({
     reason: "fake_listing",
     description: "",
+  });
+  const [reviewForm, setReviewForm] = useState({
+    rating: 5,
+    title: "",
+    reviewText: "",
   });
 
   useEffect(() => {
@@ -249,6 +269,30 @@ export function PropertyDetail() {
     };
   }, [listing?.id, listing?.organization_id]);
 
+  useEffect(() => {
+    if (!listing?.id) {
+      setReviews([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    marketplaceReviewService
+      .getApprovedReviewsForListing(listing.id)
+      .then((items) => {
+        if (!cancelled) {
+          setReviews(items);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load listing reviews:", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [listing?.id]);
+
   const property = listing?.property;
   const organization = listing?.organization;
   const mediaItems = getPropertyMediaItems(property);
@@ -264,19 +308,44 @@ export function PropertyDetail() {
   const locationQuery = property
     ? [property.address, property.city, property.region, property.country].filter(Boolean).join(", ")
     : "";
-  const mapEmbedUrl = locationQuery
-    ? `https://www.google.com/maps?q=${encodeURIComponent(locationQuery)}&output=embed`
-    : "";
   const hasPreciseCoordinates =
     typeof property?.latitude === "number" && typeof property?.longitude === "number";
-  const streetViewEmbedUrl = hasPreciseCoordinates
-    ? `https://www.google.com/maps?layer=c&cbll=${property.latitude},${property.longitude}&cbp=11,0,0,0,0&output=svembed`
-    : "";
+  const propertyMapMarkers = useMemo<PropertyMapMarker[]>(
+    () =>
+      hasPreciseCoordinates
+        ? [
+            {
+              id: String(listing?.id || "property"),
+              latitude: Number(property?.latitude),
+              longitude: Number(property?.longitude),
+              label: property?.address || "Property",
+              subtitle: [property?.city, property?.region].filter(Boolean).join(", "),
+              caption: property?.ghana_post_gps
+                ? `GhanaPostGPS ${property.ghana_post_gps}`
+                : "Verified property coordinate",
+              badge: "Listing",
+            },
+          ]
+        : [],
+    [
+      hasPreciseCoordinates,
+      listing?.id,
+      property?.address,
+      property?.city,
+      property?.ghana_post_gps,
+      property?.latitude,
+      property?.longitude,
+      property?.region,
+    ]
+  );
+  const propertyMapUrl = buildPublicMapUrl({
+    latitude: hasPreciseCoordinates ? property?.latitude : undefined,
+    longitude: hasPreciseCoordinates ? property?.longitude : undefined,
+    query: locationQuery,
+  });
   const streetViewOpenUrl = hasPreciseCoordinates
     ? `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${property.latitude},${property.longitude}`
-    : locationQuery
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationQuery)}`
-      : "";
+    : "";
   const listingQualityScore =
     typeof listing?.quality_score === "number" ? Math.round(listing.quality_score) : null;
   const listingVerificationStatus = listing?.verification_status
@@ -336,6 +405,53 @@ export function PropertyDetail() {
         inspectionFee: Number(listing?.inspection_fee_amount || 0),
       }),
     [listing?.inspection_fee_amount, listing?.listing_type, listing?.price]
+  );
+  const buyerFinance = useMemo(
+    () =>
+      calculateBuyerFinance({
+        price: Number(listing?.price || 0),
+        currency: listing?.currency || "GHS",
+        monthlyRentEstimate:
+          listing?.listing_type === "rental" ? Number(listing?.price || 0) : undefined,
+      }),
+    [listing?.currency, listing?.listing_type, listing?.price]
+  );
+  const reviewSummary = useMemo(() => buildReviewSummary({ reviews }), [reviews]);
+  const trustExplanationSignals = useMemo(
+    () =>
+      buildTrustExplanationSignals({
+        organizationVerified: organization?.verified,
+        documentCount: trustSnapshot?.publicDocumentCount || 0,
+        reviewScore: reviewSummary.averageRating,
+        fraudFlags: listing?.fraud_flags_count || 0,
+        paymentHistoryCount: trustSnapshot?.paymentHistoryCount || 0,
+      }),
+    [
+      listing?.fraud_flags_count,
+      organization?.verified,
+      reviewSummary.averageRating,
+      trustSnapshot?.paymentHistoryCount,
+      trustSnapshot?.publicDocumentCount,
+    ]
+  );
+  const communityPrompts = useMemo(
+    () =>
+      buildCommunityPrompts({
+        city: property?.city,
+        region: property?.region,
+        neighborhood: property?.neighborhood,
+      }),
+    [property?.city, property?.neighborhood, property?.region]
+  );
+  const humanReviewedFraudSignals = useMemo(
+    () =>
+      buildHumanReviewedFraudSignals({
+        listingPrice: Number(listing?.price || 0),
+        areaAveragePrice: null,
+        mediaCount: mediaItems.length,
+        organizationVerified: organization?.verified,
+      }),
+    [listing?.price, mediaItems.length, organization?.verified]
   );
   const remoteBuyerReadiness = useMemo(
     () =>
@@ -406,6 +522,25 @@ export function PropertyDetail() {
     return `${property.address}, ${property.city}`;
   }, [property]);
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const encodedShareUrl = encodeURIComponent(shareUrl);
+  const encodedShareTitle = encodeURIComponent(pageTitle);
+  const socialShareLinks = useMemo(
+    () => [
+      {
+        label: "WhatsApp",
+        href: `https://wa.me/?text=${encodedShareTitle}%20${encodedShareUrl}`,
+      },
+      {
+        label: "Facebook",
+        href: `https://www.facebook.com/sharer/sharer.php?u=${encodedShareUrl}`,
+      },
+      {
+        label: "X",
+        href: `https://twitter.com/intent/tweet?text=${encodedShareTitle}&url=${encodedShareUrl}`,
+      },
+    ],
+    [encodedShareTitle, encodedShareUrl]
+  );
   const currentPath = `${location.pathname}${location.search}`;
   const referralContext = useMemo(() => {
     const directContext = {
@@ -754,6 +889,62 @@ export function PropertyDetail() {
     }
   };
 
+  const handleReviewSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!user) {
+      toast.error("Log in to review this property.");
+      navigate("/login", { state: { from: currentPath } });
+      return;
+    }
+
+    if (!reviewForm.reviewText.trim()) {
+      toast.error("Add a short review before submitting.");
+      return;
+    }
+
+    try {
+      setReviewSubmitting(true);
+      await marketplaceReviewService.submitReview({
+        targetType: "listing",
+        reviewerUserId: user.id,
+        rating: reviewForm.rating,
+        title: reviewForm.title,
+        reviewText: reviewForm.reviewText,
+        listingId: listing.id,
+        organizationId: listing.organization_id,
+      });
+      setReviewForm({ rating: 5, title: "", reviewText: "" });
+      toast.success("Review submitted for moderation.");
+      trackListingEvent("listing_review_submitted", { rating: reviewForm.rating });
+    } catch (error) {
+      console.error("Failed to submit review:", error);
+      toast.error("We couldn't submit your review right now.");
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  const handleReviewReport = async (reviewId: string) => {
+    if (!user) {
+      toast.error("Log in to report a review.");
+      navigate("/login", { state: { from: currentPath } });
+      return;
+    }
+
+    try {
+      await marketplaceReviewService.reportReview(
+        reviewId,
+        user.id,
+        "Buyer reported this review for moderation."
+      );
+      toast.success("Review report sent to moderation.");
+    } catch (error) {
+      console.error("Failed to report review:", error);
+      toast.error("We couldn't report this review right now.");
+    }
+  };
+
   const handleSecurePayment = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -988,6 +1179,12 @@ export function PropertyDetail() {
                         Trust {listingQualityScore}
                       </div>
                     )}
+                    {reviewSummary.reviewCount > 0 && (
+                      <div className="bg-secondary px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-primary text-primary" />
+                        {reviewSummary.label}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground mb-4">
                     <MapPin className="w-5 h-5" />
@@ -1027,6 +1224,19 @@ export function PropertyDetail() {
                   <Button variant="outline" size="sm" onClick={toggleSave}>
                     <Heart className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : ""}`} />
                   </Button>
+                </div>
+                <div className="flex flex-wrap gap-2 sm:justify-end">
+                  {socialShareLinks.map((link) => (
+                    <a
+                      key={link.label}
+                      href={link.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold transition-colors hover:border-primary/40 hover:bg-primary/5"
+                    >
+                      {link.label}
+                    </a>
+                  ))}
                 </div>
               </div>
 
@@ -1301,6 +1511,46 @@ export function PropertyDetail() {
             </div>
 
             <div>
+              <h2 className="text-2xl font-semibold mb-4">Finance Snapshot</h2>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {[
+                  {
+                    label: "Estimated mortgage",
+                    value: formatMoney(buyerFinance.monthlyMortgage, buyerFinance.currency),
+                    helper: "Based on 20% down, 12% annual rate, 15-year term.",
+                  },
+                  {
+                    label: "Cash needed",
+                    value: formatMoney(buyerFinance.cashNeeded, buyerFinance.currency),
+                    helper: "Down payment plus estimated closing and review reserve.",
+                  },
+                  {
+                    label: "Rent vs buy",
+                    value:
+                      buyerFinance.rentVsBuyDelta >= 0
+                        ? `${formatMoney(buyerFinance.rentVsBuyDelta, buyerFinance.currency)} more/mo`
+                        : `${formatMoney(Math.abs(buyerFinance.rentVsBuyDelta), buyerFinance.currency)} less/mo`,
+                    helper: "Compares estimated ownership payment against local rent proxy.",
+                  },
+                  {
+                    label: "Investment yield",
+                    value: `${buyerFinance.netYieldPercent.toFixed(1)}% net`,
+                    helper: `${buyerFinance.grossYieldPercent.toFixed(1)}% gross before estimated operating costs.`,
+                  },
+                ].map((item) => (
+                  <Card key={item.label} className="p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 text-xl font-semibold text-primary">{item.value}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">{item.helper}</p>
+                  </Card>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">{buyerFinance.disclaimer}</p>
+            </div>
+
+            <div>
               <h2 className="text-2xl font-semibold mb-4">Verification & Trust</h2>
               <Card className="p-6 bg-primary/5 border-primary/15">
                 <div className="flex items-start gap-3 mb-5">
@@ -1501,40 +1751,33 @@ export function PropertyDetail() {
                 ))}
               </div>
               <Card className="overflow-hidden">
-                {mapEmbedUrl ? (
-                  <>
-                    <iframe
-                      title={`Map for ${pageTitle}`}
-                      src={mapEmbedUrl}
-                      className="w-full h-80 border-0"
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                    />
-                    <div className="p-4 border-t border-border flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <p className="text-sm text-muted-foreground">{locationQuery}</p>
-                      <Button
-                        variant="outline"
-                        onClick={() =>
-                          window.open(
-                            `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationQuery)}`,
-                            "_blank",
-                            "noopener,noreferrer"
-                          )
-                        }
-                      >
-                        <MapPin className="w-4 h-4" />
-                        Open in Maps
-                      </Button>
+                <PropertyMap
+                  markers={propertyMapMarkers}
+                  selectedMarkerId={propertyMapMarkers[0]?.id}
+                  heightClassName="h-80"
+                  className="rounded-none border-0"
+                  emptyStateTitle="Map discovery is live for this listing"
+                  emptyStateDescription="The property can still open on the wider public map, but BaytMiftah needs a verified coordinate before it can pin this exact home."
+                />
+                <div className="border-t border-border p-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{locationQuery || "Location pending"}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {hasPreciseCoordinates
+                          ? "Pinned to a verified coordinate for map-first review."
+                          : "Area-level map handoff is available while the coordinate pin is being verified."}
+                      </p>
                     </div>
-                  </>
-                ) : (
-                  <div className="h-80 bg-secondary flex items-center justify-center">
-                    <div className="text-center text-muted-foreground">
-                      <MapPin className="w-12 h-12 mx-auto mb-2" />
-                      <p>Location details are still being prepared</p>
-                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => window.open(propertyMapUrl, "_blank", "noopener,noreferrer")}
+                    >
+                      <MapPin className="w-4 h-4" />
+                      Open Full Map
+                    </Button>
                   </div>
-                )}
+                </div>
               </Card>
               <GhanaRoutePlanner
                 destinationLat={property.latitude}
@@ -1547,31 +1790,41 @@ export function PropertyDetail() {
                   <div className="p-5 border-b border-border">
                     <div className="flex items-center gap-2">
                       <Navigation className="w-5 h-5 text-primary" />
-                      <h3 className="font-semibold">Street View & Arrival Check</h3>
+                      <h3 className="font-semibold">Arrival & Street-Level Check</h3>
                     </div>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Preview the street approach before booking a viewing or making an offer.
+                      Use the live map pin, route estimate, and optional street-level preview before
+                      booking a viewing or making an offer.
                     </p>
                   </div>
-                  {streetViewEmbedUrl ? (
-                    <iframe
-                      title={`Street view for ${pageTitle}`}
-                      src={streetViewEmbedUrl}
-                      className="w-full h-72 border-0"
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                    />
-                  ) : (
-                    <div className="h-72 flex items-center justify-center bg-secondary/40 px-6 text-center">
-                      <div>
-                        <Navigation className="w-10 h-10 mx-auto text-primary mb-3" />
-                        <p className="font-medium">Street view is not ready yet</p>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          The team has not attached precise coordinates for a panorama preview yet, but the map location is still available.
-                        </p>
-                      </div>
+                  <div className="grid gap-4 bg-secondary/20 p-5 md:grid-cols-2">
+                    <div className="rounded-2xl border border-border bg-background p-4">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Street-view handoff
+                      </p>
+                      <p className="mt-2 text-lg font-semibold">
+                        {streetViewOpenUrl ? "Available" : "Awaiting precise pin"}
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {streetViewOpenUrl
+                          ? "Google Street View can open directly from the listing coordinate for a final arrival sense-check."
+                          : "Street-level preview needs the final verified coordinate before we can deep-link into panorama mode."}
+                      </p>
                     </div>
-                  )}
+                    <div className="rounded-2xl border border-border bg-background p-4">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Map pin status
+                      </p>
+                      <p className="mt-2 text-lg font-semibold">
+                        {hasPreciseCoordinates ? "Verified coordinate" : "Area map only"}
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {hasPreciseCoordinates
+                          ? "Remote buyers can compare the live pin with photos, trust records, and route planning."
+                          : "The listing remains searchable by area while the team confirms the exact coordinate."}
+                      </p>
+                    </div>
+                  </div>
                   <div className="p-5 flex flex-wrap gap-3">
                     <Button
                       variant="outline"
@@ -1586,14 +1839,7 @@ export function PropertyDetail() {
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() =>
-                        locationQuery &&
-                        window.open(
-                          `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationQuery)}`,
-                          "_blank",
-                          "noopener,noreferrer"
-                        )
-                      }
+                      onClick={() => window.open(propertyMapUrl, "_blank", "noopener,noreferrer")}
                     >
                       <MapPin className="w-4 h-4" />
                       Open Map
@@ -1659,6 +1905,189 @@ export function PropertyDetail() {
                       </Button>
                     )}
                   </div>
+                </Card>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-semibold mb-4">Trust Signals & Community</h2>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <Card className="p-6">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold">Why this listing scores the way it does</h3>
+                  </div>
+                  <div className="mt-5 grid gap-3">
+                    {trustExplanationSignals.map((signal) => (
+                      <div key={signal.label} className="rounded-xl border border-border p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="font-medium">{signal.label}</p>
+                          <span
+                            className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                              signal.status === "positive"
+                                ? "bg-accent/10 text-accent"
+                                : signal.status === "review"
+                                  ? "bg-destructive/10 text-destructive"
+                                  : "bg-secondary text-muted-foreground"
+                            }`}
+                          >
+                            {signal.status}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm text-muted-foreground">{signal.helper}</p>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                <Card className="p-6">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold">Neighborhood Q&A readiness</h3>
+                  </div>
+                  <div className="mt-5 space-y-3">
+                    {communityPrompts.map((prompt) => (
+                      <div key={prompt.type} className="rounded-xl border border-border p-4">
+                        <p className="font-medium">{prompt.title}</p>
+                        <p className="mt-2 text-sm text-muted-foreground">{prompt.prompt}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-5 rounded-xl border border-primary/15 bg-primary/5 p-4">
+                    <p className="text-sm font-medium">Human-reviewed fraud signals</p>
+                    <div className="mt-3 space-y-2">
+                      {humanReviewedFraudSignals.map((signal) => (
+                        <div key={signal.key} className="flex items-start gap-2 text-sm">
+                          <AlertTriangle
+                            className={`mt-0.5 h-4 w-4 ${
+                              signal.active ? "text-destructive" : "text-muted-foreground"
+                            }`}
+                          />
+                          <span className="text-muted-foreground">{signal.helper}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-semibold mb-4">Reviews & Reputation</h2>
+              <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+                <Card className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-primary/10 p-3 text-primary">
+                      <Star className="w-5 h-5 fill-primary" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-semibold">
+                        {reviewSummary.reviewCount > 0
+                          ? reviewSummary.averageRating.toFixed(1)
+                          : "New"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{reviewSummary.label}</p>
+                    </div>
+                  </div>
+                  <div className="mt-5 rounded-xl border border-border p-4">
+                    <p className="font-medium">Verified review signal</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {reviewSummary.verifiedCount} review{reviewSummary.verifiedCount === 1 ? "" : "s"} are linked to an inquiry, viewing, payment, or completed deal.
+                    </p>
+                  </div>
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    Reviews are moderated before public display. Abuse reports route to the admin queue.
+                  </p>
+                </Card>
+
+                <Card className="p-6">
+                  <form className="space-y-4" onSubmit={handleReviewSubmit}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h3 className="font-semibold">Submit a review</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Share your viewing, inquiry, or transaction experience. It stays pending until approved.
+                        </p>
+                      </div>
+                      <select
+                        className="rounded-lg border border-border bg-input-background px-3 py-2 text-sm"
+                        value={reviewForm.rating}
+                        onChange={(event) =>
+                          setReviewForm((current) => ({
+                            ...current,
+                            rating: Number(event.target.value),
+                          }))
+                        }
+                        aria-label="Review rating"
+                      >
+                        {[5, 4, 3, 2, 1].map((rating) => (
+                          <option key={rating} value={rating}>
+                            {rating} star{rating === 1 ? "" : "s"}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <Input
+                      label="Review title"
+                      value={reviewForm.title}
+                      onChange={(event) =>
+                        setReviewForm((current) => ({ ...current, title: event.target.value }))
+                      }
+                      placeholder="Clear viewing process"
+                    />
+                    <div>
+                      <label htmlFor="property-review-text" className="block mb-2 text-sm">
+                        Review
+                      </label>
+                      <textarea
+                        id="property-review-text"
+                        className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        rows={4}
+                        value={reviewForm.reviewText}
+                        onChange={(event) =>
+                          setReviewForm((current) => ({
+                            ...current,
+                            reviewText: event.target.value,
+                          }))
+                        }
+                        placeholder="What happened, what felt trustworthy, and what should other buyers or renters know?"
+                      />
+                    </div>
+                    <Button type="submit" disabled={reviewSubmitting}>
+                      {reviewSubmitting ? "Submitting..." : "Submit for Moderation"}
+                    </Button>
+                  </form>
+
+                  {reviews.length > 0 && (
+                    <div className="mt-6 space-y-3 border-t border-border pt-5">
+                      {reviews.slice(0, 3).map((review) => (
+                        <div key={review.id} className="rounded-xl border border-border p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="font-medium">{review.title || "Buyer review"}</p>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-1 text-xs font-semibold">
+                              <Star className="w-3 h-3 fill-primary text-primary" />
+                              {review.rating}/5
+                            </span>
+                          </div>
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            {review.review_text}
+                          </p>
+                          {review.verified && (
+                            <p className="mt-2 text-xs font-medium text-primary">
+                              Verified via {String(review.verified_source || "platform workflow")}
+                            </p>
+                          )}
+                          <button
+                            type="button"
+                            className="mt-3 text-xs font-medium text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+                            onClick={() => void handleReviewReport(review.id)}
+                          >
+                            Report review
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </Card>
               </div>
             </div>

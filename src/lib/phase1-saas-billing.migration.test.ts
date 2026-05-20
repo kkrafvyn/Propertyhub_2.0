@@ -20,6 +20,14 @@ const workspaceSettings = readFileSync(
   join(process.cwd(), "src/app/pages/workspace/WorkspaceSettings.tsx"),
   "utf8"
 );
+const unifiedProcessorMigration = readFileSync(
+  join(process.cwd(), "supabase/migrations/20260518153224_unify_payment_processors.sql"),
+  "utf8"
+);
+const workspaceEntry = readFileSync(
+  join(process.cwd(), "src/app/pages/workspace/WorkspaceEntry.tsx"),
+  "utf8"
+);
 const platformAdminService = readFileSync(
   join(process.cwd(), "src/lib/platform-admin.service.ts"),
   "utf8"
@@ -96,5 +104,14 @@ describe("Phase 1 SaaS deployment wiring", () => {
     expect(envExample).toContain("PAYSTACK_PLAN_CODE_STARTER=");
     expect(envExample).toContain("PAYSTACK_PLAN_CODE_GROWTH=");
     expect(envExample).toContain("PAYSTACK_PLAN_CODE_PRO=");
+  });
+
+  it("supports provider-neutral subscription onboarding with Paystack fallback", () => {
+    expect(unifiedProcessorMigration).toContain(
+      "CHECK (provider IN ('paystack', 'stripe', 'flutterwave'))"
+    );
+    expect(unifiedProcessorMigration).toContain("flutterwave_plan_id_ghs");
+    expect(workspaceEntry).toContain("Falls back to Paystack");
+    expect(workspaceEntry).toContain('provider: "flutterwave"');
   });
 });

@@ -42,6 +42,12 @@ import {
   getStoredReferralEvents,
 } from "../../../lib/referral-attribution.service";
 import {
+  buildAffordabilityPlanGuardrails,
+  buildContributorMonetizationPreview,
+  buildInvestmentScorePreview,
+  getReferralRewardStatusDisplay,
+} from "../../../lib/competitive-operations.service";
+import {
   trustVerificationService,
   type TrustRequestType,
 } from "../../../lib/trust-verification.service";
@@ -1551,6 +1557,32 @@ export function UserInsightsPanel({
       ? `Reply to ${unreadMessages} unread message${unreadMessages === 1 ? "" : "s"}.`
       : "Message inbox is currently caught up.",
   ];
+  const focusListing = savedProperties[0]?.listing || dealCases[0]?.listing || null;
+  const focusProperty = focusListing?.property || null;
+  const focusInsight = getNeighborhoodSnapshot(
+    focusProperty
+      ? {
+          city: focusProperty.city,
+          region: focusProperty.region,
+          neighborhood: focusProperty.neighborhood,
+        }
+      : null
+  );
+  const estimatedRentalYieldPercent = focusInsight?.investmentScore
+    ? Number((focusInsight.investmentScore * 1.8).toFixed(1))
+    : null;
+  const investmentPreview = buildInvestmentScorePreview({
+    price: Number(focusListing?.price || 0),
+    rentalYieldPercent: estimatedRentalYieldPercent,
+    locationConfidence: focusProperty?.location_confidence || null,
+    documentVerified: ["verified", "approved"].includes(String(focusListing?.verification_status || "")),
+    marketDemand: focusInsight?.demandLevel || null,
+  });
+  const affordabilityGuardrails = buildAffordabilityPlanGuardrails({
+    planType: focusListing?.listing_type === "sale" ? "installment_purchase" : "weekly_rent",
+    providerKey: "payment_service",
+    legalReviewRequired: true,
+  });
 
   return (
     <div className="space-y-6">
@@ -1632,6 +1664,45 @@ export function UserInsightsPanel({
           <p className="mt-2 text-sm text-muted-foreground">
             Based on saved properties, active deals, viewings, successful payments, and market alerts.
           </p>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Investment Score Preview</h3>
+          </div>
+          <p className="text-4xl font-semibold">{investmentPreview.score}/100</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Confidence {investmentPreview.confidence}/100 - {formatLabel(investmentPreview.status)}
+          </p>
+          <div className="mt-4 space-y-2">
+            {investmentPreview.drivers.map((driver) => (
+              <div key={driver} className="rounded-xl border border-border p-3 text-sm text-muted-foreground">
+                {driver}
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-xs text-muted-foreground">{investmentPreview.disclosure}</p>
+        </Card>
+
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <HandCoins className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Affordability Plan Guardrails</h3>
+          </div>
+          <Badge variant={affordabilityGuardrails.canGoLive ? "default" : "outline"}>
+            {affordabilityGuardrails.canGoLive ? "Can go live" : "Legal/provider review"}
+          </Badge>
+          <p className="mt-3 font-medium">{affordabilityGuardrails.label}</p>
+          <div className="mt-4 space-y-2">
+            {affordabilityGuardrails.guardrails.map((guardrail) => (
+              <div key={guardrail} className="rounded-xl border border-border p-3 text-sm text-muted-foreground">
+                {guardrail}
+              </div>
+            ))}
+          </div>
         </Card>
       </div>
     </div>
@@ -2321,6 +2392,14 @@ export function ReferralProgramPanel({ user }: ReferralProgramPanelProps) {
       }),
     [user?.id]
   );
+  const rewardStatuses = ["pending_review", "approved", "paid", "fraud_hold"].map((status) =>
+    getReferralRewardStatusDisplay(status)
+  );
+  const contributorPreview = buildContributorMonetizationPreview({
+    contributionCount: referralPerformance.totals.savedAlerts + referralPerformance.totals.leads,
+    approvedCount: referralPerformance.totals.wonDeals || 0,
+    payoutStatus: "pending_verification",
+  });
 
   return (
     <div className="space-y-6">
@@ -2428,6 +2507,46 @@ export function ReferralProgramPanel({ user }: ReferralProgramPanelProps) {
           </div>
         )}
       </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Reward Review States</h3>
+          </div>
+          <div className="space-y-3">
+            {rewardStatuses.map((status) => (
+              <div key={status.label} className="rounded-xl border border-border p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium">{status.label}</p>
+                  <Badge variant={status.tone === "positive" ? "default" : "outline"}>
+                    {status.tone}
+                  </Badge>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">{status.helper}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <FileSignature className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Contributor Monetization</h3>
+          </div>
+          <p className="text-3xl font-semibold">{contributorPreview.approvalRate}%</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Estimated contribution approval signal. Payouts remain tax, terms, and fraud-review gated.
+          </p>
+          <div className="mt-4 space-y-2">
+            {contributorPreview.checklist.map((item) => (
+              <div key={item} className="rounded-xl border border-border p-3 text-sm text-muted-foreground">
+                {item}
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -2740,14 +2859,14 @@ export function SupportPanel({ organizationContacts, dealCases }: SupportPanelPr
               </Button>
             </form>
           )}
-        </Card>
+      </Card>
 
-        <Card className="p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Concierge Handoff</h3>
-          </div>
-          <div className="space-y-3 text-sm text-muted-foreground">
+      <Card className="p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <ShieldCheck className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold">Concierge Handoff</h3>
+        </div>
+        <div className="space-y-3 text-sm text-muted-foreground">
             <p>Use your deal room to confirm move-in date, utility activation, and the first maintenance check.</p>
             <p>Keep vendor contacts, inventory notes, and signed agreements together before the first key handoff.</p>
             {organizationContacts.length > 0 && (
@@ -2794,8 +2913,8 @@ export function SupportPanel({ organizationContacts, dealCases }: SupportPanelPr
                 </div>
               )}
             </div>
-          </div>
-        </Card>
+        </div>
+      </Card>
       </div>
     </div>
   );

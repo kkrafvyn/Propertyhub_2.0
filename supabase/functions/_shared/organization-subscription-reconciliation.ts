@@ -4,6 +4,7 @@ import type {
   PaystackSubscriptionData,
   PaystackTransactionData,
 } from "./paystack.ts";
+import type { PaymentGatewayTransactionData } from "./payment-gateways.ts";
 import { createAdminClient } from "./supabase.ts";
 
 type SubscriptionPaymentRow = {
@@ -60,6 +61,11 @@ function addDays(value: Date, days: number) {
 function buildInvoiceNumber(reference: string) {
   const suffix = reference.replace(/[^a-zA-Z0-9]/g, "").slice(-12).toUpperCase();
   return `BM-SUB-${new Date().getUTCFullYear()}-${suffix}`;
+}
+
+function buildProviderInvoiceNumber(provider: string, reference: string) {
+  const suffix = reference.replace(/[^a-zA-Z0-9]/g, "").slice(-12).toUpperCase();
+  return `BM-${provider.toUpperCase()}-${new Date().getUTCFullYear()}-${suffix}`;
 }
 
 function getCustomerCode(value: PaystackTransactionData | PaystackSubscriptionData) {
@@ -329,6 +335,162 @@ export async function reconcileOrganizationSubscriptionPayment(input: {
     subscriptionId: subscription.id,
     eventType: "subscription_payment_success",
     message: "Paystack confirmed a subscription payment and the workspace is active.",
+    metadata: {
+      reference: input.reference,
+      source: input.source,
+      amountMinor: updatedPayment.amount_minor,
+      currency: updatedPayment.currency,
+    },
+  });
+
+  return {
+    payment: updatedPayment,
+    subscription: updatedSubscription,
+    alreadyProcessed: false,
+  };
+}
+
+export async function reconcileFlutterwaveOrganizationSubscriptionPayment(input: {
+  reference: string;
+  verifiedTransaction: PaymentGatewayTransactionData;
+  source: "webhook" | "manual_verify";
+}) {
+  const admin = createAdminClient();
+  const { data: payment, error: paymentError } = await admin
+    .from("organization_subscription_payments")
+    .select("*")
+    .eq("provider", "flutterwave")
+    .eq("provider_reference", input.reference)
+    .maybeSingle();
+
+  if (paymentError) {
+    throw new HttpError(500, paymentError.message);
+  }
+
+  if (!payment) return null;
+
+  const subscriptionPayment = payment as SubscriptionPaymentRow;
+  const normalizedStatus = normalizePaymentStatus(input.verifiedTransaction.status);
+  const providerTransactionId =
+    input.verifiedTransaction.id !== undefined ? String(input.verifiedTransaction.id) : null;
+  const paidAt = input.verifiedTransaction.paid_at || new Date().toISOString();
+  const mergedMetadata = {
+    ...(subscriptionPayment.metadata || {}),
+    flutterwave: input.verifiedTransaction,
+    reconciliationSource: input.source,
+  };
+
+  if (subscriptionPayment.status === "success" && normalizedStatus === "success") {
+    const { data: subscription } = await admin
+      .from("organization_subscriptions")
+      .select("*")
+      .eq("id", subscriptionPayment.subscription_id)
+      .maybeSingle();
+
+    return {
+      payment: subscriptionPayment,
+      subscription,
+      alreadyProcessed: true,
+    };
+  }
+
+  const { data: updatedPayment, error: updatePaymentError } = await admin
+    .from("organization_subscription_payments")
+    .update({
+      status: normalizedStatus,
+      provider_transaction_id: providerTransactionId,
+      paid_at: normalizedStatus === "success" ? paidAt : null,
+      payment_channel: input.verifiedTransaction.channel || null,
+      gateway_response: input.verifiedTransaction.gateway_response || null,
+      flutterwave_transaction_id: providerTransactionId,
+      metadata: mergedMetadata,
+    })
+    .eq("id", subscriptionPayment.id)
+    .select("*")
+    .single();
+
+  if (updatePaymentError) {
+    throw new HttpError(500, updatePaymentError.message);
+  }
+
+  const { data: subscription, error: subscriptionError } = await admin
+    .from("organization_subscriptions")
+    .select("*")
+    .eq("id", subscriptionPayment.subscription_id)
+    .single();
+
+  if (subscriptionError || !subscription) {
+    throw new HttpError(500, subscriptionError?.message || "Subscription not found");
+  }
+
+  if (normalizedStatus !== "success") {
+    return {
+      payment: updatedPayment,
+      subscription,
+      alreadyProcessed: false,
+    };
+  }
+
+  const paidDate = new Date(paidAt);
+  const periodEnd = addMonths(paidDate, 1).toISOString();
+  const { data: updatedSubscription, error: updateSubscriptionError } = await admin
+    .from("organization_subscriptions")
+    .update({
+      status: "active",
+      provider: "flutterwave",
+      provider_reference: input.reference,
+      authorization_url: null,
+      flutterwave_subscription_id: providerTransactionId,
+      current_period_start: paidAt,
+      current_period_end: periodEnd,
+      next_payment_at: periodEnd,
+      grace_period_ends_at: null,
+      activated_at: subscription.activated_at || paidAt,
+      suspended_at: null,
+      metadata: {
+        ...(subscription.metadata || {}),
+        lastSuccessfulPaymentReference: input.reference,
+        lastSuccessfulPaymentAt: paidAt,
+        flutterwaveTransactionId: providerTransactionId,
+      },
+    })
+    .eq("id", subscription.id)
+    .select("*")
+    .single();
+
+  if (updateSubscriptionError) {
+    throw new HttpError(500, updateSubscriptionError.message);
+  }
+
+  await admin.from("subscription_invoices").upsert(
+    {
+      organization_id: subscription.organization_id,
+      subscription_id: subscription.id,
+      payment_id: updatedPayment.id,
+      invoice_number: buildProviderInvoiceNumber("flutterwave", input.reference),
+      amount_minor: updatedPayment.amount_minor,
+      currency: updatedPayment.currency || "GHS",
+      status: "paid",
+      period_start: paidAt,
+      period_end: periodEnd,
+      issued_at: paidAt,
+      paid_at: paidAt,
+      metadata: {
+        provider: "flutterwave",
+        providerReference: input.reference,
+        source: input.source,
+      },
+    },
+    {
+      onConflict: "invoice_number",
+    }
+  );
+
+  await insertBillingEvent({
+    organizationId: subscription.organization_id,
+    subscriptionId: subscription.id,
+    eventType: "subscription_payment_success",
+    message: "Flutterwave confirmed a subscription payment and the workspace is active.",
     metadata: {
       reference: input.reference,
       source: input.source,

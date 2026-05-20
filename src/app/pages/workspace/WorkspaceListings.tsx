@@ -16,6 +16,7 @@ import { listingQualityService } from "../../../lib/listing-quality.service";
 import { propertyMediaService } from "../../../lib/property-media.service";
 import { listingService } from "../../../lib/listing.service";
 import { propertyService } from "../../../lib/property.service";
+import { PROPERTY_CATEGORIES, formatPropertyCategory } from "../../../lib/property-category";
 import {
   getActiveListingLimitState,
   isPublicActiveListing,
@@ -73,13 +74,6 @@ const LISTING_STATUS_OPTIONS: ListingStatus[] = [
 
 const LISTING_VISIBILITY_OPTIONS: ListingVisibility[] = ["public", "private", "hidden"];
 const LISTING_TYPE_OPTIONS: ListingType[] = ["rental", "sale", "lease"];
-const PROPERTY_CATEGORY_OPTIONS: PropertyCategory[] = [
-  "apartment",
-  "house",
-  "office",
-  "commercial",
-  "land",
-];
 
 const currencyFormatter = new Intl.NumberFormat("en-GH", {
   style: "currency",
@@ -612,7 +606,8 @@ export function WorkspaceListings({
                           </Badge>
                         </div>
                         <p className="text-muted-foreground">
-                          {listing.property?.city}, {listing.property?.region} - {listing.property?.category || "property"}
+                          {listing.property?.city}, {listing.property?.region} -{" "}
+                          {formatPropertyCategory(listing.property?.category)}
                         </p>
                         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                           <span>
@@ -759,9 +754,9 @@ export function WorkspaceListings({
                             value={draft?.category || "apartment"}
                             onChange={(event) => updateDraft(listing.id, "category", event.target.value)}
                           >
-                            {PROPERTY_CATEGORY_OPTIONS.map((category) => (
+                            {PROPERTY_CATEGORIES.map((category) => (
                               <option key={category} value={category}>
-                                {category}
+                                {formatPropertyCategory(category)}
                               </option>
                             ))}
                           </select>

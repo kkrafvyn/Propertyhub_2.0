@@ -58,6 +58,29 @@ function average(values: number[]) {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
+function matchesLocationQuery(
+  property:
+    | Pick<
+        Database["public"]["Tables"]["properties"]["Row"],
+        "address" | "city" | "region" | "neighborhood" | "country" | "ghana_post_gps"
+      >
+    | null
+    | undefined,
+  query?: string | null
+) {
+  const normalizedQuery = normalizeLocationText(query);
+  if (!normalizedQuery) return true;
+
+  return [
+    property?.address,
+    property?.city,
+    property?.region,
+    property?.neighborhood,
+    property?.country,
+    property?.ghana_post_gps,
+  ].some((value) => normalizeLocationText(value).includes(normalizedQuery));
+}
+
 function sortLocationSummaries(a: PublicLocationSummary, b: PublicLocationSummary) {
   if (b.listingCount !== a.listingCount) {
     return b.listingCount - a.listingCount;
@@ -117,6 +140,13 @@ export const listingService = {
       .map((amenity) => amenity.trim().toLowerCase())
       .filter(Boolean);
     const sanitizedLocation = sanitizePostgrestLikeQuery(filters.location);
+    const requiresPropertySideFiltering = Boolean(
+      sanitizedLocation ||
+        normalizedPropertyType ||
+        filters.bedrooms != null ||
+        filters.bathrooms != null ||
+        requiredAmenities.length > 0
+    );
 
     let query = supabase
       .from("listings")
@@ -137,57 +167,54 @@ export const listingService = {
       query = query.eq("listing_type", filters.listingType);
     }
 
-    if (normalizedPropertyType) {
-      query = query.eq("properties.category", normalizedPropertyType);
+    if (!requiresPropertySideFiltering) {
+      const { data, error, count } = await query.range(offset, offset + limit - 1);
+
+      if (error) throw error;
+
+      return {
+        results: data || [],
+        total: count || 0,
+      };
     }
 
-    if (filters.bedrooms != null) {
-      query = query.gte("properties.bedrooms", filters.bedrooms);
-    }
-
-    if (filters.bathrooms != null) {
-      query = query.gte("properties.bathrooms", filters.bathrooms);
-    }
-
-    if (sanitizedLocation) {
-      const locationFilters = [
-        `address.ilike.%${sanitizedLocation}%`,
-        `city.ilike.%${sanitizedLocation}%`,
-        `region.ilike.%${sanitizedLocation}%`,
-        `neighborhood.ilike.%${sanitizedLocation}%`,
-        `country.ilike.%${sanitizedLocation}%`,
-        `ghana_post_gps.ilike.%${sanitizedLocation}%`,
-      ].join(",");
-
-      query = query.or(locationFilters, { foreignTable: "properties" });
-    }
-
-    const shouldFilterAmenitiesClientSide = requiredAmenities.length > 0;
-    const finalQuery = shouldFilterAmenitiesClientSide
-      ? query
-      : query.range(offset, offset + limit - 1);
-
-    const { data, error, count } = await finalQuery;
+    // Public search stays reliable by filtering embedded property fields client-side
+    // after fetching a broader backend-backed candidate set.
+    const candidateWindow = Math.max(offset + limit, 120);
+    const { data, error } = await query.range(0, candidateWindow - 1);
 
     if (error) throw error;
 
-    const amenityFilteredResults = shouldFilterAmenitiesClientSide
-      ? (data || []).filter((listing) => {
-          const property = listing.property as Database["public"]["Tables"]["properties"]["Row"] | null;
-          const listingAmenities = (property?.amenities || []).map((amenity) =>
-            amenity.trim().toLowerCase()
-          );
+    const propertyFilteredResults = (data || []).filter((listing) => {
+      const property = listing.property as Database["public"]["Tables"]["properties"]["Row"] | null;
+      const normalizedCategory = normalizePropertyCategory(property?.category);
+      const listingAmenities = (property?.amenities || []).map((amenity) =>
+        amenity.trim().toLowerCase()
+      );
 
-          return requiredAmenities.every((amenity) => listingAmenities.includes(amenity));
-        })
-      : data || [];
+      if (normalizedPropertyType && normalizedCategory !== normalizedPropertyType) {
+        return false;
+      }
 
-    const total = shouldFilterAmenitiesClientSide ? amenityFilteredResults.length : count || 0;
+      if (filters.bedrooms != null && Number(property?.bedrooms || 0) < filters.bedrooms) {
+        return false;
+      }
+
+      if (filters.bathrooms != null && Number(property?.bathrooms || 0) < filters.bathrooms) {
+        return false;
+      }
+
+      if (!matchesLocationQuery(property, sanitizedLocation)) {
+        return false;
+      }
+
+      return requiredAmenities.every((amenity) => listingAmenities.includes(amenity));
+    });
+
+    const total = propertyFilteredResults.length;
 
     return {
-      results: shouldFilterAmenitiesClientSide
-        ? amenityFilteredResults.slice(offset, offset + limit)
-        : amenityFilteredResults,
+      results: propertyFilteredResults.slice(offset, offset + limit),
       total,
     };
   },

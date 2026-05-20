@@ -51,14 +51,21 @@ describe("Phase 3 Paystack escrow", () => {
     expect(migrationSql).toContain("paystack_transfer_recipient_code");
   });
 
-  it("keeps Phase 3 payment movement on Paystack release and refund APIs", () => {
+  it("keeps Phase 3 payment movement behind the unified provider service", () => {
     expect(paystackShared).toContain("createPaystackTransfer");
     expect(paystackShared).toContain('"/transfer"');
     expect(paymentServiceShared).toContain("createPaystackTransfer");
     expect(paymentServiceShared).toContain("createPaystackRefund");
+    expect(paymentServiceShared).toContain("createStripeTransfer");
+    expect(paymentServiceShared).toContain("createStripeRefund");
+    expect(paymentServiceShared).toContain("createFlutterwaveTransfer");
+    expect(paymentServiceShared).toContain("createFlutterwaveRefund");
+    expect(paymentServiceShared).toContain("refundPropertyTransaction");
     expect(paymentServiceShared).toContain("recordInitiatedPropertyRefund");
     expect(manageEscrowFunction).toContain("releaseToAgency");
     expect(manageEscrowFunction).toContain("refundBuyer");
+    expect(manageEscrowFunction).toContain("processor_transfer_reference");
+    expect(manageEscrowFunction).toContain("processor_refund_reference");
     expect(manageEscrowFunction).toContain('"confirm_release"');
     expect(manageEscrowFunction).toContain('"resolve_dispute"');
     expect(manageEscrowFunction).toContain('"cancel_within_window"');
@@ -81,7 +88,7 @@ describe("Phase 3 Paystack escrow", () => {
     expect(escrowService).toContain("manage-property-escrow");
     expect(workspacePayments).toContain("Escrow Queue");
     expect(workspacePayments).toContain("Upload ${missingDocument.label}");
-    expect(adminLayout).toContain("Paystack Escrow Control");
+    expect(adminLayout).toContain("Escrow Control");
     expect(adminLayout).toContain("Release to Agency");
     expect(userDashboard).toContain("Confirm Release");
     expect(userDashboard).toContain("Cancel Escrow");

@@ -64,6 +64,64 @@ function isPresent(key) {
   return Boolean(env[key] && String(env[key]).trim());
 }
 
+function isUrlKey(key) {
+  return /URL|ENDPOINT/.test(key);
+}
+
+function isEmailLike(value) {
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value);
+}
+
+function getPlaceholderReason(key) {
+  if (!isPresent(key)) return null;
+
+  const value = String(env[key]).trim();
+  const lowerValue = value.toLowerCase();
+  const upperKey = key.toUpperCase();
+
+  if (isUrlKey(upperKey) && /(localhost|127\.0\.0\.1)/i.test(value)) {
+    return "still points at localhost";
+  }
+
+  if (isUrlKey(upperKey) && /example\.supabase\.co|example\.com|example\.org/i.test(value)) {
+    return "still points at an example host";
+  }
+
+  if (upperKey.includes("PUBLIC_APP_URL") && /^http:\/\//i.test(value)) {
+    return "is not using HTTPS";
+  }
+
+  if (upperKey.includes("STRIPE") && /\b(?:pk|sk|rk)_test_/i.test(value)) {
+    return "still uses Stripe test credentials";
+  }
+
+  if (upperKey.includes("PAYSTACK") && /\b(?:pk|sk)_test_/i.test(value)) {
+    return "still uses Paystack test credentials";
+  }
+
+  if (!isEmailLike(value) && /^(?:ci_|dummy_|placeholder_|sample_|your_|replace[-_]?me|changeme)/i.test(value)) {
+    return "still uses placeholder text";
+  }
+
+  if (
+    !isEmailLike(value) &&
+    /(placeholder|dummy|changeme|replace[-_]?me|todo)/i.test(lowerValue)
+  ) {
+    return "still uses placeholder text";
+  }
+
+  return null;
+}
+
+function formatInvalidValues(keys) {
+  return keys
+    .map((key) => {
+      const reason = getPlaceholderReason(key);
+      return reason ? `${key} (${reason})` : null;
+    })
+    .filter(Boolean);
+}
+
 const requiredGroups = [
   {
     name: "Core web and Supabase",
@@ -146,6 +204,37 @@ const advisoryGroups = [
   },
 ];
 
+function checkMapProvider() {
+  const rawProvider = String(env.VITE_MAP_PROVIDER || "openstreetmap").trim().toLowerCase();
+
+  if (!["openstreetmap", "maptiler"].includes(rawProvider)) {
+    warnings.push(
+      `Public map tiles: unknown VITE_MAP_PROVIDER value "${rawProvider}". Falling back to OpenStreetMap in the client.`
+    );
+    return;
+  }
+
+  if (rawProvider === "maptiler") {
+    if (!isPresent("VITE_MAPTILER_KEY")) {
+      failures.push("Public map tiles: missing VITE_MAPTILER_KEY for MapTiler");
+      return;
+    }
+
+    const invalid = formatInvalidValues(["VITE_MAPTILER_KEY"]);
+    if (invalid.length) {
+      failures.push(
+        `Public map tiles: replace placeholder values for ${invalid.join(", ")}`
+      );
+      return;
+    }
+
+    passes.push("Public map tiles: MapTiler is configured for client map discovery");
+    return;
+  }
+
+  passes.push("Public map tiles: OpenStreetMap fallback is configured for client map discovery");
+}
+
 const iotProviders = [
   {
     name: "TTLock",
@@ -174,18 +263,31 @@ function checkKeyGroup(group, strict = true) {
     return;
   }
 
+  const invalid = formatInvalidValues(group.keys || []);
+  if (invalid.length) {
+    const message = `${group.name}: replace placeholder values for ${invalid.join(", ")}`;
+    if (strict) failures.push(message);
+    else warnings.push(message);
+    return;
+  }
+
   passes.push(`${group.name}: all required values are present`);
 }
 
 function checkAnyOfGroup(group, strict = true) {
-  const satisfied = group.anyOf.some((option) => option.every((key) => isPresent(key)));
+  const satisfied = group.anyOf.some((option) =>
+    option.every((key) => isPresent(key) && !getPlaceholderReason(key))
+  );
   if (satisfied) {
     passes.push(`${group.name}: at least one valid credential set is present`);
     return;
   }
 
   const choices = group.anyOf.map((option) => option.join(" + ")).join(" OR ");
-  const message = `${group.name}: missing one of ${choices}`;
+  const invalid = formatInvalidValues(group.anyOf.flat());
+  const message = invalid.length
+    ? `${group.name}: replace placeholder values for ${invalid.join(", ")}`
+    : `${group.name}: missing one of ${choices}`;
   if (strict) failures.push(message);
   else warnings.push(message);
 }
@@ -198,6 +300,8 @@ for (const group of advisoryGroups) {
   if (group.anyOf) checkAnyOfGroup(group, group.strict);
   else checkKeyGroup(group, group.strict);
 }
+
+checkMapProvider();
 
 const readyIotProviders = iotProviders.filter((provider) => provider.keys.every((key) => isPresent(key)));
 if (readyIotProviders.length) {

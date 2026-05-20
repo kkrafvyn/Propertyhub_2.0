@@ -46,6 +46,19 @@ interface GatewayInitializeInput {
   metadata?: Record<string, unknown>;
 }
 
+export interface FlutterwaveSubscriptionPaymentInput {
+  amountMinor: number;
+  email: string;
+  currency: string;
+  reference: string;
+  callbackUrl: string;
+  paymentPlanId: string | number;
+  customerName?: string;
+  customerPhone?: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+}
+
 export interface GatewayInitializeResult {
   authorizationUrl: string;
   accessCode?: string;
@@ -77,6 +90,32 @@ type FlutterwaveTransactionResponse = {
   meta?: Record<string, unknown>;
 };
 
+type FlutterwaveRefundResponse = {
+  id?: number | string;
+  transaction_id?: number | string;
+  tx_ref?: string;
+  flw_ref?: string;
+  amount?: number | string;
+  currency?: string;
+  status?: string;
+  comments?: string;
+  created_at?: string;
+};
+
+type FlutterwaveTransferResponse = {
+  id?: number | string;
+  reference?: string;
+  status?: string;
+  complete_message?: string;
+  amount?: number | string;
+  currency?: string;
+  account_number?: string;
+  account_bank?: string;
+  bank_name?: string;
+  fullname?: string;
+  created_at?: string;
+};
+
 function getEnv(name: string) {
   const value = Deno.env.get(name);
   return value && value.trim() ? value.trim() : "";
@@ -89,6 +128,46 @@ function requireEnv(name: string) {
   }
 
   return value;
+}
+
+function uniqueProviders(providers: PaymentGatewayProvider[]) {
+  return providers.filter((provider, index) => providers.indexOf(provider) === index);
+}
+
+export function isPaymentGatewayConfigured(provider: PaymentGatewayProvider) {
+  if (provider === "paystack") return Boolean(getEnv("PAYSTACK_SECRET_KEY"));
+  if (provider === "stripe") return Boolean(getEnv("STRIPE_SECRET_KEY"));
+  if (provider === "flutterwave") return Boolean(getEnv("FLUTTERWAVE_SECRET_KEY"));
+  return Boolean(getEnv("IT_CONSORTIUM_MERCHANT_ID") && getEnv("IT_CONSORTIUM_API_KEY"));
+}
+
+export function getPaymentGatewayFallbackOrder(input: {
+  primaryProvider: PaymentGatewayProvider;
+  currency?: string | null;
+  fallbackProviders?: PaymentGatewayProvider[];
+  enableFallback?: boolean;
+}) {
+  if (input.enableFallback === false) return [input.primaryProvider];
+
+  const defaultFallbackProviders: PaymentGatewayProvider[] = [
+    "paystack",
+    "stripe",
+    "flutterwave",
+    "it_consortium",
+  ];
+
+  const requestedOrder = uniqueProviders([
+    input.primaryProvider,
+    ...(input.fallbackProviders?.length
+      ? input.fallbackProviders
+      : defaultFallbackProviders),
+  ]);
+
+  const primaryAndConfiguredFallbacks = requestedOrder.filter(
+    (provider, index) => index === 0 || isPaymentGatewayConfigured(provider)
+  );
+
+  return primaryAndConfiguredFallbacks.length ? primaryAndConfiguredFallbacks : requestedOrder;
 }
 
 export function normalizePaymentGatewayProvider(value: unknown): PaymentGatewayProvider {
@@ -147,6 +226,10 @@ function majorAmountToMinor(amount: unknown) {
   return Math.round(numericAmount * 100);
 }
 
+function minorAmountToMajor(amountMinor: number) {
+  return Number((amountMinor / 100).toFixed(2));
+}
+
 function normalizeFlutterwaveStatus(status?: string) {
   switch ((status || "").toLowerCase()) {
     case "successful":
@@ -186,6 +269,47 @@ async function initializeFlutterwavePayment(input: GatewayInitializeInput) {
 
   if (!data.link) {
     throw new HttpError(502, "Flutterwave did not return a checkout link");
+  }
+
+  return {
+    authorizationUrl: data.link,
+    reference: data.tx_ref || input.reference,
+    providerTransactionId: data.id !== undefined ? String(data.id) : undefined,
+    raw: data as Record<string, unknown>,
+  };
+}
+
+export async function initializeFlutterwaveSubscriptionPayment(
+  input: FlutterwaveSubscriptionPaymentInput
+) {
+  const data = await flutterwaveFetch<FlutterwavePaymentResponse>("/v3/payments", {
+    method: "POST",
+    body: JSON.stringify({
+      tx_ref: input.reference,
+      amount: (input.amountMinor / 100).toFixed(2),
+      currency: input.currency,
+      redirect_url: input.callbackUrl,
+      payment_plan: input.paymentPlanId,
+      payment_options: "card",
+      customer: {
+        email: input.email,
+        name: input.customerName || input.email,
+        phonenumber: input.customerPhone || undefined,
+      },
+      customizations: {
+        title: "BaytMiftah Subscription",
+        description: input.description || "BaytMiftah workspace subscription",
+      },
+      meta: {
+        ...(input.metadata || {}),
+        gatewayProvider: "flutterwave",
+        providerReference: input.reference,
+      },
+    }),
+  });
+
+  if (!data.link) {
+    throw new HttpError(502, "Flutterwave did not return a subscription checkout link");
   }
 
   return {
@@ -275,6 +399,70 @@ export async function verifyFlutterwaveTransaction(reference: string) {
       raw: data,
     },
   } satisfies PaymentGatewayTransactionData;
+}
+
+export async function createFlutterwaveRefund(input: {
+  transactionId: string | number;
+  amountMinor?: number;
+  reason?: string;
+  callbackUrl?: string;
+}) {
+  const body: Record<string, unknown> = {};
+  if (input.amountMinor !== undefined) body.amount = minorAmountToMajor(input.amountMinor);
+  if (input.reason) body.comments = input.reason;
+  if (input.callbackUrl) body.callbackurl = input.callbackUrl;
+
+  return flutterwaveFetch<FlutterwaveRefundResponse>(
+    `/v3/transactions/${encodeURIComponent(String(input.transactionId))}/refund`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    }
+  );
+}
+
+export async function createFlutterwaveTransfer(input: {
+  amountMinor: number;
+  currency: string;
+  reference: string;
+  narration: string;
+  accountBank?: string | null;
+  accountNumber?: string | null;
+  beneficiary?: string | number | null;
+  beneficiaryName?: string | null;
+  destinationBranchCode?: string | null;
+  debitSubaccount?: string | null;
+  debitCurrency?: string | null;
+  callbackUrl?: string | null;
+  metadata?: Record<string, unknown>;
+}) {
+  const hasBankRecipient = Boolean(input.accountBank && input.accountNumber);
+  if (!hasBankRecipient && !input.beneficiary) {
+    throw new HttpError(
+      400,
+      "Flutterwave transfer requires either beneficiary ID or bank recipient details"
+    );
+  }
+  const accountBank = input.accountBank || (input.beneficiary ? "flutterwave" : undefined);
+  const accountNumber = input.accountNumber || (input.beneficiary ? String(input.beneficiary) : undefined);
+
+  return flutterwaveFetch<FlutterwaveTransferResponse>("/v3/transfers", {
+    method: "POST",
+    body: JSON.stringify({
+      account_bank: accountBank,
+      account_number: accountNumber,
+      beneficiary_name: input.beneficiaryName || undefined,
+      destination_branch_code: input.destinationBranchCode || undefined,
+      debit_subaccount: input.debitSubaccount || undefined,
+      debit_currency: input.debitCurrency || undefined,
+      amount: minorAmountToMajor(input.amountMinor),
+      currency: input.currency,
+      reference: input.reference,
+      narration: input.narration,
+      callback_url: input.callbackUrl || undefined,
+      meta: input.metadata,
+    }),
+  });
 }
 
 function getTheTellerCheckoutBaseUrl() {

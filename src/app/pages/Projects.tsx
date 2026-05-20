@@ -5,6 +5,7 @@ import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { useMobileShell } from "../mobile/MobileShellContext";
+import { buildConstructionProgressPreview } from "../../lib/competitive-operations.service";
 import {
   buildProjectReputationSpotlights,
   publicDiscoveryService,
@@ -73,6 +74,10 @@ export function Projects() {
                   const trustHighlights = reputation?.trustHighlights?.length
                     ? reputation.trustHighlights
                     : project.trustHighlights;
+                  const constructionPreview = buildConstructionProgressPreview({
+                    progressPercent: project.availableUnits > 0 ? 68 : 28,
+                    updateCount: project.listings.length,
+                  });
 
                   return (
                     <Card key={project.slug} className="overflow-hidden">
@@ -119,6 +124,20 @@ export function Projects() {
                             <p className="mt-2 font-semibold">
                               {reputation ? `${reputation.reviewScore}/100` : "Pending"}
                             </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-5 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-xs uppercase tracking-wide text-amber-800">Construction readiness</p>
+                              <p className="mt-1 text-sm font-semibold text-amber-950">
+                                {constructionPreview.status.replaceAll("_", " ")} · {constructionPreview.confidence}% confidence
+                              </p>
+                            </div>
+                            <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-amber-900">
+                              {constructionPreview.progress}%
+                            </span>
                           </div>
                         </div>
 

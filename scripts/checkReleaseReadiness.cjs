@@ -117,10 +117,22 @@ function checkPackage() {
     fail("package.json should expose prod:env:check for launch credential validation.");
   }
 
-  if (packageJson.scripts?.["qa:local"]) {
-    pass("Local QA script is available");
+  if (packageJson.scripts?.["test:e2e"] === "playwright test") {
+    pass("Playwright browser smoke script is available");
   } else {
-    fail("package.json should expose qa:local for repeatable launch checks.");
+    fail("package.json should expose test:e2e for browser smoke coverage.");
+  }
+
+  if (packageJson.scripts?.["qa:browser"] === "playwright test") {
+    pass("Browser QA shortcut is available");
+  } else {
+    fail("package.json should expose qa:browser for repeatable browser verification.");
+  }
+
+  if (packageJson.scripts?.["qa:local"]?.includes("npm run qa:browser")) {
+    pass("Local QA script includes browser smoke coverage");
+  } else {
+    fail("package.json should expose qa:local with browser smoke coverage for repeatable launch checks.");
   }
 
   const viteVersion = packageJson.devDependencies?.vite || "";
@@ -133,6 +145,10 @@ function checkPackage() {
 
 function checkNativeFiles() {
   checkContains("vercel.json", '"destination": "/index.html"', "Vercel SPA fallback rewrite");
+  checkContains("vercel.json", '"Content-Security-Policy"', "Vercel production CSP header");
+  checkContains("vercel.json", '"X-Frame-Options"', "Vercel security headers");
+  checkContains("vite.config.ts", "'Content-Security-Policy'", "Vite dev and preview CSP header");
+  checkContains("playwright.config.ts", "webServer", "Playwright config file");
   checkContains("capacitor.config.ts", 'appId: "com.baytmiftah.app"', "Capacitor BaytMiftah app ID");
   checkContains("capacitor.config.ts", 'appName: "BaytMiftah"', "Capacitor BaytMiftah app name");
   checkContains("android/app/build.gradle", 'applicationId "com.baytmiftah.app"', "Android BaytMiftah application ID");
@@ -173,6 +189,8 @@ function checkEnvHygiene() {
   checkContains(".env.example", "APNS_BUNDLE_ID=com.baytmiftah.app", "APNS env placeholders documented");
   checkContains(".env.example", "WEB_PUSH_PRIVATE_KEY=", "Web push secret placeholder documented");
   checkContains(".env.example", "WEB_PUSH_CONTACT_EMAIL=mailto:support@baytmiftah.app", "BaytMiftah support contact documented");
+  checkContains(".env.example", "VITE_MAP_PROVIDER=openstreetmap", "Map provider placeholder documented");
+  checkContains(".env.example", "VITE_MAPTILER_KEY=", "MapTiler key placeholder documented");
   checkContains(".env.example", "PAYSTACK_PLAN_CODE_STARTER=", "Paystack Starter plan code documented");
   checkContains(".env.example", "PAYSTACK_PLAN_CODE_GROWTH=", "Paystack Growth plan code documented");
   checkContains(".env.example", "PAYSTACK_PLAN_CODE_PRO=", "Paystack Pro plan code documented");
@@ -190,6 +208,12 @@ function checkEnvHygiene() {
   checkContains(".env.example", "EDGE_RATE_LIMIT_MAX_REQUESTS=30", "Edge rate limit placeholder documented");
   checkContains(".env.example", "FLUTTERWAVE_SECRET_KEY=", "Flutterwave secret placeholder documented");
   checkContains(".env.example", "FLUTTERWAVE_WEBHOOK_SECRET_HASH=", "Flutterwave webhook secret placeholder documented");
+  checkContains(".env.example", "FLUTTERWAVE_DEFAULT_ESCROW_BENEFICIARY_ID=", "Flutterwave escrow beneficiary fallback documented");
+  checkContains(".env.example", "FLUTTERWAVE_DEFAULT_ESCROW_ACCOUNT_BANK=", "Flutterwave escrow bank fallback documented");
+  checkContains(".env.example", "FLUTTERWAVE_DEFAULT_ESCROW_ACCOUNT_NUMBER=", "Flutterwave escrow account fallback documented");
+  checkContains(".env.example", "FLUTTERWAVE_PLAN_ID_STARTER=", "Flutterwave Starter plan ID documented");
+  checkContains(".env.example", "FLUTTERWAVE_PLAN_ID_GROWTH=", "Flutterwave Growth plan ID documented");
+  checkContains(".env.example", "FLUTTERWAVE_PLAN_ID_PRO=", "Flutterwave Pro plan ID documented");
   checkContains(".env.example", "IT_CONSORTIUM_MERCHANT_ID=", "IT Consortium merchant placeholder documented");
 
   const externalSecrets = [
@@ -224,6 +248,16 @@ function checkEnvHygiene() {
 
 function checkReleaseDocs() {
   checkContains(
+    ".github/workflows/ci.yml",
+    "Playwright browser install",
+    "CI installs Playwright browsers"
+  );
+  checkContains(
+    ".github/workflows/ci.yml",
+    "npm run test:e2e",
+    "CI runs browser smoke tests"
+  );
+  checkContains(
     "docs/deployment/RELEASE_HARDENING_CHECKLIST.md",
     "Counsel sign-off",
     "Release hardening checklist"
@@ -244,13 +278,18 @@ function checkReleaseDocs() {
     "Production provider activation runbook"
   );
   checkContains(
+    "docs/deployment/PRODUCTION_PROVIDER_ACTIVATION.md",
+    "Public Map Discovery",
+    "Public map activation runbook"
+  );
+  checkContains(
     "docs/deployment/RELEASE_HARDENING_CHECKLIST.md",
     "npm run prod:env:check",
     "Production env checker included in release checklist"
   );
   checkContains(
     "scripts/checkProductionEnv.cjs",
-    "Production environment check passed",
+    "replace placeholder values",
     "Production environment checker implementation"
   );
 }

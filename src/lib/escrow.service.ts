@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { sha256Hex } from "./browser-crypto";
+import { attachEscrowMilestones } from "./escrow-milestones";
 
 export type EscrowStatus =
   | "initiated"
@@ -49,7 +50,7 @@ export const escrowService = {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return attachEscrowMilestones(data || []);
   },
 
   async getUserEscrows(userId: string) {
@@ -60,7 +61,7 @@ export const escrowService = {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return attachEscrowMilestones(data || []);
   },
 
   async managePropertyEscrow<T = any>(body: {

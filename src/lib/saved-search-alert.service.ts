@@ -65,7 +65,23 @@ function toListingFilters(alert: any) {
     bathrooms: alert.bathrooms || undefined,
     propertyType: alert.property_type || undefined,
     listingType: alert.listing_type || undefined,
+    amenities: Array.isArray(alert.amenities) ? alert.amenities : undefined,
   };
+}
+
+function getLowestPrice(listings: any[]) {
+  const prices = listings
+    .map((listing) => Number(listing.price || 0))
+    .filter((price) => Number.isFinite(price) && price > 0);
+
+  return prices.length > 0 ? Math.min(...prices) : null;
+}
+
+function buildResultFingerprint(listings: any[]) {
+  return listings
+    .map((listing) => `${listing.id}:${listing.price || 0}:${listing.updated_at || listing.published_at || ""}`)
+    .sort()
+    .join("|");
 }
 
 export const savedSearchAlertService = {
@@ -91,6 +107,10 @@ export const savedSearchAlertService = {
     bedrooms?: number | null;
     bathrooms?: number | null;
     frequency?: AlertFrequency;
+    amenities?: string[];
+    notificationChannels?: string[];
+    alertRules?: string[];
+    priceDropThresholdPercent?: number;
     initialMatchCount?: number;
   }) {
     const { data, error } = await supabase
@@ -112,9 +132,13 @@ export const savedSearchAlertService = {
         bedrooms: input.bedrooms ?? null,
         bathrooms: input.bathrooms ?? null,
         frequency: input.frequency || "daily",
+        amenities: input.amenities || [],
+        notification_channels: input.notificationChannels || ["email"],
+        alert_rules: input.alertRules || ["new_listing", "price_drop"],
+        price_drop_threshold_percent: input.priceDropThresholdPercent ?? 5,
         last_match_count: input.initialMatchCount || 0,
         last_checked_at: new Date().toISOString(),
-      })
+      } as any)
       .select("*")
       .single();
 
@@ -147,19 +171,36 @@ export const savedSearchAlertService = {
     );
     const now = new Date().toISOString();
     const nextMatchCount = searchResults.total;
+    const lowestPrice = getLowestPrice(searchResults.results);
+    const resultFingerprint = buildResultFingerprint(searchResults.results);
     const hasMoreMatches = nextMatchCount > (alert.last_match_count || 0);
+    const alertRules = Array.isArray(alert.alert_rules)
+      ? alert.alert_rules
+      : ["new_listing", "price_drop"];
+    const previousLowestPrice = Number(alert.last_lowest_price || 0);
+    const priceDropThreshold = Number(alert.price_drop_threshold_percent || 5);
+    const priceDropPercent =
+      previousLowestPrice > 0 && lowestPrice
+        ? ((previousLowestPrice - lowestPrice) / previousLowestPrice) * 100
+        : 0;
+    const hasPriceDrop =
+      alertRules.includes("price_drop") &&
+      previousLowestPrice > 0 &&
+      Boolean(lowestPrice) &&
+      priceDropPercent >= priceDropThreshold;
     const shouldNotify =
       Boolean(userId) &&
-      hasMoreMatches &&
+      ((alertRules.includes("new_listing") && hasMoreMatches) || hasPriceDrop) &&
       isNotificationDue(alert.last_notified_at, alert.frequency);
 
     if (shouldNotify && userId) {
       await communicationService.createInAppNotification({
         userId,
-        notificationType: "saved_search_match",
-        subject: `New matches for ${alert.title}`,
-        content:
-          nextMatchCount === 1
+        notificationType: hasPriceDrop ? "saved_search_price_drop" : "saved_search_match",
+        subject: hasPriceDrop ? `Price drop for ${alert.title}` : `New matches for ${alert.title}`,
+        content: hasPriceDrop
+          ? `A matching property is now at least ${Math.round(priceDropPercent)}% lower than your last tracked price.`
+          : nextMatchCount === 1
             ? "A new property matched your saved search."
             : `${nextMatchCount} properties now match your saved search.`,
         actionUrl: "/search",
@@ -169,6 +210,10 @@ export const savedSearchAlertService = {
     return this.updateAlert(alert.id, {
       last_checked_at: now,
       last_match_count: nextMatchCount,
+      last_lowest_price: lowestPrice ?? alert.last_lowest_price ?? null,
+      last_result_fingerprint: resultFingerprint,
+      last_new_listing_at: hasMoreMatches ? now : alert.last_new_listing_at || null,
+      last_price_drop_at: hasPriceDrop ? now : alert.last_price_drop_at || null,
       last_notified_at: shouldNotify ? now : alert.last_notified_at || null,
     });
   },

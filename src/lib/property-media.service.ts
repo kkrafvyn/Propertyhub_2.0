@@ -83,6 +83,49 @@ export const propertyMediaService = {
     return uploadedRows;
   },
 
+  async addExternalMedia(params: {
+    organizationId: string;
+    propertyId: string;
+    createdBy: string;
+    mediaType:
+      | "video"
+      | "floor_plan"
+      | "virtual_tour"
+      | "drone"
+      | "renovation_before_after"
+      | "other";
+    url: string;
+    caption?: string | null;
+  }) {
+    const existingMedia = await this.getPropertyMedia(params.propertyId);
+    const externalPath = `external/${params.organizationId}/${params.propertyId}/${crypto.randomUUID()}`;
+
+    const { data, error } = await supabase
+      .from("property_media")
+      .insert({
+        property_id: params.propertyId,
+        organization_id: params.organizationId,
+        storage_path: externalPath,
+        public_url: params.url,
+        alt_text: params.caption || null,
+        sort_order: existingMedia.length,
+        is_primary: false,
+        created_by: params.createdBy,
+        media_type: params.mediaType,
+        external_embed_url: params.url,
+        caption: params.caption || null,
+        processing_status: "ready",
+        metadata: {
+          source: "external_url",
+        },
+      } as any)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
   async updatePropertyMedia(mediaId: string, updates: PropertyMediaUpdate) {
     const { data, error } = await supabase
       .from("property_media")
@@ -116,9 +159,10 @@ export const propertyMediaService = {
 
     if (fetchError) throw fetchError;
 
-    const { error: storageError } = await supabase.storage
-      .from(PROPERTY_MEDIA_BUCKET)
-      .remove([media.storage_path]);
+    const isExternalMedia = String(media.storage_path || "").startsWith("external/");
+    const { error: storageError } = isExternalMedia
+      ? { error: null }
+      : await supabase.storage.from(PROPERTY_MEDIA_BUCKET).remove([media.storage_path]);
 
     if (storageError) throw storageError;
 

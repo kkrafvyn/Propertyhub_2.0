@@ -1,6 +1,10 @@
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
-import { reconcileOrganizationSubscriptionPayment } from "../_shared/organization-subscription-reconciliation.ts";
+import {
+  reconcileFlutterwaveOrganizationSubscriptionPayment,
+  reconcileOrganizationSubscriptionPayment,
+} from "../_shared/organization-subscription-reconciliation.ts";
 import { verifyPaystackTransaction } from "../_shared/paystack.ts";
+import { verifyGatewayTransaction } from "../_shared/payment-gateways.ts";
 import { reconcileStripeOrganizationSubscriptionCheckout } from "../_shared/stripe-reconciliation.ts";
 import { retrieveStripeCheckoutSession } from "../_shared/stripe.ts";
 import { createAdminClient, requireAuthenticatedUser } from "../_shared/supabase.ts";
@@ -33,7 +37,7 @@ Deno.serve(async (req) => {
     const admin = createAdminClient();
     let paymentQuery = admin
       .from("organization_subscription_payments")
-      .select("id, organization_id, subscription_id, provider, provider_reference, stripe_checkout_session_id");
+      .select("id, organization_id, subscription_id, provider, provider_reference, stripe_checkout_session_id, flutterwave_transaction_id");
 
     if (reference && stripeSessionId) {
       paymentQuery = paymentQuery.or(
@@ -78,6 +82,15 @@ Deno.serve(async (req) => {
             ),
             "manual_verify"
           )
+        : payment.provider === "flutterwave"
+          ? await reconcileFlutterwaveOrganizationSubscriptionPayment({
+              reference: payment.provider_reference || reference,
+              verifiedTransaction: await verifyGatewayTransaction(
+                "flutterwave",
+                payment.provider_reference || reference
+              ),
+              source: "manual_verify",
+            })
         : await reconcileOrganizationSubscriptionPayment({
             reference: payment.provider_reference || reference,
             verifiedTransaction: await verifyPaystackTransaction(payment.provider_reference || reference),

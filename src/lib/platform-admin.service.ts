@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { OrganizationSubscription, SubscriptionTier } from "./subscription.service";
+import { attachEscrowMilestones } from "./escrow-milestones";
 
 export interface PlatformAdmin {
   user_id: string;
@@ -104,6 +105,8 @@ export interface AdminEscrowRow {
   } | null;
   documents?: any[];
   events?: any[];
+  condition_reports?: any[];
+  milestones?: any[];
 }
 
 export interface PlatformAdminRosterRow extends PlatformAdmin {
@@ -229,7 +232,8 @@ export const platformAdminService = {
         payer:users(full_name, email),
         listing:listings(property:properties(address, city, region)),
         documents:property_escrow_documents(*),
-        events:property_escrow_events(*)
+        events:property_escrow_events(*),
+        condition_reports:property_condition_reports(*)
       `
       )
       .order("updated_at", { ascending: false, nullsFirst: false })
@@ -238,7 +242,7 @@ export const platformAdminService = {
 
     if (error) throw error;
 
-    const escrows = (data || []) as AdminEscrowRow[];
+    const escrows = (await attachEscrowMilestones((data || []) as AdminEscrowRow[])) as AdminEscrowRow[];
     const metrics = {
       totalEscrows: escrows.length,
       held: escrows.filter((escrow) =>

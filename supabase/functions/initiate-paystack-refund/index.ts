@@ -1,9 +1,6 @@
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
-import {
-  getPropertyRefundSummary,
-  recordInitiatedPropertyRefund,
-} from "../_shared/refund-reconciliation.ts";
-import { createPaystackRefund } from "../_shared/paystack.ts";
+import { refundPropertyTransaction } from "../_shared/payment-service.ts";
+import { getPropertyRefundSummary } from "../_shared/refund-reconciliation.ts";
 import { createAdminClient, requireAuthenticatedUser } from "../_shared/supabase.ts";
 
 function parseRefundAmountToMinorUnits(amount: unknown) {
@@ -60,7 +57,9 @@ Deno.serve(async (req) => {
 
     const { data: transaction, error: transactionError } = await admin
       .from("property_transactions")
-      .select("id, provider_reference, amount_minor, refunded_amount_minor, status, organization_id, currency")
+      .select(
+        "id, provider, provider_reference, provider_transaction_id, amount_minor, refunded_amount_minor, status, organization_id, property_id, currency, stripe_payment_intent_id, stripe_charge_id, metadata"
+      )
       .eq("id", transactionId)
       .maybeSingle();
 
@@ -114,29 +113,20 @@ Deno.serve(async (req) => {
       throw new HttpError(400, "Refund amount cannot exceed the remaining refundable balance");
     }
 
-    const shouldPassAmount =
-      amountMinor < transaction.amount_minor || refundSummary.processedAmountMinor > 0;
-    const paystackRefund = await createPaystackRefund({
-      transaction: transaction.provider_reference,
-      amount: shouldPassAmount ? amountMinor : undefined,
-      currency: transaction.currency,
-      customer_note: customerNote || refundReason,
-      merchant_note: merchantNote || refundReason,
-    });
-
-    const result = await recordInitiatedPropertyRefund({
-      transactionId: transaction.id,
+    const result = await refundPropertyTransaction({
+      admin,
+      transaction,
       requestedByUserId: user.id,
       amountMinor,
       refundReason,
       customerNote: customerNote || refundReason,
       merchantNote: merchantNote || refundReason,
-      paystackRefund,
     });
 
     return jsonResponse(200, {
       transaction: result.transaction,
-      refund: result.refund,
+      refund: result.refundRecord,
+      provider: result.provider,
       refundableBalanceMinor: Math.max(
         result.transaction.amount_minor - result.transaction.refunded_amount_minor,
         0

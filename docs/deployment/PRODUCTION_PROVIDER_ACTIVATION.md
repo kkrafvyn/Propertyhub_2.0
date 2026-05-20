@@ -49,7 +49,15 @@ The environment checker only reports whether values are present. It never prints
 - For Android push, set either `FCM_SERVER_KEY` or `FCM_PROJECT_ID` plus `FCM_ACCESS_TOKEN`.
 - For iOS push, set `APNS_BEARER_TOKEN`, `APNS_BUNDLE_ID`, and `APNS_USE_SANDBOX` correctly per environment.
 
-## 5. Integrity Audit And Anchoring
+## 5. Public Map Discovery
+
+- Default public map discovery now runs on OpenStreetMap tiles with live listing pins.
+- If you want a branded hosted tile service instead, set `VITE_MAP_PROVIDER=maptiler` and store `VITE_MAPTILER_KEY` in the deployment environment.
+- Run `npm run prod:env:check -- --env-file=.env.production` after changing map settings; the checker now validates MapTiler configuration when selected.
+- Confirm the deployed `/search` page loads tiles, fits bounds around plotted listings, and still handles listings without verified coordinates cleanly.
+- Confirm one public property detail page shows the live map surface, route planner, and external map handoff without console errors.
+
+## 6. Integrity Audit And Anchoring
 
 - Generate a production RSA key pair outside the repo.
 - Store `AUDIT_RSA_PRIVATE_KEY_PEM` only in the deployment secret manager.
@@ -60,15 +68,16 @@ The environment checker only reports whether values are present. It never prints
 - Configure a weekly cron job to call `anchor-integrity-audit` with the job secret.
 - After the first cron run, confirm the anchor hash appears in the public repository and `integrity_anchors`.
 
-## 6. Smart Property Access Providers
+## 7. Smart Property Access Providers
 
 - Decide which provider launches first: TTLock, Yale, or Tuya.
 - Store provider command endpoints and access tokens server-side only.
 - Run `npm run prod:env:check -- --strict-iot --env-file=.env.production` before enabling live unlock actions.
+- In the workspace Smart Access page, mark each provider connection only after secrets are vaulted, webhook signatures are verified, and a real-device code cycle passes.
 - Test device registry, grant creation, viewing access, tenant access, revoke, provider offline, failed unlock, and audit log events.
 - Document the human fallback path for provider outages before inviting real tenants to use Smart Property Access.
 
-## 7. Legal And Operations Decisions
+## 8. Legal And Operations Decisions
 
 - Escrow fee: set the initial percentage before public escrow launch. Recommended starting range: 1% to 2%.
 - FX handling: lock diaspora exchange rate at payment time and show the rate on receipts.
@@ -76,11 +85,12 @@ The environment checker only reports whether values are present. It never prints
 - Device support policy: define supported providers, owner responsibilities, emergency lockout, and outage handling.
 - Counsel must approve Terms, Privacy Notice, escrow language, refund language, and Smart Property Access terms.
 
-## 8. Production Smoke Test
+## 9. Production Smoke Test
 
 After deployment and provider setup:
 
 - Open `/`, `/search`, `/legal/terms`, `/legal/privacy`, `/get-the-app`, `/workspace`, `/admin`, and one public listing page.
+- In `/search`, toggle map view, select multiple pins, and confirm the map recenters and external map handoff works.
 - Create a test organization and complete the subscription activation flow.
 - Invite an agent and confirm the seat cap still works.
 - Create a listing, publish it, browse it publicly, submit an inquiry, and request a viewing.

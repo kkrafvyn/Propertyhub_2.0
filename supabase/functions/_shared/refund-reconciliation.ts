@@ -9,6 +9,8 @@ type RefundStatus =
   | "failed"
   | "processed";
 
+type RefundProvider = "paystack" | "stripe" | "flutterwave";
+
 type PropertyTransactionSummaryRow = {
   id: string;
   provider_reference: string;
@@ -25,7 +27,7 @@ type PropertyRefundRow = {
   organization_id: string;
   property_id: string;
   requested_by_user_id: string | null;
-  provider: "paystack";
+  provider: RefundProvider;
   provider_refund_id: string | null;
   provider_refund_reference: string | null;
   amount_minor: number;
@@ -40,6 +42,7 @@ type PropertyRefundRow = {
   processed_at: string | null;
   failed_at: string | null;
   paystack_response: Record<string, unknown>;
+  provider_response?: Record<string, unknown>;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -58,6 +61,28 @@ export function normalizePaystackRefundStatus(status?: string | null): RefundSta
     default:
       return "pending";
   }
+}
+
+export function normalizeGatewayRefundStatus(
+  provider: RefundProvider,
+  status?: string | null
+): RefundStatus {
+  const normalized = (status || "").trim().toLowerCase().replace(/[-\s]+/g, "_");
+
+  if (provider === "paystack") return normalizePaystackRefundStatus(status);
+
+  if (provider === "stripe") {
+    if (normalized === "succeeded") return "processed";
+    if (["failed", "canceled", "cancelled"].includes(normalized)) return "failed";
+    return "processing";
+  }
+
+  if (["successful", "success", "completed", "processed"].includes(normalized)) {
+    return "processed";
+  }
+  if (["failed", "cancelled", "canceled"].includes(normalized)) return "failed";
+  if (["processing", "pending"].includes(normalized)) return "processing";
+  return "pending";
 }
 
 export function isActiveRefundStatus(status?: string | null) {
@@ -306,6 +331,96 @@ export async function recordInitiatedPropertyRefund(input: {
       metadata: {
         source: "workspace",
         initiated_at: nowIso,
+      },
+    })
+    .select("*")
+    .single();
+
+  if (refundError) {
+    throw new HttpError(500, refundError.message);
+  }
+
+  const updatedTransaction = await syncPropertyTransactionRefundState(transaction.id);
+
+  return {
+    transaction: updatedTransaction,
+    refund,
+  };
+}
+
+export async function recordInitiatedGatewayPropertyRefund(input: {
+  transactionId: string;
+  requestedByUserId: string;
+  provider: RefundProvider;
+  amountMinor: number;
+  refundReason: string;
+  customerNote?: string | null;
+  merchantNote?: string | null;
+  providerRefundId?: string | number | null;
+  providerRefundReference?: string | null;
+  providerStatus?: string | null;
+  providerCurrency?: string | null;
+  processor?: string | null;
+  expectedAt?: string | null;
+  processedAt?: string | null;
+  failedAt?: string | null;
+  providerResponse: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}) {
+  const admin = createAdminClient();
+  const { data: transaction, error: transactionError } = await admin
+    .from("property_transactions")
+    .select("id, provider_reference, amount_minor, refunded_amount_minor, currency, organization_id, property_id")
+    .eq("id", input.transactionId)
+    .maybeSingle();
+
+  if (transactionError) {
+    throw new HttpError(500, transactionError.message);
+  }
+
+  if (!transaction) {
+    throw new HttpError(404, "Property transaction not found");
+  }
+
+  const remainingAmountMinor = Math.max(
+    transaction.amount_minor - (transaction.refunded_amount_minor || 0),
+    0
+  );
+  const refundStatus = normalizeGatewayRefundStatus(input.provider, input.providerStatus);
+  const nowIso = new Date().toISOString();
+
+  const { data: refund, error: refundError } = await admin
+    .from("property_refunds")
+    .insert({
+      transaction_id: transaction.id,
+      organization_id: transaction.organization_id,
+      property_id: transaction.property_id,
+      requested_by_user_id: input.requestedByUserId,
+      provider: input.provider,
+      provider_refund_id:
+        input.providerRefundId !== undefined && input.providerRefundId !== null
+          ? String(input.providerRefundId)
+          : null,
+      provider_refund_reference: input.providerRefundReference || null,
+      amount_minor: input.amountMinor,
+      currency: input.providerCurrency || transaction.currency,
+      refund_type: input.amountMinor >= remainingAmountMinor ? "full" : "partial",
+      status: refundStatus,
+      refund_reason: input.refundReason,
+      customer_note: input.customerNote || null,
+      merchant_note: input.merchantNote || null,
+      processor: input.processor || input.provider,
+      expected_at: toIsoOrNull(input.expectedAt),
+      processed_at:
+        refundStatus === "processed" ? toIsoOrNull(input.processedAt) || nowIso : null,
+      failed_at:
+        refundStatus === "failed" ? toIsoOrNull(input.failedAt) || nowIso : null,
+      paystack_response: input.provider === "paystack" ? input.providerResponse : {},
+      provider_response: input.providerResponse,
+      metadata: {
+        source: "payment_service",
+        initiated_at: nowIso,
+        ...(input.metadata || {}),
       },
     })
     .select("*")

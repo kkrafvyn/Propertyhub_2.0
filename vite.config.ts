@@ -3,6 +3,40 @@ import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://open.er-api.com https://api.ghana-api.dev ws://127.0.0.1:* ws://localhost:* http://127.0.0.1:* http://localhost:*",
+  "font-src 'self' data:",
+  "frame-ancestors 'none'",
+  "frame-src 'none'",
+  "img-src 'self' data: blob: https:",
+  "manifest-src 'self'",
+  "media-src 'self' data: blob:",
+  "object-src 'none'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "worker-src 'self' blob:",
+].join('; ')
+
+const devContentSecurityPolicy = contentSecurityPolicy.replace(
+  "script-src 'self'",
+  "script-src 'self' 'unsafe-inline'"
+)
+
+const previewSecurityHeaders = {
+  'Content-Security-Policy': contentSecurityPolicy,
+  'Permissions-Policy': 'camera=(self), geolocation=(self), microphone=(), payment=(self)',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+}
+
+const serverSecurityHeaders = {
+  ...previewSecurityHeaders,
+  'Content-Security-Policy': devContentSecurityPolicy,
+}
+
 function figmaAssetResolver() {
   return {
     name: 'figma-asset-resolver',
@@ -27,6 +61,12 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+  },
+  preview: {
+    headers: previewSecurityHeaders,
+  },
+  server: {
+    headers: serverSecurityHeaders,
   },
   build: {
     rollupOptions: {
@@ -88,6 +128,7 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     css: true,
     testTimeout: 10000,
+    exclude: ['tests/e2e/**', '**/node_modules/**'],
   },
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })

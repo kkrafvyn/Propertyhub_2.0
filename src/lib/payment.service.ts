@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { attachEscrowMilestonesToTransactions } from "./escrow-milestones";
 
 export type PaymentGatewayProvider = "paystack" | "stripe" | "flutterwave" | "it_consortium";
 
@@ -13,19 +14,19 @@ export const PAYMENT_GATEWAY_OPTIONS: PaymentGatewayOption[] = [
   {
     id: "paystack",
     label: "Paystack",
-    helper: "MoMo, cards, bank transfer, and bank payments.",
+    helper: "Secure checkout, escrow release, and refunds. Live now with your Paystack key.",
     enabled: true,
   },
   {
     id: "stripe",
     label: "Stripe",
-    helper: "International cards for diaspora USD, GBP, and EUR payments.",
-    enabled: Boolean(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY),
+    helper: "Same checkout, escrow, and refund flow. Falls back to Paystack until Stripe keys are added.",
+    enabled: true,
   },
   {
     id: "flutterwave",
     label: "Flutterwave",
-    helper: "Cards, mobile money, bank transfer, and regional rails.",
+    helper: "Same checkout, escrow, and refund flow. Falls back to Paystack until Flutterwave keys are added.",
     enabled: true,
   },
   {
@@ -84,6 +85,8 @@ export interface InitializePropertyPaymentInput {
   customerName?: string;
   customerPhone?: string;
   provider?: PaymentGatewayProvider;
+  fallbackProviders?: PaymentGatewayProvider[];
+  allowGatewayFallback?: boolean;
 }
 
 export interface InitiatePropertyRefundInput {
@@ -107,6 +110,13 @@ export const paymentService = {
       accessCode: string;
       reference: string;
       provider: PaymentGatewayProvider;
+      requestedProvider?: PaymentGatewayProvider;
+      fallbackAttempted?: boolean;
+      fallbackAttempts?: Array<{
+        provider: PaymentGatewayProvider;
+        reference: string;
+        error: string;
+      }>;
       callbackUrl: string;
     };
   },
@@ -146,7 +156,7 @@ export const paymentService = {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return attachEscrowMilestonesToTransactions(data || []);
   },
 
   async getOrganizationPropertyTransactions(organizationId: string) {
@@ -157,7 +167,7 @@ export const paymentService = {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return attachEscrowMilestonesToTransactions(data || []);
   },
 
   async getReceiptDownloadUrl(bucket: string, path: string) {

@@ -1,8 +1,11 @@
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import { createSubscription } from "../_shared/payment-service.ts";
 import { initializePaystackTransaction } from "../_shared/paystack.ts";
+import { isPaymentGatewayConfigured } from "../_shared/payment-gateways.ts";
 import { enforceRateLimit } from "../_shared/rate-limit.ts";
 import { createAdminClient, requireAuthenticatedUser } from "../_shared/supabase.ts";
+
+type SubscriptionProvider = "paystack" | "stripe" | "flutterwave";
 
 function getAppUrl(req: Request) {
   return (
@@ -21,6 +24,11 @@ function buildReference() {
 function buildStripeReference() {
   const suffix = crypto.randomUUID().replace(/-/g, "").slice(0, 18);
   return `bm-st-sub-${suffix}`;
+}
+
+function buildFlutterwaveReference() {
+  const suffix = crypto.randomUUID().replace(/-/g, "").slice(0, 18);
+  return `bm-flw-sub-${suffix}`;
 }
 
 function normalizeSlug(value: string) {
@@ -42,9 +50,9 @@ function getPlanCode(tierId: string, tierPlanCode?: string | null) {
   );
 }
 
-function normalizeSubscriptionProvider(value: unknown, currency: string) {
+function normalizeSubscriptionProvider(value: unknown): SubscriptionProvider {
   const normalized = typeof value === "string" ? value.trim().toLowerCase() : "";
-  if (normalized === "stripe" || ["USD", "GBP", "EUR"].includes(currency)) return "stripe";
+  if (normalized === "stripe" || normalized === "flutterwave") return normalized;
   return "paystack";
 }
 
@@ -70,6 +78,90 @@ function getStripeAmountMinor(tier: any, currency: string) {
   const configured = Deno.env.get(`STRIPE_PRICE_AMOUNT_MINOR_${normalizedTier}_${currency}`);
   const parsed = Number(configured || "");
   return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : Number(tier.price_minor || 0);
+}
+
+function getFlutterwavePlanId(tier: any, currency: string) {
+  const normalizedTier = String(tier.id || "").trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_");
+  const normalizedCurrency = currency.toUpperCase();
+  const columnName = `flutterwave_plan_id_${normalizedCurrency.toLowerCase()}`;
+  return (
+    tier[columnName] ||
+    Deno.env.get(`FLUTTERWAVE_PLAN_ID_${normalizedTier}_${normalizedCurrency}`) ||
+    Deno.env.get(`FLUTTERWAVE_${normalizedTier}_${normalizedCurrency}_PLAN_ID`) ||
+    Deno.env.get(`FLUTTERWAVE_PLAN_ID_${normalizedTier}`) ||
+    ""
+  );
+}
+
+function uniqueProviders(providers: SubscriptionProvider[]) {
+  return providers.filter((provider, index) => providers.indexOf(provider) === index);
+}
+
+function getSubscriptionFallbackOrder(provider: SubscriptionProvider) {
+  return uniqueProviders([provider, "paystack", "stripe", "flutterwave"]);
+}
+
+function getProviderReadiness(provider: SubscriptionProvider, tier: any, currency: string) {
+  if (provider === "paystack") {
+    const planCode = getPlanCode(tier.id, tier.paystack_plan_code);
+    return {
+      provider,
+      ready: Boolean(planCode && isPaymentGatewayConfigured("paystack")),
+      planCode,
+      priceId: "",
+      flutterwavePlanId: "",
+      amountMinor: tier.price_minor,
+      currency: tier.currency || "GHS",
+      missing: !planCode ? "missing Paystack plan code" : "missing Paystack secret key",
+    };
+  }
+
+  if (provider === "stripe") {
+    const priceId = getStripePriceId(tier, currency);
+    return {
+      provider,
+      ready: Boolean(priceId && isPaymentGatewayConfigured("stripe")),
+      planCode: "",
+      priceId,
+      flutterwavePlanId: "",
+      amountMinor: getStripeAmountMinor(tier, currency),
+      currency,
+      missing: !priceId ? "missing Stripe price ID" : "missing Stripe secret key",
+    };
+  }
+
+  const flutterwavePlanId = getFlutterwavePlanId(tier, currency);
+  return {
+    provider,
+    ready: Boolean(flutterwavePlanId && isPaymentGatewayConfigured("flutterwave")),
+    planCode: "",
+    priceId: "",
+    flutterwavePlanId,
+    amountMinor: tier.price_minor,
+    currency,
+    missing: !flutterwavePlanId
+      ? "missing Flutterwave payment plan ID"
+      : "missing Flutterwave secret key",
+  };
+}
+
+function selectSubscriptionCheckoutProvider(input: {
+  requestedProvider: SubscriptionProvider;
+  tier: any;
+  currency: string;
+}) {
+  const attempts = getSubscriptionFallbackOrder(input.requestedProvider).map((provider) =>
+    getProviderReadiness(provider, input.tier, input.currency)
+  );
+  const selected = attempts.find((attempt) => attempt.ready);
+  if (selected) return { selected, attempts };
+
+  throw new HttpError(
+    500,
+    `No subscription payment provider is configured. Tried ${attempts
+      .map((attempt) => `${attempt.provider}: ${attempt.missing}`)
+      .join("; ")}.`
+  );
 }
 
 function normalizeString(value: unknown) {
@@ -101,7 +193,7 @@ Deno.serve(async (req) => {
     const organizationInput = requestBody?.organization || {};
     const tierId = normalizeString(requestBody?.tierId) || "starter";
     const currency = normalizeCurrency(requestBody?.currency);
-    const provider = normalizeSubscriptionProvider(requestBody?.provider, currency);
+    const requestedProvider = normalizeSubscriptionProvider(requestBody?.provider);
 
     const name = normalizeString(organizationInput.name);
     const slug = normalizeSlug(String(organizationInput.slug || organizationInput.name || ""));
@@ -139,25 +231,12 @@ Deno.serve(async (req) => {
       throw new HttpError(404, "Subscription tier not found");
     }
 
-    const planCode = provider === "paystack" ? getPlanCode(tier.id, tier.paystack_plan_code) : "";
-    if (provider === "paystack" && !planCode) {
-      throw new HttpError(
-        500,
-        `Missing Paystack plan code for the ${tier.name} tier. Configure PAYSTACK_PLAN_CODE_${String(
-          tier.id
-        ).toUpperCase()} or subscription_tiers.paystack_plan_code.`
-      );
-    }
-
-    const stripePriceId = provider === "stripe" ? getStripePriceId(tier, currency) : "";
-    if (provider === "stripe" && !stripePriceId) {
-      throw new HttpError(
-        500,
-        `Missing Stripe price ID for the ${tier.name} tier in ${currency}. Configure STRIPE_PRICE_ID_${String(
-          tier.id
-        ).toUpperCase()}_${currency} or subscription_tiers.stripe_price_id_${currency.toLowerCase()}.`
-      );
-    }
+    const { selected, attempts } = selectSubscriptionCheckoutProvider({
+      requestedProvider,
+      tier,
+      currency,
+    });
+    const provider = selected.provider;
 
     const { data: existingOrganization } = await admin
       .from("organizations")
@@ -215,13 +294,21 @@ Deno.serve(async (req) => {
         tier_id: tier.id,
         status: "pending_payment",
         provider,
-        paystack_plan_code: provider === "paystack" ? planCode : null,
-        stripe_price_id: provider === "stripe" ? stripePriceId : null,
+        paystack_plan_code: provider === "paystack" ? selected.planCode : null,
+        stripe_price_id: provider === "stripe" ? selected.priceId : null,
+        flutterwave_payment_plan_id:
+          provider === "flutterwave" ? String(selected.flutterwavePlanId) : null,
         metadata: {
           createdBy: user.id,
           onboardingVersion: "phase1",
+          requestedBillingProvider: requestedProvider,
           billingProvider: provider,
-          billingCurrency: currency,
+          billingCurrency: selected.currency,
+          providerFallbackAttempts: attempts.map((attempt) => ({
+            provider: attempt.provider,
+            ready: attempt.ready,
+            missing: attempt.ready ? null : attempt.missing,
+          })),
         },
       })
       .select("*")
@@ -231,7 +318,12 @@ Deno.serve(async (req) => {
       throw new HttpError(500, subscriptionError.message);
     }
 
-    const reference = provider === "stripe" ? buildStripeReference() : buildReference();
+    const reference =
+      provider === "stripe"
+        ? buildStripeReference()
+        : provider === "flutterwave"
+          ? buildFlutterwaveReference()
+          : buildReference();
     const callbackUrl = `${getAppUrl(req)}/workspace?billing=verify&provider=${encodeURIComponent(
       provider
     )}&organization=${encodeURIComponent(organization.slug)}&reference=${encodeURIComponent(
@@ -246,7 +338,14 @@ Deno.serve(async (req) => {
       tierId: tier.id,
       ownerUserId: user.id,
       provider,
-      currency,
+      requestedProvider,
+      currency: selected.currency,
+      fallbackAttempted: requestedProvider !== provider,
+      providerFallbackAttempts: attempts.map((attempt) => ({
+        provider: attempt.provider,
+        ready: attempt.ready,
+        missing: attempt.ready ? null : attempt.missing,
+      })),
     };
 
     const { data: payment, error: paymentError } = await admin
@@ -256,8 +355,8 @@ Deno.serve(async (req) => {
         subscription_id: subscription.id,
         provider,
         provider_reference: reference,
-        amount_minor: provider === "stripe" ? getStripeAmountMinor(tier, currency) : tier.price_minor,
-        currency: provider === "stripe" ? currency : tier.currency || "GHS",
+        amount_minor: selected.amountMinor,
+        currency: selected.currency,
         status: "initialized",
         metadata,
       })
@@ -277,16 +376,31 @@ Deno.serve(async (req) => {
             successUrl: stripeSuccessUrl,
             cancelUrl: callbackUrl,
             tierName: tier.name,
-            stripePriceId,
+            amountMinor: selected.amountMinor,
+            currency: selected.currency,
+            stripePriceId: selected.priceId,
+            metadata,
+          })
+        : provider === "flutterwave"
+          ? await createSubscription({
+            provider: "flutterwave",
+            email: user.email,
+            reference,
+            successUrl: callbackUrl,
+            cancelUrl: callbackUrl,
+            tierName: tier.name,
+            amountMinor: selected.amountMinor,
+            currency: selected.currency,
+            flutterwavePaymentPlanId: selected.flutterwavePlanId,
             metadata,
           })
         : await initializePaystackTransaction({
-            amount: String(tier.price_minor),
+            amount: String(selected.amountMinor),
             email: user.email,
-            currency: tier.currency || "GHS",
+            currency: selected.currency,
             reference,
             callback_url: callbackUrl,
-            plan: planCode,
+            plan: selected.planCode,
             metadata,
           }).then((paystack) => ({
             provider: "paystack" as const,
@@ -306,6 +420,10 @@ Deno.serve(async (req) => {
         provider_transaction_id: checkout.providerTransactionId || null,
         stripe_checkout_session_id:
           provider === "stripe" ? checkout.providerTransactionId || null : null,
+        flutterwave_transaction_id:
+          provider === "flutterwave" ? checkout.providerTransactionId || null : null,
+        flutterwave_payment_plan_id:
+          provider === "flutterwave" ? String(selected.flutterwavePlanId) : null,
         metadata: {
           ...metadata,
           checkout: checkout.raw,
@@ -320,6 +438,8 @@ Deno.serve(async (req) => {
         provider_reference: reference,
         stripe_checkout_session_id:
           provider === "stripe" ? checkout.providerTransactionId || null : null,
+        flutterwave_subscription_id:
+          provider === "flutterwave" ? checkout.providerTransactionId || null : null,
       })
       .eq("id", subscription.id);
 
@@ -333,8 +453,10 @@ Deno.serve(async (req) => {
         reference,
         tierId: tier.id,
         amountMinor: payment.amount_minor,
+        requestedProvider,
         provider,
         currency: payment.currency,
+        fallbackAttempted: requestedProvider !== provider,
       },
     });
 
@@ -350,6 +472,14 @@ Deno.serve(async (req) => {
       accessCode: "accessCode" in checkout ? checkout.accessCode || null : null,
       reference: checkout.reference,
       callbackUrl,
+      requestedProvider,
+      provider,
+      fallbackAttempted: requestedProvider !== provider,
+      fallbackAttempts: attempts.map((attempt) => ({
+        provider: attempt.provider,
+        ready: attempt.ready,
+        missing: attempt.ready ? null : attempt.missing,
+      })),
     });
   } catch (error) {
     if (error instanceof HttpError) {

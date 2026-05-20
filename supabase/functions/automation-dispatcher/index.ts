@@ -46,11 +46,14 @@ function formatDateTime(value?: string | null) {
 
 function normalizePropertyCategory(value?: string | null) {
   if (!value) return null;
-  const normalized = value.trim().toLowerCase();
+  const normalized = value.trim().toLowerCase().replace(/[\s_-]+/g, " ");
   if (["apartment", "flat", "condo"].includes(normalized)) return "apartment";
   if (["house", "home", "villa", "duplex"].includes(normalized)) return "house";
   if (["office", "workspace"].includes(normalized)) return "office";
   if (["commercial", "shop", "retail"].includes(normalized)) return "commercial";
+  if (["warehouse", "storage", "logistics", "logistics hub"].includes(normalized)) return "warehouse";
+  if (["car park", "car parks", "carpark", "carparks", "parking", "parking lot"].includes(normalized)) return "car_park";
+  if (["office complex", "office complexes", "business park", "corporate campus"].includes(normalized)) return "office_complex";
   if (["land", "plot"].includes(normalized)) return "land";
   return normalized;
 }

@@ -14,10 +14,16 @@ import { listingQualityService } from "../../../lib/listing-quality.service";
 import { propertyMediaService } from "../../../lib/property-media.service";
 import { propertyService } from "../../../lib/property.service";
 import {
+  PROPERTY_CATEGORIES,
+  formatPropertyCategory,
+  getPropertyCategoryIoTHints,
+} from "../../../lib/property-category";
+import {
   getActiveListingLimitState,
   isPublicActiveListing,
   subscriptionService,
 } from "../../../lib/subscription.service";
+import { buildAiListingDraft } from "../../../lib/competitive-features.service";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 type PropertyCategory = Database["public"]["Tables"]["properties"]["Row"]["category"];
@@ -31,14 +37,6 @@ interface WorkspaceNewListingProps {
   currentUserId: string;
 }
 
-const PROPERTY_CATEGORIES: PropertyCategory[] = [
-  "apartment",
-  "house",
-  "office",
-  "commercial",
-  "land",
-];
-
 const LISTING_TYPES: ListingType[] = ["rental", "sale", "lease"];
 const LISTING_STATUSES: ListingStatus[] = ["draft", "pending_review", "listed"];
 const VISIBILITY_OPTIONS: ListingVisibility[] = ["public", "private", "hidden"];
@@ -51,6 +49,14 @@ export function WorkspaceNewListing({
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [aiDraft, setAiDraft] = useState<ReturnType<typeof buildAiListingDraft> | null>(null);
+  const [mediaLinks, setMediaLinks] = useState({
+    videoUrl: "",
+    virtualTourUrl: "",
+    floorPlanUrl: "",
+    droneUrl: "",
+    renovationUrl: "",
+  });
   const [form, setForm] = useState({
     address: "",
     ghanaPostGps: "",
@@ -78,6 +84,37 @@ export function WorkspaceNewListing({
 
   const updateField = (field: keyof typeof form, value: string | boolean) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const updateMediaLink = (field: keyof typeof mediaLinks, value: string) => {
+    setMediaLinks((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleGenerateAiDraft = () => {
+    setAiDraft(
+      buildAiListingDraft({
+        address: form.address,
+        city: form.city,
+        region: form.region,
+        neighborhood: form.neighborhood,
+        category: form.category,
+        listingType: form.listingType,
+        price: form.price,
+        amenities: form.amenities,
+        bedrooms: form.bedrooms,
+        bathrooms: form.bathrooms,
+      })
+    );
+  };
+
+  const handleApplyAiDraft = () => {
+    if (!aiDraft) return;
+    setForm((current) => ({
+      ...current,
+      description: aiDraft.description,
+      amenities: current.amenities,
+    }));
+    toast.success("Draft copied into the listing description. Review it before publishing.");
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -183,6 +220,54 @@ export function WorkspaceNewListing({
         }
       }
 
+      const externalMedia = [
+        {
+          mediaType: "video" as const,
+          url: mediaLinks.videoUrl,
+          caption: "Video walkthrough",
+        },
+        {
+          mediaType: "virtual_tour" as const,
+          url: mediaLinks.virtualTourUrl,
+          caption: "Virtual tour",
+        },
+        {
+          mediaType: "floor_plan" as const,
+          url: mediaLinks.floorPlanUrl,
+          caption: "Floor plan",
+        },
+        {
+          mediaType: "drone" as const,
+          url: mediaLinks.droneUrl,
+          caption: "Drone or exterior media",
+        },
+        {
+          mediaType: "renovation_before_after" as const,
+          url: mediaLinks.renovationUrl,
+          caption: "Before and after renovation media",
+        },
+      ].filter((item) => item.url.trim());
+
+      if (externalMedia.length > 0) {
+        try {
+          await Promise.all(
+            externalMedia.map((item) =>
+              propertyMediaService.addExternalMedia({
+                organizationId: organization.id,
+                propertyId: property.id,
+                createdBy: currentUserId,
+                mediaType: item.mediaType,
+                url: item.url.trim(),
+                caption: item.caption,
+              })
+            )
+          );
+        } catch (mediaError) {
+          console.error("Failed to attach external property media:", mediaError);
+          toast.error("The listing was created, but one or more media links failed to attach.");
+        }
+      }
+
       toast.success("Listing created successfully.");
       navigate(`${workspaceBasePath}/listings`, {
         replace: true,
@@ -201,6 +286,7 @@ export function WorkspaceNewListing({
     form.region,
     form.neighborhood
   );
+  const smartAccessHints = getPropertyCategoryIoTHints(form.category);
   const locationConfidence = ghanaMarketService.calculateLocationConfidence({
     address: form.address,
     city: form.city,
@@ -294,7 +380,7 @@ export function WorkspaceNewListing({
               >
                 {PROPERTY_CATEGORIES.map((category) => (
                   <option key={category} value={category}>
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                    {formatPropertyCategory(category)}
                   </option>
                 ))}
               </select>
@@ -325,6 +411,21 @@ export function WorkspaceNewListing({
             />
           </div>
 
+          <div className="mt-4 rounded-xl border border-primary/15 bg-primary/5 p-4">
+            <h3 className="font-semibold">{smartAccessHints.title}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{smartAccessHints.description}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {smartAccessHints.devices.map((device) => (
+                <span
+                  key={device}
+                  className="rounded-full border border-primary/15 bg-white px-3 py-1 text-xs font-medium text-primary"
+                >
+                  {device}
+                </span>
+              ))}
+            </div>
+          </div>
+
           <div className="mt-4 rounded-xl border border-border bg-secondary/20 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -350,6 +451,47 @@ export function WorkspaceNewListing({
               onChange={(event) => updateField("description", event.target.value)}
               placeholder="Describe the property, neighborhood, and unique selling points."
             />
+          </div>
+
+          <div className="mt-4 rounded-xl border border-primary/15 bg-primary/5 p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <h3 className="font-semibold">AI listing draft helper</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Generate editable copy from the fields above. Nothing is published or saved until you review and apply it.
+                </p>
+              </div>
+              <Button type="button" variant="outline" onClick={handleGenerateAiDraft}>
+                Generate Draft
+              </Button>
+            </div>
+            {aiDraft && (
+              <div className="mt-4 space-y-3 rounded-xl border border-border bg-background p-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Suggested title
+                  </p>
+                  <p className="mt-1 font-medium">{aiDraft.title}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    SEO summary
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">{aiDraft.seoDescription}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Editable draft
+                  </p>
+                  <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
+                    {aiDraft.description}
+                  </p>
+                </div>
+                <Button type="button" onClick={handleApplyAiDraft}>
+                  Apply Draft to Description
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="mt-4">
@@ -488,6 +630,44 @@ export function WorkspaceNewListing({
             disabled={submitting}
             helperText="Add photos now so the property is ready to publish as soon as the listing is created."
           />
+          <div className="mt-6 border-t border-border pt-6">
+            <h3 className="font-semibold">Rich media links</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Add optional video, virtual tour, floor plan, drone, or renovation media links for remote buyers.
+            </p>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Video walkthrough URL"
+                value={mediaLinks.videoUrl}
+                onChange={(event) => updateMediaLink("videoUrl", event.target.value)}
+                placeholder="https://youtube.com/..."
+              />
+              <Input
+                label="Virtual tour URL"
+                value={mediaLinks.virtualTourUrl}
+                onChange={(event) => updateMediaLink("virtualTourUrl", event.target.value)}
+                placeholder="https://matterport.com/..."
+              />
+              <Input
+                label="Floor plan URL"
+                value={mediaLinks.floorPlanUrl}
+                onChange={(event) => updateMediaLink("floorPlanUrl", event.target.value)}
+                placeholder="https://..."
+              />
+              <Input
+                label="Drone / exterior media URL"
+                value={mediaLinks.droneUrl}
+                onChange={(event) => updateMediaLink("droneUrl", event.target.value)}
+                placeholder="https://..."
+              />
+              <Input
+                label="Before / after renovation URL"
+                value={mediaLinks.renovationUrl}
+                onChange={(event) => updateMediaLink("renovationUrl", event.target.value)}
+                placeholder="https://..."
+              />
+            </div>
+          </div>
         </Card>
 
         <ListingQualityPanel report={qualityReport} />

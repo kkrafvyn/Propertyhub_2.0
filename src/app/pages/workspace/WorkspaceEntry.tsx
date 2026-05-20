@@ -42,31 +42,34 @@ const PROPERTY_TYPE_OPTIONS = [
   "House",
   "Commercial",
   "Office",
+  "Warehouse",
+  "Car Park",
+  "Office Complex",
   "Land",
   "Developer Projects",
 ];
 
 const BILLING_LANES = [
   {
-    id: "ghana",
-    label: "Ghana organization",
-    helper: "Bill in GHS through Paystack with Mobile Money, card, or bank transfer.",
+    id: "paystack-ghs",
+    label: "Paystack",
+    helper: "GHS billing with Mobile Money, card, or bank transfer. Live default.",
     provider: "paystack" as const,
     currency: "GHS" as const,
   },
   {
-    id: "diaspora-usd",
-    label: "Diaspora organization - USD",
-    helper: "Bill an international agency or landlord in USD through Stripe.",
+    id: "stripe-usd",
+    label: "Stripe",
+    helper: "USD card billing for diaspora teams. Falls back to Paystack until configured.",
     provider: "stripe" as const,
     currency: "USD" as const,
   },
   {
-    id: "diaspora-gbp",
-    label: "Diaspora organization - GBP",
-    helper: "Bill a UK-based agency or landlord in GBP through Stripe.",
-    provider: "stripe" as const,
-    currency: "GBP" as const,
+    id: "flutterwave-ghs",
+    label: "Flutterwave",
+    helper: "GHS card/mobile money billing. Falls back to Paystack until configured.",
+    provider: "flutterwave" as const,
+    currency: "GHS" as const,
   },
 ];
 
@@ -102,7 +105,7 @@ export function WorkspaceEntry() {
   const [memberships, setMemberships] = useState<OrganizationMembership[]>([]);
   const [tiers, setTiers] = useState<SubscriptionTier[]>([]);
   const [selectedTierId, setSelectedTierId] = useState("starter");
-  const [selectedBillingLaneId, setSelectedBillingLaneId] = useState("ghana");
+  const [selectedBillingLaneId, setSelectedBillingLaneId] = useState("paystack-ghs");
   const [slugEdited, setSlugEdited] = useState(false);
   const [form, setForm] = useState({
     name: "",
@@ -262,8 +265,8 @@ export function WorkspaceEntry() {
 
       toast.success(
         `Workspace reserved. Continue to ${
-          selectedBillingLane.provider === "stripe" ? "Stripe" : "Paystack"
-        } to activate it.`
+          result.provider || selectedBillingLane.provider
+        } checkout to activate it.`
       );
       window.location.assign(result.authorizationUrl);
     } catch (error) {
@@ -542,7 +545,7 @@ export function WorkspaceEntry() {
                 ) : (
                   <>
                     <CreditCard className="h-4 w-4" />
-                    Continue to {selectedBillingLane.provider === "stripe" ? "Stripe" : "Paystack"}
+                    Continue to {selectedBillingLane.label}
                   </>
                 )}
               </Button>
@@ -595,9 +598,7 @@ export function WorkspaceEntry() {
                     selectedTier.price_minor,
                     selectedTier.currency
                   )} per month, ${
-                    selectedBillingLane.provider === "stripe"
-                      ? `configured for ${selectedBillingLane.currency} Stripe billing.`
-                      : "billed through Paystack."
+                    `requested through ${selectedBillingLane.label}. If that provider is not configured yet, BaytMiftah will activate through Paystack.`
                   }`
                 : "Choose a tier to continue."}
             </p>

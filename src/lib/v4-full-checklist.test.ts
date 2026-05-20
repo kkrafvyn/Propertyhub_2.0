@@ -57,17 +57,23 @@ describe("BaytMiftah v4 checklist completion", () => {
     expect(deployScript).toContain("payment-webhook");
   });
 
-  it("connects diaspora subscription checkout and verification to Stripe", () => {
+  it("connects provider-neutral subscription checkout and verification to all payment lanes", () => {
     expect(initializeSubscription).toContain("createSubscription");
     expect(initializeSubscription).toContain("STRIPE_PRICE_ID_");
+    expect(initializeSubscription).toContain("FLUTTERWAVE_PLAN_ID_");
+    expect(initializeSubscription).toContain('provider: "flutterwave"');
+    expect(initializeSubscription).toContain("getSubscriptionFallbackOrder");
     expect(initializeSubscription).toContain("provider");
     expect(initializeSubscription).toContain("currency");
     expect(verifySubscription).toContain("retrieveStripeCheckoutSession");
     expect(verifySubscription).toContain("reconcileStripeOrganizationSubscriptionCheckout");
+    expect(verifySubscription).toContain("reconcileFlutterwaveOrganizationSubscriptionPayment");
     expect(stripeReconciliation).toContain("reconcileStripeInvoicePaid");
     expect(workspaceEntry).toContain("Billing lane");
-    expect(workspaceEntry).toContain("diaspora-usd");
-    expect(workspaceEntry).toContain("diaspora-gbp");
+    expect(workspaceEntry).toContain("paystack-ghs");
+    expect(workspaceEntry).toContain("stripe-usd");
+    expect(workspaceEntry).toContain("flutterwave-ghs");
+    expect(workspaceEntry).toContain("Falls back to Paystack");
   });
 
   it("surfaces public receipts, multi-currency marketplace prices, and condition reports", () => {

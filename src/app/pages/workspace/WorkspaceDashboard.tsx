@@ -24,6 +24,10 @@ import { listingService } from "../../../lib/listing.service";
 import { organizationService } from "../../../lib/organization.service";
 import { paymentService } from "../../../lib/payment.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
+import {
+  buildDocumentTemplateDrafts,
+  buildViewingCalendarExports,
+} from "../../../lib/competitive-operations.service";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 
@@ -206,6 +210,33 @@ export function WorkspaceDashboard({ organization, workspaceBasePath }: Workspac
       .filter((entry) => entry.count > 0)
       .slice(0, 5);
   }, [dealCases]);
+  const templateDrafts = useMemo(() => {
+    const listing = recentListings[0];
+    return buildDocumentTemplateDrafts({
+      organizationName: organization.name,
+      propertyAddress: listing?.property?.address || null,
+      listingType: listing?.listing_type || null,
+      price: listing?.price || null,
+      currency: listing?.currency || "GHS",
+    });
+  }, [organization.name, recentListings]);
+  const nextViewingExport = useMemo(() => {
+    const viewing = upcomingViewings[0];
+    if (!viewing) return null;
+
+    return buildViewingCalendarExports({
+      title: `BaytMiftah viewing: ${viewing.listing?.property?.address || "Property"}`,
+      startsAt: viewing.confirmed_datetime || viewing.requested_datetime,
+      location: [
+        viewing.listing?.property?.address,
+        viewing.listing?.property?.city,
+        viewing.listing?.property?.region,
+      ]
+        .filter(Boolean)
+        .join(", "),
+      description: "Viewing scheduled from the BaytMiftah workspace.",
+    });
+  }, [upcomingViewings]);
   const onboardingItems = useMemo(() => {
     const organizationAny = organization as any;
     return [
@@ -218,7 +249,7 @@ export function WorkspaceDashboard({ organization, workspaceBasePath }: Workspac
       },
       {
         label: "Set payout destination",
-        description: "Add Paystack or Stripe release details before escrow goes live.",
+        description: "Add payout and release details for every payment gateway before escrow goes live.",
         complete:
           organizationAny.payment_setup_status === "ready" ||
           Boolean(
@@ -586,6 +617,74 @@ export function WorkspaceDashboard({ organization, workspaceBasePath }: Workspac
           </div>
         )}
       </Card>
+
+      <div className="grid gap-8 mt-8 lg:grid-cols-2">
+        <Card className="p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold">Document Automation</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Draft operational documents from the latest listing. Legal-sensitive drafts stay review-gated.
+              </p>
+            </div>
+            <Link to={`${workspaceBasePath}/documents`}>
+              <Button variant="outline" size="sm">
+                Open Docs
+              </Button>
+            </Link>
+          </div>
+          <div className="mt-5 space-y-3">
+            {templateDrafts.map((draft) => (
+              <div key={draft.key} className="rounded-xl border border-border p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium">{draft.title}</p>
+                  <Badge variant={draft.legalGate ? "outline" : "secondary"}>
+                    {draft.legalGate ? "Legal review" : "Ready draft"}
+                  </Badge>
+                </div>
+                <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{draft.body}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold">Calendar & Viewing Sync</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                ICS export works now. Google and Outlook OAuth stay readiness-gated until consent review.
+              </p>
+            </div>
+            <Link to={`${workspaceBasePath}/calendar`}>
+              <Button variant="outline" size="sm">
+                Calendar
+              </Button>
+            </Link>
+          </div>
+          {nextViewingExport ? (
+            <div className="mt-5 space-y-3">
+              <a
+                href={nextViewingExport.googleUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex rounded-lg border border-border px-4 py-2 text-sm font-medium hover:border-primary/40 hover:bg-primary/5"
+              >
+                Preview Google Calendar export
+              </a>
+              {nextViewingExport.providerReadiness.map((item) => (
+                <div key={item} className="rounded-xl border border-border p-3 text-sm text-muted-foreground">
+                  {item}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-5 rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+              Confirm a viewing to generate calendar export links.
+            </p>
+          )}
+        </Card>
+      </div>
 
       <Card className="p-6 mt-8">
         <div className="flex items-center gap-3 mb-3">

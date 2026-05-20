@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "../components/Navbar";
 import { DiasporaPrice } from "../components/DiasporaPrice";
+import { PropertyMap, type PropertyMapMarker } from "../components/PropertyMap";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
@@ -23,6 +24,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useMobileShell } from "../mobile/MobileShellContext";
 import { getPropertyCoverImage } from "../../lib/property-media";
 import { listingService, type PublicLocationSummary } from "../../lib/listing.service";
+import { buildPublicMapUrl } from "../../lib/map-provider";
 import {
   PROPERTY_CATEGORY_OPTIONS,
   formatPropertyCategory,
@@ -56,6 +58,29 @@ const AMENITY_FILTER_OPTIONS = [
   "Furnished",
 ];
 
+function isFiniteCoordinate(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function formatCoordinate(value?: number | null, axis: "lat" | "lng" = "lat") {
+  if (!isFiniteCoordinate(value)) return axis === "lat" ? "Lat pending" : "Lng pending";
+  return `${Math.abs(value).toFixed(4)} ${value >= 0 ? (axis === "lat" ? "N" : "E") : axis === "lat" ? "S" : "W"}`;
+}
+
+function formatCompactPrice(amount: number, currency = "GHS", listingType?: string) {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return listingType === "rental" ? "Rent" : "Listing";
+  }
+
+  const compactValue = new Intl.NumberFormat("en-GH", {
+    notation: "compact",
+    maximumFractionDigits: amount >= 1000000 ? 1 : 0,
+  }).format(amount);
+
+  const prefix = currency === "GHS" ? "GHS" : currency;
+  return listingType === "rental" ? `${prefix} ${compactValue}/mo` : `${prefix} ${compactValue}`;
+}
+
 export function PropertySearch() {
   const { isMobileShell } = useMobileShell();
   const navigate = useNavigate();
@@ -67,6 +92,7 @@ export function PropertySearch() {
   const [listings, setListings] = useState<any[]>([]);
   const [totalResults, setTotalResults] = useState(0);
   const [savingAlert, setSavingAlert] = useState(false);
+  const [alertFrequency, setAlertFrequency] = useState<"immediate" | "daily" | "weekly">("daily");
   const [userAlerts, setUserAlerts] = useState<any[]>([]);
   const [selectedMapListingId, setSelectedMapListingId] = useState<string | null>(null);
   const currentPage = Math.max(parseInt(searchParams.get("page") || "1", 10) || 1, 1);
@@ -268,6 +294,14 @@ export function PropertySearch() {
         priceMax: appliedFilters.priceMax ? parseInt(appliedFilters.priceMax, 10) : null,
         bedrooms: parseCountFilter(appliedFilters.bedrooms) ?? null,
         bathrooms: parseCountFilter(appliedFilters.bathrooms) ?? null,
+        frequency: alertFrequency,
+        amenities: appliedFilters.amenities
+          ? appliedFilters.amenities
+              .split(",")
+              .map((amenity) => amenity.trim())
+              .filter(Boolean)
+          : [],
+        alertRules: ["new_listing", "price_drop"],
         initialMatchCount: totalResults,
       });
 
@@ -416,6 +450,25 @@ export function PropertySearch() {
     if (typeof window === "undefined") return "";
     return buildAbsoluteSearchUrl(currentSearchInput, window.location.origin);
   }, [currentSearchInput]);
+  const encodedSearchUrl = encodeURIComponent(currentSearchUrl);
+  const encodedSearchTitle = encodeURIComponent(resultsTitle);
+  const socialShareLinks = useMemo(
+    () => [
+      {
+        label: "WhatsApp",
+        href: `https://wa.me/?text=${encodedSearchTitle}%20${encodedSearchUrl}`,
+      },
+      {
+        label: "Facebook",
+        href: `https://www.facebook.com/sharer/sharer.php?u=${encodedSearchUrl}`,
+      },
+      {
+        label: "X",
+        href: `https://twitter.com/intent/tweet?text=${encodedSearchTitle}&url=${encodedSearchUrl}`,
+      },
+    ],
+    [encodedSearchTitle, encodedSearchUrl]
+  );
   const currentSearchSaved = useMemo(
     () => userAlerts.some((alert) => matchesAlertSearch(alert, currentSearchInput)),
     [currentSearchInput, userAlerts]
@@ -445,6 +498,35 @@ export function PropertySearch() {
     () => listings.find((listing) => listing.id === selectedMapListingId) || listings[0] || null,
     [listings, selectedMapListingId]
   );
+  const mapPoints = useMemo<PropertyMapMarker[]>(
+    () =>
+      listings
+        .filter(
+          (listing) =>
+            isFiniteCoordinate(listing?.property?.latitude) &&
+            isFiniteCoordinate(listing?.property?.longitude)
+        )
+        .map((listing) => ({
+          id: listing.id,
+          latitude: Number(listing.property.latitude),
+          longitude: Number(listing.property.longitude),
+          label: listing.property?.address || "Property",
+          subtitle: [listing.property?.city, listing.property?.region].filter(Boolean).join(", "),
+          caption: listing.property?.ghana_post_gps
+            ? `GhanaPostGPS ${listing.property.ghana_post_gps}`
+            : "Verified listing coordinate",
+          badge: formatCompactPrice(
+            Number(listing.price || 0),
+            listing.currency || "GHS",
+            listing.listing_type
+          ),
+        })),
+    [listings]
+  );
+  const selectedMapPoint = useMemo(
+    () => mapPoints.find((point) => point.id === selectedMapListingId) || null,
+    [mapPoints, selectedMapListingId]
+  );
   const selectedMapQuery = useMemo(() => {
     if (selectedMapListing?.property) {
       return [
@@ -459,9 +541,32 @@ export function PropertySearch() {
 
     return searchParams.get("q") || "Accra, Ghana";
   }, [searchParams, selectedMapListing]);
-  const selectedMapEmbedUrl = `https://www.google.com/maps?q=${encodeURIComponent(
-    selectedMapQuery
-  )}&output=embed`;
+  const selectedMapUrl = useMemo(() => {
+    return buildPublicMapUrl({
+      latitude: selectedMapPoint?.latitude,
+      longitude: selectedMapPoint?.longitude,
+      query: selectedMapQuery,
+    });
+  }, [selectedMapPoint, selectedMapQuery]);
+  const marketPulse = useMemo(() => {
+    const verifiedCount = listings.filter((listing) => listing.organization?.verified).length;
+    const prices = listings
+      .map((listing) => Number(listing.price || 0))
+      .filter((price) => Number.isFinite(price) && price > 0);
+    const averagePrice =
+      prices.length > 0 ? prices.reduce((sum, price) => sum + price, 0) / prices.length : 0;
+    const topLocation = popularLocations[0];
+
+    return {
+      verifiedCount,
+      averagePrice,
+      topLocation,
+      alertText:
+        totalResults > 0
+          ? `${totalResults} active match${totalResults === 1 ? "" : "es"} with ${verifiedCount} verified agenc${verifiedCount === 1 ? "y" : "ies"}.`
+          : "No active matches yet. Save the search to catch the next listing.",
+    };
+  }, [listings, popularLocations, totalResults]);
 
   const handleShareSearch = async () => {
     if (!currentSearchUrl) return;
@@ -584,7 +689,7 @@ export function PropertySearch() {
               <h1 className="text-3xl font-semibold mb-2">{resultsTitle}</h1>
               <p className="text-muted-foreground">{resultSummary}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {user && (
                 <Link to="/app/compare">
                   <Button variant="outline" size="sm">
@@ -592,6 +697,18 @@ export function PropertySearch() {
                   </Button>
                 </Link>
               )}
+              <select
+                className="rounded-lg border border-border bg-input-background px-3 py-2 text-sm"
+                value={alertFrequency}
+                onChange={(event) =>
+                  setAlertFrequency(event.target.value as typeof alertFrequency)
+                }
+                aria-label="Saved alert frequency"
+              >
+                <option value="immediate">Immediate alerts</option>
+                <option value="daily">Daily alerts</option>
+                <option value="weekly">Weekly digest</option>
+              </select>
               <Button
                 variant="outline"
                 size="sm"
@@ -605,6 +722,17 @@ export function PropertySearch() {
                 <Share2 className="w-4 h-4" />
                 Share Search
               </Button>
+              {socialShareLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-primary/5"
+                >
+                  {link.label}
+                </a>
+              ))}
               <Button
                 variant={viewMode === "grid" ? "primary" : "outline"}
                 size="sm"
@@ -703,6 +831,34 @@ export function PropertySearch() {
             </div>
           </Card>
         )}
+
+        <Card className="p-4 mb-6 border-primary/10 bg-secondary/20">
+          <div className="grid gap-4 md:grid-cols-4">
+            <div className="md:col-span-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Marketplace pulse
+              </p>
+              <p className="mt-1 font-semibold">{marketPulse.alertText}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Heat-map data is currently based on BaytMiftah search and area-guide signals. Live flood, power, water, safety, and transit feeds remain gated in provider readiness.
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-background p-3">
+              <p className="text-xs text-muted-foreground">Average visible price</p>
+              <p className="mt-1 text-lg font-semibold">
+                {marketPulse.averagePrice > 0
+                  ? `GHS ${Math.round(marketPulse.averagePrice).toLocaleString()}`
+                  : "Pending"}
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-background p-3">
+              <p className="text-xs text-muted-foreground">Hot location</p>
+              <p className="mt-1 text-lg font-semibold">
+                {marketPulse.topLocation?.label || "Building signal"}
+              </p>
+            </div>
+          </div>
+        </Card>
 
         <div className="flex min-w-0 flex-col gap-6 lg:flex-row lg:gap-8">
           {/* Filters Sidebar */}
@@ -1066,14 +1222,103 @@ export function PropertySearch() {
                       ))}
                     </div>
 
-                    <Card className="sticky top-24 h-[420px] overflow-hidden sm:h-[560px] xl:h-[880px]">
-                      <iframe
-                        title={`Map search for ${selectedMapQuery}`}
-                        src={selectedMapEmbedUrl}
-                        className="h-full w-full border-0"
-                        loading="lazy"
-                        referrerPolicy="no-referrer-when-downgrade"
-                      />
+                    <Card className="sticky top-24 overflow-hidden">
+                      <div className="flex flex-col gap-3 border-b border-border bg-secondary/20 px-5 py-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">Live market map</p>
+                            <p className="text-xs text-muted-foreground">
+                              Plotting verified property coordinates for the current search.
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+                              {mapPoints.length} plotted
+                            </span>
+                            {listings.length > mapPoints.length ? (
+                              <span className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                                {listings.length - mapPoints.length} awaiting geocode
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                          <span className="rounded-full bg-background px-3 py-1">
+                            Select a card or pin to inspect the property area
+                          </span>
+                          {selectedMapPoint ? (
+                            <span className="rounded-full bg-background px-3 py-1">
+                              {formatCoordinate(selectedMapPoint.latitude)} /{" "}
+                              {formatCoordinate(selectedMapPoint.longitude, "lng")}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex h-[420px] flex-col sm:h-[560px] xl:h-[880px]">
+                        <PropertyMap
+                          markers={mapPoints}
+                          selectedMarkerId={selectedMapListingId}
+                          onMarkerSelect={setSelectedMapListingId}
+                          className="rounded-none border-0"
+                          heightClassName="min-h-0 flex-1"
+                          emptyStateTitle="The live map is ready for this search"
+                          emptyStateDescription="We still need verified coordinates for these results, so BaytMiftah is holding the map on the Ghana overview until the listing team geocodes the properties."
+                        />
+
+                        {selectedMapListing ? (
+                          <div className="border-t border-border bg-background px-5 py-4">
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="font-semibold">
+                                    {selectedMapListing.property?.address || "Property"}
+                                  </p>
+                                  {selectedMapPoint ? (
+                                    <span className="rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-[11px] font-medium text-primary">
+                                      Coordinate verified
+                                    </span>
+                                  ) : (
+                                    <span className="rounded-full border border-border bg-secondary/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                                      Coordinate pending
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                  {selectedMapListing.property?.city}, {selectedMapListing.property?.region}
+                                  {selectedMapListing.property?.ghana_post_gps
+                                    ? ` / ${selectedMapListing.property.ghana_post_gps}`
+                                    : ""}
+                                </p>
+                                <p className="mt-2 text-sm text-muted-foreground">
+                                  {selectedMapPoint
+                                    ? `${formatCoordinate(selectedMapPoint.latitude)} / ${formatCoordinate(
+                                        selectedMapPoint.longitude,
+                                        "lng"
+                                      )}`
+                                    : "This listing can still open in the wider map search while the team finishes its geocode."}
+                                </p>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2">
+                                <Link to={buildPropertyHref(selectedMapListing.id)}>
+                                  <Button size="sm">Open Listing</Button>
+                                </Link>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    window.open(selectedMapUrl, "_blank", "noopener,noreferrer")
+                                  }
+                                >
+                                  <Map className="h-4 w-4" />
+                                  Open Full Map
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
                     </Card>
                   </div>
                 )}

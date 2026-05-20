@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-import { ExternalLink, Loader2, MapPin, Shield } from "lucide-react";
+import { ExternalLink, Loader2, MapPin, Shield, TimerReset } from "lucide-react";
 import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { useMobileShell } from "../mobile/MobileShellContext";
+import { buildConstructionProgressPreview } from "../../lib/competitive-operations.service";
 import { getPropertyCoverImage } from "../../lib/property-media";
 import {
   buildProjectReputationSpotlights,
@@ -74,6 +75,10 @@ export function ProjectDetail() {
   }
 
   const reputationSnapshot = buildProjectReputationSpotlights([project], 1)[0] || null;
+  const constructionPreview = buildConstructionProgressPreview({
+    progressPercent: project.availableUnits > 0 ? 72 : 32,
+    updateCount: project.listings.length,
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -147,6 +152,42 @@ export function ProjectDetail() {
                     >
                       {item}
                     </span>
+                  ))}
+                </div>
+              </Card>
+
+              <Card className="p-6">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-2xl bg-amber-500/10 p-3 text-amber-700">
+                    <TimerReset className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Construction Progress Readiness</h2>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      A buyer-facing construction tracker is staged here for progress photos, developer updates,
+                      completion confidence, and presale follow-up.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-border bg-secondary/30 p-4">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Progress</p>
+                    <p className="mt-2 text-2xl font-semibold">{constructionPreview.progress}%</p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-secondary/30 p-4">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Status</p>
+                    <p className="mt-2 font-semibold capitalize">{constructionPreview.status.replaceAll("_", " ")}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-secondary/30 p-4">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Confidence</p>
+                    <p className="mt-2 font-semibold">{constructionPreview.confidence}%</p>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-2">
+                  {constructionPreview.checklist.map((item) => (
+                    <div key={item} className="rounded-xl border border-border p-3 text-sm text-muted-foreground">
+                      {item}
+                    </div>
                   ))}
                 </div>
               </Card>

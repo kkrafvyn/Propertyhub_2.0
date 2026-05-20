@@ -57,6 +57,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   })
 
   useEffect(() => {
+    const authOverride =
+      typeof window !== 'undefined'
+        ? (window as Window & {
+            __BAYTMIFTAH_AUTH_OVERRIDE__?: {
+              user?: User | null
+              authAssurance?: {
+                currentLevel?: AuthAssuranceLevel
+                nextLevel?: AuthAssuranceLevel
+              }
+            } | null
+          }).__BAYTMIFTAH_AUTH_OVERRIDE__
+        : undefined
+
+    if (authOverride) {
+      setUser(authOverride.user ?? null)
+      setAuthAssurance({
+        currentLevel: authOverride.authAssurance?.currentLevel ?? null,
+        nextLevel: authOverride.authAssurance?.nextLevel ?? null,
+        loading: false,
+      })
+      setLoading(false)
+      return
+    }
+
     const ensureProfile = async (currentUser: User | null) => {
       if (!currentUser?.email && !currentUser?.phone) return
 

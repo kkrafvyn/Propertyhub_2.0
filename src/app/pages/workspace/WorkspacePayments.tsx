@@ -19,6 +19,7 @@ import { getPaymentGatewayLabel, paymentService } from "../../../lib/payment.ser
 import type { Database } from "../../../lib/database.types";
 import type { MemberRole } from "../../../lib/workspace";
 import { Badge } from "../../components/ui/badge";
+import { EscrowMilestoneTimeline } from "../../components/escrow/EscrowMilestoneTimeline";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import {
@@ -434,7 +435,7 @@ export function WorkspacePayments({
         )
       );
 
-      toast.success("Refund request submitted to Paystack.");
+      toast.success("Refund request submitted to the configured payment gateway.");
       resetRefundDialog();
     } catch (error) {
       console.error("Failed to initiate refund:", error);
@@ -566,7 +567,7 @@ export function WorkspacePayments({
         <div>
           <h2 className="text-xl font-semibold">Escrow Queue</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Deposit and booking payments are held in BaytMiftah's Paystack account until required
+            Deposit and booking payments are held in BaytMiftah's escrow account until required
             documents are approved and the renter confirms satisfaction.
           </p>
         </div>
@@ -657,6 +658,12 @@ export function WorkspacePayments({
                           ))}
                       </div>
                     ) : null}
+                    <EscrowMilestoneTimeline
+                      milestones={escrow.milestones}
+                      title="Release timeline"
+                      description="Track the trust checkpoints still open before funds move."
+                      compact
+                    />
                     {conditionReports.length > 0 ? (
                       <div className="space-y-2 rounded-xl border border-border bg-secondary/20 p-3">
                         <p className="text-sm font-medium text-foreground">Condition reports</p>
@@ -733,7 +740,7 @@ export function WorkspacePayments({
         <h1 className="text-3xl font-semibold mb-2">Payments</h1>
         <p className="text-muted-foreground">
           Track payment gateways, review receipts, confirm integrity hashes, and manage
-          Paystack refunds for {organization.name}.
+          gateway refunds for {organization.name}.
         </p>
       </div>
 
@@ -955,7 +962,7 @@ export function WorkspacePayments({
                         )}
                         {latestRefund.status === "needs_attention" && (
                           <p className="text-destructive mt-2">
-                            Paystack is waiting for customer bank details before this refund can
+                            The payment gateway is waiting for customer bank details before this refund can
                             continue.
                           </p>
                         )}
@@ -1023,7 +1030,7 @@ export function WorkspacePayments({
           <DialogHeader>
             <DialogTitle>Request Refund</DialogTitle>
             <DialogDescription>
-              Start a Paystack refund for this property payment. Leave the amount blank to refund
+              Start a gateway refund for this property payment. Leave the amount blank to refund
               the full remaining balance.
             </DialogDescription>
           </DialogHeader>
@@ -1082,7 +1089,7 @@ export function WorkspacePayments({
                 <Textarea
                   value={merchantNote}
                   onChange={(event) => setMerchantNote(event.target.value)}
-                  placeholder="Optional operations note for Paystack records"
+                  placeholder="Optional operations note for payment gateway records"
                 />
               </div>
             </div>
