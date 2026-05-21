@@ -4,13 +4,13 @@ import {
   ArrowRight,
   Building2,
   Clock3,
-  Loader2,
   MessageSquareQuote,
   ShieldCheck,
   Star,
   Wrench,
 } from "lucide-react";
 import { Navbar } from "../components/Navbar";
+import { ActionEmptyState, PageLoadingState } from "../components/PageStates";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -96,13 +96,26 @@ export function PublicReviews() {
             </div>
 
             {loading ? (
-              <div className="flex items-center justify-center py-24 text-muted-foreground">
-                <Loader2 className="w-6 h-6 animate-spin" />
-              </div>
+              <PageLoadingState label="Loading reputation signals..." />
             ) : testimonials.length === 0 ? (
-              <Card className="p-8 mt-6 text-muted-foreground">
-                Public testimonials will appear here as more service reviews are completed.
-              </Card>
+              <div className="mt-6">
+                <ActionEmptyState
+                  icon={MessageSquareQuote}
+                  eyebrow="Reviews are warming up"
+                  title="Public testimonials will appear after moderated partner reviews are approved."
+                  description="Until then, buyers can still use agency verification, document counts, project momentum, and response signals as the first trust layer."
+                  actions={
+                    <>
+                      <Link to="/agencies">
+                        <Button>Browse Verified Agencies</Button>
+                      </Link>
+                      <Link to="/buyer-requests">
+                        <Button variant="outline">Post Buyer Request</Button>
+                      </Link>
+                    </>
+                  }
+                />
+              </div>
             ) : (
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {testimonials.map((testimonial) => (

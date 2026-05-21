@@ -3,13 +3,13 @@ import { Link } from "react-router";
 import {
   ArrowRight,
   BarChart3,
-  Loader2,
   MapPin,
   Shield,
   TrendingUp,
   Waves,
 } from "lucide-react";
 import { Navbar } from "../components/Navbar";
+import { ActionEmptyState, PageLoadingState } from "../components/PageStates";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { useMobileShell } from "../mobile/MobileShellContext";
@@ -175,24 +175,24 @@ export function AreaGuides() {
 
           <section className="mt-6">
             {loading ? (
-              <div className="flex items-center justify-center py-24 text-muted-foreground">
-                <Loader2 className="w-6 h-6 animate-spin" />
-              </div>
+              <PageLoadingState label="Loading neighborhood guides..." />
             ) : guides.length === 0 ? (
-              <Card className="p-10 text-center">
-                <h3 className="text-2xl font-semibold">No neighborhood guides are live yet</h3>
-                <p className="mt-3 text-muted-foreground">
-                  Publish a few public listings with city, region, and neighborhood details to unlock this board.
-                </p>
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                  <Link to="/search">
-                    <Button>Browse listings</Button>
-                  </Link>
-                  <Link to="/market-trends">
-                    <Button variant="outline">Open market trends</Button>
-                  </Link>
-                </div>
-              </Card>
+              <ActionEmptyState
+                icon={MapPin}
+                eyebrow="No guides yet"
+                title="Neighborhood guides unlock when listings include city, region, and area details."
+                description="Add live inventory with location signals to power demand, access, flood-risk, and investment context for buyers."
+                actions={
+                  <>
+                    <Link to="/search">
+                      <Button>Browse Listings</Button>
+                    </Link>
+                    <Link to="/market-trends">
+                      <Button variant="outline">Open Market Trends</Button>
+                    </Link>
+                  </>
+                }
+              />
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {guides.map((guide) => (

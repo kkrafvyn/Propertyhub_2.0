@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Clock3,
   FileText,
-  Loader2,
   Settings,
   Shield,
   ShieldAlert,
@@ -19,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
 import { EscrowMilestoneTimeline } from "../../components/escrow/EscrowMilestoneTimeline";
+import { PageLoadingState } from "../../components/PageStates";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
@@ -1635,10 +1635,7 @@ export function AdminLayout() {
   const renderSectionContent = () => {
     if (loading) {
       return (
-        <Card className="p-10 bg-white text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />
-          <p className="text-muted-foreground">Loading the admin console...</p>
-        </Card>
+        <PageLoadingState label="Loading the admin console..." />
       );
     }
 

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Loader2, Megaphone, Search, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { Navbar } from "../components/Navbar";
+import { ActionEmptyState, PageLoadingState } from "../components/PageStates";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
@@ -290,20 +291,26 @@ export function BuyerRequests() {
 
             <div className="mt-6 space-y-4">
               {loadingBoard ? (
-                <div className="flex items-center justify-center py-16 text-muted-foreground">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
+                <PageLoadingState label="Loading buyer demand..." />
               ) : requests.length === 0 ? (
-                <Card className="p-8 text-muted-foreground">
-                  No public buyer requests have been posted yet. Share the first one and it will appear here for the marketplace.
-                </Card>
+                <ActionEmptyState
+                  icon={Megaphone}
+                  eyebrow="No public requests yet"
+                  title="Be the first buyer brief on the demand board."
+                  description="Post the location, budget, property type, and must-haves so agencies can match you with inventory before it appears in search."
+                  actions={
+                    <Button type="button" variant="outline" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+                      Write a Request
+                    </Button>
+                  }
+                />
               ) : (
                 requests.map((request) => (
                   <Card key={request.id} className="p-5">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground">
-                          {request.buyerLabel} · {new Date(request.createdAt).toLocaleDateString()}
+                          {request.buyerLabel} / {new Date(request.createdAt).toLocaleDateString()}
                         </p>
                         <h3 className="mt-2 text-xl font-semibold capitalize">{request.title}</h3>
                       </div>

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { ArrowRight, Building2, FileText, Loader2, MapPin, Shield } from "lucide-react";
+import { ArrowRight, Building2, FileText, MapPin, Search, Shield } from "lucide-react";
 import { Navbar } from "../components/Navbar";
+import { ActionEmptyState, PageLoadingState } from "../components/PageStates";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { useMobileShell } from "../mobile/MobileShellContext";
@@ -59,9 +60,27 @@ export function AgenciesDirectory() {
         <section className="px-4 mt-10">
           <div className="max-w-6xl mx-auto">
             {loading ? (
-              <div className="flex items-center justify-center py-24 text-muted-foreground">
-                <Loader2 className="w-6 h-6 animate-spin" />
-              </div>
+              <PageLoadingState label="Loading verified agency profiles..." />
+            ) : agencies.length === 0 ? (
+              <ActionEmptyState
+                icon={Building2}
+                eyebrow="No public agencies yet"
+                title="Verified agency profiles will appear here once workspaces publish inventory."
+                description="Agencies become visible after subscription activation, profile setup, and verification review. Buyers can still browse live listings while the directory fills up."
+                actions={
+                  <>
+                    <Link to="/search">
+                      <Button>
+                        <Search className="h-4 w-4" />
+                        Browse Listings
+                      </Button>
+                    </Link>
+                    <Link to="/workspace">
+                      <Button variant="outline">Register Agency</Button>
+                    </Link>
+                  </>
+                }
+              />
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {agencies.map((agency) => (

@@ -10,12 +10,13 @@ import {
   Bed,
   Bath,
   X,
-  Loader2,
   Bell,
   Share2,
+  ShieldCheck,
 } from "lucide-react";
 import { Navbar } from "../components/Navbar";
 import { DiasporaPrice } from "../components/DiasporaPrice";
+import { ActionEmptyState, PageLoadingState } from "../components/PageStates";
 import { PropertyMap, type PropertyMapMarker } from "../components/PropertyMap";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -1046,13 +1047,23 @@ export function PropertySearch() {
           {/* Properties Grid/List */}
           <div className="min-w-0 flex-1">
             {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin" />
-              </div>
+              <PageLoadingState label="Loading matching properties..." />
             ) : listings.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground text-lg">No properties found matching your criteria</p>
-              </div>
+              <ActionEmptyState
+                icon={Search}
+                eyebrow="No matches yet"
+                title="No properties match this exact search."
+                description="Try widening the price range, removing an amenity, or saving the search so BaytMiftah can alert you when a new match arrives."
+                actions={
+                  <>
+                    <Button onClick={clearFilters}>Clear Filters</Button>
+                    <Button variant="outline" onClick={() => void handleSaveAlert()}>
+                      <Bell className="h-4 w-4" />
+                      Save This Search
+                    </Button>
+                  </>
+                }
+              />
             ) : (
               <>
                 <div className="mb-6">
@@ -1068,16 +1079,26 @@ export function PropertySearch() {
                         transition={{ delay: index * 0.05 }}
                       >
                         <Link to={buildPropertyHref(listing.id)}>
-                          <Card hover className="overflow-hidden">
-                            <div className="relative h-48 overflow-hidden">
+                          <Card hover className="group overflow-hidden rounded-[1.5rem] border-border/70 bg-white/95 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(15,23,42,0.12)]">
+                            <div className="relative h-52 overflow-hidden">
                               <img
                                 src={getPropertyCoverImage(listing.property)}
                                 alt={listing.property?.address}
-                                className="w-full h-full object-cover"
+                                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                               />
-                              <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold">
+                              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/65 to-transparent" />
+                              <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold capitalize backdrop-blur-sm">
+                                {listing.listing_type}
+                              </div>
+                              <div className="absolute right-3 top-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold">
                                 {formatPropertyCategory(listing.property?.category)}
                               </div>
+                              {listing.organization?.verified && (
+                                <div className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-emerald-500/95 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+                                  <ShieldCheck className="h-3.5 w-3.5" />
+                                  Verified agency
+                                </div>
+                              )}
                             </div>
                             <div className="p-4">
                               <h3 className="font-semibold text-lg mb-2 line-clamp-2">
@@ -1108,6 +1129,10 @@ export function PropertySearch() {
                                   </div>
                                 </div>
                               )}
+                              <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-sm">
+                                <span className="text-muted-foreground">Open full listing</span>
+                                <span className="font-semibold text-primary">View details</span>
+                              </div>
                             </div>
                           </Card>
                         </Link>
@@ -1124,20 +1149,31 @@ export function PropertySearch() {
                         transition={{ delay: index * 0.05 }}
                       >
                         <Link to={buildPropertyHref(listing.id)}>
-                          <Card hover className="overflow-hidden">
+                          <Card hover className="group overflow-hidden rounded-[1.5rem] border-border/70 bg-white/95 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_60px_rgba(15,23,42,0.1)]">
                             <div className="flex flex-col md:flex-row">
                               <div className="relative w-full md:w-80 h-48 flex-shrink-0 overflow-hidden">
                                 <img
                                   src={getPropertyCoverImage(listing.property)}
                                   alt={listing.property?.address}
-                                  className="w-full h-full object-cover"
+                                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                                 />
+                                <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold capitalize backdrop-blur-sm">
+                                  {listing.listing_type}
+                                </div>
                               </div>
                               <div className="flex min-w-0 flex-1 flex-col justify-between p-4 sm:p-6">
                                 <div className="min-w-0">
-                                  <h3 className="font-semibold text-xl mb-2">
-                                    {listing.property?.address || 'Property'}
-                                  </h3>
+                                  <div className="flex flex-wrap items-start justify-between gap-3">
+                                    <h3 className="font-semibold text-xl mb-2">
+                                      {listing.property?.address || 'Property'}
+                                    </h3>
+                                    {listing.organization?.verified && (
+                                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                        <ShieldCheck className="h-3.5 w-3.5" />
+                                        Verified
+                                      </span>
+                                    )}
+                                  </div>
                                   <div className="flex items-center gap-1 text-muted-foreground mb-4">
                                     <MapPin className="h-4 w-4 flex-shrink-0" />
                                     <span className="min-w-0 truncate">{listing.property?.city}, {listing.property?.region}</span>
@@ -1167,6 +1203,7 @@ export function PropertySearch() {
                                       </div>
                                     </div>
                                   )}
+                                  <span className="text-sm font-semibold text-primary">View details</span>
                                 </div>
                               </div>
                             </div>

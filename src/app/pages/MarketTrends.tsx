@@ -3,13 +3,13 @@ import { Link } from "react-router";
 import {
   ArrowRight,
   BarChart3,
-  Loader2,
   MapPin,
   Shield,
   TrendingUp,
   Waves,
 } from "lucide-react";
 import { Navbar } from "../components/Navbar";
+import { ActionEmptyState, PageLoadingState } from "../components/PageStates";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { useMobileShell } from "../mobile/MobileShellContext";
@@ -180,24 +180,24 @@ export function MarketTrends() {
 
           <section className="mt-6">
             {loading ? (
-              <div className="flex items-center justify-center py-24 text-muted-foreground">
-                <Loader2 className="w-6 h-6 animate-spin" />
-              </div>
+              <PageLoadingState label="Loading market snapshots..." />
             ) : trends.length === 0 ? (
-              <Card className="p-10 text-center">
-                <h3 className="text-2xl font-semibold">No public market snapshots yet</h3>
-                <p className="mt-3 text-muted-foreground">
-                  Publish a few live listings or location trend rows to light up this board.
-                </p>
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                  <Link to="/search">
-                    <Button>Browse live listings</Button>
-                  </Link>
-                  <Link to="/guides">
-                    <Button variant="outline">Open area guides</Button>
-                  </Link>
-                </div>
-              </Card>
+              <ActionEmptyState
+                icon={BarChart3}
+                eyebrow="No trend snapshots yet"
+                title="Market boards light up when live listings and location trend rows are available."
+                description="Use search while data grows, then compare price direction, supply, demand, flood-risk, and accessibility by market."
+                actions={
+                  <>
+                    <Link to="/search">
+                      <Button>Browse Live Listings</Button>
+                    </Link>
+                    <Link to="/guides">
+                      <Button variant="outline">Open Area Guides</Button>
+                    </Link>
+                  </>
+                }
+              />
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {trends.map((trend) => (

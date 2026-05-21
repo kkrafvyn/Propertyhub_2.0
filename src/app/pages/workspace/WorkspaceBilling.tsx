@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarClock, CreditCard, Loader2, ReceiptText, RotateCcw } from "lucide-react";
+import { CalendarClock, CreditCard, ReceiptText, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { PageLoadingState } from "../../components/PageStates";
 import type { Database } from "../../../lib/database.types";
 import {
   formatMinorCurrency,
@@ -136,12 +137,7 @@ export function WorkspaceBilling({ organization, currentRole }: WorkspaceBilling
   };
 
   if (loading) {
-    return (
-      <Card className="p-8 text-center text-muted-foreground">
-        <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-primary" />
-        Loading billing...
-      </Card>
-    );
+    return <PageLoadingState label="Loading billing..." />;
   }
 
   const subscription = billing?.subscription || null;

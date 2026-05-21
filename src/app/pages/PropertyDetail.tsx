@@ -534,6 +534,15 @@ export function PropertyDetail() {
       }),
     [listing, mediaItems, property, remoteBuyerReadiness.score]
   );
+  const isSmartProperty = Boolean(
+    property?.amenities?.some((amenity: string) =>
+      /smart|iot|lock|access|digital key/i.test(String(amenity))
+    )
+  );
+  const listingTypeLabel = listing?.listing_type
+    ? String(listing.listing_type).replaceAll("_", " ")
+    : "property";
+  const primaryActionLabel = listing?.listing_type === "sale" ? "Make Offer" : "Book Viewing";
 
   const pageTitle = useMemo(() => {
     if (!property) return "Property";
@@ -673,6 +682,36 @@ export function PropertyDetail() {
 
     trackListingEvent("buyer_tools_opened");
     navigate("/app/buying-tools");
+  };
+
+  const openViewingFlow = () => {
+    setShowViewingForm(true);
+    setShowOfferForm(false);
+    setShowContactForm(false);
+    setShowPaymentForm(false);
+  };
+
+  const openOfferFlow = () => {
+    setShowOfferForm(true);
+    setShowViewingForm(false);
+    setShowContactForm(false);
+    setShowPaymentForm(false);
+  };
+
+  const openPaymentFlow = () => {
+    setShowPaymentForm(true);
+    setShowOfferForm(false);
+    setShowViewingForm(false);
+    setShowContactForm(false);
+  };
+
+  const openPrimaryAction = () => {
+    if (listing?.listing_type === "sale") {
+      openOfferFlow();
+      return;
+    }
+
+    openViewingFlow();
   };
 
   const handleInquiry = async (e: FormEvent) => {
@@ -1137,36 +1176,122 @@ export function PropertyDetail() {
       {!isMobileShell && <Navbar />}
 
       <div className={isMobileShell ? "pt-4 pb-32 px-4 max-w-7xl mx-auto" : "pt-24 pb-12 px-4 max-w-7xl mx-auto"}>
-        <div className="mb-8">
-          <div className="grid h-[320px] grid-cols-1 gap-4 sm:h-[420px] md:h-[500px] md:grid-cols-4">
-            <div className="md:col-span-3 h-full relative overflow-hidden rounded-xl">
-              <img src={images[currentImageIndex]} alt={pageTitle} className="w-full h-full object-cover" />
-              <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white px-4 py-2 rounded-lg">
-                {currentImageIndex + 1} / {images.length}
+        <div className="mb-8 overflow-hidden rounded-[2rem] border border-border bg-white shadow-2xl shadow-black/10">
+          <div className="grid h-[360px] grid-cols-1 gap-0 sm:h-[460px] md:h-[560px] md:grid-cols-4">
+            <div className="relative h-full overflow-hidden md:col-span-3">
+              <img
+                src={images[currentImageIndex]}
+                alt={pageTitle}
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,8,14,0.42)_0%,rgba(5,8,14,0.08)_42%,rgba(5,8,14,0.76)_100%)]" />
+
+              <div className="absolute left-4 top-4 flex max-w-[calc(100%-7rem)] flex-wrap gap-2">
+                <span className="rounded-full bg-white/95 px-3 py-1 text-xs font-semibold capitalize text-foreground shadow-sm">
+                  {listingTypeLabel}
+                </span>
+                {organization?.verified && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-white shadow-sm">
+                    <Check className="h-3 w-3" />
+                    Verified agency
+                  </span>
+                )}
+                {isSmartProperty && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white shadow-sm">
+                    <Shield className="h-3 w-3" />
+                    Smart access ready
+                  </span>
+                )}
+              </div>
+
+              <div className="absolute right-4 top-4 flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-white/20 bg-white/90 text-foreground hover:bg-white"
+                  onClick={() => void handleShare()}
+                  aria-label="Share property"
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-white/20 bg-white/90 text-foreground hover:bg-white"
+                  onClick={toggleSave}
+                  aria-label={isSaved ? "Remove saved property" : "Save property"}
+                >
+                  <Heart className={`h-4 w-4 ${isSaved ? "fill-primary text-primary" : ""}`} />
+                </Button>
+              </div>
+
+              <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div className="max-w-2xl text-white">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/75">
+                    BaytMiftah verified listing
+                  </p>
+                  <h1 className="mt-2 line-clamp-2 text-2xl font-semibold leading-tight tracking-[-0.03em] sm:text-4xl">
+                    {pageTitle}
+                  </h1>
+                  <p className="mt-2 flex items-center gap-2 text-sm text-white/85">
+                    <MapPin className="h-4 w-4" />
+                    <span className="line-clamp-1">
+                      {[property.city, property.region, property.country].filter(Boolean).join(", ")}
+                    </span>
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { icon: Camera, label: `${mediaPhotoCount} photos` },
+                    { icon: Video, label: mediaReadiness.videos > 0 ? "Video ready" : "Video pending" },
+                    { icon: FileText, label: mediaReadiness.floorPlans > 0 ? "Floor plan" : "Docs pending" },
+                  ].map((item) => (
+                    <span
+                      key={item.label}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur"
+                    >
+                      <item.icon className="h-3.5 w-3.5" />
+                      {item.label}
+                    </span>
+                  ))}
+                  <span className="rounded-full bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">
+                    {currentImageIndex + 1} / {images.length}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="hidden md:flex flex-col gap-4 h-full">
+
+            <div className="hidden h-full grid-rows-4 gap-2 bg-foreground/95 p-2 md:grid">
               {images.slice(1, 5).map((image, index) => (
                 <button
-                  key={image}
+                  key={`${image}-${index}`}
+                  type="button"
                   onClick={() => setCurrentImageIndex(index + 1)}
-                  className="relative h-full overflow-hidden rounded-xl hover:opacity-80 transition-opacity"
+                  className="relative h-full overflow-hidden rounded-2xl transition hover:opacity-90"
+                  aria-label={`Show property image ${index + 2}`}
                 >
-                  <img src={image} alt={`${pageTitle} ${index + 2}`} className="w-full h-full object-cover" />
+                  <img src={image} alt={`${pageTitle} ${index + 2}`} className="h-full w-full object-cover" />
+                  {index === 3 && images.length > 5 && (
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-semibold text-white">
+                      View all {images.length}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
           </div>
-          <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+          <div className="flex gap-2 overflow-x-auto border-t border-border bg-white p-3">
             {images.map((image, index) => (
               <button
-                key={image}
+                key={`${image}-thumb-${index}`}
+                type="button"
                 onClick={() => setCurrentImageIndex(index)}
-                className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                  currentImageIndex === index ? "border-primary" : "border-transparent"
+                className={`h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl border-2 transition-all ${
+                  currentImageIndex === index ? "border-primary shadow-lg shadow-primary/15" : "border-transparent"
                 }`}
+                aria-label={`Show thumbnail ${index + 1}`}
               >
-                <img src={image} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                <img src={image} alt={`Thumbnail ${index + 1}`} className="h-full w-full object-cover" />
               </button>
             ))}
           </div>
@@ -1184,7 +1309,7 @@ export function PropertyDetail() {
                     </div>
                   )}
                   <div className="mb-2 flex flex-wrap items-center gap-3">
-                    <h1 className="text-2xl font-semibold sm:text-3xl">{pageTitle}</h1>
+                    <h2 className="text-2xl font-semibold sm:text-3xl">Property overview</h2>
                     {organization?.verified && (
                       <div className="bg-accent text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
                         <Check className="w-3 h-3" />
@@ -1287,16 +1412,65 @@ export function PropertyDetail() {
                   </div>
                 </div>
               </div>
+
+              <div className="sticky top-20 z-30 mt-5 hidden overflow-x-auto rounded-full border border-border bg-background/90 p-1 shadow-sm backdrop-blur lg:flex">
+                {[
+                  ["#overview", "Overview"],
+                  ["#amenities", "Amenities"],
+                  ["#location", "Location"],
+                  ["#trust", "Trust"],
+                  ["#payments", "Payments"],
+                  ["#reviews", "Reviews"],
+                ].map(([href, label]) => (
+                  <a
+                    key={href}
+                    href={href}
+                    className="whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                  >
+                    {label}
+                  </a>
+                ))}
+              </div>
+
+              <Card className="mt-6 overflow-hidden border-primary/15 bg-[linear-gradient(135deg,rgba(255,45,92,0.08),rgba(255,255,255,1))]">
+                <div className="grid gap-4 p-5 md:grid-cols-[0.9fr_1.1fr] md:items-center">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                      Trust at a glance
+                    </p>
+                    <h3 className="mt-2 text-2xl font-semibold">
+                      {listingTrust.score}/100 listing confidence
+                    </h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Combines agency verification, media readiness, documents, reviews, and fraud checks.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {[
+                      { label: "Agency", value: `${agencyTrustScore.score}/100`, helper: agencyTrustScore.label },
+                      { label: "Media", value: `${mediaReadiness.score}/100`, helper: `${mediaReadiness.readyItems} ready items` },
+                      { label: "Reviews", value: reviewSummary.reviewCount ? reviewSummary.label : "New listing", helper: `${reviewSummary.verifiedCount} verified` },
+                      { label: "Payments", value: selectedPaymentGateway.label, helper: "Protected checkout available" },
+                    ].map((item) => (
+                      <div key={item.label} className="rounded-2xl border border-border bg-white/80 p-4">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">{item.label}</p>
+                        <p className="mt-1 font-semibold">{item.value}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{item.helper}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
             </div>
 
-            <div>
+            <div id="overview" className="scroll-mt-32">
               <h2 className="text-2xl font-semibold mb-4">Description</h2>
               <p className="text-muted-foreground leading-relaxed">
                 {property.description || "No detailed description has been added for this property yet."}
               </p>
             </div>
 
-            <div>
+            <div id="amenities" className="scroll-mt-32">
               <h2 className="text-2xl font-semibold mb-4">Amenities</h2>
               {property.amenities?.length ? (
                 <div className="grid grid-cols-2 gap-3">
@@ -1755,7 +1929,7 @@ export function PropertyDetail() {
               </Card>
             </div>
 
-            <div>
+            <div id="location" className="scroll-mt-32">
               <h2 className="text-2xl font-semibold mb-4">Location</h2>
               <div className="grid gap-3 mb-5 md:grid-cols-4">
                 {neighborhoodIntelCards.map((item) => (
@@ -1903,20 +2077,14 @@ export function PropertyDetail() {
                   <div className="mt-5 flex flex-wrap gap-3">
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        setShowViewingForm(true);
-                        setShowOfferForm(false);
-                      }}
+                      onClick={openViewingFlow}
                     >
                       <MapPin className="w-4 h-4" />
                       Book Viewing
                     </Button>
                     {listing.listing_type === "sale" && (
                       <Button
-                        onClick={() => {
-                          setShowOfferForm(true);
-                          setShowViewingForm(false);
-                        }}
+                        onClick={openOfferFlow}
                       >
                         <Shield className="w-4 h-4" />
                         Continue to Offer
@@ -1927,7 +2095,7 @@ export function PropertyDetail() {
               </div>
             </div>
 
-            <div>
+            <div id="trust" className="scroll-mt-32">
               <h2 className="text-2xl font-semibold mb-4">Trust Signals & Community</h2>
               <div className="grid gap-4 lg:grid-cols-2">
                 <Card className="p-6">
@@ -2000,7 +2168,7 @@ export function PropertyDetail() {
               </div>
             </div>
 
-            <div>
+            <div id="reviews" className="scroll-mt-32">
               <h2 className="text-2xl font-semibold mb-4">Reviews & Reputation</h2>
               <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
                 <Card className="p-6">
@@ -2122,7 +2290,50 @@ export function PropertyDetail() {
           </div>
 
           <div className="lg:col-span-1">
-            <Card className="p-6 sticky top-24">
+            <Card className="sticky top-24 overflow-hidden p-6">
+              <div className="-m-6 mb-6 bg-[linear-gradient(135deg,rgba(255,45,92,0.12),rgba(255,255,255,1))] p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                  Listing action
+                </p>
+                <div className="mt-3">
+                  <DiasporaPrice
+                    amount={Number(listing.price || 0)}
+                    currency={listing.currency || "GHS"}
+                    suffix={
+                      listing.listing_type === "rental"
+                        ? "/month"
+                        : listing.listing_type === "lease"
+                          ? "/lease"
+                          : ""
+                    }
+                    size="md"
+                  />
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-2xl border border-white/80 bg-white/70 p-3">
+                    <p className="text-muted-foreground">Trust</p>
+                    <p className="mt-1 font-semibold text-foreground">{listingTrust.score}/100</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/80 bg-white/70 p-3">
+                    <p className="text-muted-foreground">Media</p>
+                    <p className="mt-1 font-semibold text-foreground">{mediaReadiness.score}/100</p>
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-2">
+                  <Button size="lg" className="w-full" onClick={openPrimaryAction}>
+                    {listing.listing_type === "sale" ? (
+                      <Shield className="h-5 w-5" />
+                    ) : (
+                      <MapPin className="h-5 w-5" />
+                    )}
+                    {primaryActionLabel}
+                  </Button>
+                  <Button variant="outline" className="w-full bg-white/80" onClick={() => setShowContactForm(true)}>
+                    <MessageCircle className="h-4 w-4" />
+                    Ask a question
+                  </Button>
+                </div>
+              </div>
               <div className="mb-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
@@ -2178,10 +2389,8 @@ export function PropertyDetail() {
               {listing.listing_type === "sale" && !showOfferForm && (
                 <Button
                   className="w-full mt-3"
-                  onClick={() => {
-                    setShowOfferForm(true);
-                    setShowContactForm(false);
-                  }}
+                  aria-label="Open offer form from contact card"
+                  onClick={openOfferFlow}
                 >
                   <Shield className="w-4 h-4" />
                   Make Offer
@@ -2192,10 +2401,7 @@ export function PropertyDetail() {
                 <Button
                   variant="outline"
                   className="w-full mt-3"
-                  onClick={() => {
-                    setShowViewingForm(true);
-                    setShowOfferForm(false);
-                  }}
+                  onClick={openViewingFlow}
                 >
                   <MapPin className="w-4 h-4" />
                   Book Viewing
@@ -2206,10 +2412,7 @@ export function PropertyDetail() {
                 <Button
                   variant="outline"
                   className="w-full mt-3"
-                  onClick={() => {
-                    setShowPaymentForm(true);
-                    setShowOfferForm(false);
-                  }}
+                  onClick={openPaymentFlow}
                 >
                   <CreditCard className="w-4 h-4" />
                   Secure Property Payment
@@ -2682,27 +2885,29 @@ export function PropertyDetail() {
               )}
             </Card>
 
-            <Card className="p-6 mt-6">
-              <h4 className="font-semibold mb-3 flex items-center gap-2">
-                <Shield className="w-5 h-5 text-primary" />
-                Safe Payment Milestones
-              </h4>
-              <div className="space-y-3">
-                {safePaymentMilestones.map((milestone) => (
-                  <div key={milestone.label} className="rounded-xl border border-border p-3">
-                    <div className="flex items-center gap-2">
-                      <Check
-                        className={`w-4 h-4 ${
-                          milestone.complete ? "text-accent" : "text-muted-foreground"
-                        }`}
-                      />
-                      <p className="text-sm font-medium">{milestone.label}</p>
+            <div id="payments" className="scroll-mt-32">
+              <Card className="p-6 mt-6">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-primary" />
+                  Safe Payment Milestones
+                </h4>
+                <div className="space-y-3">
+                  {safePaymentMilestones.map((milestone) => (
+                    <div key={milestone.label} className="rounded-xl border border-border p-3">
+                      <div className="flex items-center gap-2">
+                        <Check
+                          className={`w-4 h-4 ${
+                            milestone.complete ? "text-accent" : "text-muted-foreground"
+                          }`}
+                        />
+                        <p className="text-sm font-medium">{milestone.label}</p>
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">{milestone.helper}</p>
                     </div>
-                    <p className="mt-2 text-xs text-muted-foreground">{milestone.helper}</p>
-                  </div>
-                ))}
-              </div>
-            </Card>
+                  ))}
+                </div>
+              </Card>
+            </div>
 
             <Card className="p-6 mt-6">
               <h4 className="font-semibold mb-3 flex items-center gap-2">
@@ -2744,16 +2949,28 @@ export function PropertyDetail() {
 
         {relatedListings.length > 0 && (
           <div className="mt-16">
-            <h2 className="text-3xl font-semibold mb-8">Similar Properties</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+                  Keep exploring
+                </p>
+                <h2 className="mt-2 text-3xl font-semibold">Similar Properties</h2>
+              </div>
+              <p className="text-sm text-muted-foreground">Swipe or drag sideways to compare nearby options.</p>
+            </div>
+            <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4">
               {relatedListings.map((item) => (
-                <Link key={item.id} to={`/property/${item.id}${referralQueryString}`}>
-                  <Card hover className="overflow-hidden">
+                <Link
+                  key={item.id}
+                  to={`/property/${item.id}${referralQueryString}`}
+                  className="min-w-[280px] snap-start sm:min-w-[340px]"
+                >
+                  <Card hover className="h-full overflow-hidden">
                     <div className="relative h-48 overflow-hidden">
                       <img
                         src={getPropertyCoverImage(item.property)}
                         alt={item.property?.address || "Property"}
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                       />
                     </div>
                     <div className="p-4">
@@ -2774,6 +2991,32 @@ export function PropertyDetail() {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 px-4 py-3 shadow-[0_-16px_40px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-7xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs text-muted-foreground">{listingTypeLabel}</p>
+            <DiasporaPrice
+              amount={Number(listing.price || 0)}
+              currency={listing.currency || "GHS"}
+              suffix={
+                listing.listing_type === "rental"
+                  ? "/month"
+                  : listing.listing_type === "lease"
+                    ? "/lease"
+                    : ""
+              }
+              size="sm"
+            />
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setShowContactForm(true)}>
+            <MessageCircle className="h-4 w-4" />
+          </Button>
+          <Button size="sm" aria-label="Open primary property action from mobile bar" onClick={openPrimaryAction}>
+            {primaryActionLabel}
+          </Button>
+        </div>
       </div>
     </div>
   );

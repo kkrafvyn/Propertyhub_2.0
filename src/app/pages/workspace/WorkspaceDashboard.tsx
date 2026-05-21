@@ -18,6 +18,7 @@ import {
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/badge";
+import { PageLoadingState } from "../../components/PageStates";
 import { dealCaseService } from "../../../lib/dealcase.service";
 import type { Database } from "../../../lib/database.types";
 import { listingService } from "../../../lib/listing.service";
@@ -293,11 +294,7 @@ export function WorkspaceDashboard({ organization, workspaceBasePath }: Workspac
   const onboardingPercent = Math.round((onboardingCompleteCount / onboardingItems.length) * 100);
 
   if (loading) {
-    return (
-      <Card className="p-8 text-center text-muted-foreground">
-        Loading workspace overview...
-      </Card>
-    );
+    return <PageLoadingState label="Loading workspace overview..." />;
   }
 
   return (

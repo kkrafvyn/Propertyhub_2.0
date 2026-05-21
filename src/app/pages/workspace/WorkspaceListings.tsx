@@ -6,6 +6,7 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
+import { ActionEmptyState, PageLoadingState } from "../../components/PageStates";
 import { PropertyMediaPicker } from "../../components/PropertyMediaPicker";
 import { ListingQualityPanel } from "../../components/ListingQualityPanel";
 import { GhanaRegionInput } from "../../components/GhanaRegionInput";
@@ -546,17 +547,19 @@ export function WorkspaceListings({
       </div>
 
       {loading ? (
-        <Card className="p-8 text-center text-muted-foreground">Loading listings...</Card>
+        <PageLoadingState label="Loading workspace listings..." />
       ) : listings.length === 0 ? (
-        <Card className="p-8 text-center">
-          <h2 className="text-xl font-semibold mb-2">No listings yet</h2>
-          <p className="text-muted-foreground mb-5">
-            Add your first listing to start publishing inventory from this workspace.
-          </p>
-          <Link to={`${workspaceBasePath}/new`}>
-            <Button>Create New Listing</Button>
-          </Link>
-        </Card>
+        <ActionEmptyState
+          icon={ImagePlus}
+          eyebrow="No listings yet"
+          title="Create the first property listing for this workspace."
+          description="Add photos, pricing, location, amenities, and trust details so BaytMiftah can publish inventory and start routing leads."
+          actions={
+            <Link to={`${workspaceBasePath}/new`}>
+              <Button>Create New Listing</Button>
+            </Link>
+          }
+        />
       ) : (
         <div className="space-y-4">
           {listings.map((listing) => {

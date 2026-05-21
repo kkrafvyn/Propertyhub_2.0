@@ -544,25 +544,29 @@ export function Home() {
               </div>
             </div>
 
-            <div className="sticky bottom-0 left-0 z-40 grid w-full grid-cols-4 border-t border-border bg-white/95 px-4 pb-3 pt-2 shadow-[0_-16px_40px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
+            <nav
+              className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 mx-auto grid max-w-[420px] grid-cols-4 rounded-[1.65rem] border border-border bg-white/95 px-3 py-2 shadow-[0_18px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl md:hidden"
+              aria-label="Mobile home navigation"
+            >
               {[
                 { label: "Home", icon: HomeIcon, to: "/" },
-                { label: "Saved", icon: Heart, to: "/app" },
-                { label: "Messages", icon: MessageCircle, to: "/app" },
-                { label: "Profile", icon: UserRound, to: "/app" },
+                { label: "Saved", icon: Heart, to: "/app/saved" },
+                { label: "Messages", icon: MessageCircle, to: "/app/messages" },
+                { label: "Profile", icon: UserRound, to: "/app/settings" },
               ].map((item, index) => (
                 <Link
                   key={item.label}
                   to={item.to}
-                  className={`flex flex-col items-center gap-1 text-[0.68rem] font-semibold ${
+                  aria-current={index === 0 ? "page" : undefined}
+                  className={`rounded-2xl px-2 py-1.5 flex flex-col items-center gap-1 text-[0.68rem] font-semibold transition ${
                     index === 0 ? "text-primary" : "text-muted-foreground"
-                  }`}
+                  } hover:bg-primary/5 hover:text-primary`}
                 >
                   <item.icon className="h-5 w-5" />
                   {item.label}
                 </Link>
               ))}
-            </div>
+            </nav>
           </div>
         </div>
       </section>

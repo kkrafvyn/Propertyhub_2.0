@@ -4,10 +4,10 @@ import {
   BellRing,
   Download,
   ExternalLink,
-  Loader2,
   Smartphone,
 } from "lucide-react";
 import { Navbar } from "../components/Navbar";
+import { PageLoadingState } from "../components/PageStates";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { useMobileShell } from "../mobile/MobileShellContext";
@@ -89,8 +89,8 @@ export function GetTheApp() {
           </section>
 
           {loading || !snapshot ? (
-            <div className="flex items-center justify-center py-24 text-muted-foreground">
-              <Loader2 className="w-6 h-6 animate-spin" />
+            <div className="mt-10">
+              <PageLoadingState label="Loading mobile release channels..." />
             </div>
           ) : (
             <>
