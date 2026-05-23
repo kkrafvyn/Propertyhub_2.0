@@ -91,9 +91,9 @@ The environment checker only reports whether values are present. It never prints
 - Select Ghana Card and liveness providers, then set `GHANA_CARD_PROVIDER`, `GHANA_CARD_API_ENDPOINT`, `GHANA_CARD_API_KEY`, `LIVENESS_PROVIDER`, and `LIVENESS_API_KEY`.
 - Complete a DPIA and consent copy review before enabling automated identity or biometric checks.
 - Select official or manual land/title verification sources, then set `LAND_REGISTRY_PROVIDER`, `LAND_REGISTRY_API_ENDPOINT`, and `LAND_REGISTRY_API_KEY` if an API is available.
-- Select trusted hyperlocal data sources, then set `HYPERLOCAL_DATA_PROVIDER`, `HYPERLOCAL_DATA_API_KEY`, `FLOOD_DATA_ENDPOINT`, `POWER_RELIABILITY_DATA_ENDPOINT`, `WATER_RELIABILITY_DATA_ENDPOINT`, `SAFETY_DATA_ENDPOINT`, and `TRANSIT_DATA_ENDPOINT`.
+- Select trusted hyperlocal data sources, then set `HYPERLOCAL_DATA_PROVIDER`, `HYPERLOCAL_DATA_API_KEY`, `FLOOD_DATA_ENDPOINT`, `DRAINAGE_DATA_ENDPOINT`, `POWER_RELIABILITY_DATA_ENDPOINT`, `WATER_RELIABILITY_DATA_ENDPOINT`, `SAFETY_DATA_ENDPOINT`, `TRANSIT_DATA_ENDPOINT`, `TRAFFIC_DATA_ENDPOINT`, and `COMMERCIAL_DENSITY_DATA_ENDPOINT`.
 - Run `npm run prod:env:check -- --strict-identity --strict-data --env-file=.env.production`.
-- Record sandbox or manual-review evidence for Ghana Card, liveness, registry, flood, power, water, safety, and transit data checks before public badges depend on those signals.
+- Record sandbox or manual-review evidence for Ghana Card, liveness, registry, flood, drainage, power, water, safety, transit, traffic, and commercial-density data checks before public badges depend on those signals.
 
 ## 9. Fraud, Monitoring, And Backup Proof
 
@@ -111,7 +111,7 @@ The environment checker only reports whether values are present. It never prints
 - Keep `AUDIT_RSA_PUBLIC_KEY_ID` stable for receipt verification.
 - Create a public GitHub anchor repository or dedicated folder in an existing public repo.
 - Set `ANCHOR_JOB_SECRET`, `GITHUB_ANCHOR_TOKEN`, `GITHUB_ANCHOR_REPO`, and `GITHUB_ANCHOR_BRANCH`.
-- Configure a weekly cron job to call `anchor-integrity-audit` with the job secret.
+- Configure GitHub Actions secrets `SUPABASE_PROJECT_REF` and `ANCHOR_JOB_SECRET`; `.github/workflows/audit-anchor.yml` will call `anchor-integrity-audit` every Monday at 03:17 UTC with the job secret.
 - After the first cron run, confirm the anchor hash appears in the public repository and `integrity_anchors`.
 
 ## 11. Smart Property Access Providers

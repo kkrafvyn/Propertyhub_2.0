@@ -103,6 +103,45 @@ test("renders workspace billing for an authenticated organization owner", async 
   await expect(page.getByRole("heading", { name: "Billing events" })).toBeVisible();
 });
 
+test("handles subscription provider return verification", async ({ page }) => {
+  await installMockBackend(page, "workspace");
+
+  await page.goto("/workspace?billing=verify&reference=mock_subscription_reference");
+  await expect(page).toHaveURL(/\/workspace\/prime-estates/);
+  await expect(page.getByText("Prime Estates").first()).toBeVisible();
+});
+
+test("starts property checkout through provider fallback path", async ({ page }) => {
+  await installMockBackend(page, "workspace");
+
+  await page.goto("/property/listing-east-legon-sale");
+  await page.getByRole("button", { name: "Secure Property Payment" }).click();
+  await page.getByLabel("Amount (GHS)").fill("2500");
+  await page.getByLabel("Payment Gateway").selectOption("stripe");
+  await page.getByLabel("Payer Name").fill("Kojo Buyer");
+  await page.getByLabel("Phone").fill("+233271112223");
+  await page.getByRole("button", { name: "Continue to Stripe" }).click();
+
+  await expect(page).toHaveURL(/\/app\/payments\?checkout=mock_property_reference/);
+});
+
+test("supports workspace listing CRUD actions in the mock browser flow", async ({ page }) => {
+  await installMockBackend(page, "workspace");
+  page.on("dialog", (dialog) => dialog.accept());
+
+  await page.goto("/workspace/prime-estates/listings");
+  await expect(page.getByRole("heading", { name: "Listings" })).toBeVisible();
+  await expect(page.getByText("5 Palm Avenue")).toBeVisible();
+
+  await page.getByRole("button", { name: "Edit Details" }).first().click();
+  await page.getByLabel("Neighborhood").first().fill("East Legon Hills");
+  await page.getByRole("button", { name: "Save Changes" }).first().click();
+  await expect(page.getByText("Listing and property details updated.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Archive" }).first().click();
+  await expect(page.getByText("Listing archived.")).toBeVisible();
+});
+
 test("renders admin escrow controls for an authenticated platform admin", async ({ page }) => {
   await installMockBackend(page, "admin");
 

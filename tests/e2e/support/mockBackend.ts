@@ -1151,6 +1151,114 @@ export async function installMockBackend(page: Page, mode: MockMode) {
           });
         }
 
+        if (url.origin === supabaseOrigin && url.pathname.startsWith("/functions/v1/")) {
+          const functionName = url.pathname.replace("/functions/v1/", "");
+          const bodyText = await request.text().catch(() => "");
+          const body = bodyText ? JSON.parse(bodyText) : {};
+          const now = new Date().toISOString();
+
+          window.__BAYTMIFTAH_MOCK_LOGS__.push({
+            functionName,
+            method,
+            body,
+          });
+
+          if (functionName === "verify-organization-subscription") {
+            const organizationRow = ensureTable("organizations")[0];
+            return jsonResponse({
+              alreadyProcessed: false,
+              organization: organizationRow,
+              subscription: ensureTable("organization_subscriptions")[0],
+            });
+          }
+
+          if (functionName === "initialize-organization-subscription") {
+            const provider = body.provider || "paystack";
+            return jsonResponse({
+              provider,
+              requestedProvider: provider,
+              fallbackAttempted: provider !== "paystack",
+              authorizationUrl: "/workspace?billing=verify&reference=mock_subscription_reference",
+              reference: "mock_subscription_reference",
+              organization: ensureTable("organizations")[0],
+              subscription: ensureTable("organization_subscriptions")[0],
+            });
+          }
+
+          if (functionName === "initialize-property-payment") {
+            const provider = body.provider || "paystack";
+            const listing = ensureTable("listings").find((row) => row.id === body.listingId) || ensureTable("listings")[0];
+            const transaction = {
+              id: `mock-transaction-${Date.now()}`,
+              listing_id: listing?.id || body.listingId,
+              organization_id: listing?.organization_id || "org-1",
+              payer_user_id: activeSession?.user?.id || "user-buyer",
+              provider: provider === "paystack" ? "paystack" : "paystack",
+              requested_provider: provider,
+              provider_reference: "mock_property_reference",
+              amount_minor: Math.round(Number(body.amount || 0) * 100),
+              currency: "GHS",
+              purpose: body.purpose || "deposit",
+              status: "initialized",
+              created_at: now,
+              updated_at: now,
+              listing,
+            };
+            ensureTable("property_transactions").unshift(transaction);
+            return jsonResponse({
+              transaction,
+              authorizationUrl: "/app/payments?checkout=mock_property_reference",
+              accessCode: "mock_access_code",
+              reference: "mock_property_reference",
+              provider: "paystack",
+              requestedProvider: provider,
+              fallbackAttempted: provider !== "paystack",
+              fallbackAttempts: provider !== "paystack" ? [{ provider, reference: "mock_failed_reference", error: "Provider credentials not configured in mock." }] : [],
+              callbackUrl: "/app/payments?checkout=mock_property_reference",
+            });
+          }
+
+          if (functionName === "verify-property-payment") {
+            const transaction = ensureTable("property_transactions")[0];
+            return jsonResponse({
+              status: "success",
+              alreadyProcessed: false,
+              transaction: {
+                ...transaction,
+                status: "success",
+                paid_at: now,
+                updated_at: now,
+              },
+              receipt: {
+                id: "mock-receipt-1",
+                transaction_id: transaction?.id || "mock-transaction",
+                integrity_status: "verified",
+              },
+            });
+          }
+
+          if (functionName === "initiate-paystack-refund") {
+            const refund = {
+              id: `mock-refund-${Date.now()}`,
+              transaction_id: body.transactionId,
+              amount_minor: Number(body.amount || 10000),
+              currency: "GHS",
+              status: "pending",
+              reason: body.reason || "test_refund",
+              created_at: now,
+              updated_at: now,
+            };
+            ensureTable("property_refunds").unshift(refund);
+            return jsonResponse({
+              refund,
+              transaction: ensureTable("property_transactions").find((row) => row.id === body.transactionId) || null,
+              refundableBalanceMinor: 0,
+            });
+          }
+
+          return jsonResponse({ ok: true, functionName });
+        }
+
         if (url.origin !== supabaseOrigin || !url.pathname.startsWith("/rest/v1/")) {
           return originalFetch(input, init);
         }

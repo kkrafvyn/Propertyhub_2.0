@@ -1,0 +1,32 @@
+name: Weekly Audit Anchor
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+jobs:
+  anchor-integrity-audit:
+    name: Anchor integrity audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate required secrets
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          ANCHOR_JOB_SECRET: ${{ secrets.ANCHOR_JOB_SECRET }}
+        run: |
+          test -n "$SUPABASE_PROJECT_REF"
+          test -n "$ANCHOR_JOB_SECRET"
+
+      - name: Trigger Supabase audit anchor function
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          ANCHOR_JOB_SECRET: ${{ secrets.ANCHOR_JOB_SECRET }}
+        run: |
+          curl --fail-with-body \
+            --request POST \
+            --header "content-type: application/json" \
+            --header "x-anchor-secret: ${ANCHOR_JOB_SECRET}" \
+            --data '{"source":"github_actions","job":"weekly_audit_anchor"}' \
+            "https://${SUPABASE_PROJECT_REF}.functions.supabase.co/anchor-integrity-audit"

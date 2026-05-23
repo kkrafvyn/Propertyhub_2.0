@@ -228,6 +228,9 @@ function checkEnvHygiene() {
   checkContains(".env.example", "LAND_REGISTRY_API_ENDPOINT=", "Land Registry endpoint placeholder documented");
   checkContains(".env.example", "HYPERLOCAL_DATA_PROVIDER=", "Hyperlocal data provider placeholder documented");
   checkContains(".env.example", "FLOOD_DATA_ENDPOINT=", "Flood data endpoint placeholder documented");
+  checkContains(".env.example", "DRAINAGE_DATA_ENDPOINT=", "Drainage data endpoint placeholder documented");
+  checkContains(".env.example", "TRAFFIC_DATA_ENDPOINT=", "Traffic data endpoint placeholder documented");
+  checkContains(".env.example", "COMMERCIAL_DENSITY_DATA_ENDPOINT=", "Commercial density endpoint placeholder documented");
   checkContains(".env.example", "FRAUD_IMAGE_AUTH_PROVIDER=", "Fraud image provider placeholder documented");
   checkContains(".env.example", "MONITORING_DSN=", "Monitoring DSN placeholder documented");
   checkContains(".env.example", "BACKUP_RESTORE_EVIDENCE_URL=", "Backup restore evidence placeholder documented");
@@ -272,6 +275,16 @@ function checkReleaseDocs() {
     ".github/workflows/ci.yml",
     "npm run test:e2e",
     "CI runs browser smoke tests"
+  );
+  checkContains(
+    ".github/workflows/audit-anchor.yml",
+    "anchor-integrity-audit",
+    "Weekly audit anchoring workflow calls Supabase Edge Function"
+  );
+  checkContains(
+    ".github/workflows/audit-anchor.yml",
+    "ANCHOR_JOB_SECRET",
+    "Weekly audit anchoring workflow requires anchor secret"
   );
   checkContains(
     "docs/deployment/RELEASE_HARDENING_CHECKLIST.md",

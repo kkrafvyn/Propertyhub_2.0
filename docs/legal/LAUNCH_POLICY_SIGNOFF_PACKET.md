@@ -13,9 +13,12 @@ This packet lists the legal and policy surfaces that must be reviewed before pub
 | KYC/AML Model | Identity checks, thresholds, sanctions/PEP screening, suspicious activity workflow, manual review | Legal/Trust/Safety | Pending counsel review |
 | Property Verification Policy | Business docs, title/ownership docs, manual checks, limits of verification, false listing penalties | Legal/Ops/Product | Pending counsel review |
 | AI and Investment Disclaimer | Informational estimates only, no financial advice, confidence labels, human review for high-risk outputs | Legal/Product/Data | Pending counsel review |
+| Hyperlocal Data Disclosure | Flood, drainage, power, water, safety, transit, traffic, and commercial-density source limits, update cadence, and user reliance disclaimers | Legal/Product/Data | Pending counsel review |
 | IoT Smart Access Policy | Device owner duties, tenant consent, entry logs, emergency lockout, revocation, outage fallback | Legal/Ops/Engineering | Pending counsel review |
+| Community Broadcast Rules | Emergency notices, neighborhood chats, moderation, false-alert handling, opt-out, and external SMS/WhatsApp delivery rules | Legal/Ops/Trust | Pending counsel review |
 | Communications Consent | Email/SMS/WhatsApp opt-in, opt-out, frequency, critical notices, abuse handling | Legal/Ops/Engineering | Pending counsel review |
 | Contributor and Referral Terms | Eligibility, fraud holds, payout approval, tax responsibility, content rights | Legal/Finance/Product | Pending counsel review |
+| White-Label Agency Terms | Brand usage, custom domains, agency responsibilities, support boundaries, and data-controller roles | Legal/Product/Sales | Pending counsel review |
 
 ## Data Protection Review
 
@@ -29,6 +32,8 @@ This packet lists the legal and policy surfaces that must be reviewed before pub
 | Device/access logs | Smart access safety and audit | Metadata only, no camera footage stored by default | Pending |
 | Ghana Card/liveness data | Identity verification, if enabled | Explicit consent, DPIA, manual fallback, vendor DPA | Pending |
 | AI/investment inputs | Recommendations and scoring | Confidence labels, no automated high-stakes decisioning | Pending |
+| Hyperlocal observations | Area risk and utility context | Source disclosure, confidence labels, correction path | Pending |
+| Community broadcasts/chats | Neighborhood safety and participation | Moderation queue, abuse reporting, limited external delivery | Pending |
 
 ## Counsel Review Questions
 
@@ -57,3 +62,6 @@ This packet lists the legal and policy surfaces that must be reviewed before pub
 | IoT Smart Access |  |  | Approved / Blocked |  |  |
 | Communications Consent |  |  | Approved / Blocked |  |  |
 | Referral/Contributor |  |  | Approved / Blocked |  |  |
+| Hyperlocal Data |  |  | Approved / Blocked |  |  |
+| Community Broadcasts |  |  | Approved / Blocked |  |  |
+| White-Label Agency Terms |  |  | Approved / Blocked |  |  |
