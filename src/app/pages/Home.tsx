@@ -24,6 +24,7 @@ import { formatPropertyCategory } from "../../lib/property-category";
 import { getPropertyCoverImage } from "../../lib/property-media";
 import { toast } from "sonner";
 import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
+import { useAuth } from "../context/AuthContext";
 
 const heroPropertySlides = [
   {
@@ -181,6 +182,7 @@ const homeAgencyPreview = [
 ];
 
 export function Home() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<"rental" | "sale" | "lease">("rental");
   const [featuredListings, setFeaturedListings] = useState<any[]>([]);
@@ -617,56 +619,57 @@ export function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-foreground text-white py-12 px-4">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
+      {!user ? (
+        <footer className="bg-foreground text-white py-12 px-4">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                </div>
+                <span className="text-xl font-semibold">BaytMiftah</span>
               </div>
-              <span className="text-xl font-semibold">BaytMiftah</span>
+              <p className="text-white/70">Ghana's premier real estate marketplace</p>
             </div>
-            <p className="text-white/70">Ghana's premier real estate marketplace</p>
+            <div>
+              <h4 className="font-semibold mb-4">For Renters</h4>
+              <ul className="space-y-2 text-white/70">
+                <li><Link to="/search" className="hover:text-white">Search Properties</Link></li>
+                <li><Link to="/buyer-requests" className="hover:text-white">Buyer Requests</Link></li>
+                <li><Link to="/reviews" className="hover:text-white">Public Reviews</Link></li>
+                <li><Link to="/guides" className="hover:text-white">Area Guides</Link></li>
+                <li><Link to="/app" className="hover:text-white">My Dashboard</Link></li>
+                <li><Link to="/app" className="hover:text-white">Saved Properties</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">For Landlords</h4>
+              <ul className="space-y-2 text-white/70">
+                <li><Link to={listPropertyPath} className="hover:text-white">List Property</Link></li>
+                <li><Link to={manageListingsPath} className="hover:text-white">Manage Listings</Link></li>
+                <li><Link to={analyticsPath} className="hover:text-white">Analytics</Link></li>
+                <li><Link to="/valuation" className="hover:text-white">Home Valuation</Link></li>
+                <li><Link to="/get-the-app" className="hover:text-white">Get The App</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Company</h4>
+              <ul className="space-y-2 text-white/70">
+                <li><Link to="/agencies" className="hover:text-white">Verified Agencies</Link></li>
+                <li><Link to="/projects" className="hover:text-white">Projects</Link></li>
+                <li><Link to="/market-trends" className="hover:text-white">Market Trends</Link></li>
+                <li><Link to="/sold-ledger" className="hover:text-white">Sold Ledger</Link></li>
+              </ul>
+            </div>
           </div>
-          <div>
-            <h4 className="font-semibold mb-4">For Renters</h4>
-            <ul className="space-y-2 text-white/70">
-              <li><Link to="/search" className="hover:text-white">Search Properties</Link></li>
-              <li><Link to="/buyer-requests" className="hover:text-white">Buyer Requests</Link></li>
-              <li><Link to="/reviews" className="hover:text-white">Public Reviews</Link></li>
-              <li><Link to="/guides" className="hover:text-white">Area Guides</Link></li>
-              <li><Link to="/app" className="hover:text-white">My Dashboard</Link></li>
-              <li><Link to="/app" className="hover:text-white">Saved Properties</Link></li>
-            </ul>
+          <div className="max-w-7xl mx-auto mt-8 pt-8 border-t border-white/20 text-center text-white/70">
+            <p>&copy; 2026 BaytMiftah REOS. All rights reserved.</p>
           </div>
-          <div>
-            <h4 className="font-semibold mb-4">For Landlords</h4>
-            <ul className="space-y-2 text-white/70">
-              <li><Link to={listPropertyPath} className="hover:text-white">List Property</Link></li>
-              <li><Link to={manageListingsPath} className="hover:text-white">Manage Listings</Link></li>
-              <li><Link to={analyticsPath} className="hover:text-white">Analytics</Link></li>
-              <li><Link to="/valuation" className="hover:text-white">Home Valuation</Link></li>
-              <li><Link to="/get-the-app" className="hover:text-white">Get The App</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-4">Company</h4>
-            <ul className="space-y-2 text-white/70">
-              <li><Link to="/agencies" className="hover:text-white">Verified Agencies</Link></li>
-              <li><Link to="/projects" className="hover:text-white">Projects</Link></li>
-              <li><Link to="/market-trends" className="hover:text-white">Market Trends</Link></li>
-              <li><Link to="/sold-ledger" className="hover:text-white">Sold Ledger</Link></li>
-            </ul>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto mt-8 pt-8 border-t border-white/20 text-center text-white/70">
-          <p>&copy; 2026 BaytMiftah REOS. All rights reserved.</p>
-        </div>
-      </footer>
+        </footer>
+      ) : null}
     </div>
   );
 }

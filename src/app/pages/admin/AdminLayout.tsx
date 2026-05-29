@@ -3,15 +3,23 @@ import { Link, useLocation } from "react-router";
 import {
   AlertTriangle,
   BarChart3,
+  Bell,
   Building2,
+  ChevronRight,
   CheckCircle2,
   Clock3,
+  CreditCard,
   FileText,
+  Gauge,
+  LockKeyhole,
+  MoreHorizontal,
   Settings,
   Shield,
   ShieldAlert,
   Rocket,
+  Search,
   UserCheck,
+  UserCircle2,
   Users,
   Wallet,
 } from "lucide-react";
@@ -48,9 +56,11 @@ type AdminSection =
   | "users"
   | "organizations"
   | "listings"
-  | "escrow"
-  | "moderation"
-  | "launch"
+  | "transactions"
+  | "verification"
+  | "disputes"
+  | "analytics"
+  | "security"
   | "settings";
 
 const navItems: Array<{
@@ -63,15 +73,29 @@ const navItems: Array<{
   { key: "users", label: "Users", href: "/admin/users", icon: Users },
   { key: "organizations", label: "Organizations", href: "/admin/organizations", icon: Building2 },
   { key: "listings", label: "Listings", href: "/admin/listings", icon: FileText },
-  { key: "escrow", label: "Escrow", href: "/admin/escrow", icon: Wallet },
-  { key: "moderation", label: "Moderation", href: "/admin/moderation", icon: AlertTriangle },
-  { key: "launch", label: "Launch Readiness", href: "/admin/launch", icon: Rocket },
+  { key: "transactions", label: "Transactions", href: "/admin/transactions", icon: Wallet },
+  { key: "verification", label: "Verification", href: "/admin/verification", icon: UserCheck },
+  { key: "disputes", label: "Disputes", href: "/admin/disputes", icon: AlertTriangle },
+  { key: "analytics", label: "Analytics", href: "/admin/analytics", icon: Gauge },
+  { key: "security", label: "Security", href: "/admin/security", icon: LockKeyhole },
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 function getCurrentSection(pathname: string): AdminSection {
-  const section = pathname.split("/")[2] as AdminSection | undefined;
-  return section || "overview";
+  const section = pathname.split("/")[2];
+
+  if (!section) return "overview";
+
+  const aliases: Record<string, AdminSection> = {
+    escrow: "transactions",
+    moderation: "security",
+    launch: "settings",
+  };
+
+  if (aliases[section]) return aliases[section];
+  if (navItems.some((item) => item.key === section)) return section as AdminSection;
+
+  return "overview";
 }
 
 function getPriorityVariant(priority: string) {
@@ -119,6 +143,49 @@ function getLaunchStatusVariant(status: LaunchStatus) {
 function formatTimestamp(value?: string | null) {
   if (!value) return "Just now";
   return new Date(value).toLocaleString();
+}
+
+const adminSurfaceClass =
+  "rounded-[28px] border border-slate-200/80 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.06)] backdrop-blur";
+
+const adminSoftSurfaceClass =
+  "rounded-3xl border border-slate-200/80 bg-slate-50/70";
+
+function AdminMetricCard({
+  label,
+  value,
+  helper,
+  icon: Icon,
+  tone = "slate",
+}: {
+  label: string;
+  value: string | number;
+  helper: string;
+  icon: typeof BarChart3;
+  tone?: "slate" | "blue" | "green" | "amber" | "red";
+}) {
+  const toneClasses = {
+    slate: "bg-slate-100 text-slate-700",
+    blue: "bg-blue-50 text-blue-700",
+    green: "bg-emerald-50 text-emerald-700",
+    amber: "bg-amber-50 text-amber-700",
+    red: "bg-rose-50 text-rose-700",
+  }[tone];
+
+  return (
+    <Card className={`${adminSurfaceClass} p-5`}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-slate-500">{label}</p>
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{value}</p>
+          <p className="mt-2 text-xs leading-5 text-slate-500">{helper}</p>
+        </div>
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${toneClasses}`}>
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+    </Card>
+  );
 }
 
 export function AdminLayout() {
@@ -183,6 +250,17 @@ export function AdminLayout() {
   const readinessSummary = useMemo(
     () => summarizeLaunchReadiness(readinessItems),
     [readinessItems]
+  );
+  const failedPaymentEvents = useMemo(
+    () =>
+      billingEvents.filter((event) =>
+        String(event.event_type || "").toLowerCase().includes("fail")
+      ),
+    [billingEvents]
+  );
+  const disputedEscrows = useMemo(
+    () => escrowQueue.filter((escrow) => escrow.status === "disputed"),
+    [escrowQueue]
   );
 
   const loadAdminState = async () => {
@@ -502,62 +580,56 @@ export function AdminLayout() {
   };
 
   const renderStats = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-      <Card className="p-6 bg-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Total Users</p>
-            <p className="text-3xl font-semibold">{overview.totalUsers.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground mt-1">Live user profile count</p>
-          </div>
-          <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-            <Users className="w-6 h-6 text-primary" />
-          </div>
-        </div>
-      </Card>
-
-      <Card className="p-6 bg-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Organizations</p>
-            <p className="text-3xl font-semibold">
-              {overview.totalOrganizations.toLocaleString()}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">Workspace teams on the platform</p>
-          </div>
-          <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-            <Building2 className="w-6 h-6 text-accent" />
-          </div>
-        </div>
-      </Card>
-
-      <Card className="p-6 bg-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Active Listings</p>
-            <p className="text-3xl font-semibold">{overview.totalListings.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground mt-1">Inventory currently tracked</p>
-          </div>
-          <div className="w-12 h-12 bg-chart-3/10 rounded-lg flex items-center justify-center">
-            <FileText className="w-6 h-6 text-chart-3" />
-          </div>
-        </div>
-      </Card>
-
-      <Card className="p-6 bg-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Moderation Queue</p>
-            <p className="text-3xl font-semibold">{queueCount.toLocaleString()}</p>
-            <p className="text-xs text-destructive mt-1">
-              {overview.escalatedCases} escalated, {overview.resolvedToday} resolved today
-            </p>
-          </div>
-          <div className="w-12 h-12 bg-destructive/10 rounded-lg flex items-center justify-center">
-            <ShieldAlert className="w-6 h-6 text-destructive" />
-          </div>
-        </div>
-      </Card>
+    <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7">
+      <AdminMetricCard
+        label="Active Listings"
+        value={overview.totalListings.toLocaleString()}
+        helper="Public and workspace inventory under watch."
+        icon={FileText}
+        tone="blue"
+      />
+      <AdminMetricCard
+        label="Pending Verifications"
+        value={organizationMetrics.pendingVerification.toLocaleString()}
+        helper="Organizations waiting for trust review."
+        icon={UserCheck}
+        tone="amber"
+      />
+      <AdminMetricCard
+        label="Daily Transactions"
+        value={escrowMetrics.released.toLocaleString()}
+        helper="Completed releases currently visible."
+        icon={CreditCard}
+        tone="green"
+      />
+      <AdminMetricCard
+        label="Open Disputes"
+        value={escrowMetrics.disputed.toLocaleString()}
+        helper="Cases needing calm resolution."
+        icon={AlertTriangle}
+        tone={escrowMetrics.disputed ? "red" : "slate"}
+      />
+      <AdminMetricCard
+        label="Revenue"
+        value={formatMinorCurrency(organizationMetrics.monthlyRecurringRevenueMinor)}
+        helper="Subscription MRR being tracked."
+        icon={Wallet}
+        tone="green"
+      />
+      <AdminMetricCard
+        label="Active Organizations"
+        value={organizationMetrics.activeSubscriptions.toLocaleString()}
+        helper="Paid workspaces with access."
+        icon={Building2}
+        tone="slate"
+      />
+      <AdminMetricCard
+        label="Fraud Alerts"
+        value={queueCount.toLocaleString()}
+        helper={`${overview.escalatedCases} escalated, ${overview.resolvedToday} resolved today.`}
+        icon={ShieldAlert}
+        tone={queueCount ? "red" : "slate"}
+      />
     </div>
   );
 
@@ -1555,7 +1627,7 @@ export function AdminLayout() {
   };
 
   const renderAuditFeed = () => (
-    <Card className="p-6 bg-white">
+    <Card className={`${adminSurfaceClass} p-6`}>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-semibold">Audit Trail</h2>
@@ -1592,12 +1664,188 @@ export function AdminLayout() {
     </Card>
   );
 
+  const renderLiveActivityFeed = () => {
+    const activityItems = [
+      ...organizations.slice(0, 2).map((organization) => ({
+        id: `org:${organization.id}`,
+        title: organization.name,
+        subtitle: "New organization registration",
+        time: formatTimestamp(organization.verification_submitted_at || organization.created_at),
+        icon: Building2,
+      })),
+      ...listingQueue.slice(0, 2).map((listing) => ({
+        id: `listing:${listing.id}`,
+        title:
+          [listing.property?.address, listing.property?.city].filter(Boolean).join(", ") ||
+          "Listing awaiting moderation",
+        subtitle: `${listing.organization?.name || "Agency"} submitted a listing`,
+        time: formatTimestamp(listing.updated_at || listing.created_at),
+        icon: FileText,
+      })),
+      ...escrowQueue.slice(0, 2).map((escrow) => ({
+        id: `escrow:${escrow.id}`,
+        title: `${formatMinorCurrency(Number(escrow.amount_minor || 0), escrow.currency || "GHS")} ${String(
+          escrow.status
+        ).replaceAll("_", " ")}`,
+        subtitle: escrow.organization?.name || "Escrow transaction",
+        time: formatTimestamp(escrow.updated_at || escrow.created_at),
+        icon: Wallet,
+      })),
+      ...reviewCases.slice(0, 2).map((reviewCase) => ({
+        id: `case:${reviewCase.id}`,
+        title: reviewCase.summary || "Review case opened",
+        subtitle: `${reviewCase.priority || "normal"} priority trust review`,
+        time: formatTimestamp(reviewCase.updated_at || reviewCase.created_at),
+        icon: ShieldAlert,
+      })),
+    ].slice(0, 7);
+
+    return (
+      <Card className={`${adminSurfaceClass} p-6`}>
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-950">Live Activity Feed</h2>
+            <p className="text-sm text-slate-500">Today's operational pulse in one calm timeline.</p>
+          </div>
+          <Badge variant="outline">{activityItems.length} signals</Badge>
+        </div>
+
+        <div className="space-y-5">
+          {activityItems.length === 0 ? (
+            <div className={`${adminSoftSurfaceClass} p-6 text-sm text-slate-500`}>
+              No live platform activity is visible yet.
+            </div>
+          ) : (
+            activityItems.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <div key={item.id} className="flex gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1 border-b border-slate-100 pb-4 last:border-b-0 last:pb-0">
+                    <p className="truncate text-sm font-semibold text-slate-950">{item.title}</p>
+                    <p className="mt-1 text-sm text-slate-500">{item.subtitle}</p>
+                    <p className="mt-1 text-xs text-slate-400">{item.time}</p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </Card>
+    );
+  };
+
+  const renderPriorityActions = () => {
+    const priorities = [
+      {
+        title: "Pending KYC",
+        count: organizationMetrics.pendingVerification,
+        helper: "Organization documents awaiting review.",
+        href: "/admin/verification",
+      },
+      {
+        title: "Fraud Alerts",
+        count: triageAlerts.length,
+        helper: "Signals that need triage before escalation.",
+        href: "/admin/security",
+      },
+      {
+        title: "Listings Awaiting Approval",
+        count: listingMetrics.pendingReview,
+        helper: "Submitted listings needing moderation.",
+        href: "/admin/listings",
+      },
+      {
+        title: "Failed Payments",
+        count: failedPaymentEvents.length,
+        helper: "Billing events that may affect workspaces.",
+        href: "/admin/transactions",
+      },
+      {
+        title: "Escalated Reports",
+        count: overview.escalatedCases + disputedEscrows.length,
+        helper: "Trust items requiring senior judgment.",
+        href: "/admin/disputes",
+      },
+    ];
+
+    return (
+      <aside className="space-y-4">
+        <Card className={`${adminSurfaceClass} p-5`}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
+                Priority Actions
+              </p>
+              <h2 className="mt-3 text-xl font-semibold text-slate-950">Focus queue</h2>
+              <p className="mt-1 text-sm text-slate-500">Urgent, but not noisy.</p>
+            </div>
+            <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+              <Bell className="h-4 w-4" />
+              {queueCount || escrowMetrics.disputed ? (
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500" />
+              ) : null}
+            </span>
+          </div>
+
+          <div className="mt-5 space-y-2">
+            {priorities.map((item) => (
+              <Link
+                key={item.title}
+                to={item.href}
+                className="group flex items-center justify-between gap-4 rounded-2xl border border-transparent p-3 transition hover:border-slate-200 hover:bg-slate-50"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        item.count > 0 ? "bg-rose-400" : "bg-emerald-400"
+                      }`}
+                    />
+                    <p className="text-sm font-semibold text-slate-950">{item.title}</p>
+                  </div>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">{item.helper}</p>
+                </div>
+                <div className="flex items-center gap-2 text-slate-400">
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                    {item.count}
+                  </span>
+                  <ChevronRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </Card>
+
+        <Card className={`${adminSurfaceClass} p-5`}>
+          <p className="text-sm font-semibold text-slate-950">Admin Session</p>
+          <div className="mt-4 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-950 text-white">
+              <UserCircle2 className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-slate-950">
+                {user?.email || "Platform admin"}
+              </p>
+              <p className="text-xs capitalize text-slate-500">{currentAdmin?.role || "admin"} access</p>
+            </div>
+          </div>
+        </Card>
+      </aside>
+    );
+  };
+
   const renderOverviewContent = () => (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-      <Card className="p-6 bg-white">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+      {renderLiveActivityFeed()}
+
+      <Card className={`${adminSurfaceClass} p-6`}>
         <h2 className="text-xl font-semibold mb-4">Trust Snapshot</h2>
         <div className="space-y-4">
-          <div className="rounded-xl bg-secondary/30 p-4 flex items-start gap-3">
+          <div className="rounded-2xl bg-slate-50 p-4 flex items-start gap-3">
             <ShieldAlert className="w-5 h-5 text-destructive mt-0.5" />
             <div>
               <p className="font-medium">Open moderation workload</p>
@@ -1607,7 +1855,7 @@ export function AdminLayout() {
               </p>
             </div>
           </div>
-          <div className="rounded-xl bg-secondary/30 p-4 flex items-start gap-3">
+          <div className="rounded-2xl bg-slate-50 p-4 flex items-start gap-3">
             <CheckCircle2 className="w-5 h-5 text-accent mt-0.5" />
             <div>
               <p className="font-medium">Resolved in the last 24 hours</p>
@@ -1616,7 +1864,7 @@ export function AdminLayout() {
               </p>
             </div>
           </div>
-          <div className="rounded-xl bg-secondary/30 p-4 flex items-start gap-3">
+          <div className="rounded-2xl bg-slate-50 p-4 flex items-start gap-3">
             <Clock3 className="w-5 h-5 text-primary mt-0.5" />
             <div>
               <p className="font-medium">Escalation pressure</p>
@@ -1627,7 +1875,222 @@ export function AdminLayout() {
           </div>
         </div>
       </Card>
+    </div>
+  );
 
+  const renderAnalyticsDashboard = () => {
+    const analyticsRows = [
+      {
+        label: "Marketplace Trends",
+        value: overview.totalListings,
+        helper: "Inventory tracked across live marketplace surfaces.",
+      },
+      {
+        label: "Revenue Growth",
+        value: organizationMetrics.monthlyRecurringRevenueMinor / 100,
+        helper: "Subscription revenue baseline for executive review.",
+      },
+      {
+        label: "Listing Performance",
+        value: listingMetrics.listed,
+        helper: "Listings currently approved or visible.",
+      },
+      {
+        label: "User Activity",
+        value: overview.totalUsers,
+        helper: "Registered users and workspace operators.",
+      },
+      {
+        label: "Conversion Metrics",
+        value: escrowMetrics.released,
+        helper: "Released transactions from active escrow flows.",
+      },
+    ];
+    const maxValue = Math.max(...analyticsRows.map((row) => row.value), 1);
+
+    return (
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <Card className={`${adminSurfaceClass} p-6`}>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
+            Executive Intelligence
+          </p>
+          <h2 className="mt-3 text-2xl font-semibold text-slate-950">Analytics</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            A restrained read on revenue, inventory, trust pressure, and platform usage without dashboard clutter.
+          </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Open trust workload</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">{overview.openCases}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Refunded transactions</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">{escrowMetrics.refunded}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className={`${adminSurfaceClass} p-6`}>
+          <h2 className="text-xl font-semibold text-slate-950">Performance Signals</h2>
+          <div className="mt-6 space-y-5">
+            {analyticsRows.map((row) => (
+              <div key={row.label}>
+                <div className="mb-2 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">{row.label}</p>
+                    <p className="text-xs text-slate-500">{row.helper}</p>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-700">
+                    {row.label === "Revenue Growth"
+                      ? formatMinorCurrency(organizationMetrics.monthlyRecurringRevenueMinor)
+                      : row.value.toLocaleString()}
+                  </p>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-slate-800 to-slate-400"
+                    style={{ width: `${Math.max(8, Math.round((row.value / maxValue) * 100))}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    );
+  };
+
+  const renderVerificationCenter = () => (
+    <div className="space-y-6">
+      <Card className={`${adminSurfaceClass} p-6`}>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
+              Verification
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold text-slate-950">Trust Review Center</h2>
+            <p className="mt-2 text-sm text-slate-500">
+              Pending documents, KYC reviews, ownership checks, and manual verification decisions live here.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-2xl font-semibold text-slate-950">{organizationMetrics.pendingVerification}</p>
+              <p className="text-xs text-slate-500">Pending docs</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-2xl font-semibold text-slate-950">{listingMetrics.pendingReview}</p>
+              <p className="text-xs text-slate-500">Listing checks</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-2xl font-semibold text-slate-950">{userMetrics.verifiedUsers}</p>
+              <p className="text-xs text-slate-500">Verified users</p>
+            </div>
+          </div>
+        </div>
+      </Card>
+      {renderOrganizationQueue()}
+      {renderListingQueue()}
+    </div>
+  );
+
+  const renderDisputesWorkspace = () => (
+    <div className="space-y-6">
+      <Card className={`${adminSurfaceClass} p-6`}>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-950">Dispute Workspace</h2>
+            <p className="mt-2 text-sm text-slate-500">
+              Case cards stay focused on evidence, severity, and deliberate actions.
+            </p>
+          </div>
+          <Badge variant={disputedEscrows.length ? "destructive" : "outline"}>
+            {disputedEscrows.length} open disputes
+          </Badge>
+        </div>
+      </Card>
+
+      {disputedEscrows.length === 0 ? (
+        <Card className={`${adminSurfaceClass} p-8 text-sm text-slate-500`}>
+          No open escrow disputes are visible. The transaction queue remains available below for audit review.
+        </Card>
+      ) : (
+        <div className="grid gap-4 xl:grid-cols-2">
+          {disputedEscrows.map((escrow) => {
+            const evidenceCount =
+              (Array.isArray(escrow.documents) ? escrow.documents.length : 0) +
+              (Array.isArray(escrow.condition_reports) ? escrow.condition_reports.length : 0);
+            const location = [
+              escrow.listing?.property?.address,
+              escrow.listing?.property?.city,
+              escrow.listing?.property?.region,
+            ]
+              .filter(Boolean)
+              .join(", ");
+            const isWorking = workingId?.startsWith(`escrow:${escrow.id}:`);
+
+            return (
+              <Card key={escrow.id} className={`${adminSurfaceClass} p-5`}>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-500">
+                      Escalated
+                    </p>
+                    <h3 className="mt-2 text-lg font-semibold text-slate-950">
+                      {location || "Escrow dispute"}
+                    </h3>
+                    <p className="mt-2 text-sm text-slate-500">
+                      {escrow.dispute_reason || "No dispute reason attached yet."}
+                    </p>
+                  </div>
+                  <Badge variant="outline">{evidenceCount} evidence</Badge>
+                </div>
+                <div className="mt-5 grid gap-3 text-sm text-slate-500 sm:grid-cols-2">
+                  <span>Agency: {escrow.organization?.name || "Unknown"}</span>
+                  <span>Payer: {escrow.payer?.full_name || escrow.payer?.email || "Customer"}</span>
+                  <span>{formatMinorCurrency(Number(escrow.amount_minor || 0), escrow.currency || "GHS")}</span>
+                  <span>{formatTimestamp(escrow.disputed_at || escrow.updated_at)}</span>
+                </div>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => void handleEscrowResolution(escrow, "release_to_organization")}
+                    disabled={isWorking || !canManagePlatform}
+                  >
+                    Resolve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void handleEscrowResolution(escrow, "refund_to_payer")}
+                    disabled={isWorking || !canManagePlatform}
+                  >
+                    Refund
+                  </Button>
+                  <Button size="sm" variant="outline" disabled>
+                    Request Evidence
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {renderEscrowQueue()}
+    </div>
+  );
+
+  const renderSecurityCenter = () => (
+    <div className="space-y-6">
+      <Card className={`${adminSurfaceClass} p-6`}>
+        <h2 className="text-2xl font-semibold text-slate-950">Security</h2>
+        <p className="mt-2 text-sm text-slate-500">
+          Audit logs, suspicious accounts, fraud signals, login activity, and enforcement actions stay review-first.
+        </p>
+      </Card>
+      {renderTriageAlerts()}
+      {renderReviewCases()}
       {renderAuditFeed()}
     </div>
   );
@@ -1636,16 +2099,6 @@ export function AdminLayout() {
     if (loading) {
       return (
         <PageLoadingState label="Loading the admin console..." />
-      );
-    }
-
-    if (currentSection === "moderation") {
-      return (
-        <div className="space-y-6">
-          {renderTriageAlerts()}
-          {renderReviewCases()}
-          {renderAuditFeed()}
-        </div>
       );
     }
 
@@ -1661,47 +2114,83 @@ export function AdminLayout() {
       return renderListingQueue();
     }
 
-    if (currentSection === "escrow") {
+    if (currentSection === "transactions") {
       return renderEscrowQueue();
+    }
+
+    if (currentSection === "verification") {
+      return renderVerificationCenter();
+    }
+
+    if (currentSection === "disputes") {
+      return renderDisputesWorkspace();
+    }
+
+    if (currentSection === "analytics") {
+      return renderAnalyticsDashboard();
+    }
+
+    if (currentSection === "security") {
+      return renderSecurityCenter();
     }
 
     if (currentSection === "users") {
       return renderUserQueue();
     }
 
-    if (currentSection === "launch") {
-      return renderLaunchReadiness();
-    }
-
     if (currentSection === "settings") {
-      return renderAdminSettings();
+      return (
+        <div className="space-y-6">
+          {renderAdminSettings()}
+          {renderLaunchReadiness()}
+        </div>
+      );
     }
 
     return renderOverviewContent();
   };
 
+  const isLegacyEscrowPath = location.pathname.startsWith("/admin/escrow");
+  const isLaunchReadinessPath = location.pathname.startsWith("/admin/launch");
+
   const sectionTitle =
-    currentSection === "overview"
+    isLegacyEscrowPath
+      ? "Escrow Control"
+      : isLaunchReadinessPath
+        ? "Launch Readiness"
+    : currentSection === "overview"
       ? "Platform Overview"
-      : currentSection === "moderation"
-        ? "Moderation & Trust"
-        : currentSection === "escrow"
-          ? "Escrow Control"
-        : currentSection === "launch"
-          ? "Launch Readiness"
+      : currentSection === "transactions"
+        ? "Transactions"
+        : currentSection === "verification"
+          ? "Verification"
+        : currentSection === "disputes"
+          ? "Disputes"
+        : currentSection === "analytics"
+          ? "Analytics"
+        : currentSection === "security"
+          ? "Security"
         : `${currentSection.charAt(0).toUpperCase()}${currentSection.slice(1)}`;
 
   const sectionDescription =
-    currentSection === "moderation"
-      ? "Triage fraud alerts, assign investigators, escalate cases, and keep a clean audit trail."
-      : currentSection === "escrow"
-        ? "Resolve escrow document gates, disputes, releases, and refunds across configured gateways."
+    isLegacyEscrowPath
+      ? "Review document gates, resolve disputes, and trigger provider release or refund actions."
+      : isLaunchReadinessPath
+        ? "Track production readiness, legal gates, provider activation, and launch evidence in one calm control plane."
+    : currentSection === "security"
+      ? "Triage fraud alerts, suspicious behavior, audit logs, and enforcement actions."
+      : currentSection === "transactions"
+        ? "Review payments, escrow document gates, releases, refunds, and provider handoffs."
       : currentSection === "users"
         ? "Manage account verification, suspension, and platform admin visibility."
-        : currentSection === "launch"
-          ? "Control legal, provider, data-source, AI, IoT, SMS, fraud, and payout readiness before production launch."
+        : currentSection === "verification"
+          ? "Review organization documents, listing checks, and ownership verification signals."
+        : currentSection === "disputes"
+          ? "Resolve escalated cases with evidence, receipts, and deliberate admin actions."
+        : currentSection === "analytics"
+          ? "Read marketplace, revenue, listing, user, and conversion trends at executive speed."
         : currentSection === "settings"
-          ? "Review admin access controls and recent billing/admin events."
+          ? "Organize platform settings, launch readiness, payments, verification, security, and feature gates."
       : "Monitor operational health, trust signals, and moderation volume across BaytMiftah.";
 
   return (
@@ -1720,82 +2209,157 @@ export function AdminLayout() {
         </Card>
       </div>
     ) : (
-    <div className="min-h-screen bg-background">
-      <nav className="bg-gradient-to-r from-primary to-accent text-white">
-        <div className="px-6 py-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-center gap-4">
-              <Link to="/" className="flex min-w-0 items-center gap-2">
-                <div className="w-10 h-10 flex-shrink-0 bg-white/20 rounded-lg flex items-center justify-center">
-                  <Shield className="w-6 h-6" />
-                </div>
+      <div className="min-h-screen bg-[#f5f5f7] text-slate-950">
+        <div className="flex min-h-screen">
+          <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-slate-200/80 bg-white/75 px-5 py-6 backdrop-blur-2xl lg:block">
+            <Link to="/" className="flex items-center gap-3 px-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-sm">
+                <Shield className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-950">BaytMiftah</p>
+                <p className="text-xs text-slate-500">Admin command center</p>
+              </div>
+            </Link>
+
+            <div className="my-6 h-px bg-slate-200/80" />
+
+            <nav className="space-y-1">
+              {navItems.map((item) => {
+                const isActive =
+                  currentSection === item.key ||
+                  (item.key === "overview" && location.pathname === "/admin");
+                const Icon = item.icon;
+                const itemCount =
+                  item.key === "verification"
+                    ? organizationMetrics.pendingVerification
+                    : item.key === "disputes"
+                      ? escrowMetrics.disputed
+                      : item.key === "security"
+                        ? queueCount
+                        : 0;
+
+                return (
+                  <Link
+                    key={item.key}
+                    to={item.href}
+                    className={`group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition ${
+                      isActive
+                        ? "bg-slate-950 text-white shadow-[0_12px_30px_rgba(15,23,42,0.12)]"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="font-medium">{item.label}</span>
+                    {itemCount > 0 ? (
+                      <span
+                        className={`ml-auto h-2 w-2 rounded-full ${
+                          isActive ? "bg-white" : "bg-rose-500"
+                        }`}
+                        aria-label={`${itemCount} pending`}
+                      />
+                    ) : null}
+                  </Link>
+                );
+              })}
+            </nav>
+          </aside>
+
+          <div className="flex min-w-0 flex-1 flex-col lg:pl-72">
+            <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-[#f5f5f7]/85 px-4 py-4 backdrop-blur-2xl sm:px-6 lg:px-8">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                 <div className="min-w-0">
-                  <span className="block truncate text-xl font-semibold">Admin Console</span>
-                  <span className="text-xs text-white/80">BaytMiftah REOS</span>
+                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <span>Admin</span>
+                    <ChevronRight className="h-4 w-4" />
+                    <span className="font-medium text-slate-800">{sectionTitle}</span>
+                  </div>
                 </div>
-              </Link>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge className="bg-white/15 text-white border-white/20">
-                {queueCount} in queue
-              </Badge>
-              <Link to="/">
-                <Button variant="secondary" size="sm">
-                  Back to Site
-                </Button>
-              </Link>
+
+                <div className="flex flex-1 items-center gap-3 xl:max-w-2xl">
+                  <label className="relative hidden min-w-0 flex-1 md:block">
+                    <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="search"
+                      placeholder="Search users, listings, transactions, organizations"
+                      className="h-11 w-full rounded-full border border-slate-200 bg-white/80 pl-11 pr-4 text-sm text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-300 focus:ring-4 focus:ring-slate-200/60"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="relative flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/80 text-slate-700 shadow-sm transition hover:bg-white"
+                    aria-label="Notifications"
+                  >
+                    <Bell className="h-4 w-4" />
+                    {queueCount || escrowMetrics.disputed ? (
+                      <span className="absolute right-3 top-3 h-2 w-2 rounded-full bg-rose-500" />
+                    ) : null}
+                  </button>
+                  <button
+                    type="button"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white/80 text-slate-700 shadow-sm transition hover:bg-white"
+                    aria-label="Quick actions"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-950 text-white shadow-sm">
+                    <UserCircle2 className="h-5 w-5" />
+                  </div>
+                </div>
+              </div>
+            </header>
+
+            <div className="grid min-w-0 flex-1 gap-6 px-4 pb-28 pt-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8 lg:pb-6">
+              <main className="min-w-0">
+                <div className="mb-8">
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
+                    Operational View
+                  </p>
+                  <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950">
+                    {sectionTitle}
+                  </h1>
+                  <p className="mt-3 max-w-3xl text-base leading-7 text-slate-500">
+                    {sectionDescription}
+                  </p>
+                </div>
+
+                {renderStats()}
+                {renderSectionContent()}
+              </main>
+
+              <div className="hidden lg:block">{renderPriorityActions()}</div>
             </div>
           </div>
         </div>
-      </nav>
 
-      <div className="flex flex-col lg:flex-row">
-        <aside className="w-full border-b border-border bg-white p-4 lg:w-64 lg:border-b-0 lg:border-r lg:min-h-[calc(100vh-73px)] lg:p-6">
-          <nav className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-2 lg:overflow-visible lg:pb-0">
-            {navItems.map((item) => {
-              const isActive =
-                currentSection === item.key ||
-                (item.key === "overview" && location.pathname === "/admin");
-              const Icon = item.icon;
+        <nav
+          className="fixed inset-x-4 bottom-4 z-40 grid grid-cols-5 rounded-[2rem] border border-slate-200/80 bg-white/88 p-2 shadow-[0_18px_50px_rgba(15,23,42,0.18)] backdrop-blur-2xl lg:hidden"
+          aria-label="Mobile admin navigation"
+        >
+          {[
+            { label: "Overview", href: "/admin", icon: BarChart3, active: currentSection === "overview" },
+            { label: "Listings", href: "/admin/listings", icon: FileText, active: currentSection === "listings" },
+            { label: "Verify", href: "/admin/verification", icon: UserCheck, active: currentSection === "verification" },
+            { label: "Activity", href: "/admin/security", icon: ShieldAlert, active: currentSection === "security" || currentSection === "disputes" },
+            { label: "More", href: "/admin/settings", icon: MoreHorizontal, active: currentSection === "settings" || currentSection === "analytics" || currentSection === "transactions" },
+          ].map((item) => {
+            const Icon = item.icon;
 
-              return (
-                <Link
-                  key={item.key}
-                  to={item.href}
-                  className={`flex flex-shrink-0 items-center gap-3 rounded-lg px-4 py-3 transition-colors lg:shrink ${
-                    isActive ? "bg-primary text-white" : "hover:bg-secondary"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                  {item.key === "moderation" ? (
-                    <span
-                      className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
-                        isActive ? "bg-white/20 text-white" : "bg-destructive text-white"
-                      }`}
-                    >
-                      {queueCount}
-                    </span>
-                  ) : null}
-                </Link>
-              );
-            })}
-          </nav>
-        </aside>
-
-        <main className="min-w-0 flex-1 bg-secondary/30 p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl min-w-0">
-            <div className="mb-8">
-              <h1 className="text-3xl font-semibold mb-2">{sectionTitle}</h1>
-              <p className="text-muted-foreground">{sectionDescription}</p>
-            </div>
-
-            {renderStats()}
-            {renderSectionContent()}
-          </div>
-        </main>
+            return (
+              <Link
+                key={item.label}
+                to={item.href}
+                className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-3xl text-[11px] font-semibold transition ${
+                  item.active ? "bg-slate-950 text-white shadow-sm" : "text-slate-500"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
-    </div>
     )
   );
 }

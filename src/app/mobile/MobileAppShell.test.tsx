@@ -314,7 +314,16 @@ describe("MobileAppShell", () => {
     const user = userEvent.setup();
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
 
-    expect(await screen.findByText(/fresh listings/i)).toBeInTheDocument();
+    expect(await screen.findByText("Live Close to Work, School, and Everything")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /explore properties/i })).toHaveAttribute(
+      "href",
+      "/search"
+    );
+    expect(screen.getByRole("link", { name: /list property/i })).toHaveAttribute(
+      "href",
+      "/workspace?next=new"
+    );
+    expect(screen.queryByText(/fresh listings/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/continue/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/quick paths/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /projects/i })).not.toBeInTheDocument();
@@ -419,7 +428,7 @@ describe("MobileAppShell", () => {
     const user = userEvent.setup();
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
 
-    await screen.findByText("Discover");
+    await screen.findByText("Live Close to Work, School, and Everything");
 
     expect(await within(tabBar).findByText("4")).toBeInTheDocument();
     expect(within(tabBar).getByText("2")).toBeInTheDocument();
@@ -575,7 +584,7 @@ describe("MobileAppShell", () => {
 
     renderMobileShell("/?tab=search");
 
-    expect(await screen.findByText("Discover")).toBeInTheDocument();
+    expect(await screen.findByText("Live Close to Work, School, and Everything")).toBeInTheDocument();
     expect(screen.queryByText("Find the right fit")).not.toBeInTheDocument();
 
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });

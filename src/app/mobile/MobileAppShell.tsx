@@ -16,6 +16,7 @@ import {
   HousePlus,
   KeyRound,
   Loader2,
+  Menu,
   MessageCircle,
   Mic,
   Navigation,
@@ -784,6 +785,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
 
   const featuredListing = filteredListings[0] || listings[0];
   const workspacePath = `${WORKSPACE_ENTRY_PATH}?next=dashboard`;
+  const listPropertyPath = `${WORKSPACE_ENTRY_PATH}?next=new`;
   const hasWorkspaceAccess = organizations.length > 0;
   const openDeals = dealCases.filter(
     (dealCase) => !["won", "lost"].includes(dealCase.pipeline_stage || "")
@@ -1198,6 +1200,68 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
 
   const renderContent = () => {
     if (activeTab === "home") {
+      if (user) {
+        const heroImage =
+          featuredListing?.property
+            ? getPropertyCoverImage(featuredListing.property)
+            : "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=1400&q=85&auto=format&fit=crop";
+
+        return (
+          <section className="mobile-auth-hero" aria-label="BaytMiftah property discovery">
+            <img src={heroImage} alt="" className="mobile-auth-hero-image" />
+            <div className="mobile-auth-hero-overlay" />
+            <div className="mobile-auth-hero-content">
+              <header className="mobile-auth-hero-header">
+                <Link to="/" className="mobile-auth-brand" aria-label="BaytMiftah home">
+                  <span>
+                    <Home aria-hidden="true" />
+                  </span>
+                  BaytMiftah
+                </Link>
+                <Link to={getTabHref("profile")} className="mobile-auth-menu" aria-label="Open profile menu">
+                  <Menu aria-hidden="true" />
+                </Link>
+              </header>
+
+              <div className="mobile-auth-hero-copy">
+                <p className="mobile-auth-kicker">Verified City Rentals</p>
+                <h1>Live Close to Work, School, and Everything</h1>
+                <p>
+                  Explore apartments with trusted agencies, smart access readiness, and location signals.
+                </p>
+              </div>
+
+              <div className="mobile-auth-trust-row" aria-label="Trust signals">
+                <span>
+                  <ShieldCheck aria-hidden="true" />
+                  <strong>Verified</strong>
+                  Listings
+                </span>
+                <span>
+                  <Navigation aria-hidden="true" />
+                  <strong>Smart</strong>
+                  Location Signals
+                </span>
+                <span>
+                  <Home aria-hidden="true" />
+                  <strong>Secure</strong>
+                  &amp; Trusted
+                </span>
+              </div>
+
+              <div className="mobile-auth-hero-actions">
+                <Link to="/search" className="mobile-auth-primary-action">
+                  Explore Properties
+                </Link>
+                <Link to={listPropertyPath} className="mobile-auth-secondary-action">
+                  List Property
+                </Link>
+              </div>
+            </div>
+          </section>
+        );
+      }
+
       return (
         <>
           <MobilePaneHeader

@@ -668,6 +668,217 @@ button.mobile-toolbar-button {
   font-weight: 700;
 }
 
+.mobile-auth-hero {
+  position: relative;
+  min-height: calc(100svh - 34px);
+  margin:
+    calc(-1 * max(env(safe-area-inset-top), 14px))
+    -16px
+    calc(-1 * (28px + env(safe-area-inset-bottom) + var(--mobile-keyboard-inset, 0px)));
+  overflow: hidden;
+  border-radius: 0 0 34px 34px;
+  background: #0b1019;
+  color: #ffffff;
+  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.22);
+}
+
+.mobile-auth-hero-image,
+.mobile-auth-hero-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.mobile-auth-hero-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.78) brightness(0.78);
+}
+
+.mobile-auth-hero-overlay {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255, 49, 95, 0.22), transparent 28%),
+    linear-gradient(180deg, rgba(8, 12, 20, 0.48) 0%, rgba(8, 12, 20, 0.76) 48%, rgba(8, 12, 20, 0.95) 100%),
+    linear-gradient(90deg, rgba(8, 12, 20, 0.9), rgba(8, 12, 20, 0.4));
+}
+
+.mobile-auth-hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: calc(100svh - 34px);
+  flex-direction: column;
+  padding:
+    calc(max(env(safe-area-inset-top), 18px) + 22px)
+    28px
+    calc(118px + env(safe-area-inset-bottom));
+}
+
+.mobile-auth-hero-header,
+.mobile-auth-brand,
+.mobile-auth-menu,
+.mobile-auth-trust-row,
+.mobile-auth-trust-row span,
+.mobile-auth-hero-actions {
+  display: flex;
+  align-items: center;
+}
+
+.mobile-auth-hero-header {
+  justify-content: space-between;
+}
+
+.mobile-auth-brand {
+  gap: 9px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 770;
+  text-decoration: none;
+}
+
+.mobile-auth-brand span,
+.mobile-auth-menu {
+  display: grid;
+  place-items: center;
+}
+
+.mobile-auth-brand span {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: #ff315f;
+  box-shadow: 0 14px 28px rgba(255, 49, 95, 0.28);
+}
+
+.mobile-auth-brand svg {
+  width: 19px;
+  height: 19px;
+}
+
+.mobile-auth-menu {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.mobile-auth-menu svg {
+  width: 23px;
+  height: 23px;
+}
+
+.mobile-auth-hero-copy {
+  margin-top: auto;
+  padding-bottom: 18px;
+}
+
+.mobile-auth-kicker {
+  position: relative;
+  margin: 0 0 18px;
+  padding-left: 18px;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 0.78rem;
+  font-weight: 760;
+}
+
+.mobile-auth-kicker::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 10px;
+  height: 2px;
+  content: "";
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: #ff315f;
+}
+
+.mobile-auth-hero-copy h1 {
+  max-width: 18rem;
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(2.35rem, 10vw, 3.25rem);
+  font-weight: 790;
+  letter-spacing: -0.07em;
+  line-height: 0.98;
+}
+
+.mobile-auth-hero-copy p:not(.mobile-auth-kicker) {
+  max-width: 19rem;
+  margin: 18px 0 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.mobile-auth-trust-row {
+  gap: 14px;
+  margin-top: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.mobile-auth-trust-row::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-auth-trust-row span {
+  min-width: max-content;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.66rem;
+  line-height: 1.08;
+}
+
+.mobile-auth-trust-row svg {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #ff315f;
+  padding: 7px;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(255, 49, 95, 0.22);
+}
+
+.mobile-auth-trust-row strong {
+  display: block;
+  color: #ffffff;
+}
+
+.mobile-auth-hero-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.mobile-auth-primary-action,
+.mobile-auth-secondary-action {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 780;
+  text-decoration: none;
+}
+
+.mobile-auth-primary-action {
+  background: linear-gradient(135deg, #ff315f, #c9294f);
+  color: #ffffff;
+  box-shadow: 0 18px 44px rgba(255, 49, 95, 0.24);
+}
+
+.mobile-auth-secondary-action {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+}
+
 .mobile-section-heading {
   justify-content: space-between;
   gap: 12px;
