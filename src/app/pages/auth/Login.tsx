@@ -5,7 +5,7 @@ import { Input } from "../../components/ui/Input";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
-import { buildPublicAppUrl } from "../../../lib/app-url";
+import { buildPublicAppUrl, resolveInternalRedirectPath } from "../../../lib/app-url";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -27,9 +27,9 @@ export function Login() {
       : null;
   const queryRedirectTo = useMemo(() => {
     const next = new URLSearchParams(location.search).get("next");
-    return next || null;
+    return resolveInternalRedirectPath(next, "");
   }, [location.search]);
-  const redirectTo = stateRedirectTo || queryRedirectTo || "/app";
+  const redirectTo = resolveInternalRedirectPath(stateRedirectTo || queryRedirectTo, "/app");
 
   useEffect(() => {
     if (!user) return;

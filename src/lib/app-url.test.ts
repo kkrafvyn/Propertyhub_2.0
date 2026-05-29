@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildPublicAppUrl, getPublicAppBaseUrl, PRODUCTION_APP_URL } from "./app-url";
+import {
+  buildPublicAppUrl,
+  getPublicAppBaseUrl,
+  PRODUCTION_APP_URL,
+  resolveInternalRedirectPath,
+} from "./app-url";
 
 describe("app-url", () => {
   afterEach(() => {
@@ -19,5 +24,12 @@ describe("app-url", () => {
     vi.stubEnv("VITE_PUBLIC_APP_URL", "https://example.baytmiftah.com/");
 
     expect(getPublicAppBaseUrl()).toBe("https://example.baytmiftah.com");
+  });
+
+  it("only allows internal redirect paths", () => {
+    expect(resolveInternalRedirectPath("/workspace?next=new")).toBe("/workspace?next=new");
+    expect(resolveInternalRedirectPath("http://localhost:5173/app")).toBe("/app");
+    expect(resolveInternalRedirectPath("https://evil.example/app")).toBe("/app");
+    expect(resolveInternalRedirectPath("//evil.example/app")).toBe("/app");
   });
 });

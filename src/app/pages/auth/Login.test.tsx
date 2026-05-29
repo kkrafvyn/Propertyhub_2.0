@@ -130,4 +130,20 @@ describe("Login", () => {
       expect(router.state.location.pathname).toBe("/app");
     });
   });
+
+  it("does not follow localhost next redirects after authentication", async () => {
+    const signIn = vi.fn().mockResolvedValue(undefined);
+    useAuthMock.mockReturnValue(createAuthState({ signIn }) as any);
+
+    const router = renderLogin("/login?next=http%3A%2F%2Flocalhost%3A5173%2Fworkspace");
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText("Email Address"), "agent@example.com");
+    await user.type(screen.getByLabelText("Password"), "secret-pass");
+    await user.click(screen.getByRole("button", { name: /^log in$/i }));
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/app");
+    });
+  });
 });

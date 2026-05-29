@@ -40,3 +40,17 @@ export function buildPublicAppUrl(path = "/") {
 
   return `${getPublicAppBaseUrl()}${normalizedPath}`;
 }
+
+export function resolveInternalRedirectPath(value: unknown, fallback = "/app") {
+  if (typeof value !== "string") return fallback;
+
+  const trimmed = value.trim();
+  if (!trimmed || !trimmed.startsWith("/") || trimmed.startsWith("//")) return fallback;
+
+  try {
+    const url = new URL(trimmed, PRODUCTION_APP_URL);
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return fallback;
+  }
+}
