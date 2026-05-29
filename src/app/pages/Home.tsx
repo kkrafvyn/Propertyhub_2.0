@@ -527,7 +527,7 @@ export function Home() {
                     to={agency.href}
                     className="grid min-h-[128px] min-w-[148px] place-items-center rounded-2xl border border-border bg-white p-4 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-xl md:min-w-0"
                   >
-                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-sm font-bold text-slate-700">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-sm font-bold text-primary">
                       {agency.initials}
                     </span>
                     <div>

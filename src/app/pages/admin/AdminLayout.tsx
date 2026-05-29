@@ -166,7 +166,7 @@ function AdminMetricCard({
 }) {
   const toneClasses = {
     slate: "bg-slate-100 text-slate-700",
-    blue: "bg-blue-50 text-blue-700",
+    blue: "bg-primary/10 text-primary",
     green: "bg-emerald-50 text-emerald-700",
     amber: "bg-amber-50 text-amber-700",
     red: "bg-rose-50 text-rose-700",
@@ -1823,7 +1823,7 @@ export function AdminLayout() {
         <Card className={`${adminSurfaceClass} p-5`}>
           <p className="text-sm font-semibold text-slate-950">Admin Session</p>
           <div className="mt-4 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-950 text-white">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
               <UserCircle2 className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -2209,11 +2209,11 @@ export function AdminLayout() {
         </Card>
       </div>
     ) : (
-      <div className="min-h-screen bg-[#f5f5f7] text-slate-950">
+      <div className="min-h-screen bg-[#fff7fa] text-foreground">
         <div className="flex min-h-screen">
           <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-slate-200/80 bg-white/75 px-5 py-6 backdrop-blur-2xl lg:block">
             <Link to="/" className="flex items-center gap-3 px-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
                 <Shield className="h-5 w-5" />
               </div>
               <div>
@@ -2245,8 +2245,8 @@ export function AdminLayout() {
                     to={item.href}
                     className={`group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition ${
                       isActive
-                        ? "bg-slate-950 text-white shadow-[0_12px_30px_rgba(15,23,42,0.12)]"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+                        ? "bg-primary text-primary-foreground shadow-[0_12px_30px_rgba(255,56,92,0.18)]"
+                        : "text-slate-600 hover:bg-primary/5 hover:text-primary"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -2266,7 +2266,7 @@ export function AdminLayout() {
           </aside>
 
           <div className="flex min-w-0 flex-1 flex-col lg:pl-72">
-            <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-[#f5f5f7]/85 px-4 py-4 backdrop-blur-2xl sm:px-6 lg:px-8">
+            <header className="sticky top-0 z-20 border-b border-primary/10 bg-white/85 px-4 py-4 backdrop-blur-2xl sm:px-6 lg:px-8">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-sm text-slate-500">
@@ -2302,7 +2302,7 @@ export function AdminLayout() {
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </button>
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-950 text-white shadow-sm">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
                     <UserCircle2 className="h-5 w-5" />
                   </div>
                 </div>
@@ -2350,7 +2350,7 @@ export function AdminLayout() {
                 key={item.label}
                 to={item.href}
                 className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-3xl text-[11px] font-semibold transition ${
-                  item.active ? "bg-slate-950 text-white shadow-sm" : "text-slate-500"
+                  item.active ? "bg-primary text-primary-foreground shadow-sm" : "text-slate-500"
                 }`}
               >
                 <Icon className="h-4 w-4" />

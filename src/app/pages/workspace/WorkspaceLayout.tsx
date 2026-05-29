@@ -638,8 +638,8 @@ export function WorkspaceLayout() {
   const renderMobileOperationsHome = () => {
     const agencyMode = currentRole === "owner" ? "Agency Control" : "Operations";
     const healthCards = [
-      { label: "Active Listings", value: formatCompactNumber(listedCount), href: `${workspaceBasePath}/listings`, tone: "from-slate-950 to-slate-700" },
-      { label: "New Leads", value: formatCompactNumber(activeLeadsCount), href: `${workspaceBasePath}/leads`, tone: "from-blue-700 to-sky-500" },
+      { label: "Active Listings", value: formatCompactNumber(listedCount), href: `${workspaceBasePath}/listings`, tone: "from-primary to-rose-400" },
+      { label: "New Leads", value: formatCompactNumber(activeLeadsCount), href: `${workspaceBasePath}/leads`, tone: "from-[#ff5a7a] to-primary" },
       { label: "Today's Viewings", value: formatCompactNumber(todayViewingsCount), href: `${workspaceBasePath}/calendar`, tone: "from-emerald-700 to-teal-500" },
       { label: "Pending Approvals", value: formatCompactNumber(pendingApprovalsCount), href: `${workspaceBasePath}/documents`, tone: "from-amber-600 to-orange-400" },
       { label: "Closed Deals", value: formatCompactNumber(closedDealsCount), href: `${workspaceBasePath}/payments`, tone: "from-indigo-700 to-violet-500" },
@@ -711,7 +711,7 @@ export function WorkspaceLayout() {
             </div>
             <button
               type="button"
-              className="rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold text-white"
+              className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
               onClick={() => setMobileActionSheet("quick")}
             >
               Open
@@ -727,7 +727,7 @@ export function WorkspaceLayout() {
                   to={action.href}
                   className="flex min-h-20 items-center gap-3 rounded-3xl bg-slate-50 p-4 text-sm font-semibold text-slate-900"
                 >
-                  <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-blue-600 shadow-sm">
+                  <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-primary shadow-sm">
                     <Icon className="h-5 w-5" />
                   </span>
                   {action.label}
@@ -868,7 +868,7 @@ export function WorkspaceLayout() {
               <h1 className="text-3xl font-semibold tracking-tight text-slate-950">{config.title}</h1>
               <p className="mt-2 text-sm leading-6 text-slate-500">{config.subtitle}</p>
             </div>
-            <div className="rounded-3xl bg-slate-950 px-4 py-3 text-right text-white">
+            <div className="rounded-3xl bg-primary px-4 py-3 text-right text-primary-foreground">
               <p className="text-2xl font-semibold">{config.metric}</p>
               <p className="text-[11px] text-white/70">{config.helper}</p>
             </div>
@@ -884,7 +884,7 @@ export function WorkspaceLayout() {
                 to={action.href}
                 className="rounded-[1.5rem] border border-slate-200/80 bg-white/88 p-3 text-center text-xs font-semibold text-slate-900 shadow-sm"
               >
-                <span className="mx-auto mb-2 grid h-9 w-9 place-items-center rounded-2xl bg-blue-50 text-blue-600">
+                <span className="mx-auto mb-2 grid h-9 w-9 place-items-center rounded-2xl bg-primary/10 text-primary">
                   <Icon className="h-4 w-4" />
                 </span>
                 {action.label}
@@ -925,7 +925,7 @@ export function WorkspaceLayout() {
               to={item.href}
               className="flex items-center gap-4 rounded-[1.75rem] border border-slate-200/80 bg-white/88 p-4 shadow-sm"
             >
-              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-50 text-blue-600">
+              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary">
                 <Icon className="h-5 w-5" />
               </span>
               <span className="min-w-0 flex-1">
@@ -1073,7 +1073,7 @@ export function WorkspaceLayout() {
                   className="rounded-[1.75rem] border border-slate-200/80 bg-white/90 p-4 shadow-sm"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-blue-50 text-sm font-semibold text-blue-700">
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                       {String(client).slice(0, 1).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -1242,7 +1242,7 @@ export function WorkspaceLayout() {
                 <p className="text-sm font-semibold text-slate-700">{metric.value}</p>
               </div>
               <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-slate-800" style={{ width: `${metric.percent}%` }} />
+                <div className="h-full rounded-full bg-gradient-to-r from-primary to-rose-400" style={{ width: `${metric.percent}%` }} />
               </div>
             </div>
           ))}
@@ -1339,7 +1339,7 @@ export function WorkspaceLayout() {
         <button
           type="button"
           aria-label="Close mobile action sheet"
-          className="absolute inset-0 bg-slate-950/25 backdrop-blur-sm"
+          className="absolute inset-0 bg-primary/20 backdrop-blur-sm"
           onClick={() => setMobileActionSheet(null)}
         />
         <div className="absolute inset-x-3 bottom-3 rounded-[2rem] border border-slate-200/80 bg-white p-4 shadow-[0_26px_70px_rgba(15,23,42,0.28)]">
@@ -1370,7 +1370,7 @@ export function WorkspaceLayout() {
                   className="rounded-[1.5rem] bg-slate-50 p-4 text-sm font-semibold text-slate-950"
                   onClick={() => setMobileActionSheet(null)}
                 >
-                  <span className="mb-3 grid h-10 w-10 place-items-center rounded-2xl bg-white text-blue-600 shadow-sm">
+                  <span className="mb-3 grid h-10 w-10 place-items-center rounded-2xl bg-white text-primary shadow-sm">
                     <Icon className="h-5 w-5" />
                   </span>
                   {item.label}
@@ -1531,7 +1531,7 @@ export function WorkspaceLayout() {
                         })
                       }
                     >
-                      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-blue-50 text-sm font-semibold text-blue-700">
+                      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                         {String(client).slice(0, 1).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -1677,13 +1677,13 @@ export function WorkspaceLayout() {
             ? renderEmptyState("Message threads will appear here once leads and team updates start moving.")
             : threads.map((thread) => (
                 <Link key={thread.id} to={thread.href} className="flex items-center gap-3 rounded-[1.75rem] border border-slate-200/80 bg-white/90 p-4 shadow-sm">
-                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-blue-50 text-sm font-semibold text-blue-700">
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                     {thread.initials}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
                       <strong className="truncate text-sm text-slate-950">{thread.title}</strong>
-                      {thread.unread ? <span className="h-2 w-2 rounded-full bg-blue-500" /> : null}
+                      {thread.unread ? <span className="h-2 w-2 rounded-full bg-primary" /> : null}
                     </span>
                     <span className="mt-1 block truncate text-xs text-slate-500">{thread.subtitle}</span>
                     <span className="mt-1 block text-[11px] font-semibold text-slate-400">{thread.detail}</span>
@@ -1746,7 +1746,7 @@ export function WorkspaceLayout() {
                 const Icon = item.icon;
                 return (
                   <Link key={item.id} to={item.href} className="flex items-center gap-3 rounded-[1.75rem] border border-slate-200/80 bg-white/90 p-4 shadow-sm">
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-50 text-blue-600">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
                       <Icon className="h-5 w-5" />
                     </span>
                     <span className="min-w-0 flex-1">
@@ -1899,7 +1899,7 @@ export function WorkspaceLayout() {
         <button
           type="button"
           aria-label="Close mobile detail sheet"
-          className="absolute inset-0 bg-slate-950/25 backdrop-blur-sm"
+          className="absolute inset-0 bg-primary/20 backdrop-blur-sm"
           onClick={() => setMobileDetailSheet(null)}
         />
         <div className="absolute inset-x-3 bottom-3 rounded-[2rem] border border-slate-200/80 bg-white p-4 shadow-[0_26px_70px_rgba(15,23,42,0.28)]">
@@ -1932,7 +1932,7 @@ export function WorkspaceLayout() {
             {mobileDetailSheet.actions.map((action) => {
               const classes =
                 action.tone === "primary"
-                  ? "bg-slate-950 text-white"
+                  ? "bg-primary text-primary-foreground"
                   : action.tone === "danger"
                     ? "bg-rose-50 text-rose-700"
                     : "bg-slate-100 text-slate-800";
@@ -2156,13 +2156,13 @@ export function WorkspaceLayout() {
   const mobileModuleBody = renderEnhancedMobileModuleBody();
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7]">
+    <div className="min-h-screen bg-[#fff7fa]">
       <nav className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/82 backdrop-blur-2xl">
         <div className="px-4 py-3 sm:px-6 lg:px-6 lg:py-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 items-center gap-4">
               <Link to="/" className="flex min-w-0 items-center gap-2">
-                <div className="w-10 h-10 flex-shrink-0 bg-slate-950 rounded-2xl flex items-center justify-center shadow-sm">
+                <div className="w-10 h-10 flex-shrink-0 bg-primary rounded-2xl flex items-center justify-center shadow-sm">
                   <svg
                     width="24"
                     height="24"
@@ -2220,7 +2220,7 @@ export function WorkspaceLayout() {
               </Link>
               <Link
                 to={`${workspaceBasePath}/settings`}
-                className="grid h-10 w-10 place-items-center rounded-full bg-slate-950 text-white shadow-sm"
+                className="grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm"
                 aria-label="Workspace profile"
               >
                 <UserCircle2 className="h-5 w-5" />
@@ -2364,7 +2364,7 @@ export function WorkspaceLayout() {
               key={item.label}
               to={item.href}
               className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-3xl text-[11px] font-semibold transition ${
-                item.active ? "bg-slate-950 text-white shadow-sm" : "text-slate-500"
+                item.active ? "bg-primary text-primary-foreground shadow-sm" : "text-slate-500"
               }`}
             >
               <Icon className="h-4 w-4" />
