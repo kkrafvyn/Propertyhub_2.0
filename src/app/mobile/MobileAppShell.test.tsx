@@ -314,24 +314,22 @@ describe("MobileAppShell", () => {
     const user = userEvent.setup();
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
 
-    expect(await screen.findByText("Live Close to Work, School, and Everything")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /explore properties/i })).toHaveAttribute(
+    expect(await screen.findByPlaceholderText("Search by location, property, or agent")).toBeInTheDocument();
+    expect(screen.getByText("Verified Property")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /explore property/i })).toHaveAttribute(
       "href",
-      "/search"
+      "/property/listing-1"
     );
-    expect(screen.getByRole("link", { name: /list property/i })).toHaveAttribute(
-      "href",
-      "/workspace?next=new"
-    );
+    expect(screen.getByRole("heading", { name: /property categories/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /verified agents/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /verified agencies/i })).toBeInTheDocument();
+    expect(screen.getByText("Fraud Protection")).toBeInTheDocument();
     expect(screen.queryByText(/fresh listings/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/continue/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/quick paths/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /projects/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /public reviews/i })).not.toBeInTheDocument();
-    expect(within(tabBar).getByRole("link", { name: /^search$/i })).toHaveAttribute(
-      "href",
-      "/#mobile-search"
-    );
+    expect(within(tabBar).queryByRole("link", { name: /^search$/i })).not.toBeInTheDocument();
 
     await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
 
@@ -428,7 +426,7 @@ describe("MobileAppShell", () => {
     const user = userEvent.setup();
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
 
-    await screen.findByText("Live Close to Work, School, and Everything");
+    await screen.findByText("Verified Property");
 
     expect(await within(tabBar).findByText("4")).toBeInTheDocument();
     expect(within(tabBar).getByText("2")).toBeInTheDocument();
@@ -493,7 +491,7 @@ describe("MobileAppShell", () => {
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
 
     await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
-    await user.click(await screen.findByRole("button", { name: /turn on alerts/i }));
+    await user.click(await screen.findByRole("switch", { name: /push notifications/i }));
 
     expect(registerPushMock).toHaveBeenCalledWith("user-1", expect.any(Object));
 
@@ -551,7 +549,7 @@ describe("MobileAppShell", () => {
 
     renderMobileShell();
 
-    await screen.findByText("Discover");
+    await screen.findByPlaceholderText("Search by location, property, or agent");
     await waitFor(() => expect(countOfflineQueueMock).toHaveBeenCalled());
     expect(
       screen.queryByRole("navigation", { name: /primary mobile navigation/i })
@@ -566,32 +564,40 @@ describe("MobileAppShell", () => {
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
 
     await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
-    await user.click(await screen.findByRole("radio", { name: /miftah light/i }));
+    await user.click(await screen.findByRole("button", { name: /appearance/i }));
 
     await waitFor(() => {
       expect(document.documentElement).toHaveAttribute("data-app-theme", "light");
     });
     expect(document.documentElement).toHaveAttribute("data-app-theme-preference", "light");
     expect(document.documentElement).not.toHaveClass("dark");
-    expect(screen.getByRole("radio", { name: /miftah light/i })).toHaveAttribute(
-      "aria-checked",
-      "true"
-    );
+    expect(screen.getByRole("button", { name: /appearance/i })).toHaveTextContent("Miftah Light");
   });
 
-  it("routes the search tab back to the home search bar instead of an internal pane", async () => {
+  it("wires the settings sign out action to auth logout", async () => {
+    const signOut = vi.fn(async () => undefined);
+    useAuthMock.mockReturnValue(createSignedInAuthState({ signOut }) as any);
+
+    renderMobileShell();
+    const user = userEvent.setup();
+    const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
+
+    await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
+    await user.click(await screen.findByRole("button", { name: /^sign out$/i }));
+
+    expect(signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the premium home search visible without a separate bottom search tab", async () => {
     useAuthMock.mockReturnValue(createSignedInAuthState() as any);
 
     renderMobileShell("/?tab=search");
 
-    expect(await screen.findByText("Live Close to Work, School, and Everything")).toBeInTheDocument();
+    expect(await screen.findByPlaceholderText("Search by location, property, or agent")).toBeInTheDocument();
     expect(screen.queryByText("Find the right fit")).not.toBeInTheDocument();
 
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
-    expect(within(tabBar).getByRole("link", { name: /^search$/i })).toHaveAttribute(
-      "href",
-      "/#mobile-search"
-    );
+    expect(within(tabBar).queryByRole("link", { name: /^search$/i })).not.toBeInTheDocument();
   });
 
   it("wraps direct mobile routes inside the shared app frame", async () => {
@@ -603,23 +609,20 @@ describe("MobileAppShell", () => {
     expect(screen.getByText("Search route body")).toBeInTheDocument();
 
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
-    expect(within(tabBar).getByRole("link", { name: /^search$/i })).toHaveAttribute(
-      "aria-current",
-      "page"
-    );
+    expect(within(tabBar).queryByRole("link", { name: /^search$/i })).not.toBeInTheDocument();
   });
 
   it.each([
-    { path: "/search", title: "Search results", activeTab: "Search" },
-    { path: "/property/listing-1", title: "Property", activeTab: "Search" },
+    { path: "/search", title: "Search results", activeTab: null },
+    { path: "/property/listing-1", title: "Property", activeTab: null },
     { path: "/agencies", title: "Agencies", activeTab: "Home" },
     { path: "/agencies/prime-estates", title: "Agency", activeTab: "Home" },
-    { path: "/guides", title: "Area guides", activeTab: "Search" },
-    { path: "/guides/osu", title: "Area guide", activeTab: "Search" },
-    { path: "/market-trends", title: "Market trends", activeTab: "Search" },
-    { path: "/buyer-requests", title: "Buyer requests", activeTab: "Search" },
-    { path: "/projects", title: "Projects", activeTab: "Search" },
-    { path: "/projects/project-1", title: "Project", activeTab: "Search" },
+    { path: "/guides", title: "Area guides", activeTab: null },
+    { path: "/guides/osu", title: "Area guide", activeTab: null },
+    { path: "/market-trends", title: "Market trends", activeTab: null },
+    { path: "/buyer-requests", title: "Buyer requests", activeTab: null },
+    { path: "/projects", title: "Projects", activeTab: null },
+    { path: "/projects/project-1", title: "Project", activeTab: null },
     { path: "/valuation", title: "Home valuation", activeTab: "Profile" },
     { path: "/reviews", title: "Public reviews", activeTab: "Profile" },
     { path: "/get-the-app", title: "Get the app", activeTab: "Profile" },
@@ -640,7 +643,11 @@ describe("MobileAppShell", () => {
     expect(screen.getByText(`Route body for ${path}`)).toBeInTheDocument();
 
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
-    expect(within(tabBar).getByRole("link", { name: new RegExp(`^${activeTab}$`, "i") }))
-      .toHaveAttribute("aria-current", "page");
+    if (activeTab) {
+      expect(within(tabBar).getByRole("link", { name: new RegExp(`^${activeTab}$`, "i") }))
+        .toHaveAttribute("aria-current", "page");
+    } else {
+      expect(within(tabBar).queryByRole("link", { name: /^search$/i })).not.toBeInTheDocument();
+    }
   });
 });

@@ -8,6 +8,7 @@ import {
   Brain,
   Calculator,
   CalendarDays,
+  ChevronRight,
   CreditCard,
   Download,
   ExternalLink,
@@ -18,7 +19,10 @@ import {
   KeyRound,
   Loader2,
   LogOut,
+  Mail,
   MessageCircle,
+  Moon,
+  Phone,
   Search,
   Settings,
   Share2,
@@ -695,6 +699,17 @@ export function UserDashboard() {
     dealCases[0]?.listing?.property?.city ||
     propertyViewings[0]?.listing?.property?.city ||
     "Accra";
+
+  const handleSettingsSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out.");
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+      toast.error("Couldn't sign you out right now.");
+    }
+  };
 
   const roleTaskPlans = useMemo(
     () =>
@@ -1664,59 +1679,98 @@ export function UserDashboard() {
     );
   };
 
-  const renderSettings = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <Card className="p-6 lg:col-span-2">
-        <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-            <UserCircle2 className="w-8 h-8" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-xl font-semibold">{displayName}</h3>
-            <p className="text-muted-foreground">{user?.email}</p>
-            <p className="text-sm text-muted-foreground mt-3">
-              Account created {formatRelativeTime(user?.created_at)}
-            </p>
-          </div>
-        </div>
-      </Card>
+  const renderSettings = () => {
+    const profilePhone = user?.phone || user?.user_metadata?.phone || "Add phone";
+    const profileSubtitle = savedProperties.length || dealCases.length
+      ? `${savedProperties.length} saved · ${dealCases.length} active deal${dealCases.length === 1 ? "" : "s"}`
+      : "Premium Buyer Account";
+    const settingsSections = [
+      {
+        title: "Profile information",
+        rows: [
+          { icon: UserCircle2, label: "Name", value: displayName, href: "/app/settings" },
+          { icon: Mail, label: "Email", value: user?.email || "Add email", href: "/app/settings" },
+          { icon: Phone, label: "Phone", value: profilePhone, href: "/app/settings" },
+        ],
+      },
+      {
+        title: "Preferences",
+        rows: [
+          { icon: Bell, label: "Push Notifications", value: "On", href: "/app/notifications", danger: true },
+          { icon: KeyRound, label: "Security & Password", value: "Review", href: "/forgot-password" },
+          { icon: Moon, label: "Appearance", value: "System", href: "/app/settings" },
+          { icon: Settings, label: "Account Preferences", value: "Manage", href: "/app/settings" },
+        ],
+      },
+    ];
 
-      <Card className="p-6">
-        <h3 className="font-semibold mb-4">Account Actions</h3>
-        <div className="space-y-3">
-          <Link to="/forgot-password">
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              aria-label="Reset password"
-              title="Reset password"
-            >
-              <Settings className="w-4 h-4" />
-              Reset Password
-            </Button>
-          </Link>
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            aria-label="Sign out"
-            title="Sign out"
-            onClick={async () => {
-              try {
-                await signOut();
-                toast.success("Signed out.");
-              } catch (error) {
-                console.error("Failed to sign out:", error);
-                toast.error("Couldn't sign you out right now.");
-              }
-            }}
-          >
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </Button>
+    return (
+      <div className="mx-auto max-w-3xl space-y-8 rounded-[2rem] bg-[#f7f5fa] p-4 sm:p-8">
+        <div className="border-b border-slate-200/80 pb-5">
+          <h3 className="text-4xl font-semibold tracking-[-0.06em] text-slate-950 sm:text-5xl">
+            Settings
+          </h3>
         </div>
-      </Card>
-    </div>
-  );
+
+        <div className="grid justify-items-center gap-3 text-center">
+          <div className="grid h-28 w-28 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-slate-950 text-3xl font-bold text-white shadow-xl shadow-primary/20">
+            {displayName
+              .split(/[ @.]/)
+              .filter(Boolean)
+              .map((part) => part[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase()}
+          </div>
+          <div>
+            <h4 className="text-3xl font-semibold tracking-[-0.05em] text-slate-950">
+              {displayName}
+            </h4>
+            <p className="mt-1 text-base text-slate-600">{profileSubtitle}</p>
+          </div>
+        </div>
+
+        {settingsSections.map((section) => (
+          <section key={section.title} className="space-y-3">
+            <h4 className="px-5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              {section.title}
+            </h4>
+            <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm">
+              {section.rows.map((row) => {
+                const Icon = row.icon;
+
+                return (
+                  <Link
+                    key={row.label}
+                    to={row.href}
+                    className="grid min-h-[76px] grid-cols-[auto_minmax(0,0.7fr)_minmax(0,1fr)_auto] items-center gap-4 border-b border-slate-100 px-5 text-slate-950 no-underline last:border-b-0 hover:bg-primary/5"
+                  >
+                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <strong className="text-lg font-medium tracking-[-0.03em]">{row.label}</strong>
+                    <span className="truncate text-right text-slate-600">{row.value}</span>
+                    <ChevronRight className="h-5 w-5 text-slate-300" />
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+
+        <Button
+          variant="outline"
+          className="h-16 w-full rounded-2xl border-slate-200 bg-white text-lg font-semibold text-red-600 shadow-sm hover:bg-red-50 hover:text-red-700"
+          aria-label="Sign out"
+          title="Sign out"
+          onClick={() => void handleSettingsSignOut()}
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </Button>
+      </div>
+    );
+  };
 
   const renderRoleTaskLaunchpad = () => (
     <section className="space-y-5">
@@ -2396,26 +2450,91 @@ export function UserDashboard() {
     }
 
     if (section === "settings") {
+      const profilePhone = user?.phone || user?.user_metadata?.phone || "Add phone";
+
       return (
-        <div className="mobile-dashboard-stack">
-          <article className="mobile-dashboard-card">
-            <span>Account</span>
-            <strong>{displayName}</strong>
-            <p>{user?.email}</p>
-          </article>
-          <Link to="/forgot-password" className="mobile-dashboard-card">
-            <span>Security</span>
-            <strong>Reset password</strong>
-            <p>Use your verified email to update sign-in credentials.</p>
-          </Link>
+        <div className="mobile-settings-screen">
+          <header className="mobile-settings-header">
+            <h1>Settings</h1>
+          </header>
+          <div className="mobile-settings-profile">
+            <div className="mobile-settings-avatar" aria-hidden="true">
+              <span>
+                {displayName
+                  .split(/[ @.]/)
+                  .filter(Boolean)
+                  .map((part) => part[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </span>
+            </div>
+            <h2>{displayName}</h2>
+            <p>Premium Buyer Account</p>
+          </div>
+          <section className="mobile-settings-group" aria-labelledby="dashboard-profile-info">
+            <h3 id="dashboard-profile-info">Profile information</h3>
+            <div className="mobile-settings-card">
+              <Link to="/app/settings" className="mobile-settings-row">
+                <span className="mobile-settings-icon">
+                  <UserCircle2 aria-hidden="true" />
+                </span>
+                <strong>Name</strong>
+                <span className="mobile-settings-value">{displayName}</span>
+                <ChevronRight aria-hidden="true" />
+              </Link>
+              <Link to="/app/settings" className="mobile-settings-row">
+                <span className="mobile-settings-icon">
+                  <Mail aria-hidden="true" />
+                </span>
+                <strong>Email</strong>
+                <span className="mobile-settings-value">{user?.email}</span>
+                <ChevronRight aria-hidden="true" />
+              </Link>
+              <Link to="/app/settings" className="mobile-settings-row">
+                <span className="mobile-settings-icon">
+                  <Phone aria-hidden="true" />
+                </span>
+                <strong>Phone</strong>
+                <span className="mobile-settings-value">{profilePhone}</span>
+                <ChevronRight aria-hidden="true" />
+              </Link>
+            </div>
+          </section>
+          <section className="mobile-settings-group" aria-labelledby="dashboard-preferences">
+            <h3 id="dashboard-preferences">Preferences</h3>
+            <div className="mobile-settings-card">
+              <Link to="/app/notifications" className="mobile-settings-row">
+                <span className="mobile-settings-icon is-danger">
+                  <Bell aria-hidden="true" />
+                </span>
+                <strong>Push Notifications</strong>
+                <span className="mobile-settings-switch is-on" aria-hidden="true" />
+              </Link>
+              <Link to="/forgot-password" className="mobile-settings-row">
+                <span className="mobile-settings-icon is-muted">
+                  <KeyRound aria-hidden="true" />
+                </span>
+                <strong>Security & Password</strong>
+                <span className="mobile-settings-value">Review</span>
+                <ChevronRight aria-hidden="true" />
+              </Link>
+              <Link to="/app/settings" className="mobile-settings-row">
+                <span className="mobile-settings-icon is-muted">
+                  <Moon aria-hidden="true" />
+                </span>
+                <strong>Appearance</strong>
+                <span className="mobile-settings-value">System</span>
+                <ChevronRight aria-hidden="true" />
+              </Link>
+            </div>
+          </section>
           <button
             type="button"
-            className="mobile-dashboard-card mobile-dashboard-button"
-            onClick={() => void signOut()}
+            className="mobile-settings-signout"
+            onClick={() => void handleSettingsSignOut()}
           >
-            <span>Session</span>
-            <strong>Sign out</strong>
-            <p>End this mobile session on the device.</p>
+            Sign Out
           </button>
         </div>
       );
@@ -2790,13 +2909,7 @@ export function UserDashboard() {
             {renderPayments()}
           </section>
         ) : section === "settings" ? (
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Settings</h2>
-              <p className="text-muted-foreground mt-1">
-                Manage your account and session preferences.
-              </p>
-            </div>
+          <section>
             {renderSettings()}
           </section>
         ) : (

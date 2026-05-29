@@ -42,7 +42,7 @@ const categoryConfig: Record<
   media: { label: "Media", icon: Video, tone: "bg-sky-50 text-sky-700" },
   finance: { label: "Finance", icon: Calculator, tone: "bg-emerald-50 text-emerald-700" },
   hyperlocal: { label: "Hyperlocal", icon: MapPinned, tone: "bg-amber-50 text-amber-700" },
-  community: { label: "Community", icon: MessageSquareText, tone: "bg-indigo-50 text-indigo-700" },
+  community: { label: "Community", icon: MessageSquareText, tone: "bg-primary/10 text-primary" },
   trust: { label: "Trust", icon: ShieldCheck, tone: "bg-teal-50 text-teal-700" },
   payments: { label: "Payments", icon: CreditCard, tone: "bg-orange-50 text-orange-700" },
   iot: { label: "IoT", icon: KeyRound, tone: "bg-violet-50 text-violet-700" },
@@ -409,7 +409,7 @@ export function InnovationLab() {
 
           <Card className="p-6">
             <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-indigo-50 p-3 text-indigo-700">
+              <div className="rounded-2xl bg-primary/10 p-3 text-primary">
                 <Users className="h-5 w-5" />
               </div>
               <div>

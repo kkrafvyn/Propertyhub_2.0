@@ -642,7 +642,7 @@ export function WorkspaceLayout() {
       { label: "New Leads", value: formatCompactNumber(activeLeadsCount), href: `${workspaceBasePath}/leads`, tone: "from-[#ff5a7a] to-primary" },
       { label: "Today's Viewings", value: formatCompactNumber(todayViewingsCount), href: `${workspaceBasePath}/calendar`, tone: "from-emerald-700 to-teal-500" },
       { label: "Pending Approvals", value: formatCompactNumber(pendingApprovalsCount), href: `${workspaceBasePath}/documents`, tone: "from-amber-600 to-orange-400" },
-      { label: "Closed Deals", value: formatCompactNumber(closedDealsCount), href: `${workspaceBasePath}/payments`, tone: "from-indigo-700 to-violet-500" },
+      { label: "Closed Deals", value: formatCompactNumber(closedDealsCount), href: `${workspaceBasePath}/payments`, tone: "from-primary to-rose-400" },
       { label: "Revenue", value: currencyFormatter.format(collectedRevenue), href: `${workspaceBasePath}/finance`, tone: "from-zinc-700 to-zinc-500" },
       { label: "Active Agents", value: formatCompactNumber(mobileMetrics.membersCount), href: `${workspaceBasePath}/team`, tone: "from-stone-800 to-stone-500" },
     ];

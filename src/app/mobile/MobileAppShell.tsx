@@ -3,26 +3,37 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import {
   ArrowLeft,
   Bell,
+  Bath,
+  BedDouble,
   BriefcaseBusiness,
+  Building,
   Building2,
   CalendarDays,
   Camera,
-  Check,
   ChevronRight,
+  CheckCircle2,
   Compass,
+  Crown,
   FileText,
+  GraduationCap,
   Heart,
   Home,
   HousePlus,
   KeyRound,
   Loader2,
+  Mail,
   Menu,
   MessageCircle,
   Mic,
+  Moon,
+  MapPin,
   Navigation,
+  Phone,
   RefreshCw,
   Search,
   ShieldCheck,
+  SlidersHorizontal,
+  Star,
   UserRound,
   Wallet,
 } from "lucide-react";
@@ -62,10 +73,151 @@ import "./mobile.css";
 type MobileTab = "home" | "search" | "saved" | "messages" | "profile";
 type ListingType = "rental" | "sale" | "lease";
 
-const listingTabs: Array<{ label: string; value: ListingType }> = [
+const mobileHomeQuickFilters: Array<{
+  label: string;
+  value?: ListingType;
+  queryHint?: string;
+}> = [
   { label: "Rent", value: "rental" },
   { label: "Buy", value: "sale" },
-  { label: "Lease", value: "lease" },
+  { label: "Short Stay", value: "lease", queryHint: "short stay" },
+  { label: "Land", queryHint: "land" },
+  { label: "Commercial", queryHint: "commercial" },
+];
+
+const mobileHomeCategories: Array<{
+  label: string;
+  detail: string;
+  icon: typeof Home;
+}> = [
+  { label: "Apartments", detail: "340+ verified", icon: Building2 },
+  { label: "Family Homes", detail: "190+ ready", icon: Home },
+  { label: "Offices", detail: "80+ spaces", icon: BriefcaseBusiness },
+  { label: "Luxury", detail: "Private picks", icon: Crown },
+  { label: "Student Housing", detail: "Near campus", icon: GraduationCap },
+];
+
+const mobileTrustIndicators: Array<{
+  title: string;
+  detail: string;
+  icon: typeof Home;
+}> = [
+  { title: "Verified Properties", detail: "Reviewed documents and active moderation.", icon: ShieldCheck },
+  { title: "Verified Agencies", detail: "Approved teams with public reputation signals.", icon: Building },
+  { title: "Secure Transactions", detail: "Provider-neutral payments with audit trails.", icon: Wallet },
+  { title: "Fraud Protection", detail: "Reports, risk checks, and human review.", icon: CheckCircle2 },
+];
+
+const mobileFallbackListings = [
+  {
+    id: "demo-airport-residential",
+    listing_type: "rental",
+    price: 18000,
+    currency: "GHS",
+    quality_score: 82,
+    organization: { verified: true },
+    property: {
+      address: "45 Liberation Road, Airport Residential",
+      city: "Accra",
+      region: "Greater Accra",
+      neighborhood: "Airport Residential",
+      bedrooms: 2,
+      bathrooms: 2,
+      category: "Apartment",
+    },
+    image:
+      "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=900&q=85&auto=format&fit=crop",
+  },
+  {
+    id: "demo-labone-apartment",
+    listing_type: "rental",
+    price: 6200,
+    currency: "GHS",
+    quality_score: 79,
+    organization: { verified: true },
+    property: {
+      address: "12 Fifth Avenue, Labone",
+      city: "Accra",
+      region: "Greater Accra",
+      neighborhood: "Labone",
+      bedrooms: 2,
+      bathrooms: 2,
+      category: "Apartment",
+    },
+    image:
+      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=900&q=85&auto=format&fit=crop",
+  },
+  {
+    id: "demo-cantonments-villa",
+    listing_type: "sale",
+    price: 3200000,
+    currency: "GHS",
+    quality_score: 91,
+    organization: { verified: true },
+    property: {
+      address: "7 Second Rangoon Close, Cantonments",
+      city: "Accra",
+      region: "Greater Accra",
+      neighborhood: "Cantonments",
+      bedrooms: 3,
+      bathrooms: 3,
+      category: "Villa",
+    },
+    image:
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=85&auto=format&fit=crop",
+  },
+  {
+    id: "demo-east-legon-office",
+    listing_type: "lease",
+    price: 8500,
+    currency: "GHS",
+    quality_score: 84,
+    organization: { verified: true },
+    property: {
+      address: "19 Lagos Avenue, East Legon",
+      city: "Accra",
+      region: "Greater Accra",
+      neighborhood: "East Legon",
+      bedrooms: 4,
+      bathrooms: 4,
+      category: "Office",
+    },
+    image:
+      "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=900&q=85&auto=format&fit=crop",
+  },
+];
+
+const mobileFallbackAgencies = [
+  {
+    id: "agency-accra-prime",
+    name: "Accra Prime Homes",
+    slug: "accra-prime-homes",
+    logo_url: "",
+    cover_image_url:
+      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=900&q=85&auto=format&fit=crop",
+    active_listings_count: 42,
+    rating: "4.9",
+  },
+  {
+    id: "agency-coastal-realty",
+    name: "Coastal Realty GH",
+    slug: "coastal-realty-gh",
+    logo_url: "",
+    cover_image_url:
+      "https://images.unsplash.com/photo-1494526585095-c41746248156?w=900&q=85&auto=format&fit=crop",
+    active_listings_count: 31,
+    rating: "4.8",
+  },
+  {
+    id: "agency-urban-gate",
+    name: "UrbanGate Properties",
+    slug: "urban-gate-properties",
+    logo_url: "",
+    cover_image_url:
+      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=900&q=85&auto=format&fit=crop",
+    active_listings_count: 28,
+    rating: "4.7",
+  },
 ];
 
 const mobileAgentPreview = [
@@ -459,6 +611,247 @@ function MobilePropertyCard({
   );
 }
 
+function getMobileListingImage(listing: any, fallbackImage: string) {
+  if (listing?.image) return listing.image;
+
+  try {
+    const cover = listing?.property ? getPropertyCoverImage(listing.property) : "";
+    return cover || fallbackImage;
+  } catch {
+    return fallbackImage;
+  }
+}
+
+function getMobileListingTitle(listing: any) {
+  return listing?.property?.address || listing?.title || "Verified Ghana property";
+}
+
+function getMobileListingLocation(listing: any) {
+  const property = listing?.property || {};
+  return [property.neighborhood, property.city, property.region].filter(Boolean).join(", ") || "Accra, Ghana";
+}
+
+function getMobileListingBedrooms(listing: any) {
+  return listing?.property?.bedrooms || listing?.bedrooms || 2;
+}
+
+function getMobileListingBathrooms(listing: any) {
+  return listing?.property?.bathrooms || listing?.bathrooms || getMobileListingBedrooms(listing);
+}
+
+function getAgencyInitials(agency: any) {
+  return (agency?.name || "BaytMiftah")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part: string) => part[0])
+    .join("")
+    .slice(0, 3)
+    .toUpperCase();
+}
+
+function getAgencyCoverImage(agency: any, index: number) {
+  return (
+    agency?.cover_image_url ||
+    agency?.banner_url ||
+    mobileFallbackAgencies[index % mobileFallbackAgencies.length]?.cover_image_url ||
+    mobileFallbackAgencies[0].cover_image_url
+  );
+}
+
+function MobileHomeSection({
+  title,
+  actionLabel = "See All",
+  actionTo,
+  children,
+}: {
+  title: string;
+  actionLabel?: string;
+  actionTo?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="mobile-luxe-section">
+      <div className="mobile-luxe-section-heading">
+        <h2>{title}</h2>
+        {actionTo ? <Link to={actionTo}>{actionLabel}</Link> : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function MobileCategoryCard({
+  label,
+  detail,
+  icon: Icon,
+}: {
+  label: string;
+  detail: string;
+  icon: typeof Home;
+}) {
+  return (
+    <Link to={`/search?q=${encodeURIComponent(label)}`} className="mobile-luxe-category-card">
+      <span>
+        <Icon aria-hidden="true" />
+      </span>
+      <strong>{label}</strong>
+      <small>{detail}</small>
+    </Link>
+  );
+}
+
+function MobileVerifiedAgentCard({
+  agent,
+}: {
+  agent: (typeof mobileAgentPreview)[number];
+}) {
+  return (
+    <article className="mobile-luxe-agent-card">
+      <div className="mobile-luxe-agent-photo-wrap">
+        <img src={agent.image} alt={agent.name} />
+        <span aria-label="Verified agent">
+          <ShieldCheck aria-hidden="true" />
+        </span>
+      </div>
+      <strong>{agent.name}</strong>
+      <p>{agent.role}</p>
+      <div className="mobile-luxe-agent-stats">
+        <span>{agent.rating} rating</span>
+        <span>{agent.deals} listings</span>
+      </div>
+      <Link to="/app/messages" className="mobile-luxe-message-button">
+        Message
+      </Link>
+    </article>
+  );
+}
+
+function MobilePremiumListingCard({
+  listing,
+  index,
+}: {
+  listing: any;
+  index: number;
+}) {
+  const fallback = mobileFallbackListings[index % mobileFallbackListings.length];
+  const image = getMobileListingImage(listing, fallback.image);
+
+  return (
+    <article className="mobile-luxe-listing-card">
+      <Link to={`/property/${listing.id}`} className="mobile-luxe-listing-image-link">
+        <img src={image} alt={getMobileListingTitle(listing)} />
+        <span className="mobile-luxe-verified-badge">
+          <ShieldCheck aria-hidden="true" />
+          Verified
+        </span>
+      </Link>
+      <button type="button" className="mobile-luxe-favorite" aria-label="Save property">
+        <Heart aria-hidden="true" />
+      </button>
+      <div className="mobile-luxe-listing-body">
+        <strong>{formatPrice(listing.price, listing.currency)}</strong>
+        <Link to={`/property/${listing.id}`}>{getMobileListingTitle(listing)}</Link>
+        <p>
+          <MapPin aria-hidden="true" />
+          {getMobileListingLocation(listing)}
+        </p>
+        <div className="mobile-luxe-listing-facts">
+          <span>
+            <BedDouble aria-hidden="true" />
+            {getMobileListingBedrooms(listing)} bed
+          </span>
+          <span>
+            <Bath aria-hidden="true" />
+            {getMobileListingBathrooms(listing)} bath
+          </span>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function MobileDarkPropertyCard({
+  listing,
+  index,
+}: {
+  listing: any;
+  index: number;
+}) {
+  const fallback = mobileFallbackListings[index % mobileFallbackListings.length];
+  const image = getMobileListingImage(listing, fallback.image);
+
+  return (
+    <Link to={`/property/${listing.id}`} className="mobile-luxe-recent-card">
+      <img src={image} alt={getMobileListingTitle(listing)} />
+      <div>
+        <strong>{getMobileListingTitle(listing)}</strong>
+        <span>{formatPrice(listing.price, listing.currency)}</span>
+      </div>
+    </Link>
+  );
+}
+
+function MobileVerifiedAgencyCard({
+  agency,
+  index,
+}: {
+  agency: any;
+  index: number;
+}) {
+  const cover = getAgencyCoverImage(agency, index);
+  const listingsCount =
+    agency?.active_listings_count || agency?.listing_count || agency?.listings_count || 24 + index * 7;
+  const rating = agency?.rating || (4.9 - index * 0.1).toFixed(1);
+
+  return (
+    <article className="mobile-luxe-agency-card">
+      <img src={cover} alt="" className="mobile-luxe-agency-cover" />
+      <div className="mobile-luxe-agency-body">
+        <div className="mobile-luxe-agency-logo">
+          {agency?.logo_url ? <img src={agency.logo_url} alt="" /> : <span>{getAgencyInitials(agency)}</span>}
+        </div>
+        <div>
+          <strong>{agency.name}</strong>
+          <p>
+            <ShieldCheck aria-hidden="true" />
+            Verified agency
+          </p>
+        </div>
+        <div className="mobile-luxe-agency-stats">
+          <span>{listingsCount} listings</span>
+          <span>
+            <Star aria-hidden="true" />
+            {rating}
+          </span>
+        </div>
+        <Link to={`/agencies/${agency.slug || agency.id}`} className="mobile-luxe-agency-action">
+          View Agency
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+function MobileTrustIndicatorCard({
+  title,
+  detail,
+  icon: Icon,
+}: {
+  title: string;
+  detail: string;
+  icon: typeof Home;
+}) {
+  return (
+    <article className="mobile-luxe-trust-card">
+      <span>
+        <Icon aria-hidden="true" />
+      </span>
+      <strong>{title}</strong>
+      <p>{detail}</p>
+    </article>
+  );
+}
+
 function EmptyState({
   icon: Icon,
   title,
@@ -523,6 +916,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
   const { user, signOut } = useAuth();
   const { preference: themePreference, setPreference: setThemePreference } = useAppTheme();
   const [listingType, setListingType] = useState<ListingType>("rental");
+  const [homeFilter, setHomeFilter] = useState("Rent");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [listings, setListings] = useState<any[]>([]);
@@ -782,10 +1176,10 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
     [listingType, listings, normalizedQuery]
   );
   const filteredListings = matchingListings;
+  const homeListings = filteredListings.length > 0 ? filteredListings : listings;
 
-  const featuredListing = filteredListings[0] || listings[0];
+  const featuredListing = homeListings[0] || listings[0];
   const workspacePath = `${WORKSPACE_ENTRY_PATH}?next=dashboard`;
-  const listPropertyPath = `${WORKSPACE_ENTRY_PATH}?next=new`;
   const hasWorkspaceAccess = organizations.length > 0;
   const openDeals = dealCases.filter(
     (dealCase) => !["won", "lost"].includes(dealCase.pipeline_stage || "")
@@ -798,6 +1192,28 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
   const savedBadgeCount = saved.length + savedAlerts.length;
   const accountBadgeCount = organizations.length;
   const hasMobileTabBar = Boolean(user);
+  const profileName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "BaytMiftah user";
+  const profileEmail = user?.email || "Add an email";
+  const profilePhone = user?.phone || user?.user_metadata?.phone || "Add phone";
+  const accountSubtitle = organizations.length
+    ? `${organizations.length} workspace${organizations.length === 1 ? "" : "s"} connected`
+    : "Premium Buyer Account";
+  const currentThemeOption =
+    APP_THEME_OPTIONS.find((option) => option.value === themePreference) || APP_THEME_OPTIONS[0];
+  const profileAvatarUrl =
+    user?.user_metadata?.avatar_url || user?.user_metadata?.picture || user?.user_metadata?.photo_url;
+  const pushNotificationsEnabled = pushStatus === "registered";
+  const locationServicesEnabled = Boolean(lastLocation);
+
+  const cycleThemePreference = () => {
+    const currentIndex = APP_THEME_OPTIONS.findIndex((option) => option.value === themePreference);
+    const nextOption = APP_THEME_OPTIONS[(currentIndex + 1) % APP_THEME_OPTIONS.length];
+
+    if (nextOption) {
+      setThemePreference(nextOption.value);
+      toast.success(`${nextOption.label} appearance selected.`);
+    }
+  };
 
   const refreshMobileData = async () => {
     try {
@@ -880,6 +1296,17 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
 
     if (query.trim()) params.set("q", query.trim());
     navigate(`/search?${params.toString()}`);
+  };
+
+  const handleSettingsSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out.");
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+      toast.error("Couldn't sign you out right now.");
+    }
   };
 
   const saveFieldNote = async () => {
@@ -1200,191 +1627,149 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
 
   const renderContent = () => {
     if (activeTab === "home") {
-      if (user) {
-        const heroImage =
-          featuredListing?.property
-            ? getPropertyCoverImage(featuredListing.property)
-            : "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=1400&q=85&auto=format&fit=crop";
+      const displayListings = homeListings.length > 0 ? homeListings : mobileFallbackListings;
+      const heroListing = featuredListing || displayListings[0];
+      const heroImage = getMobileListingImage(heroListing, mobileFallbackListings[0].image);
+      const displayAgencies = agencies.length > 0 ? agencies : mobileFallbackAgencies;
+      const profileHref = user ? getTabHref("profile") : "/login";
+      const notificationsHref = user ? getTabHref("messages") : "/login";
 
-        return (
-          <section className="mobile-auth-hero" aria-label="BaytMiftah property discovery">
-            <img src={heroImage} alt="" className="mobile-auth-hero-image" />
-            <div className="mobile-auth-hero-overlay" />
-            <div className="mobile-auth-hero-content">
-              <header className="mobile-auth-hero-header">
-                <Link to="/" className="mobile-auth-brand" aria-label="BaytMiftah home">
-                  <span>
-                    <Home aria-hidden="true" />
-                  </span>
-                  BaytMiftah
-                </Link>
-                <Link to={getTabHref("profile")} className="mobile-auth-menu" aria-label="Open profile menu">
-                  <Menu aria-hidden="true" />
-                </Link>
-              </header>
-
-              <div className="mobile-auth-hero-copy">
-                <p className="mobile-auth-kicker">Verified City Rentals</p>
-                <h1>Live Close to Work, School, and Everything</h1>
-                <p>
-                  Explore apartments with trusted agencies, smart access readiness, and location signals.
-                </p>
-              </div>
-
-              <div className="mobile-auth-trust-row" aria-label="Trust signals">
-                <span>
-                  <ShieldCheck aria-hidden="true" />
-                  <strong>Verified</strong>
-                  Listings
-                </span>
-                <span>
-                  <Navigation aria-hidden="true" />
-                  <strong>Smart</strong>
-                  Location Signals
-                </span>
-                <span>
-                  <Home aria-hidden="true" />
-                  <strong>Secure</strong>
-                  &amp; Trusted
-                </span>
-              </div>
-
-              <div className="mobile-auth-hero-actions">
-                <Link to="/search" className="mobile-auth-primary-action">
-                  Explore Properties
-                </Link>
-                <Link to={listPropertyPath} className="mobile-auth-secondary-action">
-                  List Property
-                </Link>
-              </div>
-            </div>
-          </section>
-        );
-      }
+      const handleQuickFilter = (filter: (typeof mobileHomeQuickFilters)[number]) => {
+        setHomeFilter(filter.label);
+        if (filter.value) setListingType(filter.value);
+        if (filter.queryHint) setQuery(filter.queryHint);
+        if (!filter.queryHint && query === homeFilter.toLowerCase()) setQuery("");
+      };
 
       return (
-        <>
-          <MobilePaneHeader
-            eyebrow="Ghana property market"
-            title="Discover"
-            subtitle="Fresh homes, verified teams, and the clearest next step."
-            action={
-              <Link
-                to={getTabHref("profile")}
-                className="mobile-icon-button"
-                aria-label="Open profile"
-                title="Profile"
-              >
-                {user ? initials : <UserRound aria-hidden="true" />}
-              </Link>
-            }
-          />
+        <section className="mobile-luxe-home" aria-label="BaytMiftah home">
+          <header className="mobile-luxe-header">
+            <Link to="/" className="mobile-luxe-brand" aria-label="BaytMiftah home">
+              <span>
+                <Home aria-hidden="true" />
+              </span>
+              <strong>BaytMiftah</strong>
+            </Link>
+            <Link to="/search?q=Accra" className="mobile-luxe-location" aria-label="Search Accra Ghana listings">
+              <MapPin aria-hidden="true" />
+              Accra, Ghana
+            </Link>
+            <Link to={notificationsHref} className="mobile-luxe-icon-button" aria-label="Open notifications">
+              <Bell aria-hidden="true" />
+              {unreadNotifications > 0 ? <span aria-label={`${unreadNotifications} unread`} /> : null}
+            </Link>
+            <Link to={profileHref} className="mobile-luxe-icon-button" aria-label="Open profile menu">
+              {user ? <strong>{initials}</strong> : <Menu aria-hidden="true" />}
+            </Link>
+          </header>
 
-          <form
-            id="mobile-search"
-            className="mobile-search-bar"
-            onSubmit={(event) => {
-              event.preventDefault();
-              submitSearch();
-            }}
-          >
-            <Search aria-hidden="true" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search Accra, Labone, East Legon"
-            />
-            <button type="submit" className="mobile-search-submit" aria-label="Search">
-              <ChevronRight aria-hidden="true" />
-            </button>
-          </form>
-
-          <section className="mobile-segmented" aria-label="Listing type">
-            {listingTabs.map((tab) => (
-              <button
-                key={tab.value}
-                type="button"
-                className={listingType === tab.value ? "is-active" : ""}
-                onClick={() => setListingType(tab.value)}
-              >
-                {tab.label}
+          <section className="mobile-luxe-search-card" aria-label="Property search">
+            <form
+              id="mobile-search"
+              className="mobile-luxe-search-row"
+              onSubmit={(event) => {
+                event.preventDefault();
+                submitSearch();
+              }}
+            >
+              <Search aria-hidden="true" />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search by location, property, or agent"
+              />
+              <button type="submit" aria-label="Search properties">
+                <ChevronRight aria-hidden="true" />
               </button>
-            ))}
+            </form>
+            <button type="button" className="mobile-luxe-filter-button" aria-label="Open filtered search" onClick={submitSearch}>
+              <SlidersHorizontal aria-hidden="true" />
+            </button>
+            <div className="mobile-luxe-filter-row" aria-label="Quick filters">
+              {mobileHomeQuickFilters.map((filter) => (
+                <button
+                  key={filter.label}
+                  type="button"
+                  className={homeFilter === filter.label ? "is-active" : ""}
+                  onClick={() => handleQuickFilter(filter)}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
           </section>
 
-          {featuredListing && (
-            <section className="mobile-feature">
-              <Link to={`/property/${featuredListing.id}`} className="mobile-feature-link">
-                <img
-                  src={getPropertyCoverImage(featuredListing.property)}
-                  alt={featuredListing.property?.address || "Featured property"}
-                />
-                <div>
-                  <span>{getListingLabel(featuredListing.listing_type)}</span>
-                  <strong>{featuredListing.property?.address}</strong>
-                  <p>{formatPrice(featuredListing.price, featuredListing.currency)}</p>
-                </div>
+          <section className="mobile-luxe-hero" aria-label="Featured verified property">
+            <img src={heroImage} alt={getMobileListingTitle(heroListing)} />
+            <div className="mobile-luxe-hero-overlay" />
+            <div className="mobile-luxe-hero-content">
+              <span className="mobile-luxe-verified-badge">
+                <ShieldCheck aria-hidden="true" />
+                Verified Property
+              </span>
+              <h1>{getMobileListingTitle(heroListing)}</h1>
+              <p>{getMobileListingLocation(heroListing)}</p>
+              <Link to={`/property/${heroListing.id}`} className="mobile-luxe-hero-cta">
+                Explore Property
               </Link>
-            </section>
-          )}
-
-          <section className="mobile-section">
-            <div className="mobile-section-heading">
-              <h2>Fresh listings</h2>
-              <Link to="/search">View all</Link>
             </div>
-            <div className="mobile-list">
-              {loading ? (
+          </section>
+
+          <MobileHomeSection title="Property Categories" actionTo="/search">
+            <div className="mobile-luxe-category-row">
+              {mobileHomeCategories.map((category) => (
+                <MobileCategoryCard key={category.label} {...category} />
+              ))}
+            </div>
+          </MobileHomeSection>
+
+          <MobileHomeSection title="Verified Agents" actionTo="/agencies">
+            <div className="mobile-luxe-agent-row">
+              {mobileAgentPreview.map((agent) => (
+                <MobileVerifiedAgentCard key={agent.name} agent={agent} />
+              ))}
+            </div>
+          </MobileHomeSection>
+
+          <MobileHomeSection title="Featured Listings" actionTo="/search">
+            <div className="mobile-luxe-listing-row">
+              {loading && listings.length === 0 ? (
                 <>
                   <MobilePropertySkeleton />
                   <MobilePropertySkeleton />
                 </>
               ) : (
-                filteredListings.map((listing) => (
-                  <MobilePropertyCard key={listing.id} listing={listing} />
+                displayListings.slice(0, 4).map((listing, index) => (
+                  <MobilePremiumListingCard key={listing.id} listing={listing} index={index} />
                 ))
               )}
             </div>
-          </section>
+          </MobileHomeSection>
 
-          <section className="mobile-section">
-            <div className="mobile-section-heading">
-              <h2>Verified agencies</h2>
-              <Link to="/agencies">Browse</Link>
-            </div>
-            <div className="mobile-agency-row">
-              {agencies.map((agency) => (
-                <Link
-                  key={agency.id}
-                  to={`/agencies/${agency.slug}`}
-                  className="mobile-agency-chip"
-                >
-                  <img src={agency.logo_url || "https://placehold.co/80x80"} alt="" />
-                  <span>{agency.name}</span>
-                </Link>
+          <MobileHomeSection title="Recently Viewed" actionTo="/app/saved">
+            <div className="mobile-luxe-recent-row">
+              {displayListings.slice(1, 5).map((listing, index) => (
+                <MobileDarkPropertyCard key={listing.id} listing={listing} index={index + 1} />
               ))}
             </div>
-          </section>
+          </MobileHomeSection>
 
-          <section className="mobile-section">
-            <div className="mobile-section-heading">
-              <h2>Meet Our Agents</h2>
-              <Link to="/agencies">See all</Link>
-            </div>
-            <div className="mobile-agent-row">
-              {mobileAgentPreview.map((agent) => (
-                <Link key={agent.name} to="/agencies" className="mobile-agent-chip">
-                  <img src={agent.image} alt={agent.name} />
-                  <strong>{agent.name}</strong>
-                  <span>{agent.role}</span>
-                  <small>
-                    {agent.rating} ({agent.deals})
-                  </small>
-                </Link>
+          <MobileHomeSection title="Verified Agencies" actionTo="/agencies">
+            <div className="mobile-luxe-agency-row">
+              {displayAgencies.slice(0, 4).map((agency, index) => (
+                <MobileVerifiedAgencyCard key={agency.id} agency={agency} index={index} />
               ))}
             </div>
-          </section>
-        </>
+          </MobileHomeSection>
+
+          <MobileHomeSection title="Trust Built In">
+            <div className="mobile-luxe-trust-grid">
+              {mobileTrustIndicators.map((item) => (
+                <MobileTrustIndicatorCard key={item.title} {...item} />
+              ))}
+            </div>
+          </MobileHomeSection>
+        </section>
       );
     }
 
@@ -1636,162 +2021,157 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
     }
 
     return (
-      <section className="mobile-pane">
-        <MobilePaneHeader
-          eyebrow="Profile"
-          title="Profile"
-          subtitle={
-            user
-              ? "Support, settings, and the right tools for your role."
-              : "Sign in to unlock your dashboard, saved activity, and workspace tools."
-          }
-          action={
-            user ? (
-              <button
-                type="button"
-                className="mobile-icon-button"
-                onClick={() => void signOut()}
-                aria-label="Sign out"
-                title="Sign out"
-              >
-                {initials}
-              </button>
-            ) : null
-          }
-        />
-
+      <section className="mobile-pane mobile-settings-screen">
         {user ? (
           <>
-            <div className="mobile-profile-card">
-              <div className="mobile-avatar">{initials}</div>
-              <div>
-                <strong>{user.user_metadata?.full_name || user.email}</strong>
-                <p>{user.email}</p>
+            <header className="mobile-settings-header">
+              <h1>Settings</h1>
+            </header>
+
+            <div className="mobile-settings-profile">
+              <div className="mobile-settings-avatar" aria-hidden="true">
+                {profileAvatarUrl ? <img src={profileAvatarUrl} alt="" /> : <span>{initials}</span>}
               </div>
-              <Link to="/app" className="mobile-primary-link">
-                Open dashboard
-                <ChevronRight aria-hidden="true" />
-              </Link>
+              <h2>{profileName}</h2>
+              <p>{accountSubtitle}</p>
             </div>
 
-            <div className="mobile-native-status">
-              <div>
-                <span>Offline queue</span>
-                <strong>
-                  {offlineQueueCount} item{offlineQueueCount === 1 ? "" : "s"}
-                </strong>
-                <p>Drafts stay safe until the app can send them.</p>
-              </div>
-              <div className="mobile-native-actions">
-                <button
-                  type="button"
-                  className="mobile-secondary-button"
-                  onClick={() => void syncOfflineQueue()}
-                  disabled={isSyncingOffline || offlineQueueCount === 0}
-                >
-                  {isSyncingOffline ? (
-                    <Loader2 aria-hidden="true" className="mobile-spin" />
-                  ) : (
-                    <RefreshCw aria-hidden="true" />
-                  )}
-                  Send drafts
-                </button>
-                <button
-                  type="button"
-                  className="mobile-secondary-button"
-                  onClick={() => void enablePushNotifications()}
-                >
-                  <Bell aria-hidden="true" />
-                  {pushStatus === "registered" ? "Alerts on" : "Turn on alerts"}
-                </button>
-              </div>
-            </div>
-
-            <section className="mobile-section mobile-theme-settings" aria-labelledby="mobile-theme-title">
-              <div className="mobile-section-heading mobile-theme-heading">
-                <div>
-                  <h2 id="mobile-theme-title">Appearance</h2>
-                  <p>Pick the mobile theme that is easiest on your eyes.</p>
-                </div>
-                <span>Settings</span>
-              </div>
-              <div className="mobile-theme-grid" role="radiogroup" aria-label="Choose app theme">
-                {APP_THEME_OPTIONS.map((option) => {
-                  const selected = themePreference === option.value;
-
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      className={`mobile-theme-option ${selected ? "is-selected" : ""}`}
-                      onClick={() => setThemePreference(option.value)}
-                    >
-                      <span
-                        className="mobile-theme-swatch"
-                        data-theme-option={option.value}
-                        aria-hidden="true"
-                      />
-                      <span className="mobile-theme-copy">
-                        <strong>{option.label}</strong>
-                        <small>{option.detail}</small>
-                      </span>
-                      {selected ? <Check aria-hidden="true" /> : null}
-                    </button>
-                  );
-                })}
+            <section className="mobile-settings-group" aria-labelledby="mobile-profile-information">
+              <h3 id="mobile-profile-information">Profile information</h3>
+              <div className="mobile-settings-card">
+                <Link to="/app/settings" className="mobile-settings-row">
+                  <span className="mobile-settings-icon">
+                    <UserRound aria-hidden="true" />
+                  </span>
+                  <strong>Name</strong>
+                  <span className="mobile-settings-value">{profileName}</span>
+                  <ChevronRight aria-hidden="true" />
+                </Link>
+                <Link to="/app/settings" className="mobile-settings-row">
+                  <span className="mobile-settings-icon">
+                    <Mail aria-hidden="true" />
+                  </span>
+                  <strong>Email</strong>
+                  <span className="mobile-settings-value">{profileEmail}</span>
+                  <ChevronRight aria-hidden="true" />
+                </Link>
+                <Link to="/app/settings" className="mobile-settings-row">
+                  <span className="mobile-settings-icon">
+                    <Phone aria-hidden="true" />
+                  </span>
+                  <strong>Phone</strong>
+                  <span className="mobile-settings-value">{profilePhone}</span>
+                  <ChevronRight aria-hidden="true" />
+                </Link>
               </div>
             </section>
 
-            <div className="mobile-action-list mobile-grouped-list">
-              <MobileQuickLink
-                to="/app/referrals"
-                icon={Compass}
-                title="Referrals"
-                detail="Share trusted listings and review your referral activity."
-              />
-              <MobileQuickLink
-                to="/app/support"
-                icon={ShieldCheck}
-                title="Get help"
-                detail="Open support, aftercare, and property handoff help."
-              />
-              <MobileQuickLink
-                to="/app/verification"
-                icon={KeyRound}
-                title="Verify safely"
-                detail="Send buyer ID, title, or address checks without learning the process."
-              />
-              <MobileQuickLink
-                to="/app/settings"
-                icon={UserRound}
-                title="Settings"
-                detail="Manage password, security, and account preferences."
-              />
-              <button
-                type="button"
-                className="mobile-quick-link mobile-quick-button"
-                onClick={openAppLockSheet}
-              >
-                <div className="mobile-quick-link-icon">
-                  <KeyRound aria-hidden="true" />
-                </div>
-                <div>
-                  <strong>App lock</strong>
-                  <p>
-                    {appLockStatus.enabled
-                      ? appLockStatus.locked
-                        ? `Locked until you verify your code or use ${appLockStatus.biometryLabel.toLowerCase()}.`
-                        : appLockStatus.nativeUnlockAvailable
-                          ? `Use ${appLockStatus.biometryLabel.toLowerCase()} or a local code before sensitive mobile use.`
-                          : "Require a code before sensitive mobile use."
-                      : "Add a local code lock for this device."}
-                  </p>
-                </div>
-                <ChevronRight aria-hidden="true" />
-              </button>
-            </div>
+            <section className="mobile-settings-group" aria-labelledby="mobile-preferences">
+              <h3 id="mobile-preferences">Preferences</h3>
+              <div className="mobile-settings-card">
+                <button
+                  type="button"
+                  className="mobile-settings-row"
+                  onClick={() => void enablePushNotifications()}
+                  role="switch"
+                  aria-checked={pushNotificationsEnabled}
+                >
+                  <span className="mobile-settings-icon is-danger">
+                    <Bell aria-hidden="true" />
+                  </span>
+                  <strong>Push Notifications</strong>
+                  <span
+                    className={`mobile-settings-switch ${pushNotificationsEnabled ? "is-on" : ""}`}
+                    aria-hidden="true"
+                  />
+                </button>
+                <button
+                  type="button"
+                  className="mobile-settings-row"
+                  onClick={captureLocation}
+                  role="switch"
+                  aria-checked={locationServicesEnabled}
+                >
+                  <span className="mobile-settings-icon">
+                    <Navigation aria-hidden="true" />
+                  </span>
+                  <strong>Location Services</strong>
+                  <span
+                    className={`mobile-settings-switch ${locationServicesEnabled ? "is-on" : ""}`}
+                    aria-hidden="true"
+                  />
+                </button>
+                <button
+                  type="button"
+                  className="mobile-settings-row"
+                  onClick={() => void syncOfflineQueue()}
+                  disabled={isSyncingOffline || offlineQueueCount === 0}
+                >
+                  <span className="mobile-settings-icon">
+                    {isSyncingOffline ? (
+                      <Loader2 aria-hidden="true" className="mobile-spin" />
+                    ) : (
+                      <RefreshCw aria-hidden="true" />
+                    )}
+                  </span>
+                  <strong>Offline Drafts</strong>
+                  <span className="mobile-settings-value">
+                    {offlineQueueCount} item{offlineQueueCount === 1 ? "" : "s"}
+                  </span>
+                  <ChevronRight aria-hidden="true" />
+                </button>
+                <button type="button" className="mobile-settings-row" onClick={openAppLockSheet}>
+                  <span className="mobile-settings-icon is-muted">
+                    <KeyRound aria-hidden="true" />
+                  </span>
+                  <strong>Security & Password</strong>
+                  <span className="mobile-settings-value">
+                    {appLockStatus.enabled ? "Protected" : "Set up"}
+                  </span>
+                  <ChevronRight aria-hidden="true" />
+                </button>
+                <button type="button" className="mobile-settings-row" onClick={cycleThemePreference}>
+                  <span className="mobile-settings-icon is-muted">
+                    <Moon aria-hidden="true" />
+                  </span>
+                  <strong>Appearance</strong>
+                  <span className="mobile-settings-value">{currentThemeOption.label}</span>
+                  <ChevronRight aria-hidden="true" />
+                </button>
+              </div>
+            </section>
+
+            <button
+              type="button"
+              className="mobile-settings-signout"
+              onClick={() => void handleSettingsSignOut()}
+            >
+              Sign Out
+            </button>
+
+            <section className="mobile-settings-group" aria-labelledby="mobile-account-tools">
+              <h3 id="mobile-account-tools">Account tools</h3>
+              <div className="mobile-settings-card">
+                <MobileQuickLink
+                  to="/app/referrals"
+                  icon={Compass}
+                  title="Referrals"
+                  detail="Share trusted listings and review your referral activity."
+                />
+                <MobileQuickLink
+                  to="/app/support"
+                  icon={ShieldCheck}
+                  title="Get help"
+                  detail="Open support, aftercare, and property handoff help."
+                />
+                <MobileQuickLink
+                  to="/app/verification"
+                  icon={KeyRound}
+                  title="Verify safely"
+                  detail="Send buyer ID, title, or address checks without learning the process."
+                />
+              </div>
+            </section>
 
             <section className="mobile-section">
               <div className="mobile-section-heading">
@@ -2215,12 +2595,6 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
               icon={Home}
               label="Home"
               to={getTabHref("home")}
-            />
-            <MobileTabButton
-              active={activeTab === "search"}
-              icon={Search}
-              label="Search"
-              to={getTabHref("search")}
             />
             <MobileTabButton
               active={activeTab === "saved"}

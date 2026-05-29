@@ -207,7 +207,7 @@ export function Home() {
 
   const loadData = async () => {
     try {
-      const listings = await listingService.getPublicListings(4, 0);
+      const listings = await listingService.getPublicListings(8, 0);
       const formattedListings = listings.map((listing: any) => ({
         ...listing,
       }));
@@ -247,6 +247,7 @@ export function Home() {
               : "Verified",
         }))
       : fallbackShowcaseProperties;
+  const signedInListingPreview = mobileShowcaseProperties.slice(0, 8);
   const recentlyViewedPreview = [...fallbackShowcaseProperties].reverse();
   const heroMenuItems = [
     { label: "For Rent", to: "/search" },
@@ -388,6 +389,82 @@ export function Home() {
           </div>
         </div>
       </section>
+
+      {user ? (
+        <section className="bg-[linear-gradient(180deg,#fff7fa_0%,#ffffff_100%)] px-4 py-10 text-[#191919] md:px-6 md:py-14">
+          <div className="mx-auto max-w-7xl">
+            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                  Welcome back
+                </p>
+                <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] md:text-5xl">
+                  Fresh listings for you
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground md:text-base">
+                  Jump straight into verified homes, offices, warehouses, car parks, and land without leaving the homepage.
+                </p>
+              </div>
+              <Link
+                to="/search"
+                className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/15 bg-white px-5 py-3 text-sm font-semibold text-primary shadow-lg shadow-primary/10 transition hover:-translate-y-0.5 hover:bg-primary hover:text-white"
+              >
+                View all listings
+                <Search className="h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="-mx-4 mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-3 md:mx-0 md:grid md:grid-cols-2 md:gap-5 md:overflow-visible md:px-0 lg:grid-cols-4">
+              {signedInListingPreview.map((property) => (
+                <Link
+                  key={`signed-in-${property.id}`}
+                  to={String(property.id).startsWith("showcase-") ? "/search" : `/property/${property.id}`}
+                  className="group min-w-[245px] snap-start overflow-hidden rounded-[1.75rem] border border-white/80 bg-white shadow-[0_18px_48px_rgba(255,45,92,0.10)] transition hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(255,45,92,0.16)] md:min-w-0"
+                >
+                  <div className="relative h-44 overflow-hidden">
+                    <img
+                      src={property.image}
+                      alt={property.title}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
+                    <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[0.68rem] font-bold text-primary backdrop-blur">
+                      Verified
+                    </span>
+                    <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-primary backdrop-blur">
+                      <Heart className="h-4 w-4" />
+                    </span>
+                    <div className="absolute bottom-3 left-3 right-3 text-white">
+                      <p className="text-lg font-semibold tracking-tight">
+                        {property.price}
+                        <span className="text-sm text-white/75"> {property.period}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="line-clamp-2 text-sm font-semibold">{property.title}</h3>
+                    <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5" />
+                      <span className="truncate">{property.location || "Ghana"}</span>
+                    </p>
+                    <div className="mt-4 grid grid-cols-3 gap-2 text-[0.68rem] text-muted-foreground">
+                      <span className="rounded-2xl bg-primary/5 px-2 py-2 text-center">
+                        {property.beds} bed
+                      </span>
+                      <span className="rounded-2xl bg-primary/5 px-2 py-2 text-center">
+                        {property.baths} bath
+                      </span>
+                      <span className="rounded-2xl bg-primary/5 px-2 py-2 text-center">
+                        {property.size}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="bg-[#f7f4f2] px-4 py-6 text-[#191919] md:px-6 md:py-12">
         <div className="mx-auto max-w-7xl">

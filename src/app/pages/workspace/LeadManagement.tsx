@@ -109,7 +109,7 @@ export function LeadManagement({ organizationId }: {
 
   const getSourceBadgeColor = (source: string) => {
     const colors: Record<string, string> = {
-      mls: 'bg-blue-100 text-blue-800',
+      mls: 'bg-primary/10 text-primary',
       zillow: 'bg-purple-100 text-purple-800',
       realtor: 'bg-orange-100 text-orange-800',
       internal: 'bg-gray-100 text-gray-800',
@@ -124,7 +124,7 @@ export function LeadManagement({ organizationId }: {
       case 'new':
         return <AlertCircle size={16} className="text-yellow-500" />;
       case 'contacted':
-        return <Send size={16} className="text-blue-500" />;
+        return <Send size={16} className="text-primary" />;
       case 'qualified':
         return <CheckCircle2 size={16} className="text-green-500" />;
       case 'viewing_scheduled':
@@ -208,7 +208,7 @@ export function LeadManagement({ organizationId }: {
                   onClick={() => setSelectedLead(lead)}
                   className={`p-4 border rounded-lg cursor-pointer transition ${
                     selectedLead?.id === lead.id
-                      ? 'border-primary bg-blue-50'
+                      ? 'border-primary bg-primary/5'
                       : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                   }`}
                 >

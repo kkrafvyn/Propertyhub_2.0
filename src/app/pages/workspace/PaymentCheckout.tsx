@@ -202,7 +202,7 @@ export function PaymentCheckout({
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/10 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
           <div className="flex justify-between mb-6">
@@ -212,7 +212,7 @@ export function PaymentCheckout({
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition ${
                       step >= s.step
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-primary text-white'
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     }`}
                   >
@@ -225,7 +225,7 @@ export function PaymentCheckout({
                 {idx < steps.length - 1 && (
                   <div
                     className={`flex-1 h-1 mx-2 mt-2 ${
-                      step > s.step ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                      step > s.step ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'
                     }`}
                   ></div>
                 )}
@@ -271,7 +271,7 @@ export function PaymentCheckout({
                         totalAmount: feeSummary.total,
                       }))
                     }}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     placeholder="0.00"
                   />
                 </div>
@@ -288,7 +288,7 @@ export function PaymentCheckout({
                       onClick={() => void handleCurrencyChange(currency.code)}
                       className={`p-4 border-2 rounded-lg transition text-left ${
                         paymentState.currency === currency.code
-                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                          ? 'border-primary bg-primary/5 dark:bg-primary/10'
                           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                       }`}
                     >
@@ -313,7 +313,7 @@ export function PaymentCheckout({
                   onChange={(event) =>
                     setPaymentState((prev) => ({ ...prev, region: event.target.value }))
                   }
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="US">United States</option>
                   <option value="GB">United Kingdom</option>
@@ -359,7 +359,7 @@ export function PaymentCheckout({
                 </button>
                 <button
                   onClick={() => setStep(2)}
-                  className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+                  className="flex-1 px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition"
                 >
                   Continue to Payment
                 </button>
@@ -387,7 +387,7 @@ export function PaymentCheckout({
                         onClick={() => void handlePaymentMethodSelect(method.payment_provider)}
                         className={`w-full p-4 border-2 rounded-lg transition text-left ${
                           paymentState.paymentMethod === method.payment_provider
-                            ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                            ? 'border-primary bg-primary/5 dark:bg-primary/10'
                             : 'border-gray-200 dark:border-gray-700'
                         }`}
                       >
@@ -420,7 +420,7 @@ export function PaymentCheckout({
                       onClick={() => void handlePaymentMethodSelect(method.id)}
                       className={`p-4 border-2 rounded-lg transition text-left ${
                         paymentState.paymentMethod === method.id
-                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                          ? 'border-primary bg-primary/5 dark:bg-primary/10'
                           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                       }`}
                     >
@@ -465,7 +465,7 @@ export function PaymentCheckout({
                 <button
                   onClick={() => setStep(3)}
                   disabled={!paymentState.paymentMethod}
-                  className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Review Payment
                 </button>
@@ -509,7 +509,7 @@ export function PaymentCheckout({
                   </div>
                   <div className="border-t border-gray-300 dark:border-gray-600 pt-3 flex justify-between text-lg">
                     <span className="font-bold text-gray-900 dark:text-white">Total Amount:</span>
-                    <span className="font-bold text-blue-600">
+                    <span className="font-bold text-primary">
                       {currencyService.formatCurrency(paymentState.totalAmount, paymentState.currency)}
                     </span>
                   </div>
@@ -523,9 +523,9 @@ export function PaymentCheckout({
                 </p>
               </div>
 
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start gap-3">
-                <Lock className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-blue-800 dark:text-blue-300">
+              <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-lg p-4 flex items-start gap-3">
+                <Lock className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-primary">
                   Your payment information is encrypted and secure. We use industry-standard security
                   protocols.
                 </p>
@@ -595,7 +595,7 @@ export function PaymentCheckout({
 
             <button
               onClick={() => onSuccess(completedTransactionId || `${listingId}-${Date.now()}`)}
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+              className="w-full px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition"
             >
               Continue
             </button>
@@ -609,13 +609,13 @@ export function PaymentCheckout({
 function getPaymentIcon(provider: string) {
   switch (provider.toLowerCase()) {
     case 'stripe':
-      return <CreditCard className="w-5 h-5 text-blue-600" />
+      return <CreditCard className="w-5 h-5 text-primary" />
     case 'paypal':
-      return <CreditCard className="w-5 h-5 text-blue-700" />
+      return <CreditCard className="w-5 h-5 text-primary" />
     case 'apple_pay':
       return <CreditCard className="w-5 h-5 text-gray-800" />
     case 'google_pay':
-      return <CreditCard className="w-5 h-5 text-blue-500" />
+      return <CreditCard className="w-5 h-5 text-primary" />
     case 'flutterwave':
     case 'mtn_momo':
     case 'airtel_money':

@@ -71,6 +71,21 @@ test("renders public marketplace search and property detail with live-backed moc
   await expect(page.getByText("Similar Properties")).toBeVisible();
 });
 
+test("keeps the property detail page action-first on desktop and mobile", async ({ page }) => {
+  await installMockBackend(page, "public");
+
+  await page.goto("/property/listing-east-legon-sale");
+  await expect(page.getByRole("button", { name: /Make Offer/i }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /Ask the team/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Protected payment/i })).toBeVisible();
+  await expect(page.getByText("Trust at a glance")).toBeVisible();
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/property/listing-east-legon-sale");
+  await expect(page.getByRole("link", { name: "Overview" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Open primary property action from mobile bar/i })).toBeVisible();
+});
+
 test("renders public discovery boards and accepts a buyer request post", async ({ page }) => {
   await installMockBackend(page, "public");
 

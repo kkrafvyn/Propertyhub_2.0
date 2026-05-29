@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import {
   MapPin,
@@ -23,6 +23,7 @@ import {
   Video,
   Users,
   AlertTriangle,
+  ChevronRight,
   Star,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -101,12 +102,26 @@ const fallbackImages = [
   "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80",
 ];
 
+function ChevronHint({ tone }: { tone: string }) {
+  return (
+    <span
+      className={`flex h-9 w-9 items-center justify-center rounded-full transition group-hover:translate-x-0.5 ${
+        tone === "primary" ? "bg-white/20 text-white" : "bg-primary/10 text-primary"
+      }`}
+      aria-hidden="true"
+    >
+      <ChevronRight className="h-4 w-4" />
+    </span>
+  );
+}
+
 export function PropertyDetail() {
   const { isMobileShell } = useMobileShell();
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const actionPanelRef = useRef<HTMLDivElement | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showContactForm, setShowContactForm] = useState(false);
   const [listing, setListing] = useState<any | null>(null);
@@ -543,6 +558,34 @@ export function PropertyDetail() {
     ? String(listing.listing_type).replaceAll("_", " ")
     : "property";
   const primaryActionLabel = listing?.listing_type === "sale" ? "Make Offer" : "Book Viewing";
+  const propertyStatCards = [
+    {
+      label: "Bedrooms",
+      value: property?.bedrooms ?? "N/A",
+      icon: Bed,
+      helper: "Sleeping rooms",
+    },
+    {
+      label: "Bathrooms",
+      value: property?.bathrooms ?? "N/A",
+      icon: Bath,
+      helper: "Washrooms",
+    },
+    {
+      label: "Interior",
+      value: property?.square_meters ? `${property.square_meters} sqm` : "N/A",
+      icon: Square,
+      helper: "Approximate size",
+    },
+  ];
+  const detailAnchors = [
+    ["#overview", "Overview"],
+    ["#amenities", "Amenities"],
+    ["#location", "Location"],
+    ["#trust", "Trust"],
+    ["#payments", "Payments"],
+    ["#reviews", "Reviews"],
+  ];
 
   const pageTitle = useMemo(() => {
     if (!property) return "Property";
@@ -689,6 +732,9 @@ export function PropertyDetail() {
     setShowOfferForm(false);
     setShowContactForm(false);
     setShowPaymentForm(false);
+    window.setTimeout(() => {
+      actionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
   };
 
   const openOfferFlow = () => {
@@ -696,6 +742,9 @@ export function PropertyDetail() {
     setShowViewingForm(false);
     setShowContactForm(false);
     setShowPaymentForm(false);
+    window.setTimeout(() => {
+      actionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
   };
 
   const openPaymentFlow = () => {
@@ -703,6 +752,19 @@ export function PropertyDetail() {
     setShowOfferForm(false);
     setShowViewingForm(false);
     setShowContactForm(false);
+    window.setTimeout(() => {
+      actionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
+
+  const openInquiryFlow = () => {
+    setShowContactForm(true);
+    setShowOfferForm(false);
+    setShowViewingForm(false);
+    setShowPaymentForm(false);
+    window.setTimeout(() => {
+      actionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
   };
 
   const openPrimaryAction = () => {
@@ -713,6 +775,33 @@ export function PropertyDetail() {
 
     openViewingFlow();
   };
+
+  const primaryActionCards = [
+    {
+      title: primaryActionLabel,
+      helper:
+        listing?.listing_type === "sale"
+          ? "Send a structured offer with price, financing, and target close date."
+          : "Request a preferred viewing slot and keep the handoff inside BaytMiftah.",
+      icon: listing?.listing_type === "sale" ? Shield : MapPin,
+      action: openPrimaryAction,
+      tone: "primary",
+    },
+    {
+      title: "Ask the team",
+      helper: "Open a tracked inquiry instead of losing details in WhatsApp.",
+      icon: MessageCircle,
+      action: openInquiryFlow,
+      tone: "soft",
+    },
+    {
+      title: "Protected payment",
+      helper: `Continue through ${selectedPaymentGateway.label} when you are ready.`,
+      icon: CreditCard,
+      action: openPaymentFlow,
+      tone: "soft",
+    },
+  ];
 
   const handleInquiry = async (e: FormEvent) => {
     e.preventDefault();
@@ -1172,11 +1261,11 @@ export function PropertyDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(255,45,92,0.09),transparent_34rem),linear-gradient(180deg,#fff7fa_0%,#ffffff_28%,#fff_100%)]">
       {!isMobileShell && <Navbar />}
 
-      <div className={isMobileShell ? "pt-4 pb-32 px-4 max-w-7xl mx-auto" : "pt-24 pb-12 px-4 max-w-7xl mx-auto"}>
-        <div className="mb-8 overflow-hidden rounded-[2rem] border border-border bg-white shadow-2xl shadow-black/10">
+      <div className={isMobileShell ? "pt-4 pb-36 px-4 max-w-7xl mx-auto" : "pt-24 pb-12 px-4 max-w-7xl mx-auto"}>
+        <div className="mb-6 overflow-hidden rounded-[2.25rem] border border-white/70 bg-white/80 shadow-2xl shadow-primary/10 ring-1 ring-black/[0.03] backdrop-blur-xl">
           <div className="grid h-[360px] grid-cols-1 gap-0 sm:h-[460px] md:h-[560px] md:grid-cols-4">
             <div className="relative h-full overflow-hidden md:col-span-3">
               <img
@@ -1297,6 +1386,52 @@ export function PropertyDetail() {
           </div>
         </div>
 
+        <div className="mb-8 grid gap-3 lg:grid-cols-3">
+          {primaryActionCards.map((item) => (
+            <button
+              key={item.title}
+              type="button"
+              onClick={item.action}
+              className={`group rounded-[1.75rem] border p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-xl ${
+                item.tone === "primary"
+                  ? "border-primary/20 bg-primary text-white shadow-primary/20"
+                  : "border-white/80 bg-white/85 text-foreground shadow-black/5 backdrop-blur-xl"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div
+                  className={`rounded-2xl p-3 ${
+                    item.tone === "primary" ? "bg-white/20 text-white" : "bg-primary/10 text-primary"
+                  }`}
+                >
+                  <item.icon className="h-5 w-5" />
+                </div>
+                <ChevronHint tone={item.tone} />
+              </div>
+              <h2 className="mt-4 text-xl font-semibold tracking-tight">{item.title}</h2>
+              <p
+                className={`mt-2 text-sm leading-6 ${
+                  item.tone === "primary" ? "text-white/80" : "text-muted-foreground"
+                }`}
+              >
+                {item.helper}
+              </p>
+            </button>
+          ))}
+        </div>
+
+        <div className="sticky top-3 z-30 mb-8 flex gap-2 overflow-x-auto rounded-full border border-white/80 bg-white/80 p-1 shadow-lg shadow-primary/10 backdrop-blur-xl lg:hidden">
+          {detailAnchors.map(([href, label]) => (
+            <a
+              key={href}
+              href={href}
+              className="whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             <div>
@@ -1383,45 +1518,28 @@ export function PropertyDetail() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-8 py-6 border-y border-border">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Bed className="w-6 h-6 text-primary" />
+              <div className="grid gap-3 border-y border-border/70 py-6 sm:grid-cols-3">
+                {propertyStatCards.map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-[1.5rem] border border-white/80 bg-white/80 p-4 shadow-sm shadow-black/5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                        <item.icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-semibold">{item.value}</div>
+                        <div className="text-sm font-medium">{item.label}</div>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-xs text-muted-foreground">{item.helper}</p>
                   </div>
-                  <div>
-                    <div className="text-2xl font-semibold">{property.bedrooms ?? "N/A"}</div>
-                    <div className="text-sm text-muted-foreground">Bedrooms</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                    <Bath className="w-6 h-6 text-accent" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold">{property.bathrooms ?? "N/A"}</div>
-                    <div className="text-sm text-muted-foreground">Bathrooms</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-chart-3/10 rounded-lg flex items-center justify-center">
-                    <Square className="w-6 h-6 text-chart-3" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold">{property.square_meters ? `${property.square_meters}m²` : "N/A"}</div>
-                    <div className="text-sm text-muted-foreground">Size</div>
-                  </div>
-                </div>
+                ))}
               </div>
 
-              <div className="sticky top-20 z-30 mt-5 hidden overflow-x-auto rounded-full border border-border bg-background/90 p-1 shadow-sm backdrop-blur lg:flex">
-                {[
-                  ["#overview", "Overview"],
-                  ["#amenities", "Amenities"],
-                  ["#location", "Location"],
-                  ["#trust", "Trust"],
-                  ["#payments", "Payments"],
-                  ["#reviews", "Reviews"],
-                ].map(([href, label]) => (
+              <div className="sticky top-20 z-30 mt-5 hidden overflow-x-auto rounded-full border border-white/80 bg-white/80 p-1 shadow-lg shadow-primary/10 backdrop-blur-xl lg:flex">
+                {detailAnchors.map(([href, label]) => (
                   <a
                     key={href}
                     href={href}
@@ -1506,8 +1624,7 @@ export function PropertyDetail() {
                         type="button"
                         className="w-full rounded-xl border border-border p-3 text-left text-sm transition-colors hover:border-primary/50 hover:bg-primary/5"
                         onClick={() => {
-                          setShowContactForm(true);
-                          setShowOfferForm(false);
+                          openInquiryFlow();
                           setContactForm((current) => ({
                             ...current,
                             message: prompt,
@@ -2290,7 +2407,10 @@ export function PropertyDetail() {
           </div>
 
           <div className="lg:col-span-1">
-            <Card className="sticky top-24 overflow-hidden p-6">
+            <div
+              ref={actionPanelRef}
+              className="sticky top-24 scroll-mt-24 overflow-hidden rounded-[2rem] border border-white/80 bg-white/90 p-6 shadow-xl shadow-primary/10 backdrop-blur-xl"
+            >
               <div className="-m-6 mb-6 bg-[linear-gradient(135deg,rgba(255,45,92,0.12),rgba(255,255,255,1))] p-6">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                   Listing action
@@ -2328,7 +2448,7 @@ export function PropertyDetail() {
                     )}
                     {primaryActionLabel}
                   </Button>
-                  <Button variant="outline" className="w-full bg-white/80" onClick={() => setShowContactForm(true)}>
+                  <Button variant="outline" className="w-full bg-white/80" onClick={openInquiryFlow}>
                     <MessageCircle className="h-4 w-4" />
                     Ask a question
                   </Button>
@@ -2365,7 +2485,7 @@ export function PropertyDetail() {
                   <Phone className="w-5 h-5" />
                   Call Team
                 </Button>
-                <Button variant="outline" size="lg" className="w-full" onClick={() => setShowContactForm(true)}>
+                <Button variant="outline" size="lg" className="w-full" onClick={openInquiryFlow}>
                   <MessageCircle className="w-5 h-5" />
                   Send Message
                 </Button>
@@ -2381,7 +2501,7 @@ export function PropertyDetail() {
               </div>
 
               {!showContactForm && (
-                <Button variant="secondary" className="w-full" onClick={() => setShowContactForm(true)}>
+                <Button variant="secondary" className="w-full" onClick={openInquiryFlow}>
                   Start Inquiry
                 </Button>
               )}
@@ -2883,7 +3003,7 @@ export function PropertyDetail() {
                   </form>
                 </motion.div>
               )}
-            </Card>
+            </div>
 
             <div id="payments" className="scroll-mt-32">
               <Card className="p-6 mt-6">
@@ -2993,10 +3113,12 @@ export function PropertyDetail() {
         )}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 px-4 py-3 shadow-[0_-16px_40px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden">
-        <div className="mx-auto flex max-w-7xl items-center gap-3">
+      <div className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-2 lg:hidden">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 rounded-[1.75rem] border border-white/80 bg-white/90 p-3 shadow-[0_-16px_42px_rgba(255,45,92,0.18)] backdrop-blur-xl">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs text-muted-foreground">{listingTypeLabel}</p>
+            <p className="truncate text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+              {listingTypeLabel}
+            </p>
             <DiasporaPrice
               amount={Number(listing.price || 0)}
               currency={listing.currency || "GHS"}
@@ -3010,10 +3132,15 @@ export function PropertyDetail() {
               size="sm"
             />
           </div>
-          <Button variant="outline" size="sm" onClick={() => setShowContactForm(true)}>
+          <Button variant="outline" size="sm" className="rounded-2xl bg-white" onClick={openInquiryFlow}>
             <MessageCircle className="h-4 w-4" />
           </Button>
-          <Button size="sm" aria-label="Open primary property action from mobile bar" onClick={openPrimaryAction}>
+          <Button
+            size="sm"
+            className="rounded-2xl px-4"
+            aria-label="Open primary property action from mobile bar"
+            onClick={openPrimaryAction}
+          >
             {primaryActionLabel}
           </Button>
         </div>

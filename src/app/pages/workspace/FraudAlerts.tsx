@@ -128,7 +128,7 @@ export function FraudAlerts({ organizationId }: { organizationId: string }) {
       case 'medium':
         return 'bg-yellow-100 text-yellow-800 border-yellow-300'
       case 'low':
-        return 'bg-blue-100 text-blue-800 border-blue-300'
+        return 'bg-primary/10 text-primary border-primary/20'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -143,7 +143,7 @@ export function FraudAlerts({ organizationId }: { organizationId: string }) {
       case 'medium':
         return <AlertCircle className="w-5 h-5 text-yellow-600" />
       case 'low':
-        return <AlertCircle className="w-5 h-5 text-blue-600" />
+        return <AlertCircle className="w-5 h-5 text-primary" />
       default:
         return <AlertCircle className="w-5 h-5 text-gray-600" />
     }
@@ -192,7 +192,7 @@ export function FraudAlerts({ organizationId }: { organizationId: string }) {
           </div>
           <button
             onClick={() => void handleRefreshScan()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition"
             disabled={scanning}
           >
             {scanning ? 'Running Scan...' : 'Refresh Scan'}
@@ -307,7 +307,7 @@ export function FraudAlerts({ organizationId }: { organizationId: string }) {
         {/* Alerts List */}
         {loading ? (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
-            <div className="animate-spin inline-block w-8 h-8 border-4 border-gray-300 border-t-blue-600 rounded-full"></div>
+            <div className="animate-spin inline-block w-8 h-8 border-4 border-gray-300 border-t-primary rounded-full"></div>
             <p className="mt-4 text-gray-600 dark:text-gray-400">Loading fraud alerts...</p>
           </div>
         ) : filteredAlerts.length === 0 ? (
