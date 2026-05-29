@@ -91,7 +91,7 @@ describe("Login", () => {
     await waitFor(() => {
       expect(signInWithOAuth).toHaveBeenCalledWith(
         "google",
-        expect.stringContaining("/login?next=%2Fworkspace%3Fnext%3Dnew")
+        "https://baytmiftah-krafvyn.vercel.app/login?next=%2Fworkspace%3Fnext%3Dnew"
       );
     });
   });
@@ -108,7 +108,7 @@ describe("Login", () => {
     await waitFor(() => {
       expect(signInWithOAuth).toHaveBeenCalledWith(
         "apple",
-        expect.stringContaining("/login?next=%2Fworkspace%3Fnext%3Dnew")
+        "https://baytmiftah-krafvyn.vercel.app/login?next=%2Fworkspace%3Fnext%3Dnew"
       );
     });
   });

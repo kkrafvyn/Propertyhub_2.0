@@ -8,6 +8,7 @@ BaytMiftah uses Supabase Auth for Google sign-in. No Google client secret belong
 - `/signup` has a Google account creation button.
 - Buyer signup returns to `/app`.
 - Landlord/agent signup returns to `/workspace?next=new`.
+- Local browser OAuth redirects are normalized to `https://baytmiftah-krafvyn.vercel.app` so Google/Supabase does not send users back to `localhost` after consent.
 - OAuth profile creation now reads Google profile names from `full_name`, `name`, `display_name`, or `preferred_username`.
 - Facebook login is not wired into BaytMiftah auth.
 
@@ -23,7 +24,8 @@ BaytMiftah uses Supabase Auth for Google sign-in. No Google client secret belong
 8. Choose `Web application`.
 9. Add authorized JavaScript origins:
    - `http://localhost:5173`
-   - your production domain, for example `https://baytmiftah.com`
+   - `https://baytmiftah-krafvyn.vercel.app`
+   - your final custom production domain, for example `https://baytmiftah.com`
    - your Vercel deployment domain if still using Vercel previews
 10. Add authorized redirect URI:
    - `https://<SUPABASE_PROJECT_REF>.supabase.co/auth/v1/callback`
@@ -35,9 +37,10 @@ BaytMiftah uses Supabase Auth for Google sign-in. No Google client secret belong
 3. Enable Google.
 4. Paste the Google OAuth client ID and client secret.
 5. Go to `Authentication` > `URL Configuration`.
-6. Set Site URL to the production app URL.
+6. Set Site URL to `https://baytmiftah-krafvyn.vercel.app`.
 7. Add redirect URLs for every app origin that can start login:
    - `http://localhost:5173/**`
+   - `https://baytmiftah-krafvyn.vercel.app/**`
    - `https://baytmiftah.com/**`
    - any active Vercel preview/deployment URL pattern used by the team
 

@@ -5,6 +5,7 @@ import { Input } from "../../components/ui/Input";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
+import { buildPublicAppUrl } from "../../../lib/app-url";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -37,7 +38,7 @@ export function Login() {
 
   const oauthRedirectUrl = useMemo(() => {
     const next = encodeURIComponent(redirectTo);
-    return `${window.location.origin}/login?next=${next}`;
+    return buildPublicAppUrl(`/login?next=${next}`);
   }, [redirectTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {

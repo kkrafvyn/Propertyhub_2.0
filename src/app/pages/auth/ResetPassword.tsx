@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { buildPublicAppUrl } from "../../../lib/app-url";
 import { authService } from "../../../lib/auth.service";
 import { supabase } from "../../../lib/supabase";
 
@@ -52,7 +53,7 @@ export function ResetPassword() {
 
     try {
       setLoading(true);
-      await authService.resetPassword(email, `${window.location.origin}/forgot-password`);
+      await authService.resetPassword(email, buildPublicAppUrl("/forgot-password"));
       toast.success("Password reset email sent.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to send reset email.");

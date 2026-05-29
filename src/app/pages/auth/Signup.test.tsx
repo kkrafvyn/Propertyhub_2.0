@@ -67,7 +67,7 @@ describe("Signup", () => {
 
     expect(signInWithOAuth).toHaveBeenCalledWith(
       "google",
-      expect.stringContaining("/login?next=%2Fapp")
+      "https://baytmiftah-krafvyn.vercel.app/login?next=%2Fapp"
     );
   });
 
@@ -83,7 +83,7 @@ describe("Signup", () => {
 
     expect(signInWithOAuth).toHaveBeenCalledWith(
       "google",
-      expect.stringContaining("/login?next=%2Fworkspace%3Fnext%3Dnew")
+      "https://baytmiftah-krafvyn.vercel.app/login?next=%2Fworkspace%3Fnext%3Dnew"
     );
   });
 });
