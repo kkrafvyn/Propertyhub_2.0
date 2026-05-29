@@ -1,4 +1,4 @@
-import { type ReactNode, type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, type TouchEvent, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import {
   ArrowLeft,
@@ -32,7 +32,6 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
-  SlidersHorizontal,
   Star,
   UserRound,
   Wallet,
@@ -71,19 +70,6 @@ import { MobileShellProvider } from "./MobileShellContext";
 import "./mobile.css";
 
 type MobileTab = "home" | "search" | "saved" | "messages" | "profile";
-type ListingType = "rental" | "sale" | "lease";
-
-const mobileHomeQuickFilters: Array<{
-  label: string;
-  value?: ListingType;
-  queryHint?: string;
-}> = [
-  { label: "Rent", value: "rental" },
-  { label: "Buy", value: "sale" },
-  { label: "Short Stay", value: "lease", queryHint: "short stay" },
-  { label: "Land", queryHint: "land" },
-  { label: "Commercial", queryHint: "commercial" },
-];
 
 const mobileHomeCategories: Array<{
   label: string;
@@ -915,9 +901,6 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
   const [searchParams] = useSearchParams();
   const { user, signOut } = useAuth();
   const { preference: themePreference, setPreference: setThemePreference } = useAppTheme();
-  const [listingType, setListingType] = useState<ListingType>("rental");
-  const [homeFilter, setHomeFilter] = useState("Rent");
-  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [listings, setListings] = useState<any[]>([]);
   const [agencies, setAgencies] = useState<any[]>([]);
@@ -1151,32 +1134,9 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
     };
   }, []);
 
-  const normalizedQuery = query.trim().toLowerCase();
   const activeTab = getCurrentMobileTab(location.pathname, searchParams);
   const isHomeRoute = location.pathname === "/";
-  const matchingListings = useMemo(
-    () =>
-      listings.filter((listing) => {
-        const property = listing.property || {};
-        const haystack = [
-          property.address,
-          property.city,
-          property.region,
-          property.country,
-          property.neighborhood,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-
-        if (listing.listing_type !== listingType) return false;
-        if (normalizedQuery && !haystack.includes(normalizedQuery)) return false;
-        return true;
-      }),
-    [listingType, listings, normalizedQuery]
-  );
-  const filteredListings = matchingListings;
-  const homeListings = filteredListings.length > 0 ? filteredListings : listings;
+  const homeListings = listings;
 
   const featuredListing = homeListings[0] || listings[0];
   const workspacePath = `${WORKSPACE_ENTRY_PATH}?next=dashboard`;
@@ -1287,15 +1247,6 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
     if (distance > 72 && window.scrollY <= 4) {
       void refreshMobileData();
     }
-  };
-
-  const submitSearch = () => {
-    const params = new URLSearchParams({
-      listingType,
-    });
-
-    if (query.trim()) params.set("q", query.trim());
-    navigate(`/search?${params.toString()}`);
   };
 
   const handleSettingsSignOut = async () => {
@@ -1634,13 +1585,6 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
       const profileHref = user ? getTabHref("profile") : "/login";
       const notificationsHref = user ? getTabHref("messages") : "/login";
 
-      const handleQuickFilter = (filter: (typeof mobileHomeQuickFilters)[number]) => {
-        setHomeFilter(filter.label);
-        if (filter.value) setListingType(filter.value);
-        if (filter.queryHint) setQuery(filter.queryHint);
-        if (!filter.queryHint && query === homeFilter.toLowerCase()) setQuery("");
-      };
-
       return (
         <section className="mobile-luxe-home" aria-label="BaytMiftah home">
           <header className="mobile-luxe-header">
@@ -1662,42 +1606,6 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
               {user ? <strong>{initials}</strong> : <Menu aria-hidden="true" />}
             </Link>
           </header>
-
-          <section className="mobile-luxe-search-card" aria-label="Property search">
-            <form
-              id="mobile-search"
-              className="mobile-luxe-search-row"
-              onSubmit={(event) => {
-                event.preventDefault();
-                submitSearch();
-              }}
-            >
-              <Search aria-hidden="true" />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search by location, property, or agent"
-              />
-              <button type="submit" aria-label="Search properties">
-                <ChevronRight aria-hidden="true" />
-              </button>
-            </form>
-            <button type="button" className="mobile-luxe-filter-button" aria-label="Open filtered search" onClick={submitSearch}>
-              <SlidersHorizontal aria-hidden="true" />
-            </button>
-            <div className="mobile-luxe-filter-row" aria-label="Quick filters">
-              {mobileHomeQuickFilters.map((filter) => (
-                <button
-                  key={filter.label}
-                  type="button"
-                  className={homeFilter === filter.label ? "is-active" : ""}
-                  onClick={() => handleQuickFilter(filter)}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-          </section>
 
           <section className="mobile-luxe-hero" aria-label="Featured verified property">
             <img src={heroImage} alt={getMobileListingTitle(heroListing)} />

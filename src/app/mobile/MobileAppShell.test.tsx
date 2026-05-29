@@ -314,7 +314,8 @@ describe("MobileAppShell", () => {
     const user = userEvent.setup();
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
 
-    expect(await screen.findByPlaceholderText("Search by location, property, or agent")).toBeInTheDocument();
+    expect(await screen.findByText("Verified Property")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Search by location, property, or agent")).not.toBeInTheDocument();
     expect(screen.getByText("Verified Property")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /explore property/i })).toHaveAttribute(
       "href",
@@ -549,7 +550,8 @@ describe("MobileAppShell", () => {
 
     renderMobileShell();
 
-    await screen.findByPlaceholderText("Search by location, property, or agent");
+    await screen.findByText("Verified Property");
+    expect(screen.queryByPlaceholderText("Search by location, property, or agent")).not.toBeInTheDocument();
     await waitFor(() => expect(countOfflineQueueMock).toHaveBeenCalled());
     expect(
       screen.queryByRole("navigation", { name: /primary mobile navigation/i })
@@ -588,12 +590,13 @@ describe("MobileAppShell", () => {
     expect(signOut).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps the premium home search visible without a separate bottom search tab", async () => {
+  it("keeps the premium home free of search controls and a separate bottom search tab", async () => {
     useAuthMock.mockReturnValue(createSignedInAuthState() as any);
 
     renderMobileShell("/?tab=search");
 
-    expect(await screen.findByPlaceholderText("Search by location, property, or agent")).toBeInTheDocument();
+    expect(await screen.findByText("Verified Property")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Search by location, property, or agent")).not.toBeInTheDocument();
     expect(screen.queryByText("Find the right fit")).not.toBeInTheDocument();
 
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });

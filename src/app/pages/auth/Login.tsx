@@ -12,7 +12,7 @@ export function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [oauthLoadingProvider, setOauthLoadingProvider] = useState<
-    "google" | "facebook" | "apple" | null
+    "google" | "apple" | null
   >(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,7 +54,7 @@ export function Login() {
     }
   };
 
-  const handleOAuthSignIn = async (provider: "google" | "facebook" | "apple") => {
+  const handleOAuthSignIn = async (provider: "google" | "apple") => {
     try {
       setOauthLoadingProvider(provider);
       await signInWithOAuth(provider, oauthRedirectUrl);

@@ -29,7 +29,7 @@ export const authService = {
   },
 
   async signInWithOAuth(
-    provider: 'google' | 'facebook' | 'apple',
+    provider: 'google' | 'apple',
     redirectTo?: string
   ) {
     const { data, error } = await supabase.auth.signInWithOAuth({

@@ -896,7 +896,6 @@ button.mobile-toolbar-button {
 .mobile-luxe-brand,
 .mobile-luxe-location,
 .mobile-luxe-icon-button,
-.mobile-luxe-search-card,
 .mobile-luxe-hero,
 .mobile-luxe-category-card,
 .mobile-luxe-agent-card,
@@ -994,93 +993,6 @@ button.mobile-toolbar-button {
 .mobile-luxe-icon-button strong {
   font-size: 0.74rem;
   font-weight: 800;
-}
-
-.mobile-luxe-search-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  border-radius: 28px;
-  padding: 10px;
-}
-
-.mobile-luxe-search-row {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) 38px;
-  align-items: center;
-  gap: 9px;
-  min-height: 54px;
-  border-radius: 20px;
-  background: #ffffff;
-  padding: 0 8px 0 15px;
-}
-
-.mobile-luxe-search-row > svg {
-  color: var(--mobile-faint);
-}
-
-.mobile-luxe-search-row input {
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--mobile-text);
-  font-size: 0.95rem;
-}
-
-.mobile-luxe-search-row button,
-.mobile-luxe-filter-button {
-  display: grid;
-  place-items: center;
-  border: 0;
-}
-
-.mobile-luxe-search-row button {
-  width: 38px;
-  height: 38px;
-  border-radius: 15px;
-  background: #ff2d5c;
-  color: #ffffff;
-}
-
-.mobile-luxe-filter-button {
-  width: 54px;
-  min-height: 54px;
-  border: 1px solid var(--mobile-border);
-  border-radius: 20px;
-  background: #ffffff;
-  color: var(--mobile-text);
-}
-
-.mobile-luxe-filter-row {
-  display: flex;
-  grid-column: 1 / -1;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 2px 1px 0;
-  scrollbar-width: none;
-}
-
-.mobile-luxe-filter-row::-webkit-scrollbar {
-  display: none;
-}
-
-.mobile-luxe-filter-row button {
-  min-height: 38px;
-  min-width: max-content;
-  border: 1px solid rgba(255, 45, 92, 0.12);
-  border-radius: 999px;
-  background: rgba(255, 246, 248, 0.9);
-  padding: 0 14px;
-  color: var(--mobile-muted);
-  font-size: 0.82rem;
-  font-weight: 760;
-}
-
-.mobile-luxe-filter-row button.is-active {
-  background: #ff2d5c;
-  color: #ffffff;
-  box-shadow: 0 14px 28px rgba(255, 45, 92, 0.24);
 }
 
 .mobile-luxe-hero {

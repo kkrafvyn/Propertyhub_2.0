@@ -26,7 +26,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signInWithOAuth: (
-    provider: 'google' | 'facebook' | 'apple',
+    provider: 'google' | 'apple',
     redirectTo?: string
   ) => Promise<void>
   signOut: () => Promise<void>
@@ -45,6 +45,16 @@ const EMPTY_AUTH_ASSURANCE: AuthAssuranceState = {
   currentLevel: null,
   nextLevel: null,
   loading: false,
+}
+
+function getAuthProfileName(currentUser: User | null, fallback?: string) {
+  return (
+    currentUser?.user_metadata?.full_name ||
+    currentUser?.user_metadata?.name ||
+    currentUser?.user_metadata?.display_name ||
+    currentUser?.user_metadata?.preferred_username ||
+    fallback
+  )
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -88,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await userService.ensureUserProfile(
           currentUser.id,
           currentUser.email,
-          currentUser.user_metadata?.full_name,
+          getAuthProfileName(currentUser),
           currentUser.phone
         )
       } catch (profileError) {
@@ -269,7 +279,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signInWithOAuth = async (
-    provider: 'google' | 'facebook' | 'apple',
+    provider: 'google' | 'apple',
     redirectTo?: string
   ) => {
     try {
