@@ -159,6 +159,27 @@ const homeAgentPreview = [
   },
 ];
 
+const homeAgencyPreview = [
+  {
+    name: "Accra Prime Homes",
+    initials: "APH",
+    detail: "Verified residential specialists",
+    href: "/agencies",
+  },
+  {
+    name: "Coastal Realty GH",
+    initials: "CRG",
+    detail: "Diaspora-ready agency team",
+    href: "/agencies",
+  },
+  {
+    name: "UrbanNest Ghana",
+    initials: "UNG",
+    detail: "Commercial and apartment experts",
+    href: "/agencies",
+  },
+];
+
 export function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<"rental" | "sale" | "lease">("rental");
@@ -369,7 +390,7 @@ export function Home() {
       <section className="bg-[#f7f4f2] px-4 py-6 text-[#191919] md:px-6 md:py-12">
         <div className="mx-auto max-w-7xl">
           <div className="relative mx-auto min-h-[100svh] w-full overflow-hidden bg-transparent md:min-h-0">
-            <div className="px-0 pb-24 pt-0 md:pb-0">
+            <div className="px-0 pb-32 pt-0 md:pb-0">
               <div className="flex items-center gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-border bg-white px-4 py-3 shadow-sm">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -492,6 +513,30 @@ export function Home() {
               </div>
 
               <div className="mt-5 flex items-center justify-between">
+                <h2 className="text-base font-semibold">Verified agencies</h2>
+                <Link to="/agencies" className="text-xs font-semibold text-primary">
+                  Browse
+                </Link>
+              </div>
+              <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0">
+                {homeAgencyPreview.map((agency) => (
+                  <Link
+                    key={agency.name}
+                    to={agency.href}
+                    className="grid min-h-[128px] min-w-[148px] place-items-center rounded-2xl border border-border bg-white p-4 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-xl md:min-w-0"
+                  >
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-sm font-bold text-slate-700">
+                      {agency.initials}
+                    </span>
+                    <div>
+                      <p className="mt-3 text-xs font-semibold text-foreground">{agency.name}</p>
+                      <p className="mt-1 text-[0.65rem] text-muted-foreground">{agency.detail}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between">
                 <h2 className="text-base font-semibold">Meet Our Agents</h2>
                 <Link to="/agencies" className="text-xs font-semibold text-primary">
                   See all
@@ -545,11 +590,12 @@ export function Home() {
             </div>
 
             <nav
-              className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 mx-auto grid max-w-[420px] grid-cols-4 rounded-[1.65rem] border border-border bg-white/95 px-3 py-2 shadow-[0_18px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl md:hidden"
+              className="fixed left-1/2 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-50 grid w-[calc(100%-2rem)] max-w-[430px] -translate-x-1/2 grid-cols-5 rounded-full border border-white/80 bg-white/90 px-3 py-2 shadow-[0_20px_70px_rgba(15,23,42,0.24)] ring-1 ring-black/5 backdrop-blur-2xl md:hidden"
               aria-label="Mobile home navigation"
             >
               {[
                 { label: "Home", icon: HomeIcon, to: "/" },
+                { label: "Search", icon: Search, to: "/search" },
                 { label: "Saved", icon: Heart, to: "/app/saved" },
                 { label: "Messages", icon: MessageCircle, to: "/app/messages" },
                 { label: "Profile", icon: UserRound, to: "/app/settings" },
@@ -558,8 +604,8 @@ export function Home() {
                   key={item.label}
                   to={item.to}
                   aria-current={index === 0 ? "page" : undefined}
-                  className={`rounded-2xl px-2 py-1.5 flex flex-col items-center gap-1 text-[0.68rem] font-semibold transition ${
-                    index === 0 ? "text-primary" : "text-muted-foreground"
+                  className={`flex flex-col items-center gap-1 rounded-full px-2 py-1.5 text-[0.68rem] font-semibold transition ${
+                    index === 0 ? "bg-primary/10 text-primary" : "text-muted-foreground"
                   } hover:bg-primary/5 hover:text-primary`}
                 >
                   <item.icon className="h-5 w-5" />

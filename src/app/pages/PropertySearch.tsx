@@ -719,50 +719,52 @@ export function PropertySearch() {
                 <Bell className="w-4 h-4" />
                 {savingAlert ? "Saving..." : "Save Alert"}
               </Button>
-              <Button variant="outline" size="sm" onClick={() => void handleShareSearch()}>
-                <Share2 className="w-4 h-4" />
-                Share Search
-              </Button>
-              {socialShareLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-primary/5"
+              <div className="hidden flex-wrap gap-2 md:flex">
+                <Button variant="outline" size="sm" onClick={() => void handleShareSearch()}>
+                  <Share2 className="w-4 h-4" />
+                  Share Search
+                </Button>
+                {socialShareLinks.map((link) => (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-primary/5"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+                <Button
+                  variant={viewMode === "grid" ? "primary" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
                 >
-                  {link.label}
-                </a>
-              ))}
-              <Button
-                variant={viewMode === "grid" ? "primary" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid3x3 className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "primary" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === "map" ? "primary" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("map")}
-              >
-                <Map className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowFilters(!showFilters)}
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                Filters
-              </Button>
+                  <Grid3x3 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "primary" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("list")}
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "map" ? "primary" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("map")}
+                >
+                  <Map className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowFilters(!showFilters)}
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  Filters
+                </Button>
+              </div>
             </div>
           </div>
         </div>

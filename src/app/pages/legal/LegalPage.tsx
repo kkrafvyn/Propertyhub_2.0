@@ -34,7 +34,7 @@ function LegalShell({
       <main className={isMobileShell ? "px-1 pb-6" : "px-4 pb-16 pt-24"}>
         <div className="mx-auto max-w-5xl">
           <Link
-            to={isMobileShell ? "/?tab=me" : "/"}
+            to={isMobileShell ? "/?tab=profile" : "/"}
             className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />

@@ -167,7 +167,11 @@ test("keeps mobile and tablet discovery layouts usable", async ({ page }) => {
 
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/search?q=East%20Legon&listingType=sale");
-  await expect(page.getByRole("button", { name: "Filters" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Save Alert" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Share Search" })).toBeHidden();
+  await expect(page.getByRole("link", { name: "WhatsApp" })).toBeHidden();
+  await expect(page.getByRole("link", { name: "Facebook" })).toBeHidden();
+  await expect(page.getByRole("button", { name: "Filters" })).toBeHidden();
   await expect(page.getByText("5 Palm Avenue")).toBeVisible();
 
   await page.setViewportSize({ width: 820, height: 1180 });

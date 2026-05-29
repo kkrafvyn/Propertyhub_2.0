@@ -314,28 +314,17 @@ describe("MobileAppShell", () => {
     const user = userEvent.setup();
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
 
-    expect(await screen.findByRole("link", { name: /projects/i })).toHaveAttribute(
+    expect(await screen.findByText(/fresh listings/i)).toBeInTheDocument();
+    expect(screen.queryByText(/continue/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/quick paths/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /projects/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /public reviews/i })).not.toBeInTheDocument();
+    expect(within(tabBar).getByRole("link", { name: /^search$/i })).toHaveAttribute(
       "href",
-      "/projects"
-    );
-    expect(screen.getByRole("link", { name: /public reviews/i })).toHaveAttribute(
-      "href",
-      "/reviews"
-    );
-
-    await user.click(within(tabBar).getByRole("link", { name: /^search$/i }));
-
-    expect(screen.getByRole("link", { name: /buyer requests/i })).toHaveAttribute(
-      "href",
-      "/buyer-requests"
-    );
-    expect(screen.getByRole("link", { name: /area guides/i })).toHaveAttribute("href", "/guides");
-    expect(screen.getByRole("link", { name: /market trends/i })).toHaveAttribute(
-      "href",
-      "/market-trends"
+      "/#mobile-search"
     );
 
-    await user.click(within(tabBar).getByRole("link", { name: /^me$/i }));
+    await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
 
     expect(screen.getByRole("link", { name: /home valuation/i })).toHaveAttribute(
       "href",
@@ -343,7 +332,7 @@ describe("MobileAppShell", () => {
     );
   });
 
-  it("surfaces activity, saved, and workspace tools for signed-in users", async () => {
+  it("surfaces messages, saved, and workspace tools for signed-in users", async () => {
     useAuthMock.mockReturnValue(
       createAuthState({
         user: {
@@ -436,10 +425,14 @@ describe("MobileAppShell", () => {
     expect(within(tabBar).getByText("2")).toBeInTheDocument();
     expect(within(tabBar).getByText("1")).toBeInTheDocument();
 
-    await user.click(within(tabBar).getByRole("link", { name: /^activity$/i }));
+    await user.click(within(tabBar).getByRole("link", { name: /^messages$/i }));
     expect(screen.getByRole("link", { name: /deal rooms/i })).toHaveAttribute("href", "/app/deals");
     expect(screen.getByRole("link", { name: /viewings/i })).toHaveAttribute("href", "/app/viewings");
-    expect(screen.getByRole("link", { name: /messages/i })).toHaveAttribute("href", "/app/messages");
+    expect(
+      screen
+        .getAllByRole("link", { name: /messages/i })
+        .some((link) => link.getAttribute("href") === "/app/messages")
+    ).toBe(true);
     expect(screen.getByRole("link", { name: /payments/i })).toHaveAttribute("href", "/app/payments");
 
     await user.click(within(tabBar).getByRole("link", { name: /^saved$/i }));
@@ -452,7 +445,7 @@ describe("MobileAppShell", () => {
       "/app/buying-tools"
     );
 
-    await user.click(within(tabBar).getByRole("link", { name: /^me$/i }));
+    await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
     expect(screen.getByRole("link", { name: /referrals/i })).toHaveAttribute(
       "href",
       "/app/referrals"
@@ -490,7 +483,7 @@ describe("MobileAppShell", () => {
     const user = userEvent.setup();
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
 
-    await user.click(within(tabBar).getByRole("link", { name: /^me$/i }));
+    await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
     await user.click(await screen.findByRole("button", { name: /turn on alerts/i }));
 
     expect(registerPushMock).toHaveBeenCalledWith("user-1", expect.any(Object));
@@ -537,7 +530,7 @@ describe("MobileAppShell", () => {
     const user = userEvent.setup();
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
 
-    await user.click(within(tabBar).getByRole("link", { name: /^me$/i }));
+    await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
 
     expect(await screen.findByText("Get help")).toBeInTheDocument();
     expect(screen.queryByText("Field kit")).not.toBeInTheDocument();
@@ -563,7 +556,7 @@ describe("MobileAppShell", () => {
     const user = userEvent.setup();
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
 
-    await user.click(within(tabBar).getByRole("link", { name: /^me$/i }));
+    await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
     await user.click(await screen.findByRole("radio", { name: /miftah light/i }));
 
     await waitFor(() => {
@@ -577,30 +570,18 @@ describe("MobileAppShell", () => {
     );
   });
 
-  it("opens quick filters in a bottom sheet on the search tab", async () => {
-    useAuthMock.mockReturnValue(createAuthState() as any);
-
-    renderMobileShell("/?tab=search");
-    const user = userEvent.setup();
-
-    await user.click(await screen.findByRole("button", { name: /open quick filters/i }));
-
-    expect(screen.getByRole("dialog", { name: /quick filters/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /more filters/i })).toHaveAttribute(
-      "href",
-      "/search"
-    );
-  });
-
-  it("supports opening a mobile destination directly from the tab query", async () => {
-    useAuthMock.mockReturnValue(createAuthState() as any);
+  it("routes the search tab back to the home search bar instead of an internal pane", async () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
 
     renderMobileShell("/?tab=search");
 
-    expect(await screen.findByText("Find the right fit")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /market trends/i })).toHaveAttribute(
+    expect(await screen.findByText("Discover")).toBeInTheDocument();
+    expect(screen.queryByText("Find the right fit")).not.toBeInTheDocument();
+
+    const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
+    expect(within(tabBar).getByRole("link", { name: /^search$/i })).toHaveAttribute(
       "href",
-      "/market-trends"
+      "/#mobile-search"
     );
   });
 
@@ -630,16 +611,17 @@ describe("MobileAppShell", () => {
     { path: "/buyer-requests", title: "Buyer requests", activeTab: "Search" },
     { path: "/projects", title: "Projects", activeTab: "Search" },
     { path: "/projects/project-1", title: "Project", activeTab: "Search" },
-    { path: "/valuation", title: "Home valuation", activeTab: "Me" },
-    { path: "/reviews", title: "Public reviews", activeTab: "Me" },
-    { path: "/get-the-app", title: "Get the app", activeTab: "Me" },
-    { path: "/legal/terms", title: "Terms of Use", activeTab: "Me" },
-    { path: "/legal/privacy", title: "Privacy Notice", activeTab: "Me" },
-    { path: "/app/deals", title: "Deal Rooms", activeTab: "Activity" },
-    { path: "/app/concierge", title: "Concierge", activeTab: "Activity" },
+    { path: "/valuation", title: "Home valuation", activeTab: "Profile" },
+    { path: "/reviews", title: "Public reviews", activeTab: "Profile" },
+    { path: "/get-the-app", title: "Get the app", activeTab: "Profile" },
+    { path: "/legal/terms", title: "Terms of Use", activeTab: "Profile" },
+    { path: "/legal/privacy", title: "Privacy Notice", activeTab: "Profile" },
+    { path: "/app/deals", title: "Deal Rooms", activeTab: "Messages" },
+    { path: "/app/concierge", title: "Concierge", activeTab: "Messages" },
+    { path: "/app/messages", title: "Messages", activeTab: "Messages" },
     { path: "/app/compare", title: "Compare", activeTab: "Saved" },
     { path: "/app/groups", title: "Buying Group", activeTab: "Saved" },
-    { path: "/app/referrals", title: "Referrals", activeTab: "Me" },
+    { path: "/app/referrals", title: "Referrals", activeTab: "Profile" },
   ])("places $path under the relevant mobile route chrome", async ({ path, title, activeTab }) => {
     useAuthMock.mockReturnValue(createSignedInAuthState() as any);
 

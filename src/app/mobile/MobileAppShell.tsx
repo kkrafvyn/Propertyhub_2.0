@@ -16,14 +16,12 @@ import {
   HousePlus,
   KeyRound,
   Loader2,
-  MapPin,
   MessageCircle,
   Mic,
   Navigation,
   RefreshCw,
   Search,
   ShieldCheck,
-  SlidersHorizontal,
   UserRound,
   Wallet,
 } from "lucide-react";
@@ -44,10 +42,6 @@ import {
   mobileDocumentScannerService,
   type MobileScannedDocument,
 } from "../../lib/mobile-document-scanner.service";
-import {
-  mobileLocationService,
-  type GeoCoordinates,
-} from "../../lib/mobile-location.service";
 import { mobileMediaService, type MobileCapturedPhoto } from "../../lib/mobile-media.service";
 import { mobileNativeService } from "../../lib/mobile-native.service";
 import { mobileOnboardingService } from "../../lib/mobile-onboarding.service";
@@ -64,13 +58,44 @@ import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
 import { MobileShellProvider } from "./MobileShellContext";
 import "./mobile.css";
 
-type MobileTab = "home" | "search" | "activity" | "saved" | "me";
+type MobileTab = "home" | "search" | "saved" | "messages" | "profile";
 type ListingType = "rental" | "sale" | "lease";
 
 const listingTabs: Array<{ label: string; value: ListingType }> = [
   { label: "Rent", value: "rental" },
   { label: "Buy", value: "sale" },
   { label: "Lease", value: "lease" },
+];
+
+const mobileAgentPreview = [
+  {
+    name: "Kwame Mensah",
+    role: "Real Estate Advisor",
+    rating: "4.9",
+    deals: "120",
+    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=240&q=80&auto=format&fit=crop",
+  },
+  {
+    name: "Akosua Addo",
+    role: "Property Consultant",
+    rating: "4.8",
+    deals: "98",
+    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=240&q=80&auto=format&fit=crop",
+  },
+  {
+    name: "Kojo Asare",
+    role: "Senior Realtor",
+    rating: "4.7",
+    deals: "89",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&q=80&auto=format&fit=crop",
+  },
+  {
+    name: "Ama Ofori",
+    role: "Real Estate Advisor",
+    rating: "4.9",
+    deals: "110",
+    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=240&q=80&auto=format&fit=crop",
+  },
 ];
 
 const mobileOnboardingAcceptedItems = [
@@ -114,15 +139,17 @@ const mobileOnboardingSteps: Array<{
   },
 ];
 
-const validMobileTabs = new Set<MobileTab>(["home", "search", "activity", "saved", "me"]);
+const validMobileTabs = new Set<MobileTab>(["home", "search", "saved", "messages", "profile"]);
 
 function getTabHref(tab: MobileTab) {
-  return tab === "home" ? "/" : `/?tab=${tab}`;
+  if (tab === "home") return "/";
+  if (tab === "search") return "/#mobile-search";
+  return `/?tab=${tab}`;
 }
 
 function getActiveMobileTab(searchParams: URLSearchParams): MobileTab {
   const requested = searchParams.get("tab");
-  return requested && validMobileTabs.has(requested as MobileTab)
+  return requested && requested !== "search" && validMobileTabs.has(requested as MobileTab)
     ? (requested as MobileTab)
     : "home";
 }
@@ -144,18 +171,18 @@ function getPathDrivenMobileTab(pathname: string): MobileTab {
     const section = getUserDashboardSection(pathname);
 
     if (["deals", "messages", "applications", "viewings", "payments", "insights", "concierge"].includes(section)) {
-      return "activity";
+      return "messages";
     }
 
     if (["compare", "buying-tools", "saved", "alerts", "groups"].includes(section)) {
       return "saved";
     }
 
-    return "me";
+    return "profile";
   }
 
   if (pathname.startsWith("/workspace")) {
-    return "me";
+    return "profile";
   }
 
   if (
@@ -164,7 +191,7 @@ function getPathDrivenMobileTab(pathname: string): MobileTab {
     pathname.startsWith("/get-the-app") ||
     pathname.startsWith("/legal")
   ) {
-    return "me";
+    return "profile";
   }
 
   return "home";
@@ -510,14 +537,12 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [fieldNote, setFieldNote] = useState("");
   const [lastLocation, setLastLocation] = useState<string | null>(null);
-  const [userCoordinates, setUserCoordinates] = useState<GeoCoordinates | null>(null);
   const [offlineQueueCount, setOfflineQueueCount] = useState(0);
   const [capturedPhotos, setCapturedPhotos] = useState<MobileCapturedPhoto[]>([]);
   const [scannedDocuments, setScannedDocuments] = useState<MobileScannedDocument[]>([]);
   const [pushStatus, setPushStatus] = useState<"idle" | "registered" | "denied" | "unsupported" | "failed">(
     "idle"
   );
-  const [searchSheetOpen, setSearchSheetOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSyncingOffline, setIsSyncingOffline] = useState(false);
   const [appLockStatus, setAppLockStatus] = useState<MobileAppLockStatus>({
@@ -755,10 +780,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
       }),
     [listingType, listings, normalizedQuery]
   );
-  const filteredListings = useMemo(
-    () => mobileLocationService.sortListingsByDistance(matchingListings, userCoordinates),
-    [matchingListings, userCoordinates]
-  );
+  const filteredListings = matchingListings;
 
   const featuredListing = filteredListings[0] || listings[0];
   const workspacePath = `${WORKSPACE_ENTRY_PATH}?next=dashboard`;
@@ -856,17 +878,6 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
 
     if (query.trim()) params.set("q", query.trim());
     navigate(`/search?${params.toString()}`);
-  };
-
-  const sortSearchNearMe = async () => {
-    try {
-      const coordinates = await mobileLocationService.getCurrentPosition();
-      setUserCoordinates(coordinates);
-      await mobileNativeService.impact();
-      toast.success("Search sorted by distance from you.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "We could not get your location.");
-    }
   };
 
   const saveFieldNote = async () => {
@@ -1045,7 +1056,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
       }
     }
 
-    navigate(notification.action_url || "/?tab=activity");
+    navigate(notification.action_url || getTabHref("messages"));
   };
 
   const handleMarkAllNotificationsRead = async () => {
@@ -1195,7 +1206,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
             subtitle="Fresh homes, verified teams, and the clearest next step."
             action={
               <Link
-                to={getTabHref("me")}
+                to={getTabHref("profile")}
                 className="mobile-icon-button"
                 aria-label="Open profile"
                 title="Profile"
@@ -1206,6 +1217,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
           />
 
           <form
+            id="mobile-search"
             className="mobile-search-bar"
             onSubmit={(event) => {
               event.preventDefault();
@@ -1252,66 +1264,6 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
             </section>
           )}
 
-          {user && (
-            <section className="mobile-section">
-              <div className="mobile-section-heading">
-                <h2>Continue</h2>
-              </div>
-              <div className="mobile-action-list mobile-grouped-list">
-                <MobileShellTabLink
-                  tab="activity"
-                  icon={CalendarDays}
-                  title="Activity"
-                  detail="Open deal rooms, viewings, receipts, and active follow-up."
-                />
-                <MobileShellTabLink
-                  tab="saved"
-                  icon={Heart}
-                  title="Saved"
-                  detail="Jump back into favorites, comparisons, and your search alerts."
-                />
-                <MobileShellTabLink
-                  tab="me"
-                  icon={BriefcaseBusiness}
-                  title="Account"
-                  detail="Reach support, settings, and any workspace you belong to."
-                />
-              </div>
-            </section>
-          )}
-
-          <section className="mobile-section">
-            <div className="mobile-section-heading">
-              <h2>Quick paths</h2>
-            </div>
-            <div className="mobile-quick-grid">
-              <MobileQuickLink
-                to="/projects"
-                icon={Building2}
-                title="Projects"
-                detail="Browse developments and available units."
-              />
-              <MobileQuickLink
-                to="/reviews"
-                icon={ShieldCheck}
-                title="Public reviews"
-                detail="See trust signals before you reach out."
-              />
-              <MobileQuickLink
-                to="/valuation"
-                icon={HousePlus}
-                title="Seller tools"
-                detail="Estimate value or start listing your property."
-              />
-              <MobileQuickLink
-                to="/get-the-app"
-                icon={Compass}
-                title="Get the app"
-                detail="Install the native app when you need alerts and offline tools."
-              />
-            </div>
-          </section>
-
           <section className="mobile-section">
             <div className="mobile-section-heading">
               <h2>Fresh listings</h2>
@@ -1349,167 +1301,41 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
               ))}
             </div>
           </section>
+
+          <section className="mobile-section">
+            <div className="mobile-section-heading">
+              <h2>Meet Our Agents</h2>
+              <Link to="/agencies">See all</Link>
+            </div>
+            <div className="mobile-agent-row">
+              {mobileAgentPreview.map((agent) => (
+                <Link key={agent.name} to="/agencies" className="mobile-agent-chip">
+                  <img src={agent.image} alt={agent.name} />
+                  <strong>{agent.name}</strong>
+                  <span>{agent.role}</span>
+                  <small>
+                    {agent.rating} ({agent.deals})
+                  </small>
+                </Link>
+              ))}
+            </div>
+          </section>
         </>
       );
     }
 
-    if (activeTab === "search") {
-      return (
-        <section className="mobile-pane">
-          <MobilePaneHeader
-            eyebrow="Search"
-            title="Find the right fit"
-            subtitle="Start simple. BaytMiftah can narrow the details for you."
-            action={
-              <button
-                type="button"
-                className="mobile-toolbar-button"
-                aria-label="Open quick filters"
-                onClick={() => setSearchSheetOpen(true)}
-              >
-                <SlidersHorizontal aria-hidden="true" />
-              </button>
-            }
-          />
-
-          <form
-            className="mobile-search-stack"
-            onSubmit={(event) => {
-              event.preventDefault();
-              submitSearch();
-            }}
-          >
-            <label>
-              <span>Location</span>
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Neighborhood or city"
-              />
-            </label>
-            <div className="mobile-segmented" aria-label="Listing type">
-              {listingTabs.map((tab) => (
-                <button
-                  key={tab.value}
-                  type="button"
-                  className={listingType === tab.value ? "is-active" : ""}
-                  onClick={() => setListingType(tab.value)}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-            <button type="submit" className="mobile-primary-button">
-              <Search aria-hidden="true" />
-              Search listings
-            </button>
-            <button
-              type="button"
-              className="mobile-secondary-button"
-              onClick={() => void sortSearchNearMe()}
-            >
-              <MapPin aria-hidden="true" />
-              {userCoordinates ? "Sorted near you" : "Find near me"}
-            </button>
-          </form>
-
-          <div className="mobile-action-list mobile-grouped-list">
-            <MobileQuickLink
-              to="/buyer-requests"
-              icon={MessageCircle}
-              title="Buyer requests"
-              detail="See where demand is strongest before you list or buy."
-            />
-            <MobileQuickLink
-              to="/guides"
-              icon={MapPin}
-              title="Area guides"
-              detail="Open neighborhood context before narrowing results."
-            />
-            <MobileQuickLink
-              to="/market-trends"
-              icon={Compass}
-              title="Market trends"
-              detail="Check demand and pricing momentum before you commit."
-            />
-          </div>
-
-          <div className="mobile-list">
-            {loading ? (
-              <>
-                <MobilePropertySkeleton />
-                <MobilePropertySkeleton />
-              </>
-            ) : (
-              filteredListings.map((listing) => {
-                const distanceLabel = userCoordinates
-                  ? mobileLocationService.formatDistance(
-                      mobileLocationService.distanceKm(userCoordinates, listing.property)
-                    )
-                  : null;
-
-                return (
-                  <MobilePropertyCard
-                    key={listing.id}
-                    listing={listing}
-                    distanceLabel={distanceLabel}
-                  />
-                );
-              })
-            )}
-          </div>
-
-          <MobileBottomSheet
-            open={searchSheetOpen}
-            title="Quick filters"
-            onClose={() => setSearchSheetOpen(false)}
-          >
-            <div className="mobile-sheet-section">
-              <span>Listing type</span>
-              <div className="mobile-segmented" aria-label="Sheet listing type">
-                {listingTabs.map((tab) => (
-                  <button
-                    key={tab.value}
-                    type="button"
-                    className={listingType === tab.value ? "is-active" : ""}
-                    onClick={() => setListingType(tab.value)}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="mobile-action-list mobile-grouped-list">
-              <MobileQuickLink
-                to="/search"
-                icon={Search}
-                title="More filters"
-                detail="Add details only when you need more control."
-              />
-              <MobileQuickLink
-                to="/app/alerts"
-                icon={Bell}
-                title="Create an alert"
-                detail="Track this area and get notified when matching listings appear."
-              />
-            </div>
-          </MobileBottomSheet>
-        </section>
-      );
-    }
-
-    if (activeTab === "activity") {
+    if (activeTab === "messages") {
       if (!user) {
         return (
           <section className="mobile-pane">
             <MobilePaneHeader
-              eyebrow="Activity"
-              title="Stay in motion"
-              subtitle="Deal rooms, messages, payments, and upcoming viewings."
+              eyebrow="Messages"
+              title="Stay connected"
+              subtitle="Messages, deal rooms, payments, and upcoming viewings."
             />
             <EmptyState
-              icon={CalendarDays}
-              title="Sign in to track deals, viewings, and payment updates."
+              icon={MessageCircle}
+              title="Sign in to track messages, deals, and viewing updates."
               body="This area keeps your in-progress buyer activity together in one stream."
               action={{ label: "Log in", to: "/login" }}
             />
@@ -1520,9 +1346,9 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
       return (
         <section className="mobile-pane">
           <MobilePaneHeader
-            eyebrow="Activity"
-            title="Your live flow"
-            subtitle="Keep deal rooms, confirmations, and receipts in one place."
+            eyebrow="Messages"
+            title="Messages"
+            subtitle="Keep conversations, deal rooms, confirmations, and receipts in one place."
             action={
               <Link
                 to="/app/deals"
@@ -1748,8 +1574,8 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
     return (
       <section className="mobile-pane">
         <MobilePaneHeader
-          eyebrow="Me"
-          title={user ? "Account" : "Profile"}
+          eyebrow="Profile"
+          title="Profile"
           subtitle={
             user
               ? "Support, settings, and the right tools for your role."
@@ -2295,9 +2121,9 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
                 </div>
                 {user ? (
                   <Link
-                    to="/?tab=activity"
+                    to={getTabHref("messages")}
                     className="mobile-route-notifications"
-                    aria-label="Open activity"
+                    aria-label="Open messages"
                   >
                     <Bell aria-hidden="true" />
                     {unreadNotifications > 0 ? (
@@ -2306,9 +2132,9 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
                   </Link>
                 ) : (
                   <Link
-                    to={getTabHref("me")}
+                    to={getTabHref("profile")}
                     className="mobile-route-notifications"
-                    aria-label="Open account"
+                    aria-label="Open profile"
                   >
                     <UserRound aria-hidden="true" />
                   </Link>
@@ -2333,13 +2159,6 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
               to={getTabHref("search")}
             />
             <MobileTabButton
-              active={activeTab === "activity"}
-              icon={CalendarDays}
-              label="Activity"
-              to={getTabHref("activity")}
-              badge={activityBadgeCount}
-            />
-            <MobileTabButton
               active={activeTab === "saved"}
               icon={Heart}
               label="Saved"
@@ -2347,10 +2166,17 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
               badge={savedBadgeCount}
             />
             <MobileTabButton
-              active={activeTab === "me"}
+              active={activeTab === "messages"}
+              icon={MessageCircle}
+              label="Messages"
+              to={getTabHref("messages")}
+              badge={activityBadgeCount}
+            />
+            <MobileTabButton
+              active={activeTab === "profile"}
               icon={UserRound}
-              label="Me"
-              to={getTabHref("me")}
+              label="Profile"
+              to={getTabHref("profile")}
               badge={accountBadgeCount}
             />
           </nav>
