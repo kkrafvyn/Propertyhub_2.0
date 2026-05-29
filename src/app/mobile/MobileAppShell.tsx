@@ -282,13 +282,13 @@ const validMobileTabs = new Set<MobileTab>(["home", "search", "saved", "messages
 
 function getTabHref(tab: MobileTab) {
   if (tab === "home") return "/";
-  if (tab === "search") return "/#mobile-search";
+  if (tab === "search") return "/search";
   return `/?tab=${tab}`;
 }
 
 function getActiveMobileTab(searchParams: URLSearchParams): MobileTab {
   const requested = searchParams.get("tab");
-  return requested && requested !== "search" && validMobileTabs.has(requested as MobileTab)
+  return requested && validMobileTabs.has(requested as MobileTab)
     ? (requested as MobileTab)
     : "home";
 }
@@ -1594,10 +1594,6 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
               </span>
               <strong>BaytMiftah</strong>
             </Link>
-            <Link to="/search?q=Accra" className="mobile-luxe-location" aria-label="Search Accra Ghana listings">
-              <MapPin aria-hidden="true" />
-              Accra, Ghana
-            </Link>
             <Link to={notificationsHref} className="mobile-luxe-icon-button" aria-label="Open notifications">
               <Bell aria-hidden="true" />
               {unreadNotifications > 0 ? <span aria-label={`${unreadNotifications} unread`} /> : null}
@@ -2503,6 +2499,12 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
               icon={Home}
               label="Home"
               to={getTabHref("home")}
+            />
+            <MobileTabButton
+              active={activeTab === "search"}
+              icon={Search}
+              label="Search"
+              to={getTabHref("search")}
             />
             <MobileTabButton
               active={activeTab === "saved"}

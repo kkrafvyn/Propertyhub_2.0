@@ -887,14 +887,13 @@ button.mobile-toolbar-button {
 
 .mobile-luxe-header {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 10px;
   padding-top: 2px;
 }
 
 .mobile-luxe-brand,
-.mobile-luxe-location,
 .mobile-luxe-icon-button,
 .mobile-luxe-hero,
 .mobile-luxe-category-card,
@@ -909,7 +908,6 @@ button.mobile-toolbar-button {
 }
 
 .mobile-luxe-brand,
-.mobile-luxe-location,
 .mobile-luxe-icon-button {
   display: inline-flex;
   min-height: 44px;
@@ -945,23 +943,6 @@ button.mobile-toolbar-button {
   font-size: 0.94rem;
   font-weight: 780;
   letter-spacing: -0.02em;
-}
-
-.mobile-luxe-location {
-  justify-self: start;
-  min-width: 0;
-  gap: 6px;
-  border-radius: 999px;
-  padding: 0 12px;
-  color: var(--mobile-muted);
-  font-size: 0.78rem;
-  font-weight: 720;
-}
-
-.mobile-luxe-location svg {
-  width: 15px;
-  height: 15px;
-  color: #ff2d5c;
 }
 
 .mobile-luxe-icon-button {
@@ -3037,7 +3018,7 @@ button.mobile-toolbar-button {
 .mobile-tab-button {
   position: relative;
   display: grid;
-  width: min(25%, 104px);
+  width: min(20%, 96px);
   min-height: 58px;
   justify-items: center;
   align-content: center;

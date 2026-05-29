@@ -330,7 +330,7 @@ describe("MobileAppShell", () => {
     expect(screen.queryByText(/quick paths/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /projects/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /public reviews/i })).not.toBeInTheDocument();
-    expect(within(tabBar).queryByRole("link", { name: /^search$/i })).not.toBeInTheDocument();
+    expect(within(tabBar).getByRole("link", { name: /^search$/i })).toHaveAttribute("href", "/search");
 
     await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
 
@@ -590,17 +590,17 @@ describe("MobileAppShell", () => {
     expect(signOut).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps the premium home free of search controls and a separate bottom search tab", async () => {
+  it("keeps the premium home free of top search controls while search lives in the bottom nav", async () => {
     useAuthMock.mockReturnValue(createSignedInAuthState() as any);
 
-    renderMobileShell("/?tab=search");
+    renderMobileShell();
 
     expect(await screen.findByText("Verified Property")).toBeInTheDocument();
     expect(screen.queryByPlaceholderText("Search by location, property, or agent")).not.toBeInTheDocument();
     expect(screen.queryByText("Find the right fit")).not.toBeInTheDocument();
 
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
-    expect(within(tabBar).queryByRole("link", { name: /^search$/i })).not.toBeInTheDocument();
+    expect(within(tabBar).getByRole("link", { name: /^search$/i })).toHaveAttribute("href", "/search");
   });
 
   it("wraps direct mobile routes inside the shared app frame", async () => {
@@ -612,20 +612,20 @@ describe("MobileAppShell", () => {
     expect(screen.getByText("Search route body")).toBeInTheDocument();
 
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
-    expect(within(tabBar).queryByRole("link", { name: /^search$/i })).not.toBeInTheDocument();
+    expect(within(tabBar).getByRole("link", { name: /^search$/i })).toHaveAttribute("aria-current", "page");
   });
 
   it.each([
-    { path: "/search", title: "Search results", activeTab: null },
-    { path: "/property/listing-1", title: "Property", activeTab: null },
+    { path: "/search", title: "Search results", activeTab: "Search" },
+    { path: "/property/listing-1", title: "Property", activeTab: "Search" },
     { path: "/agencies", title: "Agencies", activeTab: "Home" },
     { path: "/agencies/prime-estates", title: "Agency", activeTab: "Home" },
-    { path: "/guides", title: "Area guides", activeTab: null },
-    { path: "/guides/osu", title: "Area guide", activeTab: null },
-    { path: "/market-trends", title: "Market trends", activeTab: null },
-    { path: "/buyer-requests", title: "Buyer requests", activeTab: null },
-    { path: "/projects", title: "Projects", activeTab: null },
-    { path: "/projects/project-1", title: "Project", activeTab: null },
+    { path: "/guides", title: "Area guides", activeTab: "Search" },
+    { path: "/guides/osu", title: "Area guide", activeTab: "Search" },
+    { path: "/market-trends", title: "Market trends", activeTab: "Search" },
+    { path: "/buyer-requests", title: "Buyer requests", activeTab: "Search" },
+    { path: "/projects", title: "Projects", activeTab: "Search" },
+    { path: "/projects/project-1", title: "Project", activeTab: "Search" },
     { path: "/valuation", title: "Home valuation", activeTab: "Profile" },
     { path: "/reviews", title: "Public reviews", activeTab: "Profile" },
     { path: "/get-the-app", title: "Get the app", activeTab: "Profile" },
@@ -650,7 +650,7 @@ describe("MobileAppShell", () => {
       expect(within(tabBar).getByRole("link", { name: new RegExp(`^${activeTab}$`, "i") }))
         .toHaveAttribute("aria-current", "page");
     } else {
-      expect(within(tabBar).queryByRole("link", { name: /^search$/i })).not.toBeInTheDocument();
+      expect(within(tabBar).getByRole("link", { name: /^search$/i })).not.toHaveAttribute("aria-current", "page");
     }
   });
 });
