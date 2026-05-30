@@ -358,6 +358,82 @@ export function Home() {
             </div>
           </header>
 
+          <section className="mt-6 rounded-[2rem] border border-white/80 bg-white/92 p-4 text-foreground shadow-[0_24px_70px_rgba(0,0,0,0.28)] backdrop-blur-2xl lg:hidden">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <MapPin className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Search area
+                  </p>
+                  <h2 className="text-lg font-semibold tracking-[-0.04em]">Accra, Ghana</h2>
+                </div>
+              </div>
+              <Link
+                to="/search"
+                className="flex h-11 w-11 items-center justify-center rounded-2xl border border-border bg-white text-foreground shadow-sm"
+                aria-label="Open search filters"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="mt-4 flex items-center gap-2 rounded-2xl border border-border bg-white px-4 py-3 shadow-sm">
+              <Search className="h-4 w-4 flex-shrink-0 text-primary" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                onKeyDown={(event) => event.key === "Enter" && handleSearch()}
+                placeholder="Search by location, property, or agent"
+                className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                aria-label="Search by location, property, or agent"
+              />
+            </div>
+
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+              {homeIntentFilters.map((item) =>
+                item.value === "rental" || item.value === "sale" ? (
+                  <button
+                    key={`mobile-hero-${item.value}`}
+                    type="button"
+                    onClick={() => setSearchType(item.value as "rental" | "sale")}
+                    className={`min-w-max rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                      searchType === item.value
+                        ? "border-primary bg-primary text-white shadow-lg shadow-primary/20"
+                        : "border-border bg-white text-foreground"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ) : (
+                  <Link
+                    key={`mobile-hero-${item.value}`}
+                    to={item.href}
+                    className="min-w-max rounded-full border border-border bg-white px-4 py-2 text-xs font-semibold text-foreground"
+                  >
+                    {item.label}
+                  </Link>
+                )
+              )}
+            </div>
+
+            <div className="mt-4 grid grid-cols-5 gap-2">
+              {mobileHomeCategories.map((category) => (
+                <Link
+                  key={`mobile-hero-${category.label}`}
+                  to={category.href}
+                  className="rounded-2xl border border-primary/10 bg-primary/5 p-2 text-center"
+                >
+                  <category.icon className="mx-auto h-5 w-5 text-primary" />
+                  <p className="mt-1 truncate text-[0.62rem] font-semibold">{category.label}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+
           <div className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[minmax(0,0.88fr)_minmax(420px,0.72fr)]">
             <motion.div
               key={activeHeroSlide.title}
