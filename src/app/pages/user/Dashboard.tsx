@@ -2697,79 +2697,82 @@ export function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_12%_0%,rgba(255,56,92,0.13),transparent_34rem),linear-gradient(180deg,#fff7fa_0%,#ffffff_44%,#fff7fa_100%)] text-[#171214]">
       {!isMobileShell && <Navbar />}
 
       <div className={isMobileShell ? "pt-4 pb-32 px-4 max-w-7xl mx-auto" : "pt-24 pb-12 px-4 max-w-7xl mx-auto"}>
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold mb-2">Welcome back, {displayName}.</h1>
-          <p className="text-muted-foreground">
-            Track your saved homes, conversations, viewings, and payments without chasing tabs.
+        <div className="mb-8 overflow-hidden rounded-[2.5rem] border border-white/80 bg-white/82 p-6 shadow-[0_28px_90px_rgba(255,56,92,0.12)] backdrop-blur md:p-8">
+          <p className="mb-3 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-primary">
+            Buyer control center
+          </p>
+          <h1 className="text-4xl font-black tracking-[-0.07em] md:text-6xl">Welcome back, {displayName}.</h1>
+          <p className="mt-3 max-w-3xl text-lg leading-8 text-muted-foreground">
+            Track saved homes, conversations, viewings, payments, and next actions in the same calm flow as the mobile app.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-10">
-          <Card className="p-6">
+        <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-6">
+          <Card className="rounded-[1.75rem] border-white bg-white/90 p-6 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Saved Properties</p>
                 <p className="text-3xl font-semibold">{savedProperties.length}</p>
               </div>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
                 <Heart className="w-6 h-6 text-primary" />
               </div>
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="rounded-[1.75rem] border-white bg-white/90 p-6 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Payments</p>
                 <p className="text-3xl font-semibold">{propertyTransactions.length}</p>
               </div>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
                 <CreditCard className="w-6 h-6 text-primary" />
               </div>
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="rounded-[1.75rem] border-white bg-white/90 p-6 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Applications</p>
                 <p className="text-3xl font-semibold">{dealCases.length}</p>
               </div>
-              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
                 <FileText className="w-6 h-6 text-accent" />
               </div>
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="rounded-[1.75rem] border-white bg-white/90 p-6 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Viewings</p>
                 <p className="text-3xl font-semibold">{propertyViewings.length}</p>
               </div>
-              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
                 <CalendarDays className="w-6 h-6 text-accent" />
               </div>
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="rounded-[1.75rem] border-white bg-white/90 p-6 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Conversations</p>
                 <p className="text-3xl font-semibold">{conversations.length}</p>
               </div>
-              <div className="w-12 h-12 bg-chart-3/10 rounded-lg flex items-center justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
                 <MessageCircle className="w-6 h-6 text-chart-3" />
               </div>
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="rounded-[1.75rem] border-white bg-white/90 p-6 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Alerts</p>
@@ -2777,14 +2780,14 @@ export function UserDashboard() {
                   {savedAlerts.filter((alert) => alert.is_active).length}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-chart-1/10 rounded-lg flex items-center justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
                 <Bell className="w-6 h-6 text-chart-1" />
               </div>
             </div>
           </Card>
         </div>
 
-        <div className="flex flex-wrap gap-3 mb-8">
+        <div className="mb-8 flex flex-wrap gap-3 rounded-[2rem] border border-white/80 bg-white/80 p-3 shadow-[0_18px_60px_rgba(255,56,92,0.08)] backdrop-blur">
           {primaryDashboardRoutes.map((item) => {
             const Icon = navIconBySection[item.section];
             const active =
@@ -2887,10 +2890,10 @@ export function UserDashboard() {
             {renderSavedGrid(savedProperties)}
           </section>
         ) : section === "messages" ? (
-          <section className="space-y-6">
+          <section className="space-y-6 rounded-[2rem] bg-white/82 p-4 shadow-[0_18px_60px_rgba(255,56,92,0.08)] md:p-8">
             <div>
-              <h2 className="text-2xl font-semibold">Messages</h2>
-              <p className="text-muted-foreground mt-1">
+              <h2 className="text-4xl font-black tracking-[-0.06em]">Messages</h2>
+              <p className="mt-2 text-muted-foreground">
                 Review your latest property conversations.
               </p>
             </div>
@@ -2947,7 +2950,7 @@ export function UserDashboard() {
             {renderPayments()}
           </section>
         ) : section === "settings" ? (
-          <section>
+          <section className="rounded-[2rem] bg-white/82 p-4 shadow-[0_18px_60px_rgba(255,56,92,0.08)] md:p-8">
             {renderSettings()}
           </section>
         ) : (

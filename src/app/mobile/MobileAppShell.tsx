@@ -1054,8 +1054,9 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
   });
   const [appLockSheetOpen, setAppLockSheetOpen] = useState(false);
   const [appLockCode, setAppLockCode] = useState("");
-  const [showSplash, setShowSplash] = useState(() => mobileNativeService.isNative());
-  const [onboardingReady, setOnboardingReady] = useState(() => !mobileNativeService.isNative());
+  const isNativeApp = mobileNativeService.isNative();
+  const [showSplash, setShowSplash] = useState(() => isNativeApp);
+  const [onboardingReady, setOnboardingReady] = useState(() => !isNativeApp);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const pullStartY = useRef<number | null>(null);
 
@@ -1096,20 +1097,20 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!showSplash) return;
+    if (!isNativeApp || !showSplash) return;
 
     const timer = window.setTimeout(() => {
       setShowSplash(false);
     }, 950);
 
     return () => window.clearTimeout(timer);
-  }, [showSplash]);
+  }, [isNativeApp, showSplash]);
 
   useEffect(() => {
     let cancelled = false;
 
     const loadOnboardingStatus = async () => {
-      if (!mobileNativeService.isNative()) {
+      if (!isNativeApp) {
         setOnboardingReady(true);
         setShowOnboarding(false);
         return;
@@ -1135,7 +1136,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isNativeApp]);
 
   useEffect(() => {
     if (!user) {
@@ -2310,7 +2311,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {showSplash && (
+        {isNativeApp && showSplash && (
           <section className="mobile-splash" aria-label="BaytMiftah is opening">
             <div className="mobile-splash-orb">
               <Home aria-hidden="true" />

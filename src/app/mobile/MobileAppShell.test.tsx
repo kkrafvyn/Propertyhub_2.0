@@ -260,6 +260,15 @@ describe("MobileAppShell", () => {
     registerPushMock.mockResolvedValue({ status: "registered" } as any);
   });
 
+  it("does not show the launch splash in the web mobile shell", () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+    isNativeMock.mockReturnValue(false);
+
+    renderMobileShell();
+
+    expect(screen.queryByLabelText(/BaytMiftah is opening/i)).not.toBeInTheDocument();
+  });
+
   it("shows native first-run onboarding with legal acceptance before the app", async () => {
     useAuthMock.mockReturnValue(
       createAuthState({

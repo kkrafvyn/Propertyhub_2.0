@@ -591,13 +591,13 @@ export function PropertySearch() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_12%_0%,rgba(255,56,92,0.13),transparent_34rem),linear-gradient(180deg,#fff7fa_0%,#ffffff_44%,#fff7fa_100%)] text-[#171214]">
       {!isMobileShell && <Navbar />}
 
       <div className={isMobileShell ? "pt-4 pb-32 px-4 max-w-7xl mx-auto" : "pt-24 pb-12 px-4 max-w-7xl mx-auto"}>
         {/* Search Header */}
         <div className="mb-8">
-          <Card className="mb-6 overflow-visible border-primary/10 bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(247,247,247,1))] p-5 sm:p-6">
+          <Card className="mb-6 overflow-visible rounded-[2.25rem] border-white/80 bg-white/88 p-5 shadow-[0_28px_90px_rgba(255,56,92,0.12)] backdrop-blur-xl sm:p-6">
             <form onSubmit={handleSearchSubmit}>
               <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
                 <div className="flex gap-2 overflow-x-auto">
@@ -615,10 +615,10 @@ export function PropertySearch() {
                           listingType: option.value as typeof current.listingType,
                         }))
                       }
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                      className={`rounded-full px-5 py-3 text-sm font-black transition-all ${
                         filters.listingType === option.value
-                          ? "bg-primary text-white"
-                          : "bg-secondary text-foreground hover:bg-muted"
+                          ? "bg-primary text-white shadow-lg shadow-primary/20"
+                          : "bg-primary/5 text-foreground hover:bg-primary/10"
                       }`}
                     >
                       {option.label}
@@ -626,8 +626,8 @@ export function PropertySearch() {
                   ))}
                 </div>
 
-                <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-border bg-background px-4 py-2 shadow-sm">
-                  <MapPin className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                <div className="flex min-w-0 flex-1 items-center gap-3 rounded-[1.65rem] border border-primary/10 bg-white px-5 py-3 shadow-[0_16px_45px_rgba(255,56,92,0.08)]">
+                  <MapPin className="h-5 w-5 flex-shrink-0 text-primary" />
                   <Input
                     type="text"
                     value={searchInput}
@@ -639,11 +639,11 @@ export function PropertySearch() {
                         handleSearchSubmit();
                       }
                     }}
-                    className="border-0 bg-transparent px-0 py-2 shadow-none focus:ring-0"
+                    className="border-0 bg-transparent px-0 py-2 font-semibold shadow-none focus:ring-0"
                   />
                 </div>
 
-                <Button type="submit" size="lg" className="xl:min-w-[152px]">
+                <Button type="submit" size="lg" className="rounded-full xl:min-w-[152px]">
                   <Search className="h-4 w-4" />
                   Update Search
                 </Button>
@@ -687,7 +687,7 @@ export function PropertySearch() {
 
           <section
             aria-label="BaytMiftah discovery flow"
-            className="mb-6 rounded-[1.75rem] border border-primary/10 bg-white/85 p-4 shadow-sm backdrop-blur-xl"
+            className="mb-6 rounded-[2rem] border border-white/80 bg-white/82 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)] backdrop-blur-xl"
           >
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
@@ -702,7 +702,7 @@ export function PropertySearch() {
                 {["Choose", "Browse", "Open", "Act", "Track"].map((step, index) => (
                   <span
                     key={step}
-                    className="inline-flex min-w-max items-center gap-2 rounded-full border border-border bg-white px-3 py-2 text-xs font-semibold text-muted-foreground"
+                    className="inline-flex min-w-max items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3 py-2 text-xs font-bold text-muted-foreground"
                   >
                     <span className="grid h-5 w-5 place-items-center rounded-full bg-primary text-[0.65rem] text-white">
                       {index + 1}
@@ -714,9 +714,9 @@ export function PropertySearch() {
             </div>
           </section>
 
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          <div className="flex flex-col gap-4 rounded-[2rem] border border-white/80 bg-white/70 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.07)] backdrop-blur md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-3xl font-semibold mb-2">{resultsTitle}</h1>
+              <h1 className="mb-2 text-4xl font-black tracking-[-0.06em] md:text-5xl">{resultsTitle}</h1>
               <p className="text-muted-foreground">{resultSummary}</p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -864,7 +864,7 @@ export function PropertySearch() {
           </Card>
         )}
 
-        <Card className="p-4 mb-6 border-primary/10 bg-secondary/20">
+        <Card className="mb-6 rounded-[2rem] border-white/80 bg-white/82 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)] backdrop-blur">
           <div className="grid gap-4 md:grid-cols-4">
             <div className="md:col-span-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -875,7 +875,7 @@ export function PropertySearch() {
                 Heat-map data is currently based on BaytMiftah search and area-guide signals. Live flood, power, water, safety, and transit feeds remain gated in provider readiness.
               </p>
             </div>
-            <div className="rounded-xl border border-border bg-background p-3">
+            <div className="rounded-2xl border border-primary/10 bg-primary/5 p-4">
               <p className="text-xs text-muted-foreground">Average visible price</p>
               <p className="mt-1 text-lg font-semibold">
                 {marketPulse.averagePrice > 0
@@ -883,7 +883,7 @@ export function PropertySearch() {
                   : "Pending"}
               </p>
             </div>
-            <div className="rounded-xl border border-border bg-background p-3">
+            <div className="rounded-2xl border border-primary/10 bg-primary/5 p-4">
               <p className="text-xs text-muted-foreground">Hot location</p>
               <p className="mt-1 text-lg font-semibold">
                 {marketPulse.topLocation?.label || "Building signal"}
@@ -902,12 +902,12 @@ export function PropertySearch() {
                 exit={{ opacity: 0, x: -20 }}
                 className="w-full lg:w-80 lg:flex-shrink-0"
               >
-                <Card className="p-6 lg:sticky lg:top-24">
+                <Card className="rounded-[2rem] border-white/80 bg-white/90 p-6 shadow-[0_20px_70px_rgba(255,56,92,0.10)] backdrop-blur lg:sticky lg:top-24">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-semibold">Filters</h3>
                     <button
                       onClick={() => setShowFilters(false)}
-                      className="p-1 hover:bg-secondary rounded-lg transition-colors"
+                      className="rounded-xl p-2 transition-colors hover:bg-primary/10"
                       type="button"
                       aria-label="Close filters"
                       title="Close filters"
@@ -982,7 +982,7 @@ export function PropertySearch() {
                         id="property-type-filter"
                         value={filters.propertyType}
                         onChange={(e) => setFilters({ ...filters, propertyType: e.target.value })}
-                        className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
+                        className="w-full rounded-2xl border border-primary/10 bg-white px-4 py-3"
                         aria-label="Property type"
                         title="Property type"
                       >
@@ -1006,7 +1006,7 @@ export function PropertySearch() {
                             className={`py-2 px-3 rounded-lg transition-all ${
                               (filters.bedrooms || "Any") === bed
                                 ? "bg-primary text-white"
-                                : "bg-secondary hover:bg-muted"
+                                  : "bg-primary/5 hover:bg-primary/10"
                             }`}
                           >
                             {bed}
@@ -1026,7 +1026,7 @@ export function PropertySearch() {
                             className={`py-2 px-3 rounded-lg transition-all ${
                               (filters.bathrooms || "Any") === bath
                                 ? "bg-primary text-white"
-                                : "bg-secondary hover:bg-muted"
+                                  : "bg-primary/5 hover:bg-primary/10"
                             }`}
                           >
                             {bath}
@@ -1053,7 +1053,7 @@ export function PropertySearch() {
                               className={`rounded-lg border px-3 py-2 text-left text-sm transition-all ${
                                 isSelected
                                   ? "border-primary bg-primary text-white"
-                                  : "border-border bg-secondary hover:bg-muted"
+                                  : "border-primary/10 bg-primary/5 hover:bg-primary/10"
                               }`}
                             >
                               {amenity}
@@ -1063,10 +1063,10 @@ export function PropertySearch() {
                       </div>
                     </div>
 
-                    <Button className="w-full" size="lg" onClick={handleApplyFilters}>
+                    <Button className="w-full rounded-full" size="lg" onClick={handleApplyFilters}>
                       Apply Filters
                     </Button>
-                    <Button variant="outline" className="w-full" onClick={clearFilters}>
+                    <Button variant="outline" className="w-full rounded-full" onClick={clearFilters}>
                       Clear Filters
                     </Button>
                   </div>
@@ -1101,7 +1101,7 @@ export function PropertySearch() {
                   <p className="text-muted-foreground">{resultSummary}</p>
                 </div>
                 {viewMode === "grid" ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {listings.map((listing, index) => (
                       <motion.div
                         key={listing.id}
@@ -1110,18 +1110,18 @@ export function PropertySearch() {
                         transition={{ delay: index * 0.05 }}
                       >
                         <Link to={buildPropertyHref(listing.id)}>
-                          <Card hover className="group overflow-hidden rounded-[1.5rem] border-border/70 bg-white/95 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(15,23,42,0.12)]">
-                            <div className="relative h-52 overflow-hidden">
+                          <Card hover className="group overflow-hidden rounded-[2rem] border-white bg-white shadow-[0_20px_70px_rgba(255,56,92,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_90px_rgba(255,56,92,0.16)]">
+                            <div className="relative h-60 overflow-hidden">
                               <img
                                 src={getPropertyCoverImage(listing.property)}
                                 alt={listing.property?.address}
                                 className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                               />
                               <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/65 to-transparent" />
-                              <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold capitalize backdrop-blur-sm">
+                              <div className="absolute left-3 top-3 rounded-full bg-white/92 px-3 py-1 text-xs font-black capitalize text-primary backdrop-blur-sm">
                                 {listing.listing_type}
                               </div>
-                              <div className="absolute right-3 top-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold">
+                              <div className="absolute right-3 top-3 rounded-full bg-white/92 px-3 py-1 text-xs font-bold backdrop-blur-sm">
                                 {formatPropertyCategory(listing.property?.category)}
                               </div>
                               {listing.organization?.verified && (
@@ -1131,8 +1131,8 @@ export function PropertySearch() {
                                 </div>
                               )}
                             </div>
-                            <div className="p-4">
-                              <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+                            <div className="p-5">
+                              <h3 className="mb-2 line-clamp-2 text-xl font-black tracking-[-0.04em]">
                                 {listing.property?.address || 'Property'}
                               </h3>
                               <div className="flex items-center gap-1 text-muted-foreground mb-3">
@@ -1160,7 +1160,7 @@ export function PropertySearch() {
                                   </div>
                                 </div>
                               )}
-                              <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-sm">
+                              <div className="mt-4 flex items-center justify-between border-t border-primary/10 pt-3 text-sm">
                                 <span className="text-muted-foreground">Open full listing</span>
                                 <span className="font-semibold text-primary">View details</span>
                               </div>
@@ -1180,9 +1180,9 @@ export function PropertySearch() {
                         transition={{ delay: index * 0.05 }}
                       >
                         <Link to={buildPropertyHref(listing.id)}>
-                          <Card hover className="group overflow-hidden rounded-[1.5rem] border-border/70 bg-white/95 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_60px_rgba(15,23,42,0.1)]">
+                          <Card hover className="group overflow-hidden rounded-[2rem] border-white bg-white shadow-[0_20px_70px_rgba(255,56,92,0.10)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_90px_rgba(255,56,92,0.14)]">
                             <div className="flex flex-col md:flex-row">
-                              <div className="relative w-full md:w-80 h-48 flex-shrink-0 overflow-hidden">
+                              <div className="relative h-56 w-full flex-shrink-0 overflow-hidden md:h-auto md:w-80">
                                 <img
                                   src={getPropertyCoverImage(listing.property)}
                                   alt={listing.property?.address}
@@ -1195,7 +1195,7 @@ export function PropertySearch() {
                               <div className="flex min-w-0 flex-1 flex-col justify-between p-4 sm:p-6">
                                 <div className="min-w-0">
                                   <div className="flex flex-wrap items-start justify-between gap-3">
-                                    <h3 className="font-semibold text-xl mb-2">
+                                    <h3 className="mb-2 text-2xl font-black tracking-[-0.05em]">
                                       {listing.property?.address || 'Property'}
                                     </h3>
                                     {listing.organization?.verified && (

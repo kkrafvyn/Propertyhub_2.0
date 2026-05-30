@@ -38,27 +38,6 @@ const categories = [
   { label: "Agencies", detail: "Verified teams", icon: Building2, href: "/agencies" },
 ];
 
-const featuredCollections = [
-  {
-    label: "New Arrival",
-    title: "Modernist Hills",
-    href: "/search?propertyType=house",
-    image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=900&q=85&auto=format&fit=crop",
-  },
-  {
-    label: "Editor's Pick",
-    title: "Architect Villas",
-    href: "/search?propertyType=house&listingType=sale",
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=85&auto=format&fit=crop",
-  },
-  {
-    label: "Commercial",
-    title: "Prime Office Suites",
-    href: "/search?propertyType=office",
-    image: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&q=85&auto=format&fit=crop",
-  },
-];
-
 const fallbackProperties = [
   {
     id: "showcase-airport",
@@ -274,81 +253,108 @@ export function Home() {
             </div>
           </header>
 
-          <section>
-            <SectionHeader title="Featured collections" to="/search" action="View all" />
-            <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-3 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
-              {featuredCollections.map((collection) => (
-                <Link
-                  key={collection.title}
-                  to={collection.href}
-                  className="group relative h-64 min-w-[260px] overflow-hidden rounded-[2rem] bg-[#171214] shadow-[0_22px_70px_rgba(23,18,20,0.16)] md:h-72 md:min-w-0"
-                >
-                  <img
-                    src={collection.image}
-                    alt={collection.title}
-                    className="h-full w-full object-cover opacity-90 transition duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-                  <div className="absolute bottom-5 left-5 right-5 text-white">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">
-                      {collection.label}
-                    </p>
-                    <h3 className="mt-2 text-2xl font-black tracking-[-0.05em]">
-                      {collection.title}
-                    </h3>
-                  </div>
+          <section className="mt-8">
+            <SectionHeader title="Property Categories" to="/search" />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+              {categories.map((category) => (
+                <Link key={category.label} to={category.href} className="rounded-[1.6rem] border border-white bg-white p-4 shadow-[0_16px_50px_rgba(255,56,92,0.08)] transition hover:-translate-y-1 hover:shadow-[0_22px_70px_rgba(255,56,92,0.14)]">
+                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+                    <category.icon className="h-6 w-6" />
+                  </span>
+                  <h3 className="mt-4 font-black tracking-[-0.03em]">{category.label}</h3>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">{category.detail}</p>
                 </Link>
               ))}
             </div>
           </section>
 
           <section className="mt-8">
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
+              <Link
+                to={String(showcaseProperties[0]?.id || "").startsWith("showcase-") ? "/search" : `/property/${showcaseProperties[0]?.id}`}
+                className="group relative min-h-[34rem] overflow-hidden rounded-[2.5rem] bg-[#171214] shadow-[0_28px_90px_rgba(255,56,92,0.18)]"
+              >
+                <img
+                  src={showcaseProperties[0]?.image || fallbackProperties[0].image}
+                  alt={showcaseProperties[0]?.title || "Featured verified property"}
+                  className="absolute inset-0 h-full w-full object-cover opacity-90 transition duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-white md:p-10">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white/14 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] backdrop-blur">
+                    <Shield className="h-4 w-4 text-primary" />
+                    Verified Property
+                  </span>
+                  <h1 className="mt-5 max-w-2xl text-4xl font-black leading-[0.95] tracking-[-0.07em] md:text-6xl">
+                    {showcaseProperties[0]?.title || "Find your next verified property"}
+                  </h1>
+                  <p className="mt-4 max-w-xl text-base font-semibold text-white/78 md:text-lg">
+                    {showcaseProperties[0]?.location || "Accra, Ghana"}
+                  </p>
+                  <div className="mt-6 inline-flex items-center rounded-full bg-primary px-6 py-3 text-sm font-black text-white shadow-[0_18px_45px_rgba(255,56,92,0.36)]">
+                    Explore Property
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </div>
+                </div>
+              </Link>
+
+              <aside className="rounded-[2.25rem] border border-white bg-white/82 p-5 shadow-[0_22px_70px_rgba(255,56,92,0.10)] backdrop-blur">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Browse like mobile</p>
+                <h2 className="mt-3 text-3xl font-black leading-tight tracking-[-0.06em]">
+                  Open app flow, now on desktop.
+                </h2>
+                <p className="mt-3 text-sm font-semibold leading-6 text-muted-foreground">
+                  Choose intent, browse cards, open a property, then save, message, request viewing, or pay from a clear action path.
+                </p>
+                <div className="mt-6 grid gap-3">
+                  {["Rent", "Buy", "Lease"].map((label, index) => (
+                    <Link
+                      key={label}
+                      to={`/search?listingType=${index === 0 ? "rental" : label.toLowerCase()}`}
+                      className={`flex items-center justify-between rounded-2xl px-4 py-4 text-sm font-black ${index === 0 ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-primary/5 text-[#171214]"}`}
+                    >
+                      {label}
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  ))}
+                </div>
+              </aside>
+            </div>
+          </section>
+
+          <section className="mt-8">
             <div className="mb-4 flex items-center justify-between gap-4">
               <h2 className="text-3xl font-black tracking-[-0.06em] text-[#171214] md:text-4xl">
-                Latest Listings
+                Featured Listings
               </h2>
-              <div className="flex items-center gap-2">
-                <Link
-                  to="/search"
-                  className="grid h-11 w-11 place-items-center rounded-2xl bg-white text-[#171214] shadow-[0_12px_35px_rgba(255,56,92,0.08)]"
-                  aria-label="Grid view"
-                >
-                  <Building2 className="h-5 w-5" />
-                </Link>
-                <Link
-                  to="/search"
-                  className="grid h-11 w-11 place-items-center rounded-2xl bg-white text-[#171214] shadow-[0_12px_35px_rgba(255,56,92,0.08)]"
-                  aria-label="Map view"
-                >
-                  <MapPin className="h-5 w-5" />
-                </Link>
-              </div>
+              <Link to="/search" className="inline-flex items-center gap-1 text-sm font-bold text-primary">
+                See all
+                <ChevronRight className="h-4 w-4" />
+              </Link>
             </div>
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {showcaseProperties.slice(0, 6).map((property) => (
+            <div className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-3 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 xl:grid-cols-4">
+              {showcaseProperties.slice(0, 4).map((property) => (
                 <Link
                   key={property.id}
                   to={String(property.id).startsWith("showcase-") ? "/search" : `/property/${property.id}`}
-                  className="group overflow-hidden rounded-[2rem] border border-white bg-white shadow-[0_20px_70px_rgba(255,56,92,0.10)] transition hover:-translate-y-1 hover:shadow-[0_28px_90px_rgba(255,56,92,0.16)]"
+                  className="group min-w-[18rem] snap-start overflow-hidden rounded-[2rem] border border-white bg-white shadow-[0_20px_70px_rgba(255,56,92,0.10)] transition hover:-translate-y-1 hover:shadow-[0_28px_90px_rgba(255,56,92,0.16)] md:min-w-0"
                 >
                   <div className="relative h-64 overflow-hidden">
                     <img src={property.image} alt={property.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    <span className="absolute left-4 top-4 rounded-full bg-primary/10 px-3 py-1 text-xs font-black text-primary">
+                    <span className="absolute left-4 top-4 rounded-full bg-white/92 px-3 py-1 text-xs font-black text-primary">
                       {property.status}
                     </span>
                     <span className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/95 text-primary">
                       <Heart className="h-5 w-5" />
                     </span>
-                    <div className="absolute bottom-4 left-4 right-4 text-white">
-                      <p className="text-2xl font-black tracking-[-0.04em]">
-                        {property.price}
-                        <span className="text-sm text-white/70"> {property.period}</span>
-                      </p>
-                    </div>
                   </div>
                   <div className="p-5">
-                    <h3 className="line-clamp-2 text-lg font-black tracking-[-0.04em]">{property.title}</h3>
+                    <p className="text-xl font-black tracking-[-0.04em] text-primary">
+                      {property.price}
+                      <span className="text-sm text-muted-foreground"> {property.period}</span>
+                    </p>
+                    <h3 className="mt-2 line-clamp-2 text-lg font-black tracking-[-0.04em]">{property.title}</h3>
                     <p className="mt-2 flex items-center gap-1 text-sm font-semibold text-muted-foreground">
                       <MapPin className="h-4 w-4 text-primary" />
                       {property.location || "Ghana"}
@@ -358,21 +364,6 @@ export function Home() {
                       <span className="rounded-full bg-primary/5 px-3 py-2"><Bath className="mr-1 inline h-3.5 w-3.5" />{property.baths}</span>
                     </div>
                   </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          <section className="mt-8">
-            <SectionHeader title="Explore categories" to="/search" />
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-              {categories.map((category) => (
-                <Link key={category.label} to={category.href} className="rounded-[1.6rem] border border-white bg-white p-4 shadow-[0_16px_50px_rgba(255,56,92,0.08)] transition hover:-translate-y-1 hover:shadow-[0_22px_70px_rgba(255,56,92,0.14)]">
-                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
-                    <category.icon className="h-6 w-6" />
-                  </span>
-                  <h3 className="mt-4 font-black tracking-[-0.03em]">{category.label}</h3>
-                  <p className="mt-1 text-xs font-semibold text-muted-foreground">{category.detail}</p>
                 </Link>
               ))}
             </div>
