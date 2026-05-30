@@ -16,11 +16,14 @@ import {
   Crown,
   FileText,
   GraduationCap,
+  Globe2,
   Heart,
   Home,
   HousePlus,
   KeyRound,
+  Landmark,
   Loader2,
+  LogOut,
   Mail,
   Menu,
   MessageCircle,
@@ -29,9 +32,11 @@ import {
   MapPin,
   Navigation,
   Phone,
+  Shield,
   RefreshCw,
   Search,
   ShieldCheck,
+  Share2,
   SlidersHorizontal,
   Star,
   UserRound,
@@ -783,6 +788,112 @@ function MobileDarkPropertyCard({
         <span>{formatPrice(listing.price, listing.currency)}</span>
       </div>
     </Link>
+  );
+}
+
+function MobileSavedLuxeCard({
+  item,
+  index,
+}: {
+  item: any;
+  index: number;
+}) {
+  const listing = item.listing || item;
+  const fallback = mobileFallbackListings[index % mobileFallbackListings.length];
+  const image = getMobileListingImage(listing, fallback.image);
+  const price = formatPrice(listing.price || fallback.price, listing.currency || fallback.currency);
+  const title = getMobileListingTitle(listing);
+  const bedrooms = getMobileListingBedrooms(listing);
+  const bathrooms = getMobileListingBathrooms(listing);
+
+  return (
+    <Link to={`/property/${listing.id}`} className="mobile-saved-luxe-card">
+      <div className="mobile-saved-luxe-image">
+        <img src={image} alt={title} />
+        {index === 0 ? <span>New Listing</span> : null}
+        <button type="button" aria-label="Remove saved property" onClick={(event) => event.preventDefault()}>
+          <Heart aria-hidden="true" />
+        </button>
+      </div>
+      <div className="mobile-saved-luxe-body">
+        <strong>{price}</strong>
+        <h3>{title}</h3>
+        <div>
+          <span>
+            <BedDouble aria-hidden="true" />
+            {bedrooms}
+          </span>
+          <span>
+            <Bath aria-hidden="true" />
+            {bathrooms}
+          </span>
+          <span>
+            <Landmark aria-hidden="true" />
+            {listing.property?.area_sqm || listing.property?.square_feet || "Verified"}
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function MobileProfileRow({
+  icon: Icon,
+  label,
+  value,
+  to,
+  badge,
+}: {
+  icon: typeof Home;
+  label: string;
+  value?: string;
+  to?: string;
+  badge?: string;
+}) {
+  const content = (
+    <>
+      <span>
+        <Icon aria-hidden="true" />
+      </span>
+      <strong>{label}</strong>
+      {badge ? <em>{badge}</em> : value ? <small>{value}</small> : null}
+      <ChevronRight aria-hidden="true" />
+    </>
+  );
+
+  if (to) {
+    return (
+      <Link to={to} className="mobile-profile-luxe-row">
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className="mobile-profile-luxe-row">{content}</div>;
+}
+
+function MobileProfileGroup({
+  title,
+  items,
+}: {
+  title: string;
+  items: Array<{
+    icon: typeof Home;
+    label: string;
+    to: string;
+    value?: string;
+    badge?: string;
+  }>;
+}) {
+  return (
+    <section className="mobile-profile-luxe-group">
+      <h3>{title}</h3>
+      <div>
+        {items.map((item) => (
+          <MobileProfileRow key={item.label} {...item} />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -1732,158 +1843,88 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
       }
 
       return (
-        <section className="mobile-pane">
-          <MobilePaneHeader
-            eyebrow="Messages"
-            title="Messages"
-            subtitle="Keep conversations, deal rooms, confirmations, and receipts in one place."
-            action={
-              <Link
-                to="/app/deals"
-                className="mobile-toolbar-button"
-                aria-label="Open dashboard deals"
-              >
-                <ShieldCheck aria-hidden="true" />
+        <section className="mobile-messages-luxe" aria-label="Messages">
+          <header className="mobile-messages-luxe-header">
+            <Link to="/" className="mobile-saved-luxe-location">
+              <MapPin aria-hidden="true" />
+              <strong>BaytMiftah</strong>
+            </Link>
+            <div>
+              <Link to="/search" aria-label="Search messages">
+                <Search aria-hidden="true" />
               </Link>
-            }
-          />
+              <Link to="/app/settings" aria-label="Message filters">
+                <SlidersHorizontal aria-hidden="true" />
+              </Link>
+            </div>
+          </header>
 
-          <div className="mobile-stat-grid">
-            <MobileStatCard
-              label="Deal rooms"
-              value={openDeals.length}
-              helper="Active buyer threads."
-            />
-            <MobileStatCard
-              label="Viewings"
-              value={propertyViewings.length}
-              helper="Requested or confirmed."
-            />
-            <MobileStatCard
-              label="Messages"
-              value={conversations.length}
-              helper="Tracked conversations."
-            />
-            <MobileStatCard
-              label="Payments"
-              value={propertyPayments.length}
-              helper="Receipts and checkouts."
-            />
+          <div className="mobile-messages-luxe-title">
+            <h1>Messages</h1>
+            <div aria-label="Message filters">
+              <button type="button" className="is-active">All</button>
+              <button type="button">Unread</button>
+            </div>
           </div>
 
-          <div className="mobile-action-list mobile-grouped-list">
-            <MobileQuickLink
-              to="/app/deals"
-              icon={ShieldCheck}
-              title="Deal rooms"
-              detail="Open negotiation, documents, and payment threads."
-            />
-            <MobileQuickLink
-              to="/app/viewings"
-              icon={CalendarDays}
-              title="Viewings"
-              detail="Check the next property visit or reschedule."
-            />
-            <MobileQuickLink
-              to="/app/messages"
-              icon={MessageCircle}
-              title="Messages"
-              detail="Continue the latest conversation with a listing team."
-            />
-            <MobileQuickLink
-              to="/app/payments"
-              icon={Wallet}
-              title="Payments"
-              detail="Review secure checkout and receipt status."
-            />
+          <div className="mobile-messages-luxe-list">
+            {[
+              {
+                name: recentMessages[0]?.organization?.name || "Kwame Mensah",
+                property: "45 Liberation Road • Airport",
+                message: recentMessages[0]?.messages?.[0]?.content || "I've confirmed the private viewing window for tomorrow.",
+                time: "2:45 PM",
+                image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=220&q=85&auto=format&fit=crop",
+                unread: true,
+              },
+              {
+                name: "Akosua Addo",
+                property: "Cantonments Villa • Accra",
+                message: "The agreement details are ready for review.",
+                time: "Yesterday",
+                image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=220&q=85&auto=format&fit=crop",
+              },
+              {
+                name: "Kojo Asare",
+                property: "East Legon Office",
+                message: "The owner is open to a slight adjustment.",
+                time: "Tue",
+                image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=220&q=85&auto=format&fit=crop",
+              },
+              {
+                name: "Ama Ofori",
+                property: "Labone Apartment",
+                message: "Just received new photos and the viewing notes.",
+                time: "Aug 12",
+                image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=220&q=85&auto=format&fit=crop",
+                unread: true,
+              },
+            ].map((message, index) => (
+              <Link
+                key={`${message.name}-${message.time}`}
+                to="/app/messages"
+                className={`mobile-messages-luxe-card ${index === 0 || index === 3 ? "is-featured" : ""}`}
+              >
+                <span className="mobile-messages-avatar">
+                  <img src={message.image} alt="" />
+                  <i className={message.unread ? "is-online" : ""} />
+                </span>
+                <span className="mobile-messages-copy">
+                  <strong>{message.name}</strong>
+                  <small>{message.property}</small>
+                  <em>{message.message}</em>
+                </span>
+                <span className="mobile-messages-time">
+                  {message.time}
+                  {message.unread ? <i /> : null}
+                </span>
+              </Link>
+            ))}
           </div>
 
-          <section className="mobile-section" id="notifications">
-            <div className="mobile-section-heading">
-              <h2>Notifications</h2>
-              {unreadNotifications > 0 ? (
-                <button
-                  type="button"
-                  className="mobile-text-button"
-                  onClick={() => void handleMarkAllNotificationsRead()}
-                >
-                  Mark all read
-                </button>
-              ) : null}
-            </div>
-            {notifications.length ? (
-              <div className="mobile-list">
-                {notifications.map((notification) => (
-                  <button
-                    key={notification.id}
-                    type="button"
-                    className={`mobile-card mobile-notification-card ${
-                      notification.read ? "" : "is-unread"
-                    }`}
-                    onClick={() => void handleNotificationOpen(notification)}
-                  >
-                    <div className="mobile-notification-header">
-                      <strong>{notification.subject || "Notification"}</strong>
-                      {!notification.read && <span>New</span>}
-                    </div>
-                    <p>{notification.content || "Open BaytMiftah to review the latest update."}</p>
-                    <small>{formatRelativeTime(notification.created_at)}</small>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                icon={Bell}
-                title="No notifications yet."
-                body="Updates about viewings, messages, offers, and receipts will land here."
-              />
-            )}
-          </section>
-
-          <section className="mobile-section">
-            <div className="mobile-section-heading">
-              <h2>Upcoming viewings</h2>
-              <Link to="/app/viewings">View all</Link>
-            </div>
-            {upcomingViewings.length ? (
-              <div className="mobile-list">
-                {upcomingViewings.map((viewing) => (
-                  <CardPreview
-                    key={viewing.id}
-                    title={viewing.listing?.property?.address || "Property viewing"}
-                    subtitle={formatViewingTime(viewing.confirmed_datetime || viewing.requested_datetime)}
-                    detail={viewing.organization?.name || "Property team"}
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                icon={CalendarDays}
-                title="No viewings booked yet."
-                body="Book a viewing from a listing page and it will show up here."
-                action={{ label: "Browse listings", to: "/search" }}
-              />
-            )}
-          </section>
-
-          {recentMessages.length > 0 && (
-            <section className="mobile-section">
-              <div className="mobile-section-heading">
-                <h2>Recent messages</h2>
-                <Link to="/app/messages">Open inbox</Link>
-              </div>
-              <div className="mobile-list">
-                {recentMessages.map((conversation) => (
-                  <CardPreview
-                    key={conversation.id || conversation.conversation_id}
-                    title={conversation.organization?.name || "Property team"}
-                    subtitle={conversation.messages?.[0]?.content || "Conversation update"}
-                    detail={formatRelativeTime(conversation.updated_at || conversation.created_at)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
+          <Link to="/app/messages" className="mobile-messages-archive">
+            Archive older conversations
+          </Link>
         </section>
       );
     }
@@ -1908,333 +1949,136 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
       }
 
       return (
-        <section className="mobile-pane">
-          <MobilePaneHeader
-            eyebrow="Saved"
-            title="Your shortlist"
-            subtitle={`${saved.length} saved properties and ${savedAlerts.length} active alerts.`}
-            action={
-              <Link to="/app/compare" className="mobile-toolbar-button" aria-label="Compare saved listings">
-                <Heart aria-hidden="true" />
-              </Link>
-            }
-          />
+        <section className="mobile-saved-luxe" aria-label="Saved listings">
+          <header className="mobile-saved-luxe-header">
+            <div className="mobile-saved-luxe-location">
+              <MapPin aria-hidden="true" />
+              <strong>BaytMiftah</strong>
+            </div>
+            <Link to="/app/alerts" aria-label="Saved alert filters">
+              <SlidersHorizontal aria-hidden="true" />
+            </Link>
+          </header>
 
-          <div className="mobile-action-list mobile-grouped-list">
-            <MobileQuickLink
-              to="/app/compare"
-              icon={Heart}
-              title="Compare saved listings"
-              detail="Open side-by-side price, trust, and location context."
-            />
-            <MobileQuickLink
-              to="/app/buying-tools"
-              icon={Wallet}
-              title="Buying guide"
-              detail="Let BaytMiftah explain costs, timing, and remote-buyer steps."
-            />
-            <MobileQuickLink
-              to="/app/alerts"
-              icon={Bell}
-              title="Saved alerts"
-              detail="Pause, resume, or share the searches you track."
-            />
+          <div className="mobile-saved-luxe-copy">
+            <h1>Saved Listings</h1>
+            <p>
+              Your curated collection of verified properties. Compare your favorites and find
+              your next sanctuary.
+            </p>
+          </div>
+
+          <div className="mobile-saved-luxe-actions">
+            <Link to="/app/saved" className="is-muted">
+              Clear All
+            </Link>
+            <Link to="/app/compare">
+              <Share2 aria-hidden="true" />
+              Share List
+            </Link>
           </div>
 
           {saved.length ? (
-            <div className="mobile-list">
-              {saved.map((item) => (
-                <MobilePropertyCard key={item.id} listing={item.listing || item} />
+            <div className="mobile-saved-luxe-grid">
+              {saved.map((item, index) => (
+                <MobileSavedLuxeCard key={item.id} item={item} index={index} />
               ))}
             </div>
           ) : (
-            <EmptyState
-              icon={Heart}
-              title="Your saved homes will appear here."
-              body="Save properties from search or detail pages to build a shortlist."
-              action={{ label: "Browse listings", to: "/search" }}
-            />
+            <div className="mobile-saved-luxe-grid">
+              {mobileFallbackListings.map((listing, index) => (
+                <MobileSavedLuxeCard key={listing.id} item={{ listing }} index={index} />
+              ))}
+            </div>
           )}
         </section>
       );
     }
 
     return (
-      <section className="mobile-pane mobile-settings-screen">
+      <section className="mobile-profile-luxe">
         {user ? (
           <>
-            <header className="mobile-settings-header">
-              <h1>Settings</h1>
+            <header className="mobile-profile-luxe-topbar">
+              <Link to="/" className="mobile-saved-luxe-location">
+                <MapPin aria-hidden="true" />
+                <strong>BaytMiftah</strong>
+              </Link>
+              <Link to="/app/settings" aria-label="Profile settings">
+                <SlidersHorizontal aria-hidden="true" />
+              </Link>
             </header>
 
-            <div className="mobile-settings-profile">
-              <div className="mobile-settings-avatar" aria-hidden="true">
+            <div className="mobile-profile-luxe-card">
+              <div className="mobile-profile-luxe-avatar" aria-hidden="true">
                 {profileAvatarUrl ? <img src={profileAvatarUrl} alt="" /> : <span>{initials}</span>}
+                <button type="button" aria-label="Edit profile">
+                  <Camera aria-hidden="true" />
+                </button>
               </div>
               <h2>{profileName}</h2>
-              <p>{accountSubtitle}</p>
+              <p>
+                <ShieldCheck aria-hidden="true" />
+                Platinum member
+              </p>
             </div>
 
-            <section className="mobile-settings-group" aria-labelledby="mobile-profile-information">
-              <h3 id="mobile-profile-information">Profile information</h3>
-              <div className="mobile-settings-card">
-                <Link to="/app/settings" className="mobile-settings-row">
-                  <span className="mobile-settings-icon">
-                    <UserRound aria-hidden="true" />
-                  </span>
-                  <strong>Name</strong>
-                  <span className="mobile-settings-value">{profileName}</span>
-                  <ChevronRight aria-hidden="true" />
-                </Link>
-                <Link to="/app/settings" className="mobile-settings-row">
-                  <span className="mobile-settings-icon">
-                    <Mail aria-hidden="true" />
-                  </span>
-                  <strong>Email</strong>
-                  <span className="mobile-settings-value">{profileEmail}</span>
-                  <ChevronRight aria-hidden="true" />
-                </Link>
-                <Link to="/app/settings" className="mobile-settings-row">
-                  <span className="mobile-settings-icon">
-                    <Phone aria-hidden="true" />
-                  </span>
-                  <strong>Phone</strong>
-                  <span className="mobile-settings-value">{profilePhone}</span>
-                  <ChevronRight aria-hidden="true" />
-                </Link>
-              </div>
-            </section>
+            <div className="mobile-profile-luxe-stats">
+              <span><strong>{saved.length}</strong>Saved</span>
+              <span><strong>{propertyViewings.length}</strong>Tours</span>
+              <span><strong>{openDeals.length}</strong>Offered</span>
+            </div>
 
-            <section className="mobile-settings-group" aria-labelledby="mobile-preferences">
-              <h3 id="mobile-preferences">Preferences</h3>
-              <div className="mobile-settings-card">
+            <MobileProfileGroup
+              title="Account settings"
+              items={[
+                { icon: UserRound, label: "Personal Info", to: "/app/settings" },
+                { icon: Shield, label: "Security", to: "/app/verification" },
+                { icon: Bell, label: "Notifications", to: "/app/messages", badge: unreadNotifications ? `${unreadNotifications} New` : undefined },
+              ]}
+            />
+
+            <MobileProfileGroup
+              title="Property management"
+              items={[
+                { icon: Home, label: "My Listings", to: `${WORKSPACE_ENTRY_PATH}?next=listings` },
+                { icon: CalendarDays, label: "Scheduled Tours", to: "/app/viewings" },
+                { icon: FileText, label: "Documents", to: "/app/documents" },
+              ]}
+            />
+
+            <section className="mobile-profile-luxe-group">
+              <h3>Preferences</h3>
+              <div>
+                <MobileProfileRow icon={Wallet} label="Currency" value="GHS" to="/app/settings" />
+                <MobileProfileRow icon={Globe2} label="Language" value="English (GH)" to="/app/settings" />
                 <button
                   type="button"
-                  className="mobile-settings-row"
-                  onClick={() => void enablePushNotifications()}
+                  className="mobile-profile-luxe-row"
+                  onClick={cycleThemePreference}
                   role="switch"
-                  aria-checked={pushNotificationsEnabled}
+                  aria-checked={currentThemeOption.value === "pink"}
                 >
-                  <span className="mobile-settings-icon is-danger">
-                    <Bell aria-hidden="true" />
-                  </span>
-                  <strong>Push Notifications</strong>
-                  <span
-                    className={`mobile-settings-switch ${pushNotificationsEnabled ? "is-on" : ""}`}
-                    aria-hidden="true"
-                  />
-                </button>
-                <button
-                  type="button"
-                  className="mobile-settings-row"
-                  onClick={captureLocation}
-                  role="switch"
-                  aria-checked={locationServicesEnabled}
-                >
-                  <span className="mobile-settings-icon">
-                    <Navigation aria-hidden="true" />
-                  </span>
-                  <strong>Location Services</strong>
-                  <span
-                    className={`mobile-settings-switch ${locationServicesEnabled ? "is-on" : ""}`}
-                    aria-hidden="true"
-                  />
-                </button>
-                <button
-                  type="button"
-                  className="mobile-settings-row"
-                  onClick={() => void syncOfflineQueue()}
-                  disabled={isSyncingOffline || offlineQueueCount === 0}
-                >
-                  <span className="mobile-settings-icon">
-                    {isSyncingOffline ? (
-                      <Loader2 aria-hidden="true" className="mobile-spin" />
-                    ) : (
-                      <RefreshCw aria-hidden="true" />
-                    )}
-                  </span>
-                  <strong>Offline Drafts</strong>
-                  <span className="mobile-settings-value">
-                    {offlineQueueCount} item{offlineQueueCount === 1 ? "" : "s"}
-                  </span>
-                  <ChevronRight aria-hidden="true" />
-                </button>
-                <button type="button" className="mobile-settings-row" onClick={openAppLockSheet}>
-                  <span className="mobile-settings-icon is-muted">
-                    <KeyRound aria-hidden="true" />
-                  </span>
-                  <strong>Security & Password</strong>
-                  <span className="mobile-settings-value">
-                    {appLockStatus.enabled ? "Protected" : "Set up"}
-                  </span>
-                  <ChevronRight aria-hidden="true" />
-                </button>
-                <button type="button" className="mobile-settings-row" onClick={cycleThemePreference}>
-                  <span className="mobile-settings-icon is-muted">
-                    <Moon aria-hidden="true" />
-                  </span>
-                  <strong>Appearance</strong>
-                  <span className="mobile-settings-value">{currentThemeOption.label}</span>
-                  <ChevronRight aria-hidden="true" />
+                  <span><Moon aria-hidden="true" /></span>
+                  <strong>App Theme</strong>
+                  <i className={`mobile-profile-switch ${currentThemeOption.value === "pink" ? "is-on" : ""}`} />
                 </button>
               </div>
             </section>
 
-            <button
-              type="button"
-              className="mobile-settings-signout"
-              onClick={() => void handleSettingsSignOut()}
-            >
-              Sign Out
+            <MobileProfileGroup
+              title="Support"
+              items={[
+                { icon: Compass, label: "Help Center", to: "/app/support" },
+                { icon: MessageCircle, label: "Contact Us", to: "/app/messages" },
+                { icon: ShieldCheck, label: "Privacy Policy", to: "/legal/privacy" },
+              ]}
+            />
+
+            <button type="button" className="mobile-profile-logout" onClick={() => void handleSettingsSignOut()}>
+              <LogOut aria-hidden="true" />
+              Logout {profileName.split(" ")[0] || "Account"}
             </button>
-
-            <section className="mobile-settings-group" aria-labelledby="mobile-account-tools">
-              <h3 id="mobile-account-tools">Account tools</h3>
-              <div className="mobile-settings-card">
-                <MobileQuickLink
-                  to="/app/referrals"
-                  icon={Compass}
-                  title="Referrals"
-                  detail="Share trusted listings and review your referral activity."
-                />
-                <MobileQuickLink
-                  to="/app/support"
-                  icon={ShieldCheck}
-                  title="Get help"
-                  detail="Open support, aftercare, and property handoff help."
-                />
-                <MobileQuickLink
-                  to="/app/verification"
-                  icon={KeyRound}
-                  title="Verify safely"
-                  detail="Send buyer ID, title, or address checks without learning the process."
-                />
-              </div>
-            </section>
-
-            <section className="mobile-section">
-              <div className="mobile-section-heading">
-                <h2>Seller tools</h2>
-              </div>
-              <div className="mobile-action-list mobile-grouped-list">
-                <MobileQuickLink
-                  to="/valuation"
-                  icon={HousePlus}
-                  title="Home valuation"
-                  detail="Estimate a pricing range before listing or calling an agent."
-                />
-                <MobileQuickLink
-                  to={`${WORKSPACE_ENTRY_PATH}?next=new`}
-                  icon={Camera}
-                  title="Start a listing"
-                  detail="BaytMiftah guides the details and checks in the background."
-                />
-              </div>
-            </section>
-
-            {hasWorkspaceAccess && (
-              <section className="mobile-section">
-              <div className="mobile-section-heading">
-                <h2>Workspace</h2>
-              </div>
-              <div className="mobile-action-list mobile-grouped-list">
-                <MobileQuickLink
-                  to={workspacePath}
-                  icon={BriefcaseBusiness}
-                  title="Open workspace"
-                  detail="Jump into leads, documents, payments, and team work."
-                />
-                {organizations.map((item) => {
-                  const organization = item.organization || item;
-                  return (
-                    <MobileQuickLink
-                      key={organization.id}
-                      to={`/workspace/${organization.slug}`}
-                      icon={Building2}
-                      title={organization.name}
-                      detail="Open this workspace directly."
-                    />
-                  );
-                })}
-              </div>
-
-              <section className="mobile-agent-kit">
-                <div className="mobile-section-heading">
-                  <h2>Field kit</h2>
-                </div>
-                <div className="mobile-agent-grid">
-                  <button type="button" onClick={captureLocation}>
-                    <Navigation aria-hidden="true" />
-                    <span>Save location</span>
-                  </button>
-                  <button type="button" onClick={() => void captureListingPhoto()}>
-                    <Camera aria-hidden="true" />
-                    <span>Add photos</span>
-                  </button>
-                  <button type="button" onClick={() => void scanDealDocument()}>
-                    <FileText aria-hidden="true" />
-                    <span>Scan document</span>
-                  </button>
-                  <Link to="/app/payments">
-                    <Wallet aria-hidden="true" />
-                    <span>Receipts</span>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => toast.message("Voice notes are queued for native recording setup.")}
-                  >
-                    <Mic aria-hidden="true" />
-                    <span>Voice note</span>
-                  </button>
-                </div>
-                {lastLocation && <p className="mobile-agent-location">Last GPS: {lastLocation}</p>}
-                {capturedPhotos.length > 0 && (
-                  <div className="mobile-capture-strip" aria-label="Queued photos">
-                    {capturedPhotos.map((photo) => (
-                      <div key={photo.id} className="mobile-capture-thumb">
-                        {photo.webPath ? <img src={photo.webPath} alt="" /> : <Camera aria-hidden="true" />}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {scannedDocuments.length > 0 && (
-                  <div className="mobile-capture-strip" aria-label="Queued scanned documents">
-                    {scannedDocuments.map((scan) => (
-                      <div key={scan.id} className="mobile-capture-thumb">
-                        {scan.photo.webPath ? (
-                          <img src={scan.photo.webPath} alt="" />
-                        ) : (
-                          <FileText aria-hidden="true" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <textarea
-                  value={fieldNote}
-                  onChange={(event) => setFieldNote(event.target.value)}
-                  placeholder="Quick note from a viewing, inspection, or owner handoff"
-                />
-                <button type="button" className="mobile-primary-button" onClick={() => void saveFieldNote()}>
-                  Save note
-                </button>
-                <div className="mobile-draft-grid" aria-label="Offline draft actions">
-                  <button type="button" onClick={() => void saveOfflineDraft("message-draft")}>
-                    Message
-                  </button>
-                  <button type="button" onClick={() => void saveOfflineDraft("offer-draft")}>
-                    Offer
-                  </button>
-                  <button type="button" onClick={() => void saveOfflineDraft("viewing-request")}>
-                    Viewing
-                  </button>
-                  <button type="button" onClick={() => void saveOfflineDraft("maintenance-report")}>
-                    Maintenance
-                  </button>
-                </div>
-              </section>
-            </section>
-            )}
 
             <MobileBottomSheet
               open={appLockSheetOpen}

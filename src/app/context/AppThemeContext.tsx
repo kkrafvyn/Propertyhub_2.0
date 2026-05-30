@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 
-export type AppThemePreference = "system" | "light";
+export type AppThemePreference = "pink" | "system" | "light";
 export type ResolvedAppTheme = "light";
 
 export const APP_THEME_STORAGE_KEY = "baytmiftah:theme-preference";
@@ -17,9 +17,14 @@ export const APP_THEME_OPTIONS: Array<{
   detail: string;
 }> = [
   {
+    value: "pink",
+    label: "BaytMiftah Pink",
+    detail: "Warm rose, soft white cards, and graphite text.",
+  },
+  {
     value: "system",
-    label: "System",
-    detail: "Use BaytMiftah's original light palette.",
+    label: "System Pink",
+    detail: "Follow the device while keeping BaytMiftah's pink palette.",
   },
   {
     value: "light",
@@ -41,13 +46,13 @@ function isAppThemePreference(value: string | null): value is AppThemePreference
 }
 
 function getStoredPreference(): AppThemePreference {
-  if (typeof window === "undefined") return "system";
+  if (typeof window === "undefined") return "pink";
 
   try {
     const stored = window.localStorage.getItem(APP_THEME_STORAGE_KEY);
-    return isAppThemePreference(stored) ? stored : "system";
+    return isAppThemePreference(stored) ? stored : "pink";
   } catch {
-    return "system";
+    return "pink";
   }
 }
 

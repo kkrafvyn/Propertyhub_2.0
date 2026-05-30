@@ -150,7 +150,7 @@ export function GhanaTrustCenter({
           <p className="mt-1 text-2xl font-semibold">{snapshot?.pendingRequests || 0}</p>
         </Card>
         <Card className="p-4">
-          <FileCheck2 className="h-5 w-5 text-emerald-700" />
+          <FileCheck2 className="h-5 w-5 text-primary" />
           <p className="mt-3 text-sm text-muted-foreground">Passed listing checks</p>
           <p className="mt-1 text-2xl font-semibold">{snapshot?.passedChecks || 0}</p>
         </Card>

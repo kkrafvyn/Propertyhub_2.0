@@ -140,7 +140,7 @@ export function PublicReviews() {
                       <div className="flex items-center gap-2">
                         <p className="font-semibold">{testimonial.vendorName}</p>
                         {testimonial.vendorVerified && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                             <ShieldCheck className="w-3 h-3" />
                             Verified
                           </span>
@@ -184,7 +184,7 @@ export function PublicReviews() {
                       <h3 className="mt-1 text-2xl font-semibold">{partner.businessName}</h3>
                     </div>
                     {partner.verified && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                         <ShieldCheck className="w-3 h-3" />
                         Verified
                       </span>
@@ -263,7 +263,7 @@ export function PublicReviews() {
                       <h3 className="mt-1 text-2xl font-semibold">{agency.name}</h3>
                     </div>
                     {agency.verified && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                         <ShieldCheck className="w-3 h-3" />
                         Verified
                       </span>

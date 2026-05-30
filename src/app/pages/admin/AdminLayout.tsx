@@ -167,7 +167,7 @@ function AdminMetricCard({
   const toneClasses = {
     slate: "bg-slate-100 text-slate-700",
     blue: "bg-primary/10 text-primary",
-    green: "bg-emerald-50 text-emerald-700",
+    green: "bg-primary/10 text-primary",
     amber: "bg-amber-50 text-amber-700",
     red: "bg-rose-50 text-rose-700",
   }[tone];
@@ -1802,7 +1802,7 @@ export function AdminLayout() {
                   <div className="flex items-center gap-2">
                     <span
                       className={`h-2 w-2 rounded-full ${
-                        item.count > 0 ? "bg-rose-400" : "bg-emerald-400"
+                        item.count > 0 ? "bg-rose-400" : "bg-primary"
                       }`}
                     />
                     <p className="text-sm font-semibold text-slate-950">{item.title}</p>

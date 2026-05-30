@@ -57,6 +57,24 @@ function getAuthProfileName(currentUser: User | null, fallback?: string) {
   )
 }
 
+function clearAuthUrlFragment() {
+  if (typeof window === 'undefined') return
+
+  const hash = window.location.hash || ''
+  const containsAuthTokens =
+    hash.includes('access_token=') ||
+    hash.includes('refresh_token=') ||
+    hash.includes('provider_token=')
+
+  if (!containsAuthTokens) return
+
+  window.history.replaceState(
+    window.history.state,
+    document.title,
+    `${window.location.pathname}${window.location.search}`
+  )
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -130,6 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check current user on mount
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       setUser(user)
+      if (user) clearAuthUrlFragment()
       await ensureProfile(user)
       await syncAuthAssurance(user)
       setLoading(false)
@@ -140,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (_event, session) => {
         const nextUser = session?.user ?? null
         setUser(nextUser)
+        if (nextUser) clearAuthUrlFragment()
         await ensureProfile(nextUser)
         await syncAuthAssurance(nextUser)
       }

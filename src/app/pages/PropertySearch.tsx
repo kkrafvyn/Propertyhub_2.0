@@ -1125,7 +1125,7 @@ export function PropertySearch() {
                                 {formatPropertyCategory(listing.property?.category)}
                               </div>
                               {listing.organization?.verified && (
-                                <div className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-emerald-500/95 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+                                <div className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-primary/95 px-3 py-1 text-xs font-semibold text-white shadow-sm">
                                   <ShieldCheck className="h-3.5 w-3.5" />
                                   Verified agency
                                 </div>
@@ -1199,7 +1199,7 @@ export function PropertySearch() {
                                       {listing.property?.address || 'Property'}
                                     </h3>
                                     {listing.organization?.verified && (
-                                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                      <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                                         <ShieldCheck className="h-3.5 w-3.5" />
                                         Verified
                                       </span>

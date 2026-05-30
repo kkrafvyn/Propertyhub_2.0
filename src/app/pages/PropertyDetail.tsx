@@ -1299,6 +1299,158 @@ export function PropertyDetail() {
     );
   }
 
+  if (!isMobileShell) {
+    const locationText = [property.neighborhood, property.city, property.region]
+      .filter(Boolean)
+      .join(", ");
+
+    return (
+      <div className="min-h-screen bg-[radial-gradient(circle_at_12%_0%,rgba(255,56,92,0.12),transparent_34rem),linear-gradient(180deg,#fff7fa_0%,#ffffff_42%,#fff7fa_100%)] text-[#171214]">
+        <div className="fixed inset-x-0 top-0 z-50 border-b border-primary/10 bg-[#fff7fa]/86 backdrop-blur-2xl">
+          <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+            <Link to="/search" className="grid h-11 w-11 place-items-center rounded-full bg-white text-[#171214] shadow-[0_12px_35px_rgba(255,56,92,0.10)]">
+              <ChevronRight className="h-5 w-5 rotate-180" />
+            </Link>
+            <Link to="/" className="flex items-center gap-3 text-xl font-black tracking-[-0.04em]">
+              <MapPin className="h-7 w-7 text-primary" />
+              BaytMiftah
+            </Link>
+            <button
+              type="button"
+              onClick={toggleSave}
+              className="grid h-11 w-11 place-items-center rounded-full bg-white text-[#171214] shadow-[0_12px_35px_rgba(255,56,92,0.10)]"
+              aria-label={isSaved ? "Remove saved property" : "Save property"}
+            >
+              <Heart className={`h-5 w-5 ${isSaved ? "fill-primary text-primary" : ""}`} />
+            </button>
+          </div>
+        </div>
+
+        <main className="mx-auto grid max-w-7xl gap-10 px-6 pb-28 pt-28 lg:grid-cols-[minmax(0,1fr)_24rem]">
+          <section className="min-w-0">
+            <div className="relative min-h-[620px] overflow-hidden rounded-[2.25rem] bg-white shadow-[0_34px_110px_rgba(255,56,92,0.16)]">
+              <img src={images[currentImageIndex]} alt={pageTitle} className="absolute inset-0 h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#171214]/82 via-[#171214]/20 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-8 lg:p-12">
+                <div className="mb-5 flex flex-wrap gap-2">
+                  <span className="rounded-full bg-primary px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white">
+                    {listingTypeLabel}
+                  </span>
+                  <span className="rounded-full bg-white/18 px-4 py-2 text-xs font-black text-white backdrop-blur">
+                    Fully furnished
+                  </span>
+                  {organization?.verified ? (
+                    <span className="rounded-full bg-white/90 px-4 py-2 text-xs font-black text-primary backdrop-blur">
+                      Verified agency
+                    </span>
+                  ) : null}
+                </div>
+                <h1 className="max-w-3xl text-5xl font-black leading-[0.95] tracking-[-0.08em] lg:text-7xl">
+                  {pageTitle}
+                </h1>
+                <p className="mt-4 flex items-center gap-2 text-lg font-semibold text-white/70">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  {locationText || "Ghana"}
+                </p>
+                <div className="mt-5">
+                  <DiasporaPrice
+                    amount={Number(listing.price || 0)}
+                    currency={listing.currency || "GHS"}
+                    suffix={listing.listing_type === "rental" ? "/month" : ""}
+                    size="lg"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              {propertyStatCards.map((item) => (
+                <div key={item.label} className="rounded-[1.5rem] border border-white bg-white p-6 text-center shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
+                  <item.icon className="mx-auto h-7 w-7 text-primary" />
+                  <strong className="mt-3 block text-2xl font-black">{item.value}</strong>
+                  <span className="text-sm font-bold text-muted-foreground">{item.label}</span>
+                </div>
+              ))}
+            </div>
+
+            <section className="mt-10">
+              <h2 className="text-2xl font-black tracking-[-0.04em]">Description</h2>
+              <p className="mt-5 max-w-3xl text-lg leading-8 text-muted-foreground">
+                {listing.description ||
+                  "A refined BaytMiftah listing with verified context, agency support, and a guided path from discovery to viewing, payment, and review."}
+              </p>
+            </section>
+
+            <section className="mt-12">
+              <h2 className="text-2xl font-black tracking-[-0.04em]">Amenities</h2>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                {(property.amenities?.length ? property.amenities : [
+                  "Verified documents",
+                  "Secure transaction support",
+                  "Viewing coordination",
+                  "Agency messaging",
+                  "Fraud protection",
+                  "Smart access readiness",
+                ]).slice(0, 8).map((amenity: string) => (
+                  <div key={amenity} className="flex items-center gap-4 rounded-2xl border border-white bg-white p-4 shadow-[0_16px_50px_rgba(255,56,92,0.07)]">
+                    <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/15 text-primary">
+                      <Check className="h-5 w-5" />
+                    </span>
+                    <strong className="text-sm font-black">{amenity}</strong>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </section>
+
+          <aside className="lg:sticky lg:top-28 lg:h-fit">
+            <div className="rounded-[2rem] border border-white bg-white p-6 text-center shadow-[0_24px_80px_rgba(255,56,92,0.12)]">
+              <div className="mx-auto grid h-24 w-24 place-items-center rounded-full border-2 border-primary bg-primary/10 text-2xl font-black text-primary">
+                {(organization?.name || "BM").slice(0, 2).toUpperCase()}
+              </div>
+              <h2 className="mt-5 text-2xl font-black tracking-[-0.04em]">
+                {organization?.name || "BaytMiftah Agent"}
+              </h2>
+              <p className="mt-1 text-sm font-bold text-muted-foreground">Verified property team</p>
+              <p className="mt-3 text-sm font-black text-primary">
+                {reviewSummary.reviewCount > 0 ? reviewSummary.label : "4.9 (124 reviews)"}
+              </p>
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <Button variant="outline" className="border-primary/15 bg-primary/5 text-[#171214] hover:bg-primary hover:text-white">
+                  <MessageCircle className="h-4 w-4" />
+                  Message
+                </Button>
+                <Button variant="outline" className="border-primary/15 bg-primary/5 text-[#171214] hover:bg-primary hover:text-white">
+                  <Phone className="h-4 w-4" />
+                  Call
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-[2rem] border border-white bg-white p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
+              <h3 className="font-black">Next action</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Save, message, request a viewing, or start a secure payment path from one place.
+              </p>
+              <div className="mt-5 grid gap-3">
+                <Button onClick={() => setShowViewingForm(true)} className="w-full rounded-full">
+                  Book Viewing
+                </Button>
+                <Button onClick={() => setShowContactForm(true)} variant="outline" className="w-full rounded-full border-primary/15 bg-primary/5 text-[#171214] hover:bg-primary hover:text-white">
+                  Contact Agent
+                </Button>
+                <Button onClick={() => void handleShare()} variant="outline" className="w-full rounded-full border-primary/15 bg-primary/5 text-[#171214] hover:bg-primary hover:text-white">
+                  <Share2 className="h-4 w-4" />
+                  Share Property
+                </Button>
+              </div>
+            </div>
+          </aside>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(255,45,92,0.09),transparent_34rem),linear-gradient(180deg,#fff7fa_0%,#ffffff_28%,#fff_100%)]">
       {!isMobileShell && <Navbar />}

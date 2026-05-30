@@ -114,7 +114,7 @@ export function Projects() {
                           </div>
                           <div className="flex items-center gap-2 flex-wrap justify-end">
                             {reputation && (
-                              <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700">
+                              <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                                 {reputation.reviewScore}/100 reputation
                               </span>
                             )}

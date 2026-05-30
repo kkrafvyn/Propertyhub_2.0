@@ -10,7 +10,7 @@ function getStatusIcon(status: string) {
 }
 
 function getStatusClasses(status: string) {
-  if (status === "passed") return "text-emerald-700";
+  if (status === "passed") return "text-primary";
   if (status === "warning") return "text-amber-700";
   if (status === "failed") return "text-red-700";
   return "text-muted-foreground";

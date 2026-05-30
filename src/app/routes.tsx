@@ -3,10 +3,24 @@ import { Root } from "./components/Root";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { NotFound } from "./pages/NotFound";
 
+function RouteHydrateFallback() {
+  return (
+    <div className="min-h-screen bg-[var(--color-bg)] px-6 py-10 text-[var(--color-text)]">
+      <div className="mx-auto flex min-h-[60vh] max-w-sm flex-col items-center justify-center text-center">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[24px] bg-[var(--color-accent)] text-lg font-black text-white shadow-[var(--shadow-pink)]">
+          B
+        </div>
+        <p className="text-sm font-semibold text-[var(--color-muted)]">Preparing BaytMiftah</p>
+      </div>
+    </div>
+  );
+}
+
 export const router = createBrowserRouter([
   {
     path: "/",
     Component: Root,
+    HydrateFallback: RouteHydrateFallback,
     children: [
       {
         index: true,

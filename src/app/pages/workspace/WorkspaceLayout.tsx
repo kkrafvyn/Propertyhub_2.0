@@ -640,7 +640,7 @@ export function WorkspaceLayout() {
     const healthCards = [
       { label: "Active Listings", value: formatCompactNumber(listedCount), href: `${workspaceBasePath}/listings`, tone: "from-primary to-rose-400" },
       { label: "New Leads", value: formatCompactNumber(activeLeadsCount), href: `${workspaceBasePath}/leads`, tone: "from-[#ff5a7a] to-primary" },
-      { label: "Today's Viewings", value: formatCompactNumber(todayViewingsCount), href: `${workspaceBasePath}/calendar`, tone: "from-emerald-700 to-teal-500" },
+      { label: "Today's Viewings", value: formatCompactNumber(todayViewingsCount), href: `${workspaceBasePath}/calendar`, tone: "from-primary to-rose-400" },
       { label: "Pending Approvals", value: formatCompactNumber(pendingApprovalsCount), href: `${workspaceBasePath}/documents`, tone: "from-amber-600 to-orange-400" },
       { label: "Closed Deals", value: formatCompactNumber(closedDealsCount), href: `${workspaceBasePath}/payments`, tone: "from-primary to-rose-400" },
       { label: "Revenue", value: currencyFormatter.format(collectedRevenue), href: `${workspaceBasePath}/finance`, tone: "from-zinc-700 to-zinc-500" },
@@ -1274,7 +1274,7 @@ export function WorkspaceLayout() {
                       <h2 className="truncate text-sm font-semibold text-slate-950">{name}</h2>
                       <p className="text-xs capitalize text-slate-500">{member.role || "agent"} - Active today</p>
                     </div>
-                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                    <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
                       92
                     </span>
                   </div>
@@ -1874,7 +1874,7 @@ export function WorkspaceLayout() {
                         <strong className="truncate text-sm text-slate-950">{name}</strong>
                         <span className="block text-xs capitalize text-slate-500">{role} - Active today</span>
                       </span>
-                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">92</span>
+                      <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">92</span>
                     </span>
                     <span className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
                       <span className="rounded-2xl bg-slate-50 p-3">Leads</span>

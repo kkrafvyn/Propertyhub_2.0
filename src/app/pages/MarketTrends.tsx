@@ -216,7 +216,7 @@ export function MarketTrends() {
                             {formatDemandLabel(trend.demandLevel)}
                           </span>
                           {trend.newListings > 0 && (
-                            <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">
+                            <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
                               {trend.newListings} new listings
                             </span>
                           )}

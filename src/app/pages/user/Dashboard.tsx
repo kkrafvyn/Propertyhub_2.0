@@ -3,8 +3,10 @@ import { Link, useLocation, useNavigate } from "react-router";
 import {
   ArrowRightLeft,
   ArrowRight,
+  Bath,
   Bell,
   BarChart3,
+  BedDouble,
   Brain,
   Calculator,
   CalendarDays,
@@ -17,6 +19,7 @@ import {
   Heart,
   Home,
   KeyRound,
+  Landmark,
   Loader2,
   LogOut,
   Mail,
@@ -53,6 +56,7 @@ import {
 import { organizationService } from "../../../lib/organization.service";
 import { getPaymentGatewayLabel, paymentService } from "../../../lib/payment.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
+import { getPropertyCoverImage } from "../../../lib/property-media";
 import { savedSearchAlertService } from "../../../lib/saved-search-alert.service";
 import { savedPropertyService } from "../../../lib/savedproperty.service";
 import { smartAccessService } from "../../../lib/smart-access.service";
@@ -1025,35 +1029,53 @@ export function UserDashboard() {
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {items.map((item) => (
           <Link key={item.id} to={`/property/${item.listing?.id}`}>
-            <Card hover className="overflow-hidden h-full">
-              <div className="relative h-44">
+            <Card hover className="h-full overflow-hidden rounded-[2rem] border-white bg-white/90 shadow-[0_22px_70px_rgba(255,56,92,0.10)]">
+              <div className="relative h-64 overflow-hidden">
                 <img
-                  src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80"
+                  src={getPropertyCoverImage(item.listing?.property)}
                   alt={item.listing?.property?.address || "Saved property"}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <span className="absolute left-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-black text-white">
+                  {item.listing?.listing_type || "Listing"}
+                </span>
+                <span className="absolute right-4 top-4 grid h-12 w-12 place-items-center rounded-full bg-white/90 text-primary shadow-lg">
+                  <Heart className="h-6 w-6 fill-current" />
+                </span>
               </div>
               <div className="p-5">
-                <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="font-semibold">
+                    <p className="text-xl font-black text-primary">
+                      {formatPrice(item.listing?.price)}
+                      {item.listing?.listing_type === "rental" ? "/month" : ""}
+                    </p>
+                    <h3 className="mt-2 line-clamp-2 text-2xl font-black tracking-[-0.05em]">
                       {item.listing?.property?.address || "Saved property"}
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       {item.listing?.property?.city}, {item.listing?.property?.region}
                     </p>
                   </div>
-                  <Badge variant="outline" className="capitalize">
-                    {item.listing?.listing_type || "listing"}
-                  </Badge>
                 </div>
-                <p className="text-lg font-semibold text-primary">
-                  {formatPrice(item.listing?.price)}
-                  {item.listing?.listing_type === "rental" ? "/month" : ""}
-                </p>
+                <div className="flex flex-wrap gap-3 text-sm font-bold text-muted-foreground">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/5 px-3 py-2">
+                    <BedDouble className="h-4 w-4 text-primary" />
+                    {item.listing?.property?.bedrooms || 0}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/5 px-3 py-2">
+                    <Bath className="h-4 w-4 text-primary" />
+                    {item.listing?.property?.bathrooms || 0}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/5 px-3 py-2">
+                    <Landmark className="h-4 w-4 text-primary" />
+                    {item.listing?.property?.area_sqm || item.listing?.property?.square_feet || "Verified"}
+                  </span>
+                </div>
               </div>
             </Card>
           </Link>
@@ -2839,12 +2861,28 @@ export function UserDashboard() {
         ) : section === "support" ? (
           <SupportPanel organizationContacts={organizationContacts} dealCases={dealCases} />
         ) : section === "saved" ? (
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Saved Properties</h2>
-              <p className="text-muted-foreground mt-1">
-                Keep track of the listings you want to revisit.
-              </p>
+          <section className="space-y-8 rounded-[2rem] bg-gradient-to-b from-primary/5 to-white p-4 md:p-8">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-primary">
+                  <Heart className="h-3.5 w-3.5 fill-current" />
+                  Saved
+                </p>
+                <h2 className="text-4xl font-black tracking-[-0.07em] md:text-6xl">
+                  Saved Listings
+                </h2>
+                <p className="mt-3 max-w-2xl text-lg leading-8 text-muted-foreground">
+                  Your curated collection of verified properties. Compare your favorites and find
+                  your next sanctuary.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button variant="outline" className="rounded-full">Clear All</Button>
+                <Button className="rounded-full">
+                  <Share2 className="h-4 w-4" />
+                  Share List
+                </Button>
+              </div>
             </div>
             {renderSavedGrid(savedProperties)}
           </section>
