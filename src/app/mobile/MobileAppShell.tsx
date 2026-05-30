@@ -1627,14 +1627,6 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
             </div>
           </MobileHomeSection>
 
-          <MobileHomeSection title="Verified Agents" actionTo="/agencies">
-            <div className="mobile-luxe-agent-row">
-              {mobileAgentPreview.map((agent) => (
-                <MobileVerifiedAgentCard key={agent.name} agent={agent} />
-              ))}
-            </div>
-          </MobileHomeSection>
-
           <MobileHomeSection title="Featured Listings" actionTo="/search">
             <div className="mobile-luxe-listing-row">
               {loading && listings.length === 0 ? (
@@ -1650,10 +1642,10 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
             </div>
           </MobileHomeSection>
 
-          <MobileHomeSection title="Recently Viewed" actionTo="/app/saved">
-            <div className="mobile-luxe-recent-row">
-              {displayListings.slice(1, 5).map((listing, index) => (
-                <MobileDarkPropertyCard key={listing.id} listing={listing} index={index + 1} />
+          <MobileHomeSection title="Verified Agents" actionTo="/agencies">
+            <div className="mobile-luxe-agent-row">
+              {mobileAgentPreview.map((agent) => (
+                <MobileVerifiedAgentCard key={agent.name} agent={agent} />
               ))}
             </div>
           </MobileHomeSection>
@@ -1662,6 +1654,14 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
             <div className="mobile-luxe-agency-row">
               {displayAgencies.slice(0, 4).map((agency, index) => (
                 <MobileVerifiedAgencyCard key={agency.id} agency={agency} index={index} />
+              ))}
+            </div>
+          </MobileHomeSection>
+
+          <MobileHomeSection title="Recently Viewed" actionTo="/app/saved">
+            <div className="mobile-luxe-recent-row">
+              {displayListings.slice(1, 5).map((listing, index) => (
+                <MobileDarkPropertyCard key={listing.id} listing={listing} index={index + 1} />
               ))}
             </div>
           </MobileHomeSection>

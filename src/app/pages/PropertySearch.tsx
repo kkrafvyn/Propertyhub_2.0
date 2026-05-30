@@ -685,6 +685,35 @@ export function PropertySearch() {
             </form>
           </Card>
 
+          <section
+            aria-label="BaytMiftah discovery flow"
+            className="mb-6 rounded-[1.75rem] border border-primary/10 bg-white/85 p-4 shadow-sm backdrop-blur-xl"
+          >
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                  Fast buyer flow
+                </p>
+                <h2 className="mt-1 text-lg font-semibold text-foreground">
+                  Choose location and intent, then open a property to act.
+                </h2>
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
+                {["Choose", "Browse", "Open", "Act", "Track"].map((step, index) => (
+                  <span
+                    key={step}
+                    className="inline-flex min-w-max items-center gap-2 rounded-full border border-border bg-white px-3 py-2 text-xs font-semibold text-muted-foreground"
+                  >
+                    <span className="grid h-5 w-5 place-items-center rounded-full bg-primary text-[0.65rem] text-white">
+                      {index + 1}
+                    </span>
+                    {step}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             <div>
               <h1 className="text-3xl font-semibold mb-2">{resultsTitle}</h1>

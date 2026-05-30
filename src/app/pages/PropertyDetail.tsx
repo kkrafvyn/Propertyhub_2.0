@@ -727,6 +727,17 @@ export function PropertyDetail() {
     navigate("/app/buying-tools");
   };
 
+  const openProgressTracker = () => {
+    if (!user) {
+      toast.error("Log in to track viewings, messages, payments, and reviews.");
+      navigate("/login", { state: { from: currentPath } });
+      return;
+    }
+
+    trackListingEvent("buyer_progress_tracker_opened");
+    navigate("/app");
+  };
+
   const openViewingFlow = () => {
     setShowViewingForm(true);
     setShowOfferForm(false);
@@ -800,6 +811,34 @@ export function PropertyDetail() {
       icon: CreditCard,
       action: openPaymentFlow,
       tone: "soft",
+    },
+  ];
+
+  const buyerFlowSteps = [
+    {
+      label: "Choose",
+      detail: "Location and intent",
+      active: true,
+    },
+    {
+      label: "Browse",
+      detail: "Compare verified cards",
+      active: true,
+    },
+    {
+      label: "Act",
+      detail: "Save, message, view, or pay",
+      active: true,
+    },
+    {
+      label: "Track",
+      detail: "Follow progress in your account",
+      active: Boolean(user),
+    },
+    {
+      label: "Review",
+      detail: "Rate agency or property",
+      active: reviewSummary.reviewCount > 0,
     },
   ];
 
@@ -885,7 +924,7 @@ export function PropertyDetail() {
         console.error("Failed to create inquiry notification:", notificationError);
       }
 
-      toast.success("Your inquiry has been sent.");
+      toast.success("Your inquiry has been sent. Track replies in Messages.");
       setContactForm((current) => ({ ...current, message: "" }));
       setShowContactForm(false);
     } catch (error) {
@@ -998,7 +1037,7 @@ export function PropertyDetail() {
         console.error("Failed to create offer notification:", notificationError);
       }
 
-      toast.success("Offer submitted to the listing team.");
+      toast.success("Offer submitted. Track the deal from your dashboard.");
       setOfferForm((current) => ({
         ...current,
         buyerPhone: "",
@@ -1171,7 +1210,7 @@ export function PropertyDetail() {
         requestedDateTime: requestedDateTime.toISOString(),
       });
 
-      toast.success("Viewing request sent. The team can confirm it from their workspace.");
+      toast.success("Viewing request sent. Track confirmation in your dashboard.");
       setViewingForm((current) => ({
         ...current,
         contactPhone: "",
@@ -1264,7 +1303,7 @@ export function PropertyDetail() {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(255,45,92,0.09),transparent_34rem),linear-gradient(180deg,#fff7fa_0%,#ffffff_28%,#fff_100%)]">
       {!isMobileShell && <Navbar />}
 
-      <div className={isMobileShell ? "pt-4 pb-36 px-4 max-w-7xl mx-auto" : "pt-24 pb-12 px-4 max-w-7xl mx-auto"}>
+      <div className={isMobileShell ? "pt-4 pb-56 px-4 max-w-7xl mx-auto" : "pt-24 pb-32 px-4 max-w-7xl mx-auto"}>
         <div className="mb-6 overflow-hidden rounded-[2.25rem] border border-white/70 bg-white/80 shadow-2xl shadow-primary/10 ring-1 ring-black/[0.03] backdrop-blur-xl">
           <div className="grid h-[360px] grid-cols-1 gap-0 sm:h-[460px] md:h-[560px] md:grid-cols-4">
             <div className="relative h-full overflow-hidden md:col-span-3">
@@ -1419,6 +1458,49 @@ export function PropertyDetail() {
             </button>
           ))}
         </div>
+
+        <section
+          aria-label="BaytMiftah buyer flow"
+          className="mb-8 overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-4 shadow-xl shadow-primary/10 backdrop-blur-xl sm:p-5"
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                Buyer flow
+              </p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-foreground">
+                From discovery to review, keep every step inside BaytMiftah.
+              </h2>
+            </div>
+            <Button variant="outline" size="sm" className="rounded-full bg-white" onClick={openProgressTracker}>
+              Track Progress
+            </Button>
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-5">
+            {buyerFlowSteps.map((step, index) => (
+              <div
+                key={step.label}
+                className={`rounded-2xl border p-3 ${
+                  step.active
+                    ? "border-primary/15 bg-primary/5"
+                    : "border-border bg-white"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`grid h-7 w-7 place-items-center rounded-full text-xs font-bold ${
+                      step.active ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {index + 1}
+                  </span>
+                  <p className="text-sm font-semibold text-foreground">{step.label}</p>
+                </div>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{step.detail}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <div className="sticky top-3 z-30 mb-8 flex gap-2 overflow-x-auto rounded-full border border-white/80 bg-white/80 p-1 shadow-lg shadow-primary/10 backdrop-blur-xl lg:hidden">
           {detailAnchors.map(([href, label]) => (
@@ -3113,11 +3195,17 @@ export function PropertyDetail() {
         )}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-2 lg:hidden">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 rounded-[1.75rem] border border-white/80 bg-white/90 p-3 shadow-[0_-16px_42px_rgba(255,45,92,0.18)] backdrop-blur-xl">
-          <div className="min-w-0 flex-1">
+      <div
+        className={`fixed inset-x-0 z-50 px-3 pt-2 ${
+          isMobileShell
+            ? "bottom-[calc(5.75rem+env(safe-area-inset-bottom))] pb-2 lg:bottom-5"
+            : "bottom-5 pb-[env(safe-area-inset-bottom)]"
+        }`}
+      >
+        <div className="mx-auto flex max-w-5xl items-center gap-3 rounded-[1.75rem] border border-white/80 bg-white/92 p-2.5 shadow-[0_22px_70px_rgba(15,23,42,0.22)] ring-1 ring-black/5 backdrop-blur-2xl">
+          <div className="hidden min-w-0 flex-1 sm:block">
             <p className="truncate text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-              {listingTypeLabel}
+              Buyer action tray
             </p>
             <DiasporaPrice
               amount={Number(listing.price || 0)}
@@ -3132,17 +3220,57 @@ export function PropertyDetail() {
               size="sm"
             />
           </div>
-          <Button variant="outline" size="sm" className="rounded-2xl bg-white" onClick={openInquiryFlow}>
-            <MessageCircle className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            className="rounded-2xl px-4"
-            aria-label="Open primary property action from mobile bar"
-            onClick={openPrimaryAction}
-          >
-            {primaryActionLabel}
-          </Button>
+          <div className="grid flex-1 grid-cols-5 gap-1.5 sm:flex-none sm:grid-cols-5">
+            {[
+              {
+                label: "Save",
+                icon: Heart,
+                action: toggleSave,
+                active: isSaved,
+              },
+              {
+                label: "Message",
+                icon: MessageCircle,
+                action: openInquiryFlow,
+                active: showContactForm,
+              },
+              {
+                label: listing?.listing_type === "sale" ? "Offer" : "Viewing",
+                icon: listing?.listing_type === "sale" ? Shield : MapPin,
+                action: openPrimaryAction,
+                active: showViewingForm || showOfferForm,
+              },
+              {
+                label: "Pay",
+                icon: CreditCard,
+                action: openPaymentFlow,
+                active: showPaymentForm,
+              },
+              {
+                label: "Track",
+                icon: Clock3,
+                action: openProgressTracker,
+                active: false,
+              },
+            ].map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={item.action}
+                className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-2 text-[0.68rem] font-semibold transition hover:-translate-y-0.5 sm:min-w-[5.5rem] ${
+                  item.active
+                    ? "bg-primary text-white shadow-lg shadow-primary/20"
+                    : "bg-white text-muted-foreground hover:bg-primary/5 hover:text-primary"
+                }`}
+              >
+                <item.icon
+                  className={`h-4 w-4 ${item.label === "Save" && isSaved ? "fill-current" : ""}`}
+                  aria-hidden="true"
+                />
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

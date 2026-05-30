@@ -15,6 +15,8 @@ import {
   Bath,
   Ruler,
   Armchair,
+  CheckCircle2,
+  Wallet,
 } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { useState, useEffect } from "react";
@@ -178,6 +180,29 @@ const homeAgencyPreview = [
     initials: "UNG",
     detail: "Commercial and apartment experts",
     href: "/agencies",
+  },
+];
+
+const homeTrustIndicators = [
+  {
+    title: "Verified Properties",
+    detail: "Reviewed documents and active moderation.",
+    icon: Shield,
+  },
+  {
+    title: "Verified Agencies",
+    detail: "Approved teams with public reputation signals.",
+    icon: Building2,
+  },
+  {
+    title: "Secure Transactions",
+    detail: "Provider-neutral payments with audit trails.",
+    icon: Wallet,
+  },
+  {
+    title: "Fraud Protection",
+    detail: "Reports, risk checks, and human review.",
+    icon: CheckCircle2,
   },
 ];
 
@@ -544,7 +569,7 @@ export function Home() {
               </div>
 
               <div className="mt-5 flex items-center justify-between">
-                <h2 className="text-base font-semibold">Featured Properties</h2>
+                <h2 className="text-base font-semibold">Featured Listings</h2>
                 <Link to="/search" className="text-xs font-semibold text-primary">
                   See all
                 </Link>
@@ -592,31 +617,7 @@ export function Home() {
               </div>
 
               <div className="mt-5 flex items-center justify-between">
-                <h2 className="text-base font-semibold">Verified agencies</h2>
-                <Link to="/agencies" className="text-xs font-semibold text-primary">
-                  Browse
-                </Link>
-              </div>
-              <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0">
-                {homeAgencyPreview.map((agency) => (
-                  <Link
-                    key={agency.name}
-                    to={agency.href}
-                    className="grid min-h-[128px] min-w-[148px] place-items-center rounded-2xl border border-border bg-white p-4 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-xl md:min-w-0"
-                  >
-                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-sm font-bold text-primary">
-                      {agency.initials}
-                    </span>
-                    <div>
-                      <p className="mt-3 text-xs font-semibold text-foreground">{agency.name}</p>
-                      <p className="mt-1 text-[0.65rem] text-muted-foreground">{agency.detail}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-
-              <div className="mt-5 flex items-center justify-between">
-                <h2 className="text-base font-semibold">Meet Our Agents</h2>
+                <h2 className="text-base font-semibold">Verified Agents</h2>
                 <Link to="/agencies" className="text-xs font-semibold text-primary">
                   See all
                 </Link>
@@ -638,6 +639,30 @@ export function Home() {
                     <p className="mt-1 text-[0.65rem] font-semibold text-primary">
                       {agent.rating} ({agent.deals})
                     </p>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between">
+                <h2 className="text-base font-semibold">Verified Agencies</h2>
+                <Link to="/agencies" className="text-xs font-semibold text-primary">
+                  Browse
+                </Link>
+              </div>
+              <div className="-mx-4 mt-3 flex gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0">
+                {homeAgencyPreview.map((agency) => (
+                  <Link
+                    key={agency.name}
+                    to={agency.href}
+                    className="grid min-h-[128px] min-w-[148px] place-items-center rounded-2xl border border-border bg-white p-4 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-xl md:min-w-0"
+                  >
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-sm font-bold text-primary">
+                      {agency.initials}
+                    </span>
+                    <div>
+                      <p className="mt-3 text-xs font-semibold text-foreground">{agency.name}</p>
+                      <p className="mt-1 text-[0.65rem] text-muted-foreground">{agency.detail}</p>
+                    </div>
                   </Link>
                 ))}
               </div>
@@ -665,6 +690,24 @@ export function Home() {
                     </span>
                   </Link>
                 ))}
+              </div>
+
+              <div className="mt-7">
+                <h2 className="text-base font-semibold">Trust Built In</h2>
+                <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
+                  {homeTrustIndicators.map((item) => (
+                    <div
+                      key={item.title}
+                      className="rounded-3xl border border-border bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-xl md:p-5"
+                    >
+                      <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                        <item.icon className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                      <h3 className="mt-4 text-sm font-semibold text-foreground">{item.title}</h3>
+                      <p className="mt-2 text-[0.72rem] leading-relaxed text-muted-foreground">{item.detail}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
