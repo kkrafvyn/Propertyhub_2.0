@@ -26,17 +26,8 @@ import { toast } from "sonner";
 import { Button } from "../components/ui/Button";
 import { useAuth } from "../context/AuthContext";
 import { listingService } from "../../lib/listing.service";
-import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
 import { formatPropertyCategory } from "../../lib/property-category";
 import { getPropertyCoverImage } from "../../lib/property-media";
-
-const intentFilters = [
-  { label: "Rent", value: "rental", href: "/search?listingType=rental" },
-  { label: "Buy", value: "sale", href: "/search?listingType=sale" },
-  { label: "Lease", value: "lease", href: "/search?listingType=lease" },
-  { label: "Commercial", value: "commercial", href: "/search?propertyType=office" },
-  { label: "Land", value: "land", href: "/search?propertyType=land" },
-];
 
 const categories = [
   { label: "Homes", detail: "Family-ready", icon: HomeIcon, href: "/search?propertyType=house" },
@@ -205,7 +196,6 @@ export function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<"rental" | "sale" | "lease">("rental");
   const [featuredListings, setFeaturedListings] = useState<any[]>([]);
-  const listPropertyPath = `${WORKSPACE_ENTRY_PATH}?next=new`;
 
   useEffect(() => {
     const loadListings = async () => {
@@ -232,67 +222,9 @@ export function Home() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_10%_0%,rgba(255,56,92,0.12),transparent_32rem),linear-gradient(180deg,#fff7fa_0%,#ffffff_46%,#fff7fa_100%)] text-[#171214]">
-      <section className="mx-auto grid min-h-screen w-full max-w-[1480px] gap-6 px-4 py-4 md:grid-cols-[18rem_minmax(0,1fr)_22rem] md:px-6 lg:px-8">
-        <aside className="hidden rounded-[2rem] border border-white/80 bg-white/80 p-4 shadow-[0_20px_70px_rgba(255,56,92,0.10)] backdrop-blur-2xl md:sticky md:top-4 md:flex md:h-[calc(100vh-2rem)] md:flex-col">
-          <Link to="/" className="mb-8 flex items-center gap-3 px-2">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/25">
-              <HomeIcon className="h-5 w-5" />
-            </span>
-            <div>
-              <p className="text-lg font-black tracking-[-0.04em]">BaytMiftah</p>
-              <p className="text-xs font-semibold text-muted-foreground">Accra, Ghana</p>
-            </div>
-          </Link>
-
-          <div className="space-y-2">
-            {intentFilters.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => {
-                  if (item.value === "rental" || item.value === "sale" || item.value === "lease") {
-                    setSearchType(item.value);
-                  } else {
-                    navigate(item.href);
-                  }
-                }}
-                className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-bold transition ${
-                  searchType === item.value
-                    ? "bg-primary text-white shadow-lg shadow-primary/20"
-                    : "bg-white/70 text-[#171214] hover:bg-white"
-                }`}
-              >
-                {item.label}
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-8 rounded-[1.5rem] bg-[#171214] p-4 text-white">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/50">Agency tools</p>
-            <h3 className="mt-3 text-xl font-black tracking-[-0.04em]">List, assign, close.</h3>
-            <p className="mt-2 text-sm leading-6 text-white/65">
-              Open the workspace to manage listings, leads, viewings, and payments.
-            </p>
-            <Link to={listPropertyPath} className="mt-4 inline-flex w-full justify-center rounded-full bg-white px-4 py-3 text-sm font-black text-[#171214]">
-              List Property
-            </Link>
-          </div>
-
-          <div className="mt-auto space-y-2 border-t border-primary/10 pt-4">
-            <Link to={user ? "/app" : "/login"} className="flex items-center gap-3 rounded-2xl bg-white/70 px-4 py-3 text-sm font-bold">
-              <UserRound className="h-4 w-4 text-primary" />
-              {user ? "My Dashboard" : "Log in"}
-            </Link>
-            <Link to="/app/saved" className="flex items-center gap-3 rounded-2xl bg-white/70 px-4 py-3 text-sm font-bold">
-              <Heart className="h-4 w-4 text-primary" />
-              Saved
-            </Link>
-          </div>
-        </aside>
-
-        <div className="min-w-0 pb-28 md:pb-8">
-          <header className="sticky top-0 z-30 -mx-4 mb-5 border-b border-white/70 bg-[#fff7fa]/85 px-4 py-3 backdrop-blur-2xl md:static md:mx-0 md:border-none md:bg-transparent md:px-0 md:py-0">
+      <section className="mx-auto min-h-screen w-full max-w-7xl px-4 py-4 md:px-6 lg:px-8">
+        <div className="min-w-0 pb-28 md:pb-12">
+          <header className="sticky top-0 z-30 -mx-4 mb-6 border-b border-white/70 bg-[#fff7fa]/88 px-4 py-3 backdrop-blur-2xl md:static md:mx-0 md:border-none md:bg-transparent md:px-0 md:py-2">
             <div className="flex items-center justify-between gap-3 md:hidden">
               <Link to="/" className="flex items-center gap-2">
                 <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/25">
@@ -310,8 +242,17 @@ export function Home() {
               </div>
             </div>
 
-            <div className="hidden items-center gap-3 md:flex">
-              <div className="flex flex-1 items-center gap-3 rounded-[1.5rem] border border-white bg-white px-4 py-3 shadow-[0_16px_40px_rgba(255,56,92,0.08)]">
+            <div className="hidden items-center justify-between gap-5 md:flex">
+              <Link to="/" className="flex min-w-[15rem] items-center gap-3">
+                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/25">
+                  <HomeIcon className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground">Current location</p>
+                  <p className="text-lg font-black tracking-[-0.04em]">Accra, Ghana</p>
+                </div>
+              </Link>
+              <div className="flex max-w-2xl flex-1 items-center gap-3 rounded-[1.6rem] border border-white bg-white px-4 py-3 shadow-[0_16px_40px_rgba(255,56,92,0.08)]">
                 <MapPin className="h-5 w-5 text-primary" />
                 <input
                   value={searchQuery}
@@ -324,78 +265,23 @@ export function Home() {
                   Search
                 </button>
               </div>
-              <Link to="/search" className="grid h-12 w-12 place-items-center rounded-[1.25rem] bg-white shadow-sm">
+              <Link to="/search" className="grid h-12 w-12 place-items-center rounded-[1.25rem] bg-white shadow-sm" aria-label="Search filters">
                 <SlidersHorizontal className="h-5 w-5" />
               </Link>
-              <Link to={user ? "/app/notifications" : "/login"} className="grid h-12 w-12 place-items-center rounded-[1.25rem] bg-white shadow-sm">
+              <Link to={user ? "/app/notifications" : "/login"} className="grid h-12 w-12 place-items-center rounded-[1.25rem] bg-white shadow-sm" aria-label="Notifications">
                 <Bell className="h-5 w-5" />
               </Link>
             </div>
           </header>
 
-          <section className="overflow-hidden rounded-[2.25rem] bg-[#171214] p-5 text-white shadow-[0_30px_90px_rgba(23,18,20,0.20)] md:p-8">
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-end">
-              <div>
-                <p className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-white/70">
-                  Ghana property market
-                </p>
-                <h1 className="mt-5 max-w-3xl text-4xl font-black leading-[0.98] tracking-[-0.07em] md:text-6xl lg:text-7xl">
-                  Verified homes, offices, land, and agencies in one calm feed.
-                </h1>
-                <p className="mt-5 max-w-2xl text-base leading-7 text-white/65 md:text-lg">
-                  Browse like Bolt, transact like a trusted real estate operating system. Save, message, book viewings, and track deals without the chaos.
-                </p>
-                <div className="mt-7 flex flex-wrap gap-3">
-                  <Button size="lg" onClick={handleSearch}>Explore Properties</Button>
-                  <Link to={listPropertyPath}>
-                    <Button size="lg" variant="outline" className="border-white/35 bg-white/5 text-white hover:bg-white hover:text-[#171214]">
-                      List Property
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              <div className="rounded-[1.75rem] border border-white/10 bg-white/10 p-3 backdrop-blur-xl">
-                <img
-                  src={showcaseProperties[0]?.image || fallbackProperties[0].image}
-                  alt={showcaseProperties[0]?.title || "Featured property"}
-                  className="h-64 w-full rounded-[1.4rem] object-cover"
-                />
-                <div className="p-3">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1 text-xs font-black text-primary">
-                    <Shield className="h-3.5 w-3.5" />
-                    Verified Property
-                  </span>
-                  <h2 className="mt-3 text-2xl font-black tracking-[-0.05em]">{showcaseProperties[0]?.title}</h2>
-                  <p className="mt-1 text-sm text-white/60">{showcaseProperties[0]?.location}</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="mt-8">
-            <SectionHeader title="Explore categories" to="/search" />
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-              {categories.map((category) => (
-                <Link key={category.label} to={category.href} className="rounded-[1.6rem] border border-white bg-white p-4 shadow-[0_16px_50px_rgba(255,56,92,0.08)] transition hover:-translate-y-1 hover:shadow-[0_22px_70px_rgba(255,56,92,0.14)]">
-                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
-                    <category.icon className="h-6 w-6" />
-                  </span>
-                  <h3 className="mt-4 font-black tracking-[-0.03em]">{category.label}</h3>
-                  <p className="mt-1 text-xs font-semibold text-muted-foreground">{category.detail}</p>
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          <section className="mt-8">
+          <section>
             <SectionHeader title="Featured collections" to="/search" action="View all" />
-            <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
+            <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-3 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
               {featuredCollections.map((collection) => (
                 <Link
                   key={collection.title}
                   to={collection.href}
-                  className="group relative h-64 min-w-[260px] overflow-hidden rounded-[2rem] bg-[#171214] shadow-[0_22px_70px_rgba(23,18,20,0.16)] md:min-w-0"
+                  className="group relative h-64 min-w-[260px] overflow-hidden rounded-[2rem] bg-[#171214] shadow-[0_22px_70px_rgba(23,18,20,0.16)] md:h-72 md:min-w-0"
                 >
                   <img
                     src={collection.image}
@@ -438,14 +324,14 @@ export function Home() {
                 </Link>
               </div>
             </div>
-            <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {showcaseProperties.slice(0, 6).map((property) => (
                 <Link
                   key={property.id}
                   to={String(property.id).startsWith("showcase-") ? "/search" : `/property/${property.id}`}
                   className="group overflow-hidden rounded-[2rem] border border-white bg-white shadow-[0_20px_70px_rgba(255,56,92,0.10)] transition hover:-translate-y-1 hover:shadow-[0_28px_90px_rgba(255,56,92,0.16)]"
                 >
-                  <div className="relative h-56 overflow-hidden">
+                  <div className="relative h-64 overflow-hidden">
                     <img src={property.image} alt={property.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                     <span className="absolute left-4 top-4 rounded-full bg-primary/10 px-3 py-1 text-xs font-black text-primary">
@@ -472,6 +358,21 @@ export function Home() {
                       <span className="rounded-full bg-primary/5 px-3 py-2"><Bath className="mr-1 inline h-3.5 w-3.5" />{property.baths}</span>
                     </div>
                   </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-8">
+            <SectionHeader title="Explore categories" to="/search" />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+              {categories.map((category) => (
+                <Link key={category.label} to={category.href} className="rounded-[1.6rem] border border-white bg-white p-4 shadow-[0_16px_50px_rgba(255,56,92,0.08)] transition hover:-translate-y-1 hover:shadow-[0_22px_70px_rgba(255,56,92,0.14)]">
+                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+                    <category.icon className="h-6 w-6" />
+                  </span>
+                  <h3 className="mt-4 font-black tracking-[-0.03em]">{category.label}</h3>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">{category.detail}</p>
                 </Link>
               ))}
             </div>
@@ -565,35 +466,6 @@ export function Home() {
           </section>
         </div>
 
-        <aside className="hidden md:sticky md:top-4 md:flex md:h-[calc(100vh-2rem)] md:flex-col md:gap-4">
-          <div className="rounded-[2rem] bg-primary p-5 text-white shadow-[0_24px_80px_rgba(255,56,92,0.30)]">
-            <p className="text-sm font-bold text-white/75">Your next step</p>
-            <h2 className="mt-2 text-3xl font-black tracking-[-0.06em]">Save, view, or message.</h2>
-            <p className="mt-3 text-sm leading-6 text-white/75">
-              Open a property, then use the sticky tray to save, message, request viewing, or start payment.
-            </p>
-            <Link to="/search" className="mt-5 inline-flex w-full justify-center rounded-full bg-white px-4 py-3 text-sm font-black text-primary">
-              Start browsing
-            </Link>
-          </div>
-
-          <div className="rounded-[2rem] border border-white bg-white p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
-            <h3 className="font-black tracking-[-0.03em]">Marketplace pulse</h3>
-            <div className="mt-4 space-y-3">
-              {[
-                ["Active listings", "500+"],
-                ["Verified agencies", "50+"],
-                ["Payment lanes", "3"],
-                ["IoT-ready roadmap", "On"],
-              ].map(([label, value]) => (
-                <div key={label} className="flex items-center justify-between rounded-2xl bg-primary/5 px-4 py-3">
-                  <span className="text-sm font-bold text-muted-foreground">{label}</span>
-                  <span className="font-black text-primary">{value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
       </section>
 
       <nav className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 z-50 grid w-[calc(100%-2rem)] max-w-[420px] -translate-x-1/2 grid-cols-4 rounded-full border border-white/80 bg-white/92 px-3 py-2 shadow-[0_20px_70px_rgba(23,18,20,0.22)] backdrop-blur-2xl md:hidden">
