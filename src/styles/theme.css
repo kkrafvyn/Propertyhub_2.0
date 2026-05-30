@@ -2,23 +2,23 @@
 
 :root {
   --font-size: 16px;
-  --background: #ffffff;
-  --foreground: #222222;
+  --background: #fff7fa;
+  --foreground: #191919;
   --card: #ffffff;
-  --card-foreground: #222222;
+  --card-foreground: #191919;
   --popover: #ffffff;
-  --popover-foreground: #222222;
+  --popover-foreground: #191919;
   --primary: #FF385C;
   --primary-foreground: #ffffff;
-  --secondary: #F7F7F7;
-  --secondary-foreground: #222222;
-  --muted: #F7F7F7;
-  --muted-foreground: #717171;
+  --secondary: #fff0f4;
+  --secondary-foreground: #191919;
+  --muted: #fff0f4;
+  --muted-foreground: #6f6570;
   --accent: #00A699;
   --accent-foreground: #ffffff;
   --destructive: #C13515;
   --destructive-foreground: #ffffff;
-  --border: #DDDDDD;
+  --border: #f1dbe2;
   --input: transparent;
   --input-background: #ffffff;
   --switch-background: #cbced4;
@@ -31,9 +31,9 @@
   --chart-4: #722ED1;
   --chart-5: #FF7875;
   --radius: 0.75rem;
-  --sidebar: #F7F7F7;
-  --sidebar-foreground: #222222;
-  --sidebar-primary: #222222;
+  --sidebar: #fff7fa;
+  --sidebar-foreground: #191919;
+  --sidebar-primary: #191919;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #ffffff;
   --sidebar-accent-foreground: #222222;
@@ -150,6 +150,9 @@
   body {
     @apply bg-background text-foreground;
     min-width: 0;
+    background:
+      radial-gradient(circle at 8% 0%, rgba(255, 56, 92, 0.10), transparent 28rem),
+      linear-gradient(180deg, #fff7fa 0%, #ffffff 42%, #fff7fa 100%);
   }
 
   :where(main, section, article, aside, nav, header, footer, div, form) {

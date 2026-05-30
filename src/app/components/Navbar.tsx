@@ -38,13 +38,13 @@ export function Navbar({ transparent = false }: NavbarProps) {
     "PH";
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${transparent ? "bg-transparent" : "bg-white border-b border-border shadow-sm"}`}>
+    <nav className={`fixed left-0 right-0 top-0 z-50 px-3 py-3 transition-all duration-300 ${transparent ? "bg-transparent" : "bg-transparent"}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-20 min-w-0 items-center justify-between gap-3">
+        <div className="flex h-16 min-w-0 items-center justify-between gap-3 rounded-[1.75rem] border border-white/80 bg-white/88 px-4 shadow-[0_18px_50px_rgba(15,23,42,0.10)] ring-1 ring-black/[0.03] backdrop-blur-2xl">
           <div className="flex min-w-0 items-center gap-4 lg:gap-8">
             {/* Logo */}
             <Link to="/" className="flex min-w-0 items-center gap-2">
-              <div className="w-10 h-10 flex-shrink-0 bg-primary rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 flex-shrink-0 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                   <polyline points="9 22 9 12 15 12 15 22" />
@@ -60,7 +60,7 @@ export function Navbar({ transparent = false }: NavbarProps) {
               <div className="relative">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-foreground transition-colors hover:bg-secondary hover:text-primary"
+                  className="inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                   aria-haspopup="menu"
                   aria-expanded={publicMenuOpen}
                   onClick={() => setPublicMenuOpen((open) => !open)}
@@ -80,7 +80,7 @@ export function Navbar({ transparent = false }: NavbarProps) {
                 {publicMenuOpen && (
                   <div
                     role="menu"
-                    className="absolute left-0 top-full mt-3 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border bg-white p-2 shadow-xl"
+                    className="absolute left-0 top-full mt-3 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-[1.5rem] border border-white/80 bg-white/95 p-2 shadow-[0_24px_70px_rgba(15,23,42,0.16)] backdrop-blur-xl"
                   >
                     {publicMenuItems.map((item) => (
                       <Link
@@ -105,7 +105,7 @@ export function Navbar({ transparent = false }: NavbarProps) {
           {/* Right Actions */}
           <div className="hidden flex-shrink-0 items-center gap-4 md:flex">
             <button
-              className="p-2 hover:bg-secondary rounded-full transition-colors"
+            className="p-2 hover:bg-secondary rounded-full transition-colors"
               type="button"
               aria-label="Saved properties"
               title="Saved properties"
@@ -147,7 +147,7 @@ export function Navbar({ transparent = false }: NavbarProps) {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 hover:bg-secondary rounded-lg transition-colors"
+            className="md:hidden p-2 hover:bg-secondary rounded-full transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             type="button"
             aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
@@ -162,7 +162,7 @@ export function Navbar({ transparent = false }: NavbarProps) {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="max-h-[calc(100dvh-5rem)] overflow-y-auto border-t border-border bg-white md:hidden">
+        <div className="mx-3 mt-2 max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-[1.75rem] border border-white/80 bg-white/95 shadow-[0_24px_70px_rgba(15,23,42,0.16)] backdrop-blur-xl md:hidden">
           <div id="mobile-navigation-menu" className="space-y-4 px-4 py-4">
             <div className="rounded-2xl border border-border bg-secondary/40 p-2">
               <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

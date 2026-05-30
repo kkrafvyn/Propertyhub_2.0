@@ -8,22 +8,22 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const baseStyles =
-  "inline-flex items-center justify-center gap-2 rounded-lg transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed";
+  "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed";
 
 const variants = {
-  default: "bg-primary text-primary-foreground hover:opacity-90 shadow-sm",
-  primary: "bg-primary text-primary-foreground hover:opacity-90 shadow-sm",
-  secondary: "bg-secondary text-secondary-foreground hover:bg-muted",
+  default: "bg-primary text-primary-foreground shadow-[0_14px_32px_rgba(255,56,92,0.20)] hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(255,56,92,0.26)]",
+  primary: "bg-primary text-primary-foreground shadow-[0_14px_32px_rgba(255,56,92,0.20)] hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(255,56,92,0.26)]",
+  secondary: "bg-secondary text-secondary-foreground hover:bg-primary/10",
   ghost: "hover:bg-secondary text-foreground",
-  outline: "border-2 border-border hover:bg-secondary text-foreground",
+  outline: "border border-border bg-white/88 text-foreground shadow-sm hover:-translate-y-0.5 hover:border-primary/25 hover:bg-primary/5 hover:text-primary",
 };
 
 const sizes = {
   default: "px-5 py-2.5",
-  sm: "px-3 py-1.5 text-sm",
+  sm: "px-4 py-2 text-sm",
   md: "px-5 py-2.5",
-  lg: "px-6 py-3.5 text-lg",
-  icon: "h-9 w-9 p-0",
+  lg: "px-6 py-3.5 text-base",
+  icon: "h-10 w-10 p-0",
 };
 
 export function buttonVariants({

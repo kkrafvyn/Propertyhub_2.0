@@ -296,7 +296,7 @@ export function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <section className="relative min-h-[100svh] overflow-hidden bg-[#090d17] text-white">
+      <section className="relative min-h-[100svh] overflow-hidden bg-[radial-gradient(circle_at_0%_0%,rgba(255,56,92,0.13),transparent_34rem),linear-gradient(180deg,#fff7fa_0%,#ffffff_100%)] text-foreground">
         {heroPropertySlides.map((slide, index) => (
           <motion.img
             key={slide.title}
@@ -308,13 +308,12 @@ export function Home() {
               scale: index === activeHeroIndex ? 1 : 1.04,
             }}
             transition={{ duration: 0.9, ease: "easeOut" }}
-            className="absolute inset-0 h-full w-full object-cover"
+            className="hidden"
           />
         ))}
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(4,8,17,0.72)_0%,rgba(6,9,16,0.36)_34%,rgba(5,8,14,0.42)_54%,rgba(5,8,14,0.96)_100%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(255,43,92,0.22),transparent_22%),linear-gradient(90deg,rgba(3,7,14,0.78),rgba(3,7,14,0.22)_52%,rgba(3,7,14,0.72))]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_12%,rgba(255,56,92,0.08),transparent_28rem)]" />
 
-        <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-7xl flex-col px-5 pb-8 pt-5 sm:px-8 lg:px-10">
+        <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-7xl flex-col px-5 pb-8 pt-24 sm:px-8 lg:px-10">
           <header className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/30">
@@ -325,14 +324,14 @@ export function Home() {
             <div className="flex items-center gap-2">
               <Link
                 to="/login"
-                className="hidden rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20 sm:inline-flex"
+                className="hidden rounded-full border border-primary/15 bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-primary/5 hover:text-primary sm:inline-flex"
               >
                 Log In
               </Link>
               <div className="relative">
                 <button
                   type="button"
-                  className="rounded-full p-2 text-white/90 transition hover:bg-white/10"
+                  className="rounded-full bg-white p-2 text-foreground shadow-sm transition hover:bg-primary/5 hover:text-primary"
                   aria-label={heroMenuOpen ? "Close navigation menu" : "Open navigation menu"}
                   title={heroMenuOpen ? "Close navigation menu" : "Open navigation menu"}
                   aria-expanded={heroMenuOpen}
@@ -341,13 +340,13 @@ export function Home() {
                   <Menu className="h-6 w-6" />
                 </button>
                 {heroMenuOpen && (
-                  <div className="absolute right-0 top-full mt-3 w-56 overflow-hidden rounded-3xl border border-white/15 bg-[#101522]/95 p-2 text-white shadow-2xl shadow-black/40 backdrop-blur-xl">
+                  <div className="absolute right-0 top-full mt-3 w-56 overflow-hidden rounded-3xl border border-white/80 bg-white/95 p-2 text-foreground shadow-2xl shadow-primary/10 backdrop-blur-xl">
                     {heroMenuItems.map((item) => (
                       <Link
                         key={item.label}
                         to={item.to}
                         onClick={() => setHeroMenuOpen(false)}
-                        className="block rounded-2xl px-4 py-3 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+                        className="block rounded-2xl px-4 py-3 text-sm font-semibold text-muted-foreground transition hover:bg-primary/5 hover:text-primary"
                       >
                         {item.label}
                       </Link>
@@ -442,7 +441,7 @@ export function Home() {
               transition={{ duration: 0.55, ease: "easeOut" }}
               className="max-w-2xl"
             >
-              <p className="mb-5 flex items-center gap-2 text-xs font-semibold text-white/80 sm:text-sm">
+              <p className="mb-5 flex items-center gap-2 text-xs font-semibold text-muted-foreground sm:text-sm">
                 <span className="h-0.5 w-4 rounded-full bg-primary" />
                 <span>
                   {activeHeroSlide.eyebrow.split("Best Spaces")[0]}
@@ -454,7 +453,7 @@ export function Home() {
               <h1 className="max-w-xl text-4xl font-semibold leading-[1.08] tracking-[-0.05em] sm:text-6xl lg:text-7xl">
                 {activeHeroSlide.title}
               </h1>
-              <p className="mt-5 max-w-lg text-base leading-7 text-white/78 sm:text-lg">
+              <p className="mt-5 max-w-lg text-base leading-7 text-muted-foreground sm:text-lg">
                 {activeHeroSlide.description}
               </p>
 
@@ -464,14 +463,14 @@ export function Home() {
                   { icon: MapPin, label: "Smart", detail: "Location Signals" },
                   { icon: HomeIcon, label: "Secure", detail: "& Trusted" },
                 ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-2 rounded-2xl bg-black/20 p-2 backdrop-blur-sm">
+                  <div key={item.label} className="flex items-center gap-2 rounded-2xl border border-white/80 bg-white/85 p-2 shadow-sm backdrop-blur-sm">
                     <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/25">
                       <item.icon className="h-4 w-4" />
                     </span>
-                    <span className="min-w-0 text-[0.64rem] font-semibold leading-tight text-white sm:text-xs">
+                    <span className="min-w-0 text-[0.64rem] font-semibold leading-tight text-foreground sm:text-xs">
                       {item.label}
                       <br />
-                      <span className="text-white/70">{item.detail}</span>
+                      <span className="text-muted-foreground">{item.detail}</span>
                     </span>
                   </div>
                 ))}
@@ -487,7 +486,7 @@ export function Home() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="w-full rounded-full border-white/25 bg-white/10 px-7 text-white hover:bg-white/20 sm:w-auto"
+                    className="w-full rounded-full px-7 sm:w-auto"
                   >
                     List Property
                   </Button>
