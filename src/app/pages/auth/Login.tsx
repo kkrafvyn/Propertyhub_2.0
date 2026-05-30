@@ -40,6 +40,9 @@ export function Login() {
     const next = encodeURIComponent(redirectTo);
     return buildPublicAppUrl(`/login?next=${next}`);
   }, [redirectTo]);
+  const googleOAuthRedirectUrl = useMemo(() => {
+    return buildPublicAppUrl("/login?next=%2F");
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +61,10 @@ export function Login() {
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
     try {
       setOauthLoadingProvider(provider);
-      await signInWithOAuth(provider, oauthRedirectUrl);
+      await signInWithOAuth(
+        provider,
+        provider === "google" ? googleOAuthRedirectUrl : oauthRedirectUrl
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Social sign-in failed");
       setOauthLoadingProvider(null);

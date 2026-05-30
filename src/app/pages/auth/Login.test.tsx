@@ -38,6 +38,10 @@ function renderLogin(initialEntry = "/login?next=%2Fworkspace%3Fnext%3Dnew") {
   const router = createMemoryRouter(
     [
       {
+        path: "/",
+        element: <div>Home Page</div>,
+      },
+      {
         path: "/login",
         element: <Login />,
       },
@@ -79,7 +83,7 @@ describe("Login", () => {
     });
   });
 
-  it("starts Google OAuth with the intended redirect target", async () => {
+  it("starts Google OAuth with the home redirect target", async () => {
     const signInWithOAuth = vi.fn().mockResolvedValue(undefined);
     useAuthMock.mockReturnValue(createAuthState({ signInWithOAuth }) as any);
 
@@ -91,7 +95,7 @@ describe("Login", () => {
     await waitFor(() => {
       expect(signInWithOAuth).toHaveBeenCalledWith(
         "google",
-        "https://baytmiftah-krafvyn.vercel.app/login?next=%2Fworkspace%3Fnext%3Dnew"
+        "https://baytmiftah-krafvyn.vercel.app/login?next=%2F"
       );
     });
   });
@@ -128,6 +132,25 @@ describe("Login", () => {
 
     await waitFor(() => {
       expect(router.state.location.pathname).toBe("/app");
+    });
+  });
+
+  it("redirects Google OAuth callbacks to the home page", async () => {
+    useAuthMock.mockReturnValue(
+      createAuthState({
+        user: {
+          id: "user-1",
+          email: "buyer@example.com",
+          app_metadata: { provider: "google" },
+          user_metadata: {},
+        },
+      }) as any
+    );
+
+    const router = renderLogin("/login?next=%2F");
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/");
     });
   });
 
