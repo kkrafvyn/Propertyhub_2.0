@@ -84,6 +84,14 @@ const mobileHomeCategories = [
   { label: "Lands", count: "200+", icon: MapPin, href: "/search?propertyType=land" },
 ];
 
+const homeIntentFilters = [
+  { label: "Rent", value: "rental", href: "/search?listingType=rental" },
+  { label: "Buy", value: "sale", href: "/search?listingType=sale" },
+  { label: "Short Stay", value: "short-stay", href: "/search?q=short%20stay" },
+  { label: "Land", value: "land", href: "/search?propertyType=land" },
+  { label: "Commercial", value: "commercial", href: "/search?propertyType=office" },
+];
+
 const fallbackShowcaseProperties = [
   {
     id: "showcase-1",
@@ -350,7 +358,7 @@ export function Home() {
             </div>
           </header>
 
-          <div className="flex flex-1 items-center py-10">
+          <div className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[minmax(0,0.88fr)_minmax(420px,0.72fr)]">
             <motion.div
               key={activeHeroSlide.title}
               initial={{ opacity: 0, y: 24 }}
@@ -411,6 +419,127 @@ export function Home() {
               </div>
             </motion.div>
 
+            <aside className="hidden rounded-[2.25rem] border border-white/25 bg-white/92 p-4 text-foreground shadow-[0_28px_90px_rgba(0,0,0,0.30)] backdrop-blur-2xl lg:block">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <MapPin className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                      Search area
+                    </p>
+                    <h2 className="text-xl font-semibold tracking-[-0.04em]">Accra, Ghana</h2>
+                  </div>
+                </div>
+                <Link
+                  to="/search"
+                  className="flex h-11 w-11 items-center justify-center rounded-2xl border border-border bg-white text-foreground shadow-sm transition hover:border-primary/30 hover:text-primary"
+                  aria-label="Open search filters"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                </Link>
+              </div>
+
+              <div className="mt-4 flex items-center gap-3 rounded-2xl border border-border bg-white px-4 py-3 shadow-sm">
+                <Search className="h-4 w-4 text-primary" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onKeyDown={(event) => event.key === "Enter" && handleSearch()}
+                  placeholder="Search by location, property, or agent"
+                  className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  aria-label="Search by location, property, or agent"
+                />
+                <button
+                  type="button"
+                  onClick={handleSearch}
+                  className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/20"
+                >
+                  Search
+                </button>
+              </div>
+
+              <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+                {homeIntentFilters.map((item) =>
+                  item.value === "rental" || item.value === "sale" ? (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => setSearchType(item.value as "rental" | "sale")}
+                      className={`min-w-max rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                        searchType === item.value
+                          ? "border-primary bg-primary text-white shadow-lg shadow-primary/20"
+                          : "border-border bg-white text-foreground hover:border-primary/30"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ) : (
+                    <Link
+                      key={item.value}
+                      to={item.href}
+                      className="min-w-max rounded-full border border-border bg-white px-4 py-2 text-xs font-semibold text-foreground transition hover:border-primary/30 hover:text-primary"
+                    >
+                      {item.label}
+                    </Link>
+                  )
+                )}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Categories</h3>
+                <Link to="/search" className="text-xs font-semibold text-primary">
+                  See all
+                </Link>
+              </div>
+              <div className="mt-3 grid grid-cols-5 gap-2">
+                {mobileHomeCategories.map((category) => (
+                  <Link
+                    key={`hero-${category.label}`}
+                    to={category.href}
+                    className="rounded-2xl border border-primary/10 bg-primary/5 p-3 text-center transition hover:-translate-y-0.5 hover:bg-primary/10"
+                  >
+                    <category.icon className="mx-auto h-5 w-5 text-primary" />
+                    <p className="mt-2 truncate text-[0.67rem] font-semibold">{category.label}</p>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Featured near you</h3>
+                <Link to="/search" className="text-xs font-semibold text-primary">
+                  Browse
+                </Link>
+              </div>
+              <div className="mt-3 grid gap-3">
+                {mobileShowcaseProperties.slice(0, 2).map((property) => (
+                  <Link
+                    key={`hero-card-${property.id}`}
+                    to={String(property.id).startsWith("showcase-") ? "/search" : `/property/${property.id}`}
+                    className="group grid grid-cols-[110px_minmax(0,1fr)] gap-3 overflow-hidden rounded-3xl border border-border bg-white p-2 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl"
+                  >
+                    <img
+                      src={property.image}
+                      alt={property.title}
+                      className="h-28 w-full rounded-2xl object-cover"
+                    />
+                    <div className="min-w-0 py-1 pr-2">
+                      <span className="inline-flex rounded-full bg-emerald-50 px-2 py-1 text-[0.65rem] font-bold text-emerald-700">
+                        Verified
+                      </span>
+                      <p className="mt-2 truncate text-sm font-semibold">{property.title}</p>
+                      <p className="mt-1 truncate text-xs text-muted-foreground">{property.location || "Ghana"}</p>
+                      <p className="mt-2 text-sm font-bold text-foreground">
+                        {property.price}
+                        <span className="text-xs font-semibold text-muted-foreground"> {property.period}</span>
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </aside>
           </div>
         </div>
       </section>
@@ -495,57 +624,74 @@ export function Home() {
         <div className="mx-auto max-w-7xl">
           <div className="relative mx-auto min-h-[100svh] w-full overflow-hidden bg-transparent md:min-h-0">
             <div className="px-0 pb-32 pt-0 md:pb-0">
-              <div className="flex items-center gap-3">
-                <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-border bg-white px-4 py-3 shadow-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    onKeyDown={(event) => event.key === "Enter" && handleSearch()}
-                    placeholder="Search location, address or neighborhood"
-                    className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
-                    aria-label="Search location, address or neighborhood"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSearch}
-                    className="text-foreground"
-                    aria-label="Search"
-                    title="Search"
+              <div className="rounded-[2rem] border border-white/80 bg-white/85 p-4 shadow-[0_18px_60px_rgba(255,45,92,0.10)] backdrop-blur-xl md:p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                      <MapPin className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        Search area
+                      </p>
+                      <h2 className="text-xl font-semibold tracking-[-0.04em] md:text-2xl">
+                        Accra, Ghana
+                      </h2>
+                    </div>
+                  </div>
+                  <Link
+                    to="/search"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white"
                   >
-                    <Search className="h-4 w-4" />
-                  </button>
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Filters
+                  </Link>
                 </div>
-                <Link
-                  to="/search"
-                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-border bg-white shadow-sm"
-                  aria-label="Advanced filters"
-                  title="Advanced filters"
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                </Link>
-              </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-3">
-                {[
-                  ["rental", "Rent"],
-                  ["sale", "Buy"],
-                  ["lease", "Lease"],
-                ].map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setSearchType(value as "rental" | "sale" | "lease")}
-                    className={`rounded-2xl border px-4 py-3 text-xs font-semibold transition ${
-                      searchType === value
-                        ? "border-primary bg-primary text-white shadow-lg shadow-primary/20"
-                        : "border-border bg-white text-foreground"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+                <div className="mt-4 flex flex-col gap-3 md:flex-row">
+                  <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-border bg-white px-4 py-3 shadow-sm">
+                    <Search className="h-4 w-4 text-primary" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      onKeyDown={(event) => event.key === "Enter" && handleSearch()}
+                      placeholder="Search by location, property, or agent"
+                      className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                      aria-label="Search by location, property, or agent"
+                    />
+                  </div>
+                  <Button type="button" onClick={handleSearch} className="rounded-2xl px-6">
+                    Search
+                  </Button>
+                </div>
+
+                <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+                  {homeIntentFilters.map((item) =>
+                    item.value === "rental" || item.value === "sale" ? (
+                      <button
+                        key={item.value}
+                        type="button"
+                        onClick={() => setSearchType(item.value as "rental" | "sale")}
+                        className={`min-w-max rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                          searchType === item.value
+                            ? "border-primary bg-primary text-white shadow-lg shadow-primary/20"
+                            : "border-border bg-white text-foreground hover:border-primary/30"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ) : (
+                      <Link
+                        key={item.value}
+                        to={item.href}
+                        className="min-w-max rounded-full border border-border bg-white px-4 py-2 text-xs font-semibold text-foreground transition hover:border-primary/30 hover:text-primary"
+                      >
+                        {item.label}
+                      </Link>
+                    )
+                  )}
+                </div>
               </div>
 
               <div className="mt-6 flex items-center justify-between">

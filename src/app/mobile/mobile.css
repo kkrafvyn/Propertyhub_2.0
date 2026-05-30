@@ -976,9 +976,118 @@ button.mobile-toolbar-button {
   font-weight: 800;
 }
 
+.mobile-bolt-discovery {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 14px;
+  box-shadow: 0 18px 48px rgba(255, 45, 92, 0.12);
+  backdrop-filter: blur(20px) saturate(160%);
+}
+
+.mobile-bolt-location {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.mobile-bolt-location > span,
+.mobile-bolt-location > a {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 16px;
+  background: #fff3f6;
+  color: #ff2d5c;
+  text-decoration: none;
+}
+
+.mobile-bolt-location svg {
+  width: 18px;
+  height: 18px;
+}
+
+.mobile-bolt-location small,
+.mobile-bolt-search span {
+  color: var(--mobile-muted);
+  font-size: 0.74rem;
+  font-weight: 680;
+}
+
+.mobile-bolt-location strong {
+  display: block;
+  color: var(--mobile-text);
+  font-size: 1rem;
+  font-weight: 820;
+  letter-spacing: -0.03em;
+}
+
+.mobile-bolt-search {
+  display: flex;
+  min-height: 50px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 0 14px;
+  color: var(--mobile-text);
+  text-decoration: none;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.06);
+}
+
+.mobile-bolt-search svg {
+  width: 18px;
+  height: 18px;
+  color: #ff2d5c;
+}
+
+.mobile-bolt-search span {
+  font-size: 0.82rem;
+}
+
+.mobile-bolt-intents {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  gap: 9px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.mobile-bolt-intents::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-bolt-intents a {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 0 15px;
+  color: var(--mobile-text);
+  font-size: 0.78rem;
+  font-weight: 790;
+  text-decoration: none;
+}
+
+.mobile-bolt-intents a.is-active {
+  border-color: transparent;
+  background: #ff2d5c;
+  color: #ffffff;
+  box-shadow: 0 12px 26px rgba(255, 45, 92, 0.22);
+}
+
 .mobile-luxe-hero {
   position: relative;
-  min-height: 380px;
+  min-height: 320px;
   overflow: hidden;
   border-radius: 34px;
   background: #141820;

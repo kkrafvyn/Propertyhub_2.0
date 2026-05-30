@@ -32,6 +32,7 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
+  SlidersHorizontal,
   Star,
   UserRound,
   Wallet,
@@ -81,6 +82,14 @@ const mobileHomeCategories: Array<{
   { label: "Offices", detail: "80+ spaces", icon: BriefcaseBusiness },
   { label: "Luxury", detail: "Private picks", icon: Crown },
   { label: "Student Housing", detail: "Near campus", icon: GraduationCap },
+];
+
+const mobileHomeIntentFilters = [
+  { label: "Rent", to: "/search?listingType=rental" },
+  { label: "Buy", to: "/search?listingType=sale" },
+  { label: "Short Stay", to: "/search?q=short%20stay" },
+  { label: "Land", to: "/search?propertyType=land" },
+  { label: "Commercial", to: "/search?propertyType=office" },
 ];
 
 const mobileTrustIndicators: Array<{
@@ -1603,6 +1612,40 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
             </Link>
           </header>
 
+          <section className="mobile-bolt-discovery" aria-label="Property discovery">
+            <div className="mobile-bolt-location">
+              <span>
+                <MapPin aria-hidden="true" />
+              </span>
+              <div>
+                <small>Current search area</small>
+                <strong>Accra, Ghana</strong>
+              </div>
+              <Link to="/search" aria-label="Open search filters">
+                <SlidersHorizontal aria-hidden="true" />
+              </Link>
+            </div>
+            <Link to="/search" className="mobile-bolt-search" aria-label="Search by location, property, or agent">
+              <Search aria-hidden="true" />
+              <span>Search by location, property, or agent</span>
+            </Link>
+            <div className="mobile-bolt-intents" aria-label="Quick property intents">
+              {mobileHomeIntentFilters.map((item, index) => (
+                <Link key={item.label} to={item.to} className={index === 0 ? "is-active" : undefined}>
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <MobileHomeSection title="Property Categories" actionTo="/search">
+            <div className="mobile-luxe-category-row">
+              {mobileHomeCategories.map((category) => (
+                <MobileCategoryCard key={category.label} {...category} />
+              ))}
+            </div>
+          </MobileHomeSection>
+
           <section className="mobile-luxe-hero" aria-label="Featured verified property">
             <img src={heroImage} alt={getMobileListingTitle(heroListing)} />
             <div className="mobile-luxe-hero-overlay" />
@@ -1618,14 +1661,6 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
               </Link>
             </div>
           </section>
-
-          <MobileHomeSection title="Property Categories" actionTo="/search">
-            <div className="mobile-luxe-category-row">
-              {mobileHomeCategories.map((category) => (
-                <MobileCategoryCard key={category.label} {...category} />
-              ))}
-            </div>
-          </MobileHomeSection>
 
           <MobileHomeSection title="Featured Listings" actionTo="/search">
             <div className="mobile-luxe-listing-row">
