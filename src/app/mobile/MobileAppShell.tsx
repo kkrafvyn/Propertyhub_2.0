@@ -2,6 +2,7 @@ import { type ReactNode, type TouchEvent, useEffect, useRef, useState } from "re
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import {
   ArrowLeft,
+  ArrowRight,
   Bell,
   Bath,
   BedDouble,
@@ -53,6 +54,7 @@ import {
   Star,
   Trophy,
   TrendingUp,
+  Users,
   UserRound,
   Wallet,
   X,
@@ -247,6 +249,136 @@ const mobileSearchResidences = [
     area: "10,200 sqft",
     image:
       "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=900&q=85&auto=format&fit=crop",
+  },
+];
+
+const mobileExploreCategories = [
+  {
+    label: "Apartments",
+    count: "1,240 verified",
+    icon: Building2,
+  },
+  {
+    label: "Family Homes",
+    count: "845 verified",
+    icon: Home,
+  },
+  {
+    label: "Offices",
+    count: "312 verified",
+    icon: Building,
+  },
+  {
+    label: "Luxury",
+    count: "128 verified",
+    icon: Star,
+  },
+];
+
+const mobileExploreFeaturedListings = [
+  {
+    id: "east-legon-luxury-suites",
+    title: "East Legon Luxury Suites",
+    price: "$2,400",
+    suffix: "/month",
+    beds: 3,
+    baths: 3,
+    area: "2,400",
+    image:
+      "https://images.unsplash.com/photo-1600210491369-e753d80a41f3?w=900&q=90&auto=format&fit=crop",
+  },
+  {
+    id: "labone-family-villa",
+    title: "The Residence at Labone",
+    price: "$1,950",
+    suffix: "/month",
+    beds: 5,
+    baths: 4,
+    area: "3,100",
+    image:
+      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=900&q=90&auto=format&fit=crop",
+  },
+  {
+    id: "cantonments-office-loft",
+    title: "Cantonments Office Loft",
+    price: "$3,800",
+    suffix: "/month",
+    beds: 0,
+    baths: 2,
+    area: "1,850",
+    image:
+      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&q=90&auto=format&fit=crop",
+  },
+  {
+    id: "airport-residential-townhome",
+    title: "Airport Residential Townhome",
+    price: "$4,600",
+    suffix: "/month",
+    beds: 4,
+    baths: 4,
+    area: "3,450",
+    image:
+      "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=900&q=90&auto=format&fit=crop",
+  },
+];
+
+const mobileExploreAgents = [
+  {
+    name: "Kwame Mensah",
+    agency: "Accra Prime Realty",
+    rating: "4.9",
+    listings: "142",
+    image:
+      "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=220&q=90&auto=format&fit=crop",
+  },
+  {
+    name: "Akosua Addo",
+    agency: "Coastal Realty GH",
+    rating: "5.0",
+    listings: "118",
+    image:
+      "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=220&q=90&auto=format&fit=crop",
+  },
+  {
+    name: "Kojo Asare",
+    agency: "Airport Homes GH",
+    rating: "4.8",
+    listings: "96",
+    image:
+      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=220&q=90&auto=format&fit=crop",
+  },
+  {
+    name: "Ama Ofori",
+    agency: "Cantonments Collective",
+    rating: "4.9",
+    listings: "104",
+    image:
+      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=220&q=90&auto=format&fit=crop",
+  },
+];
+
+const mobileExploreAgencies = [
+  { name: "Accra Prime Homes", initials: "APH" },
+  { name: "Coastal Realty GH", initials: "CRG" },
+  { name: "Airport Homes GH", initials: "AHG" },
+  { name: "Cantonments Collective", initials: "CC" },
+];
+
+const mobileExploreRecentlyViewed = [
+  {
+    image:
+      "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=420&q=90&auto=format&fit=crop",
+    title: "Kitchen suite",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=420&q=90&auto=format&fit=crop",
+    title: "Sunset lounge",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?w=420&q=90&auto=format&fit=crop",
+    title: "Gallery hall",
   },
 ];
 
@@ -2452,6 +2584,7 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
 
   const activeTab = getCurrentMobileTab(location.pathname, searchParams);
   const isSearchRoute = location.pathname.startsWith("/search");
+  const isPropertyDetailRoute = location.pathname.startsWith("/property/");
   const isGuideRoute = location.pathname.startsWith("/guides");
   const isPrivacyRoute = location.pathname.startsWith("/legal/privacy");
   const isValuationRoute = location.pathname.startsWith("/valuation");
@@ -2501,10 +2634,11 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
     (searchParams.get("next") === "team" ||
       searchParams.get("next") === "operations" ||
       location.pathname.includes("/team"));
-  const isHomeRoute = location.pathname === "/";
+  const isHomeRoute = location.pathname === "/" || location.pathname === "/app";
   const isMobileTabShellRoute =
     isHomeRoute ||
     isSearchRoute ||
+    isPropertyDetailRoute ||
     isGuideRoute ||
     isPrivacyRoute ||
     isValuationRoute ||
@@ -2541,7 +2675,10 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
   const savedBadgeCount = saved.length + savedAlerts.length;
   const accountBadgeCount = organizations.length;
   const hasMobileTabBar =
-    Boolean(user) && !isPrivacyRoute && !isAlertsRoute && !isPublicVerificationRoute;
+    (Boolean(user) || activeTab === "home") &&
+    !isPrivacyRoute &&
+    !isAlertsRoute &&
+    !isPublicVerificationRoute;
   const profileName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "BaytMiftah user";
   const profileEmail = user?.email || "Add an email";
   const profilePhone = user?.phone || user?.user_metadata?.phone || "Add phone";
@@ -5450,132 +5587,316 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
       );
     }
 
-    if (activeTab === "home") {
-      const displayListings = homeListings.length > 0 ? homeListings : mobileFallbackListings;
-      const heroListing = featuredListing || displayListings[0];
-      const heroImage = getMobileListingImage(heroListing, mobileFallbackListings[0].image);
-      const displayAgencies = agencies.length > 0 ? agencies : mobileFallbackAgencies;
-      const profileHref = user ? getTabHref("profile") : "/login";
-      const notificationsHref = user ? getTabHref("messages") : "/login";
-
+    if (isPropertyDetailRoute) {
       return (
-        <section className="mobile-luxe-home" aria-label="BaytMiftah home">
-          <header className="mobile-luxe-header">
-            <Link to="/" className="mobile-luxe-brand" aria-label="BaytMiftah home">
+        <section className="mobile-property-luxe-detail" aria-label="Property detail">
+          <div className="mobile-property-luxe-hero">
+            <img
+              src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=90&auto=format&fit=crop"
+              alt="The Glass House"
+            />
+            <div className="mobile-property-luxe-hero-scrim" />
+            <Link to="/" className="mobile-property-luxe-icon is-left" aria-label="Back to explore">
+              <ArrowLeft aria-hidden="true" />
+            </Link>
+            <Link to="/app/saved" className="mobile-property-luxe-icon is-right" aria-label="Save property">
+              <Heart className="is-filled" aria-hidden="true" />
+            </Link>
+          </div>
+
+          <div className="mobile-property-luxe-panel">
+            <section className="mobile-property-luxe-title">
+              <h1>The Glass House</h1>
+              <p>
+                <MapPin aria-hidden="true" />
+                Malibu Highlands, CA
+              </p>
+              <strong>$12,450,000</strong>
+              <div>
+                <span>Booked tours (12)</span>
+                <span>Fully furnished</span>
+              </div>
+            </section>
+
+            <section className="mobile-property-luxe-stats" aria-label="Property facts">
+              <div>
+                <BedDouble aria-hidden="true" />
+                <strong>5</strong>
+                <span>Beds</span>
+              </div>
+              <div>
+                <Bath aria-hidden="true" />
+                <strong>7</strong>
+                <span>Baths</span>
+              </div>
+              <div>
+                <Ruler aria-hidden="true" />
+                <strong>8.4k</strong>
+                <span>Sqft</span>
+              </div>
+            </section>
+
+            <section className="mobile-property-luxe-section">
+              <h2>Description</h2>
+              <p>
+                A masterwork of contemporary architecture curated by BaytMiftah, The Glass
+                House redefines coastal living with its seamless integration of obsidian
+                steel, ultra-clear glass, and raw stone. Suspended above the Pacific, this
+                residence offers 270-degree panoramic views through structural glass
+                curtains. Every detail has been curated for the discerning collector of
+                experiences, from the custom champagne-lit wine cellar to the automated
+                gallery-grade lighting throughout.
+              </p>
+            </section>
+
+            <section className="mobile-property-luxe-section">
+              <h2>Amenities</h2>
+              <div className="mobile-property-luxe-amenities">
+                {[
+                  { label: "Infinity Edge Pool", icon: Leaf },
+                  { label: "Private Cinema", icon: Camera },
+                  { label: "Wellness Center", icon: Zap },
+                  { label: "Wine Obsidian Room", icon: Trophy },
+                  { label: "Full Smart Automation", icon: BriefcaseBusiness },
+                  { label: "6-Car Gallery", icon: Home },
+                ].map(({ label, icon: Icon }) => (
+                  <div key={label}>
+                    <span>
+                      <Icon aria-hidden="true" />
+                    </span>
+                    <strong>{label}</strong>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="mobile-property-luxe-agent" aria-label="Listing agent">
+              <img
+                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=220&q=90&auto=format&fit=crop"
+                alt="Julian Sterling"
+              />
+              <h2>Julian Sterling</h2>
+              <p>BaytMiftah Senior Portfolio Director</p>
               <span>
-                <Home aria-hidden="true" />
+                <Star aria-hidden="true" />
+                4.9 (124 reviews)
               </span>
-              <strong>BaytMiftah</strong>
+              <div>
+                <button type="button" aria-label="Message Julian Sterling">
+                  <MessageCircle aria-hidden="true" />
+                </button>
+                <button type="button" aria-label="Call Julian Sterling">
+                  <Phone aria-hidden="true" />
+                </button>
+              </div>
+            </section>
+
+            <div className="mobile-property-luxe-cta">
+              <button type="button">
+                <MessageCircle aria-hidden="true" />
+                Contact Agent
+              </button>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    if (activeTab === "home") {
+      return (
+        <section className="mobile-explore-home mobile-ghana-home" aria-label="BaytMiftah home">
+          <header className="mobile-explore-topbar">
+            <Link to={getTabHref("profile")} className="mobile-ghana-avatar" aria-label="Open profile">
+              <img
+                src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&q=90&auto=format&fit=crop"
+                alt=""
+              />
             </Link>
-            <Link to={notificationsHref} className="mobile-luxe-icon-button" aria-label="Open notifications">
+            <strong>BaytMiftah</strong>
+            <Link to={user ? getTabHref("messages") : "/login"} className="mobile-ghana-bell" aria-label="Open notifications">
               <Bell aria-hidden="true" />
-              {unreadNotifications > 0 ? <span aria-label={`${unreadNotifications} unread`} /> : null}
-            </Link>
-            <Link to={profileHref} className="mobile-luxe-icon-button" aria-label="Open profile menu">
-              {user ? <strong>{initials}</strong> : <Menu aria-hidden="true" />}
             </Link>
           </header>
 
-          <section className="mobile-bolt-discovery" aria-label="Property discovery">
-            <div className="mobile-bolt-location">
-              <span>
-                <MapPin aria-hidden="true" />
-              </span>
-              <div>
-                <small>Current search area</small>
-                <strong>Accra, Ghana</strong>
-              </div>
-              <Link to="/search" aria-label="Open search filters">
-                <SlidersHorizontal aria-hidden="true" />
+          <div className="mobile-ghana-search-label">
+            <MapPin aria-hidden="true" />
+            <span>Current Search Area</span>
+          </div>
+
+          <Link to="/search?q=Cantonments%2C%20Accra" className="mobile-explore-search" aria-label="Search Cantonments, Accra">
+            <Search aria-hidden="true" />
+            <span>Cantonments, Accra</span>
+          </Link>
+
+          <div className="mobile-ghana-intents" aria-label="Property intent filters">
+            {["Rent", "Buy", "Short Stay", "Land"].map((intent, index) => (
+              <Link key={intent} to={`/search?q=${encodeURIComponent(intent)}`} className={index === 0 ? "is-active" : undefined}>
+                {intent}
               </Link>
+            ))}
+          </div>
+
+          <section className="mobile-ghana-categories" aria-label="Property categories">
+            {mobileExploreCategories.map(({ label, count, icon: Icon }) => (
+              <Link key={label} to={`/search?category=${encodeURIComponent(label)}`}>
+                <span>
+                  <Icon aria-hidden="true" />
+                </span>
+                <strong>{label}</strong>
+                <small>{count}</small>
+              </Link>
+            ))}
+          </section>
+
+          <section className="mobile-ghana-hero" aria-label="Verified property">
+            <img
+              src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1000&q=90&auto=format&fit=crop"
+              alt="45 Liberation Road"
+            />
+            <div className="mobile-ghana-hero-scrim" />
+            <div className="mobile-ghana-hero-badge">
+              <ShieldCheck aria-hidden="true" />
+              Verified Property
             </div>
-            <Link to="/search" className="mobile-bolt-search" aria-label="Search by location, property, or agent">
-              <Search aria-hidden="true" />
-              <span>Search by location, property, or agent</span>
-            </Link>
-            <div className="mobile-bolt-intents" aria-label="Quick property intents">
-              {mobileHomeIntentFilters.map((item, index) => (
-                <Link key={item.label} to={item.to} className={index === 0 ? "is-active" : undefined}>
-                  {item.label}
+            <div className="mobile-ghana-hero-copy">
+              <h1>45 Liberation Road</h1>
+              <p>
+                <MapPin aria-hidden="true" />
+                Airport Residential, Accra
+              </p>
+              <div>
+                <strong>GHC<br />14,500,000</strong>
+                <Link to="/property/demo-airport-residential">
+                  Explore<br />Property
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          <section className="mobile-explore-section mobile-explore-latest">
+            <div className="mobile-explore-section-header">
+              <h2>Featured Listings</h2>
+              <Link to="/search">View All</Link>
+            </div>
+            <div className="mobile-ghana-featured-row">
+              {mobileExploreFeaturedListings.map((listing) => (
+                <Link
+                  key={listing.id}
+                  to={`/property/${listing.id}`}
+                  className="mobile-ghana-featured-card"
+                >
+                  <div className="mobile-ghana-featured-image">
+                    <img src={listing.image} alt={listing.title} />
+                    <button type="button" aria-label={`Save ${listing.title}`} onClick={(event) => event.preventDefault()}>
+                      <Heart aria-hidden="true" />
+                    </button>
+                    <span>Verified</span>
+                  </div>
+                  <div className="mobile-ghana-featured-body">
+                    <div>
+                      <strong>{listing.price}</strong>
+                      <span>{listing.suffix}</span>
+                    </div>
+                    <h3>{listing.title}</h3>
+                    <div className="mobile-ghana-mini-stats">
+                      <span>
+                        <BedDouble aria-hidden="true" />
+                        {listing.beds}
+                      </span>
+                      <span>
+                        <Bath aria-hidden="true" />
+                        {listing.baths}
+                      </span>
+                      <span>
+                        <Ruler aria-hidden="true" />
+                        {listing.area}
+                      </span>
+                    </div>
+                  </div>
                 </Link>
               ))}
             </div>
           </section>
 
-          <MobileHomeSection title="Property Categories" actionTo="/search">
-            <div className="mobile-luxe-category-row">
-              {mobileHomeCategories.map((category) => (
-                <MobileCategoryCard key={category.label} {...category} />
-              ))}
+          <section className="mobile-explore-section">
+            <div className="mobile-explore-section-header">
+              <h2>Verified Agents</h2>
             </div>
-          </MobileHomeSection>
-
-          <section className="mobile-luxe-hero" aria-label="Featured verified property">
-            <img src={heroImage} alt={getMobileListingTitle(heroListing)} />
-            <div className="mobile-luxe-hero-overlay" />
-            <div className="mobile-luxe-hero-content">
-              <span className="mobile-luxe-verified-badge">
-                <ShieldCheck aria-hidden="true" />
-                Verified Property
-              </span>
-              <h1>{getMobileListingTitle(heroListing)}</h1>
-              <p>{getMobileListingLocation(heroListing)}</p>
-              <Link to={`/property/${heroListing.id}`} className="mobile-luxe-hero-cta">
-                Explore Property
-              </Link>
+            <div className="mobile-ghana-agent-row">
+              {mobileExploreAgents.map((agent) => (
+                <article key={agent.name} className="mobile-ghana-agent-card">
+                  <div className="mobile-ghana-agent-photo">
+                    <img src={agent.image} alt={agent.name} />
+                    <span>
+                      <ShieldCheck aria-hidden="true" />
+                    </span>
+                  </div>
+                  <strong>{agent.name}</strong>
+                  <p>{agent.agency}</p>
+                  <div>
+                    <span>
+                      <b>{agent.rating}</b>
+                      Rating
+                    </span>
+                    <span>
+                      <b>{agent.listings}</b>
+                      Listings
+                    </span>
+                  </div>
+                  <Link to="/app/messages">Message</Link>
+                </article>
+              ))}
             </div>
           </section>
 
-          <MobileHomeSection title="Featured Listings" actionTo="/search">
-            <div className="mobile-luxe-listing-row">
-              {loading && listings.length === 0 ? (
-                <>
-                  <MobilePropertySkeleton />
-                  <MobilePropertySkeleton />
-                </>
-              ) : (
-                displayListings.slice(0, 4).map((listing, index) => (
-                  <MobilePremiumListingCard key={listing.id} listing={listing} index={index} />
-                ))
-              )}
+          <section className="mobile-explore-section">
+            <div className="mobile-explore-section-header">
+              <h2>Verified Agencies</h2>
             </div>
-          </MobileHomeSection>
-
-          <MobileHomeSection title="Verified Agents" actionTo="/agencies">
-            <div className="mobile-luxe-agent-row">
-              {mobileAgentPreview.map((agent) => (
-                <MobileVerifiedAgentCard key={agent.name} agent={agent} />
+            <div className="mobile-ghana-agency-row">
+              {mobileExploreAgencies.map((agency) => (
+                <Link key={agency.name} to="/agencies" className="mobile-ghana-agency-card">
+                  <span>
+                    <Building aria-hidden="true" />
+                  </span>
+                  <strong>{agency.name}</strong>
+                </Link>
               ))}
             </div>
-          </MobileHomeSection>
+          </section>
 
-          <MobileHomeSection title="Verified Agencies" actionTo="/agencies">
-            <div className="mobile-luxe-agency-row">
-              {displayAgencies.slice(0, 4).map((agency, index) => (
-                <MobileVerifiedAgencyCard key={agency.id} agency={agency} index={index} />
+          <section className="mobile-explore-section">
+            <h2 className="mobile-ghana-small-title">Recently Viewed</h2>
+            <div className="mobile-ghana-recent-row">
+              {mobileExploreRecentlyViewed.map((item) => (
+                <Link key={item.title} to="/property/demo-airport-residential">
+                  <img src={item.image} alt={item.title} />
+                </Link>
               ))}
             </div>
-          </MobileHomeSection>
+          </section>
 
-          <MobileHomeSection title="Recently Viewed" actionTo="/app/saved">
-            <div className="mobile-luxe-recent-row">
-              {displayListings.slice(1, 5).map((listing, index) => (
-                <MobileDarkPropertyCard key={listing.id} listing={listing} index={index + 1} />
+          <section className="mobile-ghana-trust">
+            <h2>Trust Built In</h2>
+            <p>Every listing, every agent, fully vetted.</p>
+            <div>
+              {[
+                { label: "Verified Properties", icon: ShieldCheck },
+                { label: "Verified Agencies", icon: Building },
+                { label: "Secure Transactions", icon: Shield },
+                { label: "Fraud Protection", icon: CheckCircle2 },
+              ].map(({ label, icon: Icon }) => (
+                <span key={label}>
+                  <Icon aria-hidden="true" />
+                  {label}
+                </span>
               ))}
             </div>
-          </MobileHomeSection>
-
-          <MobileHomeSection title="Trust Built In">
-            <div className="mobile-luxe-trust-grid">
-              {mobileTrustIndicators.map((item) => (
-                <MobileTrustIndicatorCard key={item.title} {...item} />
-              ))}
-            </div>
-          </MobileHomeSection>
+          </section>
         </section>
       );
     }
-
     if (activeTab === "messages") {
       if (!user) {
         return (
@@ -6245,6 +6566,39 @@ export function MobileAppShell({ children }: { children?: ReactNode }) {
           <MobileInvestmentNav />
         ) : hasMobileTabBar && activeTab === "insights" ? (
           <MobileInsightsNav />
+        ) : hasMobileTabBar && activeTab === "home" ? (
+          <nav className="mobile-tab-bar mobile-ghana-home-nav" aria-label="BaytMiftah home navigation">
+            <MobileTabButton
+              active
+              icon={Home}
+              label="Home"
+              to={getTabHref("home")}
+            />
+            <MobileTabButton
+              active={false}
+              icon={Building2}
+              label="Listings"
+              to="/search"
+            />
+            <MobileTabButton
+              active={false}
+              icon={Landmark}
+              label="Invest"
+              to="/app/payments"
+            />
+            <MobileTabButton
+              active={false}
+              icon={Users}
+              label="Leads"
+              to="/app/messages"
+            />
+            <MobileTabButton
+              active={false}
+              icon={Menu}
+              label="Menu"
+              to="/app/settings"
+            />
+          </nav>
         ) : hasMobileTabBar ? (
           <nav className="mobile-tab-bar" aria-label="Primary mobile navigation">
             <MobileTabButton
