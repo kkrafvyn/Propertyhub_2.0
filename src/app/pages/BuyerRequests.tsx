@@ -24,6 +24,8 @@ function formatMoney(amount?: number | null) {
   }).format(amount);
 }
 
+const buyerRequestFlow = ["Describe need", "Match agents", "Receive leads", "Message", "Track"];
+
 export function BuyerRequests() {
   const { isMobileShell } = useMobileShell();
   const { user } = useAuth();
@@ -138,20 +140,34 @@ export function BuyerRequests() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_12%_0%,rgba(255,56,92,0.13),transparent_34rem),linear-gradient(180deg,#fff7fa_0%,#ffffff_44%,#fff7fa_100%)] text-[#171214]">
       {!isMobileShell && <Navbar />}
 
       <div className={isMobileShell ? "pt-4 pb-32 px-4" : "pt-24 pb-16 px-4"}>
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 lg:grid-cols-[0.95fr_1.05fr]">
           <section>
-            <Card className="rounded-[2rem] bg-[linear-gradient(135deg,rgba(255,255,255,1),rgba(246,244,238,1))] p-8">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/80">
+            <Card className="rounded-[2.5rem] border-white bg-white/88 p-8 shadow-[0_28px_90px_rgba(255,56,92,0.12)] backdrop-blur-xl">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">
                 Buyer Request Board
               </p>
-              <h1 className="mt-4 text-4xl font-semibold tracking-tight">
+              <h1 className="mt-5 text-4xl font-black leading-[0.98] tracking-[-0.07em] md:text-5xl">
                 Let buyers describe what they need before they ever see a listing.
               </h1>
-              <p className="mt-5 text-lg text-muted-foreground">{helpCopy}</p>
+              <p className="mt-5 text-base font-semibold leading-7 text-muted-foreground md:text-lg">{helpCopy}</p>
+
+              <div className="mt-7 flex flex-wrap gap-2">
+                {buyerRequestFlow.map((step, index) => (
+                  <span
+                    key={step}
+                    className="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3 py-2 text-xs font-black text-muted-foreground"
+                  >
+                    <span className="grid h-5 w-5 place-items-center rounded-full bg-primary text-[0.65rem] text-white">
+                      {index + 1}
+                    </span>
+                    {step}
+                  </span>
+                ))}
+              </div>
 
               <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
                 <Input

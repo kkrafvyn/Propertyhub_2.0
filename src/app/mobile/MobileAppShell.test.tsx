@@ -269,6 +269,16 @@ describe("MobileAppShell", () => {
     expect(screen.queryByLabelText(/BaytMiftah is opening/i)).not.toBeInTheDocument();
   });
 
+  it("does not show the launch splash in the native mobile shell", () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+    isNativeMock.mockReturnValue(true);
+
+    renderMobileShell();
+
+    expect(screen.queryByLabelText(/BaytMiftah is opening/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Securely entering portal...")).not.toBeInTheDocument();
+  });
+
   it("shows native first-run onboarding with legal acceptance before the app", async () => {
     useAuthMock.mockReturnValue(
       createAuthState({
@@ -339,13 +349,14 @@ describe("MobileAppShell", () => {
     expect(screen.queryByText(/quick paths/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /projects/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /public reviews/i })).not.toBeInTheDocument();
-    expect(within(tabBar).getByRole("link", { name: /^search$/i })).toHaveAttribute("href", "/search");
+    expect(within(tabBar).getByRole("link", { name: /^explore$/i })).toHaveAttribute("href", "/");
 
     await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
 
-    expect(screen.getByRole("link", { name: /home valuation/i })).toHaveAttribute(
+    expect(screen.queryByRole("link", { name: /home valuation/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /my listings/i })).toHaveAttribute(
       "href",
-      "/valuation"
+      "/workspace?next=listings"
     );
   });
 
@@ -443,38 +454,29 @@ describe("MobileAppShell", () => {
     expect(within(tabBar).getByText("1")).toBeInTheDocument();
 
     await user.click(within(tabBar).getByRole("link", { name: /^messages$/i }));
-    expect(screen.getByRole("link", { name: /deal rooms/i })).toHaveAttribute("href", "/app/deals");
-    expect(screen.getByRole("link", { name: /viewings/i })).toHaveAttribute("href", "/app/viewings");
-    expect(
-      screen
-        .getAllByRole("link", { name: /messages/i })
-        .some((link) => link.getAttribute("href") === "/app/messages")
-    ).toBe(true);
-    expect(screen.getByRole("link", { name: /payments/i })).toHaveAttribute("href", "/app/payments");
+    expect(await screen.findByText("Julian Sterling")).toBeInTheDocument();
+    expect(screen.getByText("The Glass House • Malibu")).toBeInTheDocument();
+    expect(screen.queryByText(/activity shortcuts/i)).not.toBeInTheDocument();
 
     await user.click(within(tabBar).getByRole("link", { name: /^saved$/i }));
     expect(screen.getAllByRole("link", { name: /compare saved listings/i })[0]).toHaveAttribute(
       "href",
       "/app/compare"
     );
-    expect(screen.getByRole("link", { name: /buying guide/i })).toHaveAttribute(
-      "href",
-      "/app/buying-tools"
-    );
+    expect(screen.queryByRole("link", { name: /buying guide/i })).not.toBeInTheDocument();
 
     await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
-    expect(screen.getByRole("link", { name: /referrals/i })).toHaveAttribute(
-      "href",
-      "/app/referrals"
-    );
+    expect(screen.queryByRole("link", { name: /referrals/i })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /support/i })).toHaveAttribute("href", "/app/support");
-    expect(screen.getByRole("link", { name: /prime estates/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /my listings/i })).toHaveAttribute(
       "href",
-      "/workspace/prime-estates"
+      "/workspace?next=listings"
     );
+    expect(screen.getByRole("link", { name: /scheduled tours/i })).toHaveAttribute("href", "/app/viewings");
+    expect(screen.getByRole("link", { name: /documents/i })).toHaveAttribute("href", "/app/documents");
   });
 
-  it("exposes native push and offline field capture tools from the account tab", async () => {
+  it("renders the focused profile groups without field-kit controls", async () => {
     useAuthMock.mockReturnValue(
       createAuthState({
         user: {
@@ -501,33 +503,14 @@ describe("MobileAppShell", () => {
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
 
     await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
-    await user.click(await screen.findByRole("switch", { name: /push notifications/i }));
-
-    expect(registerPushMock).toHaveBeenCalledWith("user-1", expect.any(Object));
-
-    await user.click(screen.getByRole("button", { name: /add photos/i }));
-
-    expect(capturePropertyPhotoMock).toHaveBeenCalled();
-    expect(enqueueOfflineMock).toHaveBeenCalledWith(
-      "listing-photo",
-      expect.objectContaining({
-        capturedBy: "user-1",
-        photo: expect.objectContaining({ id: "photo-1" }),
-      })
-    );
-
-    await user.type(
-      screen.getByPlaceholderText(/quick note from a viewing/i),
-      "Owner prefers Saturday morning."
-    );
-    await user.click(screen.getByRole("button", { name: /save note/i }));
-
-    expect(enqueueOfflineMock).toHaveBeenCalledWith(
-      "field-note",
-      expect.objectContaining({
-        note: "Owner prefers Saturday morning.",
-      })
-    );
+    expect(await screen.findByText("Account settings")).toBeInTheDocument();
+    expect(screen.getByText("Property management")).toBeInTheDocument();
+    expect(screen.getByText("Preferences")).toBeInTheDocument();
+    expect(screen.getByText("Support")).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: /aureus ui/i })).toBeInTheDocument();
+    expect(screen.queryByText("Field kit")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /add photos/i })).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/quick note from a viewing/i)).not.toBeInTheDocument();
   });
 
   it("keeps field tools out of the buyer account view without a workspace", async () => {
@@ -549,7 +532,7 @@ describe("MobileAppShell", () => {
 
     await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
 
-    expect(await screen.findByText("Get help")).toBeInTheDocument();
+    expect(await screen.findByText("Help Center")).toBeInTheDocument();
     expect(screen.queryByText("Field kit")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /add photos/i })).not.toBeInTheDocument();
   });
@@ -567,7 +550,7 @@ describe("MobileAppShell", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("keeps signed-in users on the restored light app palette", async () => {
+  it("keeps signed-in users on the Aureus app palette", async () => {
     useAuthMock.mockReturnValue(createSignedInAuthState() as any);
 
     renderMobileShell();
@@ -575,14 +558,14 @@ describe("MobileAppShell", () => {
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
 
     await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
-    await user.click(await screen.findByRole("button", { name: /appearance/i }));
+    await user.click(await screen.findByRole("switch", { name: /aureus ui/i }));
 
     await waitFor(() => {
-      expect(document.documentElement).toHaveAttribute("data-app-theme", "light");
+      expect(document.documentElement).toHaveAttribute("data-app-theme", "aureus");
     });
-    expect(document.documentElement).toHaveAttribute("data-app-theme-preference", "light");
+    expect(document.documentElement).toHaveAttribute("data-app-theme-preference", "baytmiftah");
     expect(document.documentElement).not.toHaveClass("dark");
-    expect(screen.getByRole("button", { name: /appearance/i })).toHaveTextContent("Miftah Light");
+    expect(screen.getByRole("switch", { name: /aureus ui/i })).toHaveAttribute("aria-checked", "false");
   });
 
   it("wires the settings sign out action to auth logout", async () => {
@@ -594,12 +577,12 @@ describe("MobileAppShell", () => {
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
 
     await user.click(within(tabBar).getByRole("link", { name: /^profile$/i }));
-    await user.click(await screen.findByRole("button", { name: /^sign out$/i }));
+    await user.click(await screen.findByRole("button", { name: /^logout/i }));
 
     expect(signOut).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps the premium home free of top search controls while search lives in the bottom nav", async () => {
+  it("keeps the premium home free of top search controls while explore owns the bottom nav", async () => {
     useAuthMock.mockReturnValue(createSignedInAuthState() as any);
 
     renderMobileShell();
@@ -609,7 +592,7 @@ describe("MobileAppShell", () => {
     expect(screen.queryByText("Find the right fit")).not.toBeInTheDocument();
 
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
-    expect(within(tabBar).getByRole("link", { name: /^search$/i })).toHaveAttribute("href", "/search");
+    expect(within(tabBar).getByRole("link", { name: /^explore$/i })).toHaveAttribute("href", "/");
   });
 
   it("wraps direct mobile routes inside the shared app frame", async () => {
@@ -617,31 +600,561 @@ describe("MobileAppShell", () => {
 
     renderMobileShell("/search", <div>Search route body</div>);
 
-    expect(await screen.findByText("Search results")).toBeInTheDocument();
-    expect(screen.getByText("Search route body")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /exclusive residences/i })).toBeInTheDocument();
+    expect(screen.getByText("The Obsidian Pavilion")).toBeInTheDocument();
+    expect(screen.getByText("Show Map")).toBeInTheDocument();
+    expect(screen.queryByText("Search route body")).not.toBeInTheDocument();
 
     const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
-    expect(within(tabBar).getByRole("link", { name: /^search$/i })).toHaveAttribute("aria-current", "page");
+    expect(within(tabBar).getByRole("link", { name: /^explore$/i })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("renders the custom mobile area guide experience", async () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+
+    renderMobileShell("/guides/bel-air-crest", <div>Area guide route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /bel air crest/i })).toBeInTheDocument();
+    expect(screen.getByText("Neighborhood Essence")).toBeInTheDocument();
+    expect(screen.getByText("The Atmosphere")).toBeInTheDocument();
+    expect(screen.getByText("Curated Local Gems")).toBeInTheDocument();
+    expect(screen.getByText("The Obsidian Lounge")).toBeInTheDocument();
+    expect(screen.queryByText("Area guide route body")).not.toBeInTheDocument();
+
+    const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
+    expect(within(tabBar).getByRole("link", { name: /^explore$/i })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("renders the custom mobile privacy policy experience", async () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+
+    renderMobileShell("/legal/privacy", <div>Privacy route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /privacy policy & data protection/i }))
+      .toBeInTheDocument();
+    expect(screen.getByText("1. Collection of Information")).toBeInTheDocument();
+    expect(screen.getByText("2. Information Usage")).toBeInTheDocument();
+    expect(screen.getByText("3. Your Global Rights")).toBeInTheDocument();
+    expect(screen.getByText("4. Security Protocols")).toBeInTheDocument();
+    expect(screen.getByText("Privacy Concierge")).toBeInTheDocument();
+    expect(screen.queryByText("Privacy route body")).not.toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: /primary mobile navigation/i })).not.toBeInTheDocument();
+  });
+
+  it("renders the custom mobile home valuation experience", async () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+
+    renderMobileShell("/valuation", <div>Valuation route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /discover your property's/i }))
+      .toBeInTheDocument();
+    expect(screen.getByText("AI-Powered Analysis")).toBeInTheDocument();
+    expect(screen.getByText("99.2% Accuracy")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /calculate estimate/i })).toBeInTheDocument();
+    expect(screen.getByText("Comparable High-Value Estates")).toBeInTheDocument();
+    expect(screen.getByText("Bel-Air Crest Manor")).toBeInTheDocument();
+    expect(screen.queryByText("Valuation route body")).not.toBeInTheDocument();
+
+    const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
+    expect(within(tabBar).getByRole("link", { name: /^valuation$/i })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("renders the custom mobile sold ledger experience", async () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+
+    renderMobileShell("/sold-ledger", <div>Sold ledger route body</div>);
+
+    expect(await screen.findByText("Obsidian Estate")).toBeInTheDocument();
+    expect(await screen.findByText("Sold Ledger")).toBeInTheDocument();
+    expect(screen.getByText("Average Premium")).toBeInTheDocument();
+    expect(screen.getByText("Mayfair & Belgravia")).toBeInTheDocument();
+    expect(screen.getByText("Chelsea Waterfront")).toBeInTheDocument();
+    expect(screen.getByText("Recent Acquisitions")).toBeInTheDocument();
+    expect(screen.getByText("The Obsidian Penthouse")).toBeInTheDocument();
+    expect(screen.getByText("£14,250,000")).toBeInTheDocument();
+    expect(screen.queryByText("Sold ledger route body")).not.toBeInTheDocument();
+
+    const tabBar = screen.getByRole("navigation", { name: /primary mobile navigation/i });
+    expect(within(tabBar).getByRole("link", { name: /^explore$/i })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("renders the custom mobile public verification receipt", async () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+
+    renderMobileShell("/verify/OE-7729-BF-2024", <div>Verification receipt route body</div>);
+
+    expect(await screen.findByText("Authenticity Certificate")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /verification receipt/i })).toBeInTheDocument();
+    expect(screen.getByText("ID: OE-7729-BF-2024")).toBeInTheDocument();
+    expect(screen.getByText("Authenticity Verified")).toBeInTheDocument();
+    expect(screen.getByText("The Obsidian Penthouse")).toBeInTheDocument();
+    expect(screen.getByText("99.8%")).toBeInTheDocument();
+    expect(screen.getByText("Primary Asset View")).toBeInTheDocument();
+    expect(screen.queryByText("Verification receipt route body")).not.toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: /primary mobile navigation/i })).not.toBeInTheDocument();
+
+    const verificationNav = screen.getByRole("navigation", { name: /public verification navigation/i });
+    expect(within(verificationNav).getByRole("link", { name: /^profile$/i })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("renders the custom mobile alerts experience", async () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+
+    renderMobileShell("/app/alerts", <div>Alerts route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /notifications/i })).toBeInTheDocument();
+    expect(screen.getByText("Intelligence Center")).toBeInTheDocument();
+    expect(screen.getByText("Transaction Updates")).toBeInTheDocument();
+    expect(screen.getByText("Escrow Milestone Reached")).toBeInTheDocument();
+    expect(screen.getByText("Property Alerts")).toBeInTheDocument();
+    expect(screen.getByText("Burj Khalifa Suite 104")).toBeInTheDocument();
+    expect(screen.getByText("Security Alerts")).toBeInTheDocument();
+    expect(screen.queryByText("Alerts route body")).not.toBeInTheDocument();
+
+    const alertsNav = screen.getByRole("navigation", { name: /alerts navigation/i });
+    expect(within(alertsNav).getByRole("link", { name: /^alerts$/i })).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByRole("navigation", { name: /primary mobile navigation/i })).not.toBeInTheDocument();
+  });
+
+  it("renders the custom mobile payments experience", async () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+
+    renderMobileShell("/app/payments", <div>Payments route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /financial overview/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /make payment/i })).toBeInTheDocument();
+    expect(screen.getByText("Payment Methods")).toBeInTheDocument();
+    expect(screen.getByText("Escrow Status")).toBeInTheDocument();
+    expect(screen.getByText("Upcoming Installments")).toBeInTheDocument();
+    expect(screen.getByText("Payment History")).toBeInTheDocument();
+    expect(screen.queryByText("Payments route body")).not.toBeInTheDocument();
+
+    const investmentNav = screen.getByRole("navigation", { name: /investment navigation/i });
+    expect(within(investmentNav).getByRole("link", { name: /^invest$/i })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("renders the custom mobile buyer concierge experience", async () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+
+    renderMobileShell("/app/buying-tools", <div>Buying tools route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /buyer concierge/i })).toBeInTheDocument();
+    expect(screen.getByText("Wealth Architect")).toBeInTheDocument();
+    expect(screen.getByText("Global Exchange")).toBeInTheDocument();
+    expect(screen.getByText("Request a Bespoke Valuation")).toBeInTheDocument();
+    expect(screen.getByText("Buying Guide")).toBeInTheDocument();
+    expect(screen.queryByText("Buying tools route body")).not.toBeInTheDocument();
+
+    const buyerNav = screen.getByRole("navigation", { name: /buyer tools navigation/i });
+    expect(within(buyerNav).getByRole("link", { name: /^leads$/i })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("renders the custom mobile smart access experience", async () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+
+    renderMobileShell("/app/access", <div>Access route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /elite access portfolio/i })).toBeInTheDocument();
+    expect(screen.getByText("Security Hub")).toBeInTheDocument();
+    expect(screen.getByText("Villa Al-Majd")).toBeInTheDocument();
+    expect(screen.getByText("Digital Keys")).toBeInTheDocument();
+    expect(screen.getByText("Leila Ben-Youssef")).toBeInTheDocument();
+    expect(screen.getByText("Security Log")).toBeInTheDocument();
+    expect(screen.getByText("Entrance Door Unlocked")).toBeInTheDocument();
+    expect(screen.queryByText("Access route body")).not.toBeInTheDocument();
+
+    const accessNav = screen.getByRole("navigation", { name: /smart access navigation/i });
+    expect(within(accessNav).getByRole("link", { name: /^listings$/i })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("renders the custom mobile applications experience", async () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+
+    renderMobileShell("/app/applications", <div>Applications route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /my applications/i })).toBeInTheDocument();
+    expect(screen.getByText("Active Applications")).toBeInTheDocument();
+    expect(screen.getByText("In Escrow")).toBeInTheDocument();
+    expect(screen.getByText("The Al-Barari Obsidian Villa")).toBeInTheDocument();
+    expect(screen.getByText("One Hyde Park Penthouse")).toBeInTheDocument();
+    expect(screen.getByText("Your KYC verification is complete")).toBeInTheDocument();
+    expect(screen.queryByText("Applications route body")).not.toBeInTheDocument();
+
+    const applicationsNav = screen.getByRole("navigation", { name: /applications navigation/i });
+    expect(within(applicationsNav).getByRole("link", { name: /^listings$/i })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("uses the applications status screen for mobile verification", async () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+
+    renderMobileShell("/app/verification", <div>Verification route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /my applications/i })).toBeInTheDocument();
+    expect(screen.getByText("Your KYC verification is complete")).toBeInTheDocument();
+    expect(screen.queryByText("Verification route body")).not.toBeInTheDocument();
+
+    const verificationNav = screen.getByRole("navigation", { name: /applications navigation/i });
+    expect(within(verificationNav).getByRole("link", { name: /^listings$/i })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("renders the custom mobile priority support experience", async () => {
+    useAuthMock.mockReturnValue(createSignedInAuthState() as any);
+
+    renderMobileShell("/app/support", <div>Support route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /priority support/i })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search the Luxury Protocol FAQ...")).toBeInTheDocument();
+    expect(screen.getByText("Contact Personal Concierge")).toBeInTheDocument();
+    expect(screen.getByText("Submit Technical Inquiry")).toBeInTheDocument();
+    expect(screen.getByText("Luxury Protocol")).toBeInTheDocument();
+    expect(screen.getByText("24/7")).toBeInTheDocument();
+    expect(screen.queryByText("Support route body")).not.toBeInTheDocument();
+
+    const supportNav = screen.getByRole("navigation", { name: /support navigation/i });
+    expect(within(supportNav).getByRole("link", { name: /^support$/i })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("renders the custom mobile settings experience", async () => {
+    const { signOut } = createSignedInAuthState();
+    useAuthMock.mockReturnValue({ ...createSignedInAuthState(), signOut } as any);
+    const user = userEvent.setup();
+
+    renderMobileShell("/app/settings", <div>Settings route body</div>);
+
+    expect(await screen.findByText("Khalid Al-Mansour")).toBeInTheDocument();
+    expect(screen.getByText("Security & Privacy")).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: /two-factor authentication/i })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    expect(screen.getByText("Biometrics")).toBeInTheDocument();
+    expect(screen.getByText("FaceID Enabled")).toBeInTheDocument();
+    expect(screen.getByText("Portfolio Preferences")).toBeInTheDocument();
+    expect(screen.getByText("Notifications")).toBeInTheDocument();
+    expect(screen.queryByText("Settings route body")).not.toBeInTheDocument();
+
+    const settingsNav = screen.getByRole("navigation", { name: /settings navigation/i });
+    expect(within(settingsNav).getByRole("link", { name: /^menu$/i })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+
+    await user.click(screen.getByRole("button", { name: /sign out of all devices/i }));
+    expect(signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders the custom mobile listing management experience", async () => {
+    useAuthMock.mockReturnValue(
+      createAuthState({
+        user: {
+          id: "manager-1",
+          email: "manager@baytmiftah.com",
+          user_metadata: { full_name: "Manager One" },
+        } as any,
+      }) as any
+    );
+    getUserOrganizationsMock.mockResolvedValue([
+      {
+        id: "org-1",
+        name: "Estate Elite",
+        slug: "estate-elite",
+        role: "owner",
+      },
+    ] as any);
+
+    renderMobileShell("/workspace?next=listings", <div>Workspace listings route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /listing management/i })).toBeInTheDocument();
+    expect(screen.getByText("Estate Elite")).toBeInTheDocument();
+    expect(screen.getByText("Total Inventory")).toBeInTheDocument();
+    expect(screen.getByText("Total Value")).toBeInTheDocument();
+    expect(screen.getByText("Active Inquiries")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /new listing/i })).toHaveAttribute(
+      "href",
+      "/workspace?next=new-listing"
+    );
+    expect(screen.getByText("The Obsidian Villa")).toBeInTheDocument();
+    expect(screen.getByText("Skyline Penthouse")).toBeInTheDocument();
+    expect(screen.getByText("Azure Retreat")).toBeInTheDocument();
+    expect(screen.queryByText("Workspace listings route body")).not.toBeInTheDocument();
+
+    const agencyNav = screen.getByRole("navigation", { name: /agency navigation/i });
+    expect(within(agencyNav).getByRole("link", { name: /^properties$/i })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("renders the custom mobile create listing experience", async () => {
+    useAuthMock.mockReturnValue(
+      createAuthState({
+        user: {
+          id: "manager-1",
+          email: "manager@baytmiftah.com",
+          user_metadata: { full_name: "Manager One" },
+        } as any,
+      }) as any
+    );
+    getUserOrganizationsMock.mockResolvedValue([
+      {
+        id: "org-1",
+        name: "Estate Elite",
+        slug: "estate-elite",
+        role: "owner",
+      },
+    ] as any);
+
+    renderMobileShell("/workspace?next=new-listing", <div>Workspace new listing route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /create exclusive listing/i })).toBeInTheDocument();
+    expect(screen.getByText("Estate Elite")).toBeInTheDocument();
+    expect(screen.getByText("Basics")).toBeInTheDocument();
+    expect(screen.getByText("Location")).toBeInTheDocument();
+    expect(screen.getByText("Media")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /property essentials/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/listing title/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/property type/i)).toHaveValue("Luxury Villa");
+    expect(screen.getByLabelText(/price \(usd\)/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/year built/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/confidential description/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /continue/i })).toBeInTheDocument();
+    expect(screen.queryByText("Workspace new listing route body")).not.toBeInTheDocument();
+
+    const agencyNewListingNav = screen.getByRole("navigation", { name: /agency new listing navigation/i });
+    expect(within(agencyNewListingNav).getByRole("link", { name: /^properties$/i })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("renders the custom mobile lead CRM experience", async () => {
+    useAuthMock.mockReturnValue(
+      createAuthState({
+        user: {
+          id: "manager-1",
+          email: "manager@baytmiftah.com",
+          user_metadata: { full_name: "Manager One" },
+        } as any,
+      }) as any
+    );
+    getUserOrganizationsMock.mockResolvedValue([
+      {
+        id: "org-1",
+        name: "Estate Elite",
+        slug: "estate-elite",
+        role: "owner",
+      },
+    ] as any);
+
+    renderMobileShell("/workspace?next=leads", <div>Workspace leads route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /client intelligence/i })).toBeInTheDocument();
+    expect(screen.getByText("Estate Elite")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /new lead/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /filters/i })).toBeInTheDocument();
+    expect(screen.getByText("Active Hot Leads")).toBeInTheDocument();
+    expect(screen.getByText("Unread Messages")).toBeInTheDocument();
+    expect(screen.getByText("Pipeline Value")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /priority queue/i })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search leads...")).toBeInTheDocument();
+    expect(screen.getByText("Julian Vane")).toBeInTheDocument();
+    expect(screen.getByText("Elena Rossi")).toBeInTheDocument();
+    expect(screen.getByText("Recent Activity")).toBeInTheDocument();
+    expect(screen.getByText("AI Prospecting Insight")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /generate personalized email/i })).toBeInTheDocument();
+    expect(screen.queryByText("Workspace leads route body")).not.toBeInTheDocument();
+
+    const agencyLeadsNav = screen.getByRole("navigation", { name: /agency leads navigation/i });
+    expect(within(agencyLeadsNav).getByRole("link", { name: /^leads$/i })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("renders the custom mobile agency financial experience", async () => {
+    useAuthMock.mockReturnValue(
+      createAuthState({
+        user: {
+          id: "manager-1",
+          email: "manager@baytmiftah.com",
+          user_metadata: { full_name: "Manager One" },
+        } as any,
+      }) as any
+    );
+    getUserOrganizationsMock.mockResolvedValue([
+      {
+        id: "org-1",
+        name: "Estate Elite",
+        slug: "estate-elite",
+        role: "owner",
+      },
+    ] as any);
+
+    renderMobileShell("/workspace?next=wealth", <div>Workspace wealth route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /wealth management/i })).toBeInTheDocument();
+    expect(screen.getByText("Estate Elite")).toBeInTheDocument();
+    expect(screen.getByText("Commission Earned YTD")).toBeInTheDocument();
+    expect(screen.getByText("$2,410,500.00")).toBeInTheDocument();
+    expect(screen.getByText("Revenue Forecast")).toBeInTheDocument();
+    expect(screen.getByText("Escrow Breakdown")).toBeInTheDocument();
+    expect(screen.getByText("Recent Payouts & Billing")).toBeInTheDocument();
+    expect(screen.getByText("Q3 Earnings Statement")).toBeInTheDocument();
+    expect(screen.queryByText("Workspace wealth route body")).not.toBeInTheDocument();
+
+    const agencyFinancialNav = screen.getByRole("navigation", { name: /agency financial navigation/i });
+    expect(within(agencyFinancialNav).getByRole("link", { name: /^wealth$/i })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
   });
 
   it.each([
-    { path: "/search", title: "Search results", activeTab: "Search" },
-    { path: "/property/listing-1", title: "Property", activeTab: "Search" },
-    { path: "/agencies", title: "Agencies", activeTab: "Home" },
-    { path: "/agencies/prime-estates", title: "Agency", activeTab: "Home" },
-    { path: "/guides", title: "Area guides", activeTab: "Search" },
-    { path: "/guides/osu", title: "Area guide", activeTab: "Search" },
-    { path: "/market-trends", title: "Market trends", activeTab: "Search" },
-    { path: "/buyer-requests", title: "Buyer requests", activeTab: "Search" },
-    { path: "/projects", title: "Projects", activeTab: "Search" },
-    { path: "/projects/project-1", title: "Project", activeTab: "Search" },
-    { path: "/valuation", title: "Home valuation", activeTab: "Profile" },
+    ["/workspace/estate-elite/new", /create exclusive listing/i, "Workspace new route body"],
+    ["/workspace/estate-elite/messages", /client intelligence/i, "Workspace messages route body"],
+    ["/workspace/estate-elite/finance", /wealth management/i, "Workspace finance route body"],
+    ["/workspace/estate-elite/payments", /wealth management/i, "Workspace payments route body"],
+  ])("renders the custom mobile workspace experience for routed slug %s", async (path, heading, bodyText) => {
+    useAuthMock.mockReturnValue(
+      createAuthState({
+        user: {
+          id: "manager-1",
+          email: "manager@baytmiftah.com",
+          user_metadata: { full_name: "Manager One" },
+        } as any,
+      }) as any
+    );
+    getUserOrganizationsMock.mockResolvedValue([
+      {
+        id: "org-1",
+        name: "Estate Elite",
+        slug: "estate-elite",
+        role: "owner",
+      },
+    ] as any);
+
+    renderMobileShell(path, <div>{bodyText}</div>);
+
+    expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
+    expect(screen.queryByText(bodyText)).not.toBeInTheDocument();
+  });
+
+  it("renders the custom mobile agency settings experience", async () => {
+    useAuthMock.mockReturnValue(
+      createAuthState({
+        user: {
+          id: "manager-1",
+          email: "manager@baytmiftah.com",
+          user_metadata: { full_name: "Manager One" },
+        } as any,
+      }) as any
+    );
+    getUserOrganizationsMock.mockResolvedValue([
+      {
+        id: "org-1",
+        name: "Estate Elite",
+        slug: "estate-elite",
+        role: "owner",
+      },
+    ] as any);
+
+    renderMobileShell("/workspace?next=settings", <div>Workspace settings route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /agency settings/i })).toBeInTheDocument();
+    expect(screen.getByText("Estate Elite")).toBeInTheDocument();
+    expect(screen.getByText("Commission Structure")).toBeInTheDocument();
+    expect(screen.getByText(/85\s\/\s15/)).toBeInTheDocument();
+    expect(screen.getByText("$100,000")).toBeInTheDocument();
+    expect(screen.getByText("Branding")).toBeInTheDocument();
+    expect(screen.getByText("Sterling & Co.")).toBeInTheDocument();
+    expect(screen.getByText("Lead Assignment")).toBeInTheDocument();
+    expect(screen.getByText("Priority Routing")).toBeInTheDocument();
+    expect(screen.getByText("Intelligence Engine")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /view report/i })).toBeInTheDocument();
+    expect(screen.queryByText("Workspace settings route body")).not.toBeInTheDocument();
+
+    const agencySettingsNav = screen.getByRole("navigation", { name: /agency settings navigation/i });
+    expect(within(agencySettingsNav).getByRole("link", { name: /^team$/i })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("renders the custom mobile agency team operation experience", async () => {
+    useAuthMock.mockReturnValue(
+      createAuthState({
+        user: {
+          id: "manager-1",
+          email: "manager@baytmiftah.com",
+          user_metadata: { full_name: "Manager One" },
+        } as any,
+      }) as any
+    );
+    getUserOrganizationsMock.mockResolvedValue([
+      {
+        id: "org-1",
+        name: "Estate Elite",
+        slug: "estate-elite",
+        role: "owner",
+      },
+    ] as any);
+
+    renderMobileShell("/workspace?next=team", <div>Workspace team route body</div>);
+
+    expect(await screen.findByRole("heading", { name: /sterling group hierarchy/i })).toBeInTheDocument();
+    expect(screen.getByText("Estate Elite")).toBeInTheDocument();
+    expect(screen.getByText("Agency Team Management")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /invite new member/i })).toBeInTheDocument();
+    expect(screen.getByText("Group GMV")).toBeInTheDocument();
+    expect(screen.getByText("$128.4M")).toBeInTheDocument();
+    expect(screen.getByText("Active Listings")).toBeInTheDocument();
+    expect(screen.getByText("Team Directory")).toBeInTheDocument();
+    expect(screen.getByText("Julian Vane")).toBeInTheDocument();
+    expect(screen.getByText("Elena Rossi")).toBeInTheDocument();
+    expect(screen.getByText("Access Hierarchy")).toBeInTheDocument();
+    expect(screen.getByText("Tier I: Principal")).toBeInTheDocument();
+    expect(screen.queryByText("Workspace team route body")).not.toBeInTheDocument();
+
+    const agencyTeamNav = screen.getByRole("navigation", { name: /agency team navigation/i });
+    expect(within(agencyTeamNav).getByRole("link", { name: /^team$/i })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it.each([
+    { path: "/property/listing-1", title: "Property", activeTab: "Explore" },
+    { path: "/agencies", title: "Agencies", activeTab: "Explore" },
+    { path: "/agencies/prime-estates", title: "Agency", activeTab: "Explore" },
+    { path: "/market-trends", title: "Market trends", activeTab: "Explore" },
+    { path: "/buyer-requests", title: "Buyer requests", activeTab: "Explore" },
+    { path: "/projects", title: "Projects", activeTab: "Explore" },
+    { path: "/projects/project-1", title: "Project", activeTab: "Explore" },
     { path: "/reviews", title: "Public reviews", activeTab: "Profile" },
     { path: "/get-the-app", title: "Get the app", activeTab: "Profile" },
     { path: "/legal/terms", title: "Terms of Use", activeTab: "Profile" },
-    { path: "/legal/privacy", title: "Privacy Notice", activeTab: "Profile" },
     { path: "/app/deals", title: "Deal Rooms", activeTab: "Messages" },
-    { path: "/app/concierge", title: "Concierge", activeTab: "Messages" },
     { path: "/app/messages", title: "Messages", activeTab: "Messages" },
     { path: "/app/compare", title: "Compare", activeTab: "Saved" },
     { path: "/app/groups", title: "Buying Group", activeTab: "Saved" },
@@ -659,7 +1172,7 @@ describe("MobileAppShell", () => {
       expect(within(tabBar).getByRole("link", { name: new RegExp(`^${activeTab}$`, "i") }))
         .toHaveAttribute("aria-current", "page");
     } else {
-      expect(within(tabBar).getByRole("link", { name: /^search$/i })).not.toHaveAttribute("aria-current", "page");
+      expect(within(tabBar).getByRole("link", { name: /^explore$/i })).not.toHaveAttribute("aria-current", "page");
     }
   });
 });

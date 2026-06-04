@@ -5,12 +5,12 @@ import { NotFound } from "./pages/NotFound";
 
 function RouteHydrateFallback() {
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] px-6 py-10 text-[var(--color-text)]">
+    <div className="min-h-screen bg-background px-6 py-10 text-foreground">
       <div className="mx-auto flex min-h-[60vh] max-w-sm flex-col items-center justify-center text-center">
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[24px] bg-[var(--color-accent)] text-lg font-black text-white shadow-[var(--shadow-pink)]">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-primary text-lg font-black text-primary-foreground shadow-[0_18px_42px_rgba(242,200,75,0.18)]">
           B
         </div>
-        <p className="text-sm font-semibold text-[var(--color-muted)]">Preparing BaytMiftah</p>
+        <p className="text-sm font-semibold text-muted-foreground">Preparing BaytMiftah</p>
       </div>
     </div>
   );
@@ -102,8 +102,332 @@ export const router = createBrowserRouter([
       {
         path: "innovation-lab",
         lazy: async () => {
+          const { BaytMiftahInnovationLab } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahInnovationLab };
+        },
+      },
+      {
+        path: "feature-completion",
+        lazy: async () => {
           const { InnovationLab } = await import("./pages/InnovationLab");
           return { Component: InnovationLab };
+        },
+      },
+      {
+        path: "baytmiftah",
+        lazy: async () => {
+          const { BaytMiftahScreensHome } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahScreensHome };
+        },
+      },
+      {
+        path: "baytmiftah/innovation",
+        lazy: async () => {
+          const { BaytMiftahInnovationLab } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahInnovationLab };
+        },
+      },
+      {
+        path: "baytmiftah/listings",
+        lazy: async () => {
+          const { BaytMiftahListingOversight } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahListingOversight };
+        },
+      },
+      {
+        path: "baytmiftah/areas",
+        lazy: async () => {
+          const { BaytMiftahAreaGuides } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahAreaGuides };
+        },
+      },
+      {
+        path: "baytmiftah/messages",
+        lazy: async () => {
+          const { BaytMiftahMessages } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahMessages };
+        },
+      },
+      {
+        path: "baytmiftah/mobile-messages",
+        lazy: async () => {
+          const { BaytMiftahMobileMessages } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahMobileMessages };
+        },
+      },
+      {
+        path: "baytmiftah/aureus-district",
+        lazy: async () => {
+          const { AureusDistrictDetail } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: AureusDistrictDetail };
+        },
+      },
+      {
+        path: "baytmiftah/aureus-analytics",
+        lazy: async () => {
+          const { AureusAnalyticsDashboard } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: AureusAnalyticsDashboard };
+        },
+      },
+      {
+        path: "baytmiftah/aureus-financials",
+        lazy: async () => {
+          const { AureusFinancialLedger } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: AureusFinancialLedger };
+        },
+      },
+      {
+        path: "baytmiftah/aureus-settings",
+        lazy: async () => {
+          const { AureusAgencySettings } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: AureusAgencySettings };
+        },
+      },
+      {
+        path: "baytmiftah/aureus-security",
+        lazy: async () => {
+          const { AureusSystemSecurity } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: AureusSystemSecurity };
+        },
+      },
+      {
+        path: "baytmiftah/aureus-compliance",
+        lazy: async () => {
+          const { AureusTrustCompliance } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: AureusTrustCompliance };
+        },
+      },
+      {
+        path: "baytmiftah/aureus-listings",
+        lazy: async () => {
+          const { AureusListingOversight } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: AureusListingOversight };
+        },
+      },
+      {
+        path: "baytmiftah/secure-login",
+        lazy: async () => {
+          const { BaytMiftahSecureLogin } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahSecureLogin };
+        },
+      },
+      {
+        path: "baytmiftah/advisor-viewings",
+        lazy: async () => {
+          const { BaytMiftahAdvisorViewings } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahAdvisorViewings };
+        },
+      },
+      {
+        path: "baytmiftah/deal-room",
+        lazy: async () => {
+          const { BaytMiftahDealRoom } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahDealRoom };
+        },
+      },
+      {
+        path: "baytmiftah/payments-escrow",
+        lazy: async () => {
+          const { BaytMiftahPaymentsEscrow } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahPaymentsEscrow };
+        },
+      },
+      {
+        path: "baytmiftah/mobile-landing",
+        lazy: async () => {
+          const { BaytMiftahMobileLanding } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahMobileLanding };
+        },
+      },
+      {
+        path: "baytmiftah/mobile-trust",
+        lazy: async () => {
+          const { BaytMiftahMobileTrust } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahMobileTrust };
+        },
+      },
+      {
+        path: "baytmiftah/mobile-workspace",
+        lazy: async () => {
+          const { BaytMiftahMobileWorkspace } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahMobileWorkspace };
+        },
+      },
+      {
+        path: "baytmiftah/mobile-viewing",
+        lazy: async () => {
+          const { BaytMiftahMobileViewing } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahMobileViewing };
+        },
+      },
+      {
+        path: "baytmiftah/mobile-portfolio",
+        lazy: async () => {
+          const { BaytMiftahMobilePortfolio } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahMobilePortfolio };
+        },
+      },
+      {
+        path: "baytmiftah/mobile-performance",
+        lazy: async () => {
+          const { BaytMiftahMobilePerformance } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahMobilePerformance };
+        },
+      },
+      {
+        path: "baytmiftah/security-email",
+        lazy: async () => {
+          const { BaytMiftahSecurityEmail } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahSecurityEmail };
+        },
+      },
+      {
+        path: "baytmiftah/admin-platform",
+        lazy: async () => {
+          const { BaytMiftahAdminPlatform } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahAdminPlatform };
+        },
+      },
+      {
+        path: "baytmiftah/mobile-security",
+        lazy: async () => {
+          const { BaytMiftahMobileSecurity } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahMobileSecurity };
+        },
+      },
+      {
+        path: "baytmiftah/admin-governance",
+        lazy: async () => {
+          const { BaytMiftahAdminGovernance } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahAdminGovernance };
+        },
+      },
+      {
+        path: "baytmiftah/agency",
+        lazy: async () => {
+          const { BaytMiftahAgencyWorkspace } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahAgencyWorkspace };
+        },
+      },
+      {
+        path: "baytmiftah/users",
+        lazy: async () => {
+          const { BaytMiftahUserManagement } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahUserManagement };
+        },
+      },
+      {
+        path: "baytmiftah/property",
+        lazy: async () => {
+          const { BaytMiftahPropertyDetail } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahPropertyDetail };
+        },
+      },
+      {
+        path: "baytmiftah/marketplace",
+        lazy: async () => {
+          const { BaytMiftahMarketplace } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahMarketplace };
+        },
+      },
+      {
+        path: "baytmiftah/offer",
+        lazy: async () => {
+          const { BaytMiftahOfferDetails } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahOfferDetails };
+        },
+      },
+      {
+        path: "baytmiftah/proof",
+        lazy: async () => {
+          const { BaytMiftahProofOfFunds } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahProofOfFunds };
+        },
+      },
+      {
+        path: "baytmiftah/review",
+        lazy: async () => {
+          const { BaytMiftahReviewSign } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahReviewSign };
+        },
+      },
+      {
+        path: "baytmiftah/command",
+        lazy: async () => {
+          const { BaytMiftahCommandCenter } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahCommandCenter };
         },
       },
       {

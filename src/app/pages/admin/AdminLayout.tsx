@@ -12,10 +12,14 @@ import {
   FileText,
   Gauge,
   LockKeyhole,
+  MapPin,
   MoreHorizontal,
+  Plus,
   Settings,
   Shield,
   ShieldAlert,
+  SlidersHorizontal,
+  Upload,
   Rocket,
   Search,
   UserCheck,
@@ -30,6 +34,7 @@ import { PageLoadingState } from "../../components/PageStates";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
+import FraudDashboard from "./FraudDashboard";
 import { fraudDetectionService } from "../../../lib/fraud-detection.service";
 import {
   canProviderGoLive,
@@ -61,6 +66,7 @@ type AdminSection =
   | "disputes"
   | "analytics"
   | "security"
+  | "fraud-dashboard"
   | "settings";
 
 const navItems: Array<{
@@ -78,6 +84,7 @@ const navItems: Array<{
   { key: "disputes", label: "Disputes", href: "/admin/disputes", icon: AlertTriangle },
   { key: "analytics", label: "Analytics", href: "/admin/analytics", icon: Gauge },
   { key: "security", label: "Security", href: "/admin/security", icon: LockKeyhole },
+  { key: "fraud-dashboard", label: "Fraud Dashboard", href: "/admin/fraud-dashboard", icon: ShieldAlert },
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -150,6 +157,104 @@ const adminSurfaceClass =
 
 const adminSoftSurfaceClass =
   "rounded-3xl border border-slate-200/80 bg-slate-50/70";
+
+const luxuryAdminMetricCards = [
+  {
+    label: "Global GMV",
+    value: "$1.42B",
+    helper: "+12.4% vs LY",
+    helperTone: "green",
+    icon: Wallet,
+  },
+  {
+    label: "HNW Users",
+    value: "12,840",
+    helper: "+8.1% MoM",
+    helperTone: "green",
+    icon: Users,
+  },
+  {
+    label: "Active Listings",
+    value: "4,192",
+    helper: "+0.4% MoM",
+    helperTone: "gold",
+    icon: Building2,
+  },
+  {
+    label: "Platform Health",
+    value: "99.98%",
+    helper: "Ultra-Stable",
+    helperTone: "green",
+    icon: Shield,
+  },
+];
+
+const luxuryAdminVelocityBars = [54, 80, 62, 92, 118, 73, 102, 69, 48];
+
+const luxuryAdminProtocolFeed = [
+  "KYC Approved: User #8821",
+  "Listing #P901 Published",
+  "Secure Session: node_04",
+  "System Integrity Scan OK",
+  "New Exclusive Lead: London",
+];
+
+const luxuryAdminListings = [
+  {
+    title: "The Obsidian Penthouse",
+    price: "$25,500,000",
+    label: "Exclusive",
+    image:
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=280&q=80",
+  },
+  {
+    title: "Penthouse Azure",
+    price: "$14,200,000",
+    label: "New construction",
+    image:
+      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=280&q=80",
+  },
+];
+
+const luxuryKycQueue = [
+  {
+    name: "Alexander Von Hohenburg",
+    context: "UHNW Client - Swiss Residency",
+    priority: "HIGH PRIORITY",
+    docLabel: "PASSPORT ID",
+    docValue: "Verified_Swiss_VIP.pdf",
+    fundLabel: "PROOF OF FUNDS",
+    fundValue: "$42,400,000.00",
+    image:
+      "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=180&q=80",
+  },
+  {
+    name: "Isabella Sterling",
+    context: "Entity Representative - Sterling Capital",
+    priority: "STANDARD",
+    docLabel: "CORPORATE DOCS",
+    docValue: "Articles_Incorp.pdf",
+    fundLabel: "LIQUIDITY VERIFICATION",
+    fundValue: "$45,800,000.00",
+    image:
+      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=180&q=80",
+  },
+];
+
+const luxuryDisputeRows = [
+  {
+    id: "#TXN-88291",
+    property: "Villa Azure, Monaco",
+    amount: "EUR 14.5M",
+    status: "ESCROW",
+  },
+  {
+    id: "#TXN-77340",
+    property: "The Penthouse, Dubai Marina",
+    amount: "$9.2M",
+    status: "VERIFY",
+  },
+];
 
 function AdminMetricCard({
   label,
@@ -1045,6 +1150,364 @@ export function AdminLayout() {
       </Card>
     </div>
   );
+
+  const renderAdminListingsCommandCenter = () => {
+    const commandMetrics = [
+      {
+        label: "Active",
+        value: "1,248",
+        helper: "+12% ↗",
+        icon: Building2,
+        tone: "gold",
+      },
+      {
+        label: "Pending",
+        value: "42",
+        helper: "42 reviews",
+        icon: Clock3,
+        tone: "slate",
+      },
+      {
+        label: "Sold YTD",
+        value: "892",
+        helper: "$1.2B vol",
+        icon: CreditCard,
+        tone: "slate",
+      },
+      {
+        label: "Reports",
+        value: "15",
+        helper: "Urgent",
+        icon: AlertTriangle,
+        tone: "red",
+      },
+    ];
+    const commandListings = [
+      {
+        title: "Skyline Pe...",
+        id: "BM-8821",
+        price: "$4.25M",
+        views: "1,240",
+        tone: "gold",
+        image:
+          "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=240&q=80&auto=format&fit=crop",
+      },
+      {
+        title: "Azure Bay ...",
+        id: "BM-4590",
+        price: "$12.8M",
+        views: "312",
+        tone: "slate",
+        image:
+          "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?w=240&q=80&auto=format&fit=crop",
+      },
+      {
+        title: "Summit L...",
+        id: "BM-1122",
+        price: "$5.40M",
+        views: "2.1k",
+        tone: "rose",
+        image:
+          "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=240&q=80&auto=format&fit=crop",
+      },
+    ];
+    const hotMarkets = [
+      ["Dubai Marina", "+18.4%", "emerald"],
+      ["Palm Jumeirah", "+4.2%", "gold"],
+      ["Downtown Res.", "+12.1%", "gold"],
+    ];
+
+    return (
+      <main className="min-h-screen bg-[#061725] text-[#f7f2df]">
+        <div className="mx-auto min-h-screen w-full max-w-[430px] overflow-hidden bg-[#061725] pb-28 shadow-[0_0_80px_rgba(0,0,0,0.42)]">
+          <header className="flex items-center justify-between px-4 py-5">
+            <Link to="/admin" className="flex items-center gap-2 text-[#f7f2df] no-underline">
+              <Shield className="h-7 w-7 text-[#f3c638]" />
+              <span className="text-[1.2rem] font-black tracking-[-0.04em]">BAYTMIFTAH</span>
+              <span className="text-[1.2rem] font-black tracking-[-0.04em] text-[#f3c638]">
+                ADMIN
+              </span>
+            </Link>
+            <div className="flex items-center gap-4">
+              <button type="button" className="text-[#cbd7e6]" aria-label="Notifications">
+                <Bell className="h-6 w-6" />
+              </button>
+              <Link
+                to="/admin/settings"
+                className="grid h-10 w-10 place-items-center overflow-hidden rounded-full border border-[#f3c63855] bg-[#13253a]"
+                aria-label="Open admin profile"
+              >
+                <img
+                  src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=96&q=80&auto=format&fit=crop"
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              </Link>
+            </div>
+          </header>
+
+          <section className="px-4">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <h1 className="text-[2rem] font-black leading-none tracking-[-0.05em] text-white">
+                  Listings Oversight
+                </h1>
+                <p className="mt-2 text-[0.78rem] font-black uppercase tracking-[0.28em] text-[#8490a3]">
+                  Platform Control Center
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  className="grid h-12 w-12 place-items-center rounded-2xl bg-[#f3c638] text-[#071521]"
+                  aria-label="Add listing"
+                >
+                  <Plus className="h-6 w-6" />
+                </button>
+                <button
+                  type="button"
+                  className="grid h-12 w-12 place-items-center rounded-2xl bg-[#1a2d43] text-[#f7f2df]"
+                  aria-label="Export listings"
+                >
+                  <Upload className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <section className="mt-8 grid grid-cols-2 gap-3" aria-label="Listings oversight metrics">
+              {commandMetrics.map(({ label, value, helper, icon: Icon, tone }) => (
+                <article
+                  key={label}
+                  className={`min-h-[128px] rounded-[18px] border bg-[#0d2034] p-4 shadow-[0_16px_42px_rgba(0,0,0,0.24)] ${
+                    tone === "gold"
+                      ? "border-[#f3c63866]"
+                      : tone === "red"
+                        ? "border-[#f39a9a44]"
+                        : "border-[#26394f]"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <Icon
+                      className={`h-6 w-6 ${
+                        tone === "red"
+                          ? "text-[#ff9d9d]"
+                          : tone === "gold"
+                            ? "text-[#f3c638]"
+                            : "text-[#d7e0ef]"
+                      }`}
+                    />
+                    <span
+                      className={`text-[0.72rem] font-black ${
+                        tone === "red"
+                          ? "uppercase text-[#ffb0b0]"
+                          : tone === "gold"
+                            ? "text-[#46f7a8]"
+                            : "uppercase text-[#d7e0ef]"
+                      }`}
+                    >
+                      {helper}
+                    </span>
+                  </div>
+                  <strong className="mt-5 block text-[2.25rem] font-black leading-none tracking-[-0.06em] text-white">
+                    {value}
+                  </strong>
+                  <span className="mt-3 block text-[0.74rem] font-black uppercase tracking-[0.24em] text-[#8490a3]">
+                    {label}
+                  </span>
+                </article>
+              ))}
+            </section>
+
+            <section className="mt-8 overflow-hidden rounded-[22px] border border-[#26394f] bg-[#0b1e32]">
+              <div className="flex items-center gap-3 px-4 py-4">
+                <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-[#26394f] bg-[#081a2c] px-3 py-3 text-[#8490a3]">
+                  <Search className="h-4 w-4" />
+                  <input
+                    type="search"
+                    className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#f7f2df] outline-none placeholder:text-[#8490a3]"
+                    placeholder="ID, Agent, Property..."
+                  />
+                </label>
+                <SlidersHorizontal className="h-5 w-5 text-[#8490a3]" />
+                <button
+                  type="button"
+                  className="rounded-lg border border-[#f3c63888] px-4 py-2 text-[0.72rem] font-black text-[#f3c638]"
+                >
+                  ALL
+                </button>
+                <button
+                  type="button"
+                  className="text-[0.72rem] font-black uppercase text-[#8490a3]"
+                >
+                  Active
+                </button>
+              </div>
+
+              <div className="grid grid-cols-[1.35fr_0.75fr_1fr] border-y border-[#26394f] px-4 py-4 text-[0.72rem] font-black uppercase tracking-[0.22em] text-[#8490a3]">
+                <span>Property</span>
+                <span>ID / Price</span>
+                <span>Performance</span>
+              </div>
+
+              <div>
+                {commandListings.map((listing) => (
+                  <article
+                    key={listing.id}
+                    className="grid grid-cols-[1.35fr_0.75fr_1fr] items-center gap-2 border-b border-[#26394f] px-4 py-4 last:border-b-0"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <img
+                        src={listing.image}
+                        alt=""
+                        className="h-9 w-12 rounded-md object-cover"
+                      />
+                      <strong className="truncate text-sm font-black text-white">{listing.title}</strong>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="block text-[0.68rem] font-bold uppercase text-[#8490a3]">
+                        {listing.id}
+                      </span>
+                      <strong
+                        className={`text-sm font-black ${
+                          listing.tone === "rose" ? "text-[#ff9d9d]" : "text-[#f3c638]"
+                        }`}
+                      >
+                        {listing.price}
+                      </strong>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between text-[0.68rem] uppercase text-[#8490a3]">
+                        <span>{listing.views}</span>
+                        <span>Views</span>
+                      </div>
+                      <span className="mt-2 block h-1 rounded-full bg-[#22354c]">
+                        <span
+                          className={`block h-full rounded-full ${
+                            listing.tone === "rose"
+                              ? "w-[92%] bg-[#ff9d9d]"
+                              : listing.tone === "gold"
+                                ? "w-[72%] bg-[#f3c638]"
+                                : "w-[38%] bg-[#c7d4e6]"
+                          }`}
+                        />
+                      </span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <Link
+                to="/admin/listings"
+                className="block py-4 text-center text-[0.78rem] font-black uppercase tracking-[0.18em] text-[#a7b4c5] no-underline"
+              >
+                View all 1,248 listings
+              </Link>
+            </section>
+
+            <section className="mt-8 rounded-[22px] border border-[#26394f] bg-[#0b1e32] p-6">
+              <div className="flex items-start gap-4">
+                <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#1b2f44] text-[#f3c638]">
+                  <Rocket className="h-6 w-6" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-black uppercase text-white">Command Health</h2>
+                  <p className="text-[0.74rem] font-bold uppercase tracking-[0.14em] text-[#8490a3]">
+                    Real-time conversion monitor
+                  </p>
+                </div>
+              </div>
+              <div className="mt-8 flex items-end justify-between">
+                <strong className="text-[2.5rem] font-black tracking-[-0.08em] text-white">
+                  3.8<span className="text-lg text-[#f3c638]">%</span>
+                </strong>
+                <span className="text-sm font-black text-[#46f7a8]">+0.4% Delta</span>
+              </div>
+              <span className="mt-3 block h-2 rounded-full bg-[#22354c]">
+                <span className="block h-full w-[38%] rounded-full bg-[#f3c638]" />
+              </span>
+              <blockquote className="mt-5 border-l border-[#f3c638] pl-4 text-sm italic leading-6 text-[#cfd8e6]">
+                Insight: Conversion clusters detected in $2M-$5M bracket. Recommend boosting
+                exposure for tier-2 luxury units.
+              </blockquote>
+            </section>
+
+            <section className="mt-8 rounded-[22px] border border-[#26394f] bg-[#0b1e32] p-6">
+              <div className="flex items-start gap-4">
+                <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#1b2f44] text-[#d9e4f4]">
+                  <MapPin className="h-6 w-6" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-black uppercase text-white">Hot Markets</h2>
+                  <p className="text-[0.74rem] font-bold uppercase tracking-[0.14em] text-[#8490a3]">
+                    Traction by geography
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6 space-y-3">
+                {hotMarkets.map(([market, delta, tone]) => (
+                  <div
+                    key={market}
+                    className="flex items-center justify-between rounded-xl border border-[#26394f] bg-[#10243a] px-4 py-3"
+                  >
+                    <strong className="text-sm font-black text-white">{market}</strong>
+                    <span
+                      className={`rounded-md border px-3 py-1 text-[0.72rem] font-black ${
+                        tone === "emerald"
+                          ? "border-[#2bd98a55] bg-[#0f3a2a] text-[#46f7a8]"
+                          : "border-[#f3c63855] bg-[#3b3210] text-[#f3c638]"
+                      }`}
+                    >
+                      {delta}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </section>
+
+          <footer className="mt-24 border-t border-[#26394f] px-4 py-12 text-center">
+            <p className="text-[0.78rem] font-black uppercase tracking-[0.34em] text-[#8490a3]">
+              BaytMiftah luxury real estate ecosystem
+            </p>
+            <div className="mt-7 flex justify-center gap-9 text-[0.72rem] font-black uppercase tracking-[0.22em] text-[#8490a3]">
+              <Link to="/admin/security" className="text-inherit no-underline">
+                Security
+              </Link>
+              <Link to="/admin" className="text-inherit no-underline">
+                Status
+              </Link>
+              <Link to="/admin/security" className="text-inherit no-underline">
+                Logs
+              </Link>
+            </div>
+          </footer>
+
+          <nav
+            className="fixed inset-x-0 bottom-0 z-40 mx-auto grid max-w-[430px] grid-cols-4 border-t border-[#26394f] bg-[#071a2b]/96 px-3 py-3 backdrop-blur-2xl"
+            aria-label="Admin command navigation"
+          >
+            {[
+              { label: "Dash", href: "/admin", icon: BarChart3 },
+              { label: "Listings", href: "/admin/listings", icon: FileText, active: true },
+              { label: "Secure", href: "/admin/security", icon: Shield },
+              { label: "System", href: "/admin/settings", icon: Settings },
+            ].map(({ label, href, icon: Icon, active }) => (
+              <Link
+                key={label}
+                to={href}
+                className={`grid justify-items-center gap-1 rounded-2xl px-2 py-2 text-[0.68rem] font-black uppercase no-underline ${
+                  active ? "text-[#f3c638]" : "text-[#8490a3]"
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+                <span>{label}</span>
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </main>
+    );
+  };
 
   const renderUserQueue = () => (
     <div className="space-y-6">
@@ -2081,6 +2544,409 @@ export function AdminLayout() {
     </div>
   );
 
+  const renderLuxuryAdminFooter = () => (
+    <footer className="mt-12 border-t border-[#1f3447] px-5 py-8 text-center">
+      <div className="flex items-center justify-center gap-3">
+        <p className="text-sm font-black uppercase tracking-[0.16em] text-[#f0c83f]">BAYTMIFTAH</p>
+        <p className="max-w-[180px] text-[10px] leading-4 text-slate-300">
+          © 2024 Luxury Real Estate Ecosystem. Secure Encrypted Session.
+        </p>
+      </div>
+      <div className="mt-5 flex justify-center gap-8 text-[9px] text-slate-400">
+        <span>Security Protocol</span>
+        <span>System Status</span>
+        <span>Audit Logs</span>
+      </div>
+    </footer>
+  );
+
+  const renderLuxuryAdminShell = (content: JSX.Element) => (
+    <div className="min-h-screen bg-[#061725] text-[#eef5ff]">
+      <div className="mx-auto min-h-screen w-full max-w-[390px] bg-[#061725] shadow-[0_0_80px_rgba(0,0,0,0.35)]">
+        {content}
+      </div>
+    </div>
+  );
+
+  const renderLuxuryAdminTopBar = () => (
+    <header className="flex items-center justify-between border-b border-[#1f3447] px-5 py-3.5">
+      <Link to="/admin" className="flex items-center gap-3">
+        <Shield className="h-5 w-5 text-[#f0c83f]" />
+        <span className="text-sm font-bold leading-tight text-[#f0c83f]">
+          BaytMiftah
+          <br />
+          Admin
+        </span>
+      </Link>
+      <div className="flex items-center gap-4">
+        <button type="button" className="relative text-[#f0c83f]" aria-label="Admin notifications">
+          <Bell className="h-4 w-4" />
+          <span className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full bg-[#ff9b9b]" />
+        </button>
+        <div className="grid h-7 w-7 place-items-center overflow-hidden rounded-full border border-[#f0c83f]/50 bg-[#13283a] text-[10px] font-bold text-[#f0c83f]">
+          {user?.user_metadata?.avatar_url || user?.user_metadata?.picture ? (
+            <img
+              src={user.user_metadata.avatar_url || user.user_metadata.picture}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            (user?.email?.[0] || "A").toUpperCase()
+          )}
+        </div>
+      </div>
+    </header>
+  );
+
+  const renderAdminExecutiveDashboard = () =>
+    renderLuxuryAdminShell(
+      <>
+        {renderLuxuryAdminTopBar()}
+        <main className="space-y-5 px-3 pb-8 pt-3">
+          <section className="px-1">
+            <h1 className="text-2xl font-black tracking-tight text-slate-100">Executive Dashboard</h1>
+            <p className="mt-1 max-w-[320px] text-xs leading-5 text-slate-300">
+              Real-time platform performance and luxury market metrics.
+            </p>
+          </section>
+
+          <div className="flex gap-3 px-1">
+            <button
+              type="button"
+              className="flex h-10 flex-1 items-center justify-center gap-2 rounded-lg border border-[#253c50] bg-[#13283a] text-[10px] font-bold text-slate-100"
+            >
+              <Clock3 className="h-3.5 w-3.5" />
+              Last 30 Days
+            </button>
+            <button
+              type="button"
+              className="flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-[#f0c83f] text-[10px] font-black text-[#081827]"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              Export Report
+            </button>
+          </div>
+
+          <section className="grid gap-4">
+            {luxuryAdminMetricCards.map((metric) => {
+              const Icon = metric.icon;
+
+              return (
+                <article
+                  key={metric.label}
+                  className="min-h-[96px] rounded-xl border border-[#22384c] bg-[#0d2134] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-300">
+                      {metric.label}
+                    </p>
+                    <Icon className="h-4 w-4 text-[#f0c83f]" />
+                  </div>
+                  <p className="mt-7 text-xl font-black text-slate-100">{metric.value}</p>
+                  <p
+                    className={`mt-2 text-[10px] font-bold ${
+                      metric.helperTone === "gold" ? "text-[#f0c83f]" : "text-[#4ff09b]"
+                    }`}
+                  >
+                    {metric.helper}
+                  </p>
+                </article>
+              );
+            })}
+          </section>
+
+          <section className="rounded-xl border border-[#22384c] bg-[#0d2134] p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-black text-slate-100">Transaction Velocity</h2>
+              <div className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-[#f0c83f]" />
+                <span className="h-2 w-2 rounded-full bg-[#41566a]" />
+              </div>
+            </div>
+            <div className="mt-7 flex h-40 items-end justify-between border-b border-[#1d3348] px-2">
+              {luxuryAdminVelocityBars.map((height, index) => (
+                <div
+                  key={`${height}-${index}`}
+                  className={`w-4 rounded-t-md ${
+                    index === 4 || index === 6 ? "bg-[#f0c83f]" : "bg-[#33475a]"
+                  }`}
+                  style={{ height }}
+                />
+              ))}
+            </div>
+            <div className="mt-5 grid grid-cols-3 gap-3 text-slate-100">
+              <div>
+                <p className="text-[9px] font-bold uppercase leading-tight text-slate-300">Avg. Deal Size</p>
+                <p className="mt-1 text-xl font-black">$4.8M</p>
+              </div>
+              <div>
+                <p className="text-[9px] font-bold uppercase leading-tight text-slate-300">Closing Time</p>
+                <p className="mt-1 text-xl font-black">22 Days</p>
+              </div>
+              <div>
+                <p className="text-[9px] font-bold uppercase leading-tight text-slate-300">Bid/Ask Ratio</p>
+                <p className="mt-1 text-xl font-black">0.98x</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="overflow-hidden rounded-xl border border-[#22384c] bg-[#0d2134]">
+            <div className="p-4">
+              <h2 className="text-lg font-black text-slate-100">Global Hotspots</h2>
+              <p className="text-xs text-slate-300">Regional demand concentration.</p>
+            </div>
+            <div className="relative h-44 overflow-hidden bg-[radial-gradient(circle_at_72%_30%,rgba(240,200,63,0.38),transparent_14%),radial-gradient(circle_at_44%_55%,rgba(255,255,255,0.14),transparent_2px),radial-gradient(circle_at_30%_42%,rgba(255,255,255,0.1),transparent_2px),linear-gradient(160deg,#050e17,#101d28)]">
+              <div className="absolute inset-0 opacity-50 [background-image:linear-gradient(20deg,transparent_46%,rgba(255,255,255,0.07)_47%,transparent_49%),linear-gradient(155deg,transparent_42%,rgba(255,255,255,0.05)_43%,transparent_46%)]" />
+              <div className="absolute inset-x-4 bottom-4 rounded-lg border border-[#22384c] bg-[#0b1c2d]/90 p-3">
+                <div className="flex items-center justify-between text-[10px] font-bold">
+                  <span>UAE (Dubai)</span>
+                  <span className="text-[#f0c83f]">+22% Growth</span>
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#2a3d51]">
+                  <div className="h-full w-[78%] rounded-full bg-[#f0c83f]" />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-[#22384c] bg-[#0d2134] p-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-200">
+              Live Protocol Feed
+            </p>
+            <div className="mt-4 space-y-2">
+              {luxuryAdminProtocolFeed.map((item, index) => (
+                <p key={item} className="grid grid-cols-[48px_1fr] gap-2 text-[10px] text-slate-300">
+                  <span className="text-[#f0c83f]">14:{22 - index * 3}:0{index}</span>
+                  <span>{item}</span>
+                </p>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="mt-5 h-9 w-full rounded-lg border border-[#22384c] text-[10px] font-black text-[#f0c83f]"
+            >
+              View Audit Logs
+            </button>
+          </section>
+
+          <section className="rounded-xl border border-[#22384c] bg-[#0d2134] p-4">
+            <div className="mb-4 flex items-start justify-between">
+              <h2 className="text-lg font-black leading-tight text-slate-100">
+                High-Performance
+                <br />
+                Listings
+              </h2>
+              <span className="text-[10px] font-bold text-[#f0c83f]">Full Inventory</span>
+            </div>
+            <div className="space-y-4">
+              {luxuryAdminListings.map((listing) => (
+                <article key={listing.title} className="grid grid-cols-[82px_1fr_auto] items-center gap-3">
+                  <img
+                    src={listing.image}
+                    alt=""
+                    className="h-16 w-20 rounded-lg object-cover"
+                    loading="lazy"
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-slate-100">{listing.title}</p>
+                    <p className="text-[10px] font-bold text-slate-200">{listing.price}</p>
+                    <p className="text-[9px] uppercase text-slate-400">{listing.label}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-slate-300" />
+                </article>
+              ))}
+            </div>
+          </section>
+        </main>
+        {renderLuxuryAdminFooter()}
+      </>
+    );
+
+  const renderVerificationDisputeOversight = () =>
+    renderLuxuryAdminShell(
+      <>
+        {renderLuxuryAdminTopBar()}
+        <main className="space-y-5 px-3 pb-8 pt-4">
+          <section className="px-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#f0c83f]">
+              Security Protocol V2.4
+            </p>
+            <h1 className="mt-2 text-2xl font-black leading-tight text-slate-100">
+              Verification & Dispute Oversight
+            </h1>
+            <p className="mt-2 text-xs leading-5 text-slate-300">
+              High-security portal for the review of elite membership credentials, high-value asset proofing,
+              and transaction integrity auditing.
+            </p>
+            <div className="mt-5 flex justify-end gap-3">
+              <div className="grid h-16 w-20 place-items-center rounded-lg border border-[#263d52] bg-[#0d2134] text-center">
+                <div>
+                  <p className="text-xl font-black text-[#f0c83f]">24</p>
+                  <p className="text-[8px] uppercase text-slate-400">Pending KYC</p>
+                </div>
+              </div>
+              <div className="grid h-16 w-20 place-items-center rounded-lg border border-[#263d52] bg-[#0d2134] text-center">
+                <div>
+                  <p className="text-xl font-black text-[#ffaaa9]">08</p>
+                  <p className="text-[8px] uppercase text-slate-400">Disputes</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-[#22384c] bg-[#0d2134] p-5">
+            <div className="mb-5 flex items-start justify-between">
+              <div className="flex gap-2">
+                <FileText className="mt-1 h-4 w-4 text-[#f0c83f]" />
+                <h2 className="text-lg font-black leading-tight text-slate-100">
+                  KYC & Proof of
+                  <br />
+                  Funds Queue
+                </h2>
+              </div>
+              <button type="button" className="text-right text-[10px] font-black text-[#f0c83f]">
+                View All
+                <br />
+                Records
+              </button>
+            </div>
+            <div className="space-y-7">
+              {luxuryKycQueue.map((candidate) => (
+                <article key={candidate.name} className="mx-auto max-w-[260px]">
+                  <div className="grid grid-cols-[72px_1fr_auto] gap-3">
+                    <img
+                      src={candidate.image}
+                      alt=""
+                      className="h-20 w-16 rounded-sm object-cover grayscale"
+                      loading="lazy"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-100">{candidate.name}</p>
+                      <p className="mt-1 text-[9px] leading-3 text-slate-400">{candidate.context}</p>
+                    </div>
+                    <span className="h-fit rounded bg-[#f0c83f] px-2 py-1 text-[7px] font-black uppercase text-[#071725]">
+                      {candidate.priority}
+                    </span>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-[8px] uppercase text-slate-400">
+                    <div>
+                      <p>{candidate.docLabel}</p>
+                      <p className="mt-1 truncate text-[9px] normal-case text-slate-100">{candidate.docValue}</p>
+                    </div>
+                    <div>
+                      <p>{candidate.fundLabel}</p>
+                      <p className="mt-1 text-[9px] font-black normal-case text-[#f0c83f]">{candidate.fundValue}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      className="h-8 rounded border border-[#ffaaa9] text-[9px] font-black text-[#ffaaa9]"
+                    >
+                      {candidate.priority === "STANDARD" ? "More Info" : "Reject"}
+                    </button>
+                    <button
+                      type="button"
+                      className="h-8 rounded bg-[#f0c83f] text-[9px] font-black text-[#071725]"
+                    >
+                      Approve Access
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-[#22384c] bg-[#0d2134] p-5">
+            <div className="mb-5 flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-[#ffaaa9]" />
+              <h2 className="text-lg font-black leading-tight text-slate-100">Transaction Disputes</h2>
+              <span className="rounded bg-[#ffaaa9] px-2 py-1 text-[7px] font-black uppercase text-[#071725]">
+                Critical Action Required
+              </span>
+            </div>
+            <div className="grid grid-cols-[0.85fr_1.2fr_0.8fr_0.6fr] gap-2 border-b border-[#22384c] pb-2 text-[8px] uppercase tracking-[0.12em] text-slate-400">
+              <span>Transaction ID</span>
+              <span>Property Asset</span>
+              <span>Amount</span>
+              <span>Dispute</span>
+            </div>
+            {luxuryDisputeRows.map((row) => (
+              <div
+                key={row.id}
+                className="grid grid-cols-[0.85fr_1.2fr_0.8fr_0.6fr] gap-2 border-b border-[#152b3f] py-3 text-[10px]"
+              >
+                <span className="font-black text-[#f0c83f]">{row.id}</span>
+                <span className="text-slate-100">{row.property}</span>
+                <span className="font-black text-slate-100">{row.amount}</span>
+                <span className="h-fit rounded bg-[#f0c83f] px-1 py-0.5 text-[7px] font-black text-[#071725]">
+                  {row.status}
+                </span>
+              </div>
+            ))}
+          </section>
+
+          <section className="rounded-xl border border-[#ffaaa9]/25 bg-[#251b29] p-5">
+            <div className="flex items-center gap-2 text-[#ffaaa9]">
+              <AlertTriangle className="h-5 w-5" />
+              <h2 className="text-lg font-black">Suspicious Activity</h2>
+            </div>
+            <div className="mt-4 space-y-4 text-[10px]">
+              <div className="border-l border-[#ffaaa9] pl-3">
+                <p className="font-black text-slate-100">Multiple Login Failures</p>
+                <p className="text-slate-400">IP: 185.22.140.2 [Moscow, RU]</p>
+                <p className="text-[8px] text-slate-500">TARGET: ADMIN_VAULT_01</p>
+              </div>
+              <div className="border-l border-[#f0c83f] pl-3">
+                <p className="font-black text-slate-100">Rapid Asset Transfer</p>
+                <p className="text-slate-400">Attempted transfer of "The Zenith" NFT Title</p>
+                <p className="text-[8px] text-slate-500">USER: USER_4892_GOLD</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="mt-5 h-10 w-full rounded bg-[#ffaaa9] text-[9px] font-black uppercase tracking-[0.12em] text-[#071725]"
+            >
+              Initiate Global Lockdown
+            </button>
+          </section>
+
+          <section className="overflow-hidden rounded-xl border border-[#22384c] bg-[#0d2134]">
+            <div className="h-40 bg-[radial-gradient(circle_at_70%_38%,rgba(240,200,63,0.2),transparent_9%),radial-gradient(circle_at_52%_52%,rgba(255,255,255,0.12),transparent_2px),linear-gradient(160deg,#071625,#111f2b)]" />
+            <div className="p-4">
+              <p className="text-[10px] font-black text-slate-100">Live Transaction Pulse</p>
+              <p className="mt-1 text-[8px] uppercase text-[#f0c83f]">Active verification nodes</p>
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-[#22384c] bg-[#0d2134] p-5">
+            <h2 className="text-base font-black text-[#f0c83f]">Weekly Throughput</h2>
+            <div className="mt-5 space-y-4">
+              <div>
+                <div className="mb-2 flex justify-between text-xs">
+                  <span>KYC Approved</span>
+                  <span className="font-black">142</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-[#273b50]">
+                  <div className="h-full w-[88%] rounded-full bg-[#f0c83f]" />
+                </div>
+              </div>
+              <div>
+                <div className="mb-2 flex justify-between text-xs">
+                  <span>Disputes Resolved</span>
+                  <span className="font-black">21 / 24</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-[#273b50]">
+                  <div className="h-full w-[72%] rounded-full bg-slate-300" />
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+        {renderLuxuryAdminFooter()}
+      </>
+    );
+
   const renderSecurityCenter = () => (
     <div className="space-y-6">
       <Card className={`${adminSurfaceClass} p-6`}>
@@ -2134,6 +3000,10 @@ export function AdminLayout() {
       return renderSecurityCenter();
     }
 
+    if (currentSection === "fraud-dashboard") {
+      return <FraudDashboard />;
+    }
+
     if (currentSection === "users") {
       return renderUserQueue();
     }
@@ -2170,6 +3040,8 @@ export function AdminLayout() {
           ? "Analytics"
         : currentSection === "security"
           ? "Security"
+          : currentSection === "fraud-dashboard"
+            ? "Fraud Dashboard"
         : `${currentSection.charAt(0).toUpperCase()}${currentSection.slice(1)}`;
 
   const sectionDescription =
@@ -2179,6 +3051,8 @@ export function AdminLayout() {
         ? "Track production readiness, legal gates, provider activation, and launch evidence in one calm control plane."
     : currentSection === "security"
       ? "Triage fraud alerts, suspicious behavior, audit logs, and enforcement actions."
+      : currentSection === "fraud-dashboard"
+        ? "Review pending fraud alerts and record approval or rejection decisions."
       : currentSection === "transactions"
         ? "Review payments, escrow document gates, releases, refunds, and provider handoffs."
       : currentSection === "users"
@@ -2192,6 +3066,18 @@ export function AdminLayout() {
         : currentSection === "settings"
           ? "Organize platform settings, launch readiness, payments, verification, security, and feature gates."
       : "Monitor operational health, trust signals, and moderation volume across BaytMiftah.";
+
+  if (!loading && currentAdmin && currentSection === "listings") {
+    return renderAdminListingsCommandCenter();
+  }
+
+  if (!loading && currentAdmin && currentSection === "overview") {
+    return renderAdminExecutiveDashboard();
+  }
+
+  if (!loading && currentAdmin && (currentSection === "verification" || currentSection === "disputes")) {
+    return renderVerificationDisputeOversight();
+  }
 
   return (
     !loading && !currentAdmin ? (
@@ -2209,7 +3095,7 @@ export function AdminLayout() {
         </Card>
       </div>
     ) : (
-      <div className="min-h-screen bg-[#fff7fa] text-foreground">
+      <div className="min-h-screen bg-background text-foreground">
         <div className="flex min-h-screen">
           <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-slate-200/80 bg-white/75 px-5 py-6 backdrop-blur-2xl lg:block">
             <Link to="/" className="flex items-center gap-3 px-3">
@@ -2245,7 +3131,7 @@ export function AdminLayout() {
                     to={item.href}
                     className={`group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition ${
                       isActive
-                        ? "bg-primary text-primary-foreground shadow-[0_12px_30px_rgba(255,56,92,0.18)]"
+                        ? "bg-primary text-primary-foreground shadow-[0_12px_30px_rgba(242,200,75,0.18)]"
                         : "text-slate-600 hover:bg-primary/5 hover:text-primary"
                     }`}
                   >

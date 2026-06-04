@@ -63,7 +63,7 @@ describe("Signup", () => {
     renderSignup();
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole("button", { name: /continue with google/i }));
+    await user.click(screen.getByRole("button", { name: /^google$/i }));
 
     expect(signInWithOAuth).toHaveBeenCalledWith(
       "google",
@@ -71,19 +71,18 @@ describe("Signup", () => {
     );
   });
 
-  it("starts Google OAuth with the workspace onboarding target for landlords and agents", async () => {
+  it("starts Apple OAuth for buyer account creation", async () => {
     const signInWithOAuth = vi.fn().mockResolvedValue(undefined);
     useAuthMock.mockReturnValue(createAuthState({ signInWithOAuth }) as any);
 
     renderSignup();
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole("button", { name: /list property/i }));
-    await user.click(screen.getByRole("button", { name: /continue with google/i }));
+    await user.click(screen.getByRole("button", { name: /^apple$/i }));
 
     expect(signInWithOAuth).toHaveBeenCalledWith(
-      "google",
-      "https://baytmiftah-krafvyn.vercel.app/login?next=%2Fworkspace%3Fnext%3Dnew"
+      "apple",
+      "https://baytmiftah-krafvyn.vercel.app/login?next=%2Fapp"
     );
   });
 });

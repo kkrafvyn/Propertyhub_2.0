@@ -61,6 +61,11 @@ function renderRoot(path = "/app") {
           <Route index element={<div>Home body</div>} />
           <Route path="app" element={<div>App body</div>} />
           <Route path="search" element={<div>Search body</div>} />
+          <Route path="login" element={<div>Login body</div>} />
+          <Route path="signup" element={<div>Signup body</div>} />
+          <Route path="verify/:token" element={<div>Receipt body</div>} />
+          <Route path="legal/terms" element={<div>Terms body</div>} />
+          <Route path="projects" element={<div>Projects body</div>} />
         </Route>
       </Routes>
     </MemoryRouter>
@@ -84,12 +89,43 @@ describe("Root", () => {
     expect(screen.getByTestId("mobile-shell")).toHaveTextContent("App body");
   });
 
-  it("keeps signed-out mobile web users on the normal web layout", () => {
+  it.each([
+    ["/login", "Login body"],
+    ["/signup", "Signup body"],
+  ])("uses the mobile app shell for signed-out auth page %s", (path, expectedBody) => {
     mockViewport(true);
+
+    renderRoot(path);
+
+    expect(screen.getByTestId("mobile-shell")).toHaveTextContent(expectedBody);
+  });
+
+  it("uses the exact app shell for redesigned public routes even when signed out", () => {
+    mockViewport(true);
+
+    renderRoot("/search");
+
+    expect(screen.getByTestId("mobile-shell")).toHaveTextContent("Search body");
+  });
+
+  it("keeps redesigned public routes in the desktop layout on desktop viewports", () => {
+    mockViewport(false);
 
     renderRoot("/search");
 
     expect(screen.queryByTestId("mobile-shell")).not.toBeInTheDocument();
     expect(screen.getByText("Search body")).toBeInTheDocument();
+  });
+
+  it.each([
+    ["/legal/terms", "Terms body"],
+    ["/verify/demo-token", "Receipt body"],
+    ["/projects", "Projects body"],
+  ])("uses the exact app shell for routed public utility page %s", (path, expectedBody) => {
+    mockViewport(true);
+
+    renderRoot(path);
+
+    expect(screen.getByTestId("mobile-shell")).toHaveTextContent(expectedBody);
   });
 });

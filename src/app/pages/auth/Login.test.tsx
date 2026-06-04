@@ -75,7 +75,7 @@ describe("Login", () => {
 
     await user.type(screen.getByLabelText("Email Address"), "agent@example.com");
     await user.type(screen.getByLabelText("Password"), "secret-pass");
-    await user.click(screen.getByRole("button", { name: /^log in$/i }));
+    await user.click(screen.getByRole("button", { name: /^sign in$/i }));
 
     await waitFor(() => {
       expect(signIn).toHaveBeenCalledWith("agent@example.com", "secret-pass");
@@ -163,7 +163,7 @@ describe("Login", () => {
 
     await user.type(screen.getByLabelText("Email Address"), "agent@example.com");
     await user.type(screen.getByLabelText("Password"), "secret-pass");
-    await user.click(screen.getByRole("button", { name: /^log in$/i }));
+    await user.click(screen.getByRole("button", { name: /^sign in$/i }));
 
     await waitFor(() => {
       expect(router.state.location.pathname).toBe("/app");

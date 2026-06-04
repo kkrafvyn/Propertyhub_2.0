@@ -704,6 +704,92 @@ export function UserDashboard() {
     propertyViewings[0]?.listing?.property?.city ||
     "Accra";
 
+  const buyerOrderSteps = useMemo(
+    () => [
+      {
+        label: "Browse",
+        helper: savedProperties.length
+          ? `${savedProperties.length} saved propert${savedProperties.length === 1 ? "y" : "ies"} ready to compare.`
+          : "Start with verified homes, offices, land, or agencies.",
+        href: "/search",
+        icon: Search,
+        active: true,
+      },
+      {
+        label: "Message",
+        helper: unreadMessages
+          ? `${unreadMessages} unread message${unreadMessages === 1 ? "" : "s"} waiting.`
+          : conversations.length
+            ? "Your agent conversations are up to date."
+            : "Message a verified agent from any property.",
+        href: "/app/messages",
+        icon: MessageCircle,
+        active: conversations.length > 0 || unreadMessages > 0,
+      },
+      {
+        label: "View",
+        helper: propertyViewings.length
+          ? `${propertyViewings.length} viewing${propertyViewings.length === 1 ? "" : "s"} in your tracker.`
+          : "Request a viewing and track confirmation here.",
+        href: "/app/viewings",
+        icon: CalendarDays,
+        active: propertyViewings.length > 0,
+      },
+      {
+        label: "Pay",
+        helper: propertyTransactions.length
+          ? `${propertyTransactions.length} payment record${propertyTransactions.length === 1 ? "" : "s"} available.`
+          : "Deposits and receipts will appear after checkout.",
+        href: "/app/payments",
+        icon: CreditCard,
+        active: propertyTransactions.length > 0,
+      },
+      {
+        label: "Review",
+        helper: dealCases.some((item) => item.status === "closed" || item.status === "completed")
+          ? "You have a completed deal ready for feedback."
+          : "After a viewing or deal, review the property and agency.",
+        href: "/reviews",
+        icon: UserCheck,
+        active: dealCases.some((item) => item.status === "closed" || item.status === "completed"),
+      },
+    ],
+    [conversations.length, dealCases, propertyTransactions.length, propertyViewings.length, savedProperties.length, unreadMessages]
+  );
+
+  const continueActionCards = [
+    {
+      label: "Search again",
+      detail: `Fresh matches around ${recommendedLocation}.`,
+      href: `/search?q=${encodeURIComponent(recommendedLocation)}`,
+      icon: Search,
+    },
+    {
+      label: "Resume chat",
+      detail: unreadMessages ? `${unreadMessages} unread waiting.` : "Open your latest agent thread.",
+      href: "/app/messages",
+      icon: MessageCircle,
+    },
+    {
+      label: "Track viewing",
+      detail: propertyViewings.length ? "Check confirmations and reminders." : "Request a slot from any listing.",
+      href: "/app/viewings",
+      icon: CalendarDays,
+    },
+    {
+      label: "Receipts",
+      detail: propertyTransactions.length ? "Open payment history." : "Payments appear here after checkout.",
+      href: "/app/payments",
+      icon: CreditCard,
+    },
+    {
+      label: "Review",
+      detail: "Rate the property or agency after a step is complete.",
+      href: "/reviews",
+      icon: UserCheck,
+    },
+  ];
+
   const handleSettingsSignOut = async () => {
     try {
       await signOut();
@@ -1076,6 +1162,11 @@ export function UserDashboard() {
                     {item.listing?.property?.area_sqm || item.listing?.property?.square_feet || "Verified"}
                   </span>
                 </div>
+                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-primary/10 pt-4 text-xs font-black text-primary">
+                  <span className="rounded-full bg-primary/5 px-3 py-2 text-center">Compare</span>
+                  <span className="rounded-full bg-primary/5 px-3 py-2 text-center">Message</span>
+                  <span className="rounded-full bg-primary/5 px-3 py-2 text-center">Track</span>
+                </div>
               </div>
             </Card>
           </Link>
@@ -1115,25 +1206,30 @@ export function UserDashboard() {
             ).length || 0;
 
           return (
-            <Card key={conversation.id} className="p-5">
+            <Card key={conversation.id} className="rounded-[1.75rem] border-white bg-white/90 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_80px_rgba(255,56,92,0.13)]">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold">
+                  <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-primary/10 font-black text-primary">
                     {(counterpart?.full_name || counterpart?.email || "C").charAt(0).toUpperCase()}
                   </div>
-                  <div>
-                    <h3 className="font-semibold">
+                  <div className="min-w-0">
+                    <h3 className="font-black tracking-[-0.03em]">
                       {counterpart?.full_name || counterpart?.email || "Conversation"}
                     </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
                       {latestMessage?.content || "No messages yet"}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="mt-2 text-xs font-bold text-primary">
                       Updated {formatRelativeTime(conversation.last_message_at || latestMessage?.created_at)}
                     </p>
                   </div>
                 </div>
                 {unreadCount > 0 && <Badge>{unreadCount} unread</Badge>}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-primary/10 pt-4 text-xs font-black text-primary">
+                <span className="rounded-full bg-primary/5 px-3 py-2">Reply</span>
+                <span className="rounded-full bg-primary/5 px-3 py-2">Open property</span>
+                <span className="rounded-full bg-primary/5 px-3 py-2">Track next step</span>
               </div>
             </Card>
           );
@@ -1167,7 +1263,7 @@ export function UserDashboard() {
             item.case_type === "purchase_offer" ? parseOfferSummary(item.message) : null;
 
           return (
-            <Card key={item.id} className="p-5">
+            <Card key={item.id} className="rounded-[1.75rem] border-white bg-white/90 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_80px_rgba(255,56,92,0.13)]">
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
                   <h3 className="font-semibold text-lg">{getCaseLabel(item.case_type)}</h3>
@@ -1213,6 +1309,11 @@ export function UserDashboard() {
                   {offerSummary?.notes || stripReferralMetadata(item.message)}
                 </p>
               )}
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-primary/10 pt-4 text-xs font-black text-primary">
+                <span className="rounded-full bg-primary/5 px-3 py-2">Track stage</span>
+                <span className="rounded-full bg-primary/5 px-3 py-2">Message team</span>
+                <span className="rounded-full bg-primary/5 px-3 py-2">Review documents</span>
+              </div>
             </Card>
           );
         })}
@@ -1252,7 +1353,7 @@ export function UserDashboard() {
           const escrowWorking = escrow ? workingEscrowId === escrow.id : false;
 
           return (
-            <Card key={transaction.id} className="p-5">
+            <Card key={transaction.id} className="rounded-[1.75rem] border-white bg-white/90 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_80px_rgba(255,56,92,0.13)]">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
@@ -1484,6 +1585,11 @@ export function UserDashboard() {
                     </Button>
                   )}
                 </div>
+                <div className="flex flex-wrap gap-2 border-t border-primary/10 pt-4 text-xs font-black text-primary lg:w-full">
+                  <span className="rounded-full bg-primary/5 px-3 py-2">Receipt</span>
+                  <span className="rounded-full bg-primary/5 px-3 py-2">Verification</span>
+                  <span className="rounded-full bg-primary/5 px-3 py-2">Dispute support</span>
+                </div>
               </div>
             </Card>
           );
@@ -1511,7 +1617,7 @@ export function UserDashboard() {
     return (
       <div className="space-y-4">
         {propertyViewings.map((viewing) => (
-          <Card key={viewing.id} className="p-5">
+          <Card key={viewing.id} className="rounded-[1.75rem] border-white bg-white/90 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_80px_rgba(255,56,92,0.13)]">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
@@ -1541,11 +1647,24 @@ export function UserDashboard() {
                 {viewing.requester_note && <p className="text-sm">{viewing.requester_note}</p>}
               </div>
 
-              {viewing.listing?.id && (
-                <Link to={`/property/${viewing.listing.id}`}>
-                  <Button variant="outline">View Listing</Button>
-                </Link>
-              )}
+              <div className="flex flex-wrap gap-2">
+                {viewing.listing?.id && (
+                  <Link to={`/property/${viewing.listing.id}`}>
+                    <Button variant="outline">View Listing</Button>
+                  </Link>
+                )}
+                <Button variant="outline" onClick={() => void handleOpenViewingDirections(viewing)}>
+                  Directions
+                </Button>
+                <Button variant="outline" onClick={() => handleAddViewingToCalendar(viewing)}>
+                  Add calendar
+                </Button>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-primary/10 pt-4 text-xs font-black text-primary">
+              <span className="rounded-full bg-primary/5 px-3 py-2">Confirm time</span>
+              <span className="rounded-full bg-primary/5 px-3 py-2">Get directions</span>
+              <span className="rounded-full bg-primary/5 px-3 py-2">Follow up</span>
             </div>
           </Card>
         ))}
@@ -1582,7 +1701,7 @@ export function UserDashboard() {
             : [];
 
           return (
-              <Card key={grant.id} className="p-5">
+              <Card key={grant.id} className="rounded-[1.75rem] border-white bg-white/90 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_80px_rgba(255,56,92,0.13)]">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
@@ -1636,6 +1755,11 @@ export function UserDashboard() {
                     </Link>
                   ) : null}
                 </div>
+                <div className="mt-4 flex flex-wrap gap-2 border-t border-primary/10 pt-4 text-xs font-black text-primary">
+                  <span className="rounded-full bg-primary/5 px-3 py-2">Access window</span>
+                  <span className="rounded-full bg-primary/5 px-3 py-2">Entry log</span>
+                  <span className="rounded-full bg-primary/5 px-3 py-2">Support</span>
+                </div>
               </Card>
           );
         })}
@@ -1662,7 +1786,7 @@ export function UserDashboard() {
     return (
       <div className="space-y-4">
         {savedAlerts.map((alert) => (
-          <Card key={alert.id} className="p-5">
+          <Card key={alert.id} className="rounded-[1.75rem] border-white bg-white/90 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_80px_rgba(255,56,92,0.13)]">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
@@ -1694,6 +1818,11 @@ export function UserDashboard() {
                   Delete
                 </Button>
               </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-primary/10 pt-4 text-xs font-black text-primary">
+              <span className="rounded-full bg-primary/5 px-3 py-2">New listings</span>
+              <span className="rounded-full bg-primary/5 px-3 py-2">Price drops</span>
+              <span className="rounded-full bg-primary/5 px-3 py-2">Shareable search</span>
             </div>
           </Card>
         ))}
@@ -1887,6 +2016,79 @@ export function UserDashboard() {
   const renderOverview = () => (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
+        <section className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)] backdrop-blur md:p-6">
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">
+                Your property journey
+              </p>
+              <h2 className="mt-1 text-2xl font-black tracking-[-0.05em]">
+                Browse, act, track, review.
+              </h2>
+            </div>
+            <Link to="/app/support">
+              <Button variant="outline" size="sm" className="rounded-full">
+                Need help?
+              </Button>
+            </Link>
+          </div>
+          <div className="grid gap-3 md:grid-cols-5">
+            {buyerOrderSteps.map((step, index) => (
+              <Link
+                key={step.label}
+                to={step.href}
+                className={`rounded-2xl border p-4 transition hover:-translate-y-0.5 ${
+                  step.active
+                    ? "border-primary/15 bg-primary/5 shadow-sm"
+                    : "border-primary/10 bg-white"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`grid h-9 w-9 place-items-center rounded-2xl ${step.active ? "bg-primary text-white" : "bg-primary/10 text-primary"}`}>
+                    <step.icon className="h-4 w-4" />
+                  </span>
+                  <span className="text-xs font-black text-primary">0{index + 1}</span>
+                </div>
+                <strong className="mt-4 block text-sm">{step.label}</strong>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">{step.helper}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-[2rem] border border-white/80 bg-white/78 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)] backdrop-blur md:p-6">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">
+                Pick up fast
+              </p>
+              <h2 className="mt-1 text-2xl font-black tracking-[-0.05em]">
+                Your next useful tap.
+              </h2>
+            </div>
+            <Link to="/search">
+              <Button variant="outline" size="sm" className="rounded-full">
+                Browse
+              </Button>
+            </Link>
+          </div>
+          <div className="-mx-2 flex snap-x gap-3 overflow-x-auto px-2 pb-2">
+            {continueActionCards.map((item) => (
+              <Link
+                key={item.label}
+                to={item.href}
+                className="min-w-[13rem] snap-start rounded-2xl border border-primary/10 bg-white p-4 transition hover:-translate-y-0.5 hover:bg-primary/5"
+              >
+                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary/10 text-primary">
+                  <item.icon className="h-4 w-4" />
+                </span>
+                <strong className="mt-4 block text-sm">{item.label}</strong>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.detail}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         {renderRoleTaskLaunchpad()}
 
         <section>
@@ -2068,6 +2270,32 @@ export function UserDashboard() {
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
+        </Card>
+
+        <Card className="rounded-[1.75rem] border-white bg-white/88 p-6 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
+          <div className="mb-3 flex items-center gap-2">
+            <Wrench className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">Support shortcuts</h3>
+          </div>
+          <p className="mb-4 text-sm leading-6 text-muted-foreground">
+            Use these for wrong listings, payment issues, agent no-shows, scam reports, or refund help.
+          </p>
+          <div className="grid gap-2">
+            {[
+              { label: "Report a listing", href: "/search" },
+              { label: "Payment or refund help", href: "/app/support" },
+              { label: "Review an agency", href: "/reviews" },
+            ].map((item) => (
+              <Link
+                key={item.label}
+                to={item.href}
+                className="flex items-center justify-between rounded-2xl bg-primary/5 px-4 py-3 text-sm font-bold text-[#171214] transition hover:bg-primary/10"
+              >
+                {item.label}
+                <ChevronRight className="h-4 w-4 text-primary" />
+              </Link>
+            ))}
+          </div>
         </Card>
       </div>
     </div>
@@ -2564,6 +2792,44 @@ export function UserDashboard() {
 
     return (
       <>
+        <section className="mobile-dashboard-section">
+          <div className="mobile-section-heading">
+            <h2>Your journey</h2>
+            <Link to="/app/support">Need help?</Link>
+          </div>
+          <div className="mobile-journey-strip" aria-label="Buyer journey steps">
+            {buyerOrderSteps.map((step, index) => (
+              <Link
+                key={step.label}
+                to={step.href}
+                className={step.active ? "is-active" : ""}
+              >
+                <span>
+                  <step.icon aria-hidden="true" />
+                </span>
+                <strong>{step.label}</strong>
+                <small>0{index + 1}</small>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="mobile-dashboard-section">
+          <div className="mobile-section-heading">
+            <h2>Pick up fast</h2>
+            <Link to="/search">Browse</Link>
+          </div>
+          <div className="mobile-quick-rail" aria-label="Quick next actions">
+            {continueActionCards.map((item) => (
+              <Link key={item.label} to={item.href}>
+                <item.icon aria-hidden="true" />
+                <strong>{item.label}</strong>
+                <p>{item.detail}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         <div className="mobile-command-grid">
           {[
             {
@@ -2887,63 +3153,145 @@ export function UserDashboard() {
                 </Button>
               </div>
             </div>
+            <div className="grid gap-3 md:grid-cols-4">
+              {[
+                { label: "Compare saved", href: "/app/compare", icon: ArrowRightLeft },
+                { label: "Message agents", href: "/app/messages", icon: MessageCircle },
+                { label: "Track viewings", href: "/app/viewings", icon: CalendarDays },
+                { label: "Get buying help", href: "/app/buying-tools", icon: Calculator },
+              ].map((item) => (
+                <Link
+                  key={item.label}
+                  to={item.href}
+                  className="rounded-[1.5rem] border border-white bg-white/84 p-4 shadow-[0_16px_50px_rgba(255,56,92,0.08)] transition hover:-translate-y-0.5 hover:bg-primary/5"
+                >
+                  <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary/10 text-primary">
+                    <item.icon className="h-4 w-4" />
+                  </span>
+                  <strong className="mt-3 block text-sm">{item.label}</strong>
+                </Link>
+              ))}
+            </div>
             {renderSavedGrid(savedProperties)}
           </section>
         ) : section === "messages" ? (
           <section className="space-y-6 rounded-[2rem] bg-white/82 p-4 shadow-[0_18px_60px_rgba(255,56,92,0.08)] md:p-8">
-            <div>
-              <h2 className="text-4xl font-black tracking-[-0.06em]">Messages</h2>
-              <p className="mt-2 text-muted-foreground">
-                Review your latest property conversations.
-              </p>
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-primary">
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  Inbox
+                </p>
+                <h2 className="text-4xl font-black tracking-[-0.06em] md:text-6xl">Messages</h2>
+                <p className="mt-2 text-muted-foreground">
+                  Review your latest property conversations and keep every next step attached to the deal.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full bg-primary px-4 py-2 text-sm font-black text-white">All</span>
+                <span className="rounded-full bg-primary/10 px-4 py-2 text-sm font-black text-primary">
+                  {unreadMessages} unread
+                </span>
+              </div>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              {[
+                { label: "Reply now", href: "/app/messages", icon: MessageCircle },
+                { label: "Track viewings", href: "/app/viewings", icon: CalendarDays },
+                { label: "Open support", href: "/app/support", icon: Wrench },
+              ].map((item) => (
+                <Link
+                  key={item.label}
+                  to={item.href}
+                  className="rounded-[1.5rem] border border-primary/10 bg-primary/5 p-4 transition hover:-translate-y-0.5 hover:bg-primary/10"
+                >
+                  <item.icon className="h-5 w-5 text-primary" />
+                  <strong className="mt-3 block text-sm">{item.label}</strong>
+                </Link>
+              ))}
             </div>
             {renderConversations()}
           </section>
         ) : section === "applications" ? (
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Applications</h2>
-              <p className="text-muted-foreground mt-1">
-                Follow the status of your inquiries, offers, and applications.
-              </p>
+          <section className="space-y-6 rounded-[2rem] bg-white/82 p-4 shadow-[0_18px_60px_rgba(255,56,92,0.08)] md:p-8">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-primary">
+                  <FileText className="h-3.5 w-3.5" />
+                  Deals
+                </p>
+                <h2 className="text-4xl font-black tracking-[-0.06em] md:text-6xl">Applications</h2>
+                <p className="mt-2 text-muted-foreground">
+                  Follow inquiries, offers, documents, and the next team response.
+                </p>
+              </div>
+              <Link to="/search">
+                <Button className="rounded-full">Find property</Button>
+              </Link>
             </div>
             {renderApplications()}
           </section>
         ) : section === "viewings" ? (
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Viewings</h2>
-              <p className="text-muted-foreground mt-1">
-                Track requested and confirmed property visits in one place.
-              </p>
+          <section className="space-y-6 rounded-[2rem] bg-white/82 p-4 shadow-[0_18px_60px_rgba(255,56,92,0.08)] md:p-8">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-primary">
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  Tours
+                </p>
+                <h2 className="text-4xl font-black tracking-[-0.06em] md:text-6xl">Viewings</h2>
+                <p className="mt-2 text-muted-foreground">
+                  Track requested and confirmed property visits in one place.
+                </p>
+              </div>
+              <Link to="/search">
+                <Button className="rounded-full">Book another</Button>
+              </Link>
             </div>
             {renderViewings()}
           </section>
         ) : section === "access" ? (
-          <section className="space-y-6">
+          <section className="space-y-6 rounded-[2rem] bg-white/82 p-4 shadow-[0_18px_60px_rgba(255,56,92,0.08)] md:p-8">
             <div>
-              <h2 className="text-2xl font-semibold">Smart Access</h2>
-              <p className="text-muted-foreground mt-1">
+              <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-primary">
+                <KeyRound className="h-3.5 w-3.5" />
+                Smart property
+              </p>
+              <h2 className="text-4xl font-black tracking-[-0.06em] md:text-6xl">Smart Access</h2>
+              <p className="mt-2 text-muted-foreground">
                 See time-boxed entry windows and tenancy access grants for smart properties.
               </p>
             </div>
             {renderSmartAccess()}
           </section>
         ) : section === "alerts" ? (
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Saved Alerts</h2>
-              <p className="text-muted-foreground mt-1">
-                Keep search alerts active and manage the filters watching the market for you.
-              </p>
+          <section className="space-y-6 rounded-[2rem] bg-white/82 p-4 shadow-[0_18px_60px_rgba(255,56,92,0.08)] md:p-8">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-primary">
+                  <Bell className="h-3.5 w-3.5" />
+                  Watchlist
+                </p>
+                <h2 className="text-4xl font-black tracking-[-0.06em] md:text-6xl">Saved Alerts</h2>
+                <p className="mt-2 text-muted-foreground">
+                  Keep search alerts active and manage the filters watching the market for you.
+                </p>
+              </div>
+              <Link to="/search">
+                <Button className="rounded-full">Create alert</Button>
+              </Link>
             </div>
             {renderAlerts()}
           </section>
         ) : section === "payments" ? (
-          <section className="space-y-6">
+          <section className="space-y-6 rounded-[2rem] bg-white/82 p-4 shadow-[0_18px_60px_rgba(255,56,92,0.08)] md:p-8">
             <div>
-              <h2 className="text-2xl font-semibold">Payments</h2>
-              <p className="text-muted-foreground mt-1">
+              <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-primary">
+                <CreditCard className="h-3.5 w-3.5" />
+                Receipts
+              </p>
+              <h2 className="text-4xl font-black tracking-[-0.06em] md:text-6xl">Payments</h2>
+              <p className="mt-2 text-muted-foreground">
                 Review property payments, open receipts, and track receipt integrity.
               </p>
             </div>

@@ -82,23 +82,23 @@ export function SoldLedger() {
   }, [announcements]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_12%_0%,rgba(255,56,92,0.13),transparent_34rem),linear-gradient(180deg,#fff7fa_0%,#ffffff_44%,#fff7fa_100%)] text-[#171214]">
       <Navbar />
 
       <main className="pt-24 pb-16">
         <section className="px-4">
           <div className="mx-auto max-w-7xl">
-            <Card className="overflow-hidden border-primary/15 bg-[radial-gradient(circle_at_top_right,rgba(0,122,255,0.16),transparent_28%),linear-gradient(135deg,#ffffff,#f8fafc)]">
+            <Card className="overflow-hidden rounded-[2.5rem] border-white bg-white/88 shadow-[0_28px_90px_rgba(255,56,92,0.12)] backdrop-blur-xl">
               <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
                 <div className="p-8 md:p-12">
                   <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
                     <Radio className="h-3.5 w-3.5" />
                     Sold ledger
                   </div>
-                  <h1 className="mt-6 max-w-4xl text-4xl font-semibold tracking-tight md:text-6xl">
+                  <h1 className="mt-6 max-w-4xl text-4xl font-black leading-[0.98] tracking-[-0.07em] md:text-6xl">
                     Public sales, private buyers.
                   </h1>
-                  <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
+                  <p className="mt-5 max-w-2xl text-base font-semibold leading-8 text-muted-foreground md:text-lg">
                     When a sale closes, BaytMiftah removes the property from active listings and
                     publishes a privacy-safe sale event. The buyer is shown as a hash, not a name.
                   </p>
@@ -120,7 +120,7 @@ export function SoldLedger() {
                   </div>
                 </div>
 
-                <div className="bg-foreground p-8 text-white md:p-12">
+                <div className="bg-[#171214] p-8 text-white md:p-12">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="rounded-3xl bg-white/10 p-5">
                       <span className="text-sm text-white/65">Closed sales</span>

@@ -29,6 +29,8 @@ function average(values: number[]) {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
+const areaFlow = ["Pick area", "Check risks", "Compare prices", "Open listings", "Track"];
+
 export function AreaGuides() {
   const { isMobileShell } = useMobileShell();
   const [guides, setGuides] = useState<AreaGuide[]>([]);
@@ -72,25 +74,25 @@ export function AreaGuides() {
   }, [guides]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_12%_0%,rgba(255,56,92,0.13),transparent_34rem),linear-gradient(180deg,#fff7fa_0%,#ffffff_44%,#fff7fa_100%)] text-[#171214]">
       {!isMobileShell && <Navbar />}
 
       <div className={isMobileShell ? "pt-4 pb-32 px-4" : "pt-24 pb-16 px-4"}>
-        <div className="max-w-6xl mx-auto">
-          <section className="overflow-hidden rounded-[2rem] border border-border bg-[radial-gradient(circle_at_top_left,rgba(26,95,122,0.16),transparent_35%),linear-gradient(135deg,rgba(255,255,255,1),rgba(237,243,244,1))] p-8 md:p-12">
+        <div className="max-w-7xl mx-auto">
+          <section className="overflow-hidden rounded-[2.5rem] border border-white/80 bg-white/88 p-8 shadow-[0_28px_90px_rgba(255,56,92,0.12)] backdrop-blur-xl md:p-12">
             <div className="flex flex-wrap items-start justify-between gap-6">
               <div className="max-w-3xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/80">
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">
                   Area Guides
                 </p>
-                <h1 className="mt-4 text-4xl md:text-5xl font-semibold tracking-tight">
+                <h1 className="mt-5 text-4xl font-black leading-[0.98] tracking-[-0.07em] md:text-6xl">
                   Neighborhood guides built from live marketplace activity and Ghana-specific location signals.
                 </h1>
-                <p className="mt-5 max-w-3xl text-lg text-muted-foreground">
+                <p className="mt-5 max-w-3xl text-base font-semibold leading-7 text-muted-foreground md:text-lg">
                   Use demand, flood risk, access, and current supply together before you shortlist a move or investment.
                 </p>
               </div>
-              <div className="rounded-3xl border border-primary/15 bg-white/80 p-5 shadow-sm backdrop-blur">
+              <div className="rounded-3xl border border-primary/10 bg-primary/5 p-5 shadow-sm backdrop-blur">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/75">
                   Live Inputs
                 </p>
@@ -98,6 +100,20 @@ export function AreaGuides() {
                   Public listings, neighborhood grouping, and Ghana market intelligence rows.
                 </p>
               </div>
+            </div>
+
+            <div className="mt-7 flex flex-wrap gap-2">
+              {areaFlow.map((step, index) => (
+                <span
+                  key={step}
+                  className="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3 py-2 text-xs font-black text-muted-foreground"
+                >
+                  <span className="grid h-5 w-5 place-items-center rounded-full bg-primary text-[0.65rem] text-white">
+                    {index + 1}
+                  </span>
+                  {step}
+                </span>
+              ))}
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -118,21 +134,21 @@ export function AreaGuides() {
 
           {!loading && guides.length > 0 && (
             <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
-              <Card className="p-5">
+              <Card className="rounded-[1.75rem] border-white bg-white/88 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   Guides Live
                 </p>
                 <p className="mt-3 text-3xl font-semibold">{summary.guideCount}</p>
                 <p className="mt-2 text-sm text-muted-foreground">Neighborhoods currently backed by public data.</p>
               </Card>
-              <Card className="p-5">
+              <Card className="rounded-[1.75rem] border-white bg-white/88 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   High Demand
                 </p>
                 <p className="mt-3 text-3xl font-semibold">{summary.highDemandCount}</p>
                 <p className="mt-2 text-sm text-muted-foreground">Guides marked high or very high demand.</p>
               </Card>
-              <Card className="p-5">
+              <Card className="rounded-[1.75rem] border-white bg-white/88 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   Avg Price
                 </p>
@@ -143,7 +159,7 @@ export function AreaGuides() {
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">Average public price across surfaced guides.</p>
               </Card>
-              <Card className="p-5">
+              <Card className="rounded-[1.75rem] border-white bg-white/88 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   Access Score
                 </p>

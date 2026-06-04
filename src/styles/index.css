@@ -16,11 +16,11 @@ body {
   height: 100%;
   width: 100%;
   font: inherit;
-  background: linear-gradient(180deg, #f7f2e7 0%, #eef4ef 100%);
+  background: linear-gradient(180deg, #071321 0%, #0d1b2a 100%);
 }
 
 .leaflet-control-attribution {
-  background: rgba(255, 255, 255, 0.92) !important;
+  background: rgba(13, 27, 42, 0.92) !important;
   border-radius: 999px;
   margin: 0 12px 12px 0 !important;
   padding: 4px 10px !important;
@@ -30,7 +30,7 @@ body {
 .leaflet-control-attribution a,
 .leaflet-popup-content-wrapper,
 .leaflet-popup-tip {
-  color: hsl(var(--foreground));
+  color: var(--foreground);
 }
 
 .baytmiftah-map-marker {
@@ -47,11 +47,11 @@ body {
   min-height: 36px;
   padding: 0 12px;
   border-radius: 999px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(242, 200, 75, 0.24);
+  background: rgba(13, 27, 42, 0.96);
   box-shadow:
-    0 18px 35px rgba(15, 23, 42, 0.16),
-    0 3px 10px rgba(15, 23, 42, 0.08);
+    0 18px 35px rgba(0, 0, 0, 0.28),
+    0 3px 10px rgba(0, 0, 0, 0.18);
   transition:
     transform 160ms ease,
     background-color 160ms ease,
@@ -74,7 +74,7 @@ body {
 
 .baytmiftah-map-pin.is-selected {
   border-color: rgba(126, 79, 28, 0.28);
-  background: hsl(var(--primary));
+  background: var(--primary);
   color: white;
   transform: translateY(-1px) scale(1.03);
 }

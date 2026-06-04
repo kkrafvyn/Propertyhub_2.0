@@ -6,8 +6,8 @@ import {
   useState,
 } from "react";
 
-export type AppThemePreference = "pink" | "system" | "light";
-export type ResolvedAppTheme = "light";
+export type AppThemePreference = "aureus" | "baytmiftah" | "system";
+export type ResolvedAppTheme = "aureus";
 
 export const APP_THEME_STORAGE_KEY = "baytmiftah:theme-preference";
 
@@ -17,19 +17,19 @@ export const APP_THEME_OPTIONS: Array<{
   detail: string;
 }> = [
   {
-    value: "pink",
-    label: "BaytMiftah Pink",
-    detail: "Warm rose, soft white cards, and graphite text.",
+    value: "aureus",
+    label: "Aureus Gold",
+    detail: "Deep navy surfaces, gold accents, and executive contrast.",
+  },
+  {
+    value: "baytmiftah",
+    label: "BaytMiftah Gold",
+    detail: "The same luxury system tuned for BaytMiftah product screens.",
   },
   {
     value: "system",
-    label: "System Pink",
-    detail: "Follow the device while keeping BaytMiftah's pink palette.",
-  },
-  {
-    value: "light",
-    label: "Miftah Light",
-    detail: "Bright, clean, and high contrast.",
+    label: "System Aureus",
+    detail: "Follow the device while preserving the new navy and gold UI.",
   },
 ];
 
@@ -46,18 +46,18 @@ function isAppThemePreference(value: string | null): value is AppThemePreference
 }
 
 function getStoredPreference(): AppThemePreference {
-  if (typeof window === "undefined") return "pink";
+  if (typeof window === "undefined") return "aureus";
 
   try {
     const stored = window.localStorage.getItem(APP_THEME_STORAGE_KEY);
-    return isAppThemePreference(stored) ? stored : "pink";
+    return isAppThemePreference(stored) ? stored : "aureus";
   } catch {
-    return "pink";
+    return "aureus";
   }
 }
 
 function resolveTheme(_preference: AppThemePreference): ResolvedAppTheme {
-  return "light";
+  return "aureus";
 }
 
 function applyDocumentTheme(preference: AppThemePreference) {

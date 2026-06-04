@@ -5,11 +5,14 @@ import {
   ExternalLink,
   FileText,
   Globe,
+  Heart,
   Loader2,
   Mail,
   MapPin,
+  MessageCircle,
   Phone,
   Shield,
+  Star,
 } from "lucide-react";
 import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/Button";
@@ -30,6 +33,8 @@ function formatMoney(amount?: number | null) {
     maximumFractionDigits: 0,
   }).format(amount);
 }
+
+const agencyFlowSteps = ["Review", "Browse", "Message", "Shortlist", "Track"];
 
 export function AgencyProfile() {
   const { isMobileShell } = useMobileShell();
@@ -96,16 +101,17 @@ export function AgencyProfile() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_12%_0%,rgba(255,56,92,0.13),transparent_34rem),linear-gradient(180deg,#fff7fa_0%,#ffffff_44%,#fff7fa_100%)] text-[#171214]">
       {!isMobileShell && <Navbar />}
 
       <div className={isMobileShell ? "pt-4 pb-32 px-4" : "pt-24 pb-16 px-4"}>
-        <div className="max-w-6xl mx-auto">
-          <section className="overflow-hidden rounded-[2rem] border border-border bg-white">
-            <div className="h-56 md:h-72 bg-gradient-to-r from-primary/20 via-accent/10 to-chart-3/10">
+        <div className="max-w-7xl mx-auto">
+          <section className="overflow-hidden rounded-[2.5rem] border border-white/80 bg-white/90 shadow-[0_28px_90px_rgba(255,56,92,0.12)] backdrop-blur-xl">
+            <div className="relative h-64 md:h-80 bg-gradient-to-r from-primary/20 via-white to-primary/10">
               {agency.bannerUrl ? (
                 <img src={agency.bannerUrl} alt={agency.name} className="w-full h-full object-cover" />
               ) : null}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
             </div>
             <div className="p-8 md:p-10 -mt-16 relative">
               <div className="flex flex-col md:flex-row gap-6 items-start">
@@ -122,15 +128,15 @@ export function AgencyProfile() {
                 )}
                 <div className="flex-1">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h1 className="text-4xl font-semibold">{agency.name}</h1>
+                    <h1 className="text-4xl font-black tracking-[-0.06em] md:text-5xl">{agency.name}</h1>
                     {agency.verified && (
-                      <span className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1 text-sm font-semibold text-accent">
+                      <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-black text-primary">
                         <Shield className="w-4 h-4" />
                         Verified organization
                       </span>
                     )}
                   </div>
-                  <p className="mt-4 max-w-3xl text-muted-foreground">
+                  <p className="mt-4 max-w-3xl font-semibold leading-7 text-muted-foreground">
                     {agency.description || "This company runs a public profile with verified listings, trust documents, and active transaction signals."}
                   </p>
                   <div className="mt-5 flex flex-wrap gap-4 text-sm text-muted-foreground">
@@ -160,27 +166,68 @@ export function AgencyProfile() {
                   </div>
                 </div>
               </div>
+
+              <div className="mt-8 flex flex-wrap gap-2">
+                {agencyFlowSteps.map((step, index) => (
+                  <span
+                    key={step}
+                    className="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3 py-2 text-xs font-black text-muted-foreground"
+                  >
+                    <span className="grid h-5 w-5 place-items-center rounded-full bg-primary text-[0.65rem] text-white">
+                      {index + 1}
+                    </span>
+                    {step}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <Link to={`/search?ref=${encodeURIComponent(agency.slug)}&channel=agency-profile`}>
+                  <Button className="w-full rounded-full">
+                    Browse Listings
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link to="/app/messages">
+                  <Button variant="outline" className="w-full rounded-full border-primary/15 bg-white">
+                    <MessageCircle className="h-4 w-4" />
+                    Message Team
+                  </Button>
+                </Link>
+                <Link to="/app/saved">
+                  <Button variant="outline" className="w-full rounded-full border-primary/15 bg-primary/5">
+                    <Heart className="h-4 w-4" />
+                    Open Shortlist
+                  </Button>
+                </Link>
+                <Link to="/reviews">
+                  <Button variant="outline" className="w-full rounded-full border-primary/15 bg-white">
+                    <Star className="h-4 w-4" />
+                    Read Reviews
+                  </Button>
+                </Link>
+              </div>
             </div>
           </section>
 
           <section className="mt-8 grid grid-cols-1 md:grid-cols-5 gap-4">
-            <Card className="p-5">
+            <Card className="rounded-[1.75rem] border-white bg-white/88 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Public Listings</p>
               <p className="mt-2 text-3xl font-semibold">{agency.publicListingCount}</p>
             </Card>
-            <Card className="p-5">
+            <Card className="rounded-[1.75rem] border-white bg-white/88 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Reputation Score</p>
               <p className="mt-2 text-3xl font-semibold">{reputationScore}/100</p>
             </Card>
-            <Card className="p-5">
+            <Card className="rounded-[1.75rem] border-white bg-white/88 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Starting Price</p>
               <p className="mt-2 text-3xl font-semibold">{formatMoney(agency.startingPrice)}</p>
             </Card>
-            <Card className="p-5">
+            <Card className="rounded-[1.75rem] border-white bg-white/88 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Trust Documents</p>
               <p className="mt-2 text-3xl font-semibold">{agency.publicDocumentCount}</p>
             </Card>
-            <Card className="p-5">
+            <Card className="rounded-[1.75rem] border-white bg-white/88 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Response Signal</p>
               <p className="mt-2 text-3xl font-semibold">
                 {agency.responseTimeHours != null && agency.responseTimeHours > 0

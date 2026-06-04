@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { mobileDeepLinkService } from "../../lib/mobile-deep-link.service";
 import { mobileNativeService } from "../../lib/mobile-native.service";
-import { useAuth } from "../context/AuthContext";
 import { MobileAppShell } from "../mobile/MobileAppShell";
 
 const mobileShellPrefixes = [
@@ -11,6 +10,7 @@ const mobileShellPrefixes = [
   "/property/",
   "/agencies",
   "/guides",
+  "/verify/",
   "/market-trends",
   "/sold-ledger",
   "/reviews",
@@ -18,6 +18,7 @@ const mobileShellPrefixes = [
   "/projects",
   "/valuation",
   "/get-the-app",
+  "/legal",
   "/app",
   "/workspace",
 ];
@@ -29,10 +30,10 @@ function isMobileWebViewport() {
   return window.matchMedia(mobileWebMediaQuery).matches;
 }
 
-function usePrefersMobileShell(isSignedIn: boolean) {
+function usePrefersMobileShell() {
   const [prefersMobileShell, setPrefersMobileShell] = useState(() => {
     if (Capacitor.isNativePlatform()) return true;
-    return isSignedIn && isMobileWebViewport();
+    return isMobileWebViewport();
   });
 
   useEffect(() => {
@@ -48,7 +49,7 @@ function usePrefersMobileShell(isSignedIn: boolean) {
 
     const media = window.matchMedia(mobileWebMediaQuery);
     const updatePreference = () => {
-      setPrefersMobileShell(isSignedIn && media.matches);
+      setPrefersMobileShell(media.matches);
     };
 
     updatePreference();
@@ -65,13 +66,16 @@ function usePrefersMobileShell(isSignedIn: boolean) {
     return () => {
       media.removeListener?.(updatePreference);
     };
-  }, [isSignedIn]);
+  }, []);
 
   return prefersMobileShell;
 }
 
 function shouldUseMobileShell(pathname: string) {
   if (pathname === "/") return true;
+  if (pathname.startsWith("/baytmiftah")) return true;
+  if (pathname.startsWith("/admin")) return true;
+  if (pathname.startsWith("/login") || pathname.startsWith("/signup")) return true;
 
   return mobileShellPrefixes.some((prefix) => {
     if (prefix.endsWith("/")) {
@@ -85,8 +89,7 @@ function shouldUseMobileShell(pathname: string) {
 export function Root() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const prefersMobileShell = usePrefersMobileShell(Boolean(user));
+  const prefersMobileShell = usePrefersMobileShell();
 
   useEffect(() => {
     let cleanupDeepLinks: (() => void) | undefined;

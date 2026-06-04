@@ -67,27 +67,24 @@ class CurrencyService {
         .select('*')
         .eq('from', from)
         .eq('to', to)
-        .single();
+        .maybeSingle();
 
-      if (cachedRate && Date.now() - cachedRate.timestamp < CACHE_TTL) {
+      if (cachedRate && Date.now() - Number(cachedRate.timestamp) < CACHE_TTL) {
+        const normalizedRate: CurrencyRate = {
+          from: cachedRate.from,
+          to: cachedRate.to,
+          rate: Number(cachedRate.rate),
+          timestamp: Number(cachedRate.timestamp),
+        };
+
         rateCache.set(cacheKey, {
-          rate: cachedRate,
+          rate: normalizedRate,
           expires: Date.now() + CACHE_TTL,
         });
-        return cachedRate.rate;
+        return normalizedRate.rate;
       }
 
       const rate = await this.fetchFromExternalAPI(from, to);
-
-      await supabase.from('currency_rates').upsert(
-        {
-          from,
-          to,
-          rate,
-          timestamp: Date.now(),
-        },
-        { onConflict: 'from,to' }
-      );
 
       rateCache.set(cacheKey, {
         rate: { from, to, rate, timestamp: Date.now() },
@@ -95,9 +92,13 @@ class CurrencyService {
       });
 
       return rate;
-    } catch (error) {
-      console.error('Failed to fetch exchange rate:', error);
-      return this.getDefaultRate(from, to);
+    } catch {
+      const fallbackRate = this.getDefaultRate(from, to);
+      rateCache.set(cacheKey, {
+        rate: { from, to, rate: fallbackRate, timestamp: Date.now() },
+        expires: Date.now() + CACHE_TTL,
+      });
+      return fallbackRate;
     }
   }
 
@@ -169,6 +170,8 @@ class CurrencyService {
       EUR_USD: 1.09,
       GBP_USD: 1.27,
       GHS_USD: 0.08,
+      GHS_GBP: 0.063,
+      GBP_GHS: 15.87,
       NGN_USD: 0.00065,
     };
 

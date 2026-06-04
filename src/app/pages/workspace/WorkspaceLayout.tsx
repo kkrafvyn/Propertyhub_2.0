@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ComponentType } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import {
   ArrowRight,
   ArrowRightLeft,
@@ -39,6 +39,8 @@ import {
   type OrganizationBillingOverview,
 } from "../../../lib/subscription.service";
 import { FraudAlerts } from "./FraudAlerts";
+import { LeadManagement } from "./LeadManagement";
+import { PaymentCheckout } from "./PaymentCheckout";
 import { WorkspaceDashboard } from "./WorkspaceDashboard";
 import { WorkspaceBilling } from "./WorkspaceBilling";
 import { CalendarOperations } from "./CalendarOperations";
@@ -363,6 +365,7 @@ export function WorkspaceLayout() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { organizationSlug = "", page } = useParams();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [billingLoading, setBillingLoading] = useState(false);
   const [memberships, setMemberships] = useState<OrganizationMembership[]>([]);
@@ -2049,6 +2052,31 @@ export function WorkspaceLayout() {
             currentUserId={user.id}
           />
         );
+      case "lead-management":
+        return <LeadManagement organizationId={organization.id} />;
+      case "checkout": {
+        const requestedAmount = Number.parseFloat(
+          searchParams.get("amount") || searchParams.get("price") || ""
+        );
+        const amount = Number.isFinite(requestedAmount) && requestedAmount > 0
+          ? requestedAmount
+          : 2500;
+        const listingId =
+          searchParams.get("listingId") ||
+          searchParams.get("listing") ||
+          "workspace-checkout";
+
+        return (
+          <PaymentCheckout
+            amount={amount}
+            listingId={listingId}
+            onCancel={() => navigate(`${workspaceBasePath}/payments`)}
+            onSuccess={(transactionId) =>
+              navigate(`${workspaceBasePath}/payments?transaction=${encodeURIComponent(transactionId)}`)
+            }
+          />
+        );
+      }
       case "team":
         return (
           <WorkspaceTeam
@@ -2156,7 +2184,7 @@ export function WorkspaceLayout() {
   const mobileModuleBody = renderEnhancedMobileModuleBody();
 
   return (
-    <div className="min-h-screen bg-[#fff7fa]">
+    <div className="min-h-screen bg-background">
       <nav className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/82 backdrop-blur-2xl">
         <div className="px-4 py-3 sm:px-6 lg:px-6 lg:py-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

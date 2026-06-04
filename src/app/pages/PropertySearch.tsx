@@ -11,6 +11,9 @@ import {
   Bath,
   X,
   Bell,
+  Clock3,
+  Heart,
+  MessageCircle,
   Share2,
   ShieldCheck,
 } from "lucide-react";
@@ -57,6 +60,35 @@ const AMENITY_FILTER_OPTIONS = [
   "Backup power",
   "Water storage",
   "Furnished",
+];
+
+const searchFlowSteps = ["Choose", "Browse", "Open", "Act", "Track"];
+
+const searchActionRail = [
+  {
+    label: "Open shortlist",
+    detail: "Compare saved homes.",
+    href: "/app/saved",
+    icon: Heart,
+  },
+  {
+    label: "Saved alerts",
+    detail: "Watch new matches.",
+    href: "/app/alerts",
+    icon: Bell,
+  },
+  {
+    label: "Messages",
+    detail: "Reply to agents.",
+    href: "/app/messages",
+    icon: MessageCircle,
+  },
+  {
+    label: "Progress",
+    detail: "Track viewings and deals.",
+    href: "/app",
+    icon: Clock3,
+  },
 ];
 
 function isFiniteCoordinate(value: unknown): value is number {
@@ -699,7 +731,7 @@ export function PropertySearch() {
                 </h2>
               </div>
               <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
-                {["Choose", "Browse", "Open", "Act", "Track"].map((step, index) => (
+                {searchFlowSteps.map((step, index) => (
                   <span
                     key={step}
                     className="inline-flex min-w-max items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3 py-2 text-xs font-bold text-muted-foreground"
@@ -712,6 +744,25 @@ export function PropertySearch() {
                 ))}
               </div>
             </div>
+          </section>
+
+          <section
+            aria-label="Search next actions"
+            className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+          >
+            {searchActionRail.map((item) => (
+              <Link
+                key={item.label}
+                to={user ? item.href : "/login"}
+                className="rounded-[1.65rem] border border-white/80 bg-white/82 p-4 shadow-[0_16px_50px_rgba(255,56,92,0.08)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-primary/5"
+              >
+                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary/10 text-primary">
+                  <item.icon className="h-4 w-4" />
+                </span>
+                <strong className="mt-3 block text-sm text-foreground">{item.label}</strong>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.detail}</p>
+              </Link>
+            ))}
           </section>
 
           <div className="flex flex-col gap-4 rounded-[2rem] border border-white/80 bg-white/70 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.07)] backdrop-blur md:flex-row md:items-center md:justify-between">
@@ -1164,6 +1215,11 @@ export function PropertySearch() {
                                 <span className="text-muted-foreground">Open full listing</span>
                                 <span className="font-semibold text-primary">View details</span>
                               </div>
+                              <div className="mt-3 grid grid-cols-3 gap-2 text-[0.72rem] font-bold text-primary">
+                                <span className="rounded-full bg-primary/5 px-3 py-2 text-center">Save</span>
+                                <span className="rounded-full bg-primary/5 px-3 py-2 text-center">Message</span>
+                                <span className="rounded-full bg-primary/5 px-3 py-2 text-center">Track</span>
+                              </div>
                             </div>
                           </Card>
                         </Link>
@@ -1235,6 +1291,11 @@ export function PropertySearch() {
                                     </div>
                                   )}
                                   <span className="text-sm font-semibold text-primary">View details</span>
+                                </div>
+                                <div className="mt-4 flex flex-wrap gap-2 border-t border-primary/10 pt-4 text-xs font-bold text-primary">
+                                  <span className="rounded-full bg-primary/5 px-3 py-2">Save to shortlist</span>
+                                  <span className="rounded-full bg-primary/5 px-3 py-2">Message agent</span>
+                                  <span className="rounded-full bg-primary/5 px-3 py-2">Track progress</span>
                                 </div>
                               </div>
                             </div>
@@ -1430,6 +1491,25 @@ export function PropertySearch() {
           </div>
         </div>
       </div>
+      {listings.length > 0 && (
+        <div className="fixed inset-x-4 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md items-center justify-between gap-2 rounded-full border border-white/80 bg-white/94 p-2 shadow-[0_22px_70px_rgba(23,18,20,0.22)] backdrop-blur-2xl md:bottom-6">
+          <Link
+            to={user ? "/app/saved" : "/login"}
+            className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-black text-white"
+          >
+            <Heart className="h-4 w-4" />
+            View shortlist
+          </Link>
+          {listings[0]?.id ? (
+            <Link
+              to={buildPropertyHref(listings[0].id)}
+              className="whitespace-nowrap rounded-full bg-primary/10 px-4 py-3 text-sm font-black text-primary"
+            >
+              Open match
+            </Link>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }

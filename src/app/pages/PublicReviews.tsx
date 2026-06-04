@@ -35,6 +35,8 @@ function formatResponseTime(minutes?: number | null) {
   return `${Math.round(minutes / 60)}h avg reply`;
 }
 
+const reviewFlow = ["Read", "Verify", "Shortlist", "Message", "Review"];
+
 export function PublicReviews() {
   const { isMobileShell } = useMobileShell();
   const [testimonials, setTestimonials] = useState<PublicVendorReview[]>([]);
@@ -61,22 +63,62 @@ export function PublicReviews() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_12%_0%,rgba(255,56,92,0.13),transparent_34rem),linear-gradient(180deg,#fff7fa_0%,#ffffff_44%,#fff7fa_100%)] text-[#171214]">
       {!isMobileShell && <Navbar />}
 
       <div className={isMobileShell ? "pt-4 pb-32 px-4" : "pt-24 pb-16 px-4"}>
-        <div className="max-w-6xl mx-auto">
-          <section className="rounded-[2rem] border border-border bg-secondary/30 p-8 md:p-12">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/80">
+        <div className="max-w-7xl mx-auto">
+          <section className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.65fr)]">
+            <div className="rounded-[2.5rem] border border-white/80 bg-white/88 p-8 shadow-[0_28px_90px_rgba(255,56,92,0.12)] backdrop-blur-xl md:p-12">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">
               Public Reviews
-            </p>
-            <h1 className="mt-4 text-4xl md:text-5xl font-semibold tracking-tight">
-              Reputation you can actually read, not just badges you have to trust blindly.
-            </h1>
-            <p className="mt-5 max-w-3xl text-lg text-muted-foreground">
-              This layer is grounded in verified service-partner ratings, live response signals,
-              agency trust snapshots, and project momentum already flowing through the product.
-            </p>
+              </p>
+              <h1 className="mt-5 max-w-4xl text-4xl font-black leading-[0.98] tracking-[-0.07em] md:text-6xl">
+                Reputation you can read before you message, view, or pay.
+              </h1>
+              <p className="mt-5 max-w-3xl text-base font-semibold leading-7 text-muted-foreground md:text-lg">
+                This layer is grounded in verified partner ratings, live response signals,
+                agency trust snapshots, and project momentum already flowing through the product.
+              </p>
+              <div className="mt-7 flex flex-wrap gap-2">
+                {reviewFlow.map((step, index) => (
+                  <span
+                    key={step}
+                    className="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3 py-2 text-xs font-black text-muted-foreground"
+                  >
+                    <span className="grid h-5 w-5 place-items-center rounded-full bg-primary text-[0.65rem] text-white">
+                      {index + 1}
+                    </span>
+                    {step}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <aside className="rounded-[2.25rem] border border-white/80 bg-white/82 p-5 shadow-[0_22px_70px_rgba(255,56,92,0.10)] backdrop-blur">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">
+                Trust shortcuts
+              </p>
+              <div className="mt-5 grid gap-3">
+                {[
+                  { title: "Verified agencies", detail: "Open approved teams with public trust records.", href: "/agencies", icon: Building2 },
+                  { title: "Buyer demand", detail: "See where renters and buyers are asking.", href: "/buyer-requests", icon: MessageSquareQuote },
+                  { title: "Active projects", detail: "Review development momentum before committing.", href: "/projects", icon: ShieldCheck },
+                ].map((item) => (
+                  <Link
+                    key={item.title}
+                    to={item.href}
+                    className="rounded-2xl border border-primary/10 bg-primary/5 p-4 transition hover:-translate-y-0.5 hover:bg-primary/10"
+                  >
+                    <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-primary shadow-sm">
+                      <item.icon className="h-4 w-4" />
+                    </span>
+                    <strong className="mt-3 block text-sm tracking-[-0.02em]">{item.title}</strong>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.detail}</p>
+                  </Link>
+                ))}
+              </div>
+            </aside>
           </section>
 
           <section className="mt-10">

@@ -1,7 +1,5 @@
 import { Link, useNavigate } from "react-router";
-import { Building2, Eye, EyeOff, Loader2, User } from "lucide-react";
-import { Button } from "../../components/ui/Button";
-import { Input } from "../../components/ui/Input";
+import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail, MapPin, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
@@ -12,13 +10,11 @@ export function Signup() {
     fullName: "",
     email: "",
     password: "",
-    confirmPassword: "",
     accountType: "user",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [oauthLoadingProvider, setOauthLoadingProvider] = useState<"google" | null>(null);
+  const [oauthLoadingProvider, setOauthLoadingProvider] = useState<"google" | "apple" | null>(null);
   const navigate = useNavigate();
   const { signUp, signInWithOAuth } = useAuth();
   const redirectTo = formData.accountType === "landlord" ? "/workspace?next=new" : "/app";
@@ -29,11 +25,6 @@ export function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords don't match");
-      return;
-    }
 
     if (formData.password.length < 6) {
       toast.error("Password must be at least 6 characters");
@@ -56,181 +47,156 @@ export function Signup() {
     }
   };
 
-  const handleGoogleOAuthSignUp = async () => {
+  const handleOAuthSignUp = async (provider: "google" | "apple") => {
     try {
-      setOauthLoadingProvider("google");
-      await signInWithOAuth("google", oauthRedirectUrl);
+      setOauthLoadingProvider(provider);
+      await signInWithOAuth(provider, oauthRedirectUrl);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Google sign-up failed");
+      toast.error(error instanceof Error ? error.message : `${provider === "google" ? "Google" : "Apple"} sign-up failed`);
       setOauthLoadingProvider(null);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Left Side - Form */}
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 mb-6">
-              <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
+    <main className="min-h-screen bg-[#061725] px-6 py-10 text-[#eaf2ff] sm:px-10 sm:py-14">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-[720px] items-center">
+        <div className="w-full">
+          <Link
+            to="/"
+            className="mb-2 inline-flex items-center gap-3 text-[32px] font-black tracking-[-0.05em] text-[#dce9ff] drop-shadow-[0_2px_0_rgba(255,255,255,0.08)]"
+          >
+            <MapPin className="h-11 w-11 text-[#f2c84b]" strokeWidth={3.2} />
+            <span>BaytMiftah</span>
+          </Link>
+
+          <h1 className="-mt-5 text-[52px] font-black leading-[0.9] tracking-[-0.065em] text-[#dce9ff] sm:text-[68px]">
+            Create your account
+          </h1>
+          <p className="mt-7 text-[28px] leading-snug tracking-[-0.03em] text-[#c4c9d3] sm:text-[34px]">
+            Join the inner circle of global real estate.
+          </p>
+
+          <form onSubmit={handleSubmit} className="mt-20 space-y-10">
+            <div>
+              <label htmlFor="fullName" className="block text-[22px] font-black uppercase tracking-[0.08em] text-[#dce4f2]">
+                Full Name
+              </label>
+              <div className="mt-5 flex h-[102px] items-center gap-7 rounded-[14px] bg-[#122538] px-8 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
+                <UserRound className="h-7 w-7 text-[#cbd2de]" strokeWidth={2.4} />
+                <input
+                  id="fullName"
+                  type="text"
+                  placeholder="Julian Sterling"
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  required
+                  className="h-full min-w-0 flex-1 bg-transparent text-[31px] tracking-[-0.04em] text-[#eaf2ff] outline-none placeholder:text-[#697381]"
+                />
               </div>
-            </Link>
-            <h1 className="text-3xl font-semibold mb-2">Create Account</h1>
-            <p className="text-muted-foreground">Join BaytMiftah and start your journey</p>
-          </div>
-
-          {/* Account Type Selection */}
-          <div className="mb-6">
-            <label className="block mb-3 font-semibold">I want to</label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, accountType: "user" })}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  formData.accountType === "user"
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/50"
-                }`}
-              >
-                <User className="w-6 h-6 mx-auto mb-2 text-primary" />
-                <div className="font-semibold">Find Property</div>
-                <div className="text-xs text-muted-foreground mt-1">Search & rent</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, accountType: "landlord" })}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  formData.accountType === "landlord"
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/50"
-                }`}
-              >
-                <Building2 className="w-6 h-6 mx-auto mb-2 text-primary" />
-                <div className="font-semibold">List Property</div>
-                <div className="text-xs text-muted-foreground mt-1">Landlord/Agent</div>
-              </button>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <Input
-              label="Full Name"
-              type="text"
-              placeholder="John Doe"
-              value={formData.fullName}
-              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-              required
-            />
-
-            <Input
-              label="Email Address"
-              type="email"
-              placeholder="you@example.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-            />
-
-            <div className="relative">
-              <Input
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Create a password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="pr-12"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((current) => !current)}
-                className="absolute bottom-3 right-3 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                title={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
             </div>
 
-            <div className="relative">
-              <Input
-                label="Confirm Password"
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm your password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="pr-12"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword((current) => !current)}
-                className="absolute bottom-3 right-3 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                title={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-              >
-                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
+            <div>
+              <label htmlFor="signupEmail" className="block text-[22px] font-black uppercase tracking-[0.08em] text-[#dce4f2]">
+                Email Address
+              </label>
+              <div className="mt-5 flex h-[102px] items-center gap-7 rounded-[14px] bg-[#122538] px-8 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
+                <Mail className="h-7 w-7 text-[#cbd2de]" strokeWidth={2.4} />
+                <input
+                  id="signupEmail"
+                  type="email"
+                  placeholder="julian@baytmiftah.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                  className="h-full min-w-0 flex-1 bg-transparent text-[31px] tracking-[-0.04em] text-[#eaf2ff] outline-none placeholder:text-[#697381]"
+                />
+              </div>
             </div>
 
-            <div className="flex items-start gap-2">
+            <div>
+              <label htmlFor="signupPassword" className="block text-[22px] font-black uppercase tracking-[0.08em] text-[#dce4f2]">
+                Security Password
+              </label>
+              <div className="mt-5 flex h-[102px] items-center gap-7 rounded-[14px] bg-[#122538] px-8 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
+                <Lock className="h-7 w-7 text-[#cbd2de]" strokeWidth={2.4} />
+                <input
+                  id="signupPassword"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••••••"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  required
+                  className="h-full min-w-0 flex-1 bg-transparent text-[31px] tracking-[0.22em] text-[#eaf2ff] outline-none placeholder:text-[#697381]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="rounded-full p-2 text-[#cbd2de] transition hover:text-[#f2c84b] focus:outline-none focus:ring-2 focus:ring-[#f2c84b]"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-9 w-9" /> : <Eye className="h-9 w-9" />}
+                </button>
+              </div>
+            </div>
+
+            <label className="flex items-start gap-6 text-[25px] leading-snug tracking-[-0.04em] text-[#c9ced8]">
               <input
                 type="checkbox"
-                id="terms"
-                className="w-4 h-4 mt-1 rounded border-border text-primary"
                 required
+                className="mt-1 h-9 w-9 shrink-0 appearance-none rounded-[7px] border-2 border-[#87909d] bg-transparent checked:border-[#f2c84b] checked:bg-[#f2c84b] focus:outline-none focus:ring-2 focus:ring-[#f2c84b]"
               />
-              <label htmlFor="terms" className="text-sm text-muted-foreground">
+              <span>
                 I agree to the{" "}
-                <a href="#" className="text-primary hover:underline">
+                <Link to="/terms" className="text-[#f2c84b]">
                   Terms of Service
-                </a>{" "}
+                </Link>{" "}
                 and{" "}
-                <a href="#" className="text-primary hover:underline">
+                <Link to="/privacy" className="text-[#f2c84b]">
                   Privacy Policy
-                </a>
-              </label>
-            </div>
+                </Link>{" "}
+                regarding my portfolio data.
+              </span>
+            </label>
 
-            <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex h-[102px] w-full items-center justify-center gap-7 rounded-[14px] bg-[#f2c84b] text-[28px] font-black uppercase tracking-[0.04em] text-[#171511] shadow-[0_24px_55px_rgba(0,0,0,0.26)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
+            >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="h-8 w-8 animate-spin" />
                   Creating account...
                 </>
               ) : (
-                "Create Account"
+                <>
+                  Create Account
+                  <ArrowRight className="h-10 w-10" strokeWidth={2.3} />
+                </>
               )}
-            </Button>
+            </button>
           </form>
 
-          <div className="mt-8">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-background text-muted-foreground">Or continue with</span>
-              </div>
-            </div>
+          <div className="mt-28 flex items-center gap-4">
+            <div className="h-px flex-1 bg-[#233447]" />
+            <span className="bg-[#061725] px-8 text-[23px] font-black uppercase tracking-[0.07em] text-[#c8ced8]">
+              Or Continue With
+            </span>
+            <div className="h-px flex-1 bg-[#233447]" />
+          </div>
 
-            <Button
-              variant="outline"
-              size="lg"
+          <div className="mt-20 grid grid-cols-2 gap-8">
+            <button
               type="button"
-              className="mt-6 w-full"
-              onClick={() => void handleGoogleOAuthSignUp()}
+              onClick={() => void handleOAuthSignUp("google")}
               disabled={Boolean(oauthLoadingProvider)}
+              className="flex h-[86px] items-center justify-center gap-6 rounded-[12px] border border-[#23374d] bg-[#112438] text-[26px] font-bold tracking-[-0.03em] text-[#dce6f6] transition hover:border-[#f2c84b]/60 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {oauthLoadingProvider === "google" ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="h-8 w-8 animate-spin" />
               ) : (
-                <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                <svg className="h-9 w-9" viewBox="0 0 24 24" aria-hidden="true">
                   <path
                     fill="currentColor"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -249,37 +215,37 @@ export function Signup() {
                   />
                 </svg>
               )}
-              Continue with Google
-            </Button>
+              Google
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void handleOAuthSignUp("apple")}
+              disabled={Boolean(oauthLoadingProvider)}
+              className="flex h-[86px] items-center justify-center gap-6 rounded-[12px] border border-[#23374d] bg-[#112438] text-[26px] font-bold tracking-[-0.03em] text-[#dce6f6] transition hover:border-[#f2c84b]/60 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {oauthLoadingProvider === "apple" ? (
+                <Loader2 className="h-8 w-8 animate-spin" />
+              ) : (
+                <svg className="h-9 w-9" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M16.37 1.43c0 1.12-.42 2.16-1.15 2.96-.79.88-2.1 1.56-3.18 1.47-.14-1.08.4-2.23 1.11-3.06.78-.92 2.15-1.6 3.22-1.37Zm3.56 16.94c-.58 1.34-.86 1.94-1.6 3.13-1.04 1.57-2.5 3.52-4.32 3.54-1.61.02-2.03-1.02-4.22-1-2.19.01-2.65 1.02-4.26 1-1.82-.02-3.21-1.78-4.25-3.35C-1.62 17.26-1.92 11.98.02 9.14c1.38-2.02 3.56-3.2 5.61-3.2 2.08 0 3.39 1.07 5.11 1.07 1.67 0 2.68-1.07 5.08-1.07 1.81 0 3.72.93 5.09 2.54-4.47 2.3-3.74 8.3-.98 9.89Z"
+                  />
+                </svg>
+              )}
+              Apple
+            </button>
           </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-muted-foreground">
-              Already have an account?{" "}
-              <Link to="/login" className="text-primary hover:underline font-semibold">
-                Log in
-              </Link>
-            </p>
-          </div>
+          <p className="mt-20 text-center text-[28px] tracking-[-0.04em] text-[#c8ced8]">
+            Already a member?{" "}
+            <Link to="/login" className="font-black text-[#f2c84b]">
+              Log in
+            </Link>
+          </p>
         </div>
       </div>
-
-      {/* Right Side - Image */}
-      <div className="hidden lg:block flex-1 relative">
-        <img
-          src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80"
-          alt="Modern property"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-accent/80 to-accent/40 flex items-end p-12">
-          <div className="text-white">
-            <h2 className="text-4xl font-semibold mb-4">Start Your Property Journey Today</h2>
-            <p className="text-xl text-white/90">
-              Whether you're looking for a home or managing properties, we've got you covered
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+    </main>
   );
 }

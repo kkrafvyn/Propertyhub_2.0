@@ -11,11 +11,11 @@ const baseStyles =
   "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed";
 
 const variants = {
-  default: "bg-primary text-primary-foreground shadow-[0_14px_32px_rgba(255,56,92,0.20)] hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(255,56,92,0.26)]",
-  primary: "bg-primary text-primary-foreground shadow-[0_14px_32px_rgba(255,56,92,0.20)] hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(255,56,92,0.26)]",
+  default: "bg-primary text-primary-foreground shadow-[0_14px_32px_rgba(242,200,75,0.18)] hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(242,200,75,0.24)]",
+  primary: "bg-primary text-primary-foreground shadow-[0_14px_32px_rgba(242,200,75,0.18)] hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(242,200,75,0.24)]",
   secondary: "bg-secondary text-secondary-foreground hover:bg-primary/10",
   ghost: "hover:bg-secondary text-foreground",
-  outline: "border border-border bg-white/88 text-foreground shadow-sm hover:-translate-y-0.5 hover:border-primary/25 hover:bg-primary/5 hover:text-primary",
+  outline: "border border-border bg-card/88 text-foreground shadow-sm hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/10 hover:text-primary",
 };
 
 const sizes = {

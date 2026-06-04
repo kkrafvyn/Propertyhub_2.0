@@ -22,6 +22,8 @@ function formatMoney(amount?: number | null) {
   }).format(amount);
 }
 
+const projectFlow = ["Find project", "Check operator", "Compare units", "Open collection", "Track"];
+
 export function Projects() {
   const { isMobileShell } = useMobileShell();
   const [projects, setProjects] = useState<ProjectCollection[]>([]);
@@ -46,21 +48,34 @@ export function Projects() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_12%_0%,rgba(255,56,92,0.13),transparent_34rem),linear-gradient(180deg,#fff7fa_0%,#ffffff_44%,#fff7fa_100%)] text-[#171214]">
       {!isMobileShell && <Navbar />}
 
       <div className={isMobileShell ? "pt-4 pb-32 px-4" : "pt-24 pb-16 px-4"}>
-        <div className="max-w-6xl mx-auto">
-          <section className="rounded-[2rem] border border-border bg-secondary/30 p-8 md:p-12">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/80">
+        <div className="max-w-7xl mx-auto">
+          <section className="rounded-[2.5rem] border border-white/80 bg-white/88 p-8 shadow-[0_28px_90px_rgba(255,56,92,0.12)] backdrop-blur-xl md:p-12">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">
               Projects & Developments
             </p>
-            <h1 className="mt-4 text-4xl md:text-5xl font-semibold tracking-tight">
+            <h1 className="mt-5 max-w-4xl text-4xl font-black leading-[0.98] tracking-[-0.07em] md:text-6xl">
               Browse grouped developments and active inventory collections instead of single listings only.
             </h1>
-            <p className="mt-5 max-w-3xl text-lg text-muted-foreground">
+            <p className="mt-5 max-w-3xl text-base font-semibold leading-7 text-muted-foreground md:text-lg">
               Each collection groups related units by operator and area so buyers can compare availability, pricing, and trust signals faster.
             </p>
+            <div className="mt-7 flex flex-wrap gap-2">
+              {projectFlow.map((step, index) => (
+                <span
+                  key={step}
+                  className="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3 py-2 text-xs font-black text-muted-foreground"
+                >
+                  <span className="grid h-5 w-5 place-items-center rounded-full bg-primary text-[0.65rem] text-white">
+                    {index + 1}
+                  </span>
+                  {step}
+                </span>
+              ))}
+            </div>
           </section>
 
           <section className="mt-10">
@@ -99,7 +114,7 @@ export function Projects() {
                   });
 
                   return (
-                    <Card key={project.slug} className="overflow-hidden">
+                    <Card key={project.slug} className="overflow-hidden rounded-[2rem] border-white bg-white/90 shadow-[0_22px_70px_rgba(255,56,92,0.10)]">
                       <div className="h-56 overflow-hidden">
                         <img src={project.heroImage} alt={project.title} className="w-full h-full object-cover" />
                       </div>

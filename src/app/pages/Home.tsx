@@ -140,6 +140,54 @@ const trustCards = [
   { title: "Fraud Protection", detail: "Reports, risk checks, and human review.", icon: CheckCircle2 },
 ];
 
+const repeatActions = [
+  {
+    title: "Continue saved search",
+    detail: "Pick up from your last Accra shortlist.",
+    href: "/search",
+    icon: Search,
+  },
+  {
+    title: "Message last agent",
+    detail: "Return to your latest property conversation.",
+    href: "/app/messages",
+    icon: MessageCircle,
+  },
+  {
+    title: "Resume deal room",
+    detail: "Track offers, receipts, and documents.",
+    href: "/app/deals",
+    icon: Shield,
+  },
+];
+
+const afterChoiceCards = [
+  {
+    title: "Message an agent",
+    detail: "Keep every question tied to the property instead of losing it in chat apps.",
+    href: "/app/messages",
+    icon: MessageCircle,
+  },
+  {
+    title: "Track a viewing",
+    detail: "See confirmations, reminders, and next steps from your buyer dashboard.",
+    href: "/app/viewings",
+    icon: Bell,
+  },
+  {
+    title: "Open deal room",
+    detail: "Follow payments, receipts, offers, and documents in one calm workspace.",
+    href: "/app/deals",
+    icon: Shield,
+  },
+  {
+    title: "Review the experience",
+    detail: "Leave feedback for agencies and properties after you complete a step.",
+    href: "/reviews",
+    icon: Star,
+  },
+];
+
 function formatListing(listing: any) {
   const price = Number(listing.price || 0);
   const category = listing.property?.category || "property";
@@ -323,6 +371,25 @@ export function Home() {
           </section>
 
           <section className="mt-8">
+            <SectionHeader title="Continue where you left off" to={user ? "/app" : "/login"} action="Open dashboard" />
+            <div className="grid gap-4 md:grid-cols-3">
+              {repeatActions.map((item) => (
+                <Link
+                  key={item.title}
+                  to={user ? item.href : "/login"}
+                  className="group rounded-[1.85rem] border border-white bg-white/86 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)] backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_24px_80px_rgba(255,56,92,0.14)]"
+                >
+                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+                    <item.icon className="h-5 w-5" />
+                  </span>
+                  <h3 className="mt-4 text-lg font-black tracking-[-0.04em]">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.detail}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-8">
             <div className="mb-4 flex items-center justify-between gap-4">
               <h2 className="text-3xl font-black tracking-[-0.06em] text-[#171214] md:text-4xl">
                 Featured Listings
@@ -436,6 +503,25 @@ export function Home() {
                     <p className="text-sm font-black">{property.title}</p>
                     <p className="mt-1 text-xs font-bold text-white/70">{property.price} {property.period}</p>
                   </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-8">
+            <SectionHeader title="After you choose" to={user ? "/app" : "/login"} action="Track progress" />
+            <div className="grid gap-4 md:grid-cols-4">
+              {afterChoiceCards.map((item) => (
+                <Link
+                  key={item.title}
+                  to={user ? item.href : "/login"}
+                  className="rounded-[1.75rem] border border-white bg-white/86 p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)] backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_24px_80px_rgba(255,56,92,0.14)]"
+                >
+                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+                    <item.icon className="h-5 w-5" />
+                  </span>
+                  <h3 className="mt-5 font-black tracking-[-0.04em]">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.detail}</p>
                 </Link>
               ))}
             </div>

@@ -738,14 +738,21 @@ export function PropertyDetail() {
     navigate("/app");
   };
 
+  const scrollToActionPanel = () => {
+    window.setTimeout(() => {
+      const target = actionPanelRef.current;
+      if (typeof target?.scrollIntoView === "function") {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 80);
+  };
+
   const openViewingFlow = () => {
     setShowViewingForm(true);
     setShowOfferForm(false);
     setShowContactForm(false);
     setShowPaymentForm(false);
-    window.setTimeout(() => {
-      actionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 80);
+    scrollToActionPanel();
   };
 
   const openOfferFlow = () => {
@@ -753,9 +760,7 @@ export function PropertyDetail() {
     setShowViewingForm(false);
     setShowContactForm(false);
     setShowPaymentForm(false);
-    window.setTimeout(() => {
-      actionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 80);
+    scrollToActionPanel();
   };
 
   const openPaymentFlow = () => {
@@ -763,9 +768,7 @@ export function PropertyDetail() {
     setShowOfferForm(false);
     setShowViewingForm(false);
     setShowContactForm(false);
-    window.setTimeout(() => {
-      actionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 80);
+    scrollToActionPanel();
   };
 
   const openInquiryFlow = () => {
@@ -773,9 +776,7 @@ export function PropertyDetail() {
     setShowOfferForm(false);
     setShowViewingForm(false);
     setShowPaymentForm(false);
-    window.setTimeout(() => {
-      actionPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 80);
+    scrollToActionPanel();
   };
 
   const openPrimaryAction = () => {
@@ -1269,6 +1270,45 @@ export function PropertyDetail() {
     }
   };
 
+  const buyerQuickActions = [
+    {
+      label: "Save",
+      helper: "Shortlist and compare later.",
+      icon: Heart,
+      action: () => void handleSaveAndCompare(),
+    },
+    {
+      label: "Message",
+      helper: "Ask the verified team.",
+      icon: MessageCircle,
+      action: openInquiryFlow,
+    },
+    {
+      label: listing?.listing_type === "sale" ? "Make offer" : "Request viewing",
+      helper: "Move from interest to action.",
+      icon: listing?.listing_type === "sale" ? Shield : MapPin,
+      action: openPrimaryAction,
+    },
+    {
+      label: "Pay",
+      helper: "Use protected checkout.",
+      icon: CreditCard,
+      action: openPaymentFlow,
+    },
+    {
+      label: "Track",
+      helper: "Follow progress in your account.",
+      icon: Clock3,
+      action: openProgressTracker,
+    },
+    {
+      label: "Share",
+      helper: "Send the listing to someone.",
+      icon: Share2,
+      action: () => void handleShare(),
+    },
+  ];
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -1427,16 +1467,28 @@ export function PropertyDetail() {
               </div>
             </div>
 
-            <div className="mt-5 rounded-[2rem] border border-white bg-white p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
+            <div
+              ref={actionPanelRef}
+              className="mt-5 rounded-[2rem] border border-white bg-white p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]"
+            >
               <h3 className="font-black">Next action</h3>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Save, message, request a viewing, or start a secure payment path from one place.
               </p>
               <div className="mt-5 grid gap-3">
-                <Button onClick={() => setShowViewingForm(true)} className="w-full rounded-full">
-                  Book Viewing
+                <Button
+                  onClick={openPrimaryAction}
+                  className="w-full rounded-full"
+                  aria-label={primaryActionLabel}
+                >
+                  {primaryActionLabel}
                 </Button>
-                <Button onClick={() => setShowContactForm(true)} variant="outline" className="w-full rounded-full border-primary/15 bg-primary/5 text-[#171214] hover:bg-primary hover:text-white">
+                <Button
+                  onClick={openInquiryFlow}
+                  variant="outline"
+                  className="w-full rounded-full border-primary/15 bg-primary/5 text-[#171214] hover:bg-primary hover:text-white"
+                  aria-label="Start Inquiry"
+                >
                   Contact Agent
                 </Button>
                 <Button onClick={() => void handleShare()} variant="outline" className="w-full rounded-full border-primary/15 bg-primary/5 text-[#171214] hover:bg-primary hover:text-white">
@@ -1445,9 +1497,229 @@ export function PropertyDetail() {
                 </Button>
               </div>
             </div>
+
+            {showContactForm && (
+              <div className="mt-5 rounded-[2rem] border border-white bg-white p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
+                <h3 className="font-black">Start inquiry</h3>
+                <form className="mt-4 space-y-4" onSubmit={handleInquiry}>
+                  <Input
+                    label="Full Name"
+                    placeholder="John Doe"
+                    value={contactForm.fullName}
+                    onChange={(e) => setContactForm((current) => ({ ...current, fullName: e.target.value }))}
+                  />
+                  <Input
+                    label="Email"
+                    type="email"
+                    placeholder="john@example.com"
+                    value={contactForm.email}
+                    onChange={(e) => setContactForm((current) => ({ ...current, email: e.target.value }))}
+                  />
+                  <Input
+                    label="Phone"
+                    type="tel"
+                    placeholder="+233 24 123 4567"
+                    value={contactForm.phone}
+                    onChange={(e) => setContactForm((current) => ({ ...current, phone: e.target.value }))}
+                  />
+                  <label htmlFor="desktop-property-inquiry-message" className="block text-sm font-semibold">
+                    Message
+                  </label>
+                  <textarea
+                    id="desktop-property-inquiry-message"
+                    className="w-full rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
+                    rows={4}
+                    placeholder="I'm interested in this property and would like more details."
+                    value={contactForm.message}
+                    onChange={(e) => setContactForm((current) => ({ ...current, message: e.target.value }))}
+                  />
+                  <Button className="w-full rounded-full" type="submit" disabled={submitting}>
+                    {submitting ? "Sending..." : "Send Inquiry"}
+                  </Button>
+                </form>
+              </div>
+            )}
+
+            {showOfferForm && listing.listing_type === "sale" && (
+              <div className="mt-5 rounded-[2rem] border border-white bg-white p-5 shadow-[0_18px_60px_rgba(255,56,92,0.08)]">
+                <h3 className="font-black">Make offer</h3>
+                <form className="mt-4 space-y-4" onSubmit={handleOfferSubmit}>
+                  <Input
+                    label="Buyer Name"
+                    placeholder="Ama Mensah"
+                    value={offerForm.buyerName}
+                    onChange={(e) => setOfferForm((current) => ({ ...current, buyerName: e.target.value }))}
+                  />
+                  <Input
+                    label="Offer Amount (GHS)"
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    value={offerForm.amount}
+                    onChange={(e) => setOfferForm((current) => ({ ...current, amount: e.target.value }))}
+                  />
+                  <Input
+                    label="Phone"
+                    type="tel"
+                    placeholder="+233 24 123 4567"
+                    value={offerForm.buyerPhone}
+                    onChange={(e) => setOfferForm((current) => ({ ...current, buyerPhone: e.target.value }))}
+                  />
+                  <label htmlFor="desktop-property-offer-notes" className="block text-sm font-semibold">
+                    Offer Notes
+                  </label>
+                  <textarea
+                    id="desktop-property-offer-notes"
+                    className="w-full rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
+                    rows={4}
+                    placeholder="Share any contingencies, document expectations, or payment structure notes."
+                    value={offerForm.notes}
+                    onChange={(e) => setOfferForm((current) => ({ ...current, notes: e.target.value }))}
+                  />
+                  <Button className="w-full rounded-full" type="submit" disabled={offerSubmitting}>
+                    {offerSubmitting ? "Submitting offer..." : "Submit Offer"}
+                  </Button>
+                </form>
+              </div>
+            )}
           </aside>
         </main>
       </div>
+    );
+  }
+
+  if (isMobileShell) {
+    const mobileLocationText =
+      [property.neighborhood, property.city, property.region || property.country]
+        .filter(Boolean)
+        .join(", ") || "Malibu Highlands, CA";
+    const mobileAreaValue = property.square_feet
+      ? Number(property.square_feet).toLocaleString()
+      : property.square_meters
+        ? `${Math.round(Number(property.square_meters) * 10.764 / 100) / 10}k`
+        : "8.4k";
+    const mobileAmenities = (
+      property.amenities?.length
+        ? property.amenities
+        : [
+            "Infinity Edge Pool",
+            "Private Cinema",
+            "Wellness Center",
+            "Wine Obsidian Room",
+            "Full Smart Automation",
+            "6-Car Gallery",
+          ]
+    ).slice(0, 6);
+    const mobileDescription =
+      listing.description ||
+      "A masterwork of contemporary architecture curated by BaytMiftah, this residence redefines coastal living with its seamless integration of obsidian steel, ultra-clear glass, and raw stone. Suspended above the skyline, this residence offers panoramic views through structural glass curtains. Every detail has been curated for the discerning collector of experiences.";
+
+    return (
+      <section className="mobile-property-luxe-detail" aria-label="Property detail">
+        <div className="mobile-property-luxe-hero">
+          <img src={images[currentImageIndex]} alt={pageTitle} />
+          <div className="mobile-property-luxe-hero-scrim" />
+          <button
+            type="button"
+            className="mobile-property-luxe-icon is-left"
+            onClick={() => navigate(-1)}
+            aria-label="Go back"
+          >
+            <ChevronRight className="rotate-180" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="mobile-property-luxe-icon is-right"
+            onClick={toggleSave}
+            aria-label={isSaved ? "Remove saved property" : "Save property"}
+          >
+            <Heart className={isSaved ? "is-filled" : ""} aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="mobile-property-luxe-panel">
+          <header className="mobile-property-luxe-title">
+            <h1>{property.address?.split(",")[0] || "The Glass House"}</h1>
+            <p>
+              <MapPin aria-hidden="true" />
+              {mobileLocationText}
+            </p>
+            <strong>{formatMoney(Number(listing.price || 12450000), listing.currency || "USD")}</strong>
+            <div>
+              <span>Booked tours (12)</span>
+              <span>Fully furnished</span>
+            </div>
+          </header>
+
+          <div className="mobile-property-luxe-stats">
+            {[
+              { icon: Bed, value: property.bedrooms || 5, label: "Beds" },
+              { icon: Bath, value: property.bathrooms || 7, label: "Baths" },
+              { icon: Square, value: mobileAreaValue, label: "Sqft" },
+            ].map((item) => (
+              <div key={item.label}>
+                <item.icon aria-hidden="true" />
+                <strong>{item.value}</strong>
+                <span>{item.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <section className="mobile-property-luxe-section">
+            <h2>Description</h2>
+            <p>{mobileDescription}</p>
+          </section>
+
+          <section className="mobile-property-luxe-section">
+            <h2>Amenities</h2>
+            <div className="mobile-property-luxe-amenities">
+              {mobileAmenities.map((amenity: string, index: number) => {
+                const icons = [Navigation, Video, Users, Star, Shield, CreditCard];
+                const AmenityIcon = icons[index % icons.length];
+
+                return (
+                  <div key={amenity}>
+                    <span>
+                      <AmenityIcon aria-hidden="true" />
+                    </span>
+                    <strong>{amenity}</strong>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="mobile-property-luxe-agent">
+            <div>
+              <img
+                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=240&q=85&auto=format&fit=crop"
+                alt=""
+              />
+            </div>
+            <h2>{organization?.name || "Julian Sterling"}</h2>
+            <p>BaytMiftah Senior Portfolio Director</p>
+            <span>
+              <Star aria-hidden="true" />
+              {reviewSummary.reviewCount > 0 ? reviewSummary.label : "4.9 (124 reviews)"}
+            </span>
+            <div>
+              <button type="button" onClick={openInquiryFlow} aria-label="Message agent">
+                <MessageCircle aria-hidden="true" />
+              </button>
+              <button type="button" onClick={openInquiryFlow} aria-label="Call agent">
+                <Phone aria-hidden="true" />
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <div className="mobile-property-luxe-cta">
+          <button type="button" onClick={openInquiryFlow}>
+            <MessageCircle aria-hidden="true" />
+            Contact Agent
+          </button>
+        </div>
+      </section>
     );
   }
 
@@ -1650,6 +1922,22 @@ export function PropertyDetail() {
                 </div>
                 <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{step.detail}</p>
               </div>
+            ))}
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+            {buyerQuickActions.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={item.action}
+                className="rounded-2xl border border-primary/10 bg-white px-4 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/20 hover:bg-primary/5"
+              >
+                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary/10 text-primary">
+                  <item.icon className="h-4 w-4" />
+                </span>
+                <span className="mt-3 block text-sm font-bold text-foreground">{item.label}</span>
+                <span className="mt-1 block text-xs leading-5 text-muted-foreground">{item.helper}</span>
+              </button>
             ))}
           </div>
         </section>
@@ -2841,7 +3129,10 @@ export function PropertyDetail() {
                       >
                         <option value="fake_listing">Fake listing</option>
                         <option value="duplicate_listing">Duplicate listing</option>
+                        <option value="wrong_listing">Wrong listing details</option>
                         <option value="scam">Scam or suspicious payment request</option>
+                        <option value="agent_no_show">Agent no-show or unsafe viewing</option>
+                        <option value="payment_refund_issue">Payment or refund issue</option>
                         <option value="wrong_details">Wrong price, photos, or location</option>
                         <option value="unreachable_agent">Agent or landlord is unreachable</option>
                       </select>
@@ -3372,7 +3663,7 @@ export function PropertyDetail() {
               size="sm"
             />
           </div>
-          <div className="grid flex-1 grid-cols-5 gap-1.5 sm:flex-none sm:grid-cols-5">
+          <div className="flex flex-1 gap-1.5 overflow-x-auto pb-1 sm:flex-none">
             {[
               {
                 label: "Save",
@@ -3399,17 +3690,32 @@ export function PropertyDetail() {
                 active: showPaymentForm,
               },
               {
+                label: "Share",
+                icon: Share2,
+                action: handleShare,
+                active: false,
+              },
+              {
                 label: "Track",
                 icon: Clock3,
                 action: openProgressTracker,
                 active: false,
+              },
+              {
+                label: "Help",
+                icon: AlertTriangle,
+                action: () => {
+                  setShowReportForm(true);
+                  scrollToActionPanel();
+                },
+                active: showReportForm,
               },
             ].map((item) => (
               <button
                 key={item.label}
                 type="button"
                 onClick={item.action}
-                className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-2 text-[0.68rem] font-semibold transition hover:-translate-y-0.5 sm:min-w-[5.5rem] ${
+                className={`flex min-h-14 min-w-[4.85rem] flex-col items-center justify-center gap-1 rounded-2xl px-2 text-[0.68rem] font-semibold transition hover:-translate-y-0.5 sm:min-w-[5.5rem] ${
                   item.active
                     ? "bg-primary text-white shadow-lg shadow-primary/20"
                     : "bg-white text-muted-foreground hover:bg-primary/5 hover:text-primary"

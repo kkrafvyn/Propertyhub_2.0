@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: "BaytMiftah",
   webDir: "dist",
   bundledWebRuntime: false,
-  backgroundColor: "#ffffff",
+  backgroundColor: "#071321",
   ios: {
     contentInset: "automatic",
   },
