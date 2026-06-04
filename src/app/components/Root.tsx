@@ -1,95 +1,40 @@
-import { Capacitor } from "@capacitor/core";
-import { useEffect, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { useEffect } from "react";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router";
 import { mobileDeepLinkService } from "../../lib/mobile-deep-link.service";
 import { mobileNativeService } from "../../lib/mobile-native.service";
-import { MobileAppShell } from "../mobile/MobileAppShell";
 
-const mobileShellPrefixes = [
-  "/search",
-  "/property/",
-  "/agencies",
-  "/guides",
-  "/verify/",
-  "/market-trends",
-  "/sold-ledger",
-  "/reviews",
-  "/buyer-requests",
-  "/projects",
-  "/valuation",
-  "/get-the-app",
-  "/legal",
-  "/app",
-  "/workspace",
-];
+const newUiRouteMap = [
+  { test: (path: string) => path === "/", to: "/baytmiftah/marketplace" },
+  { test: (path: string) => path === "/search" || path.startsWith("/search/"), to: "/baytmiftah/aureus-listings" },
+  { test: (path: string) => path.startsWith("/property/"), to: "/baytmiftah/property" },
+  { test: (path: string) => path === "/verify" || path.startsWith("/verify/"), to: "/baytmiftah/aureus-compliance" },
+  { test: (path: string) => path === "/agencies" || path.startsWith("/agencies/"), to: "/baytmiftah/agency" },
+  { test: (path: string) => path === "/guides", to: "/baytmiftah/areas" },
+  { test: (path: string) => path.startsWith("/guides/"), to: "/baytmiftah/aureus-district" },
+  { test: (path: string) => path === "/market-trends", to: "/baytmiftah/aureus-analytics" },
+  { test: (path: string) => path === "/sold-ledger", to: "/baytmiftah/payments-escrow" },
+  { test: (path: string) => path === "/reviews", to: "/baytmiftah/messages" },
+  { test: (path: string) => path === "/innovation-lab" || path === "/feature-completion", to: "/baytmiftah/innovation" },
+  { test: (path: string) => path === "/buyer-requests", to: "/baytmiftah/users" },
+  { test: (path: string) => path === "/projects" || path.startsWith("/projects/"), to: "/baytmiftah/developments" },
+  { test: (path: string) => path === "/valuation", to: "/baytmiftah/innovation" },
+  { test: (path: string) => path === "/get-the-app", to: "/baytmiftah/mobile-landing" },
+  { test: (path: string) => path === "/legal" || path.startsWith("/legal/"), to: "/baytmiftah/aureus-compliance" },
+  { test: (path: string) => path === "/login" || path === "/login/verify" || path === "/forgot-password" || path === "/signup", to: "/baytmiftah/secure-login" },
+  { test: (path: string) => path === "/app" || path.startsWith("/app/"), to: "/baytmiftah/mobile-workspace" },
+  { test: (path: string) => path === "/workspace" || path.startsWith("/workspace/"), to: "/baytmiftah/agency" },
+  { test: (path: string) => path === "/admin" || path.startsWith("/admin/"), to: "/baytmiftah/admin-platform" },
+] as const;
 
-const mobileWebMediaQuery = "(max-width: 767px), (pointer: coarse) and (max-width: 900px)";
-
-function isMobileWebViewport() {
-  if (typeof window === "undefined" || !("matchMedia" in window)) return false;
-  return window.matchMedia(mobileWebMediaQuery).matches;
-}
-
-function usePrefersMobileShell() {
-  const [prefersMobileShell, setPrefersMobileShell] = useState(() => {
-    if (Capacitor.isNativePlatform()) return true;
-    return isMobileWebViewport();
-  });
-
-  useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      setPrefersMobileShell(true);
-      return;
-    }
-
-    if (typeof window === "undefined" || !("matchMedia" in window)) {
-      setPrefersMobileShell(false);
-      return;
-    }
-
-    const media = window.matchMedia(mobileWebMediaQuery);
-    const updatePreference = () => {
-      setPrefersMobileShell(media.matches);
-    };
-
-    updatePreference();
-    if (media.addEventListener) {
-      media.addEventListener("change", updatePreference);
-
-      return () => {
-        media.removeEventListener("change", updatePreference);
-      };
-    }
-
-    media.addListener?.(updatePreference);
-
-    return () => {
-      media.removeListener?.(updatePreference);
-    };
-  }, []);
-
-  return prefersMobileShell;
-}
-
-function shouldUseMobileShell(pathname: string) {
-  if (pathname === "/") return true;
-  if (pathname.startsWith("/baytmiftah")) return true;
-  if (pathname.startsWith("/admin")) return true;
-  if (pathname.startsWith("/login") || pathname.startsWith("/signup")) return true;
-
-  return mobileShellPrefixes.some((prefix) => {
-    if (prefix.endsWith("/")) {
-      return pathname.startsWith(prefix);
-    }
-
-    return pathname === prefix || pathname.startsWith(`${prefix}/`);
-  });
+function getNewUiRedirect(pathname: string) {
+  if (pathname.startsWith("/baytmiftah")) return null;
+  return newUiRouteMap.find((route) => route.test(pathname))?.to ?? null;
 }
 
 export function Root() {
   const location = useLocation();
   const navigate = useNavigate();
-  const prefersMobileShell = usePrefersMobileShell();
+  const redirectTo = getNewUiRedirect(location.pathname);
 
   useEffect(() => {
     let cleanupDeepLinks: (() => void) | undefined;
@@ -118,12 +63,8 @@ export function Root() {
     };
   }, [navigate]);
 
-  if (prefersMobileShell && shouldUseMobileShell(location.pathname)) {
-    return (
-      <MobileAppShell>
-        <Outlet />
-      </MobileAppShell>
-    );
+  if (redirectTo) {
+    return <Navigate to={redirectTo} replace />;
   }
 
   return (

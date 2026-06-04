@@ -1200,7 +1200,7 @@ export function BaytMiftahPropertyDetail() {
               <Panel className="p-6">
                 <h3 className="text-xl font-black">Schedule Private Viewing</h3>
                 <div className="mt-5 grid grid-cols-7 gap-2 text-center text-xs text-slate-400">
-                  {"MTWTFSS".split("").map((day) => <span key={day}>{day}</span>)}
+                  {"MTWTFSS".split("").map((day, index) => <span key={`${day}-${index}`}>{day}</span>)}
                   {Array.from({ length: 14 }, (_, i) => i + 12).map((day) => (
                     <span key={day} className={day === 16 ? "rounded bg-[#f7c843] text-[#081321]" : ""}>{day}</span>
                   ))}
