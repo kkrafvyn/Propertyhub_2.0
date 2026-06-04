@@ -86,6 +86,20 @@ const publicNav = [
   "Messages",
 ];
 const adminNav = ["Dashboard", "Market Analysis", "Asset Vault"];
+const publicNavLinks: Record<string, string> = {
+  Marketplace: "/baytmiftah/marketplace",
+  Developments: "/baytmiftah/developments",
+  Concierge: "/baytmiftah/concierge",
+  Portfolio: "/baytmiftah/portfolio",
+  Auction: "/baytmiftah/auction",
+  "Innovation Lab": "/baytmiftah/innovation",
+  Messages: "/baytmiftah/messages",
+};
+const adminNavLinks: Record<string, string> = {
+  Dashboard: "/baytmiftah/admin-platform",
+  "Market Analysis": "/baytmiftah/aureus-analytics",
+  "Asset Vault": "/baytmiftah/aureus-asset-vault",
+};
 const footerLinks = ["Security Protocol", "System Status", "Audit Logs"];
 
 const visualBackgrounds: Record<VisualKind, string> = {
@@ -169,17 +183,7 @@ function PublicTopNav({ active = "Innovation Lab" }: { active?: string }) {
           {publicNav.map((item) => (
             <Link
               key={item}
-              to={
-                item === "Innovation Lab"
-                  ? "/baytmiftah/innovation"
-                  : item === "Marketplace"
-                    ? "/baytmiftah/marketplace"
-                    : item === "Developments"
-                      ? "/baytmiftah/areas"
-                      : item === "Messages"
-                        ? "/baytmiftah/messages"
-                    : "#"
-              }
+              to={publicNavLinks[item] ?? "#"}
               className={`border-b-2 py-2 ${
                 item === active
                   ? "border-[#f7c843] text-[#f7c843]"
@@ -393,15 +397,15 @@ function AdminTopNav({ active = "Dashboard" }: { active?: string }) {
         <BrandMark admin />
         <nav className="hidden items-center gap-12 text-xl lg:flex">
           {adminNav.map((item) => (
-            <a
+            <Link
               key={item}
-              href="#"
+              to={adminNavLinks[item] ?? "#"}
               className={`border-b-4 py-2 ${
                 item === active ? "border-[#f7c843] text-[#f7c843]" : "border-transparent text-slate-300"
               }`}
             >
               {item}
-            </a>
+            </Link>
           ))}
         </nav>
         <div className="flex items-center gap-6">
@@ -1286,6 +1290,268 @@ export function BaytMiftahMarketplace() {
               </Panel>
             </div>
           </div>
+        </section>
+      </main>
+      <PublicFooter />
+    </div>
+  );
+}
+
+export function BaytMiftahDevelopments() {
+  const developments = [
+    ["Royal Crescent Reserve", "Palm Jumeirah", "Launching Q4", "From $18.4M", "pavilion" as const],
+    ["Aurelia Marina District", "Dubai Harbour", "Priority Access", "From $9.8M", "ocean" as const],
+    ["Monaco Sky Atelier", "Monte Carlo", "Private Allocation", "From $24M", "tower" as const],
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#071321] text-slate-100">
+      <PublicTopNav active="Developments" />
+      <main>
+        <section className="relative overflow-hidden border-b border-white/10 px-6 py-24">
+          <LuxuryVisual kind="tower" className="absolute inset-y-0 right-0 hidden w-1/2 opacity-35 lg:block" />
+          <div className="relative mx-auto max-w-7xl">
+            <p className="text-sm font-black uppercase tracking-[0.24em] text-[#f7c843]">Development pipeline</p>
+            <h1 className="mt-5 max-w-4xl text-6xl font-black tracking-[-0.06em]">
+              Off-plan estates curated before the market sees them.
+            </h1>
+            <p className="mt-6 max-w-2xl text-xl leading-9 text-slate-300">
+              Track invitation-only residential launches, reservation windows, and construction intelligence from a single private desk.
+            </p>
+            <div className="mt-10 grid max-w-4xl gap-5 md:grid-cols-3">
+              {[
+                ["42", "Active launches"],
+                ["11", "Priority districts"],
+                ["98%", "Allocation filled"],
+              ].map(([value, label]) => (
+                <Panel key={label} className="p-6">
+                  <p className="text-4xl font-black text-[#f7c843]">{value}</p>
+                  <p className="mt-2 text-sm font-bold uppercase tracking-[0.16em] text-slate-300">{label}</p>
+                </Panel>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-[1fr_360px]">
+          <div className="grid gap-8 md:grid-cols-3">
+            {developments.map(([title, location, status, price, visual]) => (
+              <Panel key={title} className="overflow-hidden">
+                <LuxuryVisual kind={visual as VisualKind} className="h-72" />
+                <div className="p-7">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#f7c843]">{status}</p>
+                  <h2 className="mt-4 text-2xl font-black">{title}</h2>
+                  <p className="mt-2 flex items-center gap-2 text-slate-300">
+                    <MapPin className="h-4 w-4 text-[#f7c843]" />
+                    {location}
+                  </p>
+                  <div className="mt-7 flex items-center justify-between border-t border-white/10 pt-5">
+                    <span className="text-xl font-black text-[#f7c843]">{price}</span>
+                    <Link to="/baytmiftah/property" className="font-black">
+                      Brief <ArrowRight className="ml-2 inline h-4 w-4" />
+                    </Link>
+                  </div>
+                </div>
+              </Panel>
+            ))}
+          </div>
+          <Panel className="p-8">
+            <CalendarDays className="h-9 w-9 text-[#f7c843]" />
+            <h2 className="mt-8 text-3xl font-black">Launch Calendar</h2>
+            {[
+              ["Today", "Palm priority reservations open"],
+              ["Oct 28", "Marina allocation review"],
+              ["Nov 04", "Monaco investor salon"],
+            ].map(([date, copy]) => (
+              <div key={date} className="mt-7 border-l border-[#f7c843]/40 pl-5">
+                <p className="font-black text-[#f7c843]">{date}</p>
+                <p className="mt-1 text-slate-300">{copy}</p>
+              </div>
+            ))}
+            <Link to="/baytmiftah/concierge" className="mt-10 block rounded-lg bg-[#f7c843] px-6 py-4 text-center font-black text-[#081321]">
+              Request Allocation Desk
+            </Link>
+          </Panel>
+        </section>
+      </main>
+      <PublicFooter />
+    </div>
+  );
+}
+
+export function BaytMiftahConcierge() {
+  return (
+    <div className="min-h-screen bg-[#071321] text-slate-100">
+      <PublicTopNav active="Concierge" />
+      <main className="mx-auto grid max-w-7xl gap-10 px-6 py-20 lg:grid-cols-[.9fr_1.1fr]">
+        <section>
+          <p className="text-sm font-black uppercase tracking-[0.24em] text-[#f7c843]">Private advisory desk</p>
+          <h1 className="mt-5 text-6xl font-black tracking-[-0.06em]">Concierge intelligence for every high-value move.</h1>
+          <p className="mt-6 text-xl leading-9 text-slate-300">
+            Coordinate inspections, legal briefings, wealth-office approvals, and post-acquisition services with a verified BaytMiftah advisor.
+          </p>
+          <div className="mt-10 grid gap-5 sm:grid-cols-2">
+            {[
+              ["24/7", "Global advisor coverage", Phone],
+              ["14m", "Median response time", Clock],
+              ["98%", "Client satisfaction", ShieldCheck],
+              ["42", "Live concierge desks", Users],
+            ].map(([value, label, Icon]) => (
+              <Panel key={label as string} className="p-6">
+                <Icon className="h-7 w-7 text-[#f7c843]" />
+                <p className="mt-6 text-4xl font-black text-[#f7c843]">{value as string}</p>
+                <p className="mt-2 text-sm font-bold uppercase tracking-[0.14em] text-slate-300">{label as string}</p>
+              </Panel>
+            ))}
+          </div>
+        </section>
+        <Panel className="overflow-hidden">
+          <LuxuryVisual kind="interior" className="h-72" />
+          <div className="p-8">
+            <h2 className="text-3xl font-black">Active Concierge Flow</h2>
+            {[
+              ["Property dossier", "The Obsidian Pavilion security report attached.", "Complete"],
+              ["Private viewing", "Azure Pavilion confirmed for 11:00 AM GST.", "Scheduled"],
+              ["Legal review", "Purchase agreement waiting on final buyer signature.", "In review"],
+            ].map(([title, detail, status], index) => (
+              <div key={title} className="mt-7 flex gap-5">
+                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#f7c843] font-black text-[#081321]">{index + 1}</span>
+                <div>
+                  <p className="font-black">{title}</p>
+                  <p className="mt-1 text-slate-300">{detail}</p>
+                  <p className="mt-2 text-sm font-black uppercase tracking-[0.14em] text-[#f7c843]">{status}</p>
+                </div>
+              </div>
+            ))}
+            <Link to="/baytmiftah/messages" className="mt-10 block rounded-lg border border-[#f7c843] px-6 py-4 text-center font-black text-[#f7c843]">
+              Open Advisor Messages
+            </Link>
+          </div>
+        </Panel>
+      </main>
+      <PublicFooter />
+    </div>
+  );
+}
+
+export function BaytMiftahPortfolioVault() {
+  const assets = [
+    ["The Obsidian Pavilion", "Palm Jumeirah", "$14.5M", "Private sale", "pavilion" as const],
+    ["Elysian Reef Estate", "Exuma", "$31M", "Pending approval", "ocean" as const],
+    ["Ginza Sky-Suite", "Tokyo", "$5.8M", "Archived", "skyline" as const],
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#071321] text-slate-100">
+      <PublicTopNav active="Portfolio" />
+      <main className="mx-auto max-w-7xl px-6 py-20">
+        <div className="flex flex-wrap items-end justify-between gap-8">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.24em] text-[#f7c843]">Portfolio command</p>
+            <h1 className="mt-5 text-6xl font-black tracking-[-0.06em]">Private assets, documents, and deal rooms.</h1>
+            <p className="mt-6 max-w-3xl text-xl leading-9 text-slate-300">
+              Monitor owned, watched, and under-contract properties with encrypted access to each asset's transaction history.
+            </p>
+          </div>
+          <Link to="/baytmiftah/deal-room" className="rounded-lg bg-[#f7c843] px-8 py-5 font-black text-[#081321]">
+            Open Deal Room
+          </Link>
+        </div>
+
+        <section className="mt-12 grid gap-8 lg:grid-cols-[1fr_380px]">
+          <div className="grid gap-6">
+            {assets.map(([title, location, price, status, visual]) => (
+              <Panel key={title} className="grid gap-6 p-6 md:grid-cols-[180px_1fr_auto] md:items-center">
+                <LuxuryVisual kind={visual as VisualKind} className="h-36 rounded-lg" />
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#f7c843]">{status}</p>
+                  <h2 className="mt-3 text-3xl font-black">{title}</h2>
+                  <p className="mt-2 flex items-center gap-2 text-slate-300"><MapPin className="h-4 w-4 text-[#f7c843]" /> {location}</p>
+                </div>
+                <div className="text-left md:text-right">
+                  <p className="text-3xl font-black text-[#f7c843]">{price}</p>
+                  <Link to="/baytmiftah/property" className="mt-4 inline-block font-black">Inspect <ArrowRight className="ml-2 inline h-4 w-4" /></Link>
+                </div>
+              </Panel>
+            ))}
+          </div>
+          <Panel className="p-8">
+            <Lock className="h-9 w-9 text-[#f7c843]" />
+            <h2 className="mt-8 text-3xl font-black">Vault Health</h2>
+            {[
+              ["KYC coverage", "100%"],
+              ["Signed NDAs", "18"],
+              ["Open escrow files", "4"],
+            ].map(([label, value]) => (
+              <div key={label} className="mt-7">
+                <p className="flex justify-between font-black"><span>{label}</span><span className="text-[#f7c843]">{value}</span></p>
+                <span className="mt-3 block h-2 rounded-full bg-slate-700"><span className="block h-full w-4/5 rounded-full bg-[#f7c843]" /></span>
+              </div>
+            ))}
+            <Link to="/baytmiftah/payments-escrow" className="mt-10 block rounded-lg border border-[#f7c843] px-6 py-4 text-center font-black text-[#f7c843]">
+              Review Escrow
+            </Link>
+          </Panel>
+        </section>
+      </main>
+      <PublicFooter />
+    </div>
+  );
+}
+
+export function BaytMiftahAuctionHouse() {
+  return (
+    <div className="min-h-screen bg-[#071321] text-slate-100">
+      <PublicTopNav active="Auction" />
+      <main>
+        <section className="relative overflow-hidden px-6 py-24">
+          <LuxuryVisual kind="bath" className="absolute inset-0 h-full opacity-25" />
+          <div className="relative mx-auto max-w-7xl">
+            <p className="text-sm font-black uppercase tracking-[0.24em] text-[#f7c843]">Closed-bid auction protocol</p>
+            <h1 className="mt-5 max-w-4xl text-6xl font-black tracking-[-0.06em]">Institutional auction rooms for rare trophy assets.</h1>
+            <p className="mt-6 max-w-2xl text-xl leading-9 text-slate-300">
+              Place sealed bids, verify bidder credentials, and track escrow-backed commitments without public exposure.
+            </p>
+          </div>
+        </section>
+        <section className="mx-auto grid max-w-7xl gap-8 px-6 pb-20 lg:grid-cols-[1fr_420px]">
+          <Panel className="overflow-hidden">
+            <div className="grid gap-8 p-8 md:grid-cols-[1fr_260px]">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#f7c843]">Live private room</p>
+                <h2 className="mt-4 text-4xl font-black">Bel Air Sanctuary</h2>
+                <p className="mt-3 text-slate-300">Final bid window closes in 02:18:44. Bidder identities are encrypted until settlement clearance.</p>
+                <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                  {[
+                    ["$42.5M", "Current high bid"],
+                    ["7", "Verified bidders"],
+                    ["$2.1M", "Escrow reserve"],
+                  ].map(([value, label]) => <Panel key={label} className="p-5"><p className="text-2xl font-black text-[#f7c843]">{value}</p><p className="text-xs uppercase tracking-[0.14em] text-slate-300">{label}</p></Panel>)}
+                </div>
+              </div>
+              <LuxuryVisual kind="villa" className="h-72 rounded-lg" />
+            </div>
+            <div className="border-t border-white/10 p-8">
+              {["Bidder KYC verified", "Escrow bond confirmed", "Legal reserve locked"].map((item) => (
+                <p key={item} className="mt-4 flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-[#f7c843]" /> {item}</p>
+              ))}
+            </div>
+          </Panel>
+          <Panel className="p-8">
+            <CircleDollarSign className="h-10 w-10 text-[#f7c843]" />
+            <h2 className="mt-8 text-3xl font-black">Submit Bid</h2>
+            <label className="mt-7 block text-sm font-black uppercase tracking-[0.14em] text-slate-300">
+              Bid amount
+              <span className="mt-3 block rounded-lg border border-white/12 bg-[#071321] px-5 py-4 text-2xl normal-case tracking-normal">$ 43,000,000</span>
+            </label>
+            <label className="mt-5 block text-sm font-black uppercase tracking-[0.14em] text-slate-300">
+              Escrow source
+              <span className="mt-3 block rounded-lg border border-white/12 bg-[#071321] px-5 py-4 normal-case tracking-normal">Valerius Trust Vault</span>
+            </label>
+            <button className="mt-8 w-full rounded-lg bg-[#f7c843] py-5 text-xl font-black text-[#081321]" type="button">
+              Seal Bid
+            </button>
+          </Panel>
         </section>
       </main>
       <PublicFooter />
@@ -2522,6 +2788,123 @@ export function AureusFinancialLedger() {
                   ["Agent Commission", "75%"],
                   ["Tax Provision", "10%"],
                 ].map(([label, value]) => <p key={label} className="mt-8 flex justify-between rounded-lg bg-slate-700 p-5 text-xl"><span>{label}</span><b>{value}</b></p>)}
+              </AureusPanel>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+export function AureusAssetVault() {
+  const vaultAssets = [
+    ["Obsidian Pavilion", "Palm Jumeirah", "Title deed", "Encrypted", "pavilion" as const],
+    ["Azure Point Villa", "Malibu", "Inspection packet", "Pending review", "ocean" as const],
+    ["Gilded Atrium", "Manhattan", "Escrow agreement", "Ready to sign", "interior" as const],
+    ["Royal Atlantis A-12", "Dubai Marina", "KYC bundle", "Verified", "tower" as const],
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#071321] text-slate-100">
+      <AureusHeader active="Asset Vault" search />
+      <div className="flex">
+        <AureusSidebar active="Financials" />
+        <main className="mx-auto max-w-[1500px] flex-1 px-10 py-10">
+          <section className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.24em] text-[#f7c843]">Encrypted asset archive</p>
+              <h1 className="mt-4 text-6xl font-black tracking-[-0.06em]">Asset Vault</h1>
+              <p className="mt-5 max-w-3xl text-2xl leading-9 text-slate-300">
+                Govern documents, transfer evidence, valuation snapshots, and privileged deal packets across the AUREUS portfolio.
+              </p>
+            </div>
+            <div className="flex gap-5">
+              <button className="rounded-xl border border-[#f7c843] px-8 py-5 font-black text-[#f7c843]" type="button">
+                Export Audit Log
+              </button>
+              <button className="rounded-xl bg-[#f7c843] px-8 py-5 font-black text-[#081321]" type="button">
+                Secure Upload
+              </button>
+            </div>
+          </section>
+
+          <section className="mt-12 grid gap-8 lg:grid-cols-4">
+            {[
+              ["1,284", "Documents sealed", FileText],
+              ["42", "Assets monitored", Building2],
+              ["8", "Signature packets", Pencil],
+              ["99.98%", "Vault integrity", ShieldCheck],
+            ].map(([value, label, Icon]) => (
+              <AureusPanel key={label as string} className="p-8">
+                <Icon className="h-9 w-9 text-[#f7c843]" />
+                <p className="mt-8 text-4xl font-black">{value as string}</p>
+                <p className="mt-2 text-sm font-black uppercase tracking-[0.16em] text-slate-400">{label as string}</p>
+              </AureusPanel>
+            ))}
+          </section>
+
+          <section className="mt-12 grid gap-8 xl:grid-cols-[1fr_420px]">
+            <AureusPanel className="overflow-hidden">
+              <div className="flex flex-wrap items-center justify-between gap-5 border-b border-white/10 p-8">
+                <div>
+                  <h2 className="text-3xl font-black">Vault Inventory</h2>
+                  <p className="mt-2 text-slate-300">Latest secure asset packets and verification status.</p>
+                </div>
+                <div className="flex h-14 min-w-[320px] items-center gap-3 rounded-lg border border-white/12 bg-[#071321] px-5 text-slate-400">
+                  <Search className="h-5 w-5" /> Search vault records...
+                </div>
+              </div>
+              <div className="grid grid-cols-[1.3fr_.8fr_.9fr_.7fr] gap-6 px-8 py-5 text-sm font-black uppercase tracking-[0.16em] text-slate-400">
+                <span>Asset</span>
+                <span>Location</span>
+                <span>Packet</span>
+                <span>Status</span>
+              </div>
+              {vaultAssets.map(([asset, location, packet, status, visual]) => (
+                <div key={asset} className="grid grid-cols-[1.3fr_.8fr_.9fr_.7fr] items-center gap-6 border-t border-white/8 px-8 py-7">
+                  <div className="flex items-center gap-5">
+                    <LuxuryVisual kind={visual as VisualKind} className="h-16 w-20 rounded-lg" />
+                    <p className="text-xl font-black">{asset}</p>
+                  </div>
+                  <p className="text-slate-300">{location}</p>
+                  <p>{packet}</p>
+                  <p>
+                    <span className={`rounded-full px-4 py-2 text-sm font-black uppercase ${
+                      status === "Encrypted" || status === "Verified"
+                        ? "bg-emerald-500/10 text-emerald-300"
+                        : status === "Pending review"
+                          ? "bg-[#f7c843]/12 text-[#f7c843]"
+                          : "bg-blue-500/10 text-blue-200"
+                    }`}>
+                      {status}
+                    </span>
+                  </p>
+                </div>
+              ))}
+            </AureusPanel>
+
+            <div className="grid gap-8">
+              <AureusPanel className="p-8">
+                <Lock className="h-10 w-10 text-[#f7c843]" />
+                <h2 className="mt-8 text-3xl font-black">Access Control</h2>
+                {[
+                  ["Principal brokers", "Full packet access"],
+                  ["Legal counsel", "Agreement review"],
+                  ["Buyer trustees", "Escrow-only view"],
+                ].map(([role, scope]) => (
+                  <div key={role} className="mt-6 rounded-lg border border-white/10 bg-white/5 p-5">
+                    <p className="font-black">{role}</p>
+                    <p className="mt-1 text-sm text-slate-300">{scope}</p>
+                  </div>
+                ))}
+              </AureusPanel>
+              <AureusPanel className="border-[#f7c843]/40 p-8">
+                <CloudUpload className="h-10 w-10 text-[#f7c843]" />
+                <h2 className="mt-8 text-3xl font-black">Secure Drop Zone</h2>
+                <div className="mt-6 rounded-xl border border-dashed border-slate-600 px-6 py-12 text-center text-slate-300">
+                  Upload deeds, appraisal letters, investor mandates, or encrypted closing packets.
+                </div>
               </AureusPanel>
             </div>
           </section>

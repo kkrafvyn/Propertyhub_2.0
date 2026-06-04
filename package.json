@@ -27,7 +27,8 @@
     "ios:sync": "npm run build:web && npx cap sync ios",
     "ios:open": "npx cap open ios",
     "ios:build:sim": "cd ios/App && xcodebuild -project App.xcodeproj -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' build",
-    "supabase:deploy:payments": "node scripts/deploySupabasePayments.cjs"
+    "supabase:deploy:payments": "node scripts/deploySupabasePayments.cjs",
+    "supabase:deploy:functions": "node scripts/deploySupabasePayments.cjs"
   },
   "dependencies": {
     "@aparajita/capacitor-biometric-auth": "^10.0.0",

@@ -134,6 +134,42 @@ export const router = createBrowserRouter([
         },
       },
       {
+        path: "baytmiftah/developments",
+        lazy: async () => {
+          const { BaytMiftahDevelopments } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahDevelopments };
+        },
+      },
+      {
+        path: "baytmiftah/concierge",
+        lazy: async () => {
+          const { BaytMiftahConcierge } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahConcierge };
+        },
+      },
+      {
+        path: "baytmiftah/portfolio",
+        lazy: async () => {
+          const { BaytMiftahPortfolioVault } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahPortfolioVault };
+        },
+      },
+      {
+        path: "baytmiftah/auction",
+        lazy: async () => {
+          const { BaytMiftahAuctionHouse } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: BaytMiftahAuctionHouse };
+        },
+      },
+      {
         path: "baytmiftah/listings",
         lazy: async () => {
           const { BaytMiftahListingOversight } = await import(
@@ -194,6 +230,15 @@ export const router = createBrowserRouter([
             "./pages/baytmiftah/BaytMiftahScreens"
           );
           return { Component: AureusFinancialLedger };
+        },
+      },
+      {
+        path: "baytmiftah/aureus-asset-vault",
+        lazy: async () => {
+          const { AureusAssetVault } = await import(
+            "./pages/baytmiftah/BaytMiftahScreens"
+          );
+          return { Component: AureusAssetVault };
         },
       },
       {

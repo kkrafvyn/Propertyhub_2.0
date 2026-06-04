@@ -21,11 +21,12 @@ function printUsage() {
   console.log(
     [
       "Usage:",
-      "  node scripts/deploySupabasePayments.cjs --project-ref <ref> [--env-file <file>] [--skip-secrets]",
+      "  node scripts/deploySupabasePayments.cjs --project-ref <ref> [--env-file <file>] [--skip-secrets] [--dry-run]",
       "",
       "Examples:",
       "  node scripts/deploySupabasePayments.cjs --project-ref paobdnhpjmqsovideexo --env-file supabase/.env.payments",
       "  npm run supabase:deploy:payments -- --project-ref paobdnhpjmqsovideexo --env-file supabase/.env.payments",
+      "  npm run supabase:deploy:functions -- --dry-run --skip-secrets",
     ].join("\n")
   );
 }
@@ -36,18 +37,19 @@ const envFile =
   process.env.SUPABASE_SECRETS_ENV_FILE ||
   path.join("supabase", ".env.payments");
 const skipSecrets = hasFlag("--skip-secrets");
+const dryRun = hasFlag("--dry-run");
 
 if (hasFlag("--help") || hasFlag("-h")) {
   printUsage();
   process.exit(0);
 }
 
-if (!projectRef) {
+if (!projectRef && !dryRun) {
   printUsage();
   process.exit(1);
 }
 
-if (!skipSecrets) {
+if (!skipSecrets && !dryRun) {
   const resolvedEnvFile = path.resolve(projectRoot, envFile);
   if (!fs.existsSync(resolvedEnvFile)) {
     console.error(
@@ -57,8 +59,44 @@ if (!skipSecrets) {
   }
 }
 
+const targetProjectRef = projectRef || "<project-ref>";
+const publicFunctionNames = new Set([
+  "anchor-integrity-audit",
+  "automation-dispatcher",
+  "flutterwave-webhook",
+  "payment-webhook",
+  "paystack-webhook",
+  "public-verification-key",
+]);
+const functionDeployments = [
+  ["ai-concierge", "Deploy ai-concierge"],
+  ["initialize-property-payment", "Deploy initialize-property-payment"],
+  ["verify-property-payment", "Deploy verify-property-payment"],
+  ["initialize-organization-subscription", "Deploy initialize-organization-subscription"],
+  ["verify-organization-subscription", "Deploy verify-organization-subscription"],
+  ["manage-organization-subscription", "Deploy manage-organization-subscription"],
+  ["send-organization-invite", "Deploy send-organization-invite"],
+  ["initialize-paystack-payment", "Deploy legacy initialize-paystack-payment"],
+  ["verify-paystack-payment", "Deploy legacy verify-paystack-payment"],
+  ["initiate-paystack-refund", "Deploy initiate-paystack-refund"],
+  ["manage-property-escrow", "Deploy manage-property-escrow"],
+  ["manage-smart-access", "Deploy manage-smart-access"],
+  ["payment-webhook", "Deploy payment-webhook"],
+  ["paystack-webhook", "Deploy paystack-webhook"],
+  ["flutterwave-webhook", "Deploy flutterwave-webhook"],
+  ["public-verification-key", "Deploy public-verification-key"],
+  ["anchor-integrity-audit", "Deploy anchor-integrity-audit"],
+  ["automation-dispatcher", "Deploy automation-dispatcher"],
+  ["dispatch-notification", "Deploy dispatch-notification"],
+];
+
 function runSupabase(commandArgs, label) {
   console.log(`\n==> ${label}`);
+  if (dryRun) {
+    console.log(`npx supabase ${commandArgs.join(" ")}`);
+    return;
+  }
+
   const result = spawnSync("npx", ["supabase", ...commandArgs], {
     cwd: projectRoot,
     stdio: "inherit",
@@ -71,7 +109,7 @@ function runSupabase(commandArgs, label) {
   }
 }
 
-runSupabase(["link", "--project-ref", projectRef, "--workdir", ".", "--yes"], "Link project");
+runSupabase(["link", "--project-ref", targetProjectRef, "--workdir", ".", "--yes"], "Link project");
 runSupabase(
   ["db", "push", "--include-all", "--workdir", ".", "--yes"],
   "Apply remote migrations"
@@ -79,151 +117,28 @@ runSupabase(
 
 if (!skipSecrets) {
   runSupabase(
-    ["secrets", "set", "--project-ref", projectRef, "--env-file", envFile, "--workdir", "."],
+    ["secrets", "set", "--project-ref", targetProjectRef, "--env-file", envFile, "--workdir", "."],
     "Upload Edge Function secrets"
   );
 }
 
-runSupabase(
-  ["functions", "deploy", "initialize-property-payment", "--project-ref", projectRef, "--workdir", ".", "--use-api"],
-  "Deploy initialize-property-payment"
-);
-runSupabase(
-  ["functions", "deploy", "verify-property-payment", "--project-ref", projectRef, "--workdir", ".", "--use-api"],
-  "Deploy verify-property-payment"
-);
-runSupabase(
-  [
+for (const [functionName, label] of functionDeployments) {
+  const commandArgs = [
     "functions",
     "deploy",
-    "initialize-organization-subscription",
+    functionName,
     "--project-ref",
-    projectRef,
+    targetProjectRef,
     "--workdir",
     ".",
     "--use-api",
-  ],
-  "Deploy initialize-organization-subscription"
-);
-runSupabase(
-  [
-    "functions",
-    "deploy",
-    "verify-organization-subscription",
-    "--project-ref",
-    projectRef,
-    "--workdir",
-    ".",
-    "--use-api",
-  ],
-  "Deploy verify-organization-subscription"
-);
-runSupabase(
-  [
-    "functions",
-    "deploy",
-    "manage-organization-subscription",
-    "--project-ref",
-    projectRef,
-    "--workdir",
-    ".",
-    "--use-api",
-  ],
-  "Deploy manage-organization-subscription"
-);
-runSupabase(
-  ["functions", "deploy", "send-organization-invite", "--project-ref", projectRef, "--workdir", ".", "--use-api"],
-  "Deploy send-organization-invite"
-);
-runSupabase(
-  ["functions", "deploy", "initialize-paystack-payment", "--project-ref", projectRef, "--workdir", ".", "--use-api"],
-  "Deploy legacy initialize-paystack-payment"
-);
-runSupabase(
-  ["functions", "deploy", "verify-paystack-payment", "--project-ref", projectRef, "--workdir", ".", "--use-api"],
-  "Deploy legacy verify-paystack-payment"
-);
-runSupabase(
-  ["functions", "deploy", "initiate-paystack-refund", "--project-ref", projectRef, "--workdir", ".", "--use-api"],
-  "Deploy initiate-paystack-refund"
-);
-runSupabase(
-  ["functions", "deploy", "manage-property-escrow", "--project-ref", projectRef, "--workdir", ".", "--use-api"],
-  "Deploy manage-property-escrow"
-);
-runSupabase(
-  ["functions", "deploy", "manage-smart-access", "--project-ref", projectRef, "--workdir", ".", "--use-api"],
-  "Deploy manage-smart-access"
-);
-runSupabase(
-  [
-    "functions",
-    "deploy",
-    "payment-webhook",
-    "--project-ref",
-    projectRef,
-    "--workdir",
-    ".",
-    "--use-api",
-    "--no-verify-jwt",
-  ],
-  "Deploy payment-webhook"
-);
-runSupabase(
-  [
-    "functions",
-    "deploy",
-    "paystack-webhook",
-    "--project-ref",
-    projectRef,
-    "--workdir",
-    ".",
-    "--use-api",
-    "--no-verify-jwt",
-  ],
-  "Deploy paystack-webhook"
-);
-runSupabase(
-  [
-    "functions",
-    "deploy",
-    "flutterwave-webhook",
-    "--project-ref",
-    projectRef,
-    "--workdir",
-    ".",
-    "--use-api",
-    "--no-verify-jwt",
-  ],
-  "Deploy flutterwave-webhook"
-);
-runSupabase(
-  [
-    "functions",
-    "deploy",
-    "public-verification-key",
-    "--project-ref",
-    projectRef,
-    "--workdir",
-    ".",
-    "--use-api",
-    "--no-verify-jwt",
-  ],
-  "Deploy public-verification-key"
-);
-runSupabase(
-  [
-    "functions",
-    "deploy",
-    "anchor-integrity-audit",
-    "--project-ref",
-    projectRef,
-    "--workdir",
-    ".",
-    "--use-api",
-    "--no-verify-jwt",
-  ],
-  "Deploy anchor-integrity-audit"
-);
+  ];
 
-console.log("\nSupabase payment deployment complete.");
+  if (publicFunctionNames.has(functionName)) {
+    commandArgs.push("--no-verify-jwt");
+  }
+
+  runSupabase(commandArgs, label);
+}
+
+console.log(`\nSupabase function deployment ${dryRun ? "dry run" : "complete"}: ${functionDeployments.length} functions.`);
