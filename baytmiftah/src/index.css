@@ -1,0 +1,121 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  @apply box-border;
+}
+
+html {
+  @apply bg-surface text-on-surface;
+}
+
+body {
+  @apply bg-surface text-on-surface font-inter;
+  scroll-behavior: smooth;
+}
+
+/* Glass morphism effect */
+.glass-card {
+  @apply backdrop-blur-xl bg-white/10 border border-white/10 rounded-lg;
+}
+
+.glass-card-sm {
+  @apply backdrop-blur-xl bg-white/5 border border-white/5 rounded-md;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  @apply w-2 h-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-surface-container;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-surface-container-high rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-outline;
+}
+
+/* Focus states */
+:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
+}
+
+/* Input focus state */
+input:focus,
+textarea:focus {
+  @apply outline-2 outline-offset-0 outline-primary;
+}
+
+/* Animation classes */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    to right,
+    #051424 0%,
+    #273647 50%,
+    #051424 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Responsive utilities */
+@layer components {
+  .container-safe {
+    @apply px-4 md:px-8 lg:px-12;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 bg-secondary text-on-secondary rounded-md font-semibold transition-all duration-200 hover:bg-secondary/90 active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-surface-container-high text-on-surface border border-outline rounded-md font-semibold transition-all duration-200 hover:bg-surface-container-highest;
+  }
+
+  .btn-ghost {
+    @apply px-6 py-3 text-primary border border-primary rounded-md font-semibold transition-all duration-200 hover:bg-primary/10;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 bg-surface-container border border-outline-variant rounded-md text-on-surface placeholder-on-surface-variant focus:outline-2 focus:outline-offset-0 focus:outline-primary transition-all duration-200;
+  }
+
+  .card {
+    @apply bg-surface-container-high rounded-lg p-4 border border-outline-variant;
+  }
+
+  .heading-display-lg {
+    @apply text-display-lg font-bold leading-tight letter-spacing-[-0.02em];
+  }
+
+  .heading-headline-md {
+    @apply text-headline-md font-semibold leading-tight;
+  }
+
+  .text-body-lg {
+    @apply text-body-lg leading-relaxed;
+  }
+
+  .text-body-md {
+    @apply text-body-md leading-normal;
+  }
+
+  .text-label-sm {
+    @apply text-label-sm uppercase tracking-wider;
+  }
+}
