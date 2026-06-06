@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+import { normalizeSupabaseUser } from '../lib/auth'
 
 export default function Login({ setUser }) {
   const [email, setEmail] = useState('')
@@ -14,22 +16,20 @@ export default function Login({ setUser }) {
     setError('')
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      const user = {
-        id: '1',
-        name: 'John Doe',
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
-        role: 'buyer',
-        verified: false,
-      }
+        password,
+      })
+
+      if (authError) throw authError
+
+      const user = normalizeSupabaseUser(data.user)
 
       localStorage.setItem('baytmiftah_user', JSON.stringify(user))
       setUser(user)
       navigate('/')
     } catch (err) {
-      setError('Invalid credentials. Please try again.')
+      setError(err.message || 'Invalid credentials. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -40,12 +40,12 @@ export default function Login({ setUser }) {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-secondary mb-2">BaytMiftah</h1>
+          <h1 className="mb-2 text-4xl font-black text-[#071121]">Property Hub</h1>
           <p className="text-on-surface-variant">Institutional Access Portal</p>
         </div>
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="glass-card p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 rounded-lg border border-[#cbd3df] bg-white p-8 shadow-sm">
           {error && (
             <div className="p-4 bg-error/20 border border-error rounded-md">
               <p className="text-error text-sm">{error}</p>
@@ -106,7 +106,7 @@ export default function Login({ setUser }) {
             </p>
             <div className="flex gap-3">
               <button type="button" className="flex-1 btn-secondary">
-                <span className="material-symbols-outlined">2fa_enable</span>
+                <span className="material-symbols-outlined">security</span>
               </button>
               <button type="button" className="flex-1 btn-secondary">
                 <span className="material-symbols-outlined">fingerprint</span>
@@ -137,7 +137,7 @@ export default function Login({ setUser }) {
             </Link>
           </p>
           <p className="text-xs mt-4">
-            © 2024 BaytMiftah Luxury Real Estate Ecosystem. Secure Encrypted Session.
+            © 2024 Property Hub Real Estate Ecosystem. Secure encrypted session.
           </p>
         </div>
       </div>

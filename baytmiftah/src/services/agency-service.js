@@ -3,37 +3,31 @@
  * Handles all agency-related API calls to Supabase Edge Functions
  */
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:54321/functions/v1'
-
-const getAuthToken = () => {
-  return localStorage.getItem('auth_token')
-}
-
-const headers = (token) => ({
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${token}`,
-})
+import { supabase } from '../lib/supabase'
 
 export const agencyService = {
   // Agencies
   async getAgencies(filters = {}) {
-    const token = getAuthToken()
-    const response = await fetch(`${API_URL}/agencies`, {
-      headers: headers(token),
-    })
-    
-    if (!response.ok) throw new Error('Failed to fetch agencies')
-    return response.json()
+    let query = supabase
+      .from('organizations')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (filters.verified !== undefined) query = query.eq('verified', filters.verified)
+    if (filters.slug) query = query.eq('slug', filters.slug)
+
+    const { data, error } = await query
+
+    if (error) throw error
+    return data || []
   },
 
   async getAgency(agencyId) {
-    const token = getAuthToken()
-    const response = await fetch(`${API_URL}/agencies/${agencyId}`, {
-      headers: headers(token),
-    })
-    
-    if (!response.ok) throw new Error('Failed to fetch agency')
-    return response.json()
+    const { data, error } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('id', agencyId)
+      .single()
 
     if (error) throw error
     return data
@@ -41,7 +35,7 @@ export const agencyService = {
 
   async createAgency(agencyData) {
     const { data, error } = await supabase
-      .from('agencies')
+      .from('organizations')
       .insert([agencyData])
       .select()
       .single()
@@ -52,7 +46,7 @@ export const agencyService = {
 
   async updateAgency(agencyId, agencyData) {
     const { data, error } = await supabase
-      .from('agencies')
+      .from('organizations')
       .update(agencyData)
       .eq('id', agencyId)
       .select()
@@ -64,7 +58,7 @@ export const agencyService = {
 
   async deleteAgency(agencyId) {
     const { error } = await supabase
-      .from('agencies')
+      .from('organizations')
       .delete()
       .eq('id', agencyId)
 
@@ -74,10 +68,57 @@ export const agencyService = {
   // Team Members
   async getTeamMembers(agencyId) {
     const { data, error } = await supabase
-      .from('agency_members')
+      .from('organization_members')
       .select('*, user:user_id(*)')
-      .eq('agency_id', agencyId)
-      .order('created_at', { ascending: false })
+      .eq('organization_id', agencyId)
+
+    if (error) throw error
+    return data
+  },
+
+  async getPendingVerificationAgencies() {
+    const { data, error } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('verification_status', 'pending')
+      .order('verification_submitted_at', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: true })
+
+    if (error) throw error
+    return data || []
+  },
+
+  async approveAgency(agencyId, reviewerId = null) {
+    const payload = {
+      verified: true,
+      suspended: false,
+      verification_status: 'verified',
+      verified_at: new Date().toISOString(),
+    }
+
+    if (reviewerId) payload.verified_by = reviewerId
+
+    const { data, error } = await supabase
+      .from('organizations')
+      .update(payload)
+      .eq('id', agencyId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async rejectAgency(agencyId) {
+    const { data, error } = await supabase
+      .from('organizations')
+      .update({
+        verified: false,
+        verification_status: 'rejected',
+      })
+      .eq('id', agencyId)
+      .select()
+      .single()
 
     if (error) throw error
     return data
@@ -85,8 +126,8 @@ export const agencyService = {
 
   async addTeamMember(agencyId, memberData) {
     const { data, error } = await supabase
-      .from('agency_members')
-      .insert([{ agency_id: agencyId, ...memberData }])
+      .from('organization_members')
+      .insert([{ organization_id: agencyId, ...memberData }])
       .select('*, user:user_id(*)')
       .single()
 
@@ -96,7 +137,7 @@ export const agencyService = {
 
   async updateTeamMember(memberId, memberData) {
     const { data, error } = await supabase
-      .from('agency_members')
+      .from('organization_members')
       .update(memberData)
       .eq('id', memberId)
       .select('*, user:user_id(*)')
@@ -108,7 +149,7 @@ export const agencyService = {
 
   async removeTeamMember(memberId) {
     const { error } = await supabase
-      .from('agency_members')
+      .from('organization_members')
       .delete()
       .eq('id', memberId)
 
@@ -120,9 +161,10 @@ export const agencyService = {
     const { data, error } = await supabase
       .from('properties')
       .select('*')
-      .eq('agency_id', agencyId)
+      .eq('organization_id', agencyId)
       .order('created_at', { ascending: false })
 
+    if (error?.code === 'PGRST205') return []
     if (error) throw error
     return data
   },
@@ -130,7 +172,7 @@ export const agencyService = {
   async assignProperty(propertyId, agencyId) {
     const { data, error } = await supabase
       .from('properties')
-      .update({ agency_id: agencyId })
+      .update({ organization_id: agencyId })
       .eq('id', propertyId)
       .select()
       .single()
@@ -153,6 +195,7 @@ export const agencyService = {
       ascending: false,
     })
 
+    if (error?.code === 'PGRST205') return []
     if (error) throw error
     return data
   },
@@ -165,6 +208,7 @@ export const agencyService = {
       .select()
       .single()
 
+    if (error?.code === 'PGRST205') return null
     if (error) throw error
     return data
   },
@@ -177,6 +221,7 @@ export const agencyService = {
       .select()
       .single()
 
+    if (error?.code === 'PGRST205') return null
     if (error) throw error
     return data
   },
@@ -189,6 +234,7 @@ export const agencyService = {
       .eq('agency_id', agencyId)
       .single()
 
+    if (error?.code === 'PGRST205') return null
     if (error && error.code !== 'PGRST116') throw error
     return data || null
   },
@@ -201,6 +247,7 @@ export const agencyService = {
       }
     )
 
+    if (error?.code === 'PGRST202') return null
     if (error) throw error
     return data
   },
@@ -213,6 +260,7 @@ export const agencyService = {
       .select()
       .single()
 
+    if (error?.code === 'PGRST205') return null
     if (error) throw error
     return data
   },
@@ -225,6 +273,7 @@ export const agencyService = {
       .select()
       .single()
 
+    if (error?.code === 'PGRST205') return null
     if (error) throw error
     return data
   },
@@ -237,6 +286,7 @@ export const agencyService = {
       .select()
       .single()
 
+    if (error?.code === 'PGRST205') return null
     if (error) throw error
     return data
   },
@@ -250,6 +300,7 @@ export const agencyService = {
       .limit(1)
       .single()
 
+    if (error?.code === 'PGRST205') return null
     if (error && error.code !== 'PGRST116') throw error
     return data || null
   },

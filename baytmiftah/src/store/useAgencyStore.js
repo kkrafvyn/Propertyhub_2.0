@@ -19,7 +19,7 @@ export const useAgencyStore = create((set, get) => ({
     set({ loading: true, error: null })
     try {
       const { data, error } = await supabase
-        .from('agencies')
+        .from('organizations')
         .select('*')
         .order('created_at', { ascending: false })
 
@@ -38,7 +38,7 @@ export const useAgencyStore = create((set, get) => ({
     set({ loading: true, error: null })
     try {
       const { data, error } = await supabase
-        .from('agencies')
+        .from('organizations')
         .select('*')
         .eq('id', agencyId)
         .single()
@@ -62,13 +62,14 @@ export const useAgencyStore = create((set, get) => ({
       } = await supabase.auth.getUser()
 
       const { data, error } = await supabase
-        .from('agencies')
+        .from('organizations')
         .insert([
           {
             ...agencyData,
             owner_id: user.id,
             verified: false,
-            status: 'pending',
+            suspended: false,
+            verification_status: 'pending',
           },
         ])
         .select()
@@ -93,7 +94,7 @@ export const useAgencyStore = create((set, get) => ({
     set({ loading: true, error: null })
     try {
       const { data, error } = await supabase
-        .from('agencies')
+        .from('organizations')
         .update(agencyData)
         .eq('id', agencyId)
         .select()
@@ -120,7 +121,7 @@ export const useAgencyStore = create((set, get) => ({
     set({ loading: true, error: null })
     try {
       const { error } = await supabase
-        .from('agencies')
+        .from('organizations')
         .delete()
         .eq('id', agencyId)
 
@@ -143,10 +144,9 @@ export const useAgencyStore = create((set, get) => ({
   fetchTeamMembers: async (agencyId) => {
     try {
       const { data, error } = await supabase
-        .from('agency_members')
+        .from('organization_members')
         .select('*, user:user_id(*)')
-        .eq('agency_id', agencyId)
-        .order('created_at', { ascending: false })
+        .eq('organization_id', agencyId)
 
       if (error) throw error
       set({ teamMembers: data || [] })
@@ -161,12 +161,11 @@ export const useAgencyStore = create((set, get) => ({
     set({ loading: true, error: null })
     try {
       const { data, error } = await supabase
-        .from('agency_members')
+        .from('organization_members')
         .insert([
           {
-            agency_id: agencyId,
+            organization_id: agencyId,
             ...memberData,
-            status: 'invited',
           },
         ])
         .select('*, user:user_id(*)')
@@ -189,7 +188,7 @@ export const useAgencyStore = create((set, get) => ({
   updateTeamMember: async (memberId, memberData) => {
     try {
       const { data, error } = await supabase
-        .from('agency_members')
+        .from('organization_members')
         .update(memberData)
         .eq('id', memberId)
         .select('*, user:user_id(*)')
@@ -212,7 +211,7 @@ export const useAgencyStore = create((set, get) => ({
   removeTeamMember: async (memberId) => {
     try {
       const { error } = await supabase
-        .from('agency_members')
+        .from('organization_members')
         .delete()
         .eq('id', memberId)
 
@@ -233,7 +232,7 @@ export const useAgencyStore = create((set, get) => ({
       const { data, error } = await supabase
         .from('properties')
         .select('*')
-        .eq('agency_id', agencyId)
+        .eq('organization_id', agencyId)
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -254,6 +253,10 @@ export const useAgencyStore = create((set, get) => ({
         .eq('agency_id', agencyId)
         .order('created_at', { ascending: false })
 
+      if (error?.code === 'PGRST205') {
+        set({ leads: [] })
+        return []
+      }
       if (error) throw error
       set({ leads: data || [] })
       return data
@@ -272,6 +275,10 @@ export const useAgencyStore = create((set, get) => ({
         .eq('agency_id', agencyId)
         .single()
 
+      if (error?.code === 'PGRST205') {
+        set({ analytics: null })
+        return null
+      }
       if (error && error.code !== 'PGRST116') throw error
       set({ analytics: data || null })
       return data

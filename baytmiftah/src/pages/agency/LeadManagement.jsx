@@ -1,109 +1,111 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import PropTechShell from '../../components/PropTechShell'
 import { useAgencyStore } from '../../store/useAgencyStore'
 
+const demoLeads = [
+  {
+    id: 'demo-1',
+    name: 'Sarah Jennings',
+    property_interest: 'Waterfront Luxury Estates',
+    status: 'new',
+    assigned_to: 'Elena Rodriguez',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'demo-2',
+    name: 'Mark Thompson',
+    property_interest: 'Commercial Loft Space',
+    status: 'assigned',
+    assigned_to: 'Marcus Chen',
+    created_at: new Date().toISOString(),
+  },
+]
+
 export default function LeadManagement() {
-  const { currentAgency, leads, fetchLeads, loading } = useAgencyStore()
+  const { currentAgency, leads, fetchLeads } = useAgencyStore()
   const [filter, setFilter] = useState('all')
 
   useEffect(() => {
-    if (currentAgency?.id) {
-      fetchLeads(currentAgency.id)
-    }
+    if (currentAgency?.id) fetchLeads(currentAgency.id)
   }, [currentAgency?.id])
 
-  const filteredLeads = leads.filter((lead) => {
-    if (filter === 'all') return true
-    return lead.status === filter
-  })
+  const sourceLeads = leads.length > 0 ? leads : demoLeads
+  const filteredLeads = sourceLeads.filter((lead) => filter === 'all' || lead.status === filter)
 
   return (
-    <div>
-      <h1 className="text-display-md font-bold mb-8">Lead Management</h1>
-
-      {/* Summary Cards */}
-      <div className="grid md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-surface-container rounded-lg p-4">
-          <p className="text-on-surface-variant text-body-sm mb-1">Total Leads</p>
-          <p className="text-display-sm font-bold text-primary">{leads.length}</p>
-        </div>
-        <div className="bg-surface-container rounded-lg p-4">
-          <p className="text-on-surface-variant text-body-sm mb-1">New</p>
-          <p className="text-display-sm font-bold text-blue-500">
-            {leads.filter((l) => l.status === 'new').length}
+    <PropTechShell
+      active="Agency"
+      brand="PropFlow Agency"
+      sidebarTitle="Global Realty"
+      sidebarSubtitle="Enterprise Suite"
+      searchPlaceholder="Search leads..."
+      primaryAction="+ Create"
+    >
+      <main className="px-5 py-10 md:px-8">
+        <section className="mx-auto max-w-7xl">
+          <h1 className="text-5xl font-black">Lead Management</h1>
+          <p className="mt-3 text-xl text-[#303744]">
+            Track new inquiries, assignments, and closing momentum.
           </p>
-        </div>
-        <div className="bg-surface-container rounded-lg p-4">
-          <p className="text-on-surface-variant text-body-sm mb-1">Assigned</p>
-          <p className="text-display-sm font-bold text-yellow-500">
-            {leads.filter((l) => l.status === 'assigned').length}
-          </p>
-        </div>
-        <div className="bg-surface-container rounded-lg p-4">
-          <p className="text-on-surface-variant text-body-sm mb-1">Closed</p>
-          <p className="text-display-sm font-bold text-green-500">
-            {leads.filter((l) => l.status === 'closed').length}
-          </p>
-        </div>
-      </div>
 
-      {/* Filters */}
-      <div className="flex gap-2 mb-6">
-        {['all', 'new', 'assigned', 'closed'].map((status) => (
-          <button
-            key={status}
-            onClick={() => setFilter(status)}
-            className={`px-4 py-2 rounded-lg transition capitalize ${
-              filter === status
-                ? 'bg-primary text-white'
-                : 'bg-surface-container text-gray-400 hover:text-white'
-            }`}
-          >
-            {status}
-          </button>
-        ))}
-      </div>
+          <div className="mt-8 grid gap-5 md:grid-cols-4">
+            {[
+              ['Total Leads', sourceLeads.length],
+              ['New', sourceLeads.filter((lead) => lead.status === 'new').length],
+              ['Assigned', sourceLeads.filter((lead) => lead.status === 'assigned').length],
+              ['Closed', sourceLeads.filter((lead) => lead.status === 'closed').length],
+            ].map(([label, value]) => (
+              <article key={label} className="rounded-lg border border-[#cbd3df] bg-white p-6">
+                <p className="text-[#303744]">{label}</p>
+                <p className="mt-2 text-4xl font-black">{value}</p>
+              </article>
+            ))}
+          </div>
 
-      {/* Leads Table */}
-      <div className="bg-surface-container rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-700 bg-surface">
-                <th className="px-6 py-3 text-left text-body-md font-medium">Name</th>
-                <th className="px-6 py-3 text-left text-body-md font-medium">Property Interest</th>
-                <th className="px-6 py-3 text-left text-body-md font-medium">Status</th>
-                <th className="px-6 py-3 text-left text-body-md font-medium">Assigned To</th>
-                <th className="px-6 py-3 text-left text-body-md font-medium">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredLeads.map((lead) => (
-                <tr key={lead.id} className="border-b border-gray-700 hover:bg-surface transition">
-                  <td className="px-6 py-3 font-medium">{lead.name}</td>
-                  <td className="px-6 py-3 text-on-surface-variant">{lead.property_interest}</td>
-                  <td className="px-6 py-3">
-                    <span
-                      className={`px-3 py-1 rounded-full text-body-sm capitalize ${
-                        lead.status === 'new'
-                          ? 'bg-blue-500/20 text-blue-400'
-                          : lead.status === 'assigned'
-                          ? 'bg-yellow-500/20 text-yellow-400'
-                          : 'bg-green-500/20 text-green-400'
-                      }`}
-                    >
-                      {lead.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3">{lead.assigned_to || '-'}</td>
-                  <td className="px-6 py-3 text-on-surface-variant">
-                    {new Date(lead.created_at).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+          <div className="mt-8 flex flex-wrap gap-3">
+            {['all', 'new', 'assigned', 'closed'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilter(status)}
+                className={`rounded-full px-6 py-3 font-semibold capitalize ${
+                  filter === status ? 'bg-black text-white' : 'bg-[#dbeafe]'
+                }`}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
+
+          <section className="mt-8 overflow-hidden rounded-lg border border-[#cbd3df] bg-white">
+            <div className="grid min-w-[840px] grid-cols-[1.2fr_1.4fr_0.8fr_1fr_0.8fr] bg-[#edf4ff] px-8 py-5 font-semibold uppercase tracking-widest">
+              <span>Name</span>
+              <span>Property Interest</span>
+              <span>Status</span>
+              <span>Assigned To</span>
+              <span>Date</span>
+            </div>
+            {filteredLeads.map((lead) => (
+              <div key={lead.id} className="grid min-w-[840px] grid-cols-[1.2fr_1.4fr_0.8fr_1fr_0.8fr] border-t border-[#d8dde6] px-8 py-6 text-lg">
+                <strong>{lead.name}</strong>
+                <span>{lead.property_interest}</span>
+                <span
+                  className={`w-fit rounded-full px-4 py-1 text-sm font-bold capitalize ${
+                    lead.status === 'new'
+                      ? 'bg-[#dbeafe]'
+                      : lead.status === 'assigned'
+                        ? 'bg-[#62efad] text-[#006c48]'
+                        : 'bg-[#e5e7eb]'
+                  }`}
+                >
+                  {lead.status}
+                </span>
+                <span>{lead.assigned_to || '-'}</span>
+                <span>{new Date(lead.created_at).toLocaleDateString()}</span>
+              </div>
+            ))}
+          </section>
+        </section>
+      </main>
+    </PropTechShell>
   )
 }

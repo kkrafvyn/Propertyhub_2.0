@@ -1,9 +1,9 @@
-// Format currency in AED
+// Format currency in USD
 export const formatCurrency = (amount) => {
-  if (!amount) return 'AED 0'
-  return new Intl.NumberFormat('en-AE', {
+  if (!amount) return '$0'
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'AED',
+    currency: 'USD',
   }).format(amount)
 }
 
@@ -21,7 +21,7 @@ export const formatNumber = (num) => {
 // Format date
 export const formatDate = (date) => {
   if (!date) return ''
-  return new Intl.DateTimeFormat('en-AE', {
+  return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

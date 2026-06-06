@@ -1,110 +1,104 @@
 /**
  * Smart Device Service
- * Handles all IoT device-related API calls to Supabase Edge Functions
+ * Handles IoT device-related reads and writes through Supabase.
  */
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:54321/functions/v1'
-
-const getAuthToken = () => {
-  return localStorage.getItem('auth_token')
-}
-
-const headers = (token) => ({
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${token}`,
-})
+import { supabase } from '../lib/supabase'
 
 export const smartDeviceService = {
   // Devices
   async getDevices(propertyId) {
-    const token = getAuthToken()
-    let url = `${API_URL}/smart-devices`
-    if (propertyId) url += `?propertyId=${propertyId}`
-    
-    const response = await fetch(url, {
-      headers: headers(token),
-    })
-    if (!response.ok) throw new Error('Failed to fetch devices')
-    return response.json()
+    let query = supabase
+      .from('smart_devices')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (propertyId) query = query.eq('property_id', propertyId)
+
+    const { data, error } = await query
+    if (error) throw error
+    return data
   },
 
   async getDevice(deviceId) {
-    const token = getAuthToken()
-    const response = await fetch(`${API_URL}/smart-devices/${deviceId}`, {
-      headers: headers(token),
-    })
-    if (!response.ok) throw new Error('Failed to fetch device')
-    return response.json()
+    const { data, error } = await supabase
+      .from('smart_devices')
+      .select('*')
+      .eq('id', deviceId)
+      .single()
+
+    if (error) throw error
+    return data
   },
 
   async createDevice(deviceData) {
-    const token = getAuthToken()
-    const response = await fetch(`${API_URL}/smart-devices`, {
-      method: 'POST',
-      headers: headers(token),
-      body: JSON.stringify(deviceData),
-    })
-    if (!response.ok) throw new Error('Failed to create device')
-    return response.json()
+    const { data, error } = await supabase
+      .from('smart_devices')
+      .insert([deviceData])
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
   },
 
   async updateDevice(deviceId, deviceData) {
-    const token = getAuthToken()
-    const response = await fetch(`${API_URL}/smart-devices/${deviceId}`, {
-      method: 'PUT',
-      headers: headers(token),
-      body: JSON.stringify(deviceData),
-    })
-    if (!response.ok) throw new Error('Failed to update device')
-    return response.json()
+    const { data, error } = await supabase
+      .from('smart_devices')
+      .update(deviceData)
+      .eq('id', deviceId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
   },
 
   async deleteDevice(deviceId) {
-    const token = getAuthToken()
-    const response = await fetch(`${API_URL}/smart-devices/${deviceId}`, {
-      method: 'DELETE',
-      headers: headers(token),
-    })
-    if (!response.ok) throw new Error('Failed to delete device')
+    const { error } = await supabase
+      .from('smart_devices')
+      .delete()
+      .eq('id', deviceId)
+
+    if (error) throw error
   },
 
   // Device Commands
   async sendCommand(deviceId, action, parameters = {}) {
-    const token = getAuthToken()
-    const response = await fetch(`${API_URL}/smart-devices/command?deviceId=${deviceId}`, {
-      method: 'POST',
-      headers: headers(token),
-      body: JSON.stringify({ action, parameters }),
+    const { data, error } = await supabase.rpc('execute_device_command', {
+      device_id: deviceId,
+      command_data: { action, parameters },
     })
-    if (!response.ok) throw new Error('Failed to send command')
-    return response.json()
+
+    if (error) throw error
+    return data
   },
 
-  async lockDevice(deviceId) {
+  lockDevice(deviceId) {
     return this.sendCommand(deviceId, 'lock')
   },
 
-  async unlockDevice(deviceId) {
+  unlockDevice(deviceId) {
     return this.sendCommand(deviceId, 'unlock')
   },
 
-  async turnOn(deviceId) {
+  turnOn(deviceId) {
     return this.sendCommand(deviceId, 'turn_on')
   },
 
-  async turnOff(deviceId) {
+  turnOff(deviceId) {
     return this.sendCommand(deviceId, 'turn_off')
   },
 
-  async setTemperature(deviceId, temperature) {
+  setTemperature(deviceId, temperature) {
     return this.sendCommand(deviceId, 'set_temp', { temperature })
   },
 
-  async setBrightness(deviceId, brightness) {
+  setBrightness(deviceId, brightness) {
     return this.sendCommand(deviceId, 'set_brightness', { brightness })
   },
 
-  async setColor(deviceId, color) {
+  setColor(deviceId, color) {
     return this.sendCommand(deviceId, 'set_color', { color })
   },
 
@@ -118,46 +112,42 @@ export const smartDeviceService = {
 
     if (error) throw error
     return data
-  },token = getAuthToken()
-    let url = `${API_URL}/automation`
-    if (propertyId) url += `?propertyId=${propertyId}`
-    
-    const response = await fetch(url, {
-      headers: headers(token),
-    })
-    if (!response.ok) throw new Error('Failed to fetch automation rules')
-    return response.json()
   },
 
   async createRule(ruleData) {
-    const token = getAuthToken()
-    const response = await fetch(`${API_URL}/automation`, {
-      method: 'POST',
-      headers: headers(token),
-      body: JSON.stringify(ruleData),
-    })
-    if (!response.ok) throw new Error('Failed to create automation rule')
-    return response.json()
+    const { data, error } = await supabase
+      .from('smart_automation_rules')
+      .insert([ruleData])
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
   },
 
   async updateRule(ruleId, ruleData) {
-    const token = getAuthToken()
-    const response = await fetch(`${API_URL}/automation/${ruleId}`, {
-      method: 'PUT',
-      headers: headers(token),
-      body: JSON.stringify(ruleData),
-    })
-    if (!response.ok) throw new Error('Failed to update automation rule')
-    return response.json()
+    const { data, error } = await supabase
+      .from('smart_automation_rules')
+      .update(ruleData)
+      .eq('id', ruleId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
   },
 
   async deleteRule(ruleId) {
-    const token = getAuthToken()
-    const response = await fetch(`${API_URL}/automation/${ruleId}`, {
-      method: 'DELETE',
-      headers: headers(token),
-    })
-    if (!response.ok) throw new Error('Failed to delete automation rule')Id, limit = 100) {
+    const { error } = await supabase
+      .from('smart_automation_rules')
+      .delete()
+      .eq('id', ruleId)
+
+    if (error) throw error
+  },
+
+  // Alerts
+  async getAlerts(propertyId, limit = 100) {
     const { data, error } = await supabase
       .from('smart_alerts')
       .select('*')
@@ -365,22 +355,27 @@ export const smartDeviceService = {
           schema: 'public',
           table: 'smart_devices',
           filter: `id=eq.${deviceId}`,
-        }, (kept for backward compatibility)
-  subscribeToDevice(deviceId, callback) {
-    console.log('Subscribe to device:', deviceId)
-    // In Edge Functions approach, real-time is handled via Supabase directly
+        },
+        callback
+      )
+      .subscribe()
   },
 
-  subscribeToAlerts(userId, callback) {
-    console.log('Subscribe to alerts:', userId)
+  subscribeToAlerts(propertyId, callback) {
+    return supabase
+      .channel(`alerts:${propertyId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'smart_alerts',
+          filter: `property_id=eq.${propertyId}`,
+        },
+        callback
+      )
+      .subscribe()
   },
-
-  subscribeToEvents(deviceId, callback) {
-    console.log('Subscribe to events:', deviceId)
-  },
-}
-
-export default smartDeviceService
 
   subscribeToEvents(deviceId, callback) {
     return supabase

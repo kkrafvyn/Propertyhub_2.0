@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
+import { normalizeSupabaseUser } from './lib/auth'
 
 // Pages - Existing
 import Login from './pages/Login'
@@ -14,11 +15,23 @@ import AdminDashboard from './pages/AdminDashboard'
 import Favorites from './pages/Favorites'
 import MyListings from './pages/MyListings'
 import CreateListing from './pages/CreateListing'
+import NotFound from './pages/NotFound'
+import Support from './pages/Support'
+import Bookings from './pages/Bookings'
+import Notifications from './pages/Notifications'
+import AgentDashboard from './pages/AgentDashboard'
+import PropertyPortfolio from './pages/PropertyPortfolio'
+import AgentProfileShowcase from './pages/AgentProfileShowcase'
+import MobileDashboard from './pages/mobile/MobileDashboard'
+import MobileExplore from './pages/mobile/MobileExplore'
+import MobilePropertyDetails from './pages/mobile/MobilePropertyDetails'
+import MobileMessages from './pages/mobile/MobileMessages'
 
 // Pages - Agency Module (NEW)
 import AgencyOnboarding from './pages/agency/AgencyOnboarding'
 import AgencyProfile from './pages/agency/AgencyProfile'
 import AgencyDashboard from './pages/agency/AgencyDashboard'
+import AgencyOverview from './pages/agency/AgencyOverview'
 import TeamManagement from './pages/agency/TeamManagement'
 import PropertyManagement from './pages/agency/PropertyManagement'
 import LeadManagement from './pages/agency/LeadManagement'
@@ -37,8 +50,6 @@ import AgencyVerification from './pages/admin/AgencyVerification'
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute'
-import AgencyNav from './components/Navigation/AgencyNav'
-import SmartPropertyNav from './components/Navigation/SmartPropertyNav'
 
 export default function App() {
   const [user, setUser] = useState(null)
@@ -47,11 +58,26 @@ export default function App() {
   useEffect(() => {
     // Check authentication on mount
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setUser(user)
-      setLoading(false)
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+
+        if (user) {
+          const normalizedUser = normalizeSupabaseUser(user)
+          setUser(normalizedUser)
+          localStorage.setItem('baytmiftah_user', JSON.stringify(normalizedUser))
+          return
+        }
+
+        const storedUser = localStorage.getItem('baytmiftah_user')
+        setUser(storedUser ? JSON.parse(storedUser) : null)
+      } catch (error) {
+        const storedUser = localStorage.getItem('baytmiftah_user')
+        setUser(storedUser ? JSON.parse(storedUser) : null)
+      } finally {
+        setLoading(false)
+      }
     }
 
     checkAuth()
@@ -59,7 +85,15 @@ export default function App() {
     // Subscribe to auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setUser(session?.user || null)
+        const normalizedUser = normalizeSupabaseUser(session?.user)
+        setUser(normalizedUser)
+
+        if (normalizedUser) {
+          localStorage.setItem('baytmiftah_user', JSON.stringify(normalizedUser))
+        } else {
+          localStorage.removeItem('baytmiftah_user')
+          localStorage.removeItem('baytmiftah_token')
+        }
       }
     )
 
@@ -84,10 +118,14 @@ export default function App() {
     <Router>
       <Routes>
         {/* ========== PUBLIC ROUTES ========== */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
+        <Route path="/login" element={<Login setUser={setUser} />} />
+        <Route path="/signup" element={<SignUp setUser={setUser} />} />
 
         {/* ========== CORE FEATURES - PROTECTED ========== */}
+        <Route path="/dashboard" element={<Navigate to="/" replace />} />
+        <Route path="/properties" element={<Navigate to="/explore" replace />} />
+        <Route path="/listings" element={<Navigate to="/my-listings" replace />} />
+        <Route path="/agent" element={<Navigate to="/agent/dashboard" replace />} />
         <Route
           path="/"
           element={
@@ -98,19 +136,11 @@ export default function App() {
         />
         <Route
           path="/explore"
-          element={
-            <ProtectedRoute user={user}>
-              <ExploreProperties />
-            </ProtectedRoute>
-          }
+          element={<ExploreProperties />}
         />
         <Route
           path="/property/:id"
-          element={
-            <ProtectedRoute user={user}>
-              <PropertyDetails />
-            </ProtectedRoute>
-          }
+          element={<PropertyDetails />}
         />
         <Route
           path="/messages"
@@ -137,6 +167,51 @@ export default function App() {
           }
         />
         <Route
+          path="/bookings"
+          element={
+            <ProtectedRoute user={user}>
+              <Bookings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/agent/dashboard"
+          element={
+            <ProtectedRoute user={user}>
+              <AgentDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/agent/marcus-thorne" element={<AgentProfileShowcase />} />
+        <Route
+          path="/portfolio"
+          element={
+            <ProtectedRoute user={user}>
+              <PropertyPortfolio />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/agent/portfolio"
+          element={<Navigate to="/portfolio" replace />}
+        />
+        <Route
+          path="/support"
+          element={
+            <ProtectedRoute user={user}>
+              <Support />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute user={user}>
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/my-listings"
           element={
             <ProtectedRoute user={user}>
@@ -153,7 +228,15 @@ export default function App() {
           }
         />
 
+        {/* ========== MOBILE REFERENCE SCREENS ========== */}
+        <Route path="/mobile/dashboard" element={<MobileDashboard />} />
+        <Route path="/mobile/explore" element={<MobileExplore />} />
+        <Route path="/mobile/property" element={<MobilePropertyDetails />} />
+        <Route path="/mobile/messages" element={<MobileMessages />} />
+
         {/* ========== AGENCY MODULE ROUTES ========== */}
+
+        <Route path="/agency" element={<Navigate to="/agency/dashboard" replace />} />
 
         {/* Agency Onboarding */}
         <Route
@@ -165,20 +248,21 @@ export default function App() {
           }
         />
 
-        {/* Agency Public Profile */}
-        <Route path="/agency/:agencyId" element={<AgencyProfile />} />
-
         {/* Agency Dashboard & Management */}
         <Route
           path="/agency/dashboard"
           element={
             <ProtectedRoute user={user} requiresAgency>
-              <div className="flex">
-                <AgencyNav />
-                <main className="flex-1">
-                  <AgencyDashboard />
-                </main>
-              </div>
+              <AgencyDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/agency/overview"
+          element={
+            <ProtectedRoute user={user} requiresAgency>
+              <AgencyOverview />
             </ProtectedRoute>
           }
         />
@@ -187,12 +271,7 @@ export default function App() {
           path="/agency/team"
           element={
             <ProtectedRoute user={user} requiresAgency>
-              <div className="flex">
-                <AgencyNav />
-                <main className="flex-1 p-8">
-                  <TeamManagement />
-                </main>
-              </div>
+              <TeamManagement />
             </ProtectedRoute>
           }
         />
@@ -201,12 +280,7 @@ export default function App() {
           path="/agency/properties"
           element={
             <ProtectedRoute user={user} requiresAgency>
-              <div className="flex">
-                <AgencyNav />
-                <main className="flex-1 p-8">
-                  <PropertyManagement />
-                </main>
-              </div>
+              <PropertyManagement />
             </ProtectedRoute>
           }
         />
@@ -215,12 +289,7 @@ export default function App() {
           path="/agency/leads"
           element={
             <ProtectedRoute user={user} requiresAgency>
-              <div className="flex">
-                <AgencyNav />
-                <main className="flex-1 p-8">
-                  <LeadManagement />
-                </main>
-              </div>
+              <LeadManagement />
             </ProtectedRoute>
           }
         />
@@ -229,28 +298,26 @@ export default function App() {
           path="/agency/analytics"
           element={
             <ProtectedRoute user={user} requiresAgency>
-              <div className="flex">
-                <AgencyNav />
-                <main className="flex-1 p-8">
-                  <Analytics />
-                </main>
-              </div>
+              <Analytics />
             </ProtectedRoute>
           }
         />
 
+        {/* Agency Public Profile */}
+        <Route path="/agency/:agencyId" element={<AgencyProfile />} />
+
         {/* ========== IOT / SMART PROPERTY ROUTES ========== */}
+
+        <Route
+          path="/smart-property"
+          element={<Navigate to="/smart-property/devices" replace />}
+        />
 
         <Route
           path="/smart-property/devices"
           element={
             <ProtectedRoute user={user}>
-              <div className="flex">
-                <SmartPropertyNav />
-                <main className="flex-1 p-8">
-                  <DevicesDashboard />
-                </main>
-              </div>
+              <DevicesDashboard />
             </ProtectedRoute>
           }
         />
@@ -265,15 +332,19 @@ export default function App() {
         />
 
         <Route
+          path="/smart-property/devices/:deviceId"
+          element={
+            <ProtectedRoute user={user}>
+              <DeviceDetails />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/smart-property/device/:deviceId"
           element={
             <ProtectedRoute user={user}>
-              <div className="flex">
-                <SmartPropertyNav />
-                <main className="flex-1 p-8">
-                  <DeviceDetails />
-                </main>
-              </div>
+              <DeviceDetails />
             </ProtectedRoute>
           }
         />
@@ -282,12 +353,7 @@ export default function App() {
           path="/smart-property/automation"
           element={
             <ProtectedRoute user={user}>
-              <div className="flex">
-                <SmartPropertyNav />
-                <main className="flex-1 p-8">
-                  <Automation />
-                </main>
-              </div>
+              <Automation />
             </ProtectedRoute>
           }
         />
@@ -296,12 +362,7 @@ export default function App() {
           path="/smart-property/alerts"
           element={
             <ProtectedRoute user={user}>
-              <div className="flex">
-                <SmartPropertyNav />
-                <main className="flex-1 p-8">
-                  <Alerts />
-                </main>
-              </div>
+              <Alerts />
             </ProtectedRoute>
           }
         />
@@ -310,12 +371,7 @@ export default function App() {
           path="/smart-property/logs"
           element={
             <ProtectedRoute user={user}>
-              <div className="flex">
-                <SmartPropertyNav />
-                <main className="flex-1 p-8">
-                  <EventLogs />
-                </main>
-              </div>
+              <EventLogs />
             </ProtectedRoute>
           }
         />
@@ -341,7 +397,7 @@ export default function App() {
         />
 
         {/* ========== CATCH ALL ========== */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   )

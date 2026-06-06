@@ -2,6 +2,10 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
 import Header from '../components/Header'
+import marketplaceService from '../services/marketplace-service'
+import { supabase } from '../lib/supabase'
+
+const amenities = ['Pool', 'Private Elevator', 'Smart Home', 'Concierge', 'Cinema', 'Gym']
 
 export default function CreateListing() {
   const navigate = useNavigate()
@@ -16,33 +20,102 @@ export default function CreateListing() {
     sqft: '',
     amenities: [],
   })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
+  const handleChange = (event) => {
+    const { name, value } = event.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // Submit listing
-    navigate('/my-listings')
+  const toggleAmenity = (amenity) => {
+    setFormData((prev) => ({
+      ...prev,
+      amenities: prev.amenities.includes(amenity)
+        ? prev.amenities.filter((item) => item !== amenity)
+        : [...prev.amenities, amenity],
+    }))
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        throw new Error('Please sign in before publishing a listing.')
+      }
+
+      const ownedOrganization = await marketplaceService.getOwnedOrganization(user.id)
+
+      if (!ownedOrganization) {
+        throw new Error('Create or verify your agency profile before publishing listings.')
+      }
+      const [city, ...neighborhoodParts] = formData.location
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean)
+
+      const listing = await marketplaceService.createListing({
+        organizationId: ownedOrganization.id,
+        property: {
+          address: formData.location,
+          city: city || formData.location,
+          neighborhood: neighborhoodParts.join(', ') || null,
+          category: formData.type,
+          bedrooms: Number(formData.bedrooms),
+          bathrooms: Number(formData.bathrooms),
+          square_meters: Math.round(Number(formData.sqft) / 10.7639),
+          description: `${formData.title}\n\n${formData.description}`,
+          amenities: formData.amenities,
+          address_verified: false,
+          location_confidence: 0,
+          flood_risk_level: 'unknown',
+        },
+        listing: {
+          listing_type: 'sale',
+          price: Number(formData.price),
+          currency: 'GHS',
+          status: 'listed',
+          visibility: 'public',
+          quality_score: 72,
+          whatsapp_enabled: true,
+        },
+      })
+
+      navigate(`/property/${listing.id}`)
+    } catch (err) {
+      setError(
+        err.message ||
+          'Unable to publish this listing. Check Supabase table policies and try again.'
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="bg-surface min-h-screen">
+    <div className="min-h-screen bg-surface">
       <Navigation />
 
-      <main className="md:ml-64 pb-32 md:pb-8">
-        <Header title="Create New Listing" showBack={true} />
+      <main className="pb-32 md:ml-64 md:pb-10">
+        <Header title="Create New Listing" showBack />
 
-        <div className="pt-24 px-4 md:px-8">
-          <div className="max-w-2xl mx-auto">
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Basic Information */}
-              <div className="card p-6">
-                <h3 className="text-headline-md font-semibold mb-4">Basic Information</h3>
+        <div className="px-4 pt-24 md:px-8">
+          <form onSubmit={handleSubmit} className="mx-auto grid max-w-container gap-8 xl:grid-cols-[1fr_360px]">
+            <div className="space-y-6">
+              <section className="rounded-lg border border-outline-variant bg-surface-container p-6 md:p-8">
+                <p className="text-label-sm text-secondary">Listing package</p>
+                <h2 className="mt-2 text-3xl font-semibold text-secondary">
+                  Present the property with the detail premium buyers expect.
+                </h2>
 
-                <div className="space-y-4">
+                <div className="mt-8 grid gap-5">
                   <div>
                     <label className="text-label-sm mb-2 block">Property Title</label>
                     <input
@@ -51,7 +124,7 @@ export default function CreateListing() {
                       value={formData.title}
                       onChange={handleChange}
                       className="input-field"
-                      placeholder="e.g., The Celestial Penthouse"
+                      placeholder="e.g. The Obsidian Penthouse"
                       required
                     />
                   </div>
@@ -62,14 +135,13 @@ export default function CreateListing() {
                       name="description"
                       value={formData.description}
                       onChange={handleChange}
-                      className="input-field resize-none"
-                      rows="4"
-                      placeholder="Describe your property..."
+                      className="input-field min-h-36 resize-none"
+                      placeholder="Describe the architecture, light, privacy, smart features, and buyer profile..."
                       required
-                    ></textarea>
+                    />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid gap-5 md:grid-cols-2">
                     <div>
                       <label className="text-label-sm mb-2 block">Location</label>
                       <input
@@ -78,7 +150,7 @@ export default function CreateListing() {
                         value={formData.location}
                         onChange={handleChange}
                         className="input-field"
-                        placeholder="City, Area"
+                        placeholder="City, district, community"
                         required
                       />
                     </div>
@@ -99,99 +171,112 @@ export default function CreateListing() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </section>
 
-              {/* Property Details */}
-              <div className="card p-6">
-                <h3 className="text-headline-md font-semibold mb-4">Property Details</h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-label-sm mb-2 block">Bedrooms</label>
-                    <input
-                      type="number"
-                      name="bedrooms"
-                      value={formData.bedrooms}
-                      onChange={handleChange}
-                      className="input-field"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-label-sm mb-2 block">Bathrooms</label>
-                    <input
-                      type="number"
-                      name="bathrooms"
-                      value={formData.bathrooms}
-                      onChange={handleChange}
-                      className="input-field"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-label-sm mb-2 block">Square Feet</label>
-                    <input
-                      type="number"
-                      name="sqft"
-                      value={formData.sqft}
-                      onChange={handleChange}
-                      className="input-field"
-                      required
-                    />
-                  </div>
+              <section className="rounded-lg border border-outline-variant bg-surface-container p-6 md:p-8">
+                <h3 className="text-2xl font-semibold text-secondary">Property Details</h3>
+                <div className="mt-5 grid gap-5 md:grid-cols-4">
+                  {[
+                    ['bedrooms', 'Bedrooms'],
+                    ['bathrooms', 'Bathrooms'],
+                    ['sqft', 'Square Feet'],
+                    ['price', 'Price (GHS)'],
+                  ].map(([name, label]) => (
+                    <div key={name} className={name === 'price' ? 'md:col-span-1' : ''}>
+                      <label className="text-label-sm mb-2 block">{label}</label>
+                      <input
+                        type="number"
+                        name={name}
+                        value={formData[name]}
+                        onChange={handleChange}
+                        className="input-field"
+                        placeholder="0"
+                        required
+                      />
+                    </div>
+                  ))}
                 </div>
-              </div>
+              </section>
 
-              {/* Price */}
-              <div className="card p-6">
-                <h3 className="text-headline-md font-semibold mb-4">Pricing</h3>
-
-                <div>
-                  <label className="text-label-sm mb-2 block">Price (AED)</label>
-                  <input
-                    type="number"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleChange}
-                    className="input-field"
-                    placeholder="0"
-                    required
-                  />
+              <section className="rounded-lg border border-outline-variant bg-surface-container p-6 md:p-8">
+                <h3 className="text-2xl font-semibold text-secondary">Amenities</h3>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {amenities.map((amenity) => (
+                    <label
+                      key={amenity}
+                      className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 ${
+                        formData.amenities.includes(amenity)
+                          ? 'border-secondary bg-secondary/10 text-secondary'
+                          : 'border-outline-variant bg-surface-container-high'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.amenities.includes(amenity)}
+                        onChange={() => toggleAmenity(amenity)}
+                        className="h-4 w-4"
+                      />
+                      <span className="font-semibold">{amenity}</span>
+                    </label>
+                  ))}
                 </div>
-              </div>
+              </section>
+            </div>
 
-              {/* Media Upload */}
-              <div className="card p-6">
-                <h3 className="text-headline-md font-semibold mb-4">Upload Images</h3>
-
-                <div className="border-2 border-dashed border-outline rounded-lg p-8 text-center">
-                  <span className="material-symbols-outlined text-3xl text-on-surface-variant mb-2 block">
+            <aside className="space-y-6">
+              <section className="rounded-lg border border-outline-variant bg-surface-container p-6">
+                <h3 className="text-2xl font-semibold text-secondary">Media</h3>
+                <div className="mt-5 rounded-lg border-2 border-dashed border-outline-variant bg-surface-container-high p-8 text-center">
+                  <span className="material-symbols-outlined block text-4xl text-secondary">
                     cloud_upload
                   </span>
-                  <p className="text-on-surface-variant mb-2">Drag and drop images here</p>
-                  <button type="button" className="btn-secondary">
+                  <p className="mt-3 font-semibold">Upload hero and gallery images</p>
+                  <p className="mt-1 text-sm text-on-surface-variant">
+                    Use wide, bright images that show the property clearly.
+                  </p>
+                  <button type="button" className="btn-secondary mt-5">
                     Select Files
                   </button>
                 </div>
-              </div>
+                <p className="mt-3 text-sm text-on-surface-variant">
+                  Media upload storage is not connected yet; the listing will publish with
+                  fallback imagery until Storage policies are added.
+                </p>
+              </section>
 
-              {/* Actions */}
-              <div className="flex gap-4">
-                <button type="submit" className="btn-primary flex-1">
-                  Publish Listing
+              <section className="rounded-lg border border-outline-variant bg-[#111827] p-6 text-white">
+                <span className="material-symbols-outlined text-3xl">task_alt</span>
+                <h3 className="mt-4 text-2xl font-semibold">Publishing checklist</h3>
+                <ul className="mt-4 space-y-3 text-white/75">
+                  <li>Title and location are buyer-readable</li>
+                  <li>Price and measurements are verified</li>
+                  <li>Media shows rooms, exterior, and amenities</li>
+                </ul>
+              </section>
+
+              <div className="grid gap-3">
+                {error && (
+                  <div className="rounded-lg border border-error bg-error/10 p-3 text-sm text-error">
+                    {error}
+                  </div>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary w-full justify-center disabled:opacity-50"
+                >
+                  {loading ? 'Publishing...' : 'Publish Listing'}
                 </button>
                 <button
                   type="button"
                   onClick={() => navigate('/my-listings')}
-                  className="btn-secondary flex-1"
+                  className="btn-secondary w-full justify-center"
                 >
                   Cancel
                 </button>
               </div>
-            </form>
-          </div>
+            </aside>
+          </form>
         </div>
       </main>
     </div>

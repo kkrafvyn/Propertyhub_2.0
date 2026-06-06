@@ -5,19 +5,19 @@ export default function Header({ title, showBack = false, actions = [] }) {
   const navigate = useNavigate()
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 glass-card border-b border-outline-variant mx-auto">
-      <div className="container-safe max-w-container mx-auto flex items-center justify-between py-4">
+    <header className="fixed left-0 right-0 top-0 z-40 border-b border-[#cbd3df] bg-white/95 text-[#071121] backdrop-blur-xl md:left-64">
+      <div className="container-safe mx-auto flex max-w-container items-center justify-between gap-4 py-4">
         <div className="flex items-center gap-4">
           {showBack && (
             <button
               onClick={() => navigate(-1)}
-              className="p-2 hover:bg-surface-container-high rounded-md transition"
+              className="rounded-md p-2 transition hover:bg-[#edf4ff]"
               aria-label="Go back"
             >
               <span className="material-symbols-outlined">arrow_back</span>
             </button>
           )}
-          <h1 className="text-headline-md font-semibold">{title}</h1>
+          <h1 className="line-clamp-1 text-xl font-black md:text-3xl">{title}</h1>
         </div>
 
         <div className="flex items-center gap-4">
@@ -25,12 +25,12 @@ export default function Header({ title, showBack = false, actions = [] }) {
             <button
               key={idx}
               onClick={action.onClick}
-              className={`px-4 py-2 rounded-md transition ${
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-md transition ${
                 action.variant === 'primary'
-                  ? 'btn-primary'
+                  ? 'bg-black text-white font-bold hover:bg-black/90'
                   : action.variant === 'secondary'
-                  ? 'btn-secondary'
-                  : 'hover:bg-surface-container-high'
+                    ? 'border border-[#cbd3df] bg-white font-bold hover:bg-[#edf4ff]'
+                    : 'hover:bg-[#edf4ff]'
               }`}
             >
               {action.icon && <span className="material-symbols-outlined">{action.icon}</span>}

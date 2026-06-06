@@ -1,38 +1,53 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
 import Header from '../components/Header'
+import marketplaceService, {
+  fallbackMarketplaceListings,
+} from '../services/marketplace-service'
 
 export default function MyListings() {
   const navigate = useNavigate()
-  const [listings] = React.useState([
-    {
-      id: 1,
-      title: 'The Celestial Penthouse',
-      location: 'Palm Jumeirah, Dubai',
-      price: 45000000,
-      status: 'Active',
-      image: 'https://via.placeholder.com/300x200?text=Penthouse',
-      views: 127,
-      inquiries: 8,
-    },
-    {
-      id: 2,
-      title: 'Emirates Hills Villa',
-      location: 'Emirates Hills, Dubai',
-      price: 82000000,
-      status: 'Under Offer',
-      image: 'https://via.placeholder.com/300x200?text=Villa',
-      views: 89,
-      inquiries: 5,
-    },
-  ])
+  const [listings, setListings] = useState(fallbackMarketplaceListings)
+
+  useEffect(() => {
+    let ignore = false
+
+    marketplaceService
+      .getListings()
+      .then((data) => {
+        if (!ignore) setListings(data)
+      })
+      .catch(() => {
+        if (!ignore) setListings(fallbackMarketplaceListings)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  const stats = useMemo(() => {
+    const activeCount = listings.filter((listing) =>
+      String(listing.status).toLowerCase().includes('listed')
+    ).length
+    const totalValue = listings.reduce((sum, listing) => sum + (listing.price || 0), 0)
+    const verifiedCount = listings.filter(
+      (listing) => listing.addressVerified || listing.organization?.verified
+    ).length
+
+    return [
+      { label: 'Active Listings', value: activeCount || listings.length, icon: 'home_work' },
+      { label: 'Portfolio Value', value: `GHS ${(totalValue / 1000000).toFixed(1)}M`, icon: 'payments' },
+      { label: 'Verified Records', value: verifiedCount, icon: 'verified' },
+    ]
+  }, [listings])
 
   return (
-    <div className="bg-surface min-h-screen">
+    <div className="min-h-screen bg-surface">
       <Navigation />
 
-      <main className="md:ml-64 pb-32 md:pb-8">
+      <main className="pb-32 md:ml-64 md:pb-10">
         <Header
           title="My Listings"
           actions={[
@@ -45,73 +60,91 @@ export default function MyListings() {
           ]}
         />
 
-        <div className="pt-24 px-4 md:px-8">
-          <div className="max-w-container mx-auto">
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                { label: 'Active Listings', value: 2, icon: 'home' },
-                { label: 'Total Views', value: 216, icon: 'visibility' },
-                { label: 'Inquiries', value: 13, icon: 'mail' },
-              ].map((stat) => (
-                <div key={stat.label} className="card p-4">
-                  <div className="flex items-center justify-between">
+        <div className="px-4 pt-24 md:px-8">
+          <div className="mx-auto max-w-container space-y-8">
+            <section className="grid gap-4 md:grid-cols-3">
+              {stats.map((stat) => (
+                <article key={stat.label} className="rounded-lg border border-outline-variant bg-surface-container p-6">
+                  <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-on-surface-variant text-sm">{stat.label}</p>
-                      <p className="text-2xl font-bold text-secondary">{stat.value}</p>
+                      <p className="text-on-surface-variant">{stat.label}</p>
+                      <p className="mt-2 text-4xl font-bold text-secondary">{stat.value}</p>
                     </div>
-                    <span className="material-symbols-outlined text-secondary text-3xl">{stat.icon}</span>
+                    <span className="material-symbols-outlined text-4xl text-secondary">
+                      {stat.icon}
+                    </span>
                   </div>
-                </div>
+                </article>
               ))}
-            </div>
+            </section>
 
-            <div className="space-y-4">
+            <section className="space-y-5">
               {listings.map((listing) => (
-                <div key={listing.id} className="card p-4 md:p-6 flex gap-4">
+                <article
+                  key={listing.id}
+                  className="grid overflow-hidden rounded-lg border border-outline-variant bg-surface-container md:grid-cols-[280px_1fr]"
+                >
                   <img
                     src={listing.image}
                     alt={listing.title}
-                    className="w-32 h-32 object-cover rounded-md"
+                    className="h-64 w-full object-cover md:h-full"
                   />
 
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
+                  <div className="p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <h3 className="font-semibold">{listing.title}</h3>
-                        <p className="text-sm text-on-surface-variant">{listing.location}</p>
+                        <h3 className="text-2xl font-semibold leading-tight">
+                          {listing.title}
+                        </h3>
+                        <p className="mt-2 flex items-center gap-1 text-on-surface-variant">
+                          <span className="material-symbols-outlined text-base">location_on</span>
+                          {listing.displayLocation || listing.address}
+                        </p>
                       </div>
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                        listing.status === 'Active'
-                          ? 'bg-green-900/50 text-green-300'
-                          : 'bg-yellow-900/50 text-yellow-300'
-                      }`}>
+                      <span
+                        className={`w-fit rounded-full px-4 py-2 text-sm font-bold uppercase tracking-wider ${
+                          String(listing.status).toLowerCase().includes('listed')
+                            ? 'bg-secondary text-on-secondary'
+                            : 'bg-secondary/15 text-secondary'
+                        }`}
+                      >
                         {listing.status}
                       </span>
                     </div>
 
-                    <div className="flex gap-6 mb-3 text-sm">
-                      <span>
-                        <p className="text-on-surface-variant">Price</p>
-                        <p className="font-bold text-secondary">AED {listing.price.toLocaleString()}</p>
-                      </span>
-                      <span>
-                        <p className="text-on-surface-variant">Views</p>
-                        <p className="font-bold">{listing.views}</p>
-                      </span>
-                      <span>
-                        <p className="text-on-surface-variant">Inquiries</p>
-                        <p className="font-bold text-secondary">{listing.inquiries}</p>
-                      </span>
+                    <div className="mt-8 grid gap-4 border-y border-outline-variant py-5 sm:grid-cols-3">
+                      <div>
+                        <p className="text-sm text-on-surface-variant">Price</p>
+                        <p className="font-bold text-secondary">
+                          {listing.priceLabel}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-on-surface-variant">Quality</p>
+                        <p className="font-bold">{listing.qualityScore || 82}%</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-on-surface-variant">Agency</p>
+                        <p className="font-bold text-secondary">
+                          {listing.organization?.name || 'Property Hub'}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <button className="btn-secondary text-sm">Edit</button>
-                      <button className="btn-secondary text-sm">View Inquiries</button>
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      <button className="btn-secondary">Edit Listing</button>
+                      <button className="btn-secondary">View Inquiries</button>
+                      <button
+                        onClick={() => navigate(`/property/${listing.id}`)}
+                        className="btn-primary"
+                      >
+                        Property Page
+                      </button>
                     </div>
                   </div>
-                </div>
+                </article>
               ))}
-            </div>
+            </section>
           </div>
         </div>
       </main>

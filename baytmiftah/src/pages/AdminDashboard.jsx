@@ -11,7 +11,7 @@ export default function AdminDashboard() {
       role: 'Elite Agent',
       verification: 'Tier 3 (Ultra)',
       status: 'Active',
-      region: 'Dubai, UAE',
+      region: 'New York, NY',
       lastActivity: '2 mins ago',
     },
     {
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
       email: 'uid.restricted_77',
       role: 'System Admin',
       verification: 'Verification Pending',
-      status: 'Flagge',
+      status: 'Flagged',
       region: 'Global Edge',
       lastActivity: '3 days ago',
     },

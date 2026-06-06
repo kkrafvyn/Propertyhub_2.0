@@ -36,7 +36,7 @@ export default function AgencyProfile() {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <h1 className="text-display-md font-bold">{currentAgency.company_name}</h1>
+                <h1 className="text-display-md font-bold">{currentAgency.name}</h1>
                 {currentAgency.verified && (
                   <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-body-sm">
                     ✓ Verified

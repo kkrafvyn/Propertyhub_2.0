@@ -12,16 +12,16 @@ import {
 describe('Utility Functions', () => {
   describe('formatCurrency', () => {
     it('formats number as currency', () => {
-      expect(formatCurrency(1000)).toMatch(/AED.*1,000/)
-      expect(formatCurrency(1000000)).toMatch(/AED.*1,000,000/)
+      expect(formatCurrency(1000)).toMatch(/\$1,000/)
+      expect(formatCurrency(1000000)).toMatch(/\$1,000,000/)
     })
 
     it('handles zero', () => {
-      expect(formatCurrency(0)).toMatch(/AED.*0/)
+      expect(formatCurrency(0)).toBe('$0')
     })
 
     it('handles null', () => {
-      expect(formatCurrency(null)).toBe('AED 0')
+      expect(formatCurrency(null)).toBe('$0')
     })
   })
 

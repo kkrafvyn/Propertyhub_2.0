@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+import { normalizeSupabaseUser } from '../lib/auth'
 
 export default function SignUp({ setUser }) {
   const [formData, setFormData] = useState({
@@ -10,6 +12,7 @@ export default function SignUp({ setUser }) {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const navigate = useNavigate()
 
   const handleChange = (e) => {
@@ -21,24 +24,34 @@ export default function SignUp({ setUser }) {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setNotice('')
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      const user = {
-        id: '1',
-        name: formData.name,
+      const { data, error: authError } = await supabase.auth.signUp({
         email: formData.email,
-        role: formData.role,
-        verified: false,
+        password: formData.password,
+        options: {
+          data: {
+            display_name: formData.name,
+            name: formData.name,
+            role: formData.role,
+          },
+        },
+      })
+
+      if (authError) throw authError
+
+      if (data.session?.user || data.user) {
+        const user = normalizeSupabaseUser(data.session?.user || data.user)
+        localStorage.setItem('baytmiftah_user', JSON.stringify(user))
+        setUser(user)
+        navigate('/')
+        return
       }
 
-      localStorage.setItem('baytmiftah_user', JSON.stringify(user))
-      setUser(user)
-      navigate('/')
+      setNotice('Account created. Check your email to confirm access before signing in.')
     } catch (err) {
-      setError('Failed to create account. Please try again.')
+      setError(err.message || 'Failed to create account. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -49,15 +62,20 @@ export default function SignUp({ setUser }) {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-secondary mb-2">BaytMiftah</h1>
+          <h1 className="mb-2 text-4xl font-black text-[#071121]">Property Hub</h1>
           <p className="text-on-surface-variant">Request Premium Access</p>
         </div>
 
         {/* Signup Form */}
-        <form onSubmit={handleSubmit} className="glass-card p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 rounded-lg border border-[#cbd3df] bg-white p-8 shadow-sm">
           {error && (
             <div className="p-4 bg-error/20 border border-error rounded-md">
               <p className="text-error text-sm">{error}</p>
+            </div>
+          )}
+          {notice && (
+            <div className="rounded-md border border-secondary/30 bg-secondary/10 p-4">
+              <p className="text-sm text-secondary">{notice}</p>
             </div>
           )}
 

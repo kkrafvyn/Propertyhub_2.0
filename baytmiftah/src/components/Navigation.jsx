@@ -7,19 +7,30 @@ export default function Navigation() {
   const navItems = [
     { label: 'Home', icon: 'home', path: '/' },
     { label: 'Explore', icon: 'search', path: '/explore' },
+    { label: 'Listings', icon: 'real_estate_agent', path: '/my-listings' },
     { label: 'Messages', icon: 'mail', path: '/messages' },
     { label: 'Favorites', icon: 'favorite', path: '/favorites' },
+    { label: 'Agency', icon: 'business', path: '/agency/dashboard' },
+    { label: 'Smart', icon: 'devices_other', path: '/smart-property/devices' },
     { label: 'Profile', icon: 'account_circle', path: '/profile' },
   ]
+  const mobileNavItems = navItems.filter((item) =>
+    ['/', '/explore', '/messages', '/favorites', '/profile'].includes(item.path)
+  )
 
-  const isActive = (path) => location.pathname === path
+  const isActive = (path) =>
+    location.pathname === path ||
+    (path !== '/' && location.pathname.startsWith(`${path}/`)) ||
+    (path === '/agency/dashboard' && location.pathname.startsWith('/agency')) ||
+    (path === '/smart-property/devices' &&
+      location.pathname.startsWith('/smart-property'))
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 bg-surface-container-high border-r border-outline-variant flex-col pt-8 px-4 gap-8">
+      <aside className="fixed left-0 top-0 hidden h-screen w-64 flex-col gap-8 border-r border-[#cbd3df] bg-[#f8faff] px-4 pt-8 text-[#071121] md:flex">
         <Link to="/" className="flex items-center gap-3 px-4 py-2">
-          <span className="text-secondary text-2xl font-bold">BaytMiftah</span>
+          <span className="text-2xl font-black">Property Hub</span>
         </Link>
 
         <nav className="flex flex-col gap-2">
@@ -27,10 +38,10 @@ export default function Navigation() {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+              className={`flex items-center gap-3 rounded-md px-4 py-3 font-semibold transition ${
                 isActive(item.path)
-                  ? 'bg-secondary/20 text-secondary'
-                  : 'text-on-surface hover:bg-surface-container-highest'
+                  ? 'bg-[#e9fbf6] text-[#007a52]'
+                  : 'text-[#303744] hover:bg-[#edf4ff]'
               }`}
             >
               <span className="material-symbols-outlined">{item.icon}</span>
@@ -45,7 +56,7 @@ export default function Navigation() {
               localStorage.removeItem('baytmiftah_user')
               window.location.href = '/login'
             }}
-            className="w-full flex items-center gap-3 px-4 py-3 text-error hover:bg-error/10 rounded-lg transition"
+            className="flex w-full items-center gap-3 rounded-md px-4 py-3 text-red-600 transition hover:bg-red-50"
           >
             <span className="material-symbols-outlined">logout</span>
             <span>Sign Out</span>
@@ -54,16 +65,16 @@ export default function Navigation() {
       </aside>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="fixed md:hidden bottom-0 left-0 right-0 z-40 glass-card border-t border-outline-variant">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#cbd3df] bg-white md:hidden">
         <div className="flex justify-around items-center h-16">
-          {navItems.map((item) => (
+          {mobileNavItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
               className={`flex flex-col items-center justify-center w-16 h-16 transition ${
                 isActive(item.path)
-                  ? 'text-secondary'
-                  : 'text-on-surface-variant hover:text-on-surface'
+                  ? 'text-[#007a52]'
+                  : 'text-[#303744]'
               }`}
             >
               <span className="material-symbols-outlined text-2xl">{item.icon}</span>

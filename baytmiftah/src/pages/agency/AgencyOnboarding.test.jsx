@@ -1,10 +1,11 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import AgencyOnboarding from '../pages/agency/AgencyOnboarding'
+import { BrowserRouter } from 'react-router-dom'
+import AgencyOnboarding from './AgencyOnboarding'
 import { vi } from 'vitest'
 
 // Mock Zustand store
-vi.mock('../store/useAgencyStore', () => ({
+vi.mock('../../store/useAgencyStore', () => ({
   useAgencyStore: () => ({
     createAgency: vi.fn(),
     loading: false,
@@ -14,26 +15,31 @@ vi.mock('../store/useAgencyStore', () => ({
 
 describe('AgencyOnboarding Component', () => {
   it('should render onboarding wizard', () => {
-    render(<AgencyOnboarding />)
+    render(
+      <BrowserRouter>
+        <AgencyOnboarding />
+      </BrowserRouter>
+    )
 
-    expect(screen.getByText(/add smart device/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Agency Identity/i).length).toBeGreaterThan(0)
   })
 
   it('should navigate through steps', async () => {
-    render(<AgencyOnboarding />)
+    render(
+      <BrowserRouter>
+        <AgencyOnboarding />
+      </BrowserRouter>
+    )
     const user = userEvent.setup()
 
-    // Fill first step
-    const companyNameInput = screen.getByPlaceholderText(/company name/i)
+    const companyNameInput = screen.getByPlaceholderText(/Global Realty Partners/i)
     await user.type(companyNameInput, 'Test Agency')
 
-    // Click next button
-    const nextButton = screen.getByRole('button', { name: /next/i })
+    const nextButton = screen.getByRole('button', { name: /continue/i })
     await user.click(nextButton)
 
-    // Should show second step
     await waitFor(() => {
-      expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument()
+      expect(screen.getByText(/PropFlow Agency/i)).toBeInTheDocument()
     })
   })
 })

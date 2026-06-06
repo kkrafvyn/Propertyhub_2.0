@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import agencyService from '../../services/agency-service'
+import { supabase } from '../../lib/supabase'
 
 export default function AgencyVerification() {
   const [pendingAgencies, setPendingAgencies] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedAgency, setSelectedAgency] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
     loadPendingAgencies()
@@ -14,10 +16,14 @@ export default function AgencyVerification() {
   const loadPendingAgencies = async () => {
     try {
       setLoading(true)
-      const agencies = await agencyService.getVerificationStatus()
-      setPendingAgencies(agencies.filter((a) => a.verification_status === 'pending'))
-    } catch (error) {
-      console.error('Error loading agencies:', error)
+      setError('')
+      const agencies = await agencyService.getPendingVerificationAgencies()
+      setPendingAgencies(agencies)
+      setSelectedAgency((selected) =>
+        selected ? agencies.find((agency) => agency.id === selected.id) || null : null
+      )
+    } catch (err) {
+      setError(err.message || 'Unable to load pending agencies.')
     } finally {
       setLoading(false)
     }
@@ -25,143 +31,158 @@ export default function AgencyVerification() {
 
   const handleApprove = async (agencyId) => {
     try {
-      await agencyService.approveAgency(agencyId)
-      setPendingAgencies(pendingAgencies.filter((a) => a.id !== agencyId))
+      setError('')
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      await agencyService.approveAgency(agencyId, user?.id)
+      setPendingAgencies((agencies) => agencies.filter((agency) => agency.id !== agencyId))
       setSelectedAgency(null)
-    } catch (error) {
-      console.error('Error approving agency:', error)
+    } catch (err) {
+      setError(err.message || 'Unable to approve agency.')
     }
   }
 
   const handleReject = async (agencyId) => {
-    if (!rejectReason) {
-      alert('Please provide a reason for rejection')
+    if (!rejectReason.trim()) {
+      setError('Please provide a reason for rejection before rejecting the agency.')
       return
     }
+
     try {
+      setError('')
       await agencyService.rejectAgency(agencyId, rejectReason)
-      setPendingAgencies(pendingAgencies.filter((a) => a.id !== agencyId))
+      setPendingAgencies((agencies) => agencies.filter((agency) => agency.id !== agencyId))
       setSelectedAgency(null)
       setRejectReason('')
-    } catch (error) {
-      console.error('Error rejecting agency:', error)
+    } catch (err) {
+      setError(err.message || 'Unable to reject agency.')
     }
   }
 
   return (
-    <div className="grid md:grid-cols-3 gap-8">
-      {/* Pending Agencies List */}
+    <div className="grid gap-8 md:grid-cols-3">
       <div className="md:col-span-1">
-        <h2 className="text-body-lg font-medium mb-4">Pending Agencies ({pendingAgencies.length})</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-body-lg font-medium">
+            Pending Agencies ({pendingAgencies.length})
+          </h2>
+          <button onClick={loadPendingAgencies} className="btn-secondary px-3 py-2 text-sm">
+            Refresh
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded-lg border border-error bg-error/10 p-3 text-sm text-error">
+            {error}
+          </div>
+        )}
+
         <div className="space-y-2">
-          {pendingAgencies.map((agency) => (
-            <button
-              key={agency.id}
-              onClick={() => setSelectedAgency(agency)}
-              className={`w-full p-4 rounded-lg text-left transition ${
-                selectedAgency?.id === agency.id
-                  ? 'bg-primary text-white'
-                  : 'bg-surface-container hover:bg-surface'
-              }`}
-            >
-              <h3 className="font-medium">{agency.company_name}</h3>
-              <p className="text-body-sm text-gray-400">
-                {new Date(agency.created_at).toLocaleDateString()}
-              </p>
-            </button>
-          ))}
+          {loading ? (
+            <p className="rounded-lg bg-surface-container p-4 text-on-surface-variant">
+              Loading pending agencies...
+            </p>
+          ) : (
+            pendingAgencies.map((agency) => (
+              <button
+                key={agency.id}
+                onClick={() => setSelectedAgency(agency)}
+                className={`w-full rounded-lg p-4 text-left transition ${
+                  selectedAgency?.id === agency.id
+                    ? 'bg-primary text-white'
+                    : 'bg-surface-container hover:bg-surface'
+                }`}
+              >
+                <h3 className="font-medium">{agency.name}</h3>
+                <p className="text-body-sm text-gray-400">
+                  {agency.verification_submitted_at
+                    ? new Date(agency.verification_submitted_at).toLocaleDateString()
+                    : new Date(agency.created_at).toLocaleDateString()}
+                </p>
+              </button>
+            ))
+          )}
         </div>
       </div>
 
-      {/* Agency Details */}
       {selectedAgency ? (
         <div className="md:col-span-2">
-          <div className="bg-surface-container rounded-lg p-6 space-y-6">
+          <div className="space-y-6 rounded-lg bg-surface-container p-6">
             <div>
-              <h1 className="text-display-md font-bold mb-2">{selectedAgency.company_name}</h1>
-              <p className="text-on-surface-variant">License: {selectedAgency.license_number}</p>
+              <h1 className="text-display-md mb-2 font-bold">{selectedAgency.name}</h1>
+              <p className="text-on-surface-variant">
+                Registration:{' '}
+                {selectedAgency.ghana_business_registration_number || 'Not supplied'}
+              </p>
             </div>
 
-            {/* Agency Details */}
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <p className="text-on-surface-variant text-body-sm mb-1">Website</p>
-                <p className="font-medium">{selectedAgency.website}</p>
+                <p className="text-body-sm mb-1 text-on-surface-variant">Website</p>
+                <p className="font-medium">{selectedAgency.website || 'Not supplied'}</p>
               </div>
               <div>
-                <p className="text-on-surface-variant text-body-sm mb-1">Email</p>
-                <p className="font-medium">{selectedAgency.email}</p>
+                <p className="text-body-sm mb-1 text-on-surface-variant">Email</p>
+                <p className="font-medium">{selectedAgency.email || 'Not supplied'}</p>
               </div>
               <div>
-                <p className="text-on-surface-variant text-body-sm mb-1">Phone</p>
-                <p className="font-medium">{selectedAgency.phone}</p>
+                <p className="text-body-sm mb-1 text-on-surface-variant">Phone</p>
+                <p className="font-medium">{selectedAgency.phone || 'Not supplied'}</p>
               </div>
               <div>
-                <p className="text-on-surface-variant text-body-sm mb-1">Location</p>
+                <p className="text-body-sm mb-1 text-on-surface-variant">Tax ID</p>
                 <p className="font-medium">
-                  {selectedAgency.city}, {selectedAgency.country}
+                  {selectedAgency.ghana_tax_identification_number || 'Not supplied'}
                 </p>
               </div>
             </div>
 
-            {/* Description */}
             <div>
-              <p className="text-on-surface-variant text-body-sm mb-2">Description</p>
-              <p className="bg-surface rounded-lg p-4">{selectedAgency.description}</p>
+              <p className="text-body-sm mb-2 text-on-surface-variant">Description</p>
+              <p className="rounded-lg bg-surface p-4">
+                {selectedAgency.description || 'No description submitted yet.'}
+              </p>
             </div>
 
-            {/* Documents Section */}
             <div>
-              <h3 className="text-body-lg font-medium mb-3">Submitted Documents</h3>
-              <div className="space-y-2">
-                {selectedAgency.documents?.map((doc, idx) => (
-                  <a
-                    key={idx}
-                    href={doc.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-3 bg-surface rounded-lg hover:bg-surface/80 transition"
-                  >
-                    <span>📄</span>
-                    <span className="flex-1">{doc.name}</span>
-                    <span className="text-gray-400">↗</span>
-                  </a>
-                ))}
-              </div>
+              <h3 className="text-body-lg mb-3 font-medium">Submitted Documents</h3>
+              <p className="rounded-lg bg-surface p-3 text-on-surface-variant">
+                Verification document storage is not exposed by the current Supabase schema yet.
+              </p>
             </div>
 
-            {/* Rejection Reason (if rejecting) */}
             <div>
-              <p className="text-on-surface-variant text-body-sm mb-2">
-                Rejection Reason (if applicable)
+              <p className="text-body-sm mb-2 text-on-surface-variant">
+                Rejection Reason
               </p>
               <textarea
                 value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
+                onChange={(event) => setRejectReason(event.target.value)}
                 placeholder="Enter reason for rejection..."
-                className="w-full bg-surface border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 h-24 resize-none"
+                className="h-24 w-full resize-none rounded-lg border border-gray-600 bg-surface px-4 py-2 text-white placeholder-gray-400"
               />
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-3">
               <button
                 onClick={() => handleApprove(selectedAgency.id)}
-                className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
+                className="flex-1 rounded-lg bg-green-600 px-6 py-3 font-medium text-white transition hover:bg-green-700"
               >
-                ✓ Approve
+                Approve
               </button>
               <button
                 onClick={() => handleReject(selectedAgency.id)}
-                className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
+                className="flex-1 rounded-lg bg-red-600 px-6 py-3 font-medium text-white transition hover:bg-red-700"
               >
-                ✕ Reject
+                Reject
               </button>
             </div>
           </div>
         </div>
       ) : (
-        <div className="md:col-span-2 flex items-center justify-center">
+        <div className="flex items-center justify-center md:col-span-2">
           <p className="text-on-surface-variant">
             {pendingAgencies.length === 0 ? 'No pending agencies' : 'Select an agency to review'}
           </p>

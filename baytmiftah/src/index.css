@@ -3,53 +3,68 @@
 @tailwind utilities;
 
 * {
-  @apply box-border;
+  box-sizing: border-box;
 }
 
 html {
-  @apply bg-surface text-on-surface;
+  background-color: #f5f7fc;
+  color: #071121;
 }
 
 body {
-  @apply bg-surface text-on-surface font-inter;
+  background-color: #f5f7fc;
+  color: #071121;
+  font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   scroll-behavior: smooth;
 }
 
 /* Glass morphism effect */
 .glass-card {
-  @apply backdrop-blur-xl bg-white/10 border border-white/10 rounded-lg;
+  backdrop-filter: blur(20px);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
 }
 
 .glass-card-sm {
-  @apply backdrop-blur-xl bg-white/5 border border-white/5 rounded-md;
+  backdrop-filter: blur(20px);
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
 }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  @apply w-2 h-2;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-surface-container;
+  background-color: #1a1f2e;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-surface-container-high rounded-full;
+  background-color: #2a2f3e;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-outline;
+  background-color: #606060;
 }
 
 /* Focus states */
 :focus-visible {
-  @apply outline-2 outline-offset-2 outline-primary;
+  outline: 2px solid;
+  outline-color: #bec6e0;
+  outline-offset: 2px;
 }
 
 /* Input focus state */
 input:focus,
 textarea:focus {
-  @apply outline-2 outline-offset-0 outline-primary;
+  outline: 2px solid;
+  outline-color: #bec6e0;
+  outline-offset: 0;
 }
 
 /* Animation classes */
@@ -73,14 +88,118 @@ textarea:focus {
   background-size: 1000px 100%;
 }
 
-/* Responsive utilities */
 @layer components {
+  .bg-surface {
+    background-color: #f5f7fc;
+  }
+
+  .bg-surface\/95 {
+    background-color: rgba(255, 255, 255, 0.96);
+  }
+
+  .bg-surface-container {
+    background-color: #ffffff;
+  }
+
+  .bg-surface-container-high {
+    background-color: #edf4ff;
+  }
+
+  .bg-surface-container-highest {
+    background-color: #dbeafe;
+  }
+
+  .text-on-surface {
+    color: #071121;
+  }
+
+  .text-on-surface-variant,
+  .placeholder-on-surface-variant::placeholder {
+    color: #596170;
+  }
+
+  .text-secondary {
+    color: #007a52;
+  }
+
+  .bg-secondary {
+    background-color: #007a52;
+  }
+
+  .text-on-secondary {
+    color: #ffffff;
+  }
+
+  .border-outline,
+  .border-outline-variant {
+    border-color: #cbd3df;
+  }
+
+  .enterprise-page,
+  .enterprise-page.bg-surface {
+    background-color: #f4f7fb;
+    color: #0f172a;
+  }
+
+  .enterprise-page .bg-surface\/95 {
+    background-color: rgba(255, 255, 255, 0.96);
+  }
+
+  .enterprise-page .bg-surface\/90 {
+    background-color: rgba(255, 255, 255, 0.92);
+  }
+
+  .enterprise-page .bg-surface {
+    background-color: #f4f7fb;
+  }
+
+  .enterprise-page .bg-surface-container {
+    background-color: #ffffff;
+  }
+
+  .enterprise-page .bg-surface-container-high {
+    background-color: #eef4fb;
+  }
+
+  .enterprise-page .bg-surface-container-highest {
+    background-color: #e5edf7;
+  }
+
+  .enterprise-page .text-on-surface {
+    color: #0f172a;
+  }
+
+  .enterprise-page .text-on-surface-variant {
+    color: #667085;
+  }
+
+  .enterprise-page .text-secondary {
+    color: #006c48;
+  }
+
+  .enterprise-page .text-white {
+    color: #0f172a;
+  }
+
+  .enterprise-page .text-on-secondary {
+    color: #111827;
+  }
+
+  .enterprise-page .border-outline,
+  .enterprise-page .border-outline-variant {
+    border-color: #cfd8e3;
+  }
+
+  .enterprise-page .shadow-soft {
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+  }
+
   .container-safe {
     @apply px-4 md:px-8 lg:px-12;
   }
 
   .btn-primary {
-    @apply px-6 py-3 bg-secondary text-on-secondary rounded-md font-semibold transition-all duration-200 hover:bg-secondary/90 active:scale-95;
+    @apply px-6 py-3 bg-secondary text-on-secondary rounded-md font-semibold transition-all duration-200 hover:bg-secondary/90 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
@@ -92,7 +211,7 @@ textarea:focus {
   }
 
   .input-field {
-    @apply w-full px-4 py-3 bg-surface-container border border-outline-variant rounded-md text-on-surface placeholder-on-surface-variant focus:outline-2 focus:outline-offset-0 focus:outline-primary transition-all duration-200;
+    @apply w-full px-4 py-3 bg-surface-container border border-outline-variant rounded-md text-on-surface placeholder-on-surface-variant transition-all duration-200;
   }
 
   .card {
@@ -100,22 +219,22 @@ textarea:focus {
   }
 
   .heading-display-lg {
-    @apply text-display-lg font-bold leading-tight letter-spacing-[-0.02em];
+    @apply text-5xl font-bold leading-tight;
   }
 
   .heading-headline-md {
-    @apply text-headline-md font-semibold leading-tight;
+    @apply text-3xl font-semibold leading-tight;
   }
 
   .text-body-lg {
-    @apply text-body-lg leading-relaxed;
+    @apply text-lg leading-relaxed;
   }
 
   .text-body-md {
-    @apply text-body-md leading-normal;
+    @apply text-base leading-normal;
   }
 
   .text-label-sm {
-    @apply text-label-sm uppercase tracking-wider;
+    @apply text-sm uppercase tracking-wider;
   }
 }

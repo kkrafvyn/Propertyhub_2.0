@@ -3,6 +3,26 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import Login from '../../pages/Login'
 
+vi.mock('../../lib/supabase', () => ({
+  supabase: {
+    auth: {
+      signInWithPassword: vi.fn(() =>
+        Promise.resolve({
+          data: {
+            user: {
+              id: 'user-1',
+              email: 'test@example.com',
+              user_metadata: { display_name: 'Test User', role: 'buyer' },
+              app_metadata: {},
+            },
+          },
+          error: null,
+        })
+      ),
+    },
+  },
+}))
+
 describe('Login Page', () => {
   const mockSetUser = vi.fn()
 
@@ -17,9 +37,9 @@ describe('Login Page', () => {
       </BrowserRouter>
     )
 
-    expect(screen.getByText(/Sign In/i)).toBeInTheDocument()
-    expect(screen.getByPlaceholderText(/Email/i)).toBeInTheDocument()
-    expect(screen.getByPlaceholderText(/Password/i)).toBeInTheDocument()
+    expect(screen.getByText(/Secure Login/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Professional Email/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Access Key/i)).toBeInTheDocument()
   })
 
   it('updates form fields when user types', () => {
@@ -29,8 +49,8 @@ describe('Login Page', () => {
       </BrowserRouter>
     )
 
-    const emailInput = screen.getByPlaceholderText(/Email/i)
-    const passwordInput = screen.getByPlaceholderText(/Password/i)
+    const emailInput = screen.getByLabelText(/Professional Email/i)
+    const passwordInput = screen.getByLabelText(/Access Key/i)
 
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
     fireEvent.change(passwordInput, { target: { value: 'password123' } })
@@ -46,14 +66,14 @@ describe('Login Page', () => {
       </BrowserRouter>
     )
 
-    const submitButton = screen.getByText(/Sign In/i).closest('button')
-    const emailInput = screen.getByPlaceholderText(/Email/i)
+    const submitButton = screen.getByText(/Secure Login/i).closest('button')
+    const emailInput = screen.getByLabelText(/Professional Email/i)
 
     fireEvent.change(emailInput, { target: { value: 'invalid-email' } })
     fireEvent.click(submitButton)
 
     await waitFor(() => {
-      expect(screen.getByText(/Invalid email/i)).toBeInTheDocument()
+      expect(emailInput).toBeInvalid()
     })
   })
 
@@ -64,9 +84,9 @@ describe('Login Page', () => {
       </BrowserRouter>
     )
 
-    const emailInput = screen.getByPlaceholderText(/Email/i)
-    const passwordInput = screen.getByPlaceholderText(/Password/i)
-    const submitButton = screen.getByText(/Sign In/i).closest('button')
+    const emailInput = screen.getByLabelText(/Professional Email/i)
+    const passwordInput = screen.getByLabelText(/Access Key/i)
+    const submitButton = screen.getByText(/Secure Login/i).closest('button')
 
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
     fireEvent.change(passwordInput, { target: { value: 'password123' } })
@@ -84,7 +104,7 @@ describe('Login Page', () => {
       </BrowserRouter>
     )
 
-    const signupLink = screen.getByText(/Don't have an account/i).closest('a')
+    const signupLink = screen.getByRole('link', { name: /Request Access/i })
     expect(signupLink).toHaveAttribute('href', '/signup')
   })
 })
