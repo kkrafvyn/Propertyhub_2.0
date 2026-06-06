@@ -1,43 +1,60 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as jose from "https://deno.land/x/jose@v4.11.2/index.ts";
 
-const JWT_SECRET = Deno.env.get("JWT_SECRET") || "dev-secret";
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ||
+  Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
 
-export async function verifyToken(authHeader?: string) {
-  if (!authHeader) {
+export type AuthenticatedUser = {
+  id: string;
+  email?: string;
+  role: string;
+  agencyId?: string | null;
+};
+
+export function getSupabaseClient() {
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
+
+export function getUserSupabaseClient(authHeader?: string) {
+  return createClient(supabaseUrl, anonKey, {
+    global: {
+      headers: authHeader ? { Authorization: authHeader } : {},
+    },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
+
+export async function verifyToken(authHeader?: string): Promise<AuthenticatedUser> {
+  if (!authHeader?.startsWith("Bearer ")) {
     throw new Error("Missing Authorization header");
   }
 
   const token = authHeader.replace("Bearer ", "");
+  const supabase = getUserSupabaseClient(authHeader);
+  const { data, error } = await supabase.auth.getUser(token);
 
-  try {
-    const secret = new TextEncoder().encode(JWT_SECRET);
-    const verified = await jose.jwtVerify(token, secret);
-    return verified.payload as Record<string, any>;
-  } catch (error) {
+  if (error || !data.user) {
     throw new Error("Invalid token");
   }
-}
 
-export function getSupabaseClient() {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const user = data.user;
+  const appMetadata = user.app_metadata || {};
+  const userMetadata = user.user_metadata || {};
 
-  return createClient(supabaseUrl!, supabaseServiceRoleKey!);
-}
-
-export function getUserSupabaseClient() {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-
-  return createClient(supabaseUrl!, supabaseAnonKey!);
-}
-
-export function generateToken(payload: Record<string, any>) {
-  const secret = new TextEncoder().encode(JWT_SECRET);
-  return jose.SignJWT.new(payload)
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("24h")
-    .sign(secret);
+  return {
+    id: user.id,
+    email: user.email,
+    role: appMetadata.role || userMetadata.role || "buyer",
+    agencyId: appMetadata.agency_id || userMetadata.agency_id ||
+      userMetadata.agencyId || null,
+  };
 }

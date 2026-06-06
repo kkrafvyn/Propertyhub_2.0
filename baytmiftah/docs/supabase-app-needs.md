@@ -63,7 +63,20 @@ The frontend is now aligned to `organizations` instead of the older backend-doc 
 - `agencies`
 - `agencies/:agencyId`
 
-If these are not deployed, the direct Supabase table reads/writes can still work, but the Edge Function agency list/detail calls will fail.
+The checked-in Edge Functions have been aligned to the live `organizations` /
+`organization_members` schema. They are still not active until they are deployed
+with the Supabase CLI or dashboard.
+
+Required Edge Function secrets:
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY` or `SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+The frontend agency creation flow tries `supabase.functions.invoke('agencies')`
+first and falls back to direct table writes if the function is not deployed.
+Once functions are deployed and verified, remove the direct-write fallback for
+more centralized validation and audit logging.
 
 ## Security Checklist
 

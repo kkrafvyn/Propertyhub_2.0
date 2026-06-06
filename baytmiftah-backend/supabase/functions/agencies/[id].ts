@@ -9,43 +9,47 @@ Deno.serve(async (req: Request) => {
   if (corsResponse) return corsResponse;
 
   try {
-    const authHeader = req.headers.get("Authorization");
+    const authHeader = req.headers.get("Authorization") || undefined;
     const user = await verifyToken(authHeader);
-
     const url = new URL(req.url);
-    const agencyId = url.pathname.split("/").pop();
+    const organizationId = url.searchParams.get("organizationId") ||
+      url.pathname.split("/").filter(Boolean).pop();
+
+    if (!organizationId) {
+      return errorResponse("Missing organizationId", 400);
+    }
 
     const supabase = getSupabaseClient();
 
     if (req.method === "GET") {
-      // Get agency by ID
       const { data, error } = await supabase
-        .from("agencies")
+        .from("organizations")
         .select("*")
-        .eq("id", agencyId)
+        .eq("id", organizationId)
         .single();
 
       if (error) throw error;
       return jsonResponse(data);
     }
 
+    const { data: organization, error: organizationError } = await supabase
+      .from("organizations")
+      .select("owner_id")
+      .eq("id", organizationId)
+      .single();
+
+    if (organizationError) throw organizationError;
+
+    if (organization?.owner_id !== user.id && user.role !== "admin") {
+      return errorResponse("Unauthorized", 403);
+    }
+
     if (req.method === "PUT") {
-      // Update agency (verify ownership)
-      const { data: agency } = await supabase
-        .from("agencies")
-        .select("user_id")
-        .eq("id", agencyId)
-        .single();
-
-      if (agency?.user_id !== user.sub && user.role !== "admin") {
-        return errorResponse("Unauthorized", 403);
-      }
-
       const updateData = await req.json();
       const { data, error } = await supabase
-        .from("agencies")
+        .from("organizations")
         .update(updateData)
-        .eq("id", agencyId)
+        .eq("id", organizationId)
         .select()
         .single();
 
@@ -54,21 +58,10 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "DELETE") {
-      // Delete agency (verify ownership)
-      const { data: agency } = await supabase
-        .from("agencies")
-        .select("user_id")
-        .eq("id", agencyId)
-        .single();
-
-      if (agency?.user_id !== user.sub && user.role !== "admin") {
-        return errorResponse("Unauthorized", 403);
-      }
-
       const { error } = await supabase
-        .from("agencies")
+        .from("organizations")
         .delete()
-        .eq("id", agencyId);
+        .eq("id", organizationId);
 
       if (error) throw error;
       return jsonResponse({ success: true });

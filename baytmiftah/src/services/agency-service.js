@@ -5,6 +5,12 @@
 
 import { supabase } from '../lib/supabase'
 
+async function invokeFunction(name, options = {}) {
+  const { data, error } = await supabase.functions.invoke(name, options)
+  if (error) throw error
+  return data
+}
+
 export const agencyService = {
   // Agencies
   async getAgencies(filters = {}) {
@@ -34,6 +40,16 @@ export const agencyService = {
   },
 
   async createAgency(agencyData) {
+    try {
+      return await invokeFunction('agencies', {
+        body: agencyData,
+      })
+    } catch (functionError) {
+      if (!String(functionError.message || '').toLowerCase().includes('function')) {
+        throw functionError
+      }
+    }
+
     const { data, error } = await supabase
       .from('organizations')
       .insert([agencyData])
