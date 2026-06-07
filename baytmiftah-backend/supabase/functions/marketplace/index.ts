@@ -1,4 +1,4 @@
-import { getSupabaseClient, verifyToken } from "../_shared/auth.ts";
+import { getSupabaseClient, requireOrganizationAccess, verifyToken } from "../_shared/auth.ts";
 import { handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
 const LISTING_SELECT =
@@ -85,16 +85,7 @@ Deno.serve(async (req: Request) => {
         return errorResponse("An organization is required before creating a listing", 400);
       }
 
-      const { data: organization, error: organizationError } = await supabase
-        .from("organizations")
-        .select("id,owner_id")
-        .eq("id", organizationId)
-        .maybeSingle();
-
-      if (organizationError) throw organizationError;
-      if (!organization || organization.owner_id !== user.id) {
-        return errorResponse("You can only create listings for an organization you own", 403);
-      }
+      await requireOrganizationAccess(supabase, user, organizationId);
 
       const { data: createdProperty, error: propertyError } = await supabase
         .from("properties")
@@ -129,6 +120,12 @@ Deno.serve(async (req: Request) => {
 
     return errorResponse("Method not allowed", 405);
   } catch (error) {
-    return errorResponse(error.message || "Internal server error", 500);
+    const message = error.message || "Internal server error";
+    const status = message.includes("Authentication") || message.includes("Authorization")
+      ? 401
+      : message.includes("access required")
+      ? 403
+      : 500;
+    return errorResponse(message, status);
   }
 });

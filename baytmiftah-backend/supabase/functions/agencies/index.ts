@@ -1,4 +1,12 @@
-import { getSupabaseClient, verifyToken } from "../_shared/auth.ts";
+import {
+  getSupabaseClient,
+  isAdmin,
+  maybeVerifyToken,
+  requireAdmin,
+  requireOrganizationAccess,
+  requireOrganizationManager,
+  verifyToken,
+} from "../_shared/auth.ts";
 import { handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
 function slugify(value: string) {
@@ -16,19 +24,20 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authHeader = req.headers.get("Authorization") || undefined;
-    const user = await verifyToken(authHeader);
+    const user = await maybeVerifyToken(authHeader);
     const supabase = getSupabaseClient();
     const url = new URL(req.url);
     const action = url.searchParams.get("action") || "list";
     const agencyId = url.searchParams.get("agencyId");
 
     if (req.method === "GET" && action === "list") {
+      if (!user) return errorResponse("Authentication required", 401);
       let query = supabase.from("organizations").select("*").order("created_at", { ascending: false });
       const verified = url.searchParams.get("verified");
       const slug = url.searchParams.get("slug");
       if (verified !== null) query = query.eq("verified", verified === "true");
       if (slug) query = query.eq("slug", slug);
-      if (user.role !== "admin") query = query.eq("owner_id", user.id);
+      if (!isAdmin(user)) query = query.eq("owner_id", user.id);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -38,11 +47,30 @@ Deno.serve(async (req: Request) => {
     if (req.method === "GET" && action === "get") {
       const { data, error } = await supabase.from("organizations").select("*").eq("id", agencyId).single();
       if (error) throw error;
-      if (user.role !== "admin" && data.owner_id !== user.id) return errorResponse("Forbidden", 403);
+      if (!user) {
+        const publicAgency = {
+          id: data.id,
+          name: data.name,
+          slug: data.slug,
+          description: data.description,
+          logo_url: data.logo_url,
+          banner_url: data.banner_url,
+          website: data.website,
+          email: data.email,
+          phone: data.phone,
+          verified: data.verified,
+          verification_status: data.verification_status,
+        };
+        return jsonResponse(publicAgency);
+      }
+
+      const access = await requireOrganizationAccess(supabase, user, agencyId);
+      if (!access.allowed) return errorResponse("Forbidden", 403);
       return jsonResponse(data);
     }
 
     if (req.method === "POST" && action === "create") {
+      const creator = user || await verifyToken(authHeader);
       const body = await req.json();
       const name = body.name || body.companyName;
       const registrationNumber = body.ghana_business_registration_number ||
@@ -51,12 +79,12 @@ Deno.serve(async (req: Request) => {
       if (!name || !registrationNumber) return errorResponse("Missing required organization fields", 400);
 
       const { data, error } = await supabase.from("organizations").insert([{
-        owner_id: user.id,
+        owner_id: creator.id,
         name,
         slug: body.slug || slugify(name),
         description: body.description || null,
         website: body.website || null,
-        email: body.email || user.email || null,
+        email: body.email || creator.email || null,
         phone: body.phone || null,
         logo_url: body.logo_url || null,
         banner_url: body.banner_url || null,
@@ -73,12 +101,13 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "PUT" && action === "update") {
+      const editor = user || await verifyToken(authHeader);
+      await requireOrganizationManager(supabase, editor, agencyId);
       const body = await req.json();
       const { data, error } = await supabase
         .from("organizations")
         .update(body)
         .eq("id", agencyId)
-        .eq(user.role === "admin" ? "id" : "owner_id", user.role === "admin" ? agencyId : user.id)
         .select()
         .single();
 
@@ -87,14 +116,19 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "DELETE" && action === "delete") {
+      const editor = user || await verifyToken(authHeader);
       let query = supabase.from("organizations").delete().eq("id", agencyId);
-      if (user.role !== "admin") query = query.eq("owner_id", user.id);
+      if (!isAdmin(editor)) {
+        await requireOrganizationManager(supabase, editor, agencyId);
+        query = query.eq("owner_id", editor.id);
+      }
       const { error } = await query;
       if (error) throw error;
       return jsonResponse({ ok: true });
     }
 
     if (req.method === "GET" && action === "pending-verification") {
+      requireAdmin(user);
       const { data, error } = await supabase
         .from("organizations")
         .select("*")
@@ -107,6 +141,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "POST" && action === "approve") {
+      requireAdmin(user);
       const body = await req.json().catch(() => ({}));
       const { data, error } = await supabase.from("organizations").update({
         verified: true,
@@ -120,6 +155,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "POST" && action === "reject") {
+      requireAdmin(user);
       const { data, error } = await supabase.from("organizations").update({
         verified: false,
         verification_status: "rejected",
@@ -129,6 +165,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "GET" && action === "team") {
+      await requireOrganizationAccess(supabase, user, agencyId);
       const { data, error } = await supabase
         .from("organization_members")
         .select("*")
@@ -138,6 +175,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "POST" && action === "add-team-member") {
+      await requireOrganizationManager(supabase, user, agencyId);
       const body = await req.json();
       const { data, error } = await supabase
         .from("organization_members")
@@ -149,21 +187,36 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "PUT" && action === "update-team-member") {
+      if (!user) return errorResponse("Authentication required", 401);
       const memberId = url.searchParams.get("memberId");
       const body = await req.json();
+      const { data: member } = await supabase
+        .from("organization_members")
+        .select("organization_id")
+        .eq("id", memberId)
+        .maybeSingle();
+      await requireOrganizationManager(supabase, user, member?.organization_id);
       const { data, error } = await supabase.from("organization_members").update(body).eq("id", memberId).select().single();
       if (error) return jsonResponse(emptyForMissingTable(error, null));
       return jsonResponse(data);
     }
 
     if (req.method === "DELETE" && action === "remove-team-member") {
+      if (!user) return errorResponse("Authentication required", 401);
       const memberId = url.searchParams.get("memberId");
+      const { data: member } = await supabase
+        .from("organization_members")
+        .select("organization_id")
+        .eq("id", memberId)
+        .maybeSingle();
+      await requireOrganizationManager(supabase, user, member?.organization_id);
       const { error } = await supabase.from("organization_members").delete().eq("id", memberId);
       if (error) return jsonResponse(emptyForMissingTable(error, { ok: true }));
       return jsonResponse({ ok: true });
     }
 
     if (req.method === "GET" && action === "properties") {
+      await requireOrganizationAccess(supabase, user, agencyId);
       const { data, error } = await supabase
         .from("properties")
         .select("*")
@@ -176,6 +229,7 @@ Deno.serve(async (req: Request) => {
     if (req.method === "POST" && action === "assign-property") {
       const propertyId = url.searchParams.get("propertyId");
       const targetAgencyId = url.searchParams.get("agencyId");
+      await requireOrganizationManager(supabase, user, targetAgencyId);
       const { data, error } = await supabase
         .from("properties")
         .update({ organization_id: targetAgencyId })
@@ -187,6 +241,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "GET" && action === "leads") {
+      await requireOrganizationAccess(supabase, user, agencyId);
       let query = supabase.from("leads").select("*").eq("agency_id", agencyId);
       const status = url.searchParams.get("status");
       const assignedTo = url.searchParams.get("assigned_to");
@@ -198,8 +253,11 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "POST" && action === "assign-lead") {
+      if (!user) return errorResponse("Authentication required", 401);
       const leadId = url.searchParams.get("leadId");
       const body = await req.json();
+      const { data: lead } = await supabase.from("leads").select("agency_id").eq("id", leadId).maybeSingle();
+      await requireOrganizationAccess(supabase, user, lead?.agency_id);
       const { data, error } = await supabase.from("leads").update({
         assigned_to: body.agentId,
         status: "assigned",
@@ -209,22 +267,30 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "PUT" && action === "update-lead") {
+      if (!user) return errorResponse("Authentication required", 401);
       const leadId = url.searchParams.get("leadId");
       const body = await req.json();
+      const { data: lead } = await supabase.from("leads").select("agency_id").eq("id", leadId).maybeSingle();
+      await requireOrganizationAccess(supabase, user, lead?.agency_id);
       const { data, error } = await supabase.from("leads").update(body).eq("id", leadId).select().single();
       if (error) return jsonResponse(emptyForMissingTable(error, null));
       return jsonResponse(data);
     }
 
     if (req.method === "GET" && action === "analytics") {
+      await requireOrganizationAccess(supabase, user, agencyId);
       const { data, error } = await supabase.from("agency_analytics").select("*").eq("agency_id", agencyId).maybeSingle();
       if (error) return jsonResponse(emptyForMissingTable(error, null));
       return jsonResponse(data || null);
     }
 
-    if (req.method === "POST" && action === "generate-analytics") return jsonResponse(null);
+    if (req.method === "POST" && action === "generate-analytics") {
+      await requireOrganizationAccess(supabase, user, agencyId);
+      return jsonResponse(null);
+    }
 
     if (req.method === "POST" && action === "invite") {
+      await requireOrganizationAccess(supabase, user, agencyId);
       const body = await req.json();
       const { data, error } = await supabase.from("agency_invitations").insert([{
         email: body.email,
@@ -236,6 +302,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "POST" && action === "accept-invitation") {
+      if (!user) return errorResponse("Authentication required", 401);
       const invitationId = url.searchParams.get("invitationId");
       const { data, error } = await supabase.from("agency_invitations").update({
         status: "accepted",
@@ -246,6 +313,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "POST" && action === "request-verification") {
+      await requireOrganizationAccess(supabase, user, agencyId);
       const body = await req.json();
       const { data, error } = await supabase.from("agency_verification_requests").insert([{
         agency_id: agencyId,
@@ -257,6 +325,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "GET" && action === "verification-status") {
+      await requireOrganizationAccess(supabase, user, agencyId);
       const { data, error } = await supabase
         .from("agency_verification_requests")
         .select("*")
@@ -270,6 +339,12 @@ Deno.serve(async (req: Request) => {
 
     return errorResponse("Method not allowed", 405);
   } catch (error) {
-    return errorResponse(error.message || "Internal server error", 500);
+    const message = error.message || "Internal server error";
+    const status = message.includes("Authentication") || message.includes("Authorization")
+      ? 401
+      : message.includes("access required") || message.includes("Admin")
+      ? 403
+      : 500;
+    return errorResponse(message, status);
   }
 });

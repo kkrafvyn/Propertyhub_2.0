@@ -31,6 +31,14 @@ export const authService = {
 
     return data
   },
+
+  async getCurrentUser() {
+    return callEdgeFunction('auth', {
+      method: 'POST',
+      query: { action: 'me' },
+      body: {},
+    })
+  },
 }
 
 export default authService

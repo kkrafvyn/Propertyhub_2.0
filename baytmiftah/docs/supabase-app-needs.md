@@ -63,6 +63,25 @@ The frontend no longer calls RPC functions directly. Edge Functions may call dat
 
 The checked-in Edge Functions have been aligned to the live `organizations`, `organization_members`, `properties`, `listings`, and `property_media` schema. Optional modules such as leads, analytics, alerts, and smart devices return empty/null responses until their tables are created and exposed.
 
+## Role Model
+
+Backend authorization uses `public.user_roles`, `organizations.owner_id`, and `organization_members`. It does not trust user-editable `user_metadata.role` for privileged decisions.
+
+- `admin`: platform review and verification actions.
+- `agency_admin`: agency management actions when attached through membership.
+- `agent`: agency leads, listings, and team workspace access when attached through membership.
+- `owner`: property owner workflows and organization ownership.
+- `buyer`: marketplace browsing and account baseline.
+
+Self-serve signup only accepts `buyer`, `owner`, or `agent`. Admin and agency-admin roles must be granted through SQL/dashboard/service-role tooling.
+
+## Edge Function Authorization
+
+- `auth`: login, signup, and current profile enrichment from `user_roles`.
+- `marketplace`: public listing/org reads; listing creation requires organization ownership or membership.
+- `agencies`: public agency profile read; private list/team/properties/leads/analytics require organization ownership or membership; verification approval/rejection requires admin.
+- `smart-devices`: device, rule, alert, log, and sharing operations require property organization access or device ownership.
+
 Required Edge Function secrets:
 
 - `SUPABASE_URL`
@@ -86,9 +105,10 @@ Run or convert [supabase-required-schema.sql](./supabase-required-schema.sql) in
 
 The Supabase CLI was not available in the local shell during this pass, so the SQL is checked in as a runnable schema file rather than a generated migration.
 
-Before launch, extend that SQL with:
+Before launch sequence:
 
-- `owner_id`, `agency_id`, or `user_id` ownership columns where needed.
-- Policies for buyers, owners, individual agents, agency members, and admins.
-- Storage buckets for property media and verification documents.
-- Private document access policies for offers, contracts, and verification files.
+- Run `supabase-required-schema.sql` in the Supabase SQL editor or convert it to a migration.
+- Add `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` or `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` as Edge Function secrets.
+- Deploy Edge Functions: `auth`, `marketplace`, `agencies`, `smart-devices`.
+- Create/confirm an admin row in `public.user_roles` for the reviewer account.
+- Deploy the Vercel frontend after the functions respond successfully.

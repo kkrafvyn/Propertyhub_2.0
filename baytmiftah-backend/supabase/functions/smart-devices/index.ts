@@ -1,9 +1,51 @@
-import { getSupabaseClient, verifyToken } from "../_shared/auth.ts";
+import { getSupabaseClient, requireOrganizationAccess, verifyToken } from "../_shared/auth.ts";
 import { handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
 function fallbackForMissingTable(error: any, fallback: any) {
   if (error?.code === "PGRST205" || error?.code === "42P01") return fallback;
   throw error;
+}
+
+async function getPropertyOrganizationId(
+  supabase: ReturnType<typeof getSupabaseClient>,
+  propertyId?: string | null,
+) {
+  if (!propertyId) return null;
+  const { data, error } = await supabase
+    .from("properties")
+    .select("organization_id")
+    .eq("id", propertyId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.organization_id || null;
+}
+
+async function requirePropertyAccess(
+  supabase: ReturnType<typeof getSupabaseClient>,
+  user: Awaited<ReturnType<typeof verifyToken>>,
+  propertyId?: string | null,
+) {
+  const organizationId = await getPropertyOrganizationId(supabase, propertyId);
+  await requireOrganizationAccess(supabase, user, organizationId);
+}
+
+async function requireDeviceAccess(
+  supabase: ReturnType<typeof getSupabaseClient>,
+  user: Awaited<ReturnType<typeof verifyToken>>,
+  deviceId?: string | null,
+) {
+  const { data: device, error } = await supabase
+    .from("smart_devices")
+    .select("id,property_id,owner_id")
+    .eq("id", deviceId)
+    .maybeSingle();
+
+  if (error) return fallbackForMissingTable(error, null);
+  if (!device) throw new Error("Device not found");
+  if (device.owner_id === user.id) return device;
+
+  await requirePropertyAccess(supabase, user, device.property_id);
+  return device;
 }
 
 Deno.serve(async (req: Request) => {
@@ -19,14 +61,17 @@ Deno.serve(async (req: Request) => {
     const deviceId = url.searchParams.get("deviceId");
 
     if (req.method === "GET" && action === "list") {
+      if (propertyId) await requirePropertyAccess(supabase, user, propertyId);
       let query = supabase.from("smart_devices").select("*").order("created_at", { ascending: false });
       if (propertyId) query = query.eq("property_id", propertyId);
+      if (!propertyId) query = query.eq("owner_id", user.id);
       const { data, error } = await query;
       if (error) return jsonResponse(fallbackForMissingTable(error, []));
       return jsonResponse(data || []);
     }
 
     if (req.method === "GET" && action === "get") {
+      await requireDeviceAccess(supabase, user, deviceId);
       const { data, error } = await supabase.from("smart_devices").select("*").eq("id", deviceId).maybeSingle();
       if (error) return jsonResponse(fallbackForMissingTable(error, null));
       return jsonResponse(data || null);
@@ -34,6 +79,7 @@ Deno.serve(async (req: Request) => {
 
     if (req.method === "POST" && action === "create") {
       const body = await req.json();
+      await requirePropertyAccess(supabase, user, body.property_id || propertyId);
       const { data, error } = await supabase.from("smart_devices").insert([{
         ...body,
         owner_id: user.id,
@@ -45,6 +91,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "PUT" && action === "update") {
+      await requireDeviceAccess(supabase, user, deviceId);
       const body = await req.json();
       const { data, error } = await supabase.from("smart_devices").update(body).eq("id", deviceId).select().single();
       if (error) return jsonResponse(fallbackForMissingTable(error, null));
@@ -52,12 +99,14 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "DELETE" && action === "delete") {
+      await requireDeviceAccess(supabase, user, deviceId);
       const { error } = await supabase.from("smart_devices").delete().eq("id", deviceId);
       if (error) return jsonResponse(fallbackForMissingTable(error, { ok: true }));
       return jsonResponse({ ok: true });
     }
 
     if (req.method === "POST" && action === "command") {
+      await requireDeviceAccess(supabase, user, deviceId);
       const body = await req.json();
       const command = { action: body.action, parameters: body.parameters || {} };
 
@@ -80,6 +129,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "GET" && action === "rules") {
+      await requirePropertyAccess(supabase, user, propertyId);
       const { data, error } = await supabase
         .from("smart_automation_rules")
         .select("*")
@@ -91,6 +141,7 @@ Deno.serve(async (req: Request) => {
 
     if (req.method === "POST" && action === "create-rule") {
       const body = await req.json();
+      await requirePropertyAccess(supabase, user, body.property_id || propertyId);
       const { data, error } = await supabase.from("smart_automation_rules").insert([{
         ...body,
         owner_id: user.id,
@@ -103,6 +154,8 @@ Deno.serve(async (req: Request) => {
     if (req.method === "PUT" && action === "update-rule") {
       const ruleId = url.searchParams.get("ruleId");
       const body = await req.json();
+      const { data: rule } = await supabase.from("smart_automation_rules").select("property_id").eq("id", ruleId).maybeSingle();
+      await requirePropertyAccess(supabase, user, rule?.property_id);
       const { data, error } = await supabase.from("smart_automation_rules").update(body).eq("id", ruleId).select().single();
       if (error) return jsonResponse(fallbackForMissingTable(error, null));
       return jsonResponse(data);
@@ -110,12 +163,15 @@ Deno.serve(async (req: Request) => {
 
     if (req.method === "DELETE" && action === "delete-rule") {
       const ruleId = url.searchParams.get("ruleId");
+      const { data: rule } = await supabase.from("smart_automation_rules").select("property_id").eq("id", ruleId).maybeSingle();
+      await requirePropertyAccess(supabase, user, rule?.property_id);
       const { error } = await supabase.from("smart_automation_rules").delete().eq("id", ruleId);
       if (error) return jsonResponse(fallbackForMissingTable(error, { ok: true }));
       return jsonResponse({ ok: true });
     }
 
     if (req.method === "GET" && action === "alerts") {
+      await requirePropertyAccess(supabase, user, propertyId);
       let query = supabase
         .from("smart_alerts")
         .select("*")
@@ -131,6 +187,8 @@ Deno.serve(async (req: Request) => {
 
     if (req.method === "GET" && action === "alert") {
       const alertId = url.searchParams.get("alertId");
+      const { data: alert } = await supabase.from("smart_alerts").select("property_id").eq("id", alertId).maybeSingle();
+      await requirePropertyAccess(supabase, user, alert?.property_id);
       const { data, error } = await supabase.from("smart_alerts").select("*").eq("id", alertId).maybeSingle();
       if (error) return jsonResponse(fallbackForMissingTable(error, null));
       return jsonResponse(data || null);
@@ -138,6 +196,8 @@ Deno.serve(async (req: Request) => {
 
     if (req.method === "POST" && action === "dismiss-alert") {
       const alertId = url.searchParams.get("alertId");
+      const { data: alert } = await supabase.from("smart_alerts").select("property_id").eq("id", alertId).maybeSingle();
+      await requirePropertyAccess(supabase, user, alert?.property_id);
       const { data, error } = await supabase.from("smart_alerts").update({
         dismissed: true,
         dismissed_at: new Date().toISOString(),
@@ -148,6 +208,7 @@ Deno.serve(async (req: Request) => {
 
     if (req.method === "GET" && action === "alert-preferences") {
       const userId = url.searchParams.get("userId") || user.id;
+      if (userId !== user.id) return errorResponse("Forbidden", 403);
       const { data, error } = await supabase.from("alert_preferences").select("*").eq("user_id", userId).maybeSingle();
       if (error) return jsonResponse(fallbackForMissingTable(error, null));
       return jsonResponse(data || null);
@@ -155,6 +216,7 @@ Deno.serve(async (req: Request) => {
 
     if (req.method === "PUT" && action === "alert-preferences") {
       const userId = url.searchParams.get("userId") || user.id;
+      if (userId !== user.id) return errorResponse("Forbidden", 403);
       const body = await req.json();
       const { data, error } = await supabase.from("alert_preferences").upsert({ user_id: userId, ...body }).select().single();
       if (error) return jsonResponse(fallbackForMissingTable(error, null));
@@ -162,6 +224,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "GET" && action === "logs") {
+      await requireDeviceAccess(supabase, user, deviceId);
       let query = supabase
         .from("smart_device_logs")
         .select("*")
@@ -176,6 +239,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "GET" && action === "property-logs") {
+      await requirePropertyAccess(supabase, user, propertyId);
       const { data, error } = await supabase
         .from("smart_device_logs")
         .select("*, device:device_id(*)")
@@ -187,6 +251,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "POST" && action === "log-event") {
+      await requireDeviceAccess(supabase, user, deviceId);
       const body = await req.json();
       const { data, error } = await supabase.from("smart_device_logs").insert([{
         device_id: deviceId,
@@ -198,6 +263,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "GET" && action === "status") {
+      await requireDeviceAccess(supabase, user, deviceId);
       const { data, error } = await supabase
         .from("smart_devices")
         .select("status,battery_level,signal_strength,last_seen")
@@ -208,6 +274,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "PUT" && action === "status") {
+      await requireDeviceAccess(supabase, user, deviceId);
       const body = await req.json();
       const { data, error } = await supabase.from("smart_devices").update({
         status: body.status,
@@ -227,6 +294,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (req.method === "POST" && action === "share") {
+      await requireDeviceAccess(supabase, user, deviceId);
       const body = await req.json();
       const { data, error } = await supabase.from("device_sharing").insert([{
         device_id: deviceId,
@@ -239,6 +307,7 @@ Deno.serve(async (req: Request) => {
 
     if (req.method === "GET" && action === "shared") {
       const userId = url.searchParams.get("userId") || user.id;
+      if (userId !== user.id) return errorResponse("Forbidden", 403);
       const { data, error } = await supabase.from("device_sharing").select("*, device:device_id(*)").eq("shared_with", userId);
       if (error) return jsonResponse(fallbackForMissingTable(error, []));
       return jsonResponse(data || []);
@@ -246,6 +315,8 @@ Deno.serve(async (req: Request) => {
 
     if (req.method === "DELETE" && action === "share") {
       const shareId = url.searchParams.get("shareId");
+      const { data: share } = await supabase.from("device_sharing").select("device_id").eq("id", shareId).maybeSingle();
+      await requireDeviceAccess(supabase, user, share?.device_id);
       const { error } = await supabase.from("device_sharing").delete().eq("id", shareId);
       if (error) return jsonResponse(fallbackForMissingTable(error, { ok: true }));
       return jsonResponse({ ok: true });
@@ -253,6 +324,12 @@ Deno.serve(async (req: Request) => {
 
     return errorResponse("Method not allowed", 405);
   } catch (error) {
-    return errorResponse(error.message || "Internal server error", 500);
+    const message = error.message || "Internal server error";
+    const status = message.includes("Authentication") || message.includes("Authorization")
+      ? 401
+      : message.includes("access required") || message.includes("Forbidden")
+      ? 403
+      : 500;
+    return errorResponse(message, status);
   }
 });

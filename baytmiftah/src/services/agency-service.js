@@ -19,7 +19,7 @@ export const agencyService = {
   },
 
   async getAgency(agencyId) {
-    return agencyRequest({ query: { action: 'get', agencyId } })
+    return agencyRequest({ allowAnonymous: true, query: { action: 'get', agencyId } })
   },
 
   async createAgency(agencyData) {
