@@ -1,11 +1,10 @@
 # BaytMiftah Supabase App Needs
 
-This app currently uses a browser Supabase client for agency and smart-property data, plus a legacy Axios API service for core marketplace endpoints. To make the app fully live, either migrate the legacy endpoints to Supabase or provide a backend at `VITE_API_URL`.
+This app now routes marketplace, agency, and smart-property data through Supabase Edge Functions. The browser Supabase client is used for session storage only, so the frontend can attach the user's bearer token to Edge Function requests.
 
 ## Client Configuration
 
 - Required browser env vars: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` or `VITE_SUPABASE_ANON_KEY`.
-- Optional Edge Functions override: `VITE_SUPABASE_FUNCTIONS_URL`.
 - Never place a service-role key in any `VITE_` variable.
 
 ## Live Supabase Scan
@@ -35,7 +34,7 @@ Not exposed/found yet:
 
 The frontend is now aligned to `organizations` instead of the older backend-doc `agencies` table name.
 
-## Tables Used By The Current Frontend
+## Tables Used By Edge Functions
 
 - `organizations`
 - `organization_members`
@@ -51,21 +50,18 @@ The frontend is now aligned to `organizations` instead of the older backend-doc 
 - `smart_device_logs`
 - `device_sharing`
 
-## RPC Functions Used
+## RPC Functions Needed By The Schema
 
-- `generate_agency_analytics(agency_id)`
-- `execute_device_command(device_id, command_data)`
-- `generate_device_pairing_code(device_type)`
-- `validate_pairing_code(pairing_code)`
+The frontend no longer calls RPC functions directly. Edge Functions may call database RPCs later, but the current checked-in Edge implementation handles missing optional RPCs gracefully.
 
 ## Edge Functions Expected
 
+- `auth`
+- `marketplace`
 - `agencies`
-- `agencies/:agencyId`
+- `smart-devices`
 
-The checked-in Edge Functions have been aligned to the live `organizations` /
-`organization_members` schema. They are still not active until they are deployed
-with the Supabase CLI or dashboard.
+The checked-in Edge Functions have been aligned to the live `organizations`, `organization_members`, `properties`, `listings`, and `property_media` schema. Optional modules such as leads, analytics, alerts, and smart devices return empty/null responses until their tables are created and exposed.
 
 Required Edge Function secrets:
 
@@ -73,10 +69,7 @@ Required Edge Function secrets:
 - `SUPABASE_ANON_KEY` or `SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
-The frontend agency creation flow tries `supabase.functions.invoke('agencies')`
-first and falls back to direct table writes if the function is not deployed.
-Once functions are deployed and verified, remove the direct-write fallback for
-more centralized validation and audit logging.
+There are no direct frontend `.from()`, `.rpc()`, or realtime channel calls in `src`. Deploy the Edge Functions before deploying the frontend, otherwise data screens will fail at the function boundary.
 
 ## Security Checklist
 

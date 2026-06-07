@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
 import Header from '../components/Header'
 import marketplaceService from '../services/marketplace-service'
-import { supabase } from '../lib/supabase'
 
 const amenities = ['Pool', 'Private Elevator', 'Smart Home', 'Concierge', 'Cinema', 'Gym']
 
@@ -43,15 +42,7 @@ export default function CreateListing() {
     setError('')
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        throw new Error('Please sign in before publishing a listing.')
-      }
-
-      const ownedOrganization = await marketplaceService.getOwnedOrganization(user.id)
+      const ownedOrganization = await marketplaceService.getOwnedOrganization()
 
       if (!ownedOrganization) {
         throw new Error('Create or verify your agency profile before publishing listings.')

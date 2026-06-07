@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import agencyService from '../../services/agency-service'
-import { supabase } from '../../lib/supabase'
 
 export default function AgencyVerification() {
   const [pendingAgencies, setPendingAgencies] = useState([])
@@ -32,11 +31,7 @@ export default function AgencyVerification() {
   const handleApprove = async (agencyId) => {
     try {
       setError('')
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      await agencyService.approveAgency(agencyId, user?.id)
+      await agencyService.approveAgency(agencyId)
       setPendingAgencies((agencies) => agencies.filter((agency) => agency.id !== agencyId))
       setSelectedAgency(null)
     } catch (err) {

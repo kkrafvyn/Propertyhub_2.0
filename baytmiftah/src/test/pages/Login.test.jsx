@@ -3,23 +3,18 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import Login from '../../pages/Login'
 
-vi.mock('../../lib/supabase', () => ({
-  supabase: {
-    auth: {
-      signInWithPassword: vi.fn(() =>
-        Promise.resolve({
-          data: {
-            user: {
-              id: 'user-1',
-              email: 'test@example.com',
-              user_metadata: { display_name: 'Test User', role: 'buyer' },
-              app_metadata: {},
-            },
-          },
-          error: null,
-        })
-      ),
-    },
+vi.mock('../../services/auth-service', () => ({
+  default: {
+    signIn: vi.fn(() =>
+      Promise.resolve({
+        user: {
+          id: 'user-1',
+          email: 'test@example.com',
+          user_metadata: { display_name: 'Test User', role: 'buyer' },
+          app_metadata: {},
+        },
+      })
+    ),
   },
 }))
 

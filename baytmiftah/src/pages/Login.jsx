@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
 import { normalizeSupabaseUser } from '../lib/auth'
+import authService from '../services/auth-service'
 
 export default function Login({ setUser }) {
   const [email, setEmail] = useState('')
@@ -16,12 +16,7 @@ export default function Login({ setUser }) {
     setError('')
 
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (authError) throw authError
+      const data = await authService.signIn(email, password)
 
       const user = normalizeSupabaseUser(data.user)
 

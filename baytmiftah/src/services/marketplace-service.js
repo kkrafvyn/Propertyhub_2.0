@@ -1,10 +1,4 @@
-import { supabase } from '../lib/supabase'
-
-const LISTING_SELECT = `
-  *,
-  property:properties(*),
-  organization:organizations(id,name,slug,description,logo_url,banner_url,verified,verification_status)
-`
+import { callEdgeFunction } from './edge-client'
 
 const fallbackImages = [
   'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1600&q=85',
@@ -168,33 +162,20 @@ const normalizeListing = (listing, mediaByProperty = new Map(), index = 0) => {
 }
 
 const attachMedia = async (listings = []) => {
-  const propertyIds = [...new Set(listings.map((item) => item.property_id).filter(Boolean))]
-  if (propertyIds.length === 0) return listings.map((item, index) => normalizeListing(item, new Map(), index))
-
-  const { data: media, error } = await supabase
-    .from('property_media')
-    .select('*')
-    .in('property_id', propertyIds)
-    .order('sort_order', { ascending: true })
-
-  if (error) throw error
-
-  const mediaByProperty = mapMediaByProperty(media || [])
+  const mediaByProperty = mapMediaByProperty(
+    listings.flatMap((item) => item.media || item.property_media || [])
+  )
   return listings.map((item, index) => normalizeListing(item, mediaByProperty, index))
 }
 
 export const marketplaceService = {
   async getListings() {
-    const { data, error } = await supabase
-      .from('listings')
-      .select(LISTING_SELECT)
-      .eq('visibility', 'public')
-      .order('featured', { ascending: false })
-      .order('published_at', { ascending: false })
+    const data = await callEdgeFunction('marketplace', {
+      allowAnonymous: true,
+      query: { action: 'listings' },
+    })
 
-    if (error) throw error
     if (!data || data.length === 0) return fallbackMarketplaceListings
-
     return attachMedia(data)
   },
 
@@ -212,62 +193,26 @@ export const marketplaceService = {
   },
 
   async getOrganizations() {
-    const { data, error } = await supabase
-      .from('organizations')
-      .select('id,name,slug,description,logo_url,banner_url,verified,verification_status')
-      .order('name', { ascending: true })
-
-    if (error) throw error
-    return data || []
+    return callEdgeFunction('marketplace', {
+      allowAnonymous: true,
+      query: { action: 'organizations' },
+    })
   },
 
   async getOwnedOrganization(userId) {
     if (!userId) return null
 
-    const { data, error } = await supabase
-      .from('organizations')
-      .select('id,name,slug,verified,verification_status')
-      .eq('owner_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (error) throw error
-    return data || null
+    return callEdgeFunction('marketplace', {
+      query: { action: 'owned-organization' },
+    })
   },
 
   async createListing({ property, listing, organizationId }) {
-    const propertyPayload = {
-      ...property,
-      organization_id: organizationId || null,
-      country: property.country || 'Ghana',
-    }
-
-    const { data: createdProperty, error: propertyError } = await supabase
-      .from('properties')
-      .insert([propertyPayload])
-      .select()
-      .single()
-
-    if (propertyError) throw propertyError
-
-    const { data: createdListing, error: listingError } = await supabase
-      .from('listings')
-      .insert([
-        {
-          ...listing,
-          property_id: createdProperty.id,
-          organization_id: organizationId || null,
-          status: listing.status || 'listed',
-          visibility: listing.visibility || 'public',
-          published_at: listing.published_at || new Date().toISOString(),
-          verification_status: listing.verification_status || 'submitted',
-        },
-      ])
-      .select(LISTING_SELECT)
-      .single()
-
-    if (listingError) throw listingError
+    const createdListing = await callEdgeFunction('marketplace', {
+      method: 'POST',
+      query: { action: 'create-listing' },
+      body: { property, listing, organizationId },
+    })
 
     const [normalized] = await attachMedia([createdListing])
     return normalized

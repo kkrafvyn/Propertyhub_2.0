@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
 import { normalizeSupabaseUser } from '../lib/auth'
+import authService from '../services/auth-service'
 
 export default function SignUp({ setUser }) {
   const [formData, setFormData] = useState({
@@ -27,19 +27,13 @@ export default function SignUp({ setUser }) {
     setNotice('')
 
     try {
-      const { data, error: authError } = await supabase.auth.signUp({
+      const data = await authService.signUp({
         email: formData.email,
         password: formData.password,
-        options: {
-          data: {
-            display_name: formData.name,
-            name: formData.name,
-            role: formData.role,
-          },
-        },
+        firstName: formData.name.split(' ')[0] || formData.name,
+        lastName: formData.name.split(' ').slice(1).join(' '),
+        role: formData.role,
       })
-
-      if (authError) throw authError
 
       if (data.session?.user || data.user) {
         const user = normalizeSupabaseUser(data.session?.user || data.user)

@@ -1,8 +1,7 @@
 import { create } from 'zustand'
-import { supabase } from '../lib/supabase'
+import agencyService from '../services/agency-service'
 
-export const useAgencyStore = create((set, get) => ({
-  // State
+export const useAgencyStore = create((set) => ({
   agencies: [],
   currentAgency: null,
   teamMembers: [],
@@ -12,23 +11,18 @@ export const useAgencyStore = create((set, get) => ({
   loading: false,
   error: null,
 
-  // Agency Actions
   setCurrentAgency: (agency) => set({ currentAgency: agency }),
 
   fetchAgencies: async () => {
     set({ loading: true, error: null })
     try {
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
+      const data = await agencyService.getAgencies()
       set({ agencies: data || [] })
       return data
     } catch (error) {
       set({ error: error.message })
       console.error('Error fetching agencies:', error)
+      return []
     } finally {
       set({ loading: false })
     }
@@ -37,18 +31,13 @@ export const useAgencyStore = create((set, get) => ({
   fetchAgencyById: async (agencyId) => {
     set({ loading: true, error: null })
     try {
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('*')
-        .eq('id', agencyId)
-        .single()
-
-      if (error) throw error
+      const data = await agencyService.getAgency(agencyId)
       set({ currentAgency: data })
       return data
     } catch (error) {
       set({ error: error.message })
       console.error('Error fetching agency:', error)
+      return null
     } finally {
       set({ loading: false })
     }
@@ -57,25 +46,7 @@ export const useAgencyStore = create((set, get) => ({
   createAgency: async (agencyData) => {
     set({ loading: true, error: null })
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      const { data, error } = await supabase
-        .from('organizations')
-        .insert([
-          {
-            ...agencyData,
-            owner_id: user.id,
-            verified: false,
-            suspended: false,
-            verification_status: 'pending',
-          },
-        ])
-        .select()
-        .single()
-
-      if (error) throw error
+      const data = await agencyService.createAgency(agencyData)
       set((state) => ({
         agencies: [...state.agencies, data],
         currentAgency: data,
@@ -93,18 +64,9 @@ export const useAgencyStore = create((set, get) => ({
   updateAgency: async (agencyId, agencyData) => {
     set({ loading: true, error: null })
     try {
-      const { data, error } = await supabase
-        .from('organizations')
-        .update(agencyData)
-        .eq('id', agencyId)
-        .select()
-        .single()
-
-      if (error) throw error
+      const data = await agencyService.updateAgency(agencyId, agencyData)
       set((state) => ({
-        agencies: state.agencies.map((a) =>
-          a.id === agencyId ? data : a
-        ),
+        agencies: state.agencies.map((agency) => (agency.id === agencyId ? data : agency)),
         currentAgency: state.currentAgency?.id === agencyId ? data : state.currentAgency,
       }))
       return data
@@ -120,16 +82,10 @@ export const useAgencyStore = create((set, get) => ({
   deleteAgency: async (agencyId) => {
     set({ loading: true, error: null })
     try {
-      const { error } = await supabase
-        .from('organizations')
-        .delete()
-        .eq('id', agencyId)
-
-      if (error) throw error
+      await agencyService.deleteAgency(agencyId)
       set((state) => ({
-        agencies: state.agencies.filter((a) => a.id !== agencyId),
-        currentAgency:
-          state.currentAgency?.id === agencyId ? null : state.currentAgency,
+        agencies: state.agencies.filter((agency) => agency.id !== agencyId),
+        currentAgency: state.currentAgency?.id === agencyId ? null : state.currentAgency,
       }))
     } catch (error) {
       set({ error: error.message })
@@ -140,41 +96,23 @@ export const useAgencyStore = create((set, get) => ({
     }
   },
 
-  // Team Member Actions
   fetchTeamMembers: async (agencyId) => {
     try {
-      const { data, error } = await supabase
-        .from('organization_members')
-        .select('*, user:user_id(*)')
-        .eq('organization_id', agencyId)
-
-      if (error) throw error
+      const data = await agencyService.getTeamMembers(agencyId)
       set({ teamMembers: data || [] })
       return data
     } catch (error) {
       set({ error: error.message })
       console.error('Error fetching team members:', error)
+      return []
     }
   },
 
   addTeamMember: async (agencyId, memberData) => {
     set({ loading: true, error: null })
     try {
-      const { data, error } = await supabase
-        .from('organization_members')
-        .insert([
-          {
-            organization_id: agencyId,
-            ...memberData,
-          },
-        ])
-        .select('*, user:user_id(*)')
-        .single()
-
-      if (error) throw error
-      set((state) => ({
-        teamMembers: [...state.teamMembers, data],
-      }))
+      const data = await agencyService.addTeamMember(agencyId, memberData)
+      set((state) => ({ teamMembers: [...state.teamMembers, data] }))
       return data
     } catch (error) {
       set({ error: error.message })
@@ -187,18 +125,9 @@ export const useAgencyStore = create((set, get) => ({
 
   updateTeamMember: async (memberId, memberData) => {
     try {
-      const { data, error } = await supabase
-        .from('organization_members')
-        .update(memberData)
-        .eq('id', memberId)
-        .select('*, user:user_id(*)')
-        .single()
-
-      if (error) throw error
+      const data = await agencyService.updateTeamMember(memberId, memberData)
       set((state) => ({
-        teamMembers: state.teamMembers.map((m) =>
-          m.id === memberId ? data : m
-        ),
+        teamMembers: state.teamMembers.map((member) => (member.id === memberId ? data : member)),
       }))
       return data
     } catch (error) {
@@ -210,14 +139,9 @@ export const useAgencyStore = create((set, get) => ({
 
   removeTeamMember: async (memberId) => {
     try {
-      const { error } = await supabase
-        .from('organization_members')
-        .delete()
-        .eq('id', memberId)
-
-      if (error) throw error
+      await agencyService.removeTeamMember(memberId)
       set((state) => ({
-        teamMembers: state.teamMembers.filter((m) => m.id !== memberId),
+        teamMembers: state.teamMembers.filter((member) => member.id !== memberId),
       }))
     } catch (error) {
       set({ error: error.message })
@@ -226,69 +150,44 @@ export const useAgencyStore = create((set, get) => ({
     }
   },
 
-  // Listings Actions
   fetchListings: async (agencyId) => {
     try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('organization_id', agencyId)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
+      const data = await agencyService.getAgencyProperties(agencyId)
       set({ listings: data || [] })
       return data
     } catch (error) {
       set({ error: error.message })
       console.error('Error fetching listings:', error)
+      return []
     }
   },
 
-  // Leads Actions
   fetchLeads: async (agencyId) => {
     try {
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('agency_id', agencyId)
-        .order('created_at', { ascending: false })
-
-      if (error?.code === 'PGRST205') {
-        set({ leads: [] })
-        return []
-      }
-      if (error) throw error
+      const data = await agencyService.getAgencyLeads(agencyId)
       set({ leads: data || [] })
       return data
     } catch (error) {
       set({ error: error.message })
       console.error('Error fetching leads:', error)
+      return []
     }
   },
 
-  // Analytics Actions
   fetchAnalytics: async (agencyId) => {
     try {
-      const { data, error } = await supabase
-        .from('agency_analytics')
-        .select('*')
-        .eq('agency_id', agencyId)
-        .single()
-
-      if (error?.code === 'PGRST205') {
-        set({ analytics: null })
-        return null
-      }
-      if (error && error.code !== 'PGRST116') throw error
+      const data = await agencyService.getAgencyAnalytics(agencyId)
       set({ analytics: data || null })
       return data
     } catch (error) {
       set({ error: error.message })
       console.error('Error fetching analytics:', error)
+      return null
     }
   },
 
   clearError: () => set({ error: null }),
+
   reset: () =>
     set({
       agencies: [],
