@@ -30,6 +30,8 @@ import GlobalReadiness from './pages/global/GlobalReadiness'
 import GlobalReadinessDetail from './pages/global/GlobalReadinessDetail'
 import InfrastructureHub from './pages/infrastructure/InfrastructureHub'
 import InfrastructureDetail from './pages/infrastructure/InfrastructureDetail'
+import MvpPhaseHub from './pages/mvp/MvpPhaseHub'
+import MvpPhaseDetail from './pages/mvp/MvpPhaseDetail'
 import MobileDashboard from './pages/mobile/MobileDashboard'
 import MobileExplore from './pages/mobile/MobileExplore'
 import MobilePropertyDetails from './pages/mobile/MobilePropertyDetails'
@@ -281,6 +283,22 @@ export default function App() {
           element={
             <ProtectedRoute user={user}>
               <InfrastructureDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mvp"
+          element={
+            <ProtectedRoute user={user}>
+              <MvpPhaseHub />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mvp/:moduleId"
+          element={
+            <ProtectedRoute user={user}>
+              <MvpPhaseDetail />
             </ProtectedRoute>
           }
         />
