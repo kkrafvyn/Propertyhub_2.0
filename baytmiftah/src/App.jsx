@@ -26,6 +26,8 @@ import PropertyPortfolio from './pages/PropertyPortfolio'
 import AgentProfileShowcase from './pages/AgentProfileShowcase'
 import EcosystemHub from './pages/ecosystem/EcosystemHub'
 import EcosystemCategory from './pages/ecosystem/EcosystemCategory'
+import GlobalReadiness from './pages/global/GlobalReadiness'
+import GlobalReadinessDetail from './pages/global/GlobalReadinessDetail'
 import MobileDashboard from './pages/mobile/MobileDashboard'
 import MobileExplore from './pages/mobile/MobileExplore'
 import MobilePropertyDetails from './pages/mobile/MobilePropertyDetails'
@@ -245,6 +247,22 @@ export default function App() {
           element={
             <ProtectedRoute user={user}>
               <EcosystemCategory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/global"
+          element={
+            <ProtectedRoute user={user}>
+              <GlobalReadiness />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/global/:moduleId"
+          element={
+            <ProtectedRoute user={user}>
+              <GlobalReadinessDetail />
             </ProtectedRoute>
           }
         />
