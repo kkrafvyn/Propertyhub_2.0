@@ -67,19 +67,45 @@ The checked-in Edge Functions have been aligned to the live `organizations`, `or
 
 Backend authorization uses `public.user_roles`, `organizations.owner_id`, and `organization_members`. It does not trust user-editable `user_metadata.role` for privileged decisions.
 
-- `admin`: platform review and verification actions.
-- `agency_admin`: agency management actions when attached through membership.
-- `agent`: agency leads, listings, and team workspace access when attached through membership.
-- `owner`: property owner workflows and organization ownership.
-- `buyer`: marketplace browsing and account baseline.
+- `buyer`: searches, saves, compares, schedules viewings, contacts agents/owners, submits offers.
+- `renter`: searches rentals, applies, schedules inspections, manages rental agreements.
+- `property_owner`: creates and manages owned listings and property operations.
+- `independent_agent`: works independently with assigned properties, leads, clients, and deals.
+- `agency_owner`: full agency control, staff, settings, listings, revenue, and analytics.
+- `agency_manager`: day-to-day agency operations, lead/listing assignment, reporting.
+- `agency_agent`: assigned agency listings, leads, viewings, and client communication.
+- `agency_support`: scheduling, document, and customer follow-up access without ownership controls.
+- `property_developer`: projects, phases, units, reservations, and construction updates.
+- `property_manager`: tenant, maintenance, inspection, and building operations workflows.
+- `platform_admin`: platform operations, moderation, verification, disputes, and security monitoring.
+- `super_admin`: global configuration, subscription, revenue, admin management, and audit access.
 
-Self-serve signup only accepts `buyer`, `owner`, or `agent`. Admin and agency-admin roles must be granted through SQL/dashboard/service-role tooling.
+Smart-property access is permission-based through property/device access, not a standalone role.
+
+Self-serve signup accepts `buyer`, `renter`, `property_owner`, `independent_agent`, `property_developer`, and `property_manager`. Agency roles are assigned by agency creation or invitations. Platform admin and super admin roles must be granted through SQL/dashboard/service-role tooling.
+
+Hierarchy:
+
+```text
+super_admin
+  platform_admin
+    agency_owner
+      agency_manager
+        agency_agent
+        agency_support
+    property_owner
+    independent_agent
+    property_developer
+    property_manager
+    buyer
+    renter
+```
 
 ## Edge Function Authorization
 
 - `auth`: login, signup, and current profile enrichment from `user_roles`.
 - `marketplace`: public listing/org reads; listing creation requires organization ownership or membership.
-- `agencies`: public agency profile read; private list/team/properties/leads/analytics require organization ownership or membership; verification approval/rejection requires admin.
+- `agencies`: public agency profile read; private list/team/properties/leads/analytics require organization ownership or membership; verification approval/rejection requires platform admin or super admin.
 - `smart-devices`: device, rule, alert, log, and sharing operations require property organization access or device ownership.
 
 Required Edge Function secrets:
@@ -110,5 +136,5 @@ Before launch sequence:
 - Run `supabase-required-schema.sql` in the Supabase SQL editor or convert it to a migration.
 - Add `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` or `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` as Edge Function secrets.
 - Deploy Edge Functions: `auth`, `marketplace`, `agencies`, `smart-devices`.
-- Create/confirm an admin row in `public.user_roles` for the reviewer account.
+- Create/confirm a `platform_admin` or `super_admin` row in `public.user_roles` for the reviewer account.
 - Deploy the Vercel frontend after the functions respond successfully.

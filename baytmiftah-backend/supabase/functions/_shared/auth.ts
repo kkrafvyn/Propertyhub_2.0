@@ -12,6 +12,26 @@ export type AuthenticatedUser = {
   agencyId?: string | null;
 };
 
+const legacyRoleMap: Record<string, string> = {
+  admin: "platform_admin",
+  agency_admin: "agency_manager",
+  agent: "independent_agent",
+  owner: "property_owner",
+};
+
+const platformAdminRoles = new Set(["platform_admin", "super_admin"]);
+const agencyManagerRoles = new Set([
+  "agency_owner",
+  "agency_manager",
+  "platform_admin",
+  "super_admin",
+]);
+
+function normalizeRole(role?: string | null) {
+  if (!role) return "buyer";
+  return legacyRoleMap[role] || role;
+}
+
 export function getSupabaseClient() {
   return createClient(supabaseUrl, serviceRoleKey, {
     auth: {
@@ -58,7 +78,7 @@ export async function verifyToken(authHeader?: string): Promise<AuthenticatedUse
   return {
     id: user.id,
     email: user.email,
-    role: roleRecord?.role || appMetadata.role || "buyer",
+    role: normalizeRole(roleRecord?.role || appMetadata.role),
     agencyId: roleRecord?.agency_id || appMetadata.agency_id || null,
   };
 }
@@ -74,7 +94,7 @@ export async function maybeVerifyToken(
 }
 
 export function isAdmin(user: AuthenticatedUser | null) {
-  return user?.role === "admin";
+  return platformAdminRoles.has(user?.role || "");
 }
 
 export function requireAdmin(user: AuthenticatedUser | null) {
@@ -89,7 +109,7 @@ export async function getOrganizationAccess(
   organizationId?: string | null,
 ) {
   if (!user || !organizationId) return { allowed: false, role: null, owner: false };
-  if (isAdmin(user)) return { allowed: true, role: "admin", owner: false };
+  if (isAdmin(user)) return { allowed: true, role: user.role, owner: false };
 
   const { data: organization, error: organizationError } = await supabase
     .from("organizations")
@@ -99,7 +119,7 @@ export async function getOrganizationAccess(
 
   if (organizationError) throw organizationError;
   if (organization?.owner_id === user.id) {
-    return { allowed: true, role: "owner", owner: true };
+    return { allowed: true, role: "agency_owner", owner: true };
   }
 
   const { data: membership, error: membershipError } = await supabase
@@ -139,7 +159,7 @@ export async function requireOrganizationManager(
   organizationId?: string | null,
 ) {
   const access = await requireOrganizationAccess(supabase, user, organizationId);
-  if (!["admin", "owner"].includes(access.role || "")) {
+  if (!agencyManagerRoles.has(access.role || "")) {
     throw new Error("Organization manager access required");
   }
   return access;

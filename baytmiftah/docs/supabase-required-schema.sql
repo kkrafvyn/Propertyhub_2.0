@@ -12,7 +12,22 @@ create table if not exists public.user_roles (
   status text not null default 'active',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint user_roles_role_check check (role in ('admin', 'agency_admin', 'agent', 'owner', 'buyer')),
+  constraint user_roles_role_check check (
+    role in (
+      'buyer',
+      'renter',
+      'property_owner',
+      'independent_agent',
+      'agency_owner',
+      'agency_manager',
+      'agency_agent',
+      'agency_support',
+      'property_developer',
+      'property_manager',
+      'platform_admin',
+      'super_admin'
+    )
+  ),
   constraint user_roles_status_check check (status in ('active', 'suspended', 'pending'))
 );
 
@@ -32,7 +47,7 @@ alter table if exists public.organization_members
 
 alter table if exists public.organization_members
   add constraint organization_members_role_check
-  check (role in ('owner', 'admin', 'agent', 'viewer'));
+  check (role in ('agency_owner', 'agency_manager', 'agency_agent', 'agency_support'));
 
 create table if not exists public.leads (
   id uuid primary key default gen_random_uuid(),
@@ -64,7 +79,7 @@ create table if not exists public.agency_invitations (
   id uuid primary key default gen_random_uuid(),
   agency_id uuid references public.organizations(id) on delete cascade,
   email text not null,
-  role text not null default 'agent',
+  role text not null default 'agency_agent',
   status text not null default 'pending',
   accepted_at timestamptz,
   created_at timestamptz not null default now()
@@ -75,7 +90,7 @@ alter table public.agency_invitations
 
 alter table public.agency_invitations
   add constraint agency_invitations_role_check
-  check (role in ('admin', 'agent', 'viewer'));
+  check (role in ('agency_manager', 'agency_agent', 'agency_support'));
 
 create table if not exists public.agency_verification_requests (
   id uuid primary key default gen_random_uuid(),
@@ -438,7 +453,7 @@ create policy "organization admins can manage invitations"
       where organization_members.organization_id = agency_invitations.agency_id
         and organization_members.user_id = auth.uid()
         and organization_members.status = 'active'
-        and organization_members.role in ('owner', 'admin')
+        and organization_members.role in ('agency_owner', 'agency_manager')
     )
   )
   with check (
@@ -452,7 +467,7 @@ create policy "organization admins can manage invitations"
       where organization_members.organization_id = agency_invitations.agency_id
         and organization_members.user_id = auth.uid()
         and organization_members.status = 'active'
-        and organization_members.role in ('owner', 'admin')
+        and organization_members.role in ('agency_owner', 'agency_manager')
     )
   );
 

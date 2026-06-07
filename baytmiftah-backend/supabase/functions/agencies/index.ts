@@ -18,6 +18,22 @@ function emptyForMissingTable(error: any, fallback: any) {
   throw error;
 }
 
+const allowedAgencyMemberRoles = new Set([
+  "agency_manager",
+  "agency_agent",
+  "agency_support",
+]);
+
+function normalizeAgencyMemberRole(role?: string) {
+  const legacy: Record<string, string> = {
+    admin: "agency_manager",
+    agent: "agency_agent",
+    viewer: "agency_support",
+  };
+  const normalized = role ? legacy[role] || role : "agency_agent";
+  return allowedAgencyMemberRoles.has(normalized) ? normalized : "agency_agent";
+}
+
 Deno.serve(async (req: Request) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
@@ -97,6 +113,14 @@ Deno.serve(async (req: Request) => {
       }]).select().single();
 
       if (error) throw error;
+
+      await supabase.from("user_roles").upsert({
+        user_id: creator.id,
+        role: "agency_owner",
+        agency_id: data.id,
+        status: "active",
+      });
+
       return jsonResponse(data, 201);
     }
 
@@ -179,7 +203,11 @@ Deno.serve(async (req: Request) => {
       const body = await req.json();
       const { data, error } = await supabase
         .from("organization_members")
-        .insert([{ organization_id: agencyId, ...body }])
+        .insert([{
+          organization_id: agencyId,
+          ...body,
+          role: normalizeAgencyMemberRole(body.role),
+        }])
         .select()
         .single();
       if (error) return jsonResponse(emptyForMissingTable(error, null));
@@ -196,7 +224,14 @@ Deno.serve(async (req: Request) => {
         .eq("id", memberId)
         .maybeSingle();
       await requireOrganizationManager(supabase, user, member?.organization_id);
-      const { data, error } = await supabase.from("organization_members").update(body).eq("id", memberId).select().single();
+      const memberPayload = { ...body };
+      if (body.role) memberPayload.role = normalizeAgencyMemberRole(body.role);
+      const { data, error } = await supabase
+        .from("organization_members")
+        .update(memberPayload)
+        .eq("id", memberId)
+        .select()
+        .single();
       if (error) return jsonResponse(emptyForMissingTable(error, null));
       return jsonResponse(data);
     }
@@ -295,7 +330,7 @@ Deno.serve(async (req: Request) => {
       const { data, error } = await supabase.from("agency_invitations").insert([{
         email: body.email,
         agency_id: agencyId,
-        role: body.role,
+        role: normalizeAgencyMemberRole(body.role),
       }]).select().single();
       if (error) return jsonResponse(emptyForMissingTable(error, null));
       return jsonResponse(data, 201);

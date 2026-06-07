@@ -1,14 +1,24 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { normalizeSupabaseUser } from '../lib/auth'
+import { SELF_SERVE_ROLES, USER_ROLES } from '../lib/roles'
 import authService from '../services/auth-service'
+
+const roleLabels = {
+  [USER_ROLES.BUYER]: 'Buyer',
+  [USER_ROLES.RENTER]: 'Renter / Tenant',
+  [USER_ROLES.PROPERTY_OWNER]: 'Property Owner',
+  [USER_ROLES.INDEPENDENT_AGENT]: 'Independent Agent',
+  [USER_ROLES.PROPERTY_DEVELOPER]: 'Property Developer',
+  [USER_ROLES.PROPERTY_MANAGER]: 'Property Management Company',
+}
 
 export default function SignUp({ setUser }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    role: 'buyer',
+    role: USER_ROLES.BUYER,
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -132,9 +142,11 @@ export default function SignUp({ setUser }) {
               onChange={handleChange}
               className="input-field"
             >
-              <option value="buyer">Buyer / Investor</option>
-              <option value="agent">Agent / Advisor</option>
-              <option value="owner">Property Owner</option>
+              {SELF_SERVE_ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {roleLabels[role]}
+                </option>
+              ))}
             </select>
           </div>
 

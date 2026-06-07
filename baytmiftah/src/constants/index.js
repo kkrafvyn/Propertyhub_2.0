@@ -1,10 +1,11 @@
-// User Roles
-export const USER_ROLES = {
-  BUYER: 'buyer',
-  AGENT: 'agent',
-  OWNER: 'owner',
-  ADMIN: 'admin',
-}
+export {
+  AGENCY_MANAGER_ROLES,
+  AGENCY_ROLES,
+  PLATFORM_ADMIN_ROLES,
+  SELF_SERVE_ROLES,
+  USER_ROLES,
+  normalizeRole,
+} from '../lib/roles'
 
 // Property Types
 export const PROPERTY_TYPES = {

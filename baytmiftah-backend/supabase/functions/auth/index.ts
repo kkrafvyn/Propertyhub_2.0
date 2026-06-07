@@ -1,7 +1,26 @@
 import { getSupabaseClient, getUserSupabaseClient, verifyToken } from "../_shared/auth.ts";
 import { handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
-const ALLOWED_SELF_SERVE_ROLES = new Set(["buyer", "owner", "agent"]);
+const LEGACY_ROLE_MAP: Record<string, string> = {
+  owner: "property_owner",
+  agent: "independent_agent",
+  admin: "platform_admin",
+  agency_admin: "agency_manager",
+};
+
+const ALLOWED_SELF_SERVE_ROLES = new Set([
+  "buyer",
+  "renter",
+  "property_owner",
+  "independent_agent",
+  "property_developer",
+  "property_manager",
+]);
+
+function normalizeRequestedRole(role?: string) {
+  const normalized = role ? LEGACY_ROLE_MAP[role] || role : "buyer";
+  return ALLOWED_SELF_SERVE_ROLES.has(normalized) ? normalized : "buyer";
+}
 
 Deno.serve(async (req: Request) => {
   const corsResponse = handleCors(req);
@@ -56,7 +75,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "signup") {
-      const requestedRole = ALLOWED_SELF_SERVE_ROLES.has(body.role) ? body.role : "buyer";
+      const requestedRole = normalizeRequestedRole(body.role);
       const metadata = {
         first_name: body.firstName,
         last_name: body.lastName,

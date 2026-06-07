@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { normalizeSupabaseUser } from './lib/auth'
+import { PLATFORM_ADMIN_ROLES } from './lib/roles'
 import authService from './services/auth-service'
 
 // Pages - Existing
@@ -383,7 +384,7 @@ export default function App() {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute user={user} role="admin">
+            <ProtectedRoute user={user} role={PLATFORM_ADMIN_ROLES}>
               <AdminDashboard />
             </ProtectedRoute>
           }
@@ -392,7 +393,7 @@ export default function App() {
         <Route
           path="/admin/agencies"
           element={
-            <ProtectedRoute user={user} role="admin">
+            <ProtectedRoute user={user} role={PLATFORM_ADMIN_ROLES}>
               <AgencyVerification />
             </ProtectedRoute>
           }
