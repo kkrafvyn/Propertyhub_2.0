@@ -13,6 +13,7 @@ export default function Navigation() {
     { label: 'Agency', icon: 'business', path: '/agency/dashboard' },
     { label: 'Ecosystem', icon: 'hub', path: '/ecosystem' },
     { label: 'Global', icon: 'public', path: '/global' },
+    { label: 'Infra', icon: 'rocket_launch', path: '/infrastructure' },
     { label: 'Smart', icon: 'devices_other', path: '/smart-property/devices' },
     { label: 'Profile', icon: 'account_circle', path: '/profile' },
   ]
@@ -26,6 +27,7 @@ export default function Navigation() {
     (path === '/agency/dashboard' && location.pathname.startsWith('/agency')) ||
     (path === '/ecosystem' && location.pathname.startsWith('/ecosystem')) ||
     (path === '/global' && location.pathname.startsWith('/global')) ||
+    (path === '/infrastructure' && location.pathname.startsWith('/infrastructure')) ||
     (path === '/smart-property/devices' &&
       location.pathname.startsWith('/smart-property'))
 

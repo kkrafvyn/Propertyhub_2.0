@@ -28,6 +28,8 @@ import EcosystemHub from './pages/ecosystem/EcosystemHub'
 import EcosystemCategory from './pages/ecosystem/EcosystemCategory'
 import GlobalReadiness from './pages/global/GlobalReadiness'
 import GlobalReadinessDetail from './pages/global/GlobalReadinessDetail'
+import InfrastructureHub from './pages/infrastructure/InfrastructureHub'
+import InfrastructureDetail from './pages/infrastructure/InfrastructureDetail'
 import MobileDashboard from './pages/mobile/MobileDashboard'
 import MobileExplore from './pages/mobile/MobileExplore'
 import MobilePropertyDetails from './pages/mobile/MobilePropertyDetails'
@@ -263,6 +265,22 @@ export default function App() {
           element={
             <ProtectedRoute user={user}>
               <GlobalReadinessDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/infrastructure"
+          element={
+            <ProtectedRoute user={user}>
+              <InfrastructureHub />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/infrastructure/:moduleId"
+          element={
+            <ProtectedRoute user={user}>
+              <InfrastructureDetail />
             </ProtectedRoute>
           }
         />
