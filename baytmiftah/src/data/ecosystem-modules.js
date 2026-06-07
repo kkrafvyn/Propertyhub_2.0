@@ -1,0 +1,325 @@
+export const ecosystemModules = [
+  {
+    id: 'financial-services',
+    title: 'Financial Services',
+    icon: 'payments',
+    summary: 'Mortgage, rent finance, insurance, and property investment products.',
+    status: 'Partner-ready',
+    color: '#007a52',
+    modules: [
+      {
+        name: 'Mortgage Marketplace',
+        description: 'Compare bank and lender offers, calculate repayment plans, and start partner applications.',
+        features: ['Offer comparison', 'Repayment calculator', 'Partner bank application handoff'],
+        users: ['buyer', 'property_owner', 'independent_agent'],
+      },
+      {
+        name: 'Rent Financing',
+        description: 'Let tenants pay monthly while landlords receive annual rent upfront.',
+        features: ['Tenant affordability checks', 'Landlord payout tracking', 'Repayment schedule'],
+        users: ['renter', 'property_owner', 'property_manager'],
+      },
+      {
+        name: 'Property Insurance Marketplace',
+        description: 'Compare, buy, and renew coverage for residential and commercial property.',
+        features: ['Policy comparison', 'Coverage purchase', 'Renewal reminders'],
+        users: ['buyer', 'renter', 'property_owner', 'property_manager'],
+      },
+      {
+        name: 'Property Investment Marketplace',
+        description: 'Support collective property investment and income reporting.',
+        features: ['Fractional ownership', 'Property shares', 'Rental income distribution', 'Investor dashboards'],
+        users: ['buyer', 'property_owner', 'property_developer'],
+      },
+    ],
+  },
+  {
+    id: 'construction-ecosystem',
+    title: 'Construction Ecosystem',
+    icon: 'construction',
+    summary: 'Professionals, cost estimation, and development progress tracking.',
+    status: 'Design-ready',
+    color: '#5d5fef',
+    modules: [
+      {
+        name: 'Construction Marketplace',
+        description: 'Connect owners and developers with architects, engineers, contractors, surveyors, and designers.',
+        features: ['Professional directory', 'Quote requests', 'Verified provider profiles'],
+        users: ['property_owner', 'property_developer'],
+      },
+      {
+        name: 'Build Cost Calculator',
+        description: 'Estimate construction cost from land size, building type, and finish quality.',
+        features: ['Material estimates', 'Labor estimates', 'Finish-level presets'],
+        users: ['property_owner', 'property_developer'],
+      },
+      {
+        name: 'Construction Project Tracking',
+        description: 'Track milestones, progress photos, budget movement, and project updates.',
+        features: ['Milestones', 'Photo updates', 'Budget tracking', 'Progress timeline'],
+        users: ['property_developer', 'property_owner'],
+      },
+    ],
+  },
+  {
+    id: 'maintenance-ecosystem',
+    title: 'Maintenance Ecosystem',
+    icon: 'home_repair_service',
+    summary: 'Service provider booking and issue ticketing for tenants and owners.',
+    status: 'Schema-ready',
+    color: '#b45309',
+    modules: [
+      {
+        name: 'Maintenance Marketplace',
+        description: 'Book plumbers, electricians, cleaners, security technicians, and HVAC technicians.',
+        features: ['Provider booking', 'Service categories', 'Provider ratings'],
+        users: ['renter', 'property_owner', 'property_manager'],
+      },
+      {
+        name: 'Maintenance Ticketing',
+        description: 'Report issues, upload photos, track repairs, and rate completed work.',
+        features: ['Issue reports', 'Photo upload', 'Repair status', 'Provider rating'],
+        users: ['renter', 'property_owner', 'property_manager'],
+      },
+    ],
+  },
+  {
+    id: 'ai-suite',
+    title: 'AI Suite',
+    icon: 'auto_awesome',
+    summary: 'Assistant, valuation, investment analysis, and content generation.',
+    status: 'AI-ready',
+    color: '#6d28d9',
+    modules: [
+      {
+        name: 'AI Property Assistant',
+        description: 'Natural-language listing search and guided property discovery.',
+        features: ['Conversational search', 'Listing match ranking', 'Saved criteria'],
+        users: ['buyer', 'renter', 'independent_agent'],
+      },
+      {
+        name: 'AI Property Valuation',
+        description: 'Estimate market value, rental value, and appreciation forecasts.',
+        features: ['Market value estimate', 'Rental value estimate', 'Forecast bands'],
+        users: ['property_owner', 'independent_agent', 'agency_agent'],
+      },
+      {
+        name: 'AI Investment Analysis',
+        description: 'Calculate ROI, cash flow, rental yield, and risk score.',
+        features: ['ROI model', 'Cash-flow model', 'Yield analysis', 'Risk score'],
+        users: ['buyer', 'property_owner', 'property_developer'],
+      },
+      {
+        name: 'AI Listing Generator',
+        description: 'Generate property descriptions, marketing copy, and social posts.',
+        features: ['Listing descriptions', 'Marketing content', 'Social media posts'],
+        users: ['property_owner', 'independent_agent', 'agency_agent'],
+      },
+    ],
+  },
+  {
+    id: 'advanced-viewing',
+    title: 'Advanced Property Viewing',
+    icon: 'view_in_ar',
+    summary: 'Virtual tours, AR viewing, and drone media.',
+    status: 'Media-ready',
+    color: '#0369a1',
+    modules: [
+      {
+        name: 'Virtual Tours',
+        description: 'Host 360-degree walkthroughs for premium inspection workflows.',
+        features: ['360 media', 'Room labels', 'Tour sequencing'],
+        users: ['buyer', 'renter', 'independent_agent', 'agency_agent'],
+      },
+      {
+        name: 'AR Property Viewing',
+        description: 'Preview furniture, renovations, and proposed buildings on mobile.',
+        features: ['Room staging', 'Land visualization', 'Renovation previews'],
+        users: ['buyer', 'renter', 'property_developer'],
+      },
+      {
+        name: 'Drone Integration',
+        description: 'Upload aerial videos and surroundings footage for properties and developments.',
+        features: ['Aerial media', 'Surroundings highlights', 'Developer project media'],
+        users: ['independent_agent', 'agency_agent', 'property_developer'],
+      },
+    ],
+  },
+  {
+    id: 'legal-services',
+    title: 'Legal Services',
+    icon: 'contract',
+    summary: 'Digital contracts, e-signatures, and legal professional discovery.',
+    status: 'Workflow-ready',
+    color: '#334155',
+    modules: [
+      {
+        name: 'Digital Contracts',
+        description: 'Generate lease, sales, and agency agreements from platform data.',
+        features: ['Lease agreements', 'Sales agreements', 'Agency contracts'],
+        users: ['buyer', 'renter', 'property_owner', 'independent_agent'],
+      },
+      {
+        name: 'E-Signatures',
+        description: 'Route documents for digital signing and store signed records.',
+        features: ['Signature requests', 'Signer status', 'Signed document vault'],
+        users: ['buyer', 'renter', 'property_owner'],
+      },
+      {
+        name: 'Legal Professional Marketplace',
+        description: 'Connect users with lawyers, conveyancers, and notaries.',
+        features: ['Professional search', 'Matter intake', 'Appointment booking'],
+        users: ['buyer', 'property_owner', 'property_developer'],
+      },
+    ],
+  },
+  {
+    id: 'relocation-services',
+    title: 'Relocation Services',
+    icon: 'local_shipping',
+    summary: 'Moving, storage, and utility setup after a property decision.',
+    status: 'Partner-ready',
+    color: '#0f766e',
+    modules: [
+      {
+        name: 'Moving Marketplace',
+        description: 'Book movers, packers, and storage providers.',
+        features: ['Mover booking', 'Packing services', 'Storage quotes'],
+        users: ['buyer', 'renter'],
+      },
+      {
+        name: 'Utility Setup',
+        description: 'Request electricity, water, and internet setup from one workflow.',
+        features: ['Electricity connection', 'Water connection', 'Internet installation'],
+        users: ['buyer', 'renter', 'property_manager'],
+      },
+    ],
+  },
+  {
+    id: 'community-intelligence',
+    title: 'Community Intelligence',
+    icon: 'location_city',
+    summary: 'Neighborhood pages, resident reviews, and local context.',
+    status: 'Content-ready',
+    color: '#be123c',
+    modules: [
+      {
+        name: 'Neighborhood Pages',
+        description: 'Show schools, hospitals, shops, transport options, and safety information.',
+        features: ['Local amenities', 'Transport context', 'Safety signals'],
+        users: ['buyer', 'renter'],
+      },
+      {
+        name: 'Community Reviews',
+        description: 'Residents review neighborhoods, buildings, and property managers.',
+        features: ['Neighborhood reviews', 'Building reviews', 'Manager reviews'],
+        users: ['buyer', 'renter', 'property_manager'],
+      },
+    ],
+  },
+  {
+    id: 'commercial-real-estate',
+    title: 'Commercial Real Estate',
+    icon: 'apartment',
+    summary: 'Office, warehouse, factory, and retail lease intelligence.',
+    status: 'Expansion-ready',
+    color: '#7c2d12',
+    modules: [
+      {
+        name: 'Commercial Workspace',
+        description: 'Dedicated tools for offices, warehouses, factories, and retail shops.',
+        features: ['Commercial listings', 'Lease analytics', 'Occupancy tracking', 'Commercial valuation'],
+        users: ['property_owner', 'property_manager', 'independent_agent'],
+      },
+    ],
+  },
+  {
+    id: 'business-intelligence',
+    title: 'Business Intelligence',
+    icon: 'query_stats',
+    summary: 'Advanced CRM, agency analytics, and market intelligence dashboards.',
+    status: 'Dashboard-ready',
+    color: '#1d4ed8',
+    modules: [
+      {
+        name: 'Agency CRM',
+        description: 'Track lead source, follow-up status, conversion metrics, and sales pipeline.',
+        features: ['Pipeline tracking', 'Follow-up status', 'Conversion metrics'],
+        users: ['agency_owner', 'agency_manager', 'agency_agent'],
+      },
+      {
+        name: 'Market Intelligence Dashboard',
+        description: 'Show price trends, demand trends, vacancy rates, and investment hotspots.',
+        features: ['Price trends', 'Demand trends', 'Vacancy rates', 'Investment hotspots'],
+        users: ['property_owner', 'property_developer', 'agency_owner'],
+      },
+    ],
+  },
+  {
+    id: 'smart-building-expansion',
+    title: 'Smart Building Expansion',
+    icon: 'domain',
+    summary: 'Building and estate-level IoT operations beyond smart homes.',
+    status: 'IoT-ready',
+    color: '#047857',
+    modules: [
+      {
+        name: 'Smart Apartment Buildings',
+        description: 'Manage elevators, access control, common areas, and visitor management.',
+        features: ['Elevator status', 'Access control', 'Common-area devices', 'Visitor management'],
+        users: ['property_manager', 'property_owner'],
+      },
+      {
+        name: 'Smart Estates',
+        description: 'Manage estate gates, security, utilities, and shared amenities.',
+        features: ['Gate control', 'Security operations', 'Utility monitoring', 'Shared amenities'],
+        users: ['property_manager', 'property_owner'],
+      },
+    ],
+  },
+  {
+    id: 'premium-monetization',
+    title: 'Premium Monetization',
+    icon: 'workspace_premium',
+    summary: 'Featured listings and subscription plans for agencies and developers.',
+    status: 'Revenue-ready',
+    color: '#a16207',
+    modules: [
+      {
+        name: 'Featured Listings',
+        description: 'Paid promotion for listings across search and recommendation surfaces.',
+        features: ['Promotion slots', 'Campaign dates', 'Performance reporting'],
+        users: ['property_owner', 'independent_agent', 'agency_agent'],
+      },
+      {
+        name: 'Agency Subscription Plans',
+        description: 'Starter, Professional, and Enterprise tiers for agency operations.',
+        features: ['Tier limits', 'Team seats', 'Analytics access'],
+        users: ['agency_owner'],
+      },
+      {
+        name: 'Developer Subscription Plans',
+        description: 'Advanced project management and marketing tools for developers.',
+        features: ['Project tools', 'Unit inventory limits', 'Marketing boosts'],
+        users: ['property_developer'],
+      },
+    ],
+  },
+]
+
+export const standoutFeatures = [
+  'Smart Property Access & IoT Integration',
+  'Property Investment & Fractional Ownership',
+  'AI Property Assistant',
+  'Construction & Maintenance Marketplace',
+  'Developer Project Management',
+  'Smart Estate Management',
+  'Digital Contracts & E-Signatures',
+  'Mortgage & Insurance Marketplace',
+  'Community & Neighborhood Intelligence',
+  'Full Agency CRM and Business Suite',
+]
+
+export function getEcosystemModule(id) {
+  return ecosystemModules.find((module) => module.id === id) || null
+}

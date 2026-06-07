@@ -11,17 +11,19 @@ export default function Navigation() {
     { label: 'Messages', icon: 'mail', path: '/messages' },
     { label: 'Favorites', icon: 'favorite', path: '/favorites' },
     { label: 'Agency', icon: 'business', path: '/agency/dashboard' },
+    { label: 'Ecosystem', icon: 'hub', path: '/ecosystem' },
     { label: 'Smart', icon: 'devices_other', path: '/smart-property/devices' },
     { label: 'Profile', icon: 'account_circle', path: '/profile' },
   ]
   const mobileNavItems = navItems.filter((item) =>
-    ['/', '/explore', '/messages', '/favorites', '/profile'].includes(item.path)
+    ['/', '/explore', '/messages', '/ecosystem', '/profile'].includes(item.path)
   )
 
   const isActive = (path) =>
     location.pathname === path ||
     (path !== '/' && location.pathname.startsWith(`${path}/`)) ||
     (path === '/agency/dashboard' && location.pathname.startsWith('/agency')) ||
+    (path === '/ecosystem' && location.pathname.startsWith('/ecosystem')) ||
     (path === '/smart-property/devices' &&
       location.pathname.startsWith('/smart-property'))
 

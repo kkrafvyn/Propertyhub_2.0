@@ -24,6 +24,8 @@ import Notifications from './pages/Notifications'
 import AgentDashboard from './pages/AgentDashboard'
 import PropertyPortfolio from './pages/PropertyPortfolio'
 import AgentProfileShowcase from './pages/AgentProfileShowcase'
+import EcosystemHub from './pages/ecosystem/EcosystemHub'
+import EcosystemCategory from './pages/ecosystem/EcosystemCategory'
 import MobileDashboard from './pages/mobile/MobileDashboard'
 import MobileExplore from './pages/mobile/MobileExplore'
 import MobilePropertyDetails from './pages/mobile/MobilePropertyDetails'
@@ -227,6 +229,22 @@ export default function App() {
           element={
             <ProtectedRoute user={user}>
               <CreateListing />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ecosystem"
+          element={
+            <ProtectedRoute user={user}>
+              <EcosystemHub />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ecosystem/:categoryId"
+          element={
+            <ProtectedRoute user={user}>
+              <EcosystemCategory />
             </ProtectedRoute>
           }
         />
