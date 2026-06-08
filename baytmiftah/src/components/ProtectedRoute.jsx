@@ -1,6 +1,6 @@
 import React from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
-import { AGENCY_ROLES, PLATFORM_ADMIN_ROLES } from '../lib/roles'
+import { AGENCY_ROLES, getRoleHomePath, PLATFORM_ADMIN_ROLES } from '../lib/roles'
 
 export default function ProtectedRoute({
   user,
@@ -17,7 +17,7 @@ export default function ProtectedRoute({
   const allowedRoles = Array.isArray(role) ? role : role ? [role] : null
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" replace />
+    return <Navigate to={getRoleHomePath(user.role)} replace />
   }
 
   if (requiresAgency) {

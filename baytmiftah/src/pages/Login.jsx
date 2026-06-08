@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { normalizeSupabaseUser } from '../lib/auth'
+import { getRoleHomePath } from '../lib/roles'
 import authService from '../services/auth-service'
 import AuthShell from '../components/AuthShell'
 import AuthFormIcon from '../components/AuthFormIcon'
@@ -14,7 +15,7 @@ export default function Login({ setUser }) {
   const [error, setError] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
-  const redirectTarget = location.state?.from?.pathname || '/'
+  const redirectTarget = location.state?.from?.pathname
   const redirectState = location.state?.from?.bookingDraft
     ? { bookingDraft: location.state.from.bookingDraft }
     : undefined
@@ -30,8 +31,9 @@ export default function Login({ setUser }) {
       const user = normalizeSupabaseUser(data.user)
 
       localStorage.setItem('baytmiftah_user', JSON.stringify(user))
+      window.dispatchEvent(new Event('baytmiftah:user'))
       setUser(user)
-      navigate(redirectTarget, { replace: true, state: redirectState })
+      navigate(redirectTarget || getRoleHomePath(user.role), { replace: true, state: redirectState })
     } catch (err) {
       setError(err.message || 'Invalid credentials. Please try again.')
     } finally {

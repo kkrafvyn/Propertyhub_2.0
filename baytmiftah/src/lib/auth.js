@@ -9,7 +9,7 @@ export function normalizeSupabaseUser(user) {
   return {
     ...user,
     name: metadata.display_name || metadata.name || user.email,
-    role: normalizeRole(appMetadata.role),
+    role: normalizeRole(appMetadata.role || metadata.role),
     agency_id: appMetadata.agency_id || null,
     verified: Boolean(appMetadata.verified || metadata.verified || user.email_confirmed_at),
   }

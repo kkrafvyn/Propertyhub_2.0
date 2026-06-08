@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { getRoleGroup } from '../lib/roles'
 
 const iconPaths = {
   home: (
@@ -54,9 +55,43 @@ const iconPaths = {
       <path d="M14 12h2" />
     </>
   ),
+  add_home: (
+    <>
+      <path d="M4 10.5 12 4l8 6.5" />
+      <path d="M6 9.5V20h12V9.5" />
+      <path d="M12 12v6" />
+      <path d="M9 15h6" />
+    </>
+  ),
   favorite: (
     <>
       <path d="M12 20s-7.5-4.6-8.5-10A4.4 4.4 0 0 1 12 6a4.4 4.4 0 0 1 8.5 4C19.5 15.4 12 20 12 20Z" />
+    </>
+  ),
+  location_on: (
+    <>
+      <path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </>
+  ),
+  diamond: (
+    <>
+      <path d="M6.5 4.5h11L21 9l-9 11-9-11Z" />
+      <path d="M3 9h18" />
+      <path d="m8 4.5 4 15.5 4-15.5" />
+    </>
+  ),
+  trending_up: (
+    <>
+      <path d="M4 17 9 12l4 4 7-8" />
+      <path d="M14 8h6v6" />
+    </>
+  ),
+  add_circle: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v8" />
+      <path d="M8 12h8" />
     </>
   ),
   compare_arrows: (
@@ -141,6 +176,13 @@ const iconPaths = {
       <path d="m6 11 5-5 4 4 4-5" />
     </>
   ),
+  badge: (
+    <>
+      <rect x="5" y="4" width="14" height="16" rx="2" />
+      <circle cx="12" cy="10" r="3" />
+      <path d="M8 17a4.5 4.5 0 0 1 8 0" />
+    </>
+  ),
   sync_alt: (
     <>
       <path d="M7 7h12" />
@@ -176,6 +218,22 @@ const iconPaths = {
     <>
       <path d="M12 3.5 19 6v5.5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6Z" />
       <path d="m8.5 12 2.2 2.2 4.8-5" />
+    </>
+  ),
+  admin_panel_settings: (
+    <>
+      <path d="M12 3.5 19 6v5.5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6Z" />
+      <path d="M9 12h6" />
+      <path d="M12 9v6" />
+    </>
+  ),
+  rule_settings: (
+    <>
+      <rect x="4" y="5" width="16" height="15" rx="2" />
+      <path d="m8 10 1.5 1.5L12 9" />
+      <path d="M14 10h3" />
+      <path d="m8 15 1.5 1.5L12 14" />
+      <path d="M14 15h3" />
     </>
   ),
   hub: (
@@ -226,6 +284,22 @@ const iconPaths = {
       <path d="M17 16h1" />
     </>
   ),
+  group_add: (
+    <>
+      <circle cx="9" cy="9" r="3" />
+      <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
+      <path d="M17 8v6" />
+      <path d="M14 11h6" />
+    </>
+  ),
+  groups: (
+    <>
+      <circle cx="9" cy="9" r="3" />
+      <circle cx="17" cy="10" r="2.5" />
+      <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
+      <path d="M14.5 18.5a4.2 4.2 0 0 1 6 0" />
+    </>
+  ),
   logout: (
     <>
       <path d="M10 5H6v14h4" />
@@ -243,7 +317,7 @@ const iconPaths = {
   chevron_left: <path d="m15 6-6 6 6 6" />,
 }
 
-function SvgIcon({ name, className = '' }) {
+export function SvgIcon({ name, className = '' }) {
   return (
     <svg
       aria-hidden="true"
@@ -262,6 +336,13 @@ function SvgIcon({ name, className = '' }) {
 
 export default function Navigation() {
   const location = useLocation()
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('baytmiftah_user') || 'null')
+    } catch {
+      return null
+    }
+  })
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem('baytmiftah_sidebar_collapsed') === 'true'
@@ -279,6 +360,27 @@ export default function Navigation() {
     }
   }, [collapsed])
 
+  useEffect(() => {
+    const refreshUser = () => {
+      try {
+        setCurrentUser(JSON.parse(localStorage.getItem('baytmiftah_user') || 'null'))
+      } catch {
+        setCurrentUser(null)
+      }
+    }
+
+    window.addEventListener('storage', refreshUser)
+    window.addEventListener('baytmiftah:user', refreshUser)
+    refreshUser()
+
+    return () => {
+      window.removeEventListener('storage', refreshUser)
+      window.removeEventListener('baytmiftah:user', refreshUser)
+    }
+  }, [])
+
+  const roleGroup = currentUser ? getRoleGroup(currentUser.role) : 'public'
+
   const navSections = [
     {
       label: 'Primary',
@@ -289,11 +391,14 @@ export default function Navigation() {
         { label: 'Concierge', icon: 'support_agent', path: '/concierge' },
         { label: 'Messages', icon: 'mail', path: '/messages' },
         { label: 'Profile', icon: 'account_circle', path: '/profile' },
+        { label: 'Agent Desk', icon: 'badge', path: '/agent/dashboard' },
+        { label: 'Launch Room', icon: 'rocket_launch', path: '/developer-launch' },
       ],
     },
     {
       label: 'Properties',
       items: [
+        { label: 'Create', icon: 'add_home', path: '/create-listing' },
         { label: 'Listings', icon: 'real_estate_agent', path: '/my-listings' },
         { label: 'Favorites', icon: 'favorite', path: '/favorites' },
         { label: 'Compare', icon: 'compare_arrows', path: '/compare' },
@@ -301,6 +406,18 @@ export default function Navigation() {
         { label: 'Areas', icon: 'map', path: '/neighborhoods' },
         { label: 'Calendar', icon: 'calendar_month', path: '/calendar' },
         { label: 'Coach', icon: 'psychology', path: '/listing-coach' },
+      ],
+    },
+    {
+      label: 'Agency',
+      items: [
+        { label: 'Dashboard', icon: 'business', path: '/agency/dashboard' },
+        { label: 'Overview', icon: 'monitoring', path: '/agency/overview' },
+        { label: 'Leads', icon: 'group_add', path: '/agency/leads' },
+        { label: 'Team', icon: 'account_circle', path: '/agency/team' },
+        { label: 'Properties', icon: 'home_work', path: '/agency/properties' },
+        { label: 'Analytics', icon: 'monitoring', path: '/agency/analytics' },
+        { label: 'Trust', icon: 'verified_user', path: '/agency/trust-score' },
       ],
     },
     {
@@ -319,8 +436,10 @@ export default function Navigation() {
     {
       label: 'Platform',
       items: [
-        { label: 'Agency', icon: 'business', path: '/agency/dashboard' },
-        { label: 'Trust', icon: 'verified_user', path: '/agency/trust-score' },
+        { label: 'Admin', icon: 'admin_panel_settings', path: '/admin' },
+        { label: 'Reviews', icon: 'rule_settings', path: '/admin/agencies' },
+        { label: 'Moderation', icon: 'shield', path: '/admin/moderation' },
+        { label: 'Audit', icon: 'fact_check', path: '/admin/audit' },
         { label: 'Ecosystem', icon: 'hub', path: '/ecosystem' },
         { label: 'Global', icon: 'public', path: '/global' },
         { label: 'MVP', icon: 'fact_check', path: '/mvp' },
@@ -329,9 +448,135 @@ export default function Navigation() {
       ],
     },
   ]
-  const navItems = navSections.flatMap((section) => section.items)
+  const allowedPathsByRoleGroup = {
+    public: ['/', '/explore', '/neighborhoods', '/concierge'],
+    customer: [
+      '/',
+      '/explore',
+      '/smart-match',
+      '/concierge',
+      '/messages',
+      '/profile',
+      '/favorites',
+      '/compare',
+      '/calendar',
+      '/offer-room',
+      '/document-vault',
+      '/account/security',
+    ],
+    owner: [
+      '/',
+      '/owner',
+      '/create-listing',
+      '/my-listings',
+      '/listing-coach',
+      '/calendar',
+      '/messages',
+      '/profile',
+      '/billing',
+      '/transactions',
+      '/document-vault',
+      '/smart-property/devices',
+      '/account/security',
+    ],
+    agent: [
+      '/',
+      '/agent/dashboard',
+      '/explore',
+      '/smart-match',
+      '/messages',
+      '/profile',
+      '/my-listings',
+      '/create-listing',
+      '/calendar',
+      '/listing-coach',
+      '/offer-room',
+      '/transactions',
+      '/document-vault',
+      '/billing',
+      '/account/security',
+    ],
+    agency: [
+      '/',
+      '/agency/dashboard',
+      '/agency/overview',
+      '/agency/leads',
+      '/agency/team',
+      '/agency/properties',
+      '/agency/analytics',
+      '/agency/trust-score',
+      '/messages',
+      '/profile',
+      '/create-listing',
+      '/my-listings',
+      '/calendar',
+      '/listing-coach',
+      '/transactions',
+      '/offer-room',
+      '/document-vault',
+      '/billing',
+      '/integrations',
+      '/account/security',
+    ],
+    developer: [
+      '/',
+      '/developer-launch',
+      '/create-listing',
+      '/my-listings',
+      '/listing-coach',
+      '/messages',
+      '/profile',
+      '/calendar',
+      '/revenue-ops',
+      '/partners',
+      '/integrations',
+      '/document-vault',
+      '/billing',
+      '/account/security',
+    ],
+    admin: [
+      '/',
+      '/admin',
+      '/admin/agencies',
+      '/admin/trust',
+      '/admin/moderation',
+      '/admin/audit',
+      '/agency/dashboard',
+      '/agency/trust-score',
+      '/messages',
+      '/profile',
+      '/billing',
+      '/integrations',
+      '/revenue-ops',
+      '/partners',
+      '/ecosystem',
+      '/global',
+      '/mvp',
+      '/infrastructure',
+      '/smart-property/devices',
+      '/account/security',
+    ],
+  }
+  const allowedPaths = new Set(allowedPathsByRoleGroup[roleGroup] || allowedPathsByRoleGroup.customer)
+  const visibleNavSections = navSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => allowedPaths.has(item.path)),
+    }))
+    .filter((section) => section.items.length > 0)
+  const navItems = visibleNavSections.flatMap((section) => section.items)
   const mobileNavItems = navItems.filter((item) =>
-    ['/', '/explore', '/concierge', '/messages', '/profile'].includes(item.path)
+    [
+      '/',
+      '/explore',
+      '/agency/dashboard',
+      '/agent/dashboard',
+      '/owner',
+      '/developer-launch',
+      '/admin',
+      '/messages',
+      '/profile',
+    ].includes(item.path)
   )
 
   const isActive = (path) =>
@@ -389,7 +634,7 @@ export default function Navigation() {
         </div>
 
         <nav className="mt-5 flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto overflow-x-hidden pb-5 pr-1">
-          {navSections.map((section) => (
+          {visibleNavSections.map((section) => (
             <div key={section.label}>
               {!collapsed && (
                 <p className="px-3 pb-2 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#94A3B8]">
@@ -421,20 +666,34 @@ export default function Navigation() {
         </nav>
 
         <div className="border-t border-white/10 py-3">
-          <button
-            onClick={() => {
-              localStorage.removeItem('baytmiftah_user')
-              window.location.href = '/login'
-            }}
-            className={`flex min-h-11 w-full items-center rounded-md px-3 py-2 font-semibold text-[#ff453a] transition hover:bg-white/10 ${
-              collapsed ? 'justify-center' : 'gap-3'
-            }`}
-            title={collapsed ? 'Sign Out' : undefined}
-            aria-label="Sign Out"
-          >
-            <SvgIcon name="logout" />
-            {!collapsed && <span>Sign Out</span>}
-          </button>
+          {currentUser ? (
+            <button
+              onClick={() => {
+                localStorage.removeItem('baytmiftah_user')
+                window.location.href = '/login'
+              }}
+              className={`flex min-h-11 w-full items-center rounded-md px-3 py-2 font-semibold text-[#ff453a] transition hover:bg-white/10 ${
+                collapsed ? 'justify-center' : 'gap-3'
+              }`}
+              title={collapsed ? 'Sign Out' : undefined}
+              aria-label="Sign Out"
+            >
+              <SvgIcon name="logout" />
+              {!collapsed && <span>Sign Out</span>}
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className={`flex min-h-11 w-full items-center rounded-md px-3 py-2 font-semibold text-[#E9C349] transition hover:bg-white/10 ${
+                collapsed ? 'justify-center' : 'gap-3'
+              }`}
+              title={collapsed ? 'Sign In' : undefined}
+              aria-label="Sign In"
+            >
+              <SvgIcon name="account_circle" />
+              {!collapsed && <span>Sign In</span>}
+            </Link>
+          )}
         </div>
       </aside>
 

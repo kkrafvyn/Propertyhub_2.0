@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { normalizeSupabaseUser } from './lib/auth'
-import { PLATFORM_ADMIN_ROLES } from './lib/roles'
+import { getRoleHomePath, PLATFORM_ADMIN_ROLES } from './lib/roles'
 import authService from './services/auth-service'
 
 // Components
@@ -116,6 +116,7 @@ export default function App() {
           const normalizedUser = normalizeSupabaseUser(edgeProfile?.user || user)
           setUser(normalizedUser)
           localStorage.setItem('baytmiftah_user', JSON.stringify(normalizedUser))
+          window.dispatchEvent(new Event('baytmiftah:user'))
           return
         }
 
@@ -138,10 +139,12 @@ export default function App() {
         if (normalizedUser) {
           setUser(normalizedUser)
           localStorage.setItem('baytmiftah_user', JSON.stringify(normalizedUser))
+          window.dispatchEvent(new Event('baytmiftah:user'))
         } else if (event === 'SIGNED_OUT') {
           setUser(null)
           localStorage.removeItem('baytmiftah_user')
           localStorage.removeItem('baytmiftah_token')
+          window.dispatchEvent(new Event('baytmiftah:user'))
         } else {
           const storedUser = localStorage.getItem('baytmiftah_user')
           setUser(storedUser ? JSON.parse(storedUser) : null)
@@ -183,8 +186,12 @@ export default function App() {
         <Route
           path="/"
           element={
-            <Dashboard />
+            <Dashboard user={user} />
           }
+        />
+        <Route
+          path="/workspace"
+          element={<Navigate to={user ? getRoleHomePath(user.role) : '/'} replace />}
         />
         <Route
           path="/explore"

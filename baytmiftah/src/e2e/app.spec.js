@@ -1,17 +1,25 @@
 import { expect, test } from '@playwright/test'
 
-const demoUser = {
+const buyerUser = {
   id: 'qa-user',
   name: 'QA Operator',
   email: 'qa@example.com',
+  role: 'buyer',
+  app_metadata: { role: 'buyer' },
+}
+
+const adminUser = {
+  id: 'qa-admin',
+  name: 'QA Admin',
+  email: 'admin@example.com',
   role: 'platform_admin',
   app_metadata: { role: 'platform_admin' },
 }
 
-async function seedAuth(page) {
+async function seedAuth(page, user = buyerUser) {
   await page.addInitScript((user) => {
     window.localStorage.setItem('baytmiftah_user', JSON.stringify(user))
-  }, demoUser)
+  }, user)
 }
 
 test.beforeEach(async ({ page }) => {
@@ -73,7 +81,7 @@ test('create listing flow exposes checklist and media staging', async ({ page })
 })
 
 test('admin agency verification empty or review state renders', async ({ page }) => {
-  await seedAuth(page)
+  await seedAuth(page, adminUser)
   await page.goto('/admin/agencies')
 
   await expect(page.getByRole('heading', { name: /Pending Agencies/i })).toBeVisible()

@@ -25,6 +25,22 @@ export const PLATFORM_ADMIN_ROLES = [
   USER_ROLES.SUPER_ADMIN,
 ]
 
+export const CUSTOMER_ROLES = [
+  USER_ROLES.BUYER,
+  USER_ROLES.RENTER,
+]
+
+export const OWNER_ROLES = [
+  USER_ROLES.PROPERTY_OWNER,
+  USER_ROLES.PROPERTY_MANAGER,
+]
+
+export const AGENT_ROLES = [
+  USER_ROLES.INDEPENDENT_AGENT,
+  USER_ROLES.AGENCY_AGENT,
+  USER_ROLES.AGENCY_SUPPORT,
+]
+
 export const AGENCY_ROLES = [
   USER_ROLES.AGENCY_OWNER,
   USER_ROLES.AGENCY_MANAGER,
@@ -48,4 +64,30 @@ export const SELF_SERVE_ROLES = [
 
 export function normalizeRole(role) {
   return LEGACY_ROLE_MAP[role] || role || USER_ROLES.BUYER
+}
+
+export function getRoleGroup(role) {
+  const normalizedRole = normalizeRole(role)
+
+  if (PLATFORM_ADMIN_ROLES.includes(normalizedRole)) return 'admin'
+  if (AGENCY_ROLES.includes(normalizedRole)) return 'agency'
+  if (OWNER_ROLES.includes(normalizedRole)) return 'owner'
+  if (normalizedRole === USER_ROLES.PROPERTY_DEVELOPER) return 'developer'
+  if (normalizedRole === USER_ROLES.INDEPENDENT_AGENT) return 'agent'
+  if (CUSTOMER_ROLES.includes(normalizedRole)) return 'customer'
+
+  return 'customer'
+}
+
+export function getRoleHomePath(role) {
+  const roleGroup = getRoleGroup(role)
+
+  return {
+    admin: '/admin',
+    agency: '/agency/dashboard',
+    owner: '/owner',
+    developer: '/developer-launch',
+    agent: '/agent/dashboard',
+    customer: '/',
+  }[roleGroup]
 }
