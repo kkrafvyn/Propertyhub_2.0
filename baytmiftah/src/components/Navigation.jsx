@@ -606,7 +606,7 @@ export default function Navigation() {
   return (
     <>
       <aside
-        className={`fixed left-0 top-0 hidden h-screen flex-col border-r border-white/10 bg-[rgba(11,18,32,0.94)] px-3 pt-[calc(env(safe-area-inset-top)+1rem)] text-[#F8FAFC] shadow-[1px_0_0_rgba(255,255,255,0.04)] backdrop-blur-2xl transition-[width] duration-200 md:flex ${
+        className={`fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-white/10 bg-[rgba(11,18,32,0.94)] px-3 pt-[calc(env(safe-area-inset-top)+1rem)] text-[#F8FAFC] shadow-[1px_0_0_rgba(255,255,255,0.04)] backdrop-blur-2xl transition-[width] duration-200 md:flex ${
           collapsed ? 'w-20' : 'w-64'
         }`}
       >
@@ -621,10 +621,13 @@ export default function Navigation() {
           </Link>
           <button
             onClick={() => setCollapsed((current) => !current)}
-            className="flex h-11 w-11 items-center justify-center rounded-md text-[#CBD5E1] transition hover:bg-white/10 hover:text-white"
+            className={`absolute right-3 top-[calc(env(safe-area-inset-top)+1rem)] z-[60] flex h-11 w-11 items-center justify-center rounded-md border border-white/10 bg-white/10 text-[#CBD5E1] shadow-lg shadow-black/20 transition hover:bg-white/15 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#E9C349] ${
+              collapsed ? 'left-1/2 right-auto -translate-x-1/2' : ''
+            }`}
             aria-expanded={!collapsed}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            type="button"
           >
             <SvgIcon
               name={collapsed ? 'menu' : 'chevron_left'}

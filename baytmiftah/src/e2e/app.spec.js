@@ -50,6 +50,13 @@ test('desktop dashboard and navigation render', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /BaytMiftah Workspace/i })).toBeVisible()
   await expect(page.getByRole('link', { name: /Explore/i }).first()).toBeVisible()
 
+  if ((page.viewportSize()?.width || 0) >= 768) {
+    await page.getByRole('button', { name: /Collapse sidebar/i }).click()
+    await expect(page.locator('html')).toHaveAttribute('data-sidebar', 'collapsed')
+    await page.getByRole('button', { name: /Expand sidebar/i }).click()
+    await expect(page.locator('html')).toHaveAttribute('data-sidebar', 'expanded')
+  }
+
   await page.getByRole('link', { name: /Explore/i }).first().click()
   await expect(page).toHaveURL(/\/explore/)
   await expect(page.getByRole('link', { name: /The Obsidian Penthouse/i })).toBeVisible()
