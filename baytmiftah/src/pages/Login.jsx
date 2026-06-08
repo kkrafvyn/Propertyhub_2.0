@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { normalizeSupabaseUser } from '../lib/auth'
 import authService from '../services/auth-service'
 import AuthShell from '../components/AuthShell'
@@ -12,6 +12,11 @@ export default function Login({ setUser }) {
   const [providerLoading, setProviderLoading] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const location = useLocation()
+  const redirectTarget = location.state?.from?.pathname || '/'
+  const redirectState = location.state?.from?.bookingDraft
+    ? { bookingDraft: location.state.from.bookingDraft }
+    : undefined
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -24,7 +29,7 @@ export default function Login({ setUser }) {
 
       localStorage.setItem('baytmiftah_user', JSON.stringify(user))
       setUser(user)
-      navigate('/')
+      navigate(redirectTarget, { replace: true, state: redirectState })
     } catch (err) {
       setError(err.message || 'Invalid credentials. Please try again.')
     } finally {

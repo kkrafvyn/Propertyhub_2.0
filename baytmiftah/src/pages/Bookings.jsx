@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import EnterpriseShell from '../components/EnterpriseShell'
 import { createViewingRequest, getLocalBookings } from '../services/booking-service'
 
@@ -28,9 +29,13 @@ const actions = [
 ]
 
 export default function Bookings() {
+  const location = useLocation()
+  const bookingDraft = location.state?.bookingDraft || location.state?.from?.bookingDraft
   const [activeTab, setActiveTab] = useState('All Items')
   const [bookingForm, setBookingForm] = useState({
-    property: 'The Obsidian Penthouse',
+    property: bookingDraft?.property || 'The Obsidian Penthouse',
+    listingId: bookingDraft?.listingId || '',
+    propertyId: bookingDraft?.propertyId || '',
     requestedDate: '',
     requestedTime: '10:00',
     contactName: '',

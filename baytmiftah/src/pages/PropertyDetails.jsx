@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import marketplaceService, {
   fallbackMarketplaceListings,
 } from '../services/marketplace-service'
@@ -140,6 +140,7 @@ function LocationPanel({ listing }) {
 }
 
 function BookingCard({ listing, onOfferCreated }) {
+  const navigate = useNavigate()
   const deposit = listing.listingType === 'sale' ? 'Offer review' : listing.priceLabel
   const [offerForm, setOfferForm] = useState({
     buyerName: '',
@@ -150,6 +151,39 @@ function BookingCard({ listing, onOfferCreated }) {
   })
   const [offerPacket, setOfferPacket] = useState(null)
   const [offerNotice, setOfferNotice] = useState('')
+
+  const requireLoginForBooking = () => {
+    try {
+      const storedUser = localStorage.getItem('baytmiftah_user')
+      if (storedUser) {
+        navigate('/bookings', {
+          state: {
+            bookingDraft: {
+              property: listing.title,
+              listingId: listing.id,
+              propertyId: listing.propertyId,
+            },
+          },
+        })
+        return
+      }
+    } catch {
+      // Fall through to login when local auth state cannot be read.
+    }
+
+    navigate('/login', {
+      state: {
+        from: {
+          pathname: '/bookings',
+          bookingDraft: {
+            property: listing.title,
+            listingId: listing.id,
+            propertyId: listing.propertyId,
+          },
+        },
+      },
+    })
+  }
 
   const submitOffer = async (event) => {
     event.preventDefault()
@@ -192,7 +226,10 @@ function BookingCard({ listing, onOfferCreated }) {
             <strong>{deposit}</strong>
           </div>
         </div>
-        <button className="mt-6 w-full rounded-md bg-black py-5 text-xl font-bold text-white">
+        <button
+          onClick={requireLoginForBooking}
+          className="mt-6 w-full rounded-md bg-black py-5 text-xl font-bold text-white"
+        >
           Schedule Viewing
         </button>
         <a

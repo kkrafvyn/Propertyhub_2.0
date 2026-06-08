@@ -183,9 +183,7 @@ export default function App() {
         <Route
           path="/"
           element={
-            <ProtectedRoute user={user}>
-              <Dashboard />
-            </ProtectedRoute>
+            <Dashboard />
           }
         />
         <Route
