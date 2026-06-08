@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import PropTechShell from '../../components/PropTechShell'
 import { useSmartDeviceStore } from '../../store/useSmartDeviceStore'
 
 const previewLogs = [
@@ -64,7 +65,15 @@ export default function EventLogs() {
   })
 
   return (
-    <div>
+    <PropTechShell
+      active="Smart Property"
+      brand="Event Logs"
+      sidebarTitle="PropTech"
+      sidebarSubtitle="Agency Command"
+      searchPlaceholder="Search device events..."
+      primaryAction=""
+    >
+    <main className="px-5 py-8 md:px-8">
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-display-md font-bold">Event Logs</h1>
@@ -132,7 +141,8 @@ export default function EventLogs() {
       )}
 
       {loading && <p className="mt-4 text-body-sm text-on-surface-variant">Refreshing event logs...</p>}
-    </div>
+    </main>
+    </PropTechShell>
   )
 }
 

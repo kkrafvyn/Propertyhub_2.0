@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import AdminPageShell from '../../components/AdminPageShell'
 import { exportAuditCsv, getAuditEvents, recordAuditEvent } from '../../services/audit-service'
 
 export default function AuditLog() {
@@ -36,6 +37,7 @@ export default function AuditLog() {
   }
 
   return (
+    <AdminPageShell title="Audit Log">
     <div className="space-y-8">
       <section className="rounded-lg border border-outline-variant bg-surface-container p-6">
         <p className="text-label-sm text-secondary">Governance</p>
@@ -84,5 +86,6 @@ export default function AuditLog() {
         ))}
       </section>
     </div>
+    </AdminPageShell>
   )
 }

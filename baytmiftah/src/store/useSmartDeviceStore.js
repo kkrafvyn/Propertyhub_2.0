@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import smartDeviceService from '../services/smart-device-service'
 
+const isExpectedPreviewError = (error) =>
+  /sign in|auth|jwt|session/i.test(error?.message || '')
+
 export const useSmartDeviceStore = create((set, get) => ({
   devices: [],
   currentDevice: null,
@@ -21,7 +24,7 @@ export const useSmartDeviceStore = create((set, get) => ({
       return data
     } catch (error) {
       set({ error: error.message })
-      console.error('Error fetching devices:', error)
+      if (!isExpectedPreviewError(error)) console.error('Error fetching devices:', error)
       return []
     } finally {
       set({ loading: false })
@@ -35,7 +38,7 @@ export const useSmartDeviceStore = create((set, get) => ({
       return data
     } catch (error) {
       set({ error: error.message })
-      console.error('Error fetching device:', error)
+      if (!isExpectedPreviewError(error)) console.error('Error fetching device:', error)
       return null
     }
   },
@@ -117,7 +120,7 @@ export const useSmartDeviceStore = create((set, get) => ({
       return data
     } catch (error) {
       set({ error: error.message })
-      console.error('Error fetching automation rules:', error)
+      if (!isExpectedPreviewError(error)) console.error('Error fetching automation rules:', error)
       return []
     }
   },
@@ -174,7 +177,7 @@ export const useSmartDeviceStore = create((set, get) => ({
       return data
     } catch (error) {
       set({ error: error.message })
-      console.error('Error fetching alerts:', error)
+      if (!isExpectedPreviewError(error)) console.error('Error fetching alerts:', error)
       return []
     }
   },
@@ -196,7 +199,7 @@ export const useSmartDeviceStore = create((set, get) => ({
       return data
     } catch (error) {
       set({ error: error.message })
-      console.error('Error fetching event logs:', error)
+      if (!isExpectedPreviewError(error)) console.error('Error fetching event logs:', error)
       return []
     }
   },
@@ -205,7 +208,7 @@ export const useSmartDeviceStore = create((set, get) => ({
     try {
       return await smartDeviceService.logEvent(deviceId, eventType, eventData)
     } catch (error) {
-      console.error('Error logging event:', error)
+      if (!isExpectedPreviewError(error)) console.error('Error logging event:', error)
       return null
     }
   },

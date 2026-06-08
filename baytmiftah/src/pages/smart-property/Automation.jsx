@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import PropTechShell from '../../components/PropTechShell'
 import { useSmartDeviceStore } from '../../store/useSmartDeviceStore'
 
 const starterRules = [
@@ -90,7 +91,15 @@ export default function Automation() {
   const usingStarters = automationRules.length === 0
 
   return (
-    <div>
+    <PropTechShell
+      active="Smart Property"
+      brand="Automation Rules"
+      sidebarTitle="PropTech"
+      sidebarSubtitle="Agency Command"
+      searchPlaceholder="Search rules or triggers..."
+      primaryAction=""
+    >
+    <main className="px-5 py-8 md:px-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-display-md font-bold">Automation Rules</h1>
@@ -248,6 +257,7 @@ export default function Automation() {
           </div>
         </div>
       )}
-    </div>
+    </main>
+    </PropTechShell>
   )
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
+import { SvgIcon } from '../../components/Navigation'
 import { useAgencyStore } from '../../store/useAgencyStore'
 
 const fallbackAgents = [
@@ -141,6 +142,22 @@ export default function AgencyProfile() {
 
   return (
     <div className="min-h-screen bg-surface">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[rgba(7,21,36,0.92)] px-5 py-4 text-[#F8FAFC] backdrop-blur-2xl md:px-8">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+          <Link to="/explore" className="text-2xl font-semibold">
+            BaytMiftah
+          </Link>
+          <nav className="hidden items-center gap-6 text-sm font-semibold md:flex">
+            <Link to="/explore" className="hover:text-[#E9C349]">Explore</Link>
+            <Link to="/neighborhoods" className="hover:text-[#E9C349]">Neighborhoods</Link>
+            <Link to="/login" className="hover:text-[#E9C349]">Sign in</Link>
+          </nav>
+          <Link to="/explore" className="marketplace-cta px-4 py-2">
+            <SvgIcon name="search" className="h-4 w-4" />
+            Browse
+          </Link>
+        </div>
+      </header>
       <div className="h-48 bg-gradient-to-r from-primary to-secondary md:h-64" />
 
       <div className="relative z-10 mx-auto -mt-24 max-w-6xl px-4 pb-16">

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import AdminPageShell from '../../components/AdminPageShell'
 import { trustService } from '../../services/mvp-service'
 
 const fallbackSignals = [
@@ -59,6 +60,7 @@ export default function TrustDashboard() {
   }))
 
   return (
+    <AdminPageShell title="Trust Dashboard">
     <div className="space-y-8">
       <section className="rounded-lg border border-outline-variant bg-surface-container p-6">
         <p className="text-label-sm text-secondary">Trust operations</p>
@@ -117,5 +119,6 @@ export default function TrustDashboard() {
         ))}
       </section>
     </div>
+    </AdminPageShell>
   )
 }

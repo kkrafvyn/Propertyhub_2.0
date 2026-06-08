@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { SvgIcon } from '../components/Navigation'
 
 export default function NotFound() {
   return (
@@ -31,9 +32,9 @@ export default function NotFound() {
           <aside className="rounded-lg border border-outline-variant bg-surface p-5">
             {[
               ['storefront', 'Marketplace', '/explore'],
-              ['business_center', 'Agency console', '/agency/dashboard'],
-              ['settings_input_antenna', 'Smart property', '/smart-property/devices'],
-              ['analytics', 'Analytics', '/agency/analytics'],
+              ['groups', 'Agency console', '/agency/dashboard'],
+              ['devices_other', 'Smart property', '/smart-property/devices'],
+              ['monitoring', 'Analytics', '/agency/analytics'],
             ].map(([icon, label, path]) => (
               <Link
                 key={path}
@@ -41,10 +42,10 @@ export default function NotFound() {
                 className="flex items-center justify-between border-b border-outline-variant py-4 last:border-b-0"
               >
                 <span className="flex items-center gap-3 font-semibold">
-                  <span className="material-symbols-outlined text-secondary">{icon}</span>
+                  <SvgIcon name={icon} className="h-5 w-5 text-secondary" />
                   {label}
                 </span>
-                <span className="material-symbols-outlined text-on-surface-variant">arrow_forward</span>
+                <SvgIcon name="chevron_left" className="h-5 w-5 rotate-180 text-on-surface-variant" />
               </Link>
             ))}
           </aside>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import AdminPageShell from '../../components/AdminPageShell'
 import agencyService from '../../services/agency-service'
 
 export default function AgencyVerification() {
@@ -101,6 +102,7 @@ export default function AgencyVerification() {
   })
 
   return (
+    <AdminPageShell title="Agency Verification">
     <div className="grid gap-8 md:grid-cols-3">
       <div className="md:col-span-1">
         <div className="mb-4 flex items-center justify-between">
@@ -307,5 +309,6 @@ export default function AgencyVerification() {
         </div>
       )}
     </div>
+    </AdminPageShell>
   )
 }

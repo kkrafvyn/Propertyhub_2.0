@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import PropTechShell from '../../components/PropTechShell'
 import { useSmartDeviceStore } from '../../store/useSmartDeviceStore'
 
 const previewAlerts = [
@@ -68,7 +69,15 @@ export default function Alerts() {
   }
 
   return (
-    <div>
+    <PropTechShell
+      active="Smart Property"
+      brand="Smart Alerts"
+      sidebarTitle="PropTech"
+      sidebarSubtitle="Agency Command"
+      searchPlaceholder="Search alerts or units..."
+      primaryAction=""
+    >
+    <main className="px-5 py-8 md:px-8">
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-display-md font-bold">Alerts & Notifications</h1>
@@ -144,7 +153,8 @@ export default function Alerts() {
           </p>
         </div>
       )}
-    </div>
+    </main>
+    </PropTechShell>
   )
 }
 

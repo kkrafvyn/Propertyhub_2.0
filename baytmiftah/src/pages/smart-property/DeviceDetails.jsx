@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import PropTechShell from '../../components/PropTechShell'
 import { useSmartDeviceStore } from '../../store/useSmartDeviceStore'
 import smartDeviceService from '../../services/smart-device-service'
 
@@ -86,7 +87,9 @@ export default function DeviceDetails() {
       const logs = await smartDeviceService.getEventLogs(deviceId, 10)
       setEventLogs(logs || [])
     } catch (error) {
-      console.error('Error loading logs:', error)
+      if (!/sign in|auth|jwt|session/i.test(error?.message || '')) {
+        console.error('Error loading logs:', error)
+      }
       setEventLogs([])
     }
   }
@@ -148,7 +151,15 @@ export default function DeviceDetails() {
   }
 
   return (
-    <div>
+    <PropTechShell
+      active="Smart Property"
+      brand={device.name}
+      sidebarTitle="PropTech"
+      sidebarSubtitle="Agency Command"
+      searchPlaceholder="Search device history..."
+      primaryAction=""
+    >
+    <main className="px-5 py-8 md:px-8">
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-display-md font-bold">{device.name}</h1>
@@ -256,7 +267,8 @@ export default function DeviceDetails() {
           </p>
         )}
       </div>
-    </div>
+    </main>
+    </PropTechShell>
   )
 }
 
