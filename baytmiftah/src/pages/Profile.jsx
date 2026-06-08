@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
 import Header from '../components/Header'
 
 export default function Profile({ user, setUser }) {
+  const navigate = useNavigate()
   const [editMode, setEditMode] = useState(false)
   const [formData, setFormData] = useState({
     name: user?.name || 'Alex Sterling',
@@ -21,7 +23,8 @@ export default function Profile({ user, setUser }) {
     localStorage.removeItem('baytmiftah_user')
     localStorage.removeItem('baytmiftah_token')
     setUser(null)
-    window.location.href = '/login'
+    window.dispatchEvent(new Event('baytmiftah:user'))
+    navigate('/login', { replace: true })
   }
 
   return (

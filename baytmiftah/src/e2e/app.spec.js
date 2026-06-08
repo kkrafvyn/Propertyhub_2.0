@@ -95,6 +95,30 @@ test('admin agency verification empty or review state renders', async ({ page })
   await expect(page.getByRole('button', { name: /All/i })).toBeVisible()
 })
 
+test('route aliases redirect to canonical screens', async ({ page }) => {
+  await seedAuth(page)
+
+  const aliases = [
+    ['/dashboard', /\/$/],
+    ['/properties', /\/explore$/],
+    ['/saved', /\/favorites$/],
+    ['/viewings', /\/bookings$/],
+    ['/offers', /\/offer-room$/],
+    ['/documents', /\/document-vault$/],
+    ['/settings', /\/profile$/],
+    ['/devices', /\/smart-property\/devices$/],
+  ]
+
+  for (const [from, to] of aliases) {
+    await page.goto(from)
+    await expect(page).toHaveURL(to)
+  }
+
+  await seedAuth(page, adminUser)
+  await page.goto('/admin/dashboard')
+  await expect(page).toHaveURL(/\/admin$/)
+})
+
 test('unknown route renders recoverable error state', async ({ page }) => {
   await page.goto('/definitely-not-a-route')
 

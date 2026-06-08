@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { normalizeSupabaseUser } from './lib/auth'
 import { getRoleHomePath, PLATFORM_ADMIN_ROLES } from './lib/roles'
@@ -94,6 +94,11 @@ function AppLoader() {
   )
 }
 
+function PropertyRouteRedirect({ suffix = '' }) {
+  const { id } = useParams()
+  return <Navigate to={`/property/${id}${suffix}`} replace />
+}
+
 export default function App() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -183,6 +188,23 @@ export default function App() {
         <Route path="/properties" element={<Navigate to="/explore" replace />} />
         <Route path="/listings" element={<Navigate to="/my-listings" replace />} />
         <Route path="/agent" element={<Navigate to="/agent/dashboard" replace />} />
+        <Route path="/saved" element={<Navigate to="/favorites" replace />} />
+        <Route path="/saved-searches" element={<Navigate to="/smart-match" replace />} />
+        <Route path="/viewings" element={<Navigate to="/bookings" replace />} />
+        <Route path="/booking" element={<Navigate to="/bookings" replace />} />
+        <Route path="/book" element={<Navigate to="/bookings" replace />} />
+        <Route path="/offers" element={<Navigate to="/offer-room" replace />} />
+        <Route path="/documents" element={<Navigate to="/document-vault" replace />} />
+        <Route path="/vault" element={<Navigate to="/document-vault" replace />} />
+        <Route path="/settings" element={<Navigate to="/profile" replace />} />
+        <Route path="/account" element={<Navigate to="/account/security" replace />} />
+        <Route path="/analytics" element={<Navigate to="/agency/analytics" replace />} />
+        <Route path="/leads" element={<Navigate to="/agency/leads" replace />} />
+        <Route path="/team" element={<Navigate to="/agency/team" replace />} />
+        <Route path="/devices" element={<Navigate to="/smart-property/devices" replace />} />
+        <Route path="/smart-devices" element={<Navigate to="/smart-property/devices" replace />} />
+        <Route path="/property/:id/book" element={<PropertyRouteRedirect />} />
+        <Route path="/property/:id/viewing" element={<PropertyRouteRedirect />} />
         <Route
           path="/"
           element={
@@ -506,6 +528,8 @@ export default function App() {
         {/* ========== AGENCY MODULE ROUTES ========== */}
 
         <Route path="/agency" element={<Navigate to="/agency/dashboard" replace />} />
+        <Route path="/agency/home" element={<Navigate to="/agency/dashboard" replace />} />
+        <Route path="/agency/listings" element={<Navigate to="/agency/properties" replace />} />
 
         {/* Agency Onboarding */}
         <Route
@@ -590,6 +614,8 @@ export default function App() {
           path="/smart-property"
           element={<Navigate to="/smart-property/devices" replace />}
         />
+        <Route path="/smart-property/events" element={<Navigate to="/smart-property/logs" replace />} />
+        <Route path="/smart-property/event-logs" element={<Navigate to="/smart-property/logs" replace />} />
 
         <Route
           path="/smart-property/devices"
@@ -673,6 +699,10 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/admin/dashboard" element={<Navigate to="/admin" replace />} />
+        <Route path="/admin/reviews" element={<Navigate to="/admin/agencies" replace />} />
+        <Route path="/admin/agency-verification" element={<Navigate to="/admin/agencies" replace />} />
+        <Route path="/admin/queue" element={<Navigate to="/admin/moderation" replace />} />
 
         <Route
           path="/admin/trust"

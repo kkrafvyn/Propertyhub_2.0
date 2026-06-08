@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 const navItems = [
   { label: 'Dashboard', icon: 'dashboard', path: '/agency/dashboard' },
@@ -20,6 +20,14 @@ export default function PropTechShell({
   primaryAction = 'Add Property',
 }) {
   const location = useLocation()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    localStorage.removeItem('baytmiftah_user')
+    localStorage.removeItem('baytmiftah_token')
+    window.dispatchEvent(new Event('baytmiftah:user'))
+    navigate('/login', { replace: true })
+  }
 
   return (
     <div className="proptech-page min-h-screen bg-[#051424] text-[#F8FAFC]">
@@ -66,7 +74,10 @@ export default function PropTechShell({
             <span className="material-symbols-outlined">help</span>
             Support
           </Link>
-          <button className="flex min-h-11 items-center gap-4 rounded-md px-3 py-2 font-semibold text-[#CBD5E1] hover:bg-white/10 hover:text-white">
+          <button
+            onClick={handleLogout}
+            className="flex min-h-11 items-center gap-4 rounded-md px-3 py-2 font-semibold text-[#CBD5E1] hover:bg-white/10 hover:text-white"
+          >
             <span className="material-symbols-outlined">logout</span>
             Logout
           </button>

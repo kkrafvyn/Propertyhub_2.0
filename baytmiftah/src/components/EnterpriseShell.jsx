@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 const primaryNav = [
   { label: 'Marketplace', icon: 'storefront', path: '/explore' },
@@ -24,6 +24,14 @@ export default function EnterpriseShell({
   showCreate = true,
 }) {
   const location = useLocation()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    localStorage.removeItem('baytmiftah_user')
+    localStorage.removeItem('baytmiftah_token')
+    window.dispatchEvent(new Event('baytmiftah:user'))
+    navigate('/login', { replace: true })
+  }
 
   const isActive = (item) =>
     activeSection === item.label ||
@@ -69,7 +77,10 @@ export default function EnterpriseShell({
               </p>
             </div>
           </div>
-          <button className="flex min-h-11 w-full items-center gap-4 rounded-md px-3 py-2 font-semibold text-[#CBD5E1] hover:bg-white/10 hover:text-white">
+          <button
+            onClick={handleLogout}
+            className="flex min-h-11 w-full items-center gap-4 rounded-md px-3 py-2 font-semibold text-[#CBD5E1] hover:bg-white/10 hover:text-white"
+          >
             <span className="material-symbols-outlined">logout</span>
             Logout
           </button>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getRoleGroup } from '../lib/roles'
 
 const iconPaths = {
@@ -450,6 +450,7 @@ export function SvgIcon({ name, className = '' }) {
 
 export default function Navigation() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('baytmiftah_user') || 'null')
@@ -787,7 +788,9 @@ export default function Navigation() {
             <button
               onClick={() => {
                 localStorage.removeItem('baytmiftah_user')
-                window.location.href = '/login'
+                localStorage.removeItem('baytmiftah_token')
+                window.dispatchEvent(new Event('baytmiftah:user'))
+                navigate('/login', { replace: true })
               }}
               className={`flex min-h-11 w-full items-center rounded-md px-3 py-2 font-semibold text-[#ff453a] transition hover:bg-white/10 ${
                 collapsed ? 'justify-center' : 'gap-3'
