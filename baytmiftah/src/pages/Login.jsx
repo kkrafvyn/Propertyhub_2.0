@@ -17,6 +17,7 @@ export default function Login({ setUser }) {
   const redirectState = location.state?.from?.bookingDraft
     ? { bookingDraft: location.state.from.bookingDraft }
     : undefined
+  const bookingDraft = location.state?.from?.bookingDraft
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -60,7 +61,11 @@ export default function Login({ setUser }) {
       footer={(
         <>
           Don&apos;t have an account?{' '}
-          <Link to="/signup" className="font-semibold text-[#9a7413] underline">
+          <Link
+            to="/signup"
+            state={location.state}
+            className="font-semibold text-[#9a7413] underline"
+          >
             Request access
           </Link>
           <div className="mt-3 flex justify-center gap-3 text-xs">
@@ -77,6 +82,13 @@ export default function Login({ setUser }) {
           {error && (
             <div className="rounded-md border border-[#b3261e]/30 bg-[#fff4f3] p-4">
               <p className="text-sm font-medium text-[#b3261e]">{error}</p>
+            </div>
+          )}
+          {bookingDraft && (
+            <div className="rounded-md border border-[#E9C349]/40 bg-[#fff7d6] p-4">
+              <p className="text-sm font-semibold text-[#071121]">
+                Sign in to schedule a viewing for {bookingDraft.property}.
+              </p>
             </div>
           )}
 

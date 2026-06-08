@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { normalizeSupabaseUser } from '../lib/auth'
 import { SELF_SERVE_ROLES, USER_ROLES } from '../lib/roles'
 import authService from '../services/auth-service'
@@ -27,6 +27,12 @@ export default function SignUp({ setUser }) {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const navigate = useNavigate()
+  const location = useLocation()
+  const redirectTarget = location.state?.from?.pathname || '/'
+  const redirectState = location.state?.from?.bookingDraft
+    ? { bookingDraft: location.state.from.bookingDraft }
+    : undefined
+  const bookingDraft = location.state?.from?.bookingDraft
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -52,7 +58,7 @@ export default function SignUp({ setUser }) {
         const user = normalizeSupabaseUser(data.session?.user || data.user)
         localStorage.setItem('baytmiftah_user', JSON.stringify(user))
         setUser(user)
-        navigate('/')
+        navigate(redirectTarget, { replace: true, state: redirectState })
         return
       }
 
@@ -90,7 +96,11 @@ export default function SignUp({ setUser }) {
       footer={(
         <>
           Already have access?{' '}
-          <Link to="/login" className="font-semibold text-[#9a7413] underline">
+          <Link
+            to="/login"
+            state={location.state}
+            className="font-semibold text-[#9a7413] underline"
+          >
             Sign in
           </Link>
         </>
@@ -110,6 +120,13 @@ export default function SignUp({ setUser }) {
           {notice && (
             <div className="rounded-md border border-[#E9C349]/30 bg-[#fff7d6] p-4">
               <p className="text-sm font-medium text-[#E9C349]">{notice}</p>
+            </div>
+          )}
+          {bookingDraft && (
+            <div className="rounded-md border border-[#E9C349]/40 bg-[#fff7d6] p-4">
+              <p className="text-sm font-semibold text-[#071121]">
+                Create an account to request a viewing for {bookingDraft.property}.
+              </p>
             </div>
           )}
 
