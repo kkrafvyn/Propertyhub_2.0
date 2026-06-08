@@ -1,0 +1,11 @@
+{
+  "installCommand": "cd baytmiftah && npm ci",
+  "buildCommand": "cd baytmiftah && npm run build",
+  "outputDirectory": "baytmiftah/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
