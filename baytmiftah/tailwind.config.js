@@ -7,22 +7,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#bec6e0',
-        secondary: '#e9c349',
+        primary: '#E9C349',
+        secondary: '#E9C349',
         surface: '#051424',
         'dark-bg': '#0a1428',
-        'on-surface': '#e0e0e0',
-        'on-secondary': '#000000',
+        'on-surface': '#F8FAFC',
+        'on-secondary': '#0F172A',
         'surface-container': '#1a1f2e',
         'surface-container-high': '#2a2f3e',
         'surface-container-highest': '#3a3f4e',
-        'on-surface-variant': '#a0a0a0',
-        outline: '#606060',
-        'outline-variant': '#505050',
+        'on-surface-variant': '#CBD5E1',
+        outline: '#475569',
+        'outline-variant': '#334155',
       },
       fontFamily: {
-        sans: ['Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'sans-serif'],
-        inter: ['Inter', 'sans-serif'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
+        inter: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'sans-serif'],
       },
       fontSize: {
         'display-lg': ['3.5rem', { lineHeight: '1.05' }],

@@ -14,7 +14,7 @@ export default function GlobalReadiness() {
 
         <div className="mx-auto max-w-container px-4 pt-24 md:px-8">
           <section className="rounded-lg border border-[#cbd3df] bg-white p-6 shadow-sm md:p-8">
-            <p className="text-label-sm font-bold uppercase tracking-wider text-[#007a52]">
+            <p className="text-label-sm font-bold uppercase tracking-wider text-[#E9C349]">
               Worldwide readiness layer
             </p>
             <div className="mt-3 grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
@@ -23,7 +23,7 @@ export default function GlobalReadiness() {
                   Country-aware compliance, payments, localization, legal flows, and data residency.
                 </h2>
                 <p className="mt-5 max-w-3xl text-base leading-8 text-[#4b5563] md:text-lg">
-                  This layer makes Property Hub adaptable by market. It decides what users can do, what data is
+                  This layer makes BaytMiftah adaptable by market. It decides what users can do, what data is
                   required, which transactions are legal, and how each country should localize property workflows.
                 </p>
               </div>
@@ -44,10 +44,10 @@ export default function GlobalReadiness() {
               <Link
                 key={module.id}
                 to={`/global/${module.id}`}
-                className="rounded-lg border border-[#cbd3df] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#007a52] hover:shadow-md"
+                className="rounded-lg border border-[#cbd3df] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#E9C349] hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-md bg-[#e9fbf6] text-[#007a52]">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-md bg-[#fff7d6] text-[#E9C349]">
                     <span className="material-symbols-outlined">{module.icon}</span>
                   </span>
                   <span className="rounded-full bg-[#edf4ff] px-3 py-1 text-xs font-bold text-[#303744]">
@@ -58,7 +58,7 @@ export default function GlobalReadiness() {
                 <p className="mt-2 min-h-[72px] text-sm leading-6 text-[#4b5563]">{module.summary}</p>
                 <div className="mt-5 flex items-center justify-between border-t border-[#e5e7eb] pt-4 text-sm font-bold">
                   <span>{module.capabilities.length} controls</span>
-                  <span className="material-symbols-outlined text-[#007a52]">arrow_forward</span>
+                  <span className="material-symbols-outlined text-[#E9C349]">arrow_forward</span>
                 </div>
               </Link>
             ))}
@@ -67,7 +67,7 @@ export default function GlobalReadiness() {
           <section className="mt-8 rounded-lg border border-[#cbd3df] bg-white p-6 shadow-sm md:p-8">
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
               <div>
-                <p className="text-label-sm font-bold uppercase tracking-wider text-[#007a52]">Launch path</p>
+                <p className="text-label-sm font-bold uppercase tracking-wider text-[#E9C349]">Launch path</p>
                 <h2 className="mt-2 text-3xl font-black">Global rollout sequence</h2>
               </div>
               <Link to="/global/compliance-engine" className="btn-secondary inline-flex items-center gap-2">
@@ -79,7 +79,7 @@ export default function GlobalReadiness() {
             <div className="mt-6 grid gap-3 lg:grid-cols-3">
               {globalLaunchSequence.map((step, index) => (
                 <div key={step} className="rounded-md bg-[#f8faff] p-4">
-                  <span className="text-sm font-black text-[#007a52]">Phase {index + 1}</span>
+                  <span className="text-sm font-black text-[#E9C349]">Phase {index + 1}</span>
                   <p className="mt-2 font-semibold">{step}</p>
                 </div>
               ))}

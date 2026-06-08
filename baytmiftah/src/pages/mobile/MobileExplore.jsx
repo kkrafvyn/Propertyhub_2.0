@@ -121,7 +121,7 @@ export default function MobileExplore() {
           <button
             key={label}
             className={`flex flex-col items-center justify-center gap-1 ${
-              label === 'Explore' ? 'text-[#007a52]' : 'text-[#303744]'
+              label === 'Explore' ? 'text-[#E9C349]' : 'text-[#303744]'
             }`}
           >
             <span className="material-symbols-outlined">{icon}</span>

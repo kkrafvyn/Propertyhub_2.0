@@ -24,8 +24,8 @@ export default function EcosystemHub() {
         <div className="mx-auto max-w-container px-4 pt-24 md:px-8">
           <section className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
             <div className="rounded-lg border border-[#cbd3df] bg-white p-6 shadow-sm md:p-8">
-              <p className="text-label-sm font-bold uppercase tracking-wider text-[#007a52]">
-                Property Hub OS
+              <p className="text-label-sm font-bold uppercase tracking-wider text-[#E9C349]">
+                BaytMiftah OS
               </p>
               <h2 className="mt-3 max-w-3xl text-4xl font-black leading-tight md:text-5xl">
                 A complete operating system for property discovery, ownership, development, and operations.
@@ -43,7 +43,7 @@ export default function EcosystemHub() {
               </div>
               <div className="rounded-lg border border-[#cbd3df] bg-white p-6 shadow-sm">
                 <p className="text-sm text-[#4b5563]">Product modules</p>
-                <p className="mt-2 text-5xl font-black text-[#007a52]">{totals.products}</p>
+                <p className="mt-2 text-5xl font-black text-[#E9C349]">{totals.products}</p>
               </div>
             </div>
           </section>
@@ -53,7 +53,7 @@ export default function EcosystemHub() {
               <Link
                 key={group.id}
                 to={`/ecosystem/${group.id}`}
-                className="rounded-lg border border-[#cbd3df] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#007a52] hover:shadow-md"
+                className="rounded-lg border border-[#cbd3df] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#E9C349] hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-4">
                   <span
@@ -70,7 +70,7 @@ export default function EcosystemHub() {
                 <p className="mt-2 min-h-[48px] text-sm leading-6 text-[#4b5563]">{group.summary}</p>
                 <div className="mt-5 flex items-center justify-between border-t border-[#e5e7eb] pt-4 text-sm font-bold">
                   <span>{group.modules.length} modules</span>
-                  <span className="material-symbols-outlined text-[#007a52]">arrow_forward</span>
+                  <span className="material-symbols-outlined text-[#E9C349]">arrow_forward</span>
                 </div>
               </Link>
             ))}
@@ -79,8 +79,8 @@ export default function EcosystemHub() {
           <section className="mt-8 rounded-lg border border-[#cbd3df] bg-white p-6 shadow-sm md:p-8">
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
               <div>
-                <p className="text-label-sm font-bold uppercase tracking-wider text-[#007a52]">Standout bets</p>
-                <h2 className="mt-2 text-3xl font-black">What makes Property Hub hard to copy</h2>
+                <p className="text-label-sm font-bold uppercase tracking-wider text-[#E9C349]">Standout bets</p>
+                <h2 className="mt-2 text-3xl font-black">What makes BaytMiftah hard to copy</h2>
               </div>
               <Link to="/ecosystem/ai-suite" className="btn-secondary inline-flex items-center gap-2">
                 <span className="material-symbols-outlined">auto_awesome</span>
@@ -91,7 +91,7 @@ export default function EcosystemHub() {
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {standoutFeatures.map((feature, index) => (
                 <div key={feature} className="flex items-center gap-3 rounded-md bg-[#f8faff] p-4">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#e9fbf6] text-sm font-black text-[#007a52]">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#fff7d6] text-sm font-black text-[#E9C349]">
                     {index + 1}
                   </span>
                   <span className="text-sm font-semibold">{feature}</span>

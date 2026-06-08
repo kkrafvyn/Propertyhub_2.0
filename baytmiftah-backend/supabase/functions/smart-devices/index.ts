@@ -1,5 +1,6 @@
 import { getSupabaseClient, requireOrganizationAccess, verifyToken } from "../_shared/auth.ts";
 import { handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
+import { requireUuid } from "../_shared/security.ts";
 
 function fallbackForMissingTable(error: any, fallback: any) {
   if (error?.code === "PGRST205" || error?.code === "42P01") return fallback;
@@ -298,7 +299,7 @@ Deno.serve(async (req: Request) => {
       const body = await req.json();
       const { data, error } = await supabase.from("device_sharing").insert([{
         device_id: deviceId,
-        shared_with: body.userId,
+        shared_with: requireUuid(body.userId || body.user_id, "userId"),
         permissions: body.permissions || "view",
       }]).select().single();
       if (error) return jsonResponse(fallbackForMissingTable(error, null));

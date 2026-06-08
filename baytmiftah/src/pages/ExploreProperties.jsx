@@ -3,6 +3,14 @@ import { Link } from 'react-router-dom'
 import marketplaceService, {
   fallbackMarketplaceListings,
 } from '../services/marketplace-service'
+import BackendStatusBanner from '../components/BackendStatusBanner'
+import { getComparisonIds, toggleComparisonId } from '../services/comparison-service'
+import {
+  getSavedSearches,
+  listRemoteSavedSearches,
+  saveSearchAlert,
+} from '../services/saved-search-service'
+import { geocodeLocation } from '../services/geo-service'
 
 const categories = [
   { id: 'all', label: 'Marketplace', icon: 'storefront' },
@@ -19,6 +27,13 @@ export default function ExploreProperties() {
   const [listings, setListings] = useState(fallbackMarketplaceListings)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
+  const [comparisonIds, setComparisonIds] = useState(getComparisonIds)
+  const [savedSearches, setSavedSearches] = useState(getSavedSearches)
+  const [mapMode, setMapMode] = useState(false)
+  const [priceRange, setPriceRange] = useState('any')
+  const [geoResult, setGeoResult] = useState(null)
+  const [geocoding, setGeocoding] = useState(false)
+  const [persistenceNotice, setPersistenceNotice] = useState('')
 
   useEffect(() => {
     let ignore = false
@@ -42,6 +57,11 @@ export default function ExploreProperties() {
     }
 
     loadListings()
+
+    listRemoteSavedSearches().then(({ searches, source }) => {
+      setSavedSearches(searches)
+      if (source === 'supabase') setPersistenceNotice('Saved searches synced with Supabase.')
+    })
 
     return () => {
       ignore = true
@@ -70,16 +90,47 @@ export default function ExploreProperties() {
         .join(' ')
         .toLowerCase()
 
-      return matchesCategory && (!query || searchableText.includes(query))
+      const matchesPrice =
+        priceRange === 'any' ||
+        (priceRange === 'under-1m' && Number(listing.price || 0) < 1000000) ||
+        (priceRange === '1m-3m' &&
+          Number(listing.price || 0) >= 1000000 &&
+          Number(listing.price || 0) <= 3000000) ||
+        (priceRange === '3m-plus' && Number(listing.price || 0) > 3000000)
+
+      return matchesCategory && matchesPrice && (!query || searchableText.includes(query))
     })
-  }, [activeCategory, listings, search])
+  }, [activeCategory, listings, priceRange, search])
+
+  const saveCurrentSearch = async () => {
+    const { search: saved, source } = await saveSearchAlert({
+      query: search || 'All locations',
+      category: activeCategory,
+      priceRange,
+      resultCount: visibleListings.length,
+    })
+    setSavedSearches((current) => [saved, ...current])
+    setPersistenceNotice(
+      source === 'supabase'
+        ? 'Saved search stored in Supabase.'
+        : 'Saved locally. Supabase persistence needs your backend setup.'
+    )
+  }
+
+  const geocodeCurrentSearch = async () => {
+    setGeocoding(true)
+    const result = await geocodeLocation(search || 'Accra')
+    setGeoResult(result)
+    setMapMode(true)
+    setGeocoding(false)
+  }
 
   return (
     <div className="min-h-screen bg-white text-black">
       <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur-xl">
         <div className="flex items-center justify-between gap-6 px-5 py-5 md:px-8">
           <Link to="/" className="shrink-0 text-3xl font-bold text-black">
-            Property Hub
+            BaytMiftah
           </Link>
 
           <div className="hidden items-center overflow-hidden rounded-full border border-neutral-200 bg-white shadow-xl shadow-black/10 lg:flex">
@@ -113,7 +164,7 @@ export default function ExploreProperties() {
               to="/create-listing"
               className="hidden text-sm font-semibold hover:underline md:inline-flex"
             >
-              Property Hub your home
+              BaytMiftah your home
             </Link>
             <button className="hidden h-11 w-11 items-center justify-center rounded-full hover:bg-neutral-100 sm:flex">
               <span className="material-symbols-outlined">language</span>
@@ -156,9 +207,107 @@ export default function ExploreProperties() {
             Filters
           </button>
         </div>
+        {persistenceNotice && (
+          <div className="border-t border-neutral-200 px-5 py-2 text-sm font-semibold text-neutral-600 md:px-8">
+            {persistenceNotice}
+          </div>
+        )}
       </header>
 
       <main className="px-5 pb-36 pt-8 md:px-8">
+        <BackendStatusBanner className="mb-6" />
+        <section className="mb-6 grid gap-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 lg:grid-cols-[1fr_auto]">
+          <div className="grid gap-3 md:grid-cols-4">
+            <label className="md:col-span-2">
+              <span className="text-sm font-semibold">Map area search</span>
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Draw from search: Accra, Cantonments, Airport..."
+                className="mt-2 h-11 w-full rounded-md border border-neutral-200 px-3 outline-none"
+              />
+            </label>
+            <label>
+              <span className="text-sm font-semibold">Budget</span>
+              <select
+                value={priceRange}
+                onChange={(event) => setPriceRange(event.target.value)}
+                className="mt-2 h-11 w-full rounded-md border border-neutral-200 px-3 outline-none"
+              >
+                <option value="any">Any budget</option>
+                <option value="under-1m">Under GHS 1M</option>
+                <option value="1m-3m">GHS 1M - 3M</option>
+                <option value="3m-plus">GHS 3M+</option>
+              </select>
+            </label>
+            <div>
+              <span className="text-sm font-semibold">Mode</span>
+              <button
+                onClick={() => setMapMode((current) => !current)}
+                className={`mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-md border font-semibold ${
+                  mapMode ? 'border-black bg-black text-white' : 'border-neutral-200 bg-white'
+                }`}
+              >
+                <span className="material-symbols-outlined text-base">map</span>
+                {mapMode ? 'Map on' : 'Map off'}
+              </button>
+            </div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+            <button
+              onClick={geocodeCurrentSearch}
+              className="rounded-md border border-neutral-300 bg-white px-5 py-3 font-bold text-black"
+            >
+              {geocoding ? 'Locating...' : 'Locate'}
+            </button>
+            <button onClick={saveCurrentSearch} className="rounded-md bg-black px-5 py-3 font-bold text-white">
+              Save Alert
+            </button>
+          </div>
+        </section>
+        {mapMode && (
+          <section className="mb-6 overflow-hidden rounded-lg border border-neutral-200 bg-[#dfe7dc]">
+            <div className="relative h-72 bg-[radial-gradient(circle_at_28%_48%,rgba(0,0,0,.18),transparent_15%),linear-gradient(135deg,#cbd5c0,#edf4e8)]">
+              {geoResult?.results?.[0] && (
+                <div className="absolute left-4 top-4 rounded-md bg-white/95 px-4 py-3 text-sm font-semibold shadow">
+                  <span className="material-symbols-outlined mr-1 align-middle text-base">my_location</span>
+                  {geoResult.results[0].label}
+                  <span className="ml-2 text-neutral-500">({geoResult.source})</span>
+                </div>
+              )}
+              {visibleListings.slice(0, 4).map((listing, index) => (
+                <Link
+                  key={listing.id}
+                  to={`/property/${listing.id}`}
+                  className="absolute rounded-full bg-black px-4 py-2 text-sm font-bold text-white shadow-lg"
+                  style={{
+                    left: `${18 + index * 18}%`,
+                    top: `${28 + (index % 2) * 30}%`,
+                  }}
+                >
+                  {listing.priceLabel}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+        {savedSearches.length > 0 && (
+          <div className="mb-6 flex gap-2 overflow-x-auto">
+            {savedSearches.slice(0, 4).map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setSearch(item.query === 'All locations' ? '' : item.query)
+                  setActiveCategory(item.category)
+                  setPriceRange(item.priceRange)
+                }}
+                className="shrink-0 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold"
+              >
+                {item.query} / {item.resultCount} results
+              </button>
+            ))}
+          </div>
+        )}
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-widest text-neutral-500">
@@ -198,6 +347,15 @@ export default function ExploreProperties() {
                     Verified
                   </span>
                 )}
+                <button
+                  className="absolute bottom-4 left-4 rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-wider text-black"
+                  onClick={(event) => {
+                    event.preventDefault()
+                    setComparisonIds(toggleComparisonId(listing.id))
+                  }}
+                >
+                  {comparisonIds.includes(listing.id) ? 'Compared' : 'Compare'}
+                </button>
               </div>
 
               <div className="pt-3">
@@ -230,10 +388,13 @@ export default function ExploreProperties() {
         )}
       </main>
 
-      <button className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black px-7 py-4 font-bold text-white shadow-2xl shadow-black/30">
-        Show map
-        <span className="material-symbols-outlined">map</span>
-      </button>
+      <Link
+        to="/compare"
+        className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black px-7 py-4 font-bold text-white shadow-2xl shadow-black/30"
+      >
+        Compare {comparisonIds.length || ''}
+        <span className="material-symbols-outlined">compare_arrows</span>
+      </Link>
     </div>
   )
 }

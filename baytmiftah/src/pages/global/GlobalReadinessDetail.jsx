@@ -21,10 +21,10 @@ export default function GlobalReadinessDetail() {
           <section className="rounded-lg border border-[#cbd3df] bg-white p-6 shadow-sm md:p-8">
             <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
               <div className="max-w-3xl">
-                <span className="flex h-14 w-14 items-center justify-center rounded-md bg-[#e9fbf6] text-[#007a52]">
+                <span className="flex h-14 w-14 items-center justify-center rounded-md bg-[#fff7d6] text-[#E9C349]">
                   <span className="material-symbols-outlined text-3xl">{module.icon}</span>
                 </span>
-                <p className="mt-5 text-label-sm font-bold uppercase tracking-wider text-[#007a52]">
+                <p className="mt-5 text-label-sm font-bold uppercase tracking-wider text-[#E9C349]">
                   {module.status}
                 </p>
                 <h2 className="mt-2 text-4xl font-black md:text-5xl">{module.title}</h2>
@@ -43,7 +43,7 @@ export default function GlobalReadinessDetail() {
               <div className="mt-5 grid gap-3">
                 {module.capabilities.map((capability) => (
                   <div key={capability} className="flex items-start gap-3 rounded-md bg-[#f8faff] p-4">
-                    <span className="material-symbols-outlined text-[#007a52]">check_circle</span>
+                    <span className="material-symbols-outlined text-[#E9C349]">check_circle</span>
                     <span className="font-semibold">{capability}</span>
                   </div>
                 ))}

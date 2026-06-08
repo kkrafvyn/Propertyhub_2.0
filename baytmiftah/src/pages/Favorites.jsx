@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Navigation from '../components/Navigation'
 import Header from '../components/Header'
+import { DemoModeBanner } from '../components/UI'
 import marketplaceService, {
   fallbackMarketplaceListings,
 } from '../services/marketplace-service'
 
 export default function Favorites() {
   const [favorites, setFavorites] = useState(fallbackMarketplaceListings)
+  const [usingFallback, setUsingFallback] = useState(true)
 
   useEffect(() => {
     let ignore = false
@@ -15,10 +17,16 @@ export default function Favorites() {
     marketplaceService
       .getListings()
       .then((data) => {
-        if (!ignore) setFavorites(data.slice(0, 4))
+        if (!ignore) {
+          setFavorites(data.slice(0, 4))
+          setUsingFallback(data === fallbackMarketplaceListings)
+        }
       })
       .catch(() => {
-        if (!ignore) setFavorites(fallbackMarketplaceListings)
+        if (!ignore) {
+          setFavorites(fallbackMarketplaceListings)
+          setUsingFallback(true)
+        }
       })
 
     return () => {
@@ -43,6 +51,8 @@ export default function Favorites() {
                 {favorites.length} live properties staged for review, tours, or offers.
               </p>
             </div>
+
+            {usingFallback && <DemoModeBanner className="mb-6" />}
 
             <div className="grid gap-6 lg:grid-cols-2">
               {favorites.map((property) => (

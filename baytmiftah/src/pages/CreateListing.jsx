@@ -3,6 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import Navigation from '../components/Navigation'
 import Header from '../components/Header'
 import marketplaceService from '../services/marketplace-service'
+import { DataBanner } from '../components/UI'
+import {
+  uploadPropertyMedia,
+  uploadVerificationDocument,
+} from '../services/media-service'
+import BackendStatusBanner from '../components/BackendStatusBanner'
+import { reviewListingQualityWithAI } from '../services/listing-review-service'
 
 const amenities = ['Pool', 'Private Elevator', 'Smart Home', 'Concierge', 'Cinema', 'Gym']
 
@@ -21,6 +28,14 @@ export default function CreateListing() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [mediaFiles, setMediaFiles] = useState([])
+  const [verificationDocs, setVerificationDocs] = useState([])
+  const [submitAction, setSubmitAction] = useState('published')
+  const [uploadProgress, setUploadProgress] = useState(null)
+  const [uploadWarning, setUploadWarning] = useState('')
+  const [aiReview, setAiReview] = useState(null)
+  const [aiReviewing, setAiReviewing] = useState(false)
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -34,6 +49,62 @@ export default function CreateListing() {
         ? prev.amenities.filter((item) => item !== amenity)
         : [...prev.amenities, amenity],
     }))
+  }
+
+  const checklist = [
+    { label: 'Property title', done: Boolean(formData.title.trim()) },
+    { label: 'Buyer-ready description', done: formData.description.trim().length >= 40 },
+    { label: 'Location and type', done: Boolean(formData.location.trim() && formData.type) },
+    { label: 'Price and measurements', done: Boolean(formData.price && formData.sqft) },
+    { label: 'At least one amenity', done: formData.amenities.length > 0 },
+    { label: 'Media selected', done: mediaFiles.length > 0 },
+  ]
+  const verificationChecklist = [
+    { label: 'Address or GhanaPost GPS supplied', done: Boolean(formData.location.trim()) },
+    { label: 'Ownership or mandate document staged', done: verificationDocs.length > 0 },
+    { label: 'Pricing and measurements ready', done: Boolean(formData.price && formData.sqft) },
+    { label: 'Agency review required before verification badge', done: true },
+  ]
+  const readyCount = checklist.filter((item) => item.done).length
+  const canPublish = readyCount === checklist.length
+
+  const runAiReview = async () => {
+    setAiReviewing(true)
+    setAiReview(
+      await reviewListingQualityWithAI({
+        formData,
+        mediaCount: mediaFiles.length,
+        documentCount: verificationDocs.length,
+        checklist,
+      })
+    )
+    setAiReviewing(false)
+  }
+
+  const handleMediaSelect = (event) => {
+    const staged = Array.from(event.target.files || []).map((file, index) => ({
+      id: `${file.name}-${file.size}-${Date.now()}-${index}`,
+      file,
+      preview: URL.createObjectURL(file),
+      isPrimary: mediaFiles.length === 0 && index === 0,
+    }))
+    setMediaFiles((current) => [...current, ...staged])
+  }
+
+  const removeMedia = (id) => {
+    setMediaFiles((current) => {
+      const next = current.filter((item) => item.id !== id)
+      return next.map((item, index) => ({
+        ...item,
+        isPrimary: item.isPrimary || (index === 0 && !next.some((nextItem) => nextItem.isPrimary)),
+      }))
+    })
+  }
+
+  const makePrimary = (id) => {
+    setMediaFiles((current) =>
+      current.map((item) => ({ ...item, isPrimary: item.id === id }))
+    )
   }
 
   const handleSubmit = async (event) => {
@@ -52,32 +123,94 @@ export default function CreateListing() {
         .map((part) => part.trim())
         .filter(Boolean)
 
+      if (submitAction === 'published' && !canPublish) {
+        throw new Error('Complete the publishing checklist before publishing.')
+      }
+
+      const workflowStatus = {
+        draft: 'draft',
+        review: 'submitted_for_review',
+        published: 'published',
+      }[submitAction]
+
       const listing = await marketplaceService.createListing({
         organizationId: ownedOrganization.id,
         property: {
+          title: formData.title,
           address: formData.location,
           city: city || formData.location,
           neighborhood: neighborhoodParts.join(', ') || null,
           category: formData.type,
+          property_type: formData.type,
           bedrooms: Number(formData.bedrooms),
           bathrooms: Number(formData.bathrooms),
           square_meters: Math.round(Number(formData.sqft) / 10.7639),
+          sqft: Number(formData.sqft),
           description: `${formData.title}\n\n${formData.description}`,
           amenities: formData.amenities,
           address_verified: false,
           location_confidence: 0,
           flood_risk_level: 'unknown',
+          verification_checklist: Object.fromEntries(
+            verificationChecklist.map((item) => [item.label, item.done])
+          ),
         },
         listing: {
           listing_type: 'sale',
           price: Number(formData.price),
           currency: 'GHS',
-          status: 'listed',
-          visibility: 'public',
+          status: submitAction === 'draft' ? 'draft' : 'listed',
+          visibility: submitAction === 'published' ? 'public' : 'private',
+          workflow_status: workflowStatus,
+          submitted_for_review_at:
+            submitAction === 'review' ? new Date().toISOString() : null,
           quality_score: 72,
           whatsapp_enabled: true,
+          metadata: {
+            ai_review: aiReview,
+            verification_documents: verificationDocs.map((item) => ({
+              name: item.file.name,
+              documentType: item.documentType,
+            })),
+          },
         },
       })
+
+      const uploadedDocuments = []
+      if (verificationDocs.length > 0) {
+        for (const item of verificationDocs) {
+          const uploadedDocument = await uploadVerificationDocument({
+            organizationId: ownedOrganization.id,
+            propertyId: listing.propertyId,
+            listingId: listing.id,
+            file: item.file,
+            documentType: item.documentType,
+          })
+          uploadedDocuments.push(uploadedDocument)
+        }
+      }
+
+      if (mediaFiles.length > 0) {
+        try {
+          await uploadPropertyMedia({
+            propertyId: listing.propertyId,
+            listingId: listing.id,
+            files: mediaFiles,
+            title: formData.title,
+            onProgress: setUploadProgress,
+          })
+        } catch (uploadError) {
+          setUploadWarning(
+            uploadError.message ||
+              'Listing saved, but media upload failed. Check Storage bucket policies.'
+          )
+          if (submitAction === 'published') return
+        }
+      }
+
+      if (uploadedDocuments.length > 0) {
+        setSuccess(`${uploadedDocuments.length} verification document staged for review.`)
+      }
 
       navigate(`/property/${listing.id}`)
     } catch (err) {
@@ -98,6 +231,7 @@ export default function CreateListing() {
         <Header title="Create New Listing" showBack />
 
         <div className="px-4 pt-24 md:px-8">
+          <BackendStatusBanner className="mx-auto mb-6 max-w-container" />
           <form onSubmit={handleSubmit} className="mx-auto grid max-w-container gap-8 xl:grid-cols-[1fr_360px]">
             <div className="space-y-6">
               <section className="rounded-lg border border-outline-variant bg-surface-container p-6 md:p-8">
@@ -212,6 +346,64 @@ export default function CreateListing() {
                   ))}
                 </div>
               </section>
+
+              <section className="rounded-lg border border-outline-variant bg-surface-container p-6 md:p-8">
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <h3 className="text-2xl font-semibold text-secondary">AI Listing Review</h3>
+                    <p className="mt-2 text-on-surface-variant">
+                      Score the listing package before publish and generate review notes.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={runAiReview}
+                    disabled={aiReviewing}
+                    className="btn-secondary disabled:opacity-60"
+                  >
+                    <span className="material-symbols-outlined">auto_awesome</span>
+                    {aiReviewing ? 'Reviewing...' : 'Review Listing'}
+                  </button>
+                </div>
+
+                {aiReview && (
+                  <div className="mt-6 grid gap-4 lg:grid-cols-[180px_1fr]">
+                    <div className="rounded-lg bg-secondary p-5 text-on-secondary">
+                      <p className="text-sm uppercase tracking-widest">Quality score</p>
+                      <p className="mt-2 text-5xl font-bold">{aiReview.score}</p>
+                      <p className="mt-2 text-xs uppercase tracking-widest opacity-70">
+                        {aiReview.source || 'local'}
+                      </p>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {[
+                        ['Missing info', aiReview.issues],
+                        ['Suggestions', aiReview.suggestions],
+                        ['Risk signals', aiReview.riskSignals],
+                        ['Admin note', [aiReview.adminReviewNote]],
+                      ].map(([label, items]) => (
+                        <div key={label} className="rounded-lg border border-outline-variant bg-surface p-4">
+                          <p className="font-semibold">{label}</p>
+                          <ul className="mt-3 space-y-2 text-sm text-on-surface-variant">
+                            {(items.length ? items : ['No items flagged.']).map((item) => (
+                              <li key={item} className="flex gap-2">
+                                <span className="material-symbols-outlined text-base text-secondary">check_circle</span>
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="lg:col-span-2 rounded-lg bg-surface p-4">
+                      <p className="font-semibold">Suggested title</p>
+                      <p className="mt-2 text-on-surface-variant">{aiReview.titleSuggestion}</p>
+                      <p className="mt-4 font-semibold">Description guidance</p>
+                      <p className="mt-2 text-on-surface-variant">{aiReview.descriptionSuggestion}</p>
+                    </div>
+                  </div>
+                )}
+              </section>
             </div>
 
             <aside className="space-y-6">
@@ -225,27 +417,150 @@ export default function CreateListing() {
                   <p className="mt-1 text-sm text-on-surface-variant">
                     Use wide, bright images that show the property clearly.
                   </p>
-                  <button type="button" className="btn-secondary mt-5">
+                  <label className="btn-secondary mt-5 inline-flex cursor-pointer">
                     Select Files
-                  </button>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={handleMediaSelect}
+                    />
+                  </label>
                 </div>
-                <p className="mt-3 text-sm text-on-surface-variant">
-                  Media upload storage is not connected yet; the listing will publish with
-                  fallback imagery until Storage policies are added.
+                {mediaFiles.length > 0 && (
+                  <div className="mt-4 grid gap-3">
+                    {mediaFiles.map((item) => (
+                      <div
+                        key={item.id}
+                        className="grid gap-3 rounded-md bg-surface p-3 text-sm"
+                      >
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={item.preview}
+                            alt=""
+                            className="h-14 w-16 rounded object-cover"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-semibold">{item.file.name}</p>
+                            <p className="text-on-surface-variant">
+                              {(item.file.size / 1024 / 1024).toFixed(1)} MB
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => makePrimary(item.id)}
+                            className={`rounded-md px-3 py-2 ${
+                              item.isPrimary ? 'bg-secondary text-on-secondary' : 'bg-surface-container-high'
+                            }`}
+                          >
+                            Primary
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeMedia(item.id)}
+                            className="rounded-md bg-error/10 px-3 py-2 text-error"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {uploadProgress && (
+                  <p className="mt-3 text-sm text-on-surface-variant">
+                    {uploadProgress.status === 'complete' ? 'Uploaded' : 'Uploading'}{' '}
+                    {uploadProgress.fileName} ({uploadProgress.index + 1} of{' '}
+                    {uploadProgress.total})
+                  </p>
+                )}
+              </section>
+
+              <section className="rounded-lg border border-outline-variant bg-surface-container p-6">
+                <h3 className="text-2xl font-semibold text-secondary">Verification</h3>
+                <p className="mt-2 text-sm text-on-surface-variant">
+                  Upload ownership proof, agency mandate, or land/title documents for review.
                 </p>
+                <label className="btn-secondary mt-5 inline-flex cursor-pointer">
+                  Add Documents
+                  <input
+                    type="file"
+                    multiple
+                    accept="application/pdf,image/*"
+                    className="sr-only"
+                    onChange={(event) =>
+                      setVerificationDocs((current) => [
+                        ...current,
+                        ...Array.from(event.target.files || []).map((file) => ({
+                          id: `${file.name}-${file.size}-${Date.now()}`,
+                          file,
+                          documentType: 'ownership_proof',
+                        })),
+                      ])
+                    }
+                  />
+                </label>
+                <div className="mt-4 space-y-3">
+                  {verificationDocs.map((item) => (
+                    <div key={item.id} className="rounded-md bg-surface p-3">
+                      <p className="truncate font-semibold">{item.file.name}</p>
+                      <select
+                        value={item.documentType}
+                        onChange={(event) =>
+                          setVerificationDocs((current) =>
+                            current.map((doc) =>
+                              doc.id === item.id
+                                ? { ...doc, documentType: event.target.value }
+                                : doc
+                            )
+                          )
+                        }
+                        className="input-field mt-2"
+                      >
+                        <option value="ownership_proof">Ownership proof</option>
+                        <option value="agency_mandate">Agency mandate</option>
+                        <option value="tax_certificate">Tax certificate</option>
+                        <option value="address_evidence">Address evidence</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
               </section>
 
               <section className="rounded-lg border border-outline-variant bg-[#111827] p-6 text-white">
                 <span className="material-symbols-outlined text-3xl">task_alt</span>
                 <h3 className="mt-4 text-2xl font-semibold">Publishing checklist</h3>
+                <p className="mt-2 text-sm text-white/60">{readyCount} of {checklist.length} checks ready</p>
                 <ul className="mt-4 space-y-3 text-white/75">
-                  <li>Title and location are buyer-readable</li>
-                  <li>Price and measurements are verified</li>
-                  <li>Media shows rooms, exterior, and amenities</li>
+                  {checklist.map((item) => (
+                    <li key={item.label} className="flex items-center gap-3">
+                      <span className={`material-symbols-outlined ${item.done ? 'text-[#E9C349]' : 'text-white/35'}`}>
+                        {item.done ? 'check_circle' : 'radio_button_unchecked'}
+                      </span>
+                      {item.label}
+                    </li>
+                  ))}
                 </ul>
               </section>
 
+              <DataBanner
+                variant={uploadWarning ? 'warning' : 'info'}
+                title={uploadWarning ? 'Storage upload needs attention' : 'Storage upload enabled'}
+                description={
+                  uploadWarning ||
+                  'Selected media and verification documents upload to the property-media bucket when the listing is saved.'
+                }
+              />
+
               <div className="grid gap-3">
+                {success && (
+                  <div className="rounded-lg border border-success bg-success/10 p-3 text-sm text-success">
+                    {success}
+                  </div>
+                )}
                 {error && (
                   <div className="rounded-lg border border-error bg-error/10 p-3 text-sm text-error">
                     {error}
@@ -253,10 +568,27 @@ export default function CreateListing() {
                 )}
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !canPublish}
+                  onClick={() => setSubmitAction('published')}
                   className="btn-primary w-full justify-center disabled:opacity-50"
                 >
                   {loading ? 'Publishing...' : 'Publish Listing'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  onClick={() => setSubmitAction('review')}
+                  className="btn-secondary w-full justify-center"
+                >
+                  Submit for Verification
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  onClick={() => setSubmitAction('draft')}
+                  className="btn-secondary w-full justify-center"
+                >
+                  Save Draft
                 </button>
                 <button
                   type="button"

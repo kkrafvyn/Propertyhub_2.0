@@ -13,25 +13,25 @@ const navItems = [
 export default function PropTechShell({
   children,
   active = 'Dashboard',
-  brand = 'PropTech Enterprise',
-  sidebarTitle = 'Management Console',
-  sidebarSubtitle = 'Proprietary Data Layer',
+  brand = 'BaytMiftah Workspace',
+  sidebarTitle = 'Agency Command',
+  sidebarSubtitle = 'Trust-First Data Layer',
   searchPlaceholder = 'Search portfolio...',
   primaryAction = 'Add Property',
 }) {
   const location = useLocation()
 
   return (
-    <div className="min-h-screen bg-[#f5f7fc] text-[#071121]">
-      <aside className="fixed left-0 top-0 hidden h-screen w-80 flex-col border-r border-[#b9c3d2] bg-[#dbeafe] p-6 shadow-md lg:flex">
-        <Link to="/agency/dashboard" className="text-3xl font-bold leading-tight">
+    <div className="proptech-page min-h-screen bg-[#051424] text-[#F8FAFC]">
+      <aside className="fixed left-0 top-0 hidden h-screen w-72 flex-col border-r border-white/10 bg-[rgba(11,18,32,0.94)] p-4 shadow-[1px_0_0_rgba(255,255,255,0.04)] backdrop-blur-2xl lg:flex">
+        <Link to="/agency/dashboard" className="min-h-11 text-2xl font-semibold leading-tight tracking-normal">
           {sidebarTitle}
         </Link>
-        <p className="mt-2 text-sm font-semibold tracking-widest text-[#596170]">
+        <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#94A3B8]">
           {sidebarSubtitle}
         </p>
 
-        <nav className="mt-16 flex flex-col gap-3">
+        <nav className="mt-10 flex flex-col gap-1">
           {navItems.map((item) => {
             const isActive =
               active === item.label ||
@@ -42,66 +42,70 @@ export default function PropTechShell({
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-4 rounded-md px-4 py-3 font-semibold tracking-wide transition ${
+                className={`flex min-h-11 items-center gap-4 rounded-md px-3 py-2 font-semibold tracking-normal transition ${
                   isActive
-                    ? 'bg-[#62efad] text-[#006c48]'
-                    : 'text-[#202735] hover:bg-white/60'
+                    ? 'bg-[#E9C349] text-[#0F172A] shadow-[0_6px_20px_rgba(233,195,73,0.18)]'
+                    : 'text-[#CBD5E1] hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <span className="material-symbols-outlined">{item.icon}</span>
+                <span className="material-symbols-outlined text-[1.35rem]">{item.icon}</span>
                 {item.label}
               </Link>
             )
           })}
         </nav>
 
-        <div className="mt-auto space-y-5 border-t border-[#b9c3d2] pt-6">
+        <div className="mt-auto space-y-3 border-t border-white/10 pt-5">
           <Link
             to="/create-listing"
-            className="block rounded-md bg-black px-6 py-4 text-center font-bold text-white"
+            className="block min-h-11 rounded-md bg-[#E9C349] px-6 py-3 text-center font-semibold text-[#0F172A]"
           >
-            Upgrade Plan
+            Add Elite Listing
           </Link>
-          <Link to="/support" className="flex items-center gap-4 px-4 py-2">
+          <Link to="/support" className="flex min-h-11 items-center gap-4 rounded-md px-3 py-2 font-semibold text-[#CBD5E1] hover:bg-white/10 hover:text-white">
             <span className="material-symbols-outlined">help</span>
             Support
           </Link>
-          <button className="flex items-center gap-4 px-4 py-2">
+          <button className="flex min-h-11 items-center gap-4 rounded-md px-3 py-2 font-semibold text-[#CBD5E1] hover:bg-white/10 hover:text-white">
             <span className="material-symbols-outlined">logout</span>
             Logout
           </button>
         </div>
       </aside>
 
-      <div className="lg:pl-80">
-        <header className="sticky top-0 z-30 flex min-h-20 items-center gap-5 border-b border-[#b9c3d2] bg-white/95 px-5 backdrop-blur md:px-8">
-          <Link to="/agency/dashboard" className="shrink-0 text-2xl font-black md:text-3xl">
+      <div className="lg:pl-72">
+        <header className="sticky top-0 z-30 flex min-h-16 items-center gap-3 border-b border-white/10 bg-[rgba(7,21,36,0.9)] px-4 backdrop-blur-2xl md:gap-5 md:px-8">
+          <Link to="/agency/dashboard" className="min-w-0 shrink truncate text-xl font-semibold tracking-normal md:text-2xl">
             {brand}
           </Link>
-          <label className="ml-auto hidden h-14 w-full max-w-md items-center gap-3 rounded-full border border-[#b9c3d2] bg-[#edf4ff] px-5 md:flex">
-            <span className="material-symbols-outlined text-[#4b5563]">search</span>
+          <label className="ml-auto hidden h-11 w-full max-w-md items-center gap-3 rounded-md border border-white/10 bg-white/10 px-4 md:flex">
+            <span className="material-symbols-outlined text-[#CBD5E1]">search</span>
             <input
-              className="min-w-0 flex-1 bg-transparent text-lg outline-none placeholder:text-[#667085]"
+              className="min-w-0 flex-1 bg-transparent text-sm text-[#F8FAFC] outline-none placeholder:text-[#CBD5E1]"
               placeholder={searchPlaceholder}
             />
           </label>
-          <div className="ml-auto flex items-center gap-4 md:ml-0">
+          <div className="ml-auto flex items-center gap-2 md:ml-0 md:gap-4">
             {primaryAction && (
               <Link
                 to="/create-listing"
-                className="hidden rounded-md bg-black px-6 py-3 font-bold text-white sm:block"
+                className="hidden min-h-11 rounded-md bg-[#E9C349] px-6 py-3 font-semibold text-[#0F172A] sm:block"
               >
                 {primaryAction}
               </Link>
             )}
-            <span className="material-symbols-outlined hidden sm:block">help</span>
-            <span className="material-symbols-outlined relative">notifications</span>
-            <span className="material-symbols-outlined hidden sm:block">settings</span>
-            <img
-              src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80"
-              alt=""
-              className="h-11 w-11 rounded-full object-cover"
-            />
+            <button className="hidden h-11 w-11 place-items-center rounded-md hover:bg-white/10 sm:grid" aria-label="Help">
+              <span className="material-symbols-outlined">help</span>
+            </button>
+            <button className="grid h-11 w-11 place-items-center rounded-md hover:bg-white/10" aria-label="Notifications">
+              <span className="material-symbols-outlined">notifications</span>
+            </button>
+            <button className="hidden h-11 w-11 place-items-center rounded-md hover:bg-white/10 sm:grid" aria-label="Settings">
+              <span className="material-symbols-outlined">settings</span>
+            </button>
+            <span className="grid h-11 w-11 place-items-center rounded-full bg-[#E9C349] text-sm font-bold text-[#071121]">
+              BM
+            </span>
           </div>
         </header>
 

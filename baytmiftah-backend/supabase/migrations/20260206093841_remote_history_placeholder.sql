@@ -1,0 +1,1 @@
+-- Remote migration 20260206093841 is already applied on the linked Supabase project. This placeholder preserves migration history alignment for this imported repo.

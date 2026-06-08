@@ -48,7 +48,7 @@ export default function AgentProfileShowcase() {
     <div className="min-h-screen bg-[#f5f7fc] text-[#071121]">
       <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-[#ccd3df] bg-[#f8faff]/95 px-6 backdrop-blur md:px-8">
         <Link to="/explore" className="text-2xl font-black tracking-tight">
-          Property Hub
+          BaytMiftah
         </Link>
         <nav className="hidden items-center gap-8 text-sm font-semibold md:flex">
           <Link to="/portfolio">Listings</Link>
@@ -73,7 +73,7 @@ export default function AgentProfileShowcase() {
               alt="Marcus Thorne"
               className="h-full w-full rounded-full object-cover ring-8 ring-[#dff6fb]"
             />
-            <span className="absolute bottom-5 right-2 h-5 w-5 rounded-full border-2 border-white bg-[#007a52]" />
+            <span className="absolute bottom-5 right-2 h-5 w-5 rounded-full border-2 border-white bg-[#E9C349]" />
           </div>
           <h1 className="mt-5 text-2xl font-bold">Marcus Thorne</h1>
           <p className="mt-1 text-sm text-[#4b5563]">Principal Agent • 12+ Years Experience</p>
@@ -113,7 +113,7 @@ export default function AgentProfileShowcase() {
                 ['trending_up', 'Success Rate', '98.4%'],
               ].map(([icon, label, value]) => (
                 <div key={label} className="rounded-md bg-[#edf4ff] p-5">
-                  <span className="material-symbols-outlined text-[#007a52]">{icon}</span>
+                  <span className="material-symbols-outlined text-[#E9C349]">{icon}</span>
                   <p className="mt-2 text-xs font-medium">{label}</p>
                   <p className="font-semibold">{value}</p>
                 </div>
@@ -124,7 +124,7 @@ export default function AgentProfileShowcase() {
           <section>
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-2xl font-bold">Active Listings</h2>
-              <Link to="/portfolio" className="text-sm font-semibold text-[#007a52]">
+              <Link to="/portfolio" className="text-sm font-semibold text-[#E9C349]">
                 View All Active (8)
               </Link>
             </div>
@@ -140,7 +140,7 @@ export default function AgentProfileShowcase() {
                       {listing.price}
                     </span>
                     {listing.badge && (
-                      <span className="absolute bottom-4 left-4 bg-[#007a52] px-3 py-1 text-xs font-bold uppercase tracking-widest text-white">
+                      <span className="absolute bottom-4 left-4 bg-[#E9C349] px-3 py-1 text-xs font-bold uppercase tracking-widest text-white">
                         {listing.badge}
                       </span>
                     )}
@@ -171,7 +171,7 @@ export default function AgentProfileShowcase() {
 
           <section className="grid gap-6 lg:grid-cols-3">
             <article className="rounded-lg bg-[#111827] p-8 text-white">
-              <span className="material-symbols-outlined text-[#62efad]">analytics</span>
+              <span className="material-symbols-outlined text-[#F5D76B]">analytics</span>
               <h3 className="mt-7 text-2xl font-bold">Market Analyst</h3>
               <p className="mt-4 text-[#aab3c2]">
                 Marcus provides monthly bespoke market analysis reports to all his
@@ -192,11 +192,11 @@ export default function AgentProfileShowcase() {
                   </div>
                 ))}
               </div>
-              <p className="mt-8 border-t border-[#b8c9e6] pt-5 text-sm font-semibold text-[#007a52]">
+              <p className="mt-8 border-t border-[#b8c9e6] pt-5 text-sm font-semibold text-[#E9C349]">
                 Verified Local Specialist
               </p>
             </article>
-            <article className="rounded-lg border border-[#62efad] bg-[#e9fbf6] p-8">
+            <article className="rounded-lg border border-[#F5D76B] bg-[#fff7d6] p-8">
               <h3 className="flex items-center gap-2 text-xl font-bold">
                 <span className="material-symbols-outlined">settings_input_antenna</span>
                 IoT Integrated
@@ -205,7 +205,7 @@ export default function AgentProfileShowcase() {
                 Pioneer in selling Smart Homes with pre-configured ecosystem dashboards.
               </p>
               <div className="mt-7 h-2 rounded-full bg-[#b5c2c8]">
-                <div className="h-2 w-3/4 rounded-full bg-[#007a52]" />
+                <div className="h-2 w-3/4 rounded-full bg-[#E9C349]" />
               </div>
               <p className="mt-3 text-sm font-semibold">Agency Leaderboard Rank: #4</p>
             </article>

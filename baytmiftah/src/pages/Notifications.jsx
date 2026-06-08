@@ -1,5 +1,13 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import EnterpriseShell from '../components/EnterpriseShell'
+import {
+  dispatchNotification,
+  getNotificationPreferences,
+  loadLocalNotificationPreferences,
+  saveNotificationPreferences,
+} from '../services/notification-service'
+import { subscribeToNotifications } from '../services/notification-realtime-service'
+import { DataBanner } from '../components/UI'
 
 const notifications = [
   {
@@ -38,6 +46,119 @@ const notifications = [
 ]
 
 export default function Notifications() {
+  const [category, setCategory] = useState('All')
+  const [unreadOnly, setUnreadOnly] = useState(false)
+  const [preferences, setPreferences] = useState(loadLocalNotificationPreferences)
+  const [preferenceSource, setPreferenceSource] = useState('local')
+  const [savingPreference, setSavingPreference] = useState('')
+  const [liveNotifications, setLiveNotifications] = useState([])
+  const [realtimeStatus, setRealtimeStatus] = useState('idle')
+  const [dispatchStatus, setDispatchStatus] = useState('')
+
+  useEffect(() => {
+    let ignore = false
+
+    getNotificationPreferences().then((result) => {
+      if (!ignore) {
+        setPreferences(result.preferences)
+        setPreferenceSource(result.source)
+      }
+    })
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let user = null
+    try {
+      user = JSON.parse(localStorage.getItem('baytmiftah_user') || 'null')
+    } catch {
+      user = null
+    }
+
+    const subscription = subscribeToNotifications(
+      user?.id,
+      (notification) => {
+        setLiveNotifications((current) => [
+          {
+            icon: notification.category === 'lead' ? 'person' : 'notifications',
+            title: notification.title,
+            time: 'Just now',
+            body: notification.body || 'New platform event received.',
+            action: notification.action_url ? 'Open' : null,
+            strong: true,
+          },
+          ...current,
+        ])
+      },
+      setRealtimeStatus
+    )
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const updatePreference = async (key) => {
+    const next = {
+      ...preferences,
+      [key]: !preferences[key],
+    }
+    setPreferences(next)
+    setSavingPreference(key)
+    const result = await saveNotificationPreferences(next)
+    setPreferenceSource(result.source)
+    setSavingPreference('')
+  }
+
+  const sendTestNotification = async () => {
+    let user = null
+    try {
+      user = JSON.parse(localStorage.getItem('baytmiftah_user') || 'null')
+    } catch {
+      user = null
+    }
+
+    setDispatchStatus('Sending test notification...')
+    const result = await dispatchNotification({
+      userId: user?.id,
+      title: 'BaytMiftah delivery check',
+      body: 'Realtime, email, SMS, and stored notification delivery are wired through the notifications Edge Function.',
+      category: 'system',
+      emailTo: preferences.email ? user?.email : undefined,
+      smsTo: preferences.sms ? user?.phone : undefined,
+    })
+
+    setLiveNotifications((current) => [
+      {
+        icon: 'notifications',
+        title: result.notification?.title || 'BaytMiftah delivery check',
+        time: 'Just now',
+        body: result.notification?.body || 'Notification dispatch finished.',
+        strong: true,
+      },
+      ...current,
+    ])
+    setDispatchStatus(
+      result.source === 'supabase'
+        ? 'Dispatch function completed.'
+        : `Local dispatch fallback active${result.error ? `: ${result.error}` : '.'}`
+    )
+  }
+
+  const visibleNotifications = useMemo(() => {
+    const allNotifications = [...liveNotifications, ...notifications]
+    return allNotifications.filter((item) => {
+      const matchesCategory =
+        category === 'All' ||
+        (category === 'System' && ['schedule', 'lock'].includes(item.icon)) ||
+        (category === 'Messages' && item.icon === 'person') ||
+        (category === 'Smart Property' && item.icon === 'lock')
+
+      return matchesCategory && (!unreadOnly || item.strong)
+    })
+  }, [category, liveNotifications, unreadOnly])
+
   return (
     <EnterpriseShell
       activeSection="Settings"
@@ -53,40 +174,109 @@ export default function Notifications() {
               <p className="mt-2 text-body-lg text-on-surface-variant">
                 Stay updated with your real estate ecosystem and device network.
               </p>
+              <p className="mt-2 text-sm text-on-surface-variant">
+                Realtime: {realtimeStatus === 'SUBSCRIBED' ? 'connected' : 'fallback feed'}
+              </p>
+              {dispatchStatus && (
+                <p className="mt-2 text-sm text-on-surface-variant">{dispatchStatus}</p>
+              )}
             </div>
-            <div className="flex items-center gap-4 rounded-lg border border-outline-variant bg-surface-container p-2">
-              <button className="rounded-md bg-secondary px-6 py-3 text-on-secondary">
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-outline-variant bg-surface-container p-2">
+              <button
+                onClick={sendTestNotification}
+                className="rounded-md bg-secondary px-6 py-3 font-semibold text-on-secondary"
+              >
+                Send Test
+              </button>
+              <button
+                onClick={() => setUnreadOnly(false)}
+                className={`rounded-md px-6 py-3 ${
+                  !unreadOnly ? 'bg-secondary text-on-secondary' : 'text-on-surface-variant'
+                }`}
+              >
                 All Notifications
               </button>
-              <span className="px-3 text-on-surface-variant">Unread Only</span>
-              <span className="h-7 w-12 rounded-full bg-surface-container-high" />
+              <button
+                onClick={() => setUnreadOnly(true)}
+                className={`rounded-md px-6 py-3 ${
+                  unreadOnly ? 'bg-secondary text-on-secondary' : 'text-on-surface-variant'
+                }`}
+              >
+                Unread Only
+              </button>
             </div>
           </div>
 
           <div className="mt-12 grid gap-8 lg:grid-cols-[280px_1fr]">
             <aside className="space-y-4">
               {[
+                ['All', 'inbox', notifications.length],
                 ['System', 'grid_view', '12'],
                 ['Messages', 'chat_bubble', '4'],
                 ['Smart Property', 'monitoring', '2'],
               ].map(([label, icon, count]) => (
                 <button
                   key={label}
+                  onClick={() => setCategory(label)}
                   className="flex w-full items-center justify-between rounded-lg border border-outline-variant bg-surface-container p-6 text-left"
                 >
                   <span className="flex items-center gap-4">
-                    <span className="material-symbols-outlined">{icon}</span>
-                    <span className="font-semibold">{label}</span>
+                    <span className={`material-symbols-outlined ${category === label ? 'text-secondary' : ''}`}>
+                      {icon}
+                    </span>
+                    <span className={`font-semibold ${category === label ? 'text-secondary' : ''}`}>
+                      {label}
+                    </span>
                   </span>
                   <span className="rounded-full bg-secondary/20 px-3 py-1 text-secondary">
                     {count}
                   </span>
                 </button>
               ))}
+              <div className="rounded-lg border border-outline-variant bg-surface-container p-5">
+                <h2 className="font-semibold">Preferences</h2>
+                <DataBanner
+                  className="mt-4"
+                  variant={preferenceSource === 'supabase' ? 'info' : 'warning'}
+                  title={
+                    preferenceSource === 'supabase'
+                      ? 'Preferences synced'
+                      : 'Local preferences active'
+                  }
+                  description={
+                    preferenceSource === 'supabase'
+                      ? 'Notification preferences are saved to Supabase alert preferences.'
+                      : 'Preferences are saved in this browser until the backend is reachable.'
+                  }
+                />
+                <div className="mt-4 space-y-3">
+                  {[
+                    ['email', 'Email'],
+                    ['sms', 'SMS'],
+                    ['push', 'Push'],
+                    ['smartAlerts', 'Smart alerts'],
+                    ['leadAlerts', 'Lead alerts'],
+                    ['listingReviews', 'Listing reviews'],
+                  ].map(([key, label]) => (
+                    <label key={key} className="flex cursor-pointer items-center justify-between gap-3">
+                      <span className="text-sm text-on-surface-variant">
+                        {label}
+                        {savingPreference === key && ' saving...'}
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={preferences[key]}
+                        onChange={() => updatePreference(key)}
+                        className="h-4 w-4 accent-secondary"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
             </aside>
 
             <section className="space-y-5">
-              {notifications.map((item) => (
+              {visibleNotifications.map((item) => (
                 <article
                   key={item.title}
                   className={`rounded-lg border bg-surface-container p-7 ${
@@ -124,6 +314,15 @@ export default function Notifications() {
                   </div>
                 </article>
               ))}
+              {visibleNotifications.length === 0 && (
+                <div className="rounded-lg border border-outline-variant bg-surface-container p-10 text-center">
+                  <span className="material-symbols-outlined text-5xl text-secondary">notifications_off</span>
+                  <h2 className="mt-4 text-2xl font-semibold">No matching notifications</h2>
+                  <p className="mt-2 text-on-surface-variant">
+                    Change the category or unread filter to widen the list.
+                  </p>
+                </div>
+              )}
             </section>
           </div>
         </div>

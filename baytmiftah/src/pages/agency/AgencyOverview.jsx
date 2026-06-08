@@ -12,7 +12,7 @@ export default function AgencyOverview() {
   return (
     <PropTechShell
       active="Dashboard"
-      brand="PropFlow Agency"
+      brand="BaytMiftah Agency"
       sidebarTitle="Global Realty"
       sidebarSubtitle="Enterprise Suite"
       searchPlaceholder="Global search..."
@@ -23,15 +23,15 @@ export default function AgencyOverview() {
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div>
               <h1 className="text-5xl font-black">Agency Overview</h1>
-              <p className="mt-3 text-2xl text-[#303744]">
+              <p className="mt-3 text-lg leading-7 text-[#303744]">
                 Real-time performance metrics and agency-wide operations.
               </p>
             </div>
             <div className="flex gap-4">
-              <button className="rounded-md border border-[#b9c3d2] bg-white px-8 py-4 font-bold">
+              <button className="min-h-11 rounded-md border border-[#b9c3d2] bg-white px-5 py-3 font-semibold">
                 Download Report
               </button>
-              <button className="rounded-md bg-black px-8 py-4 font-bold text-white">
+              <button className="min-h-11 rounded-md bg-black px-5 py-3 font-semibold text-white">
                 View Portfolio
               </button>
             </div>
@@ -44,8 +44,8 @@ export default function AgencyOverview() {
                   <p className="font-bold uppercase tracking-widest">Total Sales (YTD)</p>
                   <p className="mt-4 text-6xl font-black">$142.8M</p>
                 </div>
-                <span className="rounded-full bg-[#62efad] px-4 py-2 font-bold text-[#006c48]">
-                  ↗ +12.4%
+                <span className="rounded-full bg-[#F5D76B] px-4 py-2 font-bold text-[#0F172A]">
+                  +12.4%
                 </span>
               </div>
               <div className="mt-12 flex h-40 items-end gap-2">
@@ -66,10 +66,10 @@ export default function AgencyOverview() {
               <div className="mt-8 rounded-md bg-[#dbeafe] p-5">
                 <div className="flex justify-between font-bold">
                   <span>Efficiency Rating</span>
-                  <span className="text-[#007a52]">Excellent</span>
+                  <span className="text-[#E9C349]">Excellent</span>
                 </div>
                 <div className="mt-3 h-2 rounded-full bg-[#cbd3df]">
-                  <div className="h-2 w-[88%] rounded-full bg-[#007a52]" />
+                  <div className="h-2 w-[88%] rounded-full bg-[#E9C349]" />
                 </div>
               </div>
             </article>
@@ -90,7 +90,7 @@ export default function AgencyOverview() {
                     <div
                       key={label}
                       className={`rounded-md border border-[#d8dde6] p-6 text-center ${
-                        index === 3 ? 'bg-[#62efad] text-[#006c48]' : 'bg-[#edf4ff]'
+                        index === 3 ? 'bg-[#F5D76B] text-[#0F172A]' : 'bg-[#edf4ff]'
                       }`}
                     >
                       <p className="text-4xl font-black">{value}</p>
@@ -115,7 +115,7 @@ export default function AgencyOverview() {
                       </div>
                       <div className="text-right">
                         <strong>{budget}</strong>
-                        <p className="text-[#007a52]">{status}</p>
+                        <p className="text-[#E9C349]">{status}</p>
                       </div>
                     </article>
                   ))}
@@ -130,8 +130,8 @@ export default function AgencyOverview() {
               </div>
               <div className="mt-12 grid grid-cols-2 divide-x divide-[#d8dde6] text-center">
                 <div>
-                  <p className="mx-auto grid h-24 w-24 place-items-center rounded-full border-4 border-[#007a52] text-3xl font-bold">24</p>
-                  <p className="mt-3 font-bold text-[#007a52]">Active</p>
+                  <p className="mx-auto grid h-24 w-24 place-items-center rounded-full border-4 border-[#E9C349] text-3xl font-bold">24</p>
+                  <p className="mt-3 font-bold text-[#E9C349]">Active</p>
                 </div>
                 <div>
                   <p className="mx-auto grid h-24 w-24 place-items-center rounded-full border-4 border-[#c7cad1] text-3xl font-bold">6</p>
@@ -169,7 +169,7 @@ export default function AgencyOverview() {
             ].map((row) => (
               <div key={row[1]} className="grid min-w-[900px] grid-cols-[1.3fr_1fr_1.3fr_0.8fr_0.9fr] border-t border-[#d8dde6] px-8 py-6 text-lg">
                 <span className="flex items-center gap-3">
-                  <span className={`material-symbols-outlined ${row[5] === 'Urgent' ? 'text-red-600' : 'text-[#007a52]'}`}>
+                  <span className={`material-symbols-outlined ${row[5] === 'Urgent' ? 'text-red-600' : 'text-[#E9C349]'}`}>
                     {row[0]}
                   </span>
                   {row[1]}
@@ -183,7 +183,7 @@ export default function AgencyOverview() {
                       ? 'bg-red-100 text-red-700'
                       : row[5] === 'Scheduled'
                         ? 'bg-[#dbeafe]'
-                        : 'bg-[#62efad] text-[#006c48]'
+                        : 'bg-[#F5D76B] text-[#0F172A]'
                   }`}
                 >
                   {row[5]}

@@ -37,7 +37,7 @@ export default function MvpPhaseHub() {
 
         <div className="mx-auto max-w-container px-4 pt-24 md:px-8">
           <section className="rounded-lg border border-[#cbd3df] bg-white p-6 shadow-sm md:p-8">
-            <p className="text-label-sm font-bold uppercase tracking-wider text-[#007a52]">
+            <p className="text-label-sm font-bold uppercase tracking-wider text-[#E9C349]">
               Pre-deploy phase 1 to 4
             </p>
             <div className="mt-3 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
@@ -63,24 +63,24 @@ export default function MvpPhaseHub() {
 
           <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-lg border border-[#cbd3df] bg-white p-5 shadow-sm">
-              <span className="material-symbols-outlined text-[#007a52]">description</span>
+              <span className="material-symbols-outlined text-[#E9C349]">description</span>
               <p className="mt-3 text-sm text-[#4b5563]">Ghana required docs</p>
               <p className="mt-1 text-3xl font-black">
                 {(baseline?.saleDocuments?.length || 0) + (baseline?.rentDocuments?.length || 0)}
               </p>
             </div>
             <div className="rounded-lg border border-[#cbd3df] bg-white p-5 shadow-sm">
-              <span className="material-symbols-outlined text-[#007a52]">workspace_premium</span>
+              <span className="material-symbols-outlined text-[#E9C349]">workspace_premium</span>
               <p className="mt-3 text-sm text-[#4b5563]">Agency plans</p>
               <p className="mt-1 text-3xl font-black">{plans.length}</p>
             </div>
             <div className="rounded-lg border border-[#cbd3df] bg-white p-5 shadow-sm">
-              <span className="material-symbols-outlined text-[#007a52]">api</span>
+              <span className="material-symbols-outlined text-[#E9C349]">api</span>
               <p className="mt-3 text-sm text-[#4b5563]">Edge Functions</p>
               <p className="mt-1 text-3xl font-black">4</p>
             </div>
             <div className="rounded-lg border border-[#cbd3df] bg-white p-5 shadow-sm">
-              <span className="material-symbols-outlined text-[#007a52]">database</span>
+              <span className="material-symbols-outlined text-[#E9C349]">database</span>
               <p className="mt-3 text-sm text-[#4b5563]">Schema tables</p>
               <p className="mt-1 text-3xl font-black">9</p>
             </div>
@@ -91,10 +91,10 @@ export default function MvpPhaseHub() {
               <Link
                 key={module.id}
                 to={`/mvp/${module.id}`}
-                className="rounded-lg border border-[#cbd3df] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#007a52] hover:shadow-md"
+                className="rounded-lg border border-[#cbd3df] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#E9C349] hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-md bg-[#e9fbf6] text-[#007a52]">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-md bg-[#fff7d6] text-[#E9C349]">
                     <span className="material-symbols-outlined">{module.icon}</span>
                   </span>
                   <span className="rounded-full bg-[#edf4ff] px-3 py-1 text-xs font-bold text-[#303744]">
@@ -105,7 +105,7 @@ export default function MvpPhaseHub() {
                 <p className="mt-2 min-h-[96px] text-sm leading-6 text-[#4b5563]">{module.summary}</p>
                 <div className="mt-5 flex items-center justify-between border-t border-[#e5e7eb] pt-4 text-sm font-bold">
                   <span>{module.functionName}</span>
-                  <span className="material-symbols-outlined text-[#007a52]">arrow_forward</span>
+                  <span className="material-symbols-outlined text-[#E9C349]">arrow_forward</span>
                 </div>
               </Link>
             ))}
@@ -114,7 +114,7 @@ export default function MvpPhaseHub() {
           <section className="mt-8 rounded-lg border border-[#cbd3df] bg-white p-6 shadow-sm md:p-8">
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
               <div>
-                <p className="text-label-sm font-bold uppercase tracking-wider text-[#007a52]">Deployment sequence</p>
+                <p className="text-label-sm font-bold uppercase tracking-wider text-[#E9C349]">Deployment sequence</p>
                 <h2 className="mt-2 text-3xl font-black">What happens before deploy</h2>
               </div>
               <Link to="/mvp/ghana-compliance" className="btn-secondary inline-flex items-center gap-2">
@@ -126,7 +126,7 @@ export default function MvpPhaseHub() {
             <div className="mt-6 grid gap-3 lg:grid-cols-5">
               {mvpPhaseSequence.map((step, index) => (
                 <div key={step} className="rounded-md bg-[#f8faff] p-4">
-                  <span className="text-sm font-black text-[#007a52]">Step {index + 1}</span>
+                  <span className="text-sm font-black text-[#E9C349]">Step {index + 1}</span>
                   <p className="mt-2 font-semibold">{step}</p>
                 </div>
               ))}

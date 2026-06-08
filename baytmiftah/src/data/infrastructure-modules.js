@@ -4,7 +4,7 @@ export const infrastructureModules = [
     title: 'Real Estate Operating System',
     icon: 'extension',
     status: 'Platform layer',
-    summary: 'Turns Property Hub into a configurable OS that countries, agencies, banks, and governments can extend.',
+    summary: 'Turns BaytMiftah into a configurable OS that countries, agencies, banks, and governments can extend.',
     capabilities: [
       'Modular plugin system',
       'Country-specific module installs',
@@ -114,7 +114,7 @@ export const infrastructureModules = [
     title: 'Predictive Market System',
     icon: 'analytics',
     status: 'Intelligence layer',
-    summary: 'Positions Property Hub as Bloomberg-style intelligence for real estate markets.',
+    summary: 'Positions BaytMiftah as Bloomberg-style intelligence for real estate markets.',
     capabilities: [
       '6-24 month price forecasting',
       'Overpriced area detection',
@@ -161,7 +161,7 @@ export const infrastructureModules = [
     title: 'Developer Ecosystem',
     icon: 'api',
     status: 'API layer',
-    summary: 'Lets third parties build plugins, analytics tools, AI tools, and integrations on Property Hub.',
+    summary: 'Lets third parties build plugins, analytics tools, AI tools, and integrations on BaytMiftah.',
     capabilities: [
       'Public property data API',
       'Search API',

@@ -20,7 +20,7 @@ export function ErrorMessage({ message, onDismiss, className = '' }) {
   if (!message) return null
 
   return (
-    <div className={`bg-error/10 border border-error/30 rounded-lg p-4 flex items-start gap-3 ${className}`}>
+    <div className={`rounded-lg border border-error/30 bg-error/10 p-4 flex items-start gap-3 ${className}`}>
       <span className="material-symbols-outlined text-error mt-0.5">error</span>
       <div className="flex-1">
         <p className="text-error text-sm font-medium">{message}</p>
@@ -28,7 +28,8 @@ export function ErrorMessage({ message, onDismiss, className = '' }) {
       {onDismiss && (
         <button
           onClick={onDismiss}
-          className="text-error hover:bg-error/10 rounded p-1 transition"
+          className="flex h-11 w-11 items-center justify-center rounded-md text-error transition hover:bg-error/10"
+          aria-label="Dismiss error"
         >
           <span className="material-symbols-outlined text-lg">close</span>
         </button>
@@ -42,7 +43,7 @@ export function SuccessMessage({ message, onDismiss, className = '' }) {
   if (!message) return null
 
   return (
-    <div className={`bg-success/10 border border-success/30 rounded-lg p-4 flex items-start gap-3 ${className}`}>
+    <div className={`rounded-lg border border-success/30 bg-success/10 p-4 flex items-start gap-3 ${className}`}>
       <span className="material-symbols-outlined text-success mt-0.5">check_circle</span>
       <div className="flex-1">
         <p className="text-success text-sm font-medium">{message}</p>
@@ -50,9 +51,108 @@ export function SuccessMessage({ message, onDismiss, className = '' }) {
       {onDismiss && (
         <button
           onClick={onDismiss}
-          className="text-success hover:bg-success/10 rounded p-1 transition"
+          className="flex h-11 w-11 items-center justify-center rounded-md text-success transition hover:bg-success/10"
+          aria-label="Dismiss success message"
         >
           <span className="material-symbols-outlined text-lg">close</span>
+        </button>
+      )}
+    </div>
+  )
+}
+
+export function DataBanner({
+  variant = 'info',
+  title,
+  description,
+  action = null,
+  className = '',
+}) {
+  const styles = {
+    info: 'border-[#E9C349]/50 bg-[#fff7d6] text-[#071121]',
+    warning: 'border-warning/40 bg-warning/10 text-[#071121]',
+    error: 'border-error/40 bg-error/10 text-[#071121]',
+  }[variant]
+
+  const icon = {
+    info: { name: 'info', className: 'text-[#B8860B]' },
+    warning: { name: 'sync_problem', className: 'text-warning' },
+    error: { name: 'error', className: 'text-error' },
+  }[variant]
+
+  return (
+    <div className={`rounded-lg border p-4 ${styles} ${className}`}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex gap-3">
+          <span className={`material-symbols-outlined mt-0.5 ${icon.className}`}>
+            {icon.name}
+          </span>
+          <div>
+            {title && <p className="font-semibold">{title}</p>}
+            {description && (
+              <p className="mt-1 text-sm leading-6 text-[#596170]">
+                {description}
+              </p>
+            )}
+          </div>
+        </div>
+        {action}
+      </div>
+    </div>
+  )
+}
+
+export function DemoModeBanner({ className = '' }) {
+  return (
+    <DataBanner
+      className={className}
+      variant="warning"
+      title="Demo data active"
+      description="Live Supabase data is not available for this view yet, so the interface is showing safe preview records."
+    />
+  )
+}
+
+export function SkeletonBlock({ className = '' }) {
+  return (
+    <div
+      className={`animate-pulse rounded-md bg-surface-container-high ${className}`}
+      aria-hidden="true"
+    />
+  )
+}
+
+export function LoadingState({ title = 'Loading data', rows = 3 }) {
+  return (
+    <div className="rounded-lg border border-outline-variant bg-surface-container p-5">
+      <div className="mb-5 flex items-center gap-3">
+        <Loader size="sm" />
+        <p className="font-semibold text-on-surface">{title}</p>
+      </div>
+      <div className="space-y-3">
+        {Array.from({ length: rows }).map((_, index) => (
+          <SkeletonBlock key={index} className="h-12" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function RetryState({
+  title = 'Unable to load data',
+  description = 'Check the connection and try again.',
+  onRetry,
+}) {
+  return (
+    <div className="rounded-lg border border-error/40 bg-error/10 p-6 text-center">
+      <span className="material-symbols-outlined text-5xl text-error">cloud_off</span>
+      <h3 className="mt-4 text-2xl font-semibold text-on-surface">{title}</h3>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-on-surface-variant">
+        {description}
+      </p>
+      {onRetry && (
+        <button onClick={onRetry} className="btn-secondary mt-5 px-4 py-2">
+          Retry
         </button>
       )}
     </div>
@@ -86,7 +186,7 @@ export function Button({
   return (
     <button
       disabled={disabled || loading}
-      className={`${variantClass} ${sizeClass} rounded-lg flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`${variantClass} ${sizeClass} flex min-h-11 items-center justify-center gap-2 rounded-md transition disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
       {...props}
     >
       {loading ? (
@@ -112,7 +212,7 @@ export function Input({
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label className="text-label-sm font-medium text-on-surface">
+        <label className="text-sm font-semibold text-on-surface">
           {label} {required && <span className="text-error">*</span>}
         </label>
       )}
@@ -145,7 +245,7 @@ export function Select({
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label className="text-label-sm font-medium text-on-surface">
+        <label className="text-sm font-semibold text-on-surface">
           {label} {required && <span className="text-error">*</span>}
         </label>
       )}
@@ -176,7 +276,7 @@ export function Textarea({
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label className="text-label-sm font-medium text-on-surface">
+        <label className="text-sm font-semibold text-on-surface">
           {label} {required && <span className="text-error">*</span>}
         </label>
       )}
@@ -198,10 +298,10 @@ export function Checkbox({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <label className="flex items-center gap-2 cursor-pointer">
+      <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-1">
         <input
           type="checkbox"
-          className="w-4 h-4 rounded border border-outline accent-primary cursor-pointer"
+          className="h-5 w-5 cursor-pointer rounded border border-outline accent-primary"
           {...props}
         />
         <span className="text-body-md text-on-surface">{label}</span>
@@ -215,7 +315,7 @@ export function Checkbox({
 export function Card({ children, className = '', clickable = false, onClick = null }) {
   return (
     <div
-      className={`card ${clickable ? 'cursor-pointer hover:shadow-lg transition' : ''} ${className}`}
+      className={`card ${clickable ? 'cursor-pointer transition hover:border-secondary/60' : ''} ${className}`}
       onClick={onClick}
     >
       {children}
@@ -273,11 +373,11 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <span className="material-symbols-outlined text-6xl text-on-surface-variant mb-4">
+      <span className="material-symbols-outlined mb-4 text-5xl text-on-surface-variant">
         {icon}
       </span>
-      <h3 className="text-headline-md text-on-surface mb-2">{title}</h3>
-      <p className="text-body-md text-on-surface-variant mb-6">{description}</p>
+      <h3 className="mb-2 text-2xl font-semibold text-on-surface">{title}</h3>
+      <p className="mb-6 text-body-md text-on-surface-variant">{description}</p>
       {action}
     </div>
   )

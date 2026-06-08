@@ -15,11 +15,11 @@ export default function MobileMessages() {
               alt=""
               className="h-16 w-16 rounded-full object-cover"
             />
-            <span className="absolute bottom-1 right-0 h-4 w-4 rounded-full border-2 border-white bg-[#007a52]" />
+            <span className="absolute bottom-1 right-0 h-4 w-4 rounded-full border-2 border-white bg-[#E9C349]" />
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-2xl font-bold">Elena Rodriguez</h1>
-            <p className="text-sm font-semibold uppercase tracking-widest text-[#007a52]">
+            <p className="text-sm font-semibold uppercase tracking-widest text-[#E9C349]">
               Online • Senior Agent
             </p>
           </div>
@@ -59,7 +59,7 @@ export default function MobileMessages() {
             faces east for the morning sun.
           </div>
           <p className="mt-2 text-sm text-[#4b5563]">
-            09:44 AM <span className="text-[#007a52]">✓✓</span>
+            09:44 AM <span className="text-[#E9C349]">✓✓</span>
           </p>
         </div>
         <div>
@@ -108,7 +108,7 @@ export default function MobileMessages() {
           <button
             key={label}
             className={`flex flex-col items-center justify-center gap-1 ${
-              label === 'Agency' ? 'border-t-4 border-[#007a52] bg-[#e9fbf6] text-[#007a52]' : ''
+              label === 'Agency' ? 'border-t-4 border-[#E9C349] bg-[#fff7d6] text-[#E9C349]' : ''
             }`}
           >
             <span className="material-symbols-outlined">{icon}</span>

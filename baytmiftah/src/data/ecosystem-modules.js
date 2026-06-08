@@ -5,7 +5,7 @@ export const ecosystemModules = [
     icon: 'payments',
     summary: 'Mortgage, rent finance, insurance, and property investment products.',
     status: 'Partner-ready',
-    color: '#007a52',
+    color: '#E9C349',
     modules: [
       {
         name: 'Mortgage Marketplace',

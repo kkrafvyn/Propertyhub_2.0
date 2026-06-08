@@ -126,7 +126,7 @@ const normalizeListing = (listing, mediaByProperty = new Map(), index = 0) => {
     currency: listing.currency || 'GHS',
     priceLabel,
     rating: ratingForListing(listing),
-    image: primaryMedia?.public_url || fallbackImages[index % fallbackImages.length],
+    image: primaryMedia?.public_url || primaryMedia?.url || fallbackImages[index % fallbackImages.length],
     media:
       media.length > 0
         ? media
@@ -199,9 +199,7 @@ export const marketplaceService = {
     })
   },
 
-  async getOwnedOrganization(userId) {
-    if (!userId) return null
-
+  async getOwnedOrganization() {
     return callEdgeFunction('marketplace', {
       query: { action: 'owned-organization' },
     })

@@ -7,7 +7,7 @@ const fallbackProperties = [
     title: 'Skyline Penthouse',
     address: '450 Manhattan Ave, NY',
     status: 'Rented',
-    statusClass: 'bg-[#007a52] text-white',
+    statusClass: 'bg-[#E9C349] text-white',
     metrics: [['Yield', '5.2%'], ['Alerts', '0 Active'], ['Rent', '$8.5k']],
     image: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=85',
     action: 'Details',
@@ -26,7 +26,7 @@ const fallbackProperties = [
     title: 'Canary Wharf Office',
     address: '12 Bank St, London',
     status: 'For Sale',
-    statusClass: 'bg-[#62efad] text-[#006c48]',
+    statusClass: 'bg-[#F5D76B] text-[#0F172A]',
     metrics: [['Cap Rate', '6.8%'], ['Views', '1.2k'], ['Price', '£45M']],
     image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=85',
     note: '2 Offers Pending',
@@ -50,7 +50,7 @@ export default function PropertyManagement() {
             address: listing.address,
             status: listing.status,
             statusClass: listing.addressVerified
-              ? 'bg-[#007a52] text-white'
+              ? 'bg-[#E9C349] text-white'
               : 'bg-[#dbeafe] text-[#071121]',
             metrics: [
               ['Quality', `${listing.qualityScore || 82}%`],
@@ -156,7 +156,7 @@ export default function PropertyManagement() {
                     <span className="italic text-[#303744]">{property.note || 'Assigned team active'}</span>
                     <button
                       className={`rounded-md px-6 py-3 font-bold ${
-                        property.action === 'Details' ? 'bg-white' : property.action === 'Manage Listing' ? 'bg-black text-white' : 'bg-[#007a52] text-white'
+                        property.action === 'Details' ? 'bg-white' : property.action === 'Manage Listing' ? 'bg-black text-white' : 'bg-[#E9C349] text-white'
                       }`}
                     >
                       {property.action}

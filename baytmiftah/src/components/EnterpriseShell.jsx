@@ -32,42 +32,44 @@ export default function EnterpriseShell({
 
   return (
     <div className="enterprise-page min-h-screen bg-surface text-on-surface">
-      <aside className="fixed left-0 top-0 hidden lg:flex h-screen w-72 flex-col border-r border-outline-variant bg-surface-container px-6 py-8">
-        <Link to="/explore" className="text-3xl font-bold text-on-surface">
-          Property Hub
+      <aside className="fixed left-0 top-0 hidden h-screen w-72 flex-col border-r border-white/10 bg-[rgba(11,18,32,0.94)] px-5 py-6 text-[#F8FAFC] shadow-[1px_0_0_rgba(255,255,255,0.04)] backdrop-blur-2xl lg:flex">
+        <Link to="/explore" className="min-h-12 text-3xl font-semibold tracking-normal text-[#F8FAFC]">
+          BaytMiftah
         </Link>
-        <p className="mt-1 text-on-surface-variant">Enterprise Suite</p>
+        <p className="mt-1 px-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#94A3B8]">
+          Trust-First Estate OS
+        </p>
 
-        <nav className="mt-12 flex flex-col gap-2">
+        <nav className="mt-10 flex flex-col gap-1">
           {primaryNav.map((item) => (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-4 rounded-md px-4 py-3 transition ${
+              className={`flex min-h-11 items-center gap-4 rounded-md px-3 py-2 font-semibold transition ${
                 isActive(item)
-                  ? 'border-r-4 border-secondary bg-secondary/10 text-secondary'
-                  : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+                  ? 'bg-[#E9C349] text-[#0F172A] shadow-[0_6px_20px_rgba(233,195,73,0.18)]'
+                  : 'text-[#CBD5E1] hover:bg-white/10 hover:text-white'
               }`}
             >
-              <span className="material-symbols-outlined">{item.icon}</span>
+              <span className="material-symbols-outlined text-[1.35rem]">{item.icon}</span>
               <span>{item.label}</span>
             </Link>
           ))}
         </nav>
 
-        <div className="mt-auto border-t border-outline-variant pt-6">
+        <div className="mt-auto border-t border-white/10 pt-5">
           <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-on-secondary">
+            <div className="flex h-11 w-11 items-center justify-center rounded-md bg-[#E9C349] text-[#0F172A]">
               <span className="material-symbols-outlined">person</span>
             </div>
             <div>
               <p className="text-sm font-semibold">Alex Rivera</p>
-              <p className="text-xs uppercase tracking-wider text-on-surface-variant">
-                Admin
+              <p className="text-xs font-semibold text-[#94A3B8]">
+                Private Office
               </p>
             </div>
           </div>
-          <button className="flex w-full items-center gap-4 rounded-md px-4 py-3 text-on-surface-variant hover:bg-surface-container-high">
+          <button className="flex min-h-11 w-full items-center gap-4 rounded-md px-3 py-2 font-semibold text-[#CBD5E1] hover:bg-white/10 hover:text-white">
             <span className="material-symbols-outlined">logout</span>
             Logout
           </button>
@@ -75,17 +77,17 @@ export default function EnterpriseShell({
       </aside>
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 flex min-h-20 items-center justify-between gap-3 border-b border-outline-variant bg-surface/95 px-4 py-4 backdrop-blur-xl sm:px-5 md:px-8">
-          <Link to="/explore" className="shrink-0 text-xl font-bold text-on-surface sm:text-2xl lg:hidden">
-            Property Hub
+        <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-3 border-b border-white/10 bg-[rgba(7,21,36,0.9)] px-4 py-3 text-[#F8FAFC] backdrop-blur-2xl sm:px-5 md:px-8">
+          <Link to="/explore" className="shrink-0 text-xl font-semibold tracking-normal text-[#F8FAFC] sm:text-2xl lg:hidden">
+            BaytMiftah
           </Link>
 
-          <label className="hidden h-12 w-full max-w-sm items-center gap-3 rounded-full border border-outline-variant bg-surface-container-high px-5 md:flex lg:max-w-xs xl:max-w-sm">
-            <span className="material-symbols-outlined text-on-surface-variant">
+          <label className="hidden h-11 w-full max-w-sm items-center gap-3 rounded-md border border-white/10 bg-white/10 px-4 md:flex lg:max-w-xs xl:max-w-sm">
+            <span className="material-symbols-outlined text-[#CBD5E1]">
               search
             </span>
             <input
-              className="w-full bg-transparent text-sm outline-none placeholder:text-on-surface-variant"
+              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-[#CBD5E1]"
               placeholder={searchPlaceholder}
             />
           </label>
@@ -100,7 +102,7 @@ export default function EnterpriseShell({
                     location.pathname === item.path ||
                     location.pathname.startsWith(`${item.path}/`)
                       ? 'border-b-2 border-secondary pb-2 text-secondary'
-                      : 'text-on-surface hover:text-secondary'
+                      : 'text-[#CBD5E1] hover:text-white'
                   }`}
                 >
                   {item.label}
@@ -116,7 +118,7 @@ export default function EnterpriseShell({
 
             <Link
               to="/notifications"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full hover:bg-surface-container-high"
+              className="relative flex h-11 w-11 items-center justify-center rounded-md hover:bg-white/10"
             >
               <span className="material-symbols-outlined">notifications</span>
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-secondary" />

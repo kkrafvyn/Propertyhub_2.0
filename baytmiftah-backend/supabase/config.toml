@@ -1,0 +1,64 @@
+project_id = "baytmiftah"
+
+[functions.auth]
+verify_jwt = false
+
+[functions.agencies]
+verify_jwt = false
+
+[functions.marketplace]
+verify_jwt = false
+
+[functions.smart-devices]
+verify_jwt = true
+
+[functions.agency-crm]
+verify_jwt = true
+
+[functions.compliance]
+verify_jwt = true
+
+[functions.trust]
+verify_jwt = true
+
+[functions.monetization]
+verify_jwt = true
+
+[functions.payments]
+verify_jwt = true
+
+[functions.bookings]
+verify_jwt = false
+
+[functions.listing-ai]
+verify_jwt = true
+
+[functions.geo]
+verify_jwt = false
+
+[functions.notifications]
+verify_jwt = true
+
+[functions.persistence]
+verify_jwt = true
+
+[functions.channel-sync]
+verify_jwt = false
+
+[functions.payments-webhook]
+verify_jwt = false
+
+[functions.messaging]
+verify_jwt = true
+
+[functions.transactions]
+verify_jwt = true
+
+[functions.moderation]
+verify_jwt = true
+
+[functions.intelligence]
+verify_jwt = false
+
+[functions.partner-api]
+verify_jwt = false

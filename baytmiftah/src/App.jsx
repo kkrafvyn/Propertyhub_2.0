@@ -1,65 +1,98 @@
-import React, { useState, useEffect } from 'react'
+import React, { Suspense, lazy, useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { normalizeSupabaseUser } from './lib/auth'
 import { PLATFORM_ADMIN_ROLES } from './lib/roles'
 import authService from './services/auth-service'
 
-// Pages - Existing
-import Login from './pages/Login'
-import SignUp from './pages/SignUp'
-import Dashboard from './pages/Dashboard'
-import ExploreProperties from './pages/ExploreProperties'
-import PropertyDetails from './pages/PropertyDetails'
-import Messages from './pages/Messages'
-import Profile from './pages/Profile'
-import AdminDashboard from './pages/AdminDashboard'
-import Favorites from './pages/Favorites'
-import MyListings from './pages/MyListings'
-import CreateListing from './pages/CreateListing'
-import NotFound from './pages/NotFound'
-import Support from './pages/Support'
-import Bookings from './pages/Bookings'
-import Notifications from './pages/Notifications'
-import AgentDashboard from './pages/AgentDashboard'
-import PropertyPortfolio from './pages/PropertyPortfolio'
-import AgentProfileShowcase from './pages/AgentProfileShowcase'
-import EcosystemHub from './pages/ecosystem/EcosystemHub'
-import EcosystemCategory from './pages/ecosystem/EcosystemCategory'
-import GlobalReadiness from './pages/global/GlobalReadiness'
-import GlobalReadinessDetail from './pages/global/GlobalReadinessDetail'
-import InfrastructureHub from './pages/infrastructure/InfrastructureHub'
-import InfrastructureDetail from './pages/infrastructure/InfrastructureDetail'
-import MvpPhaseHub from './pages/mvp/MvpPhaseHub'
-import MvpPhaseDetail from './pages/mvp/MvpPhaseDetail'
-import MobileDashboard from './pages/mobile/MobileDashboard'
-import MobileExplore from './pages/mobile/MobileExplore'
-import MobilePropertyDetails from './pages/mobile/MobilePropertyDetails'
-import MobileMessages from './pages/mobile/MobileMessages'
-
-// Pages - Agency Module (NEW)
-import AgencyOnboarding from './pages/agency/AgencyOnboarding'
-import AgencyProfile from './pages/agency/AgencyProfile'
-import AgencyDashboard from './pages/agency/AgencyDashboard'
-import AgencyOverview from './pages/agency/AgencyOverview'
-import TeamManagement from './pages/agency/TeamManagement'
-import PropertyManagement from './pages/agency/PropertyManagement'
-import LeadManagement from './pages/agency/LeadManagement'
-import Analytics from './pages/agency/Analytics'
-
-// Pages - IoT/Smart Property Module (NEW)
-import DevicesDashboard from './pages/smart-property/DevicesDashboard'
-import AddDevice from './pages/smart-property/AddDevice'
-import DeviceDetails from './pages/smart-property/DeviceDetails'
-import Automation from './pages/smart-property/Automation'
-import Alerts from './pages/smart-property/Alerts'
-import EventLogs from './pages/smart-property/EventLogs'
-
-// Pages - Admin (NEW)
-import AgencyVerification from './pages/admin/AgencyVerification'
-
 // Components
 import ProtectedRoute from './components/ProtectedRoute'
+
+const Login = lazy(() => import('./pages/Login'))
+const SignUp = lazy(() => import('./pages/SignUp'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const ExploreProperties = lazy(() => import('./pages/ExploreProperties'))
+const PropertyDetails = lazy(() => import('./pages/PropertyDetails'))
+const Messages = lazy(() => import('./pages/Messages'))
+const Profile = lazy(() => import('./pages/Profile'))
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
+const Favorites = lazy(() => import('./pages/Favorites'))
+const MyListings = lazy(() => import('./pages/MyListings'))
+const CreateListing = lazy(() => import('./pages/CreateListing'))
+const CompareProperties = lazy(() => import('./pages/CompareProperties'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+const Support = lazy(() => import('./pages/Support'))
+const Bookings = lazy(() => import('./pages/Bookings'))
+const Notifications = lazy(() => import('./pages/Notifications'))
+const AccountSecurity = lazy(() => import('./pages/AccountSecurity'))
+const BookingCalendar = lazy(() => import('./pages/BookingCalendar'))
+const Billing = lazy(() => import('./pages/Billing'))
+const TransactionCenter = lazy(() => import('./pages/TransactionCenter'))
+const OfferRoom = lazy(() => import('./pages/OfferRoom'))
+const DocumentVault = lazy(() => import('./pages/DocumentVault'))
+const SmartMatchAlerts = lazy(() => import('./pages/SmartMatchAlerts'))
+const ListingCoach = lazy(() => import('./pages/ListingCoach'))
+const Integrations = lazy(() => import('./pages/Integrations'))
+const AIConcierge = lazy(() => import('./pages/AIConcierge'))
+const OwnerPortal = lazy(() => import('./pages/OwnerPortal'))
+const NeighborhoodIntelligence = lazy(() => import('./pages/NeighborhoodIntelligence'))
+const DeveloperLaunchRoom = lazy(() => import('./pages/DeveloperLaunchRoom'))
+const InspectionApp = lazy(() => import('./pages/InspectionApp'))
+const RevenueOps = lazy(() => import('./pages/RevenueOps'))
+const PartnerPortal = lazy(() => import('./pages/PartnerPortal'))
+const VerificationPassport = lazy(() => import('./pages/VerificationPassport'))
+const PropertyGraph = lazy(() => import('./pages/PropertyGraph'))
+const AgentDashboard = lazy(() => import('./pages/AgentDashboard'))
+const PropertyPortfolio = lazy(() => import('./pages/PropertyPortfolio'))
+const AgentProfileShowcase = lazy(() => import('./pages/AgentProfileShowcase'))
+const EcosystemHub = lazy(() => import('./pages/ecosystem/EcosystemHub'))
+const EcosystemCategory = lazy(() => import('./pages/ecosystem/EcosystemCategory'))
+const GlobalReadiness = lazy(() => import('./pages/global/GlobalReadiness'))
+const GlobalReadinessDetail = lazy(() => import('./pages/global/GlobalReadinessDetail'))
+const InfrastructureHub = lazy(() => import('./pages/infrastructure/InfrastructureHub'))
+const InfrastructureDetail = lazy(() => import('./pages/infrastructure/InfrastructureDetail'))
+const MvpPhaseHub = lazy(() => import('./pages/mvp/MvpPhaseHub'))
+const MvpPhaseDetail = lazy(() => import('./pages/mvp/MvpPhaseDetail'))
+const MobileDashboard = lazy(() => import('./pages/mobile/MobileDashboard'))
+const MobileExplore = lazy(() => import('./pages/mobile/MobileExplore'))
+const MobilePropertyDetails = lazy(() => import('./pages/mobile/MobilePropertyDetails'))
+const MobileMessages = lazy(() => import('./pages/mobile/MobileMessages'))
+const MobileAgentApp = lazy(() => import('./pages/mobile/MobileAgentApp'))
+const AgencyOnboarding = lazy(() => import('./pages/agency/AgencyOnboarding'))
+const AgencyProfile = lazy(() => import('./pages/agency/AgencyProfile'))
+const AgencyDashboard = lazy(() => import('./pages/agency/AgencyDashboard'))
+const AgencyOverview = lazy(() => import('./pages/agency/AgencyOverview'))
+const TeamManagement = lazy(() => import('./pages/agency/TeamManagement'))
+const PropertyManagement = lazy(() => import('./pages/agency/PropertyManagement'))
+const LeadManagement = lazy(() => import('./pages/agency/LeadManagement'))
+const Analytics = lazy(() => import('./pages/agency/Analytics'))
+const AgencyTrustScore = lazy(() => import('./pages/agency/AgencyTrustScore'))
+const DevicesDashboard = lazy(() => import('./pages/smart-property/DevicesDashboard'))
+const AddDevice = lazy(() => import('./pages/smart-property/AddDevice'))
+const DeviceDetails = lazy(() => import('./pages/smart-property/DeviceDetails'))
+const Automation = lazy(() => import('./pages/smart-property/Automation'))
+const Alerts = lazy(() => import('./pages/smart-property/Alerts'))
+const EventLogs = lazy(() => import('./pages/smart-property/EventLogs'))
+const AgencyVerification = lazy(() => import('./pages/admin/AgencyVerification'))
+const TrustDashboard = lazy(() => import('./pages/admin/TrustDashboard'))
+const AuditLog = lazy(() => import('./pages/admin/AuditLog'))
+const ModerationQueue = lazy(() => import('./pages/admin/ModerationQueue'))
+
+function AppLoader() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-surface text-on-surface">
+      <div className="text-center">
+        <span className="material-symbols-outlined animate-spin text-4xl text-secondary">
+          progress_activity
+        </span>
+        <p className="mt-3 text-sm font-semibold text-on-surface-variant">
+          Loading workspace
+        </p>
+      </div>
+    </div>
+  )
+}
 
 export default function App() {
   const [user, setUser] = useState(null)
@@ -69,6 +102,11 @@ export default function App() {
     // Check authentication on mount
     const checkAuth = async () => {
       try {
+        const storedUser = localStorage.getItem('baytmiftah_user')
+        if (storedUser) {
+          setUser(JSON.parse(storedUser))
+        }
+
         const {
           data: { user },
         } = await supabase.auth.getUser()
@@ -81,7 +119,6 @@ export default function App() {
           return
         }
 
-        const storedUser = localStorage.getItem('baytmiftah_user')
         setUser(storedUser ? JSON.parse(storedUser) : null)
       } catch (error) {
         const storedUser = localStorage.getItem('baytmiftah_user')
@@ -97,13 +134,17 @@ export default function App() {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         const normalizedUser = normalizeSupabaseUser(session?.user)
-        setUser(normalizedUser)
 
         if (normalizedUser) {
+          setUser(normalizedUser)
           localStorage.setItem('baytmiftah_user', JSON.stringify(normalizedUser))
-        } else {
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null)
           localStorage.removeItem('baytmiftah_user')
           localStorage.removeItem('baytmiftah_token')
+        } else {
+          const storedUser = localStorage.getItem('baytmiftah_user')
+          setUser(storedUser ? JSON.parse(storedUser) : null)
         }
       }
     )
@@ -127,10 +168,12 @@ export default function App() {
 
   return (
     <Router>
+      <Suspense fallback={<AppLoader />}>
       <Routes>
         {/* ========== PUBLIC ROUTES ========== */}
         <Route path="/login" element={<Login setUser={setUser} />} />
         <Route path="/signup" element={<SignUp setUser={setUser} />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* ========== CORE FEATURES - PROTECTED ========== */}
         <Route path="/dashboard" element={<Navigate to="/" replace />} />
@@ -178,6 +221,14 @@ export default function App() {
           }
         />
         <Route
+          path="/compare"
+          element={
+            <ProtectedRoute user={user}>
+              <CompareProperties />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/bookings"
           element={
             <ProtectedRoute user={user}>
@@ -219,6 +270,143 @@ export default function App() {
           element={
             <ProtectedRoute user={user}>
               <Notifications />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/account/security"
+          element={
+            <ProtectedRoute user={user}>
+              <AccountSecurity />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/calendar"
+          element={
+            <ProtectedRoute user={user}>
+              <BookingCalendar />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/billing"
+          element={
+            <ProtectedRoute user={user}>
+              <Billing />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transactions"
+          element={
+            <ProtectedRoute user={user}>
+              <TransactionCenter />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/offer-room"
+          element={
+            <ProtectedRoute user={user}>
+              <OfferRoom />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/document-vault"
+          element={
+            <ProtectedRoute user={user}>
+              <DocumentVault />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/smart-match"
+          element={
+            <ProtectedRoute user={user}>
+              <SmartMatchAlerts />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/listing-coach"
+          element={
+            <ProtectedRoute user={user}>
+              <ListingCoach />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/integrations"
+          element={
+            <ProtectedRoute user={user}>
+              <Integrations />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/concierge"
+          element={
+            <ProtectedRoute user={user}>
+              <AIConcierge />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/owner"
+          element={
+            <ProtectedRoute user={user}>
+              <OwnerPortal />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/neighborhoods" element={<NeighborhoodIntelligence />} />
+        <Route
+          path="/developer-launch"
+          element={
+            <ProtectedRoute user={user}>
+              <DeveloperLaunchRoom />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/inspection"
+          element={
+            <ProtectedRoute user={user}>
+              <InspectionApp />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/revenue-ops"
+          element={
+            <ProtectedRoute user={user}>
+              <RevenueOps />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/partners"
+          element={
+            <ProtectedRoute user={user}>
+              <PartnerPortal />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/passport"
+          element={
+            <ProtectedRoute user={user}>
+              <VerificationPassport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/property-graph"
+          element={
+            <ProtectedRoute user={user}>
+              <PropertyGraph />
             </ProtectedRoute>
           }
         />
@@ -308,6 +496,7 @@ export default function App() {
         <Route path="/mobile/explore" element={<MobileExplore />} />
         <Route path="/mobile/property" element={<MobilePropertyDetails />} />
         <Route path="/mobile/messages" element={<MobileMessages />} />
+        <Route path="/mobile/agent" element={<MobileAgentApp />} />
 
         {/* ========== AGENCY MODULE ROUTES ========== */}
 
@@ -374,6 +563,15 @@ export default function App() {
           element={
             <ProtectedRoute user={user} requiresAgency>
               <Analytics />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/agency/trust-score"
+          element={
+            <ProtectedRoute user={user} requiresAgency>
+              <AgencyTrustScore />
             </ProtectedRoute>
           }
         />
@@ -471,9 +669,36 @@ export default function App() {
           }
         />
 
+        <Route
+          path="/admin/trust"
+          element={
+            <ProtectedRoute user={user} role={PLATFORM_ADMIN_ROLES}>
+              <TrustDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/audit"
+          element={
+            <ProtectedRoute user={user} role={PLATFORM_ADMIN_ROLES}>
+              <AuditLog />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/moderation"
+          element={
+            <ProtectedRoute user={user} role={PLATFORM_ADMIN_ROLES}>
+              <ModerationQueue />
+            </ProtectedRoute>
+          }
+        />
+
         {/* ========== CATCH ALL ========== */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
     </Router>
   )
 }

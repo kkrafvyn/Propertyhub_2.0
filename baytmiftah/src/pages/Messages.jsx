@@ -60,7 +60,7 @@ export default function Messages() {
                 onClick={() => setSelected(conversation)}
                 className={`flex w-full items-center gap-4 px-8 py-6 text-left transition ${
                   selected.id === conversation.id
-                    ? 'border-l-4 border-[#007a52] bg-[#dbeafe]'
+                    ? 'border-l-4 border-[#E9C349] bg-[#dbeafe]'
                     : 'hover:bg-white'
                 }`}
               >
@@ -72,7 +72,7 @@ export default function Messages() {
                       className="h-16 w-16 rounded-full object-cover"
                     />
                     {conversation.online && (
-                      <span className="absolute bottom-1 right-0 h-4 w-4 rounded-full border-2 border-white bg-[#007a52]" />
+                      <span className="absolute bottom-1 right-0 h-4 w-4 rounded-full border-2 border-white bg-[#E9C349]" />
                     )}
                   </div>
                 ) : (
@@ -87,13 +87,13 @@ export default function Messages() {
                   </div>
                   <p
                     className={`mt-1 truncate text-lg ${
-                      selected.id === conversation.id ? 'text-[#007a52]' : 'text-[#303744]'
+                      selected.id === conversation.id ? 'text-[#E9C349]' : 'text-[#303744]'
                     }`}
                   >
                     {conversation.message}
                   </p>
                 </div>
-                {conversation.unread && <span className="h-2 w-2 rounded-full bg-[#007a52]" />}
+                {conversation.unread && <span className="h-2 w-2 rounded-full bg-[#E9C349]" />}
               </button>
             ))}
           </div>
@@ -111,7 +111,7 @@ export default function Messages() {
               )}
               <div>
                 <h2 className="text-2xl font-bold">{selected.name}</h2>
-                <p className="font-semibold uppercase tracking-widest text-[#007a52]">Online</p>
+                <p className="font-semibold uppercase tracking-widest text-[#E9C349]">Online</p>
               </div>
             </div>
             <div className="flex items-center gap-7">
@@ -140,7 +140,7 @@ export default function Messages() {
                   The smart tinting should have kicked in at 2 PM yesterday.
                 </div>
                 <p className="mt-2 text-sm text-[#4b5563]">
-                  09:45 AM <span className="text-[#007a52]">✓✓</span>
+                  09:45 AM <span className="text-[#E9C349]">✓✓</span>
                 </p>
               </div>
               <div>

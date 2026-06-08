@@ -1,16 +1,18 @@
-import React from 'react'
+import React, { useMemo, useState } from 'react'
 import EnterpriseShell from '../components/EnterpriseShell'
+import { createViewingRequest, getLocalBookings } from '../services/booking-service'
 
 const actions = [
   {
     title: 'Contemporary Glass Villa',
     status: 'Confirmed',
-    statusClass: 'bg-[#62efad] text-[#007a52]',
+    statusClass: 'bg-[#F5D76B] text-[#E9C349]',
     meta: ['Oct 24, 2023', '14:00 - 15:00', 'Beverly Hills, CA'],
     image:
       'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=85',
     footer: 'Agent: Marcus Thorne',
     action: 'View Details',
+    type: 'Upcoming',
   },
   {
     title: 'Industrial Penthouse',
@@ -21,10 +23,41 @@ const actions = [
       'https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=800&q=85',
     footer: '"Waiting for owner to confirm the requested morning slot."',
     action: 'Property Page',
+    type: 'Purchase Inquiries',
   },
 ]
 
 export default function Bookings() {
+  const [activeTab, setActiveTab] = useState('All Items')
+  const [bookingForm, setBookingForm] = useState({
+    property: 'The Obsidian Penthouse',
+    requestedDate: '',
+    requestedTime: '10:00',
+    contactName: '',
+    contactEmail: '',
+    contactPhone: '',
+    notes: '',
+  })
+  const [localBookings, setLocalBookings] = useState(getLocalBookings)
+  const [bookingSource, setBookingSource] = useState('')
+  const tabs = ['All Items', 'Upcoming', 'Past Transactions', 'Purchase Inquiries']
+  const visibleActions = useMemo(
+    () => actions.filter((item) => activeTab === 'All Items' || item.type === activeTab),
+    [activeTab]
+  )
+
+  const submitViewingRequest = async (event) => {
+    event.preventDefault()
+    const result = await createViewingRequest(bookingForm)
+    setLocalBookings((current) => [result.booking, ...current])
+    setBookingSource(result.source)
+    setBookingForm((current) => ({
+      ...current,
+      requestedDate: '',
+      notes: '',
+    }))
+  }
+
   return (
     <EnterpriseShell activeSection="Settings" searchPlaceholder="Search bookings..." showCreate={false}>
       <main className="bg-[#f5f7fc] px-5 py-10 text-[#071121] md:px-10">
@@ -35,11 +68,12 @@ export default function Bookings() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            {['All Items', 'Upcoming', 'Past Transactions', 'Purchase Inquiries'].map((tab, index) => (
+            {tabs.map((tab) => (
               <button
                 key={tab}
+                onClick={() => setActiveTab(tab)}
                 className={`rounded-full px-7 py-3 text-lg ${
-                  index === 0 ? 'bg-black text-white' : 'bg-[#dbeafe] text-[#071121]'
+                  activeTab === tab ? 'bg-black text-white' : 'bg-[#dbeafe] text-[#071121]'
                 }`}
               >
                 {tab}
@@ -50,8 +84,8 @@ export default function Bookings() {
           <div className="mt-9 grid gap-7 lg:grid-cols-[minmax(0,1fr)_320px]">
             <article className="relative overflow-hidden rounded-lg bg-[#111827] p-8 text-white">
               <div className="relative z-10 max-w-xl">
-                <span className="inline-flex items-center rounded-full bg-[#174d4b] px-4 py-2 text-lg text-[#62efad]">
-                  <span className="mr-2 h-2 w-2 rounded-full bg-[#62efad]" />
+                <span className="inline-flex items-center rounded-full bg-[#174d4b] px-4 py-2 text-lg text-[#F5D76B]">
+                  <span className="mr-2 h-2 w-2 rounded-full bg-[#F5D76B]" />
                   Live Now
                 </span>
                 <h2 className="mt-7 text-3xl font-bold">Scheduled Viewing: Skyline Loft</h2>
@@ -60,7 +94,7 @@ export default function Bookings() {
                   arrive within the next 15 minutes.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-4">
-                  <button className="rounded-md bg-[#007a52] px-8 py-4 font-bold text-white">
+                  <button className="rounded-md bg-[#E9C349] px-8 py-4 font-bold text-white">
                     Get Directions
                   </button>
                   <button className="rounded-md border border-white/20 px-8 py-4 font-bold text-white">
@@ -89,9 +123,79 @@ export default function Bookings() {
             </aside>
           </div>
 
+          <section className="mt-10 grid gap-6 rounded-lg border border-[#cbd3df] bg-white p-6 lg:grid-cols-[1fr_320px]">
+            <form onSubmit={submitViewingRequest} className="grid gap-4 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <h2 className="text-3xl font-bold">Request a Viewing</h2>
+                <p className="mt-2 text-[#303744]">
+                  Pick a preferred slot and the agency can confirm or suggest a new time.
+                </p>
+              </div>
+              {[
+                ['property', 'Property', 'text'],
+                ['requestedDate', 'Date', 'date'],
+                ['requestedTime', 'Time', 'time'],
+                ['contactName', 'Name', 'text'],
+                ['contactEmail', 'Email', 'email'],
+                ['contactPhone', 'Phone', 'tel'],
+              ].map(([key, label, type]) => (
+                <label key={key} className="block">
+                  <span className="font-semibold">{label}</span>
+                  <input
+                    type={type}
+                    value={bookingForm[key]}
+                    onChange={(event) =>
+                      setBookingForm((current) => ({
+                        ...current,
+                        [key]: event.target.value,
+                      }))
+                    }
+                    required={['property', 'requestedDate', 'requestedTime'].includes(key)}
+                    className="mt-2 h-12 w-full rounded border border-[#b9c3d2] px-4"
+                  />
+                </label>
+              ))}
+              <label className="block md:col-span-2">
+                <span className="font-semibold">Notes</span>
+                <textarea
+                  value={bookingForm.notes}
+                  onChange={(event) =>
+                    setBookingForm((current) => ({ ...current, notes: event.target.value }))
+                  }
+                  className="mt-2 min-h-24 w-full rounded border border-[#b9c3d2] px-4 py-3"
+                />
+              </label>
+              <button className="w-fit rounded-md bg-black px-6 py-3 font-bold text-white">
+                Request Viewing
+              </button>
+              {bookingSource && (
+                <p className="self-center text-sm text-[#303744]">
+                  Request saved via {bookingSource === 'supabase' ? 'Supabase' : 'local fallback'}.
+                </p>
+              )}
+            </form>
+
+            <aside className="rounded-lg bg-[#edf4ff] p-5">
+              <h3 className="font-bold">Recent requests</h3>
+              <div className="mt-4 space-y-3">
+                {localBookings.slice(0, 4).map((booking) => (
+                  <div key={booking.id} className="rounded-md bg-white p-3">
+                    <p className="font-semibold">{booking.property}</p>
+                    <p className="text-sm text-[#303744]">
+                      {booking.requestedDate || 'Date pending'} / {booking.requestedTime}
+                    </p>
+                  </div>
+                ))}
+                {localBookings.length === 0 && (
+                  <p className="text-sm text-[#303744]">No viewing requests yet.</p>
+                )}
+              </div>
+            </aside>
+          </section>
+
           <h2 className="mt-10 text-3xl font-bold">Upcoming Viewings & Actions</h2>
           <div className="mt-6 space-y-5">
-            {actions.map((item) => (
+            {visibleActions.map((item) => (
               <article
                 key={item.title}
                 className="grid overflow-hidden rounded-lg border border-[#cbd3df] bg-white md:grid-cols-[300px_minmax(0,1fr)]"
@@ -126,12 +230,21 @@ export default function Bookings() {
                 </div>
               </article>
             ))}
+            {visibleActions.length === 0 && (
+              <div className="rounded-lg border border-[#cbd3df] bg-white p-10 text-center">
+                <span className="material-symbols-outlined text-5xl text-[#E9C349]">event_busy</span>
+                <h3 className="mt-4 text-2xl font-bold">No bookings in this view</h3>
+                <p className="mt-2 text-[#303744]">
+                  Try another booking status or return to the full schedule.
+                </p>
+              </div>
+            )}
           </div>
 
           <section className="mt-12">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
               <h2 className="text-3xl font-bold">Transaction History</h2>
-              <button className="flex items-center gap-2 font-semibold text-[#007a52]">
+              <button className="flex items-center gap-2 font-semibold text-[#E9C349]">
                 Download CSV
                 <span className="material-symbols-outlined text-base">download</span>
               </button>

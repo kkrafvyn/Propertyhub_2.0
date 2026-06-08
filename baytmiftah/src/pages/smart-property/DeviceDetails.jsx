@@ -1,121 +1,228 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useSmartDeviceStore } from '../../store/useSmartDeviceStore'
 import smartDeviceService from '../../services/smart-device-service'
+
+const previewDevice = {
+  id: 'preview-device',
+  name: 'Front Door Lock',
+  type: 'smart_lock',
+  brand: 'SecureHome',
+  model: 'SL-2024',
+  status: 'online',
+  battery_level: 86,
+  signal_strength: 92,
+  last_seen: new Date().toISOString(),
+}
+
+const previewLogs = [
+  {
+    id: 'preview-1',
+    event_type: 'lock',
+    created_at: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+    event_data: { source: 'Night security rule' },
+  },
+  {
+    id: 'preview-2',
+    event_type: 'unlock',
+    created_at: new Date(Date.now() - 1000 * 60 * 65).toISOString(),
+    event_data: { source: 'Resident access' },
+  },
+  {
+    id: 'preview-3',
+    event_type: 'status',
+    created_at: new Date(Date.now() - 1000 * 60 * 92).toISOString(),
+    event_data: { battery: '86%', signal: '92%' },
+  },
+]
+
+const historyKey = (deviceId) => `baytmiftah_command_history_${deviceId || 'unknown'}`
+
+const loadCommandHistory = (deviceId) => {
+  try {
+    return JSON.parse(localStorage.getItem(historyKey(deviceId)) || '[]')
+  } catch {
+    return []
+  }
+}
+
+const saveCommandHistory = (deviceId, history) => {
+  localStorage.setItem(historyKey(deviceId), JSON.stringify(history.slice(0, 20)))
+}
 
 export default function DeviceDetails() {
   const { deviceId } = useParams()
   const { currentDevice, fetchDeviceById, sendCommand, loading } = useSmartDeviceStore()
   const [eventLogs, setEventLogs] = useState([])
+  const [commandStatus, setCommandStatus] = useState('')
+  const [commandHistory, setCommandHistory] = useState(() => loadCommandHistory(deviceId))
+  const [deviceLoading, setDeviceLoading] = useState(true)
 
   useEffect(() => {
-    if (deviceId) {
-      fetchDeviceById(deviceId)
-      loadEventLogs()
+    let mounted = true
+
+    async function loadDevice() {
+      setDeviceLoading(true)
+      if (deviceId) {
+        await fetchDeviceById(deviceId)
+        await loadEventLogs()
+      }
+      if (mounted) setDeviceLoading(false)
     }
+
+    loadDevice()
+
+    return () => {
+      mounted = false
+    }
+  }, [deviceId])
+
+  useEffect(() => {
+    setCommandHistory(loadCommandHistory(deviceId))
   }, [deviceId])
 
   const loadEventLogs = async () => {
     try {
       const logs = await smartDeviceService.getEventLogs(deviceId, 10)
-      setEventLogs(logs)
+      setEventLogs(logs || [])
     } catch (error) {
       console.error('Error loading logs:', error)
+      setEventLogs([])
     }
   }
 
   const handleCommand = async (action) => {
     try {
+      setCommandStatus(`Sending ${action.replace('_', ' ')} command...`)
       await sendCommand(deviceId, { action })
+      setCommandHistory((history) => {
+        const next = [
+          {
+            id: `${action}-${Date.now()}`,
+            action,
+            status: 'sent',
+            created_at: new Date().toISOString(),
+          },
+          ...history,
+        ]
+        saveCommandHistory(deviceId, next)
+        return next
+      })
+      await smartDeviceService
+        .logEvent(deviceId, 'command_sent', { action, source: 'device_details' })
+        .catch(() => {})
       await loadEventLogs()
+      setCommandStatus(`${action.replace('_', ' ')} command sent`)
     } catch (error) {
       console.error('Error sending command:', error)
+      setCommandHistory((history) => {
+        const next = [
+          {
+          id: `${action}-${Date.now()}`,
+          action,
+          status: 'preview',
+          created_at: new Date().toISOString(),
+          },
+          ...history,
+        ]
+        saveCommandHistory(deviceId, next)
+        return next
+      })
+      setCommandStatus('Command preview ready. Live commands require a deployed device function.')
     }
   }
 
-  if (!currentDevice) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>
+  const device = currentDevice || previewDevice
+  const logs = eventLogs.length > 0 ? eventLogs : previewLogs
+  const usingPreview = !currentDevice
+
+  if (deviceLoading && !currentDevice) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-surface text-on-surface">
+        <div className="text-center">
+          <span className="material-symbols-outlined animate-spin text-5xl text-primary">progress_activity</span>
+          <p className="mt-3 font-semibold">Loading device details</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div>
-      <h1 className="text-display-md font-bold mb-8">{currentDevice.name}</h1>
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-display-md font-bold">{device.name}</h1>
+          <p className="mt-2 text-on-surface-variant">
+            {(device.type || 'device').replace('_', ' ')} / {device.brand || 'Unknown brand'}
+          </p>
+        </div>
+        <Link to="/smart-property/devices" className="rounded-lg border border-gray-600 px-4 py-2 font-semibold">
+          Back to devices
+        </Link>
+      </div>
 
-      {/* Device Status Card */}
-      <div className="bg-surface-container rounded-lg p-8 mb-8">
-        <div className="flex justify-between items-start mb-6">
+      {usingPreview && (
+        <div className="mb-6 rounded-lg border border-primary/40 bg-primary/10 p-4 text-on-surface">
+          Showing a device preview because the selected device record is not available yet.
+        </div>
+      )}
+
+      <div className="mb-8 rounded-lg bg-surface-container p-8">
+        <div className="mb-6 flex items-start justify-between">
           <div>
-            <h2 className="text-body-lg font-medium mb-1">Device Status</h2>
+            <h2 className="mb-1 text-body-lg font-medium">Device Status</h2>
             <p className="text-on-surface-variant">
-              {currentDevice.type.replace('_', ' ')} • {currentDevice.brand}
+              {device.model || 'Model pending'} / Last seen {formatDate(device.last_seen)}
             </p>
           </div>
           <div
-            className={`px-4 py-2 rounded-full font-medium capitalize ${
-              currentDevice.status === 'online'
+            className={`rounded-full px-4 py-2 font-medium capitalize ${
+              device.status === 'online'
                 ? 'bg-green-500/20 text-green-400'
                 : 'bg-red-500/20 text-red-400'
             }`}
           >
-            {currentDevice.status}
+            {device.status || 'unknown'}
           </div>
         </div>
 
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
-          <div>
-            <p className="text-on-surface-variant text-body-sm mb-1">Model</p>
-            <p className="text-white font-medium">{currentDevice.model}</p>
-          </div>
-          {currentDevice.battery_level && (
-            <div>
-              <p className="text-on-surface-variant text-body-sm mb-1">Battery</p>
-              <p className="text-white font-medium">{currentDevice.battery_level}%</p>
-            </div>
-          )}
-          {currentDevice.signal_strength && (
-            <div>
-              <p className="text-on-surface-variant text-body-sm mb-1">Signal</p>
-              <p className="text-white font-medium">{currentDevice.signal_strength}%</p>
-            </div>
-          )}
-          <div>
-            <p className="text-on-surface-variant text-body-sm mb-1">Last Seen</p>
-            <p className="text-white font-medium">
-              {new Date(currentDevice.last_seen).toLocaleTimeString()}
-            </p>
-          </div>
+        <div className="mb-8 grid gap-4 md:grid-cols-4">
+          <DeviceMetric label="Model" value={device.model || 'Pending'} />
+          <DeviceMetric label="Battery" value={device.battery_level ? `${device.battery_level}%` : 'N/A'} />
+          <DeviceMetric label="Signal" value={device.signal_strength ? `${device.signal_strength}%` : 'N/A'} />
+          <DeviceMetric label="Last Seen" value={formatTime(device.last_seen)} />
         </div>
 
-        {/* Control Buttons */}
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex flex-wrap gap-3">
           {['lock', 'unlock', 'turn_on', 'turn_off'].map((action) => (
             <button
               key={action}
               onClick={() => handleCommand(action)}
               disabled={loading}
-              className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition disabled:opacity-50 capitalize"
+              className="rounded-lg bg-primary px-6 py-2 capitalize text-white transition hover:bg-primary/90 disabled:opacity-50"
             >
               {loading ? 'Sending...' : action.replace('_', ' ')}
             </button>
           ))}
         </div>
+        {commandStatus && <p className="mt-4 text-body-sm text-on-surface-variant">{commandStatus}</p>}
       </div>
 
-      {/* Event Logs */}
-      <div className="bg-surface-container rounded-lg p-6">
-        <h2 className="text-body-lg font-medium mb-4">Recent Activity</h2>
+      <div className="rounded-lg bg-surface-container p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-body-lg font-medium">Recent Activity</h2>
+          <span className="text-body-sm text-on-surface-variant">{logs.length} events</span>
+        </div>
         <div className="space-y-3">
-          {eventLogs.map((log) => (
-            <div key={log.id} className="p-3 bg-surface rounded-lg border border-gray-700">
-              <div className="flex justify-between items-start">
+          {logs.map((log) => (
+            <div key={log.id} className="rounded-lg border border-gray-700 bg-surface p-3">
+              <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <p className="font-medium capitalize">{log.event_type.replace('_', ' ')}</p>
-                  <p className="text-body-sm text-gray-400">
-                    {new Date(log.created_at).toLocaleString()}
-                  </p>
+                  <p className="font-medium capitalize">{(log.event_type || 'event').replace('_', ' ')}</p>
+                  <p className="text-body-sm text-gray-400">{formatDate(log.created_at)}</p>
                 </div>
                 {log.event_data && (
-                  <span className="text-body-sm text-gray-500">
+                  <span className="rounded bg-gray-800 px-3 py-1 text-body-sm text-gray-300">
                     {JSON.stringify(log.event_data)}
                   </span>
                 )}
@@ -124,6 +231,50 @@ export default function DeviceDetails() {
           ))}
         </div>
       </div>
+
+      <div className="mt-8 rounded-lg bg-surface-container p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-body-lg font-medium">Command History</h2>
+          <span className="text-body-sm text-on-surface-variant">{commandHistory.length} saved commands</span>
+        </div>
+        {commandHistory.length > 0 ? (
+          <div className="space-y-3">
+            {commandHistory.map((item) => (
+              <div key={item.id} className="flex items-center justify-between rounded-lg border border-gray-700 bg-surface p-3">
+                <span className="font-semibold capitalize">{item.action.replace('_', ' ')}</span>
+                <span className={`rounded-full px-3 py-1 text-sm ${
+                  item.status === 'sent' ? 'bg-green-500/20 text-green-300' : 'bg-primary/20 text-primary'
+                }`}>
+                  {item.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-lg border border-gray-700 bg-surface p-4 text-on-surface-variant">
+            Commands you send from this page will be saved locally and mirrored to event logs when the backend accepts them.
+          </p>
+        )}
+      </div>
     </div>
   )
+}
+
+function DeviceMetric({ label, value }) {
+  return (
+    <div>
+      <p className="mb-1 text-body-sm text-on-surface-variant">{label}</p>
+      <p className="font-medium text-white">{value}</p>
+    </div>
+  )
+}
+
+function formatDate(value) {
+  if (!value) return 'Not recorded'
+  return new Date(value).toLocaleString()
+}
+
+function formatTime(value) {
+  if (!value) return 'N/A'
+  return new Date(value).toLocaleTimeString()
 }

@@ -21,7 +21,7 @@ export default function MobilePropertyDetails() {
         <Link to="/mobile/explore" className="grid h-11 w-11 place-items-center rounded-full bg-[#dbeafe]">
           <span className="material-symbols-outlined">arrow_back</span>
         </Link>
-        <p className="font-black">Property Hub</p>
+        <p className="font-black">BaytMiftah</p>
         <button className="grid h-11 w-11 place-items-center rounded-full bg-[#dbeafe]">
           <span className="material-symbols-outlined">ios_share</span>
         </button>
@@ -43,7 +43,7 @@ export default function MobilePropertyDetails() {
       <main>
         <section className="bg-white px-6 py-6">
           <div className="flex items-center justify-between">
-            <span className="rounded bg-[#62efad] px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#006c48]">
+            <span className="rounded bg-[#F5D76B] px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#0F172A]">
               Smart Home Certified
             </span>
             <span className="material-symbols-outlined text-3xl text-red-600">favorite</span>
@@ -53,7 +53,7 @@ export default function MobilePropertyDetails() {
             <span className="material-symbols-outlined text-base">location_on</span>
             Upper East Side, New York
           </p>
-          <p className="mt-6 text-3xl font-bold text-[#007a52]">
+          <p className="mt-6 text-3xl font-bold text-[#E9C349]">
             $12,450,000 <span className="text-xs uppercase tracking-widest text-black">/ Final Price</span>
           </p>
         </section>
@@ -78,9 +78,9 @@ export default function MobilePropertyDetails() {
             {infrastructure.map(([icon, label, value, status]) => (
               <article key={label} className="rounded-lg border border-[#cbd3df] bg-white p-4">
                 <div className="flex items-center justify-between">
-                  <span className="material-symbols-outlined text-[#007a52]">{icon}</span>
-                  <span className="flex items-center gap-1 text-xs font-semibold text-[#007a52]">
-                    <span className="h-2 w-2 rounded-full bg-[#007a52]" />
+                  <span className="material-symbols-outlined text-[#E9C349]">{icon}</span>
+                  <span className="flex items-center gap-1 text-xs font-semibold text-[#E9C349]">
+                    <span className="h-2 w-2 rounded-full bg-[#E9C349]" />
                     {status}
                   </span>
                 </div>

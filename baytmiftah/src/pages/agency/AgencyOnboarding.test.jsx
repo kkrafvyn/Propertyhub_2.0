@@ -39,7 +39,7 @@ describe('AgencyOnboarding Component', () => {
     await user.click(nextButton)
 
     await waitFor(() => {
-      expect(screen.getByText(/PropFlow Agency/i)).toBeInTheDocument()
+      expect(screen.getByText(/BaytMiftah verification workspace/i)).toBeInTheDocument()
     })
   })
 })

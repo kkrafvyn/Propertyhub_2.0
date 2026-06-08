@@ -5,10 +5,65 @@ import Header from '../components/Header'
 import marketplaceService, {
   fallbackMarketplaceListings,
 } from '../services/marketplace-service'
+import BackendStatusBanner from '../components/BackendStatusBanner'
+
+const roleViews = {
+  buyer: {
+    label: 'Buyer Workspace',
+    priority: 'Review saved properties and schedule the next verified viewing.',
+    actions: [
+      ['Explore Properties', '/explore', 'travel_explore'],
+      ['Saved Homes', '/favorites', 'favorite'],
+    ],
+  },
+  owner: {
+    label: 'Owner Workspace',
+    priority: 'Review listing readiness, verification documents, and buyer requests.',
+    actions: [
+      ['Create Listing', '/create-listing', 'add_home'],
+      ['My Listings', '/my-listings', 'real_estate_agent'],
+    ],
+  },
+  agency_agent: {
+    label: 'Agent Workspace',
+    priority: 'Follow up with high-intent leads before their next viewing window.',
+    actions: [
+      ['Lead Pipeline', '/agency/leads', 'group_add'],
+      ['Agency Analytics', '/agency/analytics', 'monitoring'],
+    ],
+  },
+  agency_admin: {
+    label: 'Agency Admin Workspace',
+    priority: 'Complete agency verification and assign open leads to active agents.',
+    actions: [
+      ['Agency Dashboard', '/agency/dashboard', 'business_center'],
+      ['Team Management', '/agency/team', 'groups'],
+    ],
+  },
+  platform_admin: {
+    label: 'Platform Admin Workspace',
+    priority: 'Clear verification queues and review marketplace trust signals.',
+    actions: [
+      ['Review Agencies', '/admin/agencies', 'rule_settings'],
+      ['Admin Dashboard', '/admin', 'admin_panel_settings'],
+    ],
+  },
+}
+
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('baytmiftah_user') || 'null')
+  } catch {
+    return null
+  }
+}
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const [featuredListings, setFeaturedListings] = useState(fallbackMarketplaceListings)
+  const [storedUser] = useState(getStoredUser)
+  const role = storedUser?.role || storedUser?.app_metadata?.role || 'buyer'
+  const roleView = roleViews[role] || roleViews.buyer
 
   useEffect(() => {
     let ignore = false
@@ -67,13 +122,14 @@ export default function Dashboard() {
       <Navigation />
 
       <main className="pb-32 md:ml-64 md:pb-10">
-        <Header title="Property Hub Workspace" />
+        <Header title="BaytMiftah Workspace" />
 
-        <div className="px-4 pt-24 md:px-8">
-          <div className="mx-auto max-w-container space-y-10">
+        <div className="page-shell">
+          <div className="content-shell section-stack">
+            <BackendStatusBanner />
             <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-              <div className="rounded-lg border border-outline-variant bg-surface-container p-6 md:p-8">
-                <p className="text-label-sm text-secondary">Property Hub command center</p>
+              <div className="panel md:p-7">
+                <p className="text-label-sm text-secondary">{roleView.label}</p>
                 <h2 className="mt-3 max-w-3xl text-4xl font-bold leading-tight text-secondary md:text-5xl">
                   Premium property operations, tuned for fast decisions.
                 </h2>
@@ -82,21 +138,24 @@ export default function Dashboard() {
                   health, and agent actions from one calm workspace.
                 </p>
                 <div className="mt-7 flex flex-wrap gap-3">
-                  <button onClick={() => navigate('/portfolio')} className="btn-primary">
-                    Review Portfolio
-                  </button>
-                  <button onClick={() => navigate('/messages')} className="btn-secondary">
-                    Open Messages
-                  </button>
+                  {roleView.actions.map(([label, path, icon], index) => (
+                    <button
+                      key={label}
+                      onClick={() => navigate(path)}
+                      className={index === 0 ? 'btn-primary' : 'btn-secondary'}
+                    >
+                      <span className="material-symbols-outlined">{icon}</span>
+                      {label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <aside className="rounded-lg border border-outline-variant bg-secondary p-6 text-on-secondary md:p-8">
+              <aside className="panel bg-secondary text-on-secondary md:p-7">
                 <span className="material-symbols-outlined text-4xl">verified_user</span>
                 <h3 className="mt-8 text-2xl font-semibold">Today&apos;s Priority</h3>
                 <p className="mt-3 text-on-secondary/80">
-                  Complete buyer verification for the Skyview Penthouse file
-                  before releasing the private inspection calendar.
+                  {roleView.priority}
                 </p>
                 <button className="mt-8 rounded-md bg-on-secondary px-5 py-3 font-semibold text-secondary">
                   Review File
@@ -106,7 +165,7 @@ export default function Dashboard() {
 
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {stats.map((stat) => (
-                <article key={stat.label} className="rounded-lg border border-outline-variant bg-surface-container p-5">
+                <article key={stat.label} className="panel-compact">
                   <div className="flex items-start justify-between gap-4">
                     <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/15 text-secondary">
                       <span className="material-symbols-outlined">{stat.icon}</span>
@@ -140,7 +199,7 @@ export default function Dashboard() {
                   <Link
                     key={listing.id}
                     to={`/property/${listing.id}`}
-                    className="group overflow-hidden rounded-lg border border-outline-variant bg-surface-container transition hover:border-secondary/60"
+                    className="group overflow-hidden rounded-lg border border-white/10 bg-surface-container transition hover:border-secondary/60"
                   >
                     <div className="relative aspect-[4/3] overflow-hidden">
                       <img
@@ -172,7 +231,7 @@ export default function Dashboard() {
             <section className="grid gap-4 md:grid-cols-2">
               <button
                 onClick={() => navigate('/create-listing')}
-                className="rounded-lg border border-outline-variant bg-surface-container p-6 text-left transition hover:border-secondary/60"
+                className="panel text-left transition hover:border-secondary/60"
               >
                 <span className="material-symbols-outlined text-3xl text-secondary">add_circle</span>
                 <h4 className="mt-4 text-2xl font-semibold">Create New Listing</h4>
@@ -183,7 +242,7 @@ export default function Dashboard() {
 
               <button
                 onClick={() => navigate('/agent/dashboard')}
-                className="rounded-lg border border-outline-variant bg-surface-container p-6 text-left transition hover:border-secondary/60"
+                className="panel text-left transition hover:border-secondary/60"
               >
                 <span className="material-symbols-outlined text-3xl text-secondary">monitoring</span>
                 <h4 className="mt-4 text-2xl font-semibold">Agent Performance</h4>

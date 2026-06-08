@@ -7,6 +7,9 @@ export default function AgencyVerification() {
   const [selectedAgency, setSelectedAgency] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
   const [error, setError] = useState('')
+  const [queueFilter, setQueueFilter] = useState('all')
+  const [search, setSearch] = useState('')
+  const [riskFilter, setRiskFilter] = useState('all')
 
   useEffect(() => {
     loadPendingAgencies()
@@ -56,16 +59,105 @@ export default function AgencyVerification() {
     }
   }
 
+  const reviewChecklist = [
+    'Business registration number matches submitted agency name',
+    'Tax ID is present or flagged for follow-up',
+    'Contact email and phone are usable for verification',
+    'Agency description and website align with the claimed market',
+  ]
+  const filteredAgencies = pendingAgencies.filter((agency) => {
+    const searchable = [
+      agency.name,
+      agency.email,
+      agency.phone,
+      agency.website,
+      agency.ghana_business_registration_number,
+      agency.ghana_tax_identification_number,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+    const matchesSearch = !search.trim() || searchable.includes(search.trim().toLowerCase())
+    const matchesQueue =
+      queueFilter === 'all' ||
+      (queueFilter === 'missing-tax'
+        ? !agency.ghana_tax_identification_number
+        : queueFilter === 'has-website'
+          ? Boolean(agency.website)
+          : agency.verification_status === queueFilter)
+    const riskScore = [
+      !agency.ghana_tax_identification_number,
+      !agency.website,
+      !agency.email,
+      !agency.phone,
+    ].filter(Boolean).length
+    const matchesRisk =
+      riskFilter === 'all' ||
+      (riskFilter === 'high' && riskScore >= 2) ||
+      (riskFilter === 'medium' && riskScore === 1) ||
+      (riskFilter === 'low' && riskScore === 0)
+
+    return matchesSearch && matchesQueue && matchesRisk
+  })
+
   return (
     <div className="grid gap-8 md:grid-cols-3">
       <div className="md:col-span-1">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-body-lg font-medium">
-            Pending Agencies ({pendingAgencies.length})
+            Pending Agencies ({filteredAgencies.length})
           </h2>
           <button onClick={loadPendingAgencies} className="btn-secondary px-3 py-2 text-sm">
             Refresh
           </button>
+        </div>
+
+        <div className="mb-4 grid grid-cols-2 gap-2">
+          {[
+            ['all', 'All'],
+            ['pending', 'Pending'],
+            ['missing-tax', 'Missing Tax'],
+            ['has-website', 'Website'],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              onClick={() => setQueueFilter(value)}
+              className={`rounded-md px-3 py-2 text-sm font-semibold ${
+                queueFilter === value ? 'bg-primary text-on-secondary' : 'bg-surface-container text-on-surface-variant'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <label className="mb-4 block">
+          <span className="sr-only">Search review queue</span>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search agencies..."
+            className="input-field"
+          />
+        </label>
+
+        <div className="mb-4 grid grid-cols-4 gap-2">
+          {[
+            ['all', 'Risk'],
+            ['high', 'High'],
+            ['medium', 'Med'],
+            ['low', 'Low'],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              onClick={() => setRiskFilter(value)}
+              className={`rounded-md px-3 py-2 text-sm font-semibold ${
+                riskFilter === value ? 'bg-secondary text-on-secondary' : 'bg-surface-container text-on-surface-variant'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {error && (
@@ -79,8 +171,8 @@ export default function AgencyVerification() {
             <p className="rounded-lg bg-surface-container p-4 text-on-surface-variant">
               Loading pending agencies...
             </p>
-          ) : (
-            pendingAgencies.map((agency) => (
+          ) : filteredAgencies.length > 0 ? (
+            filteredAgencies.map((agency) => (
               <button
                 key={agency.id}
                 onClick={() => setSelectedAgency(agency)}
@@ -96,8 +188,21 @@ export default function AgencyVerification() {
                     ? new Date(agency.verification_submitted_at).toLocaleDateString()
                     : new Date(agency.created_at).toLocaleDateString()}
                 </p>
+                <p className="mt-2 text-xs uppercase tracking-widest text-gray-400">
+                  {[!agency.ghana_tax_identification_number && 'missing tax', !agency.website && 'no website']
+                    .filter(Boolean)
+                    .join(' / ') || 'low risk'}
+                </p>
               </button>
             ))
+          ) : (
+            <div className="rounded-lg border border-gray-700 bg-surface-container p-5">
+              <span className="material-symbols-outlined text-4xl text-primary">verified_user</span>
+              <h3 className="mt-3 font-bold">Verification queue clear</h3>
+              <p className="mt-2 text-body-sm text-on-surface-variant">
+                New agency submissions will appear here after onboarding and document upload.
+              </p>
+            </div>
           )}
         </div>
       </div>
@@ -137,15 +242,20 @@ export default function AgencyVerification() {
             <div>
               <p className="text-body-sm mb-2 text-on-surface-variant">Description</p>
               <p className="rounded-lg bg-surface p-4">
-                {selectedAgency.description || 'No description submitted yet.'}
+                {selectedAgency.description || 'Description missing. Ask the agency to add a short operating profile before approval.'}
               </p>
             </div>
 
             <div>
               <h3 className="text-body-lg mb-3 font-medium">Submitted Documents</h3>
-              <p className="rounded-lg bg-surface p-3 text-on-surface-variant">
-                Verification document storage is not exposed by the current Supabase schema yet.
-              </p>
+              <div className="grid gap-3 md:grid-cols-2">
+                {reviewChecklist.map((item) => (
+                  <div key={item} className="flex items-start gap-3 rounded-lg bg-surface p-3">
+                    <span className="material-symbols-outlined text-primary">fact_check</span>
+                    <p className="text-body-sm text-on-surface-variant">{item}</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -178,9 +288,22 @@ export default function AgencyVerification() {
         </div>
       ) : (
         <div className="flex items-center justify-center md:col-span-2">
-          <p className="text-on-surface-variant">
-            {pendingAgencies.length === 0 ? 'No pending agencies' : 'Select an agency to review'}
-          </p>
+          <div className="max-w-xl rounded-lg border border-gray-700 bg-surface-container p-8 text-center">
+            <span className="material-symbols-outlined text-5xl text-primary">
+              {pendingAgencies.length === 0 ? 'task_alt' : 'rule_settings'}
+            </span>
+            <h2 className="mt-4 text-headline-md font-bold">
+              {pendingAgencies.length === 0 ? 'No agencies waiting for review' : 'Select an agency to review'}
+            </h2>
+            <p className="mt-2 text-on-surface-variant">
+              {pendingAgencies.length === 0
+                ? 'The verification queue is clear. Use refresh when a new onboarding request is submitted.'
+                : 'Open a submission from the queue to inspect identity, registration, contact, and approval details.'}
+            </p>
+            <button onClick={loadPendingAgencies} className="btn-secondary mt-5 px-4 py-2">
+              Refresh queue
+            </button>
+          </div>
         </div>
       )}
     </div>

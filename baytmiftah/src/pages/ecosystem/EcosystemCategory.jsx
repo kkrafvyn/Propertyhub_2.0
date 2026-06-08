@@ -27,7 +27,7 @@ export default function EcosystemCategory() {
                 >
                   <span className="material-symbols-outlined text-3xl">{group.icon}</span>
                 </span>
-                <p className="mt-5 text-label-sm font-bold uppercase tracking-wider text-[#007a52]">
+                <p className="mt-5 text-label-sm font-bold uppercase tracking-wider text-[#E9C349]">
                   {group.status}
                 </p>
                 <h2 className="mt-2 text-4xl font-black md:text-5xl">{group.title}</h2>
@@ -48,14 +48,14 @@ export default function EcosystemCategory() {
                     <h3 className="text-2xl font-black">{module.name}</h3>
                     <p className="mt-3 leading-7 text-[#4b5563]">{module.description}</p>
                   </div>
-                  <span className="material-symbols-outlined text-[#007a52]">add_task</span>
+                  <span className="material-symbols-outlined text-[#E9C349]">add_task</span>
                 </div>
 
                 <div className="mt-6">
                   <p className="text-sm font-black uppercase tracking-wider text-[#303744]">Core features</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {module.features.map((feature) => (
-                      <span key={feature} className="rounded-full bg-[#e9fbf6] px-3 py-1 text-sm font-semibold text-[#007a52]">
+                      <span key={feature} className="rounded-full bg-[#fff7d6] px-3 py-1 text-sm font-semibold text-[#E9C349]">
                         {feature}
                       </span>
                     ))}

@@ -11,7 +11,7 @@ export default function MobileDashboard() {
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-[#f5f7fc] pb-24 text-[#071121]">
       <header className="flex items-center justify-between border-b border-[#ccd3df] px-6 py-5">
-        <h1 className="text-2xl font-black">Property Hub</h1>
+        <h1 className="text-2xl font-black">BaytMiftah</h1>
         <div className="flex items-center gap-4">
           <span className="material-symbols-outlined">notifications</span>
           <img
@@ -31,7 +31,7 @@ export default function MobileDashboard() {
               <div>
                 <p className="text-sm uppercase tracking-widest text-[#aab3c2]">Portfolio Value</p>
                 <p className="mt-2 text-3xl font-bold">$1,284,000</p>
-                <p className="mt-2 text-sm font-semibold text-[#62efad]">↗ +4.2% this month</p>
+                <p className="mt-2 text-sm font-semibold text-[#F5D76B]">↗ +4.2% this month</p>
               </div>
               <span className="material-symbols-outlined rounded-md bg-white/10 p-3">
                 account_balance_wallet
@@ -44,7 +44,7 @@ export default function MobileDashboard() {
               ['bolt', 'IoT Status', '98% •'],
             ].map(([icon, label, value]) => (
               <div key={label} className="rounded-lg border border-[#cbd3df] bg-white p-5">
-                <span className="material-symbols-outlined text-[#007a52]">{icon}</span>
+                <span className="material-symbols-outlined text-[#E9C349]">{icon}</span>
                 <p className="mt-4 text-xs font-semibold uppercase tracking-widest">{label}</p>
                 <p className="mt-1 text-3xl font-semibold">{value}</p>
               </div>
@@ -94,12 +94,12 @@ export default function MobileDashboard() {
         <section>
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold">Recent Activity</h2>
-            <button className="font-semibold uppercase tracking-widest text-[#007a52]">View All</button>
+            <button className="font-semibold uppercase tracking-widest text-[#E9C349]">View All</button>
           </div>
           <div className="mt-4 space-y-4">
             {activity.map(([icon, text, time]) => (
               <article key={text} className="flex gap-4 rounded-lg border border-[#cbd3df] bg-white p-5">
-                <span className="material-symbols-outlined h-fit rounded-full bg-[#dffbf0] p-3 text-[#007a52]">
+                <span className="material-symbols-outlined h-fit rounded-full bg-[#fff4bf] p-3 text-[#E9C349]">
                   {icon}
                 </span>
                 <div>
@@ -130,7 +130,7 @@ export default function MobileDashboard() {
               <div className="mt-5 flex items-center justify-between border-t border-[#d8dde6] pt-4">
                 <span>12k sqft</span>
                 <span>Grade A</span>
-                <span className="material-symbols-outlined text-[#007a52]">favorite</span>
+                <span className="material-symbols-outlined text-[#E9C349]">favorite</span>
               </div>
             </div>
           </article>
@@ -155,7 +155,7 @@ export default function MobileDashboard() {
           <button
             key={label}
             className={`flex flex-col items-center justify-center gap-1 ${
-              label === 'Dashboard' ? 'bg-[#e9fbf6] text-[#007a52]' : 'text-[#303744]'
+              label === 'Dashboard' ? 'bg-[#fff7d6] text-[#E9C349]' : 'text-[#303744]'
             }`}
           >
             <span className="material-symbols-outlined">{icon}</span>
