@@ -145,6 +145,152 @@ const getStoredUser = () => {
   }
 }
 
+function PublicMarketplaceHome({ listings }) {
+  const heroListing = listings[0] || fallbackMarketplaceListings[0]
+  const heroImage = heroListing?.image || heroListing?.media?.[0]?.public_url
+  const publicListings = listings.length > 0 ? listings.slice(0, 6) : fallbackMarketplaceListings.slice(0, 6)
+
+  return (
+    <div className="marketplace-page">
+      <header className="marketplace-header">
+        <div className="flex min-h-16 items-center justify-between gap-4 px-5 py-4 md:px-8">
+          <Link to="/" className="text-3xl font-bold text-[#071121]">
+            BaytMiftah
+          </Link>
+          <nav className="hidden items-center gap-7 text-sm font-semibold md:flex">
+            <Link to="/explore" className="hover:text-[#9a7413]">Explore</Link>
+            <Link to="/neighborhoods" className="hover:text-[#9a7413]">Neighborhoods</Link>
+            <Link to="/agency/onboarding" className="hover:text-[#9a7413]">List your property</Link>
+          </nav>
+          <div className="flex items-center gap-3">
+            <Link to="/login" className="marketplace-secondary-cta hidden px-4 py-2 sm:inline-flex">
+              Sign in
+            </Link>
+            <Link to="/signup" className="marketplace-cta px-4 py-2">
+              Get started
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section className="relative min-h-[72vh] overflow-hidden bg-[#071121] text-white">
+          <img
+            src={heroImage}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-72"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,20,36,0.88),rgba(5,20,36,0.52),rgba(5,20,36,0.18))]" />
+          <div className="relative z-10 flex min-h-[72vh] flex-col justify-center px-5 py-16 md:px-8">
+            <div className="max-w-3xl">
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#E9C349]">
+                Verified Ghana property marketplace
+              </p>
+              <h1 className="mt-5 text-5xl font-bold leading-tight md:text-7xl">
+                BaytMiftah
+              </h1>
+              <p className="mt-5 max-w-2xl text-lg leading-8 text-white/82">
+                Browse verified homes, compare trusted agencies, and request viewings only when you are ready to move.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link to="/explore" className="marketplace-cta">
+                  <SvgIcon name="search" className="h-5 w-5" />
+                  Start exploring
+                </Link>
+                <Link to="/neighborhoods" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/35 bg-white/12 px-5 py-3 font-bold text-white backdrop-blur transition hover:bg-white/20">
+                  <SvgIcon name="map" className="h-5 w-5" />
+                  View neighborhoods
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="relative z-20 mx-auto -mt-12 max-w-5xl px-5 md:px-8">
+          <div className="marketplace-search grid bg-white md:grid-cols-[1.2fr_0.9fr_0.9fr_auto]">
+            {[
+              ['Location', 'Accra, Cantonments, Airport...'],
+              ['Property type', 'Apartment, house, commercial'],
+              ['Budget', 'Any budget'],
+            ].map(([label, placeholder], index) => (
+              <label key={label} className={`marketplace-search-segment ${index < 2 ? 'md:border-r' : ''}`}>
+                <span className="block text-sm font-semibold text-[#071121]">{label}</span>
+                <input
+                  placeholder={placeholder}
+                  className="mt-1 w-full bg-transparent text-sm text-[#596170] outline-none placeholder:text-[#7a8494]"
+                />
+              </label>
+            ))}
+            <Link to="/explore" className="m-2 flex min-h-14 items-center justify-center rounded-full bg-[#E9C349] px-6 font-bold text-[#071121]">
+              <SvgIcon name="search" className="h-5 w-5" />
+              <span className="ml-2 hidden sm:inline">Search</span>
+            </Link>
+          </div>
+        </section>
+
+        <section className="px-5 pb-20 pt-16 md:px-8">
+          <div className="mx-auto max-w-7xl">
+            <BackendStatusBanner className="mb-8" />
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-widest text-[#9a7413]">
+                  Marketplace
+                </p>
+                <h2 className="mt-2 text-3xl font-bold text-[#071121] md:text-4xl">
+                  Verified places to start with
+                </h2>
+              </div>
+              <Link to="/explore" className="font-semibold text-[#9a7413]">
+                View all listings
+              </Link>
+            </div>
+
+            <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+              {publicListings.map((listing) => (
+                <Link key={listing.id} to={`/property/${listing.id}`} className="marketplace-card group">
+                  <div className="marketplace-image">
+                    <img
+                      src={listing.image}
+                      alt={listing.title}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    />
+                    {(listing.addressVerified || listing.organization?.verified) && (
+                      <span className="marketplace-pill absolute left-4 top-4">
+                        <SvgIcon name="verified" className="h-3.5 w-3.5 text-[#0f766e]" />
+                        Verified
+                      </span>
+                    )}
+                    <span className="marketplace-pill absolute bottom-4 left-4">
+                      {listing.category || listing.listingType || 'Property'}
+                    </span>
+                  </div>
+                  <div className="pt-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="text-lg font-bold leading-tight text-[#071121]">
+                        {listing.displayLocation || listing.address}
+                      </h3>
+                      <span className="flex shrink-0 items-center gap-1 text-sm">
+                        <SvgIcon name="star" className="h-4 w-4 fill-[#E9C349] text-[#E9C349]" />
+                        {listing.rating}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[#596170]">{listing.title}</p>
+                    <p className="mt-3 text-lg font-bold text-[#071121]">{listing.priceLabel}</p>
+                    <div className="mt-3 flex items-center justify-between border-t border-[#e4e9f1] pt-3 text-xs font-semibold uppercase tracking-wider text-[#596170]">
+                      <span>{listing.organization?.verified ? 'Verified agency' : 'Partner agency'}</span>
+                      <span>{listing.qualityScore || 82}% score</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  )
+}
+
 export default function Dashboard({ user = null }) {
   const navigate = useNavigate()
   const [featuredListings, setFeaturedListings] = useState(fallbackMarketplaceListings)
@@ -205,6 +351,10 @@ export default function Dashboard({ user = null }) {
       },
     ]
   }, [featuredListings])
+
+  if (roleGroup === 'public') {
+    return <PublicMarketplaceHome listings={featuredListings} />
+  }
 
   return (
     <div className="min-h-screen bg-surface">
