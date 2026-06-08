@@ -3,6 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { normalizeSupabaseUser } from '../lib/auth'
 import authService from '../services/auth-service'
 import AuthShell from '../components/AuthShell'
+import AuthFormIcon from '../components/AuthFormIcon'
 
 export default function Login({ setUser }) {
   const [email, setEmail] = useState('')
@@ -55,9 +56,9 @@ export default function Login({ setUser }) {
 
   return (
     <AuthShell
-      headerLabel="Log in"
-      title="Welcome back"
-      subtitle="Use your BaytMiftah account or continue with a connected provider."
+      headerLabel="Unified login"
+      title="Sign in to BaytMiftah"
+      subtitle="One secure portal for buyers, renters, owners, agents, agencies, and platform operators."
       footer={(
         <>
           Don&apos;t have an account?{' '}
@@ -94,7 +95,7 @@ export default function Login({ setUser }) {
 
           <div className="overflow-hidden rounded-lg border border-[#cbd3df] bg-white focus-within:border-[#e9c349]">
             <label htmlFor="email" className="block border-b border-[#cbd3df] px-4 py-2 text-xs font-semibold text-[#596170]">
-              Professional Email
+              Email
             </label>
             <input
               type="email"
@@ -106,7 +107,7 @@ export default function Login({ setUser }) {
               required
             />
             <label htmlFor="password" className="block border-y border-[#cbd3df] px-4 py-2 text-xs font-semibold text-[#596170]">
-              Access Key
+              Password
             </label>
             <div className="flex items-center">
               <input
@@ -124,9 +125,7 @@ export default function Login({ setUser }) {
                 className="flex h-12 w-12 items-center justify-center text-[#596170] hover:bg-[#f5f7fc]"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
-                <span className="material-symbols-outlined text-xl">
-                  {showPassword ? 'visibility_off' : 'visibility'}
-                </span>
+                <AuthFormIcon name={showPassword ? 'eye_off' : 'eye'} />
               </button>
             </div>
           </div>
@@ -141,8 +140,8 @@ export default function Login({ setUser }) {
             className="min-h-11 w-full rounded-md bg-[#e9c349] px-6 py-3 text-base font-semibold text-[#071121] transition hover:bg-[#d9b336] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined animate-spin text-lg">settings</span>
+                <span className="flex items-center justify-center gap-2">
+                <AuthFormIcon name="spinner" className="animate-spin" />
                 Signing in...
               </span>
             ) : (
@@ -163,7 +162,7 @@ export default function Login({ setUser }) {
               disabled={Boolean(providerLoading)}
               className="relative flex min-h-11 w-full items-center justify-center rounded-md border border-[#cbd3df] px-4 py-2.5 text-sm font-semibold text-[#071121] hover:bg-[#f5f7fc] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <span className="absolute left-4 flex h-5 w-5 items-center justify-center rounded-full bg-[#4285F4] text-xs font-bold text-white">G</span>
+              <AuthFormIcon name="google" className="absolute left-4 text-[#4285F4]" />
               {providerLoading === 'google' ? 'Opening Google...' : 'Continue with Google'}
             </button>
             <button
@@ -172,7 +171,7 @@ export default function Login({ setUser }) {
               disabled={Boolean(providerLoading)}
               className="relative flex min-h-11 w-full items-center justify-center rounded-md border border-[#071121] bg-[#071121] px-4 py-2.5 text-sm font-semibold text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <span className="absolute left-4 text-lg font-bold">A</span>
+              <AuthFormIcon name="apple" className="absolute left-4 text-white" />
               {providerLoading === 'apple' ? 'Opening Apple...' : 'Continue with Apple'}
             </button>
           </div>

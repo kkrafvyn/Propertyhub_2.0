@@ -4,6 +4,7 @@ import { normalizeSupabaseUser } from '../lib/auth'
 import { SELF_SERVE_ROLES, USER_ROLES } from '../lib/roles'
 import authService from '../services/auth-service'
 import AuthShell from '../components/AuthShell'
+import AuthFormIcon from '../components/AuthFormIcon'
 
 const roleLabels = {
   [USER_ROLES.BUYER]: 'Buyer',
@@ -88,9 +89,9 @@ export default function SignUp({ setUser }) {
 
   return (
     <AuthShell
-      headerLabel="Create account"
-      title="Set up your access"
-      subtitle="Choose the account type that best matches how you use BaytMiftah."
+      headerLabel="Unified access"
+      title="Create your BaytMiftah account"
+      subtitle="Start with one account. Your workspace and permissions adapt after sign-in and verification."
       backTo="/login"
       backIcon="arrow_back"
       footer={(
@@ -106,7 +107,7 @@ export default function SignUp({ setUser }) {
         </>
       )}
       highlights={[
-        ['person_add', 'Self-serve buyer, renter, owner, and operator roles'],
+        ['person_add', 'One account for every role'],
         ['verified', 'Verification can continue inside the workspace'],
         ['groups', 'Agency teams can be invited after setup'],
       ]}
@@ -158,7 +159,7 @@ export default function SignUp({ setUser }) {
               required
             />
             <label htmlFor="password" className="block border-y border-[#cbd3df] px-4 py-2 text-xs font-semibold text-[#596170]">
-              Access Key
+              Password
             </label>
             <div className="flex items-center">
               <input
@@ -177,13 +178,11 @@ export default function SignUp({ setUser }) {
                 className="flex h-12 w-12 items-center justify-center text-[#596170] hover:bg-[#f5f7fc]"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
-                <span className="material-symbols-outlined text-xl">
-                  {showPassword ? 'visibility_off' : 'visibility'}
-                </span>
+                <AuthFormIcon name={showPassword ? 'eye_off' : 'eye'} />
               </button>
             </div>
             <label htmlFor="role" className="block border-y border-[#cbd3df] px-4 py-2 text-xs font-semibold text-[#596170]">
-              Account Type
+              Primary use
             </label>
             <select
               id="role"
@@ -225,7 +224,7 @@ export default function SignUp({ setUser }) {
               disabled={Boolean(providerLoading)}
               className="relative flex min-h-11 w-full items-center justify-center rounded-md border border-[#cbd3df] px-4 py-2.5 text-sm font-semibold text-[#071121] hover:bg-[#f5f7fc] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <span className="absolute left-4 flex h-5 w-5 items-center justify-center rounded-full bg-[#4285F4] text-xs font-bold text-white">G</span>
+            <AuthFormIcon name="google" className="absolute left-4 text-[#4285F4]" />
               {providerLoading === 'google' ? 'Opening Google...' : 'Continue with Google'}
             </button>
             <button
@@ -234,7 +233,7 @@ export default function SignUp({ setUser }) {
               disabled={Boolean(providerLoading)}
               className="relative flex min-h-11 w-full items-center justify-center rounded-md border border-[#071121] bg-[#071121] px-4 py-2.5 text-sm font-semibold text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <span className="absolute left-4 text-lg font-bold">A</span>
+              <AuthFormIcon name="apple" className="absolute left-4 text-white" />
               {providerLoading === 'apple' ? 'Opening Apple...' : 'Continue with Apple'}
             </button>
           </div>

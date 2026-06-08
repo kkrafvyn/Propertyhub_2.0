@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { accountService } from '../services/production-service'
 import AuthShell from '../components/AuthShell'
+import AuthFormIcon from '../components/AuthFormIcon'
 
 export default function ResetPassword() {
   const [email, setEmail] = useState('')
@@ -41,9 +42,9 @@ export default function ResetPassword() {
       backTo="/login"
       backIcon="arrow_back"
       highlights={[
-        ['mark_email_read', 'Secure email recovery links'],
-        ['password', 'New password update flow'],
-        ['shield', 'Account security continues in profile settings'],
+        ['lock', 'Secure email recovery links'],
+        ['verified', 'New password update flow'],
+        ['calendar', 'Account security continues in profile settings'],
       ]}
       footer={(
         <>
@@ -95,9 +96,7 @@ export default function ResetPassword() {
             onClick={() => setShowPassword((current) => !current)}
             className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-semibold text-[#596170] hover:text-[#071121]"
           >
-            <span className="material-symbols-outlined text-lg">
-              {showPassword ? 'visibility_off' : 'visibility'}
-            </span>
+            <AuthFormIcon name={showPassword ? 'eye_off' : 'eye'} />
             {showPassword ? 'Hide password' : 'Show password'}
           </button>
           <button disabled={loading} className="min-h-11 w-full rounded-md border border-[#071121] px-5 py-3 font-semibold text-[#071121] disabled:opacity-60">

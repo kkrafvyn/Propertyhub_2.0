@@ -215,6 +215,14 @@ textarea:focus {
     .p-10 {
       padding: 2rem;
     }
+
+    html[data-sidebar='collapsed'] .md\:ml-64 {
+      margin-left: 5rem !important;
+    }
+
+    html[data-sidebar='collapsed'] .md\:left-64 {
+      left: 5rem !important;
+    }
   }
 }
 
