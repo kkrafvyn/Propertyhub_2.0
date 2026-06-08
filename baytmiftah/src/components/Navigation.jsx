@@ -55,6 +55,32 @@ const iconPaths = {
       <path d="M14 12h2" />
     </>
   ),
+  storefront: (
+    <>
+      <path d="M5 10v10h14V10" />
+      <path d="M4 10h16L18.5 4h-13Z" />
+      <path d="M8 10v10" />
+      <path d="M16 10v10" />
+    </>
+  ),
+  apartment: (
+    <>
+      <rect x="5" y="4" width="14" height="17" rx="1.5" />
+      <path d="M9 8h2" />
+      <path d="M13 8h2" />
+      <path d="M9 12h2" />
+      <path d="M13 12h2" />
+      <path d="M10 21v-5h4v5" />
+    </>
+  ),
+  villa: (
+    <>
+      <path d="M3.5 11 12 4l8.5 7" />
+      <path d="M6 9.5V20h12V9.5" />
+      <path d="M9 20v-6h6v6" />
+      <path d="M4 20h16" />
+    </>
+  ),
   add_home: (
     <>
       <path d="M4 10.5 12 4l8 6.5" />
@@ -72,6 +98,16 @@ const iconPaths = {
     <>
       <path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z" />
       <circle cx="12" cy="10" r="2.5" />
+    </>
+  ),
+  star: (
+    <>
+      <path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z" />
+    </>
+  ),
+  favorite_border: (
+    <>
+      <path d="M12 20s-7.5-4.6-8.5-10A4.4 4.4 0 0 1 12 6a4.4 4.4 0 0 1 8.5 4C19.5 15.4 12 20 12 20Z" />
     </>
   ),
   diamond: (
@@ -115,6 +151,15 @@ const iconPaths = {
       <path d="m4 6 5-2 6 2 5-2v14l-5 2-6-2-5 2Z" />
       <path d="M9 4v14" />
       <path d="M15 6v14" />
+    </>
+  ),
+  my_location: (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 3v3" />
+      <path d="M12 18v3" />
+      <path d="M3 12h3" />
+      <path d="M18 12h3" />
     </>
   ),
   calendar_month: (
@@ -204,6 +249,30 @@ const iconPaths = {
       <path d="m9 12 2 2 4-5" />
     </>
   ),
+  tune: (
+    <>
+      <path d="M4 7h10" />
+      <path d="M18 7h2" />
+      <circle cx="16" cy="7" r="2" />
+      <path d="M4 17h2" />
+      <path d="M10 17h10" />
+      <circle cx="8" cy="17" r="2" />
+    </>
+  ),
+  language: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3a14 14 0 0 1 0 18" />
+      <path d="M12 3a14 14 0 0 0 0 18" />
+    </>
+  ),
+  person: (
+    <>
+      <circle cx="12" cy="8.5" r="3.5" />
+      <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+    </>
+  ),
   business: (
     <>
       <rect x="5" y="5" width="14" height="15" rx="1.5" />
@@ -218,6 +287,51 @@ const iconPaths = {
     <>
       <path d="M12 3.5 19 6v5.5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6Z" />
       <path d="m8.5 12 2.2 2.2 4.8-5" />
+    </>
+  ),
+  verified: (
+    <>
+      <path d="M12 3.5 19 6v5.5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6Z" />
+      <path d="m8.5 12 2.2 2.2 4.8-5" />
+    </>
+  ),
+  bed: (
+    <>
+      <path d="M4 11V6" />
+      <path d="M4 14h16" />
+      <path d="M20 14v-3a3 3 0 0 0-3-3h-5v6" />
+      <path d="M4 14v5" />
+      <path d="M20 14v5" />
+      <path d="M4 11h8" />
+    </>
+  ),
+  bathtub: (
+    <>
+      <path d="M5 11V7a3 3 0 0 1 6 0" />
+      <path d="M4 12h17v2a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5Z" />
+      <path d="M8 21v-2" />
+      <path d="M17 21v-2" />
+    </>
+  ),
+  straighten: (
+    <>
+      <path d="M4 17 17 4l3 3L7 20Z" />
+      <path d="m14 7 3 3" />
+      <path d="m11 10 2 2" />
+      <path d="m8 13 3 3" />
+    </>
+  ),
+  check_circle: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8.5 12.5 2.2 2.2 4.8-5.2" />
+    </>
+  ),
+  ios_share: (
+    <>
+      <path d="M12 15V4" />
+      <path d="m8 8 4-4 4 4" />
+      <path d="M5 12v7h14v-7" />
     </>
   ),
   admin_panel_settings: (

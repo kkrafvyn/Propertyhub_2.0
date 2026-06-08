@@ -4,6 +4,7 @@ import marketplaceService, {
   fallbackMarketplaceListings,
 } from '../services/marketplace-service'
 import { createOfferPacket, markOfferPacketSigned } from '../services/offer-service'
+import { SvgIcon } from '../components/Navigation'
 
 function PropertyHeader({ search = 'Search marketplace...', action = 'Create New' }) {
   return (
@@ -19,7 +20,7 @@ function PropertyHeader({ search = 'Search marketplace...', action = 'Create New
         <Link to="/smart-property/devices">Devices</Link>
       </nav>
       <label className="ml-auto hidden h-11 w-full max-w-md items-center gap-3 rounded-md border border-[#b9c3d2] bg-[#edf4ff] px-4 md:flex">
-        <span className="material-symbols-outlined text-[#4b5563]">search</span>
+        <SvgIcon name="search" className="text-[#4b5563]" />
         <input className="min-w-0 flex-1 bg-transparent outline-none" placeholder={search} />
       </label>
       <Link
@@ -28,8 +29,8 @@ function PropertyHeader({ search = 'Search marketplace...', action = 'Create New
       >
         {action}
       </Link>
-      <span className="material-symbols-outlined">notifications</span>
-      <span className="material-symbols-outlined">account_circle</span>
+      <SvgIcon name="mail" />
+      <SvgIcon name="account_circle" />
     </header>
   )
 }
@@ -85,8 +86,8 @@ function FactStrip({ listing }) {
   return (
     <div className="grid gap-3 border-b border-[#d8dde6] pb-6 md:grid-cols-4">
       {facts.map(([icon, label]) => (
-        <div key={label} className="rounded-md bg-[#edf4ff] p-4">
-          <span className="material-symbols-outlined text-[#E9C349]">{icon}</span>
+        <div key={label} className="rounded-md border border-[#d7e0ec] bg-[#edf4ff] p-4">
+          <SvgIcon name={icon} className="h-6 w-6 text-[#9a7413]" />
           <p className="mt-2 font-semibold">{label}</p>
         </div>
       ))}
@@ -105,9 +106,7 @@ function AmenityGrid({ amenities }) {
       <div className="mt-6 grid gap-5 md:grid-cols-2">
         {items.map((amenity) => (
           <div key={amenity} className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-lg text-[#E9C349]">
-              check_circle
-            </span>
+            <SvgIcon name="check_circle" className="h-5 w-5 text-[#9a7413]" />
             <span className="capitalize">{amenity}</span>
           </div>
         ))}
@@ -122,8 +121,8 @@ function LocationPanel({ listing }) {
       <h2 className="text-2xl font-semibold">Location</h2>
       <div className="relative mt-6 overflow-hidden rounded-lg bg-[#8aa896]">
         <div className="h-96 bg-[radial-gradient(circle_at_24%_58%,rgba(17,24,39,0.16),transparent_18%),linear-gradient(120deg,#7f8f79,#a9c7a5)]" />
-        <span className="material-symbols-outlined absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#111827] text-4xl text-white">
-          location_on
+        <span className="absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#111827] text-white">
+          <SvgIcon name="location_on" className="h-8 w-8" />
         </span>
         <span className="absolute bottom-6 left-6 max-w-xs rounded-md bg-white px-5 py-3 text-sm shadow">
           <strong>{listing.displayLocation || listing.address}</strong>
@@ -204,11 +203,11 @@ function BookingCard({ listing, onOfferCreated }) {
 
   return (
     <aside className="space-y-6 lg:sticky lg:top-24 lg:h-fit">
-      <section className="rounded-lg border border-[#cbd3df] bg-white p-7 shadow-xl">
+      <section className="rounded-lg border border-[#cbd3df] bg-white p-7 shadow-xl shadow-slate-900/10">
         <div className="flex items-start justify-between gap-4">
           <p className="text-2xl font-black">{listing.priceLabel}</p>
           <span className="flex items-center gap-1 text-sm">
-            <span className="material-symbols-outlined text-base text-[#E9C349]">star</span>
+            <SvgIcon name="star" className="h-4 w-4 fill-[#E9C349] text-[#E9C349]" />
             {listing.rating}
           </span>
         </div>
@@ -228,8 +227,9 @@ function BookingCard({ listing, onOfferCreated }) {
         </div>
         <button
           onClick={requireLoginForBooking}
-          className="mt-6 w-full rounded-md bg-black py-5 text-xl font-bold text-white"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-md bg-black py-5 text-xl font-bold text-white transition hover:bg-[#1f2937]"
         >
+          <SvgIcon name="calendar_month" />
           Schedule Viewing
         </button>
         <a
@@ -243,7 +243,7 @@ function BookingCard({ listing, onOfferCreated }) {
         <p className="mt-4 text-center text-sm text-[#596170]">
           You will connect with the listing agency before any payment.
         </p>
-        <div className="mt-6 space-y-3 border-b border-[#d8dde6] pb-5 text-sm">
+        <div className="mt-6 space-y-3 rounded-md border border-[#d8dde6] bg-[#f8faff] p-4 text-sm">
           {[
             ['Agency', listing.organization?.name || 'BaytMiftah Partner'],
             ['Verification', listing.verificationStatus || 'submitted'],
@@ -255,7 +255,7 @@ function BookingCard({ listing, onOfferCreated }) {
             </div>
           ))}
         </div>
-        <div className="mt-6 flex items-center gap-3">
+        <div className="mt-6 flex items-center gap-3 border-t border-[#d8dde6] pt-5">
           <img
             src={listing.organization?.logo_url || 'https://placehold.co/120x120/e0f2fe/0f172a?text=PH'}
             alt=""
@@ -268,7 +268,7 @@ function BookingCard({ listing, onOfferCreated }) {
             </p>
           </div>
         </div>
-        <button className="mt-4 w-full rounded-md border border-[#9ba4b2] py-3">
+        <button className="mt-4 w-full rounded-md border border-[#9ba4b2] py-3 font-semibold transition hover:border-black">
           Message Agent
         </button>
       </section>
@@ -434,11 +434,11 @@ export default function PropertyDetails() {
             <h1 className="mt-2 text-4xl font-black md:text-5xl">{listing.title}</h1>
             <div className="mt-4 flex flex-wrap items-center gap-5">
               <span className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-base text-[#E9C349]">star</span>
+                <SvgIcon name="star" className="h-4 w-4 fill-[#E9C349] text-[#E9C349]" />
                 {listing.rating} ({listing.qualityScore || 82}% quality)
               </span>
               <span className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-base">location_on</span>
+                <SvgIcon name="location_on" className="h-4 w-4" />
                 {listing.address}
               </span>
             </div>
@@ -446,11 +446,11 @@ export default function PropertyDetails() {
           </div>
           <div className="flex gap-5">
             <button className="flex items-center gap-2">
-              <span className="material-symbols-outlined">ios_share</span>
+              <SvgIcon name="ios_share" />
               Share
             </button>
             <button className="flex items-center gap-2">
-              <span className="material-symbols-outlined">favorite</span>
+              <SvgIcon name="favorite" />
               Save
             </button>
           </div>
@@ -481,7 +481,7 @@ export default function PropertyDetails() {
 
             <section className="rounded-lg bg-[#111827] p-6 text-white">
               <h2 className="flex items-center gap-2 text-2xl font-bold">
-                <span className="material-symbols-outlined text-[#F5D76B]">settings_input_antenna</span>
+                <SvgIcon name="verified_user" className="h-6 w-6 text-[#F5D76B]" />
                 Trust and Data Layer
               </h2>
               <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -491,7 +491,7 @@ export default function PropertyDetails() {
                   ['monitoring', 'Quality Score', listing.qualityScore ? `${listing.qualityScore}% listing quality` : 'Quality review ready'],
                 ].map(([icon, title, body]) => (
                   <article key={title} className="rounded-md border border-white/15 bg-white/5 p-4">
-                    <span className="material-symbols-outlined text-[#F5D76B]">{icon}</span>
+                    <SvgIcon name={icon} className="h-6 w-6 text-[#F5D76B]" />
                     <h3 className="mt-3 font-bold">{title}</h3>
                     <p className="mt-1 text-sm text-[#aab3c2]">{body}</p>
                   </article>

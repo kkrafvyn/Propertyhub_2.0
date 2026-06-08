@@ -4,6 +4,7 @@ import marketplaceService, {
   fallbackMarketplaceListings,
 } from '../services/marketplace-service'
 import BackendStatusBanner from '../components/BackendStatusBanner'
+import { SvgIcon } from '../components/Navigation'
 import { getComparisonIds, toggleComparisonId } from '../services/comparison-service'
 import {
   getSavedSearches,
@@ -16,7 +17,7 @@ const categories = [
   { id: 'all', label: 'Marketplace', icon: 'storefront' },
   { id: 'apartment', label: 'Apartments', icon: 'apartment' },
   { id: 'house', label: 'Houses', icon: 'villa' },
-  { id: 'office', label: 'Commercial', icon: 'business_center' },
+  { id: 'office', label: 'Commercial', icon: 'business' },
   { id: 'verified', label: 'Verified', icon: 'verified' },
   { id: 'featured', label: 'Featured', icon: 'diamond' },
 ]
@@ -155,7 +156,7 @@ export default function ExploreProperties() {
               className="m-2 flex h-12 w-12 items-center justify-center rounded-full bg-black text-white"
               aria-label="Search properties"
             >
-              <span className="material-symbols-outlined">search</span>
+              <SvgIcon name="search" />
             </button>
           </div>
 
@@ -167,12 +168,12 @@ export default function ExploreProperties() {
               BaytMiftah your home
             </Link>
             <button className="hidden h-11 w-11 items-center justify-center rounded-full hover:bg-neutral-100 sm:flex">
-              <span className="material-symbols-outlined">language</span>
+              <SvgIcon name="language" />
             </button>
             <button className="flex items-center gap-3 rounded-full border border-neutral-200 px-4 py-2 hover:shadow-lg hover:shadow-black/10">
-              <span className="material-symbols-outlined">menu</span>
+              <SvgIcon name="menu" />
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 text-black">
-                <span className="material-symbols-outlined text-xl">person</span>
+                <SvgIcon name="person" className="h-4 w-4" />
               </span>
             </button>
           </div>
@@ -191,9 +192,7 @@ export default function ExploreProperties() {
                       : 'border-transparent text-neutral-500 hover:text-black'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-3xl">
-                    {category.icon}
-                  </span>
+                  <SvgIcon name={category.icon} className="h-7 w-7" />
                   <span className="whitespace-nowrap text-sm font-semibold">
                     {category.label}
                   </span>
@@ -203,7 +202,7 @@ export default function ExploreProperties() {
           </div>
 
           <button className="hidden shrink-0 items-center gap-2 rounded-2xl border border-neutral-200 px-5 py-3 font-semibold hover:border-black md:flex">
-            <span className="material-symbols-outlined">tune</span>
+            <SvgIcon name="tune" />
             Filters
           </button>
         </div>
@@ -248,7 +247,7 @@ export default function ExploreProperties() {
                   mapMode ? 'border-black bg-black text-white' : 'border-neutral-200 bg-white'
                 }`}
               >
-                <span className="material-symbols-outlined text-base">map</span>
+                <SvgIcon name="map" className="h-4 w-4" />
                 {mapMode ? 'Map on' : 'Map off'}
               </button>
             </div>
@@ -270,7 +269,7 @@ export default function ExploreProperties() {
             <div className="relative h-72 bg-[radial-gradient(circle_at_28%_48%,rgba(0,0,0,.18),transparent_15%),linear-gradient(135deg,#cbd5c0,#edf4e8)]">
               {geoResult?.results?.[0] && (
                 <div className="absolute left-4 top-4 rounded-md bg-white/95 px-4 py-3 text-sm font-semibold shadow">
-                  <span className="material-symbols-outlined mr-1 align-middle text-base">my_location</span>
+                  <SvgIcon name="my_location" className="mr-1 inline h-4 w-4 align-middle" />
                   {geoResult.results[0].label}
                   <span className="ml-2 text-neutral-500">({geoResult.source})</span>
                 </div>
@@ -325,9 +324,9 @@ export default function ExploreProperties() {
             <Link
               key={listing.id}
               to={`/property/${listing.id}`}
-              className="group block"
+              className="group block rounded-lg border border-transparent p-2 transition hover:border-neutral-200 hover:bg-neutral-50"
             >
-              <div className="relative aspect-square overflow-hidden rounded-lg bg-neutral-100">
+              <div className="relative aspect-square overflow-hidden rounded-lg bg-neutral-100 shadow-sm">
                 <img
                   src={listing.image}
                   alt={listing.title}
@@ -338,12 +337,11 @@ export default function ExploreProperties() {
                   aria-label={`Save ${listing.title}`}
                   onClick={(event) => event.preventDefault()}
                 >
-                  <span className="material-symbols-outlined text-3xl">
-                    favorite_border
-                  </span>
+                  <SvgIcon name="favorite_border" className="h-6 w-6" />
                 </button>
                 {listing.addressVerified && (
-                  <span className="absolute left-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-wider">
+                  <span className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-wider">
+                    <SvgIcon name="verified" className="h-3.5 w-3.5 text-[#0f766e]" />
                     Verified
                   </span>
                 )}
@@ -358,21 +356,35 @@ export default function ExploreProperties() {
                 </button>
               </div>
 
-              <div className="pt-3">
+              <div className="pt-4">
                 <div className="flex items-start justify-between gap-3">
                   <h2 className="text-lg font-semibold leading-tight text-black">
                     {listing.displayLocation || listing.address}
                   </h2>
                   <span className="flex shrink-0 items-center gap-1 text-sm text-black">
-                    <span className="material-symbols-outlined text-base">star</span>
+                    <SvgIcon name="star" className="h-4 w-4 fill-[#E9C349] text-[#E9C349]" />
                     {listing.rating}
                   </span>
                 </div>
                 <p className="mt-1 text-neutral-500">{listing.title}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {listing.facts.slice(0, 3).map((fact) => (
+                    <span
+                      key={fact}
+                      className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-semibold text-neutral-600"
+                    >
+                      {fact}
+                    </span>
+                  ))}
+                </div>
                 <p className="text-neutral-500">{listing.facts.join(' • ')}</p>
                 <p className="mt-3 text-lg">
                   <span className="font-bold text-black">{listing.priceLabel}</span>
                 </p>
+                <div className="mt-3 flex items-center justify-between border-t border-neutral-100 pt-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+                  <span>{listing.organization?.verified ? 'Verified agency' : 'Partner agency'}</span>
+                  <span>{listing.qualityScore || 82}% score</span>
+                </div>
               </div>
             </Link>
           ))}
@@ -393,7 +405,7 @@ export default function ExploreProperties() {
         className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black px-7 py-4 font-bold text-white shadow-2xl shadow-black/30"
       >
         Compare {comparisonIds.length || ''}
-        <span className="material-symbols-outlined">compare_arrows</span>
+        <SvgIcon name="compare_arrows" />
       </Link>
     </div>
   )

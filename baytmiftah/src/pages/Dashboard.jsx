@@ -25,6 +25,7 @@ const roleViews = {
       ['Explore Properties', '/explore', 'travel_explore'],
       ['Sign In to Book', '/login', 'account_circle'],
     ],
+    chips: ['Public listings', 'Login-gated booking', 'Verified locations'],
   },
   customer: {
     label: 'Buyer Workspace',
@@ -42,6 +43,7 @@ const roleViews = {
       ['Explore Properties', '/explore', 'travel_explore'],
       ['Saved Homes', '/favorites', 'favorite'],
     ],
+    chips: ['Saved searches', 'Offer room', 'Viewing calendar'],
   },
   owner: {
     label: 'Owner Workspace',
@@ -59,6 +61,7 @@ const roleViews = {
       ['Create Listing', '/create-listing', 'add_home'],
       ['My Listings', '/my-listings', 'real_estate_agent'],
     ],
+    chips: ['Listing readiness', 'Document vault', 'Smart devices'],
   },
   agent: {
     label: 'Agent Workspace',
@@ -76,6 +79,7 @@ const roleViews = {
       ['Calendar', '/calendar', 'calendar_month', 'Keep viewings and follow-ups in sync.'],
       ['Listing Coach', '/listing-coach', 'monitoring', 'Strengthen property pages before outreach.'],
     ],
+    chips: ['Lead follow-up', 'Listing coach', 'Viewing calendar'],
   },
   agency: {
     label: 'Agency Workspace',
@@ -93,6 +97,7 @@ const roleViews = {
       ['Lead Pipeline', '/agency/leads', 'group_add', 'Assign and track high-intent prospects.'],
       ['Trust Score', '/agency/trust-score', 'verified_user', 'Review verification and risk signals.'],
     ],
+    chips: ['Team roles', 'Lead pipeline', 'Agency trust'],
   },
   developer: {
     label: 'Developer Workspace',
@@ -110,6 +115,7 @@ const roleViews = {
       ['Partners', '/partners', 'api', 'Review channel and integration readiness.'],
       ['Create Listing', '/create-listing', 'add_home', 'Publish verified project inventory.'],
     ],
+    chips: ['Launch room', 'Revenue ops', 'Partner APIs'],
   },
   admin: {
     label: 'Platform Admin Workspace',
@@ -127,6 +133,7 @@ const roleViews = {
       ['Moderation Queue', '/admin/moderation', 'shield', 'Resolve listing and content review items.'],
       ['Audit Log', '/admin/audit', 'fact_check', 'Track sensitive platform activity.'],
     ],
+    chips: ['Review queues', 'Audit logs', 'Trust signals'],
   },
 }
 
@@ -218,6 +225,16 @@ export default function Dashboard({ user = null }) {
                 <p className="mt-4 max-w-2xl text-body-lg text-on-surface-variant">
                   {roleView.body}
                 </p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {roleView.chips.map((chip) => (
+                    <span
+                      key={chip}
+                      className="rounded-full border border-secondary/25 bg-secondary/10 px-3 py-1 text-sm font-semibold text-secondary"
+                    >
+                      {chip}
+                    </span>
+                  ))}
+                </div>
                 <div className="mt-7 flex flex-wrap gap-3">
                   {roleView.actions.map(([label, path, icon], index) => (
                     <button
@@ -283,7 +300,7 @@ export default function Dashboard({ user = null }) {
                   <Link
                     key={listing.id}
                     to={`/property/${listing.id}`}
-                    className="group overflow-hidden rounded-lg border border-white/10 bg-surface-container transition hover:border-secondary/60"
+                    className="group overflow-hidden rounded-lg border border-white/10 bg-surface-container transition hover:-translate-y-0.5 hover:border-secondary/60 hover:shadow-xl hover:shadow-black/15"
                   >
                     <div className="relative aspect-[4/3] overflow-hidden">
                       <img
@@ -291,9 +308,17 @@ export default function Dashboard({ user = null }) {
                         alt={listing.title}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       />
-                      <span className="absolute right-4 top-4 rounded-full bg-secondary px-4 py-2 text-sm font-bold uppercase tracking-wider text-on-secondary">
-                        {listing.featured ? 'Featured' : listing.status}
-                      </span>
+                      <div className="absolute left-4 right-4 top-4 flex flex-wrap justify-between gap-2">
+                        <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-on-secondary">
+                          {listing.featured ? 'Featured' : listing.status}
+                        </span>
+                        {(listing.addressVerified || listing.organization?.verified) && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[#0f172a]">
+                            <SvgIcon name="verified" className="h-3.5 w-3.5 text-[#0f766e]" />
+                            Verified
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="p-5">
                       <h4 className="text-xl font-semibold leading-tight group-hover:text-secondary">
@@ -306,6 +331,10 @@ export default function Dashboard({ user = null }) {
                       <p className="mt-4 text-lg font-bold text-secondary">
                         {listing.priceLabel}
                       </p>
+                      <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-4 text-xs font-semibold uppercase tracking-wider text-on-surface-variant">
+                        <span>{listing.organization?.name || 'Partner agency'}</span>
+                        <span>{listing.qualityScore || 82}% quality</span>
+                      </div>
                     </div>
                   </Link>
                 ))}
