@@ -90,7 +90,9 @@ export default function Bookings() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`rounded-full px-7 py-3 text-lg ${
-                  activeTab === tab ? 'bg-black text-white' : 'bg-[#dbeafe] text-[#071121]'
+                  activeTab === tab
+                    ? 'bg-[#071121] text-white shadow-[0_10px_26px_rgba(7,17,33,0.18)]'
+                    : 'bg-white text-[#071121] ring-1 ring-[#d8dde6]'
                 }`}
               >
                 {tab}
@@ -110,7 +112,7 @@ export default function Bookings() {
                   Review pending viewing requests, confirmed appointments, and offer follow-ups in one place.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-4">
-                  <button className="rounded-md bg-[#E9C349] px-8 py-4 font-bold text-white">
+                  <button className="marketplace-cta px-8 py-4">
                     Open Calendar
                   </button>
                   <button className="rounded-md border border-white/20 px-8 py-4 font-bold text-white">
@@ -139,7 +141,7 @@ export default function Bookings() {
             </aside>
           </div>
 
-          <section className="mt-10 grid gap-6 rounded-lg border border-[#cbd3df] bg-white p-6 shadow-sm lg:grid-cols-[1fr_320px]">
+          <section className="mt-10 grid gap-6 rounded-lg border border-[#cbd3df] bg-white p-6 shadow-[0_12px_32px_rgba(7,17,33,0.06)] lg:grid-cols-[1fr_320px]">
             <form onSubmit={submitViewingRequest} className="grid gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
                 <p className="text-sm font-bold uppercase tracking-widest text-[#9a7413]">
@@ -170,7 +172,7 @@ export default function Bookings() {
                       }))
                     }
                     required={['property', 'requestedDate', 'requestedTime'].includes(key)}
-                    className="mt-2 h-12 w-full rounded border border-[#b9c3d2] px-4"
+                    className="mt-2 h-12 w-full rounded-md border border-[#b9c3d2] bg-[#f8faff] px-4"
                   />
                 </label>
               ))}
@@ -181,10 +183,10 @@ export default function Bookings() {
                   onChange={(event) =>
                     setBookingForm((current) => ({ ...current, notes: event.target.value }))
                   }
-                  className="mt-2 min-h-24 w-full rounded border border-[#b9c3d2] px-4 py-3"
+                  className="mt-2 min-h-24 w-full rounded-md border border-[#b9c3d2] bg-[#f8faff] px-4 py-3"
                 />
               </label>
-              <button className="flex w-fit items-center gap-2 rounded-md bg-black px-6 py-3 font-bold text-white">
+              <button className="marketplace-cta w-fit">
                 <SvgIcon name="calendar_month" />
                 Request Viewing
               </button>

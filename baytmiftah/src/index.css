@@ -197,6 +197,50 @@ textarea:focus {
   .text-label-sm {
     @apply text-sm uppercase tracking-wider;
   }
+
+  .marketplace-page {
+    @apply min-h-screen bg-[#f5f7fc] text-[#071121];
+  }
+
+  .marketplace-header {
+    @apply sticky top-0 z-40 border-b border-[#d8dde6] bg-[#f8faff]/95 shadow-[0_1px_0_rgba(15,23,42,0.04)] backdrop-blur-2xl;
+  }
+
+  .marketplace-search {
+    @apply overflow-hidden rounded-full border border-[#cbd3df] bg-white shadow-[0_16px_40px_rgba(7,17,33,0.12)];
+  }
+
+  .marketplace-search-segment {
+    @apply min-h-16 border-[#d8dde6] px-5 py-3 text-left transition hover:bg-[#f8faff];
+  }
+
+  .marketplace-category {
+    @apply flex w-28 shrink-0 flex-col items-center gap-1 border-b-2 pb-3 text-sm font-semibold transition;
+  }
+
+  .marketplace-filter-panel {
+    @apply rounded-lg border border-[#d8dde6] bg-white p-4 shadow-[0_12px_32px_rgba(7,17,33,0.06)];
+  }
+
+  .marketplace-card {
+    @apply block rounded-lg border border-transparent p-2 transition hover:border-[#d8dde6] hover:bg-white hover:shadow-[0_18px_45px_rgba(7,17,33,0.12)];
+  }
+
+  .marketplace-image {
+    @apply relative aspect-square overflow-hidden rounded-lg bg-[#e7edf6] shadow-sm;
+  }
+
+  .marketplace-pill {
+    @apply inline-flex min-h-8 items-center gap-1 rounded-full border border-[#d8dde6] bg-white px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#071121] shadow-sm;
+  }
+
+  .marketplace-cta {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#E9C349] px-5 py-3 font-bold text-[#071121] transition hover:bg-[#d9b336] active:scale-[0.99];
+  }
+
+  .marketplace-secondary-cta {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[#cbd3df] bg-white px-5 py-3 font-bold text-[#071121] transition hover:border-[#071121] hover:bg-[#f8faff];
+  }
 }
 
 @layer utilities {

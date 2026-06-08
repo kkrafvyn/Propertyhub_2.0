@@ -8,7 +8,7 @@ import { SvgIcon } from '../components/Navigation'
 
 function PropertyHeader({ search = 'Search marketplace...', action = 'Create New' }) {
   return (
-    <header className="sticky top-0 z-30 flex min-h-16 items-center gap-6 border-b border-[#cbd3df] bg-[#f8faff]/95 px-5 backdrop-blur md:px-8">
+    <header className="marketplace-header flex min-h-16 items-center gap-6 px-5 md:px-8">
       <Link to="/explore" className="text-2xl font-black">
         BaytMiftah
       </Link>
@@ -23,10 +23,7 @@ function PropertyHeader({ search = 'Search marketplace...', action = 'Create New
         <SvgIcon name="search" className="text-[#4b5563]" />
         <input className="min-w-0 flex-1 bg-transparent outline-none" placeholder={search} />
       </label>
-      <Link
-        to="/create-listing"
-        className="hidden rounded-md bg-black px-6 py-3 font-bold text-white sm:block"
-      >
+      <Link to="/create-listing" className="marketplace-cta hidden sm:inline-flex">
         {action}
       </Link>
       <SvgIcon name="mail" />
@@ -42,20 +39,20 @@ function Gallery({ listing }) {
 
   return (
     <section className="mt-8 grid gap-5 lg:grid-cols-[1.1fr_1fr]">
-      <div className="relative overflow-hidden rounded-lg bg-[#dbeafe]">
+      <div className="relative min-h-[420px] overflow-hidden rounded-lg bg-[#dbeafe] shadow-[0_18px_45px_rgba(7,17,33,0.12)]">
         <img
           src={hero.public_url}
           alt={hero.alt_text || listing.title}
-          className="h-[420px] w-full object-cover"
+          className="h-full min-h-[420px] w-full object-cover"
         />
         <div className="absolute left-5 top-5 flex flex-wrap gap-3">
           {listing.addressVerified && (
-            <span className="rounded-full bg-[#F5D76B] px-4 py-2 text-sm font-bold text-[#0F172A]">
+            <span className="marketplace-pill border-[#E9C349] bg-[#fff8d7] text-[#0F172A]">
               Address Verified
             </span>
           )}
           {listing.featured && (
-            <span className="rounded-full bg-white px-4 py-2 text-sm font-bold">
+            <span className="marketplace-pill">
               Featured
             </span>
           )}
@@ -67,7 +64,7 @@ function Gallery({ listing }) {
             key={item.id || `${listing.id}-media-${index}`}
             src={item.public_url}
             alt={item.alt_text || listing.title}
-            className="h-full min-h-48 rounded-lg object-cover"
+            className="h-full min-h-48 rounded-lg object-cover shadow-sm"
           />
         ))}
       </div>
@@ -203,7 +200,7 @@ function BookingCard({ listing, onOfferCreated }) {
 
   return (
     <aside className="space-y-6 lg:sticky lg:top-24 lg:h-fit">
-      <section className="rounded-lg border border-[#cbd3df] bg-white p-7 shadow-xl shadow-slate-900/10">
+      <section className="rounded-lg border border-[#cbd3df] bg-white p-7 shadow-[0_22px_60px_rgba(7,17,33,0.14)]">
         <div className="flex items-start justify-between gap-4">
           <p className="text-2xl font-black">{listing.priceLabel}</p>
           <span className="flex items-center gap-1 text-sm">
@@ -227,7 +224,7 @@ function BookingCard({ listing, onOfferCreated }) {
         </div>
         <button
           onClick={requireLoginForBooking}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-md bg-black py-5 text-xl font-bold text-white transition hover:bg-[#1f2937]"
+          className="marketplace-cta mt-6 w-full py-5 text-xl"
         >
           <SvgIcon name="calendar_month" />
           Schedule Viewing
@@ -236,7 +233,7 @@ function BookingCard({ listing, onOfferCreated }) {
           href={`https://wa.me/?text=${encodeURIComponent(`I am interested in ${listing.title} on BaytMiftah.`)}`}
           target="_blank"
           rel="noreferrer"
-          className="mt-3 block w-full rounded-md border border-[#9ba4b2] py-3 text-center font-semibold"
+          className="marketplace-secondary-cta mt-3 w-full"
         >
           WhatsApp Agent
         </a>
@@ -268,7 +265,7 @@ function BookingCard({ listing, onOfferCreated }) {
             </p>
           </div>
         </div>
-        <button className="mt-4 w-full rounded-md border border-[#9ba4b2] py-3 font-semibold transition hover:border-black">
+        <button className="marketplace-secondary-cta mt-4 w-full">
           Message Agent
         </button>
       </section>
@@ -317,7 +314,7 @@ function BookingCard({ listing, onOfferCreated }) {
             placeholder="Conditions, proof of funds notes, or contingencies..."
             className="min-h-20 rounded border border-[#cbd3df] px-3 py-2"
           />
-          <button className="rounded-md bg-black px-4 py-3 font-bold text-white">
+          <button className="marketplace-cta">
             Generate Offer Packet
           </button>
         </form>
@@ -412,7 +409,7 @@ export default function PropertyDetails() {
   }, [listing])
 
   return (
-    <div className="min-h-screen bg-[#f5f7fc] text-[#071121]">
+    <div className="marketplace-page">
       <PropertyHeader />
       <main className="mx-auto max-w-7xl px-5 py-8 md:px-8">
         <div className="text-sm text-[#596170]">
@@ -445,11 +442,11 @@ export default function PropertyDetails() {
             {loadError && <p className="mt-3 text-sm text-[#596170]">{loadError}</p>}
           </div>
           <div className="flex gap-5">
-            <button className="flex items-center gap-2">
+            <button className="marketplace-secondary-cta px-4 py-2">
               <SvgIcon name="ios_share" />
               Share
             </button>
-            <button className="flex items-center gap-2">
+            <button className="marketplace-secondary-cta px-4 py-2">
               <SvgIcon name="favorite" />
               Save
             </button>
@@ -468,7 +465,7 @@ export default function PropertyDetails() {
                 </p>
               </section>
             )}
-            <article className="rounded-lg border border-[#cbd3df] bg-white p-8">
+            <article className="rounded-lg border border-[#cbd3df] bg-white p-8 shadow-[0_12px_32px_rgba(7,17,33,0.06)]">
               <FactStrip listing={listing} />
               <h2 className="mt-6 text-2xl font-bold">Property Description</h2>
               <p className="mt-5 leading-8 text-[#303744]">{listing.description}</p>
@@ -479,7 +476,7 @@ export default function PropertyDetails() {
               )}
             </article>
 
-            <section className="rounded-lg bg-[#111827] p-6 text-white">
+            <section className="rounded-lg bg-[#071121] p-6 text-white shadow-[0_18px_45px_rgba(7,17,33,0.18)]">
               <h2 className="flex items-center gap-2 text-2xl font-bold">
                 <SvgIcon name="verified_user" className="h-6 w-6 text-[#F5D76B]" />
                 Trust and Data Layer
@@ -490,7 +487,7 @@ export default function PropertyDetails() {
                   ['map', 'Ghana Post GPS', listing.ghanaPostGps || 'Not yet attached'],
                   ['monitoring', 'Quality Score', listing.qualityScore ? `${listing.qualityScore}% listing quality` : 'Quality review ready'],
                 ].map(([icon, title, body]) => (
-                  <article key={title} className="rounded-md border border-white/15 bg-white/5 p-4">
+                  <article key={title} className="rounded-md border border-white/15 bg-white/5 p-4 backdrop-blur">
                     <SvgIcon name={icon} className="h-6 w-6 text-[#F5D76B]" />
                     <h3 className="mt-3 font-bold">{title}</h3>
                     <p className="mt-1 text-sm text-[#aab3c2]">{body}</p>
@@ -537,7 +534,7 @@ export default function PropertyDetails() {
         )}
       </main>
 
-      <footer className="mt-16 bg-black px-8 py-12 text-white">
+      <footer className="mt-16 bg-[#071121] px-8 py-12 text-white">
         <div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-4">
           <div>
             <h2 className="text-2xl font-black">BaytMiftah</h2>
