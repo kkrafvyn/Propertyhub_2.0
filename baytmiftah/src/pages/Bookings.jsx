@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import EnterpriseShell from '../components/EnterpriseShell'
 import { createViewingRequest, getLocalBookings } from '../services/booking-service'
+import { SvgIcon } from '../components/Navigation'
 
 const actions = [
   {
@@ -71,6 +72,17 @@ export default function Bookings() {
           <p className="mt-3 text-xl text-[#303744]">
             Manage your viewing schedule, active rental agreements, and purchase offers.
           </p>
+          {bookingDraft && (
+            <div className="mt-6 rounded-lg border border-[#E9C349]/40 bg-[#fff8d7] p-5">
+              <p className="text-sm font-bold uppercase tracking-widest text-[#9a7413]">
+                Booking request started
+              </p>
+              <h2 className="mt-2 text-2xl font-bold">{bookingDraft.property}</h2>
+              <p className="mt-1 text-[#303744]">
+                Choose a preferred time, add your contact details, and the agent can confirm or suggest another slot.
+              </p>
+            </div>
+          )}
 
           <div className="mt-8 flex flex-wrap gap-3">
             {tabs.map((tab) => (
@@ -93,14 +105,13 @@ export default function Bookings() {
                   <span className="mr-2 h-2 w-2 rounded-full bg-[#F5D76B]" />
                   Live Now
                 </span>
-                <h2 className="mt-7 text-3xl font-bold">Scheduled Viewing: Skyline Loft</h2>
+                <h2 className="mt-7 text-3xl font-bold">Viewing desk</h2>
                 <p className="mt-5 max-w-lg text-xl leading-8 text-[#8f9aad]">
-                  Agent Marcus is waiting for you at the entrance of 42nd Avenue. Please
-                  arrive within the next 15 minutes.
+                  Review pending viewing requests, confirmed appointments, and offer follow-ups in one place.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-4">
                   <button className="rounded-md bg-[#E9C349] px-8 py-4 font-bold text-white">
-                    Get Directions
+                    Open Calendar
                   </button>
                   <button className="rounded-md border border-white/20 px-8 py-4 font-bold text-white">
                     Contact Agent
@@ -128,12 +139,15 @@ export default function Bookings() {
             </aside>
           </div>
 
-          <section className="mt-10 grid gap-6 rounded-lg border border-[#cbd3df] bg-white p-6 lg:grid-cols-[1fr_320px]">
+          <section className="mt-10 grid gap-6 rounded-lg border border-[#cbd3df] bg-white p-6 shadow-sm lg:grid-cols-[1fr_320px]">
             <form onSubmit={submitViewingRequest} className="grid gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
-                <h2 className="text-3xl font-bold">Request a Viewing</h2>
+                <p className="text-sm font-bold uppercase tracking-widest text-[#9a7413]">
+                  Request to view
+                </p>
+                <h2 className="mt-2 text-3xl font-bold">Confirm your preferred slot</h2>
                 <p className="mt-2 text-[#303744]">
-                  Pick a preferred slot and the agency can confirm or suggest a new time.
+                  Similar to a booking request, payment is not collected here. The agency confirms availability first.
                 </p>
               </div>
               {[
@@ -170,7 +184,8 @@ export default function Bookings() {
                   className="mt-2 min-h-24 w-full rounded border border-[#b9c3d2] px-4 py-3"
                 />
               </label>
-              <button className="w-fit rounded-md bg-black px-6 py-3 font-bold text-white">
+              <button className="flex w-fit items-center gap-2 rounded-md bg-black px-6 py-3 font-bold text-white">
+                <SvgIcon name="calendar_month" />
                 Request Viewing
               </button>
               {bookingSource && (
@@ -180,8 +195,16 @@ export default function Bookings() {
               )}
             </form>
 
-            <aside className="rounded-lg bg-[#edf4ff] p-5">
+            <aside className="rounded-lg border border-[#d7e0ec] bg-[#edf4ff] p-5">
               <h3 className="font-bold">Recent requests</h3>
+              <div className="mt-4 grid gap-2 text-sm">
+                {['Agent must confirm', 'Calendar blocks after approval', 'Messages stay attached'].map((item) => (
+                  <div key={item} className="flex items-center gap-2 rounded-md bg-white/70 px-3 py-2">
+                    <SvgIcon name="check_circle" className="h-4 w-4 text-[#9a7413]" />
+                    {item}
+                  </div>
+                ))}
+              </div>
               <div className="mt-4 space-y-3">
                 {localBookings.slice(0, 4).map((booking) => (
                   <div key={booking.id} className="rounded-md bg-white p-3">
@@ -213,9 +236,10 @@ export default function Bookings() {
                       <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-lg text-[#303744]">
                         {item.meta.map((meta, index) => (
                           <span key={meta} className="flex items-center gap-1">
-                            <span className="material-symbols-outlined text-base">
-                              {index === 0 ? 'calendar_month' : index === 1 ? 'schedule' : 'location_on'}
-                            </span>
+                            <SvgIcon
+                              name={index === 0 ? 'calendar_month' : index === 1 ? 'monitoring' : 'location_on'}
+                              className="h-4 w-4"
+                            />
                             {meta}
                           </span>
                         ))}
@@ -229,7 +253,7 @@ export default function Bookings() {
                     <span className="text-lg text-[#303744]">{item.footer}</span>
                     <button className="flex items-center gap-2 text-lg">
                       {item.action}
-                      <span className="material-symbols-outlined">arrow_forward</span>
+                      <SvgIcon name="chevron_left" className="rotate-180" />
                     </button>
                   </div>
                 </div>
@@ -237,7 +261,7 @@ export default function Bookings() {
             ))}
             {visibleActions.length === 0 && (
               <div className="rounded-lg border border-[#cbd3df] bg-white p-10 text-center">
-                <span className="material-symbols-outlined text-5xl text-[#E9C349]">event_busy</span>
+                <SvgIcon name="calendar_month" className="mx-auto h-12 w-12 text-[#E9C349]" />
                 <h3 className="mt-4 text-2xl font-bold">No bookings in this view</h3>
                 <p className="mt-2 text-[#303744]">
                   Try another booking status or return to the full schedule.
@@ -251,7 +275,7 @@ export default function Bookings() {
               <h2 className="text-3xl font-bold">Transaction History</h2>
               <button className="flex items-center gap-2 font-semibold text-[#E9C349]">
                 Download CSV
-                <span className="material-symbols-outlined text-base">download</span>
+                <SvgIcon name="folder_managed" className="h-4 w-4" />
               </button>
             </div>
             <div className="overflow-x-auto rounded-lg border border-[#cbd3df] bg-white">
@@ -298,7 +322,7 @@ export default function Bookings() {
                         </span>
                       </td>
                       <td className="px-5 py-5">
-                        <span className="material-symbols-outlined">more_vert</span>
+                        <SvgIcon name="menu" />
                       </td>
                     </tr>
                   ))}
