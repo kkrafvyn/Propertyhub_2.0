@@ -13,11 +13,16 @@ function ModerationQueue() {
   const [queue, setQueue] = useState([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
+  const [error, setError] = useState('')
 
   const load = useCallback(() => {
     setLoading(true)
+    setError('')
     fetchModerationQueue().then(({ queue: rows }) => {
       setQueue(rows)
+      setLoading(false)
+    }).catch((err) => {
+      setError(err.message || 'Could not load queue')
       setLoading(false)
     })
   }, [])
@@ -26,8 +31,13 @@ function ModerationQueue() {
 
   async function handleApprove(listingId) {
     setBusyId(listingId)
-    await approveListing(listingId)
-    setQueue((prev) => prev.filter((item) => item.id !== listingId))
+    setError('')
+    try {
+      await approveListing(listingId)
+      setQueue((prev) => prev.filter((item) => item.id !== listingId))
+    } catch (err) {
+      setError(err.message || 'Approve failed')
+    }
     setBusyId(null)
   }
 
@@ -35,13 +45,21 @@ function ModerationQueue() {
     const reason = window.prompt('Reason for rejection (optional):', 'Needs more photos or documentation')
     if (reason === null) return
     setBusyId(item.id)
-    await rejectListing(item.id, reason || 'Needs changes', item.submitted_by)
-    setQueue((prev) => prev.filter((row) => row.id !== item.id))
+    setError('')
+    try {
+      await rejectListing(item.id, reason || 'Needs changes', item.submitted_by)
+      setQueue((prev) => prev.filter((row) => row.id !== item.id))
+    } catch (err) {
+      setError(err.message || 'Reject failed')
+    }
     setBusyId(null)
   }
 
   return (
     <AdminShell title="Moderation queue" subtitle="Review submitted listings — approve to publish on marketplace">
+      {error && (
+        <p className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800">{error}</p>
+      )}
       {loading ? (
         <div className="h-32 animate-pulse rounded-card bg-white/5" />
       ) : queue.length === 0 ? (

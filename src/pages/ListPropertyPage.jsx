@@ -4,8 +4,14 @@ import DesktopShell, { CompactSearch } from '../components/DesktopShell'
 import ProtectedRoute from '../components/ProtectedRoute'
 import { createListing } from '../services/listing-service'
 import { uploadListingPhoto } from '../lib/storage'
+import { geocodeLocation } from '../services/geo-service'
 
 const STEPS = ['Basics', 'Details', 'Photos', 'Review']
+
+const AMENITY_OPTIONS = [
+  'Parking', '24/7 security', 'Backup power', 'Fiber internet',
+  'Concierge', 'Garden', 'Pool', 'Elevator', 'Smart locks', 'Solar backup',
+]
 
 function ListPropertyForm() {
   const navigate = useNavigate()
@@ -22,15 +28,26 @@ function ListPropertyForm() {
     bathrooms: '',
     sqft: '',
     description: '',
+    amenities: [],
   })
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
   }
 
+  function toggleAmenity(name) {
+    setForm((f) => ({
+      ...f,
+      amenities: f.amenities.includes(name)
+        ? f.amenities.filter((a) => a !== name)
+        : [...f.amenities, name],
+    }))
+  }
+
   async function submit() {
     setSubmitting(true)
     const listingId = `listing-${crypto.randomUUID().slice(0, 8)}`
+    const geo = await geocodeLocation(form.location)
     const uploaded = []
     for (const file of photos) {
       try {
@@ -50,6 +67,9 @@ function ListPropertyForm() {
         : `GHS ${Number(form.price).toLocaleString()}`,
       image: uploaded[0],
       photos: uploaded,
+      amenities: form.amenities,
+      lat: geo.lat,
+      lng: geo.lng,
       status: 'pending_review',
     }
     await createListing(payload)
@@ -106,6 +126,25 @@ function ListPropertyForm() {
               <span className="font-medium">Description</span>
               <textarea value={form.description} onChange={(e) => update('description', e.target.value)} rows={4} className="mt-1 w-full rounded-lg border border-surface-border px-4 py-3" />
             </label>
+            <div>
+              <p className="text-sm font-medium">Amenities</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {AMENITY_OPTIONS.map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => toggleAmenity(name)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                      form.amenities.includes(name)
+                        ? 'bg-brand-dark text-brand'
+                        : 'border border-surface-border bg-surface-subtle text-ink-secondary'
+                    }`}
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+            </div>
           </>
         )}
         {step === 2 && (
@@ -130,6 +169,9 @@ function ListPropertyForm() {
             <p>{form.location} · {form.type} · {form.listingType}</p>
             <p>GHS {Number(form.price || 0).toLocaleString()}</p>
             <p>{form.bedrooms} beds · {form.bathrooms} baths · {form.sqft} sqft</p>
+            {form.amenities.length > 0 && (
+              <p className="text-ink-secondary">{form.amenities.join(' · ')}</p>
+            )}
             <p className="text-ink-secondary">{form.description}</p>
           </div>
         )}

@@ -1,9 +1,9 @@
 import { callEdgeFunction } from '../lib/edge-client'
-import { fetchViewingsFromDb } from '../lib/supabase-db'
+import { createViewingRequestInDb, fetchViewingSlotsFromDb, fetchViewingsFromDb } from '../lib/supabase-db'
 import { supabase } from '../lib/supabase'
 import { addTrip, getTrips } from '../lib/trips-storage'
 
-export async function requestViewing({ listingId, date, guests = 1, notes = '' }) {
+export async function requestViewing({ listingId, date, guests = 1, notes = '', slotId = null }) {
   try {
     return await callEdgeFunction('bookings', {
       method: 'POST',
@@ -14,9 +14,23 @@ export async function requestViewing({ listingId, date, guests = 1, notes = '' }
         preferred_date: date,
         guests,
         notes,
+        slot_id: slotId,
       },
     })
   } catch {
+    if (supabase) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const row = await createViewingRequestInDb({
+          userId: user.id,
+          listingId,
+          date,
+          guests,
+          notes: slotId ? `${notes} Slot: ${slotId}`.trim() : notes,
+        })
+        if (row) return { ok: true, request: row, source: 'supabase' }
+      }
+    }
     return addTrip({
       listing_id: listingId,
       preferred_date: date,
@@ -28,10 +42,20 @@ export async function requestViewing({ listingId, date, guests = 1, notes = '' }
 }
 
 export async function getAvailability(listingId) {
-  return callEdgeFunction('bookings', {
-    allowAnonymous: true,
-    query: { action: 'availability', listing_id: listingId },
-  })
+  try {
+    const payload = await callEdgeFunction('bookings', {
+      allowAnonymous: true,
+      query: { action: 'availability', listing_id: listingId },
+    })
+    if (payload?.slots) return { slots: payload.slots, source: payload.source || 'supabase' }
+  } catch {
+    /* direct */
+  }
+
+  const rows = await fetchViewingSlotsFromDb(listingId)
+  if (rows?.length) return { slots: rows, source: 'supabase' }
+
+  return { slots: [], source: 'local' }
 }
 
 export async function fetchUserTrips() {

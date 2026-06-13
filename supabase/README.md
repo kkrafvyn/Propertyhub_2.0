@@ -21,7 +21,7 @@ BaytMiftah uses Supabase Edge Functions as the API layer. The React app calls fu
 2. Link your project (must match `VITE_SUPABASE_URL` in `.env`):
 
 ```bash
-supabase link --project-ref tcnsqtnwyyufeupktkhs
+supabase link --project-ref ixmbfnfwpjwbfahqaftc
 ```
 
 3. Push database migrations:

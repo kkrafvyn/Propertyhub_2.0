@@ -4,7 +4,7 @@ import DesktopShell, { CompactSearch } from '../components/DesktopShell'
 import { IconStar } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
 import { fetchListingById } from '../services/marketplace-service'
-import { requestViewing } from '../services/booking-service'
+import { getAvailability, requestViewing } from '../services/booking-service'
 
 function PhotoGrid({ photos, title, onShowAll }) {
   const [hero, ...rest] = photos
@@ -49,9 +49,18 @@ function BookingCard({ listing }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [date, setDate] = useState('')
+  const [selectedSlot, setSelectedSlot] = useState('')
+  const [slots, setSlots] = useState([])
   const [guests, setGuests] = useState(1)
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    getAvailability(listing.id).then(({ slots: rows }) => {
+      setSlots(rows ?? [])
+      if (rows?.length) setSelectedSlot(rows[0].id)
+    })
+  }, [listing.id])
 
   async function handleRequest() {
     if (!user) {
@@ -59,8 +68,10 @@ function BookingCard({ listing }) {
       return
     }
 
-    if (!date) {
-      setMessage('Please pick a preferred viewing date.')
+    const slot = slots.find((s) => s.id === selectedSlot)
+    const viewingDate = slot?.date || date
+    if (!viewingDate) {
+      setMessage('Please pick a viewing date or time slot.')
       return
     }
 
@@ -70,8 +81,10 @@ function BookingCard({ listing }) {
     try {
       await requestViewing({
         listingId: listing.id,
-        date,
+        date: viewingDate,
         guests,
+        slotId: slot?.id,
+        notes: slot?.time ? `Preferred time: ${slot.time}` : '',
       })
       setStatus('success')
       setMessage('Viewing request sent! Check Trips for updates.')
@@ -92,35 +105,72 @@ function BookingCard({ listing }) {
       </div>
 
       <div className="mt-4 overflow-hidden rounded-lg border border-surface-border">
-        <div className="grid grid-cols-2">
-          <div className="border-r border-surface-border p-3">
-            <label htmlFor="viewing-date" className="text-[10px] font-bold uppercase tracking-wide text-ink">
-              Viewing
-            </label>
-            <input
-              id="viewing-date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="mt-1 w-full bg-transparent text-sm text-ink outline-none"
-            />
-          </div>
+        {slots.length > 0 ? (
           <div className="p-3">
-            <label htmlFor="viewing-guests" className="text-[10px] font-bold uppercase tracking-wide text-ink">
-              Guests
+            <label htmlFor="viewing-slot" className="text-[10px] font-bold uppercase tracking-wide text-ink">
+              Available slots
             </label>
-            <input
-              id="viewing-guests"
-              type="number"
-              min={1}
-              max={10}
-              value={guests}
-              onChange={(e) => setGuests(Number(e.target.value))}
-              className="mt-1 w-full bg-transparent text-sm text-ink outline-none"
-            />
+            <select
+              id="viewing-slot"
+              value={selectedSlot}
+              onChange={(e) => setSelectedSlot(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-surface-border bg-transparent px-2 py-2 text-sm outline-none"
+            >
+              {slots.map((slot) => (
+                <option key={slot.id} value={slot.id}>
+                  {slot.date} · {slot.time} ({slot.available} left)
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-2">
+            <div className="border-r border-surface-border p-3">
+              <label htmlFor="viewing-date" className="text-[10px] font-bold uppercase tracking-wide text-ink">
+                Viewing
+              </label>
+              <input
+                id="viewing-date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="mt-1 w-full bg-transparent text-sm text-ink outline-none"
+              />
+            </div>
+            <div className="p-3">
+              <label htmlFor="viewing-guests" className="text-[10px] font-bold uppercase tracking-wide text-ink">
+                Guests
+              </label>
+              <input
+                id="viewing-guests"
+                type="number"
+                min={1}
+                max={10}
+                value={guests}
+                onChange={(e) => setGuests(Number(e.target.value))}
+                className="mt-1 w-full bg-transparent text-sm text-ink outline-none"
+              />
+            </div>
+          </div>
+        )}
       </div>
+
+      {slots.length > 0 && (
+        <div className="mt-3">
+          <label htmlFor="viewing-guests-slots" className="text-[10px] font-bold uppercase tracking-wide text-ink-secondary">
+            Guests
+          </label>
+          <input
+            id="viewing-guests-slots"
+            type="number"
+            min={1}
+            max={10}
+            value={guests}
+            onChange={(e) => setGuests(Number(e.target.value))}
+            className="mt-1 w-full rounded-lg border border-surface-border px-3 py-2 text-sm outline-none"
+          />
+        </div>
+      )}
 
       <button
         type="button"

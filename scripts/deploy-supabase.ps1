@@ -1,8 +1,8 @@
 # Deploy BaytMiftah Supabase backend
-# Usage: .\scripts\deploy-supabase.ps1 [-ProjectRef tcnsqtnwyyufeupktkhs]
+# Usage: .\scripts\deploy-supabase.ps1 [-ProjectRef ixmbfnfwpjwbfahqaftc]
 
 param(
-  [string]$ProjectRef = "tcnsqtnwyyufeupktkhs"
+  [string]$ProjectRef = "ixmbfnfwpjwbfahqaftc"
 )
 
 $ErrorActionPreference = "Stop"

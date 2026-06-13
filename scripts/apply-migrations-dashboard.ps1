@@ -2,7 +2,7 @@
 # Full schema: run `npm run db:bundle` first to generate scripts/all-migrations.sql
 
 param(
-  [string]$ProjectRef = "tcnsqtnwyyufeupktkhs"
+  [string]$ProjectRef = "ixmbfnfwpjwbfahqaftc"
 )
 
 $ErrorActionPreference = "Stop"

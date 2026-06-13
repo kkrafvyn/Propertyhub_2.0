@@ -14,17 +14,17 @@ npm run dev
 
 ## Backend (Supabase)
 
-**Project ref:** `tcnsqtnwyyufeupktkhs`
+**Project ref:** `ixmbfnfwpjwbfahqaftc`
 
 ```bash
 npm run check:supabase          # verify .env connection
 npx supabase login
-npx supabase link --project-ref tcnsqtnwyyufeupktkhs
+npx supabase link --project-ref ixmbfnfwpjwbfahqaftc
 npm run db:push                 # apply migrations
 npm run deploy:backend          # deploy Edge Functions
 ```
 
-If CLI link fails, run bundled SQL in the [Supabase SQL Editor](https://supabase.com/dashboard/project/tcnsqtnwyyufeupktkhs/sql/new):
+If CLI link fails, run bundled SQL in the [Supabase SQL Editor](https://supabase.com/dashboard/project/ixmbfnfwpjwbfahqaftc/sql/new):
 
 ```bash
 npm run db:bundle               # writes scripts/all-migrations.sql

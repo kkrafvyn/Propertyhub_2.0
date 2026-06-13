@@ -81,6 +81,40 @@ export async function toggleSavedInDb(userId, listingId) {
   return true
 }
 
+export async function fetchViewingSlotsFromDb(listingId) {
+  if (!supabase || !listingId) return null
+  const { data, error } = await supabase
+    .from('viewing_slots')
+    .select('*')
+    .eq('listing_id', listingId)
+    .order('slot_date', { ascending: true })
+  if (error) return null
+  return data.map((row) => ({
+    id: row.id,
+    date: row.slot_date,
+    time: row.slot_time,
+    available: Math.max(0, (row.capacity ?? 1) - (row.booked ?? 0)),
+  })).filter((slot) => slot.available > 0)
+}
+
+export async function createViewingRequestInDb({ userId, listingId, date, guests, notes }) {
+  if (!supabase || !userId) return null
+  const { data, error } = await supabase
+    .from('viewing_requests')
+    .insert({
+      listing_id: listingId,
+      user_id: userId,
+      preferred_date: date,
+      guests,
+      notes: notes || null,
+      status: 'pending',
+    })
+    .select('*')
+    .single()
+  if (error) return null
+  return data
+}
+
 export async function fetchViewingsFromDb(userId) {
   if (!supabase || !userId) return null
   const { data, error } = await supabase

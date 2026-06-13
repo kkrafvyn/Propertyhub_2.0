@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
 import ProtectedRoute from '../components/ProtectedRoute'
 import { useAuth } from '../context/AuthContext'
+import { isAdminRole, isAgencyRole, isManageRole } from '../lib/roles'
 
 function ProfileContent() {
   const { user, role, signOut } = useAuth()
@@ -16,9 +17,24 @@ function ProfileContent() {
           </div>
           <p className="mt-4 font-semibold">{user?.user_metadata?.display_name || 'BaytMiftah member'}</p>
           <p className="text-sm text-ink-secondary">{user?.email}</p>
+          <p className="mt-2 rounded-full bg-brand-light px-3 py-1 text-xs font-semibold capitalize text-brand-dark">
+            {role || 'buyer'}
+          </p>
         </div>
 
         <div className="space-y-4">
+          {(isManageRole(role) || role === 'buyer' || role === 'property_owner') && (
+            <Section title="Host">
+              <NavRow to="/host/list" label="List a property" />
+              <NavRow to="/host/listings" label="Your listings" />
+              <NavRow to="/host/boost" label="Feature a listing" />
+            </Section>
+          )}
+          {(isAgencyRole(role) || isAdminRole(role)) && (
+            <Section title="Moderation">
+              <NavRow to="/admin/moderation" label="Review pending listings" />
+            </Section>
+          )}
           <Section title="Account">
             <Row label="Email" value={user?.email} />
             <Row label="Role" value={role || 'buyer'} />

@@ -11,6 +11,7 @@
     "db:bundle": "node scripts/bundle-migrations.mjs",
     "db:push": "npx supabase db push",
     "db:apply": "powershell -ExecutionPolicy Bypass -File scripts/apply-migrations-dashboard.ps1",
+    "supabase:link": "powershell -ExecutionPolicy Bypass -File scripts/link-supabase.ps1",
     "deploy:backend": "powershell -ExecutionPolicy Bypass -File scripts/deploy-supabase.ps1"
   },
   "dependencies": {

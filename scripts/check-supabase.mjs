@@ -66,7 +66,7 @@ if (listErr) {
   } else {
     console.log('Note: No active listings — apply migrations:')
     console.log('  npm run db:bundle   # then paste scripts/all-migrations.sql in Supabase SQL Editor')
-    console.log('  npm run db:push     # or after: npx supabase login && npx supabase link --project-ref tcnsqtnwyyufeupktkhs')
+    console.log('  npm run db:push     # or after: npx supabase login && npx supabase link --project-ref ixmbfnfwpjwbfahqaftc')
   }
 }
 

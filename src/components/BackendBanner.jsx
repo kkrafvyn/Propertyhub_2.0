@@ -21,8 +21,9 @@ export default function BackendBanner() {
       )}
       {status.mode === 'empty' && (
         <p>
-          <strong>Database connected.</strong> Run migrations to load live listings:{' '}
-          <code className="text-xs">supabase db push</code>
+          <strong>Database connected.</strong> Apply migrations:{' '}
+          <code className="text-xs">npm run db:apply</code> or{' '}
+          <code className="text-xs">npm run supabase:link</code> (add <code className="text-xs">SUPABASE_DB_PASSWORD</code> to .env).
         </p>
       )}
       {status.mode === 'error' && (
