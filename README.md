@@ -45,3 +45,16 @@ Agency owners and platform admins can moderate. Edge Functions work when deploye
 ```bash
 npm run build
 ```
+
+## Vercel deployment
+
+Set these **Environment Variables** in the Vercel project (Production + Preview), then redeploy:
+
+| Variable | Value |
+|----------|--------|
+| `VITE_SUPABASE_URL` | `https://ixmbfnfwpjwbfahqaftc.supabase.co` |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Your publishable key from [Supabase API settings](https://supabase.com/dashboard/project/ixmbfnfwpjwbfahqaftc/settings/api) |
+
+Do **not** use the old `tcnsqtnwyyufeupktkhs` project — Edge Functions are not deployed there (CORS / 404 errors).
+
+After updating env vars, trigger **Redeploy** so Vite rebuilds with the new values.

@@ -30,15 +30,18 @@ export async function callEdgeFunction(functionName, options = {}) {
     throw new Error('Please sign in to continue.')
   }
 
+  const hasBody = body !== undefined
+  const isGet = method === 'GET'
+
   const response = await fetch(buildUrl(functionName, query), {
     method,
     headers: {
       apikey: supabaseAnonKey,
       Authorization: `Bearer ${session?.access_token ?? supabaseAnonKey}`,
-      'Content-Type': 'application/json',
+      ...(hasBody || !isGet ? { 'Content-Type': 'application/json' } : {}),
       ...headers,
     },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: hasBody ? JSON.stringify(body) : undefined,
   })
 
   const payload = await response.json().catch(() => null)

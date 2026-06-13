@@ -35,34 +35,35 @@ function normalizeListing(raw) {
 }
 
 export async function fetchListings(filters = {}) {
+  const dbRows = await fetchListingsFromDb(filters)
+  if (dbRows?.length) {
+    return { listings: dbRows, source: 'supabase' }
+  }
+
   try {
     const payload = await callEdgeFunction('marketplace', {
       allowAnonymous: true,
-      query: {
-        action: 'list',
-        ...filters,
-      },
+      query: { action: 'list', ...filters },
     })
 
     const rows = payload?.listings ?? payload?.data ?? payload
-    if (!Array.isArray(rows) || rows.length === 0) {
-      const dbRows = await fetchListingsFromDb(filters)
-      if (dbRows?.length) return { listings: dbRows, source: 'supabase' }
-      return { listings: fallbackListings, source: 'local' }
-    }
-
-    return {
-      listings: rows.map(normalizeListing).filter(Boolean),
-      source: 'supabase',
+    if (Array.isArray(rows) && rows.length) {
+      return {
+        listings: rows.map(normalizeListing).filter(Boolean),
+        source: 'supabase',
+      }
     }
   } catch {
-    const dbRows = await fetchListingsFromDb(filters)
-    if (dbRows?.length) return { listings: dbRows, source: 'supabase' }
-    return { listings: fallbackListings, source: 'local' }
+    /* edge unavailable — use demo data */
   }
+
+  return { listings: fallbackListings, source: 'local' }
 }
 
 export async function fetchListingById(id) {
+  const dbListing = await fetchListingByIdFromDb(id)
+  if (dbListing) return { listing: dbListing, source: 'supabase' }
+
   try {
     const payload = await callEdgeFunction('marketplace', {
       allowAnonymous: true,
@@ -71,21 +72,13 @@ export async function fetchListingById(id) {
 
     const raw = payload?.listing ?? payload?.data ?? payload
     const listing = normalizeListing(raw)
-
-    if (!listing?.id) {
-      const dbListing = await fetchListingByIdFromDb(id)
-      if (dbListing) return { listing: dbListing, source: 'supabase' }
-      const fallback = getFallbackById(id)
-      return { listing: fallback, source: fallback ? 'local' : 'none' }
-    }
-
-    return { listing, source: 'supabase' }
+    if (listing?.id) return { listing, source: 'supabase' }
   } catch {
-    const dbListing = await fetchListingByIdFromDb(id)
-    if (dbListing) return { listing: dbListing, source: 'supabase' }
-    const fallback = getFallbackById(id)
-    return { listing: fallback, source: fallback ? 'local' : 'none' }
+    /* edge unavailable */
   }
+
+  const fallback = getFallbackById(id)
+  return { listing: fallback, source: fallback ? 'local' : 'none' }
 }
 
 export default { fetchListings, fetchListingById }
