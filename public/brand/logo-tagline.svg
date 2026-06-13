@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 160" fill="none" role="img" aria-label="BaytMiftah  Unlocking property opportunities">
+  <g transform="translate(186 0)">
+    <circle cx="24" cy="15" r="5.5" fill="#0F2922"/>
+    <path d="M9 33.5Q24 24.5 39 33.5" stroke="#0F2922" stroke-width="2.25" stroke-linecap="round"/>
+  </g>
+  <text x="210" y="68" fill="#0F2922" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700" letter-spacing="0.18em">B›YTMIFT›H</text>
+  <line x1="72" y1="98" x2="148" y2="98" stroke="#0F2922" stroke-width="1"/>
+  <text x="210" y="104" fill="#0F2922" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" letter-spacing="0.28em" text-anchor="middle">UNLOCKING PROPERTY OPPORTUNITIES</text>
+  <line x1="272" y1="98" x2="348" y2="98" stroke="#0F2922" stroke-width="1"/>
+</svg>

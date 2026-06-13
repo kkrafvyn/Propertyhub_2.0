@@ -1,0 +1,22 @@
+{
+  "name": "BaytMiftah",
+  "short_name": "BaytMiftah",
+  "description": "Unlocking property opportunities across Ghana.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#0F2922",
+  "icons": [
+    {
+      "src": "/brand/app-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/brand/social-icon.svg",
+      "sizes": "400x400",
+      "type": "image/svg+xml"
+    }
+  ]
+}

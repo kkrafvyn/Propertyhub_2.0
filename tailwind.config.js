@@ -9,6 +9,7 @@ export default {
           hover: '#D4AF37',
           light: '#FFF8E1',
           dark: '#051424',
+          forest: '#0F2922',
         },
         ink: {
           DEFAULT: '#051424',
