@@ -1,0 +1,58 @@
+export const neighborhoods = [
+  {
+    slug: 'cantonments',
+    name: 'Cantonments',
+    score: 92,
+    summary: 'Diplomatic quarter with strong security, premium rentals, and embassy access.',
+    schools: 4.8,
+    safety: 4.7,
+    healthcare: 4.6,
+    infrastructure: 4.5,
+    growth: '+8.2% YoY',
+    avgPrice: 'GHS 1.2M – 6.8M',
+    rentalYield: '6.1%',
+  },
+  {
+    slug: 'east-legon',
+    name: 'East Legon',
+    score: 88,
+    summary: 'Family-friendly suburb with schools, retail, and strong rental demand.',
+    schools: 4.9,
+    safety: 4.4,
+    healthcare: 4.3,
+    infrastructure: 4.2,
+    growth: '+6.5% YoY',
+    avgPrice: 'GHS 850K – 4.2M',
+    rentalYield: '7.4%',
+  },
+  {
+    slug: 'airport-residential',
+    name: 'Airport Residential',
+    score: 90,
+    summary: 'Executive housing near airport corridor with high appreciation potential.',
+    schools: 4.6,
+    safety: 4.8,
+    healthcare: 4.5,
+    infrastructure: 4.7,
+    growth: '+7.1% YoY',
+    avgPrice: 'GHS 2M – 8.5M',
+    rentalYield: '5.8%',
+  },
+  {
+    slug: 'labone',
+    name: 'Labone',
+    score: 86,
+    summary: 'Urban lifestyle neighborhood close to Osu with mixed residential stock.',
+    schools: 4.3,
+    safety: 4.2,
+    healthcare: 4.4,
+    infrastructure: 4.6,
+    growth: '+5.9% YoY',
+    avgPrice: 'GHS 1.5M – 5M',
+    rentalYield: '6.8%',
+  },
+]
+
+export function getNeighborhood(slug) {
+  return neighborhoods.find((n) => n.slug === slug) ?? null
+}

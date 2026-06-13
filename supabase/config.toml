@@ -1,0 +1,25 @@
+project_id = "baytmiftah"
+
+[api]
+enabled = true
+
+[functions.marketplace]
+verify_jwt = false
+
+[functions.auth]
+verify_jwt = false
+
+[functions.persistence]
+verify_jwt = false
+
+[functions.geo]
+verify_jwt = false
+
+[functions.messaging]
+verify_jwt = false
+
+[functions.agencies]
+verify_jwt = false
+
+[functions.moderation]
+verify_jwt = false

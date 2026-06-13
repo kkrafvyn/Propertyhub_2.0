@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.env.local
+.DS_Store
+*.log
+supabase/.temp
+stitch_urban_property_connect(2)/
+stitch_urban_property_connect(2).zip
+scripts/all-migrations.sql

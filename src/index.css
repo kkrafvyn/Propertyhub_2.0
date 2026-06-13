@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+:focus-visible {
+  outline: 2px solid #E9C349;
+  outline-offset: 2px;
+}
+
+@layer components {
+  .search-pill {
+    @apply flex items-center rounded-full border border-surface-border bg-surface shadow-search transition-shadow hover:shadow-card;
+  }
+
+  .search-segment {
+    @apply flex flex-1 flex-col justify-center px-6 py-3 transition hover:bg-surface-subtle;
+  }
+
+  .category-chip {
+    @apply flex shrink-0 cursor-pointer flex-col items-center gap-2 border-b-2 border-transparent pb-3 pt-1 opacity-70 transition hover:opacity-100;
+  }
+
+  .category-chip.active {
+    @apply border-brand-dark opacity-100;
+  }
+}
