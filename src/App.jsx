@@ -1,15 +1,20 @@
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import DesktopRoutes from './routes/DesktopRoutes'
 import MobileRoutes from './routes/MobileRoutes'
 
-function useIsMobileLayout() {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia('(max-width: 1023px)').matches
+function isMobileAppPath(pathname) {
+  return pathname === '/m' || pathname.startsWith('/m/')
 }
 
 function ResponsiveRoutes() {
-  // Simple CSS-based split: render both route trees, show one via CSS
+  const { pathname } = useLocation()
+
+  // /m routes always use the mobile app (any screen size)
+  if (isMobileAppPath(pathname)) {
+    return <MobileRoutes />
+  }
+
   return (
     <>
       <div className="hidden lg:contents">
