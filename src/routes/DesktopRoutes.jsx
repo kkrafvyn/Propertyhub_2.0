@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import RoleProtectedRoute from '../components/RoleProtectedRoute'
 
 const HomePage = lazy(() => import('../pages/HomePage'))
