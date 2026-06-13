@@ -1,88 +1,106 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import RoleProtectedRoute from '../components/RoleProtectedRoute'
-import HomePage from '../pages/HomePage'
-import ListingDetailPage from '../pages/ListingDetailPage'
-import LoginPage from '../pages/LoginPage'
-import SignUpPage from '../pages/SignUpPage'
-import SavedPage from '../pages/SavedPage'
-import TripsPage from '../pages/TripsPage'
-import HostListingsPage from '../pages/HostListingsPage'
-import ListPropertyPage from '../pages/ListPropertyPage'
-import NotFoundPage from '../pages/NotFoundPage'
-import MessagesPage from '../pages/MessagesPage'
-import ProfilePage from '../pages/ProfilePage'
-import DocumentVaultPage from '../pages/DocumentVaultPage'
-import ComparePage from '../pages/ComparePage'
-import { NeighborhoodsIndexPage, NeighborhoodDetailPage } from '../pages/NeighborhoodPage'
-import MortgageCalculatorPage from '../pages/tools/MortgageCalculatorPage'
-import InvestmentCalculatorPage from '../pages/tools/InvestmentCalculatorPage'
-import BuyerHubPage from '../pages/buyer/BuyerHubPage'
-import OfferRoomPage from '../pages/buyer/OfferRoomPage'
-import TransactionCenterPage from '../pages/buyer/TransactionCenterPage'
-import AIAdvisorPage from '../pages/buyer/AIAdvisorPage'
-import FinancingCenterPage from '../pages/buyer/FinancingCenterPage'
-import FeaturedBoostPage from '../pages/host/FeaturedBoostPage'
-import AgencyDashboardPage from '../pages/agency/AgencyDashboardPage'
-import AgencyTeamPage from '../pages/agency/AgencyTeamPage'
-import AgencyLeadsPage from '../pages/agency/AgencyLeadsPage'
-import AgencyPropertiesPage from '../pages/agency/AgencyPropertiesPage'
-import AgencyOnboardingPage from '../pages/agency/AgencyOnboardingPage'
-import AgencyBranchesPage from '../pages/agency/AgencyBranchesPage'
-import AgencyPayrollPage from '../pages/agency/AgencyPayrollPage'
-import AgencyAnalyticsPage from '../pages/agency/AgencyAnalyticsPage'
-import AgencyTrustPage from '../pages/agency/AgencyTrustPage'
-import AgencyCompliancePage from '../pages/agency/AgencyCompliancePage'
-import RenterHubPage from '../pages/renter/RenterHubPage'
-import RenterLeasesPage from '../pages/renter/RenterLeasesPage'
-import RenterPaymentsPage from '../pages/renter/RenterPaymentsPage'
-import RenterMaintenancePage from '../pages/renter/RenterMaintenancePage'
-import RenterLeaseSigningPage from '../pages/renter/RenterLeaseSigningPage'
-import ManageHubPage from '../pages/manage/ManageHubPage'
-import ManageTenantsPage from '../pages/manage/ManageTenantsPage'
-import ManageWorkOrdersPage from '../pages/manage/ManageWorkOrdersPage'
-import ManageFinancePage from '../pages/manage/ManageFinancePage'
-import ManageInspectionsPage from '../pages/manage/ManageInspectionsPage'
-import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
-import AdminAgenciesPage from '../pages/admin/AdminAgenciesPage'
-import AdminModerationPage from '../pages/admin/AdminModerationPage'
-import AdminAuditPage from '../pages/admin/AdminAuditPage'
-import AgentDashboardPage from '../pages/agent/AgentDashboardPage'
-import AgentLeadsPage from '../pages/agent/AgentLeadsPage'
-import AgentListingsPage from '../pages/agent/AgentListingsPage'
-import AgentCalendarPage from '../pages/agent/AgentCalendarPage'
-import AgentCoachPage from '../pages/agent/AgentCoachPage'
-import AgentCommissionsPage from '../pages/agent/AgentCommissionsPage'
-import AgentAnalyticsPage from '../pages/agent/AgentAnalyticsPage'
-import AgentTasksPage from '../pages/agent/AgentTasksPage'
-import FinanceHubPage from '../pages/finance/FinanceHubPage'
-import MortgageMarketplacePage from '../pages/finance/MortgageMarketplacePage'
-import EscrowPage from '../pages/finance/EscrowPage'
-import RentCollectionPage from '../pages/finance/RentCollectionPage'
-import InsurancePage from '../pages/finance/InsurancePage'
-import CommissionSettlementPage from '../pages/finance/CommissionSettlementPage'
-import SmartHubPage from '../pages/smart/SmartHubPage'
-import SmartDevicesPage from '../pages/smart/SmartDevicesPage'
-import SmartAutomationsPage from '../pages/smart/SmartAutomationsPage'
-import SmartAlertsPage from '../pages/smart/SmartAlertsPage'
-import IntelligenceHubPage from '../pages/intelligence/IntelligenceHubPage'
-import MarketIntelligencePage from '../pages/intelligence/MarketIntelligencePage'
-import HeatmapPage from '../pages/intelligence/HeatmapPage'
-import ValuationEnginePage from '../pages/intelligence/ValuationEnginePage'
-import DeveloperHubPage from '../pages/developer/DeveloperHubPage'
-import DeveloperProjectsPage from '../pages/developer/DeveloperProjectsPage'
-import DeveloperConstructionPage from '../pages/developer/DeveloperConstructionPage'
-import DeveloperBuyersPage from '../pages/developer/DeveloperBuyersPage'
-import EnterpriseHubPage from '../pages/enterprise/EnterpriseHubPage'
-import EnterprisePortfoliosPage from '../pages/enterprise/EnterprisePortfoliosPage'
-import EnterpriseEsgPage from '../pages/enterprise/EnterpriseEsgPage'
-import EnterpriseForecastPage from '../pages/enterprise/EnterpriseForecastPage'
-import AdminKycPage from '../pages/admin/AdminKycPage'
-import AdminFraudPage from '../pages/admin/AdminFraudPage'
-import AdminAiPage from '../pages/admin/AdminAiPage'
-import AdminValuationApiPage from '../pages/admin/AdminValuationApiPage'
-import AdminGlobalPage from '../pages/admin/AdminGlobalPage'
-import PaymentSuccessPage from '../pages/PaymentSuccessPage'
-import PaymentCancelPage from '../pages/PaymentCancelPage'
+
+const HomePage = lazy(() => import('../pages/HomePage'))
+const ListingDetailPage = lazy(() => import('../pages/ListingDetailPage'))
+const LoginPage = lazy(() => import('../pages/LoginPage'))
+const SignUpPage = lazy(() => import('../pages/SignUpPage'))
+const SavedPage = lazy(() => import('../pages/SavedPage'))
+const TripsPage = lazy(() => import('../pages/TripsPage'))
+const HostPage = lazy(() => import('../pages/HostPage'))
+const HostListingsPage = lazy(() => import('../pages/HostListingsPage'))
+const ListPropertyPage = lazy(() => import('../pages/ListPropertyPage'))
+const NotFoundPage = lazy(() => import('../pages/NotFoundPage'))
+const MessagesPage = lazy(() => import('../pages/MessagesPage'))
+const ProfilePage = lazy(() => import('../pages/ProfilePage'))
+const DocumentVaultPage = lazy(() => import('../pages/DocumentVaultPage'))
+const ComparePage = lazy(() => import('../pages/ComparePage'))
+const NeighborhoodPage = lazy(() => import('../pages/NeighborhoodPage'))
+const MortgageCalculatorPage = lazy(() => import('../pages/tools/MortgageCalculatorPage'))
+const InvestmentCalculatorPage = lazy(() => import('../pages/tools/InvestmentCalculatorPage'))
+const BuyerHubPage = lazy(() => import('../pages/buyer/BuyerHubPage'))
+const OfferRoomPage = lazy(() => import('../pages/buyer/OfferRoomPage'))
+const TransactionCenterPage = lazy(() => import('../pages/buyer/TransactionCenterPage'))
+const AIAdvisorPage = lazy(() => import('../pages/buyer/AIAdvisorPage'))
+const FinancingCenterPage = lazy(() => import('../pages/buyer/FinancingCenterPage'))
+const FeaturedBoostPage = lazy(() => import('../pages/host/FeaturedBoostPage'))
+const AgencyDashboardPage = lazy(() => import('../pages/agency/AgencyDashboardPage'))
+const AgencyTeamPage = lazy(() => import('../pages/agency/AgencyTeamPage'))
+const AgencyLeadsPage = lazy(() => import('../pages/agency/AgencyLeadsPage'))
+const AgencyPropertiesPage = lazy(() => import('../pages/agency/AgencyPropertiesPage'))
+const AgencyOnboardingPage = lazy(() => import('../pages/agency/AgencyOnboardingPage'))
+const AgencyBranchesPage = lazy(() => import('../pages/agency/AgencyBranchesPage'))
+const AgencyPayrollPage = lazy(() => import('../pages/agency/AgencyPayrollPage'))
+const AgencyAnalyticsPage = lazy(() => import('../pages/agency/AgencyAnalyticsPage'))
+const AgencyTrustPage = lazy(() => import('../pages/agency/AgencyTrustPage'))
+const AgencyCompliancePage = lazy(() => import('../pages/agency/AgencyCompliancePage'))
+const RenterHubPage = lazy(() => import('../pages/renter/RenterHubPage'))
+const RenterLeasesPage = lazy(() => import('../pages/renter/RenterLeasesPage'))
+const RenterPaymentsPage = lazy(() => import('../pages/renter/RenterPaymentsPage'))
+const RenterMaintenancePage = lazy(() => import('../pages/renter/RenterMaintenancePage'))
+const RenterLeaseSigningPage = lazy(() => import('../pages/renter/RenterLeaseSigningPage'))
+const ManageHubPage = lazy(() => import('../pages/manage/ManageHubPage'))
+const ManageTenantsPage = lazy(() => import('../pages/manage/ManageTenantsPage'))
+const ManageWorkOrdersPage = lazy(() => import('../pages/manage/ManageWorkOrdersPage'))
+const ManageFinancePage = lazy(() => import('../pages/manage/ManageFinancePage'))
+const ManageInspectionsPage = lazy(() => import('../pages/manage/ManageInspectionsPage'))
+const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'))
+const AdminAgenciesPage = lazy(() => import('../pages/admin/AdminAgenciesPage'))
+const AdminModerationPage = lazy(() => import('../pages/admin/AdminModerationPage'))
+const AdminAuditPage = lazy(() => import('../pages/admin/AdminAuditPage'))
+const AgentDashboardPage = lazy(() => import('../pages/agent/AgentDashboardPage'))
+const AgentLeadsPage = lazy(() => import('../pages/agent/AgentLeadsPage'))
+const AgentListingsPage = lazy(() => import('../pages/agent/AgentListingsPage'))
+const AgentCalendarPage = lazy(() => import('../pages/agent/AgentCalendarPage'))
+const AgentCoachPage = lazy(() => import('../pages/agent/AgentCoachPage'))
+const AgentCommissionsPage = lazy(() => import('../pages/agent/AgentCommissionsPage'))
+const AgentAnalyticsPage = lazy(() => import('../pages/agent/AgentAnalyticsPage'))
+const AgentTasksPage = lazy(() => import('../pages/agent/AgentTasksPage'))
+const FinanceHubPage = lazy(() => import('../pages/finance/FinanceHubPage'))
+const MortgageMarketplacePage = lazy(() => import('../pages/finance/MortgageMarketplacePage'))
+const EscrowPage = lazy(() => import('../pages/finance/EscrowPage'))
+const RentCollectionPage = lazy(() => import('../pages/finance/RentCollectionPage'))
+const InsurancePage = lazy(() => import('../pages/finance/InsurancePage'))
+const CommissionSettlementPage = lazy(() => import('../pages/finance/CommissionSettlementPage'))
+const SmartHubPage = lazy(() => import('../pages/smart/SmartHubPage'))
+const SmartDevicesPage = lazy(() => import('../pages/smart/SmartDevicesPage'))
+const SmartAutomationsPage = lazy(() => import('../pages/smart/SmartAutomationsPage'))
+const SmartAlertsPage = lazy(() => import('../pages/smart/SmartAlertsPage'))
+const IntelligenceHubPage = lazy(() => import('../pages/intelligence/IntelligenceHubPage'))
+const MarketIntelligencePage = lazy(() => import('../pages/intelligence/MarketIntelligencePage'))
+const HeatmapPage = lazy(() => import('../pages/intelligence/HeatmapPage'))
+const ValuationEnginePage = lazy(() => import('../pages/intelligence/ValuationEnginePage'))
+const DeveloperHubPage = lazy(() => import('../pages/developer/DeveloperHubPage'))
+const DeveloperProjectsPage = lazy(() => import('../pages/developer/DeveloperProjectsPage'))
+const DeveloperConstructionPage = lazy(() => import('../pages/developer/DeveloperConstructionPage'))
+const DeveloperBuyersPage = lazy(() => import('../pages/developer/DeveloperBuyersPage'))
+const EnterpriseHubPage = lazy(() => import('../pages/enterprise/EnterpriseHubPage'))
+const EnterprisePortfoliosPage = lazy(() => import('../pages/enterprise/EnterprisePortfoliosPage'))
+const EnterpriseEsgPage = lazy(() => import('../pages/enterprise/EnterpriseEsgPage'))
+const EnterpriseForecastPage = lazy(() => import('../pages/enterprise/EnterpriseForecastPage'))
+const AdminKycPage = lazy(() => import('../pages/admin/AdminKycPage'))
+const AdminFraudPage = lazy(() => import('../pages/admin/AdminFraudPage'))
+const AdminAiPage = lazy(() => import('../pages/admin/AdminAiPage'))
+const AdminValuationApiPage = lazy(() => import('../pages/admin/AdminValuationApiPage'))
+const AdminGlobalPage = lazy(() => import('../pages/admin/AdminGlobalPage'))
+const PaymentSuccessPage = lazy(() => import('../pages/PaymentSuccessPage'))
+const PaymentCancelPage = lazy(() => import('../pages/PaymentCancelPage'))
+
+const NeighborhoodsIndexPage = lazy(() =>
+  import('../pages/NeighborhoodPage').then((m) => ({ default: m.NeighborhoodsIndexPage })),
+)
+const NeighborhoodDetailPage = lazy(() =>
+  import('../pages/NeighborhoodPage').then((m) => ({ default: m.NeighborhoodDetailPage })),
+)
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <div className="h-8 w-8 animate-pulse rounded-full bg-surface-hover" />
+    </div>
+  )
+}
 
 function AdminRoute({ children }) {
   return <RoleProtectedRoute require="admin">{children}</RoleProtectedRoute>
@@ -114,6 +132,7 @@ function EnterpriseRoute({ children }) {
 
 export default function DesktopRoutes() {
   return (
+    <Suspense fallback={<RouteFallback />}>
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/property/:id" element={<ListingDetailPage />} />
@@ -203,5 +222,6 @@ export default function DesktopRoutes() {
       <Route path="/m/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    </Suspense>
   )
 }
