@@ -219,7 +219,6 @@ export default function DesktopRoutes() {
       <Route path="/enterprise/portfolios" element={<EnterpriseRoute><EnterprisePortfoliosPage /></EnterpriseRoute>} />
       <Route path="/enterprise/esg" element={<EnterpriseRoute><EnterpriseEsgPage /></EnterpriseRoute>} />
       <Route path="/enterprise/forecast" element={<EnterpriseRoute><EnterpriseForecastPage /></EnterpriseRoute>} />
-      <Route path="/m/*" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
     </Suspense>
