@@ -1,6 +1,8 @@
-# BaytMiftah
+# BaytMiftah (Property Hub 2.0)
 
 Real-estate marketplace and operations platform (React + Vite + Supabase).
+
+**Repository:** [github.com/kkrafvyn/Propertyhub_2.0](https://github.com/kkrafvyn/Propertyhub_2.0) — active branch: `baytmiftah-rebuild`
 
 ## Setup
 

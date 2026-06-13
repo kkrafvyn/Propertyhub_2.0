@@ -46,7 +46,7 @@ for (const { table, filter } of checks) {
     console.error(`FAIL: ${table} —`, error.message)
     failed = true
   } else {
-    console.log(`OK: ${table} — ${count ?? 0} rows visible`)
+    console.log(`OK: ${table} — ${count ?? 0} rows`)
   }
 }
 

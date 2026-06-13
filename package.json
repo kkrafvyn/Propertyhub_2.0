@@ -10,6 +10,7 @@
     "check:supabase": "node scripts/check-supabase.mjs",
     "db:bundle": "node scripts/bundle-migrations.mjs",
     "db:push": "npx supabase db push",
+    "db:apply": "powershell -ExecutionPolicy Bypass -File scripts/apply-migrations-dashboard.ps1",
     "deploy:backend": "powershell -ExecutionPolicy Bypass -File scripts/deploy-supabase.ps1"
   },
   "dependencies": {
