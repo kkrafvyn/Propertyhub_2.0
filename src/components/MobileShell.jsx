@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import Logo from './Logo'
+import PushPrompt from './PushPrompt'
 import { IconChevronLeft, IconHeart, IconHome, IconSearch } from './icons'
 import { useTranslation } from '../i18n/LocaleContext'
 
@@ -55,6 +56,7 @@ export default function MobileShell({ children, hideNav = false }) {
           </div>
         </nav>
       )}
+      <PushPrompt />
     </div>
   )
 }

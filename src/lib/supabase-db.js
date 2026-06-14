@@ -453,6 +453,34 @@ export async function fetchAgentLeadsFromDb(agentId) {
   }))
 }
 
+export async function fetchAllAgentLeadsFromDb() {
+  if (!supabase) return null
+  const { data, error } = await supabase.from('agent_leads').select('*').order('created_at', { ascending: false }).limit(50)
+  if (error) return null
+  return data.map((r) => ({
+    id: r.id,
+    name: r.name,
+    property: r.property,
+    stage: r.stage,
+    value: Number(r.value),
+    phone: r.phone,
+    updated: r.updated_label || 'Recently',
+    updated_label: r.updated_label,
+  }))
+}
+
+export async function fetchAgencyListingsFromDb() {
+  if (!supabase) return null
+  const { data, error } = await supabase.from('listings').select('id, title, status, rating').order('created_at', { ascending: false }).limit(50)
+  if (error) return null
+  return data.map((r) => ({
+    id: r.id,
+    title: r.title,
+    status: r.status,
+    views: r.rating ? Math.round(Number(r.rating) * 40) : 0,
+  }))
+}
+
 export async function updateAgentLeadStageInDb(agentId, leadId, stage) {
   if (!supabase || !agentId) return null
   const { error } = await supabase.from('agent_leads').update({ stage, updated_label: 'Just now' }).eq('id', leadId).eq('agent_id', agentId)

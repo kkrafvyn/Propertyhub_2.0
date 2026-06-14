@@ -11,8 +11,12 @@ $supabase = "npx supabase"
 Write-Host "Linking project $ProjectRef..."
 Invoke-Expression "$supabase link --project-ref $ProjectRef"
 
-Write-Host "Pushing migrations..."
-Invoke-Expression "$supabase db push"
+Write-Host "Pushing migrations (skipped if DB password unavailable)..."
+try {
+  Invoke-Expression "$supabase db push --yes"
+} catch {
+  Write-Host "  db push skipped — apply via: npx supabase db query --linked -f scripts/all-migrations.sql"
+}
 
 Write-Host "Deploying Edge Functions..."
 $functions = @(

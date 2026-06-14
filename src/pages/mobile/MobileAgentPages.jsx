@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import MobileShell, { MobileHeader } from '../../components/MobileShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import {
@@ -11,10 +12,12 @@ import {
 } from '../../components/ui/MobileUI'
 import { IconCalendar, IconCheck, IconSparkle, IconUsers } from '../../components/icons'
 import { useTranslation } from '../../i18n/LocaleContext'
-import { agentStats, agentLeads, agentCalendar } from '../../data/agent'
+import { fetchAgentDashboard, fetchLeads, fetchCalendar } from '../../services/agent-service'
+import { sendLeadMessage } from '../../services/comms-service'
 
 function AgentHome() {
   const { t } = useTranslation()
+  const [stats, setStats] = useState(null)
   const links = [
     { to: '/m/agent/leads', label: t('workspace.nav.leads'), Icon: IconUsers },
     { to: '/m/agent/calendar', label: t('workspace.nav.calendar'), Icon: IconCalendar },
@@ -22,21 +25,28 @@ function AgentHome() {
     { to: '/m/agent/coach', label: t('workspace.nav.listingCoach'), Icon: IconSparkle },
   ]
 
+  useEffect(() => {
+    fetchAgentDashboard().then(({ stats: s }) => setStats(s))
+  }, [])
+
   return (
     <MobileShell hideNav>
       <MobileHeader title={t('mobile.agentWorkspace')} subtitle={t('mobile.agentPipelineMobile')} backTo="/m/profile" />
       <section className="space-y-4 px-4 pb-6">
-        <div className="grid grid-cols-2 gap-3">
-          <MobileStat label={t('hubs.agent.dashboard.stats.activeListings')} value={agentStats.activeListings} />
-          <MobileStat label={t('hubs.agent.dashboard.stats.leadsThisWeek')} value={agentStats.leadsThisWeek} />
-          <MobileStat label={t('hubs.agent.dashboard.stats.viewingsScheduled')} value={agentStats.viewingsScheduled} />
-          <MobileStat label="Pipeline" value={agentStats.commissionPipeline} />
-        </div>
+        {stats && (
+          <div className="grid grid-cols-2 gap-3">
+            <MobileStat label={t('hubs.agent.dashboard.stats.activeListings')} value={stats.activeListings} />
+            <MobileStat label={t('hubs.agent.dashboard.stats.leadsThisWeek')} value={stats.leadsThisWeek} />
+            <MobileStat label={t('hubs.agent.dashboard.stats.viewingsScheduled')} value={stats.viewingsScheduled} />
+            <MobileStat label="Pipeline" value={stats.commissionPipeline} />
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           {links.map((item) => (
             <MobileHubTile key={item.to} {...item} />
           ))}
         </div>
+        <MobileTextLink to="/agent/leads" className="block text-center">Open full CRM →</MobileTextLink>
         <MobileTextLink to="/" className="block text-center">← Marketplace</MobileTextLink>
       </section>
     </MobileShell>
@@ -45,18 +55,36 @@ function AgentHome() {
 
 function AgentLeads() {
   const { t } = useTranslation()
+  const [leads, setLeads] = useState([])
+
+  useEffect(() => {
+    fetchLeads().then(({ leads: rows }) => setLeads(rows))
+  }, [])
+
   return (
     <MobileShell hideNav>
       <MobileHeader title={t('workspace.nav.leads')} backTo="/m/agent" />
       <section className="space-y-3 px-4 pb-6">
-        {agentLeads.map((lead) => (
+        {leads.map((lead) => (
           <MobileCard key={lead.id}>
             <p className="font-semibold text-ink">{lead.name}</p>
             <p className="text-sm text-ink-secondary">{lead.property}</p>
             <div className="mt-2 flex items-center justify-between">
               <MobileBadge tone="neutral">{lead.stage}</MobileBadge>
-              <span className="text-xs text-ink-secondary">GHS {lead.value.toLocaleString()}</span>
+              <span className="text-xs text-ink-secondary">GHS {Number(lead.value).toLocaleString()}</span>
             </div>
+            {lead.phone && (
+              <div className="mt-3 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => sendLeadMessage({ lead, body: `Hi ${lead.name}, following up on ${lead.property}.`, channel: 'whatsapp' })}
+                  className="text-xs font-semibold text-brand-accent underline"
+                >
+                  {t('extensions.crm.whatsapp')}
+                </button>
+                <MobileTextLink to="/agent/leads">Full pipeline →</MobileTextLink>
+              </div>
+            )}
           </MobileCard>
         ))}
       </section>
@@ -66,11 +94,17 @@ function AgentLeads() {
 
 function AgentCalendar() {
   const { t } = useTranslation()
+  const [events, setEvents] = useState([])
+
+  useEffect(() => {
+    fetchCalendar().then(({ calendar }) => setEvents(calendar))
+  }, [])
+
   return (
     <MobileShell hideNav>
       <MobileHeader title={t('workspace.nav.calendar')} backTo="/m/agent" />
       <section className="space-y-3 px-4 pb-6">
-        {agentCalendar.map((ev) => (
+        {events.map((ev) => (
           <MobileCard key={ev.id}>
             <p className="font-semibold text-ink">{ev.title}</p>
             <p className="text-sm text-ink-secondary">{ev.date} · {ev.time}</p>

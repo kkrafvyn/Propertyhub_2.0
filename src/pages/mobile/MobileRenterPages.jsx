@@ -12,6 +12,9 @@ import {
 import { IconCard, IconDocument, IconPen, IconWrench } from '../../components/icons'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchRenterDashboard, fetchRentPayments } from '../../services/renter-service'
+import { payRent } from '../../services/payments-service'
+import { initiateUssdPayment } from '../../services/ussd-service'
+import { getDefaultProvider } from '../../lib/payment-providers'
 
 function RenterHome() {
   const { t } = useTranslation()
@@ -54,10 +57,35 @@ function RenterHome() {
 function RenterPaymentsMobile() {
   const { t } = useTranslation()
   const [payments, setPayments] = useState([])
+  const [loading, setLoading] = useState(null)
+  const [ussdModal, setUssdModal] = useState(null)
+  const provider = getDefaultProvider()
 
   useEffect(() => {
     fetchRentPayments().then(({ payments: rows }) => setPayments(rows))
   }, [])
+
+  async function handlePay(p) {
+    setLoading(p.id)
+    await payRent({
+      paymentId: p.id,
+      amount: p.amount,
+      provider,
+      metadata: { period: p.period },
+    })
+    setLoading(null)
+  }
+
+  async function handleUssd(p) {
+    setLoading(p.id)
+    const result = await initiateUssdPayment({
+      paymentId: p.id,
+      amount: p.amount,
+      phone: '',
+    })
+    setUssdModal({ payment: p, ussd: result.ussd, message: result.message })
+    setLoading(null)
+  }
 
   return (
     <MobileShell hideNav>
@@ -71,11 +99,41 @@ function RenterPaymentsMobile() {
             </div>
             <p className="mt-1 font-semibold text-ink">GHS {p.amount.toLocaleString()}</p>
             {p.status === 'due' && (
-              <MobilePrimaryButton className="mt-3 w-full">Pay now</MobilePrimaryButton>
+              <div className="mt-3 flex flex-col gap-2">
+                <MobilePrimaryButton
+                  type="button"
+                  onClick={() => handlePay(p)}
+                  disabled={loading === p.id}
+                  className="w-full"
+                >
+                  {loading === p.id ? 'Redirecting…' : 'Pay now'}
+                </MobilePrimaryButton>
+                <button
+                  type="button"
+                  onClick={() => handleUssd(p)}
+                  disabled={loading === p.id}
+                  className="w-full rounded-lg border border-surface-border py-2.5 text-sm font-semibold"
+                >
+                  {t('extensions.ussd.payViaUssd')}
+                </button>
+              </div>
             )}
           </MobileCard>
         ))}
       </section>
+
+      {ussdModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4">
+          <div className="w-full max-w-lg rounded-xl bg-surface p-6">
+            <h3 className="text-lg font-semibold">{t('extensions.ussd.title')}</h3>
+            <p className="mt-2 text-sm text-ink-secondary">{ussdModal.message || t('extensions.ussd.instructions')}</p>
+            <code className="mt-4 block rounded-lg bg-surface-subtle px-4 py-3 text-center text-xl font-bold">{ussdModal.ussd}</code>
+            <MobilePrimaryButton type="button" onClick={() => setUssdModal(null)} className="mt-4 w-full">
+              {t('common.close')}
+            </MobilePrimaryButton>
+          </div>
+        </div>
+      )}
     </MobileShell>
   )
 }

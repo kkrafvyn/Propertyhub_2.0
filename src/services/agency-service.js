@@ -1,5 +1,5 @@
 import { callEdgeFunction } from '../lib/edge-client'
-import { fetchAgencyPayrollFromDb } from '../lib/supabase-db'
+import { fetchAgencyPayrollFromDb, fetchAllAgentLeadsFromDb, fetchAgencyListingsFromDb } from '../lib/supabase-db'
 import {
   agencyProfile,
   teamMembers,
@@ -110,6 +110,34 @@ export async function fetchCompliance() {
   return { compliance: agencyCompliance, source: 'local' }
 }
 
+export async function fetchAgencyLeads() {
+  const rows = await fetchAllAgentLeadsFromDb()
+  if (rows?.length) return { leads: rows, source: 'supabase' }
+
+  try {
+    const payload = await callEdgeFunction('agencies', {
+      allowAnonymous: false,
+      query: { action: 'dashboard' },
+    })
+    if (payload?.leads?.length) return { leads: payload.leads, source: 'supabase' }
+  } catch { /* fallback */ }
+  return { leads, source: 'local' }
+}
+
+export async function fetchAgencyListings() {
+  const rows = await fetchAgencyListingsFromDb()
+  if (rows?.length) return { listings: rows, source: 'supabase' }
+
+  try {
+    const payload = await callEdgeFunction('agencies', {
+      allowAnonymous: false,
+      query: { action: 'dashboard' },
+    })
+    if (payload?.listings?.length) return { listings: payload.listings, source: 'supabase' }
+  } catch { /* fallback */ }
+  return { listings: agencyListings, source: 'local' }
+}
+
 export default {
   fetchAgencyDashboard,
   fetchTeam,
@@ -119,4 +147,6 @@ export default {
   fetchAgencyAnalytics,
   fetchTrustScore,
   fetchCompliance,
+  fetchAgencyLeads,
+  fetchAgencyListings,
 }

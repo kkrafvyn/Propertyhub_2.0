@@ -1,9 +1,16 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AgentShell from '../../components/AgentShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
-import { agencyListings } from '../../data/agency'
+import { fetchMyListings } from '../../services/listing-service'
 
 function Listings() {
+  const [listings, setListings] = useState([])
+
+  useEffect(() => {
+    fetchMyListings().then(({ listings: rows }) => setListings(rows))
+  }, [])
+
   return (
     <AgentShell titleKey="hubs.agent.listings.title" subtitleKey="hubs.agent.listings.subtitle">
       <div className="mb-4">
@@ -12,15 +19,18 @@ function Listings() {
         </Link>
       </div>
       <div className="space-y-3">
-        {agencyListings.map((l) => (
+        {listings.map((l) => (
           <article key={l.id} className="flex items-center justify-between panel-card bg-surface p-4">
             <div>
               <p className="font-semibold">{l.title}</p>
-              <p className="text-sm text-ink-secondary">{l.views} views · {l.status}</p>
+              <p className="text-sm text-ink-secondary">{l.status}</p>
             </div>
             <Link to={`/property/${l.id}`} className="text-sm font-semibold text-ink underline">View</Link>
           </article>
         ))}
+        {!listings.length && (
+          <p className="text-sm text-ink-secondary">No listings yet — add one from the host flow.</p>
+        )}
       </div>
     </AgentShell>
   )
