@@ -58,6 +58,9 @@ const { data: active, error: listErr } = await supabase
 
 if (listErr) {
   console.error('FAIL: listings query —', listErr.message)
+  if (listErr.message.includes('schema cache')) {
+    console.error('Hint: Run migrations — npm run db:bundle, paste scripts/all-migrations.sql in Supabase SQL Editor')
+  }
   failed = true
 } else {
   console.log('OK: Supabase connected at', url)

@@ -3,10 +3,12 @@ import { Link, useParams } from 'react-router-dom'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
 import ProtectedRoute from '../components/ProtectedRoute'
 import { Badge, PageTitle, inputClass } from '../components/ui/AirbnbUI'
+import { useTranslation } from '../i18n/LocaleContext'
 import { fetchConversation, fetchConversations, sendMessage } from '../services/messaging-service'
 import { subscribeToMessages } from '../lib/realtime'
 
 function MessagesContent() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const [conversations, setConversations] = useState([])
   const [active, setActive] = useState(null)
@@ -49,12 +51,12 @@ function MessagesContent() {
 
   return (
     <DesktopShell search={<CompactSearch />}>
-      <PageTitle title="Messages" subtitle="Chat with hosts, agents, and buyers." />
+      <PageTitle title={t('messagesPage.title')} subtitle={t('messagesPage.subtitle')} />
 
       <div className="panel-card grid min-h-[520px] overflow-hidden lg:grid-cols-[320px_1fr]">
         <aside className="border-b border-surface-border lg:border-b-0 lg:border-r">
           {loading ? (
-            <p className="p-4 text-sm text-ink-secondary">Loading…</p>
+            <p className="p-4 text-sm text-ink-secondary">{t('common.loading')}</p>
           ) : (
             conversations.map((conv) => (
               <Link
@@ -78,7 +80,7 @@ function MessagesContent() {
         <section className="flex flex-col">
           {!active ? (
             <div className="flex flex-1 items-center justify-center p-8 text-ink-secondary">
-              Select a conversation
+              {t('messagesPage.selectConversation')}
             </div>
           ) : (
             <>
@@ -102,11 +104,11 @@ function MessagesContent() {
                 <input
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  placeholder="Write a message…"
+                  placeholder={t('messagesPage.placeholder')}
                   className={`${inputClass} rounded-full`}
                 />
                 <button type="submit" className="rounded-full bg-brand-accent px-5 py-2 text-sm font-semibold text-white">
-                  Send
+                  {t('messagesPage.send')}
                 </button>
               </form>
             </>

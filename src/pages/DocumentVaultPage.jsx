@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
 import ProtectedRoute from '../components/ProtectedRoute'
 import { Badge, PageTitle, PrimaryButton, TablePanel } from '../components/ui/AirbnbUI'
+import { useTranslation } from '../i18n/LocaleContext'
 import { fetchDocuments, saveDocument } from '../services/documents-service'
 import { uploadDocument } from '../lib/storage'
 import { useAuth } from '../context/AuthContext'
 
 function VaultContent() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const fileRef = useRef(null)
   const [documents, setDocuments] = useState([])
@@ -49,13 +51,13 @@ function VaultContent() {
   return (
     <DesktopShell search={<CompactSearch />}>
       <PageTitle
-        title="Document vault"
-        subtitle="Titles, offers, licenses, and inspection reports."
+        title={t('vaultPage.title')}
+        subtitle={t('vaultPage.subtitle')}
         action={
           <>
             <input ref={fileRef} type="file" accept=".pdf,image/*" className="hidden" onChange={handleUpload} />
             <PrimaryButton disabled={uploading || !user} onClick={() => fileRef.current?.click()}>
-              {uploading ? 'Uploading…' : 'Upload document'}
+              {uploading ? t('vaultPage.uploading') : t('vaultPage.upload')}
             </PrimaryButton>
           </>
         }
@@ -65,16 +67,16 @@ function VaultContent() {
         <table className="w-full text-left text-sm">
           <thead className="border-b border-surface-border bg-surface-subtle">
             <tr>
-              <th className="px-5 py-3 font-semibold text-ink">Document</th>
-              <th className="px-5 py-3 font-semibold text-ink">Category</th>
-              <th className="px-5 py-3 font-semibold text-ink">Status</th>
-              <th className="px-5 py-3 font-semibold text-ink">Updated</th>
+              <th className="px-5 py-3 font-semibold text-ink">{t('vaultPage.colDocument')}</th>
+              <th className="px-5 py-3 font-semibold text-ink">{t('vaultPage.colCategory')}</th>
+              <th className="px-5 py-3 font-semibold text-ink">{t('vaultPage.colStatus')}</th>
+              <th className="px-5 py-3 font-semibold text-ink">{t('vaultPage.colUpdated')}</th>
             </tr>
           </thead>
           <tbody>
             {documents.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-5 py-12 text-center text-ink-secondary">No documents yet</td>
+                <td colSpan={4} className="px-5 py-12 text-center text-ink-secondary">{t('vaultPage.empty')}</td>
               </tr>
             ) : (
               documents.map((doc) => (

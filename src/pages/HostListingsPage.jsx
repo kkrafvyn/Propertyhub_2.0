@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
 import ProtectedRoute from '../components/ProtectedRoute'
 import { Alert, Badge, EmptyPanel, ItemCard, PageTitle, PrimaryButton, SecondaryButton } from '../components/ui/AirbnbUI'
+import { useTranslation } from '../i18n/LocaleContext'
 import { fetchMyListings } from '../services/listing-service'
 
 const statusTone = {
@@ -12,6 +13,7 @@ const statusTone = {
 }
 
 function HostListingsContent() {
+  const { t } = useTranslation()
   const location = useLocation()
   const listed = location.state?.listed
   const [listings, setListings] = useState([])
@@ -39,26 +41,26 @@ function HostListingsContent() {
   return (
     <DesktopShell search={<CompactSearch />}>
       <PageTitle
-        title="Your listings"
-        subtitle="Track review status from submission to live on marketplace."
+        title={t('host.listings.title')}
+        subtitle={t('host.listings.subtitle')}
         action={
           <div className="flex gap-2">
-            <SecondaryButton onClick={load}>Refresh</SecondaryButton>
-            <PrimaryButton as={Link} to="/host/list">List new property</PrimaryButton>
+            <SecondaryButton onClick={load}>{t('host.listings.refresh')}</SecondaryButton>
+            <PrimaryButton as={Link} to="/host/list">{t('host.listings.listNew')}</PrimaryButton>
           </div>
         }
       />
 
       {listed && (
-        <Alert tone="success">Listing submitted for review. An agency admin will approve it for the marketplace.</Alert>
+        <Alert tone="success">{t('host.listings.submittedAlert')}</Alert>
       )}
 
       {source === 'local' && !loading && (
-        <Alert>Sign in and run migrations to sync listing status across devices.</Alert>
+        <Alert>{t('host.listings.localAlert')}</Alert>
       )}
 
       {listings.some((l) => l.status === 'pending_review') && (
-        <p className="mb-4 text-xs text-ink-secondary">Pending listings auto-refresh every 30 seconds.</p>
+        <p className="mb-4 text-xs text-ink-secondary">{t('host.listings.pendingRefresh')}</p>
       )}
 
       <section className="space-y-3">
@@ -66,9 +68,9 @@ function HostListingsContent() {
           <div className="h-24 animate-pulse rounded-xl bg-surface-hover" />
         ) : listings.length === 0 ? (
           <EmptyPanel
-            title="No listings yet"
-            description="Submit your first property to reach buyers and renters."
-            action={<PrimaryButton as={Link} to="/host/list">Submit your first property</PrimaryButton>}
+            title={t('host.listings.emptyTitle')}
+            description={t('host.listings.emptyDesc')}
+            action={<PrimaryButton as={Link} to="/host/list">{t('host.listings.submitFirst')}</PrimaryButton>}
           />
         ) : (
           listings.map((listing) => (
@@ -88,12 +90,12 @@ function HostListingsContent() {
                 </Badge>
                 {listing.status === 'active' && (
                   <Link to={`/property/${listing.id}`} className="text-sm font-semibold text-ink underline">
-                    View live
+                    {t('host.listings.viewLive')}
                   </Link>
                 )}
                 {listing.status === 'rejected' && (
                   <Link to="/host/list" className="text-sm font-semibold text-ink underline">
-                    Resubmit
+                    {t('host.listings.resubmit')}
                   </Link>
                 )}
               </div>

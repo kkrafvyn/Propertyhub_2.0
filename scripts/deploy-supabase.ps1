@@ -6,12 +6,13 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$supabase = "npx supabase"
 
 Write-Host "Linking project $ProjectRef..."
-supabase link --project-ref $ProjectRef
+Invoke-Expression "$supabase link --project-ref $ProjectRef"
 
 Write-Host "Pushing migrations..."
-supabase db push
+Invoke-Expression "$supabase db push"
 
 Write-Host "Deploying Edge Functions..."
 $functions = @(
@@ -37,7 +38,7 @@ $functions = @(
 
 foreach ($fn in $functions) {
   Write-Host "  -> $fn"
-  supabase functions deploy $fn
+  Invoke-Expression "$supabase functions deploy $fn"
 }
 
 Write-Host "Done. Verify at https://supabase.com/dashboard/project/$ProjectRef"

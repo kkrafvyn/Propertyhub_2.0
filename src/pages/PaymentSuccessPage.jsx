@@ -2,8 +2,10 @@ import { Link, useSearchParams } from 'react-router-dom'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
 import { IconCheck } from '../components/icons'
 import { PageTitle, PrimaryButton, SecondaryButton } from '../components/ui/AirbnbUI'
+import { useTranslation } from '../i18n/LocaleContext'
 
 export default function PaymentSuccessPage() {
+  const { t } = useTranslation()
   const [params] = useSearchParams()
   const provider = params.get('provider') || 'payment'
 
@@ -15,13 +17,13 @@ export default function PaymentSuccessPage() {
             <IconCheck className="h-8 w-8" />
           </div>
           <PageTitle
-            title="Payment successful"
-            subtitle={`Your ${provider} payment was received. It may take a moment to reflect once webhooks process.`}
+            title={t('paymentsPage.successTitle')}
+            subtitle={t('paymentsPage.successSubtitle', { provider })}
           />
           <div className="flex flex-wrap justify-center gap-3">
-            <PrimaryButton as={Link} to="/trips">View trips</PrimaryButton>
-            <SecondaryButton as={Link} to="/renter/payments">Renter payments</SecondaryButton>
-            <SecondaryButton as={Link} to="/">Home</SecondaryButton>
+            <PrimaryButton as={Link} to="/trips">{t('paymentsPage.viewTrips')}</PrimaryButton>
+            <SecondaryButton as={Link} to="/renter/payments">{t('paymentsPage.renterPayments')}</SecondaryButton>
+            <SecondaryButton as={Link} to="/">{t('paymentsPage.home')}</SecondaryButton>
           </div>
         </div>
       </div>
