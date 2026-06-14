@@ -45,6 +45,10 @@ export async function initiateCheckout({
       return payload
     }
 
+    if (payload?.message) {
+      return { ...payload, ok: payload.ok ?? true, mode: getPaymentsMode() }
+    }
+
     return payload
   } catch (err) {
     const record = {

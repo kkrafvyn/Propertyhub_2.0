@@ -90,6 +90,8 @@ const PaymentCancelPage = lazy(() => import('../pages/PaymentCancelPage'))
 const AuthCallbackPage = lazy(() => import('../pages/AuthCallbackPage'))
 const HelpCentrePage = lazy(() => import('../pages/HelpCentrePage'))
 const ReferralPage = lazy(() => import('../pages/ReferralPage'))
+const PrivacyPage = lazy(() => import('../pages/PrivacyPage'))
+const TermsPage = lazy(() => import('../pages/TermsPage'))
 
 const NeighborhoodsIndexPage = lazy(() =>
   import('../pages/NeighborhoodPage').then((m) => ({ default: m.NeighborhoodsIndexPage })),
@@ -167,6 +169,8 @@ export default function DesktopRoutes() {
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/help" element={<HelpCentrePage />} />
       <Route path="/referral" element={<ReferralPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
       <Route path="/documents" element={<DocumentVaultPage />} />
       <Route path="/agent" element={<AgentRoute><AgentDashboardPage /></AgentRoute>} />
       <Route path="/agent/leads" element={<AgentRoute><AgentLeadsPage /></AgentRoute>} />

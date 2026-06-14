@@ -3,6 +3,15 @@ import { supabase } from '../lib/supabase'
 import { createInsuranceQuoteInDb } from '../lib/supabase-db'
 
 export async function requestInsuranceQuote({ productId, propertyValue, coverageType }) {
+  try {
+    const payload = await callEdgeFunction('insurance', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'quote', product_id: productId, property_value: propertyValue, coverage_type: coverageType },
+    })
+    if (payload?.quote) return { ok: true, quote: payload.quote, partner: payload.partner, live: payload.live, source: 'supabase' }
+  } catch { /* fallback */ }
+
   if (supabase) {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {

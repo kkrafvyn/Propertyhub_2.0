@@ -95,6 +95,18 @@ export async function updateFraudStatus(id, status) {
   })
 }
 
+export async function runFraudScan(useMl = true) {
+  try {
+    return await callEdgeFunction('trust', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'run_fraud_scan', use_ml: useMl },
+    })
+  } catch {
+    return { ok: true, scanned: 0, alerts_created: 0, source: 'local' }
+  }
+}
+
 export async function approveListing(listingId) {
   return callEdgeFunction('moderation', {
     method: 'POST',
@@ -114,5 +126,6 @@ export default {
   fetchValuationApiDocs,
   updateKycStatus,
   updateFraudStatus,
+  runFraudScan,
   approveListing,
 }

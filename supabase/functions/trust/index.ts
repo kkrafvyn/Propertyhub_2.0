@@ -76,6 +76,86 @@ Deno.serve(async (req) => {
       await logAudit(admin, user.id, 'fraud_updated', body.id, { status: body.status })
       return jsonResponse({ ok: true })
     }
+    if (body.action === 'run_fraud_scan') {
+      const { data: rules } = await admin.from('fraud_rules').select('*').eq('enabled', true)
+      const { data: listings } = await admin.from('listings').select('id, title, price, submitted_by, created_at').eq('status', 'active').limit(200)
+      const alerts: Array<{ target: string; alert_type: string; risk_score: number }> = []
+
+      const byUser = new Map<string, number>()
+      for (const l of listings ?? []) {
+        const uid = l.submitted_by ?? 'unknown'
+        byUser.set(uid, (byUser.get(uid) ?? 0) + 1)
+      }
+
+      const velocityRule = rules?.find((r) => r.id === 'velocity_listings')
+      if (velocityRule) {
+        for (const [uid, count] of byUser) {
+          if (count > Number(velocityRule.threshold)) {
+            alerts.push({ target: `User ${uid.slice(0, 8)}…`, alert_type: 'velocity', risk_score: Math.min(99, count * 12) })
+          }
+        }
+      }
+
+      const prices = (listings ?? []).map((l) => Number(l.price)).filter((p) => p > 0)
+      const median = prices.length ? prices.sort((a, b) => a - b)[Math.floor(prices.length / 2)] : 0
+      const anomalyRule = rules?.find((r) => r.id === 'price_anomaly')
+      if (median && anomalyRule) {
+        for (const l of listings ?? []) {
+          const pct = ((median - Number(l.price)) / median) * 100
+          if (pct > Number(anomalyRule.threshold)) {
+            alerts.push({ target: l.title, alert_type: 'price_anomaly', risk_score: Math.min(99, Math.round(pct)) })
+          }
+        }
+      }
+
+      const openaiKey = Deno.env.get('OPENAI_API_KEY')
+      if (openaiKey && body.use_ml !== false) {
+        try {
+          const sample = (listings ?? []).slice(0, 5).map((l) => ({ id: l.id, title: l.title, price: l.price }))
+          const mlRes = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: Deno.env.get('OPENAI_MODEL') ?? 'gpt-4o-mini',
+              messages: [{
+                role: 'user',
+                content: `Score fraud risk 0-100 for these property listings JSON. Return JSON array [{id,risk_score,reason}]: ${JSON.stringify(sample)}`,
+              }],
+              response_format: { type: 'json_object' },
+            }),
+          })
+          const ml = await mlRes.json()
+          const content = ml?.choices?.[0]?.message?.content
+          if (content) {
+            const parsed = JSON.parse(content)
+            const items = parsed.items ?? parsed.listings ?? parsed.results ?? []
+            for (const item of items) {
+              if (item.risk_score >= 60) {
+                alerts.push({
+                  target: item.id ?? item.title ?? 'Listing',
+                  alert_type: 'ml_classifier',
+                  risk_score: Number(item.risk_score),
+                })
+              }
+            }
+          }
+        } catch (e) {
+          console.error('ML fraud scan failed', e)
+        }
+      }
+
+      for (const a of alerts.slice(0, 20)) {
+        await admin.from('fraud_alerts').insert({
+          id: `fa-${crypto.randomUUID().slice(0, 8)}`,
+          target: a.target,
+          alert_type: a.alert_type,
+          risk_score: a.risk_score,
+          status: 'investigating',
+        }).catch(() => null)
+      }
+
+      return jsonResponse({ ok: true, scanned: listings?.length ?? 0, alerts_created: Math.min(alerts.length, 20), source: 'supabase' })
+    }
     return errorResponse('Unsupported action', 404)
   }
 

@@ -205,8 +205,8 @@ function Footer() {
           <div>
             <h3 className="mb-4 text-sm font-semibold text-ink">{t('footer.legal')}</h3>
             <ul className="space-y-3">
-              <li><a href="#" className="text-sm text-ink-secondary hover:underline">{t('footer.privacy')}</a></li>
-              <li><a href="#" className="text-sm text-ink-secondary hover:underline">{t('footer.terms')}</a></li>
+              <li><Link to="/privacy" className="text-sm text-ink-secondary hover:underline">{t('footer.privacy')}</Link></li>
+              <li><Link to="/terms" className="text-sm text-ink-secondary hover:underline">{t('footer.terms')}</Link></li>
               <li><a href="#" className="text-sm text-ink-secondary hover:underline">{t('footer.sitemap')}</a></li>
             </ul>
           </div>

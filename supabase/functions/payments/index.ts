@@ -26,6 +26,17 @@ Deno.serve(async (req) => {
 
   if (req.method === 'GET') {
     const action = url.searchParams.get('action')
+    if (action === 'config') {
+      const stripe = Boolean(Deno.env.get('STRIPE_SECRET_KEY'))
+      const paystack = Boolean(Deno.env.get('PAYSTACK_SECRET_KEY'))
+      return jsonResponse({
+        stripe,
+        paystack,
+        ready: stripe || paystack,
+        ussd: paystack,
+        site_url: Deno.env.get('SITE_URL') ?? null,
+      })
+    }
     if (action === 'insurance') {
       const { data } = await admin.from('insurance_products').select('*')
       const products = (data ?? []).map((r) => ({

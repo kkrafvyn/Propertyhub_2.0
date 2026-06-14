@@ -10,7 +10,7 @@ const stageLabelKeys = {
   closed: 'extensions.crm.stageClosed',
 }
 
-export default function LeadPipelineBoard({ leads, onStageChange, onMessage }) {
+function LeadPipelineBoard({ leads, onStageChange, onMessage, compact = false }) {
   const { t } = useTranslation()
   const [dragId, setDragId] = useState(null)
   const [msgLead, setMsgLead] = useState(null)
@@ -34,15 +34,22 @@ export default function LeadPipelineBoard({ leads, onStageChange, onMessage }) {
     setMsgLead(null)
   }
 
+  function advanceStage(leadId, currentStage) {
+    const idx = LEAD_STAGES.indexOf(currentStage)
+    if (idx >= 0 && idx < LEAD_STAGES.length - 1 && onStageChange) {
+      onStageChange(leadId, LEAD_STAGES[idx + 1])
+    }
+  }
+
   return (
     <>
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className={`flex gap-4 overflow-x-auto pb-4 ${compact ? 'snap-x snap-mandatory' : ''}`}>
         {LEAD_STAGES.map((stage) => (
           <div
             key={stage}
-            className="min-w-[240px] flex-1 panel-card bg-surface-subtle p-3"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={() => onDrop(stage)}
+            className={`${compact ? 'min-w-[85vw] snap-center' : 'min-w-[240px] flex-1'} panel-card bg-surface-subtle p-3`}
+            onDragOver={(e) => !compact && e.preventDefault()}
+            onDrop={() => !compact && onDrop(stage)}
           >
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-secondary">
               {t(stageLabelKeys[stage])} ({byStage[stage].length})
@@ -51,9 +58,9 @@ export default function LeadPipelineBoard({ leads, onStageChange, onMessage }) {
               {byStage[stage].map((lead) => (
                 <article
                   key={lead.id}
-                  draggable
-                  onDragStart={() => setDragId(lead.id)}
-                  className="cursor-grab rounded-lg border border-surface-border bg-surface p-3 text-sm shadow-sm active:cursor-grabbing"
+                  draggable={!compact}
+                  onDragStart={() => !compact && setDragId(lead.id)}
+                  className={`rounded-lg border border-surface-border bg-surface p-3 text-sm shadow-sm ${compact ? '' : 'cursor-grab active:cursor-grabbing'}`}
                 >
                   <p className="font-semibold">{lead.name}</p>
                   <p className="text-ink-secondary">{lead.property}</p>
@@ -61,7 +68,12 @@ export default function LeadPipelineBoard({ leads, onStageChange, onMessage }) {
                   <p className="mt-1 text-xs text-ink-muted">
                     GHS {Number(lead.value).toLocaleString()} · {lead.updated_label || lead.updated}
                   </p>
-                  <div className="mt-2 flex gap-2">
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {compact && stage !== 'closed' && (
+                      <button type="button" onClick={() => advanceStage(lead.id, stage)} className="text-xs font-semibold text-brand-accent underline">
+                        {t('extensions.crm.advance')}
+                      </button>
+                    )}
                     <button type="button" onClick={() => { setMsgLead(lead); setChannel('whatsapp') }} className="text-xs font-semibold text-ink underline">
                       {t('extensions.crm.whatsapp')}
                     </button>
@@ -92,3 +104,5 @@ export default function LeadPipelineBoard({ leads, onStageChange, onMessage }) {
     </>
   )
 }
+
+export default LeadPipelineBoard

@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import AuthPageLayout from '../components/AuthPageLayout'
 import OAuthButtons, { AuthDivider } from '../components/OAuthButtons'
+import IntegrationsBanner from '../components/IntegrationsBanner'
 import { Field, inputClass, selectClass } from '../components/ui/AirbnbUI'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../i18n/LocaleContext'
@@ -69,6 +70,8 @@ export default function SignUpPage() {
     <AuthPageLayout>
       <div className="mx-auto max-w-[568px] rounded-2xl border border-surface-border bg-surface p-6 shadow-card md:p-8">
         <h1 className="text-2xl font-semibold text-ink">{t('auth.finishSignup')}</h1>
+
+        {isSupabaseConfigured && <IntegrationsBanner showOAuth />}
 
         <Field label={t('auth.iAmA')} className="mt-6">
           <select

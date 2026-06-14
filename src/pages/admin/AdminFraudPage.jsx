@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import AdminShell from '../../components/AdminShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { useTranslation } from '../../i18n/LocaleContext'
-import { fetchFraudAlerts, fetchFraudRules, scoreFraudAlert, updateFraudStatus } from '../../services/trust-service'
+import { fetchFraudAlerts, fetchFraudRules, scoreFraudAlert, updateFraudStatus, runFraudScan } from '../../services/trust-service'
 
 function Fraud() {
   const { t } = useTranslation()
   const [alerts, setAlerts] = useState([])
   const [rules, setRules] = useState([])
+  const [scanning, setScanning] = useState(false)
+  const [scanMsg, setScanMsg] = useState('')
 
   useEffect(() => {
     Promise.all([fetchFraudAlerts(), fetchFraudRules()]).then(([a, r]) => {
@@ -21,8 +23,24 @@ function Fraud() {
     setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, status: 'resolved' } : a)))
   }
 
+  async function handleScan() {
+    setScanning(true)
+    setScanMsg('')
+    const result = await runFraudScan(true)
+    setScanMsg(t('extensions.fraud.scanResult', { scanned: result.scanned ?? 0, created: result.alerts_created ?? 0 }))
+    const { alerts: rows } = await fetchFraudAlerts()
+    setAlerts(rows)
+    setScanning(false)
+  }
+
   return (
     <AdminShell titleKey="hubs.admin.fraud.title" subtitleKey="hubs.admin.fraud.subtitle">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <button type="button" onClick={handleScan} disabled={scanning} className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+          {scanning ? t('extensions.fraud.scanning') : t('extensions.fraud.runScan')}
+        </button>
+        {scanMsg && <p className="text-sm text-ink-secondary">{scanMsg}</p>}
+      </div>
       <div className="mb-8">
         <h2 className="mb-3 text-lg font-semibold">{t('extensions.fraud.rulesTitle')}</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

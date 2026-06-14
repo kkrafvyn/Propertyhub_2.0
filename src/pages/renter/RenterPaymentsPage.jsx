@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import RenterShell from '../../components/RenterShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import PaymentProviderPicker from '../../components/PaymentProviderPicker'
+import IntegrationsBanner from '../../components/IntegrationsBanner'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchRentPayments } from '../../services/renter-service'
 import { payRent } from '../../services/payments-service'
@@ -50,6 +51,7 @@ function Payments() {
 
   return (
     <RenterShell titleKey="hubs.renter.payments.title" subtitleKey="hubs.renter.payments.subtitle">
+      <IntegrationsBanner showPayments />
       {message && (
         <p className="mb-4 rounded-lg border border-brand/30 bg-surface-hover px-4 py-3 text-sm text-ink">{message}</p>
       )}

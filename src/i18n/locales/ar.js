@@ -1,7 +1,7 @@
 export default {
   "localeName": "العربية",
   "nav": {
-    "compare": "مقارنة",
+    "compare": "قارن",
     "saved": "المحفوظات",
     "listProperty": "أضف عقارك",
     "language": "اللغة والمنطقة",
@@ -51,9 +51,9 @@ export default {
     "currency": "₵ GHS"
   },
   "mobile": {
-    "explore": "استكشاف",
+    "explore": "استكشف",
     "search": "بحث",
-    "saved": "المحفوظات",
+    "saved": "محفوظ",
     "inbox": "الرسائل",
     "profile": "الملف",
     "goBack": "رجوع",
@@ -73,13 +73,20 @@ export default {
     "agencyWorkspace": "مساحة الوكالة",
     "financeWorkspace": "مساحة المالية",
     "propertyManagement": "إدارة العقارات",
-    "agentPipelineMobile": "Your pipeline on mobile",
+    "agentPipelineMobile": "خطك على الجوال",
     "yourRental": "Your rental",
     "connectedHome": "Connected home",
-    "rentPayments": "Rent payments",
-    "leaseSigning": "Lease signing",
+    "rentPayments": "مدفوعات الإيجار",
+    "leaseSigning": "توقيع العقد",
     "smartProperty": "Smart property",
-    "alerts": "Alerts"
+    "alerts": "Alerts",
+    "monthlyRent": "الإيجار الشهري",
+    "payNow": "ادفع الآن",
+    "redirecting": "جاري التوجيه…",
+    "newRequest": "طلب جديد",
+    "issuePlaceholder": "صف المشكلة",
+    "submit": "إرسال",
+    "signed": "موقّع"
   },
   "auth": {
     "welcome": "مرحباً بك في بيت مفتاح",
@@ -850,7 +857,8 @@ export default {
       "sms": "رسالة نصية",
       "messageLead": "مراسلة {{name}}",
       "messagePlaceholder": "اكتب رسالتك…",
-      "send": "إرسال"
+      "send": "إرسال",
+      "advance": "تقدم"
     },
     "payroll": {
       "totalPeriod": "الإجمالي لهذه الفترة",
@@ -905,7 +913,10 @@ export default {
       "alertsTitle": "تنبيهات الاحتيال",
       "threshold": "الحد",
       "riskScore": "درجة المخاطر",
-      "resolve": "حل"
+      "resolve": "حل",
+      "runScan": "Run ML fraud scan",
+      "scanning": "Scanning…",
+      "scanResult": "Scanned {{scanned}} listings · {{created}} new alerts"
     },
     "push": {
       "title": "تفعيل الإشعارات",
@@ -913,6 +924,46 @@ export default {
       "enable": "تفعيل",
       "enabling": "جاري التفعيل…",
       "later": "ليس الآن"
+    }
+  },
+  "integrations": {
+    "oauthHint": "سجّل الدخول عبر Google أو Apple — فعّل المزودين في لوحة Supabase Auth وأضف عناوين إعادة التوجيه.",
+    "paymentsHint": "الدفع المباشر يتطلب STRIPE_SECRET_KEY أو PAYSTACK_SECRET_KEY في أسرار Edge Functions. حتى ذلك الحين، يعمل الدفع في وضع تجريبي.",
+    "paymentDemo": "تمت جدولة الدفع في الوضع التجريبي. اضبط أسرار الدفع في Supabase للدفع المباشر."
+  },
+  "legal": {
+    "lastUpdated": "آخر تحديث: يونيو 2026",
+    "privacy": {
+      "title": "سياسة الخصوصية",
+      "intro": "تشرح هذه السياسة كيفية جمع واستخدام وحماية معلوماتك الشخصية على منصة بيت مفتاح.",
+      "collectTitle": "Information we collect",
+      "collectBody": "We collect account details (name, email, phone), listing and transaction data, device and usage analytics, and communications you send through the platform.",
+      "useTitle": "How we use information",
+      "useBody": "We use your data to operate the marketplace, process viewings and payments, verify listings and agencies, improve search and recommendations, and comply with law.",
+      "shareTitle": "Sharing",
+      "shareBody": "We share data with payment processors (Stripe, Paystack), identity and signing partners when you opt in, and service providers under contract. We do not sell personal data.",
+      "securityTitle": "Security",
+      "securityBody": "Data is stored on Supabase with row-level security. Secrets and payment keys are kept server-side only. Use a strong password and enable OAuth where available.",
+      "rightsTitle": "Your rights",
+      "rightsBody": "You may access, correct, or delete your account data by contacting support. Ghana Data Protection Act principles apply to our processing.",
+      "contactTitle": "Contact",
+      "contactBody": "Privacy questions: privacy@baytmiftah.com · Accra, Ghana."
+    },
+    "terms": {
+      "title": "شروط الخدمة",
+      "intro": "باستخدام بيت مفتاح فإنك توافق على هذه الشروط.",
+      "acceptanceTitle": "Acceptance",
+      "acceptanceBody": "You must be 18+ and provide accurate registration information. Agency and developer accounts require valid licensing where applicable.",
+      "listingsTitle": "Listings & content",
+      "listingsBody": "You are responsible for listing accuracy. We may moderate, reject, or remove listings that violate law or community standards. Featured placement may require payment.",
+      "paymentsTitle": "Payments",
+      "paymentsBody": "Rent, deposits, and boosts are processed via third-party providers. Fees and refund rules are shown at checkout. BaytMiftah is not a bank or escrow agent unless explicitly stated.",
+      "accountsTitle": "Accounts",
+      "accountsBody": "Keep credentials secure. You are liable for activity under your account. We may suspend accounts for fraud, abuse, or KYC failure.",
+      "liabilityTitle": "Limitation of liability",
+      "liabilityBody": "The platform is provided \"as is\". We are not liable for indirect damages, listing disputes between users, or third-party service outages beyond reasonable care.",
+      "lawTitle": "Governing law",
+      "lawBody": "These terms are governed by the laws of Ghana. Disputes shall be resolved in Accra courts unless mandatory consumer law provides otherwise."
     }
   }
 }

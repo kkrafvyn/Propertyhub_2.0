@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import MobileShell, { MobileHeader } from '../../components/MobileShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import LeadPipelineBoard from '../../components/LeadPipelineBoard'
 import {
-  MobileBadge,
   MobileCard,
   MobileHubTile,
   MobilePrimaryButton,
@@ -12,7 +12,7 @@ import {
 } from '../../components/ui/MobileUI'
 import { IconCalendar, IconCheck, IconSparkle, IconUsers } from '../../components/icons'
 import { useTranslation } from '../../i18n/LocaleContext'
-import { fetchAgentDashboard, fetchLeads, fetchCalendar } from '../../services/agent-service'
+import { fetchAgentDashboard, fetchLeads, fetchCalendar, updateLeadStage } from '../../services/agent-service'
 import { sendLeadMessage } from '../../services/comms-service'
 
 function AgentHome() {
@@ -47,7 +47,6 @@ function AgentHome() {
           ))}
         </div>
         <MobileTextLink to="/agent/leads" className="block text-center">Open full CRM →</MobileTextLink>
-        <MobileTextLink to="/" className="block text-center">← Marketplace</MobileTextLink>
       </section>
     </MobileShell>
   )
@@ -61,32 +60,16 @@ function AgentLeads() {
     fetchLeads().then(({ leads: rows }) => setLeads(rows))
   }, [])
 
+  async function handleStageChange(leadId, stage) {
+    await updateLeadStage(leadId, stage)
+    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage, updated_label: 'Just now' } : l)))
+  }
+
   return (
     <MobileShell hideNav>
-      <MobileHeader title={t('workspace.nav.leads')} backTo="/m/agent" />
-      <section className="space-y-3 px-4 pb-6">
-        {leads.map((lead) => (
-          <MobileCard key={lead.id}>
-            <p className="font-semibold text-ink">{lead.name}</p>
-            <p className="text-sm text-ink-secondary">{lead.property}</p>
-            <div className="mt-2 flex items-center justify-between">
-              <MobileBadge tone="neutral">{lead.stage}</MobileBadge>
-              <span className="text-xs text-ink-secondary">GHS {Number(lead.value).toLocaleString()}</span>
-            </div>
-            {lead.phone && (
-              <div className="mt-3 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => sendLeadMessage({ lead, body: `Hi ${lead.name}, following up on ${lead.property}.`, channel: 'whatsapp' })}
-                  className="text-xs font-semibold text-brand-accent underline"
-                >
-                  {t('extensions.crm.whatsapp')}
-                </button>
-                <MobileTextLink to="/agent/leads">Full pipeline →</MobileTextLink>
-              </div>
-            )}
-          </MobileCard>
-        ))}
+      <MobileHeader title={t('workspace.nav.leads')} subtitle={t('hubs.agent.leads.pipelineSubtitle')} backTo="/m/agent" />
+      <section className="px-2 pb-6">
+        <LeadPipelineBoard leads={leads} onStageChange={handleStageChange} onMessage={sendLeadMessage} compact />
       </section>
     </MobileShell>
   )
@@ -121,7 +104,6 @@ function AgentTasksMobile() {
     <MobileShell hideNav>
       <MobileHeader title={t('workspace.nav.tasks')} backTo="/m/agent" />
       <section className="space-y-3 px-4 pb-6">
-        <p className="text-sm text-ink-secondary">Open desktop CRM for full task management.</p>
         <MobilePrimaryButton as={Link} to="/agent/tasks">Open full tasks</MobilePrimaryButton>
       </section>
     </MobileShell>
@@ -129,17 +111,12 @@ function AgentTasksMobile() {
 }
 
 function AgentCoachMobile() {
-  const { t } = useTranslation()
   return (
     <MobileShell hideNav>
-      <MobileHeader title={t('workspace.nav.listingCoach')} backTo="/m/agent" />
+      <MobileHeader title="Listing coach" backTo="/m/agent" />
       <section className="px-4 pb-6">
         <MobileCard>
-          <p className="text-4xl font-semibold text-ink">
-            87<span className="text-lg text-ink-secondary">/100</span>
-          </p>
-          <p className="mt-2 font-medium text-ink">Sample listing quality score</p>
-          <MobileTextLink to="/agent/coach" className="mt-4 inline-block">Run full AI review →</MobileTextLink>
+          <MobileTextLink to="/agent/coach" className="inline-block">Run full AI review →</MobileTextLink>
         </MobileCard>
       </section>
     </MobileShell>

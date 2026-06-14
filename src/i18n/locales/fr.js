@@ -2,7 +2,7 @@ export default {
   "localeName": "Français",
   "nav": {
     "compare": "Comparer",
-    "saved": "Favoris",
+    "saved": "Enregistrés",
     "listProperty": "Publier un bien",
     "language": "Langue et région",
     "openMenu": "Ouvrir le menu"
@@ -73,13 +73,20 @@ export default {
     "agencyWorkspace": "Espace agence",
     "financeWorkspace": "Espace finance",
     "propertyManagement": "Gestion immobilière",
-    "agentPipelineMobile": "Your pipeline on mobile",
+    "agentPipelineMobile": "Votre pipeline mobile",
     "yourRental": "Your rental",
     "connectedHome": "Connected home",
-    "rentPayments": "Rent payments",
-    "leaseSigning": "Lease signing",
+    "rentPayments": "Paiements de loyer",
+    "leaseSigning": "Signature du bail",
     "smartProperty": "Smart property",
-    "alerts": "Alerts"
+    "alerts": "Alerts",
+    "monthlyRent": "Loyer mensuel",
+    "payNow": "Payer",
+    "redirecting": "Redirection…",
+    "newRequest": "Nouvelle demande",
+    "issuePlaceholder": "Décrivez le problème",
+    "submit": "Envoyer",
+    "signed": "Signé"
   },
   "auth": {
     "welcome": "Bienvenue sur BaytMiftah",
@@ -850,7 +857,8 @@ export default {
       "sms": "SMS",
       "messageLead": "Message à {{name}}",
       "messagePlaceholder": "Écrivez votre message…",
-      "send": "Envoyer"
+      "send": "Envoyer",
+      "advance": "Avancer"
     },
     "payroll": {
       "totalPeriod": "total cette période",
@@ -905,7 +913,10 @@ export default {
       "alertsTitle": "Alertes fraude",
       "threshold": "Seuil",
       "riskScore": "Score de risque",
-      "resolve": "Résoudre"
+      "resolve": "Résoudre",
+      "runScan": "Run ML fraud scan",
+      "scanning": "Scanning…",
+      "scanResult": "Scanned {{scanned}} listings · {{created}} new alerts"
     },
     "push": {
       "title": "Activer les notifications",
@@ -913,6 +924,46 @@ export default {
       "enable": "Activer",
       "enabling": "Activation…",
       "later": "Plus tard"
+    }
+  },
+  "integrations": {
+    "oauthHint": "Connectez-vous avec Google ou Apple — activez les fournisseurs dans Supabase Auth et ajoutez les URL de redirection.",
+    "paymentsHint": "Le paiement en direct nécessite STRIPE_SECRET_KEY ou PAYSTACK_SECRET_KEY dans les secrets Edge Functions. Sinon, mode démo.",
+    "paymentDemo": "Paiement en file d'attente (démo). Configurez les secrets Supabase pour le paiement réel."
+  },
+  "legal": {
+    "lastUpdated": "Dernière mise à jour : juin 2026",
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "intro": "Cette politique explique comment nous collectons, utilisons et protégeons vos données sur BaytMiftah.",
+      "collectTitle": "Information we collect",
+      "collectBody": "We collect account details (name, email, phone), listing and transaction data, device and usage analytics, and communications you send through the platform.",
+      "useTitle": "How we use information",
+      "useBody": "We use your data to operate the marketplace, process viewings and payments, verify listings and agencies, improve search and recommendations, and comply with law.",
+      "shareTitle": "Sharing",
+      "shareBody": "We share data with payment processors (Stripe, Paystack), identity and signing partners when you opt in, and service providers under contract. We do not sell personal data.",
+      "securityTitle": "Security",
+      "securityBody": "Data is stored on Supabase with row-level security. Secrets and payment keys are kept server-side only. Use a strong password and enable OAuth where available.",
+      "rightsTitle": "Your rights",
+      "rightsBody": "You may access, correct, or delete your account data by contacting support. Ghana Data Protection Act principles apply to our processing.",
+      "contactTitle": "Contact",
+      "contactBody": "Privacy questions: privacy@baytmiftah.com · Accra, Ghana."
+    },
+    "terms": {
+      "title": "Conditions d'utilisation",
+      "intro": "En utilisant BaytMiftah, vous acceptez ces conditions.",
+      "acceptanceTitle": "Acceptance",
+      "acceptanceBody": "You must be 18+ and provide accurate registration information. Agency and developer accounts require valid licensing where applicable.",
+      "listingsTitle": "Listings & content",
+      "listingsBody": "You are responsible for listing accuracy. We may moderate, reject, or remove listings that violate law or community standards. Featured placement may require payment.",
+      "paymentsTitle": "Payments",
+      "paymentsBody": "Rent, deposits, and boosts are processed via third-party providers. Fees and refund rules are shown at checkout. BaytMiftah is not a bank or escrow agent unless explicitly stated.",
+      "accountsTitle": "Accounts",
+      "accountsBody": "Keep credentials secure. You are liable for activity under your account. We may suspend accounts for fraud, abuse, or KYC failure.",
+      "liabilityTitle": "Limitation of liability",
+      "liabilityBody": "The platform is provided \"as is\". We are not liable for indirect damages, listing disputes between users, or third-party service outages beyond reasonable care.",
+      "lawTitle": "Governing law",
+      "lawBody": "These terms are governed by the laws of Ghana. Disputes shall be resolved in Accra courts unless mandatory consumer law provides otherwise."
     }
   }
 }
