@@ -5,6 +5,7 @@ import ProtectedRoute from '../components/ProtectedRoute'
 import { createListing } from '../services/listing-service'
 import { uploadListingPhoto } from '../lib/storage'
 import { geocodeLocation } from '../services/geo-service'
+import { useTranslation } from '../i18n/LocaleContext'
 
 const STEPS = ['Basics', 'Details', 'Photos', 'Review']
 
@@ -15,8 +16,10 @@ const AMENITY_OPTIONS = [
 
 function ListPropertyForm() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [step, setStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const [photos, setPhotos] = useState([])
   const [form, setForm] = useState({
     title: '',
@@ -46,35 +49,44 @@ function ListPropertyForm() {
 
   async function submit() {
     setSubmitting(true)
+    setSubmitError('')
     const listingId = `listing-${crypto.randomUUID().slice(0, 8)}`
-    const geo = await geocodeLocation(form.location)
-    const uploaded = []
-    for (const file of photos) {
-      try {
-        const { url } = await uploadListingPhoto(listingId, file)
-        if (url) uploaded.push(url)
-      } catch { /* skip failed uploads when storage not configured */ }
+    try {
+      const geo = await geocodeLocation(form.location)
+      const uploaded = []
+      for (const file of photos) {
+        try {
+          const { url } = await uploadListingPhoto(listingId, file)
+          if (url) uploaded.push(url)
+        } catch { /* storage optional */ }
+      }
+      const payload = {
+        ...form,
+        id: listingId,
+        price: Number(form.price),
+        bedrooms: Number(form.bedrooms) || 0,
+        bathrooms: Number(form.bathrooms) || 0,
+        sqft: Number(form.sqft) || 0,
+        price_label: form.listingType === 'rent'
+          ? `GHS ${Number(form.price).toLocaleString()} / month`
+          : `GHS ${Number(form.price).toLocaleString()}`,
+        image: uploaded[0],
+        photos: uploaded,
+        amenities: form.amenities,
+        lat: geo.lat,
+        lng: geo.lng,
+        status: 'pending_review',
+      }
+      const result = await createListing(payload)
+      if (result.source === 'local') {
+        setSubmitError(t('home.sampleListings'))
+      }
+      navigate('/host/listings', { state: { listed: true, source: result.source } })
+    } catch (err) {
+      setSubmitError(err.message || 'Could not submit listing.')
+    } finally {
+      setSubmitting(false)
     }
-    const payload = {
-      ...form,
-      id: listingId,
-      price: Number(form.price),
-      bedrooms: Number(form.bedrooms) || 0,
-      bathrooms: Number(form.bathrooms) || 0,
-      sqft: Number(form.sqft) || 0,
-      price_label: form.listingType === 'rent'
-        ? `GHS ${Number(form.price).toLocaleString()} / month`
-        : `GHS ${Number(form.price).toLocaleString()}`,
-      image: uploaded[0],
-      photos: uploaded,
-      amenities: form.amenities,
-      lat: geo.lat,
-      lng: geo.lng,
-      status: 'pending_review',
-    }
-    await createListing(payload)
-    setSubmitting(false)
-    navigate('/host/listings', { state: { listed: true } })
   }
 
   return (
@@ -85,7 +97,7 @@ function ListPropertyForm() {
           <span
             key={label}
             className={`rounded-full px-4 py-1.5 text-sm font-medium ${
-              i === step ? 'bg-brand-dark text-brand' : i < step ? 'bg-brand-light text-brand-dark' : 'bg-surface-subtle text-ink-secondary'
+              i === step ? 'bg-brand-accent text-white' : i < step ? 'bg-surface-hover text-ink' : 'bg-surface-subtle text-ink-secondary'
             }`}
           >
             {label}
@@ -136,7 +148,7 @@ function ListPropertyForm() {
                     onClick={() => toggleAmenity(name)}
                     className={`rounded-full px-3 py-1.5 text-xs font-medium ${
                       form.amenities.includes(name)
-                        ? 'bg-brand-dark text-brand'
+                        ? 'bg-brand-accent text-white'
                         : 'border border-surface-border bg-surface-subtle text-ink-secondary'
                     }`}
                   >
@@ -164,7 +176,7 @@ function ListPropertyForm() {
         )}
 
         {step === 3 && (
-          <div className="rounded-card border border-surface-border bg-surface-subtle p-6 text-sm space-y-2">
+          <div className="panel-card bg-surface-subtle p-6 text-sm space-y-2">
             <p><strong>{form.title}</strong></p>
             <p>{form.location} · {form.type} · {form.listingType}</p>
             <p>GHS {Number(form.price || 0).toLocaleString()}</p>
@@ -176,6 +188,10 @@ function ListPropertyForm() {
           </div>
         )}
 
+        {submitError && (
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{submitError}</p>
+        )}
+
         <div className="flex gap-3 pt-4">
           {step > 0 && (
             <button type="button" onClick={() => setStep((s) => s - 1)} className="rounded-lg border border-surface-border px-5 py-2.5 text-sm font-semibold">
@@ -183,11 +199,11 @@ function ListPropertyForm() {
             </button>
           )}
           {step < STEPS.length - 1 ? (
-            <button type="button" onClick={() => setStep((s) => s + 1)} className="rounded-lg bg-brand-dark px-5 py-2.5 text-sm font-semibold text-brand">
+            <button type="button" onClick={() => setStep((s) => s + 1)} className="rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">
               Continue
             </button>
           ) : (
-            <button type="button" onClick={submit} disabled={submitting} className="rounded-lg bg-brand-dark px-5 py-2.5 text-sm font-semibold text-brand disabled:opacity-60">
+            <button type="button" onClick={submit} disabled={submitting} className="rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
               {submitting ? 'Submitting…' : 'Submit for review'}
             </button>
           )}

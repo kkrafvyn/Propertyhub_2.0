@@ -11,16 +11,16 @@ function Leases() {
   }, [])
 
   return (
-    <RenterShell title="Lease management" subtitle="View and manage your rental agreements">
+    <RenterShell titleKey="hubs.renter.leases.title" subtitleKey="hubs.renter.leases.subtitle">
       <div className="space-y-4">
         {leases.map((lease) => (
-          <article key={lease.id} className="rounded-card border border-surface-border bg-surface p-5">
+          <article key={lease.id} className="panel-card bg-surface p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="font-semibold">{lease.property}</h2>
                 <p className="text-sm text-ink-secondary">{lease.landlord}</p>
               </div>
-              <span className="rounded-full bg-brand-light px-3 py-1 text-xs font-semibold capitalize text-brand-dark">{lease.status}</span>
+              <span className="rounded-full bg-surface-hover px-3 py-1 text-xs font-semibold capitalize text-ink">{lease.status}</span>
             </div>
             <div className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
               <p><span className="text-ink-secondary">Start:</span> {lease.start}</p>

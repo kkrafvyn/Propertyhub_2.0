@@ -2,9 +2,11 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import MobileHomePage, { MobileExplorePage, MobileSavedPage } from '../pages/mobile/MobilePages'
 import { MobileMessagesPage, MobileProfilePage, MobilePropertyPage } from '../pages/mobile/MobileMessagesProfile'
 import LoginPage from '../pages/LoginPage'
+import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 import SignUpPage from '../pages/SignUpPage'
 import PaymentSuccessPage from '../pages/PaymentSuccessPage'
 import PaymentCancelPage from '../pages/PaymentCancelPage'
+import AuthCallbackPage from '../pages/AuthCallbackPage'
 import {
   MobileAgentHomePage,
   MobileAgentLeadsPage,
@@ -66,7 +68,9 @@ export default function MobileRoutes() {
       <Route path="/payments/success" element={<PaymentSuccessPage />} />
       <Route path="/payments/cancel" element={<PaymentCancelPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/signup" element={<SignUpPage />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="*" element={<Navigate to="/m" replace />} />
     </Routes>
   )

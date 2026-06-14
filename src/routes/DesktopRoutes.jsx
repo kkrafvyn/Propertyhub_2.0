@@ -5,6 +5,7 @@ import RoleProtectedRoute from '../components/RoleProtectedRoute'
 const HomePage = lazy(() => import('../pages/HomePage'))
 const ListingDetailPage = lazy(() => import('../pages/ListingDetailPage'))
 const LoginPage = lazy(() => import('../pages/LoginPage'))
+const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'))
 const SignUpPage = lazy(() => import('../pages/SignUpPage'))
 const SavedPage = lazy(() => import('../pages/SavedPage'))
 const TripsPage = lazy(() => import('../pages/TripsPage'))
@@ -86,6 +87,7 @@ const AdminValuationApiPage = lazy(() => import('../pages/admin/AdminValuationAp
 const AdminGlobalPage = lazy(() => import('../pages/admin/AdminGlobalPage'))
 const PaymentSuccessPage = lazy(() => import('../pages/PaymentSuccessPage'))
 const PaymentCancelPage = lazy(() => import('../pages/PaymentCancelPage'))
+const AuthCallbackPage = lazy(() => import('../pages/AuthCallbackPage'))
 
 const NeighborhoodsIndexPage = lazy(() =>
   import('../pages/NeighborhoodPage').then((m) => ({ default: m.NeighborhoodsIndexPage })),
@@ -137,7 +139,9 @@ export default function DesktopRoutes() {
       <Route path="/" element={<HomePage />} />
       <Route path="/property/:id" element={<ListingDetailPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/signup" element={<SignUpPage />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="/saved" element={<SavedPage />} />
       <Route path="/trips" element={<TripsPage />} />
       <Route path="/host" element={<HostPage />} />

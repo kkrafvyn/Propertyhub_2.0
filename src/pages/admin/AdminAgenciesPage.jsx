@@ -12,16 +12,16 @@ export default function AdminAgenciesPage() {
 
   return (
     <ProtectedRoute>
-      <AdminShell title="Agency verification" subtitle="Review and approve new agencies">
+      <AdminShell titleKey="hubs.admin.agencies.title" subtitleKey="hubs.admin.agencies.subtitle">
         <div className="space-y-3">
           {agencies.map((agency) => (
-            <article key={agency.id} className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-white/10 bg-white/5 p-4">
+            <article key={agency.id} className="flex flex-wrap items-center justify-between gap-3 panel-card p-4">
               <div>
                 <p className="font-semibold">{agency.name}</p>
-                <p className="text-sm text-white/70">License {agency.license} · {agency.submitted}</p>
+                <p className="text-sm text-ink-secondary">License {agency.license} · {agency.submitted}</p>
               </div>
               <div className="flex gap-2">
-                <button type="button" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-dark">Approve</button>
+                <button type="button" className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-ink">Approve</button>
                 <button type="button" className="rounded-lg border border-white/20 px-4 py-2 text-sm">Reject</button>
               </div>
             </article>

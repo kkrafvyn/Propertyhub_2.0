@@ -11,8 +11,8 @@ function Tenants() {
   }, [])
 
   return (
-    <ManageShell title="Tenant management" subtitle="Occupancy, leases, and rent balances">
-      <div className="overflow-hidden rounded-card border border-surface-border bg-surface">
+    <ManageShell titleKey="hubs.manage.tenants.title" subtitleKey="hubs.manage.tenants.subtitle">
+      <div className="overflow-hidden panel-card bg-surface">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-surface-border bg-surface-subtle">
             <tr>
@@ -32,7 +32,7 @@ function Tenants() {
                 <td className="px-4 py-3">GHS {t.rent.toLocaleString()}</td>
                 <td className="px-4 py-3 text-ink-secondary">{t.leaseEnd}</td>
                 <td className="px-4 py-3">
-                  <span className="rounded-full bg-brand-light px-2 py-0.5 text-xs font-semibold capitalize text-brand-dark">{t.status}</span>
+                  <span className="rounded-full bg-surface-hover px-2 py-0.5 text-xs font-semibold capitalize text-ink">{t.status}</span>
                 </td>
                 <td className="px-4 py-3">{t.balance ? `GHS ${t.balance.toLocaleString()}` : '—'}</td>
               </tr>
@@ -40,7 +40,7 @@ function Tenants() {
           </tbody>
         </table>
       </div>
-      <button type="button" className="mt-4 rounded-lg bg-brand-dark px-5 py-2.5 text-sm font-semibold text-brand">Add tenant</button>
+      <button type="button" className="mt-4 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">Add tenant</button>
     </ManageShell>
   )
 }

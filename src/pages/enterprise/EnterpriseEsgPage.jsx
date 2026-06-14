@@ -13,9 +13,9 @@ function Esg() {
   if (!esg) return null
 
   return (
-    <EnterpriseShell title="ESG reporting" subtitle={`Governance rating: ${esg.governanceRating}`}>
+    <EnterpriseShell titleKey="hubs.enterprise.esg.title" subtitle={`Governance rating: ${esg.governanceRating}`}>
       <div className="mb-6 flex items-end gap-4">
-        <p className="text-5xl font-bold text-brand-dark">{esg.score}</p>
+        <p className="text-5xl font-bold text-ink">{esg.score}</p>
         <p className="pb-2 text-lg text-ink-secondary">ESG score</p>
       </div>
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
@@ -37,9 +37,9 @@ function Esg() {
 
 function Stat({ label, value }) {
   return (
-    <div className="rounded-card border border-surface-border bg-surface p-4">
+    <div className="panel-card bg-surface p-4">
       <p className="text-xs text-ink-secondary">{label}</p>
-      <p className="mt-1 font-semibold text-brand-dark">{value}</p>
+      <p className="mt-1 font-semibold text-ink">{value}</p>
     </div>
   )
 }

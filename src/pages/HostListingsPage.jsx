@@ -2,12 +2,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
 import ProtectedRoute from '../components/ProtectedRoute'
+import { Alert, Badge, EmptyPanel, ItemCard, PageTitle, PrimaryButton, SecondaryButton } from '../components/ui/AirbnbUI'
 import { fetchMyListings } from '../services/listing-service'
 
-const statusStyle = {
-  pending_review: 'bg-brand-light text-brand-dark',
-  active: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
+const statusTone = {
+  pending_review: 'warning',
+  active: 'success',
+  rejected: 'danger',
 }
 
 function HostListingsContent() {
@@ -37,79 +38,66 @@ function HostListingsContent() {
 
   return (
     <DesktopShell search={<CompactSearch />}>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Your listings</h1>
-          <p className="mt-1 text-ink-secondary">Track review status from submission to live on marketplace.</p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={load}
-            className="rounded-lg border border-surface-border px-4 py-2.5 text-sm font-semibold hover:bg-surface-subtle"
-          >
-            Refresh
-          </button>
-          <Link to="/host/list" className="rounded-lg bg-brand-dark px-5 py-2.5 text-sm font-semibold text-brand">
-            List new property
-          </Link>
-        </div>
-      </div>
+      <PageTitle
+        title="Your listings"
+        subtitle="Track review status from submission to live on marketplace."
+        action={
+          <div className="flex gap-2">
+            <SecondaryButton onClick={load}>Refresh</SecondaryButton>
+            <PrimaryButton as={Link} to="/host/list">List new property</PrimaryButton>
+          </div>
+        }
+      />
 
       {listed && (
-        <p className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          Listing submitted for review. An agency admin will approve it for the marketplace.
-        </p>
+        <Alert tone="success">Listing submitted for review. An agency admin will approve it for the marketplace.</Alert>
       )}
 
       {source === 'local' && !loading && (
-        <p className="mt-4 rounded-lg border border-brand/30 bg-brand-light px-4 py-2 text-sm text-brand-dark">
-          Sign in and run migrations to sync listing status across devices. Use <code className="text-xs">npm run db:apply</code>.
-        </p>
+        <Alert>Sign in and run migrations to sync listing status across devices.</Alert>
       )}
 
       {listings.some((l) => l.status === 'pending_review') && (
-        <p className="mt-4 text-xs text-ink-secondary">Pending listings auto-refresh every 30 seconds.</p>
+        <p className="mb-4 text-xs text-ink-secondary">Pending listings auto-refresh every 30 seconds.</p>
       )}
 
-      <section className="mt-8 space-y-3">
+      <section className="space-y-3">
         {loading ? (
-          <div className="h-24 animate-pulse rounded-card bg-surface-hover" />
+          <div className="h-24 animate-pulse rounded-xl bg-surface-hover" />
         ) : listings.length === 0 ? (
-          <div className="rounded-card border border-surface-border bg-surface-subtle px-8 py-12 text-center">
-            <p className="text-ink-secondary">No listings yet.</p>
-            <Link to="/host/list" className="mt-4 inline-block text-sm font-semibold text-brand-dark underline">
-              Submit your first property
-            </Link>
-          </div>
+          <EmptyPanel
+            title="No listings yet"
+            description="Submit your first property to reach buyers and renters."
+            action={<PrimaryButton as={Link} to="/host/list">Submit your first property</PrimaryButton>}
+          />
         ) : (
           listings.map((listing) => (
-            <article key={listing.id} className="flex flex-wrap items-center justify-between gap-4 rounded-card border border-surface-border p-4">
+            <ItemCard key={listing.id} className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex min-w-0 items-center gap-4">
                 {listing.image && (
                   <img src={listing.image} alt="" className="h-16 w-20 shrink-0 rounded-lg object-cover" />
                 )}
                 <div>
-                  <p className="font-semibold">{listing.title}</p>
+                  <p className="font-semibold text-ink">{listing.title}</p>
                   <p className="text-sm text-ink-secondary">{listing.location} · {listing.priceLabel || listing.price_label}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyle[listing.status] || statusStyle.pending_review}`}>
+                <Badge tone={statusTone[listing.status] || 'warning'}>
                   {(listing.status || 'pending_review').replace('_', ' ')}
-                </span>
+                </Badge>
                 {listing.status === 'active' && (
-                  <Link to={`/property/${listing.id}`} className="text-sm font-semibold text-brand-dark underline">
+                  <Link to={`/property/${listing.id}`} className="text-sm font-semibold text-ink underline">
                     View live
                   </Link>
                 )}
                 {listing.status === 'rejected' && (
-                  <Link to="/host/list" className="text-sm font-semibold text-brand-dark underline">
+                  <Link to="/host/list" className="text-sm font-semibold text-ink underline">
                     Resubmit
                   </Link>
                 )}
               </div>
-            </article>
+            </ItemCard>
           ))
         )}
       </section>

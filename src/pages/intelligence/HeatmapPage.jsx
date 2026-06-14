@@ -24,15 +24,15 @@ function Heatmap() {
   }))
 
   return (
-    <IntelligenceShell title="Price heatmap" subtitle="Demand intensity across Accra metro">
-      <Suspense fallback={<div className="h-[480px] animate-pulse rounded-card bg-surface-hover" />}>
+    <IntelligenceShell titleKey="hubs.intelligence.heatmap.title" subtitleKey="hubs.intelligence.heatmap.subtitle">
+      <Suspense fallback={<div className="h-[480px] animate-pulse rounded-xl bg-surface-hover" />}>
         <MapView listings={listings} center={[5.6037, -0.187]} />
       </Suspense>
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {zones.map((z) => (
-          <article key={z.id} className="rounded-card border border-surface-border bg-surface p-4">
+          <article key={z.id} className="panel-card bg-surface p-4">
             <p className="font-semibold">{z.name}</p>
-            <p className="text-sm text-brand-dark">GHS {z.avgPrice.toLocaleString()} · {z.growth}</p>
+            <p className="text-sm text-ink">GHS {z.avgPrice.toLocaleString()} · {z.growth}</p>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-subtle">
               <div className="h-full rounded-full bg-brand" style={{ width: `${z.intensity * 100}%` }} />
             </div>

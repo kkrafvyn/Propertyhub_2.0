@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import IntelligenceShell from '../../components/IntelligenceShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { HubLinkGrid, StatCard, StatGrid } from '../../components/ui/AirbnbUI'
 import { fetchIntelligenceDashboard } from '../../services/intelligence-service'
 
 const links = [
@@ -20,33 +20,17 @@ function Hub() {
   }, [])
 
   return (
-    <IntelligenceShell title="Real estate intelligence" subtitle="Market data, heatmaps, and AI valuation for Ghana">
+    <IntelligenceShell titleKey="hubs.intelligence.hub.title" subtitleKey="hubs.intelligence.hub.subtitle">
       {summary && (
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Median price" value={`GHS ${(summary.medianPrice / 1000000).toFixed(2)}M`} />
-          <Stat label="YoY change" value={summary.priceChangeYoY} />
-          <Stat label="Avg days on market" value={summary.avgDaysOnMarket} />
-          <Stat label="Transactions (6mo)" value={summary.transactionVolume} />
-        </div>
+        <StatGrid>
+          <StatCard label="Median price" value={`GHS ${(summary.medianPrice / 1000000).toFixed(2)}M`} />
+          <StatCard label="YoY change" value={summary.priceChangeYoY} />
+          <StatCard label="Avg days on market" value={summary.avgDaysOnMarket} />
+          <StatCard label="Transactions (6mo)" value={summary.transactionVolume} />
+        </StatGrid>
       )}
-      <div className="grid gap-4 sm:grid-cols-2">
-        {links.map(({ to, label, desc }) => (
-          <Link key={to} to={to} className="rounded-card border border-surface-border bg-surface p-5 transition hover:shadow-card">
-            <p className="font-semibold">{label}</p>
-            <p className="mt-1 text-sm text-ink-secondary">{desc}</p>
-          </Link>
-        ))}
-      </div>
+      <HubLinkGrid links={links} />
     </IntelligenceShell>
-  )
-}
-
-function Stat({ label, value }) {
-  return (
-    <div className="rounded-card border border-surface-border bg-surface p-4">
-      <p className="text-xs text-ink-secondary">{label}</p>
-      <p className="mt-1 text-xl font-bold text-brand-dark">{value}</p>
-    </div>
   )
 }
 

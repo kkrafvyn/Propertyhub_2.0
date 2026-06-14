@@ -22,12 +22,12 @@ function Analytics() {
   ]
 
   return (
-    <AgentShell title="Analytics" subtitle="Performance across listings and leads">
+    <AgentShell titleKey="hubs.agent.analytics.title" subtitleKey="hubs.agent.analytics.subtitle">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map(({ label, value }) => (
-          <div key={label} className="rounded-card border border-surface-border bg-surface p-5">
+          <div key={label} className="panel-card bg-surface p-5">
             <p className="text-sm text-ink-secondary">{label}</p>
-            <p className="mt-1 text-2xl font-bold text-brand-dark">{value}</p>
+            <p className="mt-1 text-2xl font-bold text-ink">{value}</p>
           </div>
         ))}
       </div>

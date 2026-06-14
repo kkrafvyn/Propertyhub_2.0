@@ -9,15 +9,17 @@ export default function PaymentProviderPicker({ value, onChange, disabled }) {
           type="button"
           disabled={disabled}
           onClick={() => onChange(p.id)}
-          className={`rounded-card border p-4 text-left transition disabled:opacity-60 ${
+          className={`rounded-xl border p-4 text-left transition disabled:opacity-60 ${
             value === p.id
-              ? 'border-brand-dark bg-brand-light ring-2 ring-brand-dark/20'
-              : 'border-surface-border bg-surface hover:border-brand-dark/40'
+              ? 'border-ink bg-surface shadow-sm ring-1 ring-ink'
+              : 'border-surface-border bg-surface hover:border-ink/30'
           }`}
         >
           <div className="flex items-center justify-between gap-2">
-            <span className="font-semibold">{p.label}</span>
-            <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold text-brand-dark">{p.badge}</span>
+            <span className="font-semibold text-ink">{p.label}</span>
+            <span className="rounded-full bg-surface-hover px-2 py-0.5 text-[10px] font-bold text-ink">
+              {p.badge}
+            </span>
           </div>
           <p className="mt-1 text-xs text-ink-secondary">{p.subtitle}</p>
         </button>

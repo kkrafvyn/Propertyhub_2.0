@@ -5,7 +5,7 @@ import { fetchGlobalRegions } from '../../services/trust-service'
 
 const statusStyles = {
   live: 'bg-green-500/20 text-green-300',
-  beta: 'bg-brand/20 text-brand',
+  beta: 'bg-surface-hover text-ink',
   planned: 'bg-white/10 text-white/50',
 }
 
@@ -17,8 +17,8 @@ function Global() {
   }, [])
 
   return (
-    <AdminShell title="Multi-region & multi-currency" subtitle="Market expansion and localization settings">
-      <div className="overflow-hidden rounded-card border border-white/10 bg-white/5">
+    <AdminShell titleKey="hubs.admin.global.title" subtitleKey="hubs.admin.global.subtitle">
+      <div className="overflow-hidden panel-card">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-white/10">
             <tr>
@@ -44,7 +44,7 @@ function Global() {
           </tbody>
         </table>
       </div>
-      <p className="mt-4 text-sm text-white/70">Payment rails: Paystack (Africa) · Stripe (international). Currency conversion at checkout.</p>
+      <p className="mt-4 text-sm text-ink-secondary">Payment rails: Paystack (Africa) · Stripe (international). Currency conversion at checkout.</p>
     </AdminShell>
   )
 }

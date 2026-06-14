@@ -13,10 +13,10 @@ function Devices() {
   }, [])
 
   return (
-    <SmartShell title="Device dashboard" subtitle="Monitor and control connected devices">
+    <SmartShell titleKey="hubs.smart.devices.title" subtitleKey="hubs.smart.devices.subtitle">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {devices.map((d) => (
-          <article key={d.id} className="rounded-card border border-surface-border bg-surface p-5">
+          <article key={d.id} className="panel-card bg-surface p-5">
             <div className="flex items-start justify-between">
               <span className="text-2xl">{typeIcons[d.type] || '📡'}</span>
               <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${
@@ -32,7 +32,7 @@ function Devices() {
           </article>
         ))}
       </div>
-      <button type="button" className="mt-6 rounded-lg bg-brand-dark px-5 py-2.5 text-sm font-semibold text-brand">Add device</button>
+      <button type="button" className="mt-6 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">Add device</button>
     </SmartShell>
   )
 }

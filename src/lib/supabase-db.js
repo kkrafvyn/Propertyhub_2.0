@@ -141,6 +141,129 @@ export async function fetchUserProfile(userId) {
   return data
 }
 
+export async function upsertUserProfileFromAuth(user, metadata = {}) {
+  if (!supabase || !user?.id) return null
+
+  const role = metadata.role || user.user_metadata?.role || 'buyer'
+  const displayName = metadata.display_name || user.user_metadata?.display_name || user.email?.split('@')[0] || 'Member'
+
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .upsert(
+      {
+        id: user.id,
+        email: user.email,
+        role,
+        display_name: displayName,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'id' },
+    )
+    .select('*')
+    .single()
+
+  if (error) return null
+  return data
+}
+
+function mapConversationRow(row, messages = []) {
+  return {
+    id: row.id,
+    participant: row.participant_name,
+    participant_name: row.participant_name,
+    listingTitle: row.listing_title,
+    listing_title: row.listing_title,
+    listing_id: row.listing_id,
+    lastMessage: row.last_message,
+    last_message: row.last_message,
+    unread: row.unread ?? 0,
+    messages: messages.map((m) => ({
+      id: m.id,
+      sender: m.sender,
+      body: m.body,
+      at: m.created_at,
+    })),
+  }
+}
+
+export async function fetchConversationsFromDb(userId) {
+  if (!supabase || !userId) return null
+  const { data, error } = await supabase
+    .from('conversations')
+    .select('*')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+  if (error) return null
+  return data.map((row) => mapConversationRow(row))
+}
+
+export async function fetchConversationFromDb(userId, conversationId) {
+  if (!supabase || !userId || !conversationId) return null
+  const { data: conv, error } = await supabase
+    .from('conversations')
+    .select('*')
+    .eq('id', conversationId)
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (error || !conv) return null
+
+  const { data: messages } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: true })
+
+  return mapConversationRow(conv, messages ?? [])
+}
+
+export async function sendMessageInDb(userId, conversationId, body) {
+  if (!supabase || !userId) return null
+
+  const { data: msg, error } = await supabase
+    .from('messages')
+    .insert({ conversation_id: conversationId, sender: 'You', body })
+    .select('*')
+    .single()
+  if (error) return null
+
+  await supabase
+    .from('conversations')
+    .update({ last_message: body, updated_at: new Date().toISOString(), unread: 0 })
+    .eq('id', conversationId)
+    .eq('user_id', userId)
+
+  return msg
+}
+
+export async function findOrCreateConversationForListing(userId, { listingId, listingTitle, participantName }) {
+  if (!supabase || !userId) return null
+
+  const { data: existing } = await supabase
+    .from('conversations')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('listing_id', listingId)
+    .maybeSingle()
+
+  if (existing) return mapConversationRow(existing)
+
+  const { data: conv, error } = await supabase
+    .from('conversations')
+    .insert({
+      user_id: userId,
+      listing_id: listingId,
+      listing_title: listingTitle,
+      participant_name: participantName || 'Property host',
+      last_message: '',
+      unread: 0,
+    })
+    .select('*')
+    .single()
+
+  if (error) return null
+  return mapConversationRow(conv)
+}
+
 export async function probeBackendConnection() {
   if (!isSupabaseConfigured) {
     return { connected: false, mode: 'offline', message: 'Supabase not configured in .env' }

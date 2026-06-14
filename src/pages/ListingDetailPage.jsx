@@ -3,15 +3,17 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
 import { IconStar } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
+import { useTranslation } from '../i18n/LocaleContext'
 import { fetchListingById } from '../services/marketplace-service'
 import { getAvailability, requestViewing } from '../services/booking-service'
 
 function PhotoGrid({ photos, title, onShowAll }) {
+  const { t } = useTranslation()
   const [hero, ...rest] = photos
   const grid = rest.length >= 4 ? rest.slice(0, 4) : [...rest, ...photos].slice(0, 4)
 
   return (
-    <div className="grid h-[480px] grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-card">
+    <div className="grid h-[480px] grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-xl">
       <button type="button" onClick={onShowAll} className="col-span-2 row-span-2 block h-full w-full">
         <img src={hero} alt={title} className="h-full w-full object-cover" />
       </button>
@@ -19,8 +21,8 @@ function PhotoGrid({ photos, title, onShowAll }) {
         <button key={src} type="button" onClick={onShowAll} className="relative h-full w-full overflow-hidden">
           <img src={src} alt="" className="h-full w-full object-cover" />
           {index === 3 && photos.length > 5 && (
-            <div className="absolute inset-0 flex items-center justify-center bg-brand-dark/50 text-sm font-semibold text-white">
-              Show all photos
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm font-semibold text-white">
+              {t('property.showAllPhotos')}
             </div>
           )}
         </button>
@@ -30,11 +32,15 @@ function PhotoGrid({ photos, title, onShowAll }) {
 }
 
 function PhotoModal({ photos, title, onClose }) {
+  const { t } = useTranslation()
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-dark/90 p-4" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-card bg-surface p-4" onClick={(e) => e.stopPropagation()}>
-        <button type="button" onClick={onClose} className="absolute right-4 top-4 rounded-full bg-surface-subtle px-3 py-1 text-sm font-semibold">Close</button>
-        <h2 className="mb-4 pr-16 text-lg font-semibold">{title}</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4" onClick={onClose} role="dialog" aria-modal="true">
+      <div className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-surface p-4" onClick={(e) => e.stopPropagation()}>
+        <button type="button" onClick={onClose} className="absolute end-4 top-4 rounded-full bg-surface-subtle px-3 py-1 text-sm font-semibold">
+          {t('common.close')}
+        </button>
+        <h2 className="mb-4 pe-16 text-lg font-semibold">{title}</h2>
         <div className="grid gap-2 sm:grid-cols-2">
           {photos.map((src) => (
             <img key={src} src={src} alt="" className="w-full rounded-lg object-cover" />
@@ -47,6 +53,7 @@ function PhotoModal({ photos, title, onClose }) {
 
 function BookingCard({ listing }) {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [date, setDate] = useState('')
   const [selectedSlot, setSelectedSlot] = useState('')
@@ -71,7 +78,7 @@ function BookingCard({ listing }) {
     const slot = slots.find((s) => s.id === selectedSlot)
     const viewingDate = slot?.date || date
     if (!viewingDate) {
-      setMessage('Please pick a viewing date or time slot.')
+      setMessage(t('property.pickDate'))
       return
     }
 
@@ -84,22 +91,24 @@ function BookingCard({ listing }) {
         date: viewingDate,
         guests,
         slotId: slot?.id,
-        notes: slot?.time ? `Preferred time: ${slot.time}` : '',
+        notes: slot?.time ? t('property.preferredTime', { time: slot.time }) : '',
+        listingTitle: listing.title,
+        hostName: listing.host,
       })
       setStatus('success')
-      setMessage('Viewing request sent! Check Trips for updates.')
+      setMessage(t('property.requestSent'))
     } catch (err) {
       setStatus('error')
-      setMessage(err.message || 'Could not send request. Try again.')
+      setMessage(err.message || t('property.requestFailed'))
     }
   }
 
   return (
-    <div className="sticky top-28 rounded-card border border-surface-border bg-surface p-6 shadow-card">
+    <div className="sticky top-28 rounded-xl border border-surface-border bg-surface p-6 shadow-card">
       <div className="flex items-baseline justify-between">
         <p className="text-2xl font-semibold text-ink">{listing.priceLabel}</p>
         <span className="flex items-center gap-1 text-sm">
-          <IconStar className="text-brand-dark" />
+          <IconStar className="h-3.5 w-3.5" />
           <span className="font-semibold">{listing.rating}</span>
         </span>
       </div>
@@ -108,7 +117,7 @@ function BookingCard({ listing }) {
         {slots.length > 0 ? (
           <div className="p-3">
             <label htmlFor="viewing-slot" className="text-[10px] font-bold uppercase tracking-wide text-ink">
-              Available slots
+              {t('property.availableSlots')}
             </label>
             <select
               id="viewing-slot"
@@ -118,16 +127,16 @@ function BookingCard({ listing }) {
             >
               {slots.map((slot) => (
                 <option key={slot.id} value={slot.id}>
-                  {slot.date} · {slot.time} ({slot.available} left)
+                  {t('property.slotsLeft', { date: slot.date, time: slot.time, count: slot.available })}
                 </option>
               ))}
             </select>
           </div>
         ) : (
           <div className="grid grid-cols-2">
-            <div className="border-r border-surface-border p-3">
+            <div className="border-e border-surface-border p-3">
               <label htmlFor="viewing-date" className="text-[10px] font-bold uppercase tracking-wide text-ink">
-                Viewing
+                {t('property.viewing')}
               </label>
               <input
                 id="viewing-date"
@@ -139,7 +148,7 @@ function BookingCard({ listing }) {
             </div>
             <div className="p-3">
               <label htmlFor="viewing-guests" className="text-[10px] font-bold uppercase tracking-wide text-ink">
-                Guests
+                {t('property.guests')}
               </label>
               <input
                 id="viewing-guests"
@@ -158,7 +167,7 @@ function BookingCard({ listing }) {
       {slots.length > 0 && (
         <div className="mt-3">
           <label htmlFor="viewing-guests-slots" className="text-[10px] font-bold uppercase tracking-wide text-ink-secondary">
-            Guests
+            {t('property.guests')}
           </label>
           <input
             id="viewing-guests-slots"
@@ -176,13 +185,17 @@ function BookingCard({ listing }) {
         type="button"
         onClick={handleRequest}
         disabled={status === 'loading' || status === 'success'}
-        className="mt-4 w-full rounded-lg bg-brand-dark py-3.5 text-base font-semibold text-brand transition hover:bg-ink disabled:opacity-60"
+        className="mt-4 w-full rounded-lg bg-brand-accent py-3.5 text-base font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
       >
-        {status === 'loading' ? 'Sending…' : status === 'success' ? 'Request sent' : 'Request viewing'}
+        {status === 'loading'
+          ? t('property.sending')
+          : status === 'success'
+            ? t('property.requestSentBtn')
+            : t('listing.requestViewing')}
       </button>
 
       <p className="mt-3 text-center text-sm text-ink-secondary">
-        {message || "You won't be charged yet"}
+        {message || t('common.notChargedYet')}
       </p>
     </div>
   )
@@ -190,6 +203,7 @@ function BookingCard({ listing }) {
 
 export default function ListingDetailPage() {
   const { id } = useParams()
+  const { t } = useTranslation()
   const [listing, setListing] = useState(null)
   const [loading, setLoading] = useState(true)
   const [galleryOpen, setGalleryOpen] = useState(false)
@@ -213,7 +227,7 @@ export default function ListingDetailPage() {
       <DesktopShell search={<CompactSearch />}>
         <div className="animate-pulse space-y-6">
           <div className="h-8 w-2/3 rounded bg-surface-hover" />
-          <div className="h-[480px] rounded-card bg-surface-hover" />
+          <div className="h-[480px] rounded-xl bg-surface-hover" />
         </div>
       </DesktopShell>
     )
@@ -223,14 +237,21 @@ export default function ListingDetailPage() {
     return (
       <DesktopShell search={<CompactSearch />}>
         <div className="py-20 text-center">
-          <h1 className="text-2xl font-semibold">Property not found</h1>
-          <Link to="/" className="mt-4 inline-block font-medium text-brand-dark underline">
-            Back to homes
+          <h1 className="text-2xl font-semibold">{t('property.notFound')}</h1>
+          <Link to="/" className="mt-4 inline-block font-medium text-ink underline">
+            {t('property.backToHomes')}
           </Link>
         </div>
       </DesktopShell>
     )
   }
+
+  const docKeys = ['docTitle', 'docLicense', 'docDisclosure']
+  const metaParts = [
+    listing.bedrooms ? t('property.bedrooms', { count: listing.bedrooms }) : listing.type,
+    listing.bathrooms ? t('property.baths', { count: listing.bathrooms }) : null,
+    listing.sqft ? t('property.sqft', { count: listing.sqft.toLocaleString() }) : null,
+  ].filter(Boolean)
 
   return (
     <DesktopShell search={<CompactSearch />}>
@@ -238,7 +259,7 @@ export default function ListingDetailPage() {
         <h1 className="text-[26px] font-semibold leading-tight text-ink">{listing.title}</h1>
         <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
           <span className="flex items-center gap-1 font-semibold">
-            <IconStar className="text-brand-dark" />
+            <IconStar className="h-3.5 w-3.5" />
             {listing.rating}
           </span>
           <span className="text-ink-secondary">·</span>
@@ -246,8 +267,8 @@ export default function ListingDetailPage() {
           {listing.verified && (
             <>
               <span className="text-ink-secondary">·</span>
-              <span className="rounded-full bg-brand-light px-2 py-0.5 text-xs font-medium text-brand-dark">
-                Verified
+              <span className="rounded-md bg-surface-hover px-2 py-0.5 text-xs font-semibold text-ink">
+                {t('categories.verified')}
               </span>
             </>
           )}
@@ -264,14 +285,10 @@ export default function ListingDetailPage() {
           <section className="border-b border-surface-border pb-8">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold">Hosted by {listing.host}</h2>
-                <p className="mt-1 text-ink-secondary">
-                  {listing.bedrooms ? `${listing.bedrooms} bedrooms` : listing.type}
-                  {listing.bathrooms ? ` · ${listing.bathrooms} baths` : ''}
-                  {listing.sqft ? ` · ${listing.sqft.toLocaleString()} sqft` : ''}
-                </p>
+                <h2 className="text-xl font-semibold">{t('property.hostedBy', { host: listing.host })}</h2>
+                <p className="mt-1 text-ink-secondary">{metaParts.join(' · ')}</p>
               </div>
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-dark text-lg font-semibold text-brand">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-ink text-lg font-semibold text-white">
                 {listing.host.charAt(0)}
               </div>
             </div>
@@ -282,7 +299,7 @@ export default function ListingDetailPage() {
           </section>
 
           <section>
-            <h2 className="mb-6 text-xl font-semibold">What this place offers</h2>
+            <h2 className="mb-6 text-xl font-semibold">{t('listing.whatOffers')}</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {listing.amenities.map((item) => (
                 <div key={item} className="flex items-center gap-3 text-ink">
@@ -294,29 +311,29 @@ export default function ListingDetailPage() {
           </section>
 
           <section className="border-t border-surface-border pt-8">
-            <h2 className="mb-4 text-xl font-semibold">Virtual tour</h2>
-            <div className="overflow-hidden rounded-card border border-surface-border bg-surface-subtle">
-              <div className="flex aspect-video items-center justify-center bg-brand-dark/5">
-                <p className="text-sm text-ink-secondary">360° walkthrough available after viewing request</p>
+            <h2 className="mb-4 text-xl font-semibold">{t('property.virtualTour')}</h2>
+            <div className="overflow-hidden panel-card bg-surface-subtle">
+              <div className="flex aspect-video items-center justify-center bg-surface-subtle">
+                <p className="text-sm text-ink-secondary">{t('property.virtualTourHint')}</p>
               </div>
-              <p className="p-4 text-sm text-ink-secondary">
-                Request a viewing to unlock the full virtual tour and floor plan for this property.
-              </p>
+              <p className="p-4 text-sm text-ink-secondary">{t('property.virtualTourDesc')}</p>
             </div>
           </section>
 
           <section className="border-t border-surface-border pt-8">
-            <h2 className="mb-4 text-xl font-semibold">Documents</h2>
+            <h2 className="mb-4 text-xl font-semibold">{t('property.documents')}</h2>
             <ul className="space-y-2 text-sm">
-              {['Title verification summary', 'Agency license', 'Property disclosure'].map((doc) => (
-                <li key={doc} className="flex items-center justify-between rounded-lg border border-surface-border bg-surface px-4 py-3">
-                  <span>{doc}</span>
-                  <span className="text-xs font-semibold text-brand-dark">{listing.verified ? 'Verified' : 'Pending'}</span>
+              {docKeys.map((key) => (
+                <li key={key} className="flex items-center justify-between rounded-lg border border-surface-border bg-surface px-4 py-3">
+                  <span>{t(`property.${key}`)}</span>
+                  <span className="text-xs font-semibold text-ink">
+                    {listing.verified ? t('common.verified') : t('common.pending')}
+                  </span>
                 </li>
               ))}
             </ul>
-            <Link to="/documents" className="mt-3 inline-block text-sm font-semibold text-brand-dark underline">
-              Open document vault →
+            <Link to="/documents" className="mt-3 inline-block text-sm font-semibold text-ink underline">
+              {t('property.openVault')}
             </Link>
           </section>
         </div>

@@ -18,10 +18,10 @@ function TransactionCenter() {
 
       <div className="mt-8 space-y-6">
         {transactions.map((tx) => (
-          <article key={tx.id} className="rounded-card border border-surface-border bg-surface p-6">
+          <article key={tx.id} className="panel-card bg-surface p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-brand-dark">{tx.stage}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-secondary">{tx.stage}</p>
                 <h2 className="mt-1 text-lg font-semibold">{tx.property}</h2>
                 <p className="mt-1 text-sm text-ink-secondary">
                   Offer: {tx.offer}
@@ -39,7 +39,7 @@ function TransactionCenter() {
                 {tx.checklist.map((item) => (
                   <li key={item.id} className="flex items-center gap-3 text-sm">
                     <span className={`flex h-5 w-5 items-center justify-center rounded-full text-xs ${
-                      item.done ? 'bg-brand-dark text-brand' : 'border border-surface-border'
+                      item.done ? 'bg-brand-accent text-white' : 'border border-surface-border'
                     }`}>
                       {item.done ? '✓' : ''}
                     </span>
@@ -49,7 +49,7 @@ function TransactionCenter() {
               </ul>
             </div>
 
-            <Link to="/offers" className="mt-4 inline-block text-sm font-semibold text-brand-dark underline">
+            <Link to="/offers" className="mt-4 inline-block text-sm font-semibold text-ink underline">
               Open offer room →
             </Link>
           </article>

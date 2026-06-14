@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import ManageShell from '../../components/ManageShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { HubLinkGrid, StatCard, StatGrid } from '../../components/ui/AirbnbUI'
 import { fetchPmsDashboard } from '../../services/pms-service'
 
 const links = [
@@ -20,33 +20,17 @@ function ManageHub() {
   }, [])
 
   return (
-    <ManageShell title="Property management" subtitle={portfolio?.name || 'Portfolio overview'}>
+    <ManageShell titleKey="hubs.manage.hub.title" subtitle={portfolio?.name || 'Portfolio overview'}>
       {portfolio && (
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Buildings" value={portfolio.buildings} />
-          <Stat label="Units" value={portfolio.units} />
-          <Stat label="Occupancy" value={portfolio.occupancy} />
-          <Stat label="Collected MTD" value={`GHS ${portfolio.collectedMtd.toLocaleString()}`} />
-        </div>
+        <StatGrid>
+          <StatCard label="Buildings" value={portfolio.buildings} />
+          <StatCard label="Units" value={portfolio.units} />
+          <StatCard label="Occupancy" value={portfolio.occupancy} />
+          <StatCard label="Collected MTD" value={`GHS ${portfolio.collectedMtd.toLocaleString()}`} />
+        </StatGrid>
       )}
-      <div className="grid gap-4 sm:grid-cols-2">
-        {links.map(({ to, label, desc }) => (
-          <Link key={to} to={to} className="rounded-card border border-surface-border bg-surface p-5 transition hover:shadow-card">
-            <p className="font-semibold">{label}</p>
-            <p className="mt-1 text-sm text-ink-secondary">{desc}</p>
-          </Link>
-        ))}
-      </div>
+      <HubLinkGrid links={links} />
     </ManageShell>
-  )
-}
-
-function Stat({ label, value }) {
-  return (
-    <div className="rounded-card border border-surface-border bg-surface p-4">
-      <p className="text-xs text-ink-secondary">{label}</p>
-      <p className="mt-1 text-xl font-bold text-brand-dark">{value}</p>
-    </div>
   )
 }
 

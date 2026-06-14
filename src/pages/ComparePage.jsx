@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
+import { EmptyPanel, PageTitle, PrimaryButton, TablePanel, TextLink } from '../components/ui/AirbnbUI'
+import { useTranslation } from '../i18n/LocaleContext'
 import { fetchListings } from '../services/marketplace-service'
 import { getCompareIds, clearCompare } from '../lib/compare-listings'
 
 export default function ComparePage() {
+  const { t } = useTranslation()
   const [listings, setListings] = useState([])
   const ids = getCompareIds()
 
@@ -15,39 +18,36 @@ export default function ComparePage() {
   }, [ids.join(',')])
 
   const rows = [
-    { label: 'Price', key: 'priceLabel' },
-    { label: 'Location', key: 'location' },
-    { label: 'Bedrooms', key: 'bedrooms' },
-    { label: 'Bathrooms', key: 'bathrooms' },
-    { label: 'Sqft', key: 'sqft' },
-    { label: 'Rating', key: 'rating' },
-    { label: 'Type', key: 'type' },
-    { label: 'Verified', key: 'verified' },
+    { label: t('comparePage.price'), key: 'priceLabel' },
+    { label: t('comparePage.location'), key: 'location' },
+    { label: t('comparePage.bedrooms'), key: 'bedrooms' },
+    { label: t('comparePage.bathrooms'), key: 'bathrooms' },
+    { label: t('comparePage.sqft'), key: 'sqft' },
+    { label: t('comparePage.rating'), key: 'rating' },
+    { label: t('comparePage.type'), key: 'type' },
+    { label: t('comparePage.verified'), key: 'verified' },
   ]
 
   return (
     <DesktopShell search={<CompactSearch />}>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Compare properties</h1>
-          <p className="mt-1 text-ink-secondary">Up to 4 homes side by side</p>
-        </div>
-        {listings.length > 0 && (
+      <PageTitle
+        title={t('comparePage.title')}
+        subtitle={t('comparePage.subtitle')}
+        action={listings.length > 0 && (
           <button type="button" onClick={clearCompare} className="text-sm font-medium text-ink-secondary underline">
-            Clear all
+            {t('common.clearAll')}
           </button>
         )}
-      </div>
+      />
 
       {listings.length === 0 ? (
-        <div className="mt-12 rounded-card border border-surface-border bg-surface-subtle py-16 text-center">
-          <p className="text-ink-secondary">Add properties using the compare button on listing cards.</p>
-          <Link to="/" className="mt-4 inline-block rounded-lg bg-brand-dark px-6 py-3 text-sm font-semibold text-brand">
-            Browse homes
-          </Link>
-        </div>
+        <EmptyPanel
+          title={t('comparePage.emptyTitle')}
+          description={t('comparePage.emptyDesc')}
+          action={<PrimaryButton as={Link} to="/">{t('common.browseHomes')}</PrimaryButton>}
+        />
       ) : (
-        <div className="mt-8 overflow-x-auto">
+        <TablePanel>
           <table className="min-w-full border-collapse text-sm">
             <thead>
               <tr>
@@ -66,19 +66,19 @@ export default function ComparePage() {
                   <td className="border border-surface-border bg-surface-subtle p-3 font-medium">{label}</td>
                   {listings.map((l) => (
                     <td key={l.id} className="border border-surface-border p-3">
-                      {key === 'verified' ? (l.verified ? 'Yes' : 'No') : l[key] ?? '—'}
+                      {key === 'verified' ? (l.verified ? t('common.yes') : t('common.no')) : l[key] ?? '—'}
                     </td>
                   ))}
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </TablePanel>
       )}
 
       <div className="mt-8 flex gap-4">
-        <Link to="/tools/mortgage" className="text-sm font-semibold text-brand-dark underline">Mortgage estimator →</Link>
-        <Link to="/tools/investment" className="text-sm font-semibold text-brand-dark underline">Investment calculator →</Link>
+        <TextLink to="/tools/mortgage">{t('comparePage.mortgageEstimator')}</TextLink>
+        <TextLink to="/tools/investment">{t('comparePage.investmentCalculator')}</TextLink>
       </div>
     </DesktopShell>
   )

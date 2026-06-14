@@ -2,6 +2,13 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import MobileShell, { MobileHeader } from '../../components/MobileShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import {
+  MobileBadge,
+  MobileCard,
+  MobileHubTile,
+  MobilePrimaryButton,
+  MobileTextLink,
+} from '../../components/ui/MobileUI'
 import { IconCard, IconDocument, IconPen, IconWrench } from '../../components/icons'
 import { fetchRenterDashboard, fetchRentPayments } from '../../services/renter-service'
 
@@ -21,24 +28,23 @@ function RenterHome() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Renter App" subtitle={profile?.unit || 'Your rental'} />
+      <MobileHeader title="Renter workspace" subtitle={profile?.unit || 'Your rental'} backTo="/m/profile" />
       <section className="space-y-4 px-4 pb-6">
         {profile && (
-          <div className="rounded-2xl bg-surface p-4 shadow-sm">
+          <MobileCard>
             <p className="text-sm text-ink-secondary">Monthly rent</p>
-            <p className="text-2xl font-bold text-brand-dark">GHS {profile.rentAmount.toLocaleString()}</p>
-            <p className="mt-1 text-xs text-ink-secondary">Due day {profile.rentDueDay} · Lease ends {profile.leaseEnd}</p>
-          </div>
+            <p className="text-2xl font-semibold text-ink">GHS {profile.rentAmount.toLocaleString()}</p>
+            <p className="mt-1 text-xs text-ink-secondary">
+              Due day {profile.rentDueDay} · Lease ends {profile.leaseEnd}
+            </p>
+          </MobileCard>
         )}
         <div className="grid grid-cols-2 gap-3">
-          {links.map(({ to, label, Icon }) => (
-            <Link key={to} to={to} className="rounded-2xl bg-surface p-4 shadow-sm">
-              <Icon className="h-7 w-7 text-brand-dark" />
-              <p className="mt-2 font-semibold">{label}</p>
-            </Link>
+          {links.map((item) => (
+            <MobileHubTile key={item.to} {...item} />
           ))}
         </div>
-        <Link to="/renter" className="block text-center text-sm text-brand-dark underline">Open full renter workspace →</Link>
+        <MobileTextLink to="/renter" className="block text-center">Open full renter workspace →</MobileTextLink>
       </section>
     </MobileShell>
   )
@@ -56,16 +62,16 @@ function RenterPaymentsMobile() {
       <MobileHeader title="Rent payments" backTo="/m/renter" />
       <section className="space-y-3 px-4 pb-6">
         {payments.map((p) => (
-          <article key={p.id} className="rounded-2xl bg-surface p-4 shadow-sm">
+          <MobileCard key={p.id}>
             <div className="flex justify-between">
-              <p className="font-semibold">{p.period}</p>
-              <span className={`text-xs font-semibold capitalize ${p.status === 'paid' ? 'text-green-700' : 'text-brand-dark'}`}>{p.status}</span>
+              <p className="font-semibold text-ink">{p.period}</p>
+              <MobileBadge tone={p.status === 'paid' ? 'success' : 'accent'}>{p.status}</MobileBadge>
             </div>
-            <p className="mt-1 font-bold text-brand-dark">GHS {p.amount.toLocaleString()}</p>
+            <p className="mt-1 font-semibold text-ink">GHS {p.amount.toLocaleString()}</p>
             {p.status === 'due' && (
-              <button type="button" className="mt-3 w-full rounded-xl bg-brand-dark py-2.5 text-sm font-semibold text-brand">Pay now</button>
+              <MobilePrimaryButton className="mt-3 w-full">Pay now</MobilePrimaryButton>
             )}
-          </article>
+          </MobileCard>
         ))}
       </section>
     </MobileShell>
@@ -77,7 +83,7 @@ function RenterLeasesMobile() {
     <MobileShell hideNav>
       <MobileHeader title="Leases" backTo="/m/renter" />
       <section className="px-4 pb-6">
-        <Link to="/renter/leases" className="inline-block rounded-xl bg-brand-dark px-4 py-2 text-sm font-semibold text-brand">View all leases</Link>
+        <MobilePrimaryButton as={Link} to="/renter/leases">View all leases</MobilePrimaryButton>
       </section>
     </MobileShell>
   )
@@ -88,7 +94,7 @@ function RenterMaintenanceMobile() {
     <MobileShell hideNav>
       <MobileHeader title="Maintenance" backTo="/m/renter" />
       <section className="px-4 pb-6">
-        <Link to="/renter/maintenance" className="inline-block rounded-xl bg-brand-dark px-4 py-2 text-sm font-semibold text-brand">Submit request</Link>
+        <MobilePrimaryButton as={Link} to="/renter/maintenance">Submit request</MobilePrimaryButton>
       </section>
     </MobileShell>
   )
@@ -99,7 +105,7 @@ function RenterSignMobile() {
     <MobileShell hideNav>
       <MobileHeader title="Lease signing" backTo="/m/renter" />
       <section className="px-4 pb-6">
-        <Link to="/renter/sign" className="inline-block rounded-xl bg-brand-dark px-4 py-2 text-sm font-semibold text-brand">Sign documents</Link>
+        <MobilePrimaryButton as={Link} to="/renter/sign">Sign documents</MobilePrimaryButton>
       </section>
     </MobileShell>
   )

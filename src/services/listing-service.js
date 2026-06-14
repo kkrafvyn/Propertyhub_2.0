@@ -44,6 +44,7 @@ export async function createListing(payload) {
         })
         return { ok: true, listing: mapListingRow(data), source: 'supabase' }
       }
+      throw new Error(error.message || 'Could not save listing to database.')
     }
   }
 

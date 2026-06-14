@@ -11,8 +11,8 @@ function Forecast() {
   }, [])
 
   return (
-    <EnterpriseShell title="Revenue forecast" subtitle="Quarterly NOI projections">
-      <div className="overflow-hidden rounded-card border border-surface-border bg-surface">
+    <EnterpriseShell titleKey="hubs.enterprise.forecast.title" subtitleKey="hubs.enterprise.forecast.subtitle">
+      <div className="overflow-hidden panel-card bg-surface">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-surface-border bg-surface-subtle">
             <tr>
@@ -28,7 +28,7 @@ function Forecast() {
                 <td className="px-4 py-3 font-medium">{f.quarter}</td>
                 <td className="px-4 py-3">GHS {(f.revenue / 1000000).toFixed(0)}M</td>
                 <td className="px-4 py-3 text-ink-secondary">GHS {(f.expenses / 1000000).toFixed(0)}M</td>
-                <td className="px-4 py-3 font-bold text-brand-dark">GHS {(f.noi / 1000000).toFixed(0)}M</td>
+                <td className="px-4 py-3 font-bold text-ink">GHS {(f.noi / 1000000).toFixed(0)}M</td>
               </tr>
             ))}
           </tbody>

@@ -1,20 +1,24 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import MobileShell, { MobileCategoryChips, MobileHeader, MobileSearchBar } from '../../components/MobileShell'
+import {
+  MobileEmpty,
+  MobileListingRow,
+  MobileListingTile,
+  MobileSectionTitle,
+} from '../../components/ui/MobileUI'
+import { useTranslation } from '../../i18n/LocaleContext'
 import { syncSavedIds } from '../../lib/saved-listings'
 import { fetchListings } from '../../services/marketplace-service'
 
-const categories = [
-  { id: 'all', label: 'All' },
-  { id: 'apartment', label: 'Apts' },
-  { id: 'house', label: 'Houses' },
-  { id: 'office', label: 'Commercial' },
-]
+const categoryIds = ['all', 'apartment', 'house', 'office']
 
 export default function MobileHomePage() {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [listings, setListings] = useState([])
+
+  const categories = categoryIds.map((id) => ({ id, label: t(`categories.${id}`) }))
 
   useEffect(() => {
     fetchListings().then(({ listings: rows }) => setListings(rows))
@@ -26,26 +30,19 @@ export default function MobileHomePage() {
       const matchCat = category === 'all' || l.type === category
       const matchQ = !q || `${l.title} ${l.location}`.toLowerCase().includes(q)
       return matchCat && matchQ
-    }).slice(0, 6)
+    }).slice(0, 8)
   }, [listings, search, category])
 
   return (
     <MobileShell>
-      <MobileHeader title="BaytMiftah" subtitle="Properties near you" />
-      <MobileSearchBar value={search} onChange={setSearch} />
+      <MobileHeader title="BaytMiftah" subtitle={t('mobile.homesInAccra')} showLogo />
+      <MobileSearchBar value={search} onChange={setSearch} placeholder={t('search.searchDestinations')} />
       <MobileCategoryChips options={categories} active={category} onChange={setCategory} />
 
       <section className="space-y-3 px-4 pb-4">
-        <h2 className="text-base font-bold text-ink">Popular in Accra</h2>
+        <MobileSectionTitle>{t('mobile.popularHomes')}</MobileSectionTitle>
         {visible.map((listing) => (
-          <Link key={listing.id} to={`/m/property/${listing.id}`} className="flex gap-3 rounded-2xl bg-surface p-3 shadow-sm">
-            <img src={listing.image} alt="" className="h-20 w-20 shrink-0 rounded-xl object-cover" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold">{listing.title}</p>
-              <p className="truncate text-sm text-ink-secondary">{listing.location}</p>
-              <p className="mt-1 text-sm font-bold text-brand-dark">{listing.priceLabel}</p>
-            </div>
-          </Link>
+          <MobileListingRow key={listing.id} listing={listing} to={`/m/property/${listing.id}`} />
         ))}
       </section>
     </MobileShell>
@@ -53,6 +50,7 @@ export default function MobileHomePage() {
 }
 
 export function MobileExplorePage() {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const [listings, setListings] = useState([])
 
@@ -66,17 +64,11 @@ export function MobileExplorePage() {
 
   return (
     <MobileShell>
-      <MobileHeader title="Explore" subtitle="Find your next home" />
+      <MobileHeader title={t('mobile.search')} subtitle={t('mobile.findNextHome')} />
       <MobileSearchBar value={search} onChange={setSearch} />
       <div className="grid grid-cols-2 gap-3 px-4 pb-4">
         {visible.map((listing) => (
-          <Link key={listing.id} to={`/m/property/${listing.id}`} className="overflow-hidden rounded-2xl bg-surface shadow-sm">
-            <img src={listing.image} alt="" className="aspect-square w-full object-cover" />
-            <div className="p-2.5">
-              <p className="truncate text-sm font-semibold">{listing.title}</p>
-              <p className="text-xs font-bold text-brand-dark">{listing.priceLabel}</p>
-            </div>
-          </Link>
+          <MobileListingTile key={listing.id} listing={listing} to={`/m/property/${listing.id}`} />
         ))}
       </div>
     </MobileShell>
@@ -84,6 +76,7 @@ export function MobileExplorePage() {
 }
 
 export function MobileSavedPage() {
+  const { t } = useTranslation()
   const [listings, setListings] = useState([])
 
   useEffect(() => {
@@ -94,19 +87,13 @@ export function MobileSavedPage() {
 
   return (
     <MobileShell>
-      <MobileHeader title="Saved" subtitle={`${listings.length} homes`} />
+      <MobileHeader title={t('mobile.saved')} subtitle={t('mobile.savedCount', { count: listings.length })} />
       <div className="space-y-3 px-4 pb-4">
         {listings.length === 0 ? (
-          <p className="py-12 text-center text-ink-secondary">No saved homes yet</p>
+          <MobileEmpty title={t('mobile.noSavedTitle')} description={t('mobile.noSavedDesc')} />
         ) : (
           listings.map((listing) => (
-            <Link key={listing.id} to={`/m/property/${listing.id}`} className="flex gap-3 rounded-2xl bg-surface p-3 shadow-sm">
-              <img src={listing.image} alt="" className="h-16 w-16 rounded-xl object-cover" />
-              <div>
-                <p className="font-semibold">{listing.title}</p>
-                <p className="text-sm text-brand-dark">{listing.priceLabel}</p>
-              </div>
-            </Link>
+            <MobileListingRow key={listing.id} listing={listing} to={`/m/property/${listing.id}`} />
           ))
         )}
       </div>

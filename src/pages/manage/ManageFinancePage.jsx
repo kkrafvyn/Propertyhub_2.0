@@ -19,7 +19,7 @@ function Finance() {
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0)
 
   return (
-    <ManageShell title="Rent collection & expenses" subtitle="Track income and operating costs">
+    <ManageShell titleKey="hubs.manage.finance.title" subtitleKey="hubs.manage.finance.subtitle">
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <Stat label="Collected" value={`GHS ${collected.toLocaleString()}`} />
         <Stat label="Outstanding" value={`GHS ${outstanding.toLocaleString()}`} />
@@ -46,7 +46,7 @@ function Finance() {
         {expenses.map((e) => (
           <div key={e.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-surface-border bg-surface px-4 py-3 text-sm">
             <span>{e.category} · {e.description}</span>
-            <span className="font-semibold text-brand-dark">GHS {e.amount.toLocaleString()}</span>
+            <span className="font-semibold text-ink">GHS {e.amount.toLocaleString()}</span>
           </div>
         ))}
       </div>
@@ -56,9 +56,9 @@ function Finance() {
 
 function Stat({ label, value }) {
   return (
-    <div className="rounded-card border border-surface-border bg-surface p-4">
+    <div className="panel-card bg-surface p-4">
       <p className="text-xs text-ink-secondary">{label}</p>
-      <p className="mt-1 text-xl font-bold text-brand-dark">{value}</p>
+      <p className="mt-1 text-xl font-bold text-ink">{value}</p>
     </div>
   )
 }

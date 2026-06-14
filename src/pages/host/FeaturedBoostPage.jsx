@@ -56,7 +56,7 @@ function FeaturedBoost() {
       </div>
 
       {status && (
-        <p className="mt-6 rounded-lg border border-brand/30 bg-brand-light px-4 py-3 text-sm text-brand-dark">{status}</p>
+        <p className="mt-6 rounded-lg border border-brand/30 bg-surface-hover px-4 py-3 text-sm text-ink">{status}</p>
       )}
     </DesktopShell>
   )
@@ -64,9 +64,9 @@ function FeaturedBoost() {
 
 function Plan({ name, price, perks, onSelect, loading }) {
   return (
-    <article className="rounded-card border border-surface-border bg-surface p-6">
+    <article className="panel-card bg-surface p-6">
       <h2 className="text-lg font-semibold">{name}</h2>
-      <p className="mt-1 text-2xl font-bold text-brand-dark">{price}</p>
+      <p className="mt-1 text-2xl font-bold text-ink">{price}</p>
       <ul className="mt-4 space-y-2 text-sm text-ink-secondary">
         {perks.map((p) => (
           <li key={p} className="flex items-center gap-2">
@@ -75,7 +75,7 @@ function Plan({ name, price, perks, onSelect, loading }) {
           </li>
         ))}
       </ul>
-      <button type="button" onClick={onSelect} disabled={loading} className="mt-4 rounded-lg bg-brand-dark px-5 py-2.5 text-sm font-semibold text-brand disabled:opacity-60">
+      <button type="button" onClick={onSelect} disabled={loading} className="mt-4 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
         {loading ? 'Redirecting to checkout…' : 'Get started'}
       </button>
     </article>

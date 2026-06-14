@@ -55,6 +55,8 @@ export function AuthProvider({ children }) {
       loading,
       signIn: authService.signInWithEmail,
       signUp: authService.signUpWithEmail,
+      signInWithOAuth: authService.signInWithOAuth,
+      resetPassword: authService.resetPasswordForEmail,
       signOut: async () => {
         await authService.signOut()
         setUser(null)

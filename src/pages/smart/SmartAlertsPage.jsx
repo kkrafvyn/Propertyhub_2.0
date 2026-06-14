@@ -21,7 +21,7 @@ function Alerts() {
   }, [])
 
   return (
-    <SmartShell title="Alerts & event logs" subtitle="Security notifications and device history">
+    <SmartShell titleKey="hubs.smart.alerts.title" subtitleKey="hubs.smart.alerts.subtitle">
       <h3 className="mb-3 font-semibold">Active alerts</h3>
       <div className="space-y-2">
         {alerts.map((a) => (
@@ -38,7 +38,7 @@ function Alerts() {
       </div>
 
       <h3 className="mb-3 mt-8 font-semibold">Event log</h3>
-      <div className="overflow-hidden rounded-card border border-surface-border bg-surface">
+      <div className="overflow-hidden panel-card bg-surface">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-surface-border bg-surface-subtle">
             <tr>

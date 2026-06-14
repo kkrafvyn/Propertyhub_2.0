@@ -50,18 +50,18 @@ function AIAdvisor() {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Ask anything about a property or neighborhood…"
-            className="flex-1 rounded-xl border border-surface-border px-4 py-3 text-sm outline-none focus:border-brand-dark"
+            className="flex-1 rounded-xl border border-surface-border px-4 py-3 text-sm outline-none focus:border-ink"
           />
-          <button type="submit" disabled={loading} className="rounded-xl bg-brand-dark px-5 py-3 text-sm font-semibold text-brand disabled:opacity-60">
+          <button type="submit" disabled={loading} className="rounded-xl bg-brand-accent px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
             {loading ? '…' : 'Ask'}
           </button>
         </form>
 
         {answer && (
-          <div className="mt-6 rounded-card border border-surface-border bg-brand-light p-5">
-            <p className="text-sm leading-relaxed text-brand-dark">{answer}</p>
+          <div className="mt-6 panel-card bg-surface-subtle p-5">
+            <p className="text-sm leading-relaxed text-ink">{answer}</p>
             {source && (
-              <p className="mt-3 text-xs text-brand-dark/60">Source: {source === 'supabase' ? 'BaytMiftah AI' : 'Local advisor'}</p>
+              <p className="mt-3 text-xs text-ink-secondary">Source: {source === 'supabase' ? 'BaytMiftah AI' : 'Local advisor'}</p>
             )}
           </div>
         )}

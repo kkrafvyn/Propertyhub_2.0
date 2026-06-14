@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
 import ProtectedRoute from '../components/ProtectedRoute'
+import { Badge, PageTitle, inputClass } from '../components/ui/AirbnbUI'
 import { fetchConversation, fetchConversations, sendMessage } from '../services/messaging-service'
 import { subscribeToMessages } from '../lib/realtime'
 
@@ -31,10 +32,7 @@ function MessagesContent() {
         if (!prev || prev.id !== id) return prev
         return {
           ...prev,
-          messages: [
-            ...(prev.messages ?? []),
-            { id: row.id, sender: row.sender, body: row.body },
-          ],
+          messages: [...(prev.messages ?? []), { id: row.id, sender: row.sender, body: row.body }],
         }
       })
     })
@@ -51,8 +49,9 @@ function MessagesContent() {
 
   return (
     <DesktopShell search={<CompactSearch />}>
-      <h1 className="text-2xl font-semibold">Messages</h1>
-      <div className="mt-6 grid min-h-[520px] overflow-hidden rounded-card border border-surface-border lg:grid-cols-[320px_1fr]">
+      <PageTitle title="Messages" subtitle="Chat with hosts, agents, and buyers." />
+
+      <div className="panel-card grid min-h-[520px] overflow-hidden lg:grid-cols-[320px_1fr]">
         <aside className="border-b border-surface-border lg:border-b-0 lg:border-r">
           {loading ? (
             <p className="p-4 text-sm text-ink-secondary">Loading…</p>
@@ -61,14 +60,14 @@ function MessagesContent() {
               <Link
                 key={conv.id}
                 to={`/messages/${conv.id}`}
-                className={`block border-b border-surface-border px-4 py-4 hover:bg-surface-subtle ${
-                  id === conv.id ? 'bg-brand-light' : ''
+                className={`block border-b border-surface-border px-4 py-4 transition hover:bg-surface-hover ${
+                  id === conv.id ? 'bg-surface-hover' : ''
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <p className="font-semibold text-ink">{conv.participant}</p>
                   {conv.unread > 0 && (
-                    <span className="rounded-full bg-brand-dark px-2 py-0.5 text-xs text-brand">{conv.unread}</span>
+                    <Badge tone="accent">{conv.unread}</Badge>
                   )}
                 </div>
                 <p className="mt-1 truncate text-sm text-ink-secondary">{conv.lastMessage}</p>
@@ -84,7 +83,7 @@ function MessagesContent() {
           ) : (
             <>
               <div className="border-b border-surface-border px-4 py-3">
-                <p className="font-semibold">{active.participant}</p>
+                <p className="font-semibold text-ink">{active.participant}</p>
                 <p className="text-sm text-ink-secondary">{active.listingTitle}</p>
               </div>
               <div className="flex-1 space-y-3 overflow-y-auto p-4">
@@ -92,7 +91,7 @@ function MessagesContent() {
                   <div
                     key={msg.id}
                     className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
-                      msg.sender === 'You' ? 'ml-auto bg-brand-dark text-brand' : 'bg-surface-subtle text-ink'
+                      msg.sender === 'You' ? 'ml-auto bg-ink text-white' : 'bg-surface-subtle text-ink'
                     }`}
                   >
                     {msg.body}
@@ -104,9 +103,9 @@ function MessagesContent() {
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   placeholder="Write a message…"
-                  className="flex-1 rounded-full border border-surface-border px-4 py-2 text-sm outline-none"
+                  className={`${inputClass} rounded-full`}
                 />
-                <button type="submit" className="rounded-full bg-brand-dark px-5 py-2 text-sm font-semibold text-brand">
+                <button type="submit" className="rounded-full bg-brand-accent px-5 py-2 text-sm font-semibold text-white">
                   Send
                 </button>
               </form>

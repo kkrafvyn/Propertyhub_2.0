@@ -186,3 +186,29 @@ export function IconChevronLeft({ className = 'h-5 w-5' }) {
     </svg>
   )
 }
+
+export function IconChevronRight({ className = 'h-5 w-5' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M12 8 22 16 12 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function IconSliders({ className = 'h-4 w-4' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M6 10h6M6 22h12M20 10h6M26 22h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="14" cy="10" r="2" fill="currentColor" />
+      <circle cx="22" cy="22" r="2" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function IconMap({ className = 'h-4 w-4' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M6 8 12 6v18l-6 2V8Zm12-2 8 2v18l-8-2V6ZM12 6l8 2v18l-8-2V6Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+    </svg>
+  )
+}

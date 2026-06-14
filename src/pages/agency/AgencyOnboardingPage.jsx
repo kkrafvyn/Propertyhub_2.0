@@ -11,12 +11,12 @@ const steps = [
 export default function AgencyOnboardingPage() {
   return (
     <ProtectedRoute>
-      <AgencyShell title="Onboarding" subtitle="Complete verification to unlock enterprise tools">
+      <AgencyShell titleKey="hubs.agency.onboarding.title" subtitleKey="hubs.agency.onboarding.subtitle">
         <div className="max-w-xl space-y-4">
           {steps.map((step) => (
-            <div key={step.id} className="flex items-center gap-4 rounded-card border border-surface-border bg-surface p-4">
+            <div key={step.id} className="flex items-center gap-4 panel-card bg-surface p-4">
               <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
-                step.done ? 'bg-brand-dark text-brand' : 'bg-surface-subtle text-ink-secondary'
+                step.done ? 'bg-brand-accent text-white' : 'bg-surface-subtle text-ink-secondary'
               }`}>
                 {step.done ? '✓' : step.id}
               </span>

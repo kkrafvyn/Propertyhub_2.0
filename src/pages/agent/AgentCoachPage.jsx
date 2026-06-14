@@ -30,9 +30,9 @@ export default function AgentCoachPage() {
 
   return (
     <ProtectedRoute>
-      <AgentShell title="AI Listing coach" subtitle="Pre-publish quality scoring">
-        <div className="max-w-xl rounded-card border border-surface-border bg-surface p-6">
-          <p className="text-4xl font-bold text-brand-dark">
+      <AgentShell titleKey="hubs.agent.coach.title" subtitleKey="hubs.agent.coach.subtitle">
+        <div className="max-w-xl panel-card bg-surface p-6">
+          <p className="text-4xl font-bold text-ink">
             {score}
             <span className="text-lg text-ink-secondary">/100</span>
           </p>
@@ -46,7 +46,7 @@ export default function AgentCoachPage() {
             type="button"
             onClick={handleReview}
             disabled={loading}
-            className="mt-6 rounded-lg bg-brand-dark px-5 py-2.5 text-sm font-semibold text-brand disabled:opacity-60"
+            className="mt-6 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
             {loading ? 'Analyzing…' : 'Run full AI review'}
           </button>

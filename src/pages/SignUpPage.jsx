@@ -1,24 +1,29 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import DesktopShell from '../components/DesktopShell'
+import AuthPageLayout from '../components/AuthPageLayout'
+import OAuthButtons, { AuthDivider } from '../components/OAuthButtons'
+import { Field, inputClass, selectClass } from '../components/ui/AirbnbUI'
 import { useAuth } from '../context/AuthContext'
+import { useTranslation } from '../i18n/LocaleContext'
 import { USER_ROLES } from '../platform/registry'
 import { getRoleHomePath } from '../lib/roles'
+import { isSupabaseConfigured } from '../lib/supabase'
 
 const roleOptions = [
-  { value: USER_ROLES.BUYER, label: 'Buyer' },
-  { value: USER_ROLES.RENTER, label: 'Renter' },
-  { value: USER_ROLES.INVESTOR, label: 'Investor' },
-  { value: USER_ROLES.INDEPENDENT_AGENT, label: 'Independent agent' },
-  { value: USER_ROLES.AGENCY_OWNER, label: 'Agency owner' },
-  { value: USER_ROLES.PROPERTY_OWNER, label: 'Property owner' },
-  { value: USER_ROLES.PROPERTY_MANAGER, label: 'Property manager' },
-  { value: USER_ROLES.DEVELOPER, label: 'Developer' },
-  { value: USER_ROLES.ENTERPRISE_OPERATOR, label: 'Enterprise operator' },
+  USER_ROLES.BUYER,
+  USER_ROLES.RENTER,
+  USER_ROLES.INVESTOR,
+  USER_ROLES.INDEPENDENT_AGENT,
+  USER_ROLES.AGENCY_OWNER,
+  USER_ROLES.PROPERTY_OWNER,
+  USER_ROLES.PROPERTY_MANAGER,
+  USER_ROLES.DEVELOPER,
+  USER_ROLES.ENTERPRISE_OPERATOR,
 ]
 
 export default function SignUpPage() {
-  const { signUp } = useAuth()
+  const { signUp, signInWithOAuth } = useAuth()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -26,6 +31,23 @@ export default function SignUpPage() {
   const [role, setRole] = useState(USER_ROLES.BUYER)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [oauthProvider, setOauthProvider] = useState(null)
+
+  const oauthMetadata = { display_name: name || undefined, role }
+
+  async function handleOAuth(provider) {
+    setError('')
+    setOauthProvider(provider)
+    try {
+      await signInWithOAuth(provider, {
+        redirectPath: getRoleHomePath({ user_metadata: { role } }) || '/',
+        metadata: oauthMetadata,
+      })
+    } catch (err) {
+      setError(err.message || `Could not sign up with ${provider}.`)
+      setOauthProvider(null)
+    }
+  }
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -44,56 +66,69 @@ export default function SignUpPage() {
   }
 
   return (
-    <DesktopShell minimal>
-      <div className="mx-auto max-w-md py-12">
-        <h1 className="text-2xl font-semibold text-ink">Create your account</h1>
-        <p className="mt-2 text-ink-secondary">Join BaytMiftah to save listings and book viewings.</p>
+    <AuthPageLayout>
+      <div className="mx-auto max-w-[568px] rounded-2xl border border-surface-border bg-surface p-6 shadow-card md:p-8">
+        <h1 className="text-2xl font-semibold text-ink">{t('auth.finishSignup')}</h1>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-          <Field label="Full name">
+        <Field label={t('auth.iAmA')} className="mt-6">
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className={selectClass}
+          >
+            {roleOptions.map((value) => (
+              <option key={value} value={value}>{t(`roles.${value}`)}</option>
+            ))}
+          </select>
+        </Field>
+
+        {isSupabaseConfigured && (
+          <>
+            <div className="mt-4">
+              <OAuthButtons
+                loadingProvider={oauthProvider}
+                disabled={loading}
+                onGoogle={() => handleOAuth('google')}
+                onApple={() => handleOAuth('apple')}
+              />
+            </div>
+            <AuthDivider />
+          </>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Field label={t('auth.fullName')}>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg border border-surface-border px-4 py-3 text-sm outline-none focus:border-brand-dark"
-              placeholder="Your name"
+              className={inputClass}
+              placeholder={t('auth.yourName')}
             />
           </Field>
 
-          <Field label="Email">
+          <Field label={t('auth.email')}>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-surface-border px-4 py-3 text-sm outline-none focus:border-brand-dark"
-              placeholder="you@example.com"
+              className={inputClass}
+              placeholder={t('auth.email')}
             />
           </Field>
 
-          <Field label="Password">
+          <Field label={t('auth.password')}>
             <input
               type="password"
               required
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-surface-border px-4 py-3 text-sm outline-none focus:border-brand-dark"
-              placeholder="At least 8 characters"
+              className={inputClass}
+              placeholder={t('auth.passwordMin')}
             />
-          </Field>
-
-          <Field label="I am a">
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full rounded-lg border border-surface-border px-4 py-3 text-sm outline-none focus:border-brand-dark"
-            >
-              {roleOptions.map(({ value, label }) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
           </Field>
 
           {error && (
@@ -104,29 +139,20 @@ export default function SignUpPage() {
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-brand-dark py-3.5 text-sm font-semibold text-brand transition hover:bg-ink disabled:opacity-60"
+            disabled={loading || oauthProvider}
+            className="w-full rounded-lg bg-brand-accent py-3.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
           >
-            {loading ? 'Creating account…' : 'Sign up'}
+            {loading ? t('auth.creatingAccount') : t('auth.agreeContinue')}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-ink-secondary">
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-brand-dark underline">
-            Log in
+          {t('auth.hasAccount')}{' '}
+          <Link to="/login" className="font-semibold text-ink underline">
+            {t('auth.logIn')}
           </Link>
         </p>
       </div>
-    </DesktopShell>
-  )
-}
-
-function Field({ label, children }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-ink">{label}</span>
-      {children}
-    </label>
+    </AuthPageLayout>
   )
 }

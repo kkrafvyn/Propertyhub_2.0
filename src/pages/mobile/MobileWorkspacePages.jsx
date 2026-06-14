@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import MobileShell, { MobileHeader } from '../../components/MobileShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { MobileHubTile, MobileTextLink } from '../../components/ui/MobileUI'
 import {
   IconCard, IconDocument, IconOffice, IconSparkle, IconUsers, IconWrench,
 } from '../../components/icons'
@@ -11,8 +11,7 @@ import { fetchFinanceDashboard } from '../../services/finance-service'
 const workspaces = [
   {
     id: 'agency',
-    title: 'Agency ERP',
-    home: '/m/agency',
+    title: 'Agency workspace',
     desktop: '/agency',
     links: [
       { to: '/agency/team', label: 'Team', Icon: IconUsers },
@@ -22,8 +21,7 @@ const workspaces = [
   },
   {
     id: 'manage',
-    title: 'Property Management',
-    home: '/m/manage',
+    title: 'Property management',
     desktop: '/manage',
     links: [
       { to: '/manage/tenants', label: 'Tenants', Icon: IconUsers },
@@ -33,8 +31,7 @@ const workspaces = [
   },
   {
     id: 'finance',
-    title: 'Financial Services',
-    home: '/m/finance',
+    title: 'Financial services',
     desktop: '/finance',
     links: [
       { to: '/finance/mortgages', label: 'Mortgages', Icon: IconDocument },
@@ -44,8 +41,7 @@ const workspaces = [
   },
   {
     id: 'intelligence',
-    title: 'Intelligence',
-    home: '/m/intelligence',
+    title: 'Market intelligence',
     desktop: '/intelligence',
     links: [
       { to: '/intelligence/market', label: 'Market data', Icon: IconSparkle },
@@ -55,8 +51,7 @@ const workspaces = [
   },
   {
     id: 'developer',
-    title: 'Developer',
-    home: '/m/developer',
+    title: 'Developer platform',
     desktop: '/developer',
     links: [
       { to: '/developer/projects', label: 'Projects', Icon: IconOffice },
@@ -66,8 +61,7 @@ const workspaces = [
   },
   {
     id: 'enterprise',
-    title: 'Enterprise',
-    home: '/m/enterprise',
+    title: 'Enterprise assets',
     desktop: '/enterprise',
     links: [
       { to: '/enterprise/portfolios', label: 'Portfolios', Icon: IconOffice },
@@ -85,7 +79,9 @@ function WorkspaceHome({ workspace }) {
       fetchAgencyDashboard().then(({ agency }) => setSubtitle(agency?.name ?? 'Agency'))
     }
     if (workspace.id === 'finance') {
-      fetchFinanceDashboard().then(({ summary }) => setSubtitle(`Escrow GHS ${(summary?.escrowTotal ?? 0).toLocaleString()}`))
+      fetchFinanceDashboard().then(({ summary }) =>
+        setSubtitle(`Escrow GHS ${(summary?.escrowTotal ?? 0).toLocaleString()}`),
+      )
     }
   }, [workspace.id])
 
@@ -94,16 +90,13 @@ function WorkspaceHome({ workspace }) {
       <MobileHeader title={workspace.title} subtitle={subtitle} backTo="/m/profile" />
       <section className="space-y-4 px-4 pb-6">
         <div className="grid grid-cols-2 gap-3">
-          {workspace.links.map(({ to, label, Icon }) => (
-            <Link key={to} to={to} className="rounded-2xl bg-surface p-4 shadow-sm">
-              <Icon className="h-7 w-7 text-brand-dark" />
-              <p className="mt-2 font-semibold">{label}</p>
-            </Link>
+          {workspace.links.map((item) => (
+            <MobileHubTile key={item.to} {...item} />
           ))}
         </div>
-        <Link to={workspace.desktop} className="block text-center text-sm font-semibold text-brand-dark underline">
+        <MobileTextLink to={workspace.desktop} className="block text-center">
           Open full {workspace.title.toLowerCase()} →
-        </Link>
+        </MobileTextLink>
       </section>
     </MobileShell>
   )

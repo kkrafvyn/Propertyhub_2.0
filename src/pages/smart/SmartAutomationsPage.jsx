@@ -16,10 +16,10 @@ function Automations() {
   }
 
   return (
-    <SmartShell title="Automation engine" subtitle="Triggers and actions for your building">
+    <SmartShell titleKey="hubs.smart.automations.title" subtitleKey="hubs.smart.automations.subtitle">
       <ul className="space-y-3">
         {rules.map((r) => (
-          <li key={r.id} className="rounded-card border border-surface-border bg-surface p-4">
+          <li key={r.id} className="panel-card bg-surface p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-semibold">{r.name}</p>
@@ -30,7 +30,7 @@ function Automations() {
                 type="button"
                 onClick={() => handleToggle(r.id, r.enabled)}
                 className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-                  r.enabled ? 'bg-brand-dark text-brand' : 'bg-surface-subtle text-ink-secondary'
+                  r.enabled ? 'bg-brand-accent text-white' : 'bg-surface-subtle text-ink-secondary'
                 }`}
               >
                 {r.enabled ? 'On' : 'Off'}
@@ -39,7 +39,7 @@ function Automations() {
           </li>
         ))}
       </ul>
-      <button type="button" className="mt-4 rounded-lg bg-brand-dark px-5 py-2.5 text-sm font-semibold text-brand">Create automation</button>
+      <button type="button" className="mt-4 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">Create automation</button>
     </SmartShell>
   )
 }

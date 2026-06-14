@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import SmartShell from '../../components/SmartShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { HubLinkGrid, StatCard, StatGrid } from '../../components/ui/AirbnbUI'
 import { fetchSmartDashboard } from '../../services/smart-service'
 
 const links = [
@@ -19,33 +19,17 @@ function SmartHub() {
   }, [])
 
   return (
-    <SmartShell title="Smart property" subtitle={portfolio?.building || 'Connected building management'}>
+    <SmartShell titleKey="hubs.smart.hub.title" subtitle={portfolio?.building || 'Connected building management'}>
       {portfolio && (
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Devices online" value={`${portfolio.devicesOnline}/${portfolio.devicesTotal}`} />
-          <Stat label="Automations" value={portfolio.automationsActive} />
-          <Stat label="Alerts today" value={portfolio.alertsToday} />
-          <Stat label="Energy today" value={portfolio.energyToday} />
-        </div>
+        <StatGrid>
+          <StatCard label="Devices online" value={`${portfolio.devicesOnline}/${portfolio.devicesTotal}`} />
+          <StatCard label="Automations" value={portfolio.automationsActive} />
+          <StatCard label="Alerts today" value={portfolio.alertsToday} />
+          <StatCard label="Energy today" value={portfolio.energyToday} />
+        </StatGrid>
       )}
-      <div className="grid gap-4 sm:grid-cols-2">
-        {links.map(({ to, label, desc }) => (
-          <Link key={to} to={to} className="rounded-card border border-surface-border bg-surface p-5 transition hover:shadow-card">
-            <p className="font-semibold">{label}</p>
-            <p className="mt-1 text-sm text-ink-secondary">{desc}</p>
-          </Link>
-        ))}
-      </div>
+      <HubLinkGrid links={links} />
     </SmartShell>
-  )
-}
-
-function Stat({ label, value }) {
-  return (
-    <div className="rounded-card border border-surface-border bg-surface p-4">
-      <p className="text-xs text-ink-secondary">{label}</p>
-      <p className="mt-1 text-xl font-bold text-brand-dark">{value}</p>
-    </div>
   )
 }
 

@@ -30,9 +30,9 @@ function Escrow() {
   }
 
   return (
-    <FinanceShell title="Escrow platform" subtitle="Secure buyer deposits held until closing conditions are met">
+    <FinanceShell titleKey="hubs.finance.escrow.title" subtitleKey="hubs.finance.escrow.subtitle">
       {message && (
-        <p className="mb-4 rounded-lg border border-brand/30 bg-brand-light px-4 py-3 text-sm text-brand-dark">{message}</p>
+        <p className="mb-4 rounded-lg border border-brand/30 bg-surface-hover px-4 py-3 text-sm text-ink">{message}</p>
       )}
 
       <div className="mb-6 max-w-xl">
@@ -45,13 +45,13 @@ function Escrow() {
           const pct = Math.round((e.funded / e.amount) * 100)
           const remaining = e.amount - e.funded
           return (
-            <article key={e.id} className="rounded-card border border-surface-border bg-surface p-5">
+            <article key={e.id} className="panel-card bg-surface p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="font-semibold">{e.property}</h2>
                   <p className="text-sm text-ink-secondary">Buyer: {e.buyer}</p>
                 </div>
-                <span className="rounded-full bg-brand-light px-3 py-1 text-xs font-semibold capitalize text-brand-dark">{e.status}</span>
+                <span className="rounded-full bg-surface-hover px-3 py-1 text-xs font-semibold capitalize text-ink">{e.status}</span>
               </div>
               <div className="mt-4">
                 <div className="flex justify-between text-sm">
@@ -67,7 +67,7 @@ function Escrow() {
                   type="button"
                   onClick={() => handleFund(e)}
                   disabled={loading === e.id}
-                  className="mt-4 rounded-lg bg-brand-dark px-4 py-2 text-sm font-semibold text-brand disabled:opacity-60"
+                  className="mt-4 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
                 >
                   {loading === e.id ? 'Redirecting…' : `Fund GHS ${remaining.toLocaleString()} via ${provider}`}
                 </button>

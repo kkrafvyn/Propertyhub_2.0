@@ -17,10 +17,10 @@ function Compliance() {
   }, [])
 
   return (
-    <AgencyShell title="Compliance center" subtitle="Licenses, KYC, and regulatory requirements">
+    <AgencyShell titleKey="hubs.agency.compliance.title" subtitleKey="hubs.agency.compliance.subtitle">
       <div className="space-y-3">
         {items.map((item) => (
-          <article key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-surface-border bg-surface p-4">
+          <article key={item.id} className="flex flex-wrap items-center justify-between gap-3 panel-card bg-surface p-4">
             <div>
               <p className="font-semibold">{item.item}</p>
               <p className="text-sm text-ink-secondary">Owner: {item.owner} · Due {item.due}</p>
@@ -31,7 +31,7 @@ function Compliance() {
           </article>
         ))}
       </div>
-      <button type="button" className="mt-6 rounded-lg bg-brand-dark px-5 py-2.5 text-sm font-semibold text-brand">
+      <button type="button" className="mt-6 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">
         Add compliance item
       </button>
     </AgencyShell>

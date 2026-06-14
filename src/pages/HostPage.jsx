@@ -1,33 +1,31 @@
 import { Link } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
+import { PageTitle, SecondaryButton } from '../components/ui/AirbnbUI'
 import { useAuth } from '../context/AuthContext'
+import { useTranslation } from '../i18n/LocaleContext'
 
 export default function HostPage() {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const location = useLocation()
   const listed = location.state?.listed
 
   if (!user) {
     return (
       <DesktopShell search={<CompactSearch />}>
-        <div className="mx-auto max-w-xl py-16 text-center">
-          <h1 className="text-3xl font-semibold text-ink">List your property</h1>
-          <p className="mt-4 text-ink-secondary">
-            Sign in to start listing your home, apartment, or commercial space.
-          </p>
-          <div className="mt-8 flex justify-center gap-4">
-            <Link
-              to="/login"
-              className="rounded-lg border border-surface-border px-6 py-3 text-sm font-semibold text-ink hover:bg-surface-subtle"
-            >
-              Log in
-            </Link>
+        <div className="mx-auto max-w-xl py-12 text-center">
+          <PageTitle
+            title={t('host.title')}
+            subtitle={t('host.signInSubtitle')}
+          />
+          <div className="flex justify-center gap-4">
+            <SecondaryButton as={Link} to="/login">{t('auth.logIn')}</SecondaryButton>
             <Link
               to="/signup"
-              className="rounded-lg bg-brand-dark px-6 py-3 text-sm font-semibold text-brand hover:bg-ink"
+              className="inline-flex rounded-lg bg-brand-accent px-6 py-3.5 text-sm font-semibold text-white hover:opacity-90"
             >
-              Sign up
+              {t('auth.signUp')}
             </Link>
           </div>
         </div>
@@ -38,58 +36,47 @@ export default function HostPage() {
   return (
     <DesktopShell search={<CompactSearch />}>
       {listed && (
-        <p className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          Listing submitted for review. Our team will verify and publish it shortly.
+        <p className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          {t('host.submitted')}
         </p>
       )}
       <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
         <div>
-          <h1 className="text-3xl font-semibold leading-tight text-ink">
-            List your property on BaytMiftah
-          </h1>
-          <p className="mt-4 text-lg text-ink-secondary">
-            Reach verified buyers and renters across Ghana. Our team reviews every listing
-            for quality and trust.
-          </p>
-          <ul className="mt-8 space-y-3 text-ink-secondary">
+          <PageTitle
+            title={t('host.heroTitle')}
+            subtitle={t('host.heroSubtitle')}
+          />
+          <ul className="space-y-3 text-ink-secondary">
             <li className="flex items-center gap-3">
-              <span className="h-2 w-2 rounded-full bg-brand" />
-              Professional photos and verified address
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+              {t('host.benefit1')}
             </li>
             <li className="flex items-center gap-3">
-              <span className="h-2 w-2 rounded-full bg-brand" />
-              Agency dashboard for leads and viewings
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+              {t('host.benefit2')}
             </li>
             <li className="flex items-center gap-3">
-              <span className="h-2 w-2 rounded-full bg-brand" />
-              Secure document vault for transactions
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+              {t('host.benefit3')}
             </li>
           </ul>
-          <Link
-            to="/host/list"
-            className="mt-8 inline-block rounded-lg bg-brand-dark px-8 py-3.5 text-sm font-semibold text-brand transition hover:bg-ink"
-          >
-            Get started
-          </Link>
-          <Link
-            to="/host/listings"
-            className="ml-4 mt-8 inline-block rounded-lg border border-surface-border px-8 py-3.5 text-sm font-semibold text-ink transition hover:bg-surface-subtle"
-          >
-            Your listings
-          </Link>
-          <Link
-            to="/host/boost"
-            className="ml-4 mt-8 inline-block rounded-lg border border-surface-border px-8 py-3.5 text-sm font-semibold text-ink transition hover:bg-surface-subtle"
-          >
-            Feature your listing
-          </Link>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              to="/host/list"
+              className="inline-flex rounded-lg bg-brand-accent px-8 py-3.5 text-sm font-semibold text-white hover:opacity-90"
+            >
+              {t('host.getStarted')}
+            </Link>
+            <SecondaryButton as={Link} to="/host/listings">{t('host.yourListings')}</SecondaryButton>
+            <SecondaryButton as={Link} to="/host/boost">{t('host.featureListing')}</SecondaryButton>
+          </div>
         </div>
 
-        <div className="overflow-hidden rounded-card shadow-card">
+        <div className="overflow-hidden rounded-xl shadow-card">
           <img
             src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&q=80"
-            alt="Modern property"
-            className="h-full w-full object-cover"
+            alt=""
+            className="aspect-[4/3] w-full object-cover"
           />
         </div>
       </div>

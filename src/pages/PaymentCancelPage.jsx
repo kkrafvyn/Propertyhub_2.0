@@ -1,15 +1,20 @@
 import { Link } from 'react-router-dom'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
+import { PageTitle, PrimaryButton, SecondaryButton } from '../components/ui/AirbnbUI'
 
 export default function PaymentCancelPage() {
   return (
     <DesktopShell search={<CompactSearch />}>
-      <div className="mx-auto max-w-lg py-16 text-center">
-        <h1 className="text-2xl font-semibold">Payment cancelled</h1>
-        <p className="mt-2 text-ink-secondary">No charge was made. You can try again anytime.</p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link to="/finance" className="rounded-lg bg-brand-dark px-6 py-3 text-sm font-semibold text-brand">Finance hub</Link>
-          <Link to="/" className="rounded-lg border border-surface-border px-6 py-3 text-sm font-semibold">Home</Link>
+      <div className="mx-auto max-w-lg py-12">
+        <div className="panel-card px-8 py-12 text-center">
+          <PageTitle
+            title="Payment cancelled"
+            subtitle="No charge was made. You can try again anytime."
+          />
+          <div className="flex flex-wrap justify-center gap-3">
+            <PrimaryButton as={Link} to="/finance">Finance hub</PrimaryButton>
+            <SecondaryButton as={Link} to="/">Home</SecondaryButton>
+          </div>
         </div>
       </div>
     </DesktopShell>

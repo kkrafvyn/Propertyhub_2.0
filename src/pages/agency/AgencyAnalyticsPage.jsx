@@ -21,18 +21,18 @@ function Analytics() {
   ]
 
   return (
-    <AgencyShell title="Revenue analytics" subtitle="KPIs and performance trends">
+    <AgencyShell titleKey="hubs.agency.analytics.title" subtitleKey="hubs.agency.analytics.subtitle">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {kpis.map(({ label, value }) => (
-          <div key={label} className="rounded-card border border-surface-border bg-surface p-4">
+          <div key={label} className="panel-card bg-surface p-4">
             <p className="text-xs text-ink-secondary">{label}</p>
-            <p className="mt-1 text-xl font-bold text-brand-dark">{value}</p>
+            <p className="mt-1 text-xl font-bold text-ink">{value}</p>
           </div>
         ))}
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-card border border-surface-border bg-surface p-5">
+        <div className="panel-card bg-surface p-5">
           <h3 className="font-semibold">Monthly revenue</h3>
           <div className="mt-4 space-y-3">
             {data.revenueByMonth.map((m) => (
@@ -50,13 +50,13 @@ function Analytics() {
           </div>
         </div>
 
-        <div className="rounded-card border border-surface-border bg-surface p-5">
+        <div className="panel-card bg-surface p-5">
           <h3 className="font-semibold">Top agents</h3>
           <ul className="mt-4 space-y-3">
             {data.topAgents.map((a, i) => (
               <li key={a.name} className="flex items-center justify-between text-sm">
                 <span>{i + 1}. {a.name}</span>
-                <span className="font-semibold text-brand-dark">GHS {a.revenue.toLocaleString()}</span>
+                <span className="font-semibold text-ink">GHS {a.revenue.toLocaleString()}</span>
               </li>
             ))}
           </ul>

@@ -5,7 +5,7 @@ import { fetchKycQueue, updateKycStatus } from '../../services/trust-service'
 
 const statusStyles = {
   verified: 'bg-green-500/20 text-green-300',
-  pending_review: 'bg-brand/20 text-brand',
+  pending_review: 'bg-surface-hover text-ink',
   flagged: 'bg-red-500/20 text-red-300',
 }
 
@@ -22,13 +22,13 @@ function Kyc() {
   }
 
   return (
-    <AdminShell title="KYC / AML" subtitle="Identity verification and anti-money laundering checks">
+    <AdminShell titleKey="hubs.admin.kyc.title" subtitleKey="hubs.admin.kyc.subtitle">
       <div className="space-y-3">
         {kyc.map((item) => (
-          <article key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-white/10 bg-white/5 p-4">
+          <article key={item.id} className="flex flex-wrap items-center justify-between gap-3 panel-card p-4">
             <div>
               <p className="font-semibold">{item.entity || item.name}</p>
-              <p className="text-sm text-white/70 capitalize">{item.type || item.entity_type} · {item.documents} documents</p>
+              <p className="text-sm text-ink-secondary capitalize">{item.type || item.entity_type} · {item.documents} documents</p>
             </div>
             <div className="flex items-center gap-2">
               <span className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyles[item.status] || statusStyles.pending_review}`}>
@@ -38,7 +38,7 @@ function Kyc() {
                 <button
                   type="button"
                   onClick={() => handleVerify(item.id)}
-                  className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-brand-dark"
+                  className="rounded-lg bg-brand-accent px-3 py-1.5 text-xs font-semibold text-ink"
                 >
                   Verify
                 </button>

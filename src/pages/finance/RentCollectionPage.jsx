@@ -30,7 +30,7 @@ function RentCollection() {
   }
 
   return (
-    <FinanceShell title="Rent collection rails" subtitle="Collect rent via Paystack (Africa) or Stripe (international)">
+    <FinanceShell titleKey="hubs.finance.rentCollection.title" subtitleKey="hubs.finance.rentCollection.subtitle">
       <div className="grid gap-8 lg:grid-cols-2">
         <div>
           <h3 className="font-semibold">Collect payment</h3>
@@ -54,17 +54,17 @@ function RentCollection() {
               type="button"
               onClick={handleCollect}
               disabled={loading}
-              className="rounded-lg bg-brand-dark px-5 py-2.5 text-sm font-semibold text-brand disabled:opacity-60"
+              className="rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
             >
               {loading ? 'Creating checkout…' : 'Create payment link'}
             </button>
-            {message && <p className="text-sm text-brand-dark">{message}</p>}
+            {message && <p className="text-sm text-ink">{message}</p>}
           </div>
         </div>
 
         <div className="space-y-4">
           {Object.entries(rentCollectionRails).map(([key, rail]) => (
-            <article key={key} className="rounded-card border border-surface-border bg-surface p-4">
+            <article key={key} className="panel-card bg-surface p-4">
               <h4 className="font-semibold">{rail.label}</h4>
               <p className="text-sm text-ink-secondary">{rail.region} · {rail.currency}</p>
               <p className="mt-2 text-sm">{rail.methods.join(' · ')}</p>

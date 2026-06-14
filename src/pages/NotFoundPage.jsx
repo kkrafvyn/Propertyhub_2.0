@@ -1,20 +1,23 @@
 import { Link } from 'react-router-dom'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
+import { EmptyPanel, PrimaryButton } from '../components/ui/AirbnbUI'
+import { useTranslation } from '../i18n/LocaleContext'
 
 export default function NotFoundPage() {
+  const { t } = useTranslation()
+
   return (
     <DesktopShell search={<CompactSearch />}>
-      <div className="py-20 text-center">
-        <p className="text-6xl font-bold text-brand">404</p>
-        <h1 className="mt-4 text-2xl font-semibold text-ink">Page not found</h1>
-        <p className="mt-2 text-ink-secondary">This page doesn&apos;t exist or has been moved.</p>
-        <Link
-          to="/"
-          className="mt-8 inline-block rounded-lg bg-brand-dark px-6 py-3 text-sm font-semibold text-brand"
-        >
-          Back to home
-        </Link>
-      </div>
+      <EmptyPanel
+        title={t('notFound.title')}
+        description={t('notFound.description')}
+        action={
+          <div className="space-y-3">
+            <p className="text-5xl font-bold text-ink">404</p>
+            <PrimaryButton as={Link} to="/">{t('common.backToHome')}</PrimaryButton>
+          </div>
+        }
+      />
     </DesktopShell>
   )
 }

@@ -34,9 +34,9 @@ function Payments() {
   }
 
   return (
-    <RenterShell title="Rent payments" subtitle="Pay with Paystack (mobile money, bank) or Stripe (international cards)">
+    <RenterShell titleKey="hubs.renter.payments.title" subtitleKey="hubs.renter.payments.subtitle">
       {message && (
-        <p className="mb-4 rounded-lg border border-brand/30 bg-brand-light px-4 py-3 text-sm text-brand-dark">{message}</p>
+        <p className="mb-4 rounded-lg border border-brand/30 bg-surface-hover px-4 py-3 text-sm text-ink">{message}</p>
       )}
 
       <div className="mb-6 max-w-xl">
@@ -46,19 +46,19 @@ function Payments() {
 
       <div className="space-y-3">
         {payments.map((p) => (
-          <article key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-surface-border bg-surface p-4">
+          <article key={p.id} className="flex flex-wrap items-center justify-between gap-3 panel-card bg-surface p-4">
             <div>
               <p className="font-semibold">{p.period}</p>
               <p className="text-sm text-ink-secondary">Due {p.due}{p.method ? ` · ${p.method}` : ''}</p>
             </div>
             <div className="flex items-center gap-3">
-              <p className="font-bold text-brand-dark">GHS {p.amount.toLocaleString()}</p>
+              <p className="font-bold text-ink">GHS {p.amount.toLocaleString()}</p>
               {p.status === 'due' ? (
                 <button
                   type="button"
                   onClick={() => handlePay(p)}
                   disabled={loading === p.id}
-                  className="rounded-lg bg-brand-dark px-4 py-2 text-sm font-semibold text-brand disabled:opacity-60"
+                  className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
                 >
                   {loading === p.id ? 'Redirecting…' : 'Pay now'}
                 </button>

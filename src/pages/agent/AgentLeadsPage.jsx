@@ -30,17 +30,17 @@ function LeadsBoard() {
 
   if (loading) {
     return (
-      <AgentShell title="Lead pipeline" subtitle="Loading…">
-        <div className="h-48 animate-pulse rounded-card bg-surface-hover" />
+      <AgentShell titleKey="hubs.agent.leads.title" subtitleKey="hubs.agent.leads.subtitle">
+        <div className="h-48 animate-pulse rounded-xl bg-surface-hover" />
       </AgentShell>
     )
   }
 
   return (
-    <AgentShell title="Lead pipeline" subtitle="Lead → Contacted → Viewing → Offer → Closed">
+    <AgentShell titleKey="hubs.agent.leads.title" subtitleKey="hubs.agent.leads.pipelineSubtitle">
       <div className="flex gap-4 overflow-x-auto pb-4">
         {LEAD_STAGES.map((stage) => (
-          <div key={stage} className="min-w-[220px] flex-1 rounded-card border border-surface-border bg-surface-subtle p-3">
+          <div key={stage} className="min-w-[220px] flex-1 panel-card bg-surface-subtle p-3">
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-secondary">
               {stageLabels[stage]} ({byStage[stage].length})
             </h3>

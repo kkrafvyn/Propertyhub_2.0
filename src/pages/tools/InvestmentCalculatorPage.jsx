@@ -50,7 +50,7 @@ function Input({ label, value, onChange }) {
 
 function Metric({ label, value }) {
   return (
-    <div className="rounded-card border border-surface-border bg-surface p-4">
+    <div className="panel-card bg-surface p-4">
       <p className="text-sm text-ink-secondary">{label}</p>
       <p className="mt-1 text-xl font-semibold">{value}</p>
     </div>

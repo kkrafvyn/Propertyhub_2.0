@@ -1,5 +1,6 @@
 import { BrowserRouter, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { LocaleProvider } from './i18n/LocaleContext'
 import DesktopRoutes from './routes/DesktopRoutes'
 import MobileRoutes from './routes/MobileRoutes'
 
@@ -29,10 +30,12 @@ function ResponsiveRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <ResponsiveRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+    <LocaleProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <ResponsiveRoutes />
+        </BrowserRouter>
+      </AuthProvider>
+    </LocaleProvider>
   )
 }

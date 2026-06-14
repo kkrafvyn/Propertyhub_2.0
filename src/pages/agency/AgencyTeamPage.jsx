@@ -11,8 +11,8 @@ function TeamPage() {
   }, [])
 
   return (
-    <AgencyShell title="Team" subtitle="Manage agents and permissions">
-      <div className="overflow-hidden rounded-card border border-surface-border bg-surface">
+    <AgencyShell titleKey="hubs.agency.team.title" subtitleKey="hubs.agency.team.subtitle">
+      <div className="overflow-hidden panel-card bg-surface">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-surface-border bg-surface-subtle">
             <tr>
@@ -29,7 +29,7 @@ function TeamPage() {
                 <td className="px-4 py-3">{member.role}</td>
                 <td className="px-4 py-3 text-ink-secondary">{member.email}</td>
                 <td className="px-4 py-3">
-                  <span className="rounded-full bg-brand-light px-2 py-0.5 text-xs font-medium text-brand-dark">
+                  <span className="rounded-full bg-surface-hover px-2 py-0.5 text-xs font-medium text-ink">
                     {member.status}
                   </span>
                 </td>
@@ -38,7 +38,7 @@ function TeamPage() {
           </tbody>
         </table>
       </div>
-      <button type="button" className="mt-4 rounded-lg bg-brand-dark px-5 py-2.5 text-sm font-semibold text-brand">
+      <button type="button" className="mt-4 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">
         Invite team member
       </button>
     </AgencyShell>

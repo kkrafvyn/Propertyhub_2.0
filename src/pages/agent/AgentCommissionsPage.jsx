@@ -13,18 +13,18 @@ function Commissions() {
   const total = commissions.reduce((sum, c) => sum + c.amount, 0)
 
   return (
-    <AgentShell title="Commissions" subtitle="Track paid, pending, and pipeline earnings">
-      <p className="mb-6 text-2xl font-bold text-brand-dark">GHS {total.toLocaleString()}</p>
+    <AgentShell titleKey="hubs.agent.commissions.title" subtitleKey="hubs.agent.commissions.subtitle">
+      <p className="mb-6 text-2xl font-bold text-ink">GHS {total.toLocaleString()}</p>
       <div className="space-y-3">
         {commissions.map((c) => (
-          <article key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-surface-border bg-surface p-4">
+          <article key={c.id} className="flex flex-wrap items-center justify-between gap-3 panel-card bg-surface p-4">
             <div>
               <p className="font-semibold">{c.property}</p>
               <p className="text-sm text-ink-secondary">Closed: {c.closed}</p>
             </div>
             <div className="text-right">
-              <p className="font-semibold text-brand-dark">GHS {c.amount.toLocaleString()}</p>
-              <span className="rounded-full bg-brand-light px-2 py-0.5 text-xs font-semibold capitalize text-brand-dark">{c.status}</span>
+              <p className="font-semibold text-ink">GHS {c.amount.toLocaleString()}</p>
+              <span className="rounded-full bg-surface-hover px-2 py-0.5 text-xs font-semibold capitalize text-ink">{c.status}</span>
             </div>
           </article>
         ))}

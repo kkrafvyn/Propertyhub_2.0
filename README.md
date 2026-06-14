@@ -58,3 +58,84 @@ Set these **Environment Variables** in the Vercel project (Production + Preview)
 Do **not** use the old `tcnsqtnwyyufeupktkhs` project — Edge Functions are not deployed there (CORS / 404 errors).
 
 After updating env vars, trigger **Redeploy** so Vite rebuilds with the new values.
+
+## Sign in with Google & Apple
+
+OAuth is wired in the app at `/login`, `/signup`, and `/auth/callback`.
+
+### Supabase Auth settings
+
+1. Open [Authentication → Providers](https://supabase.com/dashboard/project/ixmbfnfwpjwbfahqaftc/auth/providers)
+2. Enable **Google** and **Apple**
+3. Under [URL Configuration](https://supabase.com/dashboard/project/ixmbfnfwpjwbfahqaftc/auth/url-configuration):
+   - **Site URL:** `https://propertyhub-2-0.vercel.app` (or your custom domain)
+   - **Redirect URLs** (add all that apply):
+     - `http://localhost:5173/auth/callback`
+     - `https://propertyhub-2-0.vercel.app/auth/callback`
+
+### Google
+
+1. Create OAuth credentials in [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Authorized redirect URI: `https://ixmbfnfwpjwbfahqaftc.supabase.co/auth/v1/callback`
+3. Paste Client ID and Client Secret into Supabase Google provider settings
+
+### Apple
+
+1. Configure Sign in with Apple in [Apple Developer](https://developer.apple.com/account/resources/identifiers/list/serviceId) (Services ID + key)
+2. Return URL: `https://ixmbfnfwpjwbfahqaftc.supabase.co/auth/v1/callback`
+3. Paste Services ID, Team ID, Key ID, and private key into Supabase Apple provider settings
+
+On signup, users can pick a role before continuing with Google or Apple; that role is stored in user metadata after the callback.
+
+## Languages (i18n)
+
+The app supports **5 languages** with automatic browser detection and a saved preference in `localStorage` (`baytmiftah_locale`):
+
+| Code | Language |
+|------|----------|
+| `en` | English |
+| `ar` | العربية (RTL) |
+| `fr` | Français |
+| `es` | Español |
+| `pt` | Português |
+
+Switch language from the **header globe menu**, **footer**, **Profile → Language**, or **mobile Profile** tab.
+
+Translation files live in `src/i18n/locales/`. To add a string, add the key to all locale files and use `const { t } = useTranslation()` then `t('section.key')`.
+
+## Viewings & messaging
+
+Viewing requests and in-app chat use direct Supabase reads/writes when Edge Functions are unavailable:
+
+1. Apply migrations (`npm run db:push` or SQL Editor bundle)
+2. Sign in and open a listing → **Request viewing**
+3. Open **Messages** — conversations are created per listing
+
+Optional: deploy `messaging` Edge Function via `npm run deploy:backend` for server-side validation.
+
+## Payments (Stripe / Paystack)
+
+Set in **Vercel** (client):
+
+| Variable | Purpose |
+|----------|---------|
+| `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe checkout (optional) |
+
+Set in **Supabase Edge Function secrets** (server):
+
+| Secret | Purpose |
+|--------|---------|
+| `STRIPE_SECRET_KEY` | Stripe sessions |
+| `PAYSTACK_SECRET_KEY` | Paystack checkout |
+| `SITE_URL` | `https://propertyhub-2-0.vercel.app` |
+
+Without secrets, payment flows show a clear configuration error instead of failing silently.
+
+## Production checklist
+
+1. **Migrations** — `npm run db:bundle` → paste into SQL Editor, or `SUPABASE_DB_PASSWORD=… npm run db:push`
+2. **OAuth** — Google + Apple providers + redirect URLs (see above)
+3. **Edge secrets** — Stripe, Paystack, `SITE_URL`, optional `RESEND_API_KEY`, `OPENAI_API_KEY`
+4. **Vercel env** — `VITE_SUPABASE_*`, optional `VITE_STRIPE_PUBLISHABLE_KEY`
+5. **Deploy** — push to `baytmiftah-rebuild`; Vercel auto-deploys from GitHub
+6. **Verify** — `npm run check:supabase` (listings table exists after migrations)

@@ -13,15 +13,15 @@ function Trust() {
   if (!trust) return null
 
   return (
-    <AgencyShell title="Trust score" subtitle={`Last reviewed ${trust.lastReview}`}>
+    <AgencyShell titleKey="hubs.agency.trust.title" subtitle={`Last reviewed ${trust.lastReview}`}>
       <div className="flex flex-wrap items-end gap-4">
-        <p className="text-5xl font-bold text-brand-dark">{trust.score}</p>
+        <p className="text-5xl font-bold text-ink">{trust.score}</p>
         <p className="pb-2 text-lg text-green-700">{trust.trend} this month</p>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
         {trust.badges.map((b) => (
-          <span key={b} className="rounded-full bg-brand-light px-3 py-1 text-xs font-semibold text-brand-dark">{b}</span>
+          <span key={b} className="rounded-full bg-surface-hover px-3 py-1 text-xs font-semibold text-ink">{b}</span>
         ))}
       </div>
 
@@ -33,7 +33,7 @@ function Trust() {
               <span className="font-semibold">{f.score}% · {f.weight}</span>
             </div>
             <div className="mt-1 h-2 overflow-hidden rounded-full bg-surface-subtle">
-              <div className="h-full rounded-full bg-brand-dark" style={{ width: `${f.score}%` }} />
+              <div className="h-full rounded-full bg-brand-accent" style={{ width: `${f.score}%` }} />
             </div>
           </div>
         ))}

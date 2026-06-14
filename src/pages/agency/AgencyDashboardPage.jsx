@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import AgencyShell from '../../components/AgencyShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { DataRow, PanelCard, StatCard, StatGrid } from '../../components/ui/AirbnbUI'
 import { fetchAgencyDashboard } from '../../services/agency-service'
 
 function AgencyOverview() {
@@ -10,55 +11,45 @@ function AgencyOverview() {
     fetchAgencyDashboard().then(setData)
   }, [])
 
-  if (!data) return <AgencyShell title="Overview"><p>Loading…</p></AgencyShell>
+  if (!data) {
+    return (
+      <AgencyShell titleKey="hubs.agency.dashboard.title" subtitleKey="hubs.agency.dashboard.subtitle">
+        <div className="h-40 animate-pulse rounded-xl bg-surface-hover" />
+      </AgencyShell>
+    )
+  }
 
   const { agency, leads, listings } = data
 
   return (
-    <AgencyShell title="Agency overview" subtitle={`${agency.name} · Trust score ${agency.trustScore}`}>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Active listings" value={agency.activeListings} />
-        <Stat label="Team members" value={agency.teamCount} />
-        <Stat label="Leads this month" value={agency.leadsThisMonth} />
-        <Stat label="Trust score" value={`${agency.trustScore}%`} />
-      </div>
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <Panel title="Recent leads">
+    <AgencyShell
+      titleKey="hubs.agency.dashboard.title"
+      subtitleKey="hubs.agency.dashboard.loadedSubtitle"
+      subtitleVars={{ name: agency.name, trustScore: agency.trustScore }}
+    >
+      <StatGrid>
+        <StatCard label="Active listings" value={agency.activeListings} />
+        <StatCard label="Team members" value={agency.teamCount} />
+        <StatCard label="Leads this month" value={agency.leadsThisMonth} />
+        <StatCard label="Trust score" value={`${agency.trustScore}%`} />
+      </StatGrid>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <PanelCard title="Recent leads">
           {leads.slice(0, 3).map((lead) => (
-            <div key={lead.id} className="flex justify-between border-b border-surface-border py-3 text-sm last:border-0">
-              <span>{lead.name} · {lead.property}</span>
-              <span className="text-ink-secondary">{lead.stage}</span>
-            </div>
+            <DataRow
+              key={lead.id}
+              primary={`${lead.name} · ${lead.property}`}
+              meta={lead.stage}
+            />
           ))}
-        </Panel>
-        <Panel title="Top listings">
+        </PanelCard>
+        <PanelCard title="Top listings">
           {listings.map((item) => (
-            <div key={item.id} className="flex justify-between border-b border-surface-border py-3 text-sm last:border-0">
-              <span>{item.title}</span>
-              <span className="text-ink-secondary">{item.views} views</span>
-            </div>
+            <DataRow key={item.id} primary={item.title} meta={`${item.views} views`} />
           ))}
-        </Panel>
+        </PanelCard>
       </div>
     </AgencyShell>
-  )
-}
-
-function Stat({ label, value }) {
-  return (
-    <div className="rounded-card border border-surface-border bg-surface p-5">
-      <p className="text-sm text-ink-secondary">{label}</p>
-      <p className="mt-2 text-2xl font-semibold">{value}</p>
-    </div>
-  )
-}
-
-function Panel({ title, children }) {
-  return (
-    <div className="rounded-card border border-surface-border bg-surface p-5">
-      <h3 className="font-semibold">{title}</h3>
-      <div className="mt-3">{children}</div>
-    </div>
   )
 }
 

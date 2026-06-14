@@ -11,11 +11,11 @@ function Projects() {
   }, [])
 
   return (
-    <DeveloperShell title="Projects" subtitle="Development portfolio and unit inventory">
+    <DeveloperShell titleKey="hubs.developer.projects.title" subtitleKey="hubs.developer.projects.subtitle">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {projects.map((p) => (
-          <article key={p.id} className="rounded-card border border-surface-border bg-surface p-5">
-            <span className="rounded-full bg-brand-light px-2 py-0.5 text-xs font-semibold capitalize text-brand-dark">{p.status.replace('_', ' ')}</span>
+          <article key={p.id} className="panel-card bg-surface p-5">
+            <span className="rounded-full bg-surface-hover px-2 py-0.5 text-xs font-semibold capitalize text-ink">{p.status.replace('_', ' ')}</span>
             <h2 className="mt-3 font-semibold">{p.name}</h2>
             <p className="text-sm text-ink-secondary">{p.location}</p>
             <p className="mt-3 text-sm">{p.sold}/{p.units} units sold · Complete {p.completion}</p>
@@ -25,7 +25,7 @@ function Projects() {
           </article>
         ))}
       </div>
-      <button type="button" className="mt-6 rounded-lg bg-brand-dark px-5 py-2.5 text-sm font-semibold text-brand">New project</button>
+      <button type="button" className="mt-6 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">New project</button>
     </DeveloperShell>
   )
 }

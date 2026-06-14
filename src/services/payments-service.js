@@ -1,5 +1,6 @@
 import { callEdgeFunction } from '../lib/edge-client'
 import { getDefaultProvider } from '../lib/payment-providers'
+import { getPaymentsMode } from '../lib/payments-config'
 
 const PAYMENTS_KEY = 'baytmiftah_payments'
 
@@ -60,7 +61,8 @@ export async function initiateCheckout({
       ok: true,
       source: 'local',
       checkout_url: null,
-      message: err.message || 'Checkout queued — configure STRIPE_SECRET_KEY or PAYSTACK_SECRET_KEY on Edge Functions.',
+      message: err.message || 'Configure STRIPE_SECRET_KEY or PAYSTACK_SECRET_KEY on Supabase Edge Functions, then redeploy.',
+      mode: getPaymentsMode(),
       payment: record,
     }
   }

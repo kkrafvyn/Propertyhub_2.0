@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTranslation } from '../i18n/LocaleContext'
 import { getRoleHomePath, isAdminRole, isAgencyRole, isAgentRole, isManageRole } from '../lib/roles'
 import { USER_ROLES } from '../platform/registry'
 
@@ -14,8 +15,8 @@ const checks = {
 
 export default function RoleProtectedRoute({ children, require = 'any', fallbackToLogin = true }) {
   const { user, role, profile, loading } = useAuth()
+  const { t } = useTranslation()
   const location = useLocation()
-
   if (loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
@@ -36,14 +37,13 @@ export default function RoleProtectedRoute({ children, require = 'any', fallback
     if (!ok) {
       return (
         <div className="mx-auto max-w-lg px-6 py-20 text-center">
-          <h1 className="text-xl font-semibold">Access restricted</h1>
+          <h1 className="text-xl font-semibold">{t('access.restricted')}</h1>
           <p className="mt-2 text-ink-secondary">
-            This area requires {allowed.join(' or ')} permissions. Your role: {role || 'buyer'}.
+            {t('access.requires', { roles: allowed.join(' / '), role: t(`roles.${role || 'buyer'}`) })}
           </p>
-          <a href={getRoleHomePath(user, profile)} className="mt-4 inline-block text-sm font-semibold text-brand-dark underline">
-            Go to your workspace
-          </a>
-        </div>
+          <a href={getRoleHomePath(user, profile)} className="mt-4 inline-block text-sm font-semibold text-ink underline">
+            {t('access.goToWorkspace')}
+          </a>        </div>
       )
     }
   }

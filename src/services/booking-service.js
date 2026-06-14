@@ -1,9 +1,9 @@
 import { callEdgeFunction } from '../lib/edge-client'
-import { createViewingRequestInDb, fetchViewingSlotsFromDb, fetchViewingsFromDb } from '../lib/supabase-db'
+import { createViewingRequestInDb, fetchViewingSlotsFromDb, fetchViewingsFromDb, upsertUserProfileFromAuth } from '../lib/supabase-db'
 import { supabase } from '../lib/supabase'
 import { addTrip, getTrips } from '../lib/trips-storage'
 
-export async function requestViewing({ listingId, date, guests = 1, notes = '', slotId = null }) {
+export async function requestViewing({ listingId, date, guests = 1, notes = '', slotId = null, listingTitle = '', hostName = '' }) {
   try {
     return await callEdgeFunction('bookings', {
       method: 'POST',
@@ -21,6 +21,7 @@ export async function requestViewing({ listingId, date, guests = 1, notes = '', 
     if (supabase) {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        await upsertUserProfileFromAuth(user)
         const row = await createViewingRequestInDb({
           userId: user.id,
           listingId,
@@ -28,7 +29,20 @@ export async function requestViewing({ listingId, date, guests = 1, notes = '', 
           guests,
           notes: slotId ? `${notes} Slot: ${slotId}`.trim() : notes,
         })
-        if (row) return { ok: true, request: row, source: 'supabase' }
+        if (row) {
+          try {
+            const { openListingConversation } = await import('./messaging-service')
+            await openListingConversation({
+              listingId,
+              listingTitle: listingTitle || listingId,
+              participantName: hostName || 'Property host',
+              initialMessage: `Viewing request for ${date}${guests > 1 ? ` (${guests} guests)` : ''}.`,
+            })
+          } catch {
+            /* messaging optional */
+          }
+          return { ok: true, request: row, source: 'supabase' }
+        }
       }
     }
     return addTrip({

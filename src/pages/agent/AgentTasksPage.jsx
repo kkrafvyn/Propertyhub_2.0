@@ -15,15 +15,15 @@ function Tasks() {
   }
 
   return (
-    <AgentShell title="Tasks" subtitle="Follow-ups, documents, and listing updates">
+    <AgentShell titleKey="hubs.agent.tasks.title" subtitleKey="hubs.agent.tasks.subtitle">
       <ul className="space-y-3">
         {tasks.map((t) => (
-          <li key={t.id} className="flex items-start gap-3 rounded-card border border-surface-border bg-surface p-4">
+          <li key={t.id} className="flex items-start gap-3 panel-card bg-surface p-4">
             <button
               type="button"
               onClick={() => toggleDone(t.id)}
               className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${
-                t.done ? 'bg-brand-dark text-brand' : 'border border-surface-border'
+                t.done ? 'bg-brand-accent text-white' : 'border border-surface-border'
               }`}
             >
               {t.done ? '✓' : ''}

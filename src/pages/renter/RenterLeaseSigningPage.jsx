@@ -21,10 +21,10 @@ function LeaseSigning() {
   }
 
   return (
-    <RenterShell title="Digital lease signing" subtitle="Review and sign lease documents securely">
+    <RenterShell titleKey="hubs.renter.leaseSigning.title" subtitleKey="hubs.renter.leaseSigning.subtitle">
       <div className="space-y-3">
         {documents.map((doc) => (
-          <article key={doc.id} className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-surface-border bg-surface p-4">
+          <article key={doc.id} className="flex flex-wrap items-center justify-between gap-3 panel-card bg-surface p-4">
             <div>
               <p className="font-semibold">{doc.name}</p>
               {doc.signedAt && <p className="text-sm text-ink-secondary">Signed {doc.signedAt}</p>}
@@ -36,7 +36,7 @@ function LeaseSigning() {
                 type="button"
                 onClick={() => handleSign(doc.id)}
                 disabled={signing === doc.id}
-                className="rounded-lg bg-brand-dark px-4 py-2 text-sm font-semibold text-brand disabled:opacity-60"
+                className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
               >
                 {signing === doc.id ? 'Signing…' : 'Sign document'}
               </button>
