@@ -838,5 +838,81 @@ export default {
     "remove": "Remove alert",
     "prompt": "Notify when price drops",
     "saved": "Price alert saved"
+  },
+  "extensions": {
+    "crm": {
+      "stageLead": "عميل محتمل",
+      "stageContacted": "تم التواصل",
+      "stageViewing": "معاينة",
+      "stageOffer": "عرض",
+      "stageClosed": "مغلق",
+      "whatsapp": "واتساب",
+      "sms": "رسالة نصية",
+      "messageLead": "مراسلة {{name}}",
+      "messagePlaceholder": "اكتب رسالتك…",
+      "send": "إرسال"
+    },
+    "payroll": {
+      "totalPeriod": "الإجمالي لهذه الفترة",
+      "name": "الاسم",
+      "role": "الدور",
+      "base": "الأساسي",
+      "commission": "العمولة",
+      "status": "الحالة",
+      "run": "تشغيل الرواتب",
+      "exportCsv": "تصدير CSV"
+    },
+    "units": {
+      "inventoryTitle": "مخزون الوحدات",
+      "unit": "الوحدة",
+      "floor": "الطابق",
+      "beds": "غرف",
+      "sqft": "قدم²",
+      "price": "السعر",
+      "status": "الحالة",
+      "empty": "لا توجد وحدات لهذا المشروع بعد."
+    },
+    "iot": {
+      "webhookTitle": "نقطة webhook للأجهزة الذكية",
+      "webhookHint": "أرسل أحداث الأجهزة إلى هذا الرابط من المحور الذكي أو المستشعرات.",
+      "testEvent": "محاكاة حدث",
+      "recentEvents": "أحداث webhook الأخيرة"
+    },
+    "insurance": {
+      "getQuote": "طلب عرض",
+      "quoteTitle": "عرض — {{name}}",
+      "propertyValue": "قيمة العقار (GHS)",
+      "coverageType": "نوع التغطية",
+      "building": "المبنى فقط",
+      "contents": "المحتويات فقط",
+      "combined": "المبنى + المحتويات",
+      "estimatedPremium": "القسط التقديري",
+      "requesting": "جاري الطلب…",
+      "requestQuote": "طلب عرض سعر"
+    },
+    "ussd": {
+      "payViaUssd": "الدفع عبر USSD",
+      "title": "المال المحمول (USSD)",
+      "instructions": "اتصل بهذا الرمز على هاتفك للدفع عبر MTN/Vodafone."
+    },
+    "docusign": {
+      "signViaDocusign": "التوقيع عبر DocuSign",
+      "signing": "جاري فتح التوقيع…",
+      "legalNote": "التوقيعات الإلكترونية ملزمة قانوناً بموجب قانون المعاملات الإلكترونية في غانا."
+    },
+    "fraud": {
+      "rulesTitle": "قواعد مكافحة الاحتيال النشطة",
+      "alertsTitle": "تنبيهات الاحتيال",
+      "threshold": "الحد",
+      "riskScore": "درجة المخاطر",
+      "resolve": "حل"
+    },
+    "push": {
+      "title": "تفعيل الإشعارات",
+      "body": "احصل على تنبيهات للمعاينات والرسائل وتذكيرات الإيجار.",
+      "enable": "تفعيل",
+      "enabling": "جاري التفعيل…",
+      "later": "ليس الآن"
+    }
   }
 }

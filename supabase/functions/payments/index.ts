@@ -84,6 +84,39 @@ Deno.serve(async (req) => {
     if (req.method === 'POST') {
       const body = await req.json()
 
+      if (body.action === 'ussd_initiate') {
+        const ussd = body.ussd_code ?? `*713*33*${String(body.payment_id ?? '').slice(-8)}#`
+        await admin.from('payment_records').insert({
+          id: crypto.randomUUID(),
+          user_id: user.id,
+          purpose: 'rent_ussd',
+          amount: Number(body.amount) || 0,
+          currency: 'GHS',
+          provider: 'paystack_ussd',
+          status: 'pending',
+          metadata: { payment_id: body.payment_id, phone: body.phone, ussd_code: ussd },
+        }).catch((e) => console.error('ussd record failed', e.message))
+        return jsonResponse({
+          ok: true,
+          ussd,
+          message: 'Dial the USSD code on your phone to complete mobile money payment.',
+        })
+      }
+
+      if (body.action === 'insurance_quote') {
+        const propertyValue = Number(body.property_value) || 500000
+        const premium = Math.round(propertyValue * 0.0025)
+        const { data } = await admin.from('insurance_quotes').insert({
+          user_id: user.id,
+          product_id: body.product_id,
+          property_value: propertyValue,
+          coverage_type: body.coverage_type ?? 'building',
+          premium_estimate: premium,
+          status: 'quoted',
+        }).select('*').single()
+        return jsonResponse({ ok: true, quote: data ?? { premium_estimate: premium, status: 'quoted' } })
+      }
+
       if (body.action === 'create_checkout' || body.action === 'create_boost') {
         const purpose = body.action === 'create_boost' ? 'featured_boost' : body.purpose
         const amount = Number(body.amount) || (body.action === 'create_boost' ? 299 : 0)

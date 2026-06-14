@@ -45,6 +45,72 @@ html.dark .border-surface-border {
   border-color: #3d5a52;
 }
 
+html.dark .shadow-search,
+html.dark .shadow-card {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+html.dark .text-ink-muted {
+  color: #8a9a94;
+}
+
+html.dark .bg-brand-accent {
+  background-color: #e07a5f;
+}
+
+html.dark .panel-card {
+  background-color: #1a3830;
+  border-color: #3d5a52;
+}
+
+html.dark .search-pill {
+  background-color: #1a3830;
+  border-color: #3d5a52;
+}
+
+html.dark .nav-pill:hover,
+html.dark .workspace-nav-link:hover {
+  background-color: #243d35;
+}
+
+html.dark .filter-chip {
+  border-color: #f7f7f7;
+  color: #f7f7f7;
+}
+
+html.dark .category-chip.active {
+  border-color: #f7f7f7;
+}
+
+html.dark .hub-link-card:hover {
+  background-color: #243d35;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #1a3830;
+  color: #f7f7f7;
+  border-color: #3d5a52;
+}
+
+html.dark ::placeholder {
+  color: #8a9a94;
+}
+
+html.dark :focus-visible {
+  outline-color: #e07a5f;
+}
+
+html.dark header.sticky {
+  background-color: #1a3830;
+}
+
+html.dark code {
+  background-color: #243d35;
+  color: #f7f7f7;
+}
+
 :focus-visible {
   outline: 2px solid #222222;
   outline-offset: 2px;

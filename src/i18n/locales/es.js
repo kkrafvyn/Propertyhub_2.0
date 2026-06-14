@@ -838,5 +838,81 @@ export default {
     "remove": "Remove alert",
     "prompt": "Notify when price drops",
     "saved": "Price alert saved"
+  },
+  "extensions": {
+    "crm": {
+      "stageLead": "Prospecto",
+      "stageContacted": "Contactado",
+      "stageViewing": "Visita",
+      "stageOffer": "Oferta",
+      "stageClosed": "Cerrado",
+      "whatsapp": "WhatsApp",
+      "sms": "SMS",
+      "messageLead": "Mensaje a {{name}}",
+      "messagePlaceholder": "Escribe tu mensaje…",
+      "send": "Enviar"
+    },
+    "payroll": {
+      "totalPeriod": "total este período",
+      "name": "Nombre",
+      "role": "Rol",
+      "base": "Base",
+      "commission": "Comisión",
+      "status": "Estado",
+      "run": "Ejecutar nómina",
+      "exportCsv": "Exportar CSV"
+    },
+    "units": {
+      "inventoryTitle": "Inventario de unidades",
+      "unit": "Unidad",
+      "floor": "Piso",
+      "beds": "Habitaciones",
+      "sqft": "Pies²",
+      "price": "Precio",
+      "status": "Estado",
+      "empty": "Aún no hay unidades para este proyecto."
+    },
+    "iot": {
+      "webhookTitle": "Endpoint webhook IoT",
+      "webhookHint": "Envía eventos de dispositivos a esta URL desde tu hub o sensores.",
+      "testEvent": "Simular evento",
+      "recentEvents": "Eventos webhook recientes"
+    },
+    "insurance": {
+      "getQuote": "Obtener cotización",
+      "quoteTitle": "Cotización — {{name}}",
+      "propertyValue": "Valor de la propiedad (GHS)",
+      "coverageType": "Tipo de cobertura",
+      "building": "Solo edificio",
+      "contents": "Solo contenido",
+      "combined": "Edificio + contenido",
+      "estimatedPremium": "Prima estimada",
+      "requesting": "Solicitando…",
+      "requestQuote": "Solicitar cotización"
+    },
+    "ussd": {
+      "payViaUssd": "Pagar vía USSD",
+      "title": "Dinero móvil (USSD)",
+      "instructions": "Marca este código en tu teléfono para pagar vía MTN/Vodafone."
+    },
+    "docusign": {
+      "signViaDocusign": "Firmar con DocuSign",
+      "signing": "Abriendo firmante…",
+      "legalNote": "Las firmas electrónicas son legalmente vinculantes según la ley de transacciones electrónicas de Ghana."
+    },
+    "fraud": {
+      "rulesTitle": "Reglas antifraude activas",
+      "alertsTitle": "Alertas de fraude",
+      "threshold": "Umbral",
+      "riskScore": "Puntuación de riesgo",
+      "resolve": "Resolver"
+    },
+    "push": {
+      "title": "Activar notificaciones",
+      "body": "Recibe alertas de visitas, mensajes y recordatorios de alquiler.",
+      "enable": "Activar",
+      "enabling": "Activando…",
+      "later": "Ahora no"
+    }
   }
 }

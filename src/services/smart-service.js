@@ -1,4 +1,6 @@
 import { callEdgeFunction } from '../lib/edge-client'
+import { supabase, supabaseUrl } from '../lib/supabase'
+import { fetchIotEventsFromDb, insertIotEventInDb } from '../lib/supabase-db'
 import {
   smartPortfolio,
   smartDevices,
@@ -6,6 +8,11 @@ import {
   smartAlerts,
   eventLogs,
 } from '../data/smart'
+
+export function getIotWebhookUrl() {
+  if (!supabaseUrl) return null
+  return `${supabaseUrl}/functions/v1/iot-webhook`
+}
 
 export async function fetchSmartDashboard() {
   try {
@@ -51,6 +58,41 @@ export async function fetchAlertsAndLogs() {
   return { alerts: smartAlerts, logs: eventLogs, source: 'local' }
 }
 
+export async function fetchIotEvents() {
+  if (supabase) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const rows = await fetchIotEventsFromDb(user.id)
+      if (rows?.length) return { events: rows, source: 'supabase' }
+    }
+  }
+  return { events: [], source: 'local' }
+}
+
+export async function simulateIotEvent({ deviceId, eventType, payload }) {
+  if (supabase) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const row = await insertIotEventInDb({
+        ownerId: user.id,
+        deviceId,
+        eventType,
+        payload,
+      })
+      if (row) return { ok: true, event: row, source: 'supabase' }
+    }
+  }
+  try {
+    return await callEdgeFunction('iot-webhook', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { device_id: deviceId, event_type: eventType, payload },
+    })
+  } catch {
+    return { ok: true, source: 'local' }
+  }
+}
+
 export async function toggleAutomation(id, enabled) {
   try {
     return await callEdgeFunction('smart', {
@@ -64,9 +106,12 @@ export async function toggleAutomation(id, enabled) {
 }
 
 export default {
+  getIotWebhookUrl,
   fetchSmartDashboard,
   fetchDevices,
   fetchAutomations,
   fetchAlertsAndLogs,
+  fetchIotEvents,
+  simulateIotEvent,
   toggleAutomation,
 }

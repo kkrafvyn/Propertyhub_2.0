@@ -3,6 +3,7 @@ import UserMenu from './UserMenu'
 import Logo from './Logo'
 import LanguageSwitcher from './LanguageSwitcher'
 import NotificationBell from './NotificationBell'
+import PushPrompt from './PushPrompt'
 import { useCurrency } from '../context/CurrencyContext'
 import { useTheme } from '../context/ThemeContext'
 import { IconSearch } from './icons'
@@ -258,6 +259,7 @@ export default function DesktopShell({
         {children}
       </main>
       {!minimal && <Footer />}
+      <PushPrompt />
     </div>
   )
 }

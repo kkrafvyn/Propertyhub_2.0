@@ -33,7 +33,11 @@ $functions = @(
   "developer",
   "enterprise",
   "trust",
-  "email"
+  "email",
+  "communications",
+  "push",
+  "docusign",
+  "iot-webhook"
 )
 
 foreach ($fn in $functions) {

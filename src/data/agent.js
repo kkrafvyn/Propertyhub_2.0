@@ -1,11 +1,11 @@
 export const LEAD_STAGES = ['lead', 'contacted', 'viewing', 'offer', 'closed']
 
 export const agentLeads = [
-  { id: 'al1', name: 'Daniel K.', property: 'Cantonments Sky Villa', stage: 'viewing', value: 125000, updated: '2h ago' },
-  { id: 'al2', name: 'Sarah A.', property: 'Labone Penthouse', stage: 'offer', value: 4200000, updated: '5h ago' },
-  { id: 'al3', name: 'Michael T.', property: 'East Legon Family Home', stage: 'contacted', value: 58000, updated: '1d ago' },
-  { id: 'al4', name: 'Grace M.', property: 'Airport Townhouse', stage: 'lead', value: 6850000, updated: '2d ago' },
-  { id: 'al5', name: 'James O.', property: 'Osu Office Suite', stage: 'closed', value: 42000, updated: '1w ago' },
+  { id: 'al1', name: 'Daniel K.', property: 'Cantonments Sky Villa', stage: 'viewing', value: 125000, updated: '2h ago', phone: '0244123456', email: 'daniel@example.com' },
+  { id: 'al2', name: 'Sarah A.', property: 'Labone Penthouse', stage: 'offer', value: 4200000, updated: '5h ago', phone: '0555987654', email: 'sarah@example.com' },
+  { id: 'al3', name: 'Michael T.', property: 'East Legon Family Home', stage: 'contacted', value: 58000, updated: '1d ago', phone: '0203112233' },
+  { id: 'al4', name: 'Grace M.', property: 'Airport Townhouse', stage: 'lead', value: 6850000, updated: '2d ago', phone: '0277889900' },
+  { id: 'al5', name: 'James O.', property: 'Osu Office Suite', stage: 'closed', value: 42000, updated: '1w ago', phone: '0501234567' },
 ]
 
 export const agentStats = {

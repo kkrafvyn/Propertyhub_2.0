@@ -838,5 +838,81 @@ export default {
     "remove": "Remove alert",
     "prompt": "Notify when price drops",
     "saved": "Price alert saved"
+  },
+  "extensions": {
+    "crm": {
+      "stageLead": "Prospect",
+      "stageContacted": "Contacté",
+      "stageViewing": "Visite",
+      "stageOffer": "Offre",
+      "stageClosed": "Clôturé",
+      "whatsapp": "WhatsApp",
+      "sms": "SMS",
+      "messageLead": "Message à {{name}}",
+      "messagePlaceholder": "Écrivez votre message…",
+      "send": "Envoyer"
+    },
+    "payroll": {
+      "totalPeriod": "total cette période",
+      "name": "Nom",
+      "role": "Rôle",
+      "base": "Base",
+      "commission": "Commission",
+      "status": "Statut",
+      "run": "Lancer la paie",
+      "exportCsv": "Exporter CSV"
+    },
+    "units": {
+      "inventoryTitle": "Inventaire des unités",
+      "unit": "Unité",
+      "floor": "Étage",
+      "beds": "Chambres",
+      "sqft": "Pieds²",
+      "price": "Prix",
+      "status": "Statut",
+      "empty": "Aucune unité pour ce projet pour l'instant."
+    },
+    "iot": {
+      "webhookTitle": "Point de terminaison IoT webhook",
+      "webhookHint": "Envoyez les événements des appareils à cette URL depuis votre hub ou capteurs.",
+      "testEvent": "Simuler un événement",
+      "recentEvents": "Événements webhook récents"
+    },
+    "insurance": {
+      "getQuote": "Obtenir un devis",
+      "quoteTitle": "Devis — {{name}}",
+      "propertyValue": "Valeur du bien (GHS)",
+      "coverageType": "Type de couverture",
+      "building": "Bâtiment uniquement",
+      "contents": "Contenu uniquement",
+      "combined": "Bâtiment + contenu",
+      "estimatedPremium": "Prime estimée",
+      "requesting": "Demande en cours…",
+      "requestQuote": "Demander un devis"
+    },
+    "ussd": {
+      "payViaUssd": "Payer via USSD",
+      "title": "Mobile money (USSD)",
+      "instructions": "Composez ce code sur votre téléphone pour payer via MTN/Vodafone."
+    },
+    "docusign": {
+      "signViaDocusign": "Signer avec DocuSign",
+      "signing": "Ouverture du signataire…",
+      "legalNote": "Les signatures électroniques sont juridiquement contraignantes en vertu de la loi ghanéenne sur les transactions électroniques."
+    },
+    "fraud": {
+      "rulesTitle": "Règles anti-fraude actives",
+      "alertsTitle": "Alertes fraude",
+      "threshold": "Seuil",
+      "riskScore": "Score de risque",
+      "resolve": "Résoudre"
+    },
+    "push": {
+      "title": "Activer les notifications",
+      "body": "Recevez des alertes pour les visites, messages et rappels de loyer.",
+      "enable": "Activer",
+      "enabling": "Activation…",
+      "later": "Plus tard"
+    }
   }
 }

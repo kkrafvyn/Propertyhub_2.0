@@ -1,5 +1,6 @@
 import { callEdgeFunction } from '../lib/edge-client'
-import { developerProfile, developerProjects, constructionMilestones, developerBuyers } from '../data/developer'
+import { fetchDeveloperUnitsFromDb } from '../lib/supabase-db'
+import { developerProfile, developerProjects, constructionMilestones, developerBuyers, developerUnits } from '../data/developer'
 
 export async function fetchDeveloperDashboard() {
   try {
@@ -21,6 +22,24 @@ export async function fetchProjects() {
     if (payload?.projects?.length) return { projects: payload.projects, source: 'supabase' }
   } catch { /* fallback */ }
   return { projects: developerProjects, source: 'local' }
+}
+
+export async function fetchProjectUnits(projectId) {
+  const rows = await fetchDeveloperUnitsFromDb(projectId)
+  if (rows?.length) return { units: rows, source: 'supabase' }
+
+  try {
+    const payload = await callEdgeFunction('developer', {
+      allowAnonymous: false,
+      query: { action: 'units', project_id: projectId },
+    })
+    if (payload?.units?.length) return { units: payload.units, source: 'supabase' }
+  } catch { /* fallback */ }
+
+  const filtered = projectId
+    ? developerUnits.filter((u) => u.project_id === projectId)
+    : developerUnits
+  return { units: filtered, source: 'local' }
 }
 
 export async function fetchConstruction() {
@@ -45,4 +64,4 @@ export async function fetchDeveloperBuyers() {
   return { buyers: developerBuyers, source: 'local' }
 }
 
-export default { fetchDeveloperDashboard, fetchProjects, fetchConstruction, fetchDeveloperBuyers }
+export default { fetchDeveloperDashboard, fetchProjects, fetchProjectUnits, fetchConstruction, fetchDeveloperBuyers }

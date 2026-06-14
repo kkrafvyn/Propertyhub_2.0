@@ -1,16 +1,9 @@
 import { useEffect, useState } from 'react'
 import AgentShell from '../../components/AgentShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
-import { fetchLeads } from '../../services/agent-service'
-import { LEAD_STAGES } from '../../data/agent'
-
-const stageLabels = {
-  lead: 'Lead',
-  contacted: 'Contacted',
-  viewing: 'Viewing',
-  offer: 'Offer',
-  closed: 'Closed',
-}
+import LeadPipelineBoard from '../../components/LeadPipelineBoard'
+import { fetchLeads, updateLeadStage } from '../../services/agent-service'
+import { sendLeadMessage } from '../../services/comms-service'
 
 function LeadsBoard() {
   const [leads, setLeads] = useState([])
@@ -23,10 +16,10 @@ function LeadsBoard() {
     })
   }, [])
 
-  const byStage = LEAD_STAGES.reduce((acc, stage) => {
-    acc[stage] = leads.filter((l) => l.stage === stage)
-    return acc
-  }, {})
+  async function handleStageChange(leadId, stage) {
+    await updateLeadStage(leadId, stage)
+    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage, updated_label: 'Just now' } : l)))
+  }
 
   if (loading) {
     return (
@@ -38,26 +31,7 @@ function LeadsBoard() {
 
   return (
     <AgentShell titleKey="hubs.agent.leads.title" subtitleKey="hubs.agent.leads.pipelineSubtitle">
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {LEAD_STAGES.map((stage) => (
-          <div key={stage} className="min-w-[220px] flex-1 panel-card bg-surface-subtle p-3">
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-secondary">
-              {stageLabels[stage]} ({byStage[stage].length})
-            </h3>
-            <div className="space-y-2">
-              {byStage[stage].map((lead) => (
-                <article key={lead.id} className="rounded-lg border border-surface-border bg-surface p-3 text-sm shadow-sm">
-                  <p className="font-semibold">{lead.name}</p>
-                  <p className="text-ink-secondary">{lead.property}</p>
-                  <p className="mt-1 text-xs text-ink-muted">
-                    GHS {Number(lead.value).toLocaleString()} · {lead.updated_label || lead.updated}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      <LeadPipelineBoard leads={leads} onStageChange={handleStageChange} onMessage={sendLeadMessage} />
     </AgentShell>
   )
 }

@@ -838,5 +838,81 @@ export default {
     "remove": "Remove alert",
     "prompt": "Notify when price drops",
     "saved": "Price alert saved"
+  },
+  "extensions": {
+    "crm": {
+      "stageLead": "Lead",
+      "stageContacted": "Contactado",
+      "stageViewing": "Visita",
+      "stageOffer": "Oferta",
+      "stageClosed": "Fechado",
+      "whatsapp": "WhatsApp",
+      "sms": "SMS",
+      "messageLead": "Mensagem para {{name}}",
+      "messagePlaceholder": "Escreva a sua mensagem…",
+      "send": "Enviar"
+    },
+    "payroll": {
+      "totalPeriod": "total deste período",
+      "name": "Nome",
+      "role": "Função",
+      "base": "Base",
+      "commission": "Comissão",
+      "status": "Estado",
+      "run": "Executar folha",
+      "exportCsv": "Exportar CSV"
+    },
+    "units": {
+      "inventoryTitle": "Inventário de unidades",
+      "unit": "Unidade",
+      "floor": "Andar",
+      "beds": "Quartos",
+      "sqft": "Pés²",
+      "price": "Preço",
+      "status": "Estado",
+      "empty": "Ainda não há unidades para este projeto."
+    },
+    "iot": {
+      "webhookTitle": "Endpoint webhook IoT",
+      "webhookHint": "Envie eventos de dispositivos para este URL a partir do hub ou sensores.",
+      "testEvent": "Simular evento",
+      "recentEvents": "Eventos webhook recentes"
+    },
+    "insurance": {
+      "getQuote": "Obter cotação",
+      "quoteTitle": "Cotação — {{name}}",
+      "propertyValue": "Valor do imóvel (GHS)",
+      "coverageType": "Tipo de cobertura",
+      "building": "Apenas edifício",
+      "contents": "Apenas conteúdo",
+      "combined": "Edifício + conteúdo",
+      "estimatedPremium": "Prémio estimado",
+      "requesting": "A solicitar…",
+      "requestQuote": "Pedir cotação"
+    },
+    "ussd": {
+      "payViaUssd": "Pagar via USSD",
+      "title": "Dinheiro móvel (USSD)",
+      "instructions": "Disque este código no telemóvel para pagar via MTN/Vodafone."
+    },
+    "docusign": {
+      "signViaDocusign": "Assinar com DocuSign",
+      "signing": "A abrir assinatura…",
+      "legalNote": "As assinaturas eletrónicas são legalmente vinculativas ao abrigo da lei de transações eletrónicas do Gana."
+    },
+    "fraud": {
+      "rulesTitle": "Regras antifraude ativas",
+      "alertsTitle": "Alertas de fraude",
+      "threshold": "Limite",
+      "riskScore": "Pontuação de risco",
+      "resolve": "Resolver"
+    },
+    "push": {
+      "title": "Ativar notificações",
+      "body": "Receba alertas de visitas, mensagens e lembretes de renda.",
+      "enable": "Ativar",
+      "enabling": "A ativar…",
+      "later": "Agora não"
+    }
   }
 }

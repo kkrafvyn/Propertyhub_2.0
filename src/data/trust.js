@@ -11,6 +11,12 @@ export const fraudAlerts = [
   { id: 'f3', target: 'Duplicate photos across listings', type: 'media_fraud', riskScore: 82, status: 'blocked', detected: '2026-06-09' },
 ]
 
+export const fraudRules = [
+  { id: 'velocity_listings', name: 'Listing velocity', rule_type: 'listings_per_day', threshold: 5, description: 'Flag users posting more than N listings per day' },
+  { id: 'price_anomaly', name: 'Price anomaly', rule_type: 'price_deviation_pct', threshold: 40, description: 'Flag listings priced far below neighborhood median' },
+  { id: 'duplicate_phone', name: 'Duplicate contact', rule_type: 'duplicate_phone', threshold: 1, description: 'Flag leads sharing the same phone across agents' },
+]
+
 export const aiModules = [
   { id: 'ai1', name: 'Buyer advisor', route: '/buyer/advisor', status: 'active', requests24h: 47 },
   { id: 'ai2', name: 'Listing coach', route: '/agent/coach', status: 'active', requests24h: 23 },

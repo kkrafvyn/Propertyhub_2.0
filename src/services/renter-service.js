@@ -1,4 +1,9 @@
 import { callEdgeFunction } from '../lib/edge-client'
+import { supabase } from '../lib/supabase'
+import {
+  fetchLeaseDocumentsFromDb,
+  signLeaseDocumentInDb,
+} from '../lib/supabase-db'
 import {
   renterProfile,
   leases,
@@ -94,6 +99,13 @@ export async function submitMaintenanceRequest({ title, category, priority, note
 }
 
 export async function fetchLeaseDocuments() {
+  if (supabase) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const rows = await fetchLeaseDocumentsFromDb(user.id)
+      if (rows?.length) return { documents: rows, source: 'supabase' }
+    }
+  }
   try {
     const payload = await callEdgeFunction('renter', {
       allowAnonymous: false,
@@ -105,6 +117,12 @@ export async function fetchLeaseDocuments() {
 }
 
 export async function signLeaseDocument(documentId) {
+  if (supabase) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user && await signLeaseDocumentInDb(user.id, documentId)) {
+      return { ok: true, document_id: documentId, signed_at: new Date().toISOString().slice(0, 10), source: 'supabase' }
+    }
+  }
   try {
     return await callEdgeFunction('renter', {
       method: 'POST',

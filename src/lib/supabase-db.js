@@ -436,4 +436,172 @@ export async function createReferralInDb({ referrerId, code }) {
   return data
 }
 
+export async function fetchAgentLeadsFromDb(agentId) {
+  if (!supabase || !agentId) return null
+  const { data, error } = await supabase.from('agent_leads').select('*').eq('agent_id', agentId).order('created_at', { ascending: false })
+  if (error) return null
+  return data.map((r) => ({
+    id: r.id,
+    name: r.name,
+    property: r.property,
+    stage: r.stage,
+    value: Number(r.value),
+    phone: r.phone,
+    email: r.email,
+    updated: r.updated_label,
+    updated_label: r.updated_label,
+  }))
+}
+
+export async function updateAgentLeadStageInDb(agentId, leadId, stage) {
+  if (!supabase || !agentId) return null
+  const { error } = await supabase.from('agent_leads').update({ stage, updated_label: 'Just now' }).eq('id', leadId).eq('agent_id', agentId)
+  return !error
+}
+
+export async function logLeadMessageInDb({ leadId, agentId, channel, body, phone, status }) {
+  if (!supabase || !agentId) return null
+  const { data, error } = await supabase.from('lead_messages').insert({
+    lead_id: leadId,
+    agent_id: agentId,
+    channel,
+    body,
+    phone: phone || null,
+    status: status || 'queued',
+  }).select('*').single()
+  if (error) return null
+  return data
+}
+
+export async function fetchAgencyPayrollFromDb() {
+  if (!supabase) return null
+  const { data, error } = await supabase.from('agency_payroll').select('*').order('name')
+  if (error) return null
+  return data.map((r) => ({
+    id: r.id,
+    name: r.name,
+    role: r.role,
+    base: Number(r.base),
+    commission: Number(r.commission),
+    status: r.status,
+    period: r.period,
+  }))
+}
+
+export async function fetchDeveloperUnitsFromDb(projectId) {
+  if (!supabase) return null
+  let q = supabase.from('developer_units').select('*')
+  if (projectId) q = q.eq('project_id', projectId)
+  const { data, error } = await q.order('unit_number')
+  if (error) return null
+  return data
+}
+
+export async function updateDeveloperUnitInDb(unitId, patch) {
+  if (!supabase) return null
+  const { error } = await supabase.from('developer_units').update(patch).eq('id', unitId)
+  return !error
+}
+
+export async function createInsuranceQuoteInDb({ userId, productId, propertyValue, coverageType, premiumEstimate }) {
+  if (!supabase || !userId) return null
+  const { data, error } = await supabase.from('insurance_quotes').insert({
+    user_id: userId,
+    product_id: productId,
+    property_value: propertyValue,
+    coverage_type: coverageType,
+    premium_estimate: premiumEstimate,
+    status: 'quoted',
+  }).select('*').single()
+  if (error) return null
+  return data
+}
+
+export async function savePushTokenInDb({ userId, token, platform }) {
+  if (!supabase || !userId) return null
+  const { error } = await supabase.from('push_tokens').upsert({ user_id: userId, token, platform }, { onConflict: 'user_id,token' })
+  return !error
+}
+
+export async function createLeaseEnvelopeInDb({ userId, documentId, envelopeId, signingUrl, status }) {
+  if (!supabase || !userId) return null
+  const { data, error } = await supabase.from('lease_envelopes').insert({
+    user_id: userId,
+    document_id: documentId,
+    envelope_id: envelopeId,
+    signing_url: signingUrl,
+    status,
+  }).select('*').single()
+  if (error) return null
+  return data
+}
+
+export async function fetchFraudAlertsFromDb() {
+  if (!supabase) return null
+  const { data, error } = await supabase.from('fraud_alerts').select('*').order('created_at', { ascending: false })
+  if (error) return null
+  return data.map((r) => ({
+    id: r.id,
+    target: r.target,
+    alert_type: r.alert_type,
+    type: r.alert_type,
+    risk_score: r.risk_score,
+    riskScore: r.risk_score,
+    status: r.status,
+  }))
+}
+
+export async function updateFraudAlertInDb(id, status) {
+  if (!supabase) return null
+  const { error } = await supabase.from('fraud_alerts').update({ status }).eq('id', id)
+  return !error
+}
+
+export async function fetchFraudRulesFromDb() {
+  if (!supabase) return null
+  const { data, error } = await supabase.from('fraud_rules').select('*').eq('enabled', true)
+  if (error) return null
+  return data
+}
+
+export async function insertIotEventInDb({ ownerId, deviceId, eventType, payload }) {
+  if (!supabase) return null
+  const { data, error } = await supabase.from('iot_webhook_events').insert({
+    owner_id: ownerId,
+    device_id: deviceId,
+    event_type: eventType,
+    payload: payload || {},
+  }).select('*').single()
+  if (error) return null
+  return data
+}
+
+export async function fetchIotEventsFromDb(ownerId, limit = 20) {
+  if (!supabase || !ownerId) return null
+  const { data, error } = await supabase.from('iot_webhook_events').select('*').eq('owner_id', ownerId).order('created_at', { ascending: false }).limit(limit)
+  if (error) return null
+  return data
+}
+
+export async function fetchLeaseDocumentsFromDb(userId) {
+  if (!supabase || !userId) return null
+  const { data, error } = await supabase.from('lease_documents').select('*').eq('user_id', userId)
+  if (error) return null
+  return data.map((r) => ({
+    id: r.id,
+    name: r.name,
+    status: r.status === 'pending_signature' ? 'pending' : r.status,
+    signedAt: r.signed_at,
+  }))
+}
+
+export async function signLeaseDocumentInDb(userId, documentId) {
+  if (!supabase || !userId) return null
+  const { error } = await supabase.from('lease_documents').update({
+    status: 'signed',
+    signed_at: new Date().toISOString().slice(0, 10),
+  }).eq('id', documentId).eq('user_id', userId)
+  return !error
+}
+
 export { mapListingRow }

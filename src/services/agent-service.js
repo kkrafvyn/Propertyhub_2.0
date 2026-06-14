@@ -1,4 +1,9 @@
 import { callEdgeFunction } from '../lib/edge-client'
+import { supabase } from '../lib/supabase'
+import {
+  fetchAgentLeadsFromDb,
+  updateAgentLeadStageInDb,
+} from '../lib/supabase-db'
 import { agentCommissions, agentAnalytics, agentTasks, agentLeads, agentCalendar, agentStats } from '../data/agent'
 
 export async function fetchAgentDashboard() {
@@ -10,11 +15,36 @@ export async function fetchAgentDashboard() {
 }
 
 export async function fetchLeads() {
+  if (supabase) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const rows = await fetchAgentLeadsFromDb(user.id)
+      if (rows?.length) return { leads: rows, source: 'supabase' }
+    }
+  }
   try {
     const payload = await callEdgeFunction('agent', { allowAnonymous: false, query: { action: 'leads' } })
     if (payload?.leads?.length) return { leads: payload.leads, source: 'supabase' }
   } catch { /* fallback */ }
   return { leads: agentLeads, source: 'local' }
+}
+
+export async function updateLeadStage(leadId, stage) {
+  if (supabase) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user && await updateAgentLeadStageInDb(user.id, leadId, stage)) {
+      return { ok: true, source: 'supabase' }
+    }
+  }
+  try {
+    return await callEdgeFunction('agent', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'update_lead_stage', lead_id: leadId, stage },
+    })
+  } catch {
+    return { ok: true, source: 'local' }
+  }
 }
 
 export async function fetchCalendar() {
@@ -58,4 +88,4 @@ export async function toggleTask(taskId, done) {
   })
 }
 
-export default { fetchAgentDashboard, fetchLeads, fetchCalendar, fetchCommissions, fetchAnalytics, fetchTasks, toggleTask }
+export default { fetchAgentDashboard, fetchLeads, updateLeadStage, fetchCalendar, fetchCommissions, fetchAnalytics, fetchTasks, toggleTask }

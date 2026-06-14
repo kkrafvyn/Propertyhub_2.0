@@ -1,4 +1,5 @@
 import { callEdgeFunction } from '../lib/edge-client'
+import { fetchAgencyPayrollFromDb } from '../lib/supabase-db'
 import {
   agencyProfile,
   teamMembers,
@@ -51,6 +52,9 @@ export async function fetchBranches() {
 }
 
 export async function fetchPayroll() {
+  const rows = await fetchAgencyPayrollFromDb()
+  if (rows?.length) return { payroll: rows, source: 'supabase' }
+
   try {
     const payload = await callEdgeFunction('agencies', {
       allowAnonymous: false,
@@ -59,6 +63,18 @@ export async function fetchPayroll() {
     if (payload?.payroll?.length) return { payroll: payload.payroll, source: 'supabase' }
   } catch { /* fallback */ }
   return { payroll: agencyPayroll, source: 'local' }
+}
+
+export function exportPayrollCsv(payroll) {
+  return payroll.map((p) => ({
+    name: p.name,
+    role: p.role,
+    base: p.base,
+    commission: p.commission,
+    total: p.base + p.commission,
+    status: p.status,
+    period: p.period || '',
+  }))
 }
 
 export async function fetchAgencyAnalytics() {
@@ -99,6 +115,7 @@ export default {
   fetchTeam,
   fetchBranches,
   fetchPayroll,
+  exportPayrollCsv,
   fetchAgencyAnalytics,
   fetchTrustScore,
   fetchCompliance,

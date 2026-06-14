@@ -12,7 +12,8 @@ Deno.serve(async (req) => {
   const admin = createAdminClient()
   await ensureDeveloperData(admin, user.id)
 
-  const action = new URL(req.url).searchParams.get('action')
+  const url = new URL(req.url)
+  const action = url.searchParams.get('action')
 
   if (action === 'dashboard') {
     const { data: projects } = await admin.from('developer_projects').select('*').eq('owner_id', user.id)
@@ -47,6 +48,17 @@ Deno.serve(async (req) => {
     const ids = projects?.map((p) => p.id) ?? []
     const { data } = await admin.from('developer_buyers').select('*').in('project_id', ids)
     return jsonResponse({ buyers: data ?? [], source: 'supabase' })
+  }
+
+  if (action === 'units') {
+    const projectId = url.searchParams.get('project_id')
+    let q = admin.from('developer_units').select('*')
+    if (projectId) q = q.eq('project_id', projectId)
+    const { data: projects } = await admin.from('developer_projects').select('id').eq('owner_id', user.id)
+    const ids = projects?.map((p) => p.id) ?? []
+    if (ids.length) q = q.in('project_id', ids)
+    const { data } = await q.order('unit_number')
+    return jsonResponse({ units: data ?? [], source: 'supabase' })
   }
 
   return errorResponse('Unsupported action', 404)

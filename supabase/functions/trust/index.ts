@@ -43,6 +43,10 @@ Deno.serve(async (req) => {
       }))
       return jsonResponse({ alerts, source: 'supabase' })
     }
+    if (action === 'fraud_rules') {
+      const { data } = await admin.from('fraud_rules').select('*').eq('enabled', true)
+      return jsonResponse({ rules: data ?? [], source: 'supabase' })
+    }
     if (action === 'ai_modules') {
       const { data } = await admin.from('ai_modules').select('*')
       return jsonResponse({ modules: data ?? [], source: 'supabase' })
