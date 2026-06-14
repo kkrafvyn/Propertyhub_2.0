@@ -10,17 +10,18 @@ import {
   MobileTextLink,
 } from '../../components/ui/MobileUI'
 import { IconCard, IconDocument, IconPen, IconWrench } from '../../components/icons'
+import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchRenterDashboard, fetchRentPayments } from '../../services/renter-service'
 
-const links = [
-  { to: '/m/renter/leases', label: 'Leases', Icon: IconDocument },
-  { to: '/m/renter/payments', label: 'Pay rent', Icon: IconCard },
-  { to: '/m/renter/maintenance', label: 'Maintenance', Icon: IconWrench },
-  { to: '/m/renter/sign', label: 'Sign lease', Icon: IconPen },
-]
-
 function RenterHome() {
+  const { t } = useTranslation()
   const [profile, setProfile] = useState(null)
+  const links = [
+    { to: '/m/renter/leases', label: t('hubs.renter.leases.title'), Icon: IconDocument },
+    { to: '/m/renter/payments', label: t('hubs.renter.payments.title'), Icon: IconCard },
+    { to: '/m/renter/maintenance', label: t('hubs.renter.maintenance.title'), Icon: IconWrench },
+    { to: '/m/renter/sign', label: t('hubs.renter.leaseSigning.title'), Icon: IconPen },
+  ]
 
   useEffect(() => {
     fetchRenterDashboard().then(({ profile: p }) => setProfile(p))
@@ -28,7 +29,7 @@ function RenterHome() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Renter workspace" subtitle={profile?.unit || 'Your rental'} backTo="/m/profile" />
+      <MobileHeader title={t('mobile.renterWorkspace')} subtitle={profile?.unit || t('mobile.yourRental')} backTo="/m/profile" />
       <section className="space-y-4 px-4 pb-6">
         {profile && (
           <MobileCard>
@@ -51,6 +52,7 @@ function RenterHome() {
 }
 
 function RenterPaymentsMobile() {
+  const { t } = useTranslation()
   const [payments, setPayments] = useState([])
 
   useEffect(() => {
@@ -59,7 +61,7 @@ function RenterPaymentsMobile() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Rent payments" backTo="/m/renter" />
+      <MobileHeader title={t('mobile.rentPayments')} backTo="/m/renter" />
       <section className="space-y-3 px-4 pb-6">
         {payments.map((p) => (
           <MobileCard key={p.id}>
@@ -79,9 +81,10 @@ function RenterPaymentsMobile() {
 }
 
 function RenterLeasesMobile() {
+  const { t } = useTranslation()
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Leases" backTo="/m/renter" />
+      <MobileHeader title={t('hubs.renter.leases.title')} backTo="/m/renter" />
       <section className="px-4 pb-6">
         <MobilePrimaryButton as={Link} to="/renter/leases">View all leases</MobilePrimaryButton>
       </section>
@@ -90,9 +93,10 @@ function RenterLeasesMobile() {
 }
 
 function RenterMaintenanceMobile() {
+  const { t } = useTranslation()
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Maintenance" backTo="/m/renter" />
+      <MobileHeader title={t('hubs.renter.maintenance.title')} backTo="/m/renter" />
       <section className="px-4 pb-6">
         <MobilePrimaryButton as={Link} to="/renter/maintenance">Submit request</MobilePrimaryButton>
       </section>
@@ -101,9 +105,10 @@ function RenterMaintenanceMobile() {
 }
 
 function RenterSignMobile() {
+  const { t } = useTranslation()
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Lease signing" backTo="/m/renter" />
+      <MobileHeader title={t('mobile.leaseSigning')} backTo="/m/renter" />
       <section className="px-4 pb-6">
         <MobilePrimaryButton as={Link} to="/renter/sign">Sign documents</MobilePrimaryButton>
       </section>

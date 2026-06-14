@@ -73,6 +73,13 @@ export default {
     agencyWorkspace: 'Agency workspace',
     financeWorkspace: 'Finance workspace',
     propertyManagement: 'Property management',
+    agentPipelineMobile: 'Your pipeline on mobile',
+    yourRental: 'Your rental',
+    connectedHome: 'Connected home',
+    rentPayments: 'Rent payments',
+    leaseSigning: 'Lease signing',
+    smartProperty: 'Smart property',
+    alerts: 'Alerts',
   },
   auth: {
     welcome: 'Welcome to BaytMiftah',
@@ -339,6 +346,27 @@ export default {
     score: 'BaytMiftah score',
     growthLabel: 'Growth {{growth}}.',
   },
+  buyerHub: {
+    title: 'Buyer workspace',
+    subtitle: 'Your purchase journey — from search to close.',
+    links: {
+      saved: { label: 'Saved properties', desc: 'Homes you have shortlisted' },
+      trips: { label: 'Viewings & trips', desc: 'Scheduled property visits' },
+      offers: { label: 'Offer room', desc: 'Submit and track offers' },
+      transactions: { label: 'Transaction center', desc: 'Closing checklist and stages' },
+      documents: { label: 'Document vault', desc: 'Titles, offers, and contracts' },
+      finance: { label: 'Financing center', desc: 'Mortgages and partner banks' },
+      advisor: { label: 'AI buyer advisor', desc: 'Pricing and neighborhood insights' },
+      compare: { label: 'Compare', desc: 'Side-by-side property analysis' },
+      neighborhoods: { label: 'Neighborhood intel', desc: 'Schools, safety, growth' },
+    },
+  },
+  panels: {
+    upcoming: 'Upcoming',
+    recentLeads: 'Recent leads',
+    topListings: 'Top listings',
+    paymentProviders: 'Payment providers',
+  },
   workspace: {
     titles: {
       agent: 'Agent workspace',
@@ -462,6 +490,12 @@ export default {
         loadedSubtitle: '{{name}} · Trust score {{trustScore}}',
         subtitle: 'Loading your dashboard…',
         title: 'Agency overview',
+        stats: {
+          activeListings: 'Active listings',
+          teamMembers: 'Team members',
+          leadsThisMonth: 'Leads this month',
+          trustScore: 'Trust score',
+        },
       },
       leads: {
         subtitle: "Track inquiries and viewing pipeline",
@@ -508,6 +542,13 @@ export default {
         loadedSubtitle: 'Your pipeline at a glance',
         subtitle: 'Loading…',
         title: 'Agent dashboard',
+        stats: {
+          activeListings: 'Active listings',
+          leadsThisWeek: 'Leads this week',
+          viewingsScheduled: 'Viewings scheduled',
+          conversionRate: 'Conversion rate',
+        },
+        commissionPipeline: 'Commission pipeline: {{value}}',
       },
       leads: {
         pipelineSubtitle: 'Lead → Contacted → Viewing → Offer → Closed',
@@ -566,8 +607,13 @@ export default {
         title: "Escrow platform",
       },
       hub: {
-        subtitle: "Payments powered by Paystack (Africa) and Stripe (international)",
-        title: "Financial services",
+        subtitle: 'Payments powered by Paystack (Africa) and Stripe (international)',
+        title: 'Financial services',
+        stats: {
+          escrowFunded: 'Escrow funded',
+          pendingCommissions: 'Pending commissions',
+          mortgagePartners: 'Mortgage partners',
+        },
       },
       insurance: {
         subtitle: "Property, landlord, and tenant coverage",
@@ -576,6 +622,10 @@ export default {
       mortgageMarketplace: {
         subtitle: "Compare partner lenders and apply in-app",
         title: "Mortgage marketplace",
+      },
+      mortgageCalculator: {
+        subtitle: "Estimate monthly payments",
+        title: "Mortgage calculator",
       },
       rentCollection: {
         subtitle: "Collect rent via Paystack (Africa) or Stripe (international)",
@@ -622,7 +672,14 @@ export default {
     },
     renter: {
       hub: {
-        title: "Renter workspace",
+        title: 'Renter workspace',
+        subtitle: 'Your rental journey',
+        loadedSubtitle: '{{unit}} · GHS {{rent}}/mo',
+        stats: {
+          currentRent: 'Current rent',
+          leaseEnds: 'Lease ends',
+          landlord: 'Landlord',
+        },
       },
       leaseSigning: {
         subtitle: "Review and sign lease documents securely",

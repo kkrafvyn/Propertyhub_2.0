@@ -1,26 +1,25 @@
 import DesktopShell, { CompactSearch } from '../../components/DesktopShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { HubLinkGrid, PageTitle } from '../../components/ui/AirbnbUI'
-
-const links = [
-  { to: '/saved', label: 'Saved properties', desc: 'Homes you have shortlisted' },
-  { to: '/trips', label: 'Viewings & trips', desc: 'Scheduled property visits' },
-  { to: '/offers', label: 'Offer room', desc: 'Submit and track offers' },
-  { to: '/transactions', label: 'Transaction center', desc: 'Closing checklist and stages' },
-  { to: '/documents', label: 'Document vault', desc: 'Titles, offers, and contracts' },
-  { to: '/buyer/finance', label: 'Financing center', desc: 'Mortgages and partner banks' },
-  { to: '/buyer/advisor', label: 'AI buyer advisor', desc: 'Pricing and neighborhood insights' },
-  { to: '/compare', label: 'Compare', desc: 'Side-by-side property analysis' },
-  { to: '/neighborhoods', label: 'Neighborhood intel', desc: 'Schools, safety, growth' },
-]
+import { useTranslation } from '../../i18n/LocaleContext'
 
 function BuyerHub() {
+  const { t } = useTranslation()
+  const links = [
+    { to: '/saved', label: t('buyerHub.links.saved.label'), desc: t('buyerHub.links.saved.desc') },
+    { to: '/trips', label: t('buyerHub.links.trips.label'), desc: t('buyerHub.links.trips.desc') },
+    { to: '/offers', label: t('buyerHub.links.offers.label'), desc: t('buyerHub.links.offers.desc') },
+    { to: '/transactions', label: t('buyerHub.links.transactions.label'), desc: t('buyerHub.links.transactions.desc') },
+    { to: '/documents', label: t('buyerHub.links.documents.label'), desc: t('buyerHub.links.documents.desc') },
+    { to: '/buyer/finance', label: t('buyerHub.links.finance.label'), desc: t('buyerHub.links.finance.desc') },
+    { to: '/buyer/advisor', label: t('buyerHub.links.advisor.label'), desc: t('buyerHub.links.advisor.desc') },
+    { to: '/compare', label: t('buyerHub.links.compare.label'), desc: t('buyerHub.links.compare.desc') },
+    { to: '/neighborhoods', label: t('buyerHub.links.neighborhoods.label'), desc: t('buyerHub.links.neighborhoods.desc') },
+  ]
+
   return (
     <DesktopShell search={<CompactSearch />}>
-      <PageTitle
-        title="Buyer workspace"
-        subtitle="Your purchase journey — from search to close."
-      />
+      <PageTitle title={t('buyerHub.title')} subtitle={t('buyerHub.subtitle')} />
       <HubLinkGrid links={links} />
     </DesktopShell>
   )

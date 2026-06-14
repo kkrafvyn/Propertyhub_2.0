@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import AgencyShell from '../../components/AgencyShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { DataRow, PanelCard, StatCard, StatGrid } from '../../components/ui/AirbnbUI'
+import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchAgencyDashboard } from '../../services/agency-service'
 
 function AgencyOverview() {
+  const { t } = useTranslation()
   const [data, setData] = useState(null)
 
   useEffect(() => {
@@ -28,13 +30,13 @@ function AgencyOverview() {
       subtitleVars={{ name: agency.name, trustScore: agency.trustScore }}
     >
       <StatGrid>
-        <StatCard label="Active listings" value={agency.activeListings} />
-        <StatCard label="Team members" value={agency.teamCount} />
-        <StatCard label="Leads this month" value={agency.leadsThisMonth} />
-        <StatCard label="Trust score" value={`${agency.trustScore}%`} />
+        <StatCard label={t('hubs.agency.dashboard.stats.activeListings')} value={agency.activeListings} />
+        <StatCard label={t('hubs.agency.dashboard.stats.teamMembers')} value={agency.teamCount} />
+        <StatCard label={t('hubs.agency.dashboard.stats.leadsThisMonth')} value={agency.leadsThisMonth} />
+        <StatCard label={t('hubs.agency.dashboard.stats.trustScore')} value={`${agency.trustScore}%`} />
       </StatGrid>
       <div className="grid gap-6 lg:grid-cols-2">
-        <PanelCard title="Recent leads">
+        <PanelCard title={t('panels.recentLeads')}>
           {leads.slice(0, 3).map((lead) => (
             <DataRow
               key={lead.id}
@@ -43,7 +45,7 @@ function AgencyOverview() {
             />
           ))}
         </PanelCard>
-        <PanelCard title="Top listings">
+        <PanelCard title={t('panels.topListings')}>
           {listings.map((item) => (
             <DataRow key={item.id} primary={item.title} meta={`${item.views} views`} />
           ))}

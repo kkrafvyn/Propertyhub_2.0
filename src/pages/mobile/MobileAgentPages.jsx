@@ -10,24 +10,26 @@ import {
   MobileTextLink,
 } from '../../components/ui/MobileUI'
 import { IconCalendar, IconCheck, IconSparkle, IconUsers } from '../../components/icons'
+import { useTranslation } from '../../i18n/LocaleContext'
 import { agentStats, agentLeads, agentCalendar } from '../../data/agent'
 
-const links = [
-  { to: '/m/agent/leads', label: 'Leads', Icon: IconUsers },
-  { to: '/m/agent/calendar', label: 'Calendar', Icon: IconCalendar },
-  { to: '/m/agent/tasks', label: 'Tasks', Icon: IconCheck },
-  { to: '/m/agent/coach', label: 'Listing coach', Icon: IconSparkle },
-]
-
 function AgentHome() {
+  const { t } = useTranslation()
+  const links = [
+    { to: '/m/agent/leads', label: t('workspace.nav.leads'), Icon: IconUsers },
+    { to: '/m/agent/calendar', label: t('workspace.nav.calendar'), Icon: IconCalendar },
+    { to: '/m/agent/tasks', label: t('workspace.nav.tasks'), Icon: IconCheck },
+    { to: '/m/agent/coach', label: t('workspace.nav.listingCoach'), Icon: IconSparkle },
+  ]
+
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Agent workspace" subtitle="Your pipeline on mobile" backTo="/m/profile" />
+      <MobileHeader title={t('mobile.agentWorkspace')} subtitle={t('mobile.agentPipelineMobile')} backTo="/m/profile" />
       <section className="space-y-4 px-4 pb-6">
         <div className="grid grid-cols-2 gap-3">
-          <MobileStat label="Active listings" value={agentStats.activeListings} />
-          <MobileStat label="Leads this week" value={agentStats.leadsThisWeek} />
-          <MobileStat label="Viewings" value={agentStats.viewingsScheduled} />
+          <MobileStat label={t('hubs.agent.dashboard.stats.activeListings')} value={agentStats.activeListings} />
+          <MobileStat label={t('hubs.agent.dashboard.stats.leadsThisWeek')} value={agentStats.leadsThisWeek} />
+          <MobileStat label={t('hubs.agent.dashboard.stats.viewingsScheduled')} value={agentStats.viewingsScheduled} />
           <MobileStat label="Pipeline" value={agentStats.commissionPipeline} />
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -42,9 +44,10 @@ function AgentHome() {
 }
 
 function AgentLeads() {
+  const { t } = useTranslation()
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Leads" backTo="/m/agent" />
+      <MobileHeader title={t('workspace.nav.leads')} backTo="/m/agent" />
       <section className="space-y-3 px-4 pb-6">
         {agentLeads.map((lead) => (
           <MobileCard key={lead.id}>
@@ -62,9 +65,10 @@ function AgentLeads() {
 }
 
 function AgentCalendar() {
+  const { t } = useTranslation()
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Calendar" backTo="/m/agent" />
+      <MobileHeader title={t('workspace.nav.calendar')} backTo="/m/agent" />
       <section className="space-y-3 px-4 pb-6">
         {agentCalendar.map((ev) => (
           <MobileCard key={ev.id}>
@@ -78,9 +82,10 @@ function AgentCalendar() {
 }
 
 function AgentTasksMobile() {
+  const { t } = useTranslation()
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Tasks" backTo="/m/agent" />
+      <MobileHeader title={t('workspace.nav.tasks')} backTo="/m/agent" />
       <section className="space-y-3 px-4 pb-6">
         <p className="text-sm text-ink-secondary">Open desktop CRM for full task management.</p>
         <MobilePrimaryButton as={Link} to="/agent/tasks">Open full tasks</MobilePrimaryButton>
@@ -90,9 +95,10 @@ function AgentTasksMobile() {
 }
 
 function AgentCoachMobile() {
+  const { t } = useTranslation()
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Listing coach" backTo="/m/agent" />
+      <MobileHeader title={t('workspace.nav.listingCoach')} backTo="/m/agent" />
       <section className="px-4 pb-6">
         <MobileCard>
           <p className="text-4xl font-semibold text-ink">

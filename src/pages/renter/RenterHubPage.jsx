@@ -1,36 +1,38 @@
-import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import RenterShell from '../../components/RenterShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { HubLinkGrid, StatCard, StatGrid } from '../../components/ui/AirbnbUI'
+import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchRenterDashboard } from '../../services/renter-service'
 
-const links = [
-  { to: '/renter/leases', label: 'My leases', desc: 'Active and past rental agreements' },
-  { to: '/renter/payments', label: 'Rent payments', desc: 'Pay rent and view history' },
-  { to: '/renter/maintenance', label: 'Maintenance', desc: 'Submit and track repair requests' },
-  { to: '/renter/sign', label: 'Digital signing', desc: 'Sign lease documents' },
-  { to: '/documents', label: 'Document vault', desc: 'All rental documents' },
-  { to: '/', label: 'Browse rentals', desc: 'Find your next home' },
-]
-
 function RenterHub() {
+  const { t } = useTranslation()
   const [profile, setProfile] = useState(null)
 
   useEffect(() => {
     fetchRenterDashboard().then(({ profile: p }) => setProfile(p))
   }, [])
 
+  const links = [
+    { to: '/renter/leases', label: t('hubs.renter.leases.title'), desc: t('hubs.renter.leases.subtitle') },
+    { to: '/renter/payments', label: t('hubs.renter.payments.title'), desc: t('hubs.renter.payments.subtitle') },
+    { to: '/renter/maintenance', label: t('hubs.renter.maintenance.title'), desc: t('hubs.renter.maintenance.subtitle') },
+    { to: '/renter/sign', label: t('hubs.renter.leaseSigning.title'), desc: t('hubs.renter.leaseSigning.subtitle') },
+    { to: '/documents', label: t('profileNav.documentVault'), desc: t('buyerHub.links.documents.desc') },
+    { to: '/', label: t('common.browseHomes'), desc: t('mobile.findNextHome') },
+  ]
+
   return (
     <RenterShell
-      title="Renter workspace"
-      subtitle={profile ? `${profile.unit} · GHS ${profile.rentAmount.toLocaleString()}/mo` : 'Your rental journey'}
+      titleKey="hubs.renter.hub.title"
+      subtitleKey={profile ? 'hubs.renter.hub.loadedSubtitle' : 'hubs.renter.hub.subtitle'}
+      subtitleVars={profile ? { unit: profile.unit, rent: profile.rentAmount.toLocaleString() } : undefined}
     >
       {profile && (
         <StatGrid cols={3}>
-          <StatCard label="Current rent" value={`GHS ${profile.rentAmount.toLocaleString()}`} />
-          <StatCard label="Lease ends" value={profile.leaseEnd} />
-          <StatCard label="Landlord" value={profile.landlord} />
+          <StatCard label={t('hubs.renter.hub.stats.currentRent')} value={`GHS ${profile.rentAmount.toLocaleString()}`} />
+          <StatCard label={t('hubs.renter.hub.stats.leaseEnds')} value={profile.leaseEnd} />
+          <StatCard label={t('hubs.renter.hub.stats.landlord')} value={profile.landlord} />
         </StatGrid>
       )}
       <HubLinkGrid links={links} />

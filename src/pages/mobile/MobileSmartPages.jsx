@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import MobileShell, { MobileHeader } from '../../components/MobileShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { MobileCard, MobileStat, MobileTextLink } from '../../components/ui/MobileUI'
+import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchSmartDashboard, fetchDevices, fetchAlertsAndLogs } from '../../services/smart-service'
 
 function SmartHome() {
+  const { t } = useTranslation()
   const [portfolio, setPortfolio] = useState(null)
   const [devices, setDevices] = useState([])
 
@@ -15,7 +17,7 @@ function SmartHome() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Smart property" subtitle={portfolio?.building || 'Connected home'} backTo="/m/profile" />
+      <MobileHeader title={t('mobile.smartProperty')} subtitle={portfolio?.building || t('mobile.connectedHome')} backTo="/m/profile" />
       <section className="space-y-4 px-4 pb-6">
         {portfolio && (
           <div className="grid grid-cols-2 gap-3">
@@ -44,6 +46,7 @@ function SmartHome() {
 }
 
 function SmartAlertsMobile() {
+  const { t } = useTranslation()
   const [alerts, setAlerts] = useState([])
 
   useEffect(() => {
@@ -52,7 +55,7 @@ function SmartAlertsMobile() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Alerts" backTo="/m/smart" />
+      <MobileHeader title={t('mobile.alerts')} backTo="/m/smart" />
       <section className="space-y-2 px-4 pb-6">
         {alerts.map((a) => (
           <MobileCard key={a.id}>

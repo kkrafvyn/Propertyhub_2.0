@@ -26,14 +26,16 @@ function Dashboard() {
   return (
     <AgentShell titleKey="hubs.agent.dashboard.title" subtitleKey="hubs.agent.dashboard.loadedSubtitle">
       <StatGrid>
-        <StatCard label="Active listings" value={stats.activeListings} />
-        <StatCard label="Leads this week" value={stats.leadsThisWeek} />
-        <StatCard label="Viewings scheduled" value={stats.viewingsScheduled} />
-        <StatCard label="Conversion rate" value={stats.conversionRate} />
+        <StatCard label={t('hubs.agent.dashboard.stats.activeListings')} value={stats.activeListings} />
+        <StatCard label={t('hubs.agent.dashboard.stats.leadsThisWeek')} value={stats.leadsThisWeek} />
+        <StatCard label={t('hubs.agent.dashboard.stats.viewingsScheduled')} value={stats.viewingsScheduled} />
+        <StatCard label={t('hubs.agent.dashboard.stats.conversionRate')} value={stats.conversionRate} />
       </StatGrid>
-      <p className="mb-8 text-sm text-ink-secondary">Commission pipeline: {stats.commissionPipeline}</p>
+      <p className="mb-8 text-sm text-ink-secondary">
+        {t('hubs.agent.dashboard.commissionPipeline', { value: stats.commissionPipeline })}
+      </p>
 
-      <PanelCard title="Upcoming">
+      <PanelCard title={t('panels.upcoming')}>
         <div className="space-y-3">
           {calendar.map((e) => (
             <div key={e.id} className="rounded-lg border border-surface-border px-4 py-3 text-sm">
