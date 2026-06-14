@@ -90,4 +90,7 @@ drop policy if exists "Users can create own transactions" on public.transactions
 create policy "Users can create own transactions" on public.transactions for insert with check (auth.uid() = user_id);
 
 -- Realtime for notifications
-alter publication supabase_realtime add table public.notifications;
+do $$ begin
+  alter publication supabase_realtime add table public.notifications;
+exception when duplicate_object then null;
+end $$;

@@ -125,9 +125,3 @@ insert into public.fraud_rules (id, name, rule_type, threshold, description) val
   ('price_anomaly', 'Price anomaly', 'price_deviation_pct', 40, 'Flag listings priced far below neighborhood median'),
   ('duplicate_phone', 'Duplicate contact', 'duplicate_phone', 1, 'Flag leads sharing the same phone across agents')
 on conflict (id) do nothing;
-
-insert into public.developer_units (id, project_id, unit_number, floor, bedrooms, sqft, price, status) values
-  ('u-a101', 'proj-legon-heights', 'A-101', 1, 2, 950, 850000, 'available'),
-  ('u-a102', 'proj-legon-heights', 'A-102', 1, 3, 1200, 1100000, 'reserved'),
-  ('u-b201', 'proj-legon-heights', 'B-201', 2, 2, 980, 920000, 'sold')
-on conflict (id) do nothing;

@@ -11,6 +11,19 @@ create table if not exists public.saved_listings (
   primary key (user_id, listing_id)
 );
 
+-- enterprise_features creates conversations.id as text; messaging requires uuid
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'conversations'
+      and column_name = 'id' and data_type = 'text'
+  ) then
+    drop table if exists public.messages;
+    drop table if exists public.conversations cascade;
+  end if;
+end $$;
+
 create table if not exists public.conversations (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
