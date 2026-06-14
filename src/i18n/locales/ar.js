@@ -784,5 +784,59 @@ export default {
     "aiAdvisor": "AI buyer advisor",
     "savedHomes": "Saved homes",
     "documentVault": "Document vault"
+  },
+  "share": {
+    "whatsapp": "Share on WhatsApp",
+    "copyLink": "Copy link",
+    "copied": "Link copied"
+  },
+  "reviews": {
+    "title": "Reviews",
+    "empty": "No reviews yet — be the first after your viewing.",
+    "leaveReview": "Leave a review",
+    "rating": "Rating",
+    "placeholder": "Share your experience…",
+    "submit": "Submit review",
+    "thanks": "Thank you for your review!",
+    "signIn": "Sign in to leave a review."
+  },
+  "similar": {
+    "title": "Similar homes",
+    "browseMore": "Browse all homes"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications yet"
+  },
+  "help": {
+    "title": "Help Centre",
+    "subtitle": "Guides for buyers, hosts, and agencies on BaytMiftah.",
+    "gettingStarted": "Getting started",
+    "gettingStartedBody": "Create an account, save homes, request viewings, and track offers from your buyer workspace.",
+    "listings": "Listing a property",
+    "listingsBody": "Property owners submit listings at /host/list. Agency admins approve listings at /admin/moderation before they go live.",
+    "payments": "Payments",
+    "paymentsBody": "Rent and featured boosts use Paystack (Ghana mobile money & cards) or Stripe (international cards). Configure secrets in Supabase Edge Functions.",
+    "safety": "Trust & safety",
+    "safetyBody": "Verified listings and KYC-reviewed agencies help keep the marketplace trustworthy. Report suspicious activity to support."
+  },
+  "referral": {
+    "title": "Refer a friend",
+    "subtitle": "Invite agents and buyers — earn recognition as your network grows.",
+    "yourCode": "Your referral code",
+    "uses": "{{count}} sign-ups via your link",
+    "copyLink": "Copy invite link"
+  },
+  "filters": {
+    "verifiedOnly": "Verified only",
+    "minBedrooms": "Min bedrooms",
+    "furnished": "Furnished",
+    "any": "Any"
+  },
+  "alerts": {
+    "set": "Price alert on",
+    "remove": "Remove alert",
+    "prompt": "Notify when price drops",
+    "saved": "Price alert saved"
   }
 }

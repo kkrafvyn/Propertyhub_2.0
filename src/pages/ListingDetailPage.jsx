@@ -4,7 +4,11 @@ import DesktopShell, { CompactSearch } from '../components/DesktopShell'
 import { IconStar } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../i18n/LocaleContext'
-import { fetchListingById } from '../services/marketplace-service'
+import ShareListingButton from '../components/ShareListingButton'
+import ListingReviews from '../components/ListingReviews'
+import SimilarListings from '../components/SimilarListings'
+import PageMeta from '../components/PageMeta'
+import { fetchListings } from '../services/marketplace-service'
 import { getAvailability, requestViewing } from '../services/booking-service'
 
 function PhotoGrid({ photos, title, onShowAll }) {
@@ -205,6 +209,7 @@ export default function ListingDetailPage() {
   const { id } = useParams()
   const { t } = useTranslation()
   const [listing, setListing] = useState(null)
+  const [allListings, setAllListings] = useState([])
   const [loading, setLoading] = useState(true)
   const [galleryOpen, setGalleryOpen] = useState(false)
 
@@ -217,6 +222,9 @@ export default function ListingDetailPage() {
         setListing(row)
         setLoading(false)
       }
+    })
+    fetchListings().then(({ listings: rows }) => {
+      if (!ignore) setAllListings(rows)
     })
 
     return () => { ignore = true }
@@ -255,23 +263,34 @@ export default function ListingDetailPage() {
 
   return (
     <DesktopShell search={<CompactSearch />}>
+      <PageMeta
+        title={listing.title}
+        description={listing.description?.slice(0, 160)}
+        path={`/property/${listing.id}`}
+        image={listing.image}
+      />
       <div className="mb-6">
-        <h1 className="text-[26px] font-semibold leading-tight text-ink">{listing.title}</h1>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-          <span className="flex items-center gap-1 font-semibold">
-            <IconStar className="h-3.5 w-3.5" />
-            {listing.rating}
-          </span>
-          <span className="text-ink-secondary">·</span>
-          <span className="font-semibold underline">{listing.location}</span>
-          {listing.verified && (
-            <>
-              <span className="text-ink-secondary">·</span>
-              <span className="rounded-md bg-surface-hover px-2 py-0.5 text-xs font-semibold text-ink">
-                {t('categories.verified')}
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-[26px] font-semibold leading-tight text-ink">{listing.title}</h1>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+              <span className="flex items-center gap-1 font-semibold">
+                <IconStar className="h-3.5 w-3.5" />
+                {listing.rating}
               </span>
-            </>
-          )}
+              <span className="text-ink-secondary">·</span>
+              <span className="font-semibold underline">{listing.location}</span>
+              {listing.verified && (
+                <>
+                  <span className="text-ink-secondary">·</span>
+                  <span className="rounded-md bg-surface-hover px-2 py-0.5 text-xs font-semibold text-ink">
+                    {t('categories.verified')}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+          <ShareListingButton listing={listing} />
         </div>
       </div>
 
@@ -313,12 +332,25 @@ export default function ListingDetailPage() {
           <section className="border-t border-surface-border pt-8">
             <h2 className="mb-4 text-xl font-semibold">{t('property.virtualTour')}</h2>
             <div className="overflow-hidden panel-card bg-surface-subtle">
-              <div className="flex aspect-video items-center justify-center bg-surface-subtle">
-                <p className="text-sm text-ink-secondary">{t('property.virtualTourHint')}</p>
-              </div>
-              <p className="p-4 text-sm text-ink-secondary">{t('property.virtualTourDesc')}</p>
+              {listing.virtualTourUrl ? (
+                <iframe
+                  title={t('property.virtualTour')}
+                  src={listing.virtualTourUrl}
+                  className="aspect-video w-full border-0"
+                  allowFullScreen
+                />
+              ) : (
+                <>
+                  <div className="flex aspect-video items-center justify-center bg-surface-subtle">
+                    <p className="text-sm text-ink-secondary">{t('property.virtualTourHint')}</p>
+                  </div>
+                  <p className="p-4 text-sm text-ink-secondary">{t('property.virtualTourDesc')}</p>
+                </>
+              )}
             </div>
           </section>
+
+          <ListingReviews listingId={listing.id} />
 
           <section className="border-t border-surface-border pt-8">
             <h2 className="mb-4 text-xl font-semibold">{t('property.documents')}</h2>
@@ -340,6 +372,7 @@ export default function ListingDetailPage() {
 
         <BookingCard listing={listing} />
       </div>
+      <SimilarListings listings={allListings.filter((l) => l.type === listing.type || l.location === listing.location)} currentId={listing.id} />
     </DesktopShell>
   )
 }

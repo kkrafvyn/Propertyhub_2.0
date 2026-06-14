@@ -139,3 +139,22 @@ Without secrets, payment flows show a clear configuration error instead of faili
 4. **Vercel env** — `VITE_SUPABASE_*`, optional `VITE_STRIPE_PUBLISHABLE_KEY`
 5. **Deploy** — push to `baytmiftah-rebuild`; Vercel auto-deploys from GitHub
 6. **Verify** — `npm run check:supabase` (listings table exists after migrations)
+
+## Platform features (reviews, alerts, referrals)
+
+After migrations, the app includes:
+
+| Feature | Route / location |
+|---------|------------------|
+| Reviews | Property detail page |
+| Price alerts | Saved homes |
+| Notifications bell | Header (when signed in) |
+| WhatsApp share | Property detail |
+| Referrals | `/referral` |
+| Help centre | `/help` |
+| Dark mode | Header moon/sun toggle |
+| Currency (GHS/USD) | Footer selector |
+| Advanced filters | Home → Filters (verified, min beds) |
+| PWA | `manifest.webmanifest` + service worker |
+
+Optional env: `VITE_POSTHOG_KEY`, `VITE_SITE_URL` (see `.env.example`).

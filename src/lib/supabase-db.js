@@ -24,6 +24,8 @@ function mapListingRow(row) {
     amenities: row.amenities || [],
     lat: row.lat,
     lng: row.lng,
+    virtualTourUrl: row.virtual_tour_url,
+    instantBook: Boolean(row.instant_book),
   }
 }
 
@@ -279,6 +281,159 @@ export async function probeBackendConnection() {
     mode: data?.length ? 'live' : 'empty',
     message: data?.length ? 'Connected to Supabase' : 'Connected — run migrations to seed listings',
   }
+}
+
+export async function createOfferInDb({ userId, property, amount, notes, listingId }) {
+  if (!supabase || !userId) return null
+  const id = `offer-${crypto.randomUUID().slice(0, 8)}`
+  const { data, error } = await supabase.from('offers').insert({
+    id,
+    user_id: userId,
+    property,
+    amount: Number(amount),
+    notes: notes || null,
+    status: 'pending',
+    updated: new Date().toISOString().slice(0, 10),
+  }).select('*').single()
+  if (error) return null
+  if (listingId) {
+    await supabase.from('transactions').upsert({
+      id: `tx-${id}`,
+      user_id: userId,
+      property,
+      stage: 'offer',
+      offer: String(amount),
+      checklist: [
+        { id: 'offer', label: 'Offer submitted', done: true },
+        { id: 'docs', label: 'Documents collected', done: false },
+        { id: 'close', label: 'Closing scheduled', done: false },
+      ],
+    }, { onConflict: 'id' })
+  }
+  return data
+}
+
+export async function fetchOffersFromDb(userId) {
+  if (!supabase || !userId) return null
+  const { data, error } = await supabase.from('offers').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+  if (error) return null
+  return data.map((r) => ({
+    id: r.id,
+    property: r.property,
+    amount: Number(r.amount),
+    status: r.status,
+    notes: r.notes,
+    updated: r.updated || r.created_at?.slice(0, 10),
+  }))
+}
+
+export async function fetchTransactionsFromDb(userId) {
+  if (!supabase || !userId) return null
+  const { data, error } = await supabase.from('transactions').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+  if (error) return null
+  return data
+}
+
+export async function updateTransactionChecklistInDb(userId, transactionId, checklist) {
+  if (!supabase || !userId) return null
+  const { error } = await supabase.from('transactions').update({ checklist }).eq('id', transactionId).eq('user_id', userId)
+  return !error
+}
+
+export async function fetchReviewsFromDb(listingId) {
+  if (!supabase || !listingId) return null
+  const { data, error } = await supabase.from('reviews').select('*').eq('listing_id', listingId).order('created_at', { ascending: false })
+  if (error) return null
+  return data.map((r) => ({
+    id: r.id,
+    rating: r.rating,
+    body: r.body,
+    author: 'Guest',
+    created_at: r.created_at,
+  }))
+}
+
+export async function createReviewInDb({ userId, listingId, rating, body, viewingId }) {
+  if (!supabase || !userId) return null
+  const { data, error } = await supabase.from('reviews').insert({
+    listing_id: listingId,
+    user_id: userId,
+    rating,
+    body: body || null,
+    viewing_id: viewingId || null,
+  }).select('*').single()
+  if (error) return null
+  const { data: agg } = await supabase.from('reviews').select('rating').eq('listing_id', listingId)
+  if (agg?.length) {
+    const avg = agg.reduce((s, x) => s + x.rating, 0) / agg.length
+    await supabase.from('listings').update({ rating: Math.round(avg * 100) / 100 }).eq('id', listingId)
+  }
+  return data
+}
+
+export async function fetchNotificationsFromDb(userId) {
+  if (!supabase || !userId) return null
+  const { data, error } = await supabase.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(50)
+  if (error) return null
+  return data
+}
+
+export async function createNotificationInDb({ userId, type, title, body, link }) {
+  if (!supabase || !userId) return null
+  const { data, error } = await supabase.from('notifications').insert({
+    user_id: userId,
+    type,
+    title,
+    body: body || null,
+    link: link || null,
+  }).select('*').single()
+  if (error) return null
+  return data
+}
+
+export async function markNotificationReadInDb(userId, id) {
+  if (!supabase || !userId) return null
+  const { error } = await supabase.from('notifications').update({ read: true }).eq('id', id).eq('user_id', userId)
+  return !error
+}
+
+export async function fetchPriceAlertsFromDb(userId) {
+  if (!supabase || !userId) return null
+  const { data, error } = await supabase.from('price_alerts').select('*').eq('user_id', userId)
+  if (error) return null
+  return data
+}
+
+export async function createPriceAlertInDb({ userId, listingId, targetPrice }) {
+  if (!supabase || !userId) return null
+  const { data, error } = await supabase.from('price_alerts').upsert({
+    user_id: userId,
+    listing_id: listingId,
+    target_price: targetPrice,
+    notify_on_drop: true,
+  }, { onConflict: 'user_id,listing_id' }).select('*').single()
+  if (error) return null
+  return data
+}
+
+export async function deletePriceAlertInDb(userId, listingId) {
+  if (!supabase || !userId) return null
+  const { error } = await supabase.from('price_alerts').delete().eq('user_id', userId).eq('listing_id', listingId)
+  return !error
+}
+
+export async function fetchReferralByUserId(userId) {
+  if (!supabase || !userId) return null
+  const { data, error } = await supabase.from('referrals').select('*').eq('referrer_id', userId).maybeSingle()
+  if (error) return null
+  return data
+}
+
+export async function createReferralInDb({ referrerId, code }) {
+  if (!supabase || !referrerId) return null
+  const { data, error } = await supabase.from('referrals').insert({ referrer_id: referrerId, code }).select('*').single()
+  if (error) return null
+  return data
 }
 
 export { mapListingRow }

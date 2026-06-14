@@ -41,6 +41,21 @@ export async function requestViewing({ listingId, date, guests = 1, notes = '', 
           } catch {
             /* messaging optional */
           }
+          try {
+            const { notifyCurrentUser } = await import('./notification-service')
+            await notifyCurrentUser({
+              type: 'viewing',
+              title: 'Viewing request sent',
+              body: `${listingTitle || listingId} · ${date}`,
+              link: '/trips',
+            })
+            const { sendViewingConfirmation } = await import('./email-service')
+            if (user.email) {
+              await sendViewingConfirmation({ to: user.email, listingTitle: listingTitle || listingId, date })
+            }
+          } catch {
+            /* notifications optional */
+          }
           return { ok: true, request: row, source: 'supabase' }
         }
       }

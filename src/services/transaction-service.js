@@ -1,7 +1,17 @@
 import { callEdgeFunction } from '../lib/edge-client'
+import { supabase } from '../lib/supabase'
+import { fetchTransactionsFromDb, updateTransactionChecklistInDb } from '../lib/supabase-db'
 import { transactions } from '../data/buyer'
 
 export async function fetchTransactions() {
+  if (supabase) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const rows = await fetchTransactionsFromDb(user.id)
+      if (rows?.length) return { transactions: rows, source: 'supabase' }
+    }
+  }
+
   try {
     const payload = await callEdgeFunction('persistence', {
       allowAnonymous: false,
@@ -13,6 +23,22 @@ export async function fetchTransactions() {
 }
 
 export async function updateChecklistItem(transactionId, itemId, done) {
+  if (supabase) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { transactions: rows } = await fetchTransactions()
+      const tx = rows.find((t) => t.id === transactionId)
+      if (tx?.checklist) {
+        const checklist = tx.checklist.map((item) =>
+          (item.id === itemId ? { ...item, done } : item),
+        )
+        if (await updateTransactionChecklistInDb(user.id, transactionId, checklist)) {
+          return { ok: true, source: 'supabase' }
+        }
+      }
+    }
+  }
+
   try {
     return await callEdgeFunction('persistence', {
       method: 'POST',

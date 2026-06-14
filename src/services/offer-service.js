@@ -1,4 +1,6 @@
 import { callEdgeFunction } from '../lib/edge-client'
+import { supabase } from '../lib/supabase'
+import { createOfferInDb, fetchOffersFromDb } from '../lib/supabase-db'
 import { offerHistory } from '../data/buyer'
 
 const STORAGE_KEY = 'baytmiftah_offers'
@@ -13,6 +15,14 @@ export function getLocalOffers() {
 }
 
 export async function fetchOffers() {
+  if (supabase) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const rows = await fetchOffersFromDb(user.id)
+      if (rows) return { offers: rows, source: 'supabase' }
+    }
+  }
+
   try {
     const payload = await callEdgeFunction('persistence', {
       allowAnonymous: false,
@@ -23,7 +33,7 @@ export async function fetchOffers() {
   return { offers: getLocalOffers(), source: 'local' }
 }
 
-export async function submitOffer({ property, amount, notes }) {
+export async function submitOffer({ property, amount, notes, listingId }) {
   const offer = {
     id: `offer-${Date.now()}`,
     property,
@@ -31,6 +41,23 @@ export async function submitOffer({ property, amount, notes }) {
     status: 'pending',
     notes,
     updated: new Date().toISOString().slice(0, 10),
+  }
+
+  if (supabase) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const row = await createOfferInDb({ userId: user.id, property, amount, notes, listingId })
+      if (row) {
+        const { notifyCurrentUser } = await import('./notification-service')
+        await notifyCurrentUser({
+          type: 'offer',
+          title: 'Offer submitted',
+          body: `${property} — GHS ${Number(amount).toLocaleString()}`,
+          link: '/offers',
+        })
+        return { ok: true, offer: { ...offer, id: row.id }, source: 'supabase' }
+      }
+    }
   }
 
   try {

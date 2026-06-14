@@ -29,6 +29,8 @@ export default function HomePage() {
   const [dataSource, setDataSource] = useState('local')
   const [mapMode, setMapMode] = useState(false)
   const [mapCenter, setMapCenter] = useState([5.6037, -0.187])
+  const [verifiedOnly, setVerifiedOnly] = useState(false)
+  const [minBedrooms, setMinBedrooms] = useState(0)
 
   useEffect(() => {
     syncSavedIds().then(setSavedIds)
@@ -64,11 +66,13 @@ export default function HomePage() {
       const matchesType = propertyType === 'any' || listing.type === propertyType
       const haystack = `${listing.title} ${listing.location}`.toLowerCase()
       const matchesBudget = !budget.trim() || haystack.includes(budget.toLowerCase()) || listing.priceLabel?.includes(budget)
-      return matchesCategory && matchesType && matchesBudget && (!query || haystack.includes(query))
+      const matchesVerified = !verifiedOnly || listing.verified
+      const matchesBeds = !minBedrooms || (listing.bedrooms ?? 0) >= minBedrooms
+      return matchesCategory && matchesType && matchesBudget && matchesVerified && matchesBeds && (!query || haystack.includes(query))
     })
     if (aiQuery.trim()) filtered = parseAiSearchQuery(aiQuery, filtered)
     return filtered
-  }, [listings, category, location, propertyType, budget, aiQuery])
+  }, [listings, category, location, propertyType, budget, aiQuery, verifiedOnly, minBedrooms])
 
   const featured = useMemo(
     () => listings.filter((l) => l.featured).slice(0, 12),
@@ -111,6 +115,10 @@ export default function HomePage() {
         <FiltersPanel
           aiQuery={aiQuery}
           onAiQueryChange={setAiQuery}
+          verifiedOnly={verifiedOnly}
+          onVerifiedOnlyChange={setVerifiedOnly}
+          minBedrooms={minBedrooms}
+          onMinBedroomsChange={setMinBedrooms}
           onClose={() => setFiltersOpen(false)}
         />
       )}
@@ -223,7 +231,7 @@ function ListingCarousel({ title, listings, savedIds, compareIds, onToggleSave, 
   )
 }
 
-function FiltersPanel({ aiQuery, onAiQueryChange, onClose }) {
+function FiltersPanel({ aiQuery, onAiQueryChange, verifiedOnly, onVerifiedOnlyChange, minBedrooms, onMinBedroomsChange, onClose }) {
   const { t } = useTranslation()
 
   return (
@@ -240,6 +248,19 @@ function FiltersPanel({ aiQuery, onAiQueryChange, onClose }) {
             ✕
           </button>
         </div>
+        <label className="mb-4 flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={verifiedOnly} onChange={(e) => onVerifiedOnlyChange(e.target.checked)} />
+          {t('filters.verifiedOnly')}
+        </label>
+        <label className="mb-4 block text-sm">
+          {t('filters.minBedrooms')}
+          <select value={minBedrooms} onChange={(e) => onMinBedroomsChange(Number(e.target.value))} className="mt-1 w-full rounded-xl border border-surface-border px-3 py-2">
+            <option value={0}>{t('filters.any')}</option>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <option key={n} value={n}>{n}+</option>
+            ))}
+          </select>
+        </label>
         <label className="block">
           <span className="mb-2 block text-sm font-medium text-ink">{t('home.aiSearch')}</span>
           <input

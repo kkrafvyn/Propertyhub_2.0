@@ -4,6 +4,24 @@ const ACCRA_CENTER = { lat: 5.6037, lng: -0.187 }
 
 export async function geocodeLocation(query) {
   try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`${query}, Ghana`)}&format=json&limit=1`,
+      { headers: { 'Accept-Language': 'en' } },
+    )
+    const rows = await res.json()
+    if (rows?.[0]) {
+      return {
+        lat: Number(rows[0].lat),
+        lng: Number(rows[0].lon),
+        label: rows[0].display_name,
+        source: 'nominatim',
+      }
+    }
+  } catch {
+    /* fallback */
+  }
+
+  try {
     const payload = await callEdgeFunction('geo', {
       allowAnonymous: true,
       query: { action: 'geocode', q: query },

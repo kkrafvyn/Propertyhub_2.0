@@ -2,6 +2,9 @@ import { Link } from 'react-router-dom'
 import UserMenu from './UserMenu'
 import Logo from './Logo'
 import LanguageSwitcher from './LanguageSwitcher'
+import NotificationBell from './NotificationBell'
+import { useCurrency } from '../context/CurrencyContext'
+import { useTheme } from '../context/ThemeContext'
 import { IconSearch } from './icons'
 import { useTranslation } from '../i18n/LocaleContext'
 
@@ -101,6 +104,7 @@ export function CompactSearch() {
 
 function Header({ search, minimal = false, categoryBar = null, compareCount = 0 }) {
   const { t } = useTranslation()
+  const { theme, toggleTheme } = useTheme()
 
   return (
     <header className="sticky top-0 z-50 border-b border-surface-border bg-surface">
@@ -129,6 +133,10 @@ function Header({ search, minimal = false, categoryBar = null, compareCount = 0 
               {t('nav.listProperty')}
             </Link>
             <LanguageSwitcher />
+            {!minimal && <NotificationBell />}
+            <button type="button" onClick={toggleTheme} className="nav-pill hidden lg:inline-flex" aria-label="Toggle theme">
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
             <UserMenu />
           </div>
         </div>
@@ -145,20 +153,33 @@ function Header({ search, minimal = false, categoryBar = null, compareCount = 0 
 
 function Footer() {
   const { t, locale } = useTranslation()
+  const { currency, setCurrency } = useCurrency()
   const current = { en: 'English', ar: 'العربية', fr: 'Français', es: 'Español', pt: 'Português' }[locale] ?? 'English'
 
   const columns = [
     {
       title: t('footer.support'),
-      links: [t('footer.helpCentre'), t('footer.safety'), t('footer.cancellation')],
+      links: [
+        { label: t('footer.helpCentre'), to: '/help' },
+        { label: t('footer.safety'), to: '/help#safety' },
+        { label: t('footer.cancellation'), to: '/help' },
+      ],
     },
     {
       title: t('footer.hosting'),
-      links: [t('nav.listProperty'), t('footer.hostResources'), t('footer.communityForum')],
+      links: [
+        { label: t('nav.listProperty'), to: '/host' },
+        { label: t('footer.hostResources'), to: '/help#listings' },
+        { label: t('referral.title'), to: '/referral' },
+      ],
     },
     {
       title: t('footer.company'),
-      links: [t('footer.about'), t('footer.newsroom'), t('footer.careers')],
+      links: [
+        { label: t('footer.about'), to: '/help' },
+        { label: t('footer.newsroom'), to: '/help' },
+        { label: t('footer.careers'), to: '/help' },
+      ],
     },
   ]
 
@@ -170,11 +191,11 @@ function Footer() {
             <div key={title}>
               <h3 className="mb-4 text-sm font-semibold text-ink">{title}</h3>
               <ul className="space-y-3">
-                {links.map((label) => (
+                {links.map(({ label, to }) => (
                   <li key={label}>
-                    <a href="#" className="text-sm text-ink-secondary hover:underline">
+                    <Link to={to} className="text-sm text-ink-secondary hover:underline">
                       {label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -194,8 +215,16 @@ function Footer() {
           <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
           <div className="flex items-center gap-4">
             <LanguageSwitcher variant="compact" className="min-w-[140px]" />
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="rounded-lg border border-surface-border bg-surface px-2 py-1 text-sm"
+              aria-label="Currency"
+            >
+              <option value="GHS">₵ GHS</option>
+              <option value="USD">$ USD</option>
+            </select>
             <span>{current}</span>
-            <span>{t('footer.currency')}</span>
           </div>
         </div>
       </div>

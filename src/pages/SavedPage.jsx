@@ -7,11 +7,13 @@ import { EmptyPanel, PageTitle } from '../components/ui/AirbnbUI'
 import { useTranslation } from '../i18n/LocaleContext'
 import { syncSavedIds, toggleSavedIdAsync } from '../lib/saved-listings'
 import { fetchListings } from '../services/marketplace-service'
+import { fetchPriceAlerts, setPriceAlert, removePriceAlert } from '../services/price-alert-service'
 
 export default function SavedPage() {
   const { t } = useTranslation()
   const [savedIds, setSavedIds] = useState([])
   const [listings, setListings] = useState([])
+  const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -22,12 +24,23 @@ export default function SavedPage() {
         setLoading(false)
       })
     })
+    fetchPriceAlerts().then(({ alerts: rows }) => setAlerts(rows.map((a) => a.listing_id)))
   }, [])
 
   async function handleToggle(id) {
     const next = await toggleSavedIdAsync(id)
     setSavedIds(next)
     setListings((prev) => prev.filter((l) => next.includes(l.id)))
+  }
+
+  async function toggleAlert(listingId) {
+    if (alerts.includes(listingId)) {
+      await removePriceAlert(listingId)
+      setAlerts((prev) => prev.filter((id) => id !== listingId))
+    } else {
+      await setPriceAlert({ listingId })
+      setAlerts((prev) => [...prev, listingId])
+    }
   }
 
   return (
@@ -58,12 +71,20 @@ export default function SavedPage() {
         ) : (
           <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {listings.map((listing) => (
-              <ListingCard
-                key={listing.id}
-                listing={listing}
-                saved
-                onToggleSave={handleToggle}
-              />
+              <div key={listing.id}>
+                <ListingCard
+                  listing={listing}
+                  saved
+                  onToggleSave={handleToggle}
+                />
+                <button
+                  type="button"
+                  onClick={() => toggleAlert(listing.id)}
+                  className="mt-2 text-xs font-semibold text-ink underline"
+                >
+                  {alerts.includes(listing.id) ? t('alerts.remove') : t('alerts.prompt')}
+                </button>
+              </div>
             ))}
           </div>
         )}

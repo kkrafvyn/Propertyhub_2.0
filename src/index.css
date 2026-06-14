@@ -19,6 +19,32 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+html.dark body {
+  color: #f7f7f7;
+  background: #0f2922;
+}
+
+html.dark .bg-surface {
+  background-color: #1a3830;
+}
+
+html.dark .bg-surface-subtle,
+html.dark .bg-surface-hover {
+  background-color: #243d35;
+}
+
+html.dark .text-ink {
+  color: #f7f7f7;
+}
+
+html.dark .text-ink-secondary {
+  color: #b0b0b0;
+}
+
+html.dark .border-surface-border {
+  border-color: #3d5a52;
+}
+
 :focus-visible {
   outline: 2px solid #222222;
   outline-offset: 2px;
