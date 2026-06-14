@@ -147,8 +147,8 @@ export function MobileExplorePage() {
   )
 
   return (
-    <MobileShell hideNav>
-      <MobileHeader title={t('mobile.search')} subtitle={t('mobile.findNextHome')} backTo="/m" />
+    <MobileShell>
+      <MobileHeader title={t('mobile.search')} subtitle={t('mobile.findNextHome')} />
       <MobileSearchBar value={search} onChange={setSearch} placeholder={t('mobile.searchListings')} />
       <div className="grid grid-cols-2 gap-3 px-4 pb-4">
         {visible.map((listing) => (

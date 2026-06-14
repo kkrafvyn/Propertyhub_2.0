@@ -1,7 +1,7 @@
 import { Link, NavLink } from 'react-router-dom'
 import Logo from './Logo'
 import PushPrompt from './PushPrompt'
-import { IconChevronLeft, IconHeart, IconHome } from './icons'
+import { IconChevronLeft, IconHome } from './icons'
 import { IconSearch } from './icons'
 import { useTranslation } from '../i18n/LocaleContext'
 
@@ -37,7 +37,7 @@ export default function MobileShell({ children, hideNav = false }) {
 
   const tabs = [
     { to: '/m', label: t('mobile.home'), icon: IconHome, end: true },
-    { to: '/m/saved', label: t('mobile.saved'), icon: IconHeart },
+    { to: '/m/explore', label: t('mobile.search'), icon: IconSearch },
     { to: '/m/messages', label: t('mobile.inbox'), icon: MessageIcon },
     { to: '/m/agent', label: t('mobile.agents'), icon: AgentsIcon },
     { to: '/m/profile', label: t('mobile.profile'), icon: ProfileIcon },

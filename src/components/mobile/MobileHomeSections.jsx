@@ -19,14 +19,25 @@ function ProfileAvatar({ to = '/m/profile' }) {
 }
 
 export function MobileReferenceHeader() {
+  const { t } = useTranslation()
+
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between bg-white px-4 pb-3 pt-4">
       <div className="flex min-w-0 items-center gap-3">
         <ProfileAvatar />
         <h1 className="truncate text-xl font-bold text-ink">BaytMiftah</h1>
       </div>
-      <div className="relative shrink-0">
-        <NotificationBell />
+      <div className="flex shrink-0 items-center gap-1">
+        <Link
+          to="/m/saved"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-[#F5F5F5]"
+          aria-label={t('mobile.saved')}
+        >
+          <IconHeart className="h-5 w-5" />
+        </Link>
+        <div className="relative">
+          <NotificationBell />
+        </div>
       </div>
     </header>
   )
@@ -60,7 +71,7 @@ export function MobileTransactionTabs({ active, onChange }) {
   const { t } = useTranslation()
 
   return (
-    <div className="mb-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="mb-4 grid grid-cols-4 gap-2 px-4">
       {TX_TABS.map((id) => {
         const isActive = active === id
         return (
@@ -68,18 +79,18 @@ export function MobileTransactionTabs({ active, onChange }) {
             key={id}
             type="button"
             onClick={() => onChange(id)}
-            className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold transition ${
+            className={`flex min-w-0 items-center justify-center gap-1 rounded-full px-2 py-2.5 text-sm font-semibold transition ${
               isActive
                 ? 'bg-brand-forest text-white shadow-sm'
                 : 'bg-[#F5F5F5] text-ink-secondary'
             }`}
           >
             {id === 'stay' && (
-              <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">
                 <path d="M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
               </svg>
             )}
-            {t(`mobile.homeScreen.${id}`)}
+            <span className="truncate">{t(`mobile.homeScreen.${id}`)}</span>
           </button>
         )
       })}
