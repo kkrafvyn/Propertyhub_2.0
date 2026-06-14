@@ -10,8 +10,14 @@ export default {
           hover: '#D4AF37',
           light: '#FFF8E1',
           dark: '#051424',
-          forest: '#0F2922',
+          forest: '#1B4332',
           accent: '#FF385C',
+        },
+        bolt: {
+          green: '#34BB09',
+          'green-dark': '#2DA008',
+          bg: '#F2F2F2',
+          card: '#FFFFFF',
         },
         ink: {
           DEFAULT: '#222222',
@@ -42,6 +48,8 @@ export default {
         card: '0 6px 16px rgba(0,0,0,0.12)',
         header: '0 1px 0 rgba(0,0,0,0.08)',
         menu: '0 2px 16px rgba(0,0,0,0.12)',
+        'bolt-card': '0 2px 8px rgba(0,0,0,0.08)',
+        'bolt-nav': '0 -2px 12px rgba(0,0,0,0.06)',
       },
       borderRadius: {
         card: '12px',
