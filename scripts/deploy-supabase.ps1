@@ -45,6 +45,7 @@ $functions = @(
   "platform",
   "events",
   "tenant",
+  "cron",
   "investment",
   "resident",
   "organizations",

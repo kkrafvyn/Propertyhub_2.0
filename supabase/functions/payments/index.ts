@@ -6,6 +6,7 @@ import { loadRegionConfigFromDb } from '../_shared/plugins/registry.ts'
 import { handleStripeWebhook, handlePaystackWebhook, handleRazorpayWebhook } from '../_shared/webhooks.ts'
 import { emitPlatformEvent } from '../_shared/events.ts'
 import { finalizePayment } from '../_shared/payment-completion.ts'
+import { paymentWebhookUrls } from '../_shared/platform-urls.ts'
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -40,6 +41,12 @@ Deno.serve(async (req) => {
         ready: stripe || paystack || razorpay,
         ussd: paystack,
         site_url: Deno.env.get('SITE_URL') ?? null,
+        webhooks: paymentWebhookUrls(),
+        webhook_events: {
+          paystack: ['charge.success'],
+          stripe: ['checkout.session.completed'],
+          razorpay: ['payment.captured', 'payment_link.paid'],
+        },
       })
     }
     if (action === 'insurance') {

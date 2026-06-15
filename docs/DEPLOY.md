@@ -8,7 +8,7 @@ Set **Environment Variables** (Production + Preview):
 |----------|--------|
 | `VITE_SUPABASE_URL` | Project URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Anon key |
-| `VITE_SITE_URL` | e.g. `https://propertyhub-2-0.vercel.app` |
+| `VITE_SITE_URL` | e.g. `https://phub-sigma.vercel.app` |
 | `VITE_POSTHOG_KEY` | Optional analytics |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | Optional |
 
@@ -30,7 +30,7 @@ npx supabase db push --yes
 npx supabase functions deploy bookings
 npx supabase functions deploy moderation
 npx supabase functions deploy payments
-npx supabase functions deploy agencies
+npx supabase functions deploy cron
 # … see scripts/deploy-supabase.ps1 for full list
 ```
 
@@ -39,10 +39,14 @@ npx supabase functions deploy agencies
 **Dashboard → Edge Functions → Secrets** (never put these in `VITE_*`):
 
 ```
-SITE_URL=https://propertyhub-2-0.vercel.app
+SITE_URL=https://phub-sigma.vercel.app
 PAYSTACK_SECRET_KEY=sk_live_...
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+RAZORPAY_KEY_ID=rzp_live_...
+RAZORPAY_KEY_SECRET=...
+RAZORPAY_WEBHOOK_SECRET=...
+CRON_SECRET=your-random-cron-secret
 TWILIO_ACCOUNT_SID=...
 TWILIO_AUTH_TOKEN=...
 TWILIO_PHONE_NUMBER=...
@@ -54,20 +58,41 @@ FCM_SERVER_KEY=...
 
 ## 4. Webhooks
 
-Register in Paystack / Stripe dashboards:
+Register in Paystack / Stripe / Razorpay dashboards (also shown at `/developer/platform-api`):
 
-- **Paystack:** `https://<project-ref>.supabase.co/functions/v1/payments?action=webhook_paystack`
-- **Stripe:** `https://<project-ref>.supabase.co/functions/v1/payments?action=webhook_stripe`
+| Provider | URL | Events |
+|----------|-----|--------|
+| Paystack | `https://ixmbfnfwpjwbfahqaftc.supabase.co/functions/v1/payments?action=webhook_paystack` | `charge.success` |
+| Stripe | `https://ixmbfnfwpjwbfahqaftc.supabase.co/functions/v1/payments?action=webhook_stripe` | `checkout.session.completed` |
+| Razorpay | `https://ixmbfnfwpjwbfahqaftc.supabase.co/functions/v1/payments?action=webhook_razorpay` | `payment.captured`, `payment_link.paid` |
 
-Events: `charge.success` (Paystack), `checkout.session.completed` (Stripe).
+Or fetch live URLs: `GET /functions/v1/payments?action=config`
 
-## 5. Smoke test
+## 5. Nightly cron (analytics + utility billing)
+
+Set `CRON_SECRET` in Edge Function secrets, then schedule a daily POST:
+
+```
+POST https://ixmbfnfwpjwbfahqaftc.supabase.co/functions/v1/cron?action=nightly_full
+Authorization: Bearer <CRON_SECRET>
+```
+
+**Supabase Dashboard → Integrations → Cron** (or GitHub Actions scheduled workflow):
+
+- `nightly_full` — analytics aggregation for all regions + utility bill generation
+- `analytics` — warehouse facts only
+- `utility_billing` — generate unpaid utility bills only
+
+Health check (no auth): `GET /functions/v1/cron?action=health`
+
+## 6. Smoke test
 
 1. Sign in on mobile → save a listing → appears on second device after login.
 2. Book viewing → `/trips` shows request; agent confirms in `/agent/calendar`.
 3. Renter **Pay now** (Paystack) → webhook marks `rent_payments` paid.
 4. Admin approves listing → host gets in-app notification + verified badge on mobile.
+5. Developer **Platform API** page shows webhook URLs and cron endpoint.
 
-## 6. CI
+## 7. CI
 
 GitHub Actions runs `npm run build` and `npm test` on push/PR.

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import DeveloperShell from '../../components/DeveloperShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
-import { fetchPlatformServices, fetchMarketRegions, resolveRegionConfig, fetchPlatformArchitecture, fetchAnalyticsFacts, fetchPartnerApiKeys, createPartnerApiKey, revokePartnerApiKey, runAnalyticsAggregation } from '../../services/platform-service'
+import { fetchPlatformServices, fetchMarketRegions, resolveRegionConfig, fetchPlatformArchitecture, fetchAnalyticsFacts, fetchPartnerApiKeys, createPartnerApiKey, revokePartnerApiKey, runAnalyticsAggregation, fetchPlatformGateway, fetchPaymentsConfig } from '../../services/platform-service'
 import { setStoredRegionId } from '../../lib/market-context'
 
 function PlatformApi() {
@@ -15,6 +15,8 @@ function PlatformApi() {
   const [newKeyName, setNewKeyName] = useState('Production partner')
   const [createdKey, setCreatedKey] = useState(null)
   const [aggMessage, setAggMessage] = useState('')
+  const [webhooks, setWebhooks] = useState(null)
+  const [cronUrl, setCronUrl] = useState('')
 
   useEffect(() => {
     fetchPlatformServices().then(({ services: rows }) => setServices(rows ?? []))
@@ -25,6 +27,10 @@ function PlatformApi() {
       if (rows?.[0]) setSelectedRegion(rows[0].id)
     })
     fetchPartnerApiKeys().then(({ keys }) => setApiKeys(keys ?? []))
+    Promise.all([fetchPlatformGateway(), fetchPaymentsConfig()]).then(([gw, pay]) => {
+      setWebhooks(gw?.webhooks ?? pay?.webhooks ?? {})
+      setCronUrl(gw?.cron?.nightly ?? '')
+    })
   }, [])
 
   useEffect(() => {
@@ -84,6 +90,31 @@ function PlatformApi() {
           ))}
         </div>
       </section>
+
+      {webhooks && (
+        <section className="mb-8">
+          <h2 className="mb-2 text-lg font-semibold">Payment webhooks</h2>
+          <p className="mb-3 text-sm text-ink-secondary">Register these URLs in Paystack, Stripe, and Razorpay dashboards.</p>
+          <ul className="space-y-2 text-sm">
+            {Object.entries(webhooks).map(([provider, url]) => (
+              <li key={provider} className="rounded-lg border border-surface-border px-3 py-2">
+                <span className="font-semibold capitalize">{provider}</span>
+                <code className="mt-1 block break-all text-xs text-ink-secondary">{url}</code>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {cronUrl && (
+        <section className="mb-8">
+          <h2 className="mb-2 text-lg font-semibold">Nightly cron</h2>
+          <p className="mb-2 text-sm text-ink-secondary">
+            POST with <code className="text-xs">Authorization: Bearer CRON_SECRET</code> — schedule daily in Supabase Cron or GitHub Actions.
+          </p>
+          <code className="block break-all rounded-lg border border-surface-border bg-surface-subtle px-3 py-2 text-xs">{cronUrl}</code>
+        </section>
+      )}
 
       <section className="mb-8">
         <h2 className="mb-2 text-lg font-semibold">Region-by-region scaling</h2>

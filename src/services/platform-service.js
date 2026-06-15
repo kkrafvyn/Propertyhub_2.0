@@ -35,6 +35,28 @@ export async function fetchPlatformArchitecture() {
   }
 }
 
+export async function fetchPlatformGateway() {
+  try {
+    const payload = await callEdgeFunction('platform', {
+      query: { action: 'gateway' },
+      allowAnonymous: true,
+    })
+    if (payload?.gateway) return payload
+  } catch { /* fallback */ }
+  return { gateway: {}, webhooks: {}, cron: {}, source: 'local' }
+}
+
+export async function fetchPaymentsConfig() {
+  try {
+    const payload = await callEdgeFunction('payments', {
+      query: { action: 'config' },
+      allowAnonymous: true,
+    })
+    if (payload) return payload
+  } catch { /* fallback */ }
+  return { ready: false, webhooks: {}, source: 'local' }
+}
+
 export async function fetchAnalyticsFacts() {
   try {
     const payload = await callEdgeFunction('platform', {
@@ -174,4 +196,6 @@ export default {
   createPartnerApiKey,
   revokePartnerApiKey,
   runAnalyticsAggregation,
+  fetchPlatformGateway,
+  fetchPaymentsConfig,
 }

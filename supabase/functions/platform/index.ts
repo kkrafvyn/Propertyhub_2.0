@@ -4,6 +4,7 @@ import { loadRegionConfigFromDb, buildFallbackRegionConfig } from '../_shared/pl
 import { resolveRegionId, DEFAULT_REGION_ID, type WalletPurpose } from '../_shared/plugins/types.ts'
 import { createPartnerApiKey, extractApiKey, verifyPartnerApiKey } from '../_shared/api-gateway.ts'
 import { aggregateAnalyticsFacts } from '../_shared/analytics-aggregate.ts'
+import { paymentWebhookUrls, cronJobUrl } from '../_shared/platform-urls.ts'
 
 /** Production-scale service manifest — API Gateway routing map */
 const ARCHITECTURE_LAYERS = {
@@ -81,6 +82,9 @@ Deno.serve(async (req) => {
           gateway: ARCHITECTURE_LAYERS.gateway,
           routes: CORE_SERVICES,
           auth: 'Bearer JWT via Supabase Auth',
+          partner_auth: 'X-Api-Key: bm_live_…',
+          webhooks: paymentWebhookUrls(),
+          cron: { nightly: cronJobUrl('nightly_full'), auth: 'Bearer CRON_SECRET' },
           source: 'platform',
         })
       }

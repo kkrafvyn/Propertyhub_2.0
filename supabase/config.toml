@@ -23,3 +23,21 @@ verify_jwt = false
 
 [functions.moderation]
 verify_jwt = false
+
+[functions.payments]
+verify_jwt = false
+
+[functions.cron]
+verify_jwt = false
+
+[functions.platform]
+verify_jwt = false
+
+[functions.utilities]
+verify_jwt = false
+
+[functions.events]
+verify_jwt = false
+
+[functions.iot-webhook]
+verify_jwt = false
