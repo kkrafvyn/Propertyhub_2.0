@@ -24,13 +24,11 @@ export async function checkoutViaAdapter(
   const adapter = overrideProvider ?? resolvePaymentAdapter(regionConfig)
 
   if (adapter === 'razorpay') {
-    // Partner stub — falls through to Stripe until Razorpay keys configured
     const razorpayKey = Deno.env.get('RAZORPAY_KEY_SECRET')
     if (!razorpayKey) {
-      return createCheckout({ ...input, provider: 'stripe' })
+      return createCheckout({ ...input, provider: 'paystack' })
     }
-    // Future: implement Razorpay initialize
-    return createCheckout({ ...input, provider: 'stripe' })
+    return createCheckout({ ...input, provider: 'razorpay' })
   }
 
   if (adapter === 'bank_transfer') {

@@ -7,15 +7,6 @@ import SignUpPage from '../pages/SignUpPage'
 import PaymentSuccessPage from '../pages/PaymentSuccessPage'
 import PaymentCancelPage from '../pages/PaymentCancelPage'
 import AuthCallbackPage from '../pages/AuthCallbackPage'
-import RenterCreditPage from '../pages/renter/RenterCreditPage'
-import {
-  MobileAgentHomePage,
-  MobileAgentLeadsPage,
-  MobileAgentCalendarPage,
-  MobileAgentTasksPage,
-  MobileAgentCoachPage,
-} from '../pages/mobile/MobileAgentPages'
-
 import {
   MobileRenterHomePage,
   MobileRenterLeasesPage,
@@ -23,7 +14,16 @@ import {
   MobileRenterUtilitiesPage,
   MobileRenterMaintenancePage,
   MobileRenterSignPage,
+  MobileRenterCreditPage,
 } from '../pages/mobile/MobileRenterPages'
+
+import {
+  MobileAgentHomePage,
+  MobileAgentLeadsPage,
+  MobileAgentCalendarPage,
+  MobileAgentTasksPage,
+  MobileAgentCoachPage,
+} from '../pages/mobile/MobileAgentPages'
 
 import {
   MobileSmartHomePage,
@@ -109,7 +109,7 @@ export default function MobileRoutes() {
       <Route path="/renter/leases" element={<MobileRenterLeasesPage />} />
       <Route path="/renter/payments" element={<MobileRenterPaymentsPage />} />
       <Route path="/renter/utilities" element={<MobileRenterUtilitiesPage />} />
-      <Route path="/renter/credit" element={<RenterCreditPage />} />
+      <Route path="/renter/credit" element={<MobileRenterCreditPage />} />
       <Route path="/renter/maintenance" element={<MobileRenterMaintenancePage />} />
       <Route path="/renter/sign" element={<MobileRenterSignPage />} />
       <Route path="/smart" element={<MobileSmartHomePage />} />

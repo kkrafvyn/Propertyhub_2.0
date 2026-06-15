@@ -5,6 +5,7 @@ import { emitPlatformEvent } from './events.ts'
 import { recordPaymentLedger } from './ledger.ts'
 import { computeTenantIntelligence } from './tenant-intelligence.ts'
 import { runEventAutomations } from './event-automation.ts'
+import { splitPaymentToProperty } from './property-wallets.ts'
 
 export interface FinalizePaymentInput {
   providerRef?: string
@@ -58,6 +59,18 @@ export async function finalizePayment(
       purpose,
       actorId: userId,
     })
+
+    const propertyId = String(meta.property_id ?? meta.listing_id ?? '')
+    if (propertyId && (purpose.includes('rent') || purpose === 'utility')) {
+      await splitPaymentToProperty(admin, {
+        propertyId,
+        amount,
+        currency: payment?.currency ?? 'GHS',
+        paymentId,
+        purpose,
+        landlordUserId: meta.landlord_user_id ? String(meta.landlord_user_id) : undefined,
+      }).catch(() => {})
+    }
   }
 
   if (userId) {

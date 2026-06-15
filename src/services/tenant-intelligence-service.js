@@ -43,4 +43,8 @@ export async function fetchTenantScore(recompute = false) {
   }
 }
 
-export default { fetchTenantDashboard, fetchTenantScore }
+export async function fetchTenantProfile(recompute = false) {
+  return fetchTenantScore(recompute)
+}
+
+export default { fetchTenantDashboard, fetchTenantScore, fetchTenantProfile }

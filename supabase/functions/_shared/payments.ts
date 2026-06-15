@@ -1,6 +1,6 @@
 /** Stripe + Paystack checkout helpers for Edge Functions */
 
-export type PaymentProvider = 'stripe' | 'paystack'
+export type PaymentProvider = 'stripe' | 'paystack' | 'razorpay'
 
 export interface CheckoutInput {
   purpose: string
@@ -18,10 +18,56 @@ const SITE_URL = Deno.env.get('SITE_URL') || 'http://localhost:5173'
 
 function toMinorUnits(amount: number, currency: string): number {
   // GHS, USD, NGN — 2 decimal places
-  if (['GHS', 'USD', 'NGN', 'EUR', 'GBP'].includes(currency.toUpperCase())) {
+  if (['GHS', 'USD', 'NGN', 'EUR', 'GBP', 'INR'].includes(currency.toUpperCase())) {
     return Math.round(amount * 100)
   }
   return Math.round(amount)
+}
+
+export async function createRazorpayCheckout(input: CheckoutInput) {
+  const keyId = Deno.env.get('RAZORPAY_KEY_ID')
+  const keySecret = Deno.env.get('RAZORPAY_KEY_SECRET')
+  if (!keyId || !keySecret) return null
+
+  const minor = toMinorUnits(input.amount, input.currency)
+  const auth = btoa(`${keyId}:${keySecret}`)
+  const callbackUrl = `${SITE_URL}${input.successPath || '/payments/success'}?provider=razorpay`
+
+  const res = await fetch('https://api.razorpay.com/v1/payment_links', {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${auth}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      amount: minor,
+      currency: input.currency.toUpperCase(),
+      accept_partial: false,
+      description: input.purpose.replace(/_/g, ' '),
+      callback_url: callbackUrl,
+      callback_method: 'get',
+      notes: {
+        purpose: input.purpose,
+        user_id: input.userId,
+        payment_id: String(input.metadata?.payment_id ?? ''),
+        ...Object.fromEntries(
+          Object.entries(input.metadata ?? {}).map(([k, v]) => [k, String(v)]),
+        ),
+      },
+    }),
+  })
+
+  const data = await res.json()
+  if (!res.ok || !data.short_url) {
+    console.error('Razorpay error', data)
+    return null
+  }
+
+  return {
+    checkout_url: data.short_url,
+    provider_ref: data.id,
+    provider: 'razorpay' as const,
+  }
 }
 
 export async function createStripeCheckout(input: CheckoutInput) {
@@ -105,6 +151,11 @@ export async function createPaystackCheckout(input: CheckoutInput) {
 }
 
 export async function createCheckout(input: CheckoutInput) {
+  if (input.provider === 'razorpay') {
+    return (await createRazorpayCheckout(input))
+      ?? (await createPaystackCheckout(input))
+      ?? (await createStripeCheckout(input))
+  }
   if (input.provider === 'paystack') {
     return (await createPaystackCheckout(input)) ?? (await createStripeCheckout(input))
   }

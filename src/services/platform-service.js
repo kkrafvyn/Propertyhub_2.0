@@ -129,10 +129,49 @@ export async function ensureMoneyLayerWallets(currency) {
   }
 }
 
+export async function fetchPartnerApiKeys() {
+  try {
+    return await callEdgeFunction('platform', {
+      allowAnonymous: false,
+      query: { action: 'api_keys' },
+    })
+  } catch {
+    return { keys: [], source: 'local' }
+  }
+}
+
+export async function createPartnerApiKey(name, scopes = ['read']) {
+  return callEdgeFunction('platform', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'create_api_key', name, scopes },
+  })
+}
+
+export async function revokePartnerApiKey(keyId) {
+  return callEdgeFunction('platform', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'revoke_api_key', key_id: keyId },
+  })
+}
+
+export async function runAnalyticsAggregation(regionId) {
+  return callEdgeFunction('platform', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'aggregate_analytics', region_id: regionId },
+  })
+}
+
 export default {
   fetchPlatformServices,
   fetchMarketRegions,
   fetchRegionPlugins,
   resolveRegionConfig,
   ensureMoneyLayerWallets,
+  fetchPartnerApiKeys,
+  createPartnerApiKey,
+  revokePartnerApiKey,
+  runAnalyticsAggregation,
 }

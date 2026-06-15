@@ -1,7 +1,9 @@
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
 import { createCheckout } from '../_shared/payments.ts'
-import { handleStripeWebhook, handlePaystackWebhook } from '../_shared/webhooks.ts'
+import { checkoutViaAdapter } from '../_shared/plugins/payment-adapter.ts'
+import { loadRegionConfigFromDb } from '../_shared/plugins/registry.ts'
+import { handleStripeWebhook, handlePaystackWebhook, handleRazorpayWebhook } from '../_shared/webhooks.ts'
 import { emitPlatformEvent } from '../_shared/events.ts'
 import { finalizePayment } from '../_shared/payment-completion.ts'
 
@@ -20,9 +22,8 @@ Deno.serve(async (req) => {
     const result = await handlePaystackWebhook(req, admin)
     return jsonResponse({ received: result.ok }, result.status)
   }
-
-  if (req.method === 'POST' && url.searchParams.get('action') === 'webhook_paystack') {
-    const result = await handlePaystackWebhook(req, admin)
+  if (req.method === 'POST' && url.searchParams.get('action') === 'webhook_razorpay') {
+    const result = await handleRazorpayWebhook(req, admin)
     return jsonResponse({ received: result.ok }, result.status)
   }
 
@@ -31,10 +32,12 @@ Deno.serve(async (req) => {
     if (action === 'config') {
       const stripe = Boolean(Deno.env.get('STRIPE_SECRET_KEY'))
       const paystack = Boolean(Deno.env.get('PAYSTACK_SECRET_KEY'))
+      const razorpay = Boolean(Deno.env.get('RAZORPAY_KEY_SECRET'))
       return jsonResponse({
         stripe,
         paystack,
-        ready: stripe || paystack,
+        razorpay,
+        ready: stripe || paystack || razorpay,
         ussd: paystack,
         site_url: Deno.env.get('SITE_URL') ?? null,
       })
@@ -134,7 +137,13 @@ Deno.serve(async (req) => {
         const purpose = body.action === 'create_boost' ? 'featured_boost' : body.purpose
         const amount = Number(body.amount) || (body.action === 'create_boost' ? 299 : 0)
         const currency = body.currency ?? 'GHS'
-        const provider = (body.provider ?? 'paystack') as 'stripe' | 'paystack'
+        let regionConfig
+        try {
+          regionConfig = await loadRegionConfigFromDb(admin, body.country, body.region_id)
+        } catch {
+          regionConfig = null
+        }
+        const provider = (body.provider ?? (currency === 'INR' ? 'razorpay' : currency === 'GHS' ? 'paystack' : 'stripe')) as 'stripe' | 'paystack' | 'razorpay'
 
         if (!amount || amount <= 0) return errorResponse('Invalid amount')
 
@@ -153,17 +162,28 @@ Deno.serve(async (req) => {
           bill_ids: body.metadata?.bill_ids,
         }
 
-        const checkout = await createCheckout({
-          purpose,
-          amount,
-          currency,
-          provider,
-          userId: user.id,
-          userEmail: user.email ?? 'user@baytmiftah.com',
-          metadata,
-          successPath,
-          cancelPath: body.cancel_path ?? '/payments/cancel',
-        })
+        const checkout = regionConfig
+          ? await checkoutViaAdapter(regionConfig, {
+              purpose,
+              amount,
+              currency,
+              userId: user.id,
+              userEmail: user.email ?? 'user@baytmiftah.com',
+              metadata,
+              successPath,
+              cancelPath: body.cancel_path ?? '/payments/cancel',
+            }, provider === 'razorpay' || provider === 'paystack' || provider === 'stripe' ? provider : undefined)
+          : await createCheckout({
+              purpose,
+              amount,
+              currency,
+              provider,
+              userId: user.id,
+              userEmail: user.email ?? 'user@baytmiftah.com',
+              metadata,
+              successPath,
+              cancelPath: body.cancel_path ?? '/payments/cancel',
+            })
 
         const record = {
           id: recordId,

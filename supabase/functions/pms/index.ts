@@ -1,6 +1,7 @@
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
 import { ensurePmsData } from '../_shared/user-seed.ts'
+import { getTenantIntelligence } from '../_shared/tenant-intelligence.ts'
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -81,8 +82,26 @@ Deno.serve(async (req) => {
 
       if (action === 'tenants') {
         const { data } = await admin.from('pms_tenants').select('*').eq('owner_id', user.id)
-        const tenants = (data ?? []).map((r) => ({
-          id: r.id, name: r.name, unit: r.unit, rent: r.rent, leaseEnd: r.lease_end, status: r.status, balance: r.balance,
+        const tenants = await Promise.all((data ?? []).map(async (r) => {
+          let credit = null
+          if (r.user_id) {
+            try {
+              credit = await getTenantIntelligence(admin, r.user_id, false)
+            } catch { /* skip */ }
+          }
+          return {
+            id: r.id,
+            name: r.name,
+            unit: r.unit,
+            rent: r.rent,
+            leaseEnd: r.lease_end,
+            status: r.status,
+            balance: r.balance,
+            userId: r.user_id,
+            creditScore: credit?.credit_score ?? null,
+            riskBand: credit?.risk_band ?? null,
+            depositMultiplier: credit?.deposit_multiplier ?? null,
+          }
         }))
         return jsonResponse({ tenants, source: 'supabase' })
       }
@@ -118,6 +137,20 @@ Deno.serve(async (req) => {
       if (action === 'inspections') {
         const { data } = await admin.from('pms_inspections').select('*').eq('owner_id', user.id)
         return jsonResponse({ inspections: data ?? [], source: 'supabase' })
+      }
+      return errorResponse('Unsupported action', 404)
+    }
+
+    if (req.method === 'POST') {
+      const body = await req.json()
+      if (body.action === 'link_tenant_user') {
+        const tenantId = body.tenant_id
+        const tenantUserId = body.user_id
+        if (!tenantId || !tenantUserId) return errorResponse('tenant_id and user_id required', 400)
+        const { data: row } = await admin.from('pms_tenants').select('id').eq('id', tenantId).eq('owner_id', user.id).maybeSingle()
+        if (!row) return errorResponse('Tenant not found', 404)
+        await admin.from('pms_tenants').update({ user_id: tenantUserId }).eq('id', tenantId)
+        return jsonResponse({ ok: true, tenant_id: tenantId, user_id: tenantUserId })
       }
       return errorResponse('Unsupported action', 404)
     }

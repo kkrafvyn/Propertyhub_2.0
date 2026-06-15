@@ -23,6 +23,7 @@ import {
 import { createSigningSession } from '../../services/docusign-service'
 import { payRent, payUtility, payAllUtilities } from '../../services/payments-service'
 import { fetchUtilityDashboard } from '../../services/utility-service'
+import { fetchTenantProfile } from '../../services/tenant-intelligence-service'
 import { utilityTypeLabel, utilityIcon } from '../../lib/utilities'
 import { initiateUssdPayment } from '../../services/ussd-service'
 import { getDefaultProvider } from '../../lib/payment-providers'
@@ -34,6 +35,7 @@ function RenterHome() {
     { to: '/renter/leases', label: t('hubs.renter.leases.title'), Icon: IconDocument },
     { to: '/renter/payments', label: t('hubs.renter.payments.title'), Icon: IconCard },
     { to: '/renter/utilities', label: 'Utilities', Icon: IconCard },
+    { to: '/renter/credit', label: 'Housing credit', Icon: IconCard },
     { to: '/renter/maintenance', label: t('hubs.renter.maintenance.title'), Icon: IconWrench },
     { to: '/renter/sign', label: t('hubs.renter.leaseSigning.title'), Icon: IconPen },
   ]
@@ -321,4 +323,48 @@ export function MobileRenterMaintenancePage() {
 
 export function MobileRenterSignPage() {
   return <ProtectedRoute><RenterSignMobile /></ProtectedRoute>
+}
+
+function RenterCreditMobile() {
+  const { t } = useTranslation()
+  const [profile, setProfile] = useState(null)
+
+  useEffect(() => {
+    fetchTenantProfile().then(({ profile: p }) => setProfile(p))
+  }, [])
+
+  return (
+    <MobileShell hideNav>
+      <MobileHeader title="Housing credit" subtitle="Rental reliability score" backTo="/renter" />
+      <section className="space-y-4 px-4 pb-6">
+        {!profile ? (
+          <p className="text-sm text-ink-secondary">Loading…</p>
+        ) : (
+          <>
+            <MobileCard>
+              <p className="text-xs font-semibold uppercase text-ink-secondary">Credit score</p>
+              <p className="text-3xl font-bold text-ink">{profile.credit_score}</p>
+              <MobileBadge tone={profile.risk_band === 'approved' ? 'success' : 'default'} className="mt-2 capitalize">
+                {profile.risk_band?.replace(/_/g, ' ')}
+              </MobileBadge>
+            </MobileCard>
+            <MobileCard>
+              <p className="text-sm font-semibold">On-time payments</p>
+              <p className="text-2xl font-bold">{profile.on_time_payments ?? 0}</p>
+            </MobileCard>
+            <MobileCard>
+              <p className="text-sm text-ink-secondary">
+                Pay rent and utilities before due dates to improve your housing credit score.
+              </p>
+              <MobileTextLink to="/renter/payments" className="mt-3 inline-block">{t('hubs.renter.payments.title')}</MobileTextLink>
+            </MobileCard>
+          </>
+        )}
+      </section>
+    </MobileShell>
+  )
+}
+
+export function MobileRenterCreditPage() {
+  return <ProtectedRoute><RenterCreditMobile /></ProtectedRoute>
 }

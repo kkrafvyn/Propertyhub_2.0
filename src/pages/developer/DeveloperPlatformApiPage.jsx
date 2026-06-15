@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import DeveloperShell from '../../components/DeveloperShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
-import { fetchPlatformServices, fetchMarketRegions, resolveRegionConfig, fetchPlatformArchitecture, fetchAnalyticsFacts } from '../../services/platform-service'
+import { fetchPlatformServices, fetchMarketRegions, resolveRegionConfig, fetchPlatformArchitecture, fetchAnalyticsFacts, fetchPartnerApiKeys, createPartnerApiKey, revokePartnerApiKey, runAnalyticsAggregation } from '../../services/platform-service'
 import { setStoredRegionId } from '../../lib/market-context'
 
 function PlatformApi() {
@@ -11,6 +11,10 @@ function PlatformApi() {
   const [config, setConfig] = useState(null)
   const [architecture, setArchitecture] = useState(null)
   const [facts, setFacts] = useState([])
+  const [apiKeys, setApiKeys] = useState([])
+  const [newKeyName, setNewKeyName] = useState('Production partner')
+  const [createdKey, setCreatedKey] = useState(null)
+  const [aggMessage, setAggMessage] = useState('')
 
   useEffect(() => {
     fetchPlatformServices().then(({ services: rows }) => setServices(rows ?? []))
@@ -20,6 +24,7 @@ function PlatformApi() {
       setRegions(rows ?? [])
       if (rows?.[0]) setSelectedRegion(rows[0].id)
     })
+    fetchPartnerApiKeys().then(({ keys }) => setApiKeys(keys ?? []))
   }, [])
 
   useEffect(() => {
@@ -30,6 +35,23 @@ function PlatformApi() {
   function handleRegionChange(id) {
     setSelectedRegion(id)
     setStoredRegionId(id)
+  }
+
+  async function handleCreateKey() {
+    const result = await createPartnerApiKey(newKeyName)
+    if (result?.key) setCreatedKey(result.key)
+    fetchPartnerApiKeys().then(({ keys }) => setApiKeys(keys ?? []))
+  }
+
+  async function handleRevokeKey(id) {
+    await revokePartnerApiKey(id)
+    fetchPartnerApiKeys().then(({ keys }) => setApiKeys(keys ?? []))
+  }
+
+  async function handleAggregate() {
+    const result = await runAnalyticsAggregation(selectedRegion)
+    setAggMessage(`Aggregated ${result.count ?? 0} facts for ${result.period ?? 'current period'}.`)
+    fetchAnalyticsFacts().then(({ facts: rows }) => setFacts(rows ?? []))
   }
 
   return (
@@ -102,7 +124,13 @@ function PlatformApi() {
 
       {facts.length > 0 && (
         <section className="mb-8">
-          <h2 className="mb-2 text-lg font-semibold">Analytics facts (warehouse layer)</h2>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">Analytics facts (warehouse layer)</h2>
+            <button type="button" onClick={handleAggregate} className="rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold">
+              Run aggregation
+            </button>
+          </div>
+          {aggMessage && <p className="mb-2 text-sm text-ink-secondary">{aggMessage}</p>}
           <div className="grid gap-2 sm:grid-cols-3">
             {facts.slice(0, 6).map((f) => (
               <article key={f.id} className="rounded-lg border border-surface-border px-3 py-2 text-sm">
@@ -113,6 +141,37 @@ function PlatformApi() {
           </div>
         </section>
       )}
+
+      <section className="mb-8">
+        <h2 className="mb-2 text-lg font-semibold">Partner API keys</h2>
+        <p className="mb-4 text-sm text-ink-secondary">
+          Create keys for external integrations. Pass as <code className="text-xs">X-Api-Key: bm_live_…</code> — rate limited per key.
+        </p>
+        <div className="mb-4 flex flex-wrap gap-2">
+          <input
+            value={newKeyName}
+            onChange={(e) => setNewKeyName(e.target.value)}
+            className="rounded-lg border border-surface-border px-3 py-2 text-sm"
+            placeholder="Key name"
+          />
+          <button type="button" onClick={handleCreateKey} className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white">
+            Create API key
+          </button>
+        </div>
+        {createdKey && (
+          <p className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm dark:bg-amber-900/20">
+            New key (copy now): <code className="break-all text-xs">{createdKey}</code>
+          </p>
+        )}
+        <ul className="space-y-2 text-sm">
+          {apiKeys.map((k) => (
+            <li key={k.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-surface-border px-3 py-2">
+              <span>{k.name} · <code className="text-xs">{k.key_prefix}…</code></span>
+              <button type="button" onClick={() => handleRevokeKey(k.id)} className="text-xs font-semibold text-red-600">Revoke</button>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section>
         <h2 className="mb-2 text-lg font-semibold">Partner integration</h2>

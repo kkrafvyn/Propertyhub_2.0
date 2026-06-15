@@ -4,13 +4,15 @@ import ProtectedRoute from '../../components/ProtectedRoute'
 import PaymentProviderPicker from '../../components/PaymentProviderPicker'
 import IntegrationsBanner from '../../components/IntegrationsBanner'
 import { utilityTypeLabel, utilityIcon } from '../../lib/utilities'
-import { fetchUtilityDashboard, fetchMeterReadings } from '../../services/utility-service'
+import { fetchUtilityDashboard, fetchMeterReadings, fetchPrepaidBalances, topUpPrepaid } from '../../services/utility-service'
 import { payUtility, payAllUtilities } from '../../services/payments-service'
 import { getDefaultProvider } from '../../lib/payment-providers'
 
 function Utilities() {
   const [dashboard, setDashboard] = useState(null)
   const [readings, setReadings] = useState([])
+  const [prepaid, setPrepaid] = useState([])
+  const [topUpUnits, setTopUpUnits] = useState('50')
   const [provider, setProvider] = useState(getDefaultProvider())
   const [loading, setLoading] = useState(null)
   const [message, setMessage] = useState('')
@@ -24,7 +26,31 @@ function Utilities() {
   useEffect(() => {
     if (!accountId) return
     fetchMeterReadings(accountId).then(({ readings: rows }) => setReadings(rows ?? []))
+    fetchPrepaidBalances(accountId).then(({ balances }) => setPrepaid(balances ?? []))
   }, [accountId])
+
+  async function handlePrepaidTopUp() {
+    if (!accountId) return
+    setLoading('prepaid')
+    setMessage('')
+    try {
+      const units = Number(topUpUnits)
+      const result = await topUpPrepaid({ accountId, utilityType: 'electricity', units, amount: units * 1.5 })
+      setMessage(`ECG prepaid topped up — ${units} units added.`)
+      setPrepaid((prev) => {
+        const existing = prev.find((b) => b.utility_type === 'electricity')
+        if (existing) {
+          return prev.map((b) => b.utility_type === 'electricity'
+            ? { ...b, units_remaining: Number(result.balance?.units_remaining ?? units) }
+            : b)
+        }
+        return [...prev, result.balance]
+      })
+    } catch (err) {
+      setMessage(err.message || 'Top-up failed.')
+    }
+    setLoading(null)
+  }
 
   const bills = dashboard?.bills ?? []
   const unpaid = bills.filter((b) => b.status === 'unpaid')
@@ -120,6 +146,40 @@ function Utilities() {
           <p className="text-sm font-semibold text-ink truncate">{dashboard.accounts?.[0]?.property_id ?? '—'}</p>
         </div>
       </div>
+
+      <section className="mb-8 rounded-xl border border-surface-border bg-surface-subtle p-4">
+        <h2 className="mb-2 text-lg font-semibold">⚡ ECG prepaid top-up</h2>
+        <p className="mb-4 text-sm text-ink-secondary">
+          Add prepaid electricity units to your meter balance (Ghana ECG / prepaid markets).
+        </p>
+        <div className="flex flex-wrap items-end gap-4">
+          <div>
+            <label className="mb-1 block text-xs font-semibold uppercase text-ink-secondary">Units (kWh)</label>
+            <input
+              type="number"
+              min={10}
+              step={10}
+              value={topUpUnits}
+              onChange={(e) => setTopUpUnits(e.target.value)}
+              className="w-32 rounded-lg border border-surface-border px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="text-sm text-ink-secondary">
+            Balance:{' '}
+            <span className="font-semibold text-ink">
+              {prepaid.find((b) => b.utility_type === 'electricity')?.units_remaining ?? 0} units
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handlePrepaidTopUp}
+            disabled={loading === 'prepaid'}
+            className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {loading === 'prepaid' ? 'Topping up…' : 'Top up ECG'}
+          </button>
+        </div>
+      </section>
 
       {unpaid.length > 0 && (
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4 rounded-xl border border-surface-border bg-surface-subtle p-4">

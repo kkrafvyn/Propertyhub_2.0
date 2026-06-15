@@ -40,6 +40,8 @@ export async function ensureRenterData(admin: SupabaseClient, userId: string) {
     { id: 'ld1', user_id: userId, lease_id: 'lease-1', name: 'Residential lease agreement', status: 'signed', signed_at: '2025-08-28' },
     { id: 'ld2', user_id: userId, lease_id: 'lease-1', name: 'Renewal offer — 2026/27', status: 'pending_signature' },
   ])
+
+  await admin.from('pms_tenants').update({ user_id: userId }).eq('name', 'Daniel K.').is('user_id', null)
 }
 
 export async function ensurePmsData(admin: SupabaseClient, userId: string) {

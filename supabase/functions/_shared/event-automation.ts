@@ -1,4 +1,4 @@
-/** Event-driven automations — notifications & actions on platform events */
+/** Event-driven automations — DB rules with hardcoded fallback */
 
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { notifyUser } from './notifications.ts'
@@ -9,7 +9,91 @@ export interface AutomationContext {
   payload?: Record<string, unknown>
 }
 
-export async function runEventAutomations(admin: SupabaseClient, ctx: AutomationContext) {
+interface AutomationRule {
+  id: string
+  event_type: string
+  action_type: string
+  title_template: string
+  body_template: string
+  link_template: string | null
+  condition: Record<string, unknown>
+  enabled: boolean
+}
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => String(vars[key] ?? ''))
+}
+
+function matchesCondition(rule: AutomationRule, payload: Record<string, unknown>): boolean {
+  const cond = rule.condition ?? {}
+  const bands = cond.risk_bands as string[] | undefined
+  if (bands?.length) {
+    const band = String(payload.risk_band ?? '')
+    if (!bands.includes(band)) return false
+  }
+  return true
+}
+
+function payloadVars(eventType: string, payload: Record<string, unknown>): Record<string, string | number> {
+  const purpose = String(payload.purpose ?? '').replace(/_/g, ' ')
+  const utilitiesMessage = payload.utilities_mode === 'inclusive'
+    ? 'all utilities included'
+    : 'utility billing is active'
+  return {
+    purpose,
+    amount: Number(payload.amount ?? 0),
+    risk_band: String(payload.risk_band ?? '').replace(/_/g, ' '),
+    utilities_message: utilitiesMessage,
+  }
+}
+
+async function loadRules(admin: SupabaseClient, eventType: string): Promise<AutomationRule[]> {
+  const { data } = await admin
+    .from('event_automation_rules')
+    .select('*')
+    .eq('event_type', eventType)
+    .eq('enabled', true)
+    .order('priority', { ascending: false })
+
+  return (data ?? []) as AutomationRule[]
+}
+
+async function runRule(
+  admin: SupabaseClient,
+  rule: AutomationRule,
+  userId: string,
+  eventType: string,
+  payload: Record<string, unknown>,
+) {
+  if (rule.action_type !== 'notify_user') return
+
+  const vars = payloadVars(eventType, payload)
+  const title = interpolate(rule.title_template, vars)
+  const body = interpolate(rule.body_template, vars)
+  let link = rule.link_template ?? '/renter'
+  if (String(payload.purpose) === 'utility' && eventType === 'payment.completed') {
+    link = '/renter/utilities'
+  }
+
+  const typeMap: Record<string, string> = {
+    'payment.completed': 'payment',
+    'utility.bill.generated': 'utility',
+    'utility.bill.paid': 'utility',
+    'booking.created': 'booking',
+    'tenant.risk_updated': 'credit',
+  }
+
+  await notifyUser(admin, {
+    userId,
+    type: typeMap[eventType] ?? 'system',
+    title,
+    body,
+    link,
+  })
+}
+
+/** Hardcoded fallback when DB rules table is empty or unavailable */
+async function runFallbackAutomations(admin: SupabaseClient, ctx: AutomationContext) {
   const { eventType, userId, payload = {} } = ctx
   if (!userId) return
 
@@ -65,12 +149,32 @@ export async function runEventAutomations(admin: SupabaseClient, ctx: Automation
           type: 'credit',
           title: 'Housing credit update',
           body: `Your risk band is now "${band.replace(/_/g, ' ')}". Pay on time to improve your score.`,
-          link: '/renter',
+          link: '/renter/credit',
         })
       }
       break
     }
     default:
       break
+  }
+}
+
+export async function runEventAutomations(admin: SupabaseClient, ctx: AutomationContext) {
+  const { eventType, userId, payload = {} } = ctx
+  if (!userId) return
+
+  try {
+    const rules = await loadRules(admin, eventType)
+    if (rules.length === 0) {
+      await runFallbackAutomations(admin, ctx)
+      return
+    }
+
+    for (const rule of rules) {
+      if (!matchesCondition(rule, payload)) continue
+      await runRule(admin, rule, userId, eventType, payload)
+    }
+  } catch {
+    await runFallbackAutomations(admin, ctx)
   }
 }

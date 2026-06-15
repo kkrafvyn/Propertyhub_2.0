@@ -2,6 +2,8 @@ import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
 import { loadRegionConfigFromDb, buildFallbackRegionConfig } from '../_shared/plugins/registry.ts'
 import { resolveRegionId, DEFAULT_REGION_ID, type WalletPurpose } from '../_shared/plugins/types.ts'
+import { createPartnerApiKey, extractApiKey, verifyPartnerApiKey } from '../_shared/api-gateway.ts'
+import { aggregateAnalyticsFacts } from '../_shared/analytics-aggregate.ts'
 
 /** Production-scale service manifest — API Gateway routing map */
 const ARCHITECTURE_LAYERS = {
@@ -58,6 +60,12 @@ Deno.serve(async (req) => {
   const action = url.searchParams.get('action')
 
   try {
+    const partnerKey = extractApiKey(req)
+    if (partnerKey && action !== 'gateway' && action !== 'architecture' && action !== 'services') {
+      const verified = await verifyPartnerApiKey(admin, partnerKey)
+      if (!verified.ok) return errorResponse(verified.message, verified.status)
+    }
+
     if (req.method === 'GET') {
       if (action === 'architecture') {
         return jsonResponse({
@@ -84,6 +92,17 @@ Deno.serve(async (req) => {
       if (action === 'analytics') {
         const { data } = await admin.from('analytics_facts').select('*').order('recorded_at', { ascending: false }).limit(20)
         return jsonResponse({ facts: data ?? [], source: 'supabase' })
+      }
+
+      if (action === 'api_keys') {
+        const user = await getUserFromRequest(req)
+        if (!user) return errorResponse('Authentication required', 401)
+        const { data } = await admin
+          .from('platform_api_keys')
+          .select('id, name, key_prefix, scopes, rate_limit_per_minute, last_used_at, active, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+        return jsonResponse({ keys: data ?? [], source: 'supabase' })
       }
 
       if (action === 'regions') {
@@ -145,6 +164,33 @@ Deno.serve(async (req) => {
         }
 
         return jsonResponse({ ok: true, wallets, source: 'supabase' })
+      }
+
+      if (body.action === 'create_api_key') {
+        const result = await createPartnerApiKey(admin, user.id, body.name ?? 'Partner key', body.scopes ?? ['read'])
+        return jsonResponse({ ok: true, ...result, message: 'Store this key securely — it will not be shown again.' })
+      }
+
+      if (body.action === 'revoke_api_key') {
+        await admin.from('platform_api_keys').update({ active: false }).eq('id', body.key_id).eq('user_id', user.id)
+        return jsonResponse({ ok: true, revoked: body.key_id })
+      }
+
+      if (body.action === 'aggregate_analytics') {
+        const result = await aggregateAnalyticsFacts(admin, body.region_id ?? DEFAULT_REGION_ID)
+        return jsonResponse({ ok: true, ...result, source: 'supabase' })
+      }
+
+      if (body.action === 'save_payout_rule') {
+        const row = {
+          property_id: body.property_id,
+          owner_user_id: user.id,
+          platform_fee_pct: Number(body.platform_fee_pct ?? 5),
+          landlord_split_pct: Number(body.landlord_split_pct ?? 95),
+          auto_payout: body.auto_payout ?? true,
+        }
+        await admin.from('property_payout_rules').upsert(row)
+        return jsonResponse({ ok: true, rule: row })
       }
 
       return errorResponse('Unsupported action', 404)

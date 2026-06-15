@@ -140,6 +140,13 @@ Deno.serve(async (req) => {
         return jsonResponse({ readings: data ?? [], source: 'supabase' })
       }
 
+      if (action === 'prepaid_balances') {
+        const accountId = url.searchParams.get('account_id')
+        if (!accountId) return errorResponse('account_id required', 400)
+        const { data } = await admin.from('utility_prepaid_balances').select('*').eq('utility_account_id', accountId)
+        return jsonResponse({ balances: data ?? [], source: 'supabase' })
+      }
+
       return errorResponse('Unsupported action', 404)
     }
 
@@ -247,16 +254,36 @@ Deno.serve(async (req) => {
       }
 
       if (body.action === 'prepaid_topup') {
+        const units = Number(body.units)
+        const amount = Number(body.amount ?? units * Number(body.rate_per_unit ?? 1.5))
         const row = {
-          id: `upb-${crypto.randomUUID().slice(0, 8)}`,
+          id: body.id ?? `upb-${crypto.randomUUID().slice(0, 8)}`,
           utility_account_id: body.utility_account_id,
-          utility_type: body.utility_type,
-          units_remaining: Number(body.units),
+          utility_type: body.utility_type ?? 'electricity',
+          units_remaining: units,
           last_top_up_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }
+        const { data: existing } = await admin
+          .from('utility_prepaid_balances')
+          .select('*')
+          .eq('utility_account_id', body.utility_account_id)
+          .eq('utility_type', row.utility_type)
+          .maybeSingle()
+        if (existing) {
+          row.units_remaining = Number(existing.units_remaining) + units
+          row.id = existing.id
+        }
         await admin.from('utility_prepaid_balances').upsert(row, { onConflict: 'utility_account_id,utility_type' })
-        return jsonResponse({ ok: true, balance: row })
+        await emitPlatformEvent(admin, {
+          eventType: 'utility.prepaid.topped_up',
+          aggregateType: 'utility_account',
+          aggregateId: body.utility_account_id,
+          actorId: user.id,
+          payload: { utility_type: row.utility_type, units, amount },
+          idempotencyKey: `prepaid-${row.id}-${Date.now()}`,
+        })
+        return jsonResponse({ ok: true, balance: row, amount, currency: body.currency ?? 'GHS' })
       }
 
       if (body.action === 'save_property_config') {

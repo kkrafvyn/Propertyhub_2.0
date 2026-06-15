@@ -152,6 +152,31 @@ export async function getPayAllSummary() {
   }
 }
 
+export async function fetchPrepaidBalances(accountId) {
+  try {
+    const payload = await callEdgeFunction('utilities', {
+      allowAnonymous: false,
+      query: { action: 'prepaid_balances', account_id: accountId },
+    })
+    if (payload?.balances) return payload
+  } catch { /* fallback */ }
+  return { balances: [], source: 'local' }
+}
+
+export async function topUpPrepaid({ accountId, utilityType, units, amount }) {
+  return callEdgeFunction('utilities', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: {
+      action: 'prepaid_topup',
+      utility_account_id: accountId,
+      utility_type: utilityType ?? 'electricity',
+      units,
+      amount,
+    },
+  })
+}
+
 export default {
   fetchUtilityProviders,
   fetchPropertyUtilities,
@@ -163,4 +188,6 @@ export default {
   savePropertyUtilityConfig,
   markUtilityBillPaid,
   getPayAllSummary,
+  fetchPrepaidBalances,
+  topUpPrepaid,
 }

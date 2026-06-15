@@ -2,6 +2,7 @@ import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
 import { emitPlatformEvent } from '../_shared/events.ts'
 import { recordLedgerEntry } from '../_shared/ledger.ts'
+import { ensurePropertyWallet } from '../_shared/property-wallets.ts'
 
 type WalletPurpose = 'general' | 'rent' | 'utility' | 'escrow'
 
@@ -72,6 +73,15 @@ Deno.serve(async (req) => {
       if (action === 'all') {
         const wallets = await ensureAllWallets(admin, user.id, currency)
         return jsonResponse({ wallets: wallets.map(mapWallet), source: 'supabase' })
+      }
+
+      if (action === 'property') {
+        const propertyId = url.searchParams.get('property_id')
+        if (!propertyId) return errorResponse('property_id required', 400)
+        const purpose = (url.searchParams.get('purpose') ?? 'rent') as 'rent' | 'utility' | 'general'
+        const wallet = await ensurePropertyWallet(admin, propertyId, currency, purpose)
+        const { data: txs } = await admin.from('wallet_transactions').select('*').eq('wallet_id', wallet.id).order('created_at', { ascending: false }).limit(30)
+        return jsonResponse({ wallet: mapWallet(wallet), transactions: txs ?? [], source: 'supabase' })
       }
 
       const wallet = await ensureUserWallet(admin, user.id, purpose, currency)
