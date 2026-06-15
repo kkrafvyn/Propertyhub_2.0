@@ -12,17 +12,34 @@ export async function hideNativeSplash() {
   }
 }
 
-export async function initCapacitor() {
+/** Status bar + browser chrome to match light/dark theme (native + PWA). */
+export async function syncNativeTheme(theme = 'light') {
+  const isDark = theme === 'dark'
+  const bg = isDark ? '#0F2922' : '#FFFFFF'
+  const themeColor = isDark ? '#0F2922' : '#0F2922'
+
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColor)
+
   if (!Capacitor.isNativePlatform()) return
 
   try {
     const { StatusBar, Style } = await import('@capacitor/status-bar')
-
-    await StatusBar.setStyle({ style: Style.Dark })
+    await StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark })
     if (Capacitor.getPlatform() === 'android') {
-      await StatusBar.setBackgroundColor({ color: '#FFFFFF' })
+      await StatusBar.setBackgroundColor({ color: bg })
     }
   } catch {
     /* plugins optional during dev */
   }
+}
+
+export async function initCapacitor() {
+  if (!Capacitor.isNativePlatform()) return
+
+  let theme = 'light'
+  try {
+    theme = localStorage.getItem('baytmiftah_theme') || 'light'
+  } catch { /* ignore */ }
+
+  await syncNativeTheme(theme)
 }

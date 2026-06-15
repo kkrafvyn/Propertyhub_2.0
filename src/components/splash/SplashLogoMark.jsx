@@ -2,7 +2,11 @@ import { SPLASH_COLORS } from './constants'
 
 const ARC_PATH = 'M9 33.5Q24 24.5 39 33.5'
 
-export default function SplashLogoMark({ className = 'splash-mark', primary = SPLASH_COLORS.primary }) {
+export default function SplashLogoMark({
+  className = 'splash-mark',
+  primary = SPLASH_COLORS.primary,
+  shadow = SPLASH_COLORS.shadow,
+}) {
   return (
     <svg
       className={className}
@@ -35,7 +39,7 @@ export default function SplashLogoMark({ className = 'splash-mark', primary = SP
         cy="34"
         rx="16"
         ry="2.5"
-        fill={SPLASH_COLORS.shadow}
+        fill={shadow}
         style={{ transformOrigin: '24px 34px' }}
       />
 

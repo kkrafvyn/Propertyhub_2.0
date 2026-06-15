@@ -1,11 +1,11 @@
 import SplashLogoMark from './SplashLogoMark'
-import { SPLASH_WORDMARK } from './constants'
+import { SPLASH_COLORS, SPLASH_WORDMARK } from './constants'
 
-export default function SplashReflection() {
+export default function SplashReflection({ primary = SPLASH_COLORS.primary, shadow = SPLASH_COLORS.shadow }) {
   return (
     <div className="splash-reflection" aria-hidden="true">
       <div className="splash-reflection__inner">
-        <SplashLogoMark className="splash-reflection__mark" />
+        <SplashLogoMark className="splash-reflection__mark" primary={primary} shadow={shadow} />
         <span className="splash-reflection__wordmark">{SPLASH_WORDMARK}</span>
       </div>
     </div>

@@ -122,8 +122,8 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(13, 79, 60, 0.45) 35%,
-    rgba(13, 79, 60, 0.45) 100%
+    var(--splash-line, rgba(13, 79, 60, 0.45)) 35%,
+    var(--splash-line, rgba(13, 79, 60, 0.45)) 100%
   );
   transform: scaleX(0);
   transform-origin: center center;
@@ -134,8 +134,8 @@
 .splash-tagline__line--right {
   background: linear-gradient(
     90deg,
-    rgba(13, 79, 60, 0.45) 0%,
-    rgba(13, 79, 60, 0.45) 65%,
+    var(--splash-line, rgba(13, 79, 60, 0.45)) 0%,
+    var(--splash-line, rgba(13, 79, 60, 0.45)) 65%,
     transparent 100%
   );
 }
@@ -147,7 +147,7 @@
   font-weight: 600;
   letter-spacing: 0.22em;
   line-height: 1.3;
-  color: rgba(13, 79, 60, 0.72);
+  color: var(--splash-tagline, rgba(13, 79, 60, 0.72));
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -187,7 +187,7 @@
   font-size: clamp(1rem, 4vw, 1.25rem);
   font-weight: 700;
   letter-spacing: 0.18em;
-  color: rgba(13, 79, 60, 0.12);
+  color: var(--splash-reflection, rgba(13, 79, 60, 0.12));
   text-indent: 0.18em;
 }
 

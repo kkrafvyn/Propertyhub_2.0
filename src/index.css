@@ -377,3 +377,42 @@ html.dark code {
 .desktop-shell .user-menu-trigger:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
+
+/* Mobile app shell — light/dark theme tokens */
+html.dark .mobile-bolt,
+html.dark .bg-bolt-bg {
+  background-color: #0f2922;
+}
+
+html.dark .bg-bolt-card {
+  background-color: #1a3830;
+}
+
+html.dark .mobile-bolt .shadow-bolt-card,
+html.dark .shadow-bolt-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+html.dark .mobile-bolt .shadow-bolt-nav {
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.4);
+}
+
+html.dark .mobile-bolt .text-mobile-forest {
+  color: #8fd4b0;
+}
+
+html.dark .mobile-bolt .bg-green-100 {
+  background-color: rgba(34, 197, 94, 0.15);
+}
+
+html.dark .mobile-bolt .text-green-800 {
+  color: #86efac;
+}
+
+html.dark .mobile-bolt .bg-red-100 {
+  background-color: rgba(239, 68, 68, 0.15);
+}
+
+html.dark .mobile-bolt .text-red-800 {
+  color: #fca5a5;
+}

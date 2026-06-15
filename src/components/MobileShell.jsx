@@ -16,10 +16,10 @@ export default function MobileShell({ children, hideNav = false }) {
   ]
 
   return (
-    <div className="mobile-bolt min-h-screen min-h-[100dvh] w-full overflow-x-clip bg-white pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] pt-[env(safe-area-inset-top,0px)] text-ink">
+    <div className="mobile-bolt min-h-screen min-h-[100dvh] w-full overflow-x-clip bg-bolt-bg pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] pt-[env(safe-area-inset-top,0px)] text-ink">
       <div className="mx-auto w-full min-w-0 max-w-lg sm:max-w-xl lg:max-w-2xl">{children}</div>
       {!hideNav && (
-        <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-black/5 bg-white shadow-bolt-nav">
+        <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-surface-border bg-surface shadow-bolt-nav">
           <div className="mx-auto flex w-full min-w-0 max-w-lg items-stretch justify-around px-0.5 pt-1 sm:max-w-xl sm:px-1 lg:max-w-2xl pb-[max(0.25rem,env(safe-area-inset-bottom))]">
             {tabs.map(({ to, label, icon: Icon, end }) => (
               <NavLink
@@ -46,7 +46,7 @@ export default function MobileShell({ children, hideNav = false }) {
 
 export function MobileBoltHomeHeader({ title, tagline }) {
   return (
-    <header className="sticky top-0 z-40 bg-white px-4 pb-3 pt-4">
+    <header className="sticky top-0 z-40 bg-surface px-4 pb-3 pt-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h1 className="text-[26px] font-bold leading-tight tracking-tight text-ink">{title}</h1>
@@ -54,7 +54,7 @@ export function MobileBoltHomeHeader({ title, tagline }) {
         </div>
         <Link
           to="/profile"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F5F5F5] text-ink"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-subtle text-ink"
           aria-label="Profile"
         >
           <IconUser className="h-5 w-5" />
@@ -68,12 +68,12 @@ export function MobileHeader({ title, subtitle, backTo, showLogo = false }) {
   const { t } = useTranslation()
 
   return (
-    <header className="sticky top-0 z-40 border-b border-black/5 bg-white px-4 py-3">
+    <header className="sticky top-0 z-40 border-b border-surface-border bg-surface px-4 py-3">
       <div className="flex items-center gap-3">
         {backTo ? (
           <NavLink
             to={backTo}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F5F5] text-ink"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-subtle text-ink"
             aria-label={t('mobile.goBack')}
           >
             <IconChevronLeft className="h-5 w-5 rtl-flip" />
@@ -95,7 +95,7 @@ export function MobileSearchBar({ value, onChange, placeholder }) {
 
   return (
     <div className="px-4 py-3">
-      <div className="flex items-center gap-3 rounded-xl bg-[#F5F5F5] px-4 py-3.5">
+      <div className="flex items-center gap-3 rounded-xl bg-surface-subtle px-4 py-3.5">
         <IconSearch className="h-4 w-4 shrink-0 text-ink-secondary" />
         <input
           type="search"
@@ -122,7 +122,7 @@ export function MobileCategoryChips({ options, active, onChange }) {
             className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-semibold transition ${
               isActive
                 ? 'bg-mobile-forest text-white shadow-sm'
-                : 'border border-black/10 bg-white text-ink-secondary'
+                : 'border border-surface-border bg-surface text-ink-secondary'
             }`}
           >
             {label}
@@ -141,7 +141,7 @@ export function MobileFiltersRow({ onFiltersClick }) {
       <button
         type="button"
         onClick={onFiltersClick}
-        className="flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-ink"
+        className="flex items-center gap-2 rounded-full border border-surface-border bg-surface px-4 py-2 text-sm font-semibold text-ink"
       >
         {t('mobile.filters')}
       </button>

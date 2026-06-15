@@ -19,7 +19,7 @@ export function MobileReferenceHeader() {
   const { t } = useTranslation()
 
   return (
-    <header className="sticky top-0 z-40 flex min-w-0 items-center justify-between bg-white px-3 pb-3 pt-2 sm:px-4 sm:pt-4">
+    <header className="sticky top-0 z-40 flex min-w-0 items-center justify-between bg-surface px-3 pb-3 pt-2 sm:px-4 sm:pt-4">
       <div className="flex min-w-0 items-center gap-3">
         <ProfileAvatar />
         <h1 className="truncate text-xl font-bold text-ink">BaytMiftah</h1>
@@ -162,7 +162,7 @@ export function MobileHomeListingCard({ listing, to, badge, saved, onToggleSave 
 
   return (
     <div className="relative w-[min(260px,78vw)] shrink-0">
-      <Link to={to} className="block overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+      <Link to={to} className="block overflow-hidden rounded-2xl bg-bolt-card shadow-[0_2px_12px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
         <div className="relative aspect-[4/3]">
           <img src={listing.image} alt="" className="h-full w-full object-cover" />
           {displayBadge && (
@@ -187,7 +187,7 @@ export function MobileHomeListingCard({ listing, to, badge, saved, onToggleSave 
             e.preventDefault()
             onToggleSave(listing.id)
           }}
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm"
+          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-surface/90 shadow-sm"
           aria-label="Save"
         >
           <IconHeart className={`h-4 w-4 ${saved ? 'text-brand-accent' : 'text-ink'}`} filled={saved} />

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { syncNativeTheme } from '../lib/capacitor-init'
 
 const ThemeContext = createContext({ theme: 'light', toggleTheme: () => {} })
 
@@ -12,10 +13,13 @@ export function ThemeProvider({ children }) {
   })
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark')
+    const root = document.documentElement
+    root.classList.toggle('dark', theme === 'dark')
+    root.dataset.theme = theme
     try {
       localStorage.setItem('baytmiftah_theme', theme)
     } catch { /* ignore */ }
+    syncNativeTheme(theme)
   }, [theme])
 
   const value = useMemo(() => ({

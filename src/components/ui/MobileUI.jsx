@@ -33,7 +33,7 @@ export function MobilePrimaryButton({ children, className = '', as: Tag = 'butto
 export function MobileSecondaryButton({ children, className = '', as: Tag = 'button', ...props }) {
   return (
     <Tag
-      className={`inline-flex items-center justify-center rounded-xl border border-black/10 bg-bolt-card px-5 py-3 text-sm font-semibold text-ink ${className}`}
+      className={`inline-flex items-center justify-center rounded-xl border border-surface-border bg-bolt-card px-5 py-3 text-sm font-semibold text-ink ${className}`}
       {...props}
     >
       {children}

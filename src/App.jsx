@@ -21,7 +21,15 @@ function ResponsiveRoutes() {
 }
 
 export default function App() {
-  const [splashDone, setSplashDone] = useState(false)
+  const nativeApp = isNativeApp()
+  const [splashDone, setSplashDone] = useState(() => {
+    if (!nativeApp) return true
+    try {
+      return sessionStorage.getItem('baytmiftah.splash.seen') === '1'
+    } catch {
+      return false
+    }
+  })
 
   return (
     <ThemeProvider>
@@ -29,12 +37,20 @@ export default function App() {
         <CurrencyProvider>
           <AuthProvider>
             <BrowserRouter>
-              {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
-              <LegacyMobileRedirect>
-                <MarketBootstrap>
-                  <ResponsiveRoutes />
-                </MarketBootstrap>
-              </LegacyMobileRedirect>
+              {nativeApp && !splashDone && (
+                <SplashScreen
+                  native
+                  skipIfSeen
+                  onComplete={() => setSplashDone(true)}
+                />
+              )}
+              {splashDone && (
+                <LegacyMobileRedirect>
+                  <MarketBootstrap>
+                    <ResponsiveRoutes />
+                  </MarketBootstrap>
+                </LegacyMobileRedirect>
+              )}
             </BrowserRouter>
           </AuthProvider>
         </CurrencyProvider>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { hideNativeSplash } from '../../lib/capacitor-init'
-import { SPLASH_COLORS, SPLASH_DURATION_MS } from './constants'
+import { isNativeApp } from '../../lib/platform'
+import { NATIVE_SPLASH_COLORS, SPLASH_COLORS, SPLASH_DURATION_MS } from './constants'
 import SplashLogoMark from './SplashLogoMark'
 import SplashReflection from './SplashReflection'
 import SplashTagline from './SplashTagline'
@@ -40,7 +41,9 @@ export default function SplashScreen({
   fadeOut = true,
   skipIfSeen = false,
   sessionKey = 'baytmiftah.splash.seen',
+  native = isNativeApp(),
 }) {
+  const colors = native ? NATIVE_SPLASH_COLORS : SPLASH_COLORS
   const [exiting, setExiting] = useState(false)
   const completedRef = useRef(false)
   const skip = shouldSkipSplash(skipIfSeen, sessionKey)
@@ -86,19 +89,26 @@ export default function SplashScreen({
 
   return (
     <div
-      className={`splash-screen${exiting ? ' splash-screen--exit' : ''}`}
+      className={`splash-screen${exiting ? ' splash-screen--exit' : ''}${native ? ' splash-screen--native' : ''}`}
       role="img"
       aria-label="BaytMiftah — unlocking property opportunities"
-      style={{ backgroundColor: SPLASH_COLORS.background }}
+      style={{
+        backgroundColor: colors.background,
+        '--splash-primary': colors.primary,
+        '--splash-bg': colors.background,
+        '--splash-tagline': colors.tagline,
+        '--splash-line': colors.line,
+        '--splash-reflection': colors.reflection,
+      }}
     >
       <div className={`splash-screen__stage${!exiting ? ' splash-screen__stage--polish' : ''}`}>
         <div className="splash-screen__mark-wrap">
-          <SplashLogoMark />
+          <SplashLogoMark primary={colors.primary} shadow={colors.shadow} />
         </div>
 
         <SplashWordmark />
         <SplashTagline />
-        <SplashReflection />
+        <SplashReflection primary={colors.primary} shadow={colors.shadow} />
       </div>
     </div>
   )
