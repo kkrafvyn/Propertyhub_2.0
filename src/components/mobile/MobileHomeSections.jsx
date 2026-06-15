@@ -7,7 +7,7 @@ function ProfileAvatar({ to = '/m/profile' }) {
   return (
     <Link
       to={to}
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-forest/10 text-brand-forest"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mobile-forest/10 text-mobile-forest"
       aria-label="Profile"
     >
       <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
@@ -81,7 +81,7 @@ export function MobileTransactionTabs({ active, onChange }) {
             onClick={() => onChange(id)}
             className={`flex min-w-0 items-center justify-center gap-1 rounded-full px-2 py-2.5 text-sm font-semibold transition ${
               isActive
-                ? 'bg-brand-forest text-white shadow-sm'
+                ? 'bg-mobile-forest text-white shadow-sm'
                 : 'bg-[#F5F5F5] text-ink-secondary'
             }`}
           >
@@ -123,12 +123,12 @@ export function MobilePropertyTypeRow({ active, onChange }) {
           >
             <span
               className={`flex h-14 w-14 items-center justify-center rounded-2xl text-2xl transition ${
-                isActive ? 'ring-2 ring-brand-forest ring-offset-2' : ''
+                isActive ? 'ring-2 ring-mobile-forest ring-offset-2' : ''
               } ${bg}`}
             >
               {emoji}
             </span>
-            <span className={`text-center text-[11px] font-medium leading-tight ${isActive ? 'text-brand-forest' : 'text-ink-secondary'}`}>
+            <span className={`text-center text-[11px] font-medium leading-tight ${isActive ? 'text-mobile-forest' : 'text-ink-secondary'}`}>
               {t(labelKey)}
             </span>
           </button>
@@ -146,7 +146,7 @@ export function MobileCarouselSection({ title, seeAllTo, children }) {
       <div className="mb-3 flex items-center justify-between px-4">
         <h2 className="text-[17px] font-bold text-ink">{title}</h2>
         {seeAllTo && (
-          <Link to={seeAllTo} className="text-sm font-semibold text-brand-forest">
+          <Link to={seeAllTo} className="text-sm font-semibold text-mobile-forest">
             {t('mobile.homeScreen.seeAll')}
           </Link>
         )}
@@ -167,7 +167,7 @@ export function MobileHomeListingCard({ listing, to, badge, saved, onToggleSave 
           {badge && (
             <span
               className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white ${
-                badge.tone === 'blue' ? 'bg-blue-500' : 'bg-brand-forest'
+                badge.tone === 'blue' ? 'bg-blue-500' : 'bg-mobile-forest'
               }`}
             >
               {badge.label}
@@ -176,7 +176,7 @@ export function MobileHomeListingCard({ listing, to, badge, saved, onToggleSave 
         </div>
         <div className="p-3">
           <p className="truncate font-bold text-ink">{listing.title}</p>
-          <p className="mt-1 text-sm font-bold text-brand-forest">{listing.priceLabel}</p>
+          <p className="mt-1 text-sm font-bold text-mobile-forest">{listing.priceLabel}</p>
         </div>
       </Link>
       {onToggleSave && (

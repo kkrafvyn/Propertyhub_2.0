@@ -23,8 +23,6 @@ import { fetchListings } from '../../services/marketplace-service'
 
 export default function MobileHomePage() {
   const { t } = useTranslation()
-  const [txTab, setTxTab] = useState('stay')
-  const [propType, setPropType] = useState(null)
   const [listings, setListings] = useState([])
   const [savedIds, setSavedIds] = useState([])
 
@@ -33,12 +31,7 @@ export default function MobileHomePage() {
     syncSavedIds().then(setSavedIds)
   }, [])
 
-  const filtered = useMemo(
-    () => filterHomeListings(listings, txTab, propType),
-    [listings, txTab, propType],
-  )
-
-  const weekend = useMemo(() => filtered.slice(0, 6), [filtered])
+  const weekend = useMemo(() => listings.slice(0, 6), [listings])
   const featured = useMemo(() => listings.filter((l) => l.featured).slice(0, 6), [listings])
 
   const areas = useMemo(
@@ -66,8 +59,6 @@ export default function MobileHomePage() {
     <MobileShell>
       <MobileReferenceHeader />
       <MobileHeroBanner />
-      <MobileTransactionTabs active={txTab} onChange={setTxTab} />
-      <MobilePropertyTypeRow active={propType} onChange={setPropType} />
 
       {weekend.length > 0 && (
         <MobileCarouselSection title={t('mobile.homeScreen.availableWeekend')} seeAllTo="/m/explore">
@@ -123,12 +114,6 @@ export default function MobileHomePage() {
           ))}
         </MobileCarouselSection>
       )}
-
-      {filtered.length === 0 && (
-        <div className="px-4 pb-6">
-          <MobileEmpty title={t('home.noMatches')} description={t('home.tryAdjusting')} />
-        </div>
-      )}
     </MobileShell>
   )
 }
@@ -136,25 +121,41 @@ export default function MobileHomePage() {
 export function MobileExplorePage() {
   const { t } = useTranslation()
   const [search, setSearch] = useState('')
+  const [txTab, setTxTab] = useState('stay')
+  const [propType, setPropType] = useState(null)
   const [listings, setListings] = useState([])
 
   useEffect(() => {
     fetchListings().then(({ listings: rows }) => setListings(rows))
   }, [])
 
-  const visible = listings.filter((l) =>
-    !search || `${l.title} ${l.type}`.toLowerCase().includes(search.toLowerCase()),
-  )
+  const visible = useMemo(() => {
+    const filtered = filterHomeListings(listings, txTab, propType)
+    const q = search.trim().toLowerCase()
+    if (!q) return filtered
+    return filtered.filter((l) =>
+      `${l.title} ${l.type}`.toLowerCase().includes(q),
+    )
+  }, [listings, txTab, propType, search])
 
   return (
     <MobileShell>
       <MobileHeader title={t('mobile.search')} subtitle={t('mobile.findNextHome')} />
       <MobileSearchBar value={search} onChange={setSearch} placeholder={t('mobile.searchListings')} />
-      <div className="grid grid-cols-2 gap-3 px-4 pb-4">
-        {visible.map((listing) => (
-          <MobileBoltListingTile key={listing.id} listing={listing} to={`/m/property/${listing.id}`} />
-        ))}
-      </div>
+      <MobileTransactionTabs active={txTab} onChange={setTxTab} />
+      <MobilePropertyTypeRow active={propType} onChange={setPropType} />
+
+      {visible.length === 0 ? (
+        <div className="px-4 pb-4">
+          <MobileEmpty title={t('home.noMatches')} description={t('home.tryAdjusting')} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 px-4 pb-4">
+          {visible.map((listing) => (
+            <MobileBoltListingTile key={listing.id} listing={listing} to={`/m/property/${listing.id}`} />
+          ))}
+        </div>
+      )}
     </MobileShell>
   )
 }

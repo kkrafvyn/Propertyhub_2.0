@@ -10,8 +10,13 @@ export default {
           hover: '#D4AF37',
           light: '#FFF8E1',
           dark: '#051424',
-          forest: '#1B4332',
+          forest: '#0F2922',
           accent: '#FF385C',
+        },
+        mobile: {
+          forest: '#1B4332',
+          bg: '#F2F2F2',
+          card: '#FFFFFF',
         },
         bolt: {
           green: '#34BB09',

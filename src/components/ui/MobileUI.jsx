@@ -21,7 +21,7 @@ export function MobileStat({ label, value }) {
 export function MobilePrimaryButton({ children, className = '', as: Tag = 'button', ...props }) {
   return (
     <Tag
-      className={`inline-flex items-center justify-center rounded-xl bg-brand-forest px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60 ${className}`}
+      className={`inline-flex items-center justify-center rounded-xl bg-mobile-forest px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60 ${className}`}
       {...props}
     >
       {children}
@@ -55,7 +55,7 @@ export function MobileLinkRow({ to, children }) {
 export function MobileBadge({ children, tone = 'neutral' }) {
   const tones = {
     neutral: 'bg-bolt-bg text-ink',
-    accent: 'bg-brand-forest/10 text-brand-forest',
+    accent: 'bg-mobile-forest/10 text-mobile-forest',
     success: 'bg-green-100 text-green-800',
     danger: 'bg-red-100 text-red-800',
   }
@@ -81,7 +81,7 @@ export function MobileSectionTitle({ children }) {
 
 export function MobileTextLink({ to, children, className = '' }) {
   return (
-    <Link to={to} className={`text-sm font-semibold text-brand-forest ${className}`}>
+    <Link to={to} className={`text-sm font-semibold text-mobile-forest ${className}`}>
       {children}
     </Link>
   )
@@ -156,7 +156,7 @@ export function MobileListingTile({ listing, to }) {
 export function MobileHubTile({ to, label, Icon }) {
   return (
     <Link to={to} className="rounded-2xl bg-bolt-card p-4 shadow-bolt-card">
-      <Icon className="h-7 w-7 text-brand-forest" />
+      <Icon className="h-7 w-7 text-mobile-forest" />
       <p className="mt-2 font-bold text-ink">{label}</p>
     </Link>
   )
