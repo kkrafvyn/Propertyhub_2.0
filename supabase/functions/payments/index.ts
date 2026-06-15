@@ -2,6 +2,8 @@ import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
 import { createCheckout } from '../_shared/payments.ts'
 import { handleStripeWebhook, handlePaystackWebhook } from '../_shared/webhooks.ts'
+import { emitPlatformEvent } from '../_shared/events.ts'
+import { finalizePayment } from '../_shared/payment-completion.ts'
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -136,6 +138,21 @@ Deno.serve(async (req) => {
 
         if (!amount || amount <= 0) return errorResponse('Invalid amount')
 
+        const recordId = crypto.randomUUID()
+        const baseSuccess = body.success_path ?? '/payments/success'
+        const successPath = `${baseSuccess}${baseSuccess.includes('?') ? '&' : '?'}payment_id=${recordId}`
+        const metadata = {
+          purpose,
+          payment_id: recordId,
+          ...(body.metadata ?? {}),
+          listing_id: body.listing_id ?? body.metadata?.listing_id,
+          rent_payment_id: body.metadata?.rent_payment_id ?? body.rent_payment_id,
+          settlement_id: body.metadata?.settlement_id,
+          escrow_id: body.metadata?.escrow_id,
+          bill_id: body.metadata?.bill_id,
+          bill_ids: body.metadata?.bill_ids,
+        }
+
         const checkout = await createCheckout({
           purpose,
           amount,
@@ -143,13 +160,13 @@ Deno.serve(async (req) => {
           provider,
           userId: user.id,
           userEmail: user.email ?? 'user@baytmiftah.com',
-          metadata: body.metadata ?? { listing_id: body.listing_id },
-          successPath: body.success_path ?? '/payments/success',
+          metadata,
+          successPath,
           cancelPath: body.cancel_path ?? '/payments/cancel',
         })
 
         const record = {
-          id: crypto.randomUUID(),
+          id: recordId,
           user_id: user.id,
           purpose,
           amount,
@@ -157,17 +174,19 @@ Deno.serve(async (req) => {
           provider: checkout?.provider ?? provider,
           provider_ref: checkout?.provider_ref ?? null,
           status: checkout ? 'pending' : 'demo',
-          metadata: {
-            purpose,
-            ...(body.metadata ?? {}),
-            listing_id: body.listing_id ?? body.metadata?.listing_id,
-            rent_payment_id: body.metadata?.rent_payment_id ?? body.rent_payment_id,
-            settlement_id: body.metadata?.settlement_id,
-            escrow_id: body.metadata?.escrow_id,
-          },
+          metadata,
         }
 
         await admin.from('payment_records').insert(record).catch((e) => console.error('payment record insert failed', e.message))
+
+        await emitPlatformEvent(admin, {
+          eventType: 'payment.initiated',
+          aggregateType: 'payment',
+          aggregateId: record.id,
+          actorId: user.id,
+          payload: { purpose, amount, currency, provider: record.provider },
+          idempotencyKey: `payment-init-${record.id}`,
+        })
 
         if (checkout?.checkout_url) {
           return jsonResponse({ ok: true, checkout_url: checkout.checkout_url, provider: checkout.provider, payment_id: record.id })
@@ -177,6 +196,17 @@ Deno.serve(async (req) => {
           ok: true, checkout_url: null, provider, payment_id: record.id,
           message: 'Payment queued — set STRIPE_SECRET_KEY and PAYSTACK_SECRET_KEY in Edge Function secrets.',
         })
+      }
+
+      if (body.action === 'confirm_checkout' || body.action === 'confirm_demo') {
+        const paymentId = body.payment_id
+        if (!paymentId) return errorResponse('payment_id required', 400)
+        const result = await finalizePayment(admin, {
+          paymentId,
+          userId: user.id,
+          metadata: { payment_id: paymentId, ...(body.metadata ?? {}) },
+        })
+        return jsonResponse({ ok: result.ok, payment_id: paymentId, status: 'completed', already_done: result.alreadyDone })
       }
 
       return errorResponse('Unsupported action', 404)

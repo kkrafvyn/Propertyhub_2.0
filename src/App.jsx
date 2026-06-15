@@ -5,6 +5,7 @@ import { CurrencyProvider } from './context/CurrencyContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { LocaleProvider } from './i18n/LocaleContext'
 import LegacyMobileRedirect from './components/LegacyMobileRedirect'
+import MarketBootstrap from './components/MarketBootstrap'
 import { SplashScreen } from './components/splash'
 import DesktopRoutes from './routes/DesktopRoutes'
 import MobileRoutes from './routes/MobileRoutes'
@@ -30,7 +31,9 @@ export default function App() {
             <BrowserRouter>
               {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
               <LegacyMobileRedirect>
-                <ResponsiveRoutes />
+                <MarketBootstrap>
+                  <ResponsiveRoutes />
+                </MarketBootstrap>
               </LegacyMobileRedirect>
             </BrowserRouter>
           </AuthProvider>

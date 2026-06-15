@@ -1,13 +1,57 @@
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
+import { emitPlatformEvent } from '../_shared/events.ts'
+import { recordLedgerEntry } from '../_shared/ledger.ts'
 
-async function ensureUserWallet(admin, userId: string) {
-  const id = `wal-${userId.slice(0, 8)}`
-  const { data } = await admin.from('wallets').select('*').eq('owner_id', userId).eq('owner_type', 'user').maybeSingle()
+type WalletPurpose = 'general' | 'rent' | 'utility' | 'escrow'
+
+async function ensureUserWallet(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+  purpose: WalletPurpose = 'general',
+  currency = 'GHS',
+) {
+  const prefix = purpose === 'general' ? 'wal' : `wal-${purpose.slice(0, 4)}`
+  const id = `${prefix}-${userId.slice(0, 8)}`
+  const { data } = await admin
+    .from('wallets')
+    .select('*')
+    .eq('owner_id', userId)
+    .eq('owner_type', 'user')
+    .eq('wallet_purpose', purpose)
+    .eq('currency', currency)
+    .maybeSingle()
   if (data) return data
-  const row = { id, owner_type: 'user', owner_id: userId, currency: 'GHS', available_balance: 0, pending_balance: 0 }
+  const row = {
+    id,
+    owner_type: 'user',
+    owner_id: userId,
+    currency,
+    wallet_purpose: purpose,
+    available_balance: 0,
+    pending_balance: 0,
+  }
   await admin.from('wallets').upsert(row)
   return row
+}
+
+async function ensureAllWallets(admin: ReturnType<typeof createAdminClient>, userId: string, currency = 'GHS') {
+  const purposes: WalletPurpose[] = ['general', 'rent', 'utility', 'escrow']
+  const wallets = []
+  for (const purpose of purposes) {
+    wallets.push(await ensureUserWallet(admin, userId, purpose, currency))
+  }
+  return wallets
+}
+
+function mapWallet(row: Record<string, unknown>) {
+  return {
+    id: row.id,
+    purpose: row.wallet_purpose ?? 'general',
+    currency: row.currency,
+    availableBalance: Number(row.available_balance),
+    pendingBalance: Number(row.pending_balance),
+  }
 }
 
 Deno.serve(async (req) => {
@@ -20,20 +64,24 @@ Deno.serve(async (req) => {
   const admin = createAdminClient()
   const url = new URL(req.url)
   const action = url.searchParams.get('action')
+  const purpose = (url.searchParams.get('purpose') ?? 'general') as WalletPurpose
+  const currency = url.searchParams.get('currency') ?? 'GHS'
 
   try {
     if (req.method === 'GET') {
-      const wallet = await ensureUserWallet(admin, user.id)
+      if (action === 'all') {
+        const wallets = await ensureAllWallets(admin, user.id, currency)
+        return jsonResponse({ wallets: wallets.map(mapWallet), source: 'supabase' })
+      }
+
+      const wallet = await ensureUserWallet(admin, user.id, purpose, currency)
 
       if (action === 'dashboard' || action === 'transactions') {
         const { data: txs } = await admin.from('wallet_transactions').select('*').eq('wallet_id', wallet.id).order('created_at', { ascending: false }).limit(50)
+        const allWallets = await ensureAllWallets(admin, user.id, currency)
         return jsonResponse({
-          wallet: {
-            id: wallet.id,
-            currency: wallet.currency,
-            availableBalance: Number(wallet.available_balance),
-            pendingBalance: Number(wallet.pending_balance),
-          },
+          wallet: mapWallet(wallet),
+          wallets: allWallets.map(mapWallet),
           transactions: txs ?? [],
           source: 'supabase',
         })
@@ -43,7 +91,8 @@ Deno.serve(async (req) => {
 
     if (req.method === 'POST') {
       const body = await req.json()
-      const wallet = await ensureUserWallet(admin, user.id)
+      const walletPurpose = (body.purpose ?? purpose) as WalletPurpose
+      const wallet = await ensureUserWallet(admin, user.id, walletPurpose, body.currency ?? currency)
 
       if (body.action === 'withdraw') {
         const amount = Number(body.amount)
@@ -65,6 +114,15 @@ Deno.serve(async (req) => {
           updated_at: new Date().toISOString(),
         }).eq('id', wallet.id)
 
+        await emitPlatformEvent(admin, {
+          eventType: 'wallet.debited',
+          aggregateType: 'wallet',
+          aggregateId: wallet.id,
+          actorId: user.id,
+          payload: { amount, type: 'withdrawal', transaction_id: txId },
+          idempotencyKey: `wallet-debit-${txId}`,
+        })
+
         return jsonResponse({ ok: true, transaction_id: txId })
       }
 
@@ -85,6 +143,29 @@ Deno.serve(async (req) => {
           available_balance: Number(wallet.available_balance) + amount,
           updated_at: new Date().toISOString(),
         }).eq('id', wallet.id)
+
+        await recordLedgerEntry(admin, {
+          entryType: 'credit',
+          accountType: walletPurpose === 'utility' ? 'utility' : walletPurpose === 'rent' ? 'rent' : 'user_wallet',
+          accountId: user.id,
+          amount,
+          currency: wallet.currency,
+          referenceType: 'wallet_transaction',
+          referenceId: txId,
+          idempotencyKey: `wallet-credit-${txId}`,
+          description: body.description ?? 'Wallet credit',
+          actorId: user.id,
+        })
+
+        await emitPlatformEvent(admin, {
+          eventType: 'wallet.credited',
+          aggregateType: 'wallet',
+          aggregateId: wallet.id,
+          actorId: user.id,
+          payload: { amount, type: body.type ?? 'deposit', transaction_id: txId },
+          idempotencyKey: `wallet-credit-evt-${txId}`,
+        })
+
         return jsonResponse({ ok: true, transaction_id: txId })
       }
     }

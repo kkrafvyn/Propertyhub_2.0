@@ -488,6 +488,8 @@ export default {
       userManagement: 'User management',
       leases: 'Leases',
       rentPayments: 'Rent payments',
+      utilities: 'Utilities',
+      credit: 'Housing credit',
       maintenance: 'Maintenance',
       leaseSigning: 'Lease signing',
       tenants: 'Tenants',

@@ -7,7 +7,8 @@ import { fetchPmsDashboard } from '../../services/pms-service'
 const links = [
   { to: '/manage/tenants', label: 'Tenants', desc: 'Occupancy, leases, and balances' },
   { to: '/manage/work-orders', label: 'Work orders', desc: 'Maintenance and vendor dispatch' },
-  { to: '/manage/finance', label: 'Rent & expenses', desc: 'Collection and expense tracking' },
+  { to: '/manage/finance', label: 'Rent & expenses', desc: 'Collection, utility arrears & billing' },
+  { to: '/manage/utilities', label: 'Utilities', desc: 'ECG, water, internet & gas config' },
   { to: '/manage/inspections', label: 'Inspections', desc: 'Move-in, quarterly, move-out reports' },
   { to: '/documents', label: 'Document vault', desc: 'Leases and compliance docs' },
 ]
@@ -26,7 +27,10 @@ function ManageHub() {
           <StatCard label="Buildings" value={portfolio.buildings} />
           <StatCard label="Units" value={portfolio.units} />
           <StatCard label="Occupancy" value={portfolio.occupancy} />
-          <StatCard label="Collected MTD" value={`GHS ${portfolio.collectedMtd.toLocaleString()}`} />
+          <StatCard label="Collected MTD" value={`GHS ${portfolio.collectedMtd?.toLocaleString()}`} />
+          {portfolio.totalArrears != null && (
+            <StatCard label="Total arrears" value={`GHS ${portfolio.totalArrears.toLocaleString()}`} />
+          )}
         </StatGrid>
       )}
       <HubLinkGrid links={links} />

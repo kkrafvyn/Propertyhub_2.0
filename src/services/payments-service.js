@@ -4,6 +4,18 @@ import { getPaymentsMode } from '../lib/payments-config'
 
 const PAYMENTS_KEY = 'baytmiftah_payments'
 
+async function confirmCheckout({ paymentId, metadata = {} }) {
+  try {
+    return await callEdgeFunction('payments', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'confirm_checkout', payment_id: paymentId, metadata },
+    })
+  } catch (error) {
+    return { ok: false, error: error.message }
+  }
+}
+
 function saveLocalPayment(record) {
   try {
     const stored = JSON.parse(localStorage.getItem(PAYMENTS_KEY) || '[]')
@@ -46,7 +58,15 @@ export async function initiateCheckout({
     }
 
     if (payload?.message) {
-      return { ...payload, ok: payload.ok ?? true, mode: getPaymentsMode() }
+      const enriched = { ...payload, ok: payload.ok ?? true, mode: getPaymentsMode() }
+      if (!payload.checkout_url && payload.payment_id) {
+        await confirmCheckout({ paymentId: payload.payment_id, metadata: { purpose, ...metadata } }).catch(() => {})
+      }
+      return enriched
+    }
+
+    if (!payload?.checkout_url && payload?.payment_id) {
+      await confirmCheckout({ paymentId: payload.payment_id, metadata: { purpose, ...metadata } }).catch(() => {})
     }
 
     return payload
@@ -98,6 +118,36 @@ export async function payRent({ paymentId, amount, provider = 'paystack', metada
   })
 }
 
+export async function payUtility({ billId, amount, provider = 'paystack', metadata = {} }) {
+  try {
+    const { trackFunnel } = await import('../lib/analytics')
+    trackFunnel('payment_started', { purpose: 'utility', bill_id: billId, provider })
+  } catch { /* */ }
+  return initiateCheckout({
+    purpose: 'utility',
+    amount,
+    provider,
+    metadata: { bill_id: billId, ...metadata },
+    successPath: `/payments/success?purpose=utility&bill_id=${billId}&provider=${provider}`,
+    cancelPath: '/renter/utilities',
+  })
+}
+
+export async function payAllUtilities({ amount, provider = 'paystack', billIds = [], metadata = {} }) {
+  try {
+    const { trackFunnel } = await import('../lib/analytics')
+    trackFunnel('payment_started', { purpose: 'utility_pay_all', provider })
+  } catch { /* */ }
+  return initiateCheckout({
+    purpose: 'utility',
+    amount,
+    provider,
+    metadata: { bill_ids: billIds, pay_all: true, ...metadata },
+    successPath: '/payments/success?purpose=utility&pay_all=1',
+    cancelPath: '/renter/utilities',
+  })
+}
+
 export async function fundEscrow({ escrowId, amount, provider = 'paystack' }) {
   return initiateCheckout({
     purpose: 'escrow_deposit',
@@ -124,6 +174,10 @@ export async function settleCommission({ settlementId, amount, provider = 'payst
   })
 }
 
+export async function confirmCheckoutPublic({ paymentId, metadata = {} }) {
+  return confirmCheckout({ paymentId, metadata })
+}
+
 export async function fetchPaymentHistory() {
   try {
     const payload = await callEdgeFunction('payments', {
@@ -145,6 +199,9 @@ export default {
   initiateCheckout,
   createFeaturedBoost,
   payRent,
+  payUtility,
+  payAllUtilities,
+  confirmCheckout: confirmCheckoutPublic,
   fundEscrow,
   settleCommission,
   fetchPaymentHistory,

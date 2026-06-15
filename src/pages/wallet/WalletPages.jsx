@@ -13,10 +13,22 @@ function WalletHub() {
   }, [])
 
   const wallet = data?.wallet
+  const wallets = data?.wallets ?? (wallet ? [wallet] : [])
 
   return (
-    <WalletShell title="Real estate wallet" subtitle="Deposits, escrow holds, rent collection, and payouts">
-      {wallet && (
+    <WalletShell title="Real estate wallet" subtitle="Rent, utility, escrow & general balances">
+      {wallets.length > 0 && (
+        <StatGrid cols={Math.min(wallets.length, 4)}>
+          {wallets.map((w) => (
+            <StatCard
+              key={w.id}
+              label={`${(w.purpose ?? 'general').replace(/^\w/, (c) => c.toUpperCase())} wallet`}
+              value={`${w.currency} ${w.availableBalance?.toLocaleString()}`}
+            />
+          ))}
+        </StatGrid>
+      )}
+      {wallet && wallets.length <= 1 && (
         <StatGrid cols={2}>
           <StatCard label="Available balance" value={`${wallet.currency} ${wallet.availableBalance?.toLocaleString()}`} />
           <StatCard label="Pending / held" value={`${wallet.currency} ${wallet.pendingBalance?.toLocaleString()}`} />

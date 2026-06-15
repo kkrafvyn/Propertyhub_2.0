@@ -39,6 +39,8 @@ const AgencyCompliancePage = lazy(() => import('../pages/agency/AgencyCompliance
 const RenterHubPage = lazy(() => import('../pages/renter/RenterHubPage'))
 const RenterLeasesPage = lazy(() => import('../pages/renter/RenterLeasesPage'))
 const RenterPaymentsPage = lazy(() => import('../pages/renter/RenterPaymentsPage'))
+const RenterUtilitiesPage = lazy(() => import('../pages/renter/RenterUtilitiesPage'))
+const RenterCreditPage = lazy(() => import('../pages/renter/RenterCreditPage'))
 const RenterMaintenancePage = lazy(() => import('../pages/renter/RenterMaintenancePage'))
 const RenterLeaseSigningPage = lazy(() => import('../pages/renter/RenterLeaseSigningPage'))
 const ManageHubPage = lazy(() => import('../pages/manage/ManageHubPage'))
@@ -46,6 +48,7 @@ const ManageTenantsPage = lazy(() => import('../pages/manage/ManageTenantsPage')
 const ManageWorkOrdersPage = lazy(() => import('../pages/manage/ManageWorkOrdersPage'))
 const ManageFinancePage = lazy(() => import('../pages/manage/ManageFinancePage'))
 const ManageInspectionsPage = lazy(() => import('../pages/manage/ManageInspectionsPage'))
+const ManageUtilitiesPage = lazy(() => import('../pages/manage/ManageUtilitiesPage'))
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'))
 const AdminAgenciesPage = lazy(() => import('../pages/admin/AdminAgenciesPage'))
 const AdminModerationPage = lazy(() => import('../pages/admin/AdminModerationPage'))
@@ -77,6 +80,7 @@ const DeveloperHubPage = lazy(() => import('../pages/developer/DeveloperHubPage'
 const DeveloperProjectsPage = lazy(() => import('../pages/developer/DeveloperProjectsPage'))
 const DeveloperConstructionPage = lazy(() => import('../pages/developer/DeveloperConstructionPage'))
 const DeveloperBuyersPage = lazy(() => import('../pages/developer/DeveloperBuyersPage'))
+const DeveloperPlatformApiPage = lazy(() => import('../pages/developer/DeveloperPlatformApiPage'))
 const EnterpriseHubPage = lazy(() => import('../pages/enterprise/EnterpriseHubPage'))
 const EnterprisePortfoliosPage = lazy(() => import('../pages/enterprise/EnterprisePortfoliosPage'))
 const EnterpriseEsgPage = lazy(() => import('../pages/enterprise/EnterpriseEsgPage'))
@@ -268,6 +272,8 @@ export default function DesktopRoutes() {
       <Route path="/agency/onboarding" element={<AgencyRoute><AgencyOnboardingPage /></AgencyRoute>} />
       <Route path="/renter/leases" element={<RenterLeasesPage />} />
       <Route path="/renter/payments" element={<RenterPaymentsPage />} />
+      <Route path="/renter/utilities" element={<RenterUtilitiesPage />} />
+      <Route path="/renter/credit" element={<RenterCreditPage />} />
       <Route path="/renter/maintenance" element={<RenterMaintenancePage />} />
       <Route path="/renter/sign" element={<RenterLeaseSigningPage />} />
       <Route path="/manage" element={<ManageRoute><ManageHubPage /></ManageRoute>} />
@@ -275,6 +281,7 @@ export default function DesktopRoutes() {
       <Route path="/manage/work-orders" element={<ManageRoute><ManageWorkOrdersPage /></ManageRoute>} />
       <Route path="/manage/finance" element={<ManageRoute><ManageFinancePage /></ManageRoute>} />
       <Route path="/manage/inspections" element={<ManageRoute><ManageInspectionsPage /></ManageRoute>} />
+      <Route path="/manage/utilities" element={<ManageRoute><ManageUtilitiesPage /></ManageRoute>} />
       <Route path="/admin" element={<StaffRoute><AdminDashboardPage /></StaffRoute>} />
       <Route path="/admin/agencies" element={<AdminRoute><AdminAgenciesPage /></AdminRoute>} />
       <Route path="/admin/moderation" element={<ModerationRoute><AdminModerationPage /></ModerationRoute>} />
@@ -303,6 +310,7 @@ export default function DesktopRoutes() {
       <Route path="/developer/projects" element={<DeveloperRoute><DeveloperProjectsPage /></DeveloperRoute>} />
       <Route path="/developer/construction" element={<DeveloperRoute><DeveloperConstructionPage /></DeveloperRoute>} />
       <Route path="/developer/buyers" element={<DeveloperRoute><DeveloperBuyersPage /></DeveloperRoute>} />
+      <Route path="/developer/platform-api" element={<DeveloperRoute><DeveloperPlatformApiPage /></DeveloperRoute>} />
       <Route path="/enterprise" element={<EnterpriseRoute><EnterpriseHubPage /></EnterpriseRoute>} />
       <Route path="/enterprise/organizations" element={<EnterpriseRoute><EnterpriseOrganizationsPage /></EnterpriseRoute>} />
       <Route path="/enterprise/users" element={<EnterpriseRoute><EnterpriseOrgUsersPage /></EnterpriseRoute>} />

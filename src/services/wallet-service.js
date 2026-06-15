@@ -24,16 +24,24 @@ async function ensureWallet(userId) {
 function mapWallet(row) {
   return {
     id: row.id,
+    purpose: row.purpose ?? row.wallet_purpose ?? 'general',
     currency: row.currency,
-    availableBalance: Number(row.available_balance),
-    pendingBalance: Number(row.pending_balance),
+    availableBalance: Number(row.availableBalance ?? row.available_balance),
+    pendingBalance: Number(row.pendingBalance ?? row.pending_balance),
   }
 }
 
 export async function fetchWalletDashboard() {
   try {
     const payload = await callEdgeFunction('wallet', { allowAnonymous: false, query: { action: 'dashboard' } })
-    if (payload?.wallet) return payload
+    if (payload?.wallet) {
+      return {
+        wallet: mapWallet(payload.wallet),
+        wallets: (payload.wallets ?? [payload.wallet]).map(mapWallet),
+        transactions: (payload.transactions ?? []).map(mapTx),
+        source: payload.source ?? 'supabase',
+      }
+    }
   } catch { /* fallback */ }
 
   if (supabase) {

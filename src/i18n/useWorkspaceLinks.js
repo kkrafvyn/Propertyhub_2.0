@@ -72,6 +72,8 @@ export function useRenterShellNav() {
     { to: '/renter', key: 'home', end: true },
     { to: '/renter/leases', key: 'leases' },
     { to: '/renter/payments', key: 'rentPayments' },
+    { to: '/renter/utilities', key: 'utilities' },
+    { to: '/renter/credit', key: 'credit' },
     { to: '/renter/maintenance', key: 'maintenance' },
     { to: '/renter/sign', key: 'leaseSigning' },
   ])
@@ -85,6 +87,7 @@ export function useManageShellNav() {
     { to: '/manage/tenants', key: 'tenants' },
     { to: '/manage/work-orders', key: 'workOrders' },
     { to: '/manage/finance', key: 'rentExpenses' },
+    { to: '/manage/utilities', key: 'utilities' },
     { to: '/manage/inspections', key: 'inspections' },
   ])
   return { workspaceLabel: t('workspace.titles.manage'), homePath: '/manage', links }

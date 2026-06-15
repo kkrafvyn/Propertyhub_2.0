@@ -53,9 +53,32 @@ export async function fetchRentCollection() {
       allowAnonymous: false,
       query: { action: 'rent_collection' },
     })
-    if (payload?.collection?.length) return { collection: payload.collection, expenses: payload.expenses, source: 'supabase' }
+    if (payload?.collection) return payload
   } catch { /* fallback */ }
-  return { collection: rentCollection, expenses, source: 'local' }
+  return { collection: rentCollection, expenses, utilityArrears: 760, utilityBills: [], source: 'local' }
+}
+
+export async function fetchLandlordArrears() {
+  try {
+    const payload = await callEdgeFunction('pms', {
+      allowAnonymous: false,
+      query: { action: 'arrears' },
+    })
+    if (payload?.arrears) return payload
+  } catch { /* fallback */ }
+  const rentItems = rentCollection.filter((c) => c.status !== 'paid').map((c) => ({
+    id: c.id,
+    type: 'rent',
+    tenant: c.tenant,
+    unit: c.unit,
+    amount: c.amount,
+    status: c.status,
+  }))
+  return {
+    summary: { rentArrears: 125000, utilityArrears: 760, totalArrears: 125760 },
+    arrears: rentItems,
+    source: 'local',
+  }
 }
 
 export async function fetchInspections() {
@@ -74,5 +97,6 @@ export default {
   fetchTenants,
   fetchWorkOrders,
   fetchRentCollection,
+  fetchLandlordArrears,
   fetchInspections,
 }

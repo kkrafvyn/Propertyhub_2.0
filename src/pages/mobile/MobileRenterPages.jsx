@@ -21,7 +21,9 @@ import {
   signLeaseDocument,
 } from '../../services/renter-service'
 import { createSigningSession } from '../../services/docusign-service'
-import { payRent } from '../../services/payments-service'
+import { payRent, payUtility, payAllUtilities } from '../../services/payments-service'
+import { fetchUtilityDashboard } from '../../services/utility-service'
+import { utilityTypeLabel, utilityIcon } from '../../lib/utilities'
 import { initiateUssdPayment } from '../../services/ussd-service'
 import { getDefaultProvider } from '../../lib/payment-providers'
 
@@ -31,6 +33,7 @@ function RenterHome() {
   const links = [
     { to: '/renter/leases', label: t('hubs.renter.leases.title'), Icon: IconDocument },
     { to: '/renter/payments', label: t('hubs.renter.payments.title'), Icon: IconCard },
+    { to: '/renter/utilities', label: 'Utilities', Icon: IconCard },
     { to: '/renter/maintenance', label: t('hubs.renter.maintenance.title'), Icon: IconWrench },
     { to: '/renter/sign', label: t('hubs.renter.leaseSigning.title'), Icon: IconPen },
   ]
@@ -120,6 +123,70 @@ function RenterPaymentsMobile() {
           </div>
         </div>
       )}
+    </MobileShell>
+  )
+}
+
+function RenterUtilitiesMobile() {
+  const { t } = useTranslation()
+  const [dashboard, setDashboard] = useState(null)
+  const [loading, setLoading] = useState(null)
+  const [message, setMessage] = useState('')
+  const provider = getDefaultProvider()
+
+  useEffect(() => {
+    fetchUtilityDashboard().then(setDashboard)
+  }, [])
+
+  async function handlePay(bill) {
+    setLoading(bill.id)
+    const result = await payUtility({ billId: bill.id, amount: bill.amount, provider })
+    if (result.message && !result.checkout_url) setMessage(result.message)
+    setLoading(null)
+  }
+
+  async function handlePayAll() {
+    setLoading('all')
+    const total = dashboard?.summary?.totalDue ?? 0
+    const result = await payAllUtilities({ amount: total, provider })
+    if (result.message && !result.checkout_url) setMessage(result.message)
+    setLoading(null)
+  }
+
+  const bills = dashboard?.bills ?? []
+  const unpaid = bills.filter((b) => b.status === 'unpaid')
+  const totalDue = dashboard?.summary?.totalDue ?? 0
+
+  return (
+    <MobileShell hideNav>
+      <MobileHeader title="Utilities" subtitle="ECG · Water · Internet · Gas" backTo="/renter" />
+      <section className="space-y-3 px-4 pb-6">
+        <IntegrationsBanner showPayments />
+        {message && <p className="text-sm text-ink-secondary">{message}</p>}
+        {unpaid.length > 0 && (
+          <MobilePrimaryButton type="button" onClick={handlePayAll} disabled={loading === 'all'} className="w-full">
+            {loading === 'all' ? t('mobile.redirecting') : `Pay all · GHS ${totalDue.toLocaleString()}`}
+          </MobilePrimaryButton>
+        )}
+        {bills.map((bill) => (
+          <MobileCard key={bill.id}>
+            <div className="flex items-start gap-2">
+              <span>{utilityIcon(bill.type)}</span>
+              <div className="flex-1">
+                <p className="font-semibold text-ink">{utilityTypeLabel(bill.type)}</p>
+                <p className="text-xs text-ink-secondary">{bill.providerName} · {bill.month}</p>
+                <p className="mt-1 font-semibold text-ink">GHS {bill.amount.toLocaleString()}</p>
+              </div>
+              <MobileBadge tone={bill.status === 'paid' ? 'success' : 'accent'}>{bill.status}</MobileBadge>
+            </div>
+            {bill.status === 'unpaid' && (
+              <MobilePrimaryButton type="button" onClick={() => handlePay(bill)} disabled={loading === bill.id} className="mt-3 w-full">
+                {loading === bill.id ? t('mobile.redirecting') : t('mobile.payNow')}
+              </MobilePrimaryButton>
+            )}
+          </MobileCard>
+        ))}
+      </section>
     </MobileShell>
   )
 }
@@ -238,6 +305,10 @@ export function MobileRenterHomePage() {
 
 export function MobileRenterPaymentsPage() {
   return <ProtectedRoute><RenterPaymentsMobile /></ProtectedRoute>
+}
+
+export function MobileRenterUtilitiesPage() {
+  return <ProtectedRoute><RenterUtilitiesMobile /></ProtectedRoute>
 }
 
 export function MobileRenterLeasesPage() {

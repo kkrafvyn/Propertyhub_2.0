@@ -1,47 +1,7 @@
 /** Stripe + Paystack webhook handlers */
 
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-async function completePayment(
-  admin: SupabaseClient,
-  providerRef: string,
-  metadata: Record<string, string>,
-) {
-  await admin
-    .from('payment_records')
-    .update({ status: 'paid' })
-    .eq('provider_ref', providerRef)
-
-  const purpose = metadata.purpose || metadata.Purpose
-  const listingId = metadata.listing_id || metadata.listingId
-  const rentPaymentId = metadata.rent_payment_id
-  const settlementId = metadata.settlement_id
-
-  if (purpose === 'featured_boost' && listingId) {
-    await admin.from('listings').update({ featured: true, status: 'active' }).eq('id', listingId)
-  }
-
-  if (purpose === 'rent_payment' && rentPaymentId) {
-    await admin.from('rent_payments').update({ status: 'paid', method: metadata.provider || 'online' }).eq('id', rentPaymentId)
-  }
-
-  if (purpose === 'commission_settlement' && metadata.settlement_id) {
-    await admin.from('commission_settlements').update({
-      status: 'paid',
-      paid_at: new Date().toISOString().slice(0, 10),
-    }).eq('id', metadata.settlement_id)
-  }
-
-  if (purpose === 'escrow_deposit' && metadata.escrow_id) {
-    const amount = Number(metadata.amount || 0)
-    const { data: escrow } = await admin.from('escrow_accounts').select('*').eq('id', metadata.escrow_id).maybeSingle()
-    if (escrow) {
-      const funded = Number(escrow.funded) + amount
-      const status = funded >= Number(escrow.amount) ? 'funded' : 'partial'
-      await admin.from('escrow_accounts').update({ funded, status }).eq('id', metadata.escrow_id)
-    }
-  }
-}
+import { finalizePaymentFromWebhook } from './payment-completion.ts'
 
 export async function handleStripeWebhook(req: Request, admin: SupabaseClient) {
   const body = await req.text()
@@ -50,7 +10,6 @@ export async function handleStripeWebhook(req: Request, admin: SupabaseClient) {
   if (webhookSecret) {
     const sig = req.headers.get('stripe-signature')
     if (!sig) return { ok: false, status: 400, message: 'Missing signature' }
-    // Production: verify with crypto.subtle — for now parse if signature present
   }
 
   let event: { type: string; data: { object: Record<string, unknown> } }
@@ -64,7 +23,15 @@ export async function handleStripeWebhook(req: Request, admin: SupabaseClient) {
     const session = event.data.object
     const metadata = (session.metadata as Record<string, string>) || {}
     const ref = String(session.id || '')
-    if (ref) await completePayment(admin, ref, { ...metadata, provider: 'stripe' })
+    const amount = Number(session.amount_total ?? 0) / 100
+    if (ref) {
+      await finalizePaymentFromWebhook(admin, ref, {
+        ...metadata,
+        provider: 'stripe',
+        amount: String(amount || metadata.amount || 0),
+        payment_id: metadata.payment_id,
+      })
+    }
   }
 
   return { ok: true, status: 200, message: 'received' }
@@ -102,7 +69,12 @@ export async function handlePaystackWebhook(req: Request, admin: SupabaseClient)
   if (event.event === 'charge.success') {
     const ref = event.data.reference
     const metadata = event.data.metadata || {}
-    await completePayment(admin, ref, { ...metadata, provider: 'paystack', amount: String(event.data.amount / 100) })
+    await finalizePaymentFromWebhook(admin, ref, {
+      ...metadata,
+      provider: 'paystack',
+      amount: String(event.data.amount / 100),
+      payment_id: metadata.payment_id,
+    })
   }
 
   return { ok: true, status: 200, message: 'received' }

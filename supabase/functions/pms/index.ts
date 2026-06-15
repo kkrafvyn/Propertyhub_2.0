@@ -17,13 +17,68 @@ Deno.serve(async (req) => {
 
   try {
     if (req.method === 'GET') {
-      if (action === 'dashboard') {
-        const { count } = await admin.from('pms_tenants').select('*', { count: 'exact', head: true }).eq('owner_id', user.id)
-        return jsonResponse({
-          portfolio: { name: 'Anchorstone Properties', buildings: 4, units: count ?? 0, occupancy: '89%', collectedMtd: 486000 },
-          source: 'supabase',
-        })
+      if (action === 'dashboard' || action === 'arrears') {
+        const { data: tenantRows } = await admin.from('pms_tenants').select('*').eq('owner_id', user.id)
+        const rentArrears = (tenantRows ?? [])
+          .filter((t) => Number(t.balance) > 0)
+          .reduce((s, t) => s + Number(t.balance), 0)
+
+        const { data: unpaidBills } = await admin.from('utility_bills').select('amount, status').eq('status', 'unpaid')
+        const utilityArrears = (unpaidBills ?? []).reduce((s, b) => s + Number(b.amount), 0)
+        const collectedMtd = (tenantRows ?? [])
+          .filter((t) => Number(t.balance) <= 0)
+          .reduce((s, t) => s + Number(t.rent), 0)
+
+        const portfolio = {
+          name: 'Anchorstone Properties',
+          buildings: 4,
+          units: tenantRows?.length ?? 0,
+          occupancy: tenantRows?.length ? `${Math.round(((tenantRows.length - (tenantRows.filter((t) => t.status === 'vacant').length)) / tenantRows.length) * 100)}%` : '0%',
+          collectedMtd: collectedMtd || 486000,
+          rentArrears,
+          utilityArrears,
+          totalArrears: rentArrears + utilityArrears,
+        }
+
+        if (action === 'arrears') {
+          const rentItems = (tenantRows ?? [])
+            .filter((t) => Number(t.balance) > 0)
+            .map((t) => ({
+              id: t.id,
+              type: 'rent',
+              tenant: t.name,
+              unit: t.unit,
+              amount: Number(t.balance),
+              status: 'overdue',
+            }))
+
+          const { data: billsDetail } = await admin
+            .from('utility_bills')
+            .select('id, utility_type, provider_name, amount, billing_month, utility_account_id, status')
+            .eq('status', 'unpaid')
+            .order('billing_month', { ascending: false })
+            .limit(50)
+
+          const utilityItems = (billsDetail ?? []).map((b) => ({
+            id: b.id,
+            type: 'utility',
+            tenant: b.utility_account_id,
+            unit: b.provider_name ?? b.utility_type,
+            amount: Number(b.amount),
+            status: 'unpaid',
+            month: b.billing_month,
+          }))
+
+          return jsonResponse({
+            summary: portfolio,
+            arrears: [...rentItems, ...utilityItems],
+            source: 'supabase',
+          })
+        }
+
+        return jsonResponse({ portfolio, source: 'supabase' })
       }
+
       if (action === 'tenants') {
         const { data } = await admin.from('pms_tenants').select('*').eq('owner_id', user.id)
         const tenants = (data ?? []).map((r) => ({
@@ -40,10 +95,25 @@ Deno.serve(async (req) => {
       }
       if (action === 'rent_collection') {
         const { data } = await admin.from('pms_tenants').select('*').eq('owner_id', user.id)
+        const { data: unpaidBills } = await admin.from('utility_bills').select('*').eq('status', 'unpaid')
+        const utilityTotal = (unpaidBills ?? []).reduce((s, b) => s + Number(b.amount), 0)
+
         const collection = (data ?? []).map((r) => ({
-          unit: r.unit, tenant: r.name, expected: r.rent, collected: r.balance > 0 ? 0 : r.rent, status: r.balance > 0 ? 'overdue' : 'paid',
+          id: r.id,
+          unit: r.unit,
+          tenant: r.name,
+          amount: r.rent,
+          expected: r.rent,
+          collected: r.balance > 0 ? 0 : r.rent,
+          status: r.balance > 0 ? 'overdue' : 'paid',
         }))
-        return jsonResponse({ collection, expenses: [{ label: 'Maintenance', amount: 4500 }, { label: 'Security', amount: 8200 }], source: 'supabase' })
+        return jsonResponse({
+          collection,
+          utilityArrears: utilityTotal,
+          utilityBills: (unpaidBills ?? []).slice(0, 20),
+          expenses: [{ id: 'e1', category: 'Maintenance', description: 'HVAC service', amount: 4500 }, { id: 'e2', category: 'Security', description: 'Monthly guard', amount: 8200 }],
+          source: 'supabase',
+        })
       }
       if (action === 'inspections') {
         const { data } = await admin.from('pms_inspections').select('*').eq('owner_id', user.id)
@@ -51,6 +121,7 @@ Deno.serve(async (req) => {
       }
       return errorResponse('Unsupported action', 404)
     }
+
     return errorResponse('Method not allowed', 405)
   } catch (error) {
     console.error(error)

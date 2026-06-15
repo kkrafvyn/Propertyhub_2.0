@@ -1,5 +1,9 @@
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
+import { resolveStayType, resolveUtilitiesMode, buildUtilityAccountRow } from '../_shared/utilities.ts'
+import { persistModuleActivation } from '../_shared/booking-modules.ts'
+import { emitPlatformEvent } from '../_shared/events.ts'
+import { runEventAutomations } from '../_shared/event-automation.ts'
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -41,10 +45,14 @@ Deno.serve(async (req) => {
         if (!listing) return errorResponse('Listing not found', 404)
 
         const hostId = listing.owner_id ?? listing.submitted_by
+        const propertyId = body.property_id ?? body.listing_id
+        const stayType = resolveStayType(body.check_in, body.check_out)
+        const utilitiesMode = resolveUtilitiesMode(stayType)
         const id = `res-${crypto.randomUUID().slice(0, 8)}`
         const row = {
           id,
           listing_id: body.listing_id,
+          property_id: propertyId,
           guest_id: user.id,
           host_id: hostId,
           check_in: body.check_in,
@@ -52,6 +60,8 @@ Deno.serve(async (req) => {
           status: 'pending',
           total: body.total ?? listing.price ?? 0,
           guests: body.guests ?? 1,
+          stay_type: stayType,
+          utilities_mode: utilitiesMode,
         }
         const { error } = await admin.from('reservations').insert(row)
         if (error) return errorResponse(error.message, 400)
@@ -59,9 +69,58 @@ Deno.serve(async (req) => {
           id: `re-${crypto.randomUUID().slice(0, 8)}`,
           reservation_id: id,
           event_type: 'created',
-          payload: {},
+          payload: { stay_type: stayType, utilities_mode: utilitiesMode },
         })
-        return jsonResponse({ ok: true, reservation: row })
+
+        let utilityAccount = null
+        const { modules } = await persistModuleActivation(admin, {
+          bookingType: 'reservation',
+          bookingId: id,
+          stayType,
+          checkIn: body.check_in,
+          checkOut: body.check_out,
+        })
+
+        if (modules.utility_account) {
+          const accountRow = buildUtilityAccountRow({
+            userId: user.id,
+            propertyId,
+            reservationId: id,
+            utilitiesMode,
+          })
+          const { error: uaErr } = await admin.from('utility_accounts').insert(accountRow)
+          if (!uaErr) utilityAccount = accountRow
+        }
+
+        await emitPlatformEvent(admin, {
+          eventType: 'booking.created',
+          aggregateType: 'reservation',
+          aggregateId: id,
+          actorId: user.id,
+          payload: { stay_type: stayType, utilities_mode: utilitiesMode, listing_id: body.listing_id },
+          idempotencyKey: `booking-created-${id}`,
+        })
+        await runEventAutomations(admin, {
+          eventType: 'booking.created',
+          userId: user.id,
+          payload: { utilities_mode: utilitiesMode, stay_type: stayType },
+        })
+        await emitPlatformEvent(admin, {
+          eventType: 'booking.modules_activated',
+          aggregateType: 'reservation',
+          aggregateId: id,
+          actorId: user.id,
+          payload: modules,
+          idempotencyKey: `booking-modules-${id}`,
+        })
+
+        return jsonResponse({
+          ok: true,
+          reservation: row,
+          utility_account: utilityAccount,
+          utilities_included: utilitiesMode === 'inclusive',
+          modules,
+        })
       }
     }
 

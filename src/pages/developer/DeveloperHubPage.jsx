@@ -8,6 +8,7 @@ const links = [
   { to: '/developer/projects', label: 'Projects', desc: 'Active developments and unit inventory' },
   { to: '/developer/construction', label: 'Construction tracking', desc: 'Milestones and progress' },
   { to: '/developer/buyers', label: 'Buyer portal', desc: 'Pre-sales and contract stages' },
+  { to: '/developer/platform-api', label: 'Platform API', desc: 'Core services, regions & plugin config' },
 ]
 
 function Hub() {

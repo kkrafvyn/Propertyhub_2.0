@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useSearchParams } from 'react-router-dom'
 import RenterShell from '../../components/RenterShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
@@ -13,6 +14,7 @@ import {
   triggerRentDueReminders,
 } from '../../services/renter-service'
 import { payRent } from '../../services/payments-service'
+import { fetchUtilityDashboard } from '../../services/utility-service'
 import { initiateUssdPayment } from '../../services/ussd-service'
 import { getDefaultProvider } from '../../lib/payment-providers'
 
@@ -21,6 +23,7 @@ function Payments() {
   const { user } = useAuth()
   const [params] = useSearchParams()
   const [payments, setPayments] = useState([])
+  const [utilitySummary, setUtilitySummary] = useState(null)
   const [provider, setProvider] = useState(getDefaultProvider())
   const [momoProvider, setMomoProvider] = useState('mtn')
   const [autopay, setAutopay] = useState(getAutopayEnabled())
@@ -33,6 +36,7 @@ function Payments() {
       setPayments(rows)
       if (user?.email) triggerRentDueReminders(rows, user.email)
     })
+    fetchUtilityDashboard().then((dash) => setUtilitySummary(dash?.summary ?? null))
   }, [user?.email])
 
   async function handlePay(p, isAutopay = false) {
@@ -111,7 +115,11 @@ function Payments() {
         <p className="mt-1 text-xs text-ink-secondary">{t('extensions.ussd.paystackHint')}</p>
       </div>
 
-      <div className="space-y-3">
+      <div className="mb-8">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">💰 Rent</h2>
+        </div>
+        <div className="space-y-3">
         {payments.map((p) => (
           <article key={p.id} className="flex flex-wrap items-center justify-between gap-3 panel-card bg-surface p-4">
             <div>
@@ -145,7 +153,27 @@ function Payments() {
             </div>
           </article>
         ))}
+        </div>
       </div>
+
+      {utilitySummary && utilitySummary.unpaidCount > 0 && (
+        <div className="mb-8 rounded-xl border border-surface-border bg-surface-subtle p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">⚡ Utilities</h2>
+              <p className="text-sm text-ink-secondary">
+                {utilitySummary.unpaidCount} unpaid bill(s) · GHS {utilitySummary.totalDue.toLocaleString()} due
+              </p>
+            </div>
+            <Link
+              to="/renter/utilities"
+              className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white"
+            >
+              View & pay utilities
+            </Link>
+          </div>
+        </div>
+      )}
 
       {ussdModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
