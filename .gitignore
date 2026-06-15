@@ -8,3 +8,4 @@ supabase/.temp
 stitch_urban_property_connect(2)/
 stitch_urban_property_connect(2).zip
 scripts/all-migrations.sql
+.vercel
