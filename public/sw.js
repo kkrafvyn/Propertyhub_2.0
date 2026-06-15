@@ -1,6 +1,6 @@
-const CACHE = 'baytmiftah-v3'
-const RUNTIME = 'baytmiftah-runtime-v3'
-const PRECACHE = ['/', '/explore', '/saved', '/manifest.webmanifest', '/brand/app-icon.svg']
+const CACHE = 'baytmiftah-v4'
+const RUNTIME = 'baytmiftah-runtime-v4'
+const PRECACHE = ['/manifest.webmanifest', '/brand/app-icon.svg']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)))
@@ -20,13 +20,26 @@ self.addEventListener('message', (event) => {
   if (event.data?.type !== 'PRECACHE_URLS' || !event.data.urls?.length) return
   event.waitUntil(
     caches.open(RUNTIME).then((cache) =>
-      Promise.allSettled(event.data.urls.map((url) => cache.add(url).catch(() => {}))),
+      Promise.allSettled(
+        event.data.urls
+          .filter((url) => !String(url).includes('/assets/'))
+          .map((url) => cache.add(url).catch(() => {})),
+      ),
     ),
   )
 })
 
 function isListingImage(url) {
   return /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(url) || url.includes('unsplash.com')
+}
+
+function isBuildAsset(pathname) {
+  return pathname.startsWith('/assets/') || /\.(js|css|mjs|wasm)(\?|$)/i.test(pathname)
+}
+
+function isValidAssetResponse(response) {
+  const type = response.headers.get('content-type') || ''
+  return response.ok && !type.includes('text/html')
 }
 
 self.addEventListener('fetch', (event) => {
@@ -51,24 +64,35 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  event.respondWith(
-    fetch(event.request)
-      .then((res) => {
-        if (res.ok && (url.pathname === '/' || url.pathname === '/explore' || url.pathname === '/saved')) {
-          const clone = res.clone()
-          caches.open(CACHE).then((cache) => cache.put(event.request, clone))
-        }
-        return res
-      })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/'))),
-  )
+  if (isBuildAsset(url.pathname)) {
+    event.respondWith(
+      fetch(event.request).then((res) => (isValidAssetResponse(res) ? res : Response.error())),
+    )
+    return
+  }
+
+  const isDocument =
+    event.request.mode === 'navigate' ||
+    event.request.destination === 'document' ||
+    event.request.headers.get('accept')?.includes('text/html')
+
+  if (isDocument) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request).then((cached) => cached || caches.match('/'))),
+    )
+    return
+  }
+
+  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)))
 })
 
 self.addEventListener('push', (event) => {
   let data = { title: 'BaytMiftah', body: 'You have a new notification' }
   try {
     if (event.data) data = { ...data, ...event.data.json() }
-  } catch { /* use defaults */ }
+  } catch {
+    /* use defaults */
+  }
 
   event.waitUntil(
     self.registration.showNotification(data.title, {
