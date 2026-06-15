@@ -1,4 +1,4 @@
-import { fetchSavedIdsFromDb, toggleSavedInDb } from './supabase-db'
+import { fetchSavedIdsFromDb, mergeSavedListingsToDb, toggleSavedInDb } from './supabase-db'
 import { supabase } from './supabase'
 
 const STORAGE_KEY = 'baytmiftah_saved'
@@ -59,4 +59,25 @@ export async function toggleSavedIdAsync(id) {
     }
   }
   return toggleSavedId(id)
+}
+
+/** Union local + remote saved IDs on login and persist to Supabase */
+export async function mergeSavedOnLogin() {
+  const userId = await getAuthUserId()
+  if (!userId) return getSavedIds()
+
+  const localIds = getSavedIds()
+  const merged = await mergeSavedListingsToDb(userId, localIds)
+  if (merged) {
+    setSavedIds(merged)
+    return merged
+  }
+
+  const remoteIds = await fetchSavedIdsFromDb(userId)
+  if (remoteIds) {
+    const union = [...new Set([...remoteIds, ...localIds])]
+    setSavedIds(union)
+    return union
+  }
+  return localIds
 }

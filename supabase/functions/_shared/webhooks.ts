@@ -15,6 +15,7 @@ async function completePayment(
   const purpose = metadata.purpose || metadata.Purpose
   const listingId = metadata.listing_id || metadata.listingId
   const rentPaymentId = metadata.rent_payment_id
+  const settlementId = metadata.settlement_id
 
   if (purpose === 'featured_boost' && listingId) {
     await admin.from('listings').update({ featured: true, status: 'active' }).eq('id', listingId)
@@ -22,6 +23,13 @@ async function completePayment(
 
   if (purpose === 'rent_payment' && rentPaymentId) {
     await admin.from('rent_payments').update({ status: 'paid', method: metadata.provider || 'online' }).eq('id', rentPaymentId)
+  }
+
+  if (purpose === 'commission_settlement' && metadata.settlement_id) {
+    await admin.from('commission_settlements').update({
+      status: 'paid',
+      paid_at: new Date().toISOString().slice(0, 10),
+    }).eq('id', metadata.settlement_id)
   }
 
   if (purpose === 'escrow_deposit' && metadata.escrow_id) {

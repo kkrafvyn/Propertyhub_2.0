@@ -4,6 +4,13 @@ import ProtectedRoute from '../../components/ProtectedRoute'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchFraudAlerts, fetchFraudRules, scoreFraudAlert, updateFraudStatus, runFraudScan } from '../../services/trust-service'
 
+const REVIEW_ACTIONS = [
+  { status: 'investigating', key: 'extensions.fraud.investigate', tone: 'border-surface-border hover:bg-surface-hover' },
+  { status: 'blocked', key: 'extensions.fraud.block', tone: 'border-red-200 text-red-700 hover:bg-red-50' },
+  { status: 'escalated', key: 'extensions.fraud.escalate', tone: 'border-amber-200 text-amber-800 hover:bg-amber-50' },
+  { status: 'resolved', key: 'extensions.fraud.resolve', tone: 'bg-brand-accent text-white' },
+]
+
 function Fraud() {
   const { t } = useTranslation()
   const [alerts, setAlerts] = useState([])
@@ -18,9 +25,9 @@ function Fraud() {
     })
   }, [])
 
-  async function handleResolve(id) {
-    await updateFraudStatus(id, 'resolved')
-    setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, status: 'resolved' } : a)))
+  async function handleStatus(id, status) {
+    await updateFraudStatus(id, status)
+    setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)))
   }
 
   async function handleScan() {
@@ -40,6 +47,7 @@ function Fraud() {
           {scanning ? t('extensions.fraud.scanning') : t('extensions.fraud.runScan')}
         </button>
         {scanMsg && <p className="text-sm text-ink-secondary">{scanMsg}</p>}
+        <p className="w-full text-xs text-ink-secondary sm:w-auto">{t('extensions.fraud.mlNote')}</p>
       </div>
       <div className="mb-8">
         <h2 className="mb-3 text-lg font-semibold">{t('extensions.fraud.rulesTitle')}</h2>
@@ -72,13 +80,18 @@ function Fraud() {
                   <p className="text-xs text-ink-secondary">{t('extensions.fraud.riskScore')}</p>
                 </div>
               </div>
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="inline-block rounded-full bg-surface-hover px-3 py-1 text-xs font-semibold capitalize">{a.status}</span>
-                {a.status !== 'resolved' && (
-                  <button type="button" onClick={() => handleResolve(a.id)} className="rounded-lg bg-brand-accent px-3 py-1.5 text-xs font-semibold text-white">
-                    {t('extensions.fraud.resolve')}
+                {a.status !== 'resolved' && REVIEW_ACTIONS.map(({ status, key, tone }) => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => handleStatus(a.id, status)}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${tone}`}
+                  >
+                    {t(key)}
                   </button>
-                )}
+                ))}
               </div>
             </article>
           )

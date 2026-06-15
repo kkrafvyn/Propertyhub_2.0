@@ -1,12 +1,32 @@
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
 import { logAudit } from '../_shared/user-seed.ts'
+import { notifyUser } from '../_shared/notifications.ts'
 
 const MODERATOR_ROLES = new Set(['agency_owner', 'agency_manager', 'platform_admin'])
 
 async function requireModerator(admin: ReturnType<typeof createAdminClient>, userId: string) {
   const { data } = await admin.from('user_profiles').select('role').eq('id', userId).maybeSingle()
   return MODERATOR_ROLES.has(data?.role ?? '')
+}
+
+async function notifySubmitter(
+  admin: ReturnType<typeof createAdminClient>,
+  listingId: string,
+  { approved, reason }: { approved: boolean; reason?: string },
+) {
+  const { data: listing } = await admin.from('listings').select('title, submitted_by, host').eq('id', listingId).maybeSingle()
+  if (!listing?.submitted_by) return
+
+  await notifyUser(admin, {
+    userId: listing.submitted_by,
+    type: 'moderation',
+    title: approved ? 'Listing approved' : 'Listing needs changes',
+    body: approved
+      ? `${listing.title} is live with a verified badge.`
+      : `${listing.title}: ${reason || 'Please update and resubmit.'}`,
+    link: approved ? `/property/${listingId}` : '/host/list',
+  })
 }
 
 Deno.serve(async (req) => {
@@ -45,6 +65,7 @@ Deno.serve(async (req) => {
       await admin.from('listings').update({ status: 'active', verified: true }).eq('id', body.listing_id)
       await admin.from('moderation_queue').update({ status: 'approved' }).eq('listing_id', body.listing_id)
       await logAudit(admin, user.id, 'listing_approved', body.listing_id, {})
+      await notifySubmitter(admin, body.listing_id, { approved: true })
       return jsonResponse({ ok: true })
     }
     if (body.action === 'reject_listing') {
@@ -53,6 +74,7 @@ Deno.serve(async (req) => {
         listing_id: body.listing_id, submitter_id: body.submitter_id, status: 'rejected', reason: body.reason,
       })
       await logAudit(admin, user.id, 'listing_rejected', body.listing_id, { reason: body.reason })
+      await notifySubmitter(admin, body.listing_id, { approved: false, reason: body.reason })
       return jsonResponse({ ok: true })
     }
     return errorResponse('Unsupported action', 404)

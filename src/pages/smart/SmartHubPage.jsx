@@ -8,7 +8,7 @@ const links = [
   { to: '/smart/devices', label: 'Device dashboard', desc: 'Locks, cameras, sensors, climate' },
   { to: '/smart/automations', label: 'Automation engine', desc: 'Rules and scheduled actions' },
   { to: '/smart/alerts', label: 'Alerts & event logs', desc: 'Security and device events' },
-  { to: '/m/smart', label: 'Mobile app', desc: 'Control devices on the go' },
+  { to: '/smart', label: 'Mobile app', desc: 'Control devices on the go' },
 ]
 
 function SmartHub() {

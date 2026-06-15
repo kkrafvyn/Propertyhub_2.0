@@ -14,7 +14,7 @@ export default function CategoryBar({
   const { t } = useTranslation()
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
       <div className="listing-scroll min-w-0 flex-1">
         {categoryIds.map((id) => {
           const Icon = categoryIcons[id]
@@ -36,7 +36,7 @@ export default function CategoryBar({
         })}
       </div>
 
-      <div className="flex shrink-0 items-center gap-3 border-s border-surface-border ps-4">
+      <div className="flex shrink-0 items-center gap-2 border-s border-surface-border ps-0 sm:gap-3 sm:ps-4">
         {onFiltersClick && (
           <button type="button" onClick={onFiltersClick} className="filter-chip">
             <IconSliders />

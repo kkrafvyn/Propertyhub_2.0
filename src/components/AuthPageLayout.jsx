@@ -1,27 +1,10 @@
-import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useIsMobileViewport } from '../hooks/useMediaQuery'
 import DesktopShell from './DesktopShell'
 import MobileShell from './MobileShell'
 import LanguageSwitcher from './LanguageSwitcher'
 
-function usePreferMobileShell() {
-  const location = useLocation()
-  const [narrow, setNarrow] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches,
-  )
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    const update = () => setNarrow(mq.matches)
-    mq.addEventListener('change', update)
-    return () => mq.removeEventListener('change', update)
-  }, [])
-
-  return location.pathname.startsWith('/m') || narrow
-}
-
 export default function AuthPageLayout({ children }) {
-  const mobile = usePreferMobileShell()
+  const mobile = useIsMobileViewport()
 
   if (mobile) {
     return (

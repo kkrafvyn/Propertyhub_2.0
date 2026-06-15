@@ -35,4 +35,16 @@ export async function sendLeadMessage({ lead, body, channel }) {
   }
 }
 
-export default { sendLeadMessage }
+export async function sendSms({ phone, body, template = 'general' }) {
+  try {
+    return await callEdgeFunction('communications', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'send', channel: 'sms', phone, body, template },
+    })
+  } catch {
+    return { ok: false, sent: false, source: 'local', message: 'SMS service unavailable' }
+  }
+}
+
+export default { sendLeadMessage, sendSms }

@@ -17,6 +17,36 @@ async function assertModerator() {
   return user
 }
 
+async function notifyListingDecision({ listingId, listingTitle, approved, reason, submitterId }) {
+  try {
+    const { notifyUser } = await import('./notification-service')
+    const { sendListingStatusEmail } = await import('./email-service')
+    if (submitterId) {
+      await notifyUser({
+        userId: submitterId,
+        type: 'moderation',
+        title: approved ? 'Listing approved' : 'Listing needs changes',
+        body: approved
+          ? `${listingTitle} is live with a verified badge.`
+          : `${listingTitle}: ${reason || 'Please update and resubmit.'}`,
+        link: approved ? `/property/${listingId}` : '/host/list',
+      })
+    }
+    if (supabase && submitterId) {
+      const profile = await fetchUserProfile(submitterId)
+      if (profile?.email) {
+        await sendListingStatusEmail({
+          to: profile.email,
+          listingTitle,
+          status: approved ? 'approved & verified' : 'rejected',
+        })
+      }
+    }
+  } catch {
+    /* optional */
+  }
+}
+
 export async function fetchModerationQueue() {
   try {
     const payload = await callEdgeFunction('moderation', {
@@ -39,7 +69,7 @@ export async function fetchModerationQueue() {
   return { queue: [], source: 'local' }
 }
 
-export async function approveListing(listingId) {
+export async function approveListing(listingId, { listingTitle = '', submitterId = null } = {}) {
   try {
     return await callEdgeFunction('moderation', {
       method: 'POST',
@@ -48,12 +78,19 @@ export async function approveListing(listingId) {
     })
   } catch {
     await assertModerator()
+    const { data: listing } = await supabase.from('listings').select('title, submitted_by').eq('id', listingId).maybeSingle()
     const { error } = await supabase
       .from('listings')
       .update({ status: 'active', verified: true, updated_at: new Date().toISOString() })
       .eq('id', listingId)
     if (error) throw error
     await supabase.from('moderation_queue').update({ status: 'approved' }).eq('listing_id', listingId)
+    await notifyListingDecision({
+      listingId,
+      listingTitle: listingTitle || listing?.title || listingId,
+      approved: true,
+      submitterId: submitterId || listing?.submitted_by,
+    })
     return { ok: true, source: 'supabase' }
   }
 }
@@ -72,6 +109,7 @@ export async function rejectListing(listingId, reason = 'Needs changes', submitt
     })
   } catch {
     await assertModerator()
+    const { data: listing } = await supabase.from('listings').select('title, submitted_by').eq('id', listingId).maybeSingle()
     const { error } = await supabase
       .from('listings')
       .update({ status: 'rejected', updated_at: new Date().toISOString() })
@@ -79,9 +117,16 @@ export async function rejectListing(listingId, reason = 'Needs changes', submitt
     if (error) throw error
     await supabase.from('moderation_queue').insert({
       listing_id: listingId,
-      submitter_id: submitterId,
+      submitter_id: submitterId || listing?.submitted_by,
       status: 'rejected',
       reason,
+    })
+    await notifyListingDecision({
+      listingId,
+      listingTitle: listing?.title || listingId,
+      approved: false,
+      reason,
+      submitterId: submitterId || listing?.submitted_by,
     })
     return { ok: true, source: 'supabase' }
   }

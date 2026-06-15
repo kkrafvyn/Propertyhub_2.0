@@ -84,12 +84,16 @@ export async function createFeaturedBoost({ listingId, provider = 'paystack', am
 }
 
 export async function payRent({ paymentId, amount, provider = 'paystack', metadata = {} }) {
+  try {
+    const { trackFunnel } = await import('../lib/analytics')
+    trackFunnel('payment_started', { purpose: 'rent_payment', payment_id: paymentId, provider })
+  } catch { /* */ }
   return initiateCheckout({
     purpose: 'rent_payment',
     amount,
     provider,
     metadata: { rent_payment_id: paymentId, ...metadata },
-    successPath: '/payments/success?purpose=rent',
+    successPath: `/payments/success?purpose=rent&rent_payment_id=${paymentId}&provider=${provider}`,
     cancelPath: '/payments/cancel',
   })
 }
@@ -106,6 +110,10 @@ export async function fundEscrow({ escrowId, amount, provider = 'paystack' }) {
 }
 
 export async function settleCommission({ settlementId, amount, provider = 'paystack' }) {
+  try {
+    const { trackFunnel } = await import('../lib/analytics')
+    trackFunnel('payment_started', { purpose: 'commission_settlement', settlement_id: settlementId, provider })
+  } catch { /* */ }
   return initiateCheckout({
     purpose: 'commission_settlement',
     amount,

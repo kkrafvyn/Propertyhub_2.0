@@ -141,6 +141,7 @@ export default function DesktopRoutes() {
     <Suspense fallback={<RouteFallback />}>
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/explore" element={<Navigate to="/" replace />} />
       <Route path="/property/:id" element={<ListingDetailPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />

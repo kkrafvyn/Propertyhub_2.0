@@ -5,8 +5,34 @@ export const mortgageProducts = [
 ]
 
 export const escrowAccounts = [
-  { id: 'e1', property: 'Labone Penthouse', buyer: 'Sarah A.', amount: 4200000, funded: 2100000, status: 'partial', provider: 'paystack' },
-  { id: 'e2', property: 'East Legon Family Home', buyer: 'Michael T.', amount: 580000, funded: 580000, status: 'funded', provider: 'paystack' },
+  {
+    id: 'e1',
+    property: 'Labone Penthouse',
+    buyer: 'Sarah A.',
+    amount: 4200000,
+    funded: 2100000,
+    status: 'partial',
+    provider: 'paystack',
+    transactionId: 'tx-e1',
+    milestones: [
+      { id: 'em1', label: 'Deposit (50%)', amount: 2100000, status: 'funded', due: '2026-05-01' },
+      { id: 'em2', label: 'Structural inspection', amount: 840000, status: 'pending', due: '2026-07-01' },
+      { id: 'em3', label: 'Final handover', amount: 1260000, status: 'scheduled', due: '2026-09-01' },
+    ],
+  },
+  {
+    id: 'e2',
+    property: 'East Legon Family Home',
+    buyer: 'Michael T.',
+    amount: 580000,
+    funded: 580000,
+    status: 'funded',
+    provider: 'paystack',
+    transactionId: 'tx-e2',
+    milestones: [
+      { id: 'em4', label: 'Full escrow', amount: 580000, status: 'funded', due: '2026-04-15' },
+    ],
+  },
 ]
 
 export const insuranceProducts = [

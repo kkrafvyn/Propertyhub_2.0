@@ -4,36 +4,48 @@ import RenterShell from '../../components/RenterShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import PaymentProviderPicker from '../../components/PaymentProviderPicker'
 import IntegrationsBanner from '../../components/IntegrationsBanner'
+import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from '../../i18n/LocaleContext'
-import { fetchRentPayments } from '../../services/renter-service'
+import {
+  fetchRentPayments,
+  getAutopayEnabled,
+  setAutopayEnabled,
+  triggerRentDueReminders,
+} from '../../services/renter-service'
 import { payRent } from '../../services/payments-service'
 import { initiateUssdPayment } from '../../services/ussd-service'
 import { getDefaultProvider } from '../../lib/payment-providers'
 
 function Payments() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [params] = useSearchParams()
   const [payments, setPayments] = useState([])
   const [provider, setProvider] = useState(getDefaultProvider())
+  const [momoProvider, setMomoProvider] = useState('mtn')
+  const [autopay, setAutopay] = useState(getAutopayEnabled())
   const [loading, setLoading] = useState(null)
   const [ussdModal, setUssdModal] = useState(null)
   const [message, setMessage] = useState(params.get('paid') ? 'Payment recorded — thank you!' : '')
 
   useEffect(() => {
-    fetchRentPayments().then(({ payments: rows }) => setPayments(rows))
-  }, [])
+    fetchRentPayments().then(({ payments: rows }) => {
+      setPayments(rows)
+      if (user?.email) triggerRentDueReminders(rows, user.email)
+    })
+  }, [user?.email])
 
-  async function handlePay(p) {
+  async function handlePay(p, isAutopay = false) {
     setLoading(p.id)
     setMessage('')
     const result = await payRent({
       paymentId: p.id,
       amount: p.amount,
       provider,
-      metadata: { period: p.period },
+      metadata: { period: p.period, autopay: isAutopay },
     })
     if (!result.checkout_url) {
-      setMessage(result.message || 'Payment initiated.')
+      setMessage(result.message || (isAutopay ? 'Autopay initiated.' : 'Payment initiated.'))
     }
     setLoading(null)
   }
@@ -43,10 +55,17 @@ function Payments() {
     const result = await initiateUssdPayment({
       paymentId: p.id,
       amount: p.amount,
-      phone: '',
+      phone: user?.user_metadata?.phone || '',
+      provider: momoProvider,
     })
-    setUssdModal({ payment: p, ussd: result.ussd, message: result.message })
+    setUssdModal({ payment: p, ussd: result.ussd, message: result.message, provider: momoProvider })
     setLoading(null)
+  }
+
+  function toggleAutopay() {
+    const next = setAutopayEnabled(!autopay)
+    setAutopay(next)
+    setMessage(next ? 'Autopay enabled — due rent will use your selected provider.' : 'Autopay disabled.')
   }
 
   return (
@@ -59,6 +78,37 @@ function Payments() {
       <div className="mb-6 max-w-xl">
         <p className="mb-2 text-sm font-semibold">Payment provider</p>
         <PaymentProviderPicker value={provider} onChange={setProvider} disabled={!!loading} />
+      </div>
+
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-surface-border bg-surface-subtle px-4 py-3">
+        <div>
+          <p className="text-sm font-semibold text-ink">Autopay rent</p>
+          <p className="text-xs text-ink-secondary">Pay due rent automatically via {provider}</p>
+        </div>
+        <button
+          type="button"
+          onClick={toggleAutopay}
+          className={`rounded-full px-4 py-2 text-sm font-semibold ${autopay ? 'bg-brand-accent text-white' : 'border border-surface-border bg-surface'}`}
+        >
+          {autopay ? 'On' : 'Off'}
+        </button>
+      </div>
+
+      <div className="mb-6 max-w-xl">
+        <p className="mb-2 text-sm font-semibold">MoMo provider (USSD)</p>
+        <div className="flex gap-2">
+          {['mtn', 'telecel'].map((id) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setMomoProvider(id)}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold ${momoProvider === id ? 'bg-brand-accent text-white' : 'border border-surface-border'}`}
+            >
+              {t(`extensions.ussd.${id}`)}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1 text-xs text-ink-secondary">{t('extensions.ussd.paystackHint')}</p>
       </div>
 
       <div className="space-y-3">

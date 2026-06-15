@@ -19,7 +19,10 @@ import {
 import { neighborhoods } from '../../data/neighborhoods'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { syncSavedIds, toggleSavedIdAsync } from '../../lib/saved-listings'
+import { cacheListingsForOffline, getCachedListings } from '../../lib/offline-cache'
+import { trackFunnel } from '../../lib/analytics'
 import { fetchListings } from '../../services/marketplace-service'
+import MobileExploreMap from '../../components/mobile/MobileExploreMap'
 
 export default function MobileHomePage() {
   const { t } = useTranslation()
@@ -27,7 +30,10 @@ export default function MobileHomePage() {
   const [savedIds, setSavedIds] = useState([])
 
   useEffect(() => {
-    fetchListings().then(({ listings: rows }) => setListings(rows))
+    fetchListings().then(({ listings: rows }) => {
+      setListings(rows)
+      cacheListingsForOffline(rows)
+    })
     syncSavedIds().then(setSavedIds)
   }, [])
 
@@ -46,13 +52,15 @@ export default function MobileHomePage() {
   )
 
   const promos = [
-    { title: t('mobile.homeScreen.bookTomorrow'), to: '/m/explore' },
-    { title: t('mobile.homeScreen.instantDeals'), to: '/m/explore' },
-    { title: t('mobile.homeScreen.weekendEscapes'), to: '/m/explore' },
+    { title: t('mobile.homeScreen.bookTomorrow'), to: '/explore' },
+    { title: t('mobile.homeScreen.instantDeals'), to: '/explore' },
+    { title: t('mobile.homeScreen.weekendEscapes'), to: '/explore' },
   ]
 
   async function handleToggleSave(id) {
+    const wasSaved = savedIds.includes(id)
     setSavedIds(await toggleSavedIdAsync(id))
+    trackFunnel(wasSaved ? 'listing_unsaved' : 'listing_saved', { listing_id: id })
   }
 
   return (
@@ -61,12 +69,12 @@ export default function MobileHomePage() {
       <MobileHeroBanner />
 
       {weekend.length > 0 && (
-        <MobileCarouselSection title={t('mobile.homeScreen.availableWeekend')} seeAllTo="/m/explore">
+        <MobileCarouselSection title={t('mobile.homeScreen.availableWeekend')} seeAllTo="/explore">
           {weekend.map((listing, i) => (
             <MobileHomeListingCard
               key={listing.id}
               listing={listing}
-              to={`/m/property/${listing.id}`}
+              to={`/property/${listing.id}`}
               badge={{
                 label: i % 2 === 0 ? t('mobile.homeScreen.badgeWeekend') : t('mobile.homeScreen.badgeNights'),
                 tone: i % 2 === 0 ? 'green' : 'blue',
@@ -78,7 +86,7 @@ export default function MobileHomePage() {
         </MobileCarouselSection>
       )}
 
-      <MobileCarouselSection title={t('mobile.homeScreen.lastMinute')} seeAllTo="/m/explore">
+      <MobileCarouselSection title={t('mobile.homeScreen.lastMinute')} seeAllTo="/explore">
         {promos.map((promo, i) => (
           <MobilePromoCard
             key={promo.title}
@@ -102,12 +110,12 @@ export default function MobileHomePage() {
       </MobileCarouselSection>
 
       {featured.length > 0 && (
-        <MobileCarouselSection title={t('mobile.homeScreen.featuredHomes')} seeAllTo="/m/explore">
+        <MobileCarouselSection title={t('mobile.homeScreen.featuredHomes')} seeAllTo="/explore">
           {featured.map((listing) => (
             <MobileHomeListingCard
               key={listing.id}
               listing={listing}
-              to={`/m/property/${listing.id}`}
+              to={`/property/${listing.id}`}
               saved={savedIds.includes(listing.id)}
               onToggleSave={handleToggleSave}
             />
@@ -124,9 +132,18 @@ export function MobileExplorePage() {
   const [txTab, setTxTab] = useState('stay')
   const [propType, setPropType] = useState(null)
   const [listings, setListings] = useState([])
+  const [viewMode, setViewMode] = useState('list')
 
   useEffect(() => {
-    fetchListings().then(({ listings: rows }) => setListings(rows))
+    fetchListings()
+      .then(({ listings: rows }) => {
+        setListings(rows)
+        cacheListingsForOffline(rows)
+      })
+      .catch(() => {
+        const cached = getCachedListings()
+        if (cached.length) setListings(cached)
+      })
   }, [])
 
   const visible = useMemo(() => {
@@ -134,9 +151,18 @@ export function MobileExplorePage() {
     const q = search.trim().toLowerCase()
     if (!q) return filtered
     return filtered.filter((l) =>
-      `${l.title} ${l.type}`.toLowerCase().includes(q),
+      `${l.title} ${l.type} ${l.location || ''}`.toLowerCase().includes(q),
     )
   }, [listings, txTab, propType, search])
+
+  useEffect(() => {
+    const q = search.trim()
+    if (q.length >= 2) {
+      const timer = setTimeout(() => trackFunnel('search', { query: q, results: visible.length }), 400)
+      return () => clearTimeout(timer)
+    }
+    return undefined
+  }, [search, visible.length])
 
   return (
     <MobileShell>
@@ -145,14 +171,39 @@ export function MobileExplorePage() {
       <MobileTransactionTabs active={txTab} onChange={setTxTab} />
       <MobilePropertyTypeRow active={propType} onChange={setPropType} />
 
-      {visible.length === 0 ? (
+      <div className="mb-3 flex gap-2 px-3 sm:px-4">
+        {['list', 'map'].map((mode) => (
+          <button
+            key={mode}
+            type="button"
+            onClick={() => setViewMode(mode)}
+            className={`flex-1 rounded-full py-2 text-sm font-semibold transition ${
+              viewMode === mode
+                ? 'bg-mobile-forest text-white'
+                : 'bg-[#F5F5F5] text-ink-secondary'
+            }`}
+          >
+            {mode === 'list' ? t('mobile.viewList') : t('mobile.viewMap')}
+          </button>
+        ))}
+      </div>
+
+      {viewMode === 'map' ? (
+        visible.length === 0 ? (
+          <div className="px-4 pb-4">
+            <MobileEmpty title={t('home.noMatches')} description={t('home.tryAdjusting')} />
+          </div>
+        ) : (
+          <MobileExploreMap listings={visible} />
+        )
+      ) : visible.length === 0 ? (
         <div className="px-4 pb-4">
           <MobileEmpty title={t('home.noMatches')} description={t('home.tryAdjusting')} />
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 px-4 pb-4">
+        <div className="grid grid-cols-2 gap-2 px-3 pb-4 md:grid-cols-3 md:gap-3 sm:gap-3 sm:px-4">
           {visible.map((listing) => (
-            <MobileBoltListingTile key={listing.id} listing={listing} to={`/m/property/${listing.id}`} />
+            <MobileBoltListingTile key={listing.id} listing={listing} to={`/property/${listing.id}`} />
           ))}
         </div>
       )}
@@ -166,7 +217,12 @@ export function MobileSavedPage() {
 
   useEffect(() => {
     syncSavedIds().then((ids) => {
-      fetchListings().then(({ listings: rows }) => setListings(rows.filter((l) => ids.includes(l.id))))
+      fetchListings()
+        .then(({ listings: rows }) => setListings(rows.filter((l) => ids.includes(l.id))))
+        .catch(() => {
+          const cached = getCachedListings()
+          setListings(cached.filter((l) => ids.includes(l.id)))
+        })
     })
   }, [])
 
@@ -178,7 +234,7 @@ export function MobileSavedPage() {
           <MobileEmpty title={t('mobile.noSavedTitle')} description={t('mobile.noSavedDesc')} />
         ) : (
           listings.map((listing) => (
-            <MobileBoltListingCard key={listing.id} listing={listing} to={`/m/property/${listing.id}`} />
+            <MobileBoltListingCard key={listing.id} listing={listing} to={`/property/${listing.id}`} />
           ))
         )}
       </div>

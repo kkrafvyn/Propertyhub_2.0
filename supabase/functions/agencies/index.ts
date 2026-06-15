@@ -10,6 +10,45 @@ Deno.serve(async (req) => {
 
   const admin = createAdminClient()
   const url = new URL(req.url)
+
+  if (req.method === 'POST') {
+    const body = await req.json()
+    if (body.action === 'run_payroll') {
+      const ids: string[] = body.payroll_ids ?? []
+      let query = admin.from('agency_payroll').select('*').eq('status', 'pending')
+      if (ids.length) query = query.in('id', ids)
+
+      const { data: rows } = await query
+      const processed = rows ?? []
+
+      for (const row of processed) {
+        await admin.from('agency_payroll').update({ status: 'processing' }).eq('id', row.id)
+        await admin.from('payment_records').insert({
+          id: crypto.randomUUID(),
+          user_id: user.id,
+          purpose: 'agency_payroll',
+          amount: Number(row.base ?? 0) + Number(row.commission ?? 0),
+          currency: 'GHS',
+          provider: 'paystack',
+          status: 'queued',
+          metadata: {
+            payroll_id: row.id,
+            beneficiary: row.name,
+            account_number: row.account_number,
+            bank_code: row.bank_code,
+          },
+        }).catch((e) => console.error('payroll record failed', e.message))
+      }
+
+      return jsonResponse({
+        ok: true,
+        processed: processed.length,
+        message: `${processed.length} payroll entries queued — export Ghana bank file for bank transfer.`,
+      })
+    }
+    return errorResponse('Unsupported action', 404)
+  }
+
   const action = url.searchParams.get('action')
 
   if (action === 'dashboard') {

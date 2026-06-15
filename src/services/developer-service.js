@@ -64,4 +64,27 @@ export async function fetchDeveloperBuyers() {
   return { buyers: developerBuyers, source: 'local' }
 }
 
-export default { fetchDeveloperDashboard, fetchProjects, fetchProjectUnits, fetchConstruction, fetchDeveloperBuyers }
+export async function notifyBuyersOfMilestone(milestone) {
+  try {
+    return await callEdgeFunction('developer', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'notify_milestone', milestone },
+    })
+  } catch {
+    const { sendEmail } = await import('./email-service')
+    const buyers = developerBuyers.filter((b) => b.project === milestone.project)
+    await Promise.all(
+      buyers.map((b) =>
+        sendEmail({
+          to: `${b.name.replace(/\s/g, '').toLowerCase()}@example.com`,
+          subject: `Construction update — ${milestone.milestone}`,
+          body: `<p>${milestone.project}: <strong>${milestone.milestone}</strong> is now <strong>${milestone.status.replace('_', ' ')}</strong>.</p><p>View your buyer portal for payment schedule updates.</p>`,
+        }),
+      ),
+    )
+    return { ok: true, notified: buyers.length, source: 'local' }
+  }
+}
+
+export default { fetchDeveloperDashboard, fetchProjects, fetchProjectUnits, fetchConstruction, fetchDeveloperBuyers, notifyBuyersOfMilestone }

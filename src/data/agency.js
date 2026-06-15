@@ -33,9 +33,9 @@ export const agencyBranches = [
 ]
 
 export const agencyPayroll = [
-  { id: 'p1', name: 'Kwame Osei', role: 'Senior Agent', base: 4500, commission: 12400, status: 'paid', period: 'May 2026' },
-  { id: 'p2', name: 'Efua Mensah', role: 'Agent', base: 3200, commission: 6800, status: 'pending', period: 'May 2026' },
-  { id: 'p3', name: 'Ama Serwaa', role: 'Agency Manager', base: 8500, commission: 2100, status: 'paid', period: 'May 2026' },
+  { id: 'p1', name: 'Kwame Osei', role: 'Senior Agent', base: 4500, commission: 12400, status: 'paid', period: 'May 2026', accountNumber: '6012345678', bankCode: '040', bankName: 'GCB Bank', branchCode: '001' },
+  { id: 'p2', name: 'Efua Mensah', role: 'Agent', base: 3200, commission: 6800, status: 'pending', period: 'May 2026', accountNumber: '1309876543', bankCode: '130', bankName: 'Ecobank Ghana', branchCode: '108' },
+  { id: 'p3', name: 'Ama Serwaa', role: 'Agency Manager', base: 8500, commission: 2100, status: 'paid', period: 'May 2026', accountNumber: '2087654321', bankCode: '208', bankName: 'Stanbic Bank', branchCode: '012' },
 ]
 
 export const agencyAnalytics = {

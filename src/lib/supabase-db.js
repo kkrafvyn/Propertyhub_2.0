@@ -83,6 +83,20 @@ export async function toggleSavedInDb(userId, listingId) {
   return true
 }
 
+export async function mergeSavedListingsToDb(userId, localIds = []) {
+  if (!supabase || !userId) return null
+  const remoteIds = (await fetchSavedIdsFromDb(userId)) ?? []
+  const merged = [...new Set([...remoteIds, ...localIds])]
+  const toInsert = merged.filter((id) => !remoteIds.includes(id))
+  if (toInsert.length) {
+    const { error } = await supabase.from('saved_listings').insert(
+      toInsert.map((listing_id) => ({ user_id: userId, listing_id })),
+    )
+    if (error) return null
+  }
+  return merged
+}
+
 export async function fetchViewingSlotsFromDb(listingId) {
   if (!supabase || !listingId) return null
   const { data, error } = await supabase
@@ -134,6 +148,30 @@ export async function fetchViewingsFromDb(userId) {
     created_at: r.created_at,
     source: 'supabase',
   }))
+}
+
+export async function updateViewingRequestStatusInDb(id, status) {
+  if (!supabase || !id) return null
+  const { data, error } = await supabase
+    .from('viewing_requests')
+    .update({ status })
+    .eq('id', id)
+    .select('*')
+    .maybeSingle()
+  if (error) return null
+  return data
+}
+
+export async function fetchAgentViewingsFromDb() {
+  if (!supabase) return null
+  const { data, error } = await supabase
+    .from('viewing_requests')
+    .select('*')
+    .in('status', ['pending', 'confirmed'])
+    .order('preferred_date', { ascending: true })
+    .limit(50)
+  if (error) return null
+  return data
 }
 
 export async function fetchUserProfile(userId) {

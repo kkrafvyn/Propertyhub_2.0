@@ -3,7 +3,7 @@ import NotificationBell from '../NotificationBell'
 import { IconHeart } from '../icons'
 import { useTranslation } from '../../i18n/LocaleContext'
 
-function ProfileAvatar({ to = '/m/profile' }) {
+function ProfileAvatar({ to = '/profile' }) {
   return (
     <Link
       to={to}
@@ -22,14 +22,14 @@ export function MobileReferenceHeader() {
   const { t } = useTranslation()
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between bg-white px-4 pb-3 pt-4">
+    <header className="sticky top-0 z-40 flex min-w-0 items-center justify-between bg-white px-3 pb-3 pt-2 sm:px-4 sm:pt-4">
       <div className="flex min-w-0 items-center gap-3">
         <ProfileAvatar />
         <h1 className="truncate text-xl font-bold text-ink">BaytMiftah</h1>
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <Link
-          to="/m/saved"
+          to="/saved"
           className="flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-[#F5F5F5]"
           aria-label={t('mobile.saved')}
         >
@@ -50,11 +50,11 @@ export function MobileHeroBanner() {
   const { t } = useTranslation()
 
   return (
-    <section className="relative mx-4 mb-5 overflow-hidden rounded-2xl">
-      <img src={HERO_IMAGE} alt="" className="h-[200px] w-full object-cover" />
+    <section className="relative mx-3 mb-5 overflow-hidden rounded-2xl sm:mx-4">
+      <img src={HERO_IMAGE} alt="" className="h-[180px] w-full object-cover sm:h-[200px]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
-      <div className="absolute inset-x-0 bottom-0 p-5">
-        <h2 className="text-[22px] font-bold leading-tight text-white">
+      <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+        <h2 className="text-lg font-bold leading-tight text-white sm:text-[22px]">
           {t('mobile.homeScreen.heroTitle')}
         </h2>
         <p className="mt-1.5 text-sm leading-snug text-white/90">
@@ -71,7 +71,7 @@ export function MobileTransactionTabs({ active, onChange }) {
   const { t } = useTranslation()
 
   return (
-    <div className="mb-4 grid grid-cols-4 gap-2 px-4">
+    <div className="mb-4 grid grid-cols-4 gap-1.5 px-3 sm:gap-2 sm:px-4">
       {TX_TABS.map((id) => {
         const isActive = active === id
         return (
@@ -79,7 +79,7 @@ export function MobileTransactionTabs({ active, onChange }) {
             key={id}
             type="button"
             onClick={() => onChange(id)}
-            className={`flex min-w-0 items-center justify-center gap-1 rounded-full px-2 py-2.5 text-sm font-semibold transition ${
+            className={`flex min-w-0 items-center justify-center gap-0.5 rounded-full px-1.5 py-2 text-xs font-semibold transition sm:gap-1 sm:px-2 sm:py-2.5 sm:text-sm ${
               isActive
                 ? 'bg-mobile-forest text-white shadow-sm'
                 : 'bg-[#F5F5F5] text-ink-secondary'
@@ -159,18 +159,23 @@ export function MobileCarouselSection({ title, seeAllTo, children }) {
 }
 
 export function MobileHomeListingCard({ listing, to, badge, saved, onToggleSave }) {
+  const { t } = useTranslation()
+  const displayBadge = badge ?? (listing.verified
+    ? { label: t('categories.verified'), tone: 'green' }
+    : undefined)
+
   return (
-    <div className="relative w-[260px] shrink-0">
+    <div className="relative w-[min(260px,78vw)] shrink-0">
       <Link to={to} className="block overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
         <div className="relative aspect-[4/3]">
           <img src={listing.image} alt="" className="h-full w-full object-cover" />
-          {badge && (
+          {displayBadge && (
             <span
               className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white ${
-                badge.tone === 'blue' ? 'bg-blue-500' : 'bg-mobile-forest'
+                displayBadge.tone === 'blue' ? 'bg-blue-500' : 'bg-mobile-forest'
               }`}
             >
-              {badge.label}
+              {displayBadge.label}
             </span>
           )}
         </div>

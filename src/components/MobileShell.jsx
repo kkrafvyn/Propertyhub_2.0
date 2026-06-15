@@ -36,32 +36,32 @@ export default function MobileShell({ children, hideNav = false }) {
   const { t } = useTranslation()
 
   const tabs = [
-    { to: '/m', label: t('mobile.home'), icon: IconHome, end: true },
-    { to: '/m/explore', label: t('mobile.search'), icon: IconSearch },
-    { to: '/m/messages', label: t('mobile.inbox'), icon: MessageIcon },
-    { to: '/m/agent', label: t('mobile.agents'), icon: AgentsIcon },
-    { to: '/m/profile', label: t('mobile.profile'), icon: ProfileIcon },
+    { to: '/', label: t('mobile.home'), icon: IconHome, end: true },
+    { to: '/explore', label: t('mobile.search'), icon: IconSearch },
+    { to: '/messages', label: t('mobile.inbox'), icon: MessageIcon },
+    { to: '/agent', label: t('mobile.agents'), icon: AgentsIcon },
+    { to: '/profile', label: t('mobile.profile'), icon: ProfileIcon },
   ]
 
   return (
-    <div className="mobile-bolt min-h-screen bg-white pb-[72px] text-ink">
-      <div className="mx-auto max-w-lg">{children}</div>
+    <div className="mobile-bolt min-h-screen min-h-[100dvh] w-full overflow-x-clip bg-white pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] pt-[env(safe-area-inset-top,0px)] text-ink">
+      <div className="mx-auto w-full min-w-0 max-w-lg sm:max-w-xl lg:max-w-2xl">{children}</div>
       {!hideNav && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/5 bg-white shadow-bolt-nav">
-          <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+        <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-black/5 bg-white shadow-bolt-nav">
+          <div className="mx-auto flex w-full min-w-0 max-w-lg items-stretch justify-around px-0.5 pt-1 sm:max-w-xl sm:px-1 lg:max-w-2xl pb-[max(0.25rem,env(safe-area-inset-bottom))]">
             {tabs.map(({ to, label, icon: Icon, end }) => (
               <NavLink
                 key={to}
                 to={to}
                 end={end}
                 className={({ isActive }) =>
-                  `flex flex-1 flex-col items-center gap-0.5 rounded-lg px-1 py-2 text-[10px] font-medium transition ${
+                  `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg px-0.5 py-2 text-[10px] font-medium transition sm:px-1 ${
                     isActive ? 'font-semibold text-mobile-forest' : 'text-ink-secondary'
                   }`
                 }
               >
-                <Icon className="h-6 w-6" />
-                {label}
+                <Icon className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />
+                <span className="max-w-full truncate">{label}</span>
               </NavLink>
             ))}
           </div>
@@ -81,7 +81,7 @@ export function MobileBoltHomeHeader({ title, tagline }) {
           {tagline && <p className="mt-0.5 text-sm text-ink-secondary">{tagline}</p>}
         </div>
         <Link
-          to="/m/profile"
+          to="/profile"
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F5F5F5] text-ink"
           aria-label="Profile"
         >
@@ -107,7 +107,7 @@ export function MobileHeader({ title, subtitle, backTo, showLogo = false }) {
             <IconChevronLeft className="h-5 w-5 rtl-flip" />
           </NavLink>
         ) : showLogo ? (
-          <Logo size="sm" showText={false} to="/m" />
+          <Logo size="sm" showText={false} to="/" />
         ) : null}
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-bold text-ink">{title}</h1>

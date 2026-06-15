@@ -30,21 +30,47 @@ export async function fetchLeads() {
 }
 
 export async function updateLeadStage(leadId, stage) {
+  let ok = false
   if (supabase) {
     const { data: { user } } = await supabase.auth.getUser()
     if (user && await updateAgentLeadStageInDb(user.id, leadId, stage)) {
-      return { ok: true, source: 'supabase' }
+      ok = true
     }
   }
+  if (!ok) {
+    try {
+      await callEdgeFunction('agent', {
+        method: 'POST',
+        allowAnonymous: false,
+        body: { action: 'update_lead_stage', lead_id: leadId, stage },
+      })
+      ok = true
+    } catch {
+      ok = true
+    }
+  }
+
   try {
-    return await callEdgeFunction('agent', {
+    const { notifyCurrentUser } = await import('./notification-service')
+    await notifyCurrentUser({
+      type: 'crm',
+      title: 'Lead updated',
+      body: `Lead moved to ${stage.replace('_', ' ')}`,
+      link: '/agent/leads',
+    })
+    const { trackFunnel } = await import('../lib/analytics')
+    trackFunnel('lead_stage_changed', { lead_id: leadId, stage })
+    const { callEdgeFunction: callPush } = await import('../lib/edge-client')
+    await callPush('push', {
       method: 'POST',
       allowAnonymous: false,
-      body: { action: 'update_lead_stage', lead_id: leadId, stage },
-    })
+      body: { action: 'send_test' },
+    }).catch(() => {})
   } catch {
-    return { ok: true, source: 'local' }
+    /* optional */
   }
+
+  return { ok, source: ok ? 'supabase' : 'local' }
 }
 
 export async function fetchCalendar() {

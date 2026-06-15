@@ -20,7 +20,7 @@ export function SearchPill({
   const { t } = useTranslation()
 
   return (
-    <div className="search-pill max-w-[850px]">
+    <div className="search-pill min-w-0 max-w-full xl:max-w-[850px]">
       <div className="search-segment rounded-l-full">
         <label htmlFor="search-location" className="search-segment-label">
           {t('search.where')}
@@ -54,9 +54,9 @@ export function SearchPill({
         </select>
       </div>
 
-      <div className="h-8 w-px shrink-0 bg-surface-border" />
+      <div className="hidden h-8 w-px shrink-0 bg-surface-border xl:block" />
 
-      <div className="search-segment">
+      <div className="search-segment hidden min-w-0 xl:flex">
         <label htmlFor="search-budget" className="search-segment-label">
           {t('search.budget')}
         </label>
@@ -74,7 +74,9 @@ export function SearchPill({
         )}
       </div>
 
-      <button type="button" className="search-orb" aria-label={t('search.search')}>
+      <div className="hidden h-8 w-px shrink-0 bg-surface-border xl:block" />
+
+      <button type="button" className="search-orb shrink-0" aria-label={t('search.search')}>
         <IconSearch className="h-4 w-4" />
       </button>
     </div>
@@ -109,12 +111,12 @@ function Header({ search, minimal = false, categoryBar = null, compareCount = 0 
 
   return (
     <header className="sticky top-0 z-50 border-b border-surface-border bg-surface">
-      <div className="mx-auto max-w-page px-6 xl:px-20">
-        <div className={`flex items-center gap-4 ${minimal ? 'h-[72px]' : 'h-[80px]'}`}>
+      <div className="mx-auto w-full min-w-0 max-w-page px-4 sm:px-6 xl:px-20">
+        <div className={`flex min-w-0 items-center gap-2 sm:gap-4 ${minimal ? 'h-[72px]' : 'h-[80px]'}`}>
           <Logo />
 
           {!minimal && (
-            <div className="hidden flex-1 justify-center px-4 md:flex">
+            <div className="hidden min-w-0 flex-1 justify-center px-2 md:flex lg:px-4">
               {search}
             </div>
           )}
@@ -186,7 +188,7 @@ function Footer() {
 
   return (
     <footer className="mt-12 border-t border-surface-border bg-surface-subtle">
-      <div className="mx-auto max-w-page px-6 py-12 xl:px-20">
+      <div className="mx-auto max-w-page px-4 py-12 sm:px-6 xl:px-20">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {columns.map(({ title, links }) => (
             <div key={title}>
@@ -242,7 +244,7 @@ export default function DesktopShell({
   fullBleed = false,
 }) {
   return (
-    <div className="min-h-screen bg-surface text-ink">
+    <div className="min-h-screen min-h-[100dvh] overflow-x-clip bg-surface text-ink">
       <Header
         search={search}
         minimal={minimal}
@@ -253,7 +255,7 @@ export default function DesktopShell({
         className={
           fullBleed
             ? 'w-full'
-            : 'mx-auto w-full max-w-page px-6 py-6 xl:px-20 xl:py-8'
+            : 'mx-auto w-full min-w-0 max-w-page px-4 py-6 sm:px-6 xl:px-20 xl:py-8'
         }
       >
         {children}

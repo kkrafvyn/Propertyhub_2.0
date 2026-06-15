@@ -17,7 +17,7 @@ function SmartHome() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title={t('mobile.smartProperty')} subtitle={portfolio?.building || t('mobile.connectedHome')} backTo="/m/profile" />
+      <MobileHeader title={t('mobile.smartProperty')} subtitle={portfolio?.building || t('mobile.connectedHome')} backTo="/profile" />
       <section className="space-y-4 px-4 pb-6">
         {portfolio && (
           <div className="grid grid-cols-2 gap-3">
@@ -55,7 +55,7 @@ function SmartAlertsMobile() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title={t('mobile.alerts')} backTo="/m/smart" />
+      <MobileHeader title={t('mobile.alerts')} backTo="/smart" />
       <section className="space-y-2 px-4 pb-6">
         {alerts.map((a) => (
           <MobileCard key={a.id}>

@@ -29,10 +29,10 @@ function RenterHome() {
   const { t } = useTranslation()
   const [profile, setProfile] = useState(null)
   const links = [
-    { to: '/m/renter/leases', label: t('hubs.renter.leases.title'), Icon: IconDocument },
-    { to: '/m/renter/payments', label: t('hubs.renter.payments.title'), Icon: IconCard },
-    { to: '/m/renter/maintenance', label: t('hubs.renter.maintenance.title'), Icon: IconWrench },
-    { to: '/m/renter/sign', label: t('hubs.renter.leaseSigning.title'), Icon: IconPen },
+    { to: '/renter/leases', label: t('hubs.renter.leases.title'), Icon: IconDocument },
+    { to: '/renter/payments', label: t('hubs.renter.payments.title'), Icon: IconCard },
+    { to: '/renter/maintenance', label: t('hubs.renter.maintenance.title'), Icon: IconWrench },
+    { to: '/renter/sign', label: t('hubs.renter.leaseSigning.title'), Icon: IconPen },
   ]
 
   useEffect(() => {
@@ -41,7 +41,7 @@ function RenterHome() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title={t('mobile.renterWorkspace')} subtitle={profile?.unit || t('mobile.yourRental')} backTo="/m/profile" />
+      <MobileHeader title={t('mobile.renterWorkspace')} subtitle={profile?.unit || t('mobile.yourRental')} backTo="/profile" />
       <section className="space-y-4 px-4 pb-6">
         {profile && (
           <MobileCard>
@@ -88,7 +88,7 @@ function RenterPaymentsMobile() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title={t('mobile.rentPayments')} backTo="/m/renter" />
+      <MobileHeader title={t('mobile.rentPayments')} backTo="/renter" />
       <section className="space-y-3 px-4 pb-6">
         <IntegrationsBanner showPayments />
         {message && <p className="text-sm text-ink-secondary">{message}</p>}
@@ -134,7 +134,7 @@ function RenterLeasesMobile() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title={t('hubs.renter.leases.title')} backTo="/m/renter" />
+      <MobileHeader title={t('hubs.renter.leases.title')} backTo="/renter" />
       <section className="space-y-3 px-4 pb-6">
         {leases.map((lease) => (
           <MobileCard key={lease.id}>
@@ -170,7 +170,7 @@ function RenterMaintenanceMobile() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title={t('hubs.renter.maintenance.title')} backTo="/m/renter" />
+      <MobileHeader title={t('hubs.renter.maintenance.title')} backTo="/renter" />
       <section className="space-y-3 px-4 pb-6">
         <MobilePrimaryButton type="button" onClick={() => setShowForm(true)} className="w-full">{t('mobile.newRequest')}</MobilePrimaryButton>
         {showForm && (
@@ -213,7 +213,7 @@ function RenterSignMobile() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title={t('mobile.leaseSigning')} backTo="/m/renter" />
+      <MobileHeader title={t('mobile.leaseSigning')} backTo="/renter" />
       <section className="space-y-3 px-4 pb-6">
         {documents.map((doc) => (
           <MobileCard key={doc.id}>

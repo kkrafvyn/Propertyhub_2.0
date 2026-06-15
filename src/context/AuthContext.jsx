@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchUserProfile } from '../lib/supabase-db'
+import { mergeSavedOnLogin } from '../lib/saved-listings'
+import { identifyUser } from '../lib/analytics'
 import authService from '../services/auth-service'
 
 import { getUserRole, getRoleHomePath } from '../lib/roles'
@@ -15,13 +17,17 @@ export function AuthProvider({ children }) {
   const role = getUserRole(user, profile)
   const homePath = getRoleHomePath(user, profile)
 
-  async function loadProfile(sessionUser) {
+  async function loadProfile(sessionUser, event) {
     if (!sessionUser) {
       setProfile(null)
       return
     }
     const row = await fetchUserProfile(sessionUser.id)
     setProfile(row)
+    if (event === 'SIGNED_IN') {
+      mergeSavedOnLogin().catch(() => {})
+      identifyUser(sessionUser.id, { email: sessionUser.email, role: row?.role })
+    }
   }
 
   useEffect(() => {
@@ -33,14 +39,14 @@ export function AuthProvider({ children }) {
     supabase.auth.getSession().then(async ({ data }) => {
       const sessionUser = data.session?.user ?? null
       setUser(sessionUser)
-      await loadProfile(sessionUser)
+      await loadProfile(sessionUser, sessionUser ? 'SIGNED_IN' : null)
       setLoading(false)
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
       const sessionUser = session?.user ?? null
       setUser(sessionUser)
-      await loadProfile(sessionUser)
+      await loadProfile(sessionUser, event)
     })
 
     return () => listener.subscription.unsubscribe()

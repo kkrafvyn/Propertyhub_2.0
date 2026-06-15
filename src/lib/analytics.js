@@ -1,6 +1,19 @@
 const KEY = import.meta.env.VITE_POSTHOG_KEY
 const HOST = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com'
 
+const FUNNEL_EVENTS = new Set([
+  'search',
+  'listing_saved',
+  'listing_unsaved',
+  'viewing_requested',
+  'viewing_cancelled',
+  'viewing_confirmed',
+  'payment_started',
+  'payment_completed',
+  'listing_submitted',
+  'lead_stage_changed',
+])
+
 let loaded = false
 
 export function initAnalytics() {
@@ -21,4 +34,16 @@ export function trackEvent(name, props = {}) {
   }
 }
 
-export default { initAnalytics, trackEvent }
+/** Product funnel events for search → save → viewing → pay */
+export function trackFunnel(step, props = {}) {
+  const name = FUNNEL_EVENTS.has(step) ? step : `funnel_${step}`
+  trackEvent(name, { funnel_step: step, ...props })
+}
+
+export function identifyUser(userId, traits = {}) {
+  if (typeof window !== 'undefined' && window.posthog?.identify && userId) {
+    window.posthog.identify(userId, traits)
+  }
+}
+
+export default { initAnalytics, trackEvent, trackFunnel, identifyUser }

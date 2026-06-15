@@ -1,11 +1,43 @@
 import { callEdgeFunction } from '../lib/edge-client'
-import { createViewingRequestInDb, fetchViewingSlotsFromDb, fetchViewingsFromDb, upsertUserProfileFromAuth } from '../lib/supabase-db'
+import {
+  createViewingRequestInDb,
+  fetchAgentViewingsFromDb,
+  fetchViewingSlotsFromDb,
+  fetchViewingsFromDb,
+  updateViewingRequestStatusInDb,
+  upsertUserProfileFromAuth,
+} from '../lib/supabase-db'
 import { supabase } from '../lib/supabase'
-import { addTrip, getTrips } from '../lib/trips-storage'
+import { addTrip, getTrips, updateTripStatus } from '../lib/trips-storage'
+
+async function notifyViewingStatus({ userId, listingTitle, date, status }) {
+  try {
+    const { notifyUser } = await import('./notification-service')
+    const titles = {
+      confirmed: 'Viewing confirmed',
+      cancelled: 'Viewing cancelled',
+      completed: 'Viewing completed',
+    }
+    await notifyUser({
+      userId,
+      type: 'viewing',
+      title: titles[status] || 'Viewing updated',
+      body: `${listingTitle || 'Property'} · ${date}`,
+      link: '/trips',
+    })
+    const { sendSms } = await import('./comms-service')
+    if (userId && supabase) {
+      const { data } = await supabase.from('user_profiles').select('email').eq('id', userId).maybeSingle()
+      /* SMS requires phone on profile — optional */
+    }
+  } catch {
+    /* optional */
+  }
+}
 
 export async function requestViewing({ listingId, date, guests = 1, notes = '', slotId = null, listingTitle = '', hostName = '' }) {
   try {
-    return await callEdgeFunction('bookings', {
+    const result = await callEdgeFunction('bookings', {
       method: 'POST',
       allowAnonymous: false,
       body: {
@@ -17,6 +49,13 @@ export async function requestViewing({ listingId, date, guests = 1, notes = '', 
         slot_id: slotId,
       },
     })
+    if (result?.ok !== false) {
+      try {
+        const { trackFunnel } = await import('../lib/analytics')
+        trackFunnel('viewing_requested', { listing_id: listingId })
+      } catch { /* */ }
+    }
+    return result
   } catch {
     if (supabase) {
       const { data: { user } } = await supabase.auth.getUser()
@@ -53,6 +92,17 @@ export async function requestViewing({ listingId, date, guests = 1, notes = '', 
             if (user.email) {
               await sendViewingConfirmation({ to: user.email, listingTitle: listingTitle || listingId, date })
             }
+            const { sendSms } = await import('./comms-service')
+            const phone = user.user_metadata?.phone || user.phone
+            if (phone) {
+              await sendSms({
+                phone,
+                body: `BaytMiftah: Viewing request for ${listingTitle || listingId} on ${date}. Track in Trips.`,
+                template: 'viewing_booked',
+              })
+            }
+            const { trackFunnel } = await import('../lib/analytics')
+            trackFunnel('viewing_requested', { listing_id: listingId })
           } catch {
             /* notifications optional */
           }
@@ -68,6 +118,50 @@ export async function requestViewing({ listingId, date, guests = 1, notes = '', 
       source: 'local',
     })
   }
+}
+
+export async function updateViewingStatus(viewingId, status, { listingTitle = '', date = '', userId = null } = {}) {
+  try {
+    const result = await callEdgeFunction('bookings', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'update_viewing_status', viewing_id: viewingId, status },
+    })
+    if (result?.ok !== false && userId) {
+      await notifyViewingStatus({ userId, listingTitle, date, status })
+    }
+    return result
+  } catch {
+    const row = await updateViewingRequestStatusInDb(viewingId, status)
+    if (row) {
+      updateTripStatus(viewingId, status)
+      if (userId) await notifyViewingStatus({ userId: row.user_id, listingTitle, date: row.preferred_date, status })
+      return { ok: true, request: row, source: 'supabase' }
+    }
+    updateTripStatus(viewingId, status)
+    return { ok: true, source: 'local' }
+  }
+}
+
+export async function cancelViewing(viewingId) {
+  return updateViewingStatus(viewingId, 'cancelled')
+}
+
+export async function confirmViewing(viewingId, meta = {}) {
+  return updateViewingStatus(viewingId, 'confirmed', meta)
+}
+
+export async function fetchAgentViewings() {
+  try {
+    const payload = await callEdgeFunction('bookings', {
+      allowAnonymous: false,
+      query: { action: 'agent_viewings' },
+    })
+    if (payload?.viewings?.length) return { viewings: payload.viewings, source: 'supabase' }
+  } catch { /* */ }
+  const rows = await fetchAgentViewingsFromDb()
+  if (rows?.length) return { viewings: rows, source: 'supabase' }
+  return { viewings: [], source: 'local' }
 }
 
 export async function getAvailability(listingId) {
@@ -108,4 +202,12 @@ export async function fetchUserTrips() {
   return { trips: getTrips(), source: 'local' }
 }
 
-export default { requestViewing, getAvailability, fetchUserTrips }
+export default {
+  requestViewing,
+  getAvailability,
+  fetchUserTrips,
+  cancelViewing,
+  confirmViewing,
+  updateViewingStatus,
+  fetchAgentViewings,
+}

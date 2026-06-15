@@ -29,9 +29,9 @@ export const agentTasks = [
 ]
 
 export const agentCommissions = [
-  { id: 'cm1', property: 'Osu Office Suite', amount: 8400, status: 'paid', closed: '2026-05-28' },
-  { id: 'cm2', property: 'Labone Penthouse', amount: 62000, status: 'pending', closed: '—' },
-  { id: 'cm3', property: 'East Legon Family Home', amount: 5800, status: 'pipeline', closed: '—' },
+  { id: 'cm1', property: 'Osu Office Suite', amount: 8400, status: 'paid', closed: '2026-05-28', settlementId: 'cs1', paymentId: 'pay-cm1' },
+  { id: 'cm2', property: 'Labone Penthouse', amount: 62000, status: 'pending', closed: '—', settlementId: 'cs2', paymentId: 'pay-cm2' },
+  { id: 'cm3', property: 'East Legon Family Home', amount: 5800, status: 'pipeline', closed: '—', settlementId: null, paymentId: null },
 ]
 
 export const agentAnalytics = {

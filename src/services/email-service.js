@@ -28,4 +28,12 @@ export async function sendListingStatusEmail({ to, listingTitle, status }) {
   })
 }
 
-export default { sendEmail, sendViewingConfirmation, sendListingStatusEmail }
+export async function sendPaymentDueReminder({ to, period, amount, dueDate }) {
+  return sendEmail({
+    to,
+    subject: `Rent due — ${period}`,
+    body: `<p>Your rent of <strong>GHS ${Number(amount).toLocaleString()}</strong> for ${period} is due ${dueDate}.</p><p>Pay from your Renter workspace or enable autopay.</p>`,
+  })
+}
+
+export default { sendEmail, sendViewingConfirmation, sendListingStatusEmail, sendPaymentDueReminder }

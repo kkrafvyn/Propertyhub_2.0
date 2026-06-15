@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useSearchParams } from 'react-router-dom'
 import FinanceShell from '../../components/FinanceShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
@@ -6,6 +7,12 @@ import PaymentProviderPicker from '../../components/PaymentProviderPicker'
 import { fetchEscrowAccounts } from '../../services/finance-service'
 import { fundEscrow } from '../../services/payments-service'
 import { getDefaultProvider } from '../../lib/payment-providers'
+
+const milestoneStyles = {
+  funded: 'bg-green-100 text-green-800',
+  pending: 'bg-amber-100 text-amber-800',
+  scheduled: 'bg-surface-subtle text-ink-secondary',
+}
 
 function Escrow() {
   const [params] = useSearchParams()
@@ -18,12 +25,12 @@ function Escrow() {
     fetchEscrowAccounts().then(({ escrow: rows }) => setEscrow(rows))
   }, [])
 
-  async function handleFund(account) {
-    const remaining = account.amount - account.funded
-    if (remaining <= 0) return
+  async function handleFund(account, milestoneAmount) {
+    const amount = milestoneAmount ?? account.amount - account.funded
+    if (amount <= 0) return
     setLoading(account.id)
     setMessage('')
-    const result = await fundEscrow({ escrowId: account.id, amount: remaining, provider })
+    const result = await fundEscrow({ escrowId: account.id, amount, provider })
     if (result.checkout_url) return
     setMessage(result.message || 'Escrow deposit initiated.')
     setLoading(null)
@@ -50,6 +57,11 @@ function Escrow() {
                 <div>
                   <h2 className="font-semibold">{e.property}</h2>
                   <p className="text-sm text-ink-secondary">Buyer: {e.buyer}</p>
+                  {e.transactionId && (
+                    <Link to="/transactions" className="text-sm font-semibold text-brand-accent underline">
+                      Transaction {e.transactionId} →
+                    </Link>
+                  )}
                 </div>
                 <span className="rounded-full bg-surface-hover px-3 py-1 text-xs font-semibold capitalize text-ink">{e.status}</span>
               </div>
@@ -62,7 +74,37 @@ function Escrow() {
                   <div className="h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
                 </div>
               </div>
-              {remaining > 0 && (
+
+              {e.milestones?.length > 0 && (
+                <ul className="mt-4 space-y-2 border-t border-surface-border pt-4">
+                  {e.milestones.map((m) => (
+                    <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                      <div>
+                        <p className="font-medium">{m.label}</p>
+                        <p className="text-xs text-ink-secondary">Due {m.due}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">GHS {m.amount.toLocaleString()}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${milestoneStyles[m.status] || milestoneStyles.scheduled}`}>
+                          {m.status}
+                        </span>
+                        {m.status === 'pending' && (
+                          <button
+                            type="button"
+                            onClick={() => handleFund(e, m.amount)}
+                            disabled={loading === e.id}
+                            className="rounded-lg bg-brand-accent px-3 py-1 text-xs font-semibold text-white disabled:opacity-60"
+                          >
+                            Fund
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {remaining > 0 && !e.milestones?.length && (
                 <button
                   type="button"
                   onClick={() => handleFund(e)}

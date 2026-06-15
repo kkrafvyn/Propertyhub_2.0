@@ -29,12 +29,12 @@ function ModerationQueue() {
 
   useEffect(() => { load() }, [load])
 
-  async function handleApprove(listingId) {
-    setBusyId(listingId)
+  async function handleApprove(item) {
+    setBusyId(item.id)
     setError('')
     try {
-      await approveListing(listingId)
-      setQueue((prev) => prev.filter((item) => item.id !== listingId))
+      await approveListing(item.id, { listingTitle: item.title, submitterId: item.submitted_by })
+      setQueue((prev) => prev.filter((row) => row.id !== item.id))
     } catch (err) {
       setError(err.message || 'Approve failed')
     }
@@ -87,7 +87,7 @@ function ModerationQueue() {
                 <button
                   type="button"
                   disabled={busyId === item.id}
-                  onClick={() => handleApprove(item.id)}
+                  onClick={() => handleApprove(item)}
                   className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
                 >
                   Approve & publish

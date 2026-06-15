@@ -20,3 +20,10 @@ export function addTrip(trip) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify([entry, ...trips]))
   return entry
 }
+
+export function updateTripStatus(id, status) {
+  const trips = getTrips()
+  const next = trips.map((t) => (t.id === id ? { ...t, status } : t))
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+  return next
+}

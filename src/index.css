@@ -10,6 +10,9 @@ html,
 body,
 #root {
   min-height: 100%;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-x: clip;
 }
 
 body {
@@ -17,6 +20,13 @@ body {
   color: #222222;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
 }
 
 html.dark body {
@@ -122,7 +132,7 @@ html.dark code {
   }
 
   .search-segment {
-    @apply relative flex min-w-0 flex-1 flex-col justify-center px-6 py-2;
+    @apply relative flex min-w-0 flex-1 flex-col justify-center px-3 py-2 lg:px-5 xl:px-6;
   }
 
   .search-segment::before {

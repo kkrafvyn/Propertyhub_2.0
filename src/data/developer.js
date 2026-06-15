@@ -40,11 +40,11 @@ export const developerProjects = [
 ]
 
 export const constructionMilestones = [
-  { id: 'm1', project: 'Skyline Residences', milestone: 'Foundation complete', date: '2025-11-15', status: 'done' },
-  { id: 'm2', project: 'Skyline Residences', milestone: 'Structural frame', date: '2026-03-20', status: 'done' },
-  { id: 'm3', project: 'Skyline Residences', milestone: 'MEP installation', date: '2026-06-30', status: 'in_progress' },
-  { id: 'm4', project: 'Harbour View Towers', milestone: 'Site preparation', date: '2026-05-01', status: 'done' },
-  { id: 'm5', project: 'Ridge Executive Suites', milestone: 'Interior fit-out', date: '2026-07-15', status: 'scheduled' },
+  { id: 'm1', project: 'Skyline Residences', milestone: 'Foundation complete', date: '2025-11-15', status: 'done', buyerNotified: true },
+  { id: 'm2', project: 'Skyline Residences', milestone: 'Structural frame', date: '2026-03-20', status: 'done', buyerNotified: true },
+  { id: 'm3', project: 'Skyline Residences', milestone: 'MEP installation', date: '2026-06-30', status: 'in_progress', buyerNotified: false },
+  { id: 'm4', project: 'Harbour View Towers', milestone: 'Site preparation', date: '2026-05-01', status: 'done', buyerNotified: true },
+  { id: 'm5', project: 'Ridge Executive Suites', milestone: 'Interior fit-out', date: '2026-07-15', status: 'scheduled', buyerNotified: false },
 ]
 
 export const developerBuyers = [

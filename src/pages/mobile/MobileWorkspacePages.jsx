@@ -87,7 +87,7 @@ function WorkspaceHome({ workspace }) {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title={workspace.title} subtitle={subtitle} backTo="/m/profile" />
+      <MobileHeader title={workspace.title} subtitle={subtitle} backTo="/profile" />
       <section className="space-y-4 px-4 pb-6">
         <div className="grid grid-cols-2 gap-3">
           {workspace.links.map((item) => (

@@ -157,7 +157,14 @@ Deno.serve(async (req) => {
           provider: checkout?.provider ?? provider,
           provider_ref: checkout?.provider_ref ?? null,
           status: checkout ? 'pending' : 'demo',
-          metadata: { ...(body.metadata ?? {}), listing_id: body.listing_id, rent_payment_id: body.rent_payment_id },
+          metadata: {
+            purpose,
+            ...(body.metadata ?? {}),
+            listing_id: body.listing_id ?? body.metadata?.listing_id,
+            rent_payment_id: body.metadata?.rent_payment_id ?? body.rent_payment_id,
+            settlement_id: body.metadata?.settlement_id,
+            escrow_id: body.metadata?.escrow_id,
+          },
         }
 
         await admin.from('payment_records').insert(record).catch((e) => console.error('payment record insert failed', e.message))
