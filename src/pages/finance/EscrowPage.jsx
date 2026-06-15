@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import FinanceShell from '../../components/FinanceShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import PaymentProviderPicker from '../../components/PaymentProviderPicker'
+import { IconChevronRight } from '../../components/icons'
 import { fetchEscrowAccounts } from '../../services/finance-service'
 import { fundEscrow } from '../../services/payments-service'
 import { getDefaultProvider } from '../../lib/payment-providers'
@@ -58,8 +59,9 @@ function Escrow() {
                   <h2 className="font-semibold">{e.property}</h2>
                   <p className="text-sm text-ink-secondary">Buyer: {e.buyer}</p>
                   {e.transactionId && (
-                    <Link to="/transactions" className="text-sm font-semibold text-brand-accent underline">
-                      Transaction {e.transactionId} →
+                    <Link to="/transactions" className="inline-flex items-center gap-1 text-sm font-semibold text-brand-accent underline">
+                      Transaction {e.transactionId}
+                      <IconChevronRight className="h-3.5 w-3.5" />
                     </Link>
                   )}
                 </div>

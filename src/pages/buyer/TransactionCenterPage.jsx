@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DesktopShell, { CompactSearch } from '../../components/DesktopShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { IconCheck, IconChevronRight } from '../../components/icons'
 import { fetchTransactions } from '../../services/transaction-service'
 
 function TransactionCenter() {
@@ -41,7 +42,7 @@ function TransactionCenter() {
                     <span className={`flex h-5 w-5 items-center justify-center rounded-full text-xs ${
                       item.done ? 'bg-brand-accent text-white' : 'border border-surface-border'
                     }`}>
-                      {item.done ? '✓' : ''}
+                      {item.done ? <IconCheck className="h-3 w-3" /> : null}
                     </span>
                     {item.label}
                   </li>
@@ -49,8 +50,9 @@ function TransactionCenter() {
               </ul>
             </div>
 
-            <Link to="/offers" className="mt-4 inline-block text-sm font-semibold text-ink underline">
-              Open offer room →
+            <Link to="/offers" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-ink underline">
+              Open offer room
+              <IconChevronRight className="h-3.5 w-3.5" />
             </Link>
           </article>
         ))}

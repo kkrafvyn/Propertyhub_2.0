@@ -4,7 +4,7 @@ import DesktopShell, { SearchPill } from '../components/DesktopShell'
 import BackendBanner from '../components/BackendBanner'
 import CategoryBar from '../components/CategoryBar'
 import ListingCard, { ListingCardSkeleton } from '../components/ListingCard'
-import { IconChevronLeft, IconChevronRight } from '../components/icons'
+import { IconChevronLeft, IconChevronRight, IconClose } from '../components/icons'
 import { useTranslation } from '../i18n/LocaleContext'
 import { syncSavedIds, toggleSavedIdAsync } from '../lib/saved-listings'
 import { syncCompareIds, toggleCompareIdAsync } from '../lib/compare-listings'
@@ -124,7 +124,7 @@ export default function HomePage() {
       )}
 
       {dataSource === 'local' && !loading && (
-        <p className="mb-6 rounded-xl border border-surface-border bg-surface-subtle px-4 py-3 text-sm text-ink-secondary">
+        <p className="mb-6 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-ink-secondary">
           {t('home.sampleListings')}
         </p>
       )}
@@ -154,7 +154,7 @@ export default function HomePage() {
               <h2 className="section-heading">
                 {location.trim() ? t('home.homesIn', { location }) : t('home.exploreHomes')}
               </h2>
-              <Link to="/neighborhoods" className="flex items-center gap-1 text-sm font-semibold underline">
+              <Link to="/neighborhoods" className="inline-flex items-center gap-1 text-sm font-semibold text-ink underline underline-offset-2">
                 {t('home.viewNeighborhoods')}
                 <IconChevronRight className="h-4 w-4 rtl-flip" />
               </Link>
@@ -199,7 +199,7 @@ function ListingCarousel({ title, listings, savedIds, compareIds, onToggleSave, 
           <button
             type="button"
             onClick={() => scrollBy(-1)}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-surface-border bg-surface transition hover:shadow-search"
+            className="carousel-nav-btn"
             aria-label={t('home.scrollLeft')}
           >
             <IconChevronLeft className="h-4 w-4 rtl-flip" />
@@ -207,7 +207,7 @@ function ListingCarousel({ title, listings, savedIds, compareIds, onToggleSave, 
           <button
             type="button"
             onClick={() => scrollBy(1)}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-surface-border bg-surface transition hover:shadow-search"
+            className="carousel-nav-btn"
             aria-label={t('home.scrollRight')}
           >
             <IconChevronRight className="h-4 w-4 rtl-flip" />
@@ -245,7 +245,7 @@ function FiltersPanel({ aiQuery, onAiQueryChange, verifiedOnly, onVerifiedOnlyCh
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">{t('home.filters')}</h2>
           <button type="button" onClick={onClose} className="rounded-full p-2 hover:bg-surface-hover" aria-label={t('common.close')}>
-            ✕
+            <IconClose className="h-4 w-4" />
           </button>
         </div>
         <label className="mb-4 flex items-center gap-2 text-sm">
@@ -287,7 +287,7 @@ function EmptyState() {
   const { t } = useTranslation()
 
   return (
-    <div className="rounded-2xl border border-surface-border px-8 py-16 text-center">
+    <div className="rounded-2xl border border-white/15 bg-white/5 px-8 py-16 text-center">
       <h2 className="text-xl font-semibold">{t('home.noMatches')}</h2>
       <p className="mt-2 text-ink-secondary">{t('home.tryAdjusting')}</p>
     </div>

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { IconChevronLeft, IconChevronRight } from '../icons'
 
 export const inputClass =
   'w-full rounded-lg border border-surface-border px-4 py-3 text-sm text-ink outline-none transition focus:border-ink'
@@ -188,10 +189,12 @@ export function EmptyPanel({ title, description, action }) {
   )
 }
 
-export function TextLink({ to, children, className = '' }) {
+export function TextLink({ to, children, className = '', arrow }) {
   return (
-    <Link to={to} className={`text-sm font-semibold text-ink underline ${className}`}>
+    <Link to={to} className={`inline-flex items-center gap-1 text-sm font-semibold text-ink underline ${className}`}>
+      {arrow === 'left' && <IconChevronLeft className="h-3.5 w-3.5 shrink-0 rtl-flip" />}
       {children}
+      {arrow === 'right' && <IconChevronRight className="h-3.5 w-3.5 shrink-0 rtl-flip" />}
     </Link>
   )
 }

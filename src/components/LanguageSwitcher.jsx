@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { LOCALE_META } from '../i18n'
 import { useLocale } from '../i18n/LocaleContext'
+import { IconChevronRight } from './icons'
 
 export default function LanguageSwitcher({ className = '', variant = 'pill' }) {
   const { locale, setLocale, t } = useLocale()
@@ -33,13 +34,13 @@ export default function LanguageSwitcher({ className = '', variant = 'pill' }) {
         aria-haspopup="listbox"
       >
         <span>{current.label}</span>
-        {variant === 'compact' && <span className="text-ink-secondary">›</span>}
+        {variant === 'compact' && <IconChevronRight className="h-4 w-4 text-ink-secondary" />}
       </button>
 
       {open && (
         <div
-          className={`absolute z-50 mt-2 overflow-hidden rounded-xl border border-surface-border bg-surface py-2 shadow-menu ${
-            variant === 'compact' ? 'left-0 right-0' : 'right-0 min-w-[180px]'
+          className={`absolute z-50 mt-2 max-h-72 overflow-y-auto rounded-xl border border-surface-border bg-surface py-2 shadow-menu ${
+            variant === 'compact' ? 'left-0 right-0' : 'right-0 min-w-[200px]'
           }`}
           role="listbox"
           aria-label={t('language.choose')}
@@ -76,7 +77,7 @@ export function LanguagePanel() {
   return (
     <div>
       <p className="mb-3 text-sm text-ink-secondary">{t('profile.languageDesc')}</p>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {LOCALE_META.map(({ code, label }) => (
           <button
             key={code}

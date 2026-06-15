@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from './LocaleContext'
+import { isFullAdminRole } from '../lib/roles'
 
 function useNavLinks(entries) {
   const { t } = useTranslation()
@@ -8,6 +9,19 @@ function useNavLinks(entries) {
     [t, entries],
   )
 }
+
+const ADMIN_NAV_ENTRIES = [
+  { to: '/admin', key: 'overview', end: true, fullAdminOnly: false },
+  { to: '/admin/moderation', key: 'moderation', fullAdminOnly: false },
+  { to: '/admin/kyc', key: 'kycAml', fullAdminOnly: false },
+  { to: '/admin/fraud', key: 'fraudRisk', fullAdminOnly: false },
+  { to: '/admin/users', key: 'userManagement', fullAdminOnly: true },
+  { to: '/admin/agencies', key: 'agencyVerification', fullAdminOnly: true },
+  { to: '/admin/ai', key: 'aiOrchestration', fullAdminOnly: true },
+  { to: '/admin/valuation-api', key: 'valuationApi', fullAdminOnly: true },
+  { to: '/admin/global', key: 'regionsCurrency', fullAdminOnly: true },
+  { to: '/admin/audit', key: 'auditLog', fullAdminOnly: true },
+]
 
 export function useAgentShellNav() {
   const { t } = useTranslation()
@@ -42,19 +56,13 @@ export function useAgencyShellNav() {
   return { workspaceLabel: t('workspace.titles.agency'), homePath: '/agency', links }
 }
 
-export function useAdminShellNav() {
+export function useAdminShellNav(role) {
   const { t } = useTranslation()
-  const links = useNavLinks([
-    { to: '/admin', key: 'overview', end: true },
-    { to: '/admin/agencies', key: 'agencyVerification' },
-    { to: '/admin/moderation', key: 'moderation' },
-    { to: '/admin/kyc', key: 'kycAml' },
-    { to: '/admin/fraud', key: 'fraudRisk' },
-    { to: '/admin/ai', key: 'aiOrchestration' },
-    { to: '/admin/valuation-api', key: 'valuationApi' },
-    { to: '/admin/global', key: 'regionsCurrency' },
-    { to: '/admin/audit', key: 'auditLog' },
-  ])
+  const entries = useMemo(
+    () => ADMIN_NAV_ENTRIES.filter((item) => !item.fullAdminOnly || isFullAdminRole(role)),
+    [role],
+  )
+  const links = useNavLinks(entries)
   return { workspaceLabel: t('workspace.titles.admin'), homePath: '/admin', links }
 }
 

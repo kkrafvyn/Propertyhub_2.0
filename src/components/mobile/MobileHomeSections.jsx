@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import NotificationBell from '../NotificationBell'
-import { IconHeart, propertyTypeIcons } from '../icons'
+import { IconHeart, IconHome, IconChevronRight, IconUser, propertyTypeIcons } from '../icons'
 import { useTranslation } from '../../i18n/LocaleContext'
 
 function ProfileAvatar({ to = '/profile' }) {
@@ -10,10 +10,7 @@ function ProfileAvatar({ to = '/profile' }) {
       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mobile-forest/10 text-mobile-forest"
       aria-label="Profile"
     >
-      <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
-        <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.75" />
-        <path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      </svg>
+      <IconUser className="h-5 w-5" />
     </Link>
   )
 }
@@ -85,11 +82,7 @@ export function MobileTransactionTabs({ active, onChange }) {
                 : 'bg-[#F5F5F5] text-ink-secondary'
             }`}
           >
-            {id === 'stay' && (
-              <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">
-                <path d="M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
-              </svg>
-            )}
+            {id === 'stay' && <IconHome className="h-3.5 w-3.5 shrink-0" />}
             <span className="truncate">{t(`mobile.homeScreen.${id}`)}</span>
           </button>
         )
@@ -219,7 +212,10 @@ export function MobilePromoCard({ title, subtitle, to, index = 0 }) {
       <div className="absolute inset-0 bg-black/20" />
       <div className="relative">
         <p className="text-sm font-bold leading-tight">{title}</p>
-        <p className="mt-2 text-[11px] font-semibold text-white/90">{subtitle}</p>
+        <p className="mt-2 inline-flex items-center gap-0.5 text-[11px] font-semibold text-white/90">
+          {subtitle}
+          <IconChevronRight className="h-3 w-3 shrink-0" />
+        </p>
       </div>
     </Link>
   )

@@ -250,3 +250,131 @@ export const propertyTypeIcons = {
   land: IconLand,
   shortStay: IconBed,
 }
+
+export function IconSun({ className = 'h-4 w-4' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <circle cx="16" cy="16" r="5" stroke="currentColor" strokeWidth="1.75" />
+      <path d="M16 4v3M16 25v3M4 16h3M25 16h3M7.5 7.5l2 2M22.5 22.5l2 2M7.5 24.5l2-2M22.5 9.5l2-2" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function IconMoon({ className = 'h-4 w-4' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M20 6a10 10 0 1 0 8 16 8 8 0 0 1-8-16Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function IconClose({ className = 'h-4 w-4' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M10 10 22 22M22 10 10 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function IconWarning({ className = 'h-4 w-4' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M16 6 28 26H4L16 6Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+      <path d="M16 13v6M16 22h.01" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function IconBell({ className = 'h-5 w-5' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M12 26h8M8 22h16l-2-3v-5a6 6 0 1 0-12 0v5l-2 3Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function IconUser({ className = 'h-5 w-5' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <circle cx="16" cy="11" r="4.5" stroke="currentColor" strokeWidth="1.75" />
+      <path d="M8 27c0-4.5 3.6-8 8-8s8 3.5 8 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function IconMessage({ className = 'h-5 w-5' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M6 8h20v12H12l-4 4V8Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function IconLock({ className = 'h-6 w-6' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <rect x="9" y="14" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.75" />
+      <path d="M12 14v-3a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function IconCamera({ className = 'h-6 w-6' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M6 12h5l2-3h6l2 3h5v12H6V12Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+      <circle cx="16" cy="18" r="4" stroke="currentColor" strokeWidth="1.75" />
+    </svg>
+  )
+}
+
+export function IconClimate({ className = 'h-6 w-6' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M16 6v20M12 10h8M11 16h10M12 22h8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <circle cx="16" cy="16" r="3" stroke="currentColor" strokeWidth="1.75" />
+    </svg>
+  )
+}
+
+export function IconDroplet({ className = 'h-6 w-6' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M16 6c4 6 8 10.5 8 15a8 8 0 1 1-16 0c0-4.5 4-9 8-15Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function IconAntenna({ className = 'h-6 w-6' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M16 26V14M16 14c-3 0-5.5 2-5.5 4.5M16 14c3 0 5.5 2 5.5 4.5M16 10c-5 0-9 3.5-9 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <circle cx="16" cy="26" r="2" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function IconDot({ className = 'h-1.5 w-1.5' }) {
+  return (
+    <svg className={className} viewBox="0 0 8 8" fill="currentColor" aria-hidden="true">
+      <circle cx="4" cy="4" r="4" />
+    </svg>
+  )
+}
+
+export function IconPin({ className = 'h-5 w-5' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M16 28s-6-5.5-6-12a6 6 0 1 1 12 0c0 6.5-6 12-6 12Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+      <circle cx="16" cy="16" r="2.5" fill="currentColor" />
+    </svg>
+  )
+}
+
+export const deviceTypeIcons = {
+  lock: IconLock,
+  camera: IconCamera,
+  climate: IconClimate,
+  sensor: IconDroplet,
+  default: IconAntenna,
+}

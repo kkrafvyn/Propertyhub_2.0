@@ -46,6 +46,18 @@ Agency owners and platform admins can moderate. Edge Functions work when deploye
 npm run build
 ```
 
+## Native mobile app (Capacitor)
+
+The same codebase builds as **iOS and Android** apps. Inside the native shell, the mobile UI is always used.
+
+```bash
+npm run cap:sync        # build web + copy to android/ and ios/
+npm run cap:android     # open Android Studio (Windows/macOS)
+npm run cap:ios         # open Xcode (macOS only)
+```
+
+Full guide: [docs/CAPACITOR.md](docs/CAPACITOR.md)
+
 ## Vercel deployment
 
 Set these **Environment Variables** in the Vercel project (Production + Preview), then redeploy:

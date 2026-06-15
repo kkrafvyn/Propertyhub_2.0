@@ -70,7 +70,7 @@ export function NeighborhoodDetailPage() {
 
   return (
     <DesktopShell search={<CompactSearch />}>
-      <TextLink to="/neighborhoods" className="mb-4 inline-block">{t('neighborhoodPage.allNeighborhoods')}</TextLink>
+      <TextLink to="/neighborhoods" className="mb-4" arrow="left">{t('neighborhoodPage.allNeighborhoods')}</TextLink>
       <PageTitle title={n.name} subtitle={n.summary} />
 
       <StatGrid cols={4}>

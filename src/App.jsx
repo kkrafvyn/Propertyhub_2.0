@@ -7,9 +7,13 @@ import LegacyMobileRedirect from './components/LegacyMobileRedirect'
 import DesktopRoutes from './routes/DesktopRoutes'
 import MobileRoutes from './routes/MobileRoutes'
 import { useIsMobileViewport } from './hooks/useMediaQuery'
+import { useCapacitorBackButton } from './hooks/useCapacitorBackButton'
+import { isNativeApp } from './lib/platform'
 
 function ResponsiveRoutes() {
-  const isMobile = useIsMobileViewport()
+  const isMobileViewport = useIsMobileViewport()
+  const isMobile = isNativeApp() || isMobileViewport
+  useCapacitorBackButton()
   return isMobile ? <MobileRoutes /> : <DesktopRoutes />
 }
 

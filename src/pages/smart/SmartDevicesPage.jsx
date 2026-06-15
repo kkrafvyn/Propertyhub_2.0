@@ -4,7 +4,7 @@ import ProtectedRoute from '../../components/ProtectedRoute'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchDevices, getIotWebhookUrl, fetchIotEvents, simulateIotEvent } from '../../services/smart-service'
 
-const typeIcons = { lock: '🔐', camera: '📷', climate: '🌡️', sensor: '💧' }
+import { deviceTypeIcons } from '../../components/icons'
 
 function Devices() {
   const { t } = useTranslation()
@@ -37,10 +37,12 @@ function Devices() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {devices.map((d) => (
+        {devices.map((d) => {
+          const DeviceIcon = deviceTypeIcons[d.type] || deviceTypeIcons.default
+          return (
           <article key={d.id} className="panel-card bg-surface p-5">
             <div className="flex items-start justify-between">
-              <span className="text-2xl">{typeIcons[d.type] || '📡'}</span>
+              <DeviceIcon className="h-7 w-7 text-ink-secondary" />
               <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${
                 d.status === 'online' ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'
               }`}>{d.status}</span>
@@ -55,7 +57,8 @@ function Devices() {
               {t('extensions.iot.testEvent')}
             </button>
           </article>
-        ))}
+          )
+        })}
       </div>
 
       {events.length > 0 && (

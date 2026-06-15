@@ -2,12 +2,11 @@ import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
 import { logAudit } from '../_shared/user-seed.ts'
 import { notifyUser } from '../_shared/notifications.ts'
-
-const MODERATOR_ROLES = new Set(['agency_owner', 'agency_manager', 'platform_admin'])
+import { getProfileRole, MODERATOR_ROLES } from '../_shared/roles.ts'
 
 async function requireModerator(admin: ReturnType<typeof createAdminClient>, userId: string) {
-  const { data } = await admin.from('user_profiles').select('role').eq('id', userId).maybeSingle()
-  return MODERATOR_ROLES.has(data?.role ?? '')
+  const role = await getProfileRole(admin, userId)
+  return MODERATOR_ROLES.has(role)
 }
 
 async function notifySubmitter(

@@ -1,6 +1,12 @@
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
 import { logAudit } from '../_shared/user-seed.ts'
+import {
+  canAssignRole,
+  getProfileRole,
+  isFullAdminRole,
+  isStaffRole,
+} from '../_shared/roles.ts'
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -10,10 +16,24 @@ Deno.serve(async (req) => {
   if (!user) return errorResponse('Authentication required', 401)
 
   const admin = createAdminClient()
+  const requesterRole = await getProfileRole(admin, user.id)
   const url = new URL(req.url)
   const action = url.searchParams.get('action')
 
   if (req.method === 'GET') {
+    if (action === 'users') {
+      if (!isFullAdminRole(requesterRole)) return errorResponse('Forbidden', 403)
+      const { data, error } = await admin
+        .from('user_profiles')
+        .select('id, email, display_name, role, updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(200)
+      if (error) return errorResponse(error.message, 500)
+      return jsonResponse({ users: data ?? [], source: 'supabase' })
+    }
+
+    if (!isStaffRole(requesterRole)) return errorResponse('Forbidden', 403)
+
     if (action === 'overview') {
       const [{ count: kycPending }, { count: fraudOpen }, { data: pendingListings }] = await Promise.all([
         admin.from('kyc_records').select('*', { count: 'exact', head: true }).neq('status', 'verified'),
@@ -48,10 +68,12 @@ Deno.serve(async (req) => {
       return jsonResponse({ rules: data ?? [], source: 'supabase' })
     }
     if (action === 'ai_modules') {
+      if (!isFullAdminRole(requesterRole)) return errorResponse('Forbidden', 403)
       const { data } = await admin.from('ai_modules').select('*')
       return jsonResponse({ modules: data ?? [], source: 'supabase' })
     }
     if (action === 'regions') {
+      if (!isFullAdminRole(requesterRole)) return errorResponse('Forbidden', 403)
       return jsonResponse({
         regions: [
           { code: 'GH', name: 'Ghana', currency: 'GHS', active: true },
@@ -66,6 +88,30 @@ Deno.serve(async (req) => {
 
   if (req.method === 'POST') {
     const body = await req.json()
+
+    if (body.action === 'promote_user') {
+      if (!canAssignRole(requesterRole, body.role)) {
+        return errorResponse('Forbidden', 403)
+      }
+      if (!body.userId || !body.role) return errorResponse('userId and role required', 400)
+
+      const { error: profileError } = await admin
+        .from('user_profiles')
+        .update({ role: body.role, updated_at: new Date().toISOString() })
+        .eq('id', body.userId)
+      if (profileError) return errorResponse(profileError.message, 500)
+
+      await admin.auth.admin.updateUserById(body.userId, {
+        user_metadata: { role: body.role },
+        app_metadata: { role: body.role },
+      }).catch(() => null)
+
+      await logAudit(admin, user.id, 'user_role_updated', body.userId, { role: body.role })
+      return jsonResponse({ ok: true, role: body.role, source: 'supabase' })
+    }
+
+    if (!isStaffRole(requesterRole)) return errorResponse('Forbidden', 403)
+
     if (body.action === 'update_kyc') {
       await admin.from('kyc_records').update({ status: body.status }).eq('id', body.id)
       await logAudit(admin, user.id, 'kyc_updated', body.id, { status: body.status })

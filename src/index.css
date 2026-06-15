@@ -128,11 +128,23 @@ html.dark code {
 
 @layer components {
   .search-pill {
-    @apply flex h-14 max-h-14 w-full items-center rounded-full border border-surface-border bg-surface shadow-search transition-shadow hover:shadow-search-hover;
+    @apply flex h-[4.25rem] max-h-[4.25rem] w-full items-center rounded-full border border-surface-border bg-surface shadow-search transition-shadow hover:shadow-search-hover;
   }
 
   .search-segment {
     @apply relative flex min-w-0 flex-1 flex-col justify-center px-3 py-2 lg:px-5 xl:px-6;
+  }
+
+  .search-segment-icon {
+    @apply flex-row items-center gap-3;
+  }
+
+  .search-segment-icon-svg {
+    @apply text-ink-secondary opacity-80;
+  }
+
+  .search-divider {
+    @apply h-8 w-px shrink-0 bg-surface-border;
   }
 
   .search-segment::before {
@@ -153,7 +165,7 @@ html.dark code {
   }
 
   .search-orb {
-    @apply mr-2 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-accent text-white transition hover:scale-105;
+    @apply mr-2 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-orange text-white transition hover:scale-105;
   }
 
   .category-chip {
@@ -174,7 +186,15 @@ html.dark code {
   }
 
   .section-heading {
-    @apply text-[22px] font-semibold tracking-tight text-ink;
+    @apply text-2xl font-semibold tracking-tight text-ink md:text-[26px];
+  }
+
+  .carousel-nav-btn {
+    @apply flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-transparent text-ink transition hover:bg-white/10;
+  }
+
+  .compact-search-pill {
+    @apply flex max-w-[360px] items-center gap-3 rounded-full border border-white/20 bg-white/5 py-2 pl-6 pr-2 transition hover:bg-white/10;
   }
 
   .nav-pill {
@@ -222,4 +242,138 @@ html.dark code {
 [dir='rtl'] .search-orb {
   margin-inline-start: 0;
   margin-inline-end: 0.5rem;
+}
+
+/* Desktop marketplace theme (forest green) */
+.desktop-shell {
+  background-color: #0b211a;
+  color: #ffffff;
+}
+
+.desktop-shell .text-ink {
+  color: #ffffff;
+}
+
+.desktop-shell .text-ink-secondary {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.desktop-shell .text-ink-muted {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.desktop-shell .bg-surface,
+.desktop-shell .desktop-header {
+  background-color: #0b211a;
+}
+
+.desktop-shell .desktop-footer {
+  background-color: #0b211a;
+}
+
+.desktop-shell .border-surface-border,
+.desktop-shell .desktop-header {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.desktop-shell .search-pill {
+  background-color: #0b211a;
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: none;
+}
+
+.desktop-shell .search-pill:hover {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.desktop-shell .search-divider {
+  background-color: rgba(255, 255, 255, 0.18);
+}
+
+.desktop-shell .search-segment::before {
+  display: none;
+}
+
+.desktop-shell .search-segment:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-radius: 9999px;
+}
+
+.desktop-shell .search-segment-label {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+}
+
+.desktop-shell .search-segment-value,
+.desktop-shell .search-segment-icon-svg {
+  color: #ffffff;
+}
+
+.desktop-shell .search-segment-value option {
+  background-color: #0b211a;
+  color: #ffffff;
+}
+
+.desktop-shell .nav-pill {
+  color: #ffffff;
+}
+
+.desktop-shell .nav-pill:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.desktop-shell .filter-chip {
+  border-color: rgba(255, 255, 255, 0.85);
+  color: #ffffff;
+}
+
+.desktop-shell .filter-chip:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.desktop-shell .category-chip {
+  opacity: 0.55;
+}
+
+.desktop-shell .category-chip:hover {
+  opacity: 0.85;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.desktop-shell .category-chip.active {
+  opacity: 1;
+  border-color: #ffffff;
+}
+
+.desktop-shell .panel-card,
+.desktop-shell .hub-link-card {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.desktop-shell .bg-surface-subtle,
+.desktop-shell .bg-surface-hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.desktop-shell input,
+.desktop-shell select,
+.desktop-shell textarea,
+.desktop-shell .desktop-select {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.desktop-shell ::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.desktop-shell .user-menu-trigger {
+  border-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.desktop-shell .user-menu-trigger:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }

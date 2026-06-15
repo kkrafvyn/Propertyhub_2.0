@@ -77,8 +77,8 @@ export default function ComparePage() {
       )}
 
       <div className="mt-8 flex gap-4">
-        <TextLink to="/tools/mortgage">{t('comparePage.mortgageEstimator')}</TextLink>
-        <TextLink to="/tools/investment">{t('comparePage.investmentCalculator')}</TextLink>
+        <TextLink to="/tools/mortgage" arrow="right">{t('comparePage.mortgageEstimator')}</TextLink>
+        <TextLink to="/tools/investment" arrow="right">{t('comparePage.investmentCalculator')}</TextLink>
       </div>
     </DesktopShell>
   )

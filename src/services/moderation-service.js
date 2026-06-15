@@ -1,9 +1,9 @@
 import { callEdgeFunction } from '../lib/edge-client'
 import { supabase } from '../lib/supabase'
-import { isAdminRole, isAgencyRole } from '../lib/roles'
+import { isAgencyRole, isStaffRole } from '../lib/roles'
 import { fetchUserProfile } from '../lib/supabase-db'
 
-const MODERATOR_ROLES = new Set(['agency_owner', 'agency_manager', 'platform_admin'])
+const MODERATOR_ROLES = new Set(['agency_owner', 'agency_manager', 'platform_admin', 'platform_moderator'])
 
 async function assertModerator() {
   if (!supabase) throw new Error('Supabase is not configured.')
@@ -11,7 +11,7 @@ async function assertModerator() {
   if (!user) throw new Error('Please sign in to continue.')
   const profile = await fetchUserProfile(user.id)
   const role = profile?.role
-  if (!isAdminRole(role) && !isAgencyRole(role) && !MODERATOR_ROLES.has(role)) {
+  if (!isStaffRole(role) && !isAgencyRole(role) && !MODERATOR_ROLES.has(role)) {
     throw new Error('Moderator access required.')
   }
   return user

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import ManageShell from '../../components/ManageShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { IconStar } from '../../components/icons'
 import { fetchWorkOrders } from '../../services/pms-service'
 
 function WorkOrders() {
@@ -37,7 +38,10 @@ function WorkOrders() {
           <div key={v.id} className="panel-card bg-surface-subtle p-4">
             <p className="font-semibold">{v.name}</p>
             <p className="text-sm text-ink-secondary">{v.specialty}</p>
-            <p className="mt-1 text-xs">★ {v.rating} · {v.jobs} jobs</p>
+            <p className="mt-1 flex items-center gap-1 text-xs">
+              <IconStar className="h-3 w-3 text-amber-500" />
+              {v.rating} · {v.jobs} jobs
+            </p>
           </div>
         ))}
       </div>

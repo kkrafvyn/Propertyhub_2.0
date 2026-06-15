@@ -48,7 +48,9 @@ function AgentHome() {
             <MobileHubTile key={item.to} {...item} />
           ))}
         </div>
-        <MobileTextLink to="/agent/leads" className="block text-center">Open full CRM →</MobileTextLink>
+        <MobileTextLink to="/agent/leads" className="w-full justify-center" arrow="right">
+          Open full CRM
+        </MobileTextLink>
       </section>
     </MobileShell>
   )
@@ -166,7 +168,9 @@ function AgentCoachMobile() {
       <MobileHeader title="Listing coach" backTo="/agent" />
       <section className="px-4 pb-6">
         <MobileCard>
-          <MobileTextLink to="/agent/coach" className="inline-block">Run full AI review →</MobileTextLink>
+          <MobileTextLink to="/agent/coach" arrow="right">
+            Run full AI review
+          </MobileTextLink>
         </MobileCard>
       </section>
     </MobileShell>

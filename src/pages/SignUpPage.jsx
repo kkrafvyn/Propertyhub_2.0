@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../i18n/LocaleContext'
 import { USER_ROLES } from '../platform/registry'
 import { getRoleHomePath } from '../lib/roles'
+import { resolvePostLoginPath } from '../lib/post-login'
 import { isSupabaseConfigured } from '../lib/supabase'
 
 const roleOptions = [
@@ -57,8 +58,9 @@ export default function SignUpPage() {
 
     try {
       const result = await signUp(email, password, { display_name: name, role })
-      const user = result?.user ?? { user_metadata: { role } }
-      navigate(getRoleHomePath(user) || '/', { replace: true })
+      const user = result?.user ?? { user_metadata: { role, display_name: name } }
+      const destination = await resolvePostLoginPath(user, { profile: { role } })
+      navigate(destination, { replace: true })
     } catch (err) {
       setError(err.message || 'Could not create your account.')
     } finally {

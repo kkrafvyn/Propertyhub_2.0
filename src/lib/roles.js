@@ -30,8 +30,24 @@ export function isAgencyRole(role) {
   ].includes(role)
 }
 
-export function isAdminRole(role) {
+/** Full platform admin — all admin capabilities including user promotion */
+export function isFullAdminRole(role) {
   return role === USER_ROLES.PLATFORM_ADMIN
+}
+
+/** Limited platform moderator — trust & safety tasks only */
+export function isLimitedAdminRole(role) {
+  return role === USER_ROLES.PLATFORM_MODERATOR
+}
+
+/** Any platform staff (full admin or limited moderator) */
+export function isStaffRole(role) {
+  return isFullAdminRole(role) || isLimitedAdminRole(role)
+}
+
+/** @deprecated Use isFullAdminRole or isStaffRole */
+export function isAdminRole(role) {
+  return isFullAdminRole(role)
 }
 
 export function isManageRole(role) {

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import FinanceShell from '../../components/FinanceShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { IconChevronRight } from '../../components/icons'
 import { fetchMortgages } from '../../services/finance-service'
 
 function Mortgages() {
@@ -28,8 +29,9 @@ function Mortgages() {
           </article>
         ))}
       </div>
-      <Link to="/tools/mortgage" className="mt-6 inline-block text-sm font-semibold text-ink underline">
-        Use mortgage calculator →
+      <Link to="/tools/mortgage" className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-ink underline">
+        Use mortgage calculator
+        <IconChevronRight className="h-3.5 w-3.5" />
       </Link>
     </FinanceShell>
   )

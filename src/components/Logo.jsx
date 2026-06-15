@@ -24,15 +24,15 @@ export function LogoMark({ className = 'h-9 w-9', inverted = false, ...props }) 
   )
 }
 
-export default function Logo({ to = '/', className = '', showText = true, size = 'md' }) {
+export default function Logo({ to = '/', className = '', showText = true, size = 'md', inverted = false }) {
   const textSize = size === 'sm' ? 'text-sm' : 'text-lg'
   const markSize = size === 'sm' ? 'h-8 w-8' : 'h-9 w-9'
 
   return (
     <Link to={to} className={`flex shrink-0 items-center gap-2.5 ${className}`}>
-      <LogoMark className={markSize} />
+      <LogoMark className={markSize} inverted={inverted} />
       {showText && (
-        <span className={`${textSize} font-bold tracking-[0.14em] text-brand-forest`}>
+        <span className={`${textSize} font-bold tracking-[0.14em] ${inverted ? 'text-white' : 'text-brand-forest'}`}>
           BΛYTMIFTΛH
         </span>
       )}

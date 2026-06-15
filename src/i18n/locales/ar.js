@@ -110,7 +110,7 @@ export default {
       "bookTomorrow": "Book Tomorrow",
       "instantDeals": "Instant Deals",
       "weekendEscapes": "Weekend Escapes",
-      "exploreStays": "Explore stays →",
+      "exploreStays": "Explore stays",
       "propertiesCount": "{{count}} properties"
     }
   },
@@ -190,7 +190,7 @@ export default {
     "uncompare": "إزالة من المقارنة",
     "addedToCompare": "أُضيف للمقارنة",
     "requestViewing": "طلب معاينة",
-    "backToSearch": "← العودة للبحث",
+    "backToSearch": "العودة للبحث",
     "whatOffers": "ما يقدمه هذا المكان",
     "viewProperty": "عرض العقار",
     "perMonth": "/ شهر"
@@ -253,8 +253,8 @@ export default {
     "rating": "Rating",
     "type": "Type",
     "verified": "Verified",
-    "mortgageEstimator": "Mortgage estimator →",
-    "investmentCalculator": "Investment calculator →"
+    "mortgageEstimator": "Mortgage estimator",
+    "investmentCalculator": "Investment calculator"
   },
   "property": {
     "notFound": "Property not found",
@@ -271,7 +271,7 @@ export default {
     "docTitle": "Title verification summary",
     "docLicense": "Agency license",
     "docDisclosure": "Property disclosure",
-    "openVault": "Open document vault →",
+    "openVault": "Open document vault",
     "availableSlots": "Available slots",
     "viewing": "Viewing",
     "guests": "Guests",
@@ -382,7 +382,7 @@ export default {
     "subtitle": "Schools, safety, healthcare, and growth signals across Accra.",
     "notFound": "Neighborhood not found.",
     "back": "Back",
-    "allNeighborhoods": "← All neighborhoods",
+    "allNeighborhoods": "All neighborhoods",
     "schools": "Schools",
     "safety": "Safety",
     "healthcare": "Healthcare",

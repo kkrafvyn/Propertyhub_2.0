@@ -49,6 +49,7 @@ const ManageInspectionsPage = lazy(() => import('../pages/manage/ManageInspectio
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'))
 const AdminAgenciesPage = lazy(() => import('../pages/admin/AdminAgenciesPage'))
 const AdminModerationPage = lazy(() => import('../pages/admin/AdminModerationPage'))
+const AdminUsersPage = lazy(() => import('../pages/admin/AdminUsersPage'))
 const AdminAuditPage = lazy(() => import('../pages/admin/AdminAuditPage'))
 const AgentDashboardPage = lazy(() => import('../pages/agent/AgentDashboardPage'))
 const AgentLeadsPage = lazy(() => import('../pages/agent/AgentLeadsPage'))
@@ -112,8 +113,12 @@ function AdminRoute({ children }) {
   return <RoleProtectedRoute require="admin">{children}</RoleProtectedRoute>
 }
 
+function StaffRoute({ children }) {
+  return <RoleProtectedRoute require="staff">{children}</RoleProtectedRoute>
+}
+
 function ModerationRoute({ children }) {
-  return <RoleProtectedRoute require={['admin', 'agency']}>{children}</RoleProtectedRoute>
+  return <RoleProtectedRoute require={['moderation', 'agency']}>{children}</RoleProtectedRoute>
 }
 
 function AgentRoute({ children }) {
@@ -201,11 +206,12 @@ export default function DesktopRoutes() {
       <Route path="/manage/work-orders" element={<ManageRoute><ManageWorkOrdersPage /></ManageRoute>} />
       <Route path="/manage/finance" element={<ManageRoute><ManageFinancePage /></ManageRoute>} />
       <Route path="/manage/inspections" element={<ManageRoute><ManageInspectionsPage /></ManageRoute>} />
-      <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+      <Route path="/admin" element={<StaffRoute><AdminDashboardPage /></StaffRoute>} />
       <Route path="/admin/agencies" element={<AdminRoute><AdminAgenciesPage /></AdminRoute>} />
       <Route path="/admin/moderation" element={<ModerationRoute><AdminModerationPage /></ModerationRoute>} />
-      <Route path="/admin/kyc" element={<AdminRoute><AdminKycPage /></AdminRoute>} />
-      <Route path="/admin/fraud" element={<AdminRoute><AdminFraudPage /></AdminRoute>} />
+      <Route path="/admin/kyc" element={<StaffRoute><AdminKycPage /></StaffRoute>} />
+      <Route path="/admin/fraud" element={<StaffRoute><AdminFraudPage /></StaffRoute>} />
+      <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
       <Route path="/admin/ai" element={<AdminRoute><AdminAiPage /></AdminRoute>} />
       <Route path="/admin/valuation-api" element={<AdminRoute><AdminValuationApiPage /></AdminRoute>} />
       <Route path="/admin/global" element={<AdminRoute><AdminGlobalPage /></AdminRoute>} />

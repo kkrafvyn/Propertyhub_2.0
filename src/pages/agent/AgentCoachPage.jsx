@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import AgentShell from '../../components/AgentShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { IconCheck, IconWarning } from '../../components/icons'
 import { runListingCoach } from '../../services/intelligence-service'
 
 const sampleListing = {
@@ -38,9 +39,18 @@ export default function AgentCoachPage() {
           </p>
           <p className="mt-2 font-medium">Listing quality score</p>
           <ul className="mt-6 space-y-2 text-sm text-ink-secondary">
-            {tips.map((tip) => (
-              <li key={tip}>{tip.startsWith('Add') || tip.startsWith('Include') || tip.startsWith('Expand') ? `⚠ ${tip}` : `✓ ${tip}`}</li>
-            ))}
+            {tips.map((tip) => {
+              const isWarning = tip.startsWith('Add') || tip.startsWith('Include') || tip.startsWith('Expand')
+              return (
+              <li key={tip} className="flex items-start gap-2">
+                {isWarning ? (
+                  <IconWarning className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                ) : (
+                  <IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-green-700" />
+                )}
+                <span>{tip}</span>
+              </li>
+            )})}
           </ul>
           <button
             type="button"

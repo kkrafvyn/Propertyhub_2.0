@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DeveloperShell from '../../components/DeveloperShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { IconChevronRight } from '../../components/icons'
 import { fetchConstruction, fetchDeveloperBuyers, notifyBuyersOfMilestone } from '../../services/developer-service'
 
 const statusStyles = {
@@ -43,8 +44,9 @@ function Construction() {
         <p className="mt-1 text-sm text-ink-secondary">
           {buyers.length} active buyers across projects — milestone updates sync to buyer dashboards.
         </p>
-        <Link to="/buyer" className="mt-2 inline-block text-sm font-semibold text-brand-accent underline">
-          Open buyer hub →
+        <Link to="/buyer" className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-accent underline">
+          Open buyer hub
+          <IconChevronRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 

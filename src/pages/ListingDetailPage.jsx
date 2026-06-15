@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
-import { IconStar } from '../components/icons'
+import { IconChevronRight, IconStar } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../i18n/LocaleContext'
 import ShareListingButton from '../components/ShareListingButton'
@@ -364,8 +364,9 @@ export default function ListingDetailPage() {
                 </li>
               ))}
             </ul>
-            <Link to="/documents" className="mt-3 inline-block text-sm font-semibold text-ink underline">
+            <Link to="/documents" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-ink underline">
               {t('property.openVault')}
+              <IconChevronRight className="h-3.5 w-3.5" />
             </Link>
           </section>
         </div>

@@ -1,16 +1,16 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AuthPageLayout from '../components/AuthPageLayout'
 import OAuthButtons, { AuthDivider } from '../components/OAuthButtons'
 import IntegrationsBanner from '../components/IntegrationsBanner'
 import { Field, inputClass } from '../components/ui/AirbnbUI'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../i18n/LocaleContext'
-import { getRoleHomePath } from '../lib/roles'
-import { isSupabaseConfigured } from '../lib/supabase'
+import { isReturnPath, resolvePostLoginPath } from '../lib/post-login'
+import { isSupabaseConfigured, supabase } from '../lib/supabase'
 
 export default function LoginPage() {
-  const { signIn, signInWithOAuth } = useAuth()
+  const { user, profile, loading: authLoading, signIn, signInWithOAuth } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
@@ -20,13 +20,26 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [oauthProvider, setOauthProvider] = useState(null)
 
-  const redirectTo = location.state?.from || '/'
+  const returnPath = isReturnPath(location.state?.from) ? location.state.from : null
+
+  useEffect(() => {
+    if (authLoading || !user) return
+
+    let cancelled = false
+
+    resolvePostLoginPath(user, { from: returnPath, profile })
+      .then((destination) => {
+        if (!cancelled) navigate(destination, { replace: true })
+      })
+
+    return () => { cancelled = true }
+  }, [authLoading, user, profile, returnPath, navigate])
 
   async function handleOAuth(provider) {
     setError('')
     setOauthProvider(provider)
     try {
-      await signInWithOAuth(provider, { redirectPath: redirectTo })
+      await signInWithOAuth(provider, { redirectPath: returnPath ?? '' })
     } catch (err) {
       setError(err.message || `Could not sign in with ${provider}.`)
       setOauthProvider(null)
@@ -40,8 +53,13 @@ export default function LoginPage() {
 
     try {
       const result = await signIn(email, password)
-      const user = result?.user
-      const destination = redirectTo !== '/login' ? redirectTo : getRoleHomePath(user) || '/'
+      let signedInUser = result?.user
+      if (!signedInUser && supabase) {
+        const { data } = await supabase.auth.getUser()
+        signedInUser = data.user
+      }
+
+      const destination = await resolvePostLoginPath(signedInUser, { from: returnPath })
       navigate(destination, { replace: true })
     } catch (err) {
       setError(err.message || 'Could not sign in. Check your credentials.')
@@ -50,10 +68,21 @@ export default function LoginPage() {
     }
   }
 
+  if (authLoading || user) {
+    return (
+      <AuthPageLayout>
+        <div className="mx-auto flex min-h-[40vh] max-w-[568px] items-center justify-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-brand-accent border-t-transparent" />
+        </div>
+      </AuthPageLayout>
+    )
+  }
+
   return (
     <AuthPageLayout>
       <div className="mx-auto max-w-[568px] rounded-2xl border border-surface-border bg-surface p-6 shadow-card md:p-8">
         <h1 className="text-2xl font-semibold text-ink">{t('auth.welcome')}</h1>
+        <p className="mt-2 text-sm text-ink-secondary">{t('auth.loginSubtitle')}</p>
 
         {isSupabaseConfigured && <IntegrationsBanner showOAuth />}
 

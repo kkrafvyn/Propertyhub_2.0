@@ -39,7 +39,9 @@ function SmartHome() {
             </MobileCard>
           ))}
         </div>
-        <MobileTextLink to="/smart" className="block text-center">Open full dashboard →</MobileTextLink>
+        <MobileTextLink to="/smart" className="w-full justify-center" arrow="right">
+          Open full dashboard
+        </MobileTextLink>
       </section>
     </MobileShell>
   )

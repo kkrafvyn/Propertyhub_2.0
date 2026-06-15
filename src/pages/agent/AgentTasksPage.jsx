@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import AgentShell from '../../components/AgentShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { IconCheck } from '../../components/icons'
 import { fetchTasks } from '../../services/agent-service'
 
 function Tasks() {
@@ -26,7 +27,7 @@ function Tasks() {
                 t.done ? 'bg-brand-accent text-white' : 'border border-surface-border'
               }`}
             >
-              {t.done ? '✓' : ''}
+              {t.done ? <IconCheck className="h-3 w-3" /> : null}
             </button>
             <div className="flex-1">
               <p className={`font-medium ${t.done ? 'text-ink-secondary line-through' : ''}`}>{t.title}</p>

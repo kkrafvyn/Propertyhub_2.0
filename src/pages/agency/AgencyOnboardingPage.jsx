@@ -1,5 +1,6 @@
 import AgencyShell from '../../components/AgencyShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { IconCheck } from '../../components/icons'
 
 const steps = [
   { id: 1, label: 'Company details', done: true },
@@ -18,7 +19,7 @@ export default function AgencyOnboardingPage() {
               <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
                 step.done ? 'bg-brand-accent text-white' : 'bg-surface-subtle text-ink-secondary'
               }`}>
-                {step.done ? '✓' : step.id}
+                {step.done ? <IconCheck className="h-4 w-4" /> : step.id}
               </span>
               <span className="font-medium">{step.label}</span>
             </div>

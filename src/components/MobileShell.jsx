@@ -1,36 +1,8 @@
 import { Link, NavLink } from 'react-router-dom'
 import Logo from './Logo'
 import PushPrompt from './PushPrompt'
-import { IconChevronLeft, IconHome } from './icons'
-import { IconSearch } from './icons'
+import { IconChevronLeft, IconHome, IconMessage, IconSearch, IconUser, IconUsers } from './icons'
 import { useTranslation } from '../i18n/LocaleContext'
-
-function MessageIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={props.className} aria-hidden="true">
-      <path d="M4 5h16v10H7l-3 3V5Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function AgentsIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={props.className} aria-hidden="true">
-      <circle cx="9" cy="8" r="3" stroke="currentColor" strokeWidth="1.75" />
-      <circle cx="17" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M3 20c0-3 2.5-5 6-5M14 20c0-2.2 1.8-4 4-4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function ProfileIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={props.className} aria-hidden="true">
-      <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-    </svg>
-  )
-}
 
 export default function MobileShell({ children, hideNav = false }) {
   const { t } = useTranslation()
@@ -38,9 +10,9 @@ export default function MobileShell({ children, hideNav = false }) {
   const tabs = [
     { to: '/', label: t('mobile.home'), icon: IconHome, end: true },
     { to: '/explore', label: t('mobile.search'), icon: IconSearch },
-    { to: '/messages', label: t('mobile.inbox'), icon: MessageIcon },
-    { to: '/agent', label: t('mobile.agents'), icon: AgentsIcon },
-    { to: '/profile', label: t('mobile.profile'), icon: ProfileIcon },
+    { to: '/messages', label: t('mobile.inbox'), icon: IconMessage },
+    { to: '/agent', label: t('mobile.agents'), icon: IconUsers },
+    { to: '/profile', label: t('mobile.profile'), icon: IconUser },
   ]
 
   return (
@@ -85,7 +57,7 @@ export function MobileBoltHomeHeader({ title, tagline }) {
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F5F5F5] text-ink"
           aria-label="Profile"
         >
-          <ProfileIcon className="h-5 w-5" />
+          <IconUser className="h-5 w-5" />
         </Link>
       </div>
     </header>

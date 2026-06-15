@@ -3,8 +3,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import AuthPageLayout from '../components/AuthPageLayout'
 import { PrimaryButton } from '../components/ui/AirbnbUI'
 import { useTranslation } from '../i18n/LocaleContext'
+import { resolvePostLoginPath, isReturnPath } from '../lib/post-login'
 import { completeOAuthCallback } from '../services/auth-service'
-import { getRoleHomePath } from '../lib/roles'
+import { fetchUserProfile } from '../lib/supabase-db'
 import { supabase } from '../lib/supabase'
 
 export default function AuthCallbackPage() {
@@ -24,9 +25,10 @@ export default function AuthCallbackPage() {
       try {
         const { session, next } = await completeOAuthCallback()
         if (cancelled) return
-        const destination = next && next !== '/auth/callback'
-          ? next
-          : getRoleHomePath(session.user) || '/'
+
+        const profile = await fetchUserProfile(session.user.id)
+        const from = isReturnPath(next) ? next : null
+        const destination = await resolvePostLoginPath(session.user, { from, profile })
         navigate(destination, { replace: true })
       } catch (err) {
         if (!cancelled) {

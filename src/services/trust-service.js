@@ -115,6 +115,33 @@ export async function approveListing(listingId) {
   })
 }
 
+export async function fetchAdminUsers() {
+  try {
+    const payload = await callEdgeFunction('trust', {
+      allowAnonymous: false,
+      query: { action: 'users' },
+    })
+    if (payload?.users) return { users: payload.users, source: payload.source ?? 'supabase' }
+  } catch { /* fallback */ }
+  const { demoAdminUsers } = await import('../data/admin-users')
+  return { users: demoAdminUsers, source: 'local' }
+}
+
+export async function promoteUserRole(userId, role) {
+  try {
+    return await callEdgeFunction('trust', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'promote_user', userId, role },
+    })
+  } catch (err) {
+    if (userId.startsWith('demo-')) {
+      return { ok: true, source: 'local', role }
+    }
+    throw err
+  }
+}
+
 export default {
   fetchAdminOverview,
   fetchKycQueue,
@@ -128,4 +155,6 @@ export default {
   updateFraudStatus,
   runFraudScan,
   approveListing,
+  fetchAdminUsers,
+  promoteUserRole,
 }

@@ -11,7 +11,9 @@ export default {
           light: '#FFF8E1',
           dark: '#051424',
           forest: '#0F2922',
+          marketplace: '#0B211A',
           accent: '#FF385C',
+          orange: '#E07A5F',
         },
         mobile: {
           forest: '#1B4332',

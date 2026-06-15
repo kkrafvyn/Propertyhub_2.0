@@ -94,8 +94,8 @@ function WorkspaceHome({ workspace }) {
             <MobileHubTile key={item.to} {...item} />
           ))}
         </div>
-        <MobileTextLink to={workspace.desktop} className="block text-center">
-          Open full {workspace.title.toLowerCase()} →
+        <MobileTextLink to={workspace.desktop} className="w-full justify-center" arrow="right">
+          Open full {workspace.title.toLowerCase()}
         </MobileTextLink>
       </section>
     </MobileShell>

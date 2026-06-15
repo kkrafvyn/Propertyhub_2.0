@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 import MobileShell, { MobileHeader } from '../../components/MobileShell'
-import { IconHeart } from '../../components/icons'
+import { IconChevronLeft, IconChevronRight, IconDot, IconHeart } from '../../components/icons'
 import {
   MobileLinkRow,
   MobilePrimaryButton,
+  MobileSecondaryButton,
   MobileTextLink,
   MobileBadge,
 } from '../../components/ui/MobileUI'
@@ -13,8 +14,10 @@ import { MobileHomeListingCard } from '../../components/mobile/MobileHomeSection
 import { fetchConversation, fetchConversations } from '../../services/messaging-service'
 import { fetchListings } from '../../services/marketplace-service'
 import { syncSavedIds, toggleSavedIdAsync } from '../../lib/saved-listings'
-import { LanguagePanel } from '../../components/LanguageSwitcher'
+import { AppSettingsPanels } from '../../components/AppSettings'
+import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from '../../i18n/LocaleContext'
+import { useRoleNavigation } from '../../lib/role-navigation'
 
 export function MobileMessagesPage() {
   const { t } = useTranslation()
@@ -67,28 +70,80 @@ export function MobileMessagesPage() {
 }
 
 export function MobileProfilePage() {
+  const { user, role, loading, signOut } = useAuth()
+  const location = useLocation()
   const { t } = useTranslation()
+  const { workspaces, tools, hosting, workspaceTitle } = useRoleNavigation(role)
+
+  if (loading) {
+    return (
+      <MobileShell>
+        <div className="flex min-h-[40vh] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-accent border-t-transparent" />
+        </div>
+      </MobileShell>
+    )
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  }
 
   return (
     <MobileShell>
       <MobileHeader title={t('mobile.profile')} subtitle={t('mobile.profileSubtitle')} />
       <div className="space-y-4 px-4 pb-4">
-        <div className="rounded-xl border border-surface-border bg-surface p-4 shadow-sm">
-          <p className="mb-3 text-sm font-semibold text-ink">{t('profile.language')}</p>
-          <LanguagePanel />
+        <div className="rounded-2xl bg-bolt-card p-4 shadow-bolt-card">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-mobile-forest/10 text-lg font-bold text-mobile-forest">
+              {user.email?.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-ink">
+                {user.user_metadata?.display_name || t('profile.member')}
+              </p>
+              <p className="truncate text-sm text-ink-secondary">{user.email}</p>
+              <MobileBadge tone="accent">{t(`roles.${role || 'buyer'}`)}</MobileBadge>
+            </div>
+          </div>
         </div>
-        <MobileLinkRow to="/profile">{t('mobile.accountSettings')}</MobileLinkRow>
-        <MobileLinkRow to="/host/list">{t('host.title')}</MobileLinkRow>
-        <MobileLinkRow to="/trips">{t('menu.trips')}</MobileLinkRow>
-        <MobileLinkRow to="/agent">{t('mobile.agentWorkspace')}</MobileLinkRow>
-        <MobileLinkRow to="/buyer">{t('mobile.buyerWorkspace')}</MobileLinkRow>
-        <MobileLinkRow to="/documents">{t('menu.documents')}</MobileLinkRow>
-        <MobileLinkRow to="/renter">{t('mobile.renterWorkspace')}</MobileLinkRow>
-        <MobileLinkRow to="/manage">{t('mobile.propertyManagement')}</MobileLinkRow>
-        <MobileLinkRow to="/agency">{t('mobile.agencyWorkspace')}</MobileLinkRow>
-        <MobileLinkRow to="/finance">{t('mobile.financeWorkspace')}</MobileLinkRow>
-        <MobileLinkRow to="/admin">{t('menu.admin')}</MobileLinkRow>
-        <MobileLinkRow to="/login">{t('auth.logIn')}</MobileLinkRow>
+
+        <div className="rounded-2xl bg-bolt-card p-4 shadow-bolt-card">
+          <p className="mb-1 font-semibold text-ink">{t('profile.settings')}</p>
+          <p className="mb-4 text-sm text-ink-secondary">{t('profile.settingsDesc')}</p>
+          <AppSettingsPanels />
+        </div>
+
+        {hosting.length > 0 && (
+          <div className="space-y-2">
+            <p className="px-1 text-sm font-semibold text-ink-secondary">{t('profileNav.hosting')}</p>
+            {hosting.map(({ to, label }) => (
+              <MobileLinkRow key={to} to={to}>{label}</MobileLinkRow>
+            ))}
+          </div>
+        )}
+
+        {workspaces.length > 0 && (
+          <div className="space-y-2">
+            <p className="px-1 text-sm font-semibold text-ink-secondary">{workspaceTitle}</p>
+            {workspaces.map(({ to, label }) => (
+              <MobileLinkRow key={to} to={to}>{label}</MobileLinkRow>
+            ))}
+          </div>
+        )}
+
+        {tools.length > 0 && (
+          <div className="space-y-2">
+            <p className="px-1 text-sm font-semibold text-ink-secondary">{t('profileNav.tripsTools')}</p>
+            {tools.map(({ to, label }) => (
+              <MobileLinkRow key={to} to={to}>{label}</MobileLinkRow>
+            ))}
+          </div>
+        )}
+
+        <MobileSecondaryButton type="button" className="w-full" onClick={signOut}>
+          {t('profile.logOut')}
+        </MobileSecondaryButton>
       </div>
     </MobileShell>
   )
@@ -187,7 +242,7 @@ export function MobilePropertyPage() {
               className="absolute left-3 top-1/2 hidden -translate-y-1/2 rounded-full bg-surface/90 px-2.5 py-1 text-lg shadow-sm sm:block"
               aria-label="Previous photo"
             >
-              ‹
+              <IconChevronLeft className="h-4 w-4" />
             </button>
             <button
               type="button"
@@ -195,7 +250,7 @@ export function MobilePropertyPage() {
               className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-full bg-surface/90 px-2.5 py-1 text-lg shadow-sm sm:block"
               aria-label="Next photo"
             >
-              ›
+              <IconChevronRight className="h-4 w-4" />
             </button>
             <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
               {photos.map((_, index) => (
@@ -246,7 +301,10 @@ export function MobilePropertyPage() {
             <p className="mb-2 text-sm font-semibold text-ink">{t('listing.whatOffers')}</p>
             <ul className="space-y-1.5 text-sm text-ink-secondary">
               {listing.amenities.slice(0, 6).map((item) => (
-                <li key={item}>• {item}</li>
+                <li key={item} className="flex items-start gap-2">
+                  <IconDot className="mt-2 shrink-0 text-ink-secondary" />
+                  <span>{item}</span>
+                </li>
               ))}
             </ul>
           </div>
@@ -274,7 +332,7 @@ export function MobilePropertyPage() {
           </p>
         )}
 
-        <MobileTextLink to="/explore" className="block text-center">{t('listing.backToSearch')}</MobileTextLink>
+        <MobileTextLink to="/explore" className="w-full justify-center" arrow="left">{t('listing.backToSearch')}</MobileTextLink>
       </div>
 
       {showViewing && (

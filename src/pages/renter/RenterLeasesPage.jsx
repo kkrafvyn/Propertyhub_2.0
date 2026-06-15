@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import RenterShell from '../../components/RenterShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { IconCheck } from '../../components/icons'
 import { fetchLeases } from '../../services/renter-service'
 
 function Leases() {
@@ -28,7 +29,10 @@ function Leases() {
               <p><span className="text-ink-secondary">Rent:</span> GHS {lease.rent.toLocaleString()}</p>
             </div>
             {lease.signed && (
-              <p className="mt-3 text-xs font-semibold text-green-700">✓ Digitally signed</p>
+              <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-green-700">
+                <IconCheck className="h-3.5 w-3.5" />
+                Digitally signed
+              </p>
             )}
           </article>
         ))}

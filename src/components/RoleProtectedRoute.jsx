@@ -1,11 +1,13 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../i18n/LocaleContext'
-import { getRoleHomePath, isAdminRole, isAgencyRole, isAgentRole, isManageRole } from '../lib/roles'
+import { getRoleHomePath, isAgencyRole, isAgentRole, isFullAdminRole, isManageRole, isStaffRole } from '../lib/roles'
 import { USER_ROLES } from '../platform/registry'
 
 const checks = {
-  admin: (role) => isAdminRole(role),
+  admin: (role) => isFullAdminRole(role),
+  staff: (role) => isStaffRole(role),
+  moderation: (role) => isStaffRole(role),
   agency: (role) => isAgencyRole(role),
   agent: (role) => isAgentRole(role),
   developer: (role) => role === USER_ROLES.DEVELOPER,

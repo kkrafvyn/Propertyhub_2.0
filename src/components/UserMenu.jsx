@@ -3,10 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { IconMenu } from './icons'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../i18n/LocaleContext'
+import { useRoleNavigation } from '../lib/role-navigation'
 
 export default function UserMenu() {
-  const { user, signOut } = useAuth()
+  const { user, role, signOut } = useAuth()
   const { t } = useTranslation()
+  const { menuLinks } = useRoleNavigation(role)
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const navigate = useNavigate()
@@ -32,7 +34,7 @@ export default function UserMenu() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-3 rounded-full border border-surface-border bg-surface py-1.5 pl-3 pr-1.5 transition hover:shadow-search"
+        className="user-menu-trigger flex items-center gap-3 rounded-full border py-1.5 pl-3 pr-1.5 transition hover:shadow-search"
         aria-label={t('nav.openMenu')}
         aria-expanded={open}
       >
@@ -48,14 +50,11 @@ export default function UserMenu() {
             <>
               <p className="truncate px-4 py-2 text-sm font-medium text-ink">{user.email}</p>
               <hr className="my-2 border-surface-border" />
-              <MenuLink to="/messages" onClick={() => setOpen(false)}>{t('menu.messages')}</MenuLink>
               <MenuLink to="/profile" onClick={() => setOpen(false)}>{t('menu.profile')}</MenuLink>
-              <MenuLink to="/saved" onClick={() => setOpen(false)}>{t('menu.saved')}</MenuLink>
-              <MenuLink to="/trips" onClick={() => setOpen(false)}>{t('menu.trips')}</MenuLink>
-              <MenuLink to="/documents" onClick={() => setOpen(false)}>{t('menu.documents')}</MenuLink>
-              <MenuLink to="/agency" onClick={() => setOpen(false)}>{t('menu.agency')}</MenuLink>
-              <MenuLink to="/admin" onClick={() => setOpen(false)}>{t('menu.admin')}</MenuLink>
-              <MenuLink to="/host" onClick={() => setOpen(false)}>{t('menu.listProperty')}</MenuLink>
+              <MenuLink to="/messages" onClick={() => setOpen(false)}>{t('menu.messages')}</MenuLink>
+              {menuLinks.map(({ to, label }) => (
+                <MenuLink key={to} to={to} onClick={() => setOpen(false)}>{label}</MenuLink>
+              ))}
               <hr className="my-2 border-surface-border" />
               <button
                 type="button"

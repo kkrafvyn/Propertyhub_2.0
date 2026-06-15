@@ -36,7 +36,7 @@ export default function CategoryBar({
         })}
       </div>
 
-      <div className="flex shrink-0 items-center gap-2 border-s border-surface-border ps-0 sm:gap-3 sm:ps-4">
+      <div className="desktop-category-row flex shrink-0 items-center gap-2 sm:gap-3 sm:border-s sm:border-white/15 sm:ps-4">
         {onFiltersClick && (
           <button type="button" onClick={onFiltersClick} className="filter-chip">
             <IconSliders />

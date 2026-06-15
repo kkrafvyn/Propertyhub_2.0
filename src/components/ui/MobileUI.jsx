@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { IconChevronLeft, IconChevronRight, IconStar } from '../icons'
 import { useTranslation } from '../../i18n/LocaleContext'
 
 export function MobileCard({ children, className = '', as: Tag = 'div', ...props }) {
@@ -47,7 +48,7 @@ export function MobileLinkRow({ to, children }) {
       className="flex items-center justify-between rounded-2xl bg-bolt-card px-4 py-4 font-semibold text-ink shadow-bolt-card"
     >
       {children}
-      <span className="text-ink-muted">›</span>
+      <IconChevronRight className="h-4 w-4 text-ink-muted" />
     </Link>
   )
 }
@@ -79,32 +80,47 @@ export function MobileSectionTitle({ children }) {
   return <h2 className="text-[20px] font-bold tracking-tight text-ink">{children}</h2>
 }
 
-export function MobileTextLink({ to, children, className = '' }) {
+export function MobileTextLink({ to, children, className = '', arrow }) {
   return (
-    <Link to={to} className={`text-sm font-semibold text-mobile-forest ${className}`}>
+    <Link to={to} className={`inline-flex items-center gap-1 text-sm font-semibold text-mobile-forest ${className}`}>
+      {arrow === 'left' && <IconChevronLeft className="h-3.5 w-3.5 shrink-0 rtl-flip" />}
       {children}
+      {arrow === 'right' && <IconChevronRight className="h-3.5 w-3.5 shrink-0 rtl-flip" />}
     </Link>
   )
 }
 
-function listingMeta(listing, t) {
-  const parts = []
-  if (listing.rating > 0) parts.push(`★ ${listing.rating.toFixed(1)}`)
-  if (listing.bedrooms > 0) parts.push(`${listing.bedrooms} bed`)
-  if (listing.type) parts.push(t(`categories.${listing.type}`))
-  return parts.join(' · ')
+function ListingMeta({ listing, t, className = 'mt-0.5 truncate text-sm text-ink-secondary' }) {
+  const hasRating = listing.rating > 0
+  const hasBedrooms = listing.bedrooms > 0
+  const hasType = Boolean(listing.type)
+  if (!hasRating && !hasBedrooms && !hasType) return null
+
+  return (
+    <p className={`flex flex-wrap items-center gap-x-1.5 ${className}`}>
+      {hasRating && (
+        <span className="inline-flex items-center gap-0.5">
+          <IconStar className="h-3 w-3 shrink-0 text-amber-500" />
+          <span>{listing.rating.toFixed(1)}</span>
+        </span>
+      )}
+      {hasRating && (hasBedrooms || hasType) && <span className="text-ink-muted">·</span>}
+      {hasBedrooms && <span>{listing.bedrooms} bed</span>}
+      {hasBedrooms && hasType && <span className="text-ink-muted">·</span>}
+      {hasType && <span>{t(`categories.${listing.type}`)}</span>}
+    </p>
+  )
 }
 
 export function MobileBoltListingCard({ listing, to }) {
   const { t } = useTranslation()
-  const meta = listingMeta(listing, t)
 
   return (
     <Link to={to} className="flex gap-3 rounded-2xl bg-bolt-card p-3 shadow-bolt-card transition active:scale-[0.99]">
       <img src={listing.image} alt="" className="h-[88px] w-[88px] shrink-0 rounded-xl object-cover" />
       <div className="min-w-0 flex-1 py-0.5">
         <p className="truncate text-[15px] font-bold text-ink">{listing.title}</p>
-        {meta && <p className="mt-0.5 truncate text-sm text-ink-secondary">{meta}</p>}
+        <ListingMeta listing={listing} t={t} />
         <div className="mt-1.5 flex flex-wrap items-center gap-2">
           <p className="text-sm font-bold text-ink">{listing.priceLabel}</p>
           {listing.verified && (
@@ -118,14 +134,13 @@ export function MobileBoltListingCard({ listing, to }) {
 
 export function MobileBoltListingTile({ listing, to }) {
   const { t } = useTranslation()
-  const meta = listingMeta(listing, t)
 
   return (
     <Link to={to} className="overflow-hidden rounded-2xl bg-bolt-card shadow-bolt-card">
       <img src={listing.image} alt="" className="aspect-[4/3] w-full object-cover" />
       <div className="p-3">
         <p className="truncate text-sm font-bold text-ink">{listing.title}</p>
-        {meta && <p className="mt-0.5 truncate text-xs text-ink-secondary">{meta}</p>}
+        <ListingMeta listing={listing} t={t} className="mt-0.5 truncate text-xs text-ink-secondary" />
         <p className="mt-1 text-sm font-bold text-ink">{listing.priceLabel}</p>
       </div>
     </Link>

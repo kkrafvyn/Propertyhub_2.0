@@ -27,6 +27,7 @@ export const USER_ROLES = {
   PROPERTY_MANAGER: 'property_manager',
   DEVELOPER: 'developer',
   ENTERPRISE_OPERATOR: 'enterprise_operator',
+  PLATFORM_MODERATOR: 'platform_moderator',
   PLATFORM_ADMIN: 'platform_admin',
 }
 
@@ -43,8 +44,12 @@ export const ROLE_HOME_PATHS = {
   [USER_ROLES.PROPERTY_MANAGER]: '/manage',
   [USER_ROLES.DEVELOPER]: '/developer',
   [USER_ROLES.ENTERPRISE_OPERATOR]: '/enterprise',
+  [USER_ROLES.PLATFORM_MODERATOR]: '/admin',
   [USER_ROLES.PLATFORM_ADMIN]: '/admin',
 }
+
+/** All roles that a full platform admin may assign to another user */
+export const PROMOTABLE_ROLES = Object.values(USER_ROLES)
 
 /** Platform metadata for nav, marketing, and future module loader */
 export const PLATFORM_REGISTRY = [
