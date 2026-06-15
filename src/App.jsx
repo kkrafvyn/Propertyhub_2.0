@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { CurrencyProvider } from './context/CurrencyContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { LocaleProvider } from './i18n/LocaleContext'
 import LegacyMobileRedirect from './components/LegacyMobileRedirect'
+import { SplashScreen } from './components/splash'
 import DesktopRoutes from './routes/DesktopRoutes'
 import MobileRoutes from './routes/MobileRoutes'
 import { useIsMobileViewport } from './hooks/useMediaQuery'
@@ -18,12 +20,15 @@ function ResponsiveRoutes() {
 }
 
 export default function App() {
+  const [splashDone, setSplashDone] = useState(false)
+
   return (
     <ThemeProvider>
       <LocaleProvider>
         <CurrencyProvider>
           <AuthProvider>
             <BrowserRouter>
+              {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
               <LegacyMobileRedirect>
                 <ResponsiveRoutes />
               </LegacyMobileRedirect>

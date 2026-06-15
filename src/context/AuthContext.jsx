@@ -4,6 +4,7 @@ import { fetchUserProfile } from '../lib/supabase-db'
 import { mergeSavedOnLogin } from '../lib/saved-listings'
 import { identifyUser } from '../lib/analytics'
 import authService from '../services/auth-service'
+import { fetchUserCapabilities } from '../services/capability-service'
 
 import { getUserRole, getRoleHomePath } from '../lib/roles'
 
@@ -12,6 +13,7 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [capabilities, setCapabilities] = useState([])
   const [loading, setLoading] = useState(true)
 
   const role = getUserRole(user, profile)
@@ -20,10 +22,13 @@ export function AuthProvider({ children }) {
   async function loadProfile(sessionUser, event) {
     if (!sessionUser) {
       setProfile(null)
+      setCapabilities([])
       return
     }
     const row = await fetchUserProfile(sessionUser.id)
     setProfile(row)
+    const caps = await fetchUserCapabilities(sessionUser.id, row?.role ?? 'buyer')
+    setCapabilities(caps)
     if (event === 'SIGNED_IN') {
       mergeSavedOnLogin().catch(() => {})
       identifyUser(sessionUser.id, { email: sessionUser.email, role: row?.role })
@@ -58,6 +63,7 @@ export function AuthProvider({ children }) {
       profile,
       role,
       homePath,
+      capabilities,
       loading,
       signIn: authService.signInWithEmail,
       signUp: authService.signUpWithEmail,
@@ -67,9 +73,10 @@ export function AuthProvider({ children }) {
         await authService.signOut()
         setUser(null)
         setProfile(null)
+        setCapabilities([])
       },
     }),
-    [user, profile, role, homePath, loading],
+    [user, profile, role, homePath, loading, capabilities],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

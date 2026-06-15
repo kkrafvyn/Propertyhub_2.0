@@ -6,7 +6,7 @@ export function getUserRole(user, profile) {
     profile?.role ||
     user.app_metadata?.role ||
     user.user_metadata?.role ||
-    USER_ROLES.BUYER
+    USER_ROLES.CONSUMER
   )
 }
 

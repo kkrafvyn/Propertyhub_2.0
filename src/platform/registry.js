@@ -16,6 +16,7 @@ export const PLATFORMS = {
 }
 
 export const USER_ROLES = {
+  CONSUMER: 'consumer',
   BUYER: 'buyer',
   RENTER: 'renter',
   INVESTOR: 'investor',
@@ -33,9 +34,10 @@ export const USER_ROLES = {
 
 /** Default home route per role group */
 export const ROLE_HOME_PATHS = {
-  [USER_ROLES.BUYER]: '/',
-  [USER_ROLES.RENTER]: '/renter',
-  [USER_ROLES.INVESTOR]: '/intelligence',
+  [USER_ROLES.CONSUMER]: '/consumer',
+  [USER_ROLES.BUYER]: '/consumer',
+  [USER_ROLES.RENTER]: '/consumer/rent',
+  [USER_ROLES.INVESTOR]: '/investment',
   [USER_ROLES.INDEPENDENT_AGENT]: '/agent',
   [USER_ROLES.AGENCY_OWNER]: '/agency',
   [USER_ROLES.AGENCY_MANAGER]: '/agency',
@@ -58,6 +60,48 @@ export const PLATFORM_REGISTRY = [
     name: 'Marketplace',
     phase: 1,
     routePrefix: '/',
+    status: 'connected',
+  },
+  {
+    id: 'consumer',
+    name: 'Consumer',
+    phase: 1,
+    routePrefix: '/consumer',
+    status: 'connected',
+  },
+  {
+    id: 'wallet',
+    name: 'Real Estate Wallet',
+    phase: 5,
+    routePrefix: '/wallet',
+    status: 'connected',
+  },
+  {
+    id: 'investment',
+    name: 'Investment Center',
+    phase: 7,
+    routePrefix: '/investment',
+    status: 'connected',
+  },
+  {
+    id: 'host_workspace',
+    name: 'Host Workspace',
+    phase: 1,
+    routePrefix: '/host',
+    status: 'connected',
+  },
+  {
+    id: 'tenant_portal',
+    name: 'Tenant Portal',
+    phase: 4,
+    routePrefix: '/tenant',
+    status: 'connected',
+  },
+  {
+    id: 'resident',
+    name: 'Smart Resident',
+    phase: 6,
+    routePrefix: '/resident',
     status: 'connected',
   },
   {

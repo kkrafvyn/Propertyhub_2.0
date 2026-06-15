@@ -40,6 +40,27 @@ import {
   MobileEnterprisePage,
 } from '../pages/mobile/MobileWorkspacePages'
 
+import {
+  MobileConsumerHomePage,
+  MobileConsumerBuyPage,
+  MobileConsumerRentPage,
+  MobileConsumerStayPage,
+  MobileWalletHomePage,
+  MobileWalletTransactionsPage,
+  MobileHostHomePage,
+  MobileHostReservationsPage,
+  MobileInvestmentHomePage,
+  MobileTenantHomePage,
+  MobileResidentHomePage,
+  MobileEnterpriseOrgsPage,
+} from '../pages/mobile/MobileOsPages'
+
+import AIAdvisorPage from '../pages/buyer/AIAdvisorPage'
+import TransactionCenterPage from '../pages/buyer/TransactionCenterPage'
+import OfferRoomPage from '../pages/buyer/OfferRoomPage'
+import HostListingsPage from '../pages/HostListingsPage'
+import HelpCentrePage from '../pages/HelpCentrePage'
+
 export default function MobileRoutes() {
   return (
     <Routes>
@@ -53,13 +74,36 @@ export default function MobileRoutes() {
       <Route path="/trips" element={<MobileTripsPage />} />
       <Route path="/neighborhoods" element={<MobileNeighborhoodsPage />} />
       <Route path="/neighborhoods/:slug" element={<MobileNeighborhoodDetailPage />} />
+      <Route path="/consumer" element={<MobileConsumerHomePage />} />
+      <Route path="/consumer/buy" element={<MobileConsumerBuyPage />} />
+      <Route path="/consumer/rent" element={<MobileConsumerRentPage />} />
+      <Route path="/consumer/stay" element={<MobileConsumerStayPage />} />
+      <Route path="/consumer/invest" element={<Navigate to="/investment" replace />} />
+      <Route path="/wallet" element={<MobileWalletHomePage />} />
+      <Route path="/wallet/transactions" element={<MobileWalletTransactionsPage />} />
+      <Route path="/wallet/payouts" element={<Navigate to="/wallet" replace />} />
+      <Route path="/wallet/escrow" element={<Navigate to="/wallet" replace />} />
+      <Route path="/investment" element={<MobileInvestmentHomePage />} />
+      <Route path="/investment/roi" element={<Navigate to="/investment" replace />} />
+      <Route path="/tenant" element={<MobileTenantHomePage />} />
+      <Route path="/tenant/visitors" element={<MobileTenantHomePage />} />
+      <Route path="/resident" element={<MobileResidentHomePage />} />
+      <Route path="/host" element={<MobileHostHomePage />} />
       <Route path="/host/list" element={<MobileHostListingPage />} />
+      <Route path="/host/listings" element={<HostListingsPage />} />
+      <Route path="/host/reservations" element={<MobileHostReservationsPage />} />
+      <Route path="/host/calendar" element={<Navigate to="/host" replace />} />
+      <Route path="/host/payouts" element={<Navigate to="/wallet/payouts" replace />} />
+      <Route path="/buyer" element={<Navigate to="/consumer/buy" replace />} />
+      <Route path="/buyer/advisor" element={<AIAdvisorPage />} />
+      <Route path="/transactions" element={<TransactionCenterPage />} />
+      <Route path="/offers" element={<OfferRoomPage />} />
+      <Route path="/renter" element={<Navigate to="/consumer/rent" replace />} />
       <Route path="/agent" element={<MobileAgentHomePage />} />
       <Route path="/agent/leads" element={<MobileAgentLeadsPage />} />
       <Route path="/agent/calendar" element={<MobileAgentCalendarPage />} />
       <Route path="/agent/tasks" element={<MobileAgentTasksPage />} />
       <Route path="/agent/coach" element={<MobileAgentCoachPage />} />
-      <Route path="/renter" element={<MobileRenterHomePage />} />
       <Route path="/renter/leases" element={<MobileRenterLeasesPage />} />
       <Route path="/renter/payments" element={<MobileRenterPaymentsPage />} />
       <Route path="/renter/maintenance" element={<MobileRenterMaintenancePage />} />
@@ -72,6 +116,8 @@ export default function MobileRoutes() {
       <Route path="/intelligence" element={<MobileIntelligencePage />} />
       <Route path="/developer" element={<MobileDeveloperPage />} />
       <Route path="/enterprise" element={<MobileEnterprisePage />} />
+      <Route path="/enterprise/organizations" element={<MobileEnterpriseOrgsPage />} />
+      <Route path="/help" element={<HelpCentrePage />} />
       <Route path="/payments/success" element={<PaymentSuccessPage />} />
       <Route path="/payments/cancel" element={<PaymentCancelPage />} />
       <Route path="/login" element={<LoginPage />} />

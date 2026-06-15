@@ -94,6 +94,46 @@ const ReferralPage = lazy(() => import('../pages/ReferralPage'))
 const PrivacyPage = lazy(() => import('../pages/PrivacyPage'))
 const TermsPage = lazy(() => import('../pages/TermsPage'))
 
+const ConsumerHubPage = lazy(() => import('../pages/consumer/ConsumerPages').then((m) => ({ default: m.ConsumerHubPage })))
+const ConsumerBuyPage = lazy(() => import('../pages/consumer/ConsumerPages').then((m) => ({ default: m.ConsumerBuyPage })))
+const ConsumerRentPage = lazy(() => import('../pages/consumer/ConsumerPages').then((m) => ({ default: m.ConsumerRentPage })))
+const ConsumerStayPage = lazy(() => import('../pages/consumer/ConsumerPages').then((m) => ({ default: m.ConsumerStayPage })))
+const ConsumerInvestPage = lazy(() => import('../pages/consumer/ConsumerPages').then((m) => ({ default: m.ConsumerInvestPage })))
+
+const HostDashboardPage = lazy(() => import('../pages/host/HostWorkspacePages').then((m) => ({ default: m.HostDashboardPage })))
+const HostReservationsWorkspacePage = lazy(() => import('../pages/host/HostWorkspacePages').then((m) => ({ default: m.HostReservationsWorkspacePage })))
+const HostCalendarWorkspacePage = lazy(() => import('../pages/host/HostWorkspacePages').then((m) => ({ default: m.HostCalendarWorkspacePage })))
+const HostPricingPage = lazy(() => import('../pages/host/HostWorkspacePages').then((m) => ({ default: m.HostPricingPage })))
+const HostCleaningPage = lazy(() => import('../pages/host/HostWorkspacePages').then((m) => ({ default: m.HostCleaningPage })))
+const HostGuestsPage = lazy(() => import('../pages/host/HostWorkspacePages').then((m) => ({ default: m.HostGuestsPage })))
+const HostPayoutsWorkspacePage = lazy(() => import('../pages/host/HostWorkspacePages').then((m) => ({ default: m.HostPayoutsWorkspacePage })))
+
+const WalletHubPage = lazy(() => import('../pages/wallet/WalletPages').then((m) => ({ default: m.WalletHubPage })))
+const WalletTransactionsPage = lazy(() => import('../pages/wallet/WalletPages').then((m) => ({ default: m.WalletTransactionsPageExport })))
+const WalletPayoutsPage = lazy(() => import('../pages/wallet/WalletPages').then((m) => ({ default: m.WalletPayoutsPageExport })))
+const WalletEscrowPage = lazy(() => import('../pages/wallet/WalletPages').then((m) => ({ default: m.WalletEscrowPageExport })))
+
+const InvestmentHubPage = lazy(() => import('../pages/investment/InvestmentPages').then((m) => ({ default: m.InvestmentHubPage })))
+const InvestmentRoiPage = lazy(() => import('../pages/investment/InvestmentPages').then((m) => ({ default: m.InvestmentRoiPage })))
+const InvestmentPortfolioPage = lazy(() => import('../pages/investment/InvestmentPages').then((m) => ({ default: m.InvestmentPortfolioPage })))
+const InvestmentDealsPage = lazy(() => import('../pages/investment/InvestmentPages').then((m) => ({ default: m.InvestmentDealsPage })))
+const InvestmentForecastPage = lazy(() => import('../pages/investment/InvestmentPages').then((m) => ({ default: m.InvestmentForecastPage })))
+
+const TenantPortalPage = lazy(() => import('../pages/tenant/TenantPages').then((m) => ({ default: m.TenantPortalPage })))
+const TenantVisitorsPage = lazy(() => import('../pages/tenant/TenantPages').then((m) => ({ default: m.TenantVisitorsPage })))
+const TenantAccessPage = lazy(() => import('../pages/tenant/TenantPages').then((m) => ({ default: m.TenantAccessPage })))
+const TenantCommunityPage = lazy(() => import('../pages/tenant/TenantPages').then((m) => ({ default: m.TenantCommunityPage })))
+
+const ResidentHubPage = lazy(() => import('../pages/resident/ResidentPages').then((m) => ({ default: m.ResidentHubPage })))
+const ResidentAccessPage = lazy(() => import('../pages/resident/ResidentPages').then((m) => ({ default: m.ResidentAccessPage })))
+const ResidentVisitorsPage = lazy(() => import('../pages/resident/ResidentPages').then((m) => ({ default: m.ResidentVisitorsPage })))
+const ResidentEnergyPage = lazy(() => import('../pages/resident/ResidentPages').then((m) => ({ default: m.ResidentEnergyPage })))
+const ResidentAnnouncementsPage = lazy(() => import('../pages/resident/ResidentPages').then((m) => ({ default: m.ResidentAnnouncementsPage })))
+
+const EnterpriseOrganizationsPage = lazy(() => import('../pages/enterprise/EnterpriseOrgPages').then((m) => ({ default: m.EnterpriseOrganizationsPage })))
+const EnterpriseOrgUsersPage = lazy(() => import('../pages/enterprise/EnterpriseOrgPages').then((m) => ({ default: m.EnterpriseOrgUsersPage })))
+const EnterpriseOrgPermissionsPage = lazy(() => import('../pages/enterprise/EnterpriseOrgPages').then((m) => ({ default: m.EnterpriseOrgPermissionsPage })))
+
 const NeighborhoodsIndexPage = lazy(() =>
   import('../pages/NeighborhoodPage').then((m) => ({ default: m.NeighborhoodsIndexPage })),
 )
@@ -154,20 +194,50 @@ export default function DesktopRoutes() {
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="/saved" element={<SavedPage />} />
       <Route path="/trips" element={<TripsPage />} />
-      <Route path="/host" element={<HostPage />} />
+      <Route path="/host" element={<HostDashboardPage />} />
       <Route path="/host/list" element={<ListPropertyPage />} />
       <Route path="/host/listings" element={<HostListingsPage />} />
+      <Route path="/host/calendar" element={<HostCalendarWorkspacePage />} />
+      <Route path="/host/reservations" element={<HostReservationsWorkspacePage />} />
+      <Route path="/host/pricing" element={<HostPricingPage />} />
+      <Route path="/host/cleaning" element={<HostCleaningPage />} />
+      <Route path="/host/guests" element={<HostGuestsPage />} />
+      <Route path="/host/payouts" element={<HostPayoutsWorkspacePage />} />
       <Route path="/host/boost" element={<FeaturedBoostPage />} />
+      <Route path="/consumer" element={<ConsumerHubPage />} />
+      <Route path="/consumer/buy" element={<ConsumerBuyPage />} />
+      <Route path="/consumer/rent" element={<ConsumerRentPage />} />
+      <Route path="/consumer/stay" element={<ConsumerStayPage />} />
+      <Route path="/consumer/invest" element={<ConsumerInvestPage />} />
+      <Route path="/wallet" element={<WalletHubPage />} />
+      <Route path="/wallet/transactions" element={<WalletTransactionsPage />} />
+      <Route path="/wallet/payouts" element={<WalletPayoutsPage />} />
+      <Route path="/wallet/escrow" element={<WalletEscrowPage />} />
+      <Route path="/investment" element={<InvestmentHubPage />} />
+      <Route path="/investment/roi" element={<InvestmentRoiPage />} />
+      <Route path="/investment/portfolio" element={<InvestmentPortfolioPage />} />
+      <Route path="/investment/deals" element={<InvestmentDealsPage />} />
+      <Route path="/investment/forecast" element={<InvestmentForecastPage />} />
+      <Route path="/tenant" element={<TenantPortalPage />} />
+      <Route path="/tenant/visitors" element={<TenantVisitorsPage />} />
+      <Route path="/tenant/access" element={<TenantAccessPage />} />
+      <Route path="/tenant/community" element={<TenantCommunityPage />} />
+      <Route path="/resident" element={<ResidentHubPage />} />
+      <Route path="/resident/access" element={<ResidentAccessPage />} />
+      <Route path="/resident/visitors" element={<ResidentVisitorsPage />} />
+      <Route path="/resident/energy" element={<ResidentEnergyPage />} />
+      <Route path="/resident/announcements" element={<ResidentAnnouncementsPage />} />
+      <Route path="/buyer" element={<Navigate to="/consumer/buy" replace />} />
+      <Route path="/buyer/advisor" element={<AIAdvisorPage />} />
+      <Route path="/buyer/finance" element={<FinancingCenterPage />} />
+      <Route path="/renter" element={<Navigate to="/consumer/rent" replace />} />
+      <Route path="/tools/investment" element={<Navigate to="/investment/roi" replace />} />
       <Route path="/payments/success" element={<PaymentSuccessPage />} />
       <Route path="/payments/cancel" element={<PaymentCancelPage />} />
       <Route path="/compare" element={<ComparePage />} />
       <Route path="/neighborhoods" element={<NeighborhoodsIndexPage />} />
       <Route path="/neighborhoods/:slug" element={<NeighborhoodDetailPage />} />
       <Route path="/tools/mortgage" element={<MortgageCalculatorPage />} />
-      <Route path="/tools/investment" element={<InvestmentCalculatorPage />} />
-      <Route path="/buyer" element={<BuyerHubPage />} />
-      <Route path="/buyer/advisor" element={<AIAdvisorPage />} />
-      <Route path="/buyer/finance" element={<FinancingCenterPage />} />
       <Route path="/transactions" element={<TransactionCenterPage />} />
       <Route path="/offers" element={<OfferRoomPage />} />
       <Route path="/messages" element={<MessagesPage />} />
@@ -196,7 +266,6 @@ export default function DesktopRoutes() {
       <Route path="/agency/trust" element={<AgencyRoute><AgencyTrustPage /></AgencyRoute>} />
       <Route path="/agency/compliance" element={<AgencyRoute><AgencyCompliancePage /></AgencyRoute>} />
       <Route path="/agency/onboarding" element={<AgencyRoute><AgencyOnboardingPage /></AgencyRoute>} />
-      <Route path="/renter" element={<RenterHubPage />} />
       <Route path="/renter/leases" element={<RenterLeasesPage />} />
       <Route path="/renter/payments" element={<RenterPaymentsPage />} />
       <Route path="/renter/maintenance" element={<RenterMaintenancePage />} />
@@ -235,6 +304,9 @@ export default function DesktopRoutes() {
       <Route path="/developer/construction" element={<DeveloperRoute><DeveloperConstructionPage /></DeveloperRoute>} />
       <Route path="/developer/buyers" element={<DeveloperRoute><DeveloperBuyersPage /></DeveloperRoute>} />
       <Route path="/enterprise" element={<EnterpriseRoute><EnterpriseHubPage /></EnterpriseRoute>} />
+      <Route path="/enterprise/organizations" element={<EnterpriseRoute><EnterpriseOrganizationsPage /></EnterpriseRoute>} />
+      <Route path="/enterprise/users" element={<EnterpriseRoute><EnterpriseOrgUsersPage /></EnterpriseRoute>} />
+      <Route path="/enterprise/permissions" element={<EnterpriseRoute><EnterpriseOrgPermissionsPage /></EnterpriseRoute>} />
       <Route path="/enterprise/portfolios" element={<EnterpriseRoute><EnterprisePortfoliosPage /></EnterpriseRoute>} />
       <Route path="/enterprise/esg" element={<EnterpriseRoute><EnterpriseEsgPage /></EnterpriseRoute>} />
       <Route path="/enterprise/forecast" element={<EnterpriseRoute><EnterpriseForecastPage /></EnterpriseRoute>} />

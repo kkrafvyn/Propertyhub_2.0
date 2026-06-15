@@ -9,6 +9,7 @@ export const MODERATOR_ROLES = new Set([
 ])
 
 export const PROMOTABLE_ROLES = [
+  'consumer',
   'buyer',
   'renter',
   'investor',
@@ -25,7 +26,8 @@ export const PROMOTABLE_ROLES = [
 ]
 
 export async function getProfileRole(
-  admin: { from: (table: string) => { select: (cols: string) => { eq: (col: string, val: string) => { maybeSingle: () => Promise<{ data: { role?: string } | null }> } } } } },
+  // deno-lint-ignore no-explicit-any
+  admin: any,
   userId: string,
 ) {
   const { data } = await admin.from('user_profiles').select('role').eq('id', userId).maybeSingle()

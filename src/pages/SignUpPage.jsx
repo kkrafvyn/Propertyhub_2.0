@@ -12,6 +12,7 @@ import { resolvePostLoginPath } from '../lib/post-login'
 import { isSupabaseConfigured } from '../lib/supabase'
 
 const roleOptions = [
+  USER_ROLES.CONSUMER,
   USER_ROLES.BUYER,
   USER_ROLES.RENTER,
   USER_ROLES.INVESTOR,
@@ -30,7 +31,7 @@ export default function SignUpPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState(USER_ROLES.BUYER)
+  const [role, setRole] = useState(USER_ROLES.CONSUMER)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [oauthProvider, setOauthProvider] = useState(null)

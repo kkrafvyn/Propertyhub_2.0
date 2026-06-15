@@ -1,18 +1,27 @@
 import { Capacitor } from '@capacitor/core'
 
-export async function initCapacitor() {
+/** Hide the native Capacitor splash once the animated splash is ready. */
+export async function hideNativeSplash() {
   if (!Capacitor.isNativePlatform()) return
 
   try {
     const { SplashScreen } = await import('@capacitor/splash-screen')
+    await SplashScreen.hide()
+  } catch {
+    /* plugins optional during dev */
+  }
+}
+
+export async function initCapacitor() {
+  if (!Capacitor.isNativePlatform()) return
+
+  try {
     const { StatusBar, Style } = await import('@capacitor/status-bar')
 
-    await StatusBar.setStyle({ style: Style.Light })
+    await StatusBar.setStyle({ style: Style.Dark })
     if (Capacitor.getPlatform() === 'android') {
-      await StatusBar.setBackgroundColor({ color: '#0F2922' })
+      await StatusBar.setBackgroundColor({ color: '#FFFFFF' })
     }
-
-    await SplashScreen.hide()
   } catch {
     /* plugins optional during dev */
   }

@@ -3,10 +3,16 @@ import { USER_ROLES } from '../platform/registry'
 import { useTranslation } from '../i18n/LocaleContext'
 
 export const WORKSPACE_LINKS = {
-  buyer: { to: '/buyer', labelKey: 'profileNav.buyerWorkspace' },
+  consumer: { to: '/consumer', labelKey: 'profileNav.consumerWorkspace' },
+  buyer: { to: '/consumer/buy', labelKey: 'profileNav.buyerWorkspace' },
   agent: { to: '/agent', labelKey: 'profileNav.agentCrm' },
   agency: { to: '/agency', labelKey: 'profileNav.agencyErp' },
-  renter: { to: '/renter', labelKey: 'profileNav.renterWorkspace' },
+  renter: { to: '/consumer/rent', labelKey: 'profileNav.renterWorkspace' },
+  tenant: { to: '/tenant', labelKey: 'profileNav.tenantPortal' },
+  host: { to: '/host', labelKey: 'profileNav.hostWorkspace' },
+  wallet: { to: '/wallet', labelKey: 'profileNav.wallet' },
+  investment: { to: '/investment', labelKey: 'profileNav.investmentCenter' },
+  resident: { to: '/resident', labelKey: 'profileNav.smartResident' },
   manage: { to: '/manage', labelKey: 'profileNav.propertyManagement' },
   smart: { to: '/smart', labelKey: 'profileNav.smartProperty' },
   finance: { to: '/finance', labelKey: 'profileNav.financialServices' },
@@ -17,7 +23,7 @@ export const WORKSPACE_LINKS = {
 }
 
 export const TOOL_LINKS = {
-  trips: { to: '/trips', labelKey: 'profileNav.tripsViewings' },
+  trips: { to: '/consumer/stay', labelKey: 'profileNav.tripsViewings' },
   transactions: { to: '/transactions', labelKey: 'profileNav.transactionCenter' },
   advisor: { to: '/buyer/advisor', labelKey: 'profileNav.aiAdvisor' },
   saved: { to: '/saved', labelKey: 'profileNav.savedHomes' },
@@ -27,30 +33,41 @@ export const TOOL_LINKS = {
 }
 
 export const HOSTING_LINKS = [
+  { to: '/host', labelKey: 'profileNav.hostDashboard' },
   { to: '/host/list', labelKey: 'profileNav.listProperty' },
   { to: '/host/listings', labelKey: 'profileNav.yourListings' },
+  { to: '/host/reservations', labelKey: 'profileNav.reservations' },
+  { to: '/host/calendar', labelKey: 'profileNav.calendar' },
+  { to: '/host/payouts', labelKey: 'profileNav.hostPayouts' },
   { to: '/host/boost', labelKey: 'profileNav.featureListing' },
 ]
 
-/** Profile sections shown per role — each user sees only their own workspace and tools. */
+const CONSUMER_TOOLS = ['trips', 'transactions', 'advisor', 'saved', 'documents', 'compare', 'messages']
+
+/** Profile sections — capability-aware; legacy roles map to consumer modules */
 export const ROLE_PROFILE_CONFIG = {
+  [USER_ROLES.CONSUMER]: {
+    workspaces: ['consumer', 'wallet', 'investment', 'tenant', 'resident'],
+    tools: CONSUMER_TOOLS,
+    hosting: true,
+  },
   [USER_ROLES.BUYER]: {
-    workspaces: ['buyer'],
-    tools: ['trips', 'transactions', 'advisor', 'saved', 'documents', 'compare', 'messages'],
+    workspaces: ['consumer', 'wallet'],
+    tools: CONSUMER_TOOLS,
     hosting: true,
   },
   [USER_ROLES.RENTER]: {
-    workspaces: ['renter'],
+    workspaces: ['consumer', 'tenant', 'resident', 'wallet'],
     tools: ['trips', 'documents', 'messages'],
     hosting: false,
   },
   [USER_ROLES.INVESTOR]: {
-    workspaces: ['intelligence'],
+    workspaces: ['consumer', 'investment', 'intelligence', 'wallet'],
     tools: ['saved', 'compare', 'advisor', 'documents', 'messages'],
     hosting: false,
   },
   [USER_ROLES.INDEPENDENT_AGENT]: {
-    workspaces: ['agent'],
+    workspaces: ['agent', 'wallet'],
     tools: ['trips', 'transactions', 'documents', 'messages'],
     hosting: false,
   },
@@ -60,7 +77,7 @@ export const ROLE_PROFILE_CONFIG = {
     hosting: false,
   },
   [USER_ROLES.AGENCY_OWNER]: {
-    workspaces: ['agency'],
+    workspaces: ['agency', 'wallet'],
     tools: ['documents', 'messages'],
     hosting: false,
   },
@@ -70,22 +87,22 @@ export const ROLE_PROFILE_CONFIG = {
     hosting: false,
   },
   [USER_ROLES.PROPERTY_OWNER]: {
-    workspaces: ['manage', 'finance', 'smart'],
+    workspaces: ['manage', 'finance', 'smart', 'host', 'wallet'],
     tools: ['documents', 'messages'],
     hosting: true,
   },
   [USER_ROLES.PROPERTY_MANAGER]: {
-    workspaces: ['manage', 'smart', 'finance'],
+    workspaces: ['manage', 'smart', 'finance', 'wallet'],
     tools: ['documents', 'messages'],
     hosting: false,
   },
   [USER_ROLES.DEVELOPER]: {
-    workspaces: ['developer'],
+    workspaces: ['developer', 'investment'],
     tools: ['documents', 'messages'],
     hosting: false,
   },
   [USER_ROLES.ENTERPRISE_OPERATOR]: {
-    workspaces: ['enterprise', 'intelligence'],
+    workspaces: ['enterprise', 'intelligence', 'investment'],
     tools: ['documents', 'messages'],
     hosting: false,
   },
@@ -101,19 +118,19 @@ export const ROLE_PROFILE_CONFIG = {
   },
 }
 
-/** Header menu shortcuts per role (profile + sign out are added separately). */
 export const ROLE_MENU_CONFIG = {
-  [USER_ROLES.BUYER]: ['saved', 'trips', 'documents', 'host'],
-  [USER_ROLES.RENTER]: ['renter', 'trips', 'documents'],
-  [USER_ROLES.INVESTOR]: ['saved', 'compare', 'intelligence'],
-  [USER_ROLES.INDEPENDENT_AGENT]: ['agent', 'trips', 'documents'],
+  [USER_ROLES.CONSUMER]: ['saved', 'trips', 'wallet', 'host'],
+  [USER_ROLES.BUYER]: ['saved', 'trips', 'wallet', 'host'],
+  [USER_ROLES.RENTER]: ['tenant', 'trips', 'resident', 'documents'],
+  [USER_ROLES.INVESTOR]: ['investment', 'saved', 'compare', 'intelligence'],
+  [USER_ROLES.INDEPENDENT_AGENT]: ['agent', 'trips', 'wallet', 'documents'],
   [USER_ROLES.AGENCY_AGENT]: ['agent', 'trips', 'documents'],
-  [USER_ROLES.AGENCY_OWNER]: ['agency', 'documents'],
+  [USER_ROLES.AGENCY_OWNER]: ['agency', 'wallet', 'documents'],
   [USER_ROLES.AGENCY_MANAGER]: ['agency', 'documents'],
-  [USER_ROLES.PROPERTY_OWNER]: ['manage', 'host', 'documents'],
-  [USER_ROLES.PROPERTY_MANAGER]: ['manage', 'documents'],
-  [USER_ROLES.DEVELOPER]: ['developer', 'documents'],
-  [USER_ROLES.ENTERPRISE_OPERATOR]: ['enterprise', 'documents'],
+  [USER_ROLES.PROPERTY_OWNER]: ['manage', 'host', 'wallet', 'documents'],
+  [USER_ROLES.PROPERTY_MANAGER]: ['manage', 'wallet', 'documents'],
+  [USER_ROLES.DEVELOPER]: ['developer', 'investment', 'documents'],
+  [USER_ROLES.ENTERPRISE_OPERATOR]: ['enterprise', 'investment', 'documents'],
   [USER_ROLES.PLATFORM_MODERATOR]: ['admin'],
   [USER_ROLES.PLATFORM_ADMIN]: ['admin'],
 }
@@ -124,7 +141,11 @@ const MENU_ITEM_DEFS = {
   documents: TOOL_LINKS.documents,
   compare: TOOL_LINKS.compare,
   messages: TOOL_LINKS.messages,
-  host: { to: '/host', labelKey: 'menu.listProperty' },
+  wallet: WORKSPACE_LINKS.wallet,
+  investment: WORKSPACE_LINKS.investment,
+  host: WORKSPACE_LINKS.host,
+  tenant: WORKSPACE_LINKS.tenant,
+  resident: WORKSPACE_LINKS.resident,
   renter: WORKSPACE_LINKS.renter,
   agent: WORKSPACE_LINKS.agent,
   agency: WORKSPACE_LINKS.agency,
@@ -139,16 +160,16 @@ function resolveLinks(ids, catalog, t) {
   return ids
     .map((id) => catalog[id])
     .filter(Boolean)
-    .map(({ to, labelKey }) => ({ to, label: t(labelKey) }))
+    .map(({ to, labelKey }) => ({ to, label: t(labelKey) || labelKey }))
 }
 
 function getProfileConfig(role) {
-  return ROLE_PROFILE_CONFIG[role] || ROLE_PROFILE_CONFIG[USER_ROLES.BUYER]
+  return ROLE_PROFILE_CONFIG[role] || ROLE_PROFILE_CONFIG[USER_ROLES.CONSUMER]
 }
 
 export function useRoleNavigation(role) {
   const { t } = useTranslation()
-  const resolvedRole = role || USER_ROLES.BUYER
+  const resolvedRole = role || USER_ROLES.CONSUMER
 
   return useMemo(() => {
     const config = getProfileConfig(resolvedRole)
@@ -156,10 +177,10 @@ export function useRoleNavigation(role) {
     const workspaces = resolveLinks(config.workspaces, WORKSPACE_LINKS, t)
     const tools = resolveLinks(config.tools, TOOL_LINKS, t)
     const hosting = config.hosting
-      ? HOSTING_LINKS.map(({ to, labelKey }) => ({ to, label: t(labelKey) }))
+      ? HOSTING_LINKS.map(({ to, labelKey }) => ({ to, label: t(labelKey) || labelKey }))
       : []
 
-    const menuIds = ROLE_MENU_CONFIG[resolvedRole] || ROLE_MENU_CONFIG[USER_ROLES.BUYER]
+    const menuIds = ROLE_MENU_CONFIG[resolvedRole] || ROLE_MENU_CONFIG[USER_ROLES.CONSUMER]
     const menuLinks = resolveLinks(menuIds, MENU_ITEM_DEFS, t)
 
     const workspaceTitle = workspaces.length === 1
