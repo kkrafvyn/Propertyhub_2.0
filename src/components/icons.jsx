@@ -212,3 +212,41 @@ export function IconMap({ className = 'h-4 w-4' }) {
     </svg>
   )
 }
+
+export function IconTownhouse({ className = 'h-6 w-6' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M4 18 10 12l6 5 6-5 6 6v8H4v-7Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+      <path d="M12 25v-5h3v5M17 25v-5h3v5" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function IconLand({ className = 'h-6 w-6' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M6 26h20" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <path d="M10 26V14l6-6 6 6v12" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+      <path d="M8 18c2-3 4-4 8-4s6 1 8 4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function IconBed({ className = 'h-6 w-6' }) {
+  return (
+    <svg className={className} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M6 20v6M26 20v6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+      <path d="M4 20h24v-4H4v4Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+      <path d="M8 16V12a4 4 0 0 1 8 0v4" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export const propertyTypeIcons = {
+  apartment: IconApartment,
+  house: IconVilla,
+  townhouse: IconTownhouse,
+  office: IconOffice,
+  land: IconLand,
+  shortStay: IconBed,
+}

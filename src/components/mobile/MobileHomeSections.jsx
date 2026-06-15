@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import NotificationBell from '../NotificationBell'
-import { IconHeart } from '../icons'
+import { IconHeart, propertyTypeIcons } from '../icons'
 import { useTranslation } from '../../i18n/LocaleContext'
 
 function ProfileAvatar({ to = '/profile' }) {
@@ -99,36 +99,39 @@ export function MobileTransactionTabs({ active, onChange }) {
 }
 
 const PROPERTY_TYPES = [
-  { id: 'apartment', labelKey: 'categories.apartment', emoji: '🏢', bg: 'bg-blue-50' },
-  { id: 'house', labelKey: 'categories.house', emoji: '🏠', bg: 'bg-green-50' },
-  { id: 'townhouse', labelKey: 'mobile.homeScreen.townhouses', emoji: '🏘️', bg: 'bg-orange-50' },
-  { id: 'office', labelKey: 'categories.office', emoji: '🏛️', bg: 'bg-purple-50' },
-  { id: 'land', labelKey: 'mobile.homeScreen.land', emoji: '🌳', bg: 'bg-emerald-50' },
-  { id: 'shortStay', labelKey: 'mobile.homeScreen.shortStay', emoji: '🛏️', bg: 'bg-rose-50' },
+  { id: 'apartment', labelKey: 'categories.apartment', bg: 'bg-blue-50' },
+  { id: 'house', labelKey: 'categories.house', bg: 'bg-green-50' },
+  { id: 'townhouse', labelKey: 'mobile.homeScreen.townhouses', bg: 'bg-orange-50' },
+  { id: 'office', labelKey: 'categories.office', bg: 'bg-purple-50' },
+  { id: 'land', labelKey: 'mobile.homeScreen.land', bg: 'bg-emerald-50' },
+  { id: 'shortStay', labelKey: 'mobile.homeScreen.shortStay', bg: 'bg-rose-50' },
 ]
 
 export function MobilePropertyTypeRow({ active, onChange }) {
   const { t } = useTranslation()
 
   return (
-    <div className="mb-6 flex gap-3 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {PROPERTY_TYPES.map(({ id, labelKey, emoji, bg }) => {
+    <div className="mb-6 flex gap-5 overflow-x-auto px-4 sm:gap-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {PROPERTY_TYPES.map(({ id, labelKey, bg }) => {
         const isActive = active === id
+        const Icon = propertyTypeIcons[id]
         return (
           <button
             key={id}
             type="button"
             onClick={() => onChange(isActive ? null : id)}
-            className="flex w-[72px] shrink-0 flex-col items-center gap-2"
+            className="flex w-[76px] shrink-0 flex-col items-center gap-2.5 sm:w-[84px]"
           >
             <span
-              className={`flex h-14 w-14 items-center justify-center rounded-2xl text-2xl transition ${
+              className={`flex h-14 w-14 items-center justify-center rounded-2xl transition sm:h-[3.75rem] sm:w-[3.75rem] ${
                 isActive ? 'ring-2 ring-mobile-forest ring-offset-2' : ''
               } ${bg}`}
             >
-              {emoji}
+              {Icon && (
+                <Icon className={`h-7 w-7 ${isActive ? 'text-mobile-forest' : 'text-ink-secondary'}`} />
+              )}
             </span>
-            <span className={`text-center text-[11px] font-medium leading-tight ${isActive ? 'text-mobile-forest' : 'text-ink-secondary'}`}>
+            <span className={`text-center text-[11px] font-medium leading-tight sm:text-xs ${isActive ? 'text-mobile-forest' : 'text-ink-secondary'}`}>
               {t(labelKey)}
             </span>
           </button>

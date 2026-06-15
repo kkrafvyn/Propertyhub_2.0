@@ -15,7 +15,7 @@ export default function CategoryBar({
 
   return (
     <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-      <div className="listing-scroll min-w-0 flex-1">
+      <div className="listing-scroll min-w-0 flex-1 lg:justify-start">
         {categoryIds.map((id) => {
           const Icon = categoryIcons[id]
           const isActive = active === id
@@ -27,8 +27,8 @@ export default function CategoryBar({
               onClick={() => onChange(id)}
               className={`category-chip ${isActive ? 'active' : ''}`}
             >
-              <Icon className={`h-6 w-6 ${isActive ? 'text-ink' : 'text-ink-secondary'}`} />
-              <span className={`whitespace-nowrap text-xs font-medium ${isActive ? 'text-ink' : 'text-ink-secondary'}`}>
+              <Icon className={`h-6 w-6 shrink-0 ${isActive ? 'text-ink' : 'text-ink-secondary'}`} />
+              <span className={`whitespace-nowrap text-xs font-medium sm:text-[13px] ${isActive ? 'text-ink' : 'text-ink-secondary'}`}>
                 {t(`categories.${id}`)}
               </span>
             </button>
