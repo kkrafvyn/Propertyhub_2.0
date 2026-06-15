@@ -62,7 +62,12 @@ Deno.serve(async (req) => {
 
   try {
     const partnerKey = extractApiKey(req)
-    if (partnerKey && action !== 'gateway' && action !== 'architecture' && action !== 'services') {
+    if (
+      partnerKey?.startsWith('bm_live_') &&
+      action !== 'gateway' &&
+      action !== 'architecture' &&
+      action !== 'services'
+    ) {
       const verified = await verifyPartnerApiKey(admin, partnerKey)
       if (!verified.ok) return errorResponse(verified.message, verified.status)
     }

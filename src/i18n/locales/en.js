@@ -214,6 +214,48 @@ export default {
     scrollLeft: 'Scroll left',
     scrollRight: 'Scroll right',
   },
+  consumer: {
+    dashboard: {
+      title: 'My BaytMiftah',
+      subtitle: 'Buy, rent, stay, and invest — one account that grows with you',
+      myActivity: 'My activity',
+      aiAssistant: 'AI assistant',
+      quickActions: 'Quick actions',
+    },
+    activity: {
+      search: 'Search properties',
+      saved: 'Saved properties',
+      messages: 'Messages',
+      trips: 'Trips & bookings',
+      recentSearches: 'Recent searches',
+      recentlyViewed: 'Recently viewed',
+    },
+    ai: {
+      recommendations: 'Property recommendations',
+      marketInsights: 'Market insights',
+      affordability: 'Affordability analysis',
+    },
+    actions: {
+      buy: 'Buy property',
+      rent: 'Rent property',
+      bookStay: 'Book short stay',
+      makeOffer: 'Make offer',
+      scheduleViewing: 'Schedule viewing',
+    },
+    context: {
+      leases: 'Leases',
+      payments: 'Payments',
+      maintenance: 'Maintenance',
+      trips: 'Trips',
+      reservations: 'Reservations',
+      offers: 'Offers',
+      transactions: 'Transactions',
+      myHome: 'My home',
+    },
+    access: {
+      proOnly: 'This workspace is for real estate professionals. Use your consumer home for property search, bookings, and rentals.',
+    },
+  },
   listing: {
     guestFavourite: 'Guest favourite',
     save: 'Save listing',

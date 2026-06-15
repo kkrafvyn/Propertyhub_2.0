@@ -11,7 +11,7 @@ import DesktopRoutes from './routes/DesktopRoutes'
 import MobileRoutes from './routes/MobileRoutes'
 import { useIsMobileViewport } from './hooks/useMediaQuery'
 import { useCapacitorBackButton } from './hooks/useCapacitorBackButton'
-import { isNativeApp } from './lib/platform'
+import { isNativeApp, shouldShowLaunchSplash, isStandalonePwa } from './lib/platform'
 
 function ResponsiveRoutes() {
   const isMobileViewport = useIsMobileViewport()
@@ -21,9 +21,9 @@ function ResponsiveRoutes() {
 }
 
 export default function App() {
-  const nativeApp = isNativeApp()
+  const launchSplash = shouldShowLaunchSplash()
   const [splashDone, setSplashDone] = useState(() => {
-    if (!nativeApp) return true
+    if (!launchSplash) return true
     try {
       return sessionStorage.getItem('baytmiftah.splash.seen') === '1'
     } catch {
@@ -37,9 +37,9 @@ export default function App() {
         <CurrencyProvider>
           <AuthProvider>
             <BrowserRouter>
-              {nativeApp && !splashDone && (
+              {launchSplash && !splashDone && (
                 <SplashScreen
-                  native
+                  native={isNativeApp() || isStandalonePwa()}
                   skipIfSeen
                   onComplete={() => setSplashDone(true)}
                 />

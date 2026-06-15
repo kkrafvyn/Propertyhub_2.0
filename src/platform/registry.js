@@ -34,9 +34,9 @@ export const USER_ROLES = {
 
 /** Default home route per role group */
 export const ROLE_HOME_PATHS = {
-  [USER_ROLES.CONSUMER]: '/consumer',
-  [USER_ROLES.BUYER]: '/consumer',
-  [USER_ROLES.RENTER]: '/consumer/rent',
+  [USER_ROLES.CONSUMER]: '/',
+  [USER_ROLES.BUYER]: '/',
+  [USER_ROLES.RENTER]: '/',
   [USER_ROLES.INVESTOR]: '/investment',
   [USER_ROLES.INDEPENDENT_AGENT]: '/agent',
   [USER_ROLES.AGENCY_OWNER]: '/agency',

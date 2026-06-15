@@ -1,33 +1,19 @@
 import { Link } from 'react-router-dom'
 import NotificationBell from '../NotificationBell'
-import { IconHeart, IconHome, IconChevronRight, IconUser, propertyTypeIcons } from '../icons'
+import Logo from '../Logo'
+import { IconHeart, IconHome, IconChevronRight, propertyTypeIcons } from '../icons'
 import { useTranslation } from '../../i18n/LocaleContext'
-
-function ProfileAvatar({ to = '/profile' }) {
-  return (
-    <Link
-      to={to}
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mobile-forest/10 text-mobile-forest"
-      aria-label="Profile"
-    >
-      <IconUser className="h-5 w-5" />
-    </Link>
-  )
-}
 
 export function MobileReferenceHeader() {
   const { t } = useTranslation()
 
   return (
     <header className="sticky top-0 z-40 flex min-w-0 items-center justify-between bg-surface px-3 pb-3 pt-2 sm:px-4 sm:pt-4">
-      <div className="flex min-w-0 items-center gap-3">
-        <ProfileAvatar />
-        <h1 className="truncate text-xl font-bold text-ink">BaytMiftah</h1>
-      </div>
+      <Logo to="/" size="sm" className="min-w-0 shrink" />
       <div className="flex shrink-0 items-center gap-1">
         <Link
           to="/saved"
-          className="flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-[#F5F5F5]"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-surface-subtle"
           aria-label={t('mobile.saved')}
         >
           <IconHeart className="h-5 w-5" />

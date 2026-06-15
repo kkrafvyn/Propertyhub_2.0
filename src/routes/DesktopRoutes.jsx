@@ -190,14 +190,17 @@ export default function DesktopRoutes() {
     <Suspense fallback={<RouteFallback />}>
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/explore" element={<Navigate to="/" replace />} />
+      <Route path="/explore" element={<HomePage />} />
       <Route path="/property/:id" element={<ListingDetailPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="/saved" element={<SavedPage />} />
+      <Route path="/favorites" element={<Navigate to="/saved" replace />} />
       <Route path="/trips" element={<TripsPage />} />
+      <Route path="/bookings" element={<Navigate to="/trips" replace />} />
+      <Route path="/booking" element={<Navigate to="/trips" replace />} />
       <Route path="/host" element={<HostDashboardPage />} />
       <Route path="/host/list" element={<ListPropertyPage />} />
       <Route path="/host/listings" element={<HostListingsPage />} />
@@ -208,13 +211,14 @@ export default function DesktopRoutes() {
       <Route path="/host/guests" element={<HostGuestsPage />} />
       <Route path="/host/payouts" element={<HostPayoutsWorkspacePage />} />
       <Route path="/host/boost" element={<FeaturedBoostPage />} />
-      <Route path="/consumer" element={<ConsumerHubPage />} />
+      <Route path="/consumer" element={<Navigate to="/" replace />} />
       <Route path="/consumer/buy" element={<ConsumerBuyPage />} />
       <Route path="/consumer/rent" element={<ConsumerRentPage />} />
       <Route path="/consumer/stay" element={<ConsumerStayPage />} />
       <Route path="/consumer/invest" element={<ConsumerInvestPage />} />
       <Route path="/wallet" element={<WalletHubPage />} />
       <Route path="/wallet/transactions" element={<WalletTransactionsPage />} />
+      <Route path="/wallet/history" element={<Navigate to="/wallet/transactions" replace />} />
       <Route path="/wallet/payouts" element={<WalletPayoutsPage />} />
       <Route path="/wallet/escrow" element={<WalletEscrowPage />} />
       <Route path="/investment" element={<InvestmentHubPage />} />
@@ -244,6 +248,7 @@ export default function DesktopRoutes() {
       <Route path="/tools/mortgage" element={<MortgageCalculatorPage />} />
       <Route path="/transactions" element={<TransactionCenterPage />} />
       <Route path="/offers" element={<OfferRoomPage />} />
+      <Route path="/offer-room" element={<Navigate to="/offers" replace />} />
       <Route path="/messages" element={<MessagesPage />} />
       <Route path="/messages/:id" element={<MessagesPage />} />
       <Route path="/profile" element={<ProfilePage />} />
@@ -252,6 +257,8 @@ export default function DesktopRoutes() {
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/documents" element={<DocumentVaultPage />} />
+      <Route path="/document-vault" element={<Navigate to="/documents" replace />} />
+      <Route path="/my-home" element={<ResidentHubPage />} />
       <Route path="/agent" element={<AgentRoute><AgentDashboardPage /></AgentRoute>} />
       <Route path="/agent/leads" element={<AgentRoute><AgentLeadsPage /></AgentRoute>} />
       <Route path="/agent/listings" element={<AgentRoute><AgentListingsPage /></AgentRoute>} />
@@ -294,9 +301,11 @@ export default function DesktopRoutes() {
       <Route path="/admin/audit" element={<AdminRoute><AdminAuditPage /></AdminRoute>} />
       <Route path="/finance" element={<FinanceHubPage />} />
       <Route path="/finance/mortgages" element={<MortgageMarketplacePage />} />
+      <Route path="/mortgages" element={<Navigate to="/finance/mortgages" replace />} />
       <Route path="/finance/escrow" element={<EscrowPage />} />
       <Route path="/finance/rent-collection" element={<RentCollectionPage />} />
       <Route path="/finance/insurance" element={<InsurancePage />} />
+      <Route path="/insurance" element={<Navigate to="/finance/insurance" replace />} />
       <Route path="/finance/commissions" element={<CommissionSettlementPage />} />
       <Route path="/smart" element={<SmartHubPage />} />
       <Route path="/smart/devices" element={<SmartDevicesPage />} />

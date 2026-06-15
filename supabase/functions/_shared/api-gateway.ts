@@ -14,10 +14,13 @@ async function sha256Hex(input: string): Promise<string> {
 }
 
 export function extractApiKey(req: Request): string | null {
-  const header = req.headers.get('x-api-key') ?? req.headers.get('authorization')
-  if (!header) return null
-  if (header.startsWith('Bearer ')) return header.slice(7).trim()
-  return header.trim()
+  const explicit = req.headers.get('x-api-key')
+  if (explicit?.trim()) return explicit.trim()
+
+  const auth = req.headers.get('authorization')
+  if (!auth?.startsWith('Bearer ')) return null
+  const token = auth.slice(7).trim()
+  return token.startsWith('bm_live_') ? token : null
 }
 
 export async function verifyPartnerApiKey(

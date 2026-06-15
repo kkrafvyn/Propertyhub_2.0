@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 import MobileShell, { MobileHeader } from '../../components/MobileShell'
+import ProtectedRoute from '../../components/ProtectedRoute'
 import { IconChevronLeft, IconChevronRight, IconDot, IconHeart } from '../../components/icons'
 import {
   MobileLinkRow,
@@ -13,6 +14,7 @@ import MobileViewingModal from '../../components/mobile/MobileViewingModal'
 import { MobileHomeListingCard } from '../../components/mobile/MobileHomeSections'
 import { fetchConversation, fetchConversations } from '../../services/messaging-service'
 import { fetchListings } from '../../services/marketplace-service'
+import { trackRecentlyViewed } from '../../lib/recent-activity'
 import { syncSavedIds, toggleSavedIdAsync } from '../../lib/saved-listings'
 import { AppSettingsPanels } from '../../components/AppSettings'
 import { useAuth } from '../../context/AuthContext'
@@ -20,6 +22,14 @@ import { useTranslation } from '../../i18n/LocaleContext'
 import { useRoleNavigation } from '../../lib/role-navigation'
 
 export function MobileMessagesPage() {
+  return (
+    <ProtectedRoute>
+      <MobileMessagesContent />
+    </ProtectedRoute>
+  )
+}
+
+function MobileMessagesContent() {
   const { t } = useTranslation()
   const { id } = useParams()
   const [conversations, setConversations] = useState([])
@@ -151,6 +161,7 @@ export function MobileProfilePage() {
 
 export function MobilePropertyPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const { id } = useParams()
   const [listing, setListing] = useState(null)
   const [allListings, setAllListings] = useState([])
@@ -162,7 +173,10 @@ export function MobilePropertyPage() {
 
   useEffect(() => {
     import('../../services/marketplace-service').then(({ fetchListingById }) => {
-      fetchListingById(id).then(({ listing: row }) => setListing(row))
+      fetchListingById(id).then(({ listing: row }) => {
+        setListing(row)
+        if (row) trackRecentlyViewed(row)
+      })
     })
     fetchListings().then(({ listings: rows }) => setAllListings(rows))
   }, [id])
@@ -288,7 +302,8 @@ export function MobilePropertyPage() {
               {t('listing.requestViewing')}
             </MobilePrimaryButton>
             <Link
-              to="/messages"
+              to={user ? '/messages' : '/login'}
+              state={user ? undefined : { from: '/messages' }}
               className="flex flex-1 items-center justify-center rounded-xl border border-surface-border bg-surface px-3 py-2.5 text-sm font-semibold text-ink"
             >
               {t('mobile.messageAgent')}

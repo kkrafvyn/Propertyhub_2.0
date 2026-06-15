@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import MobileShell, { MobileHeader, MobileSearchBar } from '../../components/MobileShell'
+import ConsumerDashboard from '../../components/consumer/ConsumerDashboard'
+import { useAuth } from '../../context/AuthContext'
 import {
   MobileAreaCard,
   MobileCarouselSection,
@@ -21,11 +23,13 @@ import { useTranslation } from '../../i18n/LocaleContext'
 import { syncSavedIds, toggleSavedIdAsync } from '../../lib/saved-listings'
 import { cacheListingsForOffline, getCachedListings } from '../../lib/offline-cache'
 import { trackFunnel } from '../../lib/analytics'
+import { trackRecentSearch } from '../../lib/recent-activity'
 import { fetchListings } from '../../services/marketplace-service'
 import MobileExploreMap from '../../components/mobile/MobileExploreMap'
 
 export default function MobileHomePage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [listings, setListings] = useState([])
   const [savedIds, setSavedIds] = useState([])
 
@@ -66,6 +70,7 @@ export default function MobileHomePage() {
   return (
     <MobileShell>
       <MobileReferenceHeader />
+      {user && <ConsumerDashboard compact />}
       <MobileHeroBanner />
 
       {weekend.length > 0 && (
@@ -158,7 +163,10 @@ export function MobileExplorePage() {
   useEffect(() => {
     const q = search.trim()
     if (q.length >= 2) {
-      const timer = setTimeout(() => trackFunnel('search', { query: q, results: visible.length }), 400)
+      const timer = setTimeout(() => {
+        trackRecentSearch(q)
+        trackFunnel('search', { query: q, results: visible.length })
+      }, 400)
       return () => clearTimeout(timer)
     }
     return undefined

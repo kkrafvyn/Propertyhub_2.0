@@ -60,3 +60,18 @@ export function isManageRole(role) {
 export function isRenterRole(role) {
   return role === USER_ROLES.RENTER
 }
+
+/** Personal-use roles — unified consumer experience (not real estate professionals) */
+export function isConsumerPersona(role) {
+  return [
+    USER_ROLES.CONSUMER,
+    USER_ROLES.BUYER,
+    USER_ROLES.RENTER,
+    USER_ROLES.INVESTOR,
+  ].includes(role)
+}
+
+/** Agent, agency, PMS, developer, enterprise, platform staff */
+export function isProfessionalRole(role) {
+  return !isConsumerPersona(role) && role != null
+}

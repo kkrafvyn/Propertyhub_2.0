@@ -4,11 +4,14 @@ import DesktopShell, { SearchPill } from '../components/DesktopShell'
 import BackendBanner from '../components/BackendBanner'
 import CategoryBar from '../components/CategoryBar'
 import ListingCard, { ListingCardSkeleton } from '../components/ListingCard'
+import ConsumerDashboard from '../components/consumer/ConsumerDashboard'
 import { IconChevronLeft, IconChevronRight, IconClose } from '../components/icons'
+import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../i18n/LocaleContext'
 import { syncSavedIds, toggleSavedIdAsync } from '../lib/saved-listings'
 import { syncCompareIds, toggleCompareIdAsync } from '../lib/compare-listings'
 import { parseAiSearchQuery } from '../lib/ai-search'
+import { trackRecentSearch } from '../lib/recent-activity'
 import { fetchListings } from '../services/marketplace-service'
 import { geocodeLocation } from '../services/geo-service'
 
@@ -16,6 +19,7 @@ const MapView = lazy(() => import('../components/MapView'))
 
 export default function HomePage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [category, setCategory] = useState('all')
   const [location, setLocation] = useState('')
   const [propertyType, setPropertyType] = useState('any')
@@ -55,6 +59,11 @@ export default function HomePage() {
       if (r.lat && r.lng) setMapCenter([r.lat, r.lng])
     })
   }, [location])
+
+  useEffect(() => {
+    if (!location.trim() && !aiQuery.trim()) return
+    trackRecentSearch(location.trim() || aiQuery.trim())
+  }, [location, aiQuery])
 
   const visible = useMemo(() => {
     const query = location.trim().toLowerCase()
@@ -110,6 +119,8 @@ export default function HomePage() {
       }
     >
       <BackendBanner />
+
+      {user && <ConsumerDashboard />}
 
       {filtersOpen && (
         <FiltersPanel

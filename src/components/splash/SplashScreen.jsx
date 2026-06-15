@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { hideNativeSplash } from '../../lib/capacitor-init'
+import { dismissHtmlSplash } from '../../lib/pwa-splash'
 import { isNativeApp } from '../../lib/platform'
 import { NATIVE_SPLASH_COLORS, SPLASH_COLORS, SPLASH_DURATION_MS } from './constants'
 import SplashLogoMark from './SplashLogoMark'
@@ -59,6 +60,7 @@ export default function SplashScreen({
       }
     }
     onComplete?.()
+    dismissHtmlSplash()
   }, [onComplete, sessionKey, skipIfSeen])
 
   useEffect(() => {
@@ -67,6 +69,7 @@ export default function SplashScreen({
       return undefined
     }
 
+    dismissHtmlSplash()
     hideNativeSplash()
 
     const reduced = prefersReducedMotion()

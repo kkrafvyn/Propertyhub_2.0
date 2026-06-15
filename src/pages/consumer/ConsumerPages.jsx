@@ -32,9 +32,9 @@ function ConsumerHub() {
     { to: '/consumer/stay', label: 'Short stays', desc: 'Bookings, trips, guest receipts' },
     { to: '/consumer/invest', label: 'Invest', desc: 'Portfolio, ROI, market intelligence' },
     { to: '/tenant', label: 'Tenant portal', desc: 'Visitors, access, community' },
+    { to: '/my-home', label: 'My home', desc: 'Smart locks, energy, announcements' },
     { to: '/wallet', label: 'Wallet', desc: 'Balance, escrow, payouts' },
     { to: '/host', label: 'Host', desc: 'Listings, calendar, reservations' },
-    { to: '/resident', label: 'Smart resident', desc: 'Door access, energy, announcements' },
   ]
 
   return (

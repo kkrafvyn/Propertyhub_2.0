@@ -3,7 +3,7 @@ import { USER_ROLES } from '../platform/registry'
 import { useTranslation } from '../i18n/LocaleContext'
 
 export const WORKSPACE_LINKS = {
-  consumer: { to: '/consumer', labelKey: 'profileNav.consumerWorkspace' },
+  consumer: { to: '/', labelKey: 'profileNav.consumerWorkspace' },
   buyer: { to: '/consumer/buy', labelKey: 'profileNav.buyerWorkspace' },
   agent: { to: '/agent', labelKey: 'profileNav.agentCrm' },
   agency: { to: '/agency', labelKey: 'profileNav.agencyErp' },
@@ -12,7 +12,7 @@ export const WORKSPACE_LINKS = {
   host: { to: '/host', labelKey: 'profileNav.hostWorkspace' },
   wallet: { to: '/wallet', labelKey: 'profileNav.wallet' },
   investment: { to: '/investment', labelKey: 'profileNav.investmentCenter' },
-  resident: { to: '/resident', labelKey: 'profileNav.smartResident' },
+  resident: { to: '/my-home', labelKey: 'profileNav.smartResident' },
   manage: { to: '/manage', labelKey: 'profileNav.propertyManagement' },
   smart: { to: '/smart', labelKey: 'profileNav.smartProperty' },
   finance: { to: '/finance', labelKey: 'profileNav.financialServices' },
@@ -23,11 +23,11 @@ export const WORKSPACE_LINKS = {
 }
 
 export const TOOL_LINKS = {
-  trips: { to: '/consumer/stay', labelKey: 'profileNav.tripsViewings' },
+  trips: { to: '/trips', labelKey: 'profileNav.tripsViewings' },
   transactions: { to: '/transactions', labelKey: 'profileNav.transactionCenter' },
   advisor: { to: '/buyer/advisor', labelKey: 'profileNav.aiAdvisor' },
   saved: { to: '/saved', labelKey: 'profileNav.savedHomes' },
-  documents: { to: '/documents', labelKey: 'profileNav.documentVault' },
+  documents: { to: '/document-vault', labelKey: 'profileNav.documentVault' },
   compare: { to: '/compare', labelKey: 'nav.compare' },
   messages: { to: '/messages', labelKey: 'menu.messages' },
 }
@@ -47,22 +47,22 @@ const CONSUMER_TOOLS = ['trips', 'transactions', 'advisor', 'saved', 'documents'
 /** Profile sections — capability-aware; legacy roles map to consumer modules */
 export const ROLE_PROFILE_CONFIG = {
   [USER_ROLES.CONSUMER]: {
-    workspaces: ['consumer', 'wallet', 'investment', 'tenant', 'resident'],
+    workspaces: ['wallet', 'investment', 'tenant', 'resident'],
     tools: CONSUMER_TOOLS,
     hosting: true,
   },
   [USER_ROLES.BUYER]: {
-    workspaces: ['consumer', 'wallet'],
+    workspaces: ['wallet', 'investment'],
     tools: CONSUMER_TOOLS,
     hosting: true,
   },
   [USER_ROLES.RENTER]: {
-    workspaces: ['consumer', 'tenant', 'resident', 'wallet'],
+    workspaces: ['tenant', 'resident', 'wallet'],
     tools: ['trips', 'documents', 'messages'],
     hosting: false,
   },
   [USER_ROLES.INVESTOR]: {
-    workspaces: ['consumer', 'investment', 'intelligence', 'wallet'],
+    workspaces: ['investment', 'wallet'],
     tools: ['saved', 'compare', 'advisor', 'documents', 'messages'],
     hosting: false,
   },
@@ -122,7 +122,7 @@ export const ROLE_MENU_CONFIG = {
   [USER_ROLES.CONSUMER]: ['saved', 'trips', 'wallet', 'host'],
   [USER_ROLES.BUYER]: ['saved', 'trips', 'wallet', 'host'],
   [USER_ROLES.RENTER]: ['tenant', 'trips', 'resident', 'documents'],
-  [USER_ROLES.INVESTOR]: ['investment', 'saved', 'compare', 'intelligence'],
+  [USER_ROLES.INVESTOR]: ['investment', 'saved', 'compare'],
   [USER_ROLES.INDEPENDENT_AGENT]: ['agent', 'trips', 'wallet', 'documents'],
   [USER_ROLES.AGENCY_AGENT]: ['agent', 'trips', 'documents'],
   [USER_ROLES.AGENCY_OWNER]: ['agency', 'wallet', 'documents'],

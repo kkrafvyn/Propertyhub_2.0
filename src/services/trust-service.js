@@ -67,9 +67,24 @@ export async function fetchAiOrchestration() {
 export async function fetchGlobalRegions() {
   try {
     const payload = await callEdgeFunction('trust', { allowAnonymous: false, query: { action: 'regions' } })
-    if (payload?.regions?.length) return { regions: payload.regions, source: 'supabase' }
+    if (payload?.regions?.length) {
+      return {
+        regions: payload.regions.map(normalizeGlobalRegion),
+        source: payload.source ?? 'supabase',
+      }
+    }
   } catch { /* fallback */ }
   return { regions: supportedRegions, source: 'local' }
+}
+
+function normalizeGlobalRegion(r) {
+  return {
+    code: r.code,
+    name: r.name,
+    currency: r.currency,
+    listings: r.listings ?? 0,
+    status: r.status ?? (r.active === false ? 'planned' : r.active === true ? 'live' : 'beta'),
+  }
 }
 
 export async function fetchValuationApiDocs() {

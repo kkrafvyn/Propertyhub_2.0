@@ -74,11 +74,15 @@ Deno.serve(async (req) => {
     }
     if (action === 'regions') {
       if (!isFullAdminRole(requesterRole)) return errorResponse('Forbidden', 403)
+      const listingCounts = await Promise.all([
+        admin.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+      ])
+      const totalListings = listingCounts[0]?.count ?? 0
       return jsonResponse({
         regions: [
-          { code: 'GH', name: 'Ghana', currency: 'GHS', active: true },
-          { code: 'NG', name: 'Nigeria', currency: 'NGN', active: true },
-          { code: 'KE', name: 'Kenya', currency: 'KES', active: false },
+          { code: 'GH', name: 'Ghana', currency: 'GHS', active: true, status: 'live', listings: totalListings },
+          { code: 'NG', name: 'Nigeria', currency: 'NGN', active: true, status: 'beta', listings: 0 },
+          { code: 'KE', name: 'Kenya', currency: 'KES', active: false, status: 'planned', listings: 0 },
         ],
         source: 'supabase',
       })

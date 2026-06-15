@@ -1,41 +1,72 @@
 import { Link, NavLink } from 'react-router-dom'
 import Logo from './Logo'
 import PushPrompt from './PushPrompt'
-import { IconChevronLeft, IconHome, IconMessage, IconSearch, IconUser, IconUsers } from './icons'
+import { IconChevronLeft, IconHeart, IconHome, IconMessage, IconSearch, IconUser } from './icons'
 import { useTranslation } from '../i18n/LocaleContext'
+import { useAuth } from '../context/AuthContext'
+import { CONSUMER_BOTTOM_TABS, getContextualTabs } from '../lib/consumer-nav'
 
-export default function MobileShell({ children, hideNav = false }) {
+const TAB_ICONS = {
+  home: IconHome,
+  search: IconSearch,
+  heart: IconHeart,
+  message: IconMessage,
+  user: IconUser,
+}
+
+export default function MobileShell({ children, hideNav = false, showContextual = true }) {
   const { t } = useTranslation()
+  const { user, capabilities } = useAuth()
 
-  const tabs = [
-    { to: '/', label: t('mobile.home'), icon: IconHome, end: true },
-    { to: '/explore', label: t('mobile.search'), icon: IconSearch },
-    { to: '/messages', label: t('mobile.inbox'), icon: IconMessage },
-    { to: '/agent', label: t('mobile.agents'), icon: IconUsers },
-    { to: '/profile', label: t('mobile.profile'), icon: IconUser },
-  ]
+  const contextualTabs = showContextual && user ? getContextualTabs(capabilities) : []
+  const bottomPad = contextualTabs.length > 0
+    ? 'pb-[calc(6.75rem+env(safe-area-inset-bottom,0px))]'
+    : 'pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))]'
 
   return (
-    <div className="mobile-bolt min-h-screen min-h-[100dvh] w-full overflow-x-clip bg-bolt-bg pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] pt-[env(safe-area-inset-top,0px)] text-ink">
+    <div className={`mobile-bolt min-h-screen min-h-[100dvh] w-full overflow-x-clip bg-bolt-bg ${bottomPad} pt-[env(safe-area-inset-top,0px)] text-ink`}>
       <div className="mx-auto w-full min-w-0 max-w-lg sm:max-w-xl lg:max-w-2xl">{children}</div>
+
+      {contextualTabs.length > 0 && !hideNav && (
+        <div className="fixed inset-x-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] z-40 border-t border-surface-border bg-surface/95 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-lg gap-1 overflow-x-auto px-2 py-2 sm:max-w-xl lg:max-w-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {contextualTabs.map(({ to, labelKey }) => (
+              <Link
+                key={to}
+                to={to}
+                className="shrink-0 rounded-full border border-surface-border bg-surface-subtle px-3 py-1.5 text-xs font-semibold text-ink"
+              >
+                {t(labelKey)}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {!hideNav && (
         <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-surface-border bg-surface shadow-bolt-nav">
           <div className="mx-auto flex w-full min-w-0 max-w-lg items-stretch justify-around px-0.5 pt-1 sm:max-w-xl sm:px-1 lg:max-w-2xl pb-[max(0.25rem,env(safe-area-inset-bottom))]">
-            {tabs.map(({ to, label, icon: Icon, end }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={({ isActive }) =>
-                  `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg px-0.5 py-2 text-[10px] font-medium transition sm:px-1 ${
-                    isActive ? 'font-semibold text-mobile-forest' : 'text-ink-secondary'
-                  }`
-                }
-              >
-                <Icon className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />
-                <span className="max-w-full truncate">{label}</span>
-              </NavLink>
-            ))}
+            {CONSUMER_BOTTOM_TABS.map(({ to, labelKey, icon, end, authRequired }) => {
+              const needsAuth = authRequired && !user
+              const dest = needsAuth ? '/login' : to
+              const Icon = TAB_ICONS[icon]
+              return (
+                <NavLink
+                  key={to}
+                  to={dest}
+                  end={end}
+                  state={needsAuth ? { from: to } : undefined}
+                  className={({ isActive }) =>
+                    `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg px-0.5 py-2 text-[10px] font-medium transition sm:px-1 ${
+                      isActive && !needsAuth ? 'font-semibold text-mobile-forest' : 'text-ink-secondary'
+                    }`
+                  }
+                >
+                  {Icon && <Icon className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />}
+                  <span className="max-w-full truncate">{t(labelKey)}</span>
+                </NavLink>
+              )
+            })}
           </div>
         </nav>
       )}

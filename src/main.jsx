@@ -4,12 +4,23 @@ import { Capacitor } from '@capacitor/core'
 import App from './App'
 import { initAnalytics } from './lib/analytics'
 import { initCapacitor } from './lib/capacitor-init'
+import { dismissHtmlSplash } from './lib/pwa-splash'
+import { shouldShowLaunchSplash } from './lib/platform'
 import { installChunkReloadRecovery } from './lib/chunk-reload'
 import './index.css'
 
 initAnalytics()
 installChunkReloadRecovery()
 initCapacitor()
+
+try {
+  const seen = sessionStorage.getItem('baytmiftah.splash.seen') === '1'
+  if (!shouldShowLaunchSplash() || seen) {
+    dismissHtmlSplash()
+  }
+} catch {
+  if (!shouldShowLaunchSplash()) dismissHtmlSplash()
+}
 
 if ('serviceWorker' in navigator && import.meta.env.PROD && !Capacitor.isNativePlatform()) {
   window.addEventListener('load', () => {

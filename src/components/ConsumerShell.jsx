@@ -1,7 +1,7 @@
 import WorkspaceShell from './WorkspaceShell'
 
 const CONSUMER_LINKS = [
-  { to: '/consumer', label: 'Overview', end: true },
+  { to: '/', label: 'Overview', end: true },
   { to: '/consumer/buy', label: 'Buy' },
   { to: '/consumer/rent', label: 'Rent' },
   { to: '/consumer/stay', label: 'Short stays' },
@@ -13,7 +13,7 @@ export default function ConsumerShell(props) {
   return (
     <WorkspaceShell
       workspaceLabel="BaytMiftah Consumer"
-      homePath="/consumer"
+      homePath="/"
       links={CONSUMER_LINKS}
       {...props}
     />

@@ -38,9 +38,11 @@ function Global() {
                 <td className="px-4 py-3">{r.name}</td>
                 <td className="px-4 py-3 font-mono">{r.code}</td>
                 <td className="px-4 py-3">{r.currency}</td>
-                <td className="px-4 py-3">{r.listings.toLocaleString()}</td>
+                <td className="px-4 py-3">{(r.listings ?? 0).toLocaleString()}</td>
                 <td className="px-4 py-3">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${statusStyles[r.status]}`}>{r.status}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${statusStyles[r.status] || statusStyles.planned}`}>
+                    {r.status ?? (r.active === false ? 'planned' : 'live')}
+                  </span>
                 </td>
               </tr>
             ))}

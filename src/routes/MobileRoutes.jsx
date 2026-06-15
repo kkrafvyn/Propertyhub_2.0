@@ -1,4 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import RoleProtectedRoute from '../components/RoleProtectedRoute'
+import ConsumerGuard from '../components/ConsumerGuard'
 import MobileHomePage, { MobileExplorePage, MobileSavedPage } from '../pages/mobile/MobilePages'
 import { MobileMessagesPage, MobileProfilePage, MobilePropertyPage } from '../pages/mobile/MobileMessagesProfile'
 import LoginPage from '../pages/LoginPage'
@@ -7,8 +9,9 @@ import SignUpPage from '../pages/SignUpPage'
 import PaymentSuccessPage from '../pages/PaymentSuccessPage'
 import PaymentCancelPage from '../pages/PaymentCancelPage'
 import AuthCallbackPage from '../pages/AuthCallbackPage'
+import DocumentVaultPage from '../pages/DocumentVaultPage'
+import ComparePage from '../pages/ComparePage'
 import {
-  MobileRenterHomePage,
   MobileRenterLeasesPage,
   MobileRenterPaymentsPage,
   MobileRenterUtilitiesPage,
@@ -43,7 +46,6 @@ import {
 } from '../pages/mobile/MobileWorkspacePages'
 
 import {
-  MobileConsumerHomePage,
   MobileConsumerBuyPage,
   MobileConsumerRentPage,
   MobileConsumerStayPage,
@@ -63,26 +65,84 @@ import OfferRoomPage from '../pages/buyer/OfferRoomPage'
 import HostListingsPage from '../pages/HostListingsPage'
 import HelpCentrePage from '../pages/HelpCentrePage'
 
+function AgentRoute({ children }) {
+  return (
+    <ConsumerGuard>
+      <RoleProtectedRoute require="agent">{children}</RoleProtectedRoute>
+    </ConsumerGuard>
+  )
+}
+
+function AgencyRoute({ children }) {
+  return (
+    <ConsumerGuard>
+      <RoleProtectedRoute require="agency">{children}</RoleProtectedRoute>
+    </ConsumerGuard>
+  )
+}
+
+function ManageRoute({ children }) {
+  return (
+    <ConsumerGuard>
+      <RoleProtectedRoute require="manage">{children}</RoleProtectedRoute>
+    </ConsumerGuard>
+  )
+}
+
+function DeveloperRoute({ children }) {
+  return (
+    <ConsumerGuard>
+      <RoleProtectedRoute require="developer">{children}</RoleProtectedRoute>
+    </ConsumerGuard>
+  )
+}
+
+function EnterpriseRoute({ children }) {
+  return (
+    <ConsumerGuard>
+      <RoleProtectedRoute require="enterprise">{children}</RoleProtectedRoute>
+    </ConsumerGuard>
+  )
+}
+
+function ProSmartRoute({ children }) {
+  return (
+    <ConsumerGuard>
+      <RoleProtectedRoute require="manage">{children}</RoleProtectedRoute>
+    </ConsumerGuard>
+  )
+}
+
 export default function MobileRoutes() {
   return (
     <Routes>
       <Route path="/" element={<MobileHomePage />} />
       <Route path="/explore" element={<MobileExplorePage />} />
       <Route path="/saved" element={<MobileSavedPage />} />
+      <Route path="/favorites" element={<Navigate to="/saved" replace />} />
       <Route path="/messages" element={<MobileMessagesPage />} />
       <Route path="/messages/:id" element={<MobileMessagesPage />} />
       <Route path="/profile" element={<MobileProfilePage />} />
+      <Route path="/settings" element={<Navigate to="/profile" replace />} />
+      <Route path="/security" element={<Navigate to="/profile" replace />} />
       <Route path="/property/:id" element={<MobilePropertyPage />} />
       <Route path="/trips" element={<MobileTripsPage />} />
+      <Route path="/bookings" element={<Navigate to="/trips" replace />} />
+      <Route path="/booking" element={<Navigate to="/trips" replace />} />
       <Route path="/neighborhoods" element={<MobileNeighborhoodsPage />} />
       <Route path="/neighborhoods/:slug" element={<MobileNeighborhoodDetailPage />} />
-      <Route path="/consumer" element={<MobileConsumerHomePage />} />
+      <Route path="/compare" element={<ComparePage />} />
+      <Route path="/documents" element={<DocumentVaultPage />} />
+      <Route path="/document-vault" element={<Navigate to="/documents" replace />} />
+      <Route path="/my-home" element={<MobileResidentHomePage />} />
+      <Route path="/consumer" element={<Navigate to="/" replace />} />
       <Route path="/consumer/buy" element={<MobileConsumerBuyPage />} />
       <Route path="/consumer/rent" element={<MobileConsumerRentPage />} />
       <Route path="/consumer/stay" element={<MobileConsumerStayPage />} />
       <Route path="/consumer/invest" element={<Navigate to="/investment" replace />} />
       <Route path="/wallet" element={<MobileWalletHomePage />} />
       <Route path="/wallet/transactions" element={<MobileWalletTransactionsPage />} />
+      <Route path="/wallet/history" element={<Navigate to="/wallet/transactions" replace />} />
       <Route path="/wallet/payouts" element={<Navigate to="/wallet" replace />} />
       <Route path="/wallet/escrow" element={<Navigate to="/wallet" replace />} />
       <Route path="/investment" element={<MobileInvestmentHomePage />} />
@@ -100,27 +160,30 @@ export default function MobileRoutes() {
       <Route path="/buyer/advisor" element={<AIAdvisorPage />} />
       <Route path="/transactions" element={<TransactionCenterPage />} />
       <Route path="/offers" element={<OfferRoomPage />} />
+      <Route path="/offer-room" element={<Navigate to="/offers" replace />} />
       <Route path="/renter" element={<Navigate to="/consumer/rent" replace />} />
-      <Route path="/agent" element={<MobileAgentHomePage />} />
-      <Route path="/agent/leads" element={<MobileAgentLeadsPage />} />
-      <Route path="/agent/calendar" element={<MobileAgentCalendarPage />} />
-      <Route path="/agent/tasks" element={<MobileAgentTasksPage />} />
-      <Route path="/agent/coach" element={<MobileAgentCoachPage />} />
+      <Route path="/agent" element={<AgentRoute><MobileAgentHomePage /></AgentRoute>} />
+      <Route path="/agent/leads" element={<AgentRoute><MobileAgentLeadsPage /></AgentRoute>} />
+      <Route path="/agent/calendar" element={<AgentRoute><MobileAgentCalendarPage /></AgentRoute>} />
+      <Route path="/agent/tasks" element={<AgentRoute><MobileAgentTasksPage /></AgentRoute>} />
+      <Route path="/agent/coach" element={<AgentRoute><MobileAgentCoachPage /></AgentRoute>} />
       <Route path="/renter/leases" element={<MobileRenterLeasesPage />} />
       <Route path="/renter/payments" element={<MobileRenterPaymentsPage />} />
       <Route path="/renter/utilities" element={<MobileRenterUtilitiesPage />} />
       <Route path="/renter/credit" element={<MobileRenterCreditPage />} />
       <Route path="/renter/maintenance" element={<MobileRenterMaintenancePage />} />
       <Route path="/renter/sign" element={<MobileRenterSignPage />} />
-      <Route path="/smart" element={<MobileSmartHomePage />} />
-      <Route path="/smart/alerts" element={<MobileSmartAlertsPage />} />
-      <Route path="/agency" element={<MobileAgencyPage />} />
-      <Route path="/manage" element={<MobileManagePage />} />
+      <Route path="/smart" element={<ProSmartRoute><MobileSmartHomePage /></ProSmartRoute>} />
+      <Route path="/smart/alerts" element={<ProSmartRoute><MobileSmartAlertsPage /></ProSmartRoute>} />
+      <Route path="/agency" element={<AgencyRoute><MobileAgencyPage /></AgencyRoute>} />
+      <Route path="/manage" element={<ManageRoute><MobileManagePage /></ManageRoute>} />
       <Route path="/finance" element={<MobileFinancePage />} />
+      <Route path="/mortgages" element={<Navigate to="/finance" replace />} />
+      <Route path="/insurance" element={<Navigate to="/finance" replace />} />
       <Route path="/intelligence" element={<MobileIntelligencePage />} />
-      <Route path="/developer" element={<MobileDeveloperPage />} />
-      <Route path="/enterprise" element={<MobileEnterprisePage />} />
-      <Route path="/enterprise/organizations" element={<MobileEnterpriseOrgsPage />} />
+      <Route path="/developer" element={<DeveloperRoute><MobileDeveloperPage /></DeveloperRoute>} />
+      <Route path="/enterprise" element={<EnterpriseRoute><MobileEnterprisePage /></EnterpriseRoute>} />
+      <Route path="/enterprise/organizations" element={<EnterpriseRoute><MobileEnterpriseOrgsPage /></EnterpriseRoute>} />
       <Route path="/help" element={<HelpCentrePage />} />
       <Route path="/payments/success" element={<PaymentSuccessPage />} />
       <Route path="/payments/cancel" element={<PaymentCancelPage />} />

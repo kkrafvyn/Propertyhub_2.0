@@ -8,8 +8,9 @@ import ShareListingButton from '../components/ShareListingButton'
 import ListingReviews from '../components/ListingReviews'
 import SimilarListings from '../components/SimilarListings'
 import PageMeta from '../components/PageMeta'
-import { fetchListings } from '../services/marketplace-service'
+import { fetchListingById, fetchListings } from '../services/marketplace-service'
 import { getAvailability, requestViewing } from '../services/booking-service'
+import { trackRecentlyViewed } from '../lib/recent-activity'
 
 function PhotoGrid({ photos, title, onShowAll }) {
   const { t } = useTranslation()
@@ -221,6 +222,7 @@ export default function ListingDetailPage() {
       if (!ignore) {
         setListing(row)
         setLoading(false)
+        if (row) trackRecentlyViewed(row)
       }
     })
     fetchListings().then(({ listings: rows }) => {
