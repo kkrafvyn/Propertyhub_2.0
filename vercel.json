@@ -1,9 +1,7 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rewrites": [
-    { "source": "/((?!assets|icons|brand|favicon|manifest|sw\\.js|.*\\..*).*)", "destination": "/index.html" }
-  ],
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "redirects": [
     { "source": "/favicon.ico", "destination": "/favicon.svg", "permanent": false }
   ],

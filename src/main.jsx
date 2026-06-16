@@ -6,7 +6,7 @@ import { initAnalytics } from './lib/analytics'
 import { initCapacitor } from './lib/capacitor-init'
 import { dismissHtmlSplash } from './lib/pwa-splash'
 import { shouldShowLaunchSplash } from './lib/platform'
-import { installChunkReloadRecovery } from './lib/chunk-reload'
+import { installChunkReloadRecovery, clearChunkReloadFlag } from './lib/chunk-reload'
 import './index.css'
 
 initAnalytics()
@@ -33,3 +33,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </React.StrictMode>,
 )
+
+clearChunkReloadFlag()

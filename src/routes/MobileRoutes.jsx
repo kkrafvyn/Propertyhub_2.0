@@ -1,26 +1,15 @@
 import { lazy, Suspense } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import RoleProtectedRoute from '../components/RoleProtectedRoute'
 import ProtectedRoute from '../components/ProtectedRoute'
 import ConsumerGuard from '../components/ConsumerGuard'
 import RouteErrorBoundary from '../components/RouteErrorBoundary'
-
-const MobileHomePage = lazy(() => import('../pages/mobile/MobilePages'))
-const MobileExplorePage = lazy(() =>
-  import('../pages/mobile/MobilePages').then((m) => ({ default: m.MobileExplorePage })),
-)
-const MobileSavedPage = lazy(() =>
-  import('../pages/mobile/MobilePages').then((m) => ({ default: m.MobileSavedPage })),
-)
-const MobileMessagesPage = lazy(() =>
-  import('../pages/mobile/MobileMessagesProfile').then((m) => ({ default: m.MobileMessagesPage })),
-)
-const MobileProfilePage = lazy(() =>
-  import('../pages/mobile/MobileMessagesProfile').then((m) => ({ default: m.MobileProfilePage })),
-)
-const MobilePropertyPage = lazy(() =>
-  import('../pages/mobile/MobileMessagesProfile').then((m) => ({ default: m.MobilePropertyPage })),
-)
+import MobileHomePage, { MobileExplorePage, MobileSavedPage } from '../pages/mobile/MobilePages'
+import {
+  MobileMessagesPage,
+  MobileProfilePage,
+  MobilePropertyPage,
+} from '../pages/mobile/MobileMessagesProfile'
 
 const LoginPage = lazy(() => import('../pages/LoginPage'))
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'))
@@ -289,8 +278,10 @@ function StaffRoute({ children }) {
 }
 
 export default function MobileRoutes() {
+  const location = useLocation()
+
   return (
-    <RouteErrorBoundary>
+    <RouteErrorBoundary resetKey={location.pathname}>
       <Suspense fallback={<RouteFallback />}>
         <Routes>
         <Route path="/" element={<MobileHomePage />} />

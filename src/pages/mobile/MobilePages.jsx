@@ -201,7 +201,7 @@ export function MobileExplorePage() {
   }, [search, visible.length, userLocation.isActive])
 
   return (
-    <MobileShell>
+    <MobileShell showContextual={false}>
       <MobileHeader title={t('mobile.search')} subtitle={t('mobile.findNextHome')} />
       <MobileExploreSearchRow
         value={search}

@@ -1,6 +1,18 @@
 const RELOAD_KEY = 'baytmiftah-chunk-reload'
 
-function reloadOnceForStaleChunks() {
+export function isStaleChunkError(reason) {
+  const message = reason?.message || String(reason || '')
+  return (
+    message.includes('Failed to fetch dynamically imported module') ||
+    message.includes('Importing a module script failed') ||
+    message.includes('error loading dynamically imported module') ||
+    message.includes('Failed to load module script') ||
+    message.includes('dynamically imported module') ||
+    /Loading chunk [\w-]+ failed/i.test(message)
+  )
+}
+
+export function reloadOnceForStaleChunks() {
   try {
     if (sessionStorage.getItem(RELOAD_KEY) === '1') return false
     sessionStorage.setItem(RELOAD_KEY, '1')
@@ -11,14 +23,10 @@ function reloadOnceForStaleChunks() {
   return true
 }
 
-function isStaleChunkError(reason) {
-  const message = reason?.message || String(reason || '')
-  return (
-    message.includes('Failed to fetch dynamically imported module') ||
-    message.includes('Importing a module script failed') ||
-    message.includes('error loading dynamically imported module') ||
-    message.includes('Failed to load module script')
-  )
+export function clearChunkReloadFlag() {
+  try {
+    sessionStorage.removeItem(RELOAD_KEY)
+  } catch { /* ignore */ }
 }
 
 export function installChunkReloadRecovery() {
