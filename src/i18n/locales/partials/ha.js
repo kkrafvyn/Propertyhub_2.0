@@ -1,0 +1,113 @@
+export default {
+  "localeName": "Hausa",
+  "nav": {
+    "compare": "Kwatanta",
+    "saved": "An adana",
+    "listProperty": "Sanya dukiyarku",
+    "language": "Harshe da yanki",
+    "openMenu": "Buɗe menu"
+  },
+  "search": {
+    "where": "Inda",
+    "type": "Nau'i",
+    "budget": "Kudin",
+    "searchDestinations": "Nemo wurare",
+    "anyType": "Duk nau'i",
+    "apartments": "Gidajen hawa",
+    "houses": "Gidaje",
+    "commercial": "Kasuwanci",
+    "addBudget": "Ƙara kudin",
+    "anywhere": "Ko'ina",
+    "search": "Nemo",
+    "whereTo": "Ina za ku je?"
+  },
+  "categories": {
+    "all": "Duk gidaje",
+    "apartment": "Gidajen hawa",
+    "house": "Gidaje",
+    "office": "Kasuwanci",
+    "verified": "An tabbatar",
+    "filters": "Tace",
+    "showMap": "Nuna taswira",
+    "showList": "Nuna jerin"
+  },
+  "mobile": {
+    "explore": "Bincika",
+    "search": "Nemo",
+    "saved": "An adana",
+    "inbox": "Saƙonni",
+    "profile": "Bayani",
+    "goBack": "Komawa",
+    "filters": "Tace",
+    "home": "Gida",
+    "agents": "Agents",
+    "searchListings": "Nemo gidaje…",
+    "homeScreen": {
+      "heroTitle": "Nemo gidanka na gaba da amana",
+      "heroSubtitle": "Dukiya da aka tabbatar. Agents da aka amince. Yanke shawara mafi kyau.",
+      "buy": "Sayi",
+      "rent": "Haya",
+      "lease": "Lease",
+      "stay": "Zama",
+      "townhouses": "Townhouse",
+      "land": "Kasa",
+      "shortStay": "Zama gajere",
+      "seeAll": "Duba duka",
+      "exploreStays": "Bincika zama",
+      "propertiesCount": "Dukiya {{count}}"
+    },
+    "findNextHome": "Nemo gidanka na gaba",
+    "viewList": "Jerin",
+    "viewMap": "Taswira",
+    "savedCount": "Dukiya {{count}}",
+    "noSavedTitle": "Babu wanda aka adana",
+    "noSavedDesc": "Danna zuciya don adanawa.",
+    "mapLoading": "Ana lodawa taswira…",
+    "useMyLocation": "Yi amfani da wajena",
+    "menu": "Menu"
+  },
+  "auth": {
+    "welcome": "Barka da zuwa BaytMiftah",
+    "finishSignup": "Kammala rajista",
+    "email": "Imel",
+    "password": "Kalmar sirri",
+    "continue": "Ci gaba",
+    "logIn": "Shiga",
+    "signUp": "Yi rajista",
+    "forgotPassword": "Manta kalmar sirri?",
+    "resetPassword": "Sake saita kalmar sirri"
+  },
+  "profile": {
+    "account": "Asusu",
+    "language": "Harshe",
+    "languageDesc": "Zaɓi harshen da kuka fi so.",
+    "logOut": "Fita"
+  },
+  "language": {
+    "title": "Harshe da yanki",
+    "choose": "Zaɓi harshe",
+    "groupGlobal": "Duniya",
+    "groupAfrica": "Afirka",
+    "groupAsia": "Asia & Pacific"
+  },
+  "common": {
+    "loading": "Ana lodawa…",
+    "close": "Rufe",
+    "verified": "An tabbatar",
+    "pending": "Ana jira"
+  },
+  "listing": {
+    "backToSearch": "Komawa bincike",
+    "requestViewing": "Nemi dubawa"
+  },
+  "home": {
+    "noMatches": "Babu daidaito",
+    "tryAdjusting": "Canza tace ko bincike",
+    "showResults": "Nuna sakamako"
+  },
+  "filters": {
+    "verifiedOnly": "An tabbatar kawai",
+    "minBedrooms": "Min. dakuna",
+    "any": "Duk"
+  }
+}

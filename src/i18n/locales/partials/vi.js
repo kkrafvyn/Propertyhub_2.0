@@ -1,0 +1,113 @@
+export default {
+  "localeName": "Tiếng Việt",
+  "nav": {
+    "compare": "So sánh",
+    "saved": "Đã lưu",
+    "listProperty": "Đăng tin",
+    "language": "Ngôn ngữ và khu vực",
+    "openMenu": "Mở menu"
+  },
+  "search": {
+    "where": "Địa điểm",
+    "type": "Loại",
+    "budget": "Ngân sách",
+    "searchDestinations": "Tìm điểm đến",
+    "anyType": "Mọi loại",
+    "apartments": "Căn hộ",
+    "houses": "Nhà",
+    "commercial": "Thương mại",
+    "addBudget": "Thêm ngân sách",
+    "anywhere": "Mọi nơi",
+    "search": "Tìm kiếm",
+    "whereTo": "Đi đâu?"
+  },
+  "categories": {
+    "all": "Tất cả",
+    "apartment": "Căn hộ",
+    "house": "Nhà",
+    "office": "Thương mại",
+    "verified": "Đã xác minh",
+    "filters": "Bộ lọc",
+    "showMap": "Bản đồ",
+    "showList": "Danh sách"
+  },
+  "mobile": {
+    "explore": "Khám phá",
+    "search": "Tìm kiếm",
+    "saved": "Đã lưu",
+    "inbox": "Tin nhắn",
+    "profile": "Hồ sơ",
+    "goBack": "Quay lại",
+    "filters": "Bộ lọc",
+    "home": "Trang chủ",
+    "agents": "Môi giới",
+    "searchListings": "Tìm bất động sản…",
+    "findNextHome": "Tìm ngôi nhà tiếp theo",
+    "viewList": "Danh sách",
+    "viewMap": "Bản đồ",
+    "homeScreen": {
+      "heroTitle": "Tìm ngôi nhà tiếp theo với sự tự tin",
+      "heroSubtitle": "Bất động sản đã xác minh. Môi giới đáng tin cậy.",
+      "buy": "Mua",
+      "rent": "Thuê",
+      "lease": "Cho thuê dài hạn",
+      "stay": "Lưu trú",
+      "townhouses": "Nhà phố",
+      "land": "Đất",
+      "shortStay": "Lưu trú ngắn",
+      "seeAll": "Xem tất cả",
+      "exploreStays": "Khám phá lưu trú",
+      "propertiesCount": "{{count}} bất động sản"
+    },
+    "savedCount": "{{count}} bất động sản",
+    "noSavedTitle": "Chưa có bất động sản đã lưu",
+    "noSavedDesc": "Nhấn trái tim để lưu tin.",
+    "mapLoading": "Đang tải bản đồ…",
+    "useMyLocation": "Dùng vị trí của tôi",
+    "menu": "Menu"
+  },
+  "auth": {
+    "welcome": "Chào mừng đến BaytMiftah",
+    "finishSignup": "Hoàn tất đăng ký",
+    "email": "Email",
+    "password": "Mật khẩu",
+    "continue": "Tiếp tục",
+    "logIn": "Đăng nhập",
+    "signUp": "Đăng ký",
+    "forgotPassword": "Quên mật khẩu?",
+    "resetPassword": "Đặt lại mật khẩu"
+  },
+  "profile": {
+    "account": "Tài khoản",
+    "language": "Ngôn ngữ",
+    "languageDesc": "Chọn ngôn ngữ ưa thích cho ứng dụng.",
+    "logOut": "Đăng xuất"
+  },
+  "language": {
+    "title": "Ngôn ngữ và khu vực",
+    "choose": "Chọn ngôn ngữ",
+    "groupGlobal": "Toàn cầu",
+    "groupAfrica": "Châu Phi",
+    "groupAsia": "Châu Á & Thái Bình Dương"
+  },
+  "common": {
+    "loading": "Đang tải…",
+    "close": "Đóng",
+    "verified": "Đã xác minh",
+    "pending": "Đang chờ"
+  },
+  "listing": {
+    "backToSearch": "Quay lại tìm kiếm",
+    "requestViewing": "Đặt lịch xem"
+  },
+  "home": {
+    "noMatches": "Không có kết quả khớp",
+    "tryAdjusting": "Thử điều chỉnh bộ lọc hoặc tìm kiếm",
+    "showResults": "Xem kết quả"
+  },
+  "filters": {
+    "verifiedOnly": "Chỉ đã xác minh",
+    "minBedrooms": "Phòng ngủ tối thiểu",
+    "any": "Bất kỳ"
+  }
+}

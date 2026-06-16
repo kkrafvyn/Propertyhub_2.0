@@ -1,5 +1,5 @@
-const CACHE = 'baytmiftah-v10'
-const RUNTIME = 'baytmiftah-runtime-v10'
+const CACHE = 'baytmiftah-v11'
+const RUNTIME = 'baytmiftah-runtime-v11'
 const PRECACHE = ['/manifest.webmanifest', '/brand/app-icon.svg', '/icons/icon-192.webp', '/icons/icon-512.webp']
 
 self.addEventListener('install', (event) => {
