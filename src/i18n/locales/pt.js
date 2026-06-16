@@ -499,146 +499,160 @@ export default {
   },
   "panels": {
     "upcoming": "Upcoming",
-    "recentLeads": "Recent leads",
+    "recentLeads": "Leads recentes",
     "topListings": "Top listings",
-    "paymentProviders": "Payment providers"
+    "paymentProviders": "Provedores de pagamento",
+    "members": "Membros",
+    "organizations": "Your organizations",
+    "permissionMatrix": "Matriz de permissões"
   },
   "workspace": {
     "titles": {
-      "agent": "Agent workspace",
-      "agency": "Agency workspace",
-      "admin": "Admin console",
-      "renter": "Renter workspace",
-      "manage": "Property management",
-      "finance": "Financial services",
-      "intelligence": "Market intelligence",
-      "developer": "Developer platform",
-      "enterprise": "Enterprise assets",
+      "agent": "Espaço de trabalho do agente",
+      "agency": "Espaço de trabalho da agência",
+      "admin": "Painel do Administrador",
+      "renter": "Espaço de trabalho do locatário",
+      "manage": "Gestão imobiliária",
+      "finance": "Serviços financeiros",
+      "intelligence": "Inteligência Competitiva de Mercado",
+      "developer": "Plataforma de desenvolvimento",
+      "enterprise": "Ativos empresariais",
       "smart": "Smart property"
     },
     "nav": {
-      "overview": "Overview",
-      "dashboard": "Dashboard",
-      "home": "Home",
+      "overview": "Visão geral",
+      "dashboard": "Painel de Controlo",
+      "home": "Casa",
       "leads": "Leads",
-      "listings": "Listings",
-      "calendar": "Calendar",
+      "listings": "Anúncios",
+      "calendar": "Agenda",
       "tasks": "Tasks",
-      "commissions": "Commissions",
-      "analytics": "Analytics",
-      "listingCoach": "Listing coach",
-      "branches": "Branches",
+      "commissions": "Comissões",
+      "analytics": "Analíticos",
+      "listingCoach": "Instrutor de anúncios",
+      "branches": "Sucursais",
       "team": "Team",
-      "properties": "Properties",
-      "payroll": "Payroll",
+      "properties": "Imóveis",
+      "payroll": "Retribuição",
       "trustScore": "Trust score",
-      "compliance": "Compliance",
+      "compliance": "Conformidade",
       "onboarding": "Onboarding",
-      "documents": "Documents",
-      "agencyVerification": "Agency verification",
+      "documents": "Documentos",
+      "agencyVerification": "Verificação da agência",
       "moderation": "Moderation",
-      "kycAml": "KYC / AML",
-      "fraudRisk": "Fraud & risk",
-      "aiOrchestration": "AI orchestration",
+      "kycAml": "CONHEÇA SEU CLIENTE(KYC) & COMBATE AO BRANQUEAMENTO DE CAPITAIS",
+      "fraudRisk": "Risco de Fraude",
+      "aiOrchestration": "Orquestração de IA",
       "valuationApi": "Valuation API",
-      "regionsCurrency": "Regions & currency",
-      "integrations": "Integrations",
-      "auditLog": "Audit log",
-      "leases": "Leases",
-      "rentPayments": "Rent payments",
-      "maintenance": "Maintenance",
-      "leaseSigning": "Lease signing",
+      "regionsCurrency": "Regiões e moeda",
+      "integrations": "Integrações",
+      "auditLog": "Registo de auditoria",
+      "leases": "Arrendamentos",
+      "rentPayments": "pagamentos de rendas,",
+      "maintenance": "Manutenção",
+      "leaseSigning": "Assinatura DA locação",
       "tenants": "Tenants",
       "workOrders": "Work orders",
-      "rentExpenses": "Rent & expenses",
-      "inspections": "Inspections",
-      "mortgages": "Mortgages",
-      "escrow": "Escrow",
-      "rentCollection": "Rent collection",
-      "insurance": "Insurance",
-      "marketData": "Market data",
-      "priceHeatmap": "Price heatmap",
-      "aiValuation": "AI valuation",
-      "projects": "Projects",
-      "construction": "Construction",
-      "buyerPortal": "Buyer portal",
+      "rentExpenses": "Despesas de aluguéis",
+      "inspections": "Inspecções",
+      "mortgages": "Crédito hipotecário",
+      "escrow": "Garantia",
+      "rentCollection": "cobrança de alugueres",
+      "insurance": "Seguros",
+      "marketData": "Dados de mercado",
+      "priceHeatmap": "Mapa de calor de preços",
+      "aiValuation": "Avaliação de IA",
+      "projects": "Projectos",
+      "construction": "Construção",
+      "buyerPortal": "Portal do comprador",
       "portfolios": "Portfolios",
-      "esgReporting": "ESG reporting",
-      "revenueForecast": "Revenue forecast",
-      "devices": "Devices",
-      "automations": "Automations",
-      "alertsLogs": "Alerts & logs",
+      "esgReporting": "Relatórios ESG",
+      "revenueForecast": "Previsão de receita",
+      "devices": "Dispositivos",
+      "automations": "Automações",
+      "alertsLogs": "Alertas e registos",
       "userManagement": "User management",
       "utilities": "Utilities",
-      "credit": "Housing credit",
-      "organizations": "Organizations"
+      "credit": "CREDITO HABITA00",
+      "organizations": "Organizações"
     }
   },
   "hubs": {
     "admin": {
       "agencies": {
-        "subtitle": "Review and approve new agencies",
-        "title": "Agency verification"
+        "subtitle": "Revisar e aprovar novas agências",
+        "title": "Verificação da agência"
       },
       "ai": {
-        "subtitle": "Cross-platform AI modules and request volume",
-        "title": "BaytMiftah AI orchestration"
+        "subtitle": "Módulos de IA multiplataforma e volume de solicitações",
+        "title": "Orquestração BaytMiftah AI"
       },
       "audit": {
-        "subtitle": "Platform activity trail",
-        "title": "Audit log"
+        "subtitle": "Trilha DE atividade DA plataforma",
+        "title": "Registo de auditoria"
       },
       "dashboard": {
         "loadedSubtitle": "Trust, verification, AI, and global operations",
-        "subtitle": "Loading…",
-        "title": "Platform overview"
+        "subtitle": "Carregando…",
+        "title": "I. Visão geral da plataforma",
+        "stats": {
+          "pendingAgencies": "Agências pendentes",
+          "moderationQueue": "Fila de Moderação",
+          "kycPending": "KYC pendente",
+          "fraudAlerts": "Alertas de fraude",
+          "auditEvents": "Eventos de auditoria"
+        }
       },
       "fraud": {
-        "subtitle": "Automated anomaly detection across listings and users",
-        "title": "Fraud detection & risk scores"
+        "subtitle": "Detecção automatizada de anomalias em anúncios e utilizadores",
+        "title": "Detecção de fraudes e pontuações de risco"
       },
       "global": {
-        "subtitle": "Market expansion and localization settings",
-        "title": "Multi-region & multi-currency"
+        "subtitle": "Expansão do mercado e configurações de localização",
+        "title": "Multi-região e multi-moeda"
       },
       "kyc": {
-        "subtitle": "Identity verification and anti-money laundering checks",
-        "title": "KYC / AML"
+        "subtitle": "Verificação de identidade e verificações contra lavagem de dinheiro",
+        "title": "CONHEÇA SEU CLIENTE(KYC) & COMBATE AO BRANQUEAMENTO DE CAPITAIS"
       },
       "moderation": {
         "subtitle": "Review submitted listings — approve to publish on marketplace",
-        "title": "Moderation queue"
+        "title": "Fila de Moderação"
       },
       "valuationApi": {
-        "subtitle": "Data product for institutional integrations",
+        "subtitle": "Produto de dados para integrações institucionais",
         "title": "Valuation API"
       },
       "users": {
-        "subtitle": "Promote users to new roles across the platform",
+        "subtitle": "Promova os utilizadores a novas funções em toda a plataforma",
         "title": "User management"
+      },
+      "integrations": {
+        "subtitle": "DocuSign Connect, webhooks e configuração de terceiros",
+        "title": "Integrações"
       }
     },
     "agency": {
       "analytics": {
-        "subtitle": "KPIs and performance trends",
-        "title": "Revenue analytics"
+        "subtitle": "KPIs e tendências de desempenho",
+        "title": "Análise de receita"
       },
       "branches": {
-        "subtitle": "Manage offices and regional teams",
-        "title": "Branches"
+        "subtitle": "Gerir escritórios e equipas regionais",
+        "title": "Sucursais"
       },
       "compliance": {
-        "subtitle": "Licenses, KYC, and regulatory requirements",
-        "title": "Compliance center"
+        "subtitle": "Licenças, KYC e requisitos regulamentares",
+        "title": "Centro de conformidade"
       },
       "dashboard": {
         "loadedSubtitle": "{{name}} · Trust score {{trustScore}}",
-        "subtitle": "Loading your dashboard…",
-        "title": "Agency overview",
+        "subtitle": "A carregar o seu painel...",
+        "title": "Detalhes da Unidade IGM",
         "stats": {
-          "activeListings": "Active listings",
+          "activeListings": "Listagens ativas",
           "teamMembers": "Team members",
-          "leadsThisMonth": "Leads this month",
+          "leadsThisMonth": "Leads este mês",
           "trustScore": "Trust score"
         }
       },
@@ -647,19 +661,19 @@ export default {
         "title": "Leads"
       },
       "onboarding": {
-        "subtitle": "Complete verification to unlock enterprise tools",
+        "subtitle": "Conclua a verificação para desbloquear ferramentas empresariais",
         "title": "Onboarding"
       },
       "payroll": {
-        "subtitle": "Agent compensation and payout status",
-        "title": "Payroll & commissions"
+        "subtitle": "Compensação do agente e estado do pagamento",
+        "title": "Folha de pagamento e comissões"
       },
       "properties": {
-        "subtitle": "Manage agency listings",
-        "title": "Properties"
+        "subtitle": "Gerir anúncios de agências",
+        "title": "Imóveis"
       },
       "team": {
-        "subtitle": "Manage agents and permissions",
+        "subtitle": "Gerir agentes e permissões",
         "title": "Team"
       },
       "trust": {
@@ -668,196 +682,385 @@ export default {
     },
     "agent": {
       "analytics": {
-        "subtitle": "Performance across listings and leads",
-        "title": "Analytics"
+        "subtitle": "Desempenho entre anúncios e leads",
+        "title": "Analíticos"
       },
       "calendar": {
         "subtitle": "Viewings, calls, and tasks",
-        "title": "Calendar"
+        "title": "Agenda"
       },
       "coach": {
-        "subtitle": "Pre-publish quality scoring",
-        "title": "AI Listing coach"
+        "subtitle": "Pontuação de qualidade pré-publicação",
+        "title": "Instrutor de listagem de IA"
       },
       "commissions": {
         "subtitle": "Track paid, pending, and pipeline earnings",
-        "title": "Commissions"
+        "title": "Comissões"
       },
       "dashboard": {
         "loadedSubtitle": "Your pipeline at a glance",
-        "subtitle": "Loading…",
-        "title": "Agent dashboard",
+        "subtitle": "Carregando…",
+        "title": "Painel Principal do Agente",
         "stats": {
-          "activeListings": "Active listings",
-          "leadsThisWeek": "Leads this week",
+          "activeListings": "Listagens ativas",
+          "leadsThisWeek": "Leads esta semana",
           "viewingsScheduled": "Viewings scheduled",
-          "conversionRate": "Conversion rate"
+          "conversionRate": "Taxa de conversão"
         },
-        "commissionPipeline": "Commission pipeline: {{value}}"
+        "commissionPipeline": "Pipeline de comissões: {{value}}"
       },
       "leads": {
-        "pipelineSubtitle": "Lead → Contacted → Viewing → Offer → Closed",
-        "subtitle": "Loading…",
-        "title": "Lead pipeline"
+        "pipelineSubtitle": "→ Oferta de → visualização → contactada do lead → encerrada",
+        "subtitle": "Carregando…",
+        "title": "Pipeline de chumbo"
       },
       "listings": {
-        "subtitle": "Manage and optimize your portfolio",
-        "title": "My listings"
+        "subtitle": "Gerir e otimizar o seu portfólio",
+        "title": "Meus anúncios"
       },
       "tasks": {
-        "subtitle": "Follow-ups, documents, and listing updates",
+        "subtitle": "Acompanhamentos, documentos e atualizações do anúncio",
         "title": "Tasks"
       }
     },
     "developer": {
       "buyers": {
-        "subtitle": "Pre-sales pipeline and payment progress",
-        "title": "Buyer portal"
+        "subtitle": "Funil de pré-vendas e progresso do pagamento",
+        "title": "Portal do comprador"
       },
       "construction": {
-        "subtitle": "Milestones across active developments",
-        "title": "Construction tracking"
+        "subtitle": "Marcos em desenvolvimentos ativos",
+        "title": "Rastreamento de construção"
       },
       "hub": {
-        "title": "Developer platform"
+        "title": "Plataforma de desenvolvimento",
+        "subtitle": "Gerenciamento de projetos",
+        "stats": {
+          "activeProjects": "Projetos ativos",
+          "avgProgress": "Progresso médio",
+          "totalUnits": "Total units",
+          "unitsSold": "Units sold"
+        }
       },
       "projects": {
-        "subtitle": "Development portfolio and unit inventory",
-        "title": "Projects"
+        "subtitle": "Portfólio de desenvolvimento e inventário da unidade",
+        "title": "Projectos"
+      },
+      "platformApi": {
+        "subtitle": "Global Real Estate OS — arquitetura DE produção",
+        "title": "API da plataforma"
       }
     },
     "enterprise": {
       "esg": {
-        "title": "ESG reporting"
+        "title": "Relatórios ESG",
+        "stats": {
+          "carbonIntensity": "Carbon Intensity",
+          "renewableShare": "Quota renovável.",
+          "socialHousingUnits": "Social housing units"
+        }
       },
       "forecast": {
-        "subtitle": "Quarterly NOI projections",
-        "title": "Revenue forecast"
+        "subtitle": "Projeções trimestrais de NOI",
+        "title": "Previsão de receita"
       },
       "hub": {
-        "title": "Enterprise asset management"
+        "title": "Gestão de ativos empresariais",
+        "subtitle": "Carteiras institucionais",
+        "stats": {
+          "assets": "Activos",
+          "aum": "ativos sob gestão",
+          "countries": "Países",
+          "occupancy": "Ocupação"
+        }
       },
       "portfolios": {
-        "subtitle": "Cross-border asset overview",
-        "title": "Multi-portfolio dashboard"
+        "subtitle": "Visão geral dos ativos transfronteiriços",
+        "title": "Painel de vários portfólios"
+      },
+      "organizations": {
+        "links": {
+          "organizations": {
+            "desc": "REITs, fundos e operadores",
+            "label": "Organizações"
+          },
+          "permissions": {
+            "desc": "Role-based org access",
+            "label": "Permissões"
+          },
+          "portfolios": {
+            "desc": "Detenções de activos",
+            "label": "Portfolios"
+          },
+          "users": {
+            "desc": "Membros em todas as organizações",
+            "label": "Users"
+          }
+        },
+        "panel": "Your organizations",
+        "stats": {
+          "organizations": "Organizações",
+          "totalMembers": "Total members"
+        },
+        "subtitle": "Estrutura empresarial de várias entidades",
+        "title": "Organizações"
+      },
+      "permissions": {
+        "panel": "Matriz de permissões",
+        "subtitle": "Role → capability matrix per organization",
+        "title": "Permissões"
+      },
+      "users": {
+        "empty": "Select an organization to view members.",
+        "panel": "Membros",
+        "subtitle": "Membros e convites",
+        "title": "organização"
       }
     },
     "finance": {
       "commissionSettlement": {
-        "subtitle": "Pay agents via Paystack or Stripe payout rails",
-        "title": "Commission settlement"
+        "subtitle": "Pagar aos agentes através dos trilhos de pagamento Paystack ou Stripe",
+        "title": "Liquidação da comissão"
       },
       "escrow": {
         "subtitle": "Secure buyer deposits held until closing conditions are met",
-        "title": "Escrow platform"
+        "title": "Plataforma Escrow"
       },
       "hub": {
-        "subtitle": "Payments powered by Paystack (Africa) and Stripe (international)",
-        "title": "Financial services",
+        "subtitle": "Pagamentos com Paystack (África) e Stripe (internacional)",
+        "title": "Serviços financeiros",
         "stats": {
-          "escrowFunded": "Escrow funded",
-          "pendingCommissions": "Pending commissions",
-          "mortgagePartners": "Mortgage partners"
+          "escrowFunded": "Financiado por caução",
+          "pendingCommissions": "Comissões Pendentes",
+          "mortgagePartners": "Parceiros hipotecários"
         }
       },
       "insurance": {
-        "subtitle": "Property, landlord, and tenant coverage",
-        "title": "Insurance marketplace"
+        "subtitle": "Cobertura de propriedade, proprietário e inquilino",
+        "title": "Mercado de seguros"
       },
       "mortgageMarketplace": {
-        "subtitle": "Compare partner lenders and apply in-app",
-        "title": "Mortgage marketplace"
+        "subtitle": "Compare os credores parceiros e inscreva-se na aplicação",
+        "title": "Mercado hipotecário"
       },
       "mortgageCalculator": {
-        "subtitle": "Estimate monthly payments",
-        "title": "Mortgage calculator"
+        "subtitle": "Estimativa de pagamentos mensais",
+        "title": "Calculadora de Financiamento"
       },
       "rentCollection": {
-        "subtitle": "Collect rent via Paystack (Africa) or Stripe (international)",
-        "title": "Rent collection rails"
+        "subtitle": "Recolha a renda através do Paystack (África) ou Stripe (internacional)",
+        "title": "Trilhos de arrecadação de aluguéis"
       }
     },
     "intelligence": {
       "heatmap": {
-        "subtitle": "Demand intensity across Accra metro",
-        "title": "Price heatmap"
+        "subtitle": "Intensidade da procura no metro de Acra",
+        "title": "Mapa de calor de preços"
       },
       "hub": {
-        "subtitle": "Market data, heatmaps, and AI valuation for Ghana",
-        "title": "Real estate intelligence"
+        "subtitle": "Dados de mercado, mapas de calor e avaliação de IA para Gana",
+        "title": "Inteligência Imobiliária",
+        "stats": {
+          "avgDaysOnMarket": "Média de dias no mercado",
+          "medianPrice": "Preço mediano",
+          "transactions6mo": "Transactions (6mo)",
+          "yoyChange": "YoY change"
+        }
       },
       "marketIntelligence": {
-        "title": "Market intelligence"
+        "title": "Inteligência Competitiva de Mercado"
       },
       "valuationEngine": {
-        "subtitle": "Instant estimates powered by comparable sales data",
-        "title": "AI valuation engine"
+        "subtitle": "Estimativas instantâneas alimentadas por dados de vendas comparáveis",
+        "title": "Mecanismo de avaliação de IA"
       }
     },
     "manage": {
       "finance": {
         "subtitle": "Track income and operating costs",
-        "title": "Rent collection & expenses"
+        "title": "Despesas com cobrança",
+        "stats": {
+          "rentCollected": "Renda cobrada",
+          "rentOutstanding": "Aluguer pendente",
+          "totalArrears": "Total arrears",
+          "utilityArrears": "Utility arrears"
+        }
       },
       "hub": {
-        "title": "Property management"
+        "title": "Gestão imobiliária",
+        "stats": {
+          "buildings": "Edifícios",
+          "collectedMtd": "MTD recolhido",
+          "occupancy": "Ocupação",
+          "totalArrears": "Total arrears",
+          "units": "Units"
+        },
+        "subtitle": "Visão geral do portfólio"
       },
       "inspections": {
-        "subtitle": "Move-in, quarterly, and move-out inspections",
-        "title": "Inspection reports"
+        "subtitle": "Inspeções de entrada, trimestrais e de saída",
+        "title": "Relatórios de inspeção"
       },
       "tenants": {
-        "subtitle": "Occupancy, leases, and rent balances",
+        "subtitle": "Saldos de ocupação, arrendamentos e aluguéis",
         "title": "Tenant management"
       },
       "workOrders": {
-        "subtitle": "Maintenance dispatch and vendor network",
+        "subtitle": "Despacho de manutenção e rede de fornecedores",
         "title": "Work orders & vendors"
+      },
+      "applications": {
+        "empty": "Sem aplicações",
+        "subtitle": "Review tenant applications for your listings",
+        "title": "Pedidos de aluguer"
+      },
+      "utilities": {
+        "subtitle": "Provedores de propriedade · medição · mecanismo de faturamento",
+        "title": "Utility config"
       }
     },
     "renter": {
       "hub": {
-        "title": "Renter workspace",
+        "title": "Espaço de trabalho do locatário",
         "subtitle": "Your rental journey",
         "loadedSubtitle": "{{unit}} · GHS {{rent}}/mo",
         "stats": {
-          "currentRent": "Current rent",
-          "leaseEnds": "Lease ends",
-          "landlord": "Landlord"
+          "currentRent": "Aluguer atual",
+          "leaseEnds": "Fim DA locação",
+          "landlord": "Senhorio",
+          "eligibility": "Elegibilidade",
+          "housingCreditScore": "Pontuação de crédito habitacional",
+          "riskBand": "Risk band"
         }
       },
       "leaseSigning": {
         "subtitle": "Review and sign lease documents securely",
-        "title": "Digital lease signing"
+        "title": "Assinatura digital de leasing"
       },
       "leases": {
         "subtitle": "View and manage your rental agreements",
-        "title": "Lease management"
+        "title": "Gestão de arrendamento"
       },
       "maintenance": {
-        "subtitle": "Report issues and track repairs",
-        "title": "Maintenance requests"
+        "subtitle": "Relatar problemas e acompanhar reparos",
+        "title": "Solicitações de manutenção"
       },
       "payments": {
-        "subtitle": "Pay with Paystack (mobile money, bank) or Stripe (international cards)",
-        "title": "Rent payments"
+        "subtitle": "Pague com Paystack (dinheiro móvel, banco) ou Stripe (cartões internacionais)",
+        "title": "pagamentos de rendas,"
+      },
+      "credit": {
+        "stats": {
+          "eligibility": "Elegibilidade",
+          "housingCreditScore": "Pontuação de crédito habitacional",
+          "late": "Atrasado",
+          "missed": "Falhados",
+          "onTime": "Sobre o tempo",
+          "riskBand": "Risk band"
+        },
+        "subtitle": "Your rental reliability score",
+        "title": "CREDITO HABITA00"
+      },
+      "rentalApplication": {
+        "subtitle": "Inscreva-se para alugar uma propriedade",
+        "title": "Pedido de aluguer"
+      },
+      "utilities": {
+        "subtitle": "ECG, água, internet e gás",
+        "subtitleBreakdown": "Quebra de ECG, água, internet e gás",
+        "subtitleStay": "Incluído na sua estadia",
+        "title": "Utilities"
       }
     },
     "smart": {
       "alerts": {
         "subtitle": "Security notifications and device history",
-        "title": "Alerts & event logs"
+        "title": "Alertas e registos de eventos"
       },
       "automations": {
         "subtitle": "Triggers and actions for your building",
-        "title": "Automation engine"
+        "title": "Mecanismo de automação"
       },
       "devices": {
-        "subtitle": "Monitor and control connected devices",
-        "title": "Device dashboard"
+        "subtitle": "Monitorizar e controlar dispositivos ligados",
+        "title": "Painel do dispositivo"
       },
       "hub": {
-        "title": "Smart property"
+        "title": "Smart property",
+        "links": {
+          "alerts": {
+            "desc": "Security and device events",
+            "label": "Alertas e registos de eventos"
+          },
+          "automations": {
+            "desc": "Rules and scheduled actions",
+            "label": "Mecanismo de automação"
+          },
+          "devices": {
+            "desc": "Fechaduras, câmaras, sensores, clima",
+            "label": "Painel do dispositivo"
+          },
+          "mobile": {
+            "desc": "Dispositivos de controlo em movimento",
+            "label": "Aplicação móvel"
+          }
+        },
+        "stats": {
+          "alertsToday": "Alertas hoje",
+          "automations": "Automações",
+          "devicesOnline": "Dispositivos online",
+          "energyToday": "Energia hoje"
+        },
+        "subtitle": "Gestão de edifícios interligados"
+      }
+    },
+    "buyer": {
+      "aiAdvisor": {
+        "subtitle": "Preços, bairros e potencial de investimento",
+        "title": "Consultor de compradores de IA"
+      },
+      "financingCenter": {
+        "subtitle": "Hipotecas e pré-qualificação",
+        "title": "Centro de financiamento"
+      },
+      "offerRoom": {
+        "subtitle": "Submit and negotiate offers",
+        "title": "Oferecer quarto"
+      },
+      "transactionCenter": {
+        "subtitle": "Ofertas, negociações e encerramento",
+        "title": "Transaction center"
+      }
+    },
+    "modals": {
+      "scheduleInspection": {
+        "title": "Schedule inspection",
+        "submit": "Schedule",
+        "trigger": "Schedule inspection"
+      },
+      "addTenant": {
+        "title": "Add tenant",
+        "submit": "Add tenant"
+      },
+      "inviteTeamMember": {
+        "title": "Invite team member",
+        "submit": "Send invite"
+      },
+      "addComplianceItem": {
+        "title": "Add compliance item",
+        "submit": "Add item"
+      },
+      "addBranch": {
+        "title": "Add branch",
+        "submit": "Add branch"
+      },
+      "createAutomation": {
+        "title": "Create automation",
+        "submit": "Create"
+      },
+      "addDevice": {
+        "title": "Add device",
+        "submit": "Add device"
       }
     }
   },

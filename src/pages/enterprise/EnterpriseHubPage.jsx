@@ -1,30 +1,32 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import EnterpriseShell from '../../components/EnterpriseShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { HubLinkGrid, StatCard, StatGrid } from '../../components/ui/AirbnbUI'
 import { fetchEnterpriseDashboard } from '../../services/enterprise-service'
-
-const links = [
-  { to: '/enterprise/portfolios', label: 'Multi-country portfolios', desc: 'Assets across Ghana, Nigeria, Kenya' },
-  { to: '/enterprise/esg', label: 'ESG reporting', desc: 'Sustainability and governance metrics' },
-  { to: '/enterprise/forecast', label: 'Revenue forecast', desc: 'NOI projections by quarter' },
-]
+import { useTranslation } from '../../i18n/LocaleContext'
 
 function Hub() {
+  const { t } = useTranslation()
   const [org, setOrg] = useState(null)
+
+  const links = useMemo(() => [
+    { to: '/enterprise/portfolios', label: t('hubs.enterprise.portfolios.title'), desc: t('hubs.enterprise.portfolios.subtitle') },
+    { to: '/enterprise/esg', label: t('hubs.enterprise.esg.title'), desc: t('workspace.nav.esgReporting') },
+    { to: '/enterprise/forecast', label: t('hubs.enterprise.forecast.title'), desc: t('hubs.enterprise.forecast.subtitle') },
+  ], [t])
 
   useEffect(() => {
     fetchEnterpriseDashboard().then(({ org: o }) => setOrg(o))
   }, [])
 
   return (
-    <EnterpriseShell titleKey="hubs.enterprise.hub.title" subtitle={org?.name || 'Institutional portfolios'}>
+    <EnterpriseShell titleKey="hubs.enterprise.hub.title" subtitle={org?.name || t('hubs.enterprise.hub.subtitle')}>
       {org && (
         <StatGrid>
-          <StatCard label="Countries" value={org.countries} />
-          <StatCard label="Assets" value={org.assets} />
-          <StatCard label="AUM" value={org.aum} />
-          <StatCard label="Occupancy" value={org.occupancy} />
+          <StatCard label={t('hubs.enterprise.hub.stats.countries')} value={org.countries} />
+          <StatCard label={t('hubs.enterprise.hub.stats.assets')} value={org.assets} />
+          <StatCard label={t('hubs.enterprise.hub.stats.aum')} value={org.aum} />
+          <StatCard label={t('hubs.enterprise.hub.stats.occupancy')} value={org.occupancy} />
         </StatGrid>
       )}
       <HubLinkGrid links={links} />

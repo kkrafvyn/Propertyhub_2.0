@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import SmartShell from '../../components/SmartShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import QuickFormModal, { ModalField, modalInputClassName } from '../../components/ui/QuickFormModal'
+import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchAutomations, toggleAutomation, createAutomation } from '../../services/smart-service'
 
 function Automations() {
+  const { t } = useTranslation()
   const [rules, setRules] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', trigger: '', action: '' })
@@ -53,10 +55,10 @@ function Automations() {
           </li>
         ))}
       </ul>
-      <button type="button" onClick={() => setShowForm(true)} className="mt-4 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">Create automation</button>
+      <button type="button" onClick={() => setShowForm(true)} className="mt-4 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">{t('hubs.modals.createAutomation.title')}</button>
 
       {showForm && (
-        <QuickFormModal title="Create automation" onClose={() => setShowForm(false)} onSubmit={handleCreate} submitLabel="Create" loading={loading}>
+        <QuickFormModal title={t('hubs.modals.createAutomation.title')} onClose={() => setShowForm(false)} onSubmit={handleCreate} submitLabel={t('hubs.modals.createAutomation.submit')} loading={loading}>
           <ModalField label="Name">
             <input className={modalInputClassName()} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Turn off AC when window opens" />
           </ModalField>

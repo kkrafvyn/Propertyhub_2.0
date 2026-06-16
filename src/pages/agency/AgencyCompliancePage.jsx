@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import AgencyShell from '../../components/AgencyShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import QuickFormModal, { ModalField, modalInputClassName } from '../../components/ui/QuickFormModal'
+import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchCompliance, addComplianceItem } from '../../services/agency-service'
 
 const statusStyles = {
@@ -23,6 +24,7 @@ function normalizeItem(item) {
 }
 
 function Compliance() {
+  const { t } = useTranslation()
   const [items, setItems] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ item: '', owner: '', due: '' })
@@ -58,11 +60,11 @@ function Compliance() {
         ))}
       </div>
       <button type="button" onClick={() => setShowForm(true)} className="mt-6 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">
-        Add compliance item
+        {t('hubs.modals.addComplianceItem.title')}
       </button>
 
       {showForm && (
-        <QuickFormModal title="Add compliance item" onClose={() => setShowForm(false)} onSubmit={handleAdd} submitLabel="Add item" loading={loading}>
+        <QuickFormModal title={t('hubs.modals.addComplianceItem.title')} onClose={() => setShowForm(false)} onSubmit={handleAdd} submitLabel={t('hubs.modals.addComplianceItem.submit')} loading={loading}>
           <ModalField label="Requirement">
             <input className={modalInputClassName()} value={form.item} onChange={(e) => setForm((f) => ({ ...f, item: e.target.value }))} placeholder="License renewal" />
           </ModalField>

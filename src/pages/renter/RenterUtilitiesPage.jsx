@@ -7,8 +7,10 @@ import { utilityTypeLabel, utilityIcon } from '../../lib/utilities'
 import { fetchUtilityDashboard, fetchMeterReadings, fetchPrepaidBalances, topUpPrepaid } from '../../services/utility-service'
 import { payUtility, payAllUtilities } from '../../services/payments-service'
 import { getDefaultProvider } from '../../lib/payment-providers'
+import { useTranslation } from '../../i18n/LocaleContext'
 
 function Utilities() {
+  const { t } = useTranslation()
   const [dashboard, setDashboard] = useState(null)
   const [readings, setReadings] = useState([])
   const [prepaid, setPrepaid] = useState([])
@@ -104,15 +106,15 @@ function Utilities() {
 
   if (!dashboard) {
     return (
-      <RenterShell title="Utilities" subtitle="ECG, water, internet & gas">
-        <p className="text-sm text-ink-secondary">Loading utility account…</p>
+      <RenterShell titleKey="hubs.renter.utilities.title" subtitleKey="hubs.renter.utilities.subtitle">
+        <p className="text-sm text-ink-secondary">{t('common.loading')}</p>
       </RenterShell>
     )
   }
 
   if (dashboard.accounts?.length === 0 && !isInclusive) {
     return (
-      <RenterShell title="Utilities" subtitle="Included in your stay">
+      <RenterShell titleKey="hubs.renter.utilities.title" subtitleKey="hubs.renter.utilities.subtitleStay">
         <div className="rounded-xl border border-brand/30 bg-surface-hover px-4 py-6 text-center">
           <p className="text-4xl">🏠</p>
           <p className="mt-2 font-semibold text-ink">Utilities included</p>
@@ -125,7 +127,7 @@ function Utilities() {
   }
 
   return (
-    <RenterShell title="Utilities" subtitle="ECG, water, internet & gas breakdown">
+    <RenterShell titleKey="hubs.renter.utilities.title" subtitleKey="hubs.renter.utilities.subtitleBreakdown">
       <IntegrationsBanner showPayments />
 
       {message && (

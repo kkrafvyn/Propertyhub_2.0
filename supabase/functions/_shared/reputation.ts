@@ -1,6 +1,16 @@
-/** Reputation score from reviews, KYC, and payment history */
+/** Reputation score from reviews, KYC, payment history, and responsiveness */
 
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+function buildBadges(factors: Record<string, unknown>, score: number) {
+  const badges: string[] = []
+  if (score >= 85) badges.push('Top rated')
+  if (Number(factors.review_count ?? 0) >= 3) badges.push('Reviewed host')
+  if (factors.kyc) badges.push('Verified identity')
+  if (Number(factors.payments ?? 0) >= 2) badges.push('Trusted payer')
+  if (Number(factors.response_score ?? 0) >= 85) badges.push('Fast responder')
+  return badges
+}
 
 export async function computeReputationScore(admin: SupabaseClient, userId: string) {
   const { data: reviews } = await admin.from('reviews').select('rating').eq('user_id', userId)
@@ -25,7 +35,25 @@ export async function computeReputationScore(admin: SupabaseClient, userId: stri
     .eq('status', 'completed')
   const paymentBonus = Math.min(15, (paymentCount ?? 0) * 2)
 
-  const score = Math.min(100, Math.max(0, 50 + reviewBonus + kycBonus + paymentBonus))
+  const { count: msgCount } = await admin
+    .from('lead_messages')
+    .select('*', { count: 'exact', head: true })
+    .eq('agent_id', userId)
+  const responseScore = Math.min(100, 70 + Math.min(30, (msgCount ?? 0) * 3))
+  const responseBonus = Math.min(10, Math.floor(responseScore / 15))
+
+  const score = Math.min(100, Math.max(0, 50 + reviewBonus + kycBonus + paymentBonus + responseBonus))
+
+  const factors = {
+    review_count: reviews?.length ?? 0,
+    review_avg: reviewAvg,
+    payments: paymentCount ?? 0,
+    kyc: kyc?.entity_type ?? null,
+    response_score: responseScore,
+    response_messages: msgCount ?? 0,
+  }
+
+  const badges = buildBadges(factors, score)
 
   const row = {
     user_id: userId,
@@ -33,12 +61,12 @@ export async function computeReputationScore(admin: SupabaseClient, userId: stri
     review_avg: reviewAvg,
     kyc_bonus: kycBonus,
     payment_bonus: paymentBonus,
-    factors: { review_count: reviews?.length ?? 0, payments: paymentCount ?? 0, kyc: kyc?.entity_type ?? null },
+    factors: { ...factors, badges },
     updated_at: new Date().toISOString(),
   }
 
   await admin.from('reputation_scores').upsert(row)
-  return row
+  return { ...row, badges }
 }
 
 export async function computePropertyScore(admin: SupabaseClient, listingId: string) {

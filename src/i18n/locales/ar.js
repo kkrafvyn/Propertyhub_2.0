@@ -501,7 +501,10 @@ export default {
     "upcoming": "Upcoming",
     "recentLeads": "Recent leads",
     "topListings": "Top listings",
-    "paymentProviders": "Payment providers"
+    "paymentProviders": "Payment providers",
+    "members": "Members",
+    "organizations": "Your organizations",
+    "permissionMatrix": "Permission matrix"
   },
   "workspace": {
     "titles": {
@@ -591,7 +594,14 @@ export default {
       "dashboard": {
         "loadedSubtitle": "Trust, verification, AI, and global operations",
         "subtitle": "Loading…",
-        "title": "Platform overview"
+        "title": "Platform overview",
+        "stats": {
+          "pendingAgencies": "Pending agencies",
+          "moderationQueue": "Moderation queue",
+          "kycPending": "KYC pending",
+          "fraudAlerts": "Fraud alerts",
+          "auditEvents": "Audit events"
+        }
       },
       "fraud": {
         "subtitle": "Automated anomaly detection across listings and users",
@@ -616,6 +626,10 @@ export default {
       "users": {
         "subtitle": "Promote users to new roles across the platform",
         "title": "User management"
+      },
+      "integrations": {
+        "subtitle": "DocuSign Connect, webhooks, and third-party setup",
+        "title": "Integrations"
       }
     },
     "agency": {
@@ -719,27 +733,88 @@ export default {
         "title": "Construction tracking"
       },
       "hub": {
-        "title": "Developer platform"
+        "title": "Developer platform",
+        "subtitle": "Project management",
+        "stats": {
+          "activeProjects": "Active projects",
+          "avgProgress": "Avg progress",
+          "totalUnits": "Total units",
+          "unitsSold": "Units sold"
+        }
       },
       "projects": {
         "subtitle": "Development portfolio and unit inventory",
         "title": "Projects"
+      },
+      "platformApi": {
+        "subtitle": "Global Real Estate OS — production architecture",
+        "title": "Platform API"
       }
     },
     "enterprise": {
       "esg": {
-        "title": "ESG reporting"
+        "title": "ESG reporting",
+        "stats": {
+          "carbonIntensity": "Carbon intensity",
+          "renewableShare": "Renewable share",
+          "socialHousingUnits": "Social housing units"
+        }
       },
       "forecast": {
         "subtitle": "Quarterly NOI projections",
         "title": "Revenue forecast"
       },
       "hub": {
-        "title": "Enterprise asset management"
+        "title": "Enterprise asset management",
+        "subtitle": "Institutional portfolios",
+        "stats": {
+          "assets": "Assets",
+          "aum": "AUM",
+          "countries": "Countries",
+          "occupancy": "Occupancy"
+        }
       },
       "portfolios": {
         "subtitle": "Cross-border asset overview",
         "title": "Multi-portfolio dashboard"
+      },
+      "organizations": {
+        "links": {
+          "organizations": {
+            "desc": "REITs, funds, and operators",
+            "label": "Organizations"
+          },
+          "permissions": {
+            "desc": "Role-based org access",
+            "label": "Permissions"
+          },
+          "portfolios": {
+            "desc": "Asset holdings",
+            "label": "Portfolios"
+          },
+          "users": {
+            "desc": "Members across organizations",
+            "label": "Users"
+          }
+        },
+        "panel": "Your organizations",
+        "stats": {
+          "organizations": "Organizations",
+          "totalMembers": "Total members"
+        },
+        "subtitle": "Multi-entity enterprise structure",
+        "title": "Organizations"
+      },
+      "permissions": {
+        "panel": "Permission matrix",
+        "subtitle": "Role → capability matrix per organization",
+        "title": "Permissions"
+      },
+      "users": {
+        "empty": "Select an organization to view members.",
+        "panel": "Members",
+        "subtitle": "Members and invitations",
+        "title": "Organization users"
       }
     },
     "finance": {
@@ -784,7 +859,13 @@ export default {
       },
       "hub": {
         "subtitle": "Market data, heatmaps, and AI valuation for Ghana",
-        "title": "Real estate intelligence"
+        "title": "Real estate intelligence",
+        "stats": {
+          "avgDaysOnMarket": "Avg days on market",
+          "medianPrice": "Median price",
+          "transactions6mo": "Transactions (6mo)",
+          "yoyChange": "YoY change"
+        }
       },
       "marketIntelligence": {
         "title": "Market intelligence"
@@ -797,10 +878,24 @@ export default {
     "manage": {
       "finance": {
         "subtitle": "Track income and operating costs",
-        "title": "Rent collection & expenses"
+        "title": "Rent collection & expenses",
+        "stats": {
+          "rentCollected": "Rent collected",
+          "rentOutstanding": "Rent outstanding",
+          "totalArrears": "Total arrears",
+          "utilityArrears": "Utility arrears"
+        }
       },
       "hub": {
-        "title": "Property management"
+        "title": "Property management",
+        "stats": {
+          "buildings": "Buildings",
+          "collectedMtd": "Collected MTD",
+          "occupancy": "Occupancy",
+          "totalArrears": "Total arrears",
+          "units": "Units"
+        },
+        "subtitle": "Portfolio overview"
       },
       "inspections": {
         "subtitle": "Move-in, quarterly, and move-out inspections",
@@ -813,6 +908,15 @@ export default {
       "workOrders": {
         "subtitle": "Maintenance dispatch and vendor network",
         "title": "Work orders & vendors"
+      },
+      "applications": {
+        "empty": "No applications yet",
+        "subtitle": "Review tenant applications for your listings",
+        "title": "Rental applications"
+      },
+      "utilities": {
+        "subtitle": "Property providers · metering · billing engine",
+        "title": "Utility config"
       }
     },
     "renter": {
@@ -823,7 +927,10 @@ export default {
         "stats": {
           "currentRent": "Current rent",
           "leaseEnds": "Lease ends",
-          "landlord": "Landlord"
+          "landlord": "Landlord",
+          "eligibility": "Eligibility",
+          "housingCreditScore": "Housing credit score",
+          "riskBand": "Risk band"
         }
       },
       "leaseSigning": {
@@ -841,6 +948,28 @@ export default {
       "payments": {
         "subtitle": "Pay with Paystack (mobile money, bank) or Stripe (international cards)",
         "title": "Rent payments"
+      },
+      "credit": {
+        "stats": {
+          "eligibility": "Eligibility",
+          "housingCreditScore": "Housing credit score",
+          "late": "Late",
+          "missed": "Missed",
+          "onTime": "On time",
+          "riskBand": "Risk band"
+        },
+        "subtitle": "Your rental reliability score",
+        "title": "Housing credit"
+      },
+      "rentalApplication": {
+        "subtitle": "Apply to rent a property",
+        "title": "Rental application"
+      },
+      "utilities": {
+        "subtitle": "ECG, water, internet & gas",
+        "subtitleBreakdown": "ECG, water, internet & gas breakdown",
+        "subtitleStay": "Included in your stay",
+        "title": "Utilities"
       }
     },
     "smart": {
@@ -857,7 +986,81 @@ export default {
         "title": "Device dashboard"
       },
       "hub": {
-        "title": "Smart property"
+        "title": "Smart property",
+        "links": {
+          "alerts": {
+            "desc": "Security and device events",
+            "label": "Alerts & event logs"
+          },
+          "automations": {
+            "desc": "Rules and scheduled actions",
+            "label": "Automation engine"
+          },
+          "devices": {
+            "desc": "Locks, cameras, sensors, climate",
+            "label": "Device dashboard"
+          },
+          "mobile": {
+            "desc": "Control devices on the go",
+            "label": "Mobile app"
+          }
+        },
+        "stats": {
+          "alertsToday": "Alerts today",
+          "automations": "Automations",
+          "devicesOnline": "Devices online",
+          "energyToday": "Energy today"
+        },
+        "subtitle": "Connected building management"
+      }
+    },
+    "buyer": {
+      "aiAdvisor": {
+        "subtitle": "Pricing, neighborhoods, and investment potential",
+        "title": "AI buyer advisor"
+      },
+      "financingCenter": {
+        "subtitle": "Mortgages and pre-qualification",
+        "title": "Financing center"
+      },
+      "offerRoom": {
+        "subtitle": "Submit and negotiate offers",
+        "title": "Offer room"
+      },
+      "transactionCenter": {
+        "subtitle": "Offers, negotiations, and closing",
+        "title": "Transaction center"
+      }
+    },
+    "modals": {
+      "scheduleInspection": {
+        "title": "Schedule inspection",
+        "submit": "Schedule",
+        "trigger": "Schedule inspection"
+      },
+      "addTenant": {
+        "title": "Add tenant",
+        "submit": "Add tenant"
+      },
+      "inviteTeamMember": {
+        "title": "Invite team member",
+        "submit": "Send invite"
+      },
+      "addComplianceItem": {
+        "title": "Add compliance item",
+        "submit": "Add item"
+      },
+      "addBranch": {
+        "title": "Add branch",
+        "submit": "Add branch"
+      },
+      "createAutomation": {
+        "title": "Create automation",
+        "submit": "Create"
+      },
+      "addDevice": {
+        "title": "Add device",
+        "submit": "Add device"
       }
     }
   },

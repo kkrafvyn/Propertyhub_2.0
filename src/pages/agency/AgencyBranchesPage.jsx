@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import AgencyShell from '../../components/AgencyShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import QuickFormModal, { ModalField, modalInputClassName } from '../../components/ui/QuickFormModal'
+import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchBranches, addBranch } from '../../services/agency-service'
 
 function Branches() {
+  const { t } = useTranslation()
   const [branches, setBranches] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', location: '', manager: '' })
@@ -43,11 +45,11 @@ function Branches() {
         ))}
       </div>
       <button type="button" onClick={() => setShowForm(true)} className="mt-6 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">
-        Add branch
+        {t('hubs.modals.addBranch.title')}
       </button>
 
       {showForm && (
-        <QuickFormModal title="Add branch" onClose={() => setShowForm(false)} onSubmit={handleAdd} submitLabel="Add branch" loading={loading}>
+        <QuickFormModal title={t('hubs.modals.addBranch.title')} onClose={() => setShowForm(false)} onSubmit={handleAdd} submitLabel={t('hubs.modals.addBranch.submit')} loading={loading}>
           <ModalField label="Branch name">
             <input className={modalInputClassName()} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
           </ModalField>

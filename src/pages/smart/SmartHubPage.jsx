@@ -1,31 +1,33 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import SmartShell from '../../components/SmartShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { HubLinkGrid, StatCard, StatGrid } from '../../components/ui/AirbnbUI'
 import { fetchSmartDashboard } from '../../services/smart-service'
-
-const links = [
-  { to: '/smart/devices', label: 'Device dashboard', desc: 'Locks, cameras, sensors, climate' },
-  { to: '/smart/automations', label: 'Automation engine', desc: 'Rules and scheduled actions' },
-  { to: '/smart/alerts', label: 'Alerts & event logs', desc: 'Security and device events' },
-  { to: '/smart', label: 'Mobile app', desc: 'Control devices on the go' },
-]
+import { useTranslation } from '../../i18n/LocaleContext'
 
 function SmartHub() {
+  const { t } = useTranslation()
   const [portfolio, setPortfolio] = useState(null)
+
+  const links = useMemo(() => [
+    { to: '/smart/devices', label: t('hubs.smart.hub.links.devices.label'), desc: t('hubs.smart.hub.links.devices.desc') },
+    { to: '/smart/automations', label: t('hubs.smart.hub.links.automations.label'), desc: t('hubs.smart.hub.links.automations.desc') },
+    { to: '/smart/alerts', label: t('hubs.smart.hub.links.alerts.label'), desc: t('hubs.smart.hub.links.alerts.desc') },
+    { to: '/smart', label: t('hubs.smart.hub.links.mobile.label'), desc: t('hubs.smart.hub.links.mobile.desc') },
+  ], [t])
 
   useEffect(() => {
     fetchSmartDashboard().then(({ portfolio: p }) => setPortfolio(p))
   }, [])
 
   return (
-    <SmartShell titleKey="hubs.smart.hub.title" subtitle={portfolio?.building || 'Connected building management'}>
+    <SmartShell titleKey="hubs.smart.hub.title" subtitle={portfolio?.building || t('hubs.smart.hub.subtitle')}>
       {portfolio && (
         <StatGrid>
-          <StatCard label="Devices online" value={`${portfolio.devicesOnline}/${portfolio.devicesTotal}`} />
-          <StatCard label="Automations" value={portfolio.automationsActive} />
-          <StatCard label="Alerts today" value={portfolio.alertsToday} />
-          <StatCard label="Energy today" value={portfolio.energyToday} />
+          <StatCard label={t('hubs.smart.hub.stats.devicesOnline')} value={`${portfolio.devicesOnline}/${portfolio.devicesTotal}`} />
+          <StatCard label={t('hubs.smart.hub.stats.automations')} value={portfolio.automationsActive} />
+          <StatCard label={t('hubs.smart.hub.stats.alertsToday')} value={portfolio.alertsToday} />
+          <StatCard label={t('hubs.smart.hub.stats.energyToday')} value={portfolio.energyToday} />
         </StatGrid>
       )}
       <HubLinkGrid links={links} />

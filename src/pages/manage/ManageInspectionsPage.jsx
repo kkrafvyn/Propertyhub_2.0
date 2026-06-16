@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import ManageShell from '../../components/ManageShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import QuickFormModal, { ModalField, modalInputClassName } from '../../components/ui/QuickFormModal'
+import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchInspections, scheduleInspection } from '../../services/pms-service'
 
 function Inspections() {
+  const { t } = useTranslation()
   const [inspections, setInspections] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ unit: '', type: 'Routine', date: '', inspector: '' })
@@ -40,10 +42,10 @@ function Inspections() {
           </article>
         ))}
       </div>
-      <button type="button" onClick={() => setShowForm(true)} className="mt-4 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">Schedule inspection</button>
+      <button type="button" onClick={() => setShowForm(true)} className="mt-4 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">{t('hubs.modals.scheduleInspection.trigger')}</button>
 
       {showForm && (
-        <QuickFormModal title="Schedule inspection" onClose={() => setShowForm(false)} onSubmit={handleSchedule} submitLabel="Schedule" loading={loading}>
+        <QuickFormModal title={t('hubs.modals.scheduleInspection.title')} onClose={() => setShowForm(false)} onSubmit={handleSchedule} submitLabel={t('hubs.modals.scheduleInspection.submit')} loading={loading}>
           <ModalField label="Unit">
             <input className={modalInputClassName()} value={form.unit} onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))} />
           </ModalField>

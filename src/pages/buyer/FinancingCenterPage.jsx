@@ -72,7 +72,7 @@ function FinancingCenterContent() {
 
 function FinancingCenterLayout() {
   return (
-    <ResponsivePageShell title="Financing center" subtitle="Mortgages and pre-qualification">
+    <ResponsivePageShell titleKey="hubs.buyer.financingCenter.title" subtitleKey="hubs.buyer.financingCenter.subtitle">
       <FinancingCenterContent />
     </ResponsivePageShell>
   )

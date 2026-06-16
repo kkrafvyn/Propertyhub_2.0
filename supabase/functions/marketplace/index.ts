@@ -1,5 +1,13 @@
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
+import { computeReputationScore } from '../_shared/reputation.ts'
+import {
+  FALLBACK_SERVICES,
+  FALLBACK_AGENCIES,
+  FALLBACK_AGENTS,
+  mapServiceRow,
+  mapDirectoryRow,
+} from '../_shared/marketplace-services.ts'
 
 const FALLBACK_LISTINGS = [
   {
@@ -101,6 +109,22 @@ Deno.serve(async (req) => {
       if (!user) return errorResponse('Authentication required', 401)
 
       const body = await req.json()
+
+      if (body.action === 'request_service') {
+        const serviceId = String(body.service_id ?? '').trim()
+        if (!serviceId) return errorResponse('service_id required', 400)
+        const admin = createAdminClient()
+        const { data, error } = await admin.from('service_requests').insert({
+          user_id: user.id,
+          service_id: serviceId,
+          message: body.message ?? null,
+          status: 'open',
+          metadata: body.metadata ?? {},
+        }).select('*').single()
+        if (error) return errorResponse(error.message, 500)
+        return jsonResponse({ ok: true, request: data, source: 'supabase' })
+      }
+
       if (body.action !== 'create') return errorResponse('Unsupported action', 404)
 
       const listing = body.listing
@@ -175,6 +199,67 @@ Deno.serve(async (req) => {
         .eq('submitted_by', user.id)
         .order('created_at', { ascending: false })
       return jsonResponse({ listings: (data ?? []).map(mapRow), source: 'supabase' })
+    }
+
+    if (action === 'services') {
+      const admin = createAdminClient()
+      const { data } = await admin.from('marketplace_services').select('*').eq('active', true).order('category')
+      const services = data?.length ? data.map(mapServiceRow) : FALLBACK_SERVICES
+      return jsonResponse({ services, source: data?.length ? 'supabase' : 'fallback' })
+    }
+
+    if (action === 'reviews') {
+      const listingId = url.searchParams.get('listing_id')
+      if (!listingId) return errorResponse('listing_id required', 400)
+      const admin = createAdminClient()
+      const { data } = await admin.from('reviews').select('*').eq('listing_id', listingId).order('created_at', { ascending: false })
+      return jsonResponse({ reviews: data ?? [], source: 'supabase' })
+    }
+
+    if (action === 'public_list') {
+      const type = url.searchParams.get('type') ?? 'agency'
+      const admin = createAdminClient()
+      const { data } = await admin.from('directory_profiles').select('*').eq('profile_type', type)
+      if (!data?.length) {
+        return jsonResponse({
+          agencies: type === 'agency' ? FALLBACK_AGENCIES : undefined,
+          agents: type === 'agent' ? FALLBACK_AGENTS : undefined,
+          source: 'fallback',
+        })
+      }
+      const rows = await Promise.all(data.map(async (row) => {
+        let trustScore = null
+        if (row.user_id) {
+          const rep = await computeReputationScore(admin, row.user_id).catch(() => null)
+          trustScore = rep?.score ?? null
+        }
+        return mapDirectoryRow(row, trustScore)
+      }))
+      if (type === 'agent') return jsonResponse({ agents: rows, source: 'supabase' })
+      return jsonResponse({ agencies: rows, source: 'supabase' })
+    }
+
+    if (action === 'public_profile') {
+      const id = url.searchParams.get('id')
+      const type = url.searchParams.get('type') ?? 'agency'
+      if (!id) return errorResponse('id required', 400)
+      const admin = createAdminClient()
+      const { data: row } = await admin.from('directory_profiles').select('*').eq('id', id).eq('profile_type', type).maybeSingle()
+      if (!row) {
+        const fallback = type === 'agent'
+          ? FALLBACK_AGENTS.find((a) => a.id === id)
+          : FALLBACK_AGENCIES.find((a) => a.id === id)
+        if (!fallback) return errorResponse('Profile not found', 404)
+        return jsonResponse({ agency: type === 'agency' ? fallback : undefined, agent: type === 'agent' ? fallback : undefined, source: 'fallback' })
+      }
+      let trustScore = null
+      if (row.user_id) {
+        const rep = await computeReputationScore(admin, row.user_id).catch(() => null)
+        trustScore = rep?.score ?? null
+      }
+      const mapped = mapDirectoryRow(row, trustScore)
+      if (type === 'agent') return jsonResponse({ agent: mapped, reputation: trustScore != null ? { score: trustScore } : null, source: 'supabase' })
+      return jsonResponse({ agency: mapped, reputation: trustScore != null ? { score: trustScore } : null, source: 'supabase' })
     }
 
     return errorResponse('Unsupported action', 404)

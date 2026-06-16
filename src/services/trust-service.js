@@ -99,7 +99,25 @@ export async function fetchMyReputation(userId) {
     const payload = await callEdgeFunction('trust', { allowAnonymous: false, query })
     if (payload?.reputation) return { reputation: payload.reputation, source: 'supabase' }
   } catch { /* fallback */ }
-  return { reputation: { score: 50 }, source: 'local' }
+  return {
+    reputation: {
+      score: 50,
+      factors: { review_count: 0, payments: 0, badges: [] },
+      badges: [],
+    },
+    source: 'local',
+  }
+}
+
+export async function fetchPublicReputation(userId) {
+  try {
+    const payload = await callEdgeFunction('trust', {
+      allowAnonymous: true,
+      query: { action: 'public_reputation', user_id: userId },
+    })
+    if (payload?.reputation) return { reputation: payload.reputation, source: 'supabase' }
+  } catch { /* fallback */ }
+  return { reputation: { score: 88, factors: {}, badges: ['Verified'] }, source: 'local' }
 }
 
 export async function fetchMyKyc() {

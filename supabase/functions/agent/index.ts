@@ -1,6 +1,7 @@
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
 import { ensureAgentData } from '../_shared/user-seed.ts'
+import { scoreLeadWithAi, persistLeadScore } from '../_shared/lead-scoring.ts'
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -45,7 +46,27 @@ Deno.serve(async (req) => {
 
       if (action === 'leads') {
         const { data } = await admin.from('agent_leads').select('*').eq('agent_id', user.id).order('created_at', { ascending: false })
-        return jsonResponse({ leads: data ?? [], source: 'supabase' })
+        const leads = data ?? []
+        for (const lead of leads) {
+          if (lead.lead_score == null) {
+            const scored = await scoreLeadWithAi(lead)
+            await persistLeadScore(admin, lead.id, user.id, scored)
+            lead.lead_score = scored.lead_score
+            lead.score_factors = scored.score_factors
+          }
+        }
+        return jsonResponse({ leads, source: 'supabase' })
+      }
+
+      if (action === 'score_leads') {
+        const { data } = await admin.from('agent_leads').select('*').eq('agent_id', user.id)
+        let updated = 0
+        for (const lead of data ?? []) {
+          const scored = await scoreLeadWithAi(lead)
+          await persistLeadScore(admin, lead.id, user.id, scored)
+          updated += 1
+        }
+        return jsonResponse({ ok: true, updated, source: 'supabase' })
       }
 
       if (action === 'calendar') {
@@ -122,7 +143,7 @@ Deno.serve(async (req) => {
       }
 
       if (body.action === 'update_lead_stage') {
-        const { data: prev } = await admin.from('agent_leads').select('stage').eq('id', body.lead_id).eq('agent_id', user.id).maybeSingle()
+        const { data: prev } = await admin.from('agent_leads').select('*').eq('id', body.lead_id).eq('agent_id', user.id).maybeSingle()
         await admin.from('agent_leads').update({ stage: body.stage, updated_label: 'just now' }).eq('id', body.lead_id).eq('agent_id', user.id)
         if (prev && prev.stage !== body.stage) {
           await admin.from('lead_stage_history').insert({
@@ -132,6 +153,10 @@ Deno.serve(async (req) => {
             from_stage: prev.stage,
             to_stage: body.stage,
           }).catch(() => null)
+        }
+        if (prev) {
+          const scored = await scoreLeadWithAi({ ...prev, stage: body.stage })
+          await persistLeadScore(admin, body.lead_id, user.id, scored)
         }
         return jsonResponse({ ok: true })
       }
@@ -158,7 +183,20 @@ Deno.serve(async (req) => {
           phone: body.phone ?? null,
           email: body.email ?? null,
         })
-        return jsonResponse({ ok: true, lead_id: leadId })
+        const scored = await scoreLeadWithAi({
+          id: leadId,
+          name: body.name,
+          property: listingTitle,
+          stage: body.stage ?? 'lead',
+          value: Number(body.value ?? 0),
+          listing_id: body.listing_id ?? null,
+          source: body.source ?? 'manual',
+          phone: body.phone ?? null,
+          email: body.email ?? null,
+          buyer_user_id: body.buyer_user_id ?? null,
+        })
+        await persistLeadScore(admin, leadId, agentId, scored)
+        return jsonResponse({ ok: true, lead_id: leadId, lead_score: scored.lead_score, score_factors: scored.score_factors })
       }
 
       return errorResponse('Unsupported action', 404)

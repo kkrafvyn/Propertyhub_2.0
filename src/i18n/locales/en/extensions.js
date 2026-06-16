@@ -11,7 +11,13 @@ export default {
       "messageLead": "Message {{name}}",
       "messagePlaceholder": "Write your message…",
       "send": "Send",
-      "advance": "Advance"
+      "advance": "Advance",
+      "leadScore": "Score {{score}}",
+      "scoreHot": "Hot",
+      "scoreWarm": "Warm",
+      "scoreCold": "Cold",
+      "rescoreLeads": "Rescore leads",
+      "rescoring": "Scoring…"
     },
     "payroll": {
       "totalPeriod": "total this period",

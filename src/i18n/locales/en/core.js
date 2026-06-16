@@ -128,7 +128,15 @@ export default {
     "pushEnabled": "Notifications are enabled on this device.",
     "legal": "Legal & support",
     "helpCentre": "Help centre",
-    "logOut": "Log out"
+    "logOut": "Log out",
+    "reputation": "Reputation",
+    "reputationDesc": "Your trust score from verified transactions and reviews.",
+    "reputationScore": "Trust score",
+    "reputationLocalHint": "Connect live backend for synced reputation history.",
+    "reputationReviews": "Reviews",
+    "reputationPayments": "Completed payments",
+    "reputationResponse": "Responsiveness",
+    "reputationBadges": "Badges"
   },
   "roles": {
     "consumer": "Consumer (buy, rent, stay, invest)",

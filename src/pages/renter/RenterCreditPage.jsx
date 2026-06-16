@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import RenterShell from '../../components/RenterShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { fetchTenantScore } from '../../services/tenant-intelligence-service'
+import { useTranslation } from '../../i18n/LocaleContext'
 
 const TIPS = [
   { band: 'approved', text: 'You qualify for reduced deposit on new leases. Keep paying on time to maintain this status.' },
@@ -12,6 +13,7 @@ const TIPS = [
 ]
 
 function CreditPage() {
+  const { t } = useTranslation()
   const [data, setData] = useState(null)
 
   useEffect(() => {
@@ -22,7 +24,7 @@ function CreditPage() {
   const tip = TIPS.find((t) => t.band === profile?.risk_band) ?? TIPS[1]
 
   return (
-    <RenterShell title="Housing credit" subtitle="Your rental reliability score">
+    <RenterShell titleKey="hubs.renter.credit.title" subtitleKey="hubs.renter.credit.subtitle">
       {!profile ? (
         <p className="text-sm text-ink-secondary">Loading credit profile…</p>
       ) : (
@@ -50,9 +52,9 @@ function CreditPage() {
 
           <h2 className="mb-3 font-semibold">Payment history</h2>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Stat label="On time" value={profile.on_time_payments} good />
-            <Stat label="Late" value={profile.late_payments} />
-            <Stat label="Missed" value={profile.missed_payments} bad={profile.missed_payments > 0} />
+            <Stat label={t('hubs.renter.credit.stats.onTime')} value={profile.on_time_payments} good />
+            <Stat label={t('hubs.renter.credit.stats.late')} value={profile.late_payments} />
+            <Stat label={t('hubs.renter.credit.stats.missed')} value={profile.missed_payments} bad={profile.missed_payments > 0} />
           </div>
         </>
       )}

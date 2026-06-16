@@ -68,7 +68,7 @@ function ManageUtilities() {
   }
 
   return (
-    <ManageShell title="Utility config" subtitle="Property providers · metering · billing engine">
+    <ManageShell titleKey="hubs.manage.utilities.title" subtitleKey="hubs.manage.utilities.subtitle">
       {message && (
         <p className="mb-4 rounded-lg border border-brand/30 bg-surface-hover px-4 py-3 text-sm text-ink">{message}</p>
       )}

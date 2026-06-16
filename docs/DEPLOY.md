@@ -96,3 +96,27 @@ Health check (no auth): `GET /functions/v1/cron?action=health`
 ## 7. CI
 
 GitHub Actions runs `npm run build` and `npm test` on push/PR.
+
+## 8. Production readiness without API keys (~80%)
+
+The app runs in **demo/local fallback mode** when optional secrets are missing. You can ship the frontend and most UX without payment, AI, or email keys.
+
+| Area | Works without keys | Needs keys / deploy |
+|------|-------------------|---------------------|
+| Browse listings, saved, compare | ✅ Supabase anon + sample fallback | Live inventory: `VITE_SUPABASE_*` |
+| Hubs (buyer, renter, agency, …) | ✅ UI + local demo data | Edge functions + RLS for live data |
+| `/services`, `/agencies`, `/agents` | ✅ Local marketplace profiles | `marketplace` / `agencies` / `agent` edge actions |
+| Payments, escrow, rent collection | ⚠️ Banners + UI only | Paystack/Stripe/Razorpay secrets |
+| AI advisor, valuation API | ⚠️ Static hints | `OPENAI_API_KEY` |
+| Email / SMS notifications | ⚠️ In-app only | Resend, Twilio |
+| OAuth social login | ⚠️ Email auth works | Provider client IDs in Supabase |
+
+**Minimum to go live (no payment keys):**
+
+1. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SITE_URL` in Vercel.
+2. Run `npm run deploy:backend` (migrations + edge functions).
+3. Set `SITE_URL` in Supabase Edge secrets only (no payment keys required for browse/book demo flow).
+
+**When you add keys:** copy from `.env.example` → Vercel env + Supabase Edge secrets. Payment and webhook sections above apply.
+
+**i18n hub locales:** `npm run i18n:apply-hubs` (from cache) or `npm run i18n:hubs -- --langs=pt,ar` for remaining languages.

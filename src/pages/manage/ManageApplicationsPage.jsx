@@ -3,8 +3,10 @@ import ManageShell from '../../components/ManageShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { PanelCard } from '../../components/ui/AirbnbUI'
 import { fetchIncomingRentalApplications, reviewRentalApplication } from '../../services/rental-application-service'
+import { useTranslation } from '../../i18n/LocaleContext'
 
 function Applications() {
+  const { t } = useTranslation()
   const [applications, setApplications] = useState([])
   const [busy, setBusy] = useState(null)
   const [message, setMessage] = useState('')
@@ -31,13 +33,13 @@ function Applications() {
   const pending = applications.filter((a) => a.status === 'submitted')
 
   return (
-    <ManageShell title="Rental applications" subtitle="Review tenant applications for your listings">
+    <ManageShell titleKey="hubs.manage.applications.title" subtitleKey="hubs.manage.applications.subtitle">
       {message && (
         <p className="mb-4 rounded-lg border border-brand/30 bg-surface-hover px-4 py-3 text-sm text-ink">{message}</p>
       )}
 
       {pending.length === 0 && applications.length === 0 ? (
-        <PanelCard title="No applications yet">
+        <PanelCard title={t('hubs.manage.applications.empty')}>
           <p className="text-sm text-ink-secondary">When renters apply to your listings, they appear here for approval.</p>
         </PanelCard>
       ) : (

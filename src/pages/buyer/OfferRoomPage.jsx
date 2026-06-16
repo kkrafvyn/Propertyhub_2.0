@@ -552,7 +552,7 @@ function OfferRoomLayout() {
 
   return (
 
-    <ResponsivePageShell title="Offer room" subtitle="Submit and negotiate offers">
+    <ResponsivePageShell titleKey="hubs.buyer.offerRoom.title" subtitleKey="hubs.buyer.offerRoom.subtitle">
 
       <OfferRoomContent />
 

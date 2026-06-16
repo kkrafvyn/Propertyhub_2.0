@@ -92,10 +92,10 @@ function Devices() {
         </div>
       )}
 
-      <button type="button" onClick={() => setShowForm(true)} className="mt-6 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">Add device</button>
+      <button type="button" onClick={() => setShowForm(true)} className="mt-6 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">{t('hubs.modals.addDevice.title')}</button>
 
       {showForm && (
-        <QuickFormModal title="Add device" onClose={() => setShowForm(false)} onSubmit={handleAddDevice} submitLabel="Add device" loading={loading}>
+        <QuickFormModal title={t('hubs.modals.addDevice.title')} onClose={() => setShowForm(false)} onSubmit={handleAddDevice} submitLabel={t('hubs.modals.addDevice.submit')} loading={loading}>
           <ModalField label="Device name">
             <input className={modalInputClassName()} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Living room motion" />
           </ModalField>

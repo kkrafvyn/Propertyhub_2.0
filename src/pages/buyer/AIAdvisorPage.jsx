@@ -72,7 +72,7 @@ function AIAdvisorContent() {
 
 function AIAdvisorLayout() {
   return (
-    <ResponsivePageShell title="AI buyer advisor" subtitle="Pricing, neighborhoods, and investment potential">
+    <ResponsivePageShell titleKey="hubs.buyer.aiAdvisor.title" subtitleKey="hubs.buyer.aiAdvisor.subtitle">
       <AIAdvisorContent />
     </ResponsivePageShell>
   )

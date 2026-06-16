@@ -3,7 +3,7 @@
  * Skips mergeLocale-style partial locales (de.js, ja.js, …).
  * Run: npm run i18n:sync
  */
-import { readFileSync, readdirSync, writeFileSync } from 'fs'
+import { readFileSync, readdirSync, writeFileSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
 import en from '../src/i18n/locales/en.js'
@@ -24,12 +24,19 @@ function deepMerge(base, patch) {
 }
 
 const skip = new Set(['en.js', '_chrome.js'])
+const partialsDir = join(localesDir, 'partials')
 const files = readdirSync(localesDir).filter((f) => f.endsWith('.js') && !skip.has(f))
 
 for (const file of files) {
+  const code = file.replace('.js', '')
+  if (existsSync(join(partialsDir, `${code}.js`))) {
+    console.log('Skip partial wrapper', file)
+    continue
+  }
+
   const path = join(localesDir, file)
   const src = readFileSync(path, 'utf8')
-  if (src.includes('mergeLocale') || src.includes('createPartialLocale')) {
+  if (src.includes('mergeLocale') || src.includes('createPartialLocale') || src.includes('buildPartialLocale')) {
     console.log('Skip partial', file)
     continue
   }

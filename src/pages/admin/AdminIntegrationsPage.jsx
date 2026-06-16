@@ -15,7 +15,7 @@ function Integrations() {
   }, [])
 
   return (
-    <AdminShell title="Integrations" subtitle="DocuSign Connect, webhooks, and third-party setup">
+    <AdminShell titleKey="hubs.admin.integrations.title" subtitleKey="hubs.admin.integrations.subtitle">
       {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
       <section className="panel-card bg-surface-subtle p-5">

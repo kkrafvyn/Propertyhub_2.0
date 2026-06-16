@@ -10,6 +10,27 @@ const stageLabelKeys = {
   closed: 'extensions.crm.stageClosed',
 }
 
+function scoreBand(lead) {
+  const band = lead.score_factors?.band
+  if (band) return band
+  const score = lead.lead_score ?? 0
+  if (score >= 70) return 'hot'
+  if (score >= 45) return 'warm'
+  return 'cold'
+}
+
+function scoreLabel(t, lead) {
+  const band = scoreBand(lead)
+  const key = band === 'hot' ? 'extensions.crm.scoreHot' : band === 'warm' ? 'extensions.crm.scoreWarm' : 'extensions.crm.scoreCold'
+  return `${t(key)} · ${lead.lead_score}`
+}
+
+function scoreTone(band) {
+  if (band === 'hot') return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'
+  if (band === 'warm') return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+  return 'bg-surface-hover text-ink-secondary'
+}
+
 function LeadPipelineBoard({ leads, onStageChange, onMessage, compact = false }) {
   const { t } = useTranslation()
   const [dragId, setDragId] = useState(null)
@@ -62,7 +83,14 @@ function LeadPipelineBoard({ leads, onStageChange, onMessage, compact = false })
                   onDragStart={() => !compact && setDragId(lead.id)}
                   className={`rounded-lg border border-surface-border bg-surface p-3 text-sm shadow-sm ${compact ? '' : 'cursor-grab active:cursor-grabbing'}`}
                 >
-                  <p className="font-semibold">{lead.name}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold">{lead.name}</p>
+                    {lead.lead_score != null && (
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${scoreTone(scoreBand(lead))}`}>
+                        {scoreLabel(t, lead)}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-ink-secondary">{lead.property}</p>
                   {lead.phone && <p className="text-xs text-ink-muted">{lead.phone}</p>}
                   <p className="mt-1 text-xs text-ink-muted">

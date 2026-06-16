@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
 import ProtectedRoute from '../components/ProtectedRoute'
 import { AppSettingsPanels } from '../components/AppSettings'
@@ -7,11 +8,22 @@ import { IconChevronRight } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../i18n/LocaleContext'
 import { useRoleNavigation } from '../lib/role-navigation'
+import { fetchMyReputation } from '../services/trust-service'
 
 function ProfileContent() {
   const { user, role, signOut } = useAuth()
   const { t } = useTranslation()
   const { workspaces, tools, hosting, workspaceTitle } = useRoleNavigation(role)
+  const [reputation, setReputation] = useState(null)
+  const [reputationSource, setReputationSource] = useState('local')
+
+  useEffect(() => {
+    if (!user?.id) return
+    fetchMyReputation(user.id).then(({ reputation: rep, source }) => {
+      setReputation(rep)
+      setReputationSource(source)
+    })
+  }, [user?.id])
 
   return (
     <DesktopShell search={<CompactSearch />}>
@@ -42,6 +54,31 @@ function ProfileContent() {
             <Row label={t('profileNav.email')} value={user?.email} />
             <Row label={t('profileNav.role')} value={t(`roles.${role || 'consumer'}`)} />
           </PanelCard>
+
+          {reputation && (
+            <PanelCard title={t('profile.reputation')} subtitle={t('profile.reputationDesc')}>
+              <Row label={t('profile.reputationScore')} value={`${Math.round(reputation.score ?? 50)}/100`} />
+              {reputation.factors && (
+                <>
+                  <Row label={t('profile.reputationReviews')} value={String(reputation.factors.review_count ?? 0)} />
+                  <Row label={t('profile.reputationPayments')} value={String(reputation.factors.payments ?? 0)} />
+                  {reputation.factors.response_score != null && (
+                    <Row label={t('profile.reputationResponse')} value={`${reputation.factors.response_score}%`} />
+                  )}
+                </>
+              )}
+              {(reputation.badges ?? reputation.factors?.badges)?.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(reputation.badges ?? reputation.factors?.badges).map((badge) => (
+                    <span key={badge} className="rounded-full bg-surface-subtle px-3 py-1 text-xs font-medium text-ink">{badge}</span>
+                  ))}
+                </div>
+              )}
+              {reputationSource === 'local' && (
+                <p className="mt-2 text-xs text-ink-secondary">{t('profile.reputationLocalHint')}</p>
+              )}
+            </PanelCard>
+          )}
 
           {hosting.length > 0 && (
             <PanelCard title={t('profileNav.hosting')}>

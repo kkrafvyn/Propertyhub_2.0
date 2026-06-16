@@ -13,6 +13,17 @@ Deno.serve(async (req) => {
   const cors = handleCors(req)
   if (cors) return cors
 
+  const url = new URL(req.url)
+  const action = url.searchParams.get('action')
+
+  if (req.method === 'GET' && (action === 'reputation' || action === 'public_reputation')) {
+    const targetId = url.searchParams.get('user_id')
+    if (!targetId) return errorResponse('user_id required', 400)
+    const admin = createAdminClient()
+    const score = await computeReputationScore(admin, targetId)
+    return jsonResponse({ reputation: score, source: 'supabase' })
+  }
+
   const user = await getUserFromRequest(req)
   if (!user) return errorResponse('Authentication required', 401)
 

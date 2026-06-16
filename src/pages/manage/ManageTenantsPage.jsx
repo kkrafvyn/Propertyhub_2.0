@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import ManageShell from '../../components/ManageShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import QuickFormModal, { ModalField, modalInputClassName } from '../../components/ui/QuickFormModal'
+import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchTenants, createTenant } from '../../services/pms-service'
 
 function riskTone(band) {
@@ -12,6 +13,7 @@ function riskTone(band) {
 }
 
 function Tenants() {
+  const { t } = useTranslation()
   const [tenants, setTenants] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', unit: '', rent: '', leaseEnd: '' })
@@ -72,10 +74,10 @@ function Tenants() {
           </tbody>
         </table>
       </div>
-      <button type="button" onClick={() => setShowForm(true)} className="mt-4 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">Add tenant</button>
+      <button type="button" onClick={() => setShowForm(true)} className="mt-4 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">{t('hubs.modals.addTenant.submit')}</button>
 
       {showForm && (
-        <QuickFormModal title="Add tenant" onClose={() => setShowForm(false)} onSubmit={handleAdd} submitLabel="Add tenant" loading={loading}>
+        <QuickFormModal title={t('hubs.modals.addTenant.title')} onClose={() => setShowForm(false)} onSubmit={handleAdd} submitLabel={t('hubs.modals.addTenant.submit')} loading={loading}>
           <ModalField label="Name">
             <input className={modalInputClassName()} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
           </ModalField>

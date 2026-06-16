@@ -35,6 +35,21 @@ const MobileNeighborhoodsPage = lazy(() =>
 const MobileNeighborhoodDetailPage = lazy(() =>
   import('../pages/mobile/MobileNeighborhoodPages').then((m) => ({ default: m.MobileNeighborhoodDetailPage })),
 )
+const ServicesMarketplacePage = lazy(() =>
+  import('../pages/marketplace/MarketplaceDiscoveryPages').then((m) => ({ default: m.ServicesMarketplacePage })),
+)
+const AgenciesIndexPage = lazy(() =>
+  import('../pages/marketplace/MarketplaceDiscoveryPages').then((m) => ({ default: m.AgenciesIndexPage })),
+)
+const AgencyProfilePage = lazy(() =>
+  import('../pages/marketplace/MarketplaceDiscoveryPages').then((m) => ({ default: m.AgencyProfilePage })),
+)
+const AgentsIndexPage = lazy(() =>
+  import('../pages/marketplace/MarketplaceDiscoveryPages').then((m) => ({ default: m.AgentsIndexPage })),
+)
+const AgentProfilePage = lazy(() =>
+  import('../pages/marketplace/MarketplaceDiscoveryPages').then((m) => ({ default: m.AgentProfilePage })),
+)
 const MobileHostListingPage = lazy(() => import('../pages/mobile/MobileHostListingPage'))
 
 const MobileRenterLeasesPage = lazy(() =>
@@ -302,6 +317,11 @@ export default function MobileRoutes() {
         <Route path="/booking" element={<Navigate to="/trips" replace />} />
         <Route path="/neighborhoods" element={<MobileNeighborhoodsPage />} />
         <Route path="/neighborhoods/:slug" element={<MobileNeighborhoodDetailPage />} />
+        <Route path="/services" element={<ServicesMarketplacePage />} />
+        <Route path="/agencies" element={<AgenciesIndexPage />} />
+        <Route path="/agencies/:id" element={<AgencyProfilePage />} />
+        <Route path="/agents" element={<AgentsIndexPage />} />
+        <Route path="/agents/:id" element={<AgentProfilePage />} />
         <Route path="/compare" element={<ComparePage />} />
         <Route path="/documents" element={<DocumentVaultPage />} />
         <Route path="/document-vault" element={<Navigate to="/documents" replace />} />

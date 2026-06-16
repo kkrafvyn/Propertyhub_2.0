@@ -61,7 +61,7 @@ function PlatformApi() {
   }
 
   return (
-    <DeveloperShell title="Platform API" subtitle="Global Real Estate OS — production architecture">
+    <DeveloperShell titleKey="hubs.developer.platformApi.title" subtitleKey="hubs.developer.platformApi.subtitle">
       {architecture && (
         <section className="mb-8 rounded-xl border border-surface-border bg-surface-subtle p-4">
           <p className="text-sm font-semibold text-ink">{architecture.philosophy}</p>

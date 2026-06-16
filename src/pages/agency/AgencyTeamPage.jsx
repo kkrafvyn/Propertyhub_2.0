@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import AgencyShell from '../../components/AgencyShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import QuickFormModal, { ModalField, modalInputClassName } from '../../components/ui/QuickFormModal'
+import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchTeam, inviteTeamMember } from '../../services/agency-service'
 
 function TeamPage() {
+  const { t } = useTranslation()
   const [team, setTeam] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ email: '', name: '', role: 'Agent' })
@@ -60,11 +62,11 @@ function TeamPage() {
         </table>
       </div>
       <button type="button" onClick={() => setShowForm(true)} className="mt-4 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">
-        Invite team member
+        {t('hubs.modals.inviteTeamMember.title')}
       </button>
 
       {showForm && (
-        <QuickFormModal title="Invite team member" onClose={() => setShowForm(false)} onSubmit={handleInvite} submitLabel="Send invite" loading={loading}>
+        <QuickFormModal title={t('hubs.modals.inviteTeamMember.title')} onClose={() => setShowForm(false)} onSubmit={handleInvite} submitLabel={t('hubs.modals.inviteTeamMember.submit')} loading={loading}>
           <ModalField label="Email">
             <input type="email" className={modalInputClassName()} value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
           </ModalField>

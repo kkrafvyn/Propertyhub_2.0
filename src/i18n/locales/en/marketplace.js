@@ -190,5 +190,43 @@ export default {
         "desc": "Schools, safety, growth"
       }
     }
+  },
+  "marketplaceDiscovery": {
+    "services": {
+      "title": "Property services",
+      "subtitle": "Legal, valuation, moving, and inspection partners."
+    },
+    "agencies": {
+      "title": "Agencies",
+      "subtitle": "Verified brokerages and property firms."
+    },
+    "agents": {
+      "title": "Agents",
+      "subtitle": "Browse licensed agents by specialty and rating."
+    },
+    "verifiedAgency": "Verified agency",
+    "trustScore": "Trust {{score}}%",
+    "trustScoreLabel": "Trust score",
+    "activeListings": "Active listings",
+    "specialties": "Specialties",
+    "listings": "listings",
+    "rating": "{{rating}} ★",
+    "ratingLabel": "Rating",
+    "deals": "deals",
+    "dealsClosed": "Deals closed",
+    "requestService": "Request service",
+    "contactAgency": "Contact agency",
+    "messageAgent": "Message agent",
+    "viewAgency": "View agency",
+    "featuredListings": "Featured listings",
+    "backToAgencies": "← All agencies",
+    "backToAgents": "← All agents",
+    "agencyNotFound": "Agency not found.",
+    "agentNotFound": "Agent not found.",
+    "serviceRequestTitle": "Request service",
+    "serviceRequestMessage": "Tell the provider what you need",
+    "serviceRequestSubmit": "Submit request",
+    "serviceRequestSent": "Request submitted — a provider will contact you.",
+    "serviceRequestFailed": "Could not submit request. Try messaging instead."
   }
 }

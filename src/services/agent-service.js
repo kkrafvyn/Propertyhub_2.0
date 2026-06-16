@@ -5,6 +5,7 @@ import {
   updateAgentLeadStageInDb,
 } from '../lib/supabase-db'
 import { agentCommissions, agentAnalytics, agentTasks, agentLeads, agentCalendar, agentStats } from '../data/agent'
+import { enrichLeadsWithScores } from '../lib/lead-scoring'
 
 export async function fetchAgentDashboard() {
   try {
@@ -19,14 +20,22 @@ export async function fetchLeads() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       const rows = await fetchAgentLeadsFromDb(user.id)
-      if (rows?.length) return { leads: rows, source: 'supabase' }
+      if (rows?.length) return { leads: enrichLeadsWithScores(rows), source: 'supabase' }
     }
   }
   try {
     const payload = await callEdgeFunction('agent', { allowAnonymous: false, query: { action: 'leads' } })
-    if (payload?.leads?.length) return { leads: payload.leads, source: 'supabase' }
+    if (payload?.leads?.length) return { leads: enrichLeadsWithScores(payload.leads), source: 'supabase' }
   } catch { /* fallback */ }
-  return { leads: agentLeads, source: 'local' }
+  return { leads: enrichLeadsWithScores(agentLeads), source: 'local' }
+}
+
+export async function rescoreLeads() {
+  try {
+    const payload = await callEdgeFunction('agent', { allowAnonymous: false, query: { action: 'score_leads' } })
+    if (payload?.ok) return { ok: true, updated: payload.updated, source: 'supabase' }
+  } catch { /* fallback */ }
+  return { ok: true, updated: agentLeads.length, source: 'local' }
 }
 
 export async function updateLeadStage(leadId, stage) {

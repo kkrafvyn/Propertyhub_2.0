@@ -19,8 +19,8 @@ function RenterHub() {
   const links = [
     { to: '/renter/leases', label: t('hubs.renter.leases.title'), desc: t('hubs.renter.leases.subtitle') },
     { to: '/renter/payments', label: t('hubs.renter.payments.title'), desc: t('hubs.renter.payments.subtitle') },
-    { to: '/renter/utilities', label: 'Utilities', desc: 'ECG, water, internet & gas' },
-    { to: '/renter/credit', label: 'Housing credit', desc: 'Your rental reliability score' },
+    { to: '/renter/utilities', label: t('hubs.renter.utilities.title'), desc: t('hubs.renter.utilities.subtitle') },
+    { to: '/renter/credit', label: t('hubs.renter.credit.title'), desc: t('hubs.renter.credit.subtitle') },
     { to: '/renter/maintenance', label: t('hubs.renter.maintenance.title'), desc: t('hubs.renter.maintenance.subtitle') },
     { to: '/renter/sign', label: t('hubs.renter.leaseSigning.title'), desc: t('hubs.renter.leaseSigning.subtitle') },
     { to: '/documents', label: t('profileNav.documentVault'), desc: t('buyerHub.links.documents.desc') },
@@ -35,9 +35,9 @@ function RenterHub() {
     >
       {tenantIntel && (
         <StatGrid cols={3}>
-          <StatCard label="Housing credit score" value={tenantIntel.credit_score} />
-          <StatCard label="Risk band" value={tenantIntel.risk_band?.replace(/_/g, ' ')} />
-          <StatCard label="Eligibility" value={tenantIntel.eligibility?.slice(0, 24) ?? 'Standard'} />
+          <StatCard label={t('hubs.renter.hub.stats.housingCreditScore')} value={tenantIntel.credit_score} />
+          <StatCard label={t('hubs.renter.hub.stats.riskBand')} value={tenantIntel.risk_band?.replace(/_/g, ' ')} />
+          <StatCard label={t('hubs.renter.hub.stats.eligibility')} value={tenantIntel.eligibility?.slice(0, 24) ?? t('common.verified')} />
         </StatGrid>
       )}
       {profile && (
