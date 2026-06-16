@@ -14,7 +14,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (!id.includes('node_modules')) return undefined
+          if (!id.includes('node_modules')) {
+            if (id.includes('/pages/mobile/')) return 'mobile-pages'
+            if (id.includes('/routes/MobileRoutes')) return 'mobile-routes'
+            return undefined
+          }
           if (id.includes('leaflet') || id.includes('react-leaflet')) return 'map-vendor'
           if (id.includes('@supabase')) return 'supabase-vendor'
           if (id.includes('react-router')) return 'router-vendor'

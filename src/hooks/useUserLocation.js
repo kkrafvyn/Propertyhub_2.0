@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { haversineKm } from '../lib/geo-distance'
 
 const STORAGE_KEY = 'baytmiftah_user_location'
 const MAX_AGE_MS = 30 * 60 * 1000
+const MIN_MOVE_KM = 0.05
+const MIN_UPDATE_MS = 10000
 
 function readCached() {
   try {
@@ -31,8 +34,9 @@ function clearCache() {
  * Browser geolocation with optional live watch (Bolt-style).
  * Restores a recent fix from sessionStorage so distance persists across tabs.
  */
-export function useUserLocation({ watch = true, autoRestore = true } = {}) {
+export function useUserLocation({ watch = false, autoRestore = true } = {}) {
   const watchId = useRef(null)
+  const lastUpdateAt = useRef(0)
   const [state, setState] = useState(() => {
     const cached = autoRestore ? readCached() : null
     if (cached) {
@@ -49,16 +53,34 @@ export function useUserLocation({ watch = true, autoRestore = true } = {}) {
   })
 
   const applyPosition = useCallback((pos, live = false) => {
-    const next = {
-      status: 'granted',
-      lat: pos.coords.latitude,
-      lng: pos.coords.longitude,
-      accuracy: pos.coords.accuracy,
-      error: null,
-      live,
-    }
-    writeCache(next)
-    setState(next)
+    const lat = pos.coords.latitude
+    const lng = pos.coords.longitude
+    const accuracy = pos.coords.accuracy
+    const now = Date.now()
+
+    setState((prev) => {
+      if (
+        prev.lat != null &&
+        prev.lng != null &&
+        live &&
+        now - lastUpdateAt.current < MIN_UPDATE_MS &&
+        haversineKm(prev.lat, prev.lng, lat, lng) < MIN_MOVE_KM
+      ) {
+        return prev
+      }
+
+      lastUpdateAt.current = now
+      const next = {
+        status: 'granted',
+        lat,
+        lng,
+        accuracy,
+        error: null,
+        live,
+      }
+      writeCache(next)
+      return next
+    })
   }, [])
 
   const stopWatch = useCallback(() => {

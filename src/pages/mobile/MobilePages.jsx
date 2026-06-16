@@ -151,7 +151,7 @@ export function MobileExplorePage() {
   const [viewMode, setViewMode] = useState('list')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [filters, setFilters] = useState({ verifiedOnly: false, minBedrooms: 0 })
-  const userLocation = useUserLocation({ watch: true })
+  const userLocation = useUserLocation({ watch: false })
 
   useEffect(() => {
     fetchListings()

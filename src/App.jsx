@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { CurrencyProvider } from './context/CurrencyContext'
@@ -7,17 +7,30 @@ import { LocaleProvider } from './i18n/LocaleContext'
 import LegacyMobileRedirect from './components/LegacyMobileRedirect'
 import MarketBootstrap from './components/MarketBootstrap'
 import { SplashScreen } from './components/splash'
-import DesktopRoutes from './routes/DesktopRoutes'
-import MobileRoutes from './routes/MobileRoutes'
 import { useIsMobileViewport } from './hooks/useMediaQuery'
 import { useCapacitorBackButton } from './hooks/useCapacitorBackButton'
 import { isNativeApp, shouldShowLaunchSplash, isStandalonePwa } from './lib/platform'
+
+const MobileRoutes = lazy(() => import('./routes/MobileRoutes'))
+const DesktopRoutes = lazy(() => import('./routes/DesktopRoutes'))
+
+function RouteTreeFallback() {
+  return (
+    <div className="flex min-h-screen min-h-[100dvh] items-center justify-center bg-bolt-bg">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-accent border-t-transparent" />
+    </div>
+  )
+}
 
 function ResponsiveRoutes() {
   const isMobileViewport = useIsMobileViewport()
   const isMobile = isNativeApp() || isMobileViewport
   useCapacitorBackButton()
-  return isMobile ? <MobileRoutes /> : <DesktopRoutes />
+  return (
+    <Suspense fallback={<RouteTreeFallback />}>
+      {isMobile ? <MobileRoutes /> : <DesktopRoutes />}
+    </Suspense>
+  )
 }
 
 export default function App() {
