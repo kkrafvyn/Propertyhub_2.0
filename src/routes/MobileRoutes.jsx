@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import RoleProtectedRoute from '../components/RoleProtectedRoute'
 import ProtectedRoute from '../components/ProtectedRoute'
 import ConsumerGuard from '../components/ConsumerGuard'
+import RouteErrorBoundary from '../components/RouteErrorBoundary'
 
 const MobileHomePage = lazy(() => import('../pages/mobile/MobilePages'))
 const MobileExplorePage = lazy(() =>
@@ -289,8 +290,9 @@ function StaffRoute({ children }) {
 
 export default function MobileRoutes() {
   return (
-    <Suspense fallback={<RouteFallback />}>
-      <Routes>
+    <RouteErrorBoundary>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
         <Route path="/" element={<MobileHomePage />} />
         <Route path="/explore" element={<MobileExplorePage />} />
         <Route path="/saved" element={<MobileSavedPage />} />
@@ -421,7 +423,8 @@ export default function MobileRoutes() {
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Suspense>
+        </Routes>
+      </Suspense>
+    </RouteErrorBoundary>
   )
 }

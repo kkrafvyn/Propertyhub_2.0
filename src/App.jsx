@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 import { BrowserRouter } from 'react-router-dom'
+import RouteErrorBoundary from './components/RouteErrorBoundary'
 import { AuthProvider } from './context/AuthContext'
 import { CurrencyProvider } from './context/CurrencyContext'
 import { ThemeProvider } from './context/ThemeContext'
@@ -60,7 +61,9 @@ export default function App() {
               {splashDone && (
                 <LegacyMobileRedirect>
                   <MarketBootstrap>
-                    <ResponsiveRoutes />
+                    <RouteErrorBoundary>
+                      <ResponsiveRoutes />
+                    </RouteErrorBoundary>
                   </MarketBootstrap>
                 </LegacyMobileRedirect>
               )}

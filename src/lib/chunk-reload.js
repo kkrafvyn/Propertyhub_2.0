@@ -1,10 +1,12 @@
 const RELOAD_KEY = 'baytmiftah-chunk-reload'
 
 function reloadOnceForStaleChunks() {
-  const last = sessionStorage.getItem(RELOAD_KEY)
-  const now = Date.now()
-  if (last && now - Number(last) < 15000) return false
-  sessionStorage.setItem(RELOAD_KEY, String(now))
+  try {
+    if (sessionStorage.getItem(RELOAD_KEY) === '1') return false
+    sessionStorage.setItem(RELOAD_KEY, '1')
+  } catch {
+    return false
+  }
   window.location.reload()
   return true
 }
@@ -14,7 +16,8 @@ function isStaleChunkError(reason) {
   return (
     message.includes('Failed to fetch dynamically imported module') ||
     message.includes('Importing a module script failed') ||
-    message.includes('error loading dynamically imported module')
+    message.includes('error loading dynamically imported module') ||
+    message.includes('Failed to load module script')
   )
 }
 

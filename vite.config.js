@@ -2,8 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  // Relative asset paths — required for Capacitor WebView; works on Vercel too.
-  base: './',
+  base: '/',
   plugins: [react()],
   server: {
     port: 5173,
@@ -11,6 +10,7 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 600,
+    modulePreload: false,
     rollupOptions: {
       output: {
         manualChunks(id) {

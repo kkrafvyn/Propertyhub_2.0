@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet'
 import L from 'leaflet'
 import { Link } from 'react-router-dom'
@@ -20,12 +21,28 @@ const userDot = L.divIcon({
 
 export default function MapView({ listings, center = [5.6037, -0.187], zoom = 12, userLocation = null }) {
   const { t } = useTranslation()
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    setReady(true)
+    return () => setReady(false)
+  }, [])
+
   const mappable = listings.filter((l) => l.lat && l.lng)
   const mapCenter = userLocation?.lat != null ? [userLocation.lat, userLocation.lng] : center
+  const mapKey = `${mapCenter[0].toFixed(4)}-${mapCenter[1].toFixed(4)}-${zoom}`
+
+  if (!ready) {
+    return (
+      <div className="flex h-full min-h-[280px] items-center justify-center bg-surface-subtle text-sm text-ink-secondary">
+        {t('mobile.mapLoading')}
+      </div>
+    )
+  }
 
   return (
-    <div className="h-full min-h-[520px] overflow-hidden rounded-xl border border-surface-border">
-      <MapContainer center={mapCenter} zoom={zoom} className="h-full w-full" scrollWheelZoom>
+    <div className="h-full min-h-[280px] overflow-hidden rounded-xl border border-surface-border">
+      <MapContainer key={mapKey} center={mapCenter} zoom={zoom} className="h-full w-full" scrollWheelZoom>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

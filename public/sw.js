@@ -1,5 +1,5 @@
-const CACHE = 'baytmiftah-v6'
-const RUNTIME = 'baytmiftah-runtime-v6'
+const CACHE = 'baytmiftah-v7'
+const RUNTIME = 'baytmiftah-runtime-v7'
 const PRECACHE = ['/manifest.webmanifest', '/brand/app-icon.svg', '/icons/icon-192.webp', '/icons/icon-512.webp']
 
 self.addEventListener('install', (event) => {
@@ -66,10 +66,12 @@ self.addEventListener('fetch', (event) => {
 
   if (isBuildAsset(url.pathname)) {
     event.respondWith(
-      fetch(event.request).then((res) => {
-        if (isValidAssetResponse(res)) return res
-        return caches.match(event.request).then((cached) => cached || res)
-      }).catch(() => caches.match(event.request)),
+      fetch(event.request)
+        .then((res) => {
+          if (isValidAssetResponse(res)) return res
+          return Promise.reject(new Error('invalid asset response'))
+        })
+        .catch(() => caches.match(event.request)),
     )
     return
   }
