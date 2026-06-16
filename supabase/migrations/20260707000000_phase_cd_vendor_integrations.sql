@@ -17,6 +17,7 @@ alter table public.vendors add column if not exists specialty text;
 create index if not exists idx_vendors_user_id on public.vendors (user_id);
 
 drop policy if exists "Vendor users read assigned profile" on public.vendors;
+drop policy if exists "Vendor users read assigned profile" on public.vendors;
 create policy "Vendor users read assigned profile"
   on public.vendors for select using (auth.uid() = user_id);
 
@@ -33,9 +34,11 @@ create table if not exists public.reputation_scores (
 
 alter table public.reputation_scores enable row level security;
 
+drop policy if exists "Users read own reputation" on public.reputation_scores;
 create policy "Users read own reputation"
   on public.reputation_scores for select using (auth.uid() = user_id);
 
+drop policy if exists "Public read reputation" on public.reputation_scores;
 create policy "Public read reputation"
   on public.reputation_scores for select using (true);
 
@@ -49,6 +52,7 @@ create table if not exists public.property_scores (
 
 alter table public.property_scores enable row level security;
 
+drop policy if exists "Anyone read property scores" on public.property_scores;
 create policy "Anyone read property scores"
   on public.property_scores for select using (true);
 
@@ -77,9 +81,11 @@ create table if not exists public.user_subscriptions (
 alter table public.subscription_plans enable row level security;
 alter table public.user_subscriptions enable row level security;
 
+drop policy if exists "Anyone read active plans" on public.subscription_plans;
 create policy "Anyone read active plans"
   on public.subscription_plans for select using (active = true);
 
+drop policy if exists "Users read own subscriptions" on public.user_subscriptions;
 create policy "Users read own subscriptions"
   on public.user_subscriptions for select using (auth.uid() = user_id);
 
@@ -105,6 +111,7 @@ create table if not exists public.partner_referrals (
 
 alter table public.partner_referrals enable row level security;
 
+drop policy if exists "Users read own referrals" on public.partner_referrals;
 create policy "Users read own referrals"
   on public.partner_referrals for select using (auth.uid() = user_id);
 
@@ -120,6 +127,7 @@ create table if not exists public.enterprise_org_links (
 
 alter table public.enterprise_org_links enable row level security;
 
+drop policy if exists "Owners manage org links" on public.enterprise_org_links;
 create policy "Owners manage org links"
   on public.enterprise_org_links for all using (auth.uid() = owner_user_id);
 

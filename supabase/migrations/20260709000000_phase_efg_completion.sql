@@ -38,6 +38,7 @@ create table if not exists public.lead_stage_history (
 
 alter table public.lead_stage_history enable row level security;
 drop policy if exists "Agents read own lead history" on public.lead_stage_history;
+drop policy if exists "Agents read own lead history" on public.lead_stage_history;
 create policy "Agents read own lead history"
   on public.lead_stage_history for select using (auth.uid() = agent_id);
 
@@ -63,6 +64,7 @@ create index if not exists idx_user_activity_user_created
   on public.user_activity_events (user_id, created_at desc);
 
 alter table public.user_activity_events enable row level security;
+drop policy if exists "Users read own activity" on public.user_activity_events;
 drop policy if exists "Users read own activity" on public.user_activity_events;
 create policy "Users read own activity"
   on public.user_activity_events for select using (auth.uid() = user_id);

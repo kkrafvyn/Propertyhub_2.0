@@ -24,6 +24,7 @@ create index if not exists idx_event_automation_rules_type
 alter table public.event_automation_rules enable row level security;
 
 drop policy if exists "Public read automation rules" on public.event_automation_rules;
+drop policy if exists "Public read automation rules" on public.event_automation_rules;
 create policy "Public read automation rules"
   on public.event_automation_rules for select using (enabled = true);
 
@@ -60,6 +61,7 @@ create index if not exists idx_platform_api_keys_prefix on public.platform_api_k
 alter table public.platform_api_keys enable row level security;
 
 drop policy if exists "Users manage own api keys" on public.platform_api_keys;
+drop policy if exists "Users manage own api keys" on public.platform_api_keys;
 create policy "Users manage own api keys"
   on public.platform_api_keys for all
   using (auth.uid() = user_id);
@@ -84,15 +86,18 @@ create table if not exists public.property_payout_rules (
 alter table public.property_payout_rules enable row level security;
 
 drop policy if exists "Owners read property payout rules" on public.property_payout_rules;
+drop policy if exists "Owners read property payout rules" on public.property_payout_rules;
 create policy "Owners read property payout rules"
   on public.property_payout_rules for select
   using (auth.uid() = owner_user_id);
 
 drop policy if exists "Owners manage property payout rules" on public.property_payout_rules;
+drop policy if exists "Owners manage property payout rules" on public.property_payout_rules;
 create policy "Owners manage property payout rules"
   on public.property_payout_rules for all
   using (auth.uid() = owner_user_id);
 
+drop policy if exists "Owners read property wallets" on public.wallets;
 drop policy if exists "Owners read property wallets" on public.wallets;
 create policy "Owners read property wallets"
   on public.wallets for select

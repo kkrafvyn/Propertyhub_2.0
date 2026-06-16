@@ -20,10 +20,12 @@ create index if not exists idx_user_capabilities_user on public.user_capabilitie
 
 alter table public.user_capabilities enable row level security;
 
+drop policy if exists "Users read own capabilities" on public.user_capabilities;
 create policy "Users read own capabilities"
   on public.user_capabilities for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Staff manage capabilities" on public.user_capabilities;
 create policy "Staff manage capabilities"
   on public.user_capabilities for all
   using (
@@ -114,10 +116,12 @@ alter table public.wallet_holds enable row level security;
 alter table public.payout_accounts enable row level security;
 
 drop policy if exists "Owners read own wallets" on public.wallets;
+drop policy if exists "Owners read own wallets" on public.wallets;
 create policy "Owners read own wallets"
   on public.wallets for select
   using (owner_type = 'user' and owner_id = auth.uid()::text);
 
+drop policy if exists "Owners read own wallet transactions" on public.wallet_transactions;
 drop policy if exists "Owners read own wallet transactions" on public.wallet_transactions;
 create policy "Owners read own wallet transactions"
   on public.wallet_transactions for select
@@ -129,10 +133,12 @@ create policy "Owners read own wallet transactions"
   );
 
 drop policy if exists "Users read own payout accounts" on public.payout_accounts;
+drop policy if exists "Users read own payout accounts" on public.payout_accounts;
 create policy "Users read own payout accounts"
   on public.payout_accounts for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Users manage own payout accounts" on public.payout_accounts;
 drop policy if exists "Users manage own payout accounts" on public.payout_accounts;
 create policy "Users manage own payout accounts"
   on public.payout_accounts for all
@@ -219,14 +225,17 @@ alter table public.reservations enable row level security;
 alter table public.cleaning_tasks enable row level security;
 alter table public.host_payouts enable row level security;
 
+drop policy if exists "Hosts manage own profile" on public.host_profiles;
 create policy "Hosts manage own profile"
   on public.host_profiles for all
   using (auth.uid() = user_id);
 
+drop policy if exists "Public read availability" on public.listing_availability;
 create policy "Public read availability"
   on public.listing_availability for select
   using (true);
 
+drop policy if exists "Hosts manage availability" on public.listing_availability;
 create policy "Hosts manage availability"
   on public.listing_availability for all
   using (
@@ -237,18 +246,22 @@ create policy "Hosts manage availability"
     )
   );
 
+drop policy if exists "Guests and hosts read reservations" on public.reservations;
 create policy "Guests and hosts read reservations"
   on public.reservations for select
   using (auth.uid() = guest_id or auth.uid() = host_id);
 
+drop policy if exists "Guests create reservations" on public.reservations;
 create policy "Guests create reservations"
   on public.reservations for insert
   with check (auth.uid() = guest_id);
 
+drop policy if exists "Hosts update reservations" on public.reservations;
 create policy "Hosts update reservations"
   on public.reservations for update
   using (auth.uid() = host_id);
 
+drop policy if exists "Hosts read own payouts" on public.host_payouts;
 create policy "Hosts read own payouts"
   on public.host_payouts for select
   using (auth.uid() = host_id);
@@ -302,18 +315,22 @@ alter table public.visitor_passes enable row level security;
 alter table public.community_announcements enable row level security;
 alter table public.tenant_documents enable row level security;
 
+drop policy if exists "Tenants read own links" on public.pms_tenant_users;
 create policy "Tenants read own links"
   on public.pms_tenant_users for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Tenants manage visitor passes" on public.visitor_passes;
 create policy "Tenants manage visitor passes"
   on public.visitor_passes for all
   using (auth.uid() = tenant_user_id);
 
+drop policy if exists "Tenants read announcements" on public.community_announcements;
 create policy "Tenants read announcements"
   on public.community_announcements for select
   using (true);
 
+drop policy if exists "Tenants read own documents" on public.tenant_documents;
 create policy "Tenants read own documents"
   on public.tenant_documents for select
   using (auth.uid() = tenant_user_id);
@@ -353,10 +370,12 @@ alter table public.investment_portfolios enable row level security;
 alter table public.portfolio_holdings enable row level security;
 alter table public.investment_scenarios enable row level security;
 
+drop policy if exists "Users manage own portfolios" on public.investment_portfolios;
 create policy "Users manage own portfolios"
   on public.investment_portfolios for all
   using (auth.uid() = user_id);
 
+drop policy if exists "Users read own holdings" on public.portfolio_holdings;
 create policy "Users read own holdings"
   on public.portfolio_holdings for select
   using (
@@ -366,6 +385,7 @@ create policy "Users read own holdings"
     )
   );
 
+drop policy if exists "Users manage own scenarios" on public.investment_scenarios;
 create policy "Users manage own scenarios"
   on public.investment_scenarios for all
   using (auth.uid() = user_id);
@@ -406,10 +426,12 @@ alter table public.access_credentials enable row level security;
 alter table public.visitor_access_logs enable row level security;
 alter table public.energy_readings enable row level security;
 
+drop policy if exists "Residents read own credentials" on public.access_credentials;
 create policy "Residents read own credentials"
   on public.access_credentials for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Residents read own energy" on public.energy_readings;
 create policy "Residents read own energy"
   on public.energy_readings for select
   using (
@@ -464,6 +486,7 @@ alter table public.organization_members enable row level security;
 alter table public.organization_permissions enable row level security;
 alter table public.organization_entities enable row level security;
 
+drop policy if exists "Members read own orgs" on public.organizations;
 create policy "Members read own orgs"
   on public.organizations for select
   using (
@@ -473,6 +496,7 @@ create policy "Members read own orgs"
     )
   );
 
+drop policy if exists "Members read org membership" on public.organization_members;
 create policy "Members read org membership"
   on public.organization_members for select
   using (
@@ -482,6 +506,7 @@ create policy "Members read org membership"
     )
   );
 
+drop policy if exists "Org admins manage members" on public.organization_members;
 create policy "Org admins manage members"
   on public.organization_members for all
   using (
@@ -491,6 +516,7 @@ create policy "Org admins manage members"
     )
   );
 
+drop policy if exists "Org admins read org wallets" on public.wallets;
 create policy "Org admins read org wallets"
   on public.wallets for select
   using (
@@ -515,10 +541,12 @@ alter table public.market_zones enable row level security;
 alter table public.mortgage_partners enable row level security;
 
 drop policy if exists "Users read own escrow" on public.escrow_accounts;
+drop policy if exists "Users read own escrow" on public.escrow_accounts;
 create policy "Users read own escrow"
   on public.escrow_accounts for select
   using (auth.uid() = buyer_id);
 
+drop policy if exists "Agents read commissions" on public.commission_settlements;
 drop policy if exists "Agents read commissions" on public.commission_settlements;
 create policy "Agents read commissions"
   on public.commission_settlements for select
@@ -531,20 +559,24 @@ create policy "Agents read commissions"
   );
 
 drop policy if exists "Public read neighborhoods" on public.neighborhoods;
+drop policy if exists "Public read neighborhoods" on public.neighborhoods;
 create policy "Public read neighborhoods"
   on public.neighborhoods for select
   using (true);
 
+drop policy if exists "Public read market zones" on public.market_zones;
 drop policy if exists "Public read market zones" on public.market_zones;
 create policy "Public read market zones"
   on public.market_zones for select
   using (true);
 
 drop policy if exists "Public read mortgage partners" on public.mortgage_partners;
+drop policy if exists "Public read mortgage partners" on public.mortgage_partners;
 create policy "Public read mortgage partners"
   on public.mortgage_partners for select
   using (true);
 
+drop policy if exists "Staff read audit" on public.audit_events;
 drop policy if exists "Staff read audit" on public.audit_events;
 create policy "Staff read audit"
   on public.audit_events for select
@@ -555,6 +587,7 @@ create policy "Staff read audit"
     )
   );
 
+drop policy if exists "Staff read moderation queue" on public.moderation_queue;
 drop policy if exists "Staff read moderation queue" on public.moderation_queue;
 create policy "Staff read moderation queue"
   on public.moderation_queue for select

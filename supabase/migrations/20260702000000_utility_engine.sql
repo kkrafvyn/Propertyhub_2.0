@@ -149,23 +149,28 @@ alter table public.utility_prepaid_balances enable row level security;
 alter table public.utility_compliance_rules enable row level security;
 
 drop policy if exists "Public read utility providers" on public.utility_providers;
+drop policy if exists "Public read utility providers" on public.utility_providers;
 create policy "Public read utility providers"
   on public.utility_providers for select using (active = true);
 
+drop policy if exists "Owners manage property utilities" on public.property_utilities;
 drop policy if exists "Owners manage property utilities" on public.property_utilities;
 create policy "Owners manage property utilities"
   on public.property_utilities for all
   using (auth.uid() = owner_id);
 
 drop policy if exists "Public read enabled property utilities" on public.property_utilities;
+drop policy if exists "Public read enabled property utilities" on public.property_utilities;
 create policy "Public read enabled property utilities"
   on public.property_utilities for select using (enabled = true);
 
+drop policy if exists "Tenants read own utility accounts" on public.utility_accounts;
 drop policy if exists "Tenants read own utility accounts" on public.utility_accounts;
 create policy "Tenants read own utility accounts"
   on public.utility_accounts for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Tenants read own bills" on public.utility_bills;
 drop policy if exists "Tenants read own bills" on public.utility_bills;
 create policy "Tenants read own bills"
   on public.utility_bills for select
@@ -177,6 +182,7 @@ create policy "Tenants read own bills"
   );
 
 drop policy if exists "Tenants read own meter readings" on public.meter_readings;
+drop policy if exists "Tenants read own meter readings" on public.meter_readings;
 create policy "Tenants read own meter readings"
   on public.meter_readings for select
   using (
@@ -186,6 +192,7 @@ create policy "Tenants read own meter readings"
     )
   );
 
+drop policy if exists "Public read compliance rules" on public.utility_compliance_rules;
 drop policy if exists "Public read compliance rules" on public.utility_compliance_rules;
 create policy "Public read compliance rules"
   on public.utility_compliance_rules for select using (true);

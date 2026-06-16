@@ -110,10 +110,12 @@ alter table public.analytics_facts enable row level security;
 alter table public.booking_module_activations enable row level security;
 
 drop policy if exists "Users read own events" on public.platform_events;
+drop policy if exists "Users read own events" on public.platform_events;
 create policy "Users read own events"
   on public.platform_events for select
   using (auth.uid() = actor_id);
 
+drop policy if exists "Users read own ledger" on public.financial_ledger;
 drop policy if exists "Users read own ledger" on public.financial_ledger;
 create policy "Users read own ledger"
   on public.financial_ledger for select
@@ -122,14 +124,17 @@ create policy "Users read own ledger"
   );
 
 drop policy if exists "Users read own tenant intelligence" on public.tenant_intelligence;
+drop policy if exists "Users read own tenant intelligence" on public.tenant_intelligence;
 create policy "Users read own tenant intelligence"
   on public.tenant_intelligence for select
   using (auth.uid() = user_id);
 
 drop policy if exists "Public read analytics facts" on public.analytics_facts;
+drop policy if exists "Public read analytics facts" on public.analytics_facts;
 create policy "Public read analytics facts"
   on public.analytics_facts for select using (true);
 
+drop policy if exists "Users read own booking modules" on public.booking_module_activations;
 drop policy if exists "Users read own booking modules" on public.booking_module_activations;
 create policy "Users read own booking modules"
   on public.booking_module_activations for select using (true);

@@ -82,17 +82,21 @@ alter table public.region_plugin_bindings enable row level security;
 alter table public.housing_compliance_rules enable row level security;
 
 drop policy if exists "Public read market regions" on public.market_regions;
+drop policy if exists "Public read market regions" on public.market_regions;
 create policy "Public read market regions"
   on public.market_regions for select using (active = true);
 
+drop policy if exists "Public read platform plugins" on public.platform_plugins;
 drop policy if exists "Public read platform plugins" on public.platform_plugins;
 create policy "Public read platform plugins"
   on public.platform_plugins for select using (active = true);
 
 drop policy if exists "Public read region plugin bindings" on public.region_plugin_bindings;
+drop policy if exists "Public read region plugin bindings" on public.region_plugin_bindings;
 create policy "Public read region plugin bindings"
   on public.region_plugin_bindings for select using (enabled = true);
 
+drop policy if exists "Public read housing compliance" on public.housing_compliance_rules;
 drop policy if exists "Public read housing compliance" on public.housing_compliance_rules;
 create policy "Public read housing compliance"
   on public.housing_compliance_rules for select using (true);

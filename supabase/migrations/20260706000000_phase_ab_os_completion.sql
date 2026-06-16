@@ -7,6 +7,7 @@ alter table public.offers add column if not exists transaction_id text;
 alter table public.offers add column if not exists counter_notes text;
 
 drop policy if exists "Users can update own offers" on public.offers;
+drop policy if exists "Users can update own offers" on public.offers;
 create policy "Users can update own offers"
   on public.offers for update using (auth.uid() = user_id);
 
@@ -17,6 +18,7 @@ alter table public.transactions add column if not exists escrow_id text;
 alter table public.transactions add column if not exists agent_id uuid;
 alter table public.transactions add column if not exists commission_settled boolean not null default false;
 
+drop policy if exists "Users can update own transactions" on public.transactions;
 drop policy if exists "Users can update own transactions" on public.transactions;
 create policy "Users can update own transactions"
   on public.transactions for update using (auth.uid() = user_id);
@@ -38,6 +40,7 @@ create table if not exists public.escrow_milestones (
 
 alter table public.escrow_milestones enable row level security;
 
+drop policy if exists "Buyers read own escrow milestones" on public.escrow_milestones;
 create policy "Buyers read own escrow milestones"
   on public.escrow_milestones for select
   using (
@@ -58,6 +61,7 @@ create table if not exists public.transaction_events (
 
 alter table public.transaction_events enable row level security;
 
+drop policy if exists "Users read own transaction events" on public.transaction_events;
 create policy "Users read own transaction events"
   on public.transaction_events for select
   using (
@@ -90,6 +94,7 @@ create table if not exists public.vendors (
 
 alter table public.vendors enable row level security;
 
+drop policy if exists "Owners manage own vendors" on public.vendors;
 create policy "Owners manage own vendors"
   on public.vendors for all using (auth.uid() = owner_id);
 
@@ -115,12 +120,15 @@ create table if not exists public.rental_applications (
 
 alter table public.rental_applications enable row level security;
 
+drop policy if exists "Users read own rental applications" on public.rental_applications;
 create policy "Users read own rental applications"
   on public.rental_applications for select using (auth.uid() = user_id);
 
+drop policy if exists "Users create own rental applications" on public.rental_applications;
 create policy "Users create own rental applications"
   on public.rental_applications for insert with check (auth.uid() = user_id);
 
+drop policy if exists "Landlords read applications for their listings" on public.rental_applications;
 create policy "Landlords read applications for their listings"
   on public.rental_applications for select
   using (
@@ -137,6 +145,7 @@ alter table public.reviews add column if not exists reservation_id text;
 alter table public.reviews add column if not exists eligible_type text;
 
 -- Payout accounts RLS
+drop policy if exists "Users manage own payout accounts" on public.payout_accounts;
 drop policy if exists "Users manage own payout accounts" on public.payout_accounts;
 create policy "Users manage own payout accounts"
   on public.payout_accounts for all using (auth.uid() = user_id);
