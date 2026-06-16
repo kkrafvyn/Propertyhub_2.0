@@ -40,6 +40,7 @@ export async function submitOffer({ property, amount, notes, listingId }) {
     amount: Number(amount),
     status: 'pending',
     notes,
+    listingId,
     updated: new Date().toISOString().slice(0, 10),
   }
 
@@ -64,7 +65,7 @@ export async function submitOffer({ property, amount, notes, listingId }) {
     const payload = await callEdgeFunction('persistence', {
       method: 'POST',
       allowAnonymous: false,
-      body: { action: 'create_offer', offer },
+      body: { action: 'create_offer', offer, listing_id: listingId },
     })
     return payload
   } catch {
@@ -74,4 +75,29 @@ export async function submitOffer({ property, amount, notes, listingId }) {
   }
 }
 
-export default { fetchOffers, submitOffer }
+export async function fetchIncomingOffers() {
+  try {
+    const payload = await callEdgeFunction('persistence', {
+      allowAnonymous: false,
+      query: { action: 'incoming_offers' },
+    })
+    if (payload?.offers) return { offers: payload.offers, source: payload.source ?? 'supabase' }
+  } catch { /* fallback */ }
+  return { offers: [], source: 'local' }
+}
+
+export async function updateOffer(offerId, offerAction, { counterAmount, counterNotes } = {}) {
+  return callEdgeFunction('persistence', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: {
+      action: 'update_offer',
+      offer_id: offerId,
+      offer_action: offerAction,
+      counter_amount: counterAmount,
+      counter_notes: counterNotes,
+    },
+  })
+}
+
+export default { fetchOffers, fetchIncomingOffers, submitOffer, updateOffer }

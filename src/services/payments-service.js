@@ -153,9 +153,20 @@ export async function fundEscrow({ escrowId, amount, provider = 'paystack' }) {
     purpose: 'escrow_deposit',
     amount,
     provider,
-    metadata: { escrow_id: escrowId },
+    metadata: { escrow_id: escrowId, amount: String(amount) },
     successPath: '/finance/escrow?funded=1',
     cancelPath: '/finance/escrow',
+  })
+}
+
+export async function payReservation({ reservationId, amount, listingId, provider = 'paystack' }) {
+  return initiateCheckout({
+    purpose: 'reservation_payment',
+    amount,
+    provider,
+    metadata: { reservation_id: reservationId, listing_id: listingId, amount: String(amount) },
+    successPath: `/payments/success?purpose=reservation&reservation_id=${reservationId}`,
+    cancelPath: `/property/${listingId}`,
   })
 }
 
@@ -203,6 +214,7 @@ export default {
   payAllUtilities,
   confirmCheckout: confirmCheckoutPublic,
   fundEscrow,
+  payReservation,
   settleCommission,
   fetchPaymentHistory,
 }

@@ -1,6 +1,7 @@
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
 import { chatCompletion, jsonCompletion } from '../_shared/openai.ts'
+import { computePropertyScore } from '../_shared/reputation.ts'
 
 function scoreListing(listing: Record<string, unknown>) {
   let score = 70
@@ -73,6 +74,23 @@ Deno.serve(async (req) => {
       if (action === 'neighborhoods') {
         const { data } = await admin.from('neighborhoods').select('*')
         return jsonResponse({ neighborhoods: data ?? [], source: 'supabase' })
+      }
+      if (action === 'valuation_history') {
+        const { data } = await admin.from('valuations').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20)
+        const valuations = (data ?? []).map((r) => ({
+          id: r.id,
+          address: r.address,
+          estimated: r.estimated,
+          confidence: r.confidence,
+          created_at: r.created_at,
+        }))
+        return jsonResponse({ valuations, source: 'supabase' })
+      }
+      if (action === 'property_score') {
+        const listingId = url.searchParams.get('listing_id')
+        if (!listingId) return errorResponse('listing_id required', 400)
+        const score = await computePropertyScore(admin, listingId)
+        return jsonResponse({ propertyScore: score, source: 'supabase' })
       }
       return errorResponse('Unsupported action', 404)
     }

@@ -8,20 +8,24 @@ import { HubLinkGrid, StatCard, StatGrid, PanelCard } from '../../components/ui/
 import { fetchReservations } from '../../services/reservation-service'
 import { fetchInvestmentDashboard } from '../../services/investment-service'
 import { fetchRenterDashboard } from '../../services/renter-service'
+import { fetchConsumerHomeStats } from '../../services/consumer-service'
 
 function ConsumerHub() {
-  const [stats, setStats] = useState({ stays: 0, rent: null, portfolio: null })
+  const [stats, setStats] = useState({ stays: 0, rent: null, portfolio: null, smartAlerts: 0, energyToday: null })
 
   useEffect(() => {
     Promise.all([
       fetchReservations(true),
       fetchRenterDashboard(),
       fetchInvestmentDashboard(),
-    ]).then(([stays, renter, invest]) => {
+      fetchConsumerHomeStats(),
+    ]).then(([stays, renter, invest, smart]) => {
       setStats({
         stays: stays.reservations?.length ?? 0,
         rent: renter.profile?.rentAmount,
         portfolio: invest.portfolio?.totalValue,
+        smartAlerts: smart.stats?.smartAlerts ?? 0,
+        energyToday: smart.stats?.energyToday,
       })
     })
   }, [])
@@ -44,6 +48,14 @@ function ConsumerHub() {
         <StatCard label="Monthly rent" value={stats.rent ? `GHS ${stats.rent.toLocaleString()}` : '—'} />
         <StatCard label="Portfolio value" value={stats.portfolio ? `GHS ${stats.portfolio.toLocaleString()}` : '—'} />
       </StatGrid>
+      {(stats.smartAlerts > 0 || stats.energyToday) && (
+        <div className="mt-4">
+          <StatGrid cols={2}>
+            <StatCard label="Smart alerts" value={stats.smartAlerts} />
+            <StatCard label="Energy today" value={stats.energyToday ?? '—'} />
+          </StatGrid>
+        </div>
+      )}
       <HubLinkGrid links={links} />
     </ConsumerShell>
   )
@@ -55,6 +67,8 @@ function ConsumerBuy() {
     { to: '/offers', label: 'Offer room', desc: 'Submit and negotiate offers' },
     { to: '/buyer/advisor', label: 'AI advisor', desc: 'Personalised buying guidance' },
     { to: '/buyer/finance', label: 'Financing center', desc: 'Mortgages and pre-approval' },
+    { to: '/buyer/finance', label: 'Financing center', desc: 'Mortgages and pre-approval' },
+    { to: '/profile/kyc', label: 'Identity verification', desc: 'Submit KYC documents for offers' },
     { to: '/saved', label: 'Saved homes', desc: 'Your shortlisted properties' },
     { to: '/compare', label: 'Compare', desc: 'Side-by-side analysis' },
     { to: '/documents', label: 'Document vault', desc: 'Contracts and IDs' },
@@ -68,6 +82,7 @@ function ConsumerBuy() {
 
 function ConsumerRent() {
   const links = [
+    { to: '/renter/apply', label: 'Apply to rent', desc: 'Submit a rental application' },
     { to: '/renter/leases', label: 'Leases', desc: 'Active and past leases' },
     { to: '/renter/payments', label: 'Rent payments', desc: 'Paystack, Stripe, USSD' },
     { to: '/renter/maintenance', label: 'Maintenance', desc: 'Submit and track requests' },

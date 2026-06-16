@@ -26,7 +26,9 @@ const workspaces = [
     links: [
       { to: '/manage/tenants', label: 'Tenants', Icon: IconUsers },
       { to: '/manage/work-orders', label: 'Work orders', Icon: IconWrench },
+      { to: '/manage/applications', label: 'Applications', Icon: IconDocument },
       { to: '/manage/finance', label: 'Finance', Icon: IconCard },
+      { to: '/vendors', label: 'Vendors', Icon: IconWrench },
     ],
   },
   {

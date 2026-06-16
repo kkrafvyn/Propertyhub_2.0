@@ -3,6 +3,7 @@ import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
 import { emitPlatformEvent } from '../_shared/events.ts'
 import { recordLedgerEntry } from '../_shared/ledger.ts'
 import { ensurePropertyWallet } from '../_shared/property-wallets.ts'
+import { ensurePaystackRecipient, initiatePaystackTransfer } from '../_shared/paystack-transfer.ts'
 
 type WalletPurpose = 'general' | 'rent' | 'utility' | 'escrow'
 
@@ -84,6 +85,11 @@ Deno.serve(async (req) => {
         return jsonResponse({ wallet: mapWallet(wallet), transactions: txs ?? [], source: 'supabase' })
       }
 
+      if (action === 'payout_accounts') {
+        const { data } = await admin.from('payout_accounts').select('*').eq('user_id', user.id)
+        return jsonResponse({ accounts: data ?? [], source: 'supabase' })
+      }
+
       const wallet = await ensureUserWallet(admin, user.id, purpose, currency)
 
       if (action === 'dashboard' || action === 'transactions') {
@@ -109,31 +115,153 @@ Deno.serve(async (req) => {
         if (!amount || amount <= 0) return errorResponse('Invalid amount', 400)
         if (Number(wallet.available_balance) < amount) return errorResponse('Insufficient balance', 400)
 
+        const provider = body.provider ?? 'paystack'
         const txId = `wt-${crypto.randomUUID().slice(0, 8)}`
+
+        const { data: payoutAccount } = await admin
+          .from('payout_accounts')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('provider', provider)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (!payoutAccount?.account_ref) {
+          return errorResponse('Save a payout account before withdrawing', 400)
+        }
+
+        let transferStatus = 'pending'
+        let providerRef: string | null = null
+        let transferError: string | null = null
+
+        if (provider === 'paystack') {
+          const recipient = await ensurePaystackRecipient({
+            name: payoutAccount.account_name ?? user.email?.split('@')[0] ?? 'Wallet user',
+            accountNumber: payoutAccount.account_ref,
+            accountType: payoutAccount.account_type ?? 'mobile_money',
+            bankCode: payoutAccount.bank_code ?? 'MTN',
+            currency: wallet.currency ?? 'GHS',
+            existingRecipientCode: payoutAccount.paystack_recipient_code,
+          })
+
+          if (recipient.ok) {
+            if (recipient.created) {
+              await admin.from('payout_accounts').update({
+                paystack_recipient_code: recipient.recipient_code,
+              }).eq('id', payoutAccount.id)
+            }
+
+            const transfer = await initiatePaystackTransfer({
+              amount,
+              recipientCode: recipient.recipient_code,
+              reason: 'BaytMiftah wallet withdrawal',
+              reference: txId,
+              currency: wallet.currency ?? 'GHS',
+            })
+
+            if (transfer.ok) {
+              transferStatus = transfer.status === 'success' ? 'completed' : 'pending'
+              providerRef = transfer.transfer_code ?? transfer.reference
+            } else {
+              transferError = transfer.error
+              transferStatus = 'failed'
+            }
+          } else {
+            transferError = recipient.error
+            transferStatus = 'failed'
+          }
+        }
+
+        if (transferStatus === 'failed') {
+          return errorResponse(transferError ?? 'Withdrawal transfer failed', 400)
+        }
+
         await admin.from('wallet_transactions').insert({
           id: txId,
           wallet_id: wallet.id,
           type: 'withdrawal',
           amount,
-          status: 'pending',
-          description: `Withdrawal via ${body.provider ?? 'paystack'}`,
+          status: transferStatus,
+          provider_ref: providerRef,
+          description: `Withdrawal via ${provider}${providerRef ? ` · ${providerRef}` : ''}`,
         })
+
+        const pendingDelta = transferStatus === 'completed' ? 0 : amount
+        const completedDebit = transferStatus === 'completed'
+
         await admin.from('wallets').update({
           available_balance: Number(wallet.available_balance) - amount,
-          pending_balance: Number(wallet.pending_balance) + amount,
+          pending_balance: completedDebit
+            ? Number(wallet.pending_balance)
+            : Number(wallet.pending_balance) + pendingDelta,
           updated_at: new Date().toISOString(),
         }).eq('id', wallet.id)
+
+        if (transferStatus === 'pending') {
+          await admin.from('wallet_holds').insert({
+            id: `wh-${crypto.randomUUID().slice(0, 8)}`,
+            wallet_id: wallet.id,
+            amount,
+            reason: 'withdrawal_pending',
+            status: 'active',
+          }).catch(() => null)
+        }
 
         await emitPlatformEvent(admin, {
           eventType: 'wallet.debited',
           aggregateType: 'wallet',
           aggregateId: wallet.id,
           actorId: user.id,
-          payload: { amount, type: 'withdrawal', transaction_id: txId },
+          payload: { amount, type: 'withdrawal', transaction_id: txId, provider_ref: providerRef },
           idempotencyKey: `wallet-debit-${txId}`,
         })
 
-        return jsonResponse({ ok: true, transaction_id: txId })
+        return jsonResponse({
+          ok: true,
+          transaction_id: txId,
+          provider_ref: providerRef,
+          status: transferStatus,
+          demo: !providerRef && provider === 'paystack',
+          message: providerRef ? 'Transfer initiated via Paystack' : 'Withdrawal queued',
+        })
+      }
+
+      if (body.action === 'save_payout_account') {
+        const row = {
+          id: body.id ?? `pa-${crypto.randomUUID().slice(0, 8)}`,
+          user_id: user.id,
+          provider: body.provider ?? 'paystack',
+          account_ref: body.account_number ?? body.account_ref,
+          account_name: body.account_name ?? user.email?.split('@')[0] ?? 'Account holder',
+          account_type: body.account_type ?? 'mobile_money',
+          bank_code: body.bank_code ?? 'MTN',
+          verified: body.verified ?? false,
+        }
+        if (!row.account_ref) return errorResponse('account_number required', 400)
+        await admin.from('payout_accounts').upsert(row)
+        return jsonResponse({ ok: true, account: row })
+      }
+
+      if (body.action === 'hold_escrow') {
+        const amount = Number(body.amount)
+        if (!amount || amount <= 0) return errorResponse('Invalid amount', 400)
+        if (Number(wallet.available_balance) < amount) return errorResponse('Insufficient balance', 400)
+
+        const holdId = `wh-${crypto.randomUUID().slice(0, 8)}`
+        await admin.from('wallet_holds').insert({
+          id: holdId,
+          wallet_id: wallet.id,
+          amount,
+          reason: body.reason ?? 'escrow_hold',
+          status: 'active',
+          escrow_id: body.reference_id ?? body.escrow_id ?? null,
+        })
+        await admin.from('wallets').update({
+          available_balance: Number(wallet.available_balance) - amount,
+          pending_balance: Number(wallet.pending_balance) + amount,
+        }).eq('id', wallet.id)
+        return jsonResponse({ ok: true, hold_id: holdId })
       }
 
       if (body.action === 'credit') {

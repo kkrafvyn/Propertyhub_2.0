@@ -7,6 +7,7 @@ import {
   isFullAdminRole,
   isStaffRole,
 } from '../_shared/roles.ts'
+import { computeReputationScore } from '../_shared/reputation.ts'
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -21,6 +22,27 @@ Deno.serve(async (req) => {
   const action = url.searchParams.get('action')
 
   if (req.method === 'GET') {
+    if (action === 'my_kyc') {
+      const { data } = await admin
+        .from('kyc_records')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      return jsonResponse({ kyc: data, source: 'supabase' })
+    }
+
+    if (action === 'reputation') {
+      const targetId = url.searchParams.get('user_id') ?? user.id
+      const { data: existing } = await admin.from('reputation_scores').select('*').eq('user_id', targetId).maybeSingle()
+      if (!existing || targetId === user.id) {
+        const score = await computeReputationScore(admin, targetId)
+        return jsonResponse({ reputation: score, source: 'supabase' })
+      }
+      return jsonResponse({ reputation: existing, source: 'supabase' })
+    }
+
     if (action === 'users') {
       if (!isFullAdminRole(requesterRole)) return errorResponse('Forbidden', 403)
       const { data, error } = await admin
@@ -52,7 +74,8 @@ Deno.serve(async (req) => {
     if (action === 'kyc') {
       const { data } = await admin.from('kyc_records').select('*').order('created_at', { ascending: false })
       const kyc = (data ?? []).map((r) => ({
-        id: r.id, entity: r.entity_name, type: r.entity_type, status: r.status, documents: r.documents,
+        id: r.id, entity: r.entity_name, type: r.entity_type, status: r.status,
+        documents: r.documents ?? (Array.isArray(r.document_paths) ? r.document_paths.length : 0),
       }))
       return jsonResponse({ kyc, source: 'supabase' })
     }
@@ -92,6 +115,42 @@ Deno.serve(async (req) => {
 
   if (req.method === 'POST') {
     const body = await req.json()
+
+    if (body.action === 'submit_kyc') {
+      const entityName = String(body.entityName ?? '').trim()
+      const entityType = String(body.entityType ?? 'consumer').trim()
+      const documentPaths = Array.isArray(body.documentPaths) ? body.documentPaths : []
+
+      if (!entityName) return errorResponse('entityName required', 400)
+      if (!documentPaths.length) return errorResponse('At least one document required', 400)
+
+      const { data: existing } = await admin
+        .from('kyc_records')
+        .select('id, status')
+        .eq('user_id', user.id)
+        .in('status', ['pending_review', 'verified'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (existing?.status === 'verified') return errorResponse('Already verified', 400)
+      if (existing?.status === 'pending_review') return errorResponse('Submission already pending review', 400)
+
+      const id = `kyc-${crypto.randomUUID().slice(0, 8)}`
+      const { error } = await admin.from('kyc_records').insert({
+        id,
+        user_id: user.id,
+        entity_name: entityName,
+        entity_type: entityType,
+        status: 'pending_review',
+        documents: documentPaths.length,
+        document_paths: documentPaths,
+      })
+      if (error) return errorResponse(error.message, 500)
+
+      await logAudit(admin, user.id, 'kyc_submitted', id, { entityType, documents: documentPaths.length })
+      return jsonResponse({ ok: true, id, status: 'pending_review', source: 'supabase' })
+    }
 
     if (body.action === 'promote_user') {
       if (!canAssignRole(requesterRole, body.role)) {

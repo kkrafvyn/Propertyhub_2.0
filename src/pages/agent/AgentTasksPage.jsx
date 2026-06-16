@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import AgentShell from '../../components/AgentShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { IconCheck } from '../../components/icons'
-import { fetchTasks } from '../../services/agent-service'
+import { fetchTasks, toggleTask } from '../../services/agent-service'
 
 function Tasks() {
   const [tasks, setTasks] = useState([])
@@ -12,7 +12,12 @@ function Tasks() {
   }, [])
 
   function toggleDone(id) {
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
+    setTasks((prev) => {
+      const next = prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+      const item = next.find((t) => t.id === id)
+      if (item) toggleTask(id, item.done).catch(() => {})
+      return next
+    })
   }
 
   return (

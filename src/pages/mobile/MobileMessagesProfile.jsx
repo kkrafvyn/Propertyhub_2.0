@@ -113,7 +113,7 @@ export function MobileProfilePage() {
                 {user.user_metadata?.display_name || t('profile.member')}
               </p>
               <p className="truncate text-sm text-ink-secondary">{user.email}</p>
-              <MobileBadge tone="accent">{t(`roles.${role || 'buyer'}`)}</MobileBadge>
+              <MobileBadge tone="accent">{t(`roles.${role || 'consumer'}`)}</MobileBadge>
             </div>
           </div>
         </div>

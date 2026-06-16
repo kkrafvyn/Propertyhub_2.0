@@ -35,6 +35,19 @@ export async function uploadDocument(userId, file, category = 'general') {
   return { ...result, category }
 }
 
+export async function uploadKyc(userId, file) {
+  const ext = file.name.split('.').pop() || 'pdf'
+  const path = `${userId}/${Date.now()}.${ext}`
+  return uploadFile(BUCKETS.kyc, path, file)
+}
+
+export async function getSignedKycUrl(path, expiresIn = 3600) {
+  if (!supabase) return null
+  const { data, error } = await supabase.storage.from(BUCKETS.kyc).createSignedUrl(path, expiresIn)
+  if (error) return null
+  return data.signedUrl
+}
+
 export async function getSignedDocumentUrl(path, expiresIn = 3600) {
   if (!supabase) return null
   const { data, error } = await supabase.storage.from(BUCKETS.documents).createSignedUrl(path, expiresIn)

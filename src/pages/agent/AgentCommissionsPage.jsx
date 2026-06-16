@@ -15,7 +15,9 @@ function Commissions() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    fetchCommissions().then(({ commissions: rows }) => setCommissions(rows))
+    fetchCommissions().then(({ commissions: rows }) =>
+      setCommissions(rows.map((c) => ({ ...c, settlementId: c.settlementId ?? c.id }))),
+    )
   }, [])
 
   const total = commissions.reduce((sum, c) => sum + c.amount, 0)

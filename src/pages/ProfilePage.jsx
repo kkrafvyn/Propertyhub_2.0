@@ -28,7 +28,7 @@ function ProfileContent() {
             </p>
             <p className="text-sm text-ink-secondary">{user?.email}</p>
             <p className="mt-3 inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-semibold capitalize text-ink">
-              {t(`roles.${role || 'buyer'}`)}
+              {t(`roles.${role || 'consumer'}`)}
             </p>
           </div>
         </PanelCard>
@@ -40,7 +40,7 @@ function ProfileContent() {
 
           <PanelCard title={t('profileNav.accountInfo')}>
             <Row label={t('profileNav.email')} value={user?.email} />
-            <Row label={t('profileNav.role')} value={t(`roles.${role || 'buyer'}`)} />
+            <Row label={t('profileNav.role')} value={t(`roles.${role || 'consumer'}`)} />
           </PanelCard>
 
           {hosting.length > 0 && (

@@ -73,3 +73,18 @@ export async function savePortfolioHolding({ portfolioId, listingId, costBasis, 
     },
   })
 }
+
+export async function syncPortfolioHoldings(portfolioId) {
+  return callEdgeFunction('investment', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'sync_holdings', portfolio_id: portfolioId },
+  })
+}
+
+export default {
+  fetchInvestmentDashboard,
+  runInvestmentScenario,
+  savePortfolioHolding,
+  syncPortfolioHoldings,
+}

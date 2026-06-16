@@ -13,13 +13,29 @@ export async function fetchDeveloperDashboard() {
   return { profile: developerProfile, source: 'local' }
 }
 
+export async function createProject(data) {
+  return callEdgeFunction('developer', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'create_project', ...data },
+  })
+}
+
+export async function updateUnitStatus(unitId, status) {
+  return callEdgeFunction('developer', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'update_unit_status', unit_id: unitId, status },
+  })
+}
+
 export async function fetchProjects() {
   try {
     const payload = await callEdgeFunction('developer', {
       allowAnonymous: false,
       query: { action: 'projects' },
     })
-    if (payload?.projects?.length) return { projects: payload.projects, source: 'supabase' }
+    if (payload?.projects) return { projects: payload.projects, source: 'supabase' }
   } catch { /* fallback */ }
   return { projects: developerProjects, source: 'local' }
 }
@@ -48,7 +64,7 @@ export async function fetchConstruction() {
       allowAnonymous: false,
       query: { action: 'construction' },
     })
-    if (payload?.milestones?.length) return { milestones: payload.milestones, source: 'supabase' }
+    if (payload?.milestones) return { milestones: payload.milestones, source: 'supabase' }
   } catch { /* fallback */ }
   return { milestones: constructionMilestones, source: 'local' }
 }
@@ -59,7 +75,7 @@ export async function fetchDeveloperBuyers() {
       allowAnonymous: false,
       query: { action: 'buyers' },
     })
-    if (payload?.buyers?.length) return { buyers: payload.buyers, source: 'supabase' }
+    if (payload?.buyers) return { buyers: payload.buyers, source: 'supabase' }
   } catch { /* fallback */ }
   return { buyers: developerBuyers, source: 'local' }
 }
@@ -87,4 +103,4 @@ export async function notifyBuyersOfMilestone(milestone) {
   }
 }
 
-export default { fetchDeveloperDashboard, fetchProjects, fetchProjectUnits, fetchConstruction, fetchDeveloperBuyers, notifyBuyersOfMilestone }
+export default { fetchDeveloperDashboard, fetchProjects, fetchProjectUnits, fetchConstruction, fetchDeveloperBuyers, notifyBuyersOfMilestone, createProject, updateUnitStatus }

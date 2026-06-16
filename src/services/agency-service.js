@@ -178,6 +178,14 @@ export async function fetchAgencyListings() {
   return { listings: agencyListings, source: 'local' }
 }
 
+export async function syncPayrollFromCommissions(period) {
+  return callEdgeFunction('agencies', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'sync_payroll_from_commissions', period },
+  })
+}
+
 export default {
   fetchAgencyDashboard,
   fetchTeam,
@@ -186,6 +194,7 @@ export default {
   exportPayrollCsv,
   exportPayrollGhanaBank,
   runPayroll,
+  syncPayrollFromCommissions,
   fetchAgencyAnalytics,
   fetchTrustScore,
   fetchCompliance,

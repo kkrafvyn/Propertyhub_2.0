@@ -5,7 +5,7 @@ import FinanceShell from '../../components/FinanceShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import PaymentProviderPicker from '../../components/PaymentProviderPicker'
 import { IconChevronRight } from '../../components/icons'
-import { fetchEscrowAccounts } from '../../services/finance-service'
+import { fetchEscrowAccounts, releaseEscrow, disputeEscrow } from '../../services/finance-service'
 import { fundEscrow } from '../../services/payments-service'
 import { getDefaultProvider } from '../../lib/payment-providers'
 
@@ -17,14 +17,15 @@ const milestoneStyles = {
 
 function Escrow() {
   const [params] = useSearchParams()
+  const [role, setRole] = useState('buyer')
   const [escrow, setEscrow] = useState([])
   const [provider, setProvider] = useState(getDefaultProvider())
   const [loading, setLoading] = useState(null)
   const [message, setMessage] = useState(params.get('funded') ? 'Escrow deposit recorded.' : '')
 
   useEffect(() => {
-    fetchEscrowAccounts().then(({ escrow: rows }) => setEscrow(rows))
-  }, [])
+    fetchEscrowAccounts({ role }).then(({ escrow: rows }) => setEscrow(rows ?? []))
+  }, [role])
 
   async function handleFund(account, milestoneAmount) {
     const amount = milestoneAmount ?? account.amount - account.funded
@@ -37,11 +38,45 @@ function Escrow() {
     setLoading(null)
   }
 
+  async function handleRelease(account) {
+    setLoading(account.id)
+    setMessage('')
+    const result = await releaseEscrow(account.id)
+    setMessage(result?.ok ? 'Escrow released to seller.' : result?.error || 'Release failed.')
+    fetchEscrowAccounts({ role }).then(({ escrow: rows }) => setEscrow(rows ?? []))
+    setLoading(null)
+  }
+
+  async function handleDispute(account) {
+    setLoading(account.id)
+    const result = await disputeEscrow(account.id, 'Buyer dispute')
+    setMessage(result?.ok ? 'Dispute opened — support will review.' : result?.error || 'Dispute failed.')
+    fetchEscrowAccounts({ role }).then(({ escrow: rows }) => setEscrow(rows ?? []))
+    setLoading(null)
+  }
+
   return (
     <FinanceShell titleKey="hubs.finance.escrow.title" subtitleKey="hubs.finance.escrow.subtitle">
       {message && (
         <p className="mb-4 rounded-lg border border-brand/30 bg-surface-hover px-4 py-3 text-sm text-ink">{message}</p>
       )}
+
+      <div className="mb-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => setRole('buyer')}
+          className={`rounded-lg px-4 py-2 text-sm font-semibold ${role === 'buyer' ? 'bg-brand-accent text-white' : 'border border-surface-border text-ink-secondary'}`}
+        >
+          As buyer
+        </button>
+        <button
+          type="button"
+          onClick={() => setRole('seller')}
+          className={`rounded-lg px-4 py-2 text-sm font-semibold ${role === 'seller' ? 'bg-brand-accent text-white' : 'border border-surface-border text-ink-secondary'}`}
+        >
+          As seller
+        </button>
+      </div>
 
       <div className="mb-6 max-w-xl">
         <p className="mb-2 text-sm font-semibold">Payment provider</p>
@@ -90,7 +125,7 @@ function Escrow() {
                         <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${milestoneStyles[m.status] || milestoneStyles.scheduled}`}>
                           {m.status}
                         </span>
-                        {m.status === 'pending' && (
+                        {m.status === 'pending' && role === 'buyer' && (
                           <button
                             type="button"
                             onClick={() => handleFund(e, m.amount)}
@@ -106,7 +141,7 @@ function Escrow() {
                 </ul>
               )}
 
-              {remaining > 0 && !e.milestones?.length && (
+              {remaining > 0 && !e.milestones?.length && role === 'buyer' && (
                 <button
                   type="button"
                   onClick={() => handleFund(e)}
@@ -115,6 +150,31 @@ function Escrow() {
                 >
                   {loading === e.id ? 'Redirecting…' : `Fund GHS ${remaining.toLocaleString()} via ${provider}`}
                 </button>
+              )}
+
+              {e.funded >= e.amount && e.status !== 'released' && e.status !== 'disputed' && (
+                <div className="mt-4 flex flex-wrap gap-2 border-t border-surface-border pt-4">
+                  {role === 'seller' && (
+                    <button
+                      type="button"
+                      onClick={() => handleRelease(e)}
+                      disabled={loading === e.id}
+                      className="rounded-lg bg-mobile-forest px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                    >
+                      Release funds
+                    </button>
+                  )}
+                  {role === 'buyer' && (
+                    <button
+                      type="button"
+                      onClick={() => handleDispute(e)}
+                      disabled={loading === e.id}
+                      className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 disabled:opacity-60"
+                    >
+                      Open dispute
+                    </button>
+                  )}
+                </div>
               )}
             </article>
           )

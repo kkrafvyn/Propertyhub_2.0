@@ -3,7 +3,7 @@ import AgencyShell from '../../components/AgencyShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { downloadCsv } from '../../lib/export-csv'
-import { fetchPayroll, exportPayrollCsv, exportPayrollGhanaBank, runPayroll } from '../../services/agency-service'
+import { fetchPayroll, exportPayrollCsv, exportPayrollGhanaBank, runPayroll, syncPayrollFromCommissions } from '../../services/agency-service'
 
 function Payroll() {
   const { t } = useTranslation()
@@ -36,6 +36,15 @@ function Payroll() {
     if (result.processed) {
       setPayroll((prev) => prev.map((p) => (pendingIds.includes(p.id) ? { ...p, status: 'processing' } : p)))
     }
+    setRunning(false)
+  }
+
+  async function handleSyncCommissions() {
+    setRunning(true)
+    setMessage('')
+    const result = await syncPayrollFromCommissions(new Date().toISOString().slice(0, 7))
+    setMessage(`Synced ${result.synced ?? 0} payroll rows from paid commissions.`)
+    fetchPayroll().then(({ payroll: rows }) => setPayroll(rows))
     setRunning(false)
   }
 
@@ -74,7 +83,10 @@ function Payroll() {
           </tbody>
         </table>
       </div>
-      <div className="mt-4 flex gap-3">
+      <div className="mt-4 flex flex-wrap gap-3">
+        <button type="button" onClick={handleSyncCommissions} disabled={running} className="rounded-lg border border-surface-border px-5 py-2.5 text-sm font-semibold disabled:opacity-60">
+          Sync from commissions
+        </button>
         <button type="button" onClick={handleRunPayroll} disabled={running} className="rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
           {running ? t('extensions.payroll.running') : t('extensions.payroll.run')}
         </button>

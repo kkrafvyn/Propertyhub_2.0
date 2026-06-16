@@ -17,7 +17,41 @@ export async function fetchReviews(listingId) {
   return { reviews: [], source: 'local' }
 }
 
-export async function submitReview({ listingId, rating, body, viewingId }) {
+export async function checkReviewEligibility(listingId) {
+  if (!supabase) return { eligible: true, reason: 'offline' }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { eligible: false, reason: 'login_required' }
+
+  const { data: viewing } = await supabase
+    .from('viewing_requests')
+    .select('id, status')
+    .eq('user_id', user.id)
+    .eq('listing_id', listingId)
+    .eq('status', 'confirmed')
+    .limit(1)
+    .maybeSingle()
+
+  const { data: stay } = await supabase
+    .from('reservations')
+    .select('id, status')
+    .eq('guest_id', user.id)
+    .eq('listing_id', listingId)
+    .in('status', ['confirmed', 'completed'])
+    .limit(1)
+    .maybeSingle()
+
+  if (viewing || stay) return { eligible: true, viewingId: viewing?.id, reservationId: stay?.id }
+
+  return { eligible: false, reason: 'complete_viewing_or_stay' }
+}
+
+export async function submitReview({ listingId, rating, body, viewingId, reservationId }) {
+  const eligibility = await checkReviewEligibility(listingId)
+  if (!eligibility.eligible && eligibility.reason !== 'offline') {
+    throw new Error('Complete a viewing or stay before reviewing this property.')
+  }
+
   if (supabase) {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
@@ -26,7 +60,8 @@ export async function submitReview({ listingId, rating, body, viewingId }) {
         listingId,
         rating,
         body,
-        viewingId,
+        viewingId: viewingId ?? eligibility.viewingId,
+        reservationId: reservationId ?? eligibility.reservationId,
       })
       if (row) return { ok: true, review: row, source: 'supabase' }
     }

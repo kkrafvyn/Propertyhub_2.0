@@ -8,7 +8,12 @@ export async function fetchTransactions() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       const rows = await fetchTransactionsFromDb(user.id)
-      if (rows?.length) return { transactions: rows, source: 'supabase' }
+      if (rows?.length) {
+        return {
+          transactions: rows.map(mapTransaction),
+          source: 'supabase',
+        }
+      }
     }
   }
 
@@ -20,6 +25,22 @@ export async function fetchTransactions() {
     if (payload?.transactions?.length) return { transactions: payload.transactions, source: 'supabase' }
   } catch { /* fallback */ }
   return { transactions, source: 'local' }
+}
+
+function mapTransaction(row) {
+  return {
+    id: row.id,
+    property: row.property,
+    stage: row.stage,
+    offer: row.offer,
+    counter: row.counter,
+    closingDate: row.closing_date ?? row.closingDate,
+    checklist: row.checklist ?? [],
+    escrowId: row.escrow_id ?? row.escrowId,
+    listingId: row.listing_id ?? row.listingId,
+    offerId: row.offer_id ?? row.offerId,
+    commissionSettled: row.commission_settled ?? row.commissionSettled,
+  }
 }
 
 export async function updateChecklistItem(transactionId, itemId, done) {
@@ -50,4 +71,20 @@ export async function updateChecklistItem(transactionId, itemId, done) {
   }
 }
 
-export default { fetchTransactions, updateChecklistItem }
+export async function advanceTransaction(transactionId, stage) {
+  return callEdgeFunction('persistence', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'advance_transaction', transaction_id: transactionId, stage },
+  })
+}
+
+export async function completeTransaction(transactionId) {
+  return callEdgeFunction('persistence', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'complete_transaction', transaction_id: transactionId },
+  })
+}
+
+export default { fetchTransactions, updateChecklistItem, advanceTransaction, completeTransaction }

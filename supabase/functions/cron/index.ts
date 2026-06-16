@@ -7,6 +7,8 @@ import { currentBillingMonth } from '../_shared/utilities.ts'
 import { emitPlatformEvent } from '../_shared/events.ts'
 import { runEventAutomations } from '../_shared/event-automation.ts'
 import { cronJobUrl } from '../_shared/platform-urls.ts'
+import { runFraudScan } from '../_shared/fraud-scan.ts'
+import { computeReputationScore } from '../_shared/reputation.ts'
 
 function authorizeCron(req: Request): boolean {
   const secret = Deno.env.get('CRON_SECRET')
@@ -114,6 +116,21 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: true, action: 'utility_billing', bills_generated: count, source: 'cron' })
     }
 
+    if (action === 'fraud_scan') {
+      const result = await runFraudScan(admin)
+      return jsonResponse({ ok: true, action: 'fraud_scan', ...result, source: 'cron' })
+    }
+
+    if (action === 'reputation_refresh') {
+      const { data: users } = await admin.from('user_profiles').select('id').limit(100)
+      let updated = 0
+      for (const u of users ?? []) {
+        await computeReputationScore(admin, u.id)
+        updated++
+      }
+      return jsonResponse({ ok: true, action: 'reputation_refresh', updated, source: 'cron' })
+    }
+
     if (action === 'nightly_full') {
       const { data: regions } = await admin.from('market_regions').select('id').eq('active', true)
       const regionIds = regions?.map((r) => r.id) ?? ['africa_ghana']
@@ -122,16 +139,18 @@ Deno.serve(async (req) => {
         analytics.push(await aggregateAnalyticsFacts(admin, regionId))
       }
       const bills = await generateUtilityBills(admin)
+      const fraud = await runFraudScan(admin)
       return jsonResponse({
         ok: true,
         action: 'nightly_full',
         analytics,
         bills_generated: bills,
+        fraud,
         source: 'cron',
       })
     }
 
-    return errorResponse('Unknown action. Use: nightly, analytics, utility_billing, nightly_full', 404)
+    return errorResponse('Unknown action. Use: nightly, analytics, utility_billing, fraud_scan, reputation_refresh, nightly_full', 404)
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : 'Cron job failed', 500)
   }

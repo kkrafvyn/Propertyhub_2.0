@@ -41,3 +41,27 @@ verify_jwt = false
 
 [functions.iot-webhook]
 verify_jwt = false
+
+[functions.vendors]
+verify_jwt = false
+
+[functions.docusign]
+verify_jwt = false
+
+[functions.consumer]
+verify_jwt = false
+
+[functions.smart]
+verify_jwt = false
+
+[functions.agent]
+verify_jwt = false
+
+[functions.bookings]
+verify_jwt = false
+
+[functions.developer]
+verify_jwt = false
+
+[functions.enterprise]
+verify_jwt = false

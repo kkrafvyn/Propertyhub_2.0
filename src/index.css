@@ -18,9 +18,20 @@ body,
 body {
   margin: 0;
   color: #222222;
+  background: #ffffff;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   -webkit-text-size-adjust: 100%;
+}
+
+html:not(.dark) body,
+html:not(.dark) #root {
+  background: #ffffff;
+}
+
+html:not(.dark) .mobile-bolt,
+html:not(.dark) .bg-bolt-bg {
+  background-color: #ffffff;
 }
 
 img,

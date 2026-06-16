@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import DesktopShell, { CompactSearch } from '../components/DesktopShell'
+import ResponsivePageShell from '../components/ResponsivePageShell'
 import { PageTitle } from '../components/ui/AirbnbUI'
 import { useTranslation } from '../i18n/LocaleContext'
 
@@ -10,11 +10,11 @@ const sections = [
   { id: 'safety', titleKey: 'help.safety', bodyKey: 'help.safetyBody' },
 ]
 
-export default function HelpCentrePage() {
+function HelpContent() {
   const { t } = useTranslation()
 
   return (
-    <DesktopShell search={<CompactSearch />}>
+    <>
       <PageTitle title={t('help.title')} subtitle={t('help.subtitle')} />
       <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
         <nav className="space-y-2 text-sm">
@@ -36,6 +36,16 @@ export default function HelpCentrePage() {
           ))}
         </div>
       </div>
-    </DesktopShell>
+    </>
+  )
+}
+
+export default function HelpCentrePage() {
+  const { t } = useTranslation()
+
+  return (
+    <ResponsivePageShell title={t('help.title')} subtitle={t('help.subtitle')} backTo="/" hideNav={false}>
+      <HelpContent />
+    </ResponsivePageShell>
   )
 }

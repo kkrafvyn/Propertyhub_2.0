@@ -5,7 +5,7 @@ import ProtectedRoute from '../../components/ProtectedRoute'
 import CapabilityRoute from '../../components/CapabilityRoute'
 import { CAPABILITIES } from '../../lib/capabilities'
 import { HubLinkGrid, StatCard, StatGrid, PanelCard, PrimaryButton } from '../../components/ui/AirbnbUI'
-import { fetchInvestmentDashboard, runInvestmentScenario } from '../../services/investment-service'
+import { fetchInvestmentDashboard, runInvestmentScenario, syncPortfolioHoldings } from '../../services/investment-service'
 
 function InvestmentHub() {
   const [data, setData] = useState(null)
@@ -76,14 +76,25 @@ function RoiContent() {
 
 function PortfolioContent() {
   const [holdings, setHoldings] = useState([])
+  const [syncMsg, setSyncMsg] = useState('')
 
-  useEffect(() => {
+  function reload() {
     fetchInvestmentDashboard().then(({ holdings: h }) => setHoldings(h ?? []))
-  }, [])
+  }
+
+  useEffect(() => { reload() }, [])
+
+  async function handleSync() {
+    const result = await syncPortfolioHoldings()
+    setSyncMsg(`Synced ${result?.holdings_added ?? 0} holdings from completed transactions.`)
+    reload()
+  }
 
   return (
     <InvestmentShell title="Portfolio" subtitle="Track owned and watched assets">
       <PanelCard title="Holdings">
+        <PrimaryButton className="mb-4" onClick={handleSync}>Sync from completed purchases</PrimaryButton>
+        {syncMsg && <p className="mb-3 text-sm text-ink-secondary">{syncMsg}</p>}
         <ul className="divide-y divide-surface-border">
           {holdings.map((h) => (
             <li key={h.id} className="flex justify-between py-3 text-sm">

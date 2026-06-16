@@ -2,6 +2,7 @@
 
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { emitPlatformEvent } from './events.ts'
+import { updateEscrowMilestonesFromFunding } from './transaction-engine.ts'
 import { recordPaymentLedger } from './ledger.ts'
 import { computeTenantIntelligence } from './tenant-intelligence.ts'
 import { runEventAutomations } from './event-automation.ts'
@@ -48,7 +49,7 @@ export async function finalizePayment(
     await admin.from('payment_records').update({ status: 'completed' }).eq('provider_ref', input.providerRef)
   }
 
-  await applyPurposeSideEffects(admin, purpose, meta, input.provider ?? meta.provider)
+  await applyPurposeSideEffects(admin, purpose, meta, input.provider ?? meta.provider, userId)
 
   if (userId && amount > 0 && paymentId) {
     await recordPaymentLedger(admin, {
@@ -102,6 +103,7 @@ async function applyPurposeSideEffects(
   purpose: string,
   metadata: Record<string, unknown>,
   provider?: string,
+  userId?: string,
 ) {
   const listingId = metadata.listing_id ?? metadata.listingId
   const rentPaymentId = metadata.rent_payment_id
@@ -131,7 +133,35 @@ async function applyPurposeSideEffects(
       const funded = Number(escrow.funded) + depositAmount
       const status = funded >= Number(escrow.amount) ? 'funded' : 'partial'
       await admin.from('escrow_accounts').update({ funded, status }).eq('id', String(metadata.escrow_id))
+      await updateEscrowMilestonesFromFunding(admin, String(metadata.escrow_id), funded)
     }
+  }
+
+  if (purpose === 'reservation_payment' && metadata.reservation_id) {
+    await admin.from('reservations').update({
+      status: 'confirmed',
+      payment_id: payRef,
+      paid_at: new Date().toISOString(),
+    }).eq('id', String(metadata.reservation_id))
+    await emitPlatformEvent(admin, {
+      eventType: 'reservation.paid',
+      aggregateType: 'reservation',
+      aggregateId: String(metadata.reservation_id),
+      payload: { payment_id: payRef },
+      idempotencyKey: `res-paid-${metadata.reservation_id}-${payRef}`,
+    })
+  }
+
+  if (purpose === 'platform_subscription' && metadata.plan_id && userId) {
+    const subId = `sub-${crypto.randomUUID().slice(0, 8)}`
+    await admin.from('user_subscriptions').insert({
+      id: subId,
+      user_id: userId,
+      plan_id: String(metadata.plan_id),
+      status: 'active',
+      provider: provider ?? 'paystack',
+      current_period_end: new Date(Date.now() + 30 * 86400000).toISOString(),
+    }).catch(() => null)
   }
 
   if (purpose === 'utility') {

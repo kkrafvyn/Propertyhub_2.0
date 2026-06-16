@@ -2,13 +2,16 @@ import { useEffect, useState } from 'react'
 import DeveloperShell from '../../components/DeveloperShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { useTranslation } from '../../i18n/LocaleContext'
-import { fetchProjects, fetchProjectUnits } from '../../services/developer-service'
+import { fetchProjects, fetchProjectUnits, createProject } from '../../services/developer-service'
 
 function Projects() {
   const { t } = useTranslation()
   const [projects, setProjects] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [units, setUnits] = useState([])
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ name: '', location: '', units: 10 })
+  const [creating, setCreating] = useState(false)
 
   useEffect(() => {
     fetchProjects().then(({ projects: rows }) => {
@@ -22,8 +25,57 @@ function Projects() {
     fetchProjectUnits(selectedId).then(({ units: rows }) => setUnits(rows))
   }, [selectedId])
 
+  async function handleCreateProject(e) {
+    e.preventDefault()
+    if (!form.name.trim()) return
+    setCreating(true)
+    const result = await createProject(form)
+    if (result?.project) {
+      setProjects((prev) => [...prev, result.project])
+      setSelectedId(result.project.id)
+    }
+    setShowForm(false)
+    setForm({ name: '', location: '', units: 10 })
+    setCreating(false)
+  }
+
   return (
     <DeveloperShell titleKey="hubs.developer.projects.title" subtitleKey="hubs.developer.projects.subtitle">
+      {showForm ? (
+        <form onSubmit={handleCreateProject} className="mb-6 panel-card bg-surface p-4 space-y-3">
+          <input
+            className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm"
+            placeholder="Project name"
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          />
+          <input
+            className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm"
+            placeholder="Location"
+            value={form.location}
+            onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+          />
+          <input
+            type="number"
+            className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm"
+            placeholder="Units"
+            value={form.units}
+            onChange={(e) => setForm((f) => ({ ...f, units: Number(e.target.value) }))}
+          />
+          <div className="flex gap-2">
+            <button type="submit" disabled={creating} className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+              Create project
+            </button>
+            <button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-surface-border px-4 py-2 text-sm font-semibold">
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : (
+        <button type="button" onClick={() => setShowForm(true)} className="mb-6 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">
+          New project
+        </button>
+      )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {projects.map((p) => (
           <button
@@ -81,8 +133,6 @@ function Projects() {
           </div>
         </div>
       )}
-
-      <button type="button" className="mt-6 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">New project</button>
     </DeveloperShell>
   )
 }

@@ -45,4 +45,12 @@ export async function createSigningSession(documentId, documentName) {
   return { ok: false, message: 'Sign in required' }
 }
 
-export default { createSigningSession }
+export async function fetchDocuSignConnect() {
+  const payload = await callEdgeFunction('docusign', {
+    allowAnonymous: false,
+    query: { action: 'connect' },
+  })
+  return payload
+}
+
+export default { createSigningSession, fetchDocuSignConnect }

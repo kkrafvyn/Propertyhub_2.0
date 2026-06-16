@@ -20,6 +20,7 @@ const ADMIN_NAV_ENTRIES = [
   { to: '/admin/ai', key: 'aiOrchestration', fullAdminOnly: true },
   { to: '/admin/valuation-api', key: 'valuationApi', fullAdminOnly: true },
   { to: '/admin/global', key: 'regionsCurrency', fullAdminOnly: true },
+  { to: '/admin/integrations', key: 'integrations', fullAdminOnly: false },
   { to: '/admin/audit', key: 'auditLog', fullAdminOnly: true },
 ]
 
@@ -133,6 +134,7 @@ export function useEnterpriseShellNav() {
   const links = useNavLinks([
     { to: '/enterprise', key: 'overview', end: true },
     { to: '/enterprise/portfolios', key: 'portfolios' },
+    { to: '/enterprise/organizations', key: 'organizations' },
     { to: '/enterprise/esg', key: 'esgReporting' },
     { to: '/enterprise/forecast', key: 'revenueForecast' },
   ])

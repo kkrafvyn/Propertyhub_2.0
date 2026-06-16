@@ -28,6 +28,7 @@ export const TOOL_LINKS = {
   advisor: { to: '/buyer/advisor', labelKey: 'profileNav.aiAdvisor' },
   saved: { to: '/saved', labelKey: 'profileNav.savedHomes' },
   documents: { to: '/document-vault', labelKey: 'profileNav.documentVault' },
+  kyc: { to: '/profile/kyc', labelKey: 'profileNav.kycVerification' },
   compare: { to: '/compare', labelKey: 'nav.compare' },
   messages: { to: '/messages', labelKey: 'menu.messages' },
 }
@@ -42,7 +43,7 @@ export const HOSTING_LINKS = [
   { to: '/host/boost', labelKey: 'profileNav.featureListing' },
 ]
 
-const CONSUMER_TOOLS = ['trips', 'transactions', 'advisor', 'saved', 'documents', 'compare', 'messages']
+const CONSUMER_TOOLS = ['trips', 'transactions', 'advisor', 'saved', 'documents', 'kyc', 'compare', 'messages']
 
 /** Profile sections — capability-aware; legacy roles map to consumer modules */
 export const ROLE_PROFILE_CONFIG = {
@@ -58,52 +59,52 @@ export const ROLE_PROFILE_CONFIG = {
   },
   [USER_ROLES.RENTER]: {
     workspaces: ['tenant', 'resident', 'wallet'],
-    tools: ['trips', 'documents', 'messages'],
+    tools: ['trips', 'documents', 'kyc', 'messages'],
     hosting: false,
   },
   [USER_ROLES.INVESTOR]: {
     workspaces: ['investment', 'wallet'],
-    tools: ['saved', 'compare', 'advisor', 'documents', 'messages'],
+    tools: ['saved', 'compare', 'advisor', 'documents', 'kyc', 'messages'],
     hosting: false,
   },
   [USER_ROLES.INDEPENDENT_AGENT]: {
     workspaces: ['agent', 'wallet'],
-    tools: ['trips', 'transactions', 'documents', 'messages'],
+    tools: ['trips', 'transactions', 'documents', 'kyc', 'messages'],
     hosting: false,
   },
   [USER_ROLES.AGENCY_AGENT]: {
     workspaces: ['agent'],
-    tools: ['trips', 'documents', 'messages'],
+    tools: ['trips', 'documents', 'kyc', 'messages'],
     hosting: false,
   },
   [USER_ROLES.AGENCY_OWNER]: {
     workspaces: ['agency', 'wallet'],
-    tools: ['documents', 'messages'],
+    tools: ['documents', 'kyc', 'messages'],
     hosting: false,
   },
   [USER_ROLES.AGENCY_MANAGER]: {
     workspaces: ['agency'],
-    tools: ['documents', 'messages'],
+    tools: ['documents', 'kyc', 'messages'],
     hosting: false,
   },
   [USER_ROLES.PROPERTY_OWNER]: {
     workspaces: ['manage', 'finance', 'smart', 'host', 'wallet'],
-    tools: ['documents', 'messages'],
+    tools: ['documents', 'kyc', 'messages'],
     hosting: true,
   },
   [USER_ROLES.PROPERTY_MANAGER]: {
     workspaces: ['manage', 'smart', 'finance', 'wallet'],
-    tools: ['documents', 'messages'],
+    tools: ['documents', 'kyc', 'messages'],
     hosting: false,
   },
   [USER_ROLES.DEVELOPER]: {
     workspaces: ['developer', 'investment'],
-    tools: ['documents', 'messages'],
+    tools: ['documents', 'kyc', 'messages'],
     hosting: false,
   },
   [USER_ROLES.ENTERPRISE_OPERATOR]: {
     workspaces: ['enterprise', 'intelligence', 'investment'],
-    tools: ['documents', 'messages'],
+    tools: ['documents', 'kyc', 'messages'],
     hosting: false,
   },
   [USER_ROLES.PLATFORM_MODERATOR]: {

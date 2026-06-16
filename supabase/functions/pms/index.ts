@@ -107,10 +107,14 @@ Deno.serve(async (req) => {
       }
       if (action === 'work_orders') {
         const { data } = await admin.from('work_orders').select('*').eq('owner_id', user.id)
+        const { data: vendorRows } = await admin.from('vendors').select('*').eq('owner_id', user.id)
         const workOrders = (data ?? []).map((r) => ({
-          id: r.id, unit: r.unit, issue: r.issue, vendor: r.vendor, priority: r.priority, status: r.status, cost: r.cost,
+          id: r.id, unit: r.unit, issue: r.issue, vendor: r.vendor, vendorId: r.vendor_id, priority: r.priority, status: r.status, cost: r.cost,
         }))
-        return jsonResponse({ workOrders, vendors: [{ id: 'v1', name: 'CoolAir GH' }, { id: 'v2', name: 'FixIt Ltd' }], source: 'supabase' })
+        const vendors = (vendorRows ?? []).map((r) => ({
+          id: r.id, name: r.name, specialty: r.specialty ?? r.trade, rating: Number(r.rating ?? 0), jobs: r.jobs_completed ?? 0,
+        }))
+        return jsonResponse({ workOrders, vendors, source: 'supabase' })
       }
       if (action === 'rent_collection') {
         const { data } = await admin.from('pms_tenants').select('*').eq('owner_id', user.id)

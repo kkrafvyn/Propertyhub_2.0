@@ -53,6 +53,13 @@ $functions = @(
   "communications",
   "push",
   "docusign",
+  "vendors",
+  "consumer",
+  "agent",
+  "bookings",
+  "smart",
+  "developer",
+  "enterprise",
   "iot-webhook",
   "insurance"
 )

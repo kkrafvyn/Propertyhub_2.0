@@ -184,7 +184,7 @@ export async function fetchUserProfile(userId) {
 export async function upsertUserProfileFromAuth(user, metadata = {}) {
   if (!supabase || !user?.id) return null
 
-  const role = metadata.role || user.user_metadata?.role || 'buyer'
+  const role = metadata.role || user.user_metadata?.role || 'consumer'
   const displayName = metadata.display_name || user.user_metadata?.display_name || user.email?.split('@')[0] || 'Member'
 
   const { data, error } = await supabase
@@ -328,6 +328,7 @@ export async function createOfferInDb({ userId, property, amount, notes, listing
     id,
     user_id: userId,
     property,
+    listing_id: listingId || null,
     amount: Number(amount),
     notes: notes || null,
     status: 'pending',
@@ -361,6 +362,10 @@ export async function fetchOffersFromDb(userId) {
     amount: Number(r.amount),
     status: r.status,
     notes: r.notes,
+    counterAmount: r.counter_amount ? Number(r.counter_amount) : null,
+    counterNotes: r.counter_notes,
+    listingId: r.listing_id,
+    transactionId: r.transaction_id,
     updated: r.updated || r.created_at?.slice(0, 10),
   }))
 }
@@ -391,7 +396,7 @@ export async function fetchReviewsFromDb(listingId) {
   }))
 }
 
-export async function createReviewInDb({ userId, listingId, rating, body, viewingId }) {
+export async function createReviewInDb({ userId, listingId, rating, body, viewingId, reservationId }) {
   if (!supabase || !userId) return null
   const { data, error } = await supabase.from('reviews').insert({
     listing_id: listingId,
@@ -399,6 +404,8 @@ export async function createReviewInDb({ userId, listingId, rating, body, viewin
     rating,
     body: body || null,
     viewing_id: viewingId || null,
+    reservation_id: reservationId || null,
+    eligible_type: reservationId ? 'stay' : viewingId ? 'viewing' : null,
   }).select('*').single()
   if (error) return null
   const { data: agg } = await supabase.from('reviews').select('rating').eq('listing_id', listingId)

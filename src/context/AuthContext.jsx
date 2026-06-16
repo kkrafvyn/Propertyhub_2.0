@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
     }
     const row = await fetchUserProfile(sessionUser.id)
     setProfile(row)
-    const caps = await fetchUserCapabilities(sessionUser.id, row?.role ?? 'buyer')
+  const caps = await fetchUserCapabilities(sessionUser.id, row?.role ?? 'consumer')
     setCapabilities(caps)
     if (event === 'SIGNED_IN') {
       mergeSavedOnLogin().catch(() => {})

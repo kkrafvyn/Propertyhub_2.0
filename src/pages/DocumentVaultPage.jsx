@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import DesktopShell, { CompactSearch } from '../components/DesktopShell'
+import ResponsivePageShell from '../components/ResponsivePageShell'
 import ProtectedRoute from '../components/ProtectedRoute'
 import { Badge, PageTitle, PrimaryButton, TablePanel } from '../components/ui/AirbnbUI'
 import { useTranslation } from '../i18n/LocaleContext'
@@ -49,7 +49,7 @@ function VaultContent() {
   }
 
   return (
-    <DesktopShell search={<CompactSearch />}>
+    <>
       <PageTitle
         title={t('vaultPage.title')}
         subtitle={t('vaultPage.subtitle')}
@@ -64,41 +64,53 @@ function VaultContent() {
       />
 
       <TablePanel>
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-surface-border bg-surface-subtle">
-            <tr>
-              <th className="px-5 py-3 font-semibold text-ink">{t('vaultPage.colDocument')}</th>
-              <th className="px-5 py-3 font-semibold text-ink">{t('vaultPage.colCategory')}</th>
-              <th className="px-5 py-3 font-semibold text-ink">{t('vaultPage.colStatus')}</th>
-              <th className="px-5 py-3 font-semibold text-ink">{t('vaultPage.colUpdated')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {documents.length === 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[480px] text-left text-sm">
+            <thead className="border-b border-surface-border bg-surface-subtle">
               <tr>
-                <td colSpan={4} className="px-5 py-12 text-center text-ink-secondary">{t('vaultPage.empty')}</td>
+                <th className="px-5 py-3 font-semibold text-ink">{t('vaultPage.colDocument')}</th>
+                <th className="px-5 py-3 font-semibold text-ink">{t('vaultPage.colCategory')}</th>
+                <th className="px-5 py-3 font-semibold text-ink">{t('vaultPage.colStatus')}</th>
+                <th className="px-5 py-3 font-semibold text-ink">{t('vaultPage.colUpdated')}</th>
               </tr>
-            ) : (
-              documents.map((doc) => (
-                <tr key={doc.id} className="border-b border-surface-border last:border-0">
-                  <td className="px-5 py-3.5 font-medium text-ink">{doc.name}</td>
-                  <td className="px-5 py-3.5 text-ink-secondary">{doc.category || doc.property || '—'}</td>
-                  <td className="px-5 py-3.5">
-                    <Badge tone={statusTone[doc.status] || 'neutral'}>
-                      {(doc.status || 'draft').replace('_', ' ')}
-                    </Badge>
-                  </td>
-                  <td className="px-5 py-3.5 text-ink-secondary">{doc.updated || doc.created_at?.slice?.(0, 10) || '—'}</td>
+            </thead>
+            <tbody>
+              {documents.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-5 py-12 text-center text-ink-secondary">{t('vaultPage.empty')}</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                documents.map((doc) => (
+                  <tr key={doc.id} className="border-b border-surface-border last:border-0">
+                    <td className="px-5 py-3.5 font-medium text-ink">{doc.name}</td>
+                    <td className="px-5 py-3.5 text-ink-secondary">{doc.category || doc.property || '—'}</td>
+                    <td className="px-5 py-3.5">
+                      <Badge tone={statusTone[doc.status] || 'neutral'}>
+                        {(doc.status || 'draft').replace('_', ' ')}
+                      </Badge>
+                    </td>
+                    <td className="px-5 py-3.5 text-ink-secondary">{doc.updated || doc.created_at?.slice?.(0, 10) || '—'}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </TablePanel>
-    </DesktopShell>
+    </>
+  )
+}
+
+function VaultLayout() {
+  const { t } = useTranslation()
+
+  return (
+    <ResponsivePageShell title={t('vaultPage.title')} subtitle={t('vaultPage.subtitle')} backTo="/profile">
+      <VaultContent />
+    </ResponsivePageShell>
   )
 }
 
 export default function DocumentVaultPage() {
-  return <ProtectedRoute><VaultContent /></ProtectedRoute>
+  return <ProtectedRoute><VaultLayout /></ProtectedRoute>
 }

@@ -41,7 +41,7 @@ export default function RoleProtectedRoute({ children, require = 'any', fallback
         <div className="mx-auto max-w-lg px-6 py-20 text-center">
           <h1 className="text-xl font-semibold">{t('access.restricted')}</h1>
           <p className="mt-2 text-ink-secondary">
-            {t('access.requires', { roles: allowed.join(' / '), role: t(`roles.${role || 'buyer'}`) })}
+            {t('access.requires', { roles: allowed.join(' / '), role: t(`roles.${role || 'consumer'}`) })}
           </p>
           <a href={getRoleHomePath(user, profile)} className="mt-4 inline-block text-sm font-semibold text-ink underline">
             {t('access.goToWorkspace')}

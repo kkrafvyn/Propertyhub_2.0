@@ -81,6 +81,9 @@ async function runRule(
     'utility.bill.paid': 'utility',
     'booking.created': 'booking',
     'tenant.risk_updated': 'credit',
+    'iot.motion_detected': 'system',
+    'iot.device_offline': 'system',
+    'iot.leak_detected': 'system',
   }
 
   await notifyUser(admin, {
@@ -152,6 +155,18 @@ async function runFallbackAutomations(admin: SupabaseClient, ctx: AutomationCont
           link: '/renter/credit',
         })
       }
+      break
+    }
+    case 'iot.motion_detected':
+    case 'iot.device_offline':
+    case 'iot.leak_detected': {
+      await notifyUser(admin, {
+        userId,
+        type: 'system',
+        title: eventType.replace('iot.', '').replace(/[._]/g, ' '),
+        body: payload.device_id ? `Device ${payload.device_id}` : 'Smart home alert',
+        link: '/my-home',
+      })
       break
     }
     default:

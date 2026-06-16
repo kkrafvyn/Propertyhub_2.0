@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import RoleProtectedRoute from '../components/RoleProtectedRoute'
+import ProtectedRoute from '../components/ProtectedRoute'
 import ConsumerGuard from '../components/ConsumerGuard'
 import MobileHomePage, { MobileExplorePage, MobileSavedPage } from '../pages/mobile/MobilePages'
 import { MobileMessagesPage, MobileProfilePage, MobilePropertyPage } from '../pages/mobile/MobileMessagesProfile'
@@ -60,8 +61,22 @@ import {
 } from '../pages/mobile/MobileOsPages'
 
 import AIAdvisorPage from '../pages/buyer/AIAdvisorPage'
+import FinancingCenterPage from '../pages/buyer/FinancingCenterPage'
 import TransactionCenterPage from '../pages/buyer/TransactionCenterPage'
 import OfferRoomPage from '../pages/buyer/OfferRoomPage'
+import RentalApplicationPage from '../pages/renter/RentalApplicationPage'
+import ManageApplicationsPage from '../pages/manage/ManageApplicationsPage'
+import {
+  VendorHubPage,
+  VendorDirectoryPage,
+  VendorJobsPage,
+  VendorDispatchPage,
+} from '../pages/vendors/VendorPages'
+import BillingPage from '../pages/billing/BillingPage'
+import EscrowPage from '../pages/finance/EscrowPage'
+import { WalletPayoutsPageExport, WalletEscrowPageExport } from '../pages/wallet/WalletPages'
+import AdminIntegrationsPage from '../pages/admin/AdminIntegrationsPage'
+import KycPage from '../pages/profile/KycPage'
 import HostListingsPage from '../pages/HostListingsPage'
 import HelpCentrePage from '../pages/HelpCentrePage'
 
@@ -113,6 +128,14 @@ function ProSmartRoute({ children }) {
   )
 }
 
+function StaffRoute({ children }) {
+  return (
+    <ConsumerGuard>
+      <RoleProtectedRoute require="staff">{children}</RoleProtectedRoute>
+    </ConsumerGuard>
+  )
+}
+
 export default function MobileRoutes() {
   return (
     <Routes>
@@ -123,6 +146,7 @@ export default function MobileRoutes() {
       <Route path="/messages" element={<MobileMessagesPage />} />
       <Route path="/messages/:id" element={<MobileMessagesPage />} />
       <Route path="/profile" element={<MobileProfilePage />} />
+      <Route path="/profile/kyc" element={<KycPage />} />
       <Route path="/settings" element={<Navigate to="/profile" replace />} />
       <Route path="/security" element={<Navigate to="/profile" replace />} />
       <Route path="/property/:id" element={<MobilePropertyPage />} />
@@ -143,8 +167,8 @@ export default function MobileRoutes() {
       <Route path="/wallet" element={<MobileWalletHomePage />} />
       <Route path="/wallet/transactions" element={<MobileWalletTransactionsPage />} />
       <Route path="/wallet/history" element={<Navigate to="/wallet/transactions" replace />} />
-      <Route path="/wallet/payouts" element={<Navigate to="/wallet" replace />} />
-      <Route path="/wallet/escrow" element={<Navigate to="/wallet" replace />} />
+      <Route path="/wallet/payouts" element={<WalletPayoutsPageExport />} />
+      <Route path="/wallet/escrow" element={<WalletEscrowPageExport />} />
       <Route path="/investment" element={<MobileInvestmentHomePage />} />
       <Route path="/investment/roi" element={<Navigate to="/investment" replace />} />
       <Route path="/tenant" element={<MobileTenantHomePage />} />
@@ -158,6 +182,7 @@ export default function MobileRoutes() {
       <Route path="/host/payouts" element={<Navigate to="/wallet/payouts" replace />} />
       <Route path="/buyer" element={<Navigate to="/consumer/buy" replace />} />
       <Route path="/buyer/advisor" element={<AIAdvisorPage />} />
+      <Route path="/buyer/finance" element={<FinancingCenterPage />} />
       <Route path="/transactions" element={<TransactionCenterPage />} />
       <Route path="/offers" element={<OfferRoomPage />} />
       <Route path="/offer-room" element={<Navigate to="/offers" replace />} />
@@ -167,6 +192,7 @@ export default function MobileRoutes() {
       <Route path="/agent/calendar" element={<AgentRoute><MobileAgentCalendarPage /></AgentRoute>} />
       <Route path="/agent/tasks" element={<AgentRoute><MobileAgentTasksPage /></AgentRoute>} />
       <Route path="/agent/coach" element={<AgentRoute><MobileAgentCoachPage /></AgentRoute>} />
+      <Route path="/renter/apply" element={<RentalApplicationPage />} />
       <Route path="/renter/leases" element={<MobileRenterLeasesPage />} />
       <Route path="/renter/payments" element={<MobileRenterPaymentsPage />} />
       <Route path="/renter/utilities" element={<MobileRenterUtilitiesPage />} />
@@ -177,7 +203,15 @@ export default function MobileRoutes() {
       <Route path="/smart/alerts" element={<ProSmartRoute><MobileSmartAlertsPage /></ProSmartRoute>} />
       <Route path="/agency" element={<AgencyRoute><MobileAgencyPage /></AgencyRoute>} />
       <Route path="/manage" element={<ManageRoute><MobileManagePage /></ManageRoute>} />
+      <Route path="/manage/applications" element={<ManageRoute><ManageApplicationsPage /></ManageRoute>} />
+      <Route path="/vendors" element={<ManageRoute><VendorHubPage /></ManageRoute>} />
+      <Route path="/vendors/directory" element={<ManageRoute><VendorDirectoryPage /></ManageRoute>} />
+      <Route path="/vendors/jobs" element={<ProtectedRoute><VendorJobsPage /></ProtectedRoute>} />
+      <Route path="/vendors/dispatch" element={<ManageRoute><VendorDispatchPage /></ManageRoute>} />
+      <Route path="/billing" element={<BillingPage />} />
+      <Route path="/admin/integrations" element={<StaffRoute><AdminIntegrationsPage /></StaffRoute>} />
       <Route path="/finance" element={<MobileFinancePage />} />
+      <Route path="/finance/escrow" element={<EscrowPage />} />
       <Route path="/mortgages" element={<Navigate to="/finance" replace />} />
       <Route path="/insurance" element={<Navigate to="/finance" replace />} />
       <Route path="/intelligence" element={<MobileIntelligencePage />} />

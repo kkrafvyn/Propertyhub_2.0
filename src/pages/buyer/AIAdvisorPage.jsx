@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import DesktopShell, { CompactSearch } from '../../components/DesktopShell'
+import ResponsivePageShell from '../../components/ResponsivePageShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { askBuyerAdvisor } from '../../services/intelligence-service'
 
@@ -9,7 +9,7 @@ const prompts = [
   'What is the rental yield?',
 ]
 
-function AIAdvisor() {
+function AIAdvisorContent() {
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState('')
   const [source, setSource] = useState('')
@@ -24,11 +24,11 @@ function AIAdvisor() {
   }
 
   return (
-    <DesktopShell search={<CompactSearch />}>
-      <h1 className="text-2xl font-semibold">AI buyer advisor</h1>
-      <p className="mt-1 text-ink-secondary">Ask about pricing, neighborhoods, and investment potential.</p>
+    <>
+      <h1 className="text-2xl font-semibold lg:hidden">AI buyer advisor</h1>
+      <p className="mt-1 text-ink-secondary lg:hidden">Ask about pricing, neighborhoods, and investment potential.</p>
 
-      <div className="mt-8 max-w-2xl">
+      <div className="mt-6 max-w-2xl lg:mt-0">
         <div className="flex flex-wrap gap-2">
           {prompts.map((p) => (
             <button
@@ -44,7 +44,7 @@ function AIAdvisor() {
 
         <form
           onSubmit={(e) => { e.preventDefault(); handleAsk() }}
-          className="mt-4 flex gap-2"
+          className="mt-4 flex flex-col gap-2 sm:flex-row"
         >
           <input
             value={question}
@@ -66,10 +66,18 @@ function AIAdvisor() {
           </div>
         )}
       </div>
-    </DesktopShell>
+    </>
+  )
+}
+
+function AIAdvisorLayout() {
+  return (
+    <ResponsivePageShell title="AI buyer advisor" subtitle="Pricing, neighborhoods, and investment potential">
+      <AIAdvisorContent />
+    </ResponsivePageShell>
   )
 }
 
 export default function AIAdvisorPage() {
-  return <ProtectedRoute><AIAdvisor /></ProtectedRoute>
+  return <ProtectedRoute><AIAdvisorLayout /></ProtectedRoute>
 }

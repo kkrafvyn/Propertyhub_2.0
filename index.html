@@ -7,7 +7,7 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.webp" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0F2922" />
+    <meta name="theme-color" content="#FFFFFF" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -23,6 +23,21 @@
       rel="stylesheet"
     />
     <title>BaytMiftah</title>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem('baytmiftah_theme') || 'light'
+          var isDark = theme === 'dark'
+          var root = document.documentElement
+          root.classList.toggle('dark', isDark)
+          root.dataset.theme = theme
+          var meta = document.querySelector('meta[name="theme-color"]')
+          if (meta) meta.setAttribute('content', isDark ? '#0F2922' : '#FFFFFF')
+          var apple = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+          if (apple) apple.setAttribute('content', isDark ? 'black-translucent' : 'default')
+        } catch (e) {}
+      })()
+    </script>
     <style>
       #pwa-splash {
         position: fixed;
@@ -33,8 +48,8 @@
         align-items: center;
         justify-content: center;
         gap: 1.25rem;
-        background: #0f2922;
-        color: #fff;
+        background: var(--splash-bg, #ffffff);
+        color: var(--splash-fg, #0f2922);
         transition: opacity 320ms ease;
         padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
       }
@@ -69,6 +84,16 @@
       <span>BΛYTMIFTΛH</span>
       <small>Unlocking property opportunities</small>
     </div>
+    <script>
+      (function () {
+        try {
+          if ((localStorage.getItem('baytmiftah_theme') || 'light') === 'dark') {
+            document.documentElement.style.setProperty('--splash-bg', '#0f2922')
+            document.documentElement.style.setProperty('--splash-fg', '#ffffff')
+          }
+        } catch (e) {}
+      })()
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

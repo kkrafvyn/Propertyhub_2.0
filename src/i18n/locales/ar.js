@@ -479,6 +479,7 @@ export default {
       "aiOrchestration": "AI orchestration",
       "valuationApi": "Valuation API",
       "regionsCurrency": "Regions & currency",
+      "integrations": "Integrations",
       "auditLog": "Audit log",
       "leases": "Leases",
       "rentPayments": "Rent payments",

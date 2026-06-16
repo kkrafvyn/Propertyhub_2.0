@@ -10,6 +10,7 @@ import SimilarListings from '../components/SimilarListings'
 import PageMeta from '../components/PageMeta'
 import { fetchListingById, fetchListings } from '../services/marketplace-service'
 import { getAvailability, requestViewing } from '../services/booking-service'
+import StayBookingCard from '../components/StayBookingCard'
 import { trackRecentlyViewed } from '../lib/recent-activity'
 
 function PhotoGrid({ photos, title, onShowAll }) {
@@ -373,7 +374,11 @@ export default function ListingDetailPage() {
           </section>
         </div>
 
-        <BookingCard listing={listing} />
+        {(listing.instantBook || listing.listingType === 'stay') ? (
+          <StayBookingCard listing={listing} />
+        ) : (
+          <BookingCard listing={listing} />
+        )}
       </div>
       <SimilarListings listings={allListings.filter((l) => l.type === listing.type || l.location === listing.location)} currentId={listing.id} />
     </DesktopShell>

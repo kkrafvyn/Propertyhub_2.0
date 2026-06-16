@@ -91,6 +91,60 @@ export async function fetchValuationApiDocs() {
   return { docs: valuationApiDocs, source: 'local' }
 }
 
+const KYC_STORAGE_KEY = 'baytmiftah_kyc'
+
+export async function fetchMyReputation(userId) {
+  try {
+    const query = userId ? { action: 'reputation', user_id: userId } : { action: 'reputation' }
+    const payload = await callEdgeFunction('trust', { allowAnonymous: false, query })
+    if (payload?.reputation) return { reputation: payload.reputation, source: 'supabase' }
+  } catch { /* fallback */ }
+  return { reputation: { score: 50 }, source: 'local' }
+}
+
+export async function fetchMyKyc() {
+  try {
+    const payload = await callEdgeFunction('trust', {
+      allowAnonymous: false,
+      query: { action: 'my_kyc' },
+    })
+    if (payload && 'kyc' in payload) {
+      return { kyc: payload.kyc, source: payload.source ?? 'supabase' }
+    }
+  } catch { /* fallback */ }
+
+  try {
+    const raw = localStorage.getItem(KYC_STORAGE_KEY)
+    return { kyc: raw ? JSON.parse(raw) : null, source: 'local' }
+  } catch {
+    return { kyc: null, source: 'local' }
+  }
+}
+
+export async function submitKyc({ entityName, entityType, documentPaths }) {
+  try {
+    return await callEdgeFunction('trust', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'submit_kyc', entityName, entityType, documentPaths },
+    })
+  } catch (err) {
+    const record = {
+      id: `local-kyc-${Date.now()}`,
+      entity_name: entityName,
+      entity_type: entityType,
+      status: 'pending_review',
+      documents: documentPaths.length,
+      document_paths: documentPaths,
+      created_at: new Date().toISOString(),
+    }
+    try {
+      localStorage.setItem(KYC_STORAGE_KEY, JSON.stringify(record))
+    } catch { /* ignore */ }
+    return { ok: true, id: record.id, status: 'pending_review', source: 'local' }
+  }
+}
+
 export async function updateKycStatus(id, status) {
   return callEdgeFunction('trust', {
     method: 'POST',
@@ -160,6 +214,8 @@ export async function promoteUserRole(userId, role) {
 export default {
   fetchAdminOverview,
   fetchKycQueue,
+  fetchMyKyc,
+  submitKyc,
   fetchFraudAlerts,
   fetchFraudRules,
   scoreFraudAlert,

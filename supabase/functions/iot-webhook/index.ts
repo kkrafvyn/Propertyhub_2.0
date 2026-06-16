@@ -1,5 +1,7 @@
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
+import { runEventAutomations } from '../_shared/event-automation.ts'
+import { logUserActivity } from '../_shared/agent-crm.ts'
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -17,10 +19,18 @@ Deno.serve(async (req) => {
       }
 
       const body = await req.json()
-      const { device_id: deviceId, event_type: eventType, payload, owner_id: ownerId } = body
+      const { device_id: deviceId, event_type: eventType, payload, owner_id: ownerId, property_id: propertyId } = body
       if (!eventType) return errorResponse('event_type required', 400)
 
       let resolvedOwner = ownerId as string | null
+      let resolvedProperty = propertyId as string | null
+
+      if (deviceId && !resolvedOwner) {
+        const { data: device } = await admin.from('smart_devices').select('owner_id, property_id, name').eq('id', deviceId).maybeSingle()
+        resolvedOwner = device?.owner_id ?? null
+        resolvedProperty = resolvedProperty ?? device?.property_id ?? null
+      }
+
       if (!resolvedOwner) {
         const user = await getUserFromRequest(req)
         resolvedOwner = user?.id ?? null
@@ -29,6 +39,7 @@ Deno.serve(async (req) => {
       const { data, error } = await admin.from('iot_webhook_events').insert({
         owner_id: resolvedOwner,
         device_id: deviceId ?? null,
+        property_id: resolvedProperty ?? null,
         event_type: eventType,
         payload: payload ?? {},
         processed: false,
@@ -36,15 +47,46 @@ Deno.serve(async (req) => {
 
       if (error) throw error
 
-      if (deviceId && eventType === 'motion_detected') {
+      const alertTitle = eventType.replace(/[._]/g, ' ')
+      const alertId = `sa-${crypto.randomUUID().slice(0, 8)}`
+
+      if (resolvedOwner && ['motion_detected', 'device_offline', 'leak_detected'].includes(eventType)) {
         await admin.from('smart_alerts').insert({
+          id: alertId,
           owner_id: resolvedOwner,
-          device_id: deviceId,
-          alert_type: 'motion',
-          message: `Motion detected on device ${deviceId}`,
+          type: eventType.includes('leak') ? 'warning' : 'info',
+          title: alertTitle,
+          device: deviceId ?? 'unknown',
           read: false,
         }).catch(() => null)
+
+        const automationType = eventType === 'motion_detected'
+          ? 'iot.motion_detected'
+          : eventType === 'device_offline'
+            ? 'iot.device_offline'
+            : 'iot.leak_detected'
+
+        await runEventAutomations(admin, {
+          eventType: automationType,
+          userId: resolvedOwner,
+          payload: {
+            device_id: deviceId ?? '',
+            property_id: resolvedProperty ?? '',
+          },
+        })
+
+        await logUserActivity(admin, resolvedOwner, {
+          category: 'smart',
+          title: alertTitle,
+          body: deviceId ? `Device ${deviceId}` : undefined,
+          link: '/my-home',
+        })
       }
+
+      await admin.from('iot_webhook_events').update({
+        processed: true,
+        processed_at: new Date().toISOString(),
+      }).eq('id', data.id)
 
       return jsonResponse({ ok: true, event: data })
     }

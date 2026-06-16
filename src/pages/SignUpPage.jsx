@@ -3,7 +3,8 @@ import { useState } from 'react'
 import AuthPageLayout from '../components/AuthPageLayout'
 import OAuthButtons, { AuthDivider } from '../components/OAuthButtons'
 import IntegrationsBanner from '../components/IntegrationsBanner'
-import { Field, inputClass, selectClass } from '../components/ui/AirbnbUI'
+import RolePicker from '../components/RolePicker'
+import { Field, inputClass } from '../components/ui/AirbnbUI'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../i18n/LocaleContext'
 import { USER_ROLES } from '../platform/registry'
@@ -77,15 +78,7 @@ export default function SignUpPage() {
         {isSupabaseConfigured && <IntegrationsBanner showOAuth />}
 
         <Field label={t('auth.iAmA')} className="mt-6">
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className={selectClass}
-          >
-            {roleOptions.map((value) => (
-              <option key={value} value={value}>{t(`roles.${value}`)}</option>
-            ))}
-          </select>
+          <RolePicker value={role} onChange={setRole} options={roleOptions} />
         </Field>
 
         {isSupabaseConfigured && (

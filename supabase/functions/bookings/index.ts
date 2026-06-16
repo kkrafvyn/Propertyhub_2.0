@@ -1,6 +1,12 @@
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts'
 import { createAdminClient, getUserFromRequest } from '../_shared/supabase.ts'
 import { notifyUser } from '../_shared/notifications.ts'
+import {
+  resolveListingAgent,
+  upsertLeadFromViewing,
+  ensureCalendarForViewing,
+  logUserActivity,
+} from '../_shared/agent-crm.ts'
 
 const AGENT_ROLES = new Set(['agent', 'agency_owner', 'agency_manager', 'platform_admin'])
 
@@ -70,6 +76,7 @@ Deno.serve(async (req) => {
       const { data } = await admin
         .from('viewing_requests')
         .select('*')
+        .eq('agent_id', user.id)
         .in('status', ['pending', 'confirmed'])
         .order('preferred_date', { ascending: true })
         .limit(50)
@@ -85,6 +92,7 @@ Deno.serve(async (req) => {
       const admin = createAdminClient()
 
       if (body.action === 'create_viewing') {
+        const agentId = await resolveListingAgent(admin, body.listing_id)
         const { data, error } = await admin
           .from('viewing_requests')
           .insert({
@@ -94,6 +102,7 @@ Deno.serve(async (req) => {
             guests: body.guests ?? 1,
             notes: body.notes ?? '',
             status: 'pending',
+            agent_id: agentId,
           })
           .select('*')
           .single()
@@ -105,6 +114,18 @@ Deno.serve(async (req) => {
             queued: true,
             message: 'Viewing request recorded locally until database is ready.',
             request: { listing_id: body.listing_id, user_id: user.id, status: 'pending' },
+          })
+        }
+
+        if (agentId) {
+          const { data: listing } = await admin.from('listings').select('title').eq('id', body.listing_id).maybeSingle()
+          const title = listing?.title ?? body.listing_id
+          await upsertLeadFromViewing(admin, data, agentId, title)
+          await logUserActivity(admin, user.id, {
+            category: 'viewing',
+            title: 'Viewing requested',
+            body: title,
+            link: '/trips',
           })
         }
 
@@ -132,15 +153,29 @@ Deno.serve(async (req) => {
 
         const { data, error } = await admin
           .from('viewing_requests')
-          .update({ status })
+          .update({ status, agent_id: existing.agent_id ?? (await resolveListingAgent(admin, existing.listing_id)) })
           .eq('id', body.viewing_id)
           .select('*')
           .single()
 
         if (error) return errorResponse(error.message, 500)
 
-        const { data: listing } = await admin.from('listings').select('title').eq('id', existing.listing_id).maybeSingle()
+        const { data: listing } = await admin.from('listings').select('title, submitted_by').eq('id', existing.listing_id).maybeSingle()
         const title = listing?.title || existing.listing_id
+        const agentId = data.agent_id ?? listing?.submitted_by ?? null
+
+        if (agentId && status === 'confirmed') {
+          const leadId = await upsertLeadFromViewing(admin, data, agentId, title)
+          await ensureCalendarForViewing(admin, data, agentId, title, leadId)
+          await admin.from('agent_leads').update({ stage: 'viewing', updated_label: 'just now' }).eq('id', leadId)
+        }
+
+        await logUserActivity(admin, existing.user_id, {
+          category: 'viewing',
+          title: status === 'confirmed' ? 'Viewing confirmed' : status === 'cancelled' ? 'Viewing cancelled' : 'Viewing updated',
+          body: `${title} · ${existing.preferred_date}`,
+          link: '/trips',
+        })
         await notifyUser(admin, {
           userId: existing.user_id,
           type: 'viewing',

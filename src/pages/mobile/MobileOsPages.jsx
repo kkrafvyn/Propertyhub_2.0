@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import MobileShell, { MobileHeader } from '../../components/MobileShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { MobileHubTile, MobileTextLink } from '../../components/ui/MobileUI'
-import { IconCard, IconHome, IconSparkle, IconUsers, IconLock } from '../../components/icons'
+import { IconCard, IconHome, IconLock, IconSparkle, IconUsers } from '../../components/icons'
 import { fetchWalletDashboard } from '../../services/wallet-service'
 import { fetchHostDashboard } from '../../services/host-service'
 import { fetchInvestmentDashboard } from '../../services/investment-service'
@@ -42,6 +42,8 @@ export function MobileConsumerBuyPage() {
     { to: '/transactions', label: 'Transactions', Icon: IconCard },
     { to: '/offers', label: 'Offers', Icon: IconHome },
     { to: '/buyer/advisor', label: 'AI advisor', Icon: IconSparkle },
+    { to: '/buyer/finance', label: 'Financing', Icon: IconCard },
+    { to: '/profile/kyc', label: 'Verify ID', Icon: IconLock },
     { to: '/saved', label: 'Saved', Icon: IconHome },
   ]
   return <ProtectedRoute><MobileOsHub title="Buy" subtitle="Purchase workflows" tiles={tiles} /></ProtectedRoute>
@@ -49,6 +51,7 @@ export function MobileConsumerBuyPage() {
 
 export function MobileConsumerRentPage() {
   const tiles = [
+    { to: '/renter/apply', label: 'Apply to rent', Icon: IconHome },
     { to: '/renter/leases', label: 'Leases', Icon: IconLock },
     { to: '/renter/payments', label: 'Payments', Icon: IconCard },
     { to: '/renter/maintenance', label: 'Maintenance', Icon: IconSparkle },

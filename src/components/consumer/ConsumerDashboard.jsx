@@ -9,6 +9,7 @@ import {
 } from '../../lib/consumer-nav'
 import { getRecentlyViewed, getRecentSearches } from '../../lib/recent-activity'
 import { hasCapability } from '../../lib/capabilities'
+import { fetchConsumerActivity } from '../../services/consumer-service'
 import { fetchReservations } from '../../services/reservation-service'
 import { syncSavedIds } from '../../lib/saved-listings'
 
@@ -51,6 +52,7 @@ export default function ConsumerDashboard({ compact = false }) {
   const { user, capabilities } = useAuth()
   const [savedCount, setSavedCount] = useState(0)
   const [tripCount, setTripCount] = useState(0)
+  const [activityFeed, setActivityFeed] = useState([])
   const [recentSearches, setRecentSearches] = useState([])
   const [recentlyViewed, setRecentlyViewed] = useState([])
 
@@ -60,6 +62,7 @@ export default function ConsumerDashboard({ compact = false }) {
     syncSavedIds().then((ids) => setSavedCount(ids.length))
     if (user) {
       fetchReservations(true).then(({ reservations }) => setTripCount(reservations?.length ?? 0))
+      fetchConsumerActivity().then(({ activity }) => setActivityFeed(activity ?? []))
     }
   }, [user])
 
@@ -94,6 +97,24 @@ export default function ConsumerDashboard({ compact = false }) {
             />
           ))}
         </div>
+
+        {activityFeed.length > 0 && (
+          <div className="mt-3 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-secondary">
+              Recent activity
+            </p>
+            {activityFeed.slice(0, 6).map((item) => (
+              <ActivityRow
+                key={item.id}
+                to={item.link || '/'}
+                label={item.title}
+                meta={item.body}
+                authRequired={false}
+                user={user}
+              />
+            ))}
+          </div>
+        )}
 
         {recentSearches.length > 0 && (
           <div className="mt-3">

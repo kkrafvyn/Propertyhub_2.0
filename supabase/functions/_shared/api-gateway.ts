@@ -62,7 +62,14 @@ export async function verifyPartnerApiKey(
     requests_this_minute: count,
     minute_window: sameWindow ? row.minute_window : now.toISOString(),
     last_used_at: now.toISOString(),
+    requests_total: Number(row.requests_total ?? 0) + 1,
   }).eq('id', row.id)
+
+  await admin.from('api_usage_logs').insert({
+    id: `aul-${crypto.randomUUID().slice(0, 8)}`,
+    key_id: row.id,
+    endpoint: 'partner_api',
+  }).catch(() => null)
 
   return {
     ok: true,

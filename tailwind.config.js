@@ -17,13 +17,13 @@ export default {
         },
         mobile: {
           forest: '#1B4332',
-          bg: '#F2F2F2',
+          bg: '#FFFFFF',
           card: '#FFFFFF',
         },
         bolt: {
           green: '#34BB09',
           'green-dark': '#2DA008',
-          bg: '#F2F2F2',
+          bg: '#FFFFFF',
           card: '#FFFFFF',
         },
         ink: {

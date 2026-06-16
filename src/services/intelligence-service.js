@@ -121,7 +121,25 @@ export async function runValuation({ address, bedrooms, sqft, propertyType = 'ho
 }
 
 export async function fetchValuationHistory() {
+  try {
+    const payload = await callEdgeFunction('intelligence', {
+      allowAnonymous: false,
+      query: { action: 'valuation_history' },
+    })
+    if (payload?.valuations) return { valuations: payload.valuations, source: 'supabase' }
+  } catch { /* fallback */ }
   return { valuations: valuationSamples, source: 'local' }
+}
+
+export async function fetchPropertyScore(listingId) {
+  try {
+    const payload = await callEdgeFunction('intelligence', {
+      allowAnonymous: true,
+      query: { action: 'property_score', listing_id: listingId },
+    })
+    if (payload?.propertyScore) return payload
+  } catch { /* fallback */ }
+  return { propertyScore: { score: 75 }, source: 'local' }
 }
 
 export default {

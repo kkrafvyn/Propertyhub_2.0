@@ -7,6 +7,7 @@ import { handleStripeWebhook, handlePaystackWebhook, handleRazorpayWebhook } fro
 import { emitPlatformEvent } from '../_shared/events.ts'
 import { finalizePayment } from '../_shared/payment-completion.ts'
 import { paymentWebhookUrls } from '../_shared/platform-urls.ts'
+import { defaultChecklist } from '../_shared/transaction-engine.ts'
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -60,6 +61,10 @@ Deno.serve(async (req) => {
       const { data } = await admin.from('mortgage_partners').select('*')
       return jsonResponse({ partners: data ?? [], source: 'supabase' })
     }
+    if (action === 'subscription_plans') {
+      const { data } = await admin.from('subscription_plans').select('*').eq('active', true)
+      return jsonResponse({ plans: data ?? [], source: 'supabase' })
+    }
   }
 
   const user = await getUserFromRequest(req)
@@ -86,9 +91,49 @@ Deno.serve(async (req) => {
       }
 
       if (action === 'escrow') {
-        const { data } = await admin.from('escrow_accounts').select('*')
-        const escrow = (data ?? []).map((r) => ({
-          id: r.id, property: r.property, amount: r.amount, funded: r.funded, status: r.status, provider: r.provider,
+        const role = url.searchParams.get('role') ?? 'buyer'
+        let rows: Record<string, unknown>[] = []
+
+        if (role === 'seller') {
+          const { data: listings } = await admin
+            .from('listings')
+            .select('id')
+            .or(`submitted_by.eq.${user.id},owner_id.eq.${user.id}`)
+          const listingIds = (listings ?? []).map((l) => l.id)
+          if (listingIds.length) {
+            const { data } = await admin.from('escrow_accounts').select('*').in('listing_id', listingIds)
+            rows = data ?? []
+          }
+        } else {
+          const { data } = await admin.from('escrow_accounts').select('*').eq('buyer_id', user.id)
+          rows = data ?? []
+        }
+
+        const escrow = await Promise.all(rows.map(async (r) => {
+          const { data: milestones } = await admin
+            .from('escrow_milestones')
+            .select('*')
+            .eq('escrow_id', r.id)
+            .order('sort_order')
+          return {
+            id: r.id,
+            property: r.property,
+            amount: Number(r.amount),
+            funded: Number(r.funded),
+            status: r.status,
+            provider: r.provider,
+            transactionId: r.transaction_id,
+            listingId: r.listing_id,
+            buyerId: r.buyer_id,
+            buyer: role === 'seller' ? 'Buyer' : (user.email?.split('@')[0] ?? 'Buyer'),
+            role,
+            milestones: (milestones ?? []).map((m) => ({
+              id: m.id,
+              label: m.label,
+              amount: Number(m.amount),
+              status: m.status,
+            })),
+          }
         }))
         return jsonResponse({ escrow, source: 'supabase' })
       }
@@ -99,6 +144,16 @@ Deno.serve(async (req) => {
           id: r.id, agent: r.agent_name, property: r.property, amount: r.amount, status: r.status, provider: r.provider, paidAt: r.paid_at,
         }))
         return jsonResponse({ settlements, source: 'supabase' })
+      }
+
+      if (action === 'my_subscription') {
+        const { data: sub } = await admin.from('user_subscriptions').select('*').eq('user_id', user.id).eq('status', 'active').order('created_at', { ascending: false }).limit(1).maybeSingle()
+        let plan = null
+        if (sub?.plan_id) {
+          const { data: p } = await admin.from('subscription_plans').select('*').eq('id', sub.plan_id).maybeSingle()
+          plan = p
+        }
+        return jsonResponse({ subscription: sub, plan, source: 'supabase' })
       }
 
       return errorResponse('Unsupported action', 404)
@@ -137,7 +192,72 @@ Deno.serve(async (req) => {
           premium_estimate: premium,
           status: 'quoted',
         }).select('*').single()
-        return jsonResponse({ ok: true, quote: data ?? { premium_estimate: premium, status: 'quoted' } })
+
+        const referralId = `pr-${crypto.randomUUID().slice(0, 8)}`
+        await admin.from('partner_referrals').insert({
+          id: referralId,
+          user_id: user.id,
+          partner_type: 'insurance',
+          partner_id: body.product_id,
+          amount: propertyValue,
+          referral_fee: Math.round(premium * 0.15),
+          status: 'submitted',
+          metadata: { quote_id: data?.id },
+        }).catch(() => null)
+
+        return jsonResponse({ ok: true, quote: data ?? { premium_estimate: premium, status: 'quoted' }, referral_id: referralId })
+      }
+
+      if (body.action === 'mortgage_referral') {
+        const amount = Number(body.amount) || 0
+        const referralId = `pr-${crypto.randomUUID().slice(0, 8)}`
+        await admin.from('partner_referrals').insert({
+          id: referralId,
+          user_id: user.id,
+          partner_type: 'mortgage',
+          partner_id: body.partner_id,
+          listing_id: body.listing_id,
+          amount,
+          referral_fee: Math.round(amount * 0.005),
+          status: 'submitted',
+          metadata: body.metadata ?? {},
+        })
+        return jsonResponse({ ok: true, referral_id: referralId, status: 'submitted' })
+      }
+
+      if (body.action === 'subscribe') {
+        const planId = body.plan_id
+        const { data: plan } = await admin.from('subscription_plans').select('*').eq('id', planId).eq('active', true).maybeSingle()
+        if (!plan) return errorResponse('Plan not found', 404)
+
+        const recordId = crypto.randomUUID()
+        const checkout = await createCheckout({
+          purpose: 'platform_subscription',
+          amount: Number(plan.price_monthly),
+          currency: plan.currency ?? 'GHS',
+          provider: (body.provider ?? 'paystack') as 'stripe' | 'paystack' | 'razorpay',
+          userId: user.id,
+          userEmail: user.email ?? 'user@baytmiftah.com',
+          metadata: { plan_id: planId, subscription: true },
+          successPath: `/billing?subscribed=1&plan=${planId}`,
+          cancelPath: '/billing',
+        })
+
+        await admin.from('payment_records').insert({
+          id: recordId,
+          user_id: user.id,
+          purpose: 'platform_subscription',
+          amount: Number(plan.price_monthly),
+          currency: plan.currency ?? 'GHS',
+          provider: checkout?.provider ?? body.provider ?? 'paystack',
+          status: checkout ? 'pending' : 'demo',
+          metadata: { plan_id: planId },
+        }).catch(() => null)
+
+        if (checkout?.checkout_url) {
+          return jsonResponse({ ok: true, checkout_url: checkout.checkout_url, plan_id: planId })
+        }
+        return jsonResponse({ ok: true, checkout_url: null, plan_id: planId, message: 'Subscription queued — configure payment keys' })
       }
 
       if (body.action === 'create_checkout' || body.action === 'create_boost') {
@@ -234,6 +354,76 @@ Deno.serve(async (req) => {
           metadata: { payment_id: paymentId, ...(body.metadata ?? {}) },
         })
         return jsonResponse({ ok: result.ok, payment_id: paymentId, status: 'completed', already_done: result.alreadyDone })
+      }
+
+      if (body.action === 'release_escrow') {
+        const escrowId = body.escrow_id
+        if (!escrowId) return errorResponse('escrow_id required', 400)
+
+        const { data: escrow } = await admin.from('escrow_accounts').select('*').eq('id', escrowId).maybeSingle()
+        if (!escrow) return errorResponse('Escrow not found', 404)
+
+        const { data: listing } = escrow.listing_id
+          ? await admin.from('listings').select('submitted_by, owner_id').eq('id', escrow.listing_id).maybeSingle()
+          : { data: null }
+        const isOwner = listing && (listing.submitted_by === user.id || listing.owner_id === user.id)
+        const isBuyer = escrow.buyer_id === user.id
+        if (!isOwner && !isBuyer) return errorResponse('Forbidden', 403)
+        if (Number(escrow.funded) < Number(escrow.amount)) return errorResponse('Escrow not fully funded', 400)
+        if (escrow.status === 'released') return jsonResponse({ ok: true, already: true })
+
+        await admin.from('escrow_accounts').update({
+          status: 'released',
+          released_at: new Date().toISOString(),
+        }).eq('id', escrowId)
+
+        await admin.from('escrow_milestones').update({ status: 'released' }).eq('escrow_id', escrowId).eq('status', 'funded')
+
+        if (escrow.transaction_id) {
+          await admin.from('transactions').update({
+            stage: 'closing',
+            checklist: defaultChecklist('closing'),
+          }).eq('id', escrow.transaction_id)
+        }
+
+        await emitPlatformEvent(admin, {
+          eventType: 'escrow.released',
+          aggregateType: 'escrow',
+          aggregateId: escrowId,
+          actorId: user.id,
+          payload: { transaction_id: escrow.transaction_id, amount: escrow.funded },
+          idempotencyKey: `escrow-release-${escrowId}`,
+        })
+
+        return jsonResponse({ ok: true, escrow_id: escrowId, status: 'released' })
+      }
+
+      if (body.action === 'dispute_escrow') {
+        const escrowId = body.escrow_id
+        if (!escrowId) return errorResponse('escrow_id required', 400)
+
+        const { data: escrow } = await admin.from('escrow_accounts').select('*').eq('id', escrowId).maybeSingle()
+        if (!escrow) return errorResponse('Escrow not found', 404)
+
+        const isBuyer = escrow.buyer_id === user.id
+        const { data: listing } = escrow.listing_id
+          ? await admin.from('listings').select('submitted_by, owner_id').eq('id', escrow.listing_id).maybeSingle()
+          : { data: null }
+        const isOwner = listing && (listing.submitted_by === user.id || listing.owner_id === user.id)
+        if (!isBuyer && !isOwner) return errorResponse('Forbidden', 403)
+
+        await admin.from('escrow_accounts').update({ status: 'disputed' }).eq('id', escrowId)
+
+        await emitPlatformEvent(admin, {
+          eventType: 'escrow.disputed',
+          aggregateType: 'escrow',
+          aggregateId: escrowId,
+          actorId: user.id,
+          payload: { reason: body.reason ?? 'unspecified' },
+          idempotencyKey: `escrow-dispute-${escrowId}`,
+        })
+
+        return jsonResponse({ ok: true, escrow_id: escrowId, status: 'disputed' })
       }
 
       return errorResponse('Unsupported action', 404)

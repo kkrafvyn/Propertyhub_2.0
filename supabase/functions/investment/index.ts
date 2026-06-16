@@ -85,6 +85,41 @@ Deno.serve(async (req) => {
         })
         return jsonResponse({ ok: true, portfolio_id: id })
       }
+
+      if (body.action === 'sync_holdings') {
+        const portfolioId = body.portfolio_id ?? `ip-${user.id.slice(0, 8)}`
+        await admin.from('investment_portfolios').upsert({
+          id: portfolioId,
+          user_id: user.id,
+          name: body.name ?? 'My Portfolio',
+          currency: 'GHS',
+        })
+
+        const { data: txs } = await admin
+          .from('transactions')
+          .select('id, property, listing_id, offer, stage')
+          .eq('user_id', user.id)
+          .eq('stage', 'completed')
+
+        let added = 0
+        for (const tx of txs ?? []) {
+          const amount = Number(String(tx.offer ?? '0').replace(/[^\d.]/g, '')) || 0
+          if (!amount) continue
+          const holdId = `ph-${tx.id.replace(/^tx-/, '')}`
+          const { error } = await admin.from('portfolio_holdings').upsert({
+            id: holdId,
+            portfolio_id: portfolioId,
+            listing_id: tx.listing_id,
+            asset_ref: tx.property,
+            cost_basis: amount,
+            acquired_at: new Date().toISOString().slice(0, 10),
+            notes: `Synced from transaction ${tx.id}`,
+          })
+          if (!error) added++
+        }
+
+        return jsonResponse({ ok: true, portfolio_id: portfolioId, holdings_added: added, source: 'supabase' })
+      }
     }
 
     return errorResponse('Method not allowed', 405)

@@ -87,3 +87,29 @@ export async function requestWalletWithdrawal({ amount, provider = 'paystack' })
     return { ok: false, error: error.message, demo: true }
   }
 }
+
+export async function fetchPayoutAccounts() {
+  try {
+    const payload = await callEdgeFunction('wallet', {
+      allowAnonymous: false,
+      query: { action: 'payout_accounts' },
+    })
+    if (payload?.accounts) return { accounts: payload.accounts, source: 'supabase' }
+  } catch { /* fallback */ }
+  return { accounts: [], source: 'local' }
+}
+
+export async function savePayoutAccount({ accountNumber, accountName, bankCode, provider = 'paystack', accountType = 'mobile_money' }) {
+  return callEdgeFunction('wallet', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: {
+      action: 'save_payout_account',
+      account_number: accountNumber,
+      account_name: accountName,
+      bank_code: bankCode,
+      account_type: accountType,
+      provider,
+    },
+  })
+}

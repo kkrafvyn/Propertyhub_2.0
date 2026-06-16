@@ -14,16 +14,28 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url)
   const action = url.searchParams.get('action')
+  const today = new Date().toISOString().slice(0, 10)
 
   try {
     if (req.method === 'GET') {
       if (action === 'dashboard') {
-        const { data: devices } = await admin.from('smart_devices').select('status').eq('owner_id', user.id)
+        const [{ data: devices }, { count: automationsActive }, { count: alertsToday }, { data: energy }] = await Promise.all([
+          admin.from('smart_devices').select('status, property_id').eq('owner_id', user.id),
+          admin.from('smart_automations').select('*', { count: 'exact', head: true }).eq('owner_id', user.id).eq('enabled', true),
+          admin.from('smart_alerts').select('*', { count: 'exact', head: true }).eq('owner_id', user.id).gte('created_at', `${today}T00:00:00`),
+          admin.from('energy_readings').select('kwh').order('period', { ascending: false }).limit(1).maybeSingle(),
+        ])
         const online = (devices ?? []).filter((d) => d.status === 'online').length
+        const building = devices?.[0]?.property_id ?? 'My property'
+
         return jsonResponse({
           portfolio: {
-            building: 'Cantonments Sky Villa', devicesOnline: online, devicesTotal: devices?.length ?? 0,
-            automationsActive: 5, alertsToday: 3, energyToday: '42.8 kWh',
+            building,
+            devicesOnline: online,
+            devicesTotal: devices?.length ?? 0,
+            automationsActive: automationsActive ?? 0,
+            alertsToday: alertsToday ?? 0,
+            energyToday: energy?.kwh ? `${energy.kwh} kWh` : '—',
           },
           source: 'supabase',
         })
@@ -34,11 +46,25 @@ Deno.serve(async (req) => {
       }
       if (action === 'automations') {
         const { data } = await admin.from('smart_automations').select('*').eq('owner_id', user.id)
-        return jsonResponse({ automations: data ?? [], source: 'supabase' })
+        const automations = (data ?? []).map((r) => ({
+          ...r,
+          trigger: r.trigger_config,
+          action: r.action_config,
+        }))
+        return jsonResponse({ automations, source: 'supabase' })
       }
       if (action === 'alerts') {
-        const { data } = await admin.from('smart_alerts').select('*').eq('owner_id', user.id).order('created_at', { ascending: false })
-        return jsonResponse({ alerts: data ?? [], logs: [], source: 'supabase' })
+        const [{ data: alerts }, { data: logs }] = await Promise.all([
+          admin.from('smart_alerts').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }).limit(20),
+          admin.from('iot_webhook_events').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }).limit(20),
+        ])
+        const eventLogs = (logs ?? []).map((e) => ({
+          id: e.id,
+          type: e.event_type,
+          device: e.device_id,
+          at: e.created_at,
+        }))
+        return jsonResponse({ alerts: alerts ?? [], logs: eventLogs, source: 'supabase' })
       }
       return errorResponse('Unsupported action', 404)
     }

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import RoleProtectedRoute from '../components/RoleProtectedRoute'
+import ProtectedRoute from '../components/ProtectedRoute'
 
 const HomePage = lazy(() => import('../pages/HomePage'))
 const ListingDetailPage = lazy(() => import('../pages/ListingDetailPage'))
@@ -25,6 +26,8 @@ const OfferRoomPage = lazy(() => import('../pages/buyer/OfferRoomPage'))
 const TransactionCenterPage = lazy(() => import('../pages/buyer/TransactionCenterPage'))
 const AIAdvisorPage = lazy(() => import('../pages/buyer/AIAdvisorPage'))
 const FinancingCenterPage = lazy(() => import('../pages/buyer/FinancingCenterPage'))
+const RentalApplicationPage = lazy(() => import('../pages/renter/RentalApplicationPage'))
+const KycPage = lazy(() => import('../pages/profile/KycPage'))
 const FeaturedBoostPage = lazy(() => import('../pages/host/FeaturedBoostPage'))
 const AgencyDashboardPage = lazy(() => import('../pages/agency/AgencyDashboardPage'))
 const AgencyTeamPage = lazy(() => import('../pages/agency/AgencyTeamPage'))
@@ -49,6 +52,13 @@ const ManageWorkOrdersPage = lazy(() => import('../pages/manage/ManageWorkOrders
 const ManageFinancePage = lazy(() => import('../pages/manage/ManageFinancePage'))
 const ManageInspectionsPage = lazy(() => import('../pages/manage/ManageInspectionsPage'))
 const ManageUtilitiesPage = lazy(() => import('../pages/manage/ManageUtilitiesPage'))
+const ManageApplicationsPage = lazy(() => import('../pages/manage/ManageApplicationsPage'))
+const VendorHubPage = lazy(() => import('../pages/vendors/VendorPages').then((m) => ({ default: m.VendorHubPage })))
+const VendorDirectoryPage = lazy(() => import('../pages/vendors/VendorPages').then((m) => ({ default: m.VendorDirectoryPage })))
+const VendorJobsPage = lazy(() => import('../pages/vendors/VendorPages').then((m) => ({ default: m.VendorJobsPage })))
+const VendorDispatchPage = lazy(() => import('../pages/vendors/VendorPages').then((m) => ({ default: m.VendorDispatchPage })))
+const BillingPage = lazy(() => import('../pages/billing/BillingPage'))
+const AdminIntegrationsPage = lazy(() => import('../pages/admin/AdminIntegrationsPage'))
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'))
 const AdminAgenciesPage = lazy(() => import('../pages/admin/AdminAgenciesPage'))
 const AdminModerationPage = lazy(() => import('../pages/admin/AdminModerationPage'))
@@ -252,6 +262,7 @@ export default function DesktopRoutes() {
       <Route path="/messages" element={<MessagesPage />} />
       <Route path="/messages/:id" element={<MessagesPage />} />
       <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/profile/kyc" element={<KycPage />} />
       <Route path="/help" element={<HelpCentrePage />} />
       <Route path="/referral" element={<ReferralPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
@@ -277,6 +288,7 @@ export default function DesktopRoutes() {
       <Route path="/agency/trust" element={<AgencyRoute><AgencyTrustPage /></AgencyRoute>} />
       <Route path="/agency/compliance" element={<AgencyRoute><AgencyCompliancePage /></AgencyRoute>} />
       <Route path="/agency/onboarding" element={<AgencyRoute><AgencyOnboardingPage /></AgencyRoute>} />
+      <Route path="/renter/apply" element={<RentalApplicationPage />} />
       <Route path="/renter/leases" element={<RenterLeasesPage />} />
       <Route path="/renter/payments" element={<RenterPaymentsPage />} />
       <Route path="/renter/utilities" element={<RenterUtilitiesPage />} />
@@ -289,6 +301,12 @@ export default function DesktopRoutes() {
       <Route path="/manage/finance" element={<ManageRoute><ManageFinancePage /></ManageRoute>} />
       <Route path="/manage/inspections" element={<ManageRoute><ManageInspectionsPage /></ManageRoute>} />
       <Route path="/manage/utilities" element={<ManageRoute><ManageUtilitiesPage /></ManageRoute>} />
+      <Route path="/manage/applications" element={<ManageRoute><ManageApplicationsPage /></ManageRoute>} />
+      <Route path="/vendors" element={<ManageRoute><VendorHubPage /></ManageRoute>} />
+      <Route path="/vendors/directory" element={<ManageRoute><VendorDirectoryPage /></ManageRoute>} />
+      <Route path="/vendors/jobs" element={<ProtectedRoute><VendorJobsPage /></ProtectedRoute>} />
+      <Route path="/vendors/dispatch" element={<ManageRoute><VendorDispatchPage /></ManageRoute>} />
+      <Route path="/billing" element={<BillingPage />} />
       <Route path="/admin" element={<StaffRoute><AdminDashboardPage /></StaffRoute>} />
       <Route path="/admin/agencies" element={<AdminRoute><AdminAgenciesPage /></AdminRoute>} />
       <Route path="/admin/moderation" element={<ModerationRoute><AdminModerationPage /></ModerationRoute>} />
@@ -298,6 +316,7 @@ export default function DesktopRoutes() {
       <Route path="/admin/ai" element={<AdminRoute><AdminAiPage /></AdminRoute>} />
       <Route path="/admin/valuation-api" element={<AdminRoute><AdminValuationApiPage /></AdminRoute>} />
       <Route path="/admin/global" element={<AdminRoute><AdminGlobalPage /></AdminRoute>} />
+      <Route path="/admin/integrations" element={<StaffRoute><AdminIntegrationsPage /></StaffRoute>} />
       <Route path="/admin/audit" element={<AdminRoute><AdminAuditPage /></AdminRoute>} />
       <Route path="/finance" element={<FinanceHubPage />} />
       <Route path="/finance/mortgages" element={<MortgageMarketplacePage />} />

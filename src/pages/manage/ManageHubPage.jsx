@@ -6,6 +6,8 @@ import { fetchPmsDashboard } from '../../services/pms-service'
 
 const links = [
   { to: '/manage/tenants', label: 'Tenants', desc: 'Occupancy, leases, and balances' },
+  { to: '/manage/applications', label: 'Applications', desc: 'Review rental applications' },
+  { to: '/vendors', label: 'Vendors', desc: 'Contractor directory and dispatch' },
   { to: '/manage/work-orders', label: 'Work orders', desc: 'Maintenance and vendor dispatch' },
   { to: '/manage/finance', label: 'Rent & expenses', desc: 'Collection, utility arrears & billing' },
   { to: '/manage/utilities', label: 'Utilities', desc: 'ECG, water, internet & gas config' },

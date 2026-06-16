@@ -46,15 +46,32 @@ export async function fetchMortgages() {
   return { mortgages: mortgageProducts, source: 'local' }
 }
 
-export async function fetchEscrowAccounts() {
+export async function fetchEscrowAccounts({ role = 'buyer' } = {}) {
   try {
     const payload = await callEdgeFunction('payments', {
       allowAnonymous: false,
-      query: { action: 'escrow' },
+      query: { action: 'escrow', role },
     })
     if (payload?.escrow?.length) return { escrow: payload.escrow, source: 'supabase' }
+    if (payload?.escrow) return { escrow: payload.escrow, source: 'supabase' }
   } catch { /* fallback */ }
   return { escrow: escrowAccounts, source: 'local' }
+}
+
+export async function releaseEscrow(escrowId) {
+  return callEdgeFunction('payments', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'release_escrow', escrow_id: escrowId },
+  })
+}
+
+export async function disputeEscrow(escrowId, reason) {
+  return callEdgeFunction('payments', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'dispute_escrow', escrow_id: escrowId, reason },
+  })
 }
 
 export async function fetchInsuranceProducts() {

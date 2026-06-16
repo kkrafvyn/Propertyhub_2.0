@@ -16,9 +16,12 @@ export async function hideNativeSplash() {
 export async function syncNativeTheme(theme = 'light') {
   const isDark = theme === 'dark'
   const bg = isDark ? '#0F2922' : '#FFFFFF'
-  const themeColor = isDark ? '#0F2922' : '#0F2922'
+  const themeColor = isDark ? '#0F2922' : '#FFFFFF'
 
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColor)
+  document
+    .querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+    ?.setAttribute('content', isDark ? 'black-translucent' : 'default')
 
   if (!Capacitor.isNativePlatform()) return
 

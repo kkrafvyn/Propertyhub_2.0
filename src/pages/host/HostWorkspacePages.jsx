@@ -10,6 +10,7 @@ import {
   fetchHostPayouts,
   fetchHostCalendar,
   updateReservationStatus,
+  saveAvailability,
 } from '../../services/host-service'
 
 function HostDashboard() {
@@ -87,18 +88,47 @@ function HostReservationsPage() {
 
 function HostCalendarPage() {
   const [availability, setAvailability] = useState([])
+  const [listingId, setListingId] = useState('')
+  const [blockDate, setBlockDate] = useState('')
+  const [message, setMessage] = useState('')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    fetchHostCalendar().then(({ availability: a }) => setAvailability(a ?? []))
-  }, [])
+    if (listingId) fetchHostCalendar(listingId).then(({ availability: a }) => setAvailability(a ?? []))
+  }, [listingId])
+
+  async function handleSave(open) {
+    if (!listingId || !blockDate) return
+    setSaving(true)
+    setMessage('')
+    try {
+      await saveAvailability(listingId, [{ date: blockDate, available: open }])
+      setMessage(open ? 'Date opened' : 'Date blocked')
+      const { availability: a } = await fetchHostCalendar(listingId)
+      setAvailability(a ?? [])
+    } catch {
+      setMessage('Could not update calendar')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <HostShell title="Availability calendar" subtitle="Block dates and set nightly overrides">
-      <PanelCard title="Scheduled availability">
+      <PanelCard title="Manage availability">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <input value={listingId} onChange={(e) => setListingId(e.target.value)} placeholder="Listing ID" className="rounded-lg border border-surface-border px-3 py-2 text-sm" />
+          <input type="date" value={blockDate} onChange={(e) => setBlockDate(e.target.value)} className="rounded-lg border border-surface-border px-3 py-2 text-sm" />
+          <div className="flex gap-2">
+            <button type="button" disabled={saving} onClick={() => handleSave(true)} className="rounded-lg bg-mobile-forest px-3 py-2 text-sm font-semibold text-white">Open</button>
+            <button type="button" disabled={saving} onClick={() => handleSave(false)} className="rounded-lg border border-surface-border px-3 py-2 text-sm font-semibold">Block</button>
+          </div>
+        </div>
+        {message && <p className="mt-3 text-sm text-ink-secondary">{message}</p>}
         {availability.length === 0 ? (
-          <p className="text-sm text-ink-secondary">No custom availability rules. All dates open by default.</p>
+          <p className="mt-4 text-sm text-ink-secondary">Enter a listing ID to view or edit dates.</p>
         ) : (
-          <ul className="text-sm">
+          <ul className="mt-4 text-sm">
             {availability.map((a) => (
               <li key={a.id} className="py-2">{a.listing_id} · {a.date} · {a.available ? 'Open' : 'Blocked'}</li>
             ))}

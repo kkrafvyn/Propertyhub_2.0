@@ -18,9 +18,37 @@ export async function fetchPortfolios() {
       allowAnonymous: false,
       query: { action: 'portfolios' },
     })
-    if (payload?.portfolios?.length) return { portfolios: payload.portfolios, source: 'supabase' }
+    if (payload?.portfolios) return { portfolios: payload.portfolios, source: 'supabase' }
   } catch { /* fallback */ }
   return { portfolios, source: 'local' }
+}
+
+export async function fetchOrgLinks() {
+  try {
+    const payload = await callEdgeFunction('enterprise', {
+      allowAnonymous: false,
+      query: { action: 'org_links' },
+    })
+    return { links: payload?.links ?? [], source: 'supabase' }
+  } catch {
+    return { links: [], source: 'local' }
+  }
+}
+
+export async function linkOrgPortfolio(orgId, portfolioId) {
+  return callEdgeFunction('enterprise', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'link_org_portfolio', org_id: orgId, portfolio_id: portfolioId },
+  })
+}
+
+export async function createPortfolio(data) {
+  return callEdgeFunction('enterprise', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'create_portfolio', ...data },
+  })
 }
 
 export async function fetchEsgMetrics() {
@@ -45,4 +73,4 @@ export async function fetchRevenueForecast() {
   return { forecast: revenueForecast, source: 'local' }
 }
 
-export default { fetchEnterpriseDashboard, fetchPortfolios, fetchEsgMetrics, fetchRevenueForecast }
+export default { fetchEnterpriseDashboard, fetchPortfolios, fetchEsgMetrics, fetchRevenueForecast, fetchOrgLinks, linkOrgPortfolio, createPortfolio }
