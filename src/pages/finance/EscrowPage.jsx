@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import FinanceShell from '../../components/FinanceShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import PaymentProviderPicker from '../../components/PaymentProviderPicker'
+import QuickFormModal, { ModalField, modalInputClassName } from '../../components/ui/QuickFormModal'
 import { IconChevronRight } from '../../components/icons'
 import { fetchEscrowAccounts, releaseEscrow, disputeEscrow } from '../../services/finance-service'
 import { fundEscrow } from '../../services/payments-service'
@@ -15,6 +16,38 @@ const milestoneStyles = {
   scheduled: 'bg-surface-subtle text-ink-secondary',
 }
 
+const DISPUTE_STEPS = [
+  { id: 'open', label: 'Dispute opened' },
+  { id: 'review', label: 'Under review' },
+  { id: 'evidence', label: 'Evidence collection' },
+  { id: 'resolution', label: 'Resolution' },
+]
+
+function disputeStepIndex(status) {
+  if (status === 'disputed') return 1
+  if (status === 'review') return 2
+  if (status === 'resolved') return 4
+  return 0
+}
+
+function DisputeTimeline({ status }) {
+  const active = disputeStepIndex(status)
+  return (
+    <ol className="mt-4 space-y-2 border-t border-surface-border pt-4">
+      {DISPUTE_STEPS.map((step, i) => (
+        <li key={step.id} className="flex items-center gap-3 text-sm">
+          <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+            i < active ? 'bg-green-600 text-white' : i === active ? 'bg-amber-500 text-white' : 'bg-surface-subtle text-ink-secondary'
+          }`}>
+            {i + 1}
+          </span>
+          <span className={i <= active ? 'font-medium text-ink' : 'text-ink-secondary'}>{step.label}</span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
 function Escrow() {
   const [params] = useSearchParams()
   const [role, setRole] = useState('buyer')
@@ -22,10 +55,15 @@ function Escrow() {
   const [provider, setProvider] = useState(getDefaultProvider())
   const [loading, setLoading] = useState(null)
   const [message, setMessage] = useState(params.get('funded') ? 'Escrow deposit recorded.' : '')
+  const [disputeTarget, setDisputeTarget] = useState(null)
+  const [disputeReason, setDisputeReason] = useState('')
+  const [disputeCategory, setDisputeCategory] = useState('condition')
 
-  useEffect(() => {
+  function reload() {
     fetchEscrowAccounts({ role }).then(({ escrow: rows }) => setEscrow(rows ?? []))
-  }, [role])
+  }
+
+  useEffect(() => { reload() }, [role])
 
   async function handleFund(account, milestoneAmount) {
     const amount = milestoneAmount ?? account.amount - account.funded
@@ -43,15 +81,19 @@ function Escrow() {
     setMessage('')
     const result = await releaseEscrow(account.id)
     setMessage(result?.ok ? 'Escrow released to seller.' : result?.error || 'Release failed.')
-    fetchEscrowAccounts({ role }).then(({ escrow: rows }) => setEscrow(rows ?? []))
+    reload()
     setLoading(null)
   }
 
-  async function handleDispute(account) {
-    setLoading(account.id)
-    const result = await disputeEscrow(account.id, 'Buyer dispute')
-    setMessage(result?.ok ? 'Dispute opened — support will review.' : result?.error || 'Dispute failed.')
-    fetchEscrowAccounts({ role }).then(({ escrow: rows }) => setEscrow(rows ?? []))
+  async function handleDisputeSubmit() {
+    if (!disputeTarget || !disputeReason.trim()) return
+    setLoading(disputeTarget.id)
+    const reason = `[${disputeCategory}] ${disputeReason.trim()}`
+    const result = await disputeEscrow(disputeTarget.id, reason)
+    setMessage(result?.ok ? 'Dispute opened — support will review within 2 business days.' : result?.error || 'Dispute failed.')
+    setDisputeTarget(null)
+    setDisputeReason('')
+    reload()
     setLoading(null)
   }
 
@@ -167,7 +209,7 @@ function Escrow() {
                   {role === 'buyer' && (
                     <button
                       type="button"
-                      onClick={() => handleDispute(e)}
+                      onClick={() => setDisputeTarget(e)}
                       disabled={loading === e.id}
                       className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 disabled:opacity-60"
                     >
@@ -176,10 +218,41 @@ function Escrow() {
                   )}
                 </div>
               )}
+
+              {e.status === 'disputed' && (
+                <DisputeTimeline status={e.status} />
+              )}
             </article>
           )
         })}
       </div>
+
+      {disputeTarget && (
+        <QuickFormModal
+          title={`Dispute — ${disputeTarget.property}`}
+          onClose={() => setDisputeTarget(null)}
+          onSubmit={handleDisputeSubmit}
+          submitLabel="Submit dispute"
+          loading={loading === disputeTarget.id}
+        >
+          <ModalField label="Category">
+            <select className={modalInputClassName()} value={disputeCategory} onChange={(ev) => setDisputeCategory(ev.target.value)}>
+              <option value="condition">Property condition</option>
+              <option value="title">Title / documentation</option>
+              <option value="milestone">Milestone not met</option>
+              <option value="other">Other</option>
+            </select>
+          </ModalField>
+          <ModalField label="Describe the issue">
+            <textarea
+              className={modalInputClassName('min-h-[100px]')}
+              value={disputeReason}
+              onChange={(ev) => setDisputeReason(ev.target.value)}
+              placeholder="Provide details for the escrow review team…"
+            />
+          </ModalField>
+        </QuickFormModal>
+      )}
     </FinanceShell>
   )
 }

@@ -74,6 +74,14 @@ export async function disputeEscrow(escrowId, reason) {
   })
 }
 
+export async function applyMortgageReferral({ partnerId, listingId, amount, metadata }) {
+  return callEdgeFunction('payments', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'mortgage_referral', partner_id: partnerId, listing_id: listingId, amount, metadata },
+  })
+}
+
 export async function fetchInsuranceProducts() {
   try {
     const payload = await callEdgeFunction('payments', {

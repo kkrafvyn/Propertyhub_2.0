@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import RenterShell from '../../components/RenterShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
@@ -33,6 +34,17 @@ function Leases() {
                 <IconCheck className="h-3.5 w-3.5" />
                 Digitally signed
               </p>
+            )}
+            {lease.status === 'active' && (
+              <Link
+                to={`/renter/renewal?lease=${lease.id}`}
+                className="mt-4 inline-block rounded-lg border border-surface-border px-4 py-2 text-sm font-semibold hover:bg-surface-subtle"
+              >
+                Request renewal
+              </Link>
+            )}
+            {lease.status === 'renewal_requested' && (
+              <p className="mt-3 text-xs font-semibold text-amber-700">Renewal pending landlord review</p>
             )}
           </article>
         ))}

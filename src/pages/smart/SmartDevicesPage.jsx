@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import SmartShell from '../../components/SmartShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import QuickFormModal, { ModalField, modalInputClassName } from '../../components/ui/QuickFormModal'
 import { useTranslation } from '../../i18n/LocaleContext'
-import { fetchDevices, getIotWebhookUrl, fetchIotEvents, simulateIotEvent } from '../../services/smart-service'
+import { fetchDevices, getIotWebhookUrl, fetchIotEvents, simulateIotEvent, addDevice } from '../../services/smart-service'
 
 import { deviceTypeIcons } from '../../components/icons'
 
@@ -10,12 +11,17 @@ function Devices() {
   const { t } = useTranslation()
   const [devices, setDevices] = useState([])
   const [events, setEvents] = useState([])
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ name: '', type: 'sensor', location: '' })
+  const [loading, setLoading] = useState(false)
   const webhookUrl = getIotWebhookUrl()
 
-  useEffect(() => {
+  function reload() {
     fetchDevices().then(({ devices: rows }) => setDevices(rows))
     fetchIotEvents().then(({ events: rows }) => setEvents(rows))
-  }, [])
+  }
+
+  useEffect(() => { reload() }, [])
 
   async function testWebhook(device) {
     await simulateIotEvent({
@@ -23,7 +29,18 @@ function Devices() {
       eventType: 'motion_detected',
       payload: { device: device.name, location: device.location },
     })
-    fetchIotEvents().then(({ events: rows }) => setEvents(rows))
+    reload()
+  }
+
+  async function handleAddDevice() {
+    if (!form.name.trim()) return
+    setLoading(true)
+    const result = await addDevice(form)
+    if (result?.device) setDevices((prev) => [...prev, { ...result.device, lastSeen: 'Just now' }])
+    setShowForm(false)
+    setForm({ name: '', type: 'sensor', location: '' })
+    setLoading(false)
+    reload()
   }
 
   return (
@@ -75,7 +92,26 @@ function Devices() {
         </div>
       )}
 
-      <button type="button" className="mt-6 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">Add device</button>
+      <button type="button" onClick={() => setShowForm(true)} className="mt-6 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">Add device</button>
+
+      {showForm && (
+        <QuickFormModal title="Add device" onClose={() => setShowForm(false)} onSubmit={handleAddDevice} submitLabel="Add device" loading={loading}>
+          <ModalField label="Device name">
+            <input className={modalInputClassName()} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Living room motion" />
+          </ModalField>
+          <ModalField label="Type">
+            <select className={modalInputClassName()} value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}>
+              <option value="sensor">Sensor</option>
+              <option value="lock">Smart lock</option>
+              <option value="thermostat">Thermostat</option>
+              <option value="camera">Camera</option>
+            </select>
+          </ModalField>
+          <ModalField label="Location">
+            <input className={modalInputClassName()} value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} placeholder="Unit 4B" />
+          </ModalField>
+        </QuickFormModal>
+      )}
     </SmartShell>
   )
 }

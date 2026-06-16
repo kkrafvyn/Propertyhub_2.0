@@ -233,6 +233,27 @@ Deno.serve(async (req) => {
         await logAudit(admin, user.id, 'lease_signed', body.document_id, {})
         return jsonResponse({ ok: true, document_id: body.document_id, signed_at: new Date().toISOString() })
       }
+
+      if (body.action === 'request_lease_renewal') {
+        const leaseId = body.lease_id
+        if (!leaseId) return errorResponse('lease_id required', 400)
+        const { data: lease } = await admin.from('leases').select('*').eq('id', leaseId).eq('user_id', user.id).maybeSingle()
+        if (!lease) return errorResponse('Lease not found', 404)
+
+        await admin.from('leases').update({ status: 'renewal_requested' }).eq('id', leaseId)
+        await logAudit(admin, user.id, 'lease_renewal_requested', leaseId, {
+          proposed_term_months: body.term_months ?? 12,
+          proposed_rent: body.proposed_rent ?? lease.rent,
+          notes: body.notes ?? '',
+        })
+        return jsonResponse({
+          ok: true,
+          lease_id: leaseId,
+          status: 'renewal_requested',
+          message: 'Renewal request sent to your landlord.',
+        })
+      }
+
       return errorResponse('Unsupported action', 404)
     }
 

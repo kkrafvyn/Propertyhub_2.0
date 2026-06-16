@@ -3,7 +3,7 @@ import MobileShell, { MobileHeader } from '../../components/MobileShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { MobileCard, MobileStat, MobileTextLink } from '../../components/ui/MobileUI'
 import { useTranslation } from '../../i18n/LocaleContext'
-import { fetchSmartDashboard, fetchDevices, fetchAlertsAndLogs } from '../../services/smart-service'
+import { fetchSmartDashboard, fetchDevices, fetchAlertsAndLogs, markAlertRead } from '../../services/smart-service'
 
 function SmartHome() {
   const { t } = useTranslation()
@@ -39,8 +39,11 @@ function SmartHome() {
             </MobileCard>
           ))}
         </div>
-        <MobileTextLink to="/smart" className="w-full justify-center" arrow="right">
-          Open full dashboard
+        <MobileTextLink to="/smart/devices" className="w-full justify-center" arrow="right">
+          Manage devices
+        </MobileTextLink>
+        <MobileTextLink to="/smart/automations" className="w-full justify-center mt-2" arrow="right">
+          Automations
         </MobileTextLink>
       </section>
     </MobileShell>
@@ -55,14 +58,20 @@ function SmartAlertsMobile() {
     fetchAlertsAndLogs().then(({ alerts: a }) => setAlerts(a))
   }, [])
 
+  async function handleMarkRead(alert) {
+    if (alert.read) return
+    setAlerts((prev) => prev.map((a) => (a.id === alert.id ? { ...a, read: true } : a)))
+    await markAlertRead(alert.id)
+  }
+
   return (
     <MobileShell hideNav>
       <MobileHeader title={t('mobile.alerts')} backTo="/smart" />
       <section className="space-y-2 px-4 pb-6">
         {alerts.map((a) => (
-          <MobileCard key={a.id}>
+          <MobileCard key={a.id} className={a.read ? 'opacity-60' : ''} onClick={() => handleMarkRead(a)}>
             <p className="font-semibold text-ink">{a.title}</p>
-            <p className="text-xs text-ink-secondary">{a.time}</p>
+            <p className="text-xs text-ink-secondary">{a.time ?? a.created_at?.slice?.(0, 16)}</p>
           </MobileCard>
         ))}
       </section>

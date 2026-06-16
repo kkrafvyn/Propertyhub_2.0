@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
 import SmartShell from '../../components/SmartShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
-import { fetchAutomations, toggleAutomation } from '../../services/smart-service'
+import QuickFormModal, { ModalField, modalInputClassName } from '../../components/ui/QuickFormModal'
+import { fetchAutomations, toggleAutomation, createAutomation } from '../../services/smart-service'
 
 function Automations() {
   const [rules, setRules] = useState([])
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ name: '', trigger: '', action: '' })
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     fetchAutomations().then(({ automations: rows }) => setRules(rows))
@@ -13,6 +17,16 @@ function Automations() {
   async function handleToggle(id, enabled) {
     setRules((prev) => prev.map((r) => (r.id === id ? { ...r, enabled: !enabled } : r)))
     await toggleAutomation(id, !enabled)
+  }
+
+  async function handleCreate() {
+    if (!form.name.trim()) return
+    setLoading(true)
+    const result = await createAutomation(form)
+    if (result?.automation) setRules((prev) => [...prev, result.automation])
+    setShowForm(false)
+    setForm({ name: '', trigger: '', action: '' })
+    setLoading(false)
   }
 
   return (
@@ -39,7 +53,21 @@ function Automations() {
           </li>
         ))}
       </ul>
-      <button type="button" className="mt-4 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">Create automation</button>
+      <button type="button" onClick={() => setShowForm(true)} className="mt-4 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">Create automation</button>
+
+      {showForm && (
+        <QuickFormModal title="Create automation" onClose={() => setShowForm(false)} onSubmit={handleCreate} submitLabel="Create" loading={loading}>
+          <ModalField label="Name">
+            <input className={modalInputClassName()} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Turn off AC when window opens" />
+          </ModalField>
+          <ModalField label="When (trigger)">
+            <input className={modalInputClassName()} value={form.trigger} onChange={(e) => setForm((f) => ({ ...f, trigger: e.target.value }))} placeholder="Window sensor opens" />
+          </ModalField>
+          <ModalField label="Then (action)">
+            <input className={modalInputClassName()} value={form.action} onChange={(e) => setForm((f) => ({ ...f, action: e.target.value }))} placeholder="Set thermostat to eco mode" />
+          </ModalField>
+        </QuickFormModal>
+      )}
     </SmartShell>
   )
 }

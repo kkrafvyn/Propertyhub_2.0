@@ -105,6 +105,50 @@ export async function toggleAutomation(id, enabled) {
   }
 }
 
+export async function addDevice({ name, type = 'sensor', location = '' }) {
+  try {
+    return await callEdgeFunction('smart', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'create_device', name, type, location },
+    })
+  } catch {
+    return {
+      ok: true,
+      device: { id: `local-${Date.now()}`, name, type, location, status: 'online', lastSeen: 'Just now' },
+      source: 'local',
+    }
+  }
+}
+
+export async function createAutomation({ name, trigger, action }) {
+  try {
+    return await callEdgeFunction('smart', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'create_automation', name, trigger, action_config: action },
+    })
+  } catch {
+    return {
+      ok: true,
+      automation: { id: `local-${Date.now()}`, name, trigger, action, enabled: true },
+      source: 'local',
+    }
+  }
+}
+
+export async function markAlertRead(alertId) {
+  try {
+    return await callEdgeFunction('smart', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'mark_alert_read', alert_id: alertId },
+    })
+  } catch {
+    return { ok: true, source: 'local' }
+  }
+}
+
 export default {
   getIotWebhookUrl,
   fetchSmartDashboard,
@@ -114,4 +158,7 @@ export default {
   fetchIotEvents,
   simulateIotEvent,
   toggleAutomation,
+  addDevice,
+  createAutomation,
+  markAlertRead,
 }

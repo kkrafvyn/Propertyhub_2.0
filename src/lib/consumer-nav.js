@@ -56,6 +56,11 @@ export const CONSUMER_ACTIVITY_LINKS = [
   { to: '/saved', labelKey: 'consumer.activity.saved', icon: 'heart' },
   { to: '/messages', labelKey: 'consumer.activity.messages', icon: 'message', authRequired: true },
   { to: '/trips', labelKey: 'consumer.activity.trips', icon: 'calendar', authRequired: true },
+  { to: '/offers', labelKey: 'consumer.activity.offers', icon: 'document', authRequired: true, cap: 'buy' },
+  { to: '/transactions', labelKey: 'consumer.activity.transactions', icon: 'document', authRequired: true, cap: 'buy' },
+  { to: '/wallet', labelKey: 'consumer.activity.wallet', icon: 'card', authRequired: true },
+  { to: '/renter/maintenance', labelKey: 'consumer.activity.maintenance', icon: 'wrench', authRequired: true, cap: 'rent' },
+  { to: '/billing', labelKey: 'consumer.activity.billing', icon: 'card', authRequired: true },
 ]
 
 export const CONSUMER_AI_LINKS = [

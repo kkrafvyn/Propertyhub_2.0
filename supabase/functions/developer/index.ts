@@ -26,11 +26,13 @@ function mapMilestone(r: Record<string, unknown>) {
 }
 
 function mapBuyer(r: Record<string, unknown>) {
+  const paid = r.paid_pct ?? r.paid
   return {
     ...r,
     project: r.project_id,
     stage: r.status,
-    paid: r.paid_pct ?? 0,
+    paid: typeof paid === 'number' ? `${paid}%` : paid,
+    transactionId: r.transaction_id ?? null,
   }
 }
 

@@ -72,6 +72,10 @@ export default function ConsumerDashboard({ compact = false }) {
     (a) => !a.cap || hasCapability(capabilities, a.cap),
   )
 
+  const activityLinks = CONSUMER_ACTIVITY_LINKS.filter(
+    (a) => !a.cap || hasCapability(capabilities, a.cap),
+  )
+
   const activityMeta = {
     '/saved': savedCount || undefined,
     '/trips': tripCount || undefined,
@@ -86,7 +90,7 @@ export default function ConsumerDashboard({ compact = false }) {
 
       <Section title={t('consumer.dashboard.myActivity')}>
         <div className="space-y-2">
-          {CONSUMER_ACTIVITY_LINKS.map(({ to, labelKey, authRequired }) => (
+          {activityLinks.map(({ to, labelKey, authRequired }) => (
             <ActivityRow
               key={to}
               to={to}
@@ -97,6 +101,23 @@ export default function ConsumerDashboard({ compact = false }) {
             />
           ))}
         </div>
+
+        {(hasCapability(capabilities, 'buy') || activityFeed.some((i) => i.category === 'deal')) && (
+          <div className="mt-3 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-secondary">
+              My deals
+            </p>
+            {hasCapability(capabilities, 'buy') && (
+              <>
+                <ActivityRow to="/offers" label="Active offers" authRequired user={user} />
+                <ActivityRow to="/transactions" label="Closing pipeline" authRequired user={user} />
+              </>
+            )}
+            {activityFeed.filter((i) => i.link?.includes('offer') || i.link?.includes('transaction')).slice(0, 3).map((item) => (
+              <ActivityRow key={item.id} to={item.link || '/offers'} label={item.title} meta={item.body} authRequired={false} user={user} />
+            ))}
+          </div>
+        )}
 
         {activityFeed.length > 0 && (
           <div className="mt-3 space-y-2">

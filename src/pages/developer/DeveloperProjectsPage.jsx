@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import DeveloperShell from '../../components/DeveloperShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { useTranslation } from '../../i18n/LocaleContext'
-import { fetchProjects, fetchProjectUnits, createProject } from '../../services/developer-service'
+import { fetchProjects, fetchProjectUnits, createProject, updateUnitStatus } from '../../services/developer-service'
 
 function Projects() {
   const { t } = useTranslation()
@@ -37,6 +37,11 @@ function Projects() {
     setShowForm(false)
     setForm({ name: '', location: '', units: 10 })
     setCreating(false)
+  }
+
+  async function handleUnitStatus(unitId, status) {
+    await updateUnitStatus(unitId, status)
+    setUnits((prev) => prev.map((u) => (u.id === unitId ? { ...u, status } : u)))
   }
 
   return (
@@ -119,7 +124,16 @@ function Projects() {
                     <td className="px-4 py-3">{u.sqft?.toLocaleString() ?? '—'}</td>
                     <td className="px-4 py-3">GHS {Number(u.price).toLocaleString()}</td>
                     <td className="px-4 py-3">
-                      <span className="rounded-full bg-surface-hover px-2 py-0.5 text-xs font-semibold capitalize">{u.status}</span>
+                      <select
+                        value={u.status}
+                        onChange={(e) => handleUnitStatus(u.id, e.target.value)}
+                        className="rounded-lg border border-surface-border bg-surface px-2 py-1 text-xs font-semibold capitalize"
+                      >
+                        <option value="available">Available</option>
+                        <option value="reserved">Reserved</option>
+                        <option value="sold">Sold</option>
+                        <option value="under_contract">Under contract</option>
+                      </select>
                     </td>
                   </tr>
                 ))}

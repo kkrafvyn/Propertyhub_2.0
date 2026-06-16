@@ -1,14 +1,28 @@
 import { useEffect, useState } from 'react'
 import AgencyShell from '../../components/AgencyShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
-import { fetchBranches } from '../../services/agency-service'
+import QuickFormModal, { ModalField, modalInputClassName } from '../../components/ui/QuickFormModal'
+import { fetchBranches, addBranch } from '../../services/agency-service'
 
 function Branches() {
   const [branches, setBranches] = useState([])
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ name: '', location: '', manager: '' })
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     fetchBranches().then(({ branches: rows }) => setBranches(rows))
   }, [])
+
+  async function handleAdd() {
+    if (!form.name.trim() || !form.location.trim()) return
+    setLoading(true)
+    const result = await addBranch(form)
+    if (result?.branch) setBranches((prev) => [...prev, result.branch])
+    setShowForm(false)
+    setForm({ name: '', location: '', manager: '' })
+    setLoading(false)
+  }
 
   return (
     <AgencyShell titleKey="hubs.agency.branches.title" subtitleKey="hubs.agency.branches.subtitle">
@@ -28,9 +42,23 @@ function Branches() {
           </article>
         ))}
       </div>
-      <button type="button" className="mt-6 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">
+      <button type="button" onClick={() => setShowForm(true)} className="mt-6 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white">
         Add branch
       </button>
+
+      {showForm && (
+        <QuickFormModal title="Add branch" onClose={() => setShowForm(false)} onSubmit={handleAdd} submitLabel="Add branch" loading={loading}>
+          <ModalField label="Branch name">
+            <input className={modalInputClassName()} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+          </ModalField>
+          <ModalField label="Location">
+            <input className={modalInputClassName()} value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} />
+          </ModalField>
+          <ModalField label="Manager">
+            <input className={modalInputClassName()} value={form.manager} onChange={(e) => setForm((f) => ({ ...f, manager: e.target.value }))} />
+          </ModalField>
+        </QuickFormModal>
+      )}
     </AgencyShell>
   )
 }

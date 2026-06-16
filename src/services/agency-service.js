@@ -186,6 +186,54 @@ export async function syncPayrollFromCommissions(period) {
   })
 }
 
+export async function inviteTeamMember({ email, name, role = 'Agent' }) {
+  try {
+    return await callEdgeFunction('agencies', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'invite_team', email, name, role },
+    })
+  } catch {
+    return {
+      ok: true,
+      member: { id: `t-${Date.now()}`, name: name ?? email.split('@')[0], role, email, status: 'invited' },
+      source: 'local',
+    }
+  }
+}
+
+export async function addBranch({ name, location, manager }) {
+  try {
+    return await callEdgeFunction('agencies', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'add_branch', name, location, manager },
+    })
+  } catch {
+    return {
+      ok: true,
+      branch: { id: `b-${Date.now()}`, name, location, manager: manager ?? 'TBD', agents: 0, listings: 0, status: 'active' },
+      source: 'local',
+    }
+  }
+}
+
+export async function addComplianceItem({ item, owner, due }) {
+  try {
+    return await callEdgeFunction('agencies', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'add_compliance', item, owner, due },
+    })
+  } catch {
+    return {
+      ok: true,
+      item: { id: `c-${Date.now()}`, item, owner: owner ?? 'Agency', due: due ?? new Date().toISOString().slice(0, 10), status: 'pending' },
+      source: 'local',
+    }
+  }
+}
+
 export default {
   fetchAgencyDashboard,
   fetchTeam,
@@ -195,6 +243,9 @@ export default {
   exportPayrollGhanaBank,
   runPayroll,
   syncPayrollFromCommissions,
+  inviteTeamMember,
+  addBranch,
+  addComplianceItem,
   fetchAgencyAnalytics,
   fetchTrustScore,
   fetchCompliance,

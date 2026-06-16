@@ -46,6 +46,7 @@ const RenterUtilitiesPage = lazy(() => import('../pages/renter/RenterUtilitiesPa
 const RenterCreditPage = lazy(() => import('../pages/renter/RenterCreditPage'))
 const RenterMaintenancePage = lazy(() => import('../pages/renter/RenterMaintenancePage'))
 const RenterLeaseSigningPage = lazy(() => import('../pages/renter/RenterLeaseSigningPage'))
+const LeaseRenewalPage = lazy(() => import('../pages/renter/LeaseRenewalPage'))
 const ManageHubPage = lazy(() => import('../pages/manage/ManageHubPage'))
 const ManageTenantsPage = lazy(() => import('../pages/manage/ManageTenantsPage'))
 const ManageWorkOrdersPage = lazy(() => import('../pages/manage/ManageWorkOrdersPage'))
@@ -290,6 +291,7 @@ export default function DesktopRoutes() {
       <Route path="/agency/onboarding" element={<AgencyRoute><AgencyOnboardingPage /></AgencyRoute>} />
       <Route path="/renter/apply" element={<RentalApplicationPage />} />
       <Route path="/renter/leases" element={<RenterLeasesPage />} />
+      <Route path="/renter/renewal" element={<LeaseRenewalPage />} />
       <Route path="/renter/payments" element={<RenterPaymentsPage />} />
       <Route path="/renter/utilities" element={<RenterUtilitiesPage />} />
       <Route path="/renter/credit" element={<RenterCreditPage />} />

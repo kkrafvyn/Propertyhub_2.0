@@ -29,6 +29,14 @@ export async function updateUnitStatus(unitId, status) {
   })
 }
 
+export async function linkBuyerTransaction({ buyerId, transactionId, offerId }) {
+  return callEdgeFunction('developer', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'link_buyer_transaction', buyer_id: buyerId, transaction_id: transactionId, offer_id: offerId },
+  })
+}
+
 export async function fetchProjects() {
   try {
     const payload = await callEdgeFunction('developer', {
@@ -103,4 +111,4 @@ export async function notifyBuyersOfMilestone(milestone) {
   }
 }
 
-export default { fetchDeveloperDashboard, fetchProjects, fetchProjectUnits, fetchConstruction, fetchDeveloperBuyers, notifyBuyersOfMilestone, createProject, updateUnitStatus }
+export default { fetchDeveloperDashboard, fetchProjects, fetchProjectUnits, fetchConstruction, fetchDeveloperBuyers, notifyBuyersOfMilestone, createProject, updateUnitStatus, linkBuyerTransaction }

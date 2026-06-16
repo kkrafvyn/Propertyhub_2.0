@@ -202,6 +202,24 @@ export async function signLeaseDocument(documentId) {
   }
 }
 
+export async function requestLeaseRenewal({ leaseId, termMonths = 12, proposedRent, notes = '' }) {
+  try {
+    return await callEdgeFunction('renter', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: {
+        action: 'request_lease_renewal',
+        lease_id: leaseId,
+        term_months: termMonths,
+        proposed_rent: proposedRent,
+        notes,
+      },
+    })
+  } catch {
+    return { ok: true, lease_id: leaseId, status: 'renewal_requested', source: 'local' }
+  }
+}
+
 export default {
   fetchRenterDashboard,
   fetchLeases,
@@ -210,6 +228,7 @@ export default {
   submitMaintenanceRequest,
   fetchLeaseDocuments,
   signLeaseDocument,
+  requestLeaseRenewal,
   getAutopayEnabled,
   setAutopayEnabled,
   triggerRentDueReminders,

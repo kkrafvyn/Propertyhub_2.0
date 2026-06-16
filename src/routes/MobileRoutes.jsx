@@ -25,8 +25,6 @@ import {
   MobileAgentHomePage,
   MobileAgentLeadsPage,
   MobileAgentCalendarPage,
-  MobileAgentTasksPage,
-  MobileAgentCoachPage,
 } from '../pages/mobile/MobileAgentPages'
 
 import {
@@ -79,6 +77,52 @@ import AdminIntegrationsPage from '../pages/admin/AdminIntegrationsPage'
 import KycPage from '../pages/profile/KycPage'
 import HostListingsPage from '../pages/HostListingsPage'
 import HelpCentrePage from '../pages/HelpCentrePage'
+import MortgageCalculatorPage from '../pages/tools/MortgageCalculatorPage'
+import ReferralPage from '../pages/ReferralPage'
+import PrivacyPage from '../pages/PrivacyPage'
+import TermsPage from '../pages/TermsPage'
+import LeaseRenewalPage from '../pages/renter/LeaseRenewalPage'
+import MortgageMarketplacePage from '../pages/finance/MortgageMarketplacePage'
+import RentCollectionPage from '../pages/finance/RentCollectionPage'
+import CommissionSettlementPage from '../pages/finance/CommissionSettlementPage'
+import InsurancePage from '../pages/finance/InsurancePage'
+import ManageTenantsPage from '../pages/manage/ManageTenantsPage'
+import ManageWorkOrdersPage from '../pages/manage/ManageWorkOrdersPage'
+import ManageFinancePage from '../pages/manage/ManageFinancePage'
+import ManageUtilitiesPage from '../pages/manage/ManageUtilitiesPage'
+import ManageInspectionsPage from '../pages/manage/ManageInspectionsPage'
+import AgencyTeamPage from '../pages/agency/AgencyTeamPage'
+import AgencyBranchesPage from '../pages/agency/AgencyBranchesPage'
+import AgencyCompliancePage from '../pages/agency/AgencyCompliancePage'
+import AgencyAnalyticsPage from '../pages/agency/AgencyAnalyticsPage'
+import AgentListingsPage from '../pages/agent/AgentListingsPage'
+import AgentCommissionsPage from '../pages/agent/AgentCommissionsPage'
+import AgentAnalyticsPage from '../pages/agent/AgentAnalyticsPage'
+import AgentTasksPage from '../pages/agent/AgentTasksPage'
+import AgentCoachPage from '../pages/agent/AgentCoachPage'
+import SmartDevicesPage from '../pages/smart/SmartDevicesPage'
+import SmartAutomationsPage from '../pages/smart/SmartAutomationsPage'
+import MarketIntelligencePage from '../pages/intelligence/MarketIntelligencePage'
+import HeatmapPage from '../pages/intelligence/HeatmapPage'
+import ValuationEnginePage from '../pages/intelligence/ValuationEnginePage'
+import DeveloperProjectsPage from '../pages/developer/DeveloperProjectsPage'
+import DeveloperConstructionPage from '../pages/developer/DeveloperConstructionPage'
+import DeveloperBuyersPage from '../pages/developer/DeveloperBuyersPage'
+import EnterprisePortfoliosPage from '../pages/enterprise/EnterprisePortfoliosPage'
+import EnterpriseEsgPage from '../pages/enterprise/EnterpriseEsgPage'
+import EnterpriseForecastPage from '../pages/enterprise/EnterpriseForecastPage'
+import { InvestmentRoiPage, InvestmentPortfolioPage, InvestmentDealsPage, InvestmentForecastPage } from '../pages/investment/InvestmentPages'
+import {
+  HostCalendarWorkspacePage,
+  HostPricingPage,
+  HostCleaningPage,
+  HostGuestsPage,
+} from '../pages/host/HostWorkspacePages'
+import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
+import AdminAgenciesPage from '../pages/admin/AdminAgenciesPage'
+import AdminModerationPage from '../pages/admin/AdminModerationPage'
+import AdminUsersPage from '../pages/admin/AdminUsersPage'
+import AdminAuditPage from '../pages/admin/AdminAuditPage'
 
 function AgentRoute({ children }) {
   return (
@@ -170,7 +214,10 @@ export default function MobileRoutes() {
       <Route path="/wallet/payouts" element={<WalletPayoutsPageExport />} />
       <Route path="/wallet/escrow" element={<WalletEscrowPageExport />} />
       <Route path="/investment" element={<MobileInvestmentHomePage />} />
-      <Route path="/investment/roi" element={<Navigate to="/investment" replace />} />
+      <Route path="/investment/roi" element={<ProtectedRoute><InvestmentRoiPage /></ProtectedRoute>} />
+      <Route path="/investment/portfolio" element={<ProtectedRoute><InvestmentPortfolioPage /></ProtectedRoute>} />
+      <Route path="/investment/deals" element={<ProtectedRoute><InvestmentDealsPage /></ProtectedRoute>} />
+      <Route path="/investment/forecast" element={<ProtectedRoute><InvestmentForecastPage /></ProtectedRoute>} />
       <Route path="/tenant" element={<MobileTenantHomePage />} />
       <Route path="/tenant/visitors" element={<MobileTenantHomePage />} />
       <Route path="/resident" element={<MobileResidentHomePage />} />
@@ -178,7 +225,10 @@ export default function MobileRoutes() {
       <Route path="/host/list" element={<MobileHostListingPage />} />
       <Route path="/host/listings" element={<HostListingsPage />} />
       <Route path="/host/reservations" element={<MobileHostReservationsPage />} />
-      <Route path="/host/calendar" element={<Navigate to="/host" replace />} />
+      <Route path="/host/calendar" element={<ProtectedRoute><HostCalendarWorkspacePage /></ProtectedRoute>} />
+      <Route path="/host/pricing" element={<ProtectedRoute><HostPricingPage /></ProtectedRoute>} />
+      <Route path="/host/cleaning" element={<ProtectedRoute><HostCleaningPage /></ProtectedRoute>} />
+      <Route path="/host/guests" element={<ProtectedRoute><HostGuestsPage /></ProtectedRoute>} />
       <Route path="/host/payouts" element={<Navigate to="/wallet/payouts" replace />} />
       <Route path="/buyer" element={<Navigate to="/consumer/buy" replace />} />
       <Route path="/buyer/advisor" element={<AIAdvisorPage />} />
@@ -190,8 +240,11 @@ export default function MobileRoutes() {
       <Route path="/agent" element={<AgentRoute><MobileAgentHomePage /></AgentRoute>} />
       <Route path="/agent/leads" element={<AgentRoute><MobileAgentLeadsPage /></AgentRoute>} />
       <Route path="/agent/calendar" element={<AgentRoute><MobileAgentCalendarPage /></AgentRoute>} />
-      <Route path="/agent/tasks" element={<AgentRoute><MobileAgentTasksPage /></AgentRoute>} />
-      <Route path="/agent/coach" element={<AgentRoute><MobileAgentCoachPage /></AgentRoute>} />
+      <Route path="/agent/tasks" element={<AgentRoute><AgentTasksPage /></AgentRoute>} />
+      <Route path="/agent/coach" element={<AgentRoute><AgentCoachPage /></AgentRoute>} />
+      <Route path="/agent/listings" element={<AgentRoute><AgentListingsPage /></AgentRoute>} />
+      <Route path="/agent/commissions" element={<AgentRoute><AgentCommissionsPage /></AgentRoute>} />
+      <Route path="/agent/analytics" element={<AgentRoute><AgentAnalyticsPage /></AgentRoute>} />
       <Route path="/renter/apply" element={<RentalApplicationPage />} />
       <Route path="/renter/leases" element={<MobileRenterLeasesPage />} />
       <Route path="/renter/payments" element={<MobileRenterPaymentsPage />} />
@@ -199,25 +252,59 @@ export default function MobileRoutes() {
       <Route path="/renter/credit" element={<MobileRenterCreditPage />} />
       <Route path="/renter/maintenance" element={<MobileRenterMaintenancePage />} />
       <Route path="/renter/sign" element={<MobileRenterSignPage />} />
+      <Route path="/renter/renewal" element={<LeaseRenewalPage />} />
       <Route path="/smart" element={<ProSmartRoute><MobileSmartHomePage /></ProSmartRoute>} />
       <Route path="/smart/alerts" element={<ProSmartRoute><MobileSmartAlertsPage /></ProSmartRoute>} />
+      <Route path="/smart/devices" element={<ProSmartRoute><SmartDevicesPage /></ProSmartRoute>} />
+      <Route path="/smart/automations" element={<ProSmartRoute><SmartAutomationsPage /></ProSmartRoute>} />
       <Route path="/agency" element={<AgencyRoute><MobileAgencyPage /></AgencyRoute>} />
+      <Route path="/agency/team" element={<AgencyRoute><AgencyTeamPage /></AgencyRoute>} />
+      <Route path="/agency/branches" element={<AgencyRoute><AgencyBranchesPage /></AgencyRoute>} />
+      <Route path="/agency/compliance" element={<AgencyRoute><AgencyCompliancePage /></AgencyRoute>} />
+      <Route path="/agency/analytics" element={<AgencyRoute><AgencyAnalyticsPage /></AgencyRoute>} />
       <Route path="/manage" element={<ManageRoute><MobileManagePage /></ManageRoute>} />
+      <Route path="/manage/tenants" element={<ManageRoute><ManageTenantsPage /></ManageRoute>} />
+      <Route path="/manage/work-orders" element={<ManageRoute><ManageWorkOrdersPage /></ManageRoute>} />
+      <Route path="/manage/finance" element={<ManageRoute><ManageFinancePage /></ManageRoute>} />
+      <Route path="/manage/utilities" element={<ManageRoute><ManageUtilitiesPage /></ManageRoute>} />
+      <Route path="/manage/inspections" element={<ManageRoute><ManageInspectionsPage /></ManageRoute>} />
       <Route path="/manage/applications" element={<ManageRoute><ManageApplicationsPage /></ManageRoute>} />
       <Route path="/vendors" element={<ManageRoute><VendorHubPage /></ManageRoute>} />
       <Route path="/vendors/directory" element={<ManageRoute><VendorDirectoryPage /></ManageRoute>} />
       <Route path="/vendors/jobs" element={<ProtectedRoute><VendorJobsPage /></ProtectedRoute>} />
       <Route path="/vendors/dispatch" element={<ManageRoute><VendorDispatchPage /></ManageRoute>} />
       <Route path="/billing" element={<BillingPage />} />
+      <Route path="/admin" element={<StaffRoute><AdminDashboardPage /></StaffRoute>} />
+      <Route path="/admin/agencies" element={<StaffRoute><AdminAgenciesPage /></StaffRoute>} />
+      <Route path="/admin/moderation" element={<StaffRoute><AdminModerationPage /></StaffRoute>} />
+      <Route path="/admin/users" element={<StaffRoute><AdminUsersPage /></StaffRoute>} />
+      <Route path="/admin/audit" element={<StaffRoute><AdminAuditPage /></StaffRoute>} />
       <Route path="/admin/integrations" element={<StaffRoute><AdminIntegrationsPage /></StaffRoute>} />
       <Route path="/finance" element={<MobileFinancePage />} />
+      <Route path="/finance/mortgages" element={<MortgageMarketplacePage />} />
       <Route path="/finance/escrow" element={<EscrowPage />} />
-      <Route path="/mortgages" element={<Navigate to="/finance" replace />} />
-      <Route path="/insurance" element={<Navigate to="/finance" replace />} />
+      <Route path="/finance/rent-collection" element={<RentCollectionPage />} />
+      <Route path="/finance/commissions" element={<CommissionSettlementPage />} />
+      <Route path="/finance/insurance" element={<InsurancePage />} />
+      <Route path="/mortgages" element={<Navigate to="/finance/mortgages" replace />} />
+      <Route path="/insurance" element={<Navigate to="/finance/insurance" replace />} />
       <Route path="/intelligence" element={<MobileIntelligencePage />} />
+      <Route path="/intelligence/market" element={<MarketIntelligencePage />} />
+      <Route path="/intelligence/heatmap" element={<HeatmapPage />} />
+      <Route path="/intelligence/valuation" element={<ValuationEnginePage />} />
       <Route path="/developer" element={<DeveloperRoute><MobileDeveloperPage /></DeveloperRoute>} />
+      <Route path="/developer/projects" element={<DeveloperRoute><DeveloperProjectsPage /></DeveloperRoute>} />
+      <Route path="/developer/construction" element={<DeveloperRoute><DeveloperConstructionPage /></DeveloperRoute>} />
+      <Route path="/developer/buyers" element={<DeveloperRoute><DeveloperBuyersPage /></DeveloperRoute>} />
       <Route path="/enterprise" element={<EnterpriseRoute><MobileEnterprisePage /></EnterpriseRoute>} />
+      <Route path="/enterprise/portfolios" element={<EnterpriseRoute><EnterprisePortfoliosPage /></EnterpriseRoute>} />
+      <Route path="/enterprise/esg" element={<EnterpriseRoute><EnterpriseEsgPage /></EnterpriseRoute>} />
+      <Route path="/enterprise/forecast" element={<EnterpriseRoute><EnterpriseForecastPage /></EnterpriseRoute>} />
       <Route path="/enterprise/organizations" element={<EnterpriseRoute><MobileEnterpriseOrgsPage /></EnterpriseRoute>} />
+      <Route path="/tools/mortgage" element={<MortgageCalculatorPage />} />
+      <Route path="/referral" element={<ReferralPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
       <Route path="/help" element={<HelpCentrePage />} />
       <Route path="/payments/success" element={<PaymentSuccessPage />} />
       <Route path="/payments/cancel" element={<PaymentCancelPage />} />

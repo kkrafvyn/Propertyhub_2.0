@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import SmartShell from '../../components/SmartShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
-import { fetchAlertsAndLogs } from '../../services/smart-service'
+import { fetchAlertsAndLogs, markAlertRead } from '../../services/smart-service'
 
 const alertStyles = {
   critical: 'border-red-200 bg-red-50',
@@ -20,18 +20,31 @@ function Alerts() {
     })
   }, [])
 
+  async function handleMarkRead(alert) {
+    if (alert.read) return
+    setAlerts((prev) => prev.map((a) => (a.id === alert.id ? { ...a, read: true } : a)))
+    await markAlertRead(alert.id)
+  }
+
   return (
     <SmartShell titleKey="hubs.smart.alerts.title" subtitleKey="hubs.smart.alerts.subtitle">
       <h3 className="mb-3 font-semibold">Active alerts</h3>
       <div className="space-y-2">
         {alerts.map((a) => (
-          <article key={a.id} className={`rounded-lg border p-4 ${alertStyles[a.type] || alertStyles.info}`}>
+          <article
+            key={a.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => handleMarkRead(a)}
+            onKeyDown={(e) => e.key === 'Enter' && handleMarkRead(a)}
+            className={`cursor-pointer rounded-lg border p-4 transition hover:opacity-90 ${alertStyles[a.type] || alertStyles.info} ${a.read ? 'opacity-60' : ''}`}
+          >
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="font-semibold">{a.title}</p>
-                <p className="text-sm text-ink-secondary">{a.device} · {a.time}</p>
+                <p className="text-sm text-ink-secondary">{a.device} · {a.time ?? a.created_at?.slice?.(0, 16)}</p>
               </div>
-              {!a.read && <span className="h-2 w-2 shrink-0 rounded-full bg-brand" />}
+              {!a.read && <span className="h-2 w-2 shrink-0 rounded-full bg-brand" title="Unread" />}
             </div>
           </article>
         ))}
@@ -51,10 +64,10 @@ function Alerts() {
           <tbody>
             {logs.map((ev) => (
               <tr key={ev.id} className="border-b border-surface-border last:border-0">
-                <td className="px-4 py-3">{ev.event}</td>
-                <td className="px-4 py-3 text-ink-secondary">{ev.source}</td>
-                <td className="px-4 py-3">{ev.user}</td>
-                <td className="px-4 py-3 text-ink-secondary">{ev.time}</td>
+                <td className="px-4 py-3">{ev.event ?? ev.type}</td>
+                <td className="px-4 py-3 text-ink-secondary">{ev.source ?? ev.device}</td>
+                <td className="px-4 py-3">{ev.user ?? '—'}</td>
+                <td className="px-4 py-3 text-ink-secondary">{ev.time ?? ev.at}</td>
               </tr>
             ))}
           </tbody>

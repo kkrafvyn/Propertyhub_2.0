@@ -92,6 +92,65 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: true, synced, period })
     }
 
+    if (body.action === 'invite_team') {
+      if (!body.email) return errorResponse('email required', 400)
+      const id = `tm-${crypto.randomUUID().slice(0, 8)}`
+      const row = {
+        id,
+        agency_id: agencyId,
+        name: body.name ?? body.email.split('@')[0],
+        role: body.role ?? 'Agent',
+        email: body.email,
+        status: 'invited',
+      }
+      await admin.from('agency_team').insert(row)
+      return jsonResponse({ ok: true, member: row })
+    }
+
+    if (body.action === 'add_branch') {
+      if (!body.name || !body.location) return errorResponse('name and location required', 400)
+      const id = `br-${crypto.randomUUID().slice(0, 8)}`
+      const row = {
+        id,
+        agency_id: agencyId,
+        name: body.name,
+        location: body.location,
+        manager: body.manager ?? 'TBD',
+        agents: 0,
+        listings: 0,
+        status: 'active',
+      }
+      await admin.from('agency_branches').insert(row)
+      return jsonResponse({ ok: true, branch: row })
+    }
+
+    if (body.action === 'add_compliance') {
+      if (!body.item) return errorResponse('item required', 400)
+      const id = `cmp-${crypto.randomUUID().slice(0, 8)}`
+      await admin.from('audit_events').insert({
+        id,
+        user_id: user.id,
+        action: 'compliance_item',
+        resource_id: agencyId,
+        metadata: {
+          item: body.item,
+          owner: body.owner ?? user.email?.split('@')[0] ?? 'Agency',
+          due: body.due ?? new Date().toISOString().slice(0, 10),
+          status: body.status ?? 'pending',
+        },
+      }).catch(() => null)
+      return jsonResponse({
+        ok: true,
+        item: {
+          id,
+          item: body.item,
+          owner: body.owner ?? 'Agency',
+          due: body.due ?? new Date().toISOString().slice(0, 10),
+          status: body.status ?? 'pending',
+        },
+      })
+    }
+
     return errorResponse('Unsupported action', 404)
   }
 

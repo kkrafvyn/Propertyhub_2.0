@@ -156,6 +156,47 @@ Deno.serve(async (req) => {
         await admin.from('pms_tenants').update({ user_id: tenantUserId }).eq('id', tenantId)
         return jsonResponse({ ok: true, tenant_id: tenantId, user_id: tenantUserId })
       }
+      if (body.action === 'create_tenant') {
+        const id = `tn-${crypto.randomUUID().slice(0, 8)}`
+        const row = {
+          id,
+          owner_id: user.id,
+          name: body.name,
+          unit: body.unit,
+          rent: Number(body.rent) || 0,
+          lease_end: body.lease_end ?? null,
+          status: body.status ?? 'current',
+          balance: 0,
+        }
+        if (!row.name || !row.unit) return errorResponse('name and unit required', 400)
+        await admin.from('pms_tenants').insert(row)
+        return jsonResponse({ ok: true, tenant: row })
+      }
+      if (body.action === 'schedule_inspection') {
+        const id = `in-${crypto.randomUUID().slice(0, 8)}`
+        const row = {
+          id,
+          owner_id: user.id,
+          unit: body.unit,
+          inspector: body.inspector ?? 'Assigned inspector',
+          scheduled: body.scheduled ?? body.date ?? new Date().toISOString().slice(0, 10),
+          status: 'scheduled',
+        }
+        if (!row.unit) return errorResponse('unit required', 400)
+        await admin.from('pms_inspections').insert(row)
+        return jsonResponse({
+          ok: true,
+          inspection: {
+            id: row.id,
+            unit: row.unit,
+            type: body.type ?? 'Routine',
+            date: row.scheduled,
+            inspector: row.inspector,
+            status: row.status,
+            score: null,
+          },
+        })
+      }
       return errorResponse('Unsupported action', 404)
     }
 

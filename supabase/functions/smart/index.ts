@@ -80,6 +80,39 @@ Deno.serve(async (req) => {
         await admin.from('smart_alerts').update({ read: true }).eq('id', body.alert_id).eq('owner_id', user.id)
         return jsonResponse({ ok: true })
       }
+      if (body.action === 'create_device') {
+        const id = `sd-${crypto.randomUUID().slice(0, 8)}`
+        const row = {
+          id,
+          owner_id: user.id,
+          name: body.name ?? 'New device',
+          type: body.type ?? 'sensor',
+          location: body.location ?? '',
+          status: 'online',
+          battery: body.battery ?? null,
+          last_seen: new Date().toISOString(),
+        }
+        if (!body.name) return errorResponse('name required', 400)
+        await admin.from('smart_devices').insert(row)
+        return jsonResponse({ ok: true, device: row })
+      }
+      if (body.action === 'create_automation') {
+        const id = `sa-${crypto.randomUUID().slice(0, 8)}`
+        const row = {
+          id,
+          owner_id: user.id,
+          name: body.name ?? 'New automation',
+          trigger_config: body.trigger ?? body.trigger_config ?? 'Manual trigger',
+          action_config: body.action_config ?? body.action ?? 'Notify owner',
+          enabled: body.enabled ?? true,
+        }
+        if (!body.name) return errorResponse('name required', 400)
+        await admin.from('smart_automations').insert(row)
+        return jsonResponse({
+          ok: true,
+          automation: { ...row, trigger: row.trigger_config, action: row.action_config },
+        })
+      }
       return errorResponse('Unsupported action', 404)
     }
 

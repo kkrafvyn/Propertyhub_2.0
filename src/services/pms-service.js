@@ -92,6 +92,48 @@ export async function fetchInspections() {
   return { inspections, source: 'local' }
 }
 
+export async function createTenant({ name, unit, rent, leaseEnd }) {
+  try {
+    return await callEdgeFunction('pms', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'create_tenant', name, unit, rent, lease_end: leaseEnd },
+    })
+  } catch {
+    const tenant = {
+      id: `tn-${Date.now()}`,
+      name,
+      unit,
+      rent: Number(rent) || 0,
+      leaseEnd: leaseEnd ?? '—',
+      status: 'current',
+      balance: 0,
+    }
+    return { ok: true, tenant, source: 'local' }
+  }
+}
+
+export async function scheduleInspection({ unit, type, date, inspector }) {
+  try {
+    return await callEdgeFunction('pms', {
+      method: 'POST',
+      allowAnonymous: false,
+      body: { action: 'schedule_inspection', unit, type, scheduled: date, inspector },
+    })
+  } catch {
+    const inspection = {
+      id: `in-${Date.now()}`,
+      unit,
+      type: type ?? 'Routine',
+      date: date ?? new Date().toISOString().slice(0, 10),
+      inspector: inspector ?? 'Assigned inspector',
+      status: 'scheduled',
+      score: null,
+    }
+    return { ok: true, inspection, source: 'local' }
+  }
+}
+
 export default {
   fetchPmsDashboard,
   fetchTenants,
@@ -99,4 +141,6 @@ export default {
   fetchRentCollection,
   fetchLandlordArrears,
   fetchInspections,
+  createTenant,
+  scheduleInspection,
 }
