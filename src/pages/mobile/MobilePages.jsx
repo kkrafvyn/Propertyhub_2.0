@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import MobileShell, { MobileHeader, MobileSearchBar } from '../../components/MobileShell'
-import ConsumerDashboard from '../../components/consumer/ConsumerDashboard'
+import MobileShell, { MobileHeader } from '../../components/MobileShell'
 import { useAuth } from '../../context/AuthContext'
+import MobileHomeMenu from '../../components/mobile/MobileHomeMenu'
 import {
   MobileAreaCard,
   MobileCarouselSection,
@@ -14,6 +14,11 @@ import {
   filterHomeListings,
 } from '../../components/mobile/MobileHomeSections'
 import {
+  MobileExploreFiltersSheet,
+  MobileExploreSearchRow,
+  MobileLocationBar,
+} from '../../components/mobile/MobileExploreLocation'
+import {
   MobileBoltListingCard,
   MobileBoltListingTile,
   MobileEmpty,
@@ -24,6 +29,8 @@ import { syncSavedIds, toggleSavedIdAsync } from '../../lib/saved-listings'
 import { cacheListingsForOffline, getCachedListings } from '../../lib/offline-cache'
 import { trackFunnel } from '../../lib/analytics'
 import { trackRecentSearch } from '../../lib/recent-activity'
+import { enrichListingsWithDistance, formatDistanceKm, sortListingsByDistance } from '../../lib/geo-distance'
+import { useUserLocation } from '../../hooks/useUserLocation'
 import { fetchListings } from '../../services/marketplace-service'
 import MobileExploreMap from '../../components/mobile/MobileExploreMap'
 
@@ -32,6 +39,7 @@ export default function MobileHomePage() {
   const { user } = useAuth()
   const [listings, setListings] = useState([])
   const [savedIds, setSavedIds] = useState([])
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     fetchListings().then(({ listings: rows }) => {
@@ -68,9 +76,12 @@ export default function MobileHomePage() {
   }
 
   return (
-    <MobileShell>
-      <MobileReferenceHeader />
-      {user && <ConsumerDashboard compact />}
+    <MobileShell showContextual={false}>
+      <MobileReferenceHeader
+        menuEnabled
+        onMenuClick={() => setMenuOpen(true)}
+      />
+      <MobileHomeMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
       <MobileHeroBanner />
 
       {weekend.length > 0 && (
@@ -138,6 +149,9 @@ export function MobileExplorePage() {
   const [propType, setPropType] = useState(null)
   const [listings, setListings] = useState([])
   const [viewMode, setViewMode] = useState('list')
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [filters, setFilters] = useState({ verifiedOnly: false, minBedrooms: 0 })
+  const userLocation = useUserLocation({ watch: true })
 
   useEffect(() => {
     fetchListings()
@@ -152,30 +166,55 @@ export function MobileExplorePage() {
   }, [])
 
   const visible = useMemo(() => {
-    const filtered = filterHomeListings(listings, txTab, propType)
+    let filtered = filterHomeListings(listings, txTab, propType)
     const q = search.trim().toLowerCase()
-    if (!q) return filtered
-    return filtered.filter((l) =>
-      `${l.title} ${l.type} ${l.location || ''}`.toLowerCase().includes(q),
-    )
-  }, [listings, txTab, propType, search])
+    if (q) {
+      filtered = filtered.filter((l) =>
+        `${l.title} ${l.type} ${l.location || ''}`.toLowerCase().includes(q),
+      )
+    }
+    if (filters.verifiedOnly) filtered = filtered.filter((l) => l.verified)
+    if (filters.minBedrooms > 0) filtered = filtered.filter((l) => (l.bedrooms ?? 0) >= filters.minBedrooms)
+
+    if (userLocation.isActive) {
+      filtered = enrichListingsWithDistance(filtered, userLocation.lat, userLocation.lng)
+      filtered = sortListingsByDistance(filtered)
+    }
+
+    return filtered.map((l) => (
+      l.distanceKm != null
+        ? { ...l, distanceLabel: formatDistanceKm(l.distanceKm) }
+        : l
+    ))
+  }, [listings, txTab, propType, search, filters, userLocation.isActive, userLocation.lat, userLocation.lng])
 
   useEffect(() => {
     const q = search.trim()
     if (q.length >= 2) {
       const timer = setTimeout(() => {
         trackRecentSearch(q)
-        trackFunnel('search', { query: q, results: visible.length })
+        trackFunnel('search', { query: q, results: visible.length, near_me: userLocation.isActive })
       }, 400)
       return () => clearTimeout(timer)
     }
     return undefined
-  }, [search, visible.length])
+  }, [search, visible.length, userLocation.isActive])
 
   return (
     <MobileShell>
       <MobileHeader title={t('mobile.search')} subtitle={t('mobile.findNextHome')} />
-      <MobileSearchBar value={search} onChange={setSearch} placeholder={t('mobile.searchListings')} />
+      <MobileExploreSearchRow
+        value={search}
+        onChange={setSearch}
+        placeholder={t('mobile.searchListings')}
+        onFiltersClick={() => setFiltersOpen(true)}
+      />
+      <MobileLocationBar
+        location={userLocation}
+        onRequest={userLocation.request}
+        onClear={userLocation.clear}
+        onRefresh={userLocation.request}
+      />
       <MobileTransactionTabs active={txTab} onChange={setTxTab} />
       <MobilePropertyTypeRow active={propType} onChange={setPropType} />
 
@@ -202,7 +241,10 @@ export function MobileExplorePage() {
             <MobileEmpty title={t('home.noMatches')} description={t('home.tryAdjusting')} />
           </div>
         ) : (
-          <MobileExploreMap listings={visible} />
+          <MobileExploreMap
+            listings={visible}
+            userLocation={userLocation.isActive ? userLocation : null}
+          />
         )
       ) : visible.length === 0 ? (
         <div className="px-4 pb-4">
@@ -215,6 +257,13 @@ export function MobileExplorePage() {
           ))}
         </div>
       )}
+
+      <MobileExploreFiltersSheet
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        filters={filters}
+        onChange={setFilters}
+      />
     </MobileShell>
   )
 }

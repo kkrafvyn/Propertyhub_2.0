@@ -94,10 +94,15 @@ function ListingMeta({ listing, t, className = 'mt-0.5 truncate text-sm text-ink
   const hasRating = listing.rating > 0
   const hasBedrooms = listing.bedrooms > 0
   const hasType = Boolean(listing.type)
-  if (!hasRating && !hasBedrooms && !hasType) return null
+  const hasDistance = listing.distanceKm != null
+  if (!hasRating && !hasBedrooms && !hasType && !hasDistance) return null
 
   return (
     <p className={`flex flex-wrap items-center gap-x-1.5 ${className}`}>
+      {hasDistance && (
+        <span className="font-semibold text-mobile-forest">{listing.distanceLabel}</span>
+      )}
+      {hasDistance && (hasRating || hasBedrooms || hasType) && <span className="text-ink-muted">·</span>}
       {hasRating && (
         <span className="inline-flex items-center gap-0.5">
           <IconStar className="h-3 w-3 shrink-0 text-amber-500" />

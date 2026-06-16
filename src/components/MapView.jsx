@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet'
 import L from 'leaflet'
 import { Link } from 'react-router-dom'
 import { useTranslation } from '../i18n/LocaleContext'
@@ -11,22 +11,43 @@ const pin = L.divIcon({
   iconAnchor: [14, 28],
 })
 
-export default function MapView({ listings, center = [5.6037, -0.187], zoom = 12 }) {
+const userDot = L.divIcon({
+  className: '',
+  html: `<div style="background:#2563eb;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px rgba(37,99,235,0.35);"></div>`,
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+})
+
+export default function MapView({ listings, center = [5.6037, -0.187], zoom = 12, userLocation = null }) {
   const { t } = useTranslation()
   const mappable = listings.filter((l) => l.lat && l.lng)
+  const mapCenter = userLocation?.lat != null ? [userLocation.lat, userLocation.lng] : center
 
   return (
     <div className="h-full min-h-[520px] overflow-hidden rounded-xl border border-surface-border">
-      <MapContainer center={center} zoom={zoom} className="h-full w-full" scrollWheelZoom>
+      <MapContainer center={mapCenter} zoom={zoom} className="h-full w-full" scrollWheelZoom>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        {userLocation?.lat != null && (
+          <>
+            <Marker position={[userLocation.lat, userLocation.lng]} icon={userDot} />
+            <Circle
+              center={[userLocation.lat, userLocation.lng]}
+              radius={Math.min(userLocation.accuracy ?? 120, 400)}
+              pathOptions={{ color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.12, weight: 1 }}
+            />
+          </>
+        )}
         {mappable.map((listing) => (
           <Marker key={listing.id} position={[listing.lat, listing.lng]} icon={pin}>
             <Popup>
               <div className="min-w-[160px]">
                 <p className="font-semibold text-ink">{listing.title}</p>
+                {listing.distanceLabel && (
+                  <p className="text-xs font-semibold text-mobile-forest">{listing.distanceLabel} away</p>
+                )}
                 <p className="text-sm text-ink-secondary">{listing.priceLabel}</p>
                 <Link to={`/property/${listing.id}`} className="mt-2 inline-block text-sm font-semibold text-ink underline">
                   {t('listing.viewProperty')}

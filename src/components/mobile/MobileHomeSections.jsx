@@ -1,26 +1,41 @@
 import { Link } from 'react-router-dom'
-import NotificationBell from '../NotificationBell'
 import Logo from '../Logo'
-import { IconHeart, IconHome, IconChevronRight, propertyTypeIcons } from '../icons'
+import NotificationBell from '../NotificationBell'
+import { IconHome, IconChevronRight, IconMenu, propertyTypeIcons } from '../icons'
 import { useTranslation } from '../../i18n/LocaleContext'
 
-export function MobileReferenceHeader() {
+export function MobileReferenceHeader({ onMenuClick, menuEnabled = false }) {
   const { t } = useTranslation()
 
   return (
-    <header className="sticky top-0 z-40 flex min-w-0 items-center justify-between bg-surface px-3 pb-3 pt-2 sm:px-4 sm:pt-4">
-      <Logo to="/" size="sm" className="min-w-0 shrink" />
-      <div className="flex shrink-0 items-center gap-1">
-        <Link
-          to="/saved"
-          className="flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-surface-subtle"
-          aria-label={t('mobile.saved')}
-        >
-          <IconHeart className="h-5 w-5" />
-        </Link>
-        <div className="relative">
-          <NotificationBell />
-        </div>
+    <header className="sticky top-0 z-40 grid min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-2 bg-surface px-3 pb-3 pt-2 sm:px-4 sm:pt-4">
+      <div aria-hidden />
+      <Logo to="/" size="sm" className="min-w-0 justify-center" />
+      <div className="flex items-center justify-end">
+        {menuEnabled ? (
+          <>
+            <NotificationBell />
+            <button
+              type="button"
+              onClick={onMenuClick}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface-subtle"
+              aria-label={t('mobile.menu')}
+            >
+              <IconMenu className="h-5 w-5" />
+            </button>
+          </>
+        ) : (
+          <Link
+            to="/profile"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-subtle text-ink"
+            aria-label={t('mobile.profile')}
+          >
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+            </svg>
+          </Link>
+        )}
       </div>
     </header>
   )

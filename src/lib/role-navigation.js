@@ -50,12 +50,12 @@ export const ROLE_PROFILE_CONFIG = {
   [USER_ROLES.CONSUMER]: {
     workspaces: ['wallet', 'investment', 'tenant', 'resident'],
     tools: CONSUMER_TOOLS,
-    hosting: true,
+    hosting: false,
   },
   [USER_ROLES.BUYER]: {
     workspaces: ['wallet', 'investment'],
     tools: CONSUMER_TOOLS,
-    hosting: true,
+    hosting: false,
   },
   [USER_ROLES.RENTER]: {
     workspaces: ['tenant', 'resident', 'wallet'],
@@ -120,8 +120,8 @@ export const ROLE_PROFILE_CONFIG = {
 }
 
 export const ROLE_MENU_CONFIG = {
-  [USER_ROLES.CONSUMER]: ['saved', 'trips', 'wallet', 'host'],
-  [USER_ROLES.BUYER]: ['saved', 'trips', 'wallet', 'host'],
+  [USER_ROLES.CONSUMER]: ['saved', 'trips', 'wallet'],
+  [USER_ROLES.BUYER]: ['saved', 'trips', 'wallet'],
   [USER_ROLES.RENTER]: ['tenant', 'trips', 'resident', 'documents'],
   [USER_ROLES.INVESTOR]: ['investment', 'saved', 'compare'],
   [USER_ROLES.INDEPENDENT_AGENT]: ['agent', 'trips', 'wallet', 'documents'],

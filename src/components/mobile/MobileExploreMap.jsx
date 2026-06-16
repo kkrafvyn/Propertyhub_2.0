@@ -3,7 +3,7 @@ import { useTranslation } from '../../i18n/LocaleContext'
 
 const MapView = lazy(() => import('../MapView'))
 
-export default function MobileExploreMap({ listings }) {
+export default function MobileExploreMap({ listings, userLocation }) {
   const { t } = useTranslation()
 
   return (
@@ -16,7 +16,7 @@ export default function MobileExploreMap({ listings }) {
         }
       >
         <div className="h-[min(55vh,420px)] [&_.leaflet-container]:min-h-[min(55vh,420px)]">
-          <MapView listings={listings} zoom={11} />
+          <MapView listings={listings} zoom={userLocation?.lat != null ? 13 : 11} userLocation={userLocation} />
         </div>
       </Suspense>
     </div>
