@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import Logo from '../Logo'
 import NotificationBell from '../NotificationBell'
-import { IconHome, IconChevronRight, IconMenu, propertyTypeIcons } from '../icons'
+import { IconChevronRight, IconHeart, IconHome, IconMenu, propertyTypeIcons } from '../icons'
 import { useTranslation } from '../../i18n/LocaleContext'
 
 export function MobileReferenceHeader({ onMenuClick, menuEnabled = false }) {
@@ -248,7 +248,7 @@ export function MobileAreaCard({ area, count, to }) {
 }
 
 export function filterHomeListings(listings, txTab, propType) {
-  return listings.filter((l) => {
+  return (listings ?? []).filter((l) => {
     const matchTx =
       txTab === 'buy' ? l.listingType === 'sale'
       : txTab === 'rent' ? l.listingType === 'rent'

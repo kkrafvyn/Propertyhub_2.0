@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from 'react'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, useLocation } from 'react-router-dom'
 import RouteErrorBoundary from './components/RouteErrorBoundary'
 import { AuthProvider } from './context/AuthContext'
 import { CurrencyProvider } from './context/CurrencyContext'
@@ -34,6 +34,20 @@ function ResponsiveRoutes() {
   )
 }
 
+function AppRoutes() {
+  const location = useLocation()
+
+  return (
+    <LegacyMobileRedirect>
+      <MarketBootstrap>
+        <RouteErrorBoundary resetKey={location.pathname}>
+          <ResponsiveRoutes />
+        </RouteErrorBoundary>
+      </MarketBootstrap>
+    </LegacyMobileRedirect>
+  )
+}
+
 export default function App() {
   const launchSplash = shouldShowLaunchSplash()
   const [splashDone, setSplashDone] = useState(() => {
@@ -58,15 +72,7 @@ export default function App() {
                   onComplete={() => setSplashDone(true)}
                 />
               )}
-              {splashDone && (
-                <LegacyMobileRedirect>
-                  <MarketBootstrap>
-                    <RouteErrorBoundary>
-                      <ResponsiveRoutes />
-                    </RouteErrorBoundary>
-                  </MarketBootstrap>
-                </LegacyMobileRedirect>
-              )}
+              {splashDone && <AppRoutes />}
             </BrowserRouter>
           </AuthProvider>
         </CurrencyProvider>

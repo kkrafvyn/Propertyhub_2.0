@@ -30,6 +30,7 @@ function normalizeListing(raw) {
     amenities: raw.amenities || [],
     lat: raw.lat ?? raw.latitude,
     lng: raw.lng ?? raw.longitude,
+    instantBook: Boolean(raw.instant_book || raw.instantBook),
     source: raw.source || 'supabase',
   }
 }
@@ -57,7 +58,7 @@ export async function fetchListings(filters = {}) {
     /* edge unavailable — use demo data */
   }
 
-  return { listings: fallbackListings, source: 'local' }
+  return { listings: fallbackListings ?? [], source: 'local' }
 }
 
 export async function fetchListingById(id) {

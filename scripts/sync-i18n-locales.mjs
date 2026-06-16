@@ -1,16 +1,12 @@
 /**
- * Deep-merge missing keys from en.js into ar/fr/es/pt (preserves existing translations).
- * Writes valid JS using JSON.stringify (handles apostrophes safely).
- * Run: node scripts/sync-i18n-locales.mjs
+ * Deep-merge missing keys from en.js into full JSON locale catalogs.
+ * Skips mergeLocale-style partial locales (de.js, ja.js, …).
+ * Run: npm run i18n:sync
  */
-import { writeFileSync } from 'fs'
+import { readFileSync, readdirSync, writeFileSync } from 'fs'
 import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
 import en from '../src/i18n/locales/en.js'
-import ar from '../src/i18n/locales/ar.js'
-import fr from '../src/i18n/locales/fr.js'
-import es from '../src/i18n/locales/es.js'
-import pt from '../src/i18n/locales/pt.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const localesDir = join(root, 'src', 'i18n', 'locales')
@@ -27,16 +23,21 @@ function deepMerge(base, patch) {
   return out
 }
 
-const targets = [
-  { file: 'ar.js', data: ar, localeName: ar.localeName },
-  { file: 'fr.js', data: fr, localeName: fr.localeName },
-  { file: 'es.js', data: es, localeName: es.localeName },
-  { file: 'pt.js', data: pt, localeName: pt.localeName },
-]
+const skip = new Set(['en.js', '_chrome.js'])
+const files = readdirSync(localesDir).filter((f) => f.endsWith('.js') && !skip.has(f))
 
-for (const { file, data, localeName } of targets) {
+for (const file of files) {
+  const path = join(localesDir, file)
+  const src = readFileSync(path, 'utf8')
+  if (src.includes('mergeLocale') || src.includes('createPartialLocale')) {
+    console.log('Skip partial', file)
+    continue
+  }
+
+  const mod = await import(pathToFileURL(path).href)
+  const data = mod.default
   const merged = deepMerge(data, en)
-  merged.localeName = localeName
-  writeFileSync(join(localesDir, file), `export default ${JSON.stringify(merged, null, 2)}\n`)
+  if (data.localeName) merged.localeName = data.localeName
+  writeFileSync(path, `export default ${JSON.stringify(merged, null, 2)}\n`)
   console.log('Synced', file)
 }

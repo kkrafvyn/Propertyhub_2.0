@@ -19,7 +19,9 @@ export default {
     "addBudget": "Ajouter un budget",
     "anywhere": "Partout",
     "search": "Rechercher",
-    "whereTo": "Où allez-vous ?"
+    "whereTo": "Où allez-vous ?",
+    "any": "Any",
+    "searchLocation": "Search location"
   },
   "categories": {
     "all": "Tous les biens",
@@ -112,7 +114,46 @@ export default {
       "weekendEscapes": "Weekend Escapes",
       "exploreStays": "Explore stays",
       "propertiesCount": "{{count}} properties"
-    }
+    },
+    "viewList": "List",
+    "viewMap": "Map",
+    "mapLoading": "Loading map…",
+    "useMyLocation": "Use my location",
+    "locatingYou": "Finding your location…",
+    "nearYou": "Near you",
+    "nearArea": "Near {{area}}",
+    "liveLocation": "Live location · updating as you move",
+    "sortingByDistance": "Sorted by distance",
+    "refreshLocation": "Refresh",
+    "locationDenied": "Location access is off. Enable it in your browser to see distances.",
+    "locationRetry": "Try again",
+    "menu": "Menu",
+    "menuShortcuts": "Shortcuts",
+    "menuWorkspace": "Your workspace",
+    "menuMyDeals": "My deals",
+    "menuActiveOffers": "Active offers",
+    "menuClosingPipeline": "Closing pipeline",
+    "listingAgent": "Listing agent",
+    "verifiedAgent": "Verified agent",
+    "messageAgent": "Message",
+    "similarListings": "Similar listings",
+    "viewingDate": "Preferred date",
+    "viewingSlot": "Time slot",
+    "viewingAnyTime": "Any available time",
+    "viewingGuests": "Guests",
+    "viewingNotes": "Notes (optional)",
+    "viewingNotesPlaceholder": "Parking, accessibility, or timing preferences",
+    "viewingSending": "Sending request…",
+    "viewingSignIn": "Sign in to book a viewing and receive confirmations.",
+    "viewingBooked": "Viewing request sent — check Trips and your inbox for updates.",
+    "viewingError": "Could not send viewing request. Try again.",
+    "tripsCancel": "Cancel viewing",
+    "tripsCancelling": "Cancelling…",
+    "viewingConfirm": "Confirm",
+    "agentViewings": "Pending viewings",
+    "neighborhoodListings": "Homes in this area",
+    "hostSubtitle": "Submit for moderation review",
+    "hostModerationNote": "Listings are reviewed before going live with a verified badge."
   },
   "auth": {
     "welcome": "Bienvenue sur BaytMiftah",
@@ -142,7 +183,8 @@ export default {
     "resetSent": "Consultez votre e-mail pour le lien de réinitialisation.",
     "sendResetLink": "Envoyer le lien",
     "sending": "Envoi…",
-    "passwordMin": "Au moins 8 caractères"
+    "passwordMin": "Au moins 8 caractères",
+    "loginSubtitle": "One sign-in for every role — we take you to your workspace."
   },
   "roles": {
     "buyer": "Acheteur",
@@ -153,7 +195,12 @@ export default {
     "property_owner": "Propriétaire",
     "property_manager": "Gestionnaire",
     "developer": "Promoteur",
-    "enterprise_operator": "Opérateur entreprise"
+    "enterprise_operator": "Opérateur entreprise",
+    "consumer": "Consumer (buy, rent, stay, invest)",
+    "agency_manager": "Agency manager",
+    "agency_agent": "Agency agent",
+    "platform_admin": "Platform admin",
+    "platform_moderator": "Platform moderator"
   },
   "menu": {
     "messages": "Messages",
@@ -201,11 +248,27 @@ export default {
     "member": "Membre BaytMiftah",
     "language": "Langue",
     "languageDesc": "Choisissez votre langue préférée.",
-    "logOut": "Se déconnecter"
+    "logOut": "Se déconnecter",
+    "settings": "Settings",
+    "settingsDesc": "Language, currency, appearance, and notifications.",
+    "currency": "Currency",
+    "currencyDesc": "Choose how prices are shown across the app.",
+    "theme": "Appearance",
+    "themeDesc": "Light or dark mode.",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "notifications": "Notifications",
+    "pushDesc": "Get alerts for viewings, messages, and rent reminders.",
+    "pushEnabled": "Notifications are enabled on this device.",
+    "legal": "Legal & support",
+    "helpCentre": "Help centre"
   },
   "language": {
     "title": "Langue et région",
-    "choose": "Choisir une langue"
+    "choose": "Choisir une langue",
+    "groupGlobal": "Global",
+    "groupAfrica": "Africa",
+    "groupAsia": "Asia & Pacific"
   },
   "common": {
     "loading": "Chargement…",
@@ -504,7 +567,11 @@ export default {
       "revenueForecast": "Revenue forecast",
       "devices": "Devices",
       "automations": "Automations",
-      "alertsLogs": "Alerts & logs"
+      "alertsLogs": "Alerts & logs",
+      "userManagement": "User management",
+      "utilities": "Utilities",
+      "credit": "Housing credit",
+      "organizations": "Organizations"
     }
   },
   "hubs": {
@@ -545,6 +612,10 @@ export default {
       "valuationApi": {
         "subtitle": "Data product for institutional integrations",
         "title": "Valuation API"
+      },
+      "users": {
+        "subtitle": "Promote users to new roles across the platform",
+        "title": "User management"
       }
     },
     "agency": {
@@ -817,7 +888,19 @@ export default {
     "transactionCenter": "Transaction center",
     "aiAdvisor": "AI buyer advisor",
     "savedHomes": "Saved homes",
-    "documentVault": "Document vault"
+    "documentVault": "Document vault",
+    "yourWorkspace": "Your workspace",
+    "consumerWorkspace": "My BaytMiftah",
+    "hostWorkspace": "Host workspace",
+    "hostDashboard": "Host dashboard",
+    "reservations": "Reservations",
+    "calendar": "Calendar",
+    "hostPayouts": "Host payouts",
+    "wallet": "Wallet",
+    "investmentCenter": "Investment center",
+    "tenantPortal": "Tenant portal",
+    "smartResident": "Smart resident",
+    "kycVerification": "Identity verification"
   },
   "share": {
     "whatsapp": "Share on WhatsApp",
@@ -832,7 +915,8 @@ export default {
     "placeholder": "Share your experience…",
     "submit": "Submit review",
     "thanks": "Thank you for your review!",
-    "signIn": "Sign in to leave a review."
+    "signIn": "Sign in to leave a review.",
+    "eligibilityRequired": "Complete a confirmed viewing or stay before leaving a review."
   },
   "similar": {
     "title": "Similar homes",
@@ -895,7 +979,9 @@ export default {
       "commission": "Commission",
       "status": "Statut",
       "run": "Lancer la paie",
-      "exportCsv": "Exporter CSV"
+      "exportCsv": "Exporter CSV",
+      "running": "Running…",
+      "exportGhanaBank": "Export Ghana bank file"
     },
     "units": {
       "inventoryTitle": "Inventaire des unités",
@@ -928,7 +1014,10 @@ export default {
     "ussd": {
       "payViaUssd": "Payer via USSD",
       "title": "Mobile money (USSD)",
-      "instructions": "Composez ce code sur votre téléphone pour payer via MTN/Vodafone."
+      "instructions": "Composez ce code sur votre téléphone pour payer via MTN/Vodafone.",
+      "mtn": "MTN MoMo",
+      "telecel": "Telecel Cash",
+      "paystackHint": "Paystack will confirm MoMo payment automatically when configured."
     },
     "docusign": {
       "signViaDocusign": "Signer avec DocuSign",
@@ -943,7 +1032,11 @@ export default {
       "resolve": "Résoudre",
       "runScan": "Run ML fraud scan",
       "scanning": "Scanning…",
-      "scanResult": "Scanned {{scanned}} listings · {{created}} new alerts"
+      "scanResult": "Scanned {{scanned}} listings · {{created}} new alerts",
+      "investigate": "Investigate",
+      "block": "Block target",
+      "escalate": "Escalate",
+      "mlNote": "ML score combines rule hits with optional OpenAI review in the trust edge."
     },
     "push": {
       "title": "Activer les notifications",
@@ -992,5 +1085,84 @@ export default {
       "lawTitle": "Governing law",
       "lawBody": "These terms are governed by the laws of Ghana. Disputes shall be resolved in Accra courts unless mandatory consumer law provides otherwise."
     }
+  },
+  "consumer": {
+    "dashboard": {
+      "title": "My BaytMiftah",
+      "subtitle": "Buy, rent, stay, and invest — one account that grows with you",
+      "myActivity": "My activity",
+      "aiAssistant": "AI assistant",
+      "quickActions": "Quick actions"
+    },
+    "activity": {
+      "search": "Search properties",
+      "saved": "Saved properties",
+      "messages": "Messages",
+      "trips": "Trips & bookings",
+      "offers": "My offers",
+      "transactions": "My transactions",
+      "wallet": "Wallet",
+      "maintenance": "Maintenance",
+      "billing": "Billing & plans",
+      "recentSearches": "Recent searches",
+      "recentlyViewed": "Recently viewed"
+    },
+    "ai": {
+      "recommendations": "Property recommendations",
+      "marketInsights": "Market insights",
+      "affordability": "Affordability analysis"
+    },
+    "actions": {
+      "buy": "Buy property",
+      "rent": "Rent property",
+      "bookStay": "Book short stay",
+      "makeOffer": "Make offer",
+      "scheduleViewing": "Schedule viewing"
+    },
+    "context": {
+      "leases": "Leases",
+      "payments": "Payments",
+      "maintenance": "Maintenance",
+      "trips": "Trips",
+      "reservations": "Reservations",
+      "offers": "Offers",
+      "transactions": "Transactions",
+      "myHome": "My home"
+    },
+    "access": {
+      "proOnly": "This workspace is for real estate professionals. Use your consumer home for property search, bookings, and rentals."
+    }
+  },
+  "kycPage": {
+    "title": "Identity verification",
+    "subtitle": "Upload government ID and proof of address to submit property offers.",
+    "legalName": "Legal name",
+    "legalNamePlaceholder": "As shown on your ID",
+    "accountType": "Account type",
+    "uploadDocuments": "Identity documents",
+    "uploadHint": "Upload a government ID and proof of address (PDF or image, max 20 MB each).",
+    "submit": "Submit for review",
+    "submitting": "Submitting…",
+    "submitFailed": "Could not submit verification. Try again.",
+    "nameRequired": "Enter your legal name.",
+    "documentsRequired": "Upload at least one document.",
+    "verifiedTitle": "Identity verified",
+    "verifiedBody": "Your account is verified. You can submit offers and access financing.",
+    "pendingTitle": "Verification pending",
+    "pendingBody": "Our team is reviewing your documents. This usually takes 1–2 business days.",
+    "requiredTitle": "Verification required",
+    "requiredBody": "Complete identity verification before submitting property offers.",
+    "startVerification": "Start verification",
+    "backToProfile": "Back to profile",
+    "documents": "documents"
+  },
+  "adminUsers": {
+    "currentRole": "Current role",
+    "newRole": "New role",
+    "promote": "Update role",
+    "promoted": "Updated role for {{email}}.",
+    "promoteFailed": "Could not update user role.",
+    "saving": "Saving…",
+    "you": "you"
   }
 }

@@ -15,8 +15,15 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) {
+            if (id.includes('/pages/mobile/MobileHomePage')) return 'mobile-home'
+            if (id.includes('/pages/mobile/MobileExplorePage')) return 'mobile-explore'
+            if (id.includes('/pages/mobile/MobileSavedPage')) return 'mobile-saved'
             if (id.includes('/pages/mobile/')) return 'mobile-pages'
             if (id.includes('/routes/MobileRoutes')) return 'mobile-routes'
+            if (id.includes('/i18n/locales/') && !id.includes('/locales/en/')) {
+              const match = id.match(/locales[/\\]([\w-]+)\.js/)
+              if (match && match[1] !== '_chrome') return `locale-${match[1]}`
+            }
             return undefined
           }
           if (id.includes('leaflet') || id.includes('react-leaflet')) return 'map-vendor'

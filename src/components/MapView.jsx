@@ -28,7 +28,7 @@ export default function MapView({ listings, center = [5.6037, -0.187], zoom = 12
     return () => setReady(false)
   }, [])
 
-  const mappable = listings.filter((l) => l.lat && l.lng)
+  const mappable = (listings ?? []).filter((l) => l.lat != null && l.lng != null)
   const mapCenter = userLocation?.lat != null ? [Number(userLocation.lat), Number(userLocation.lng)] : center
   const mapKey = `${Number(mapCenter[0]).toFixed(4)}-${Number(mapCenter[1]).toFixed(4)}-${zoom}`
 

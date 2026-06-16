@@ -4,7 +4,9 @@ import RoleProtectedRoute from '../components/RoleProtectedRoute'
 import ProtectedRoute from '../components/ProtectedRoute'
 import ConsumerGuard from '../components/ConsumerGuard'
 import RouteErrorBoundary from '../components/RouteErrorBoundary'
-import MobileHomePage, { MobileExplorePage, MobileSavedPage } from '../pages/mobile/MobilePages'
+import MobileHomePage from '../pages/mobile/MobileHomePage'
+import MobileExplorePage from '../pages/mobile/MobileExplorePage'
+import MobileSavedPage from '../pages/mobile/MobileSavedPage'
 import {
   MobileMessagesPage,
   MobileProfilePage,

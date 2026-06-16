@@ -11,7 +11,7 @@ function readCached() {
     const raw = sessionStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
-    if (!parsed?.lat || !parsed?.lng || Date.now() - parsed.at > MAX_AGE_MS) return null
+    if (parsed?.lat == null || parsed?.lng == null || Date.now() - parsed.at > MAX_AGE_MS) return null
     return parsed
   } catch {
     return null
