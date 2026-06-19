@@ -9,6 +9,8 @@ import {
 } from '../lib/supabase-db'
 import { supabase } from '../lib/supabase'
 import { addTrip, getTrips, updateTripStatus } from '../lib/trips-storage'
+import { sendSms } from './comms-service'
+import { openListingConversation } from './messaging-service'
 
 async function notifyViewingStatus({ userId, listingTitle, date, status }) {
   try {
@@ -25,17 +27,47 @@ async function notifyViewingStatus({ userId, listingTitle, date, status }) {
       body: `${listingTitle || 'Property'} · ${date}`,
       link: '/trips',
     })
-    const { sendSms } = await import('./comms-service')
-    if (userId && supabase) {
-      const { data } = await supabase.from('user_profiles').select('email').eq('id', userId).maybeSingle()
-      /* SMS requires phone on profile — optional */
-    }
   } catch {
     /* optional */
   }
 }
 
-export async function requestViewing({ listingId, date, guests = 1, notes = '', slotId = null, listingTitle = '', hostName = '' }) {
+export async function fetchListingSlotsForManage(listingId) {
+  try {
+    const payload = await callEdgeFunction('bookings', {
+      allowAnonymous: false,
+      query: { action: 'listing_slots', listing_id: listingId },
+    })
+    if (payload?.slots) return { slots: payload.slots, source: 'supabase' }
+  } catch { /* */ }
+  return { slots: [], source: 'local' }
+}
+
+export async function createViewingSlot({ listingId, slotDate, slotTime, slotType = 'viewing', capacity, notes }) {
+  return callEdgeFunction('bookings', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: {
+      action: 'create_slot',
+      listing_id: listingId,
+      slot_date: slotDate,
+      slot_time: slotTime,
+      slot_type: slotType,
+      capacity,
+      notes,
+    },
+  })
+}
+
+export async function deleteViewingSlot(slotId) {
+  return callEdgeFunction('bookings', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'delete_slot', slot_id: slotId },
+  })
+}
+
+export async function requestViewing({ listingId, date, guests = 1, notes = '', slotId = null, preferredTime = null, listingTitle = '', hostName = '' }) {
   try {
     const result = await callEdgeFunction('bookings', {
       method: 'POST',
@@ -47,6 +79,7 @@ export async function requestViewing({ listingId, date, guests = 1, notes = '', 
         guests,
         notes,
         slot_id: slotId,
+        preferred_time: preferredTime,
       },
     })
     if (result?.ok !== false) {
@@ -70,7 +103,6 @@ export async function requestViewing({ listingId, date, guests = 1, notes = '', 
         })
         if (row) {
           try {
-            const { openListingConversation } = await import('./messaging-service')
             await openListingConversation({
               listingId,
               listingTitle: listingTitle || listingId,
@@ -92,7 +124,6 @@ export async function requestViewing({ listingId, date, guests = 1, notes = '', 
             if (user.email) {
               await sendViewingConfirmation({ to: user.email, listingTitle: listingTitle || listingId, date })
             }
-            const { sendSms } = await import('./comms-service')
             const phone = user.user_metadata?.phone || user.phone
             if (phone) {
               await sendSms({
@@ -210,4 +241,7 @@ export default {
   confirmViewing,
   updateViewingStatus,
   fetchAgentViewings,
+  fetchListingSlotsForManage,
+  createViewingSlot,
+  deleteViewingSlot,
 }

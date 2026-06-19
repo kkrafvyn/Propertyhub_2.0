@@ -18,20 +18,36 @@ export default function MobileViewingModal({ listing, onClose, onBooked }) {
 
   useEffect(() => {
     if (!listing?.id) return
-    getAvailability(listing.id).then(({ slots: rows }) => setSlots(rows || []))
+    getAvailability(listing.id).then(({ slots: rows }) => {
+      const available = rows || []
+      setSlots(available)
+      if (available.length) {
+        setSlotId(available[0].id)
+        setDate(available[0].date)
+      }
+    })
   }, [listing?.id])
+
+  const hasSlots = slots.length > 0
+  const selectedSlot = slots.find((s) => s.id === slotId)
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!date) return
+    if (hasSlots && !slotId) {
+      setMessage(t('property.pickDate'))
+      return
+    }
+    if (!hasSlots && !date) return
+
     setLoading(true)
     setMessage('')
     const result = await requestViewing({
       listingId: listing.id,
-      date,
+      date: selectedSlot?.date || date,
       guests,
       notes,
       slotId: slotId || null,
+      preferredTime: selectedSlot?.time ?? null,
       listingTitle: listing.title,
       hostName: listing.host,
     })
@@ -67,34 +83,43 @@ export default function MobileViewingModal({ listing, onClose, onBooked }) {
         <h3 className="text-lg font-bold text-ink">{t('listing.requestViewing')}</h3>
         <p className="mt-1 truncate text-sm text-ink-secondary">{listing.title}</p>
 
-        <label className="mt-4 block text-sm font-semibold text-ink">
-          {t('mobile.viewingDate')}
-          <input
-            required
-            type="date"
-            value={date}
-            min={new Date().toISOString().slice(0, 10)}
-            onChange={(e) => setDate(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-surface-border px-3 py-2.5 text-sm"
-          />
-        </label>
-
-        {slots.length > 0 && (
-          <label className="mt-3 block text-sm font-semibold text-ink">
-            {t('mobile.viewingSlot')}
+        {hasSlots ? (
+          <label className="mt-4 block text-sm font-semibold text-ink">
+            {t('property.selectSlot')}
             <select
+              required
               value={slotId}
-              onChange={(e) => setSlotId(e.target.value)}
+              onChange={(e) => {
+                const next = slots.find((s) => s.id === e.target.value)
+                setSlotId(e.target.value)
+                if (next) setDate(next.date)
+              }}
               className="mt-1 w-full rounded-xl border border-surface-border px-3 py-2.5 text-sm"
             >
-              <option value="">{t('mobile.viewingAnyTime')}</option>
               {slots.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.date} {s.time || s.label || ''}
+                  {s.slot_type === 'open_house'
+                    ? t('property.openHouseSlot', { date: s.date, time: s.time, count: s.available })
+                    : t('property.viewingSlot', { date: s.date, time: s.time, count: s.available })}
                 </option>
               ))}
             </select>
           </label>
+        ) : (
+          <>
+            <p className="mt-3 text-sm text-ink-secondary">{t('property.noSlotsYet')}</p>
+            <label className="mt-4 block text-sm font-semibold text-ink">
+              {t('mobile.viewingDate')}
+              <input
+                required
+                type="date"
+                value={date}
+                min={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => setDate(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-surface-border px-3 py-2.5 text-sm"
+              />
+            </label>
+          </>
         )}
 
         <label className="mt-3 block text-sm font-semibold text-ink">
@@ -122,7 +147,7 @@ export default function MobileViewingModal({ listing, onClose, onBooked }) {
 
         {message && <p className="mt-3 text-sm text-red-600">{message}</p>}
 
-        <MobilePrimaryButton type="submit" disabled={loading} className="mt-4 w-full">
+        <MobilePrimaryButton type="submit" disabled={loading || (hasSlots && !slotId)} className="mt-4 w-full">
           {loading ? t('mobile.viewingSending') : t('listing.requestViewing')}
         </MobilePrimaryButton>
         <button type="button" onClick={onClose} className="mt-3 w-full py-2 text-sm font-semibold text-ink-secondary">

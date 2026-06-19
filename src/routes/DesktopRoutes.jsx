@@ -168,9 +168,10 @@ const AgencyProfilePage = lazy(() =>
 const AgentsIndexPage = lazy(() =>
   import('../pages/marketplace/MarketplaceDiscoveryPages').then((m) => ({ default: m.AgentsIndexPage })),
 )
-const AgentProfilePage = lazy(() =>
-  import('../pages/marketplace/MarketplaceDiscoveryPages').then((m) => ({ default: m.AgentProfilePage })),
+const ServiceDispatchPage = lazy(() =>
+  import('../pages/marketplace/ServiceFulfillmentPages').then((m) => ({ default: m.ServiceDispatchPageExport })),
 )
+const ListingViewingSchedulePage = lazy(() => import('../pages/viewings/ListingViewingSchedulePage'))
 
 function RouteFallback() {
   return (
@@ -219,6 +220,7 @@ export default function DesktopRoutes() {
       <Route path="/" element={<HomePage />} />
       <Route path="/explore" element={<HomePage />} />
       <Route path="/property/:id" element={<ListingDetailPage />} />
+      <Route path="/listings/:listingId/schedule" element={<ListingViewingSchedulePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/signup" element={<SignUpPage />} />
@@ -273,6 +275,7 @@ export default function DesktopRoutes() {
       <Route path="/neighborhoods" element={<NeighborhoodsIndexPage />} />
       <Route path="/neighborhoods/:slug" element={<NeighborhoodDetailPage />} />
       <Route path="/services" element={<ServicesMarketplacePage />} />
+      <Route path="/services/requests" element={<MyServiceRequestsPage />} />
       <Route path="/agencies" element={<AgenciesIndexPage />} />
       <Route path="/agencies/:id" element={<AgencyProfilePage />} />
       <Route path="/agents" element={<AgentsIndexPage />} />
@@ -340,6 +343,7 @@ export default function DesktopRoutes() {
       <Route path="/admin/valuation-api" element={<AdminRoute><AdminValuationApiPage /></AdminRoute>} />
       <Route path="/admin/global" element={<AdminRoute><AdminGlobalPage /></AdminRoute>} />
       <Route path="/admin/integrations" element={<StaffRoute><AdminIntegrationsPage /></StaffRoute>} />
+      <Route path="/admin/service-requests" element={<StaffRoute><ServiceDispatchPage /></StaffRoute>} />
       <Route path="/admin/audit" element={<AdminRoute><AdminAuditPage /></AdminRoute>} />
       <Route path="/finance" element={<FinanceHubPage />} />
       <Route path="/finance/mortgages" element={<MortgageMarketplacePage />} />

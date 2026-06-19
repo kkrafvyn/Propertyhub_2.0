@@ -8,6 +8,8 @@ import {
   mapServiceRow,
   mapDirectoryRow,
 } from '../_shared/marketplace-services.ts'
+import { syncDirectoryProfiles } from '../_shared/directory-sync.ts'
+import { getProfileRole, isStaffRole } from '../_shared/roles.ts'
 
 const FALLBACK_LISTINGS = [
   {
@@ -125,11 +127,56 @@ Deno.serve(async (req) => {
         return jsonResponse({ ok: true, request: data, source: 'supabase' })
       }
 
+      const admin = createAdminClient()
+      const role = await getProfileRole(admin, user.id)
+
+      if (body.action === 'assign_service_request') {
+        if (!isStaffRole(role)) return errorResponse('Forbidden', 403)
+        const requestId = body.request_id
+        const providerName = String(body.provider_name ?? '').trim()
+        if (!requestId || !providerName) return errorResponse('request_id and provider_name required', 400)
+        const { data, error } = await admin.from('service_requests').update({
+          status: 'assigned',
+          provider_name: providerName,
+          assigned_by: user.id,
+          assigned_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }).eq('id', requestId).select('*').single()
+        if (error) return errorResponse(error.message, 500)
+        return jsonResponse({ ok: true, request: data, source: 'supabase' })
+      }
+
+      if (body.action === 'update_service_request') {
+        const requestId = body.request_id
+        const status = body.status
+        if (!requestId || !status) return errorResponse('request_id and status required', 400)
+        if (isStaffRole(role)) {
+          const { data, error } = await admin.from('service_requests').update({
+            status,
+            updated_at: new Date().toISOString(),
+          }).eq('id', requestId).select('*').single()
+          if (error) return errorResponse(error.message, 500)
+          return jsonResponse({ ok: true, request: data, source: 'supabase' })
+        }
+        if (status !== 'cancelled') return errorResponse('Forbidden', 403)
+        const { data, error } = await admin.from('service_requests').update({
+          status: 'cancelled',
+          updated_at: new Date().toISOString(),
+        }).eq('id', requestId).eq('user_id', user.id).select('*').single()
+        if (error) return errorResponse(error.message, 500)
+        return jsonResponse({ ok: true, request: data, source: 'supabase' })
+      }
+
+      if (body.action === 'sync_directory') {
+        if (!isStaffRole(role)) return errorResponse('Forbidden', 403)
+        const result = await syncDirectoryProfiles(admin)
+        return jsonResponse({ ok: true, ...result, source: 'supabase' })
+      }
+
       if (body.action !== 'create') return errorResponse('Unsupported action', 404)
 
       const listing = body.listing
       const id = listing.id || `listing-${crypto.randomUUID().slice(0, 8)}`
-      const admin = createAdminClient()
       const { data, error } = await admin.from('listings').insert({
         id,
         title: listing.title,
@@ -206,6 +253,35 @@ Deno.serve(async (req) => {
       const { data } = await admin.from('marketplace_services').select('*').eq('active', true).order('category')
       const services = data?.length ? data.map(mapServiceRow) : FALLBACK_SERVICES
       return jsonResponse({ services, source: data?.length ? 'supabase' : 'fallback' })
+    }
+
+    if (action === 'my_service_requests') {
+      const user = await getUserFromRequest(req)
+      if (!user) return errorResponse('Authentication required', 401)
+      const admin = createAdminClient()
+      const { data } = await admin
+        .from('service_requests')
+        .select('*, marketplace_services(name, category, provider)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+      return jsonResponse({ requests: data ?? [], source: 'supabase' })
+    }
+
+    if (action === 'service_queue') {
+      const user = await getUserFromRequest(req)
+      if (!user) return errorResponse('Authentication required', 401)
+      const admin = createAdminClient()
+      const role = await getProfileRole(admin, user.id)
+      if (!isStaffRole(role)) return errorResponse('Forbidden', 403)
+      const { data } = await admin
+        .from('service_requests')
+        .select('*, marketplace_services(name, category, provider)')
+        .in('status', ['open', 'assigned'])
+        .order('created_at', { ascending: false })
+        .limit(50)
+      const { data: services } = await admin.from('marketplace_services').select('provider, category').eq('active', true)
+      const providers = [...new Set((services ?? []).map((s) => s.provider))]
+      return jsonResponse({ requests: data ?? [], providers, source: 'supabase' })
     }
 
     if (action === 'reviews') {

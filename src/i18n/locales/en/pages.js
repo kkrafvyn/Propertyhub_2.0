@@ -23,7 +23,8 @@ export default {
       "emptyDesc": "Submit your first property to reach buyers and renters.",
       "submitFirst": "Submit your first property",
       "viewLive": "View live",
-      "resubmit": "Resubmit"
+      "resubmit": "Resubmit",
+      "manageViewings": "Viewing schedule"
     },
     "listForm": {
       "steps": {

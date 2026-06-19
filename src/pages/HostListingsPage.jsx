@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import DesktopShell, { CompactSearch } from '../components/DesktopShell'
 import ProtectedRoute from '../components/ProtectedRoute'
+import ResponsivePageShell from '../components/ResponsivePageShell'
 import { Alert, Badge, EmptyPanel, ItemCard, PageTitle, PrimaryButton, SecondaryButton } from '../components/ui/AirbnbUI'
+import { useIsMobileViewport } from '../hooks/useMediaQuery'
 import { useTranslation } from '../i18n/LocaleContext'
 import { fetchMyListings } from '../services/listing-service'
 
@@ -14,6 +15,7 @@ const statusTone = {
 
 function HostListingsContent() {
   const { t } = useTranslation()
+  const mobile = useIsMobileViewport()
   const location = useLocation()
   const listed = location.state?.listed
   const [listings, setListings] = useState([])
@@ -39,17 +41,29 @@ function HostListingsContent() {
   }, [listings, load])
 
   return (
-    <DesktopShell search={<CompactSearch />}>
-      <PageTitle
-        title={t('host.listings.title')}
-        subtitle={t('host.listings.subtitle')}
-        action={
-          <div className="flex gap-2">
-            <SecondaryButton onClick={load}>{t('host.listings.refresh')}</SecondaryButton>
-            <PrimaryButton as={Link} to="/host/list">{t('host.listings.listNew')}</PrimaryButton>
-          </div>
-        }
-      />
+    <ResponsivePageShell
+      backTo="/host"
+      titleKey="host.listings.title"
+      subtitleKey="host.listings.subtitle"
+      hideNav
+    >
+      {mobile ? (
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+          <SecondaryButton onClick={load} className="w-full sm:w-auto">{t('host.listings.refresh')}</SecondaryButton>
+          <PrimaryButton as={Link} to="/host/list" className="w-full sm:w-auto">{t('host.listings.listNew')}</PrimaryButton>
+        </div>
+      ) : (
+        <PageTitle
+          title={t('host.listings.title')}
+          subtitle={t('host.listings.subtitle')}
+          action={
+            <div className="flex gap-2">
+              <SecondaryButton onClick={load}>{t('host.listings.refresh')}</SecondaryButton>
+              <PrimaryButton as={Link} to="/host/list">{t('host.listings.listNew')}</PrimaryButton>
+            </div>
+          }
+        />
+      )}
 
       {listed && (
         <Alert tone="success">{t('host.listings.submittedAlert')}</Alert>
@@ -84,10 +98,17 @@ function HostListingsContent() {
                   <p className="text-sm text-ink-secondary">{listing.location} · {listing.priceLabel || listing.price_label}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className={`flex gap-3 ${mobile ? 'mt-3 w-full flex-col' : 'items-center'}`}>
                 <Badge tone={statusTone[listing.status] || 'warning'}>
                   {(listing.status || 'pending_review').replace('_', ' ')}
                 </Badge>
+                <Link
+                  to={`/listings/${listing.id}/schedule`}
+                  state={{ backTo: '/host/listings' }}
+                  className="text-sm font-semibold text-brand-accent underline"
+                >
+                  {t('viewingSchedule.manageSchedule')}
+                </Link>
                 {listing.status === 'active' && (
                   <Link to={`/property/${listing.id}`} className="text-sm font-semibold text-ink underline">
                     {t('host.listings.viewLive')}
@@ -103,7 +124,7 @@ function HostListingsContent() {
           ))
         )}
       </section>
-    </DesktopShell>
+    </ResponsivePageShell>
   )
 }
 

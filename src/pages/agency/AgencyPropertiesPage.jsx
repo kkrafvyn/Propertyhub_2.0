@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AgencyShell from '../../components/AgencyShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchAgencyListings } from '../../services/agency-service'
 
 function Properties() {
+  const { t } = useTranslation()
   const [listings, setListings] = useState([])
 
   useEffect(() => {
@@ -22,6 +24,13 @@ function Properties() {
             </p>
             <Link to={`/property/${item.id}`} className="mt-4 inline-block text-sm font-semibold text-ink underline">
               View listing
+            </Link>
+            <Link
+              to={`/listings/${item.id}/schedule`}
+              state={{ backTo: '/agency/properties' }}
+              className="mt-2 block text-sm font-semibold text-brand-accent underline"
+            >
+              {t('viewingSchedule.manageSchedule')}
             </Link>
           </article>
         ))}

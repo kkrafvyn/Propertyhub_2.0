@@ -7,8 +7,24 @@ import {
   ensureCalendarForViewing,
   logUserActivity,
 } from '../_shared/agent-crm.ts'
+import { canManageListing } from '../_shared/listing-access.ts'
 
-const AGENT_ROLES = new Set(['agent', 'agency_owner', 'agency_manager', 'platform_admin'])
+const AGENT_ROLES = new Set(['agent', 'agency_owner', 'agency_manager', 'agency_agent', 'independent_agent', 'platform_admin'])
+
+function mapSlotRow(s: Record<string, unknown>) {
+  const capacity = Number(s.capacity ?? 1)
+  const booked = Number(s.booked ?? 0)
+  return {
+    id: s.id,
+    date: s.slot_date,
+    time: s.slot_time,
+    available: capacity - booked,
+    capacity,
+    booked,
+    slot_type: s.slot_type ?? 'viewing',
+    notes: s.notes ?? null,
+  }
+}
 
 async function isAgent(admin: ReturnType<typeof createAdminClient>, userId: string) {
   const { data } = await admin.from('user_profiles').select('role').eq('id', userId).maybeSingle()
@@ -36,14 +52,33 @@ Deno.serve(async (req) => {
         .order('slot_date')
         .order('slot_time')
 
-      const slots = (data ?? []).map((s) => ({
-        id: s.id,
-        date: s.slot_date,
-        time: s.slot_time,
-        available: s.capacity - s.booked,
-      }))
+      const slots = (data ?? [])
+        .map(mapSlotRow)
+        .filter((s) => s.available > 0)
 
       return jsonResponse({ listing_id: listingId, slots, source: 'supabase' })
+    }
+
+    if (req.method === 'GET' && action === 'listing_slots') {
+      const user = await getUserFromRequest(req)
+      if (!user) return errorResponse('Authentication required', 401)
+      const listingId = url.searchParams.get('listing_id')
+      if (!listingId) return errorResponse('Missing listing_id', 400)
+
+      const admin = createAdminClient()
+      if (!(await canManageListing(admin, user.id, listingId))) {
+        return errorResponse('Forbidden', 403)
+      }
+
+      const { data } = await admin
+        .from('viewing_slots')
+        .select('*')
+        .eq('listing_id', listingId)
+        .gte('slot_date', new Date().toISOString().slice(0, 10))
+        .order('slot_date')
+        .order('slot_time')
+
+      return jsonResponse({ slots: (data ?? []).map(mapSlotRow), source: 'supabase' })
     }
 
     if (req.method === 'GET' && action === 'list_viewings') {
@@ -93,14 +128,41 @@ Deno.serve(async (req) => {
 
       if (body.action === 'create_viewing') {
         const agentId = await resolveListingAgent(admin, body.listing_id)
+        let preferredDate = body.preferred_date ?? null
+        let preferredTime: string | null = body.preferred_time ?? null
+        let slotId: string | null = body.slot_id ?? null
+        let notes = body.notes ?? ''
+
+        if (slotId) {
+          const { data: slot } = await admin
+            .from('viewing_slots')
+            .select('*')
+            .eq('id', slotId)
+            .eq('listing_id', body.listing_id)
+            .maybeSingle()
+
+          if (!slot) return errorResponse('Slot not found', 404)
+          const available = Number(slot.capacity ?? 1) - Number(slot.booked ?? 0)
+          if (available <= 0) return errorResponse('Slot is full', 409)
+
+          preferredDate = slot.slot_date
+          preferredTime = slot.slot_time
+          const typeLabel = slot.slot_type === 'open_house' ? 'Open house' : 'Viewing'
+          notes = [notes, `${typeLabel}: ${slot.slot_date} ${slot.slot_time}`].filter(Boolean).join(' · ')
+
+          await admin.from('viewing_slots').update({ booked: Number(slot.booked ?? 0) + 1 }).eq('id', slotId)
+        }
+
         const { data, error } = await admin
           .from('viewing_requests')
           .insert({
             listing_id: body.listing_id,
             user_id: user.id,
-            preferred_date: body.preferred_date ?? null,
+            preferred_date: preferredDate,
+            preferred_time: preferredTime,
+            slot_id: slotId,
             guests: body.guests ?? 1,
-            notes: body.notes ?? '',
+            notes,
             status: 'pending',
             agent_id: agentId,
           })
@@ -132,6 +194,48 @@ Deno.serve(async (req) => {
         return jsonResponse({ ok: true, request: data })
       }
 
+      if (body.action === 'create_slot') {
+        const listingId = body.listing_id
+        if (!listingId || !body.slot_date || !body.slot_time) {
+          return errorResponse('listing_id, slot_date, and slot_time required', 400)
+        }
+        if (!(await canManageListing(admin, user.id, listingId))) {
+          return errorResponse('Forbidden', 403)
+        }
+
+        const slotType = body.slot_type === 'open_house' ? 'open_house' : 'viewing'
+        const id = `vs-${crypto.randomUUID().slice(0, 8)}`
+        const row = {
+          id,
+          listing_id: listingId,
+          slot_date: body.slot_date,
+          slot_time: body.slot_time,
+          capacity: Math.max(1, Number(body.capacity ?? (slotType === 'open_house' ? 20 : 2))),
+          booked: 0,
+          slot_type: slotType,
+          created_by: user.id,
+          notes: body.notes ?? null,
+        }
+        const { data, error } = await admin.from('viewing_slots').insert(row).select('*').single()
+        if (error) return errorResponse(error.message, 500)
+        return jsonResponse({ ok: true, slot: mapSlotRow(data), source: 'supabase' })
+      }
+
+      if (body.action === 'delete_slot') {
+        const slotId = body.slot_id
+        if (!slotId) return errorResponse('slot_id required', 400)
+        const { data: slot } = await admin.from('viewing_slots').select('listing_id, booked').eq('id', slotId).maybeSingle()
+        if (!slot) return errorResponse('Slot not found', 404)
+        if (!(await canManageListing(admin, user.id, slot.listing_id))) {
+          return errorResponse('Forbidden', 403)
+        }
+        if (Number(slot.booked ?? 0) > 0) {
+          return errorResponse('Cannot delete a slot with bookings', 409)
+        }
+        await admin.from('viewing_slots').delete().eq('id', slotId)
+        return jsonResponse({ ok: true })
+      }
+
       if (body.action === 'update_viewing_status') {
         const status = body.status as string
         if (!['confirmed', 'cancelled', 'completed'].includes(status)) {
@@ -150,6 +254,13 @@ Deno.serve(async (req) => {
         const agent = await isAgent(admin, user.id)
         if (!isOwner && !agent) return errorResponse('Forbidden', 403)
         if (isOwner && status === 'confirmed') return errorResponse('Only agents can confirm', 403)
+
+        if (status === 'cancelled' && existing.slot_id) {
+          const { data: slot } = await admin.from('viewing_slots').select('booked').eq('id', existing.slot_id).maybeSingle()
+          if (slot && Number(slot.booked ?? 0) > 0) {
+            await admin.from('viewing_slots').update({ booked: Number(slot.booked) - 1 }).eq('id', existing.slot_id)
+          }
+        }
 
         const { data, error } = await admin
           .from('viewing_requests')

@@ -72,11 +72,33 @@ Web push uses `VITE_FCM_VAPID_KEY`. For native push, add `@capacitor/push-notifi
 
 ## Store release checklist
 
-- [ ] Set `VITE_SUPABASE_*` and build with production env
-- [ ] App icons & splash — run `npm run cap:assets` (sources in `assets/`; splash uses **logo-inverted** style)
-- [ ] Signing keys (Android keystore, Apple developer account)
-- [ ] Privacy policy URL in store listings
-- [ ] Test login → role dashboard redirect on device
+### Android (Google Play)
+
+1. `cp .env.example .env` — production Supabase keys
+2. `npm run cap:sync`
+3. `npm run cap:assets` — icons/splash from `assets/`
+4. Android Studio → **Build → Generate Signed Bundle (AAB)**
+5. [Google Play Console](https://play.google.com/console) → Create app → Upload AAB
+6. Store listing: screenshots, privacy policy URL (`/privacy`), content rating questionnaire
+7. **Internal testing** track first → promote to production
+
+### iOS (App Store) — requires macOS
+
+1. Apple Developer account ($99/yr)
+2. `npm run cap:sync` on Mac
+3. `npm run cap:ios` → Xcode → set Team, bundle id `com.baytmiftah.app`
+4. **Product → Archive → Distribute to App Store Connect**
+5. App Store Connect → TestFlight → submit for review
+
+### Before store submission
+
+- [ ] Set `VITE_SUPABASE_*` and `VITE_SITE_URL` for production
+- [ ] Remove dev `server.url` from `capacitor.config.json`
+- [ ] Privacy policy live at `/privacy`
+- [ ] Test: login → role dashboard → `/services` → save listing
+- [ ] Run `npm run smoke:prod` against production URL
+
+See also: `docs/MONITORING.md`, `docs/EMAIL_SETUP.md`
 
 ## Live reload (dev)
 

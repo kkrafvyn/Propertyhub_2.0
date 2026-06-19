@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, useLocation } from 'react-router-dom'
 import RouteErrorBoundary from './components/RouteErrorBoundary'
 import { AuthProvider } from './context/AuthContext'
@@ -58,6 +58,12 @@ export default function App() {
       return false
     }
   })
+
+  useEffect(() => {
+    if (!launchSplash || splashDone) return undefined
+    const timer = window.setTimeout(() => setSplashDone(true), 6500)
+    return () => window.clearTimeout(timer)
+  }, [launchSplash, splashDone])
 
   return (
     <ThemeProvider>

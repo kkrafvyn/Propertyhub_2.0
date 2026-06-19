@@ -11,6 +11,7 @@ import {
   maintenanceRequests,
   leaseDocuments,
 } from '../data/renter'
+import { sendSms } from './comms-service'
 
 const MAINTENANCE_KEY = 'baytmiftah_maintenance'
 const AUTOPAY_KEY = 'baytmiftah_renter_autopay'
@@ -142,7 +143,6 @@ export async function triggerRentDueReminders(payments, userEmail) {
   let sent = 0
   const reminded = JSON.parse(localStorage.getItem(REMINDER_KEY) || '[]')
   const { sendPaymentDueReminder } = await import('./email-service')
-  const { sendSms } = await import('./comms-service')
 
   for (const p of payments.filter((x) => x.status === 'due')) {
     if (reminded.includes(p.id)) continue

@@ -82,6 +82,10 @@ function BookingCard({ listing }) {
     }
 
     const slot = slots.find((s) => s.id === selectedSlot)
+    if (slots.length > 0 && !slot) {
+      setMessage(t('property.pickDate'))
+      return
+    }
     const viewingDate = slot?.date || date
     if (!viewingDate) {
       setMessage(t('property.pickDate'))
@@ -97,7 +101,8 @@ function BookingCard({ listing }) {
         date: viewingDate,
         guests,
         slotId: slot?.id,
-        notes: slot?.time ? t('property.preferredTime', { time: slot.time }) : '',
+        preferredTime: slot?.time ?? null,
+        notes: slot?.notes || (slot?.time ? t('property.preferredTime', { time: slot.time }) : ''),
         listingTitle: listing.title,
         hostName: listing.host,
       })
@@ -123,23 +128,31 @@ function BookingCard({ listing }) {
         {slots.length > 0 ? (
           <div className="p-3">
             <label htmlFor="viewing-slot" className="text-[10px] font-bold uppercase tracking-wide text-ink">
-              {t('property.availableSlots')}
+              {t('property.selectSlot')}
             </label>
             <select
               id="viewing-slot"
+              required
               value={selectedSlot}
               onChange={(e) => setSelectedSlot(e.target.value)}
               className="mt-1 w-full rounded-lg border border-surface-border bg-transparent px-2 py-2 text-sm outline-none"
             >
               {slots.map((slot) => (
                 <option key={slot.id} value={slot.id}>
-                  {t('property.slotsLeft', { date: slot.date, time: slot.time, count: slot.available })}
+                  {slot.slot_type === 'open_house'
+                    ? t('property.openHouseSlot', { date: slot.date, time: slot.time, count: slot.available })
+                    : t('property.viewingSlot', { date: slot.date, time: slot.time, count: slot.available })}
                 </option>
               ))}
             </select>
           </div>
         ) : (
-          <div className="grid grid-cols-2">
+          <div className="p-3">
+            <p className="text-sm text-ink-secondary">{t('property.noSlotsYet')}</p>
+          </div>
+        )}
+        {slots.length === 0 && (
+          <div className="grid grid-cols-2 border-t border-surface-border">
             <div className="border-e border-surface-border p-3">
               <label htmlFor="viewing-date" className="text-[10px] font-bold uppercase tracking-wide text-ink">
                 {t('property.viewing')}
@@ -148,6 +161,7 @@ function BookingCard({ listing }) {
                 id="viewing-date"
                 type="date"
                 value={date}
+                min={new Date().toISOString().slice(0, 10)}
                 onChange={(e) => setDate(e.target.value)}
                 className="mt-1 w-full bg-transparent text-sm text-ink outline-none"
               />
@@ -190,7 +204,7 @@ function BookingCard({ listing }) {
       <button
         type="button"
         onClick={handleRequest}
-        disabled={status === 'loading' || status === 'success'}
+        disabled={status === 'loading' || status === 'success' || (slots.length > 0 && !selectedSlot)}
         className="mt-4 w-full rounded-lg bg-brand-accent py-3.5 text-base font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
       >
         {status === 'loading'

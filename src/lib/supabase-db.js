@@ -99,10 +99,12 @@ export async function mergeSavedListingsToDb(userId, localIds = []) {
 
 export async function fetchViewingSlotsFromDb(listingId) {
   if (!supabase || !listingId) return null
+  const today = new Date().toISOString().slice(0, 10)
   const { data, error } = await supabase
     .from('viewing_slots')
     .select('*')
     .eq('listing_id', listingId)
+    .gte('slot_date', today)
     .order('slot_date', { ascending: true })
   if (error) return null
   return data.map((row) => ({
@@ -110,6 +112,8 @@ export async function fetchViewingSlotsFromDb(listingId) {
     date: row.slot_date,
     time: row.slot_time,
     available: Math.max(0, (row.capacity ?? 1) - (row.booked ?? 0)),
+    slot_type: row.slot_type ?? 'viewing',
+    notes: row.notes ?? null,
   })).filter((slot) => slot.available > 0)
 }
 

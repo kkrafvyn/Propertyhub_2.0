@@ -42,6 +42,9 @@ export function ServicesMarketplacePage() {
   return (
     <DesktopShell search={<CompactSearch />}>
       <PageTitle title={t('marketplaceDiscovery.services.title')} subtitle={t('marketplaceDiscovery.services.subtitle')} />
+      <div className="mb-4">
+        <TextLink to="/services/requests">{t('marketplaceDiscovery.trackRequests')}</TextLink>
+      </div>
       {status === 'sent' && (
         <p className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">{t('marketplaceDiscovery.serviceRequestSent')}</p>
       )}

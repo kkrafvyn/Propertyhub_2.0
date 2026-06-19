@@ -65,6 +65,7 @@ export default function SplashScreen({
 
   useEffect(() => {
     if (skip) {
+      hideNativeSplash()
       finish()
       return undefined
     }

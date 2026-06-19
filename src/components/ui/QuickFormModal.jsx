@@ -2,7 +2,7 @@ export default function QuickFormModal({ title, children, onClose, onSubmit, sub
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
       <form
-        onSubmit={(e) => { e.preventDefault(); onSubmit?.() }}
+        onSubmit={(e) => { e.preventDefault(); onSubmit?.(e) }}
         className="w-full max-w-md rounded-xl bg-surface p-5 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >

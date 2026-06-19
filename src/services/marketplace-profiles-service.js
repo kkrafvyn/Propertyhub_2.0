@@ -28,6 +28,52 @@ export async function requestMarketplaceService({ serviceId, message }) {
   return { ok: false, error: 'Request failed', source: 'local' }
 }
 
+export async function fetchMyServiceRequests() {
+  try {
+    const payload = await callEdgeFunction('marketplace', {
+      allowAnonymous: false,
+      query: { action: 'my_service_requests' },
+    })
+    if (payload?.requests) return { requests: payload.requests, source: 'supabase' }
+  } catch { /* fallback */ }
+  return { requests: [], source: 'local' }
+}
+
+export async function fetchServiceRequestQueue() {
+  try {
+    const payload = await callEdgeFunction('marketplace', {
+      allowAnonymous: false,
+      query: { action: 'service_queue' },
+    })
+    if (payload) return { requests: payload.requests ?? [], providers: payload.providers ?? [], source: 'supabase' }
+  } catch { /* fallback */ }
+  return { requests: [], providers: [], source: 'local' }
+}
+
+export async function assignServiceRequest({ requestId, providerName }) {
+  return callEdgeFunction('marketplace', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'assign_service_request', request_id: requestId, provider_name: providerName },
+  })
+}
+
+export async function updateServiceRequestStatus({ requestId, status }) {
+  return callEdgeFunction('marketplace', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'update_service_request', request_id: requestId, status },
+  })
+}
+
+export async function syncDirectoryProfiles() {
+  return callEdgeFunction('marketplace', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'sync_directory' },
+  })
+}
+
 export async function fetchPublicAgencies() {
   try {
     const payload = await callEdgeFunction('marketplace', {

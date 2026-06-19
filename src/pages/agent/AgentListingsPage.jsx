@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AgentShell from '../../components/AgentShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchMyListings } from '../../services/listing-service'
 
 function Listings() {
+  const { t } = useTranslation()
   const [listings, setListings] = useState([])
 
   useEffect(() => {
@@ -25,7 +27,16 @@ function Listings() {
               <p className="font-semibold">{l.title}</p>
               <p className="text-sm text-ink-secondary">{l.status}</p>
             </div>
-            <Link to={`/property/${l.id}`} className="text-sm font-semibold text-ink underline">View</Link>
+            <div className="flex flex-wrap gap-3">
+              <Link to={`/property/${l.id}`} className="text-sm font-semibold text-ink underline">View</Link>
+              <Link
+                to={`/listings/${l.id}/schedule`}
+                state={{ backTo: '/agent/listings' }}
+                className="text-sm font-semibold text-brand-accent underline"
+              >
+                {t('viewingSchedule.manageSchedule')}
+              </Link>
+            </div>
           </article>
         ))}
         {!listings.length && (

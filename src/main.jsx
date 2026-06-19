@@ -3,24 +3,37 @@ import ReactDOM from 'react-dom/client'
 import { Capacitor } from '@capacitor/core'
 import App from './App'
 import { initAnalytics } from './lib/analytics'
-import { initCapacitor } from './lib/capacitor-init'
+import { initMonitoring } from './lib/monitoring'
+import { hideNativeSplash, initCapacitor } from './lib/capacitor-init'
 import { dismissHtmlSplash } from './lib/pwa-splash'
 import { shouldShowLaunchSplash } from './lib/platform'
 import { installChunkReloadRecovery, clearChunkReloadFlag } from './lib/chunk-reload'
 import './index.css'
 
 initAnalytics()
+initMonitoring()
 installChunkReloadRecovery()
-initCapacitor()
+void initCapacitor()
+
+if (Capacitor.isNativePlatform()) {
+  dismissHtmlSplash()
+} else {
+  try {
+    const seen = sessionStorage.getItem('baytmiftah.splash.seen') === '1'
+    if (!shouldShowLaunchSplash() || seen) {
+      dismissHtmlSplash()
+    }
+  } catch {
+    if (!shouldShowLaunchSplash()) dismissHtmlSplash()
+  }
+}
 
 try {
   const seen = sessionStorage.getItem('baytmiftah.splash.seen') === '1'
-  if (!shouldShowLaunchSplash() || seen) {
-    dismissHtmlSplash()
+  if (Capacitor.isNativePlatform() && seen) {
+    void hideNativeSplash()
   }
-} catch {
-  if (!shouldShowLaunchSplash()) dismissHtmlSplash()
-}
+} catch { /* ignore */ }
 
 if ('serviceWorker' in navigator && import.meta.env.PROD && !Capacitor.isNativePlatform()) {
   window.addEventListener('load', () => {

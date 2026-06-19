@@ -81,7 +81,31 @@ export default {
     "requestFailed": "Could not send request. Try again.",
     "sending": "Sending…",
     "requestSentBtn": "Request sent",
-    "preferredTime": "Preferred time: {{time}}"
+    "preferredTime": "Preferred time: {{time}}",
+    "noSlotsYet": "No viewing times published yet. Contact the agent or check back soon.",
+    "selectSlot": "Select a time",
+    "openHouseSlot": "Open house — {{date}} {{time}} ({{count}} spots)",
+    "viewingSlot": "Viewing — {{date}} {{time}} ({{count}} spots)"
+  },
+  "viewingSchedule": {
+    "title": "Viewing & open house schedule",
+    "hint": "Consumers can only book from the times you publish here.",
+    "addSlot": "Add time slot",
+    "publish": "Publish slot",
+    "empty": "No upcoming slots — add dates for private viewings or open houses.",
+    "openHouse": "Open house",
+    "privateViewing": "Private viewing",
+    "capacity": "{{booked}} / {{capacity}} booked",
+    "remove": "Remove",
+    "previewListing": "Preview on listing page",
+    "date": "Date",
+    "time": "Time",
+    "type": "Type",
+    "maxGuests": "Max guests",
+    "notes": "Notes (optional)",
+    "notesPlaceholder": "Meet at gate, parking instructions…",
+    "back": "← Back to listings",
+    "manageSchedule": "Viewing schedule"
   },
   "notFound": {
     "title": "Page not found",
@@ -227,6 +251,23 @@ export default {
     "serviceRequestMessage": "Tell the provider what you need",
     "serviceRequestSubmit": "Submit request",
     "serviceRequestSent": "Request submitted — a provider will contact you.",
-    "serviceRequestFailed": "Could not submit request. Try messaging instead."
+    "serviceRequestFailed": "Could not submit request. Try messaging instead.",
+    "backToServices": "← Property services",
+    "myRequestsTitle": "My service requests",
+    "myRequestsSubtitle": "Track legal, valuation, and other property services.",
+    "noRequests": "No requests yet — browse services to get started.",
+    "assignedTo": "Assigned to {{provider}}",
+    "cancelRequest": "Cancel request",
+    "dispatchTitle": "Service dispatch",
+    "dispatchSubtitle": "Assign providers and sync the public agency/agent directory.",
+    "syncDirectory": "Sync directory from live data",
+    "viewDirectory": "View public directory",
+    "directorySynced": "Directory synced — {{agencies}} agencies, {{agents}} agents.",
+    "queueEmpty": "No open service requests.",
+    "noMessage": "No message provided.",
+    "selectProvider": "Select provider",
+    "assignProvider": "Assign provider",
+    "markComplete": "Mark complete",
+    "trackRequests": "Track my requests"
   }
 }

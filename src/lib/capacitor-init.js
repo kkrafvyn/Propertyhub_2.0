@@ -1,5 +1,8 @@
 import { Capacitor } from '@capacitor/core'
 
+const NATIVE_SPLASH_FALLBACK_MS = 5000
+let nativeSplashFallbackScheduled = false
+
 /** Hide the native Capacitor splash once the animated splash is ready. */
 export async function hideNativeSplash() {
   if (!Capacitor.isNativePlatform()) return
@@ -10,6 +13,15 @@ export async function hideNativeSplash() {
   } catch {
     /* plugins optional during dev */
   }
+}
+
+/** Never leave launchAutoHide:false splash up if JS skips the animated splash. */
+export function scheduleNativeSplashFallback() {
+  if (!Capacitor.isNativePlatform() || nativeSplashFallbackScheduled) return
+  nativeSplashFallbackScheduled = true
+  window.setTimeout(() => {
+    hideNativeSplash()
+  }, NATIVE_SPLASH_FALLBACK_MS)
 }
 
 /** Status bar + browser chrome to match light/dark theme (native + PWA). */
@@ -45,4 +57,11 @@ export async function initCapacitor() {
   } catch { /* ignore */ }
 
   await syncNativeTheme(theme)
+  scheduleNativeSplashFallback()
+
+  try {
+    if (sessionStorage.getItem('baytmiftah.splash.seen') === '1') {
+      await hideNativeSplash()
+    }
+  } catch { /* ignore */ }
 }

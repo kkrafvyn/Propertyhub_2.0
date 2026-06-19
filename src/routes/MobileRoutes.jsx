@@ -50,6 +50,7 @@ const AgentsIndexPage = lazy(() =>
 const AgentProfilePage = lazy(() =>
   import('../pages/marketplace/MarketplaceDiscoveryPages').then((m) => ({ default: m.AgentProfilePage })),
 )
+const ListingViewingSchedulePage = lazy(() => import('../pages/viewings/ListingViewingSchedulePage'))
 const MobileHostListingPage = lazy(() => import('../pages/mobile/MobileHostListingPage'))
 
 const MobileRenterLeasesPage = lazy(() =>
@@ -312,12 +313,14 @@ export default function MobileRoutes() {
         <Route path="/settings" element={<Navigate to="/profile" replace />} />
         <Route path="/security" element={<Navigate to="/profile" replace />} />
         <Route path="/property/:id" element={<MobilePropertyPage />} />
+        <Route path="/listings/:listingId/schedule" element={<ListingViewingSchedulePage />} />
         <Route path="/trips" element={<MobileTripsPage />} />
         <Route path="/bookings" element={<Navigate to="/trips" replace />} />
         <Route path="/booking" element={<Navigate to="/trips" replace />} />
         <Route path="/neighborhoods" element={<MobileNeighborhoodsPage />} />
         <Route path="/neighborhoods/:slug" element={<MobileNeighborhoodDetailPage />} />
         <Route path="/services" element={<ServicesMarketplacePage />} />
+        <Route path="/services/requests" element={<MyServiceRequestsPage />} />
         <Route path="/agencies" element={<AgenciesIndexPage />} />
         <Route path="/agencies/:id" element={<AgencyProfilePage />} />
         <Route path="/agents" element={<AgentsIndexPage />} />
