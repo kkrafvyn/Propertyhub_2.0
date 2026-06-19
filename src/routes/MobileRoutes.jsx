@@ -50,6 +50,9 @@ const AgentsIndexPage = lazy(() =>
 const AgentProfilePage = lazy(() =>
   import('../pages/marketplace/MarketplaceDiscoveryPages').then((m) => ({ default: m.AgentProfilePage })),
 )
+const MyServiceRequestsPage = lazy(() =>
+  import('../pages/marketplace/ServiceFulfillmentPages').then((m) => ({ default: m.MyServiceRequestsPageExport })),
+)
 const ListingViewingSchedulePage = lazy(() => import('../pages/viewings/ListingViewingSchedulePage'))
 const MobileHostListingPage = lazy(() => import('../pages/mobile/MobileHostListingPage'))
 
