@@ -3,7 +3,7 @@ export function isKycVerified(record) {
 }
 
 export function isKycPending(record) {
-  return record?.status === 'pending_review'
+  return record?.status === 'pending_review' || record?.status === 'pending_provider'
 }
 
 export function canSubmitOffer(kycRecord) {

@@ -10,10 +10,7 @@ export default function PaymentCancelPage() {
     <DesktopShell search={<CompactSearch />}>
       <div className="mx-auto max-w-lg py-12">
         <div className="panel-card px-8 py-12 text-center">
-          <PageTitle
-            title={t('paymentsPage.cancelTitle')}
-            subtitle={t('paymentsPage.cancelSubtitle')}
-          />
+          <PageTitle title={t('paymentsPage.cancelTitle')} />
           <div className="flex flex-wrap justify-center gap-3">
             <PrimaryButton as={Link} to="/finance">{t('paymentsPage.financeHub')}</PrimaryButton>
             <SecondaryButton as={Link} to="/">{t('paymentsPage.home')}</SecondaryButton>

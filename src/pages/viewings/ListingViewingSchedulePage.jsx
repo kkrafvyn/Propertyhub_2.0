@@ -64,13 +64,11 @@ export function ViewingSchedulePanel({ listingId, backTo, backLabel }) {
   }
 
   const resolvedBack = backTo || '/host/listings'
-  const listingSubtitle = listing ? `${listing.title} · ${listing.location}` : t('common.loading')
 
   return (
     <ResponsivePageShell
       backTo={resolvedBack}
       titleKey="viewingSchedule.title"
-      subtitle={listingSubtitle}
       hideNav
     >
       {!mobile && backTo && (
@@ -84,7 +82,6 @@ export function ViewingSchedulePanel({ listingId, backTo, backLabel }) {
       {!mobile && (
         <PageTitle
           title={t('viewingSchedule.title')}
-          subtitle={listingSubtitle}
           action={
             <PrimaryButton type="button" onClick={() => setShowForm(true)}>
               {t('viewingSchedule.addSlot')}

@@ -46,7 +46,7 @@ function RenterHome() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title={t('mobile.renterWorkspace')} subtitle={profile?.unit || t('mobile.yourRental')} backTo="/profile" />
+      <MobileHeader title={t('mobile.renterWorkspace')} backTo="/profile" />
       <section className="space-y-4 px-4 pb-6">
         {profile && (
           <MobileCard>
@@ -161,7 +161,7 @@ function RenterUtilitiesMobile() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Utilities" subtitle="ECG · Water · Internet · Gas" backTo="/renter" />
+      <MobileHeader title="Utilities" backTo="/renter" />
       <section className="space-y-3 px-4 pb-6">
         <IntegrationsBanner showPayments />
         {message && <p className="text-sm text-ink-secondary">{message}</p>}
@@ -335,7 +335,7 @@ function RenterCreditMobile() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title="Housing credit" subtitle="Rental reliability score" backTo="/renter" />
+      <MobileHeader title="Housing credit" backTo="/renter" />
       <section className="space-y-4 px-4 pb-6">
         {!profile ? (
           <p className="text-sm text-ink-secondary">Loading…</p>

@@ -89,7 +89,6 @@ export default function MobileHomePage() {
           <MobilePromoCard
             key={promo.title}
             title={promo.title}
-            subtitle={t('mobile.homeScreen.exploreStays')}
             to={promo.to}
             index={i}
           />

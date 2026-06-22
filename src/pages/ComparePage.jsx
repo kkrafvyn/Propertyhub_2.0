@@ -32,7 +32,6 @@ function CompareContent() {
     <>
       <PageTitle
         title={t('comparePage.title')}
-        subtitle={t('comparePage.subtitle')}
         action={listings.length > 0 && (
           <button type="button" onClick={clearCompare} className="text-sm font-medium text-ink-secondary underline">
             {t('common.clearAll')}
@@ -90,7 +89,7 @@ export default function ComparePage() {
   const { t } = useTranslation()
 
   return (
-    <ResponsivePageShell title={t('comparePage.title')} subtitle={t('comparePage.subtitle')} backTo="/saved">
+    <ResponsivePageShell title={t('comparePage.title')} backTo="/saved">
       <CompareContent />
     </ResponsivePageShell>
   )

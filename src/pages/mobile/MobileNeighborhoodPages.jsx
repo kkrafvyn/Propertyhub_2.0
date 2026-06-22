@@ -20,7 +20,7 @@ export function MobileNeighborhoodsPage() {
 
   return (
     <MobileShell>
-      <MobileHeader title={t('neighborhoodPage.title')} subtitle={t('neighborhoodPage.subtitle')} backTo="/" />
+      <MobileHeader title={t('neighborhoodPage.title')} backTo="/" />
       {loading ? (
         <div className="mx-4 h-48 animate-pulse rounded-xl bg-surface-hover" />
       ) : (

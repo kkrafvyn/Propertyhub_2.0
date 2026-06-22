@@ -23,7 +23,7 @@ export default function MobileSavedPage() {
 
   return (
     <MobileShell>
-      <MobileHeader title={t('mobile.saved')} subtitle={t('mobile.savedCount', { count: listings.length })} />
+      <MobileHeader title={t('mobile.saved')} />
       <div className="space-y-3 px-4 pb-4">
         {listings.length === 0 ? (
           <MobileEmpty title={t('mobile.noSavedTitle')} description={t('mobile.noSavedDesc')} />

@@ -72,7 +72,7 @@ function AIAdvisorContent() {
 
 function AIAdvisorLayout() {
   return (
-    <ResponsivePageShell titleKey="hubs.buyer.aiAdvisor.title" subtitleKey="hubs.buyer.aiAdvisor.subtitle">
+    <ResponsivePageShell titleKey="hubs.buyer.aiAdvisor.title">
       <AIAdvisorContent />
     </ResponsivePageShell>
   )

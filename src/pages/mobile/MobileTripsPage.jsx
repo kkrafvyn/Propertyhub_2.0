@@ -40,7 +40,7 @@ function TripsContent() {
 
   return (
     <MobileShell>
-      <MobileHeader title={t('tripsPage.title')} subtitle={t('tripsPage.subtitle')} />
+      <MobileHeader title={t('tripsPage.title')} />
       {loading ? (
         <div className="space-y-3 px-4">
           {Array.from({ length: 3 }).map((_, i) => (

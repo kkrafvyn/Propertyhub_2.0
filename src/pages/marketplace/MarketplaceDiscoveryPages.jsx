@@ -41,7 +41,7 @@ export function ServicesMarketplacePage() {
 
   return (
     <DesktopShell search={<CompactSearch />}>
-      <PageTitle title={t('marketplaceDiscovery.services.title')} subtitle={t('marketplaceDiscovery.services.subtitle')} />
+      <PageTitle title={t('marketplaceDiscovery.services.title')} />
       <div className="mb-4">
         <TextLink to="/services/requests">{t('marketplaceDiscovery.trackRequests')}</TextLink>
       </div>
@@ -94,7 +94,7 @@ export function AgenciesIndexPage() {
 
   return (
     <DesktopShell search={<CompactSearch />}>
-      <PageTitle title={t('marketplaceDiscovery.agencies.title')} subtitle={t('marketplaceDiscovery.agencies.subtitle')} />
+      <PageTitle title={t('marketplaceDiscovery.agencies.title')} />
       <div className="grid gap-4 sm:grid-cols-2">
         {agencies.map((a) => (
           <HubLinkCard
@@ -184,7 +184,7 @@ export function AgentsIndexPage() {
 
   return (
     <DesktopShell search={<CompactSearch />}>
-      <PageTitle title={t('marketplaceDiscovery.agents.title')} subtitle={t('marketplaceDiscovery.agents.subtitle')} />
+      <PageTitle title={t('marketplaceDiscovery.agents.title')} />
       <div className="grid gap-4 sm:grid-cols-2">
         {agents.map((a) => (
           <HubLinkCard

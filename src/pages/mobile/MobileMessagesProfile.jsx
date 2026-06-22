@@ -66,7 +66,7 @@ function MobileMessagesContent() {
 
   return (
     <MobileShell>
-      <MobileHeader title={t('mobile.inbox')} subtitle={t('mobile.inboxSubtitle')} />
+      <MobileHeader title={t('mobile.inbox')} />
       <div className="divide-y divide-surface-border">
         {conversations.map((conv) => (
           <Link key={conv.id} to={`/messages/${conv.id}`} className="block px-4 py-4">
@@ -101,7 +101,7 @@ export function MobileProfilePage() {
 
   return (
     <MobileShell>
-      <MobileHeader title={t('mobile.profile')} subtitle={t('mobile.profileSubtitle')} />
+      <MobileHeader title={t('mobile.profile')} />
       <div className="space-y-4 px-4 pb-4">
         <div className="rounded-2xl bg-bolt-card p-4 shadow-bolt-card">
           <div className="flex items-center gap-4">

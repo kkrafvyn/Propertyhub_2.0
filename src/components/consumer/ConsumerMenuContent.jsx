@@ -70,7 +70,6 @@ export default function ConsumerMenuContent({ onNavigate, showIntro = true }) {
       {showIntro && (
         <div className="mb-6">
           <h1 className="text-xl font-bold text-ink">{t('consumer.dashboard.title')}</h1>
-          <p className="mt-1 text-sm text-ink-secondary">{t('consumer.dashboard.subtitle')}</p>
         </div>
       )}
 

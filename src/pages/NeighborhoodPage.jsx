@@ -19,10 +19,7 @@ export function NeighborhoodsIndexPage() {
 
   return (
     <DesktopShell search={<CompactSearch />}>
-      <PageTitle
-        title={t('neighborhoodPage.title')}
-        subtitle={t('neighborhoodPage.subtitle')}
-      />
+      <PageTitle title={t('neighborhoodPage.title')} />
       {loading ? (
         <div className="h-48 animate-pulse rounded-xl bg-surface-hover" />
       ) : (

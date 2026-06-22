@@ -30,7 +30,7 @@ function ReferralContent() {
 
   return (
     <DesktopShell search={<CompactSearch />}>
-      <PageTitle title={t('referral.title')} subtitle={t('referral.subtitle')} />
+      <PageTitle title={t('referral.title')} />
       <div className="panel-card max-w-lg p-8">
         <p className="text-sm text-ink-secondary">{t('referral.yourCode')}</p>
         <p className="mt-2 text-3xl font-bold tracking-wide text-ink">{code || '…'}</p>

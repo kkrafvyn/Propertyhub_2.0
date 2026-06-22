@@ -15,7 +15,7 @@ function HelpContent() {
 
   return (
     <>
-      <PageTitle title={t('help.title')} subtitle={t('help.subtitle')} />
+      <PageTitle title={t('help.title')} />
       <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
         <nav className="space-y-2 text-sm">
           {sections.map((s) => (
@@ -44,7 +44,7 @@ export default function HelpCentrePage() {
   const { t } = useTranslation()
 
   return (
-    <ResponsivePageShell title={t('help.title')} subtitle={t('help.subtitle')} backTo="/" hideNav={false}>
+    <ResponsivePageShell title={t('help.title')} backTo="/" hideNav={false}>
       <HelpContent />
     </ResponsivePageShell>
   )

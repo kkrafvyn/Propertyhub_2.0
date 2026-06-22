@@ -19,7 +19,7 @@ function BuyerHub() {
 
   return (
     <DesktopShell search={<CompactSearch />}>
-      <PageTitle title={t('buyerHub.title')} subtitle={t('buyerHub.subtitle')} />
+      <PageTitle title={t('buyerHub.title')} />
       <HubLinkGrid links={links} />
     </DesktopShell>
   )

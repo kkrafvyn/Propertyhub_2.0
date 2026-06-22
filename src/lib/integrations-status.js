@@ -27,7 +27,3 @@ export async function fetchPaymentIntegrationsStatus() {
     }
   }
 }
-
-export function oauthAvailable() {
-  return isSupabaseConfigured
-}

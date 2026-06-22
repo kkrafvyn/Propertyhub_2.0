@@ -91,7 +91,7 @@ function RentalApplicationContent() {
 export default function RentalApplicationPage() {
   return (
     <ProtectedRoute>
-      <ResponsivePageShell titleKey="hubs.renter.rentalApplication.title" subtitleKey="hubs.renter.rentalApplication.subtitle" backTo="/consumer/rent">
+      <ResponsivePageShell titleKey="hubs.renter.rentalApplication.title" backTo="/consumer/rent">
         <RentalApplicationContent />
       </ResponsivePageShell>
     </ProtectedRoute>

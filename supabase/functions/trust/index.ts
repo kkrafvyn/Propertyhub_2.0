@@ -8,6 +8,42 @@ import {
   isStaffRole,
 } from '../_shared/roles.ts'
 import { computeReputationScore } from '../_shared/reputation.ts'
+import {
+  createSmileLink,
+  getSmileConfig,
+  mapSmileResultToKycStatus,
+} from '../_shared/smile-identity.ts'
+
+function mapKycRow(r: Record<string, unknown>) {
+  const paths = Array.isArray(r.document_paths) ? r.document_paths : []
+  return {
+    id: r.id,
+    entity: r.entity_name,
+    name: r.entity_name,
+    type: r.entity_type,
+    entity_type: r.entity_type,
+    status: r.status,
+    documents: r.documents ?? paths.length,
+    document_paths: paths,
+    provider: r.provider,
+    provider_job_id: r.provider_job_id,
+    provider_ref_id: r.provider_ref_id,
+    provider_status: r.provider_status,
+    rejection_reason: r.rejection_reason,
+    reviewed_at: r.reviewed_at,
+    user_id: r.user_id,
+    created_at: r.created_at,
+  }
+}
+
+async function signedKycDocumentUrls(admin: ReturnType<typeof createAdminClient>, paths: string[]) {
+  const urls: Array<{ path: string; url: string | null }> = []
+  for (const path of paths) {
+    const { data, error } = await admin.storage.from('kyc').createSignedUrl(String(path), 3600)
+    urls.push({ path: String(path), url: error ? null : data?.signedUrl ?? null })
+  }
+  return urls
+}
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -15,22 +51,65 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url)
   const action = url.searchParams.get('action')
+  const admin = createAdminClient()
 
   if (req.method === 'GET' && (action === 'reputation' || action === 'public_reputation')) {
     const targetId = url.searchParams.get('user_id')
     if (!targetId) return errorResponse('user_id required', 400)
-    const admin = createAdminClient()
     const score = await computeReputationScore(admin, targetId)
     return jsonResponse({ reputation: score, source: 'supabase' })
+  }
+
+  if (req.method === 'GET' && action === 'kyc_provider_config') {
+    const smile = getSmileConfig()
+    const siteUrl = smile?.siteUrl ?? (Deno.env.get('SITE_URL') ?? '').replace(/\/$/, '')
+    return jsonResponse({
+      provider: smile ? 'smile' : 'manual',
+      smileConfigured: Boolean(smile),
+      redirectPath: '/profile/kyc',
+      callbackUrl: siteUrl
+        ? `${Deno.env.get('SUPABASE_URL')}/functions/v1/trust?action=kyc_webhook`
+        : null,
+      source: 'supabase',
+    })
+  }
+
+  if (req.method === 'POST' && action === 'kyc_webhook') {
+    let body: Record<string, unknown> = {}
+    try {
+      body = await req.json()
+    } catch {
+      return errorResponse('Invalid JSON', 400)
+    }
+
+    const partnerParams = (body.partner_params ?? body.PartnerParams ?? {}) as Record<string, unknown>
+    const kycRecordId = String(partnerParams.kyc_record_id ?? partnerParams.job_id ?? '')
+    const resultCode = body.ResultCode ?? body.result_code ?? body.resultCode
+    const resultText = String(body.ResultText ?? body.result_text ?? body.resultText ?? '')
+    const status = mapSmileResultToKycStatus(resultCode as string | number | undefined)
+
+    if (!kycRecordId) {
+      return jsonResponse({ ok: true, ignored: true, reason: 'no_kyc_record_id' })
+    }
+
+    const update: Record<string, unknown> = {
+      provider: 'smile',
+      provider_status: String(resultCode ?? ''),
+      status,
+      reviewed_at: status !== 'pending_review' ? new Date().toISOString() : null,
+    }
+    if (status === 'rejected') {
+      update.rejection_reason = resultText || 'Verification failed'
+    }
+
+    await admin.from('kyc_records').update(update).eq('id', kycRecordId)
+    return jsonResponse({ ok: true, status, source: 'supabase' })
   }
 
   const user = await getUserFromRequest(req)
   if (!user) return errorResponse('Authentication required', 401)
 
-  const admin = createAdminClient()
   const requesterRole = await getProfileRole(admin, user.id)
-  const url = new URL(req.url)
-  const action = url.searchParams.get('action')
 
   if (req.method === 'GET') {
     if (action === 'my_kyc') {
@@ -84,11 +163,16 @@ Deno.serve(async (req) => {
     }
     if (action === 'kyc') {
       const { data } = await admin.from('kyc_records').select('*').order('created_at', { ascending: false })
-      const kyc = (data ?? []).map((r) => ({
-        id: r.id, entity: r.entity_name, type: r.entity_type, status: r.status,
-        documents: r.documents ?? (Array.isArray(r.document_paths) ? r.document_paths.length : 0),
-      }))
+      const kyc = (data ?? []).map((r) => mapKycRow(r as Record<string, unknown>))
       return jsonResponse({ kyc, source: 'supabase' })
+    }
+    if (action === 'kyc_documents') {
+      const recordId = url.searchParams.get('id')
+      if (!recordId) return errorResponse('id required', 400)
+      const { data: record } = await admin.from('kyc_records').select('document_paths').eq('id', recordId).maybeSingle()
+      const paths = Array.isArray(record?.document_paths) ? record.document_paths : []
+      const documents = await signedKycDocumentUrls(admin, paths)
+      return jsonResponse({ documents, source: 'supabase' })
     }
     if (action === 'fraud') {
       const { data } = await admin.from('fraud_alerts').select('*').order('created_at', { ascending: false })
@@ -127,6 +211,61 @@ Deno.serve(async (req) => {
   if (req.method === 'POST') {
     const body = await req.json()
 
+    if (body.action === 'start_kyc_provider') {
+      const smile = getSmileConfig()
+      if (!smile) return errorResponse('Smile Identity is not configured', 503)
+
+      const entityName = String(body.entityName ?? '').trim()
+      const entityType = String(body.entityType ?? 'consumer').trim()
+      if (!entityName) return errorResponse('entityName required', 400)
+
+      const { data: existing } = await admin
+        .from('kyc_records')
+        .select('id, status')
+        .eq('user_id', user.id)
+        .in('status', ['pending_review', 'verified', 'pending_provider'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (existing?.status === 'verified') return errorResponse('Already verified', 400)
+      if (existing?.status === 'pending_review' || existing?.status === 'pending_provider') {
+        return errorResponse('Verification already in progress', 400)
+      }
+
+      const id = `kyc-${crypto.randomUUID().slice(0, 8)}`
+      const jobId = id
+      const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/trust?action=kyc_webhook`
+      const redirectUrl = `${smile.siteUrl}/profile/kyc?smile=return`
+
+      const { link, refId } = await createSmileLink({
+        config: smile,
+        userId: user.id,
+        jobId,
+        entityName,
+        callbackUrl,
+        redirectUrl,
+      })
+
+      const { error } = await admin.from('kyc_records').insert({
+        id,
+        user_id: user.id,
+        entity_name: entityName,
+        entity_type: entityType,
+        status: 'pending_provider',
+        documents: 0,
+        document_paths: [],
+        provider: 'smile',
+        provider_job_id: jobId,
+        provider_ref_id: refId,
+        provider_status: 'link_created',
+      })
+      if (error) return errorResponse(error.message, 500)
+
+      await logAudit(admin, user.id, 'kyc_provider_started', id, { provider: 'smile', refId })
+      return jsonResponse({ ok: true, id, link, provider: 'smile', source: 'supabase' })
+    }
+
     if (body.action === 'submit_kyc') {
       const entityName = String(body.entityName ?? '').trim()
       const entityType = String(body.entityType ?? 'consumer').trim()
@@ -139,13 +278,15 @@ Deno.serve(async (req) => {
         .from('kyc_records')
         .select('id, status')
         .eq('user_id', user.id)
-        .in('status', ['pending_review', 'verified'])
+        .in('status', ['pending_review', 'verified', 'pending_provider'])
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
 
       if (existing?.status === 'verified') return errorResponse('Already verified', 400)
-      if (existing?.status === 'pending_review') return errorResponse('Submission already pending review', 400)
+      if (existing?.status === 'pending_review' || existing?.status === 'pending_provider') {
+        return errorResponse('Submission already pending review', 400)
+      }
 
       const id = `kyc-${crypto.randomUUID().slice(0, 8)}`
       const { error } = await admin.from('kyc_records').insert({
@@ -156,6 +297,7 @@ Deno.serve(async (req) => {
         status: 'pending_review',
         documents: documentPaths.length,
         document_paths: documentPaths,
+        provider: 'manual',
       })
       if (error) return errorResponse(error.message, 500)
 
@@ -187,8 +329,23 @@ Deno.serve(async (req) => {
     if (!isStaffRole(requesterRole)) return errorResponse('Forbidden', 403)
 
     if (body.action === 'update_kyc') {
-      await admin.from('kyc_records').update({ status: body.status }).eq('id', body.id)
-      await logAudit(admin, user.id, 'kyc_updated', body.id, { status: body.status })
+      const allowed = ['verified', 'rejected', 'pending_review', 'flagged']
+      const status = String(body.status ?? '')
+      if (!allowed.includes(status)) return errorResponse('Invalid status', 400)
+
+      const patch: Record<string, unknown> = {
+        status,
+        reviewed_at: new Date().toISOString(),
+      }
+      if (status === 'rejected' && body.rejectionReason) {
+        patch.rejection_reason = String(body.rejectionReason)
+      }
+      if (status === 'verified') {
+        patch.rejection_reason = null
+      }
+
+      await admin.from('kyc_records').update(patch).eq('id', body.id)
+      await logAudit(admin, user.id, 'kyc_updated', body.id, { status, rejectionReason: body.rejectionReason })
       return jsonResponse({ ok: true })
     }
     if (body.action === 'update_fraud') {
@@ -265,13 +422,14 @@ Deno.serve(async (req) => {
       }
 
       for (const a of alerts.slice(0, 20)) {
-        await admin.from('fraud_alerts').insert({
+        const { error: insertError } = await admin.from('fraud_alerts').insert({
           id: `fa-${crypto.randomUUID().slice(0, 8)}`,
           target: a.target,
           alert_type: a.alert_type,
           risk_score: a.risk_score,
           status: 'investigating',
-        }).catch(() => null)
+        })
+        if (insertError) console.error('fraud alert insert failed', insertError.message)
       }
 
       return jsonResponse({ ok: true, scanned: listings?.length ?? 0, alerts_created: Math.min(alerts.length, 20), source: 'supabase' })

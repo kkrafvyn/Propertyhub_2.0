@@ -27,7 +27,7 @@ function TripsContent() {
   return (
     <DesktopShell search={<CompactSearch />}>
       <BackendBanner />
-      <PageTitle title={t('tripsPage.title')} subtitle={t('tripsPage.subtitle')} />
+      <PageTitle title={t('tripsPage.title')} />
 
       {loading ? (
         <div className="space-y-4">

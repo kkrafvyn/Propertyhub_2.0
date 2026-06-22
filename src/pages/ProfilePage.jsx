@@ -27,7 +27,7 @@ function ProfileContent() {
 
   return (
     <DesktopShell search={<CompactSearch />}>
-      <PageTitle title={t('profile.account')} subtitle={t('profile.subtitle')} />
+      <PageTitle title={t('profile.account')} />
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <PanelCard>

@@ -33,7 +33,6 @@ export default function ForgotPasswordPage() {
     <AuthPageLayout>
       <div className="mx-auto max-w-[568px] rounded-2xl border border-surface-border bg-surface p-6 shadow-card md:p-8">
         <h1 className="text-2xl font-semibold text-ink">{t('auth.resetPassword')}</h1>
-        <p className="mt-2 text-sm text-ink-secondary">{t('auth.resetSubtitle')}</p>
 
         {!isSupabaseConfigured && (
           <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

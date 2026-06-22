@@ -69,7 +69,7 @@ function HostForm() {
 
   return (
     <MobileShell hideNav>
-      <MobileHeader title={t('host.title')} subtitle={t('mobile.hostSubtitle')} backTo="/profile" />
+      <MobileHeader title={t('host.title')} backTo="/profile" />
       <div className="space-y-4 px-4 pb-8">
         {step === 0 && (
           <>

@@ -37,7 +37,7 @@ export function MyServiceRequestsPage() {
   return (
     <DesktopShell search={<CompactSearch />}>
       <TextLink to="/services" className="mb-4 inline-block">{t('marketplaceDiscovery.backToServices')}</TextLink>
-      <PageTitle title={t('marketplaceDiscovery.myRequestsTitle')} subtitle={t('marketplaceDiscovery.myRequestsSubtitle')} />
+      <PageTitle title={t('marketplaceDiscovery.myRequestsTitle')} />
       <div className="space-y-3">
         {requests.length === 0 && (
           <p className="text-ink-secondary">{t('marketplaceDiscovery.noRequests')}</p>

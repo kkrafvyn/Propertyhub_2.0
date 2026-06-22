@@ -51,7 +51,7 @@ function MessagesContent() {
 
   return (
     <DesktopShell search={<CompactSearch />}>
-      <PageTitle title={t('messagesPage.title')} subtitle={t('messagesPage.subtitle')} />
+      <PageTitle title={t('messagesPage.title')} />
 
       <div className="panel-card grid min-h-[520px] overflow-hidden lg:grid-cols-[320px_1fr]">
         <aside className="border-b border-surface-border lg:border-b-0 lg:border-r">

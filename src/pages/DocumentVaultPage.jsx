@@ -52,7 +52,6 @@ function VaultContent() {
     <>
       <PageTitle
         title={t('vaultPage.title')}
-        subtitle={t('vaultPage.subtitle')}
         action={
           <>
             <input ref={fileRef} type="file" accept=".pdf,image/*" className="hidden" onChange={handleUpload} />
@@ -105,7 +104,7 @@ function VaultLayout() {
   const { t } = useTranslation()
 
   return (
-    <ResponsivePageShell title={t('vaultPage.title')} subtitle={t('vaultPage.subtitle')} backTo="/profile">
+    <ResponsivePageShell title={t('vaultPage.title')} backTo="/profile">
       <VaultContent />
     </ResponsivePageShell>
   )

@@ -1,15 +1,11 @@
-import { useEffect, useState } from 'react'
 import MobileShell, { MobileHeader } from '../../components/MobileShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { MobileHubTile, MobileTextLink } from '../../components/ui/MobileUI'
 import {
   IconCard, IconDocument, IconOffice, IconSparkle, IconUsers, IconWrench,
 } from '../../components/icons'
-import { fetchAgencyDashboard } from '../../services/agency-service'
-import { fetchFinanceDashboard } from '../../services/finance-service'
 
-const workspaces = [
-  {
+const workspaces = [  {
     id: 'agency',
     title: 'Agency workspace',
     desktop: '/agency',
@@ -74,22 +70,9 @@ const workspaces = [
 ]
 
 function WorkspaceHome({ workspace }) {
-  const [subtitle, setSubtitle] = useState('Mobile workspace')
-
-  useEffect(() => {
-    if (workspace.id === 'agency') {
-      fetchAgencyDashboard().then(({ agency }) => setSubtitle(agency?.name ?? 'Agency'))
-    }
-    if (workspace.id === 'finance') {
-      fetchFinanceDashboard().then(({ summary }) =>
-        setSubtitle(`Escrow GHS ${(summary?.escrowTotal ?? 0).toLocaleString()}`),
-      )
-    }
-  }, [workspace.id])
-
   return (
     <MobileShell hideNav>
-      <MobileHeader title={workspace.title} subtitle={subtitle} backTo="/profile" />
+      <MobileHeader title={workspace.title} backTo="/profile" />
       <section className="space-y-4 px-4 pb-6">
         <div className="grid grid-cols-2 gap-3">
           {workspace.links.map((item) => (

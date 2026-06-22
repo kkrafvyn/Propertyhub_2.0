@@ -43,9 +43,8 @@ function HostListingsContent() {
   return (
     <ResponsivePageShell
       backTo="/host"
-      titleKey="host.listings.title"
-      subtitleKey="host.listings.subtitle"
-      hideNav
+        titleKey="host.listings.title"
+        hideNav
     >
       {mobile ? (
         <div className="mb-4 flex flex-col gap-2 sm:flex-row">
@@ -55,7 +54,6 @@ function HostListingsContent() {
       ) : (
         <PageTitle
           title={t('host.listings.title')}
-          subtitle={t('host.listings.subtitle')}
           action={
             <div className="flex gap-2">
               <SecondaryButton onClick={load}>{t('host.listings.refresh')}</SecondaryButton>

@@ -46,7 +46,7 @@ export default function SavedPage() {
   return (
     <DesktopShell search={<CompactSearch />}>
       <BackendBanner />
-      <PageTitle title={t('savedPage.title')} subtitle={t('savedPage.subtitle')} />
+      <PageTitle title={t('savedPage.title')} />
 
       <section>
         {loading ? (

@@ -15,10 +15,7 @@ export default function HostPage() {
     return (
       <DesktopShell search={<CompactSearch />}>
         <div className="mx-auto max-w-xl py-12 text-center">
-          <PageTitle
-            title={t('host.title')}
-            subtitle={t('host.signInSubtitle')}
-          />
+          <PageTitle title={t('host.title')} />
           <div className="flex justify-center gap-4">
             <SecondaryButton as={Link} to="/login">{t('auth.logIn')}</SecondaryButton>
             <Link
@@ -42,10 +39,7 @@ export default function HostPage() {
       )}
       <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
         <div>
-          <PageTitle
-            title={t('host.heroTitle')}
-            subtitle={t('host.heroSubtitle')}
-          />
+          <PageTitle title={t('host.heroTitle')} />
           <ul className="space-y-3 text-ink-secondary">
             <li className="flex items-center gap-3">
               <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />

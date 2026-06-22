@@ -72,7 +72,7 @@ function FinancingCenterContent() {
 
 function FinancingCenterLayout() {
   return (
-    <ResponsivePageShell titleKey="hubs.buyer.financingCenter.title" subtitleKey="hubs.buyer.financingCenter.subtitle">
+    <ResponsivePageShell titleKey="hubs.buyer.financingCenter.title">
       <FinancingCenterContent />
     </ResponsivePageShell>
   )

@@ -101,7 +101,15 @@ export default {
     "requiredBody": "Complete identity verification before submitting property offers.",
     "startVerification": "Start verification",
     "backToProfile": "Back to profile",
-    "documents": "documents"
+    "documents": "documents",
+    "providerTab": "Verify with Smile ID",
+    "manualTab": "Upload documents",
+    "providerHint": "You will complete ID verification on Smile Identity's secure page (Ghana Card or passport).",
+    "startProvider": "Continue to verification",
+    "providerStartFailed": "Could not start verification. Try manual upload or try again later.",
+    "providerLinkFailed": "No verification link returned. Contact support.",
+    "providerPendingBody": "Complete or wait for Smile Identity to process your verification. This usually takes a few minutes.",
+    "reopenProvider": "Re-open verification link"
   },
   "paymentsPage": {
     "successTitle": "Payment successful",

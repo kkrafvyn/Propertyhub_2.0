@@ -163,11 +163,38 @@ export async function submitKyc({ entityName, entityType, documentPaths }) {
   }
 }
 
-export async function updateKycStatus(id, status) {
+export async function fetchKycProviderConfig() {
+  try {
+    const payload = await callEdgeFunction('trust', {
+      allowAnonymous: true,
+      query: { action: 'kyc_provider_config' },
+    })
+    return { ...payload, source: payload.source ?? 'supabase' }
+  } catch {
+    return { provider: 'manual', smileConfigured: false, source: 'local' }
+  }
+}
+
+export async function startKycProvider({ entityName, entityType }) {
   return callEdgeFunction('trust', {
     method: 'POST',
     allowAnonymous: false,
-    body: { action: 'update_kyc', id, status },
+    body: { action: 'start_kyc_provider', entityName, entityType },
+  })
+}
+
+export async function fetchKycDocuments(recordId) {
+  return callEdgeFunction('trust', {
+    allowAnonymous: false,
+    query: { action: 'kyc_documents', id: recordId },
+  })
+}
+
+export async function updateKycStatus(id, status, rejectionReason) {
+  return callEdgeFunction('trust', {
+    method: 'POST',
+    allowAnonymous: false,
+    body: { action: 'update_kyc', id, status, rejectionReason },
   })
 }
 
@@ -232,6 +259,9 @@ export async function promoteUserRole(userId, role) {
 export default {
   fetchAdminOverview,
   fetchKycQueue,
+  fetchKycProviderConfig,
+  fetchKycDocuments,
+  startKycProvider,
   fetchMyKyc,
   submitKyc,
   fetchFraudAlerts,

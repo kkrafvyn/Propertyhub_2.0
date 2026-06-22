@@ -126,7 +126,7 @@ function TransactionCenterContent() {
 
 function TransactionCenterLayout() {
   return (
-    <ResponsivePageShell titleKey="hubs.buyer.transactionCenter.title" subtitleKey="hubs.buyer.transactionCenter.subtitle">
+    <ResponsivePageShell titleKey="hubs.buyer.transactionCenter.title">
       <TransactionCenterContent />
     </ResponsivePageShell>
   )
