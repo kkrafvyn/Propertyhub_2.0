@@ -22,6 +22,7 @@ export const listings = [
     sqft: 4200,
     featured: true,
     verified: true,
+    instantBook: true,
     image: images[0],
     photos: [images[0], images[1], images[2], images[3], images[4]],
     host: 'Gold Coast Realty',

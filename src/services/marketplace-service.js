@@ -31,6 +31,9 @@ function normalizeListing(raw) {
     lat: raw.lat ?? raw.latitude,
     lng: raw.lng ?? raw.longitude,
     instantBook: Boolean(raw.instant_book || raw.instantBook),
+    verifiedAgent: Boolean(raw.verified_agent ?? raw.verifiedAgent ?? raw.verified),
+    verifiedAgency: Boolean(raw.verified_agency ?? raw.verifiedAgency ?? raw.verified),
+    viewCount: Number(raw.view_count ?? raw.viewCount ?? 0),
     source: raw.source || 'supabase',
   }
 }

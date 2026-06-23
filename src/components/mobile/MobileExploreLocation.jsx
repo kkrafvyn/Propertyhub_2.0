@@ -2,7 +2,7 @@ import { IconPin, IconSliders } from '../icons'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { nearestNeighborhoodLabel } from '../../lib/geo-distance'
 
-export function MobileExploreSearchRow({ value, onChange, placeholder, onFiltersClick }) {
+export function MobileExploreSearchRow({ value, onChange, placeholder, onFiltersClick, activeFilterCount = 0 }) {
   const { t } = useTranslation()
 
   return (
@@ -23,10 +23,15 @@ export function MobileExploreSearchRow({ value, onChange, placeholder, onFilters
       <button
         type="button"
         onClick={onFiltersClick}
-        className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl border border-surface-border bg-surface text-ink"
+        className="relative flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl border border-surface-border bg-surface text-ink"
         aria-label={t('mobile.filters')}
       >
         <IconSliders className="h-4 w-4" />
+        {activeFilterCount > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-mobile-forest px-1 text-[10px] font-bold text-white">
+            {activeFilterCount}
+          </span>
+        )}
       </button>
     </div>
   )
@@ -89,47 +94,6 @@ export function MobileLocationBar({ location, onRequest, onClear, onRefresh }) {
       <button type="button" onClick={onClear} className="shrink-0 text-xs font-semibold text-ink-secondary underline">
         {t('common.close')}
       </button>
-    </div>
-  )
-}
-
-export function MobileExploreFiltersSheet({ open, onClose, filters, onChange }) {
-  const { t } = useTranslation()
-  if (!open) return null
-
-  return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40" role="dialog" aria-modal="true">
-      <div className="w-full max-w-lg rounded-t-2xl bg-surface p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-ink">{t('mobile.filters')}</h2>
-          <button type="button" onClick={onClose} className="text-sm font-semibold text-ink-secondary">{t('common.close')}</button>
-        </div>
-        <label className="mb-4 flex items-center justify-between text-sm">
-          <span className="font-medium">{t('filters.verifiedOnly')}</span>
-          <input
-            type="checkbox"
-            checked={filters.verifiedOnly}
-            onChange={(e) => onChange({ ...filters, verifiedOnly: e.target.checked })}
-            className="h-4 w-4 rounded border-surface-border"
-          />
-        </label>
-        <label className="mb-4 block text-sm">
-          <span className="mb-1 block font-medium">{t('filters.minBedrooms')}</span>
-          <select
-            className="w-full rounded-lg border border-surface-border px-3 py-2"
-            value={filters.minBedrooms}
-            onChange={(e) => onChange({ ...filters, minBedrooms: Number(e.target.value) })}
-          >
-            <option value={0}>{t('filters.any')}</option>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <option key={n} value={n}>{n}+</option>
-            ))}
-          </select>
-        </label>
-        <button type="button" onClick={onClose} className="mt-2 w-full rounded-xl bg-mobile-forest py-3 text-sm font-semibold text-white">
-          {t('home.showResults')}
-        </button>
-      </div>
     </div>
   )
 }

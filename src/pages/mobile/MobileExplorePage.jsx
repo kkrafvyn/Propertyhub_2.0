@@ -3,18 +3,26 @@ import MobileShell, { MobileHeader } from '../../components/MobileShell'
 import {
   MobilePropertyTypeRow,
   MobileTransactionTabs,
-  filterHomeListings,
 } from '../../components/mobile/MobileHomeSections'
 import {
-  MobileExploreFiltersSheet,
   MobileExploreSearchRow,
   MobileLocationBar,
 } from '../../components/mobile/MobileExploreLocation'
+import MobileExploreFiltersSheet from '../../components/mobile/MobileExploreFiltersSheet'
 import { MobileBoltListingTile, MobileEmpty } from '../../components/ui/MobileUI'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { cacheListingsForOffline, getCachedListings } from '../../lib/offline-cache'
 import { trackFunnel } from '../../lib/analytics'
 import { trackRecentSearch } from '../../lib/recent-activity'
+import {
+  applyExploreFilters,
+  countActiveExploreFilters,
+  defaultExploreFilters,
+  filterToPropertyRow,
+  listingTypeToTxTab,
+  propertyTypeRowToFilter,
+  txTabToListingType,
+} from '../../lib/explore-filters'
 import { enrichListingsWithDistance, formatDistanceKm, sortListingsByDistance } from '../../lib/geo-distance'
 import { useUserLocation } from '../../hooks/useUserLocation'
 import { fetchListings } from '../../services/marketplace-service'
@@ -28,7 +36,7 @@ export default function MobileExplorePage() {
   const [listings, setListings] = useState([])
   const [viewMode, setViewMode] = useState('list')
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [filters, setFilters] = useState({ verifiedOnly: false, minBedrooms: 0 })
+  const [filters, setFilters] = useState(defaultExploreFilters)
   const userLocation = useUserLocation({ watch: false })
 
   useEffect(() => {
@@ -44,18 +52,45 @@ export default function MobileExplorePage() {
       })
   }, [])
 
+  function handleTxTabChange(tab) {
+    setTxTab(tab)
+    setFilters((prev) => ({
+      ...prev,
+      listingType: txTabToListingType(tab),
+    }))
+  }
+
+  function handlePropTypeChange(type) {
+    setPropType(type)
+    setFilters((prev) => ({
+      ...prev,
+      propertyTypes: propertyTypeRowToFilter(type),
+    }))
+  }
+
+  function handleApplyFilters(next) {
+    setFilters(next)
+    setTxTab(listingTypeToTxTab(next.listingType) || 'stay')
+    setPropType(filterToPropertyRow(next.propertyTypes))
+  }
+
   const visible = useMemo(() => {
-    let filtered = filterHomeListings(listings, txTab, propType)
+    const effectiveFilters = {
+      ...filters,
+      listingType: filters.listingType || txTabToListingType(txTab),
+      propertyTypes: filters.propertyTypes?.length
+        ? filters.propertyTypes
+        : propertyTypeRowToFilter(propType),
+    }
+    let filtered = applyExploreFilters(listings, effectiveFilters)
     const q = search.trim().toLowerCase()
     if (q) {
       filtered = filtered.filter((l) =>
-        `${l.title} ${l.type} ${l.location || ''}`.toLowerCase().includes(q),
+        `${l.title} ${l.type} ${l.location || ''} ${l.area || ''}`.toLowerCase().includes(q),
       )
     }
-    if (filters.verifiedOnly) filtered = filtered.filter((l) => l.verified)
-    if (filters.minBedrooms > 0) filtered = filtered.filter((l) => (l.bedrooms ?? 0) >= filters.minBedrooms)
 
-    if (userLocation.isActive) {
+    if (userLocation.isActive && filters.sortBy === 'recommended') {
       filtered = enrichListingsWithDistance(filtered, userLocation.lat, userLocation.lng)
       filtered = sortListingsByDistance(filtered)
     }
@@ -65,7 +100,9 @@ export default function MobileExplorePage() {
         ? { ...l, distanceLabel: formatDistanceKm(l.distanceKm) }
         : l
     ))
-  }, [listings, txTab, propType, search, filters, userLocation.isActive, userLocation.lat, userLocation.lng])
+  }, [listings, filters, txTab, propType, search, userLocation.isActive, userLocation.lat, userLocation.lng])
+
+  const activeFilterCount = countActiveExploreFilters(filters)
 
   useEffect(() => {
     const q = search.trim()
@@ -87,6 +124,7 @@ export default function MobileExplorePage() {
         onChange={setSearch}
         placeholder={t('mobile.searchListings')}
         onFiltersClick={() => setFiltersOpen(true)}
+        activeFilterCount={activeFilterCount}
       />
       <MobileLocationBar
         location={userLocation}
@@ -94,8 +132,8 @@ export default function MobileExplorePage() {
         onClear={userLocation.clear}
         onRefresh={userLocation.request}
       />
-      <MobileTransactionTabs active={txTab} onChange={setTxTab} />
-      <MobilePropertyTypeRow active={propType} onChange={setPropType} />
+      <MobileTransactionTabs active={txTab} onChange={handleTxTabChange} />
+      <MobilePropertyTypeRow active={propType} onChange={handlePropTypeChange} />
 
       <div className="mb-3 flex gap-2 px-3 sm:px-4">
         {['list', 'map'].map((mode) => (
@@ -141,7 +179,9 @@ export default function MobileExplorePage() {
         open={filtersOpen}
         onClose={() => setFiltersOpen(false)}
         filters={filters}
-        onChange={setFilters}
+        onApply={handleApplyFilters}
+        listings={listings}
+        search={search}
       />
     </MobileShell>
   )

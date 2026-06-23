@@ -269,5 +269,73 @@ export default {
     "assignProvider": "Assign provider",
     "markComplete": "Mark complete",
     "trackRequests": "Track my requests"
+  },
+  "exploreFilters": {
+    "title": "Filters",
+    "propertyType": "Property type",
+    "listingType": "Listing type",
+    "location": "Location",
+    "region": "Region",
+    "city": "City",
+    "area": "Area / neighborhood",
+    "anyLocation": "Any",
+    "priceRange": "Price range",
+    "minPrice": "Minimum price",
+    "maxPrice": "Maximum price",
+    "noMax": "No max",
+    "bedrooms": "Bedrooms",
+    "bathrooms": "Bathrooms",
+    "verification": "BaytMiftah verification",
+    "verifiedProperties": "Verified properties only",
+    "verifiedPropertiesHint": "Listings reviewed and address-verified by our team",
+    "verifiedAgents": "Verified agents only",
+    "verifiedAgentsHint": "Independent agents with completed KYC",
+    "verifiedAgencies": "Verified agencies only",
+    "verifiedAgenciesHint": "Registered agencies with compliance checks",
+    "availability": "Availability",
+    "amenities": "Amenities",
+    "sortBy": "Sort by",
+    "reset": "Reset filters",
+    "showResults": "Show {{count}} results",
+    "propertyTypes": {
+      "apartment": "Apartment",
+      "house": "House",
+      "townhouse": "Townhouse",
+      "villa": "Villa",
+      "commercial": "Commercial",
+      "land": "Land"
+    },
+    "listingTypes": {
+      "rent": "Rent",
+      "buy": "Buy",
+      "lease": "Lease",
+      "shortStay": "Short stay"
+    },
+    "availabilityOptions": {
+      "available_now": "Available now",
+      "available_weekend": "Available this weekend",
+      "book_tomorrow": "Book tomorrow",
+      "instant_deals": "Instant deals"
+    },
+    "amenityOptions": {
+      "parking": "Parking",
+      "ac": "Air conditioning",
+      "security": "Security",
+      "furnished": "Furnished",
+      "pool": "Swimming pool",
+      "gym": "Gym",
+      "balcony": "Balcony",
+      "garden": "Garden",
+      "generator": "Generator",
+      "internet": "Internet included"
+    },
+    "sortOptions": {
+      "recommended": "Recommended",
+      "newest": "Newest",
+      "lowest_price": "Lowest price",
+      "highest_price": "Highest price",
+      "most_viewed": "Most viewed",
+      "verified_first": "Verified first"
+    }
   }
 }
