@@ -11,6 +11,7 @@ import PageMeta from '../components/PageMeta'
 import { fetchListingById, fetchListings } from '../services/marketplace-service'
 import { getAvailability, requestViewing } from '../services/booking-service'
 import StayBookingCard from '../components/StayBookingCard'
+import MessageHostButton from '../components/chat/MessageHostButton'
 import { trackRecentlyViewed } from '../lib/recent-activity'
 
 function PhotoGrid({ photos, title, onShowAll }) {
@@ -319,14 +320,17 @@ export default function ListingDetailPage() {
       <div className="mt-12 grid gap-16 lg:grid-cols-[1fr_380px]">
         <div className="space-y-10">
           <section className="border-b border-surface-border pb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold">{t('property.hostedBy', { host: listing.host })}</h2>
-                <p className="mt-1 text-ink-secondary">{metaParts.join(' · ')}</p>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold">{t('property.hostedBy', { host: listing.host })}</h2>
+                  <p className="mt-1 text-ink-secondary">{metaParts.join(' · ')}</p>
+                </div>
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-ink text-lg font-semibold text-white">
+                  {listing.host.charAt(0)}
+                </div>
               </div>
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-ink text-lg font-semibold text-white">
-                {listing.host.charAt(0)}
-              </div>
+              <MessageHostButton listing={listing} variant="primary" />
             </div>
           </section>
 

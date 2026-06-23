@@ -1,4 +1,4 @@
-import { callEdgeFunction } from '../lib/edge-client'
+import { buildListingChatIntro } from '../lib/listing-links'
 import {
   createViewingRequestInDb,
   fetchAgentViewingsFromDb,
@@ -107,7 +107,11 @@ export async function requestViewing({ listingId, date, guests = 1, notes = '', 
               listingId,
               listingTitle: listingTitle || listingId,
               participantName: hostName || 'Property host',
-              initialMessage: `Viewing request for ${date}${guests > 1 ? ` (${guests} guests)` : ''}.`,
+              initialMessage: buildListingChatIntro({
+                listingId,
+                listingTitle: listingTitle || listingId,
+                introLine: `Viewing request for ${date}${guests > 1 ? ` (${guests} guests)` : ''}.`,
+              }),
             })
           } catch {
             /* messaging optional */

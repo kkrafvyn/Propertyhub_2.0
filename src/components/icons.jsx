@@ -354,9 +354,9 @@ export function IconAntenna({ className = 'h-6 w-6' }) {
   )
 }
 
-export function IconDot({ className = 'h-1.5 w-1.5' }) {
+export function IconDot({ className = '' }) {
   return (
-    <svg className={className} viewBox="0 0 8 8" fill="currentColor" aria-hidden="true">
+    <svg className={`h-1.5 w-1.5 shrink-0 ${className}`.trim()} viewBox="0 0 8 8" fill="currentColor" aria-hidden="true">
       <circle cx="4" cy="4" r="4" />
     </svg>
   )

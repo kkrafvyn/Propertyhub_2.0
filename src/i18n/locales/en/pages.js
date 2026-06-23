@@ -66,8 +66,15 @@ export default {
     "title": "Messages",
     "subtitle": "Chat with hosts, agents, and buyers.",
     "selectConversation": "Select a conversation",
+    "emptyInbox": "No messages yet",
+    "emptyInboxHint": "Message an agent from any listing to start a conversation.",
+    "emptyThread": "Say hello to start the conversation.",
     "placeholder": "Write a message…",
-    "send": "Send"
+    "send": "Send",
+    "sending": "Sending…",
+    "opening": "Opening…",
+    "defaultIntro": "Hi, I'm interested in {{title}}.",
+    "viewListing": "View listing"
   },
   "vaultPage": {
     "title": "Document vault",

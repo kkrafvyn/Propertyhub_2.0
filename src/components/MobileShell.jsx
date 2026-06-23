@@ -4,7 +4,7 @@ import PushPrompt from './PushPrompt'
 import { IconChevronLeft, IconHeart, IconHome, IconMessage, IconSearch, IconUser } from './icons'
 import { useTranslation } from '../i18n/LocaleContext'
 import { useAuth } from '../context/AuthContext'
-import { CONSUMER_BOTTOM_TABS, getContextualTabs } from '../lib/consumer-nav'
+import { CONSUMER_BOTTOM_TABS } from '../lib/consumer-nav'
 
 const TAB_ICONS = {
   home: IconHome,
@@ -14,34 +14,15 @@ const TAB_ICONS = {
   user: IconUser,
 }
 
-export default function MobileShell({ children, hideNav = false, showContextual = true }) {
+export default function MobileShell({ children, hideNav = false }) {
   const { t } = useTranslation()
-  const { user, capabilities } = useAuth()
+  const { user } = useAuth()
 
-  const contextualTabs = showContextual && user ? getContextualTabs(capabilities) : []
-  const bottomPad = contextualTabs.length > 0
-    ? 'pb-[calc(6.75rem+env(safe-area-inset-bottom,0px))]'
-    : 'pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))]'
+  const bottomPad = 'pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))]'
 
   return (
     <div className={`mobile-bolt min-h-screen min-h-[100dvh] w-full overflow-x-clip bg-bolt-bg ${bottomPad} pt-[env(safe-area-inset-top,0px)] text-ink`}>
       <div className="mx-auto w-full min-w-0 max-w-lg sm:max-w-xl lg:max-w-2xl">{children}</div>
-
-      {contextualTabs.length > 0 && !hideNav && (
-        <div className="fixed inset-x-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] z-40 border-t border-surface-border bg-surface/95 backdrop-blur-sm">
-          <div className="mx-auto flex max-w-lg gap-1 overflow-x-auto px-2 py-2 sm:max-w-xl lg:max-w-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {contextualTabs.map(({ to, labelKey }) => (
-              <Link
-                key={to}
-                to={to}
-                className="shrink-0 rounded-full border border-surface-border bg-surface-subtle px-3 py-1.5 text-xs font-semibold text-ink"
-              >
-                {t(labelKey)}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
 
       {!hideNav && (
         <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-surface-border bg-surface shadow-bolt-nav">

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 import MobileShell, { MobileHeader } from '../../components/MobileShell'
 import ProtectedRoute from '../../components/ProtectedRoute'
-import { IconChevronLeft, IconChevronRight, IconDot, IconHeart } from '../../components/icons'
+import { IconChevronLeft, IconChevronRight, IconHeart } from '../../components/icons'
 import {
   MobileLinkRow,
   MobilePrimaryButton,
@@ -12,6 +12,10 @@ import {
 } from '../../components/ui/MobileUI'
 import MobileViewingModal from '../../components/mobile/MobileViewingModal'
 import { MobileHomeListingCard } from '../../components/mobile/MobileHomeSections'
+import ChatThread from '../../components/chat/ChatThread'
+import MessageHostButton from '../../components/chat/MessageHostButton'
+import { getListingPath } from '../../lib/listing-links'
+import { MobileEmpty } from '../../components/ui/MobileUI'
 import { fetchConversation, fetchConversations } from '../../services/messaging-service'
 import { fetchListings } from '../../services/marketplace-service'
 import { trackRecentlyViewed } from '../../lib/recent-activity'
@@ -33,33 +37,48 @@ function MobileMessagesContent() {
   const { t } = useTranslation()
   const { id } = useParams()
   const [conversations, setConversations] = useState([])
-  const [active, setActive] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [threadMeta, setThreadMeta] = useState(null)
 
   useEffect(() => {
-    fetchConversations().then(({ conversations: rows }) => setConversations(rows))
+    fetchConversations().then(({ conversations: rows }) => {
+      setConversations(rows)
+      setLoading(false)
+    })
   }, [])
 
   useEffect(() => {
-    if (id) fetchConversation(id).then(({ conversation }) => setActive(conversation))
-    else setActive(null)
-  }, [id])
+    if (!id) {
+      setThreadMeta(null)
+      return
+    }
+    const fromList = conversations.find((c) => c.id === id)
+    if (fromList) {
+      setThreadMeta(fromList)
+      return
+    }
+    fetchConversation(id).then(({ conversation }) => setThreadMeta(conversation))
+  }, [id, conversations])
 
-  if (active) {
+  if (id) {
     return (
       <MobileShell hideNav>
-        <MobileHeader title={active.participant} subtitle={active.listingTitle} backTo="/messages" />
-        <div className="space-y-2 px-4 py-4 pb-20">
-          {active.messages?.map((msg) => (
-            <div
-              key={msg.id}
-              className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
-                msg.sender === 'You' ? 'ml-auto bg-ink text-white' : 'bg-surface-subtle text-ink'
-              }`}
+        <MobileHeader
+          title={threadMeta?.participant || t('mobile.inbox')}
+          subtitle={threadMeta?.listingTitle}
+          backTo="/messages"
+        />
+        {(threadMeta?.listingId || threadMeta?.listing_id) && (
+          <div className="border-b border-surface-border bg-surface-subtle px-4 py-2">
+            <Link
+              to={getListingPath(threadMeta.listingId || threadMeta.listing_id)}
+              className="text-sm font-semibold text-brand-accent underline"
             >
-              {msg.body}
-            </div>
-          ))}
-        </div>
+              {t('messagesPage.viewListing')}
+            </Link>
+          </div>
+        )}
+        <ChatThread conversationId={id} stickyInput className="min-h-[calc(100dvh-4rem)]" />
       </MobileShell>
     )
   }
@@ -67,14 +86,34 @@ function MobileMessagesContent() {
   return (
     <MobileShell>
       <MobileHeader title={t('mobile.inbox')} />
-      <div className="divide-y divide-surface-border">
-        {conversations.map((conv) => (
-          <Link key={conv.id} to={`/messages/${conv.id}`} className="block px-4 py-4">
-            <p className="font-semibold text-ink">{conv.participant}</p>
-            <p className="truncate text-sm text-ink-secondary">{conv.lastMessage}</p>
-          </Link>
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex min-h-[40vh] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-accent border-t-transparent" />
+        </div>
+      ) : conversations.length === 0 ? (
+        <div className="px-4 py-8">
+          <MobileEmpty title={t('messagesPage.emptyInbox')} description={t('messagesPage.emptyInboxHint')} />
+        </div>
+      ) : (
+        <div className="divide-y divide-surface-border">
+          {conversations.map((conv) => (
+            <Link key={conv.id} to={`/messages/${conv.id}`} className="block px-4 py-4">
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-semibold text-ink">{conv.participant}</p>
+                {conv.unread > 0 && (
+                  <span className="rounded-full bg-mobile-forest px-2 py-0.5 text-xs font-semibold text-white">
+                    {conv.unread}
+                  </span>
+                )}
+              </div>
+              {conv.listingTitle && (
+                <p className="mt-0.5 truncate text-xs text-ink-secondary">{conv.listingTitle}</p>
+              )}
+              <p className="mt-1 truncate text-sm text-ink-secondary">{conv.lastMessage}</p>
+            </Link>
+          ))}
+        </div>
+      )}
     </MobileShell>
   )
 }
@@ -283,7 +322,7 @@ export function MobilePropertyPage() {
             <MobileBadge tone="accent">{t('categories.verified')}</MobileBadge>
           )}
           {listing.featured && <MobileBadge tone="accent">{t('listing.guestFavourite')}</MobileBadge>}
-          {listing.propertyType && <MobileBadge>{listing.propertyType}</MobileBadge>}
+          {listing.type && <MobileBadge>{listing.type}</MobileBadge>}
         </div>
         <p className="text-xl font-semibold text-ink">{listing.priceLabel}</p>
         <p className="text-sm leading-relaxed text-ink-secondary">{listing.description}</p>
@@ -301,28 +340,22 @@ export function MobilePropertyPage() {
             >
               {t('listing.requestViewing')}
             </MobilePrimaryButton>
-            <Link
-              to={user ? '/messages' : '/login'}
-              state={user ? undefined : { from: '/messages' }}
-              className="flex flex-1 items-center justify-center rounded-xl border border-surface-border bg-surface px-3 py-2.5 text-sm font-semibold text-ink"
-            >
-              {t('mobile.messageAgent')}
-            </Link>
+            <MessageHostButton listing={listing} className="flex-1" />
           </div>
         </article>
 
         {listing.amenities?.length > 0 && (
-          <div>
-            <p className="mb-2 text-sm font-semibold text-ink">{t('listing.whatOffers')}</p>
-            <ul className="space-y-1.5 text-sm text-ink-secondary">
-              {listing.amenities.slice(0, 6).map((item) => (
-                <li key={item} className="flex items-start gap-2">
-                  <IconDot className="mt-2 shrink-0 text-ink-secondary" />
-                  <span>{item}</span>
-                </li>
+          <section>
+            <h2 className="mb-3 text-sm font-semibold text-ink">{t('listing.whatOffers')}</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {listing.amenities.map((item) => (
+                <div key={item} className="flex items-center gap-2.5 text-sm text-ink">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                  {item}
+                </div>
               ))}
-            </ul>
-          </div>
+            </div>
+          </section>
         )}
 
         {similar.length > 0 && (

@@ -8,6 +8,22 @@ import {
 import { supabase } from '../lib/supabase'
 import { conversations, getConversation } from '../data/messages'
 
+function normalizeConversation(conv) {
+  if (!conv) return conv
+  return {
+    ...conv,
+    participant: conv.participant ?? conv.participant_name,
+    listingTitle: conv.listingTitle ?? conv.listing_title,
+    listingId: conv.listingId ?? conv.listing_id,
+    listing_id: conv.listing_id ?? conv.listingId,
+    lastMessage: conv.lastMessage ?? conv.last_message,
+  }
+}
+
+function normalizeConversationList(rows = []) {
+  return rows.map(normalizeConversation)
+}
+
 async function getAuthUserId() {
   if (!supabase) return null
   const { data } = await supabase.auth.getUser()
@@ -21,7 +37,7 @@ export async function fetchConversations() {
       query: { action: 'list' },
     })
     const rows = payload?.conversations ?? []
-    if (rows.length) return { conversations: rows, source: 'supabase' }
+    if (rows.length) return { conversations: normalizeConversationList(rows), source: payload.source ?? 'supabase' }
   } catch {
     /* direct DB */
   }
@@ -29,10 +45,10 @@ export async function fetchConversations() {
   const userId = await getAuthUserId()
   if (userId) {
     const rows = await fetchConversationsFromDb(userId)
-    if (rows?.length) return { conversations: rows, source: 'supabase' }
+    if (rows?.length) return { conversations: normalizeConversationList(rows), source: 'supabase' }
   }
 
-  return { conversations, source: 'local' }
+  return { conversations: normalizeConversationList(conversations), source: 'local' }
 }
 
 export async function fetchConversation(id) {
@@ -41,7 +57,9 @@ export async function fetchConversation(id) {
       allowAnonymous: false,
       query: { action: 'thread', id },
     })
-    if (payload?.conversation) return { conversation: payload.conversation, source: 'supabase' }
+    if (payload?.conversation) {
+      return { conversation: normalizeConversation(payload.conversation), source: payload.source ?? 'supabase' }
+    }
   } catch {
     /* direct DB */
   }
@@ -49,11 +67,11 @@ export async function fetchConversation(id) {
   const userId = await getAuthUserId()
   if (userId) {
     const conversation = await fetchConversationFromDb(userId, id)
-    if (conversation) return { conversation, source: 'supabase' }
+    if (conversation) return { conversation: normalizeConversation(conversation), source: 'supabase' }
   }
 
   const conversation = getConversation(id)
-  return { conversation, source: conversation ? 'local' : 'none' }
+  return { conversation: normalizeConversation(conversation), source: conversation ? 'local' : 'none' }
 }
 
 export async function sendMessage(conversationId, body) {
@@ -101,7 +119,7 @@ export async function openListingConversation({ listingId, listingTitle, partici
   const conv = await findOrCreateConversationForListing(userId, { listingId, listingTitle, participantName })
   if (!conv) return { ok: false, error: 'Could not create conversation' }
 
-  if (initialMessage) {
+  if (initialMessage && conv.isNew) {
     await sendMessageInDb(userId, conv.id, initialMessage)
   }
 

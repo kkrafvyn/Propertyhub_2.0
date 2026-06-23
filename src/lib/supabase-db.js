@@ -210,7 +210,7 @@ export async function upsertUserProfileFromAuth(user, metadata = {}) {
   return data
 }
 
-function mapConversationRow(row, messages = []) {
+function mapConversationRow(row, messages = [], { isNew = false } = {}) {
   return {
     id: row.id,
     participant: row.participant_name,
@@ -218,9 +218,11 @@ function mapConversationRow(row, messages = []) {
     listingTitle: row.listing_title,
     listing_title: row.listing_title,
     listing_id: row.listing_id,
+    listingId: row.listing_id,
     lastMessage: row.last_message,
     last_message: row.last_message,
     unread: row.unread ?? 0,
+    isNew,
     messages: messages.map((m) => ({
       id: m.id,
       sender: m.sender,
@@ -289,7 +291,7 @@ export async function findOrCreateConversationForListing(userId, { listingId, li
     .eq('listing_id', listingId)
     .maybeSingle()
 
-  if (existing) return mapConversationRow(existing)
+  if (existing) return mapConversationRow(existing, [], { isNew: false })
 
   const { data: conv, error } = await supabase
     .from('conversations')
@@ -305,7 +307,7 @@ export async function findOrCreateConversationForListing(userId, { listingId, li
     .single()
 
   if (error) return null
-  return mapConversationRow(conv)
+  return mapConversationRow(conv, [], { isNew: true })
 }
 
 export async function probeBackendConnection() {

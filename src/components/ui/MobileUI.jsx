@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { IconChevronLeft, IconChevronRight, IconStar } from '../icons'
+import { ListingCardImage } from '../ListingCardImage'
 import { useTranslation } from '../../i18n/LocaleContext'
 
 export function MobileCard({ children, className = '', as: Tag = 'div', ...props }) {
@@ -143,7 +144,7 @@ export function MobileBoltListingTile({ listing, to }) {
 
   return (
     <Link to={to} className="overflow-hidden rounded-2xl bg-bolt-card shadow-bolt-card">
-      <img src={listing.image} alt="" className="aspect-[4/3] w-full object-cover" />
+      <ListingCardImage listing={listing} className="aspect-[4/3] w-full" alt="" />
       <div className="p-3">
         <p className="truncate text-sm font-bold text-ink">{listing.title}</p>
         <ListingMeta listing={listing} t={t} className="mt-0.5 truncate text-xs text-ink-secondary" />

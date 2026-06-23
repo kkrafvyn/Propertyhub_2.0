@@ -2,13 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from '../../i18n/LocaleContext'
-import { IconHeart } from '../icons'
 import { hasCapability } from '../../lib/capabilities'
 import {
   CONSUMER_ACTIVITY_LINKS,
   CONSUMER_AI_LINKS,
   CONSUMER_QUICK_ACTIONS,
-  getContextualTabs,
 } from '../../lib/consumer-nav'
 import { fetchConsumerActivity } from '../../services/consumer-service'
 import { fetchReservations } from '../../services/reservation-service'
@@ -56,7 +54,6 @@ export default function ConsumerMenuContent({ onNavigate, showIntro = true }) {
   const activityLinks = CONSUMER_ACTIVITY_LINKS.filter(
     (a) => !a.cap || hasCapability(capabilities, a.cap),
   )
-  const contextualTabs = user ? getContextualTabs(capabilities) : []
   const quickActions = CONSUMER_QUICK_ACTIONS.filter(
     (a) => !a.cap || hasCapability(capabilities, a.cap),
   )
@@ -73,20 +70,6 @@ export default function ConsumerMenuContent({ onNavigate, showIntro = true }) {
         </div>
       )}
 
-      <Section title={t('mobile.menuShortcuts')}>
-        <Link
-          to="/saved"
-          onClick={onNavigate}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-surface-border bg-surface py-3 text-sm font-semibold text-ink"
-        >
-          <IconHeart className="h-5 w-5" />
-          {t('mobile.saved')}
-          {savedCount > 0 && (
-            <span className="rounded-full bg-mobile-forest/10 px-2 py-0.5 text-xs text-mobile-forest">{savedCount}</span>
-          )}
-        </Link>
-      </Section>
-
       <Section title={t('consumer.dashboard.myActivity')}>
         <div className="space-y-2">
           {activityLinks.map(({ to, labelKey, authRequired }) => (
@@ -102,23 +85,6 @@ export default function ConsumerMenuContent({ onNavigate, showIntro = true }) {
           ))}
         </div>
       </Section>
-
-      {contextualTabs.length > 0 && (
-        <Section title={t('mobile.menuWorkspace')}>
-          <div className="flex flex-wrap gap-2">
-            {contextualTabs.map(({ to, labelKey }) => (
-              <Link
-                key={to}
-                to={to}
-                onClick={onNavigate}
-                className="rounded-full border border-surface-border bg-surface-subtle px-3 py-2 text-xs font-semibold text-ink"
-              >
-                {t(labelKey)}
-              </Link>
-            ))}
-          </div>
-        </Section>
-      )}
 
       {(hasCapability(capabilities, 'buy') || activityFeed.some((i) => i.category === 'deal')) && (
         <Section title={t('mobile.menuMyDeals')}>

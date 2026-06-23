@@ -2,17 +2,15 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import DesktopShell, { CompactSearch } from '../components/DesktopShell'
 import ProtectedRoute from '../components/ProtectedRoute'
-import { Badge, PageTitle, inputClass } from '../components/ui/AirbnbUI'
+import ChatThread, { ChatThreadHeader } from '../components/chat/ChatThread'
+import { Badge, PageTitle } from '../components/ui/AirbnbUI'
 import { useTranslation } from '../i18n/LocaleContext'
-import { fetchConversation, fetchConversations, sendMessage } from '../services/messaging-service'
-import { subscribeToMessages } from '../lib/realtime'
+import { fetchConversations } from '../services/messaging-service'
 
 function MessagesContent() {
   const { t } = useTranslation()
   const { id } = useParams()
   const [conversations, setConversations] = useState([])
-  const [active, setActive] = useState(null)
-  const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -22,32 +20,7 @@ function MessagesContent() {
     })
   }, [])
 
-  useEffect(() => {
-    if (!id) {
-      setActive(null)
-      return undefined
-    }
-    fetchConversation(id).then(({ conversation }) => setActive(conversation))
-
-    return subscribeToMessages(id, (row) => {
-      setActive((prev) => {
-        if (!prev || prev.id !== id) return prev
-        return {
-          ...prev,
-          messages: [...(prev.messages ?? []), { id: row.id, sender: row.sender, body: row.body }],
-        }
-      })
-    })
-  }, [id])
-
-  async function handleSend(e) {
-    e.preventDefault()
-    if (!draft.trim() || !active) return
-    await sendMessage(active.id, draft.trim())
-    setDraft('')
-    const { conversation } = await fetchConversation(active.id)
-    setActive(conversation)
-  }
+  const activeMeta = conversations.find((c) => c.id === id)
 
   return (
     <DesktopShell search={<CompactSearch />}>
@@ -57,6 +30,8 @@ function MessagesContent() {
         <aside className="border-b border-surface-border lg:border-b-0 lg:border-r">
           {loading ? (
             <p className="p-4 text-sm text-ink-secondary">{t('common.loading')}</p>
+          ) : conversations.length === 0 ? (
+            <p className="p-4 text-sm text-ink-secondary">{t('messagesPage.emptyInbox')}</p>
           ) : (
             conversations.map((conv) => (
               <Link
@@ -66,51 +41,27 @@ function MessagesContent() {
                   id === conv.id ? 'bg-surface-hover' : ''
                 }`}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <p className="font-semibold text-ink">{conv.participant}</p>
-                  {conv.unread > 0 && (
-                    <Badge tone="accent">{conv.unread}</Badge>
-                  )}
+                  {conv.unread > 0 && <Badge tone="accent">{conv.unread}</Badge>}
                 </div>
+                {conv.listingTitle && (
+                  <p className="mt-0.5 truncate text-xs text-ink-secondary">{conv.listingTitle}</p>
+                )}
                 <p className="mt-1 truncate text-sm text-ink-secondary">{conv.lastMessage}</p>
               </Link>
             ))
           )}
         </aside>
-        <section className="flex flex-col">
-          {!active ? (
+        <section className="flex min-h-[420px] flex-col">
+          {!id ? (
             <div className="flex flex-1 items-center justify-center p-8 text-ink-secondary">
               {t('messagesPage.selectConversation')}
             </div>
           ) : (
             <>
-              <div className="border-b border-surface-border px-4 py-3">
-                <p className="font-semibold text-ink">{active.participant}</p>
-                <p className="text-sm text-ink-secondary">{active.listingTitle}</p>
-              </div>
-              <div className="flex-1 space-y-3 overflow-y-auto p-4">
-                {active.messages?.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
-                      msg.sender === 'You' ? 'ml-auto bg-ink text-white' : 'bg-surface-subtle text-ink'
-                    }`}
-                  >
-                    {msg.body}
-                  </div>
-                ))}
-              </div>
-              <form onSubmit={handleSend} className="flex gap-2 border-t border-surface-border p-4">
-                <input
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder={t('messagesPage.placeholder')}
-                  className={`${inputClass} rounded-full`}
-                />
-                <button type="submit" className="rounded-full bg-brand-accent px-5 py-2 text-sm font-semibold text-white">
-                  {t('messagesPage.send')}
-                </button>
-              </form>
+              <ChatThreadHeader conversation={activeMeta} />
+              <ChatThread conversationId={id} className="min-h-[360px]" />
             </>
           )}
         </section>

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import Logo from '../Logo'
 import NotificationBell from '../NotificationBell'
+import { ListingCardImage } from '../ListingCardImage'
 import { IconChevronRight, IconHeart, IconHome, IconMenu, propertyTypeIcons } from '../icons'
 import { useTranslation } from '../../i18n/LocaleContext'
 
@@ -165,7 +166,7 @@ export function MobileHomeListingCard({ listing, to, badge, saved, onToggleSave 
     <div className="relative w-[min(260px,78vw)] shrink-0">
       <Link to={to} className="block overflow-hidden rounded-2xl bg-bolt-card shadow-[0_2px_12px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
         <div className="relative aspect-[4/3]">
-          <img src={listing.image} alt="" className="h-full w-full object-cover" />
+          <ListingCardImage listing={listing} className="h-full w-full" alt="" />
           {displayBadge && (
             <span
               className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white ${

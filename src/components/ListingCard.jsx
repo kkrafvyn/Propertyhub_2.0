@@ -1,8 +1,7 @@
-import { useState } from 'react'
-
 import { Link } from 'react-router-dom'
 
 import { IconHeart, IconStar, IconChevronLeft, IconChevronRight } from './icons'
+import { getListingPhotos, useListingPhotoCarousel } from '../hooks/useListingPhotoCarousel'
 
 import { useTranslation } from '../i18n/LocaleContext'
 
@@ -26,9 +25,8 @@ export default function ListingCard({
 
   const { t } = useTranslation()
 
-  const [photoIndex, setPhotoIndex] = useState(0)
-
-  const photos = listing.photos?.length ? listing.photos : [listing.image]
+  const photos = getListingPhotos(listing)
+  const [photoIndex, setPhotoIndex] = useListingPhotoCarousel(photos)
 
   const widthClass = compact ? 'w-[min(100%,320px)] shrink-0 sm:w-[300px] lg:w-[320px]' : 'w-full'
 
@@ -58,17 +56,17 @@ export default function ListingCard({
 
       <div className="relative aspect-square overflow-hidden rounded-listing bg-white/5">
 
-        <img
-
-          src={photos[photoIndex]}
-
-          alt={listing.title}
-
-          loading="lazy"
-
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-
-        />
+        {photos.map((src, i) => (
+          <img
+            key={`${src}-${i}`}
+            src={src}
+            alt={listing.title}
+            loading={i === 0 ? 'lazy' : undefined}
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out group-hover:scale-[1.02] ${
+              i === photoIndex ? 'opacity-100' : 'opacity-0'
+            }`}
+          />
+        ))}
 
 
 
