@@ -2,9 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Search, SlidersHorizontal, Grid3x3, List, Map, MapPin, Bed, Bath, X, Loader2, Bell, Sparkles, Heart } from "lucide-react";
 import { savedPropertyService } from "../../lib/savedproperty.service";
-import { CardGridSkeleton, EmptyState, PageHeader } from "../components/ux";
+import { EmptyState, PageHeader } from "../components/ux";
 import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
-import { Navbar } from "../components/Navbar";
+import {
+  DesktopShell,
+  ListingCard,
+  ListingCardSkeleton,
+  SearchPill,
+  mapListingToCard,
+} from "../components/baytmiftah";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
@@ -213,10 +219,7 @@ export function PropertySearch() {
     setShowFilters(false);
   };
 
-  const toggleSavedListing = async (listingId: string, event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-
+  const handleToggleSave = async (listingId: string) => {
     if (!user) {
       toast.error("Log in to save properties.");
       navigate("/login", { state: { from: `/search${window.location.search || ""}` } });
@@ -236,6 +239,12 @@ export function PropertySearch() {
       console.error(error);
       toast.error("Unable to update saved properties.");
     }
+  };
+
+  const toggleSavedListing = async (listingId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    await handleToggleSave(listingId);
   };
 
   const clearFilters = () => {
@@ -353,11 +362,52 @@ export function PropertySearch() {
     selectedMapQuery
   )}&output=embed`;
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+  const searchLocation = searchParams.get("q") || "";
+  const searchPropertyType = filters.propertyType !== "all" ? filters.propertyType : "any";
+  const searchBudget = filters.priceMax || "";
 
-      <div className="pt-24 pb-12 px-4 max-w-7xl mx-auto">
+  const handleHeaderSearch = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (searchLocation.trim()) nextParams.set("q", searchLocation.trim());
+    else nextParams.delete("q");
+    if (searchPropertyType !== "any") nextParams.set("propertyType", searchPropertyType);
+    else nextParams.delete("propertyType");
+    if (searchBudget.trim()) nextParams.set("priceMax", searchBudget.replace(/\D/g, ""));
+    else nextParams.delete("priceMax");
+    nextParams.set("page", "1");
+    setSearchParams(nextParams);
+  };
+
+  return (
+    <DesktopShell
+      search={
+        <SearchPill
+          location={searchLocation}
+          onLocationChange={(value) => {
+            const nextParams = new URLSearchParams(searchParams);
+            if (value.trim()) nextParams.set("q", value.trim());
+            else nextParams.delete("q");
+            setSearchParams(nextParams);
+          }}
+          propertyType={searchPropertyType}
+          onTypeChange={(value) => {
+            const nextParams = new URLSearchParams(searchParams);
+            if (value !== "any") nextParams.set("propertyType", value);
+            else nextParams.delete("propertyType");
+            setSearchParams(nextParams);
+          }}
+          budget={searchBudget}
+          onBudgetChange={(value) => {
+            const nextParams = new URLSearchParams(searchParams);
+            if (value.trim()) nextParams.set("priceMax", value.replace(/\D/g, ""));
+            else nextParams.delete("priceMax");
+            setSearchParams(nextParams);
+          }}
+          onSearch={handleHeaderSearch}
+        />
+      }
+    >
+      <div className="pb-12">
         <BaytMiftahAIPanel
           context="search"
           compact
@@ -619,7 +669,11 @@ export function PropertySearch() {
           {/* Properties Grid/List */}
           <div className="flex-1">
             {loading ? (
-              <CardGridSkeleton count={6} />
+              <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <ListingCardSkeleton key={i} />
+                ))}
+              </div>
             ) : listings.length === 0 ? (
               <EmptyState
                 icon={Search}
@@ -636,72 +690,14 @@ export function PropertySearch() {
                   <p className="text-muted-foreground">{resultSummary}</p>
                 </div>
                 {viewMode === "grid" ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {listings.map((listing, index) => (
-                      <motion.div
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {listings.map((listing) => (
+                      <ListingCard
                         key={listing.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                      >
-                        <Link to={`/property/${listing.id}`}>
-                          <Card hover className="overflow-hidden">
-                            <div className="relative h-48 overflow-hidden">
-                              <img
-                                src={getPropertyCoverImage(listing.property)}
-                                alt={listing.property?.address}
-                                className="w-full h-full object-cover"
-                              />
-                              <div className="absolute top-3 right-3 flex gap-2">
-                                <button
-                                  type="button"
-                                  className="bg-white/90 backdrop-blur-sm p-2 rounded-full"
-                                  onClick={(event) => void toggleSavedListing(listing.id, event)}
-                                  aria-label={savedListingIds.has(listing.id) ? "Unsave property" : "Save property"}
-                                >
-                                  <Heart
-                                    className={`w-4 h-4 ${savedListingIds.has(listing.id) ? "fill-primary text-primary" : ""}`}
-                                  />
-                                </button>
-                                <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold">
-                                  {listing.property?.category || "Property"}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="p-4">
-                              <h3 className="font-semibold text-lg mb-2 line-clamp-2">
-                                {listing.property?.address || 'Property'}
-                              </h3>
-                              <div className="flex items-center gap-1 text-muted-foreground mb-3">
-                                <MapPin className="w-4 h-4 flex-shrink-0" />
-                                <span className="text-sm">{listing.property?.city}, {listing.property?.region}</span>
-                              </div>
-                              <div className="flex items-center justify-between mb-3">
-                                <div>
-                                  <span className="text-2xl font-semibold text-primary">
-                                    GHS {listing.price.toLocaleString()}
-                                  </span>
-                                  {listing.listing_type === 'rental' && (
-                                    <span className="text-sm text-muted-foreground">/month</span>
-                                  )}
-                                </div>
-                              </div>
-                              {listing.property?.bedrooms && (
-                                <div className="flex gap-4 text-sm text-muted-foreground border-t border-border pt-3">
-                                  <div className="flex items-center gap-1">
-                                    <Bed className="w-4 h-4" />
-                                    <span>{listing.property.bedrooms}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <Bath className="w-4 h-4" />
-                                    <span>{listing.property.bathrooms}</span>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </Card>
-                        </Link>
-                      </motion.div>
+                        listing={mapListingToCard(listing)}
+                        saved={savedListingIds.has(listing.id)}
+                        onToggleSave={handleToggleSave}
+                      />
                     ))}
                   </div>
                 ) : viewMode === "list" ? (
@@ -858,6 +854,6 @@ export function PropertySearch() {
           </div>
         </div>
       </div>
-    </div>
+    </DesktopShell>
   );
 }

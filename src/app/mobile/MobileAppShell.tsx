@@ -26,6 +26,18 @@ import { consumerContextService } from "../../lib/consumer-context.service";
 import { getPropertyCoverImage } from "../../lib/property-media";
 import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
 import { NotificationBell } from "../components/NotificationBell";
+import {
+  MobileCarouselSection,
+  MobileHeroBanner,
+  MobileHomeListingCard,
+  MobilePromoCard,
+  MobilePropertyTypeRow,
+  MobileReferenceHeader,
+  MobileTransactionTabs,
+  filterHomeListings,
+} from "../components/baytmiftah/mobile/MobileHomeSections";
+import { mapListingToCard } from "../components/baytmiftah";
+import MobileHomeMenu from "../components/baytmiftah/mobile/MobileHomeMenu";
 import "./mobile.css";
 
 type MobileTab = "home" | "explore" | "saved" | "messages" | "profile";
@@ -146,7 +158,10 @@ function MobileTabButton({
 export function MobileAppShell() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<MobileTab>("home");
+  const [txTab, setTxTab] = useState("rent");
+  const [propType, setPropType] = useState<string | null>(null);
   const [listingType, setListingType] = useState<ListingType>("rental");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -297,90 +312,39 @@ export function MobileAppShell() {
 
   const renderContent = () => {
     if (activeTab === "home") {
+      const cards = listings.map(mapListingToCard);
+      const homeListings = filterHomeListings(cards, txTab, propType);
+
       return (
         <>
-          <section className="mobile-hero">
-            <div>
-              <p className="mobile-eyebrow">Ghana property market</p>
-              <h1>Find a place that feels settled.</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              {user ? <NotificationBell userId={user.id} /> : null}
-              <button
-                type="button"
-                className="mobile-icon-button"
-                onClick={() => setActiveTab("profile")}
-                aria-label="Open profile"
-                title="Profile"
-              >
-                {user ? initials : <UserRound aria-hidden="true" />}
-              </button>
-            </div>
-          </section>
+          <MobileReferenceHeader menuEnabled onMenuClick={() => setMenuOpen(true)} />
+          <MobileHeroBanner />
+          <MobileTransactionTabs active={txTab} onChange={setTxTab} />
+          <MobilePropertyTypeRow active={propType} onChange={setPropType} />
 
-          <form
-            className="mobile-search-bar"
-            onSubmit={(event) => {
-              event.preventDefault();
-              submitSearch();
-            }}
-          >
-            <Search aria-hidden="true" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search Accra, Labone, East Legon"
-            />
-          </form>
-
-          <section className="mobile-segmented" aria-label="Listing type">
-            {listingTabs.map((tab) => (
-              <button
-                key={tab.value}
-                type="button"
-                className={listingType === tab.value ? "is-active" : ""}
-                onClick={() => setListingType(tab.value)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </section>
-
-          {featuredListing && (
-            <section className="mobile-feature">
-              <Link to={`/property/${featuredListing.id}`} className="mobile-feature-link">
-                <img
-                  src={getPropertyCoverImage(featuredListing.property)}
-                  alt={featuredListing.property?.address || "Featured property"}
+          <MobileCarouselSection title="Available now" seeAllTo="/search">
+            {loading ? (
+              <div className="mobile-loading px-4">
+                <Loader2 aria-hidden="true" />
+              </div>
+            ) : (
+              homeListings.slice(0, 8).map((listing) => (
+                <MobileHomeListingCard
+                  key={listing.id}
+                  listing={listing}
+                  to={`/property/${listing.id}`}
                 />
-                <div>
-                  <span>{getListingLabel(featuredListing.listing_type)}</span>
-                  <strong>{featuredListing.property?.address}</strong>
-                  <p>{formatPrice(featuredListing.price, featuredListing.currency)}</p>
-                </div>
-              </Link>
-            </section>
-          )}
+              ))
+            )}
+          </MobileCarouselSection>
 
-          <section className="mobile-section">
-            <div className="mobile-section-heading">
-              <h2>Fresh listings</h2>
-              <Link to="/search">View all</Link>
-            </div>
-            <div className="mobile-list">
-              {loading ? (
-                <div className="mobile-loading">
-                  <Loader2 aria-hidden="true" />
-                </div>
-              ) : (
-                filteredListings.map((listing) => (
-                  <MobilePropertyCard key={listing.id} listing={listing} />
-                ))
-              )}
-            </div>
-          </section>
+          <MobileCarouselSection title="Explore modes">
+            <MobilePromoCard title="Buy" subtitle="Browse sales" to="/search?listingType=sale" index={0} />
+            <MobilePromoCard title="Rent" subtitle="Monthly homes" to="/search?listingType=rental" index={1} />
+            <MobilePromoCard title="Stay" subtitle="Short stays" to="/search?listingType=short_stay" index={2} />
+          </MobileCarouselSection>
 
-          <section className="mobile-section">
+          <section className="mobile-section px-4">
             <div className="mobile-section-heading">
               <h2>Verified agencies</h2>
             </div>
@@ -592,7 +556,7 @@ export function MobileAppShell() {
   };
 
   return (
-    <main className="mobile-app-shell">
+    <main className="mobile-bolt mobile-app-shell">
       <div className="mobile-content">{renderContent()}</div>
       {contextualNav.length > 0 && user ? (
         <div className="mobile-context-nav" aria-label="Contextual navigation">
@@ -635,6 +599,7 @@ export function MobileAppShell() {
           onClick={() => setActiveTab("profile")}
         />
       </nav>
+      <MobileHomeMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </main>
   );
 }

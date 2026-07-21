@@ -65,6 +65,7 @@ import { WorkspaceNewListing } from "./WorkspaceNewListing";
 import { WorkspacePayments } from "./WorkspacePayments";
 import { WorkspaceSettings } from "./WorkspaceSettings";
 import { WorkspaceTeam } from "./WorkspaceTeam";
+import { Logo } from "../../components/baytmiftah";
 import {
   WORKSPACE_ENTRY_PATH,
   getWorkspaceRoute,
@@ -125,15 +126,11 @@ const ENTERPRISE_NAV_ITEMS: NavItem[] = [
 ];
 
 function getNavItemClasses(isActive: boolean) {
-  return `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-    isActive ? "bg-primary text-white" : "hover:bg-secondary"
-  }`;
+  return `workspace-nav-link flex items-center gap-3 ${isActive ? "active" : ""}`;
 }
 
 function getFeatureNavItemClasses(isActive: boolean) {
-  return `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-    isActive ? "bg-primary/10 text-primary" : "hover:bg-secondary"
-  }`;
+  return `workspace-nav-link flex items-center gap-3 ${isActive ? "active" : ""}`;
 }
 
 function getRoleLabel(role: MemberRole | null) {
@@ -410,32 +407,17 @@ export function WorkspaceLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="bg-white border-b border-border">
-        <div className="px-6 py-4">
+    <div className="desktop-shell min-h-screen">
+      <nav className="desktop-header border-b border-white/10 bg-brand-marketplace">
+        <div className="mx-auto max-w-[var(--max-width-page)] px-6 py-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
-              <Link to="/" className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2"
-                  >
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                    <polyline points="9 22 9 12 15 12 15 22" />
-                  </svg>
-                </div>
-                <span className="text-xl font-semibold">Property Hub</span>
-              </Link>
-              <div className="h-8 w-px bg-border hidden md:block" />
+              <Logo inverted />
+              <div className="h-8 w-px bg-white/15 hidden md:block" />
               <div>
-                <h2 className="font-semibold">{organization.name}</h2>
-                <p className="text-xs text-muted-foreground">
-                  Workspace - {getRoleLabel(currentRole)}
+                <h2 className="font-semibold text-ink">{organization.name}</h2>
+                <p className="text-xs text-ink-secondary">
+                  Workspace · {getRoleLabel(currentRole)}
                 </p>
               </div>
             </div>
@@ -466,7 +448,7 @@ export function WorkspaceLayout() {
       </nav>
 
       <div className="flex">
-        <aside className="w-64 border-r border-border bg-white min-h-[calc(100vh-73px)] p-6 overflow-y-auto">
+        <aside className="w-64 border-r border-white/10 bg-brand-marketplace/80 min-h-[calc(100vh-73px)] p-6 overflow-y-auto">
           <nav className="space-y-2">
             <div className="mb-6">
               <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">CORE</h3>

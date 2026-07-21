@@ -1,10 +1,10 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import { Mail, Loader2, Phone, ShieldCheck } from "lucide-react";
-import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
+import { AuthPageLayout, PrimaryButton, SecondaryButton } from "../../components/baytmiftah";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -91,24 +91,11 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Left Side - Form */}
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 mb-6">
-              <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
-              </div>
-            </Link>
-            <h1 className="text-3xl font-semibold mb-2">Welcome Back</h1>
-            <p className="text-muted-foreground">Log in to access your Property Hub account</p>
-          </div>
-
-          <div className="mb-6 grid grid-cols-2 rounded-xl bg-secondary p-1">
+    <AuthPageLayout
+      title="Welcome back"
+      subtitle="Log in to your BaytMiftah account"
+    >
+      <div className="mb-6 grid grid-cols-2 rounded-xl bg-surface-subtle p-1">
             <button
               type="button"
               className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
@@ -203,7 +190,7 @@ export function Login() {
               </Link>
             </div>
 
-            <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            <PrimaryButton type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -214,13 +201,13 @@ export function Login() {
               ) : (
                 "Log In"
               )}
-            </Button>
+            </PrimaryButton>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-muted-foreground">
+            <p className="text-ink-secondary">
               Don't have an account?{" "}
-              <Link to="/signup" className="text-primary hover:underline font-semibold">
+              <Link to="/signup" className="font-semibold text-ink underline hover:opacity-80">
                 Sign up
               </Link>
             </p>
@@ -229,18 +216,17 @@ export function Login() {
           <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border"></div>
+                <div className="w-full border-t border-surface-border"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-background text-muted-foreground">Or continue with</span>
+                <span className="bg-surface px-4 text-ink-secondary">Or continue with</span>
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Button
-                variant="outline"
-                size="lg"
+            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <SecondaryButton
                 type="button"
+                className="w-full"
                 onClick={() => void handleOAuthSignIn("google")}
                 disabled={Boolean(oauthLoadingProvider)}
               >
@@ -267,11 +253,10 @@ export function Login() {
                 </svg>
                 )}
                 Google
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
+              </SecondaryButton>
+              <SecondaryButton
                 type="button"
+                className="w-full"
                 onClick={() => void handleOAuthSignIn("apple")}
                 disabled={Boolean(oauthLoadingProvider)}
               >
@@ -283,11 +268,10 @@ export function Login() {
                   </svg>
                 )}
                 Apple
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
+              </SecondaryButton>
+              <SecondaryButton
                 type="button"
+                className="w-full"
                 onClick={() => void handleOAuthSignIn("facebook")}
                 disabled={Boolean(oauthLoadingProvider)}
               >
@@ -299,23 +283,9 @@ export function Login() {
                 </svg>
                 )}
                 Facebook
-              </Button>
+              </SecondaryButton>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Right Side - Image */}
-      <div className="hidden lg:block flex-1 relative bg-gradient-to-br from-primary via-primary/90 to-accent">
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-primary/40 flex items-end p-12">
-          <div className="text-white">
-            <h2 className="text-4xl font-semibold mb-4">Find Your Dream Home in Ghana</h2>
-            <p className="text-xl text-white/90">
-              Discover quality properties across Accra and beyond
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+    </AuthPageLayout>
   );
 }

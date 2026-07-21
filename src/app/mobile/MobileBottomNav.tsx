@@ -26,21 +26,27 @@ export function MobileBottomNav() {
 
   return (
     <nav className="mobile-tab-bar mobile-tab-bar-fixed" aria-label="Mobile navigation">
-      {tabs.map((tab) => {
-        const Icon = tab.icon;
-        return (
-          <button
-            key={tab.id}
-            type="button"
-            className={`mobile-tab-button ${activeId === tab.id ? "is-active" : ""}`}
-            onClick={() => navigate(tab.href)}
-            aria-current={activeId === tab.id ? "page" : undefined}
-          >
-            <Icon aria-hidden="true" />
-            <span>{tab.label}</span>
-          </button>
-        );
-      })}
+      <div className="mobile-tab-bar-inner">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeId === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              className={`mobile-tab-button ${isActive ? "is-active" : ""}`}
+              onClick={() => navigate(tab.href)}
+              aria-current={isActive ? "page" : undefined}
+            >
+              <span className="mobile-tab-icon-wrap" aria-hidden="true">
+                {isActive && <span className="mobile-tab-active-pill" />}
+                <Icon />
+              </span>
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 }

@@ -1,16 +1,22 @@
 {
-  "name": "Property Hub",
-  "short_name": "PropertyHub",
-  "description": "Manage listings, leads, payments, fraud alerts, and field activity in one workspace.",
+  "name": "BaytMiftah",
+  "short_name": "BaytMiftah",
+  "description": "Discover, rent, buy, lease, and host properties across Ghana with verified agencies and secure payments.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#ffffff",
-  "theme_color": "#FF385C",
+  "background_color": "#0F2922",
+  "theme_color": "#0B211A",
   "lang": "en-US",
-  "categories": ["business", "productivity", "finance"],
+  "categories": ["business", "lifestyle", "finance"],
   "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",

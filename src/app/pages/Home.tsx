@@ -1,408 +1,445 @@
 import { Link, useNavigate } from "react-router";
-import { Search, MapPin, Home as HomeIcon, Building2, Landmark, TrendingUp, Shield, Users, Loader2 } from "lucide-react";
-import { Navbar } from "../components/Navbar";
-import { Button } from "../components/ui/Button";
-import { Input } from "../components/ui/Input";
-import { Card } from "../components/ui/Card";
-import { useState, useEffect } from "react";
-import { motion } from "motion/react";
-import { listingService } from "../../lib/listing.service";
-import { organizationService } from "../../lib/organization.service";
-import { getPropertyCoverImage } from "../../lib/property-media";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
-import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
+import { listingService } from "../../lib/listing.service";
+import { savedPropertyService } from "../../lib/savedproperty.service";
+import { syncCompareIds, toggleCompareIdAsync } from "../../lib/compare-listings";
+import { normalizePropertyCategory } from "../../lib/property-category";
+import { useAuth } from "../context/AuthContext";
+import {
+  BackendBanner,
+  CategoryBar,
+  DesktopShell,
+  ListingCard,
+  ListingCardSkeleton,
+  MapErrorBoundary,
+  PageMeta,
+  SearchPill,
+  mapListingToCard,
+  mapListingToMapListing,
+  type MarketplaceListingCard,
+} from "../components/baytmiftah";
+
+const MapView = lazy(() =>
+  import("../components/baytmiftah/MapView").then((m) => ({ default: m.MapView })),
+);
 
 export function Home() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchType, setSearchType] = useState<"rental" | "sale" | "lease">("rental");
-  const [featuredListings, setFeaturedListings] = useState<any[]>([]);
-  const [verifiedAgencies, setVerifiedAgencies] = useState<any[]>([]);
-  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
-  const [locationCounts, setLocationCounts] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const listPropertyPath = `${WORKSPACE_ENTRY_PATH}?next=new`;
-  const manageListingsPath = `${WORKSPACE_ENTRY_PATH}?next=listings`;
-  const analyticsPath = `${WORKSPACE_ENTRY_PATH}?next=market-intelligence`;
+  const { user } = useAuth();
+  const [category, setCategory] = useState("all");
+  const [location, setLocation] = useState("");
+  const [propertyType, setPropertyType] = useState("any");
+  const [budget, setBudget] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [minBedrooms, setMinBedrooms] = useState(0);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [mapMode, setMapMode] = useState(false);
+  const [compareToast, setCompareToast] = useState("");
+  const [listings, setListings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
+    let ignore = false;
+
+    const load = async () => {
+      try {
+        setLoading(true);
+        const rows = await listingService.getPublicListings(60, 0);
+        if (!ignore) setListings(rows);
+      } catch (error) {
+        console.error("Failed to load listings:", error);
+        if (!ignore) toast.error("Failed to load listings");
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+
+    void load();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [listings, agencies, browseStats] = await Promise.all([
-        listingService.getPublicListings(4, 0),
-        organizationService.getVerifiedOrganizations(6),
-        listingService.getBrowseStats(),
-      ]);
+  useEffect(() => {
+    syncCompareIds().then(setCompareIds);
+  }, []);
 
-      setFeaturedListings(listings);
-      setVerifiedAgencies(agencies);
-      setCategoryCounts(browseStats.categoryCounts);
-      setLocationCounts(
-        Object.fromEntries(
-          browseStats.popularLocations.map((location) => [location.name, location.count])
-        )
-      );
-    } catch (error) {
-      console.error('Failed to load home data:', error);
-      toast.error('Failed to load listings');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (!user) {
+      setSavedIds([]);
+      return;
     }
-  };
+
+    let cancelled = false;
+
+    const loadSaved = async () => {
+      try {
+        const rows = await savedPropertyService.getSavedProperties(user.id);
+        if (!cancelled) {
+          setSavedIds((rows || []).map((row: any) => row.listing?.id || row.listing_id).filter(Boolean));
+        }
+      } catch (error) {
+        console.error("Failed to load saved properties:", error);
+      }
+    };
+
+    void loadSaved();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const cards = useMemo(() => listings.map(mapListingToCard), [listings]);
+
+  const visible = useMemo(() => {
+    const query = location.trim().toLowerCase();
+
+    return cards.filter((listing) => {
+      const matchesCategory =
+        category === "all" ||
+        normalizePropertyCategory(listing.type) === normalizePropertyCategory(category) ||
+        (category === "verified" && listing.verified);
+
+      const matchesType =
+        propertyType === "any" ||
+        normalizePropertyCategory(listing.type) === normalizePropertyCategory(propertyType);
+
+      const haystack = `${listing.title} ${listing.location}`.toLowerCase();
+      const matchesBudget =
+        !budget.trim() ||
+        haystack.includes(budget.toLowerCase()) ||
+        listing.priceLabel.includes(budget);
+
+      const matchesVerified = !verifiedOnly || listing.verified;
+      const matchesBeds = !minBedrooms || (listing.bedrooms ?? 0) >= minBedrooms;
+      const matchesQuery = !query || haystack.includes(query);
+
+      return (
+        matchesCategory &&
+        matchesType &&
+        matchesBudget &&
+        matchesVerified &&
+        matchesBeds &&
+        matchesQuery
+      );
+    });
+  }, [cards, category, location, propertyType, budget, verifiedOnly, minBedrooms]);
+
+  const featured = useMemo(() => cards.filter((l) => l.featured).slice(0, 12), [cards]);
 
   const handleSearch = () => {
-    const params = new URLSearchParams({
-      q: searchQuery,
-      listingType: searchType,
-    });
+    const params = new URLSearchParams();
+    if (location.trim()) params.set("q", location.trim());
+    if (propertyType !== "any") params.set("propertyType", propertyType);
+    if (budget.trim()) params.set("priceMax", budget.replace(/\D/g, ""));
     navigate(`/search?${params.toString()}`);
   };
 
-  const categories = [
-    { name: "Apartments", searchValue: "apartment", icon: Building2 },
-    { name: "Houses", searchValue: "house", icon: HomeIcon },
-    { name: "Commercial", searchValue: "commercial", icon: Landmark },
-    { name: "Land", searchValue: "land", icon: MapPin },
-  ];
+  const handleToggleSave = async (listingId: string) => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
 
-  const locations = Object.entries(locationCounts)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 6)
-    .map(([name, count]) => ({ name, count }));
+    try {
+      const result = await savedPropertyService.toggleSavedProperty(user.id, listingId);
+      setSavedIds((prev) =>
+        result.saved ? [...new Set([...prev, listingId])] : prev.filter((id) => id !== listingId),
+      );
+    } catch (error) {
+      console.error("Failed to toggle saved property:", error);
+      toast.error("Could not update saved property");
+    }
+  };
+
+  const visibleIds = useMemo(() => new Set(visible.map((v) => v.id)), [visible]);
+  const mapListings = useMemo(
+    () => listings.filter((l) => visibleIds.has(l.id)).map(mapListingToMapListing),
+    [listings, visibleIds],
+  );
+
+  const handleToggleCompare = async (listingId: string) => {
+    const { ids, capped } = await toggleCompareIdAsync(listingId);
+    setCompareIds(ids);
+    if (capped) {
+      setCompareToast("You can compare up to 4 properties.");
+      setTimeout(() => setCompareToast(""), 3000);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar transparent />
+    <>
+      <PageMeta title="Explore homes" description="Discover properties across Ghana on BaytMiftah." />
+      <DesktopShell
+        compareCount={compareIds.length}
+      search={
+        <SearchPill
+          location={location}
+          onLocationChange={setLocation}
+          propertyType={propertyType}
+          onTypeChange={setPropertyType}
+          budget={budget}
+          onBudgetChange={setBudget}
+          onSearch={handleSearch}
+        />
+      }
+      categoryBar={
+        <CategoryBar
+          active={category}
+          onChange={setCategory}
+          onFiltersClick={() => setFiltersOpen(true)}
+          mapMode={mapMode}
+          onToggleMap={() => setMapMode((v) => !v)}
+        />
+      }
+    >
+      <BackendBanner />
 
-      {/* Hero Section */}
-      <section className="relative h-[600px] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary via-primary/90 to-accent">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/20" />
-        </div>
-
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-5xl md:text-6xl font-semibold text-white mb-6"
-          >
-            Find Your Perfect Property in Ghana
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-xl text-white/90 mb-10"
-          >
-            Discover quality homes, apartments, and commercial spaces across Accra and beyond
-          </motion.p>
-
-          {/* Search Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-white rounded-2xl shadow-2xl p-2 max-w-3xl mx-auto"
-          >
-            <div className="flex flex-col md:flex-row gap-2">
-              <div className="flex gap-2 px-2 py-1">
-                <button
-                  onClick={() => setSearchType("rental")}
-                  className={`px-4 py-2 rounded-lg transition-all ${
-                    searchType === "rental"
-                      ? "bg-primary text-white"
-                      : "text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  Rent
-                </button>
-                <button
-                  onClick={() => setSearchType("sale")}
-                  className={`px-4 py-2 rounded-lg transition-all ${
-                    searchType === "sale"
-                      ? "bg-primary text-white"
-                      : "text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  Buy
-                </button>
-                <button
-                  onClick={() => setSearchType("lease")}
-                  className={`px-4 py-2 rounded-lg transition-all ${
-                    searchType === "lease"
-                      ? "bg-primary text-white"
-                      : "text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  Lease
-                </button>
-              </div>
-              <div className="flex-1 flex items-center gap-2 px-4 py-2 bg-secondary rounded-lg">
-                <MapPin className="w-5 h-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Location, address, or neighborhood"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="bg-transparent border-0 outline-none placeholder-muted-foreground"
-                />
-              </div>
-              <Button
-                onClick={handleSearch}
-                size="lg"
-                className="px-8"
-              >
-                <Search className="w-5 h-5 mr-2" />
-                Search
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Categories */}
-      <section className="py-16 px-4 max-w-7xl mx-auto">
-        <h2 className="text-3xl font-semibold mb-8">Browse by Category</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {categories.map((category, index) => (
-            <motion.div
-              key={category.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Link to={`/search?propertyType=${category.searchValue}`}>
-                <Card hover className="p-6 text-center">
-                  <category.icon className="w-12 h-12 mx-auto mb-4 text-primary" />
-                  <h3 className="font-semibold mb-1">{category.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {(categoryCounts[category.searchValue] || 0).toLocaleString()} listings
-                  </p>
-                </Card>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Featured Properties */}
-      <section className="py-16 px-4 max-w-7xl mx-auto bg-secondary/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-semibold">Featured Properties</h2>
-            <Link to="/search">
-              <Button variant="outline">View All</Button>
-            </Link>
-          </div>
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin" />
-            </div>
-          ) : featuredListings.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">No featured properties yet. Check back soon.</p>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredListings.map((listing, index) => (
-                <motion.div
-                  key={listing.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Link to={`/property/${listing.id}`}>
-                    <Card hover className="overflow-hidden">
-                      <div className="relative h-48 overflow-hidden">
-                        <img
-                          src={getPropertyCoverImage(listing.property)}
-                          alt={listing.property?.address}
-                          className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-                        />
-                        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold">
-                          {listing.property?.category || 'Property'}
-                        </div>
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-semibold text-lg mb-2 line-clamp-2">
-                          {listing.property?.address || 'Property'}
-                        </h3>
-                        <div className="flex items-center gap-1 text-muted-foreground mb-3">
-                          <MapPin className="w-4 h-4" />
-                          <span className="text-sm">{listing.property?.city}, {listing.property?.region}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-2xl font-semibold text-primary">
-                              GHS {listing.price.toLocaleString()}
-                            </span>
-                            {listing.listing_type === 'rental' && (
-                              <span className="text-sm text-muted-foreground">/month</span>
-                            )}
-                          </div>
-                          {listing.property?.bedrooms && (
-                            <div className="flex gap-3 text-sm text-muted-foreground">
-                              <span>{listing.property.bedrooms} beds</span>
-                              <span>{listing.property.bathrooms} baths</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Popular Locations */}
-      {locations.length > 0 && (
-        <section className="py-16 px-4 max-w-7xl mx-auto">
-          <h2 className="text-3xl font-semibold mb-8">Popular Locations</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {locations.map((location, index) => (
-              <motion.div
-                key={location.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Link to={`/search?q=${encodeURIComponent(location.name)}`}>
-                  <Card hover className="p-4 text-center">
-                    <MapPin className="w-8 h-8 mx-auto mb-2 text-primary" />
-                    <h4 className="font-semibold mb-1">{location.name}</h4>
-                    <p className="text-xs text-muted-foreground">
-                      {location.count.toLocaleString()} {location.count === 1 ? "property" : "properties"}
-                    </p>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </section>
+      {compareToast && (
+        <p className="mb-4 rounded-xl border border-amber-200/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          {compareToast}
+        </p>
+      )}
+      {filtersOpen && (
+        <FiltersPanel
+          verifiedOnly={verifiedOnly}
+          onVerifiedOnlyChange={setVerifiedOnly}
+          minBedrooms={minBedrooms}
+          onMinBedroomsChange={setMinBedrooms}
+          onClose={() => setFiltersOpen(false)}
+        />
       )}
 
-      {/* Verified Agencies */}
-      <section className="py-16 px-4 bg-secondary/50">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-semibold text-center mb-12">
-            Trusted by Verified Agencies
-          </h2>
-          {verifiedAgencies.length === 0 ? (
-            <Card className="p-8 text-center max-w-xl mx-auto">
-              <p className="text-muted-foreground">No verified agencies to show yet.</p>
-            </Card>
-          ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {verifiedAgencies.map((agency) => (
-              <motion.div
-                key={agency.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <Card className="p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
-                  {agency.logo_url ? (
-                    <img
-                      src={agency.logo_url}
-                      alt={agency.name}
-                      className="w-16 h-16 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-lg bg-primary flex items-center justify-center text-white">
-                      <Building2 className="w-8 h-8" />
-                    </div>
-                  )}
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{agency.name}</h3>
-                      <Shield className="w-4 h-4 text-green-600" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Verified Agency
-                    </p>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-          )}
-        </div>
-      </section>
+      {!loading && visible.length === 0 && (
+        <p className="mb-6 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-ink-secondary">
+          No listings match your filters yet. Try adjusting your search.
+        </p>
+      )}
 
-      {/* CTA Section */}
-      <section className="py-16 px-4 bg-primary text-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-semibold mb-6">
-            Ready to List Your Property?
-          </h2>
-          <p className="text-lg mb-8 opacity-90">
-            Join Property Hub REOS and reach qualified buyers and renters
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/signup">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                Create Free Account
-              </Button>
-            </Link>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto bg-white/10 hover:bg-white/20">
-              Learn More
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-foreground text-white py-12 px-4">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
-              </div>
-              <span className="text-xl font-semibold">Property Hub</span>
+      {mapMode ? (
+        <div className="hidden gap-6 lg:grid lg:grid-cols-2">
+          <div className="max-h-[calc(100vh-12rem)] space-y-6 overflow-y-auto pe-1">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+              {visible.map((listing) => (
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  saved={savedIds.includes(listing.id)}
+                  compared={compareIds.includes(listing.id)}
+                  onToggleSave={handleToggleSave}
+                  onToggleCompare={handleToggleCompare}
+                />
+              ))}
             </div>
-            <p className="text-white/70">Ghana's premier real estate marketplace</p>
           </div>
-          <div>
-            <h4 className="font-semibold mb-4">For Renters</h4>
-            <ul className="space-y-2 text-white/70">
-              <li><Link to="/search" className="hover:text-white">Search Properties</Link></li>
-              <li><Link to="/app" className="hover:text-white">My Dashboard</Link></li>
-              <li><Link to="/app" className="hover:text-white">Saved Properties</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-4">For Landlords</h4>
-            <ul className="space-y-2 text-white/70">
-              <li><Link to={listPropertyPath} className="hover:text-white">List Property</Link></li>
-              <li><Link to={manageListingsPath} className="hover:text-white">Manage Listings</Link></li>
-              <li><Link to={analyticsPath} className="hover:text-white">Analytics</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-4">Company</h4>
-            <ul className="space-y-2 text-white/70">
-              <li><a href="#" className="hover:text-white">About Us</a></li>
-              <li><a href="#" className="hover:text-white">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
-            </ul>
+          <div className="sticky top-28 h-[calc(100vh-12rem)]">
+            <Suspense fallback={<div className="h-full animate-pulse rounded-xl bg-white/10" />}>
+              <MapErrorBoundary>
+                <MapView listings={mapListings} />
+              </MapErrorBoundary>
+            </Suspense>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto mt-8 pt-8 border-t border-white/20 text-center text-white/70">
-          <p>&copy; 2026 Property Hub REOS. All rights reserved.</p>
+      ) : loading ? (
+        <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <ListingCardSkeleton key={i} />
+          ))}
         </div>
-      </footer>
+      ) : (
+        <>
+          {featured.length > 0 && (
+            <ListingCarousel
+              title="Popular in Accra"
+              listings={featured}
+              savedIds={savedIds}
+              compareIds={compareIds}
+              onToggleSave={handleToggleSave}
+              onToggleCompare={handleToggleCompare}
+            />
+          )}
+
+          <section className={featured.length > 0 ? "mt-12" : ""}>
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="section-heading">
+                {location.trim() ? `Homes in ${location}` : "Explore homes"}
+              </h2>
+              <Link
+                to="/search"
+                className="inline-flex items-center gap-1 text-sm font-semibold text-ink underline underline-offset-2"
+              >
+                View all
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            {visible.length === 0 ? (
+              <EmptyState />
+            ) : (
+              <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                {visible.map((listing) => (
+                  <ListingCard
+                    key={listing.id}
+                    listing={listing}
+                    saved={savedIds.includes(listing.id)}
+                    compared={compareIds.includes(listing.id)}
+                    onToggleSave={handleToggleSave}
+                    onToggleCompare={handleToggleCompare}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
+    </DesktopShell>
+    </>
+  );
+}
+
+function ListingCarousel({
+  title,
+  listings,
+  savedIds,
+  compareIds,
+  onToggleSave,
+  onToggleCompare,
+}: {
+  title: string;
+  listings: MarketplaceListingCard[];
+  savedIds: string[];
+  compareIds: string[];
+  onToggleSave: (id: string) => void;
+  onToggleCompare: (id: string) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  function scrollBy(direction: number) {
+    scrollRef.current?.scrollBy({ left: direction * 320, behavior: "smooth" });
+  }
+
+  return (
+    <section>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="section-heading">{title}</h2>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => scrollBy(-1)}
+            className="carousel-nav-btn"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollBy(1)}
+            className="carousel-nav-btn"
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+      <div ref={scrollRef} className="listing-scroll">
+        {listings.map((listing) => (
+          <ListingCard
+            key={listing.id}
+            listing={listing}
+            compact
+            saved={savedIds.includes(listing.id)}
+            compared={compareIds.includes(listing.id)}
+            onToggleSave={onToggleSave}
+            onToggleCompare={onToggleCompare}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FiltersPanel({
+  verifiedOnly,
+  onVerifiedOnlyChange,
+  minBedrooms,
+  onMinBedroomsChange,
+  onClose,
+}: {
+  verifiedOnly: boolean;
+  onVerifiedOnlyChange: (value: boolean) => void;
+  minBedrooms: number;
+  onMinBedroomsChange: (value: number) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-brand-marketplace p-6 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-ink">Filters</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-2 hover:bg-white/10"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4 text-ink" />
+          </button>
+        </div>
+
+        <label className="mb-4 flex items-center gap-2 text-sm text-ink">
+          <input
+            type="checkbox"
+            checked={verifiedOnly}
+            onChange={(e) => onVerifiedOnlyChange(e.target.checked)}
+          />
+          Verified agencies only
+        </label>
+
+        <label className="mb-4 block text-sm text-ink">
+          Minimum bedrooms
+          <select
+            value={minBedrooms}
+            onChange={(e) => onMinBedroomsChange(Number(e.target.value))}
+            className="mt-1 w-full rounded-xl border border-white/20 bg-white/5 px-3 py-2"
+          >
+            <option value={0}>Any</option>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <option key={n} value={n}>
+                {n}+
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-6 w-full rounded-lg bg-brand-accent py-3.5 text-sm font-semibold text-white transition hover:opacity-90"
+        >
+          Show results
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="rounded-2xl border border-white/15 bg-white/5 px-8 py-16 text-center">
+      <h2 className="text-xl font-semibold text-ink">No matches found</h2>
+      <p className="mt-2 text-ink-secondary">Try adjusting your filters or search in a different area.</p>
     </div>
   );
 }

@@ -1,0 +1,163 @@
+import { Link, NavLink } from 'react-router'
+import { Logo } from './Logo'
+import PushPrompt from './PushPrompt'
+import { IconChevronLeft, IconHeart, IconHome, IconMessage, IconSearch, IconUser } from './icons'
+import { useTranslation } from '../../i18n/LocaleContext'
+import { useAuth } from '../../context/AuthContext'
+import { CONSUMER_ROUTES } from '../../lib/consumer-routes'
+import { CONSUMER_BOTTOM_TABS } from '../../lib/baytmiftah/consumer-nav'
+
+const TAB_ICONS = {
+  home: IconHome,
+  search: IconSearch,
+  heart: IconHeart,
+  message: IconMessage,
+  user: IconUser,
+}
+
+export default function MobileShell({ children, hideNav = false }) {
+  const { t } = useTranslation()
+  const { user } = useAuth()
+
+  const bottomPad = 'pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))]'
+
+  return (
+    <div className={`mobile-bolt min-h-screen min-h-[100dvh] w-full overflow-x-clip bg-bolt-bg ${bottomPad} pt-[env(safe-area-inset-top,0px)] text-ink`}>
+      <div className="mx-auto w-full min-w-0 max-w-lg sm:max-w-xl lg:max-w-2xl">{children}</div>
+
+      {!hideNav && (
+        <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-surface-border bg-surface shadow-bolt-nav">
+          <div className="mx-auto flex w-full min-w-0 max-w-lg items-stretch justify-around px-0.5 pt-1 sm:max-w-xl sm:px-1 lg:max-w-2xl pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+            {CONSUMER_BOTTOM_TABS.map(({ to, labelKey, icon, end, authRequired }) => {
+              const needsAuth = authRequired && !user
+              const dest = needsAuth ? '/login' : to
+              const Icon = TAB_ICONS[icon]
+              return (
+                <NavLink
+                  key={to}
+                  to={dest}
+                  end={end}
+                  state={needsAuth ? { from: to } : undefined}
+                  className={({ isActive }) =>
+                    `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg px-0.5 py-2 text-[10px] font-medium transition sm:px-1 ${
+                      isActive && !needsAuth ? 'font-semibold text-mobile-forest' : 'text-ink-secondary'
+                    }`
+                  }
+                >
+                  {Icon && <Icon className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />}
+                  <span className="max-w-full truncate">{t(labelKey)}</span>
+                </NavLink>
+              )
+            })}
+          </div>
+        </nav>
+      )}
+      <PushPrompt />
+    </div>
+  )
+}
+
+export function MobileBoltHomeHeader({ title, tagline }) {
+  return (
+    <header className="sticky top-0 z-40 bg-surface px-4 pb-3 pt-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-[26px] font-bold leading-tight tracking-tight text-ink">{title}</h1>
+          {tagline && <p className="mt-0.5 text-sm text-ink-secondary">{tagline}</p>}
+        </div>
+        <Link
+          to={CONSUMER_ROUTES.profile}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-subtle text-ink"
+          aria-label="Profile"
+        >
+          <IconUser className="h-5 w-5" />
+        </Link>
+      </div>
+    </header>
+  )
+}
+
+export function MobileHeader({ title, subtitle, backTo, showLogo = false }) {
+  const { t } = useTranslation()
+
+  return (
+    <header className="sticky top-0 z-40 border-b border-surface-border bg-surface px-4 py-3">
+      <div className="flex items-center gap-3">
+        {backTo ? (
+          <NavLink
+            to={backTo}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-subtle text-ink"
+            aria-label={t('mobile.goBack')}
+          >
+            <IconChevronLeft className="h-5 w-5 rtl-flip" />
+          </NavLink>
+        ) : showLogo ? (
+          <Logo size="sm" showText={false} to="/" />
+        ) : null}
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-lg font-bold text-ink">{title}</h1>
+          {subtitle && <p className="truncate text-xs text-ink-secondary">{subtitle}</p>}
+        </div>
+      </div>
+    </header>
+  )
+}
+
+export function MobileSearchBar({ value, onChange, placeholder }) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="px-4 py-3">
+      <div className="flex items-center gap-3 rounded-xl bg-surface-subtle px-4 py-3.5">
+        <IconSearch className="h-4 w-4 shrink-0 text-ink-secondary" />
+        <input
+          type="search"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder ?? t('mobile.searchListings')}
+          className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-secondary"
+        />
+      </div>
+    </div>
+  )
+}
+
+export function MobileCategoryChips({ options, active, onChange }) {
+  return (
+    <div className="flex gap-2 overflow-x-auto px-4 pb-4 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {options.map(({ id, label }) => {
+        const isActive = active === id
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onChange(id)}
+            className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-semibold transition ${
+              isActive
+                ? 'bg-mobile-forest text-white shadow-sm'
+                : 'border border-surface-border bg-surface text-ink-secondary'
+            }`}
+          >
+            {label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+export function MobileFiltersRow({ onFiltersClick }) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="flex gap-2 px-4 pb-3">
+      <button
+        type="button"
+        onClick={onFiltersClick}
+        className="flex items-center gap-2 rounded-full border border-surface-border bg-surface px-4 py-2 text-sm font-semibold text-ink"
+      >
+        {t('mobile.filters')}
+      </button>
+    </div>
+  )
+}

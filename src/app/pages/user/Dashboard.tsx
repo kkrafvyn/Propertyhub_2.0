@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import {
   ArrowRight,
   Bell,
@@ -67,6 +67,8 @@ import {
   TransactionsSection,
   TripsSection,
 } from "./ConsumerPortalSections";
+import ChatThread, { ChatThreadHeader } from "../../components/baytmiftah/chat/ChatThread";
+import { InboxList } from "../../components/baytmiftah/chat/InboxList";
 
 function formatRelativeTime(dateString?: string | null) {
   if (!dateString) return "Recently";
@@ -207,6 +209,8 @@ function formatViewingTime(value?: string | null) {
 export function UserDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedConversationId = searchParams.get("conversation");
   const { user, signOut } = useAuth();
   const [loading, setLoading] = useState(true);
   const [savedProperties, setSavedProperties] = useState<any[]>([]);
@@ -780,6 +784,41 @@ export function UserDashboard() {
   };
 
   const renderConversations = () => {
+    if (selectedConversationId) {
+      const selected = conversations.find((c) => c.id === selectedConversationId);
+      return (
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/app/messages")}
+            >
+              Back to inbox
+            </Button>
+          </div>
+          <ChatThreadHeader
+            conversation={
+              selected
+                ? {
+                    id: selected.id,
+                    participant:
+                      participantProfiles[
+                        selected.participant_1_id === user?.id
+                          ? selected.participant_2_id
+                          : selected.participant_1_id
+                      ]?.full_name || "Conversation",
+                  }
+                : { id: selectedConversationId, participant: "Conversation" }
+            }
+          />
+          <div className="flex h-[min(70vh,560px)] flex-col">
+            <ChatThread conversationId={selectedConversationId} />
+          </div>
+        </div>
+      );
+    }
+
     if (conversations.length === 0) {
       const config = CONSUMER_PAGE_CONFIG.messages;
       return (
@@ -794,46 +833,40 @@ export function UserDashboard() {
     }
 
     return (
-      <div className="space-y-4">
-        {conversations.map((conversation) => {
-          const counterpartId =
-            conversation.participant_1_id === user?.id
-              ? conversation.participant_2_id
-              : conversation.participant_1_id;
-          const counterpart = participantProfiles[counterpartId];
-          const latestMessage = [...(conversation.messages || [])]
-            .sort(
-              (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            )[0];
-          const unreadCount =
-            conversation.messages?.filter(
-              (message: any) => !message.read && message.sender_id !== user?.id
-            ).length || 0;
-
-          return (
-            <Card key={conversation.id} className="p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold">
-                    {(counterpart?.full_name || counterpart?.email || "C").charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">
-                      {counterpart?.full_name || counterpart?.email || "Conversation"}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {latestMessage?.content || "No messages yet"}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Updated {formatRelativeTime(conversation.last_message_at || latestMessage?.created_at)}
-                    </p>
-                  </div>
-                </div>
-                {unreadCount > 0 && <Badge>{unreadCount} unread</Badge>}
-              </div>
-            </Card>
-          );
-        })}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,360px)_1fr]">
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <InboxList
+            conversations={conversations.map((conversation) => {
+              const counterpartId =
+                conversation.participant_1_id === user?.id
+                  ? conversation.participant_2_id
+                  : conversation.participant_1_id;
+              const counterpart = participantProfiles[counterpartId];
+              const latestMessage = [...(conversation.messages || [])].sort(
+                (a, b) =>
+                  new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+              )[0];
+              return {
+                id: conversation.id,
+                participant: counterpart?.full_name || counterpart?.email || "Conversation",
+                lastMessage: latestMessage?.content,
+                updated_at: conversation.last_message_at || latestMessage?.created_at,
+                unread:
+                  conversation.messages?.filter(
+                    (message: any) => !message.read && message.sender_id !== user?.id
+                  ).length || 0,
+              };
+            })}
+            variant="desktop"
+            className="divide-y divide-border"
+            empty={
+              <p className="p-4 text-sm text-muted-foreground">No conversations yet.</p>
+            }
+          />
+        </div>
+        <div className="hidden min-h-[420px] items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 p-8 text-sm text-muted-foreground lg:flex">
+          Select a conversation to view the thread.
+        </div>
       </div>
     );
   };

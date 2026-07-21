@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none" role="img" aria-label="BaytMiftah">
+  <circle cx="200" cy="200" r="200" fill="#0F2922"/>
+  <g transform="translate(176 128) scale(2.5)">
+    <circle cx="24" cy="15" r="5.5" fill="#FFFFFF"/>
+    <path d="M9 33.5Q24 24.5 39 33.5" stroke="#FFFFFF" stroke-width="2.25" stroke-linecap="round"/>
+  </g>
+</svg>

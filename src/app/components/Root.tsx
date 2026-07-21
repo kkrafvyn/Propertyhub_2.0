@@ -4,6 +4,7 @@ import { Outlet, useLocation } from "react-router";
 import { RouteMonitoring } from "./RouteMonitoring";
 import { MobileAppShell } from "../mobile/MobileAppShell";
 import { MobileBottomNav } from "../mobile/MobileBottomNav";
+import { SplashScreen } from "./baytmiftah/splash/SplashScreen";
 
 function usePrefersMobileShell() {
   const [prefersMobileShell, setPrefersMobileShell] = useState(() => {
@@ -35,6 +36,11 @@ const MOBILE_CONSUMER_PREFIXES = ["/search", "/property/", "/app"];
 export function Root() {
   const location = useLocation();
   const prefersMobileShell = usePrefersMobileShell();
+  const [splashDone, setSplashDone] = useState(false);
+
+  if (!splashDone) {
+    return <SplashScreen onComplete={() => setSplashDone(true)} />;
+  }
 
   if (prefersMobileShell && location.pathname === "/") {
     return <MobileAppShell />;
@@ -47,7 +53,7 @@ export function Root() {
       location.pathname.startsWith("/app"));
 
   return (
-    <div className={`min-h-screen bg-background ${showMobileBottomNav ? "pb-24" : ""}`}>
+    <div className={`mobile-bolt min-h-screen min-h-[100dvh] bg-bolt-bg ${showMobileBottomNav ? "pb-24" : ""}`}>
       <RouteMonitoring />
       <Outlet />
       {showMobileBottomNav ? <MobileBottomNav /> : null}

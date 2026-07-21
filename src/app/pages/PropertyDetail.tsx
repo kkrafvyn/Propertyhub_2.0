@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
-import { Navbar } from "../components/Navbar";
+import { DesktopShell, ShareListingButton, SimilarListings, mapListingToCard, MessageHostButton, StayBookingCard, ListingReviews } from "../components/baytmiftah";
 import { GhanaRoutePlanner } from "../components/GhanaRoutePlanner";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -564,23 +564,21 @@ export function PropertyDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="pt-24 min-h-[60vh] flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin" />
+      <DesktopShell minimal>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-ink" />
         </div>
-      </div>
+      </DesktopShell>
     );
   }
 
   if (!listing || !property) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="pt-24 px-4 max-w-3xl mx-auto">
-          <Card className="p-8 text-center">
-            <h1 className="text-2xl font-semibold mb-2">Property not found</h1>
-            <p className="text-muted-foreground mb-6">
+      <DesktopShell minimal>
+        <div className="max-w-3xl mx-auto">
+          <Card className="p-8 text-center panel-card">
+            <h1 className="text-2xl font-semibold mb-2 text-ink">Property not found</h1>
+            <p className="text-ink-secondary mb-6">
               This listing may have been removed or is no longer public.
             </p>
             <Link to="/search">
@@ -588,15 +586,13 @@ export function PropertyDetail() {
             </Link>
           </Card>
         </div>
-      </div>
+      </DesktopShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
-      <div className="pt-24 pb-12 px-4 max-w-7xl mx-auto">
+    <DesktopShell minimal>
+      <div className="pb-12">
         <div className="mb-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[500px]">
             <div className="md:col-span-3 h-full relative overflow-hidden rounded-xl">
@@ -678,9 +674,7 @@ export function PropertyDetail() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => void handleShare()}>
-                    <Share2 className="w-4 h-4" />
-                  </Button>
+                  <ShareListingButton listing={mapListingToCard(listing)} variant="icon" />
                   <Button variant="outline" size="sm" onClick={toggleSave}>
                     <Heart className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : ""}`} />
                   </Button>
@@ -947,6 +941,18 @@ export function PropertyDetail() {
           </div>
 
           <div className="lg:col-span-1">
+            {listing.listing_type === "short_stay" && (
+              <div className="mb-4">
+                <StayBookingCard
+                  listing={{
+                    id: listing.id,
+                    price: listing.price,
+                    priceLabel: `GHS ${listing.price.toLocaleString()}`,
+                    instantBook: true,
+                  }}
+                />
+              </div>
+            )}
             <Card className="p-6 sticky top-24">
               <div className="mb-6 space-y-4 border-b border-border pb-6">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1044,6 +1050,15 @@ export function PropertyDetail() {
                   <MessageCircle className="w-5 h-5" />
                   Send Message
                 </Button>
+                <MessageHostButton
+                  listing={{
+                    id: listing.id,
+                    title: pageTitle,
+                    host: organization?.name || "Property Team",
+                    hostUserId: organization?.owner_id,
+                  }}
+                  className="w-full"
+                />
                 <Button
                   variant="outline"
                   size="lg"
@@ -1410,37 +1425,14 @@ export function PropertyDetail() {
         </div>
 
         {relatedListings.length > 0 && (
-          <div className="mt-16">
-            <h2 className="text-3xl font-semibold mb-8">Similar Properties</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {relatedListings.map((item) => (
-                <Link key={item.id} to={`/property/${item.id}`}>
-                  <Card hover className="overflow-hidden">
-                    <div className="relative h-48 overflow-hidden">
-                      <img
-                        src={getPropertyCoverImage(item.property)}
-                        alt={item.property?.address || "Property"}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold mb-2">{item.property?.address || "Property"}</h3>
-                      <div className="flex items-center gap-1 text-muted-foreground text-sm mb-3">
-                        <MapPin className="w-4 h-4" />
-                        <span>{item.property?.city}, {item.property?.region}</span>
-                      </div>
-                      <div className="text-2xl font-semibold text-primary">
-                        GHS {item.price.toLocaleString()}
-                        {item.listing_type === "rental" ? "/month" : ""}
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          </div>
+          <SimilarListings
+            listings={relatedListings.map(mapListingToCard)}
+            currentId={listing.id}
+          />
         )}
+
+        <ListingReviews listingId={listing.id} />
       </div>
-    </div>
+    </DesktopShell>
   );
 }

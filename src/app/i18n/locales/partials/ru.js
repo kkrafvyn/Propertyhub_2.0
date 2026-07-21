@@ -1,0 +1,113 @@
+export default {
+  "localeName": "Русский",
+  "nav": {
+    "compare": "Сравнить",
+    "saved": "Избранное",
+    "listProperty": "Разместить объект",
+    "language": "Язык и регион",
+    "openMenu": "Открыть меню"
+  },
+  "search": {
+    "where": "Где",
+    "type": "Тип",
+    "budget": "Бюджет",
+    "searchDestinations": "Поиск направлений",
+    "anyType": "Любой тип",
+    "apartments": "Квартиры",
+    "houses": "Дома",
+    "commercial": "Коммерческая",
+    "addBudget": "Добавить бюджет",
+    "anywhere": "Везде",
+    "search": "Поиск",
+    "whereTo": "Куда?"
+  },
+  "categories": {
+    "all": "Все объекты",
+    "apartment": "Квартиры",
+    "house": "Дома",
+    "office": "Коммерческая",
+    "verified": "Проверено",
+    "filters": "Фильтры",
+    "showMap": "Карта",
+    "showList": "Список"
+  },
+  "mobile": {
+    "explore": "Обзор",
+    "search": "Поиск",
+    "saved": "Избранное",
+    "inbox": "Сообщения",
+    "profile": "Профиль",
+    "goBack": "Назад",
+    "filters": "Фильтры",
+    "home": "Главная",
+    "agents": "Агенты",
+    "searchListings": "Поиск объектов…",
+    "findNextHome": "Найдите следующий дом",
+    "viewList": "Список",
+    "viewMap": "Карта",
+    "homeScreen": {
+      "heroTitle": "Найдите дом с уверенностью",
+      "heroSubtitle": "Проверенные объекты. Надёжные агенты.",
+      "buy": "Купить",
+      "rent": "Аренда",
+      "lease": "Лизинг",
+      "stay": "Проживание",
+      "townhouses": "Таунхаусы",
+      "land": "Земля",
+      "shortStay": "Краткосрочно",
+      "seeAll": "Смотреть все",
+      "exploreStays": "Обзор жилья",
+      "propertiesCount": "{{count}} объектов"
+    },
+    "savedCount": "{{count}} объектов",
+    "noSavedTitle": "Нет сохранённых объектов",
+    "noSavedDesc": "Нажмите на сердечко, чтобы сохранить.",
+    "mapLoading": "Загрузка карты…",
+    "useMyLocation": "Использовать моё местоположение",
+    "menu": "Меню"
+  },
+  "auth": {
+    "welcome": "Добро пожаловать в BaytMiftah",
+    "finishSignup": "Завершить регистрацию",
+    "email": "Эл. почта",
+    "password": "Пароль",
+    "continue": "Продолжить",
+    "logIn": "Войти",
+    "signUp": "Регистрация",
+    "forgotPassword": "Забыли пароль?",
+    "resetPassword": "Сбросить пароль"
+  },
+  "profile": {
+    "account": "Аккаунт",
+    "language": "Язык",
+    "languageDesc": "Выберите язык приложения.",
+    "logOut": "Выйти"
+  },
+  "language": {
+    "title": "Язык и регион",
+    "choose": "Выберите язык",
+    "groupGlobal": "Мир",
+    "groupAfrica": "Африка",
+    "groupAsia": "Азия и Тихий океан"
+  },
+  "common": {
+    "loading": "Загрузка…",
+    "close": "Закрыть",
+    "verified": "Проверено",
+    "pending": "Ожидание"
+  },
+  "listing": {
+    "backToSearch": "К поиску",
+    "requestViewing": "Запросить просмотр"
+  },
+  "home": {
+    "noMatches": "Точных совпадений нет",
+    "tryAdjusting": "Измените фильтры или запрос",
+    "showResults": "Показать результаты"
+  },
+  "filters": {
+    "verifiedOnly": "Только проверенные",
+    "minBedrooms": "Мин. спален",
+    "any": "Любое"
+  }
+}

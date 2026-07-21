@@ -48,7 +48,7 @@ export const pushNotificationService = {
 
     const notification = new Notification(input.title, {
       body: input.body,
-      icon: "/favicon.ico",
+      icon: "/icons/icon-192.png",
     });
 
     if (input.url) {

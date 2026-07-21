@@ -1,0 +1,466 @@
+/* BaytMiftah marketplace UI — ported from E:\phub */
+
+@layer components {
+  .search-pill {
+    @apply flex h-[4.25rem] max-h-[4.25rem] w-full items-center rounded-full border border-surface-border bg-surface shadow-search transition-shadow hover:shadow-search-hover;
+  }
+
+  .search-segment {
+    @apply relative flex min-w-0 flex-1 flex-col justify-center px-3 py-2 lg:px-5 xl:px-6;
+  }
+
+  .search-segment-icon {
+    @apply flex-row items-center gap-3;
+  }
+
+  .search-segment-icon-svg {
+    @apply text-ink-secondary opacity-80;
+  }
+
+  .search-divider {
+    @apply h-8 w-px shrink-0 bg-surface-border;
+  }
+
+  .search-segment::before {
+    content: "";
+    @apply pointer-events-none absolute inset-y-2 inset-x-1 rounded-full bg-transparent transition;
+  }
+
+  .search-segment:hover::before {
+    @apply bg-surface-hover;
+  }
+
+  .search-segment-label {
+    @apply relative z-[1] text-xs font-semibold text-ink;
+  }
+
+  .search-segment-value {
+    @apply relative z-[1] w-full truncate bg-transparent text-sm text-ink outline-none placeholder:text-ink-secondary;
+  }
+
+  .search-orb {
+    @apply mr-2 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-orange text-white transition hover:scale-105;
+  }
+
+  .category-chip {
+    @apply flex min-w-[4.75rem] shrink-0 cursor-pointer flex-col items-center gap-2 border-b-2 border-transparent px-3 pb-3 pt-1 opacity-70 transition hover:border-ink/20 hover:opacity-100 sm:min-w-[5.5rem] sm:gap-2.5 sm:px-4;
+  }
+
+  .category-chip.active {
+    @apply border-ink opacity-100;
+  }
+
+  .listing-scroll {
+    @apply flex gap-8 overflow-x-auto pb-2 scroll-smooth sm:gap-10 md:gap-12 lg:gap-14;
+    scrollbar-width: none;
+  }
+
+  .listing-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .section-heading {
+    @apply text-2xl font-semibold tracking-tight text-ink md:text-[26px];
+  }
+
+  .carousel-nav-btn {
+    @apply flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-transparent text-ink transition hover:bg-white/10;
+  }
+
+  .compact-search-pill {
+    @apply flex max-w-[360px] items-center gap-3 rounded-full border border-white/20 bg-white/5 py-2 pl-6 pr-2 transition hover:bg-white/10;
+  }
+
+  .nav-pill {
+    @apply rounded-full px-4 py-2.5 text-sm font-medium text-ink transition;
+    @apply hover:bg-surface-hover active:scale-[0.98];
+  }
+
+  .nav-pill-cta {
+    @apply bg-white/10 font-semibold ring-1 ring-white/15 hover:bg-white/15;
+  }
+
+  .filter-chip {
+    @apply flex shrink-0 items-center gap-2 rounded-xl border border-ink px-4 py-2.5 text-sm font-medium text-ink transition hover:shadow-search;
+  }
+
+  .panel-card {
+    @apply rounded-xl border border-surface-border bg-surface shadow-sm;
+  }
+
+  .hub-link-card {
+    @apply block rounded-xl border border-surface-border bg-surface p-5 transition hover:shadow-search;
+  }
+
+  .workspace-nav-link {
+    @apply block rounded-lg px-3 py-2.5 text-sm font-medium text-ink-secondary transition hover:bg-surface-hover hover:text-ink;
+  }
+
+  .workspace-nav-link.active {
+    @apply bg-surface-hover font-semibold text-ink;
+  }
+}
+
+.desktop-shell {
+  background-color: #0b211a;
+  color: #ffffff;
+}
+
+.desktop-shell .text-ink {
+  color: #ffffff;
+}
+
+.desktop-shell .text-ink-secondary {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.desktop-shell .text-ink-muted {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.desktop-shell .bg-surface,
+.desktop-shell .desktop-header {
+  background-color: #0b211a;
+}
+
+.desktop-shell .desktop-footer {
+  background-color: #0b211a;
+}
+
+.desktop-shell .border-surface-border,
+.desktop-shell .desktop-header {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.desktop-shell .search-pill {
+  background-color: #0b211a;
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: none;
+}
+
+.desktop-shell .search-pill:hover {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.desktop-shell .search-divider {
+  background-color: rgba(255, 255, 255, 0.18);
+}
+
+.desktop-shell .search-segment::before {
+  display: none;
+}
+
+.desktop-shell .search-segment:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-radius: 9999px;
+}
+
+.desktop-shell .search-segment-label {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+}
+
+.desktop-shell .search-segment-value,
+.desktop-shell .search-segment-icon-svg {
+  color: #ffffff;
+}
+
+.desktop-shell .search-segment-value option {
+  background-color: #0b211a;
+  color: #ffffff;
+}
+
+.desktop-shell .nav-pill {
+  color: #ffffff;
+}
+
+.desktop-shell .nav-pill:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.desktop-shell .filter-chip {
+  border-color: rgba(255, 255, 255, 0.85);
+  color: #ffffff;
+}
+
+.desktop-shell .filter-chip:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.desktop-shell .category-chip {
+  opacity: 0.55;
+}
+
+.desktop-shell .category-chip:hover {
+  opacity: 0.85;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.desktop-shell .category-chip.active {
+  opacity: 1;
+  border-color: #ffffff;
+}
+
+.desktop-shell .panel-card,
+.desktop-shell .hub-link-card {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.desktop-shell .bg-surface-subtle,
+.desktop-shell .bg-surface-hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.desktop-shell input,
+.desktop-shell select,
+.desktop-shell textarea,
+.desktop-shell .desktop-select {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.desktop-shell ::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.desktop-shell .user-menu-trigger {
+  border-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.desktop-shell .user-menu-trigger:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.desktop-shell .nav-pill-cta {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.desktop-shell .nav-pill-cta:hover {
+  background-color: rgba(255, 255, 255, 0.16);
+}
+
+/* ── BaytMiftah menu panels ── */
+.bm-user-menu-panel [data-slot="dropdown-menu-item"] {
+  cursor: pointer;
+}
+
+.bm-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  border-radius: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+}
+
+.bm-menu-item:hover,
+.bm-menu-item:focus {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.bm-menu-item-cta {
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(224, 122, 95, 0.25), rgba(224, 122, 95, 0.08));
+}
+
+.bm-menu-item-cta:hover,
+.bm-menu-item-cta:focus {
+  background: linear-gradient(135deg, rgba(224, 122, 95, 0.38), rgba(224, 122, 95, 0.14));
+}
+
+.bm-mobile-menu-overlay {
+  animation: bm-menu-fade-in 0.22s ease-out;
+}
+
+.bm-mobile-menu-backdrop {
+  background: rgba(11, 33, 26, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.bm-mobile-menu-panel {
+  animation: bm-menu-slide-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  background: #f7f7f5;
+}
+
+.bm-mobile-menu-header {
+  background: linear-gradient(165deg, #0f2922 0%, #14352c 48%, #1b4332 100%);
+  color: #ffffff;
+}
+
+@keyframes bm-menu-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bm-menu-slide-in {
+  from {
+    opacity: 0.6;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.mobile-bolt {
+  background-color: #ffffff;
+  color: #222222;
+}
+
+/* ── Global base (BaytMiftah) ── */
+html,
+body,
+#root {
+  min-height: 100%;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-x: clip;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+}
+
+:focus-visible {
+  outline: 2px solid #222222;
+  outline-offset: 2px;
+}
+
+/* ── Dark mode (html.dark) ── */
+html.dark body {
+  color: #f7f7f7;
+  background: #0f2922;
+}
+
+html.dark .bg-surface {
+  background-color: #1a3830;
+}
+
+html.dark .bg-surface-subtle,
+html.dark .bg-surface-hover {
+  background-color: #243d35;
+}
+
+html.dark .text-ink {
+  color: #f7f7f7;
+}
+
+html.dark .text-ink-secondary {
+  color: #b0b0b0;
+}
+
+html.dark .text-ink-muted {
+  color: #8a9a94;
+}
+
+html.dark .border-surface-border {
+  border-color: #3d5a52;
+}
+
+html.dark .shadow-search,
+html.dark .shadow-card {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+html.dark .bg-brand-accent {
+  background-color: #e07a5f;
+}
+
+html.dark .panel-card {
+  background-color: #1a3830;
+  border-color: #3d5a52;
+}
+
+html.dark .search-pill {
+  background-color: #1a3830;
+  border-color: #3d5a52;
+}
+
+html.dark .nav-pill:hover,
+html.dark .workspace-nav-link:hover {
+  background-color: #243d35;
+}
+
+html.dark .filter-chip {
+  border-color: #f7f7f7;
+  color: #f7f7f7;
+}
+
+html.dark .category-chip.active {
+  border-color: #f7f7f7;
+}
+
+html.dark .hub-link-card:hover {
+  background-color: #243d35;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #1a3830;
+  color: #f7f7f7;
+  border-color: #3d5a52;
+}
+
+html.dark ::placeholder {
+  color: #8a9a94;
+}
+
+html.dark :focus-visible {
+  outline-color: #e07a5f;
+}
+
+html.dark .mobile-bolt {
+  background-color: #0f2922;
+  color: #f7f7f7;
+}
+
+html.dark .bg-bolt-card {
+  background-color: #1a3830;
+}
+
+/* RTL layout helpers */
+[dir="rtl"] .search-pill {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .search-segment.rounded-l-full {
+  border-radius: 0 9999px 9999px 0;
+}
+
+[dir="rtl"] .listing-scroll {
+  direction: rtl;
+}
+
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .search-orb {
+  margin-inline-start: 0;
+  margin-inline-end: 0.5rem;
+}
+
+html.dark .mobile-tab-button.is-active {
+  color: #8fd4b0;
+}
+
+/* Desktop shell stays forest marketplace regardless of theme */
+html.dark .desktop-shell {
+  background-color: #0b211a;
+}

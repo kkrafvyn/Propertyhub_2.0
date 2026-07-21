@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 140" fill="none" role="img" aria-label="BaytMiftah">
+  <rect width="360" height="140" rx="8" fill="#0F2922"/>
+  <g transform="translate(156 16)">
+    <circle cx="24" cy="15" r="5.5" fill="#FFFFFF"/>
+    <path d="M9 33.5Q24 24.5 39 33.5" stroke="#FFFFFF" stroke-width="2.25" stroke-linecap="round"/>
+  </g>
+  <text x="180" y="88" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700" letter-spacing="0.18em" text-anchor="middle">B›YTMIFT›H</text>
+</svg>

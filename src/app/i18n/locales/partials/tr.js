@@ -1,0 +1,113 @@
+export default {
+  "localeName": "Türkçe",
+  "nav": {
+    "compare": "Karşılaştır",
+    "saved": "Kaydedilenler",
+    "listProperty": "İlan ver",
+    "language": "Dil ve bölge",
+    "openMenu": "Menüyü aç"
+  },
+  "search": {
+    "where": "Konum",
+    "type": "Tür",
+    "budget": "Bütçe",
+    "searchDestinations": "Destinasyon ara",
+    "anyType": "Her tür",
+    "apartments": "Daireler",
+    "houses": "Evler",
+    "commercial": "Ticari",
+    "addBudget": "Bütçe ekle",
+    "anywhere": "Her yer",
+    "search": "Ara",
+    "whereTo": "Nereye?"
+  },
+  "categories": {
+    "all": "Tüm evler",
+    "apartment": "Daireler",
+    "house": "Evler",
+    "office": "Ticari",
+    "verified": "Doğrulanmış",
+    "filters": "Filtreler",
+    "showMap": "Harita",
+    "showList": "Liste"
+  },
+  "mobile": {
+    "explore": "Keşfet",
+    "search": "Ara",
+    "saved": "Kaydedilen",
+    "inbox": "Mesajlar",
+    "profile": "Profil",
+    "goBack": "Geri",
+    "filters": "Filtreler",
+    "home": "Ana sayfa",
+    "agents": "Danışmanlar",
+    "searchListings": "İlan ara…",
+    "findNextHome": "Bir sonraki evinizi bulun",
+    "viewList": "Liste",
+    "viewMap": "Harita",
+    "homeScreen": {
+      "heroTitle": "Güvenle bir sonraki evinizi bulun",
+      "heroSubtitle": "Doğrulanmış ilanlar. Güvenilir danışmanlar.",
+      "buy": "Satın al",
+      "rent": "Kirala",
+      "lease": "Kiralama",
+      "stay": "Konaklama",
+      "townhouses": "Sıra evler",
+      "land": "Arsa",
+      "shortStay": "Kısa konaklama",
+      "seeAll": "Tümünü gör",
+      "exploreStays": "Konaklamaları keşfet",
+      "propertiesCount": "{{count}} ilan"
+    },
+    "savedCount": "{{count}} ilan",
+    "noSavedTitle": "Kayıtlı ilan yok",
+    "noSavedDesc": "Kaydetmek için kalbe dokunun.",
+    "mapLoading": "Harita yükleniyor…",
+    "useMyLocation": "Konumumu kullan",
+    "menu": "Menü"
+  },
+  "auth": {
+    "welcome": "BaytMiftah'a hoş geldiniz",
+    "finishSignup": "Kaydı tamamla",
+    "email": "E-posta",
+    "password": "Şifre",
+    "continue": "Devam",
+    "logIn": "Giriş yap",
+    "signUp": "Kayıt ol",
+    "forgotPassword": "Şifrenizi mi unuttunuz?",
+    "resetPassword": "Şifreyi sıfırla"
+  },
+  "profile": {
+    "account": "Hesap",
+    "language": "Dil",
+    "languageDesc": "Uygulama dilinizi seçin.",
+    "logOut": "Çıkış yap"
+  },
+  "language": {
+    "title": "Dil ve bölge",
+    "choose": "Dil seçin",
+    "groupGlobal": "Küresel",
+    "groupAfrica": "Afrika",
+    "groupAsia": "Asya ve Pasifik"
+  },
+  "common": {
+    "loading": "Yükleniyor…",
+    "close": "Kapat",
+    "verified": "Doğrulanmış",
+    "pending": "Beklemede"
+  },
+  "listing": {
+    "backToSearch": "Aramaya dön",
+    "requestViewing": "Görüntüleme talep et"
+  },
+  "home": {
+    "noMatches": "Tam eşleşme yok",
+    "tryAdjusting": "Filtreleri veya aramayı değiştirin",
+    "showResults": "Sonuçları göster"
+  },
+  "filters": {
+    "verifiedOnly": "Yalnızca doğrulanmış",
+    "minBedrooms": "Min. yatak odası",
+    "any": "Herhangi"
+  }
+}

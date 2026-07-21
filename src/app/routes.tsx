@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router";
 import { Root } from "./components/Root";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
+import { LegacyRouteRedirect } from "./components/LegacyRouteRedirect";
 import { NotFound } from "./pages/NotFound";
 
 export const router = createBrowserRouter([
@@ -51,6 +52,19 @@ export const router = createBrowserRouter([
           return { Component: Signup };
         },
       },
+      { path: "explore", element: <LegacyRouteRedirect /> },
+      { path: "saved", element: <LegacyRouteRedirect /> },
+      { path: "messages", element: <LegacyRouteRedirect /> },
+      { path: "messages/:id", element: <LegacyRouteRedirect /> },
+      { path: "profile", element: <LegacyRouteRedirect /> },
+      { path: "profile/kyc", element: <LegacyRouteRedirect /> },
+      { path: "trips", element: <LegacyRouteRedirect /> },
+      { path: "wallet", element: <LegacyRouteRedirect /> },
+      { path: "offers", element: <LegacyRouteRedirect /> },
+      { path: "transactions", element: <LegacyRouteRedirect /> },
+      { path: "documents", element: <LegacyRouteRedirect /> },
+      { path: "consumer", element: <LegacyRouteRedirect /> },
+      { path: "consumer/*", element: <LegacyRouteRedirect /> },
       {
         path: "app/*",
         lazy: async () => {
