@@ -52,8 +52,6 @@ export default {
     "contact": "Contact",
     "tagline": "Your home journey, one platform.",
     "communityForum": "Community forum",
-    "company": "BaytMiftah",
-    "about": "About",
     "newsroom": "Newsroom",
     "careers": "Careers",
     "legal": "Legal",

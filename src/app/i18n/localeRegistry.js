@@ -1,4 +1,6 @@
 import en from './locales/en.js'
+import { mergeLocale } from './mergeLocale.js'
+import { getDesktopChrome } from './locales/partials/_desktopChrome.js'
 
 /** @type {Record<string, () => Promise<{ default: object }>>} */
 export const LOCALE_LOADERS = {
@@ -71,8 +73,10 @@ export async function loadLocale(code) {
   if (cache[code]) return cache[code]
   const loader = LOCALE_LOADERS[code] ?? LOCALE_LOADERS.en
   const mod = await loader()
-  cache[code] = mod.default
-  return mod.default
+  const catalog =
+    code === 'en' ? mod.default : mergeLocale(mod.default, getDesktopChrome(code))
+  cache[code] = catalog
+  return catalog
 }
 
 /** Preload English (sync) and the active locale in parallel. */
