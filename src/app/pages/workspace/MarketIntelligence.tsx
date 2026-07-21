@@ -28,11 +28,15 @@ export default function MarketIntelligenceDashboard({
       try {
         setLoading(true);
 
-        const [insightsData, analyticsData, locationsData] = await Promise.all([
+        const [insightsData, locationsData] = await Promise.all([
           marketIntelligenceService.getOrganizationInsights(organizationId),
-          marketIntelligenceService.getMarketAnalytics("Accra"),
           marketIntelligenceService.getTopLocations(3),
         ]);
+
+        const marketLocation = locationsData?.[0]?.city || "";
+        const analyticsData = marketLocation
+          ? await marketIntelligenceService.getOrComputeMarketAnalytics(marketLocation)
+          : [];
 
         if (!cancelled) {
           setInsights(insightsData);

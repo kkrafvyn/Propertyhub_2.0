@@ -2,15 +2,18 @@ import { RouterProvider } from 'react-router';
 import { Toaster } from 'sonner';
 import { router } from './routes';
 import { AuthProvider } from './context/AuthContext';
-import { Web3Provider } from './context/Web3Context';
+import { AppErrorBoundary } from './components/AppErrorBoundary';
+import { validateClientEnv } from '../lib/env';
+
+validateClientEnv();
 
 export default function App() {
   return (
-    <Web3Provider>
+    <AppErrorBoundary>
       <AuthProvider>
         <RouterProvider router={router} />
         <Toaster richColors position="top-right" />
       </AuthProvider>
-    </Web3Provider>
+    </AppErrorBoundary>
   );
 }

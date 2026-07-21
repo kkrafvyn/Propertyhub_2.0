@@ -14,8 +14,7 @@ import {
   communicationService,
   type NotificationRecord,
 } from "../../lib/communication.service";
-import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
-
+import { supabase } from "../../lib/supabase";
 interface NotificationBellProps {
   userId: string;
 }
@@ -74,6 +73,31 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   }, [userId]);
 
   useEffect(() => {
+    const channel = supabase
+      .channel(`notification-bell:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notification_logs",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          void loadUnreadCount();
+          if (open) {
+            void loadNotifications();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [userId, open]);
+
+  useEffect(() => {
     if (!open) return;
     void loadNotifications();
   }, [open, userId]);
@@ -103,7 +127,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
       console.error("Failed to mark notification as read:", error);
     } finally {
       setOpen(false);
-      navigate(notification.action_url || `${WORKSPACE_ENTRY_PATH}?next=notifications`);
+      navigate(notification.action_url || "/app/notifications");
     }
   };
 
@@ -204,10 +228,10 @@ export function NotificationBell({ userId }: NotificationBellProps) {
           onSelect={(event) => {
             event.preventDefault();
             setOpen(false);
-            navigate(`${WORKSPACE_ENTRY_PATH}?next=notifications`);
+            navigate("/app/notifications");
           }}
         >
-          Open notification settings
+          Open notification center
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -46,7 +46,23 @@ export const marketIntelligenceService = {
       return date > thirtyDaysAgo
     })
     
-    const trend = recentListings.length > 0 ? 2.5 : -1.5
+    const olderListings = listings.filter(l => {
+      const date = new Date(l.created_at)
+      const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000)
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      return date <= thirtyDaysAgo && date > sixtyDaysAgo
+    })
+
+    const recentAvg = recentListings.length
+      ? recentListings.reduce((sum, listing) => sum + listing.price, 0) / recentListings.length
+      : 0
+    const olderAvg = olderListings.length
+      ? olderListings.reduce((sum, listing) => sum + listing.price, 0) / olderListings.length
+      : 0
+
+    const trend = olderAvg > 0
+      ? Math.round(((recentAvg - olderAvg) / olderAvg) * 1000) / 10
+      : 0
     
     const { data, error } = await supabase
       .from('market_analytics')
@@ -58,8 +74,8 @@ export const marketIntelligenceService = {
         avg_price: Math.round(avgPrice),
         median_price: Math.round(medianPrice),
         price_trend: trend,
-        avg_listing_days: 30,
-        occupancy_rate: 0.85,
+        avg_listing_days: null,
+        occupancy_rate: null,
         total_listings: listings.length,
         new_listings: recentListings.length,
         sold_listings: 0
@@ -208,31 +224,173 @@ export const marketIntelligenceService = {
       .limit(limit)
 
     if (error) throw error
-    return data || []
+    if (data?.length) return data
+
+    return this.computeTopLocationsFromListings(limit)
+  },
+
+  async computeTopLocationsFromListings(limit = 5) {
+    const { data, error } = await supabase
+      .from('listings')
+      .select(`
+        created_at,
+        property:properties(city, region, neighborhood)
+      `)
+      .eq('status', 'listed')
+      .eq('visibility', 'public')
+
+    if (error) throw error
+    if (!data?.length) return []
+
+    const grouped = new Map<string, {
+      city: string
+      region: string
+      total: number
+      recent: number
+    }>()
+
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
+
+    for (const listing of data) {
+      const property = listing.property as {
+        city?: string | null
+        region?: string | null
+        neighborhood?: string | null
+      } | null
+
+      const city = property?.city?.trim() || property?.neighborhood?.trim()
+      if (!city) continue
+
+      const region = property?.region?.trim() || 'Ghana'
+      const key = `${city}::${region}`
+      const bucket = grouped.get(key) || { city, region, total: 0, recent: 0 }
+      bucket.total += 1
+      if (new Date(listing.created_at).getTime() > thirtyDaysAgo) {
+        bucket.recent += 1
+      }
+      grouped.set(key, bucket)
+    }
+
+    return Array.from(grouped.values())
+      .map((entry) => ({
+        city: entry.city,
+        region: entry.region,
+        growth_rate:
+          entry.total > 0 ? Math.round((entry.recent / entry.total) * 1000) / 10 : 0,
+        investment_score: Math.min(5, 2 + entry.total * 0.2),
+        listing_count: entry.total,
+      }))
+      .sort((a, b) => b.listing_count - a.listing_count)
+      .slice(0, limit)
+  },
+
+  async getOrComputeMarketAnalytics(location: string, period = 'monthly', propertyType?: string) {
+    const stored = await this.getMarketAnalytics(location, period, propertyType)
+    if (stored?.length) return stored
+
+    const computed = await this.computeMarketAnalyticsForLocation(location, propertyType)
+    return computed ? [computed] : []
+  },
+
+  async computeMarketAnalyticsForLocation(location: string, propertyType?: string) {
+    const { data, error } = await supabase
+      .from('listings')
+      .select(`
+        price,
+        created_at,
+        listing_type,
+        property:properties(category, city, region, neighborhood)
+      `)
+      .eq('status', 'listed')
+      .eq('visibility', 'public')
+
+    if (error) throw error
+
+    const locationKey = location.trim().toLowerCase()
+    const filtered = (data || []).filter((listing) => {
+      const property = listing.property as {
+        category?: string | null
+        city?: string | null
+        region?: string | null
+        neighborhood?: string | null
+      } | null
+
+      const haystack = [
+        property?.city,
+        property?.region,
+        property?.neighborhood,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+
+      if (!haystack.includes(locationKey)) return false
+      if (propertyType && property?.category !== propertyType) return false
+      return true
+    })
+
+    if (!filtered.length) return null
+
+    const prices = filtered.map((listing) => listing.price)
+    const avgPrice = prices.reduce((sum, price) => sum + price, 0) / prices.length
+    const sortedPrices = [...prices].sort((a, b) => a - b)
+    const medianPrice = sortedPrices[Math.floor(sortedPrices.length / 2)]
+
+    const recentListings = filtered.filter((listing) => {
+      return new Date(listing.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    })
+
+    const olderListings = filtered.filter((listing) => {
+      const createdAt = new Date(listing.created_at)
+      return (
+        createdAt <= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) &&
+        createdAt > new Date(Date.now() - 60 * 24 * 60 * 60 * 1000)
+      )
+    })
+
+    const recentAvg = recentListings.length
+      ? recentListings.reduce((sum, listing) => sum + listing.price, 0) / recentListings.length
+      : 0
+    const olderAvg = olderListings.length
+      ? olderListings.reduce((sum, listing) => sum + listing.price, 0) / olderListings.length
+      : 0
+
+    const trend =
+      olderAvg > 0 ? Math.round(((recentAvg - olderAvg) / olderAvg) * 1000) / 10 : 0
+
+    return {
+      period: 'monthly',
+      location,
+      property_type: propertyType || null,
+      listing_type: filtered[0]?.listing_type || null,
+      avg_price: Math.round(avgPrice),
+      median_price: Math.round(medianPrice),
+      price_trend: trend,
+      avg_listing_days: null,
+      occupancy_rate: null,
+      total_listings: filtered.length,
+      new_listings: recentListings.length,
+      sold_listings: 0,
+      created_at: new Date().toISOString(),
+    }
   },
 
   // Get market trends forecast (simplified)
   async getMarketForecast(location: string, forecastDays = 90) {
-    // Get historical data
-    const { data: analytics } = await supabase
-      .from('market_analytics')
-      .select('*')
-      .eq('location', location)
-      .order('created_at', { ascending: false })
-      .limit(12)
+    const analytics = await this.getOrComputeMarketAnalytics(location)
     
-    if (!analytics || analytics.length < 3) return null
+    if (!analytics.length) return []
     
-    // Simple trend extrapolation
     const trend = analytics[0].price_trend || 0
     const forecast = []
     
     for (let i = 0; i < forecastDays; i += 30) {
       const daysAhead = i
+      const historicalConfidence = Math.min(analytics.length / 3, 1)
       forecast.push({
         date: new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000),
         predicted_avg_price: Math.round((analytics[0].avg_price || 0) * (1 + trend / 100)),
-        confidence: 0.75
+        confidence: Math.round(historicalConfidence * 100) / 100
       })
     }
     

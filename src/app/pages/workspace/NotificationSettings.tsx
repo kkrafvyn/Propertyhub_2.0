@@ -12,6 +12,7 @@ import {
   type NotificationRecord,
 } from "../../../lib/communication.service";
 import { pushNotificationService } from "../../../lib/push-notification.service";
+import { notificationService } from "../../../lib/notification.service";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 
 function formatRelativeTime(value?: string | null) {
@@ -160,7 +161,11 @@ export default function NotificationSettings() {
     try {
       setRegisteringPush(true);
       await pushNotificationService.registerBrowserPush(user.id);
-      toast.success("Browser push connected.");
+      toast.success(
+        pushNotificationService.hasWebPushKeys()
+          ? "Browser push connected."
+          : "Browser alerts enabled."
+      );
     } catch (error) {
       console.error("Failed to register browser push:", error);
       toast.error(
@@ -182,34 +187,49 @@ export default function NotificationSettings() {
   }
 
   const unreadCount = history.filter((notification) => !notification.read).length;
+  const externalProviders = notificationService.areExternalProvidersConfigured();
   const channels = [
+    {
+      id: "in_app",
+      name: "In-app notifications",
+      icon: Bell,
+      description: "Always available in your notification center — no external keys required.",
+      key: "in_app_enabled" as const,
+      alwaysAvailable: true,
+    },
     {
       id: "email",
       name: "Email notifications",
       icon: Mail,
-      description: "Save your email preference for listing, message, and team updates.",
+      description: "Saved for later. Email delivery activates once Resend keys are added on the server.",
       key: "email_enabled" as const,
+      alwaysAvailable: false,
     },
     {
       id: "sms",
       name: "SMS notifications",
       icon: MessageSquare,
-      description: "Save your SMS preference for urgent deal and inquiry updates.",
+      description: "Saved for later. SMS delivery activates once Twilio keys are added.",
       key: "sms_enabled" as const,
+      alwaysAvailable: false,
     },
     {
       id: "push",
       name: "Push notifications",
       icon: Bell,
-      description: "Use in-app and browser alert preferences for faster response times.",
+      description: externalProviders.webPush
+        ? "Browser push via configured VAPID keys."
+        : "Use browser alerts below until web push keys are configured.",
       key: "push_enabled" as const,
+      alwaysAvailable: false,
     },
     {
       id: "whatsapp",
       name: "WhatsApp messages",
       icon: Smartphone,
-      description: "Keep your WhatsApp delivery preference on file for future rollout.",
+      description: "Saved for later. WhatsApp delivery activates once provider keys are added.",
       key: "whatsapp_enabled" as const,
+      alwaysAvailable: false,
     },
   ];
 
@@ -219,8 +239,9 @@ export default function NotificationSettings() {
         <div>
           <h1 className="text-3xl font-semibold">Notifications</h1>
           <p className="text-muted-foreground mt-2">
-            In-app notifications are live now, and external delivery can run through the configured
-            email, SMS, WhatsApp, and push providers.
+            In-app notifications are fully live without any external API keys. Email, SMS, WhatsApp,
+            and web push preferences are saved now and will activate automatically once providers
+            are configured.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -240,8 +261,8 @@ export default function NotificationSettings() {
 
       <Card className="p-4 bg-secondary/20 border-dashed">
         <p className="text-sm text-muted-foreground">
-          Quiet hours and frequency rules apply to real-time delivery. In-app items still remain in
-          your notification center so nothing gets lost.
+          Workflow updates for bookings, maintenance, offers, leases, and messages are delivered
+          in-app immediately. Quiet hours and frequency rules apply only to external channels.
         </p>
       </Card>
 
@@ -278,7 +299,7 @@ export default function NotificationSettings() {
                       aria-label={`Toggle ${channel.name}`}
                     />
                     <Badge variant={enabled ? "default" : "secondary"}>
-                      {enabled ? "Enabled" : "Disabled"}
+                      {channel.alwaysAvailable ? "Always on" : enabled ? "Enabled" : "Disabled"}
                     </Badge>
                   </label>
                 </div>
@@ -291,24 +312,31 @@ export default function NotificationSettings() {
       <Card className="p-4 border-dashed">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Browser Push Setup</h2>
+            <h2 className="text-lg font-semibold">Browser Alerts</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Connect this browser to receive real-time push alerts when the workspace sends them.
+              Enable browser alerts for instant feedback while this app is open. Full background web
+              push requires VAPID keys on the server.
             </p>
           </div>
           <Button
             variant="outline"
             onClick={() => void handleRegisterBrowserPush()}
-            disabled={!pushNotificationService.isSupported() || registeringPush}
+            disabled={!pushNotificationService.canUseLocalNotifications() || registeringPush}
           >
-            {registeringPush ? "Connecting..." : "Enable Browser Push"}
+            {registeringPush ? "Connecting..." : "Enable Browser Alerts"}
           </Button>
         </div>
-        {!pushNotificationService.isSupported() && (
+        {!pushNotificationService.canUseLocalNotifications() && (
           <p className="text-xs text-muted-foreground mt-3">
-            Browser push is only available in supported secure browser environments.
+            Browser alerts are only available in supported secure browser environments.
           </p>
         )}
+        {pushNotificationService.canUseLocalNotifications() &&
+          pushNotificationService.getPermission() === "granted" && (
+            <p className="text-xs text-muted-foreground mt-3">
+              Browser alerts are active. In-app notifications remain your primary inbox.
+            </p>
+          )}
       </Card>
 
       <div className="space-y-4">

@@ -112,7 +112,6 @@ class CurrencyService {
       return rate;
     } catch (error) {
       console.error('Failed to fetch exchange rate:', error);
-      // Fallback to default rates
       return this.getDefaultRate(from, to);
     }
   }
@@ -160,49 +159,71 @@ class CurrencyService {
    * You can use: exchangerate-api.com, fixer.io, or openexchangerates.org
    */
   private async fetchFromExternalAPI(from: string, to: string): Promise<number> {
-    // This would integrate with your chosen API
-    // For now, returning mock rates
-    const mockRates: Record<string, number> = {
-      USD_EUR: 0.92,
-      USD_GBP: 0.79,
-      USD_GHS: 12.5,
-      USD_NGN: 1550,
-      USD_ZAR: 18.5,
-      EUR_USD: 1.09,
-      GBP_USD: 1.27,
-    };
+    const apiKey = import.meta.env.VITE_EXCHANGE_RATE_API_KEY
 
-    const key = `${from}_${to}`;
-    if (mockRates[key]) return mockRates[key];
+    if (apiKey) {
+      const response = await fetch(
+        `https://v6.exchangerate-api.com/v6/${apiKey}/pair/${from}/${to}`
+      )
 
-    // Default fallback
-    return 1;
+      if (!response.ok) {
+        throw new Error(`Exchange rate API request failed (${response.status})`)
+      }
+
+      const payload = await response.json()
+      const rate = Number(payload?.conversion_rate)
+
+      if (!Number.isFinite(rate) || rate <= 0) {
+        throw new Error('Exchange rate API returned an invalid rate')
+      }
+
+      return rate
+    }
+
+    const response = await fetch(`https://open.er-api.com/v6/latest/${from}`)
+    if (!response.ok) {
+      throw new Error(`Public exchange rate request failed (${response.status})`)
+    }
+
+    const payload = await response.json()
+    const rate = Number(payload?.rates?.[to])
+
+    if (!Number.isFinite(rate) || rate <= 0) {
+      throw new Error(`No exchange rate returned for ${from} to ${to}`)
+    }
+
+    return rate
   }
 
   /**
-   * Get default rates for fallback
+   * Get cached or reverse-computed rates when live fetch fails
    */
-  private getDefaultRate(from: string, to: string): number {
-    const defaultRates: Record<string, number> = {
-      USD_EUR: 0.92,
-      USD_GBP: 0.79,
-      USD_GHS: 12.5,
-      USD_NGN: 1550,
-      USD_ZAR: 18.5,
-      EUR_USD: 1.09,
-      GBP_USD: 1.27,
-      GHS_USD: 0.08,
-      NGN_USD: 0.00065,
-    };
+  private async getDefaultRate(from: string, to: string): Promise<number> {
+    if (from === to) return 1
 
-    const key = `${from}_${to}`;
-    if (defaultRates[key]) return defaultRates[key];
+    const { data: cachedRate } = await supabase
+      .from('currency_rates')
+      .select('*')
+      .eq('from', from)
+      .eq('to', to)
+      .maybeSingle()
 
-    // Reverse rate
-    const reverseKey = `${to}_${from}`;
-    if (defaultRates[reverseKey]) return 1 / defaultRates[reverseKey];
+    if (cachedRate?.rate) {
+      return cachedRate.rate
+    }
 
-    return 1;
+    const { data: reverseRate } = await supabase
+      .from('currency_rates')
+      .select('*')
+      .eq('from', to)
+      .eq('to', from)
+      .maybeSingle()
+
+    if (reverseRate?.rate) {
+      return 1 / reverseRate.rate
+    }
+
+    throw new Error(`No exchange rate available for ${from} to ${to}`)
   }
 }
 

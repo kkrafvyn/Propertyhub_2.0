@@ -51,6 +51,60 @@ function buildDefaultTemplate(input: {
 export const documentCenterService = {
   buildDefaultTemplate,
 
+  getDocumentFolder(documentType?: string | null) {
+    switch (documentType) {
+      case "national_id":
+      case "passport":
+        return "IDs";
+      case "lease_contract":
+        return "Leases";
+      case "sale_contract":
+      case "offer_letter":
+        return "Sale Agreements";
+      case "receipt":
+        return "Receipts";
+      case "inspection_report":
+        return "Inspection Reports";
+      case "insurance_policy":
+        return "Insurance";
+      case "invoice":
+        return "Invoices";
+      default:
+        return "Other";
+    }
+  },
+
+  async getUserDocuments(userId: string) {
+    const { data, error } = await supabase
+      .from("organization_documents")
+      .select(`
+        *,
+        deal_case:deal_cases!inner(user_id, case_type, status),
+        listing:listings(property:properties(address, city))
+      `)
+      .eq("deal_case.user_id", userId)
+      .order("updated_at", { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map((document) => ({
+      ...document,
+      document_folder:
+        document.document_folder ||
+        this.getDocumentFolder(document.document_type),
+    }));
+  },
+
+  async getUserDocumentsByFolder(userId: string) {
+    const documents = await this.getUserDocuments(userId);
+    return documents.reduce<Record<string, typeof documents>>((acc, document) => {
+      const folder = document.document_folder || "Other";
+      acc[folder] = acc[folder] || [];
+      acc[folder].push(document);
+      return acc;
+    }, {});
+  },
+
   async getOrganizationDocuments(organizationId: string) {
     const { data, error } = await supabase
       .from("organization_documents")

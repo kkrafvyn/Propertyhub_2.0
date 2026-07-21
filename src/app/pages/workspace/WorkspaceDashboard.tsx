@@ -142,13 +142,13 @@ export function WorkspaceDashboard({ organization, workspaceBasePath }: Workspac
     [propertyTransactions]
   );
 
-  const verifiedPayments = useMemo(
+  const receiptedPayments = useMemo(
     () =>
       propertyTransactions.filter((transaction) => {
         const receipt = Array.isArray(transaction.receipt)
           ? transaction.receipt[0]
           : transaction.receipt;
-        return receipt?.blockchain_status === "confirmed";
+        return Boolean(receipt?.receipt_sha256);
       }),
     [propertyTransactions]
   );
@@ -303,9 +303,9 @@ export function WorkspaceDashboard({ organization, workspaceBasePath }: Workspac
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Verified Receipts</p>
-              <p className="text-3xl font-semibold">{verifiedPayments.length}</p>
-              <p className="text-xs text-accent mt-1">Anchored to Polygon</p>
+              <p className="text-sm text-muted-foreground mb-1">Payment Receipts</p>
+              <p className="text-3xl font-semibold">{receiptedPayments.length}</p>
+              <p className="text-xs text-accent mt-1">Issued for successful payments</p>
             </div>
             <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
               <Shield className="w-6 h-6 text-accent" />

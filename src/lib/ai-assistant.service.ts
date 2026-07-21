@@ -34,6 +34,7 @@ export const aiAssistantService = {
     if (/(rent|rental|monthly)/i.test(query)) filters.listingType = 'rental'
     if (/(lease|leasing)/i.test(query)) filters.listingType = 'lease'
     if (/(buy|sale|purchase|own)/i.test(query)) filters.listingType = 'sale'
+    if (/(short stay|airbnb|nightly|weekend stay|vacation)/i.test(query)) filters.listingType = 'short_stay'
 
     if (/(apartment|flat|condo)/i.test(query)) filters.propertyType = 'apartment'
     if (/(house|home|villa|duplex)/i.test(query)) filters.propertyType = 'house'
@@ -195,11 +196,11 @@ export const aiAssistantService = {
     if (error) throw error
     
     // Create recommendations with confidence scores
-    const recommendations = listings.map(listing => ({
+    const recommendations = (listings || []).map(listing => ({
       user_id: userId,
       listing_id: listing.id,
       reason: `Matches your preferred criteria`,
-      confidence_score: 0.85
+      confidence_score: this.calculateMatchConfidence(listing, prefs)
     }))
     
     const { error: insertError } = await supabase
@@ -208,6 +209,22 @@ export const aiAssistantService = {
     
     if (insertError) throw insertError
     return recommendations
+  },
+
+  calculateMatchConfidence(listing: { price?: number | null }, preferences: Record<string, any>) {
+    let score = 0.5
+
+    if (
+      preferences.preferred_price_min &&
+      preferences.preferred_price_max &&
+      listing.price != null &&
+      listing.price >= preferences.preferred_price_min &&
+      listing.price <= preferences.preferred_price_max
+    ) {
+      score += 0.35
+    }
+
+    return Math.min(Math.round(score * 100) / 100, 1)
   },
 
   // Track recommendation click

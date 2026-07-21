@@ -119,21 +119,33 @@ export const mobileAppService = {
 
   // Get app version info
   async getAppVersion(deviceType: 'ios' | 'android') {
-    // In production, store version info in a separate table
+    const appVersion = import.meta.env.VITE_APP_VERSION || '0.0.1'
+    const minimumVersion = import.meta.env.VITE_APP_MIN_VERSION || appVersion
+    const latestVersion = import.meta.env.VITE_APP_LATEST_VERSION || appVersion
+    const iosUrl = import.meta.env.VITE_IOS_APP_URL || ''
+    const androidUrl = import.meta.env.VITE_ANDROID_APP_URL || ''
+
     return {
-      current_version: '1.0.0',
-      minimum_version: '1.0.0',
-      latest_version: '1.0.1',
-      force_update: false,
-      update_url: deviceType === 'ios' 
-        ? 'https://apps.apple.com/app/propertyhub'
-        : 'https://play.google.com/store/apps/details?id=com.propertyhub'
+      current_version: appVersion,
+      minimum_version: minimumVersion,
+      latest_version: latestVersion,
+      force_update: import.meta.env.VITE_APP_FORCE_UPDATE === 'true',
+      update_url: deviceType === 'ios' ? iosUrl : androidUrl,
+      changelog: import.meta.env.VITE_APP_CHANGELOG || null,
     }
   },
 
   // Check for app updates
   async checkForUpdates(deviceType: 'ios' | 'android', currentVersion: string) {
     const versionInfo = await this.getAppVersion(deviceType)
+    if (!versionInfo) {
+      return {
+        update_available: false,
+        force_update: false,
+        changelog: null,
+        download_url: null
+      }
+    }
     
     const current = this.parseVersion(currentVersion)
     const latest = this.parseVersion(versionInfo.latest_version)
@@ -141,7 +153,7 @@ export const mobileAppService = {
     return {
       update_available: latest > current,
       force_update: versionInfo.force_update,
-      changelog: 'Bug fixes and performance improvements',
+      changelog: versionInfo.changelog || null,
       download_url: versionInfo.update_url
     }
   },

@@ -29,7 +29,7 @@ export default function PredictiveAnalytics({
 }: PredictiveAnalyticsProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [timeRange, setTimeRange] = useState("6m");
-  const [selectedLocation, setSelectedLocation] = useState("Accra");
+  const [selectedLocation, setSelectedLocation] = useState("");
   const [loading, setLoading] = useState(true);
   const [insights, setInsights] = useState<any | null>(null);
   const [analytics, setAnalytics] = useState<any[]>([]);
@@ -76,12 +76,18 @@ export default function PredictiveAnalytics({
   }, [organizationId]);
 
   useEffect(() => {
+    if (!selectedLocation) {
+      setAnalytics([]);
+      setForecast([]);
+      return;
+    }
+
     let cancelled = false;
 
     const loadLocationData = async () => {
       try {
         const [analyticsData, forecastData] = await Promise.all([
-          marketIntelligenceService.getMarketAnalytics(selectedLocation),
+          marketIntelligenceService.getOrComputeMarketAnalytics(selectedLocation),
           marketIntelligenceService.getMarketForecast(selectedLocation),
         ]);
 
@@ -129,8 +135,9 @@ export default function PredictiveAnalytics({
       {
         label: "Conversion Rate",
         value: insights?.conversion_rate || 0,
-        change: (insights?.conversion_rate || 0) > 10 ? 3 : -2,
-        trend: (insights?.conversion_rate || 0) > 10 ? "up" : "down",
+        change: 0,
+        trend:
+          (insights?.conversion_rate || 0) > 0 ? "up" : "stable",
       },
       {
         label: "Predicted Demand",
@@ -167,7 +174,7 @@ export default function PredictiveAnalytics({
     if (topLocations[0]?.city) {
       cards.push({
         title: `${topLocations[0].city} is your strongest trend market`,
-        description: `Growth rate is ${topLocations[0].growth_rate || 0}% with an investment score of ${topLocations[0].investment_score || 0}.`,
+        description: `Growth rate is ${topLocations[0].growth_rate || 0}% with a demand score of ${topLocations[0].investment_score || 0}.`,
         impact: "high",
       });
     }
@@ -456,7 +463,7 @@ export default function PredictiveAnalytics({
                       {location.city}, {location.region}
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Demand {location.demand_level || "unknown"} • Investment score{" "}
+                      Demand {location.demand_level || "unknown"} • Demand score{" "}
                       {location.investment_score || 0}
                     </p>
                   </div>

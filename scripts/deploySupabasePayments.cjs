@@ -7,6 +7,16 @@ const path = require("node:path");
 const projectRoot = path.resolve(__dirname, "..");
 const args = process.argv.slice(2);
 
+const EDGE_FUNCTIONS = [
+  { name: "initialize-paystack-payment" },
+  { name: "verify-paystack-payment" },
+  { name: "initiate-paystack-refund" },
+  { name: "paystack-webhook", noVerifyJwt: true },
+  { name: "dispatch-notification" },
+  { name: "automation-dispatcher", noVerifyJwt: true },
+  { name: "send-organization-invite" },
+];
+
 function readFlag(name) {
   const index = args.indexOf(name);
   if (index === -1) return undefined;
@@ -84,31 +94,23 @@ if (!skipSecrets) {
   );
 }
 
-runSupabase(
-  ["functions", "deploy", "initialize-paystack-payment", "--project-ref", projectRef, "--workdir", ".", "--use-api"],
-  "Deploy initialize-paystack-payment"
-);
-runSupabase(
-  ["functions", "deploy", "verify-paystack-payment", "--project-ref", projectRef, "--workdir", ".", "--use-api"],
-  "Deploy verify-paystack-payment"
-);
-runSupabase(
-  ["functions", "deploy", "initiate-paystack-refund", "--project-ref", projectRef, "--workdir", ".", "--use-api"],
-  "Deploy initiate-paystack-refund"
-);
-runSupabase(
-  [
+for (const fn of EDGE_FUNCTIONS) {
+  const deployArgs = [
     "functions",
     "deploy",
-    "paystack-webhook",
+    fn.name,
     "--project-ref",
     projectRef,
     "--workdir",
     ".",
     "--use-api",
-    "--no-verify-jwt",
-  ],
-  "Deploy paystack-webhook"
-);
+  ];
 
-console.log("\nSupabase payment deployment complete.");
+  if (fn.noVerifyJwt) {
+    deployArgs.push("--no-verify-jwt");
+  }
+
+  runSupabase(deployArgs, `Deploy ${fn.name}`);
+}
+
+console.log("\nSupabase backend deployment complete.");

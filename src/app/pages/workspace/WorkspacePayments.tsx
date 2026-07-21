@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner";
 import { ghanaMarketService } from "../../../lib/ghana-market.service";
 import { paymentService } from "../../../lib/payment.service";
+import { escrowService } from "../../../lib/escrow.service";
 import type { Database } from "../../../lib/database.types";
 import type { MemberRole } from "../../../lib/workspace";
 import { Badge } from "../../components/ui/badge";
@@ -179,6 +180,9 @@ export function WorkspacePayments({
   const [refundReason, setRefundReason] = useState("");
   const [customerNote, setCustomerNote] = useState("");
   const [merchantNote, setMerchantNote] = useState("");
+  const [escrowHolds, setEscrowHolds] = useState<any[]>([]);
+  const [releasingHoldId, setReleasingHoldId] = useState<string | null>(null);
+  const [disputingHoldId, setDisputingHoldId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -186,10 +190,14 @@ export function WorkspacePayments({
     const loadPayments = async () => {
       try {
         if (!cancelled) setLoading(true);
-        const rows = await paymentService.getOrganizationPropertyTransactions(organization.id);
+        const [rows, holds] = await Promise.all([
+          paymentService.getOrganizationPropertyTransactions(organization.id),
+          escrowService.getOrganizationEscrowHolds(organization.id),
+        ]);
 
         if (!cancelled) {
           setPayments(rows);
+          setEscrowHolds(holds || []);
         }
       } catch (error) {
         console.error("Failed to load workspace payments:", error);
@@ -209,6 +217,39 @@ export function WorkspacePayments({
       cancelled = true;
     };
   }, [organization.id]);
+
+  const handleReleaseEscrow = async (holdId: string) => {
+    try {
+      setReleasingHoldId(holdId);
+      await escrowService.releaseEscrowHold(holdId);
+      toast.success("Escrow released.");
+      const holds = await escrowService.getOrganizationEscrowHolds(organization.id);
+      setEscrowHolds(holds || []);
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to release escrow.");
+    } finally {
+      setReleasingHoldId(null);
+    }
+  };
+
+  const handleDisputeEscrow = async (holdId: string) => {
+    const note = window.prompt("Describe the escrow dispute:");
+    if (!note?.trim()) return;
+
+    try {
+      setDisputingHoldId(holdId);
+      await escrowService.disputeEscrowHold(holdId, note.trim());
+      toast.success("Escrow marked as disputed.");
+      const holds = await escrowService.getOrganizationEscrowHolds(organization.id);
+      setEscrowHolds(holds || []);
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to dispute escrow.");
+    } finally {
+      setDisputingHoldId(null);
+    }
+  };
 
   const filteredPayments = useMemo(() => {
     if (filter === "all") return payments;
@@ -241,7 +282,7 @@ export function WorkspacePayments({
     );
     const verifiedReceipts = payments.filter((payment) => {
       const receipt = normalizeReceipt(payment);
-      return receipt?.blockchain_status === "confirmed";
+      return Boolean(receipt?.receipt_sha256);
     });
     const volumeMinor = successfulPayments.reduce(
       (total, payment) => total + (payment.amount_minor || 0),
@@ -391,10 +432,55 @@ export function WorkspacePayments({
       <div className="mb-8">
         <h1 className="text-3xl font-semibold mb-2">Payments</h1>
         <p className="text-muted-foreground">
-          Track Paystack payments, review receipts, confirm Polygon verification, and manage
+          Track Paystack payments, review receipts, download proof files, and manage
           refunds for {organization.name}.
         </p>
       </div>
+
+      {escrowHolds.filter((hold) => hold.status === "held").length > 0 && (
+        <Card className="p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4">Escrow Holds</h2>
+          <div className="space-y-4">
+            {escrowHolds
+              .filter((hold) => hold.status === "held")
+              .map((hold) => (
+                <div key={hold.id} className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between rounded-xl border border-border p-4">
+                  <div>
+                    <p className="font-semibold capitalize">
+                      {hold.transaction?.purpose?.replace(/_/g, " ") || "Escrow hold"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {hold.transaction?.payer?.full_name || hold.transaction?.payer?.email} ·{" "}
+                      {hold.transaction?.provider_reference}
+                    </p>
+                    <p className="text-sm font-medium mt-1">
+                      {formatPaymentAmount(hold.amount_minor, hold.currency)}
+                    </p>
+                  </div>
+                  {canManageRefunds(currentRole) && (
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => void handleReleaseEscrow(hold.id)}
+                        disabled={releasingHoldId === hold.id}
+                      >
+                        {releasingHoldId === hold.id ? "Releasing..." : "Release escrow"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void handleDisputeEscrow(hold.id)}
+                        disabled={disputingHoldId === hold.id}
+                      >
+                        {disputingHoldId === hold.id ? "Updating..." : "Dispute"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card className="p-6">
@@ -439,11 +525,9 @@ export function WorkspacePayments({
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Verified on Polygon</p>
+              <p className="text-sm text-muted-foreground mb-1">Receipts Issued</p>
               <p className="text-3xl font-semibold">{stats.verified}</p>
-              <p className="text-xs text-accent mt-1">
-                {formatPaymentAmount(stats.volumeMinor, "GHS")} settled volume
-              </p>
+              <p className="text-xs text-accent mt-1">SHA-256 verified payment receipts</p>
             </div>
             <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
               <Shield className="w-6 h-6 text-primary" />
@@ -540,10 +624,10 @@ export function WorkspacePayments({
                           Refund {formatRefundStatusLabel(latestRefund.status)}
                         </Badge>
                       )}
-                      {receipt?.blockchain_status === "confirmed" && (
+                      {receipt?.receipt_sha256 && (
                         <Badge variant="outline" className="gap-1">
                           <Shield className="w-3 h-3" />
-                          Verified on Polygon
+                          Receipt issued
                         </Badge>
                       )}
                     </div>

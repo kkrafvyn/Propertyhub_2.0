@@ -231,6 +231,50 @@ export const automationEngineService = {
     if (error) throw error
   },
 
+  async getWorkflowStats(workflowId: string) {
+    const logs = await this.getAutomationLogs(workflowId, 500)
+    const runs = logs.length
+    const completed = logs.filter((log) => log.status === 'completed').length
+    const successRate = runs ? Math.round((completed / runs) * 100) : 0
+
+    return {
+      runs,
+      successRate,
+      lastRun: logs[0]?.created_at || null,
+    }
+  },
+
+  async getWorkflowSummaries(organizationId: string) {
+    const workflows = await this.getWorkflows(organizationId)
+
+    return Promise.all(
+      workflows.map(async (workflow) => ({
+        workflow,
+        stats: await this.getWorkflowStats(workflow.id),
+      }))
+    )
+  },
+
+  async createCustomWorkflow(
+    organizationId: string,
+    name: string,
+    triggerType = 'new_listing'
+  ) {
+    return this.createWorkflow(
+      organizationId,
+      name,
+      'custom',
+      triggerType,
+      {},
+      {
+        send_notification: {
+          recipient: 'organization',
+          template: 'workflow_created',
+        },
+      }
+    )
+  },
+
   // Get automation logs
   async getAutomationLogs(workflowId: string, limit = 50) {
     const { data, error } = await supabase

@@ -219,9 +219,93 @@ async function notifyUser(
   }
 }
 
+async function runRentReminders(admin: ReturnType<typeof createAdminClient>) {
+  const today = new Date();
+  const todayIso = today.toISOString().slice(0, 10);
+  const upcomingCutoff = new Date(today);
+  upcomingCutoff.setDate(upcomingCutoff.getDate() + 3);
+  const upcomingIso = upcomingCutoff.toISOString().slice(0, 10);
+
+  const { data: scheduleRows, error } = await admin
+    .from("lease_rent_schedule")
+    .select(`
+      id,
+      due_date,
+      amount_minor,
+      currency,
+      status,
+      reminded_at,
+      lease:leases(
+        id,
+        tenant_user_id,
+        listing:listings(property:properties(address, city))
+      )
+    `)
+    .in("status", ["upcoming", "overdue"])
+    .lte("due_date", upcomingIso);
+
+  if (error) throw error;
+
+  let reminded = 0;
+
+  for (const row of scheduleRows || []) {
+    if (row.reminded_at) continue;
+
+    const lease = row.lease as {
+      id?: string;
+      tenant_user_id?: string;
+      listing?: { property?: { address?: string; city?: string } };
+    } | null;
+
+    if (!lease?.tenant_user_id) continue;
+
+    const address =
+      lease.listing?.property?.address ||
+      lease.listing?.property?.city ||
+      "your rental";
+    const amountLabel = new Intl.NumberFormat("en-GH", {
+      style: "currency",
+      currency: row.currency || "GHS",
+    }).format((row.amount_minor || 0) / 100);
+
+    const isOverdue = row.due_date < todayIso;
+    const subject = isOverdue ? "Rent overdue" : "Rent payment due soon";
+    const content = isOverdue
+      ? `Rent of ${amountLabel} for ${address} was due on ${row.due_date}.`
+      : `Rent of ${amountLabel} for ${address} is due on ${row.due_date}.`;
+
+    await notifyUser(admin, {
+      userId: lease.tenant_user_id,
+      subject,
+      content,
+      notificationType: isOverdue ? "rent_overdue" : "rent_due",
+      actionUrl: "/app/leases",
+    });
+
+    await admin
+      .from("lease_rent_schedule")
+      .update({
+        reminded_at: new Date().toISOString(),
+        reminder_type: isOverdue ? "overdue" : "upcoming",
+        status: isOverdue ? "overdue" : row.status,
+      })
+      .eq("id", row.id);
+
+    reminded += 1;
+  }
+
+  return { reminded };
+}
+
 async function withAutomationRun<T>(
   admin: ReturnType<typeof createAdminClient>,
-  runType: "saved_search_alerts" | "follow_up_reminders" | "stale_pipeline" | "viewing_reminders",
+  runType:
+    | "saved_search_alerts"
+    | "follow_up_reminders"
+    | "stale_pipeline"
+    | "viewing_reminders"
+    | "rent_reminders"
+    | "market_analytics_snapshot",
   executor: () => Promise<T>
 ) {
   const { data: run, error: runError } = await admin
@@ -538,6 +622,186 @@ async function runViewingReminders(admin: ReturnType<typeof createAdminClient>) 
   return { reminded };
 }
 
+async function runMarketAnalyticsSnapshots(admin: ReturnType<typeof createAdminClient>) {
+  const { data: listings, error } = await admin
+    .from("listings")
+    .select(`
+      price,
+      created_at,
+      listing_type,
+      property:properties(category, city, region, neighborhood)
+    `)
+    .eq("status", "listed")
+    .eq("visibility", "public");
+
+  if (error) throw error;
+
+  const grouped = new Map<
+    string,
+    {
+      city: string;
+      region: string;
+      prices: number[];
+      total: number;
+      recent: number;
+      listingType: string | null;
+    }
+  >();
+
+  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const sixtyDaysAgo = Date.now() - 60 * 24 * 60 * 60 * 1000;
+
+  for (const listing of listings || []) {
+    const property = listing.property as {
+      city?: string | null;
+      region?: string | null;
+      neighborhood?: string | null;
+    } | null;
+
+    const city = property?.city?.trim() || property?.neighborhood?.trim();
+    if (!city) continue;
+
+    const region = property?.region?.trim() || "Ghana";
+    const key = `${city}::${region}`;
+    const bucket = grouped.get(key) || {
+      city,
+      region,
+      prices: [],
+      total: 0,
+      recent: 0,
+      listingType: listing.listing_type || null,
+    };
+
+    bucket.prices.push(Number(listing.price || 0));
+    bucket.total += 1;
+    if (new Date(listing.created_at).getTime() > thirtyDaysAgo) {
+      bucket.recent += 1;
+    }
+    bucket.listingType = bucket.listingType || listing.listing_type || null;
+    grouped.set(key, bucket);
+  }
+
+  const topLocations = Array.from(grouped.values())
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 12);
+
+  let analyticsInserted = 0;
+  let trendsUpserted = 0;
+
+  for (const location of topLocations) {
+    const prices = location.prices.filter((price) => price > 0);
+    if (!prices.length) continue;
+
+    const avgPrice = Math.round(prices.reduce((sum, price) => sum + price, 0) / prices.length);
+    const sortedPrices = [...prices].sort((a, b) => a - b);
+    const medianPrice = sortedPrices[Math.floor(sortedPrices.length / 2)];
+
+    const recentPrices = (listings || [])
+      .filter((listing) => {
+        const property = listing.property as {
+          city?: string | null;
+          region?: string | null;
+          neighborhood?: string | null;
+        } | null;
+        const city = property?.city?.trim() || property?.neighborhood?.trim();
+        const region = property?.region?.trim() || "Ghana";
+        return (
+          city === location.city &&
+          region === location.region &&
+          new Date(listing.created_at).getTime() > thirtyDaysAgo
+        );
+      })
+      .map((listing) => Number(listing.price || 0))
+      .filter((price) => price > 0);
+
+    const olderPrices = (listings || [])
+      .filter((listing) => {
+        const property = listing.property as {
+          city?: string | null;
+          region?: string | null;
+          neighborhood?: string | null;
+        } | null;
+        const city = property?.city?.trim() || property?.neighborhood?.trim();
+        const region = property?.region?.trim() || "Ghana";
+        const createdAt = new Date(listing.created_at).getTime();
+        return (
+          city === location.city &&
+          region === location.region &&
+          createdAt <= thirtyDaysAgo &&
+          createdAt > sixtyDaysAgo
+        );
+      })
+      .map((listing) => Number(listing.price || 0))
+      .filter((price) => price > 0);
+
+    const recentAvg = recentPrices.length
+      ? recentPrices.reduce((sum, price) => sum + price, 0) / recentPrices.length
+      : 0;
+    const olderAvg = olderPrices.length
+      ? olderPrices.reduce((sum, price) => sum + price, 0) / olderPrices.length
+      : 0;
+    const trend =
+      olderAvg > 0 ? Math.round(((recentAvg - olderAvg) / olderAvg) * 1000) / 10 : 0;
+    const growthRate =
+      location.total > 0 ? Math.round((location.recent / location.total) * 1000) / 10 : 0;
+
+    const { error: analyticsError } = await admin.from("market_analytics").insert({
+      period: "monthly",
+      location: location.city,
+      property_type: null,
+      listing_type: location.listingType,
+      avg_price: avgPrice,
+      median_price: medianPrice,
+      price_trend: trend,
+      avg_listing_days: null,
+      occupancy_rate: null,
+      total_listings: location.total,
+      new_listings: location.recent,
+      sold_listings: 0,
+    });
+
+    if (analyticsError) {
+      throw analyticsError;
+    }
+
+    analyticsInserted += 1;
+
+    const { error: trendError } = await admin.from("location_trends").upsert(
+      {
+        city: location.city,
+        region: location.region,
+        growth_rate: growthRate,
+        investment_score: Math.min(5, 2 + location.total * 0.2),
+        safety_score: null,
+        accessibility_score: null,
+        demand_level:
+          location.total >= 20
+            ? "very_high"
+            : location.total >= 10
+              ? "high"
+              : location.total >= 5
+                ? "medium"
+                : "low",
+        trending_up: growthRate > 0,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "city,region" }
+    );
+
+    if (trendError) {
+      throw trendError;
+    }
+
+    trendsUpserted += 1;
+  }
+
+  return {
+    locationsProcessed: topLocations.length,
+    analyticsInserted,
+    trendsUpserted,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -551,11 +815,22 @@ Deno.serve(async (req) => {
     getAuthorizedAutomationKey(req);
     const admin = createAdminClient();
 
-    const [savedSearchSummary, followUpSummary, staleSummary, viewingSummary] = await Promise.all([
+    const [
+      savedSearchSummary,
+      followUpSummary,
+      staleSummary,
+      viewingSummary,
+      rentReminderSummary,
+      marketAnalyticsSummary,
+    ] = await Promise.all([
       withAutomationRun(admin, "saved_search_alerts", () => runSavedSearchAlerts(admin)),
       withAutomationRun(admin, "follow_up_reminders", () => runFollowUpReminders(admin)),
       withAutomationRun(admin, "stale_pipeline", () => runStalePipelineNudges(admin)),
       withAutomationRun(admin, "viewing_reminders", () => runViewingReminders(admin)),
+      withAutomationRun(admin, "rent_reminders", () => runRentReminders(admin)),
+      withAutomationRun(admin, "market_analytics_snapshot", () =>
+        runMarketAnalyticsSnapshots(admin)
+      ),
     ]);
 
     return jsonResponse(200, {
@@ -564,6 +839,8 @@ Deno.serve(async (req) => {
       followUpSummary,
       staleSummary,
       viewingSummary,
+      rentReminderSummary,
+      marketAnalyticsSummary,
     });
   } catch (error) {
     if (error instanceof HttpError) {

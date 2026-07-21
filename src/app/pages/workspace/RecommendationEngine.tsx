@@ -56,17 +56,14 @@ function getSavedSignals(savedRows: any[]) {
   return { cities, categories, listingTypes };
 }
 
-function scoreListing(listing: any, savedRows: any[]) {
+function scoreListing(listing: any, savedRows: any[], marketInsight?: Awaited<
+  ReturnType<typeof ghanaMarketService.getLocationInsight>
+> | null) {
   const property = listing.property || {};
   const signals = getSavedSignals(savedRows);
   const qualityReport = listingQualityService.evaluateListing(listing);
-  const marketInsight = ghanaMarketService.getLocationInsight(
-    property.city,
-    property.region,
-    property.neighborhood
-  );
   const reasons: string[] = [];
-  let score = 45;
+  let score = 0;
 
   if (signals.cities.has(String(property.city || "").toLowerCase())) {
     score += 12;
@@ -99,13 +96,24 @@ function scoreListing(listing: any, savedRows: any[]) {
   }
 
   if (!reasons.length) {
-    reasons.push("Fresh Ghana listing with enough data for review");
+    reasons.push("Matches available listing data");
   }
 
   return {
-    score: Math.min(98, Math.max(55, score)),
+    score: Math.min(98, Math.max(0, score)),
     reasons,
   };
+}
+
+async function scoreListingWithInsight(listing: any, savedRows: any[]) {
+  const property = listing.property || {};
+  const marketInsight = await ghanaMarketService.getLocationInsight(
+    property.city,
+    property.region,
+    property.neighborhood
+  );
+
+  return scoreListing(listing, savedRows, marketInsight);
 }
 
 export default function RecommendationEngine() {
@@ -124,9 +132,9 @@ export default function RecommendationEngine() {
       ]);
       const savedIds = new Set((savedRows || []).map((row: any) => row.listing?.id || row.listing_id));
 
-      const scored = (listingRows || [])
-        .map((listing) => {
-          const score = scoreListing(listing, savedRows || []);
+      const scored = await Promise.all(
+        (listingRows || []).map(async (listing) => {
+          const score = await scoreListingWithInsight(listing, savedRows || []);
           return {
             listing,
             matchScore: score.score,
@@ -134,7 +142,8 @@ export default function RecommendationEngine() {
             liked: savedIds.has(listing.id),
           };
         })
-        .sort((a, b) => b.matchScore - a.matchScore);
+      );
+      scored.sort((a, b) => b.matchScore - a.matchScore);
 
       setRecommendations(scored);
     } catch (error) {

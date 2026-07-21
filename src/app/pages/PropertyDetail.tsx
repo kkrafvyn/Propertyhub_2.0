@@ -16,6 +16,7 @@ import {
   Shield,
   FileText,
   Clock3,
+  HandCoins,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
@@ -26,23 +27,20 @@ import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { useAuth } from "../context/AuthContext";
 import { listingService } from "../../lib/listing.service";
-import { getPropertyCoverImage, getPropertyMediaItems } from "../../lib/property-media";
+import { getPropertyCoverImage, getPropertyImageGallery } from "../../lib/property-media";
 import { savedPropertyService } from "../../lib/savedproperty.service";
 import { dealCaseService } from "../../lib/dealcase.service";
 import { messageService } from "../../lib/message.service";
 import { communicationService } from "../../lib/communication.service";
 import { organizationService } from "../../lib/organization.service";
 import { paymentService } from "../../lib/payment.service";
+import { bookingService } from "../../lib/booking.service";
+import { hostSettingsService } from "../../lib/host-settings.service";
 import { propertyViewingService } from "../../lib/property-viewing.service";
 import { trustCenterService } from "../../lib/trust-center.service";
-
-const fallbackImages = [
-  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&q=80",
-  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&q=80",
-  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&q=80",
-  "https://images.unsplash.com/photo-1556020685-ae41abfc9365?w=1200&q=80",
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80",
-];
+import { ConsumerTrustBadges } from "../components/ConsumerTrustBadges";
+import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
+import { monitoring } from "../../lib/monitoring";
 
 export function PropertyDetail() {
   const { id } = useParams();
@@ -58,9 +56,18 @@ export function PropertyDetail() {
   const [viewingSubmitting, setViewingSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [showViewingForm, setShowViewingForm] = useState(false);
+  const [showOfferForm, setShowOfferForm] = useState(false);
+  const [offerSubmitting, setOfferSubmitting] = useState(false);
+  const [offerForm, setOfferForm] = useState({
+    amount: "",
+    message: "",
+  });
   const [trustLoading, setTrustLoading] = useState(false);
   const [trustSnapshot, setTrustSnapshot] = useState<any | null>(null);
+  const [trustBadges, setTrustBadges] = useState<any[]>([]);
   const [contactForm, setContactForm] = useState({
     fullName: user?.user_metadata?.full_name || "",
     email: user?.email || "",
@@ -91,6 +98,18 @@ export function PropertyDetail() {
       requesterNote: "",
     };
   });
+  const [bookingForm, setBookingForm] = useState(() => {
+    const checkIn = new Date();
+    checkIn.setDate(checkIn.getDate() + 1);
+    const checkOut = new Date(checkIn);
+    checkOut.setDate(checkOut.getDate() + 2);
+    return {
+      checkIn: checkIn.toISOString().slice(0, 10),
+      checkOut: checkOut.toISOString().slice(0, 10),
+      guestNote: "",
+    };
+  });
+  const [hostBookingMode, setHostBookingMode] = useState<"instant" | "request">("instant");
 
   useEffect(() => {
     if (!id) return;
@@ -101,9 +120,16 @@ export function PropertyDetail() {
         const listingData = await listingService.getListingById(id);
         setListing(listingData);
 
-        const nearby = await listingService.getPublicListings(8, 0);
+        const nearby = await listingService.getPublicListings(24, 0);
         setRelatedListings(
-          nearby.filter((item) => item.id !== listingData.id).slice(0, 3)
+          nearby
+            .filter(
+              (item) =>
+                item.id !== listingData.id &&
+                item.listing_type === listingData.listing_type &&
+                item.property?.city === listingData.property?.city
+            )
+            .slice(0, 3)
         );
       } catch (error) {
         console.error("Failed to load property:", error);
@@ -131,6 +157,18 @@ export function PropertyDetail() {
   }, [listing?.id, user]);
 
   useEffect(() => {
+    if (!listing?.id || listing.listing_type !== "short_stay") {
+      setHostBookingMode("instant");
+      return;
+    }
+
+    void hostSettingsService
+      .getListingSettings(listing.id)
+      .then((settings) => setHostBookingMode(settings?.booking_mode === "request" ? "request" : "instant"))
+      .catch(() => setHostBookingMode("instant"));
+  }, [listing?.id, listing?.listing_type]);
+
+  useEffect(() => {
     if (!listing?.price) return;
 
     setPaymentForm((current) => ({
@@ -154,9 +192,16 @@ export function PropertyDetail() {
           listing.id,
           listing.organization_id
         );
+        const badges = await trustCenterService.getConsumerTrustBadges({
+          listingId: listing.id,
+          organizationId: listing.organization_id,
+          organizationVerified: listing.organization?.verified,
+          qualityScore: listing.quality_score,
+        });
 
         if (!cancelled) {
           setTrustSnapshot(snapshot);
+          setTrustBadges(badges);
         }
       } catch (error) {
         console.error("Failed to load trust snapshot:", error);
@@ -176,10 +221,7 @@ export function PropertyDetail() {
 
   const property = listing?.property;
   const organization = listing?.organization;
-  const uploadedImages = getPropertyMediaItems(property).map(
-    (media) => media.public_url || fallbackImages[0]
-  );
-  const images = uploadedImages.length > 0 ? uploadedImages : fallbackImages;
+  const images = getPropertyImageGallery(property);
   const locationQuery = property
     ? [property.address, property.city, property.region, property.country].filter(Boolean).join(", ")
     : "";
@@ -311,6 +353,47 @@ export function PropertyDetail() {
     }
   };
 
+  const handleMakeOffer = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!user || !listing) {
+      toast.error("Log in before submitting an offer.");
+      navigate("/login", { state: { from: `/property/${id}` } });
+      return;
+    }
+
+    const amount = Number(offerForm.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error("Enter a valid offer amount.");
+      return;
+    }
+
+    try {
+      setOfferSubmitting(true);
+      await dealCaseService.createDealCase({
+        listing_id: listing.id,
+        user_id: user.id,
+        organization_id: listing.organization_id,
+        case_type: "purchase_offer",
+        message: [
+          `Offer amount: GHS ${amount.toLocaleString()}`,
+          offerForm.message.trim() || "Purchase offer submitted from property page.",
+        ].join("\n\n"),
+        pipeline_stage: "negotiation",
+      });
+      monitoring.trackWorkflowStep("purchase", "offer_submitted", { listingId: listing.id });
+      toast.success("Offer submitted. Track progress in My BaytMiftah.");
+      setShowOfferForm(false);
+      navigate("/app/applications");
+    } catch (error) {
+      console.error(error);
+      monitoring.captureError(error, "property_offer");
+      toast.error("Unable to submit offer.");
+    } finally {
+      setOfferSubmitting(false);
+    }
+  };
+
   const handleShare = async () => {
     const payload = {
       title: pageTitle,
@@ -329,6 +412,66 @@ export function PropertyDetail() {
       if (error instanceof Error && error.name === "AbortError") return;
       console.error("Failed to share property:", error);
       toast.error("We couldn't share this property right now.");
+    }
+  };
+
+  const handleShortStayBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!user || !listing) {
+      toast.error("Log in before booking a stay.");
+      navigate("/login", { state: { from: `/property/${id}` } });
+      return;
+    }
+
+    if (!bookingForm.checkIn || !bookingForm.checkOut) {
+      toast.error("Choose check-in and check-out dates.");
+      return;
+    }
+
+    if (bookingForm.checkOut <= bookingForm.checkIn) {
+      toast.error("Check-out must be after check-in.");
+      return;
+    }
+
+    try {
+      setBookingSubmitting(true);
+      const nightlyRateMinor = Math.round(Number(listing.price || 0) * 100);
+      const booking = await bookingService.createPendingBooking({
+        listingId: listing.id,
+        organizationId: listing.organization_id,
+        guestUserId: user.id,
+        checkIn: bookingForm.checkIn,
+        checkOut: bookingForm.checkOut,
+        nightlyRateMinor,
+        currency: listing.currency || "GHS",
+        guestNote: bookingForm.guestNote,
+        bookingMode: hostBookingMode,
+      });
+
+      if (hostBookingMode === "request") {
+        monitoring.trackWorkflowStep("short_stay", "request_submitted", { listingId: listing.id });
+        toast.success("Request sent. The host will confirm before payment.");
+        setShowBookingForm(false);
+        navigate("/app/reservations");
+        return;
+      }
+
+      const result = await paymentService.initializePropertyPayment({
+        listingId: listing.id,
+        amount: booking.total_minor / 100,
+        purpose: "booking_fee",
+        bookingId: booking.id,
+        customerName: user.user_metadata?.full_name,
+        customerPhone: bookingForm.guestNote,
+      });
+
+      window.location.assign(result.authorizationUrl);
+    } catch (error) {
+      console.error("Failed to start short-stay booking:", error);
+      toast.error("Unable to start booking checkout right now.");
+    } finally {
+      setBookingSubmitting(false);
     }
   };
 
@@ -613,6 +756,11 @@ export function PropertyDetail() {
                       Payments run through Paystack, while receipts and agreement records can be
                       tracked through the platform&apos;s verification layer.
                     </p>
+                    {!trustLoading && trustBadges.length > 0 ? (
+                      <div className="mt-4">
+                        <ConsumerTrustBadges badges={trustBadges} />
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 
@@ -654,10 +802,10 @@ export function PropertyDetail() {
                           Payment Trail
                         </div>
                         <p className="text-lg font-semibold">
-                          {trustSnapshot?.blockchainProofEnabled ? "Receipt-ready" : "Standard"}
+                          {trustSnapshot?.securePaymentsEnabled ? "Receipt-ready" : "Standard"}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Completed payments can be carried into receipt verification.
+                          Completed Paystack payments generate downloadable receipts.
                         </p>
                       </div>
                     </div>
@@ -800,7 +948,68 @@ export function PropertyDetail() {
 
           <div className="lg:col-span-1">
             <Card className="p-6 sticky top-24">
-              <div className="mb-6">
+              <div className="mb-6 space-y-4 border-b border-border pb-6">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Quick actions
+                </p>
+                <div className="grid grid-cols-1 gap-2">
+                  {listing.listing_type === "short_stay" ? (
+                    <Button className="w-full" onClick={() => setShowBookingForm(true)}>
+                      Book stay
+                    </Button>
+                  ) : (
+                    <>
+                      <Button className="w-full" onClick={() => setShowViewingForm(true)}>
+                        <MapPin className="w-4 h-4" />
+                        Book viewing
+                      </Button>
+                      {listing.listing_type === "sale" ? (
+                        <Button variant="outline" className="w-full" onClick={() => setShowOfferForm(true)}>
+                          <HandCoins className="w-4 h-4" />
+                          Make offer
+                        </Button>
+                      ) : (
+                        <Button variant="outline" className="w-full" onClick={() => setShowContactForm(true)}>
+                          <FileText className="w-4 h-4" />
+                          Apply
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  <Button
+                    variant={isSaved ? "secondary" : "outline"}
+                    className="w-full"
+                    onClick={toggleSave}
+                  >
+                    <Heart className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : ""}`} />
+                    {isSaved ? "Saved" : "Save property"}
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={() => void handleShare()}>
+                    <Share2 className="w-4 h-4" />
+                    Share
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setShowContactForm(true)}>
+                    <MessageCircle className="w-4 h-4" />
+                    Contact agent
+                  </Button>
+                  {listing.listing_type === "sale" ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate("/app/mortgage")}
+                    >
+                      <Shield className="w-4 h-4" />
+                      Mortgage estimate
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+
+              <BaytMiftahAIPanel context="property" compact />
+
+              <div className="mb-6 mt-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
                     <span className="text-2xl font-semibold text-primary">
@@ -852,7 +1061,13 @@ export function PropertyDetail() {
                 </Button>
               )}
 
-              {!showViewingForm && (
+              {listing.listing_type === "short_stay" && !showBookingForm && (
+                <Button className="w-full mt-3" onClick={() => setShowBookingForm(true)}>
+                  Book Short Stay
+                </Button>
+              )}
+
+              {listing.listing_type !== "short_stay" && !showViewingForm && (
                 <Button
                   variant="outline"
                   className="w-full mt-3"
@@ -863,7 +1078,7 @@ export function PropertyDetail() {
                 </Button>
               )}
 
-              {!showPaymentForm && (
+              {listing.listing_type !== "short_stay" && !showPaymentForm && (
                 <Button
                   variant="outline"
                   className="w-full mt-3"
@@ -959,6 +1174,38 @@ export function PropertyDetail() {
                 </motion.div>
               )}
 
+              {showOfferForm && listing.listing_type === "sale" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="border-t border-border pt-6 mt-6"
+                >
+                  <h4 className="font-semibold mb-4">Make an offer</h4>
+                  <form className="space-y-4" onSubmit={handleMakeOffer}>
+                    <Input
+                      label="Offer amount (GHS)"
+                      type="number"
+                      value={offerForm.amount}
+                      onChange={(event) =>
+                        setOfferForm((current) => ({ ...current, amount: event.target.value }))
+                      }
+                      placeholder={String(listing.price || "")}
+                    />
+                    <textarea
+                      className="w-full min-h-24 rounded-lg border border-border px-4 py-3"
+                      placeholder="Optional terms or message for the seller"
+                      value={offerForm.message}
+                      onChange={(event) =>
+                        setOfferForm((current) => ({ ...current, message: event.target.value }))
+                      }
+                    />
+                    <Button size="lg" className="w-full" type="submit" disabled={offerSubmitting}>
+                      {offerSubmitting ? "Submitting..." : "Submit offer"}
+                    </Button>
+                  </form>
+                </motion.div>
+              )}
+
               {showContactForm && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
@@ -1002,6 +1249,49 @@ export function PropertyDetail() {
                     </div>
                     <Button size="lg" className="w-full" type="submit" disabled={submitting}>
                       {submitting ? "Sending..." : "Send Inquiry"}
+                    </Button>
+                  </form>
+                </motion.div>
+              )}
+
+              {showBookingForm && listing.listing_type === "short_stay" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="border-t border-border pt-6 mt-6"
+                >
+                  <h4 className="font-semibold mb-4">Book this stay</h4>
+                  <form className="space-y-4" onSubmit={handleShortStayBooking}>
+                    <Input
+                      label="Check-in"
+                      type="date"
+                      value={bookingForm.checkIn}
+                      onChange={(e) =>
+                        setBookingForm((current) => ({ ...current, checkIn: e.target.value }))
+                      }
+                    />
+                    <Input
+                      label="Check-out"
+                      type="date"
+                      value={bookingForm.checkOut}
+                      onChange={(e) =>
+                        setBookingForm((current) => ({ ...current, checkOut: e.target.value }))
+                      }
+                    />
+                    <textarea
+                      className="w-full min-h-24 rounded-lg border border-border px-4 py-3"
+                      placeholder="Optional note for the host"
+                      value={bookingForm.guestNote}
+                      onChange={(e) =>
+                        setBookingForm((current) => ({ ...current, guestNote: e.target.value }))
+                      }
+                    />
+                    <Button size="lg" className="w-full" type="submit" disabled={bookingSubmitting}>
+                      {bookingSubmitting
+                        ? "Submitting..."
+                        : hostBookingMode === "request"
+                          ? "Request to book"
+                          : "Continue to Paystack"}
                     </Button>
                   </form>
                 </motion.div>

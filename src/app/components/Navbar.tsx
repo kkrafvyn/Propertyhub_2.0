@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
 import { NotificationBell } from "./NotificationBell";
+import { GlobalSearch } from "./ux/GlobalSearch";
 
 interface NavbarProps {
   transparent?: boolean;
@@ -55,17 +56,13 @@ export function Navbar({ transparent = false }: NavbarProps) {
 
           {/* Right Actions */}
           <div className="hidden md:flex items-center gap-4">
+            {isAuthenticated ? <GlobalSearch /> : null}
             <Link to={workspacePath} className="text-foreground hover:text-primary transition-colors">
               List Property
             </Link>
-            <button
-              className="p-2 hover:bg-secondary rounded-full transition-colors"
-              type="button"
-              aria-label="Saved properties"
-              title="Saved properties"
-            >
+            <Link to="/app/saved" className="p-2 hover:bg-secondary rounded-full transition-colors" aria-label="Saved properties" title="Saved properties">
               <Heart className="w-5 h-5" />
-            </button>
+            </Link>
             {isAuthenticated ? (
               <NotificationBell userId={user.id} />
             ) : (
@@ -100,7 +97,9 @@ export function Navbar({ transparent = false }: NavbarProps) {
           </div>
 
           {/* Mobile Menu Button */}
-          <button
+          <div className="md:hidden flex items-center gap-1">
+            {isAuthenticated ? <GlobalSearch /> : null}
+            <button
             className="md:hidden p-2 hover:bg-secondary rounded-lg transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             type="button"
@@ -111,6 +110,7 @@ export function Navbar({ transparent = false }: NavbarProps) {
           >
             <Menu className="w-6 h-6" />
           </button>
+          </div>
         </div>
       </div>
 

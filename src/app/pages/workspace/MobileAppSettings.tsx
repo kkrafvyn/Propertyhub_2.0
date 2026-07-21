@@ -192,16 +192,24 @@ export default function MobileAppSettings({
             <div>
               <h3 className="font-semibold">Mobile app release channels</h3>
               <p className="text-sm text-muted-foreground">
-                iOS {iosVersion?.latest_version || "1.0.1"} and Android{" "}
-                {androidVersion?.latest_version || "1.0.1"} are the latest known builds.
+                {iosVersion?.latest_version
+                  ? `iOS ${iosVersion.latest_version}`
+                  : "iOS version not configured"}{" "}
+                and{" "}
+                {androidVersion?.latest_version
+                  ? `Android ${androidVersion.latest_version}`
+                  : "Android version not configured"}{" "}
+                are the latest known builds.
               </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">iOS min {iosVersion?.minimum_version || "1.0.0"}</Badge>
-            <Badge variant="outline">
-              Android min {androidVersion?.minimum_version || "1.0.0"}
-            </Badge>
+            {iosVersion?.minimum_version ? (
+              <Badge variant="outline">iOS min {iosVersion.minimum_version}</Badge>
+            ) : null}
+            {androidVersion?.minimum_version ? (
+              <Badge variant="outline">Android min {androidVersion.minimum_version}</Badge>
+            ) : null}
           </div>
         </div>
       </Card>

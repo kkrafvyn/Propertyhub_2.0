@@ -14,6 +14,16 @@ vi.mock("../../lib/communication.service", () => ({
   },
 }));
 
+vi.mock("../../lib/supabase", () => ({
+  supabase: {
+    channel: vi.fn(() => ({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn(),
+    })),
+    removeChannel: vi.fn(),
+  },
+}));
+
 const getUnreadCountMock = vi.mocked(communicationService.getUnreadCount);
 const getNotificationHistoryMock = vi.mocked(
   communicationService.getNotificationHistory

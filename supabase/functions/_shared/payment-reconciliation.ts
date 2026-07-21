@@ -1,11 +1,6 @@
-import { Contract, JsonRpcProvider, Wallet } from "npm:ethers@6.10.0";
 import { HttpError } from "./http.ts";
 import { PaystackTransactionData } from "./paystack.ts";
 import { createAdminClient } from "./supabase.ts";
-
-const VERIFICATION_REGISTRY_ABI = [
-  "function recordVerification(bytes32 receiptHash, string paymentReference, string propertyId, string receiptId) external returns (bytes32)",
-];
 
 type PropertyTransactionRow = {
   id: string;
@@ -171,67 +166,6 @@ function buildReceiptText(payload: ReturnType<typeof buildReceiptPayload>) {
   ].join("\n");
 }
 
-async function recordReceiptOnChain(input: {
-  receiptHash: string;
-  reference: string;
-  propertyId: string;
-  receiptId: string;
-}) {
-  const registryAddress =
-    Deno.env.get("VERIFICATION_REGISTRY_ADDRESS") ||
-    Deno.env.get("VITE_VERIFICATION_REGISTRY_ADDRESS");
-  const privateKey = Deno.env.get("BLOCKCHAIN_SIGNER_PRIVATE_KEY");
-  const rpcUrl =
-    Deno.env.get("POLYGON_MAINNET_RPC_URL") ||
-    Deno.env.get("POLYGON_AMOY_RPC_URL") ||
-    Deno.env.get("POLYGON_RPC_URL");
-
-  if (!registryAddress || !privateKey || !rpcUrl) {
-    return null;
-  }
-
-  const provider = new JsonRpcProvider(rpcUrl);
-  const wallet = new Wallet(privateKey, provider);
-  const registry = new Contract(registryAddress, VERIFICATION_REGISTRY_ABI, wallet);
-  const transaction = await registry.recordVerification(
-    `0x${input.receiptHash}`,
-    input.reference,
-    input.propertyId,
-    input.receiptId
-  );
-  const receipt = await transaction.wait();
-
-  return {
-    txHash: transaction.hash,
-    blockNumber: receipt?.blockNumber ? Number(receipt.blockNumber) : undefined,
-    contractAddress: registryAddress,
-    chainId: Number(Deno.env.get("PAYMENT_BLOCKCHAIN_CHAIN_ID") || "137"),
-    explorerBaseUrl:
-      Deno.env.get("PAYMENT_BLOCKCHAIN_EXPLORER_URL") || "https://polygonscan.com",
-  };
-}
-
-async function logVerification(
-  organizationId: string,
-  blockchainRecordId: string | null,
-  status: "pending" | "verified" | "failed",
-  details: Record<string, unknown>,
-  verifiedBy?: string,
-  errorMessage?: string
-) {
-  const admin = createAdminClient();
-  await admin.from("blockchain_verification_logs").insert({
-    organization_id: organizationId,
-    blockchain_record_id: blockchainRecordId,
-    verification_type: "transaction",
-    status,
-    verification_details: details,
-    verified_by: verifiedBy,
-    verified_at: status === "verified" ? new Date().toISOString() : null,
-    error_message: errorMessage || null,
-  });
-}
-
 async function syncDealCasePaymentState(input: {
   dealCaseId: string | null;
   purpose: string | null;
@@ -256,6 +190,314 @@ async function syncDealCasePaymentState(input: {
   if (error) {
     throw new HttpError(500, error.message);
   }
+}
+
+async function ensureUserWallet(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+  currency: string
+) {
+  const { data: existing } = await admin
+    .from("user_wallets")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("currency", currency)
+    .maybeSingle();
+
+  if (existing) return existing;
+
+  const { data, error } = await admin
+    .from("user_wallets")
+    .insert({
+      user_id: userId,
+      currency,
+      available_minor: 0,
+      pending_minor: 0,
+    })
+    .select("*")
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+async function appendWalletLedger(
+  admin: ReturnType<typeof createAdminClient>,
+  input: {
+    walletId: string;
+    entryType: string;
+    amountMinor: number;
+    availableMinor: number;
+    pendingMinor: number;
+    referenceType?: string;
+    referenceId?: string;
+    description?: string;
+  }
+) {
+  const { data: existing } = await admin
+    .from("wallet_ledger")
+    .select("id")
+    .eq("wallet_id", input.walletId)
+    .eq("reference_type", input.referenceType || "")
+    .eq("reference_id", input.referenceId || "")
+    .eq("entry_type", input.entryType)
+    .maybeSingle();
+
+  if (existing?.id) return;
+
+  await admin.from("wallet_ledger").insert({
+    wallet_id: input.walletId,
+    entry_type: input.entryType,
+    amount_minor: input.amountMinor,
+    balance_available_minor: input.availableMinor,
+    balance_pending_minor: input.pendingMinor,
+    reference_type: input.referenceType || null,
+    reference_id: input.referenceId || null,
+    description: input.description || null,
+  });
+}
+
+function calculatePlatformFee(amountMinor: number) {
+  return Math.max(0, Math.round(amountMinor * 0.025));
+}
+
+function calculateNetAmount(amountMinor: number) {
+  return amountMinor - calculatePlatformFee(amountMinor);
+}
+
+async function creditOrganizationFromPayment(
+  admin: ReturnType<typeof createAdminClient>,
+  transaction: PropertyTransactionRow
+) {
+  const netMinor = calculateNetAmount(transaction.amount_minor);
+  if (netMinor <= 0) return;
+
+  const { data: existingLedger } = await admin
+    .from("organization_wallet_ledger")
+    .select("id, wallet:organization_wallets!inner(organization_id)")
+    .eq("reference_type", "property_transaction")
+    .eq("reference_id", transaction.id)
+    .maybeSingle();
+
+  if (existingLedger?.id) return;
+
+  await admin.rpc("credit_organization_wallet", {
+    p_organization_id: transaction.organization_id,
+    p_amount_minor: netMinor,
+    p_currency: transaction.currency,
+    p_reference_type: "property_transaction",
+    p_reference_id: transaction.id,
+    p_description: `Payment received for ${transaction.purpose}`,
+    p_entry_type: "payment",
+  });
+}
+
+async function createPaymentNotifications(
+  admin: ReturnType<typeof createAdminClient>,
+  transaction: PropertyTransactionRow
+) {
+  const amountLabel = minorToMajorString(transaction.amount_minor, transaction.currency);
+  const notifications = [
+    {
+      userId: transaction.payer_user_id,
+      notificationType: "payment_success",
+      subject: "Payment confirmed",
+      content: `Your ${transaction.purpose.replace(/_/g, " ")} payment of ${amountLabel} was successful.`,
+      actionUrl: "/app/wallet",
+      category: "Transactions",
+    },
+  ];
+
+  const { data: managers } = await admin
+    .from("organization_members")
+    .select("user_id")
+    .eq("organization_id", transaction.organization_id)
+    .in("role", ["owner", "manager"]);
+
+  for (const manager of managers || []) {
+    notifications.push({
+      userId: manager.user_id,
+      notificationType: "payment_received",
+      subject: "Payment received",
+      content: `A ${transaction.purpose.replace(/_/g, " ")} payment of ${amountLabel} was received.`,
+      actionUrl: "/workspace?next=finance",
+      category: "Transactions",
+    });
+  }
+
+  for (const notification of notifications) {
+    await admin.from("notification_logs").insert({
+      user_id: notification.userId,
+      notification_type: notification.notificationType,
+      notification_category: notification.category,
+      channel: "in_app",
+      subject: notification.subject,
+      content: notification.content,
+      action_url: notification.actionUrl,
+      metadata: { transactionId: transaction.id, purpose: transaction.purpose },
+      delivered: true,
+      delivered_at: new Date().toISOString(),
+      read: false,
+    });
+  }
+}
+
+async function syncFinancialSideEffects(transaction: PropertyTransactionRow) {
+  const admin = createAdminClient();
+  const wallet = await ensureUserWallet(admin, transaction.payer_user_id, transaction.currency);
+  const metadata = transaction.metadata || {};
+  const bookingId =
+    typeof metadata.bookingId === "string" ? metadata.bookingId : null;
+
+  await appendWalletLedger(admin, {
+    walletId: wallet.id,
+    entryType: "payment",
+    amountMinor: transaction.amount_minor,
+    availableMinor: wallet.available_minor || 0,
+    pendingMinor: wallet.pending_minor || 0,
+    referenceType: "property_transaction",
+    referenceId: transaction.id,
+    description: `Paystack ${transaction.purpose} payment`,
+  });
+
+  if (["deposit", "purchase_installment"].includes(transaction.purpose)) {
+    const nextPending = (wallet.pending_minor || 0) + transaction.amount_minor;
+    await admin
+      .from("user_wallets")
+      .update({ pending_minor: nextPending, updated_at: new Date().toISOString() })
+      .eq("id", wallet.id);
+
+    await admin.from("escrow_holds").upsert(
+      {
+        transaction_id: transaction.id,
+        deal_case_id: transaction.deal_case_id,
+        payer_user_id: transaction.payer_user_id,
+        organization_id: transaction.organization_id,
+        amount_minor: transaction.amount_minor,
+        currency: transaction.currency,
+        status: "held",
+      },
+      { onConflict: "transaction_id" }
+    );
+
+    await appendWalletLedger(admin, {
+      walletId: wallet.id,
+      entryType: "hold",
+      amountMinor: transaction.amount_minor,
+      availableMinor: wallet.available_minor || 0,
+      pendingMinor: nextPending,
+      referenceType: "escrow_hold",
+      referenceId: transaction.id,
+      description: "Funds held in escrow",
+    });
+  }
+
+  if (bookingId) {
+    const { data: booking } = await admin
+      .from("short_stay_bookings")
+      .select("listing_id, check_in, check_out")
+      .eq("id", bookingId)
+      .maybeSingle();
+
+    await admin
+      .from("short_stay_bookings")
+      .update({
+        status: "confirmed",
+        transaction_id: transaction.id,
+      })
+      .eq("id", bookingId);
+
+    if (booking) {
+      const start = new Date(`${booking.check_in}T00:00:00`);
+      const end = new Date(`${booking.check_out}T00:00:00`);
+      const rows = [];
+
+      for (let cursor = new Date(start); cursor < end; cursor.setDate(cursor.getDate() + 1)) {
+        rows.push({
+          listing_id: booking.listing_id,
+          available_date: cursor.toISOString().slice(0, 10),
+          is_available: false,
+        });
+      }
+
+      if (rows.length > 0) {
+        await admin
+          .from("listing_availability")
+          .upsert(rows, { onConflict: "listing_id,available_date" });
+      }
+    }
+  }
+
+  if (
+    ["rent", "lease_fee", "booking_fee", "inspection_fee"].includes(transaction.purpose)
+  ) {
+    await creditOrganizationFromPayment(admin, transaction);
+  }
+
+  if (["rent", "lease_fee"].includes(transaction.purpose)) {
+    const { data: existingLease } = await admin
+      .from("leases")
+      .select("id")
+      .eq("tenant_user_id", transaction.payer_user_id)
+      .eq("listing_id", transaction.listing_id)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (!existingLease) {
+      const startDate = new Date().toISOString().slice(0, 10);
+      const nextRentDue = new Date(startDate);
+      nextRentDue.setMonth(nextRentDue.getMonth() + 1);
+
+      await admin.from("leases").insert({
+        deal_case_id: transaction.deal_case_id,
+        tenant_user_id: transaction.payer_user_id,
+        listing_id: transaction.listing_id,
+        organization_id: transaction.organization_id,
+        start_date: startDate,
+        rent_minor: transaction.amount_minor,
+        currency: transaction.currency,
+        status: "active",
+        next_rent_due_at: nextRentDue.toISOString().slice(0, 10),
+      });
+    } else if (transaction.purpose === "rent") {
+      const nextRentDue = new Date();
+      nextRentDue.setMonth(nextRentDue.getMonth() + 1);
+      await admin
+        .from("leases")
+        .update({ next_rent_due_at: nextRentDue.toISOString().slice(0, 10) })
+        .eq("id", existingLease.id);
+
+      const dueDate = new Date().toISOString().slice(0, 10);
+      await admin
+        .from("lease_rent_schedule")
+        .update({
+          status: "paid",
+          paid_at: new Date().toISOString(),
+          transaction_id: transaction.id,
+        })
+        .eq("lease_id", existingLease.id)
+        .eq("status", "upcoming")
+        .lte("due_date", dueDate);
+
+      const { data: nextScheduleRow } = await admin
+        .from("lease_rent_schedule")
+        .select("due_date")
+        .eq("lease_id", existingLease.id)
+        .eq("status", "upcoming")
+        .order("due_date", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (nextScheduleRow?.due_date) {
+        await admin
+          .from("leases")
+          .update({ next_rent_due_at: nextScheduleRow.due_date })
+          .eq("id", existingLease.id);
+      }
+    }
+  }
+
+  await createPaymentNotifications(admin, transaction);
 }
 
 export async function reconcilePaystackPayment(input: {
@@ -324,18 +566,10 @@ export async function reconcilePaystackPayment(input: {
     .maybeSingle();
 
   if (transaction.status === "success" && existingReceipt) {
-    const blockchainRecord = existingReceipt.blockchain_record_id
-      ? await admin
-          .from("blockchain_records")
-          .select("*")
-          .eq("id", existingReceipt.blockchain_record_id)
-          .maybeSingle()
-      : { data: null };
-
     return {
       transaction,
       receipt: existingReceipt,
-      blockchainRecord: blockchainRecord.data,
+      blockchainRecord: null,
       alreadyProcessed: true,
     };
   }
@@ -391,7 +625,7 @@ export async function reconcilePaystackPayment(input: {
     paidAt,
   });
 
-  const { data: receipt, error: receiptError } = await admin
+  const { data: finalizedReceipt, error: receiptError } = await admin
     .from("transaction_receipts")
     .upsert(
       {
@@ -402,10 +636,11 @@ export async function reconcilePaystackPayment(input: {
         storage_path: storagePath,
         receipt_sha256: receiptHash,
         receipt_payload: receiptPayload,
-        blockchain_status: existingReceipt?.blockchain_status || "pending",
-        blockchain_network: existingReceipt?.blockchain_network || "polygon",
-        blockchain_txid: existingReceipt?.blockchain_txid || null,
-        verification_url: existingReceipt?.verification_url || null,
+        blockchain_status: "disabled",
+        blockchain_network: "none",
+        blockchain_txid: null,
+        blockchain_record_id: null,
+        verification_url: null,
       },
       { onConflict: "transaction_id" }
     )
@@ -416,96 +651,6 @@ export async function reconcilePaystackPayment(input: {
     throw new HttpError(500, receiptError.message);
   }
 
-  let blockchainRecord: Record<string, unknown> | null = null;
-  let blockchainStatus: "pending" | "submitted" | "confirmed" | "failed" = "pending";
-  let blockchainTxid: string | null = existingReceipt?.blockchain_txid || null;
-  let verificationUrl: string | null = existingReceipt?.verification_url || null;
-
-  try {
-    const chainResult = await recordReceiptOnChain({
-      receiptHash,
-      reference: transaction.provider_reference,
-      propertyId: transaction.property_id,
-      receiptId,
-    });
-
-    if (chainResult) {
-      const { data: createdRecord, error: blockchainError } = await admin
-        .from("blockchain_records")
-        .insert({
-          organization_id: transaction.organization_id,
-          property_id: transaction.property_id,
-          transaction_hash: chainResult.txHash,
-          chain_id: chainResult.chainId,
-          block_number: chainResult.blockNumber,
-          timestamp: Math.floor(Date.now() / 1000),
-          record_type: "payment_receipt",
-          data_hash: receiptHash,
-          contract_address: chainResult.contractAddress,
-          status: "confirmed",
-          metadata: {
-            receiptId,
-            receiptNumber,
-            provider: "paystack",
-            providerReference: transaction.provider_reference,
-            providerTransactionId,
-            purpose: transaction.purpose,
-            amountMinor: transaction.amount_minor,
-            currency: transaction.currency,
-          },
-          created_by: transaction.payer_user_id,
-        })
-        .select("*")
-        .single();
-
-      if (blockchainError) {
-        throw blockchainError;
-      }
-
-      blockchainRecord = createdRecord;
-      blockchainStatus = "confirmed";
-      blockchainTxid = chainResult.txHash;
-      verificationUrl = `${chainResult.explorerBaseUrl}/tx/${chainResult.txHash}`;
-    }
-  } catch (error) {
-    blockchainStatus = "failed";
-    await logVerification(
-      transaction.organization_id,
-      null,
-      "failed",
-      {
-        providerReference: transaction.provider_reference,
-        receiptId,
-        receiptHash,
-      },
-      input.verifiedByUserId,
-      error instanceof Error ? error.message : "Unknown blockchain recording error"
-    );
-  }
-
-  const { data: finalizedReceipt, error: finalizedReceiptError } = await admin
-    .from("transaction_receipts")
-    .update({
-      blockchain_record_id:
-        blockchainRecord && typeof blockchainRecord.id === "string"
-          ? blockchainRecord.id
-          : receipt.blockchain_record_id,
-      blockchain_status: blockchainStatus,
-      blockchain_network:
-        blockchainStatus === "confirmed"
-          ? `polygon:${Deno.env.get("PAYMENT_BLOCKCHAIN_CHAIN_ID") || "137"}`
-          : receipt.blockchain_network,
-      blockchain_txid: blockchainTxid,
-      verification_url: verificationUrl,
-    })
-    .eq("id", receipt.id)
-    .select("*")
-    .single();
-
-  if (finalizedReceiptError) {
-    throw new HttpError(500, finalizedReceiptError.message);
-  }
-
   await admin.from("verification_hashes").upsert(
     {
       organization_id: transaction.organization_id,
@@ -513,12 +658,9 @@ export async function reconcilePaystackPayment(input: {
       document_type: "payment_receipt",
       hash_algorithm: "SHA-256",
       hash_value: receiptHash,
-      blockchain_record_id:
-        blockchainRecord && typeof blockchainRecord.id === "string"
-          ? blockchainRecord.id
-          : null,
-      verified: blockchainStatus === "confirmed",
-      verification_timestamp: blockchainStatus === "confirmed" ? new Date().toISOString() : null,
+      blockchain_record_id: null,
+      verified: true,
+      verification_timestamp: new Date().toISOString(),
       uploaded_by: transaction.payer_user_id,
     },
     {
@@ -526,25 +668,12 @@ export async function reconcilePaystackPayment(input: {
     }
   );
 
-  await logVerification(
-    transaction.organization_id,
-    blockchainRecord && typeof blockchainRecord.id === "string"
-      ? blockchainRecord.id
-      : null,
-    blockchainStatus === "confirmed" ? "verified" : "pending",
-    {
-      providerReference: transaction.provider_reference,
-      receiptId,
-      receiptHash,
-      source: input.source,
-    },
-    input.verifiedByUserId
-  );
+  await syncFinancialSideEffects(updatedTransaction);
 
   return {
     transaction: updatedTransaction,
     receipt: finalizedReceipt,
-    blockchainRecord,
+    blockchainRecord: null,
     alreadyProcessed: false,
   };
 }

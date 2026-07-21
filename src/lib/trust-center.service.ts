@@ -31,7 +31,7 @@ export const trustCenterService = {
         ? `${publicDocumentCount} public verification document${publicDocumentCount === 1 ? "" : "s"} available`
         : "No public verification documents published yet",
       "Paystack handles Mobile Money, cards, and bank transfers",
-      "Successful receipts are prepared for Polygon verification",
+      "Successful payments generate downloadable receipts with SHA-256 verification",
     ];
 
     return {
@@ -40,8 +40,49 @@ export const trustCenterService = {
       publicDocuments: documents,
       signedDocumentCount,
       securePaymentsEnabled: true,
-      blockchainProofEnabled: true,
+      blockchainProofEnabled: false,
       trustHighlights,
     };
+  },
+
+  async getConsumerTrustBadges(input: {
+    listingId: string;
+    organizationId: string;
+    organizationVerified?: boolean;
+    qualityScore?: number | null;
+  }) {
+    const snapshot = await this.getListingTrustSnapshot(
+      input.listingId,
+      input.organizationId
+    );
+
+    return [
+      {
+        id: "agency",
+        label: snapshot.organizationVerified ? "Verified agency" : "Agency pending verification",
+        active: snapshot.organizationVerified,
+      },
+      {
+        id: "documents",
+        label:
+          snapshot.publicDocumentCount > 0
+            ? `${snapshot.publicDocumentCount} public trust document${snapshot.publicDocumentCount === 1 ? "" : "s"}`
+            : "Documents not published",
+        active: snapshot.publicDocumentCount > 0,
+      },
+      {
+        id: "payments",
+        label: "Secure Paystack payments",
+        active: snapshot.securePaymentsEnabled,
+      },
+      {
+        id: "listing",
+        label:
+          (input.qualityScore || 0) >= 75
+            ? `Listing quality ${input.qualityScore}`
+            : "Listing under review",
+        active: (input.qualityScore || 0) >= 75,
+      },
+    ];
   },
 };

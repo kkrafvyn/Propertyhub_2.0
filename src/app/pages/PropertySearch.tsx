@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { Search, SlidersHorizontal, Grid3x3, List, Map, MapPin, Bed, Bath, X, Loader2, Bell } from "lucide-react";
+import { Search, SlidersHorizontal, Grid3x3, List, Map, MapPin, Bed, Bath, X, Loader2, Bell, Sparkles, Heart } from "lucide-react";
+import { savedPropertyService } from "../../lib/savedproperty.service";
+import { CardGridSkeleton, EmptyState, PageHeader } from "../components/ux";
+import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
 import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -12,12 +15,15 @@ import { normalizePropertyCategory } from "../../lib/property-category";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { savedSearchAlertService } from "../../lib/saved-search-alert.service";
+import { aiAssistantService } from "../../lib/ai-assistant.service";
 
 const PAGE_SIZE = 12;
 
 export function PropertySearch() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = Math.max(parseInt(searchParams.get("page") || "1", 10) || 1, 1);
   const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -25,9 +31,10 @@ export function PropertySearch() {
   const [totalResults, setTotalResults] = useState(0);
   const [savingAlert, setSavingAlert] = useState(false);
   const [userAlerts, setUserAlerts] = useState<any[]>([]);
+  const [savedListingIds, setSavedListingIds] = useState<Set<string>>(new Set());
   const [selectedMapListingId, setSelectedMapListingId] = useState<string | null>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const currentPage = Math.max(parseInt(searchParams.get("page") || "1", 10) || 1, 1);
+  const [naturalLanguageQuery, setNaturalLanguageQuery] = useState(searchParams.get("q") || "");
+  const [parsingQuery, setParsingQuery] = useState(false);
 
   const buildFiltersFromSearchParams = () => ({
     priceMin: searchParams.get("priceMin") || "",
@@ -40,9 +47,11 @@ export function PropertySearch() {
       "all",
     listingType:
       searchParams.get("listingType") ||
-      (["rental", "sale", "lease"].includes(searchParams.get("type") || "")
-        ? (searchParams.get("type") as "rental" | "sale" | "lease")
+      (["rental", "sale", "lease", "short_stay"].includes(searchParams.get("type") || "")
+        ? (searchParams.get("type") as "rental" | "sale" | "lease" | "short_stay")
         : "rental"),
+    agency: searchParams.get("agency") || "",
+    sort: searchParams.get("sort") || "newest",
   });
 
   const [filters, setFilters] = useState(buildFiltersFromSearchParams());
@@ -58,23 +67,28 @@ export function PropertySearch() {
   useEffect(() => {
     if (!user) {
       setUserAlerts([]);
+      setSavedListingIds(new Set());
       return;
     }
 
     let cancelled = false;
 
-    const loadAlerts = async () => {
+    const loadUserData = async () => {
       try {
-        const alerts = await savedSearchAlertService.getUserAlerts(user.id);
+        const [alerts, savedRows] = await Promise.all([
+          savedSearchAlertService.getUserAlerts(user.id),
+          savedPropertyService.getSavedProperties(user.id),
+        ]);
         if (!cancelled) {
           setUserAlerts(alerts);
+          setSavedListingIds(new Set((savedRows || []).map((row: any) => row.listing_id)));
         }
       } catch (error) {
-        console.error("Failed to load saved alerts:", error);
+        console.error("Failed to load saved search data:", error);
       }
     };
 
-    void loadAlerts();
+    void loadUserData();
 
     return () => {
       cancelled = true;
@@ -90,20 +104,42 @@ export function PropertySearch() {
   const loadListings = async () => {
     try {
       setLoading(true);
+      const activeFilters = buildFiltersFromSearchParams();
+      const queryText = searchParams.get("q") || "";
+      const parsed = queryText ? await aiAssistantService.parseSearchQuery(queryText) : {};
       const searchFilter = {
-        location: searchParams.get("q") || undefined,
-        priceMin: filters.priceMin ? parseInt(filters.priceMin, 10) : undefined,
-        priceMax: filters.priceMax ? parseInt(filters.priceMax, 10) : undefined,
-        bedrooms: parseCountFilter(filters.bedrooms),
-        bathrooms: parseCountFilter(filters.bathrooms),
-        propertyType: filters.propertyType !== "all" ? filters.propertyType : undefined,
-        listingType: filters.listingType as "rental" | "sale" | "lease",
+        location: parsed.location || queryText || undefined,
+        priceMin: activeFilters.priceMin
+          ? parseInt(activeFilters.priceMin, 10)
+          : parsed.priceMin || undefined,
+        priceMax: activeFilters.priceMax
+          ? parseInt(activeFilters.priceMax, 10)
+          : parsed.priceMax || undefined,
+        bedrooms: parseCountFilter(activeFilters.bedrooms) ?? parsed.bedrooms,
+        bathrooms: parseCountFilter(activeFilters.bathrooms) ?? parsed.bathrooms,
+        propertyType:
+          activeFilters.propertyType !== "all"
+            ? activeFilters.propertyType
+            : parsed.propertyType || undefined,
+        listingType: (parsed.listingType || activeFilters.listingType) as
+          | "rental"
+          | "sale"
+          | "lease"
+          | "short_stay",
+        organizationSlug: activeFilters.agency || undefined,
+        sort: activeFilters.sort as "newest" | "price_asc" | "price_desc",
       };
 
       const offset = (currentPage - 1) * PAGE_SIZE;
       const data = await listingService.searchListingsWithCount(searchFilter, PAGE_SIZE, offset);
       setListings(data.results);
       setTotalResults(data.total);
+
+      if (user && queryText) {
+        void aiAssistantService
+          .logSearch(user.id, null, queryText, data.total)
+          .catch((error) => console.error("Failed to log AI search:", error));
+      }
     } catch (error) {
       console.error('Failed to load listings:', error);
       toast.error('Failed to load listings');
@@ -165,9 +201,41 @@ export function PropertySearch() {
     if (filters.propertyType !== "all") nextParams.set("propertyType", filters.propertyType);
     else nextParams.delete("propertyType");
 
+    if (filters.agency) nextParams.set("agency", filters.agency);
+    else nextParams.delete("agency");
+
+    if (filters.sort && filters.sort !== "newest") nextParams.set("sort", filters.sort);
+    else nextParams.delete("sort");
+
     nextParams.set("listingType", filters.listingType);
     nextParams.set("page", "1");
     setSearchParams(nextParams);
+    setShowFilters(false);
+  };
+
+  const toggleSavedListing = async (listingId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!user) {
+      toast.error("Log in to save properties.");
+      navigate("/login", { state: { from: `/search${window.location.search || ""}` } });
+      return;
+    }
+
+    try {
+      const result = await savedPropertyService.toggleSavedProperty(user.id, listingId);
+      setSavedListingIds((current) => {
+        const next = new Set(current);
+        if (result.saved) next.add(listingId);
+        else next.delete(listingId);
+        return next;
+      });
+      toast.success(result.saved ? "Property saved." : "Removed from saved.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to update saved properties.");
+    }
   };
 
   const clearFilters = () => {
@@ -180,6 +248,33 @@ export function PropertySearch() {
     nextParams.delete("page");
     nextParams.set("listingType", "rental");
     setSearchParams(nextParams);
+  };
+
+  const handleNaturalLanguageSearch = async () => {
+    if (!naturalLanguageQuery.trim()) return;
+
+    try {
+      setParsingQuery(true);
+      const parsed = await aiAssistantService.parseSearchQuery(naturalLanguageQuery);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.set("q", naturalLanguageQuery.trim());
+      nextParams.set("page", "1");
+
+      if (parsed.listingType) nextParams.set("listingType", parsed.listingType);
+      if (parsed.priceMin) nextParams.set("priceMin", String(parsed.priceMin));
+      if (parsed.priceMax) nextParams.set("priceMax", String(parsed.priceMax));
+      if (parsed.bedrooms) nextParams.set("bedrooms", String(parsed.bedrooms));
+      if (parsed.bathrooms) nextParams.set("bathrooms", String(parsed.bathrooms));
+      if (parsed.propertyType) nextParams.set("propertyType", parsed.propertyType);
+
+      setSearchParams(nextParams);
+      toast.success("BaytMiftah AI applied your search.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to parse that search.");
+    } finally {
+      setParsingQuery(false);
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -199,7 +294,9 @@ export function PropertySearch() {
         ? "Sale"
         : filters.listingType === "lease"
           ? "Lease"
-          : "Rent";
+          : filters.listingType === "short_stay"
+            ? "Short Stay"
+            : "Rent";
     const locationLabel = searchParams.get("q");
 
     if (locationLabel) {
@@ -261,14 +358,18 @@ export function PropertySearch() {
       <Navbar />
 
       <div className="pt-24 pb-12 px-4 max-w-7xl mx-auto">
-        {/* Search Header */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-semibold mb-2">{resultsTitle}</h1>
-              <p className="text-muted-foreground">{resultSummary}</p>
-            </div>
-            <div className="flex gap-2">
+        <BaytMiftahAIPanel
+          context="search"
+          compact
+          onNavigate={(href) => navigate(href)}
+        />
+
+        <PageHeader
+          title={resultsTitle}
+          description={resultSummary}
+          breadcrumbs={[{ label: "Explore", href: "/search" }]}
+          actions={
+            <>
               <Button
                 variant="outline"
                 size="sm"
@@ -307,9 +408,9 @@ export function PropertySearch() {
                 <SlidersHorizontal className="w-4 h-4" />
                 Filters
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         {user && userAlerts.length > 0 && (
           <Card className="p-4 mb-6 bg-primary/5 border-primary/20">
@@ -338,9 +439,13 @@ export function PropertySearch() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="hidden md:block w-80 flex-shrink-0"
+                className="fixed inset-0 z-50 flex md:relative md:inset-auto md:block md:w-80 md:flex-shrink-0 bg-black/40 md:bg-transparent p-4 md:p-0"
+                onClick={() => setShowFilters(false)}
               >
-                <Card className="p-6 sticky top-24">
+                <Card
+                  className="p-6 sticky top-24 max-h-[90vh] overflow-y-auto w-full max-w-sm md:max-w-none"
+                  onClick={(event) => event.stopPropagation()}
+                >
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-semibold">Filters</h3>
                     <button
@@ -389,7 +494,33 @@ export function PropertySearch() {
                         >
                           Lease
                         </button>
+                        <button
+                          onClick={() => setFilters({ ...filters, listingType: "short_stay" })}
+                          className={`flex-1 py-2 px-3 rounded-lg transition-all ${
+                            filters.listingType === "short_stay"
+                              ? "bg-primary text-white"
+                              : "bg-secondary hover:bg-muted"
+                          }`}
+                        >
+                          Stay
+                        </button>
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block mb-3 font-semibold" htmlFor="sort-filter">
+                        Sort by
+                      </label>
+                      <select
+                        id="sort-filter"
+                        value={filters.sort || "newest"}
+                        onChange={(e) => setFilters({ ...filters, sort: e.target.value })}
+                        className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
+                      >
+                        <option value="newest">Newest</option>
+                        <option value="price_asc">Price: low to high</option>
+                        <option value="price_desc">Price: high to low</option>
+                      </select>
                     </div>
 
                     {/* Price Range */}
@@ -488,13 +619,17 @@ export function PropertySearch() {
           {/* Properties Grid/List */}
           <div className="flex-1">
             {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin" />
-              </div>
+              <CardGridSkeleton count={6} />
             ) : listings.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground text-lg">No properties found matching your criteria</p>
-              </div>
+              <EmptyState
+                icon={Search}
+                title="No properties found"
+                description="Try adjusting your filters or ask BaytMiftah AI to broaden the search."
+                actionLabel="Clear Filters"
+                onAction={clearFilters}
+                secondaryActionLabel="Explore All Rentals"
+                secondaryActionHref="/search?listingType=rental"
+              />
             ) : (
               <>
                 <div className="mb-6">
@@ -517,8 +652,20 @@ export function PropertySearch() {
                                 alt={listing.property?.address}
                                 className="w-full h-full object-cover"
                               />
-                              <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold">
-                                {listing.property?.category || 'Property'}
+                              <div className="absolute top-3 right-3 flex gap-2">
+                                <button
+                                  type="button"
+                                  className="bg-white/90 backdrop-blur-sm p-2 rounded-full"
+                                  onClick={(event) => void toggleSavedListing(listing.id, event)}
+                                  aria-label={savedListingIds.has(listing.id) ? "Unsave property" : "Save property"}
+                                >
+                                  <Heart
+                                    className={`w-4 h-4 ${savedListingIds.has(listing.id) ? "fill-primary text-primary" : ""}`}
+                                  />
+                                </button>
+                                <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold">
+                                  {listing.property?.category || "Property"}
+                                </div>
                               </div>
                             </div>
                             <div className="p-4">

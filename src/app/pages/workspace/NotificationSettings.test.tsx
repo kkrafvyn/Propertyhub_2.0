@@ -34,7 +34,16 @@ vi.mock("../../../lib/communication.service", () => ({
 vi.mock("../../../lib/push-notification.service", () => ({
   pushNotificationService: {
     isSupported: vi.fn(() => false),
+    canUseLocalNotifications: vi.fn(() => false),
+    hasWebPushKeys: vi.fn(() => false),
+    getPermission: vi.fn(() => "default"),
     registerBrowserPush: vi.fn(),
+  },
+}));
+
+vi.mock("../../../lib/notification.service", () => ({
+  notificationService: {
+    areExternalProvidersConfigured: vi.fn(() => ({ webPush: false })),
   },
 }));
 

@@ -138,7 +138,7 @@ export const recommendationEngineService = {
       recommendations.push({
         type: 'conversion_rate',
         title: 'Improve Conversion Rate',
-        description: `Your conversion rate is ${org.conversion_rate}%. Industry average is 10%.`,
+        description: `Your conversion rate is ${org.conversion_rate}%.`,
         suggestions: [
           'Optimize listing descriptions',
           'Add more property photos',
@@ -191,21 +191,33 @@ export const recommendationEngineService = {
     
     // Analyze posting times
     const times: Record<number, number> = {}
+    const days: Record<number, number> = {}
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     
     listings.forEach(listing => {
-      const hour = new Date(listing.created_at).getHours()
+      const createdAt = new Date(listing.created_at)
+      const hour = createdAt.getHours()
+      const day = createdAt.getDay()
       times[hour] = (times[hour] || 0) + 1
+      days[day] = (days[day] || 0) + 1
     })
     
-    // Find peak hours
-    const sorted = Object.entries(times)
+    const sortedHours = Object.entries(times)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
+
+    const sortedDays = Object.entries(days)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+
+    const leastActiveDays = Object.entries(days)
+      .sort((a, b) => a[1] - b[1])
+      .slice(0, 2)
     
     return {
-      best_hours: sorted.map(([hour]) => parseInt(hour)),
-      best_days: ['Tuesday', 'Wednesday', 'Thursday'],
-      avoid: ['Sunday', 'Monday']
+      best_hours: sortedHours.map(([hour]) => parseInt(hour)),
+      best_days: sortedDays.map(([day]) => dayNames[parseInt(day)]),
+      avoid: leastActiveDays.map(([day]) => dayNames[parseInt(day)])
     }
   },
 

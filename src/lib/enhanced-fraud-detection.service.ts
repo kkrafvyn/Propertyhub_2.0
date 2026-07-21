@@ -134,43 +134,46 @@ class EnhancedFraudDetectionService {
 
     // Pattern 1: Fake Contact Info
     if (this.isFakeContact(lead)) {
+      const indicators = [
+        'Email looks fake or temporary',
+        'Phone number doesn\'t validate',
+        'Name contains suspicious keywords',
+      ];
       patterns.push({
         leadId: lead.id,
         pattern: 'fake_contact',
-        confidence: 0.85,
-        indicators: [
-          'Email looks fake or temporary',
-          'Phone number doesn\'t validate',
-          'Name contains suspicious keywords',
-        ],
+        confidence: Math.min(0.95, 0.5 + indicators.length * 0.15),
+        indicators,
       });
     }
 
     // Pattern 2: Mass Inquiry Behavior
     if (lead.created_at && (await this.checkMassInquiry(lead))) {
+      const indicators = [
+        'Multiple inquiries in short time period',
+        'Inquiries span different cities/states',
+        'All inquiries same price range',
+      ];
       patterns.push({
         leadId: lead.id,
         pattern: 'mass_inquiry',
-        confidence: 0.75,
-        indicators: [
-          'Multiple inquiries in short time period',
-          'Inquiries span different cities/states',
-          'All inquiries same price range',
-        ],
+        confidence: Math.min(0.95, 0.5 + indicators.length * 0.15),
+        indicators,
       });
     }
 
     // Pattern 3: Bait and Switch (too low offer after high initial interest)
     if (lead.interested_price && lead.quality_score > 80 && (await this.checkBaitAndSwitch(lead))) {
+      const indicators = [
+        'Initial interest in premium property',
+        'Later offers significantly below asking price',
+        'Negotiation tactics suggest lack of genuine intent',
+      ];
       patterns.push({
         leadId: lead.id,
         pattern: 'bait_and_switch',
-        confidence: 0.7,
-        indicators: [
-          'Initial interest in premium property',
-          'Later offers significantly below asking price',
-          'Negotiation tactics suggest lack of genuine intent',
-        ],
+        confidence: Math.min(0.95, 0.5 + indicators.length * 0.15),
+        indicators,
       });
     }
 

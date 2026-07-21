@@ -1,5 +1,5 @@
 const FALLBACK_PROPERTY_IMAGE =
-  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&q=80";
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='800' viewBox='0 0 1200 800'%3E%3Crect width='1200' height='800' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236b7280' font-family='sans-serif' font-size='32'%3ENo image available%3C/text%3E%3C/svg%3E";
 
 type PropertyMediaLike = {
   public_url?: string | null;

@@ -31,7 +31,8 @@ const ALLOWED_WORKSPACE_PAGES = new Set([
   "notifications",
   "whitelabel",
   "mobile-settings",
-  "blockchain",
+  "integrations",
+  "host",
   "advanced-search",
   "predictive-analytics",
   "recommendations",
@@ -340,7 +341,7 @@ export function WorkspaceEntry() {
               <h2 className="font-semibold mb-1">Grow into the full platform</h2>
               <p className="text-sm text-muted-foreground">
                 The same workspace becomes the entry point for analytics, automation,
-                blockchain verification, and enterprise features.
+                integrations, and enterprise features.
               </p>
             </div>
           </div>

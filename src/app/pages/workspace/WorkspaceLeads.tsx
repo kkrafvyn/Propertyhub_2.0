@@ -39,6 +39,7 @@ import { messageService } from "../../../lib/message.service";
 import { organizationService } from "../../../lib/organization.service";
 import { paymentService } from "../../../lib/payment.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
+import { PurchaseNegotiationPanel } from "./PurchaseNegotiationPanel";
 import { savedPropertyService } from "../../../lib/savedproperty.service";
 import { savedSearchAlertService } from "../../../lib/saved-search-alert.service";
 import { userService } from "../../../lib/user.service";
@@ -1221,6 +1222,13 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
                         </div>
                       )}
                     </div>
+
+                    {selectedLeadPrimaryCase?.case_type === "purchase_offer" ? (
+                      <PurchaseNegotiationPanel
+                        dealCase={selectedLeadPrimaryCase}
+                        userId={currentUserId}
+                      />
+                    ) : null}
 
                     <div>
                       <div className="mb-2 flex items-center gap-2">

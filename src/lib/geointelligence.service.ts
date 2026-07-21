@@ -2,6 +2,51 @@ import { supabase } from './supabase'
 import { ghanaMarketService } from './ghana-market.service'
 
 export const geointelligenceService = {
+  async getNeighborhoodIntelligence(neighborhood: string) {
+    const context = await ghanaMarketService.resolveLocationContext(neighborhood)
+    const insight = await ghanaMarketService.getLocationInsight(
+      context.city,
+      context.region,
+      context.neighborhood
+    )
+
+    if (!insight) {
+      return {
+        city: context.city,
+        region: context.region,
+        neighborhood: context.neighborhood,
+        safety_score: 0,
+        investment_score: 0,
+        accessibility_score: 0,
+        overall_score: 0,
+      }
+    }
+
+    return {
+      city: insight.city,
+      region: insight.region,
+      neighborhood: insight.neighborhood,
+      safety_score: insight.safetyScore,
+      investment_score: insight.investmentScore,
+      accessibility_score: insight.accessibilityScore,
+      walkability_score: insight.walkabilityScore,
+      school_proximity_score: insight.schoolProximityScore,
+      healthcare_proximity_score: insight.healthcareProximityScore,
+      overall_score:
+        Math.round(
+          ((insight.safetyScore +
+            insight.investmentScore +
+            insight.accessibilityScore +
+            insight.walkabilityScore +
+            insight.schoolProximityScore +
+            insight.healthcareProximityScore) /
+            6) *
+            100
+        ) / 100,
+      summary: insight.notes,
+    }
+  },
+
   // Get location scores
   async getLocationScore(city: string, region: string) {
     const { data, error } = await supabase
@@ -13,25 +58,57 @@ export const geointelligenceService = {
     
     if (error && error.code !== 'PGRST116') throw error
     
-    return data || {
-      safety_score: 0,
-      investment_score: 0,
-      accessibility_score: 0,
-      overall_score: 0
+    if (data) return data
+
+    const insight = await ghanaMarketService.getLocationInsight(city, region)
+    if (!insight) {
+      return {
+        safety_score: 0,
+        investment_score: 0,
+        accessibility_score: 0,
+        overall_score: 0,
+      }
+    }
+
+    return {
+      city,
+      region,
+      safety_score: insight.safetyScore,
+      investment_score: insight.investmentScore,
+      accessibility_score: insight.accessibilityScore,
+      walkability_score: insight.walkabilityScore,
+      school_proximity_score: insight.schoolProximityScore,
+      healthcare_proximity_score: insight.healthcareProximityScore,
+      overall_score:
+        Math.round(
+          ((insight.safetyScore +
+            insight.investmentScore +
+            insight.accessibilityScore +
+            insight.walkabilityScore +
+            insight.schoolProximityScore +
+            insight.healthcareProximityScore) /
+            6) *
+            100
+        ) / 100,
+      summary: insight.notes,
     }
   },
 
   // Calculate location score
   async calculateLocationScore(city: string, region: string, latitude: number, longitude: number) {
-    const marketInsight = ghanaMarketService.getLocationInsight(city, region)
+    const marketInsight = await ghanaMarketService.getLocationInsight(city, region)
+
+    if (!marketInsight) {
+      return null
+    }
 
     const scores = {
-      safety_score: marketInsight?.safetyScore ?? 3.5,
-      investment_score: marketInsight?.investmentScore ?? 3.6,
-      accessibility_score: marketInsight?.accessibilityScore ?? 3.5,
-      walkability_score: marketInsight?.walkabilityScore ?? 3.2,
-      school_proximity_score: marketInsight?.schoolProximityScore ?? 3.4,
-      healthcare_proximity_score: marketInsight?.healthcareProximityScore ?? 3.4
+      safety_score: marketInsight.safetyScore,
+      investment_score: marketInsight.investmentScore,
+      accessibility_score: marketInsight.accessibilityScore,
+      walkability_score: marketInsight.walkabilityScore,
+      school_proximity_score: marketInsight.schoolProximityScore,
+      healthcare_proximity_score: marketInsight.healthcareProximityScore
     }
     
     const overall = (
@@ -223,6 +300,11 @@ export const geointelligenceService = {
       const priceLevel = avgPrice > 1000000 ? 'luxury' :
                         avgPrice > 500000 ? 'premium' :
                         avgPrice > 200000 ? 'mid_range' : 'budget'
+
+      const supplyLevel = cellListings.length > 50 ? 'very_high' :
+                         cellListings.length > 20 ? 'high' :
+                         cellListings.length > 10 ? 'medium' :
+                         cellListings.length > 5 ? 'low' : 'very_low'
       
       heatmaps.push({
         city,
@@ -230,7 +312,7 @@ export const geointelligenceService = {
         latitude,
         longitude,
         demand_level: demandLevel,
-        supply_level: 'medium',
+        supply_level: supplyLevel,
         price_level: priceLevel,
         listing_count: cellListings.length
       })

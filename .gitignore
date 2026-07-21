@@ -26,6 +26,8 @@ ios/DerivedData/
 
 # Supabase local temp files
 supabase/.temp/
+supabase/.env.payments
+supabase/.env.local
 
 # OS/editor noise
 .DS_Store

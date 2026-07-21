@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
   ArrowRight,
@@ -9,17 +9,16 @@ import {
   ExternalLink,
   FileText,
   Heart,
+  Home,
   Loader2,
   LogOut,
   MessageCircle,
   Search,
   Settings,
   Shield,
-  TrendingUp,
   UserCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Navbar } from "../../components/Navbar";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
@@ -30,7 +29,44 @@ import { paymentService } from "../../../lib/payment.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
 import { savedSearchAlertService } from "../../../lib/saved-search-alert.service";
 import { savedPropertyService } from "../../../lib/savedproperty.service";
+import { getPropertyCoverImage } from "../../../lib/property-media";
 import { userService } from "../../../lib/user.service";
+import { walletService } from "../../../lib/wallet.service";
+import { escrowService } from "../../../lib/escrow.service";
+import { leaseService } from "../../../lib/lease.service";
+import { bookingService } from "../../../lib/booking.service";
+import { maintenanceService } from "../../../lib/maintenance.service";
+import { consumerContextService } from "../../../lib/consumer-context.service";
+import { communicationService } from "../../../lib/communication.service";
+import { residentHomeService } from "../../../lib/resident-home.service";
+import { mortgageInsuranceService } from "../../../lib/mortgage-insurance.service";
+import { CONSUMER_PAGE_CONFIG, CONSUMER_PRIMARY_NAV, type ConsumerSection } from "../../lib/consumer-page-config";
+import {
+  ActivityFeed,
+  BaytMiftahAIPanel,
+  DashboardStatsSkeleton,
+  EmptyState,
+  ErrorState,
+  ListSkeleton,
+  PageHeader,
+  PageLayout,
+  PageLoadingSkeleton,
+} from "../../components/ux";
+import {
+  ApplicationsWorkflowSection,
+  DocumentFoldersSection,
+  MaintenanceWithVendorsSection,
+  MortgageInsuranceSection,
+  NotificationsCenterSection,
+  ResidentHomeSection,
+  WalletHubSection,
+} from "./ConsumerPortalExtended";
+import {
+  LeasesSection,
+  ReservationsSection,
+  TransactionsSection,
+  TripsSection,
+} from "./ConsumerPortalSections";
 
 function formatRelativeTime(dateString?: string | null) {
   if (!dateString) return "Recently";
@@ -69,6 +105,16 @@ function getSection(pathname: string) {
   if (pathname.startsWith("/app/viewings")) return "viewings";
   if (pathname.startsWith("/app/alerts")) return "alerts";
   if (pathname.startsWith("/app/payments")) return "payments";
+  if (pathname.startsWith("/app/wallet")) return "wallet";
+  if (pathname.startsWith("/app/leases")) return "leases";
+  if (pathname.startsWith("/app/maintenance")) return "maintenance";
+  if (pathname.startsWith("/app/trips")) return "trips";
+  if (pathname.startsWith("/app/reservations")) return "reservations";
+  if (pathname.startsWith("/app/documents")) return "documents";
+  if (pathname.startsWith("/app/transactions")) return "transactions";
+  if (pathname.startsWith("/app/home")) return "home";
+  if (pathname.startsWith("/app/notifications")) return "notifications";
+  if (pathname.startsWith("/app/mortgage")) return "mortgage";
   if (pathname.startsWith("/app/settings")) return "settings";
   return "overview";
 }
@@ -172,6 +218,23 @@ export function UserDashboard() {
   const [participantProfiles, setParticipantProfiles] = useState<Record<string, any>>({});
   const [verifyingReference, setVerifyingReference] = useState(false);
   const [downloadingReceiptId, setDownloadingReceiptId] = useState<string | null>(null);
+  const [wallet, setWallet] = useState<any>(null);
+  const [walletLedger, setWalletLedger] = useState<any[]>([]);
+  const [escrowHolds, setEscrowHolds] = useState<any[]>([]);
+  const [payoutRequests, setPayoutRequests] = useState<any[]>([]);
+  const [leases, setLeases] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [maintenanceRequests, setMaintenanceRequests] = useState<any[]>([]);
+  const [consumerContext, setConsumerContext] = useState({
+    hasBookingContext: false,
+    hasRentingContext: false,
+    hasBuyingContext: false,
+  });
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [residentProfile, setResidentProfile] = useState<any>(null);
+  const [mortgageInquiries, setMortgageInquiries] = useState<any[]>([]);
+  const [savedPaymentMethods, setSavedPaymentMethods] = useState<any[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const section = getSection(location.pathname);
 
@@ -185,14 +248,48 @@ export function UserDashboard() {
 
     const loadDashboard = async () => {
       try {
-        if (!cancelled) setLoading(true);
-        const [saved, deals, chats, payments, viewings, alerts] = await Promise.all([
+        if (!cancelled) {
+          setLoading(true);
+          setLoadError(null);
+        }
+        const [
+          saved,
+          deals,
+          chats,
+          payments,
+          viewings,
+          alerts,
+          nextWallet,
+          nextLedger,
+          nextEscrow,
+          nextPayouts,
+          nextLeases,
+          nextBookings,
+          nextMaintenance,
+          nextContext,
+          nextNotifications,
+          nextResidentProfile,
+          nextMortgageInquiries,
+          nextSavedMethods,
+        ] = await Promise.all([
           savedPropertyService.getSavedProperties(user.id),
           dealCaseService.getDealCasesByUser(user.id),
           messageService.getUserConversations(user.id),
           paymentService.getUserPropertyTransactions(user.id),
           propertyViewingService.getUserViewings(user.id),
           savedSearchAlertService.getUserAlerts(user.id),
+          walletService.getWallet(user.id),
+          walletService.getLedger(user.id),
+          escrowService.getUserEscrowHolds(user.id),
+          walletService.getPayoutRequests(user.id),
+          leaseService.getTenantLeases(user.id),
+          bookingService.getGuestBookings(user.id),
+          maintenanceService.getTenantRequests(user.id),
+          consumerContextService.getConsumerContext(user.id),
+          communicationService.getNotificationHistory(user.id, 100),
+          residentHomeService.getActiveTenantProfile(user.id),
+          mortgageInsuranceService.getUserInquiries(user.id),
+          walletService.getSavedPaymentMethods(user.id),
         ]);
 
         if (!cancelled) {
@@ -202,6 +299,22 @@ export function UserDashboard() {
           setPropertyTransactions(payments || []);
           setPropertyViewings(viewings || []);
           setSavedAlerts(alerts || []);
+          setWallet(nextWallet);
+          setWalletLedger(nextLedger || []);
+          setEscrowHolds(nextEscrow || []);
+          setPayoutRequests(nextPayouts || []);
+          setLeases(nextLeases || []);
+          setBookings(nextBookings || []);
+          setMaintenanceRequests(nextMaintenance || []);
+          setConsumerContext({
+            hasBookingContext: nextContext.hasBookingContext,
+            hasRentingContext: nextContext.hasRentingContext,
+            hasBuyingContext: nextContext.hasBuyingContext,
+          });
+          setNotifications(nextNotifications || []);
+          setResidentProfile(nextResidentProfile);
+          setMortgageInquiries(nextMortgageInquiries || []);
+          setSavedPaymentMethods(nextSavedMethods || []);
         }
 
         void savedSearchAlertService
@@ -219,6 +332,7 @@ export function UserDashboard() {
       } catch (error) {
         console.error("Failed to load dashboard:", error);
         if (!cancelled) {
+          setLoadError("We couldn't load your BaytMiftah data right now.");
           toast.error("We couldn't load your dashboard data right now.");
         }
       } finally {
@@ -453,16 +567,91 @@ export function UserDashboard() {
     propertyViewings[0]?.listing?.property?.city ||
     "Accra";
 
-  const navItems = [
-    { label: "Overview", href: "/app", icon: TrendingUp },
-    { label: "Saved", href: "/app/saved", icon: Heart },
-    { label: "Messages", href: "/app/messages", icon: MessageCircle },
-    { label: "Applications", href: "/app/applications", icon: FileText },
-    { label: "Viewings", href: "/app/viewings", icon: CalendarDays },
-    { label: "Alerts", href: "/app/alerts", icon: Bell },
-    { label: "Payments", href: "/app/payments", icon: CreditCard },
-    { label: "Settings", href: "/app/settings", icon: Settings },
-  ];
+  const refreshWalletState = async () => {
+    if (!user) return;
+    const [nextWallet, nextLedger, nextEscrow, nextPayouts, nextSavedMethods] = await Promise.all([
+      walletService.getWallet(user.id),
+      walletService.getLedger(user.id),
+      escrowService.getUserEscrowHolds(user.id),
+      walletService.getPayoutRequests(user.id),
+      walletService.getSavedPaymentMethods(user.id),
+    ]);
+    setWallet(nextWallet);
+    setWalletLedger(nextLedger || []);
+    setEscrowHolds(nextEscrow || []);
+    setPayoutRequests(nextPayouts || []);
+    setSavedPaymentMethods(nextSavedMethods || []);
+  };
+
+  const refreshNotifications = async () => {
+    if (!user) return;
+    const nextNotifications = await communicationService.getNotificationHistory(user.id, 100);
+    setNotifications(nextNotifications || []);
+  };
+
+  const refreshMortgageInquiries = async () => {
+    if (!user) return;
+    const nextInquiries = await mortgageInsuranceService.getUserInquiries(user.id);
+    setMortgageInquiries(nextInquiries || []);
+  };
+
+  const handlePayFromApplication = async (
+    dealCase: any,
+    purpose: "deposit" | "lease_fee" | "rent"
+  ) => {
+    if (!dealCase?.listing_id) {
+      toast.error("Listing details are missing for this application.");
+      return;
+    }
+
+    try {
+      const amount =
+        purpose === "deposit"
+          ? Math.max((dealCase.listing?.price || 0) * 0.1, 1)
+          : dealCase.listing?.price || 0;
+
+      const checkout = await paymentService.initializePropertyPayment({
+        listingId: dealCase.listing_id,
+        amount,
+        purpose,
+        dealCaseId: dealCase.id,
+      });
+
+      window.location.href = checkout.authorizationUrl;
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to start payment checkout.");
+    }
+  };
+
+  const refreshMaintenanceState = async () => {
+    if (!user) return;
+    const nextMaintenance = await maintenanceService.getTenantRequests(user.id);
+    setMaintenanceRequests(nextMaintenance || []);
+  };
+
+  const refreshBookingsState = async () => {
+    if (!user) return;
+    const nextBookings = await bookingService.getGuestBookings(user.id);
+    setBookings(nextBookings || []);
+  };
+
+  const contextualNavItems = useMemo(
+    () => consumerContextService.getContextualNavItems(consumerContext),
+    [consumerContext]
+  );
+
+  const primaryNavItems = CONSUMER_PRIMARY_NAV;
+  const pageConfig = CONSUMER_PAGE_CONFIG[section as ConsumerSection] || CONSUMER_PAGE_CONFIG.overview;
+
+  const reloadDashboard = () => {
+    if (!user) return;
+    setLoadError(null);
+    setLoading(true);
+    window.location.reload();
+  };
+
+  const activityNavItems = contextualNavItems;
 
   const handleReceiptDownload = async (transaction: any) => {
     const receipt = Array.isArray(transaction.receipt)
@@ -515,21 +704,32 @@ export function UserDashboard() {
     }
   };
 
+  const handleRemoveSaved = async (listingId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!user) return;
+
+    try {
+      await savedPropertyService.toggleSavedProperty(user.id, listingId);
+      setSavedProperties((current) => current.filter((item) => item.listing_id !== listingId));
+      toast.success("Removed from saved properties.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to remove saved property.");
+    }
+  };
+
   const renderSavedGrid = (items: any[]) => {
     if (items.length === 0) {
+      const config = CONSUMER_PAGE_CONFIG.saved;
       return (
-        <Card className="p-8 text-center">
-          <Heart className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
-          <h3 className="text-xl font-semibold mb-2">No saved properties yet</h3>
-          <p className="text-muted-foreground mb-5">
-            Save listings you love so you can compare them later.
-          </p>
-          <Link to="/search">
-            <Button aria-label="Browse properties" title="Browse properties">
-              Browse properties
-            </Button>
-          </Link>
-        </Card>
+        <EmptyState
+          icon={Heart}
+          title={config.emptyTitle || "No saved properties yet"}
+          description={config.emptyDescription || ""}
+          actionLabel={config.emptyActionLabel}
+          actionHref={config.emptyActionHref}
+        />
       );
     }
 
@@ -540,10 +740,18 @@ export function UserDashboard() {
             <Card hover className="overflow-hidden h-full">
               <div className="relative h-44">
                 <img
-                  src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80"
+                  src={getPropertyCoverImage(item.listing?.property)}
                   alt={item.listing?.property?.address || "Saved property"}
                   className="w-full h-full object-cover"
                 />
+                <button
+                  type="button"
+                  className="absolute top-3 right-3 rounded-full bg-white/90 p-2"
+                  onClick={(event) => void handleRemoveSaved(item.listing_id, event)}
+                  aria-label="Remove saved property"
+                >
+                  <Heart className="w-4 h-4 fill-primary text-primary" />
+                </button>
               </div>
               <div className="p-5">
                 <div className="flex items-start justify-between gap-3 mb-2">
@@ -573,14 +781,15 @@ export function UserDashboard() {
 
   const renderConversations = () => {
     if (conversations.length === 0) {
+      const config = CONSUMER_PAGE_CONFIG.messages;
       return (
-        <Card className="p-8 text-center">
-          <MessageCircle className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
-          <h3 className="text-xl font-semibold mb-2">No conversations yet</h3>
-          <p className="text-muted-foreground">
-            Start an inquiry from a property page and your conversations will show up here.
-          </p>
-        </Card>
+        <EmptyState
+          icon={MessageCircle}
+          title={config.emptyTitle || "No conversations yet"}
+          description={config.emptyDescription || ""}
+          actionLabel={config.emptyActionLabel}
+          actionHref={config.emptyActionHref}
+        />
       );
     }
 
@@ -715,10 +924,10 @@ export function UserDashboard() {
                         <Badge variant={getPaymentStatusVariant(transaction.status)} className="capitalize">
                           {formatPaymentStatusLabel(transaction.status)}
                         </Badge>
-                        {receipt?.blockchain_status === "confirmed" && (
+                        {receipt?.receipt_sha256 && (
                           <Badge variant="outline" className="gap-1">
                             <Shield className="w-3 h-3" />
-                            Verified on Polygon
+                            Receipt issued
                           </Badge>
                         )}
                       </div>
@@ -937,9 +1146,8 @@ export function UserDashboard() {
   );
 
   const renderOverview = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-        <section>
+    <div className="space-y-8">
+      <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold">Upcoming Viewings</h2>
             <Link to="/app/viewings">
@@ -990,237 +1198,208 @@ export function UserDashboard() {
         <section>
           <h2 className="text-2xl font-semibold mb-6">Recent Activity</h2>
           {recentActivity.length === 0 ? (
-            <Card className="p-6 text-muted-foreground">
-              Your saved properties, conversations, and applications will show up here.
-            </Card>
+            <EmptyState
+              title="No recent activity"
+              description="Your saved properties, conversations, and applications will show up here."
+              actionLabel="Explore Properties"
+              actionHref="/search"
+            />
           ) : (
-            <Card className="divide-y divide-border">
-              {recentActivity.map((activity) => (
-                <Link
-                  key={activity.id}
-                  to={activity.href}
-                  className="flex items-start gap-4 p-4 hover:bg-secondary/40 transition-colors"
-                >
-                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                    {activity.type === "saved" && <Heart className="w-5 h-5" />}
-                    {activity.type === "message" && <MessageCircle className="w-5 h-5" />}
-                    {activity.type === "application" && <FileText className="w-5 h-5" />}
-                    {activity.type === "payment" && <CreditCard className="w-5 h-5" />}
-                  </div>
-                  <div className="flex-1">
-                    <p>{activity.message}</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {formatRelativeTime(activity.createdAt)}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </Card>
+            <ActivityFeed
+              items={recentActivity.map((activity) => ({
+                id: activity.id,
+                message: activity.message,
+                href: activity.href,
+                createdAt: activity.createdAt,
+                icon:
+                  activity.type === "saved"
+                    ? Heart
+                    : activity.type === "message"
+                      ? MessageCircle
+                      : activity.type === "payment"
+                        ? CreditCard
+                        : FileText,
+              }))}
+            />
           )}
         </section>
-      </div>
-
-      <div className="space-y-6">
-        <Card className="p-6">
-          <h3 className="font-semibold mb-4">Quick Actions</h3>
-          <div className="space-y-3">
-            <Link to="/search">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                aria-label="Search properties"
-                title="Search properties"
-              >
-                <Search className="w-4 h-4" />
-                Search Properties
-              </Button>
-            </Link>
-            <Link to="/app/messages">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                aria-label="View messages"
-                title="View messages"
-              >
-                <MessageCircle className="w-4 h-4" />
-                View Messages
-              </Button>
-            </Link>
-            <Link to="/app/applications">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                aria-label="View my applications"
-                title="View my applications"
-              >
-                <FileText className="w-4 h-4" />
-                My Applications
-              </Button>
-            </Link>
-            <Link to="/app/settings">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                aria-label="Open account settings"
-                title="Open account settings"
-              >
-                <Settings className="w-4 h-4" />
-                Account Settings
-              </Button>
-            </Link>
-            <Link to="/app/payments">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                aria-label="Open payments"
-                title="Open payments"
-              >
-                <CreditCard className="w-4 h-4" />
-                Payments
-              </Button>
-            </Link>
-            <Link to="/app/alerts">
-              <Button variant="outline" className="w-full justify-start">
-                <Bell className="w-4 h-4" />
-                Saved Alerts
-              </Button>
-            </Link>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <h3 className="font-semibold mb-4">Search Watchlist</h3>
-          {savedAlerts.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Save a search from the listings page and it will appear here.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {savedAlerts.slice(0, 3).map((alert) => (
-                <div key={alert.id} className="rounded-lg bg-secondary/30 p-3">
-                  <p className="font-medium">{alert.title}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {alert.last_match_count} matches · {alert.frequency}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        <Card className="p-6 bg-gradient-to-br from-primary/5 to-accent/10 border-primary/20">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold">Recommended Next Move</h3>
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Keep momentum going with a fresh search in {recommendedLocation}.
-          </p>
-          <Link to={`/search?q=${encodeURIComponent(recommendedLocation)}`}>
-            <Button className="w-full" aria-label="View recommendations" title="View recommendations">
-              View Recommendations
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
-        </Card>
-      </div>
     </div>
   );
 
+  const renderSectionShell = (content: ReactNode, actions?: ReactNode) => (
+    <section className="space-y-6">
+      <PageHeader
+        title={pageConfig.title}
+        description={pageConfig.description}
+        breadcrumbs={pageConfig.breadcrumb}
+        actions={actions}
+      />
+      {content}
+    </section>
+  );
+
+  const walletSection = wallet ? (
+    <WalletHubSection
+      wallet={wallet}
+      ledger={walletLedger}
+      escrowHolds={escrowHolds}
+      payoutRequests={payoutRequests}
+      payments={propertyTransactions}
+      savedMethods={savedPaymentMethods}
+      onRefresh={refreshWalletState}
+      onSaveMethod={(label) =>
+        walletService.savePaymentMethod({
+          userId: user!.id,
+          label,
+          isDefault: savedPaymentMethods.length === 0,
+        })
+      }
+      onDownloadReceipt={handleReceiptDownload}
+      downloadingReceiptId={downloadingReceiptId}
+    />
+  ) : (
+    <EmptyState
+      icon={CreditCard}
+      title={CONSUMER_PAGE_CONFIG.payments.emptyTitle || "Your wallet is empty"}
+      description={CONSUMER_PAGE_CONFIG.payments.emptyDescription || ""}
+      actionLabel={CONSUMER_PAGE_CONFIG.payments.emptyActionLabel}
+      actionHref={CONSUMER_PAGE_CONFIG.payments.emptyActionHref}
+    />
+  );
+
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
-      <div className="pt-24 pb-12 px-4 max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold mb-2">Welcome back, {displayName}.</h1>
-          <p className="text-muted-foreground">
-            Track your saved properties, conversations, and active deal flow in one place.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-10">
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Saved Properties</p>
-                <p className="text-3xl font-semibold">{savedProperties.length}</p>
+    <PageLayout
+      sidebar={
+        section === "overview" ? (
+          <>
+            <BaytMiftahAIPanel context="consumer" compact />
+            <Card className="p-6">
+              <h3 className="font-semibold mb-4">Quick Actions</h3>
+              <div className="space-y-3">
+                <Link to="/search">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Search className="w-4 h-4" />
+                    Search Properties
+                  </Button>
+                </Link>
+                <Link to="/app/messages">
+                  <Button variant="outline" className="w-full justify-start">
+                    <MessageCircle className="w-4 h-4" />
+                    View Messages
+                  </Button>
+                </Link>
+                <Link to="/app/payments">
+                  <Button variant="outline" className="w-full justify-start">
+                    <CreditCard className="w-4 h-4" />
+                    Wallet & Payments
+                  </Button>
+                </Link>
               </div>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Heart className="w-6 h-6 text-primary" />
-              </div>
+            </Card>
+          </>
+        ) : undefined
+      }
+    >
+      {loadError ? (
+        <ErrorState
+          title="We couldn't load My BaytMiftah"
+          message={`${loadError} Please check your connection or try again.`}
+          onRetry={reloadDashboard}
+        />
+      ) : (
+        <>
+          <PageHeader
+            title={section === "overview" ? pageConfig.title : undefined}
+            description={
+              section === "overview"
+                ? `Welcome back, ${displayName}. ${pageConfig.description}`
+                : undefined
+            }
+            breadcrumbs={section === "overview" ? pageConfig.breadcrumb : undefined}
+          />
+
+          {section === "overview" && !loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-10">
+                  <Card className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Saved Properties</p>
+                        <p className="text-3xl font-semibold">{savedProperties.length}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Heart className="w-6 h-6 text-primary" />
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Payments</p>
+                        <p className="text-3xl font-semibold">{propertyTransactions.length}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <CreditCard className="w-6 h-6 text-primary" />
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Applications</p>
+                        <p className="text-3xl font-semibold">{dealCases.length}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-accent" />
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Viewings</p>
+                        <p className="text-3xl font-semibold">{propertyViewings.length}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                        <CalendarDays className="w-6 h-6 text-accent" />
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Conversations</p>
+                        <p className="text-3xl font-semibold">{conversations.length}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-chart-3/10 rounded-lg flex items-center justify-center">
+                        <MessageCircle className="w-6 h-6 text-chart-3" />
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Alerts</p>
+                        <p className="text-3xl font-semibold">
+                          {savedAlerts.filter((alert) => alert.is_active).length}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-chart-1/10 rounded-lg flex items-center justify-center">
+                        <Bell className="w-6 h-6 text-chart-1" />
+                      </div>
+                    </div>
+                  </Card>
             </div>
-          </Card>
+          ) : null}
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Payments</p>
-                <p className="text-3xl font-semibold">{propertyTransactions.length}</p>
-              </div>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-primary" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Applications</p>
-                <p className="text-3xl font-semibold">{dealCases.length}</p>
-              </div>
-              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                <FileText className="w-6 h-6 text-accent" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Viewings</p>
-                <p className="text-3xl font-semibold">{propertyViewings.length}</p>
-              </div>
-              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                <CalendarDays className="w-6 h-6 text-accent" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Conversations</p>
-                <p className="text-3xl font-semibold">{conversations.length}</p>
-              </div>
-              <div className="w-12 h-12 bg-chart-3/10 rounded-lg flex items-center justify-center">
-                <MessageCircle className="w-6 h-6 text-chart-3" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Alerts</p>
-                <p className="text-3xl font-semibold">
-                  {savedAlerts.filter((alert) => alert.is_active).length}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-chart-1/10 rounded-lg flex items-center justify-center">
-                <Bell className="w-6 h-6 text-chart-1" />
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        <div className="flex flex-wrap gap-3 mb-8">
-          {navItems.map((item) => {
+          <div className="flex flex-wrap gap-3 mb-4">
+          {primaryNavItems.map((item) => {
             const Icon = item.icon;
             const active =
-              (item.href === "/app" && section === "overview") ||
-              item.href === `/app/${section}`;
+              item.section === "overview"
+                ? section === "overview"
+                : item.section
+                  ? item.section === section
+                  : false;
 
             return (
               <Link key={item.href} to={item.href}>
@@ -1238,87 +1417,126 @@ export function UserDashboard() {
           })}
         </div>
 
-        {loading ? (
-          <div className="min-h-[40vh] flex items-center justify-center">
-            <div className="flex flex-col items-center gap-3 text-muted-foreground">
-              <Loader2 className="w-8 h-8 animate-spin" />
-              {verifyingReference && <p>Verifying your Paystack payment securely...</p>}
-            </div>
-          </div>
-        ) : section === "saved" ? (
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Saved Properties</h2>
-              <p className="text-muted-foreground mt-1">
-                Keep track of the listings you want to revisit.
-              </p>
-            </div>
-            {renderSavedGrid(savedProperties)}
-          </section>
-        ) : section === "messages" ? (
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Messages</h2>
-              <p className="text-muted-foreground mt-1">
-                Review your latest property conversations.
-              </p>
-            </div>
-            {renderConversations()}
-          </section>
-        ) : section === "applications" ? (
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Applications</h2>
-              <p className="text-muted-foreground mt-1">
-                Follow the status of your inquiries, offers, and applications.
-              </p>
-            </div>
-            {renderApplications()}
-          </section>
-        ) : section === "viewings" ? (
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Viewings</h2>
-              <p className="text-muted-foreground mt-1">
-                Track requested and confirmed property visits in one place.
-              </p>
-            </div>
-            {renderViewings()}
-          </section>
-        ) : section === "alerts" ? (
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Saved Alerts</h2>
-              <p className="text-muted-foreground mt-1">
-                Keep search alerts active and manage the filters watching the market for you.
-              </p>
-            </div>
-            {renderAlerts()}
-          </section>
-        ) : section === "payments" ? (
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Payments</h2>
-              <p className="text-muted-foreground mt-1">
-                Review Paystack payments, open receipts, and track Polygon verification.
-              </p>
-            </div>
-            {renderPayments()}
-          </section>
-        ) : section === "settings" ? (
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold">Settings</h2>
-              <p className="text-muted-foreground mt-1">
-                Manage your account and session preferences.
-              </p>
-            </div>
-            {renderSettings()}
-          </section>
-        ) : (
-          renderOverview()
-        )}
-      </div>
-    </div>
+        <div className="flex flex-wrap gap-3 mb-8">
+          {activityNavItems.map((item) => {
+            const iconBySection: Record<string, typeof FileText> = {
+              applications: FileText,
+              viewings: CalendarDays,
+              payments: CreditCard,
+              alerts: Bell,
+              leases: FileText,
+              maintenance: Settings,
+              trips: CalendarDays,
+              reservations: CalendarDays,
+              documents: FileText,
+              transactions: CreditCard,
+              home: Home,
+              notifications: Bell,
+              mortgage: Shield,
+            };
+            const Icon = iconBySection[item.section] || FileText;
+            const active = item.section === section;
+
+            return (
+              <Link key={item.href} to={item.href}>
+                <Button
+                  variant={active ? "secondary" : "outline"}
+                  size="sm"
+                  aria-label={item.label}
+                  title={item.label}
+                >
+                  <Icon className="w-4 h-4" />
+                  {item.label}
+                </Button>
+              </Link>
+            );
+          })}
+        </div>
+
+          {section === "overview" ? (
+            loading ? (
+              <PageLoadingSkeleton />
+            ) : (
+              renderOverview()
+            )
+          ) : loading ? (
+            <ListSkeleton rows={4} />
+          ) : section === "saved" ? (
+            renderSectionShell(renderSavedGrid(savedProperties))
+          ) : section === "messages" ? (
+            renderSectionShell(renderConversations())
+          ) : section === "applications" ? (
+            renderSectionShell(
+              <ApplicationsWorkflowSection
+                dealCases={dealCases}
+                escrowHolds={escrowHolds}
+                userId={user!.id}
+                userName={displayName}
+                userEmail={user?.email || undefined}
+                onPayDeposit={handlePayFromApplication}
+              />
+            )
+          ) : section === "viewings" ? (
+            renderSectionShell(renderViewings())
+          ) : section === "alerts" ? (
+            renderSectionShell(renderAlerts())
+          ) : section === "payments" || section === "wallet" ? (
+            renderSectionShell(walletSection)
+          ) : section === "leases" ? (
+            renderSectionShell(<LeasesSection leases={leases} userId={user!.id} />)
+          ) : section === "maintenance" ? (
+            renderSectionShell(
+              <MaintenanceWithVendorsSection
+                userId={user!.id}
+                leases={leases}
+                requests={maintenanceRequests}
+                onCreated={refreshMaintenanceState}
+              />
+            )
+          ) : section === "trips" ? (
+            renderSectionShell(
+              <TripsSection bookings={bookings} userId={user!.id} onRefresh={refreshBookingsState} />
+            )
+          ) : section === "reservations" ? (
+            renderSectionShell(
+              <ReservationsSection
+                bookings={bookings}
+                userId={user!.id}
+                onRefresh={refreshBookingsState}
+              />
+            )
+          ) : section === "documents" ? (
+            renderSectionShell(
+              <DocumentFoldersSection userId={user!.id} dealCases={dealCases} />
+            )
+          ) : section === "transactions" ? (
+            renderSectionShell(
+              <TransactionsSection payments={propertyTransactions} escrowHolds={escrowHolds} />
+            )
+          ) : section === "home" ? (
+            renderSectionShell(<ResidentHomeSection profile={residentProfile} />)
+          ) : section === "notifications" ? (
+            renderSectionShell(
+              <NotificationsCenterSection
+                userId={user!.id}
+                notifications={notifications}
+                onRefresh={refreshNotifications}
+              />
+            )
+          ) : section === "mortgage" ? (
+            renderSectionShell(
+              <MortgageInsuranceSection
+                userId={user!.id}
+                dealCases={dealCases}
+                inquiries={mortgageInquiries}
+                onSubmitted={refreshMortgageInquiries}
+              />
+            )
+          ) : section === "settings" ? (
+            renderSectionShell(renderSettings())
+          ) : null}
+        </>
+      )}
+    </PageLayout>
   );
 }

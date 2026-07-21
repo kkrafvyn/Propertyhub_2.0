@@ -306,17 +306,12 @@ export function Login() {
       </div>
 
       {/* Right Side - Image */}
-      <div className="hidden lg:block flex-1 relative">
-        <img
-          src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=80"
-          alt="Modern apartment"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+      <div className="hidden lg:block flex-1 relative bg-gradient-to-br from-primary via-primary/90 to-accent">
         <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-primary/40 flex items-end p-12">
           <div className="text-white">
             <h2 className="text-4xl font-semibold mb-4">Find Your Dream Home in Ghana</h2>
             <p className="text-xl text-white/90">
-              Join thousands of users discovering quality properties across Accra and beyond
+              Discover quality properties across Accra and beyond
             </p>
           </div>
         </div>

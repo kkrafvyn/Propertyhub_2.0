@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/Button";
@@ -8,7 +8,7 @@ import { PropertyMediaPicker } from "../../components/PropertyMediaPicker";
 import { ListingQualityPanel } from "../../components/ListingQualityPanel";
 import { GhanaRegionInput } from "../../components/GhanaRegionInput";
 import type { Database } from "../../../lib/database.types";
-import { ghanaMarketService } from "../../../lib/ghana-market.service";
+import { ghanaMarketService, type GhanaLocationInsight } from "../../../lib/ghana-market.service";
 import { listingService } from "../../../lib/listing.service";
 import { listingQualityService } from "../../../lib/listing-quality.service";
 import { propertyMediaService } from "../../../lib/property-media.service";
@@ -34,7 +34,7 @@ const PROPERTY_CATEGORIES: PropertyCategory[] = [
   "land",
 ];
 
-const LISTING_TYPES: ListingType[] = ["rental", "sale", "lease"];
+const LISTING_TYPES: ListingType[] = ["rental", "sale", "lease", "short_stay"];
 const LISTING_STATUSES: ListingStatus[] = ["draft", "pending_review", "listed"];
 const VISIBILITY_OPTIONS: ListingVisibility[] = ["public", "private", "hidden"];
 
@@ -45,6 +45,7 @@ export function WorkspaceNewListing({
 }: WorkspaceNewListingProps) {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [marketInsight, setMarketInsight] = useState<GhanaLocationInsight | null>(null);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [form, setForm] = useState({
     address: "",
@@ -75,6 +76,23 @@ export function WorkspaceNewListing({
     setForm((current) => ({ ...current, [field]: value }));
   };
 
+  useEffect(() => {
+    let cancelled = false;
+
+    void ghanaMarketService
+      .getLocationInsight(form.city, form.region, form.neighborhood)
+      .then((insight) => {
+        if (!cancelled) setMarketInsight(insight);
+      })
+      .catch(() => {
+        if (!cancelled) setMarketInsight(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [form.city, form.region, form.neighborhood]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -85,6 +103,12 @@ export function WorkspaceNewListing({
 
     try {
       setSubmitting(true);
+
+      const locationInsight = await ghanaMarketService.getLocationInsight(
+        form.city,
+        form.region,
+        form.neighborhood
+      );
 
       const property = await propertyService.createProperty({
         organization_id: organization.id,
@@ -101,9 +125,7 @@ export function WorkspaceNewListing({
           neighborhood: form.neighborhood,
           ghanaPostGps: form.ghanaPostGps,
         }),
-        flood_risk_level:
-          ghanaMarketService.getLocationInsight(form.city, form.region, form.neighborhood)
-            ?.floodRiskLevel || "unknown",
+        flood_risk_level: locationInsight?.floodRiskLevel || "unknown",
         category: form.category,
         bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
         bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
@@ -170,11 +192,6 @@ export function WorkspaceNewListing({
     }
   };
 
-  const marketInsight = ghanaMarketService.getLocationInsight(
-    form.city,
-    form.region,
-    form.neighborhood
-  );
   const locationConfidence = ghanaMarketService.calculateLocationConfidence({
     address: form.address,
     city: form.city,

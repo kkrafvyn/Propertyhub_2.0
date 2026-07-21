@@ -23,19 +23,70 @@ export const pushNotificationService = {
     );
   },
 
+  canUseLocalNotifications() {
+    return typeof window !== "undefined" && "Notification" in window;
+  },
+
+  hasWebPushKeys() {
+    return !!import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY;
+  },
+
+  getPermission() {
+    if (!this.canUseLocalNotifications()) return "denied" as NotificationPermission;
+    return Notification.permission;
+  },
+
+  async requestPermission() {
+    if (!this.canUseLocalNotifications()) return "denied" as NotificationPermission;
+    if (Notification.permission === "granted") return "granted";
+    return Notification.requestPermission();
+  },
+
+  showLocalNotification(input: { title: string; body: string; url?: string }) {
+    if (!this.canUseLocalNotifications()) return null;
+    if (Notification.permission !== "granted") return null;
+
+    const notification = new Notification(input.title, {
+      body: input.body,
+      icon: "/favicon.ico",
+    });
+
+    if (input.url) {
+      notification.onclick = () => {
+        window.focus();
+        window.location.href = input.url!;
+        notification.close();
+      };
+    }
+
+    return notification;
+  },
+
   async registerBrowserPush(userId: string) {
-    if (!this.isSupported()) {
-      throw new Error("Browser push is not supported in this environment.");
+    if (!this.canUseLocalNotifications()) {
+      throw new Error("Browser notifications are not supported in this environment.");
+    }
+
+    const permission = await this.requestPermission();
+    if (permission !== "granted") {
+      throw new Error("Notification permission was not granted.");
     }
 
     const vapidPublicKey = import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY;
     if (!vapidPublicKey) {
-      throw new Error("Missing VITE_WEB_PUSH_PUBLIC_KEY for browser push.");
+      this.showLocalNotification({
+        title: "Property Hub alerts enabled",
+        body: "You'll receive in-app notifications and browser alerts while this app is open.",
+      });
+      return null;
     }
 
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      throw new Error("Notification permission was not granted.");
+    if (!this.isSupported()) {
+      this.showLocalNotification({
+        title: "Property Hub alerts enabled",
+        body: "In-app notifications are active. Full web push requires a supported browser.",
+      });
+      return null;
     }
 
     const registration = await navigator.serviceWorker.register("/sw.js");

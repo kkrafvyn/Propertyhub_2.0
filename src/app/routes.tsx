@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import { Root } from "./components/Root";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
 import { NotFound } from "./pages/NotFound";
 
 export const router = createBrowserRouter([
@@ -138,10 +139,12 @@ export const router = createBrowserRouter([
           const { AdminLayout } = await import("./pages/admin/AdminLayout");
 
           return {
-            Component: function ProtectedAdminRoute() {
+            Component: function ProtectedAdminRouteWrapper() {
               return (
                 <ProtectedRoute>
-                  <AdminLayout />
+                  <ProtectedAdminRoute>
+                    <AdminLayout />
+                  </ProtectedAdminRoute>
                 </ProtectedRoute>
               );
             },

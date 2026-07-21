@@ -178,12 +178,7 @@ export function Signup() {
       </div>
 
       {/* Right Side - Image */}
-      <div className="hidden lg:block flex-1 relative">
-        <img
-          src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80"
-          alt="Modern property"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+      <div className="hidden lg:block flex-1 relative bg-gradient-to-br from-accent via-accent/90 to-primary">
         <div className="absolute inset-0 bg-gradient-to-t from-accent/80 to-accent/40 flex items-end p-12">
           <div className="text-white">
             <h2 className="text-4xl font-semibold mb-4">Start Your Property Journey Today</h2>

@@ -325,7 +325,7 @@ class LeadAggregationService {
       requestedTimeframe?: string;
     }
   ): Promise<number> {
-    let score = 50; // Base score
+    let score = 0;
 
     // Quality factors
     if (leadData.email) score += 10;

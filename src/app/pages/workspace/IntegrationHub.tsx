@@ -64,6 +64,7 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
       // Fetch integrations and sync history
       const creds = await mlsIntegrationService.getMLSCredentials(organizationId);
       const history = await mlsIntegrationService.getSyncHistory(organizationId);
+      const listingCounts = await mlsIntegrationService.getExternalListingCounts(organizationId);
       
       // Transform credentials to integrations
       const integrationsList: MLSIntegration[] = creds.map((c: any) => ({
@@ -72,7 +73,7 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
         isActive: c.is_active,
         syncFrequency: c.sync_frequency,
         lastSyncAt: c.last_sync_at,
-        listingCount: 0, // Would fetch from external_listings count
+        listingCount: listingCounts[c.provider] || 0,
       }));
 
       setIntegrations(integrationsList);

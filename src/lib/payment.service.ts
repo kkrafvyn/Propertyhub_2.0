@@ -36,6 +36,7 @@ export interface InitializePropertyPaymentInput {
     | "purchase_installment"
     | "other";
   dealCaseId?: string | null;
+  bookingId?: string | null;
   customerName?: string;
   customerPhone?: string;
 }

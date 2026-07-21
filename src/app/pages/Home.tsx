@@ -17,6 +17,8 @@ export function Home() {
   const [searchType, setSearchType] = useState<"rental" | "sale" | "lease">("rental");
   const [featuredListings, setFeaturedListings] = useState<any[]>([]);
   const [verifiedAgencies, setVerifiedAgencies] = useState<any[]>([]);
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
+  const [locationCounts, setLocationCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const listPropertyPath = `${WORKSPACE_ENTRY_PATH}?next=new`;
@@ -30,14 +32,20 @@ export function Home() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const listings = await listingService.getPublicListings(4, 0);
-      const formattedListings = listings.map((listing: any) => ({
-        ...listing,
-      }));
-      setFeaturedListings(formattedListings);
+      const [listings, agencies, browseStats] = await Promise.all([
+        listingService.getPublicListings(4, 0),
+        organizationService.getVerifiedOrganizations(6),
+        listingService.getBrowseStats(),
+      ]);
 
-      const agencies = await organizationService.getVerifiedOrganizations(6);
+      setFeaturedListings(listings);
       setVerifiedAgencies(agencies);
+      setCategoryCounts(browseStats.categoryCounts);
+      setLocationCounts(
+        Object.fromEntries(
+          browseStats.popularLocations.map((location) => [location.name, location.count])
+        )
+      );
     } catch (error) {
       console.error('Failed to load home data:', error);
       toast.error('Failed to load listings');
@@ -55,20 +63,16 @@ export function Home() {
   };
 
   const categories = [
-    { name: "Apartments", searchValue: "apartment", icon: Building2, count: "1,234" },
-    { name: "Houses", searchValue: "house", icon: HomeIcon, count: "856" },
-    { name: "Commercial", searchValue: "commercial", icon: Landmark, count: "432" },
-    { name: "Land", searchValue: "land", icon: MapPin, count: "298" },
+    { name: "Apartments", searchValue: "apartment", icon: Building2 },
+    { name: "Houses", searchValue: "house", icon: HomeIcon },
+    { name: "Commercial", searchValue: "commercial", icon: Landmark },
+    { name: "Land", searchValue: "land", icon: MapPin },
   ];
 
-  const locations = [
-    { name: "East Legon", count: "234 properties" },
-    { name: "Airport Residential", count: "189 properties" },
-    { name: "Cantonments", count: "156 properties" },
-    { name: "Labone", count: "142 properties" },
-    { name: "Osu", count: "128 properties" },
-    { name: "Dzorwulu", count: "98 properties" },
-  ];
+  const locations = Object.entries(locationCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 6)
+    .map(([name, count]) => ({ name, count }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,13 +80,8 @@ export function Home() {
 
       {/* Hero Section */}
       <section className="relative h-[600px] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1920&q=80"
-            alt="Hero background"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/30" />
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary via-primary/90 to-accent">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/20" />
         </div>
 
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
@@ -182,7 +181,9 @@ export function Home() {
                 <Card hover className="p-6 text-center">
                   <category.icon className="w-12 h-12 mx-auto mb-4 text-primary" />
                   <h3 className="font-semibold mb-1">{category.name}</h3>
-                  <p className="text-sm text-muted-foreground">{category.count} listings</p>
+                  <p className="text-sm text-muted-foreground">
+                    {(categoryCounts[category.searchValue] || 0).toLocaleString()} listings
+                  </p>
                 </Card>
               </Link>
             </motion.div>
@@ -203,6 +204,10 @@ export function Home() {
             <div className="flex justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin" />
             </div>
+          ) : featuredListings.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No featured properties yet. Check back soon.</p>
+            </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {featuredListings.map((listing, index) => (
@@ -259,27 +264,31 @@ export function Home() {
       </section>
 
       {/* Popular Locations */}
-      <section className="py-16 px-4 max-w-7xl mx-auto">
-        <h2 className="text-3xl font-semibold mb-8">Popular Locations in Accra</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {locations.map((location, index) => (
-            <motion.div
-              key={location.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <Link to={`/search?q=${encodeURIComponent(location.name)}`}>
-                <Card hover className="p-4 text-center">
-                  <MapPin className="w-8 h-8 mx-auto mb-2 text-primary" />
-                  <h4 className="font-semibold mb-1">{location.name}</h4>
-                  <p className="text-xs text-muted-foreground">{location.count}</p>
-                </Card>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-      </section>
+      {locations.length > 0 && (
+        <section className="py-16 px-4 max-w-7xl mx-auto">
+          <h2 className="text-3xl font-semibold mb-8">Popular Locations</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {locations.map((location, index) => (
+              <motion.div
+                key={location.name}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <Link to={`/search?q=${encodeURIComponent(location.name)}`}>
+                  <Card hover className="p-4 text-center">
+                    <MapPin className="w-8 h-8 mx-auto mb-2 text-primary" />
+                    <h4 className="font-semibold mb-1">{location.name}</h4>
+                    <p className="text-xs text-muted-foreground">
+                      {location.count.toLocaleString()} {location.count === 1 ? "property" : "properties"}
+                    </p>
+                  </Card>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Verified Agencies */}
       <section className="py-16 px-4 bg-secondary/50">
@@ -287,6 +296,11 @@ export function Home() {
           <h2 className="text-3xl font-semibold text-center mb-12">
             Trusted by Verified Agencies
           </h2>
+          {verifiedAgencies.length === 0 ? (
+            <Card className="p-8 text-center max-w-xl mx-auto">
+              <p className="text-muted-foreground">No verified agencies to show yet.</p>
+            </Card>
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {verifiedAgencies.map((agency) => (
               <motion.div
@@ -319,6 +333,7 @@ export function Home() {
               </motion.div>
             ))}
           </div>
+          )}
         </div>
       </section>
 
@@ -329,7 +344,7 @@ export function Home() {
             Ready to List Your Property?
           </h2>
           <p className="text-lg mb-8 opacity-90">
-            Join Property Hub REOS and reach thousands of qualified buyers and renters
+            Join Property Hub REOS and reach qualified buyers and renters
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/signup">

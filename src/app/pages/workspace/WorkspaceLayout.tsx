@@ -10,11 +10,13 @@ import {
   FileText,
   Heart,
   Home,
+  KeyRound,
   LineChart,
   Map,
   MessageCircle,
   AlertTriangle,
   Palette,
+  Plug,
   Plus,
   Search,
   Settings,
@@ -41,12 +43,16 @@ import NotificationSettings from "./NotificationSettings";
 import LocationIntelligence from "./LocationIntelligence";
 import OrganizationInsights from "./OrganizationInsights";
 import MobileAppSettings from "./MobileAppSettings";
-import BlockchainVerification from "./BlockchainVerification";
 import AdvancedSearch from "./AdvancedSearch";
 import PredictiveAnalytics from "./PredictiveAnalytics";
 import RecommendationEngine from "./RecommendationEngine";
 import TeamCollaborationHub from "./TeamCollaborationHub";
 import CustomWorkflowsBuilder from "./CustomWorkflowsBuilder";
+import { IntegrationHub } from "./IntegrationHub";
+import { WorkspaceHost } from "./WorkspaceHost";
+import { WorkspaceMaintenance } from "./WorkspaceMaintenance";
+import { WorkspaceLeases } from "./WorkspaceLeases";
+import { ErrorState, PageLoadingSkeleton, BaytMiftahAIPanel } from "../../components/ux";
 import { FraudAlerts } from "./FraudAlerts";
 import { WorkspaceDashboard } from "./WorkspaceDashboard";
 import { CalendarOperations } from "./CalendarOperations";
@@ -77,27 +83,34 @@ interface NavItem {
 const CORE_NAV_ITEMS: NavItem[] = [
   { slug: "", label: "Dashboard", icon: Home },
   { slug: "listings", label: "Listings", icon: Building2 },
-  { slug: "leads", label: "Leads & Messages", icon: MessageCircle },
-  { slug: "documents", label: "Documents", icon: FileText },
-  { slug: "trust", label: "Ghana Trust", icon: Shield },
-  { slug: "calendar", label: "Calendar Ops", icon: CalendarDays },
+  { slug: "leads", label: "Leads", icon: MessageCircle },
+  { slug: "calendar", label: "Calendar", icon: CalendarDays },
   { slug: "payments", label: "Payments", icon: CreditCard },
-  { slug: "finance", label: "Finance", icon: BarChart3 },
   { slug: "team", label: "Team", icon: Users },
+  { slug: "documents", label: "Documents", icon: FileText },
+  { slug: "leases", label: "Leases", icon: KeyRound },
+  { slug: "maintenance", label: "Maintenance", icon: Wrench },
+];
+
+const WORKSPACE_SECONDARY_NAV: NavItem[] = [
+  { slug: "market-intelligence", label: "Analytics", icon: LineChart },
+  { slug: "trust", label: "Trust", icon: Shield },
+  { slug: "automation", label: "Automation", icon: Zap },
+  { slug: "ai-assistant", label: "AI", icon: Brain },
+  { slug: "settings", label: "Settings", icon: Settings },
 ];
 
 const TIER_TWO_NAV_ITEMS: NavItem[] = [
-  { slug: "market-intelligence", label: "Market Intelligence", icon: LineChart },
-  { slug: "automation", label: "Automation", icon: Zap },
   { slug: "fraud-alerts", label: "Fraud Alerts", icon: AlertTriangle },
-  { slug: "ai-assistant", label: "AI Assistant", icon: Brain },
   { slug: "vendors", label: "Vendors", icon: Wrench },
   { slug: "location-intelligence", label: "Location Intel", icon: Map },
   { slug: "org-insights", label: "Org Insights", icon: BarChart3 },
   { slug: "notifications", label: "Notifications", icon: Bell },
   { slug: "whitelabel", label: "White-Label", icon: Palette },
   { slug: "mobile-settings", label: "Mobile Apps", icon: Smartphone },
-  { slug: "blockchain", label: "Blockchain", icon: Shield },
+  { slug: "integrations", label: "Integrations", icon: Plug },
+  { slug: "host", label: "Host", icon: Home },
+  { slug: "finance", label: "Finance", icon: BarChart3 },
 ];
 
 const AI_NAV_ITEMS: NavItem[] = [
@@ -316,8 +329,19 @@ export function WorkspaceLayout() {
             organizationId={organization.id}
           />
         );
-      case "blockchain":
-        return <BlockchainVerification organizationId={organization.id} />;
+      case "integrations":
+        return (
+          <IntegrationHub
+            organizationId={organization.id}
+            workspaceBasePath={workspaceBasePath}
+          />
+        );
+      case "host":
+        return <WorkspaceHost organizationId={organization.id} />;
+      case "leases":
+        return <WorkspaceLeases organizationId={organization.id} />;
+      case "maintenance":
+        return <WorkspaceMaintenance organizationId={organization.id} />;
       case "advanced-search":
         return (
           <AdvancedSearch
@@ -338,7 +362,12 @@ export function WorkspaceLayout() {
           />
         );
       case "workflows":
-        return <CustomWorkflowsBuilder />;
+        return (
+          <CustomWorkflowsBuilder
+            organizationId={organization.id}
+            currentRole={currentRole}
+          />
+        );
       default:
         return (
           <WorkspaceDashboard
@@ -351,21 +380,20 @@ export function WorkspaceLayout() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background p-8">
-        <Card className="p-8 text-center text-muted-foreground">
-          Loading workspace...
-        </Card>
+      <div className="min-h-screen bg-background p-8 max-w-7xl mx-auto">
+        <PageLoadingSkeleton />
       </div>
     );
   }
 
   if (loadError) {
     return (
-      <div className="min-h-screen bg-background p-8">
-        <Card className="p-8 text-center">
-          <h1 className="text-2xl font-semibold mb-3">Workspace unavailable</h1>
-          <p className="text-muted-foreground">{loadError}</p>
-        </Card>
+      <div className="min-h-screen bg-background p-8 max-w-3xl mx-auto">
+        <ErrorState
+          title="Workspace unavailable"
+          message={`${loadError} Please check your connection or try again.`}
+          onRetry={() => window.location.reload()}
+        />
       </div>
     );
   }
@@ -462,7 +490,26 @@ export function WorkspaceLayout() {
 
             <div className="border-t pt-6 mb-6">
               <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
-                TIER 2 FEATURES
+                TOOLS
+              </h3>
+              {WORKSPACE_SECONDARY_NAV.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.label}
+                    to={`${workspaceBasePath}/${item.slug}`}
+                    className={getFeatureNavItemClasses(currentPage === item.slug)}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="font-medium text-sm">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="border-t pt-6 mb-6">
+              <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
+                MORE
               </h3>
               {TIER_TWO_NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
@@ -517,20 +564,18 @@ export function WorkspaceLayout() {
               })}
             </div>
 
-            <div className="border-t pt-6">
-              <Link
-                to={`${workspaceBasePath}/settings`}
-                className={getNavItemClasses(currentPage === "settings")}
-              >
-                <Settings className="w-5 h-5" />
-                <span className="font-medium">Settings</span>
-              </Link>
-            </div>
           </nav>
         </aside>
 
         <main className="flex-1 p-8 overflow-y-auto">
-          <div className="max-w-7xl">{renderPage()}</div>
+          <div className="max-w-7xl grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-8">
+            <div>{renderPage()}</div>
+            <aside className="hidden xl:block">
+              <div className="sticky top-8">
+                <BaytMiftahAIPanel context="workspace" compact />
+              </div>
+            </aside>
+          </div>
         </main>
       </div>
     </div>

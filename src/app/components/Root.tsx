@@ -1,7 +1,9 @@
 import { Capacitor } from "@capacitor/core";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router";
+import { RouteMonitoring } from "./RouteMonitoring";
 import { MobileAppShell } from "../mobile/MobileAppShell";
+import { MobileBottomNav } from "../mobile/MobileBottomNav";
 
 function usePrefersMobileShell() {
   const [prefersMobileShell, setPrefersMobileShell] = useState(() => {
@@ -28,6 +30,8 @@ function usePrefersMobileShell() {
   return prefersMobileShell;
 }
 
+const MOBILE_CONSUMER_PREFIXES = ["/search", "/property/", "/app"];
+
 export function Root() {
   const location = useLocation();
   const prefersMobileShell = usePrefersMobileShell();
@@ -36,9 +40,17 @@ export function Root() {
     return <MobileAppShell />;
   }
 
+  const showMobileBottomNav =
+    prefersMobileShell &&
+    (location.pathname.startsWith("/search") ||
+      location.pathname.startsWith("/property/") ||
+      location.pathname.startsWith("/app"));
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`min-h-screen bg-background ${showMobileBottomNav ? "pb-24" : ""}`}>
+      <RouteMonitoring />
       <Outlet />
+      {showMobileBottomNav ? <MobileBottomNav /> : null}
     </div>
   );
 }

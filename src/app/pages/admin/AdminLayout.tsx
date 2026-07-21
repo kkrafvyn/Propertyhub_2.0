@@ -20,6 +20,7 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
 import { fraudDetectionService } from "../../../lib/fraud-detection.service";
+import { adminService } from "../../../lib/admin.service";
 
 type AdminSection =
   | "overview"
@@ -98,21 +99,37 @@ export function AdminLayout() {
   });
   const [reviewCases, setReviewCases] = useState<any[]>([]);
   const [triageAlerts, setTriageAlerts] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [listings, setListings] = useState<any[]>([]);
 
   const queueCount = triageAlerts.length + reviewCases.length;
 
   const loadAdminState = async () => {
     try {
       setLoading(true);
-      const [nextOverview, nextReviewCases, nextTriageAlerts] = await Promise.all([
+      const [
+        nextOverview,
+        nextReviewCases,
+        nextTriageAlerts,
+        nextUsers,
+        nextOrganizations,
+        nextListings,
+      ] = await Promise.all([
         fraudDetectionService.getModerationOverview(),
         fraudDetectionService.getReviewCases("active", 12),
         fraudDetectionService.getPendingAlertsWithoutCase(8),
+        adminService.listUsers(50),
+        adminService.listOrganizations(50),
+        adminService.listListings(50),
       ]);
 
       setOverview(nextOverview);
       setReviewCases(nextReviewCases);
       setTriageAlerts(nextTriageAlerts);
+      setUsers(nextUsers);
+      setOrganizations(nextOrganizations);
+      setListings(nextListings);
     } catch (error) {
       console.error("Failed to load admin console:", error);
       toast.error("Unable to load the latest admin signals right now.");
@@ -472,6 +489,253 @@ export function AdminLayout() {
     </Card>
   );
 
+  const renderUsersSection = () => (
+    <Card className="p-6 bg-white">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-semibold">User Directory</h2>
+          <p className="text-sm text-muted-foreground">
+            Review accounts, verification status, and platform admin access.
+          </p>
+        </div>
+        <Badge variant="outline">{users.length} shown</Badge>
+      </div>
+
+      <div className="space-y-4">
+        {users.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
+            No users found.
+          </div>
+        ) : (
+          users.map((entry) => (
+            <div key={entry.id} className="rounded-xl border border-border p-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="font-semibold">{entry.full_name || "Unnamed user"}</p>
+                  <p className="text-sm text-muted-foreground">{entry.email || entry.phone || entry.id}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Joined {formatTimestamp(entry.created_at)}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {entry.verified ? <Badge>Verified</Badge> : <Badge variant="outline">Unverified</Badge>}
+                  {entry.banned ? <Badge variant="destructive">Banned</Badge> : null}
+                  {entry.is_platform_admin ? <Badge variant="secondary">Platform Admin</Badge> : null}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={workingId === `user:${entry.id}:verify`}
+                    onClick={() =>
+                      void runAction(`user:${entry.id}:verify`, async () => {
+                        await adminService.updateUser(entry.id, { verified: !entry.verified });
+                        toast.success(entry.verified ? "User marked unverified." : "User verified.");
+                      })
+                    }
+                  >
+                    {entry.verified ? "Revoke Verify" : "Verify"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={workingId === `user:${entry.id}:ban`}
+                    onClick={() =>
+                      void runAction(`user:${entry.id}:ban`, async () => {
+                        await adminService.updateUser(entry.id, { banned: !entry.banned });
+                        toast.success(entry.banned ? "User unbanned." : "User banned.");
+                      })
+                    }
+                  >
+                    {entry.banned ? "Unban" : "Ban"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </Card>
+  );
+
+  const renderOrganizationsSection = () => (
+    <Card className="p-6 bg-white">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-semibold">Organizations</h2>
+          <p className="text-sm text-muted-foreground">
+            Approve workspace teams or suspend access when needed.
+          </p>
+        </div>
+        <Badge variant="outline">{organizations.length} shown</Badge>
+      </div>
+
+      <div className="space-y-4">
+        {organizations.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
+            No organizations found.
+          </div>
+        ) : (
+          organizations.map((organization) => (
+            <div key={organization.id} className="rounded-xl border border-border p-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="font-semibold">{organization.name}</p>
+                  <p className="text-sm text-muted-foreground">/{organization.slug}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Created {formatTimestamp(organization.created_at)}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {organization.verified ? <Badge>Verified</Badge> : <Badge variant="outline">Pending</Badge>}
+                  {organization.suspended ? <Badge variant="destructive">Suspended</Badge> : null}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={workingId === `org:${organization.id}:verify`}
+                    onClick={() =>
+                      void runAction(`org:${organization.id}:verify`, async () => {
+                        await adminService.updateOrganization(organization.id, {
+                          verified: !organization.verified,
+                        });
+                        toast.success(
+                          organization.verified ? "Organization unverified." : "Organization verified."
+                        );
+                      })
+                    }
+                  >
+                    {organization.verified ? "Revoke Verify" : "Verify"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={workingId === `org:${organization.id}:suspend`}
+                    onClick={() =>
+                      void runAction(`org:${organization.id}:suspend`, async () => {
+                        await adminService.updateOrganization(organization.id, {
+                          suspended: !organization.suspended,
+                        });
+                        toast.success(
+                          organization.suspended ? "Organization reinstated." : "Organization suspended."
+                        );
+                      })
+                    }
+                  >
+                    {organization.suspended ? "Reinstate" : "Suspend"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </Card>
+  );
+
+  const renderListingsSection = () => (
+    <Card className="p-6 bg-white">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-semibold">Listings</h2>
+          <p className="text-sm text-muted-foreground">
+            Moderate inventory visibility and featured placement across the marketplace.
+          </p>
+        </div>
+        <Badge variant="outline">{listings.length} shown</Badge>
+      </div>
+
+      <div className="space-y-4">
+        {listings.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
+            No listings found.
+          </div>
+        ) : (
+          listings.map((listing) => {
+            const property = listing.property;
+            const organization = listing.organization;
+
+            return (
+              <div key={listing.id} className="rounded-xl border border-border p-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p className="font-semibold">
+                      {property?.address || "Untitled listing"} · {organization?.name || "Unknown org"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {property?.city}, {property?.region} · {listing.status} · {listing.visibility}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Listed {formatTimestamp(listing.created_at)}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {listing.featured ? <Badge>Featured</Badge> : null}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={workingId === `listing:${listing.id}:visibility`}
+                      onClick={() =>
+                        void runAction(`listing:${listing.id}:visibility`, async () => {
+                          const nextVisibility = listing.visibility === "public" ? "hidden" : "public";
+                          await adminService.updateListing(listing.id, { visibility: nextVisibility });
+                          toast.success(`Listing visibility set to ${nextVisibility}.`);
+                        })
+                      }
+                    >
+                      {listing.visibility === "public" ? "Hide" : "Publish"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={workingId === `listing:${listing.id}:suspend`}
+                      onClick={() =>
+                        void runAction(`listing:${listing.id}:suspend`, async () => {
+                          const nextStatus = listing.status === "suspended" ? "listed" : "suspended";
+                          await adminService.updateListing(listing.id, { status: nextStatus });
+                          toast.success(`Listing marked ${nextStatus}.`);
+                        })
+                      }
+                    >
+                      {listing.status === "suspended" ? "Restore" : "Suspend"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={workingId === `listing:${listing.id}:featured`}
+                      onClick={() =>
+                        void runAction(`listing:${listing.id}:featured`, async () => {
+                          await adminService.updateListing(listing.id, {
+                            featured: !listing.featured,
+                          });
+                          toast.success(listing.featured ? "Removed from featured." : "Marked featured.");
+                        })
+                      }
+                    >
+                      {listing.featured ? "Unfeature" : "Feature"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </Card>
+  );
+
+  const renderSettingsSection = () => (
+    <Card className="p-6 bg-white">
+      <h2 className="text-xl font-semibold mb-2">Admin Settings</h2>
+      <p className="text-muted-foreground mb-4">
+        Platform admin access is controlled by the <code>is_platform_admin</code> flag on user
+        profiles. Grant it directly in Supabase or through a trusted SQL migration for your first
+        admin account.
+      </p>
+      <div className="rounded-xl bg-secondary/30 p-4 text-sm text-muted-foreground">
+        Signed in as {user?.email || user?.id}. Moderation, audit, and directory tools are active
+        for platform admins only.
+      </div>
+    </Card>
+  );
+
   const renderOverviewContent = () => (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <Card className="p-6 bg-white">
@@ -534,6 +798,22 @@ export function AdminLayout() {
 
     if (currentSection === "overview") {
       return renderOverviewContent();
+    }
+
+    if (currentSection === "users") {
+      return renderUsersSection();
+    }
+
+    if (currentSection === "organizations") {
+      return renderOrganizationsSection();
+    }
+
+    if (currentSection === "listings") {
+      return renderListingsSection();
+    }
+
+    if (currentSection === "settings") {
+      return renderSettingsSection();
     }
 
     return (

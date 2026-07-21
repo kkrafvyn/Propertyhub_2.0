@@ -84,7 +84,18 @@ Deno.serve(async (req) => {
     }
 
     if (!membership || !["owner", "manager"].includes(membership.role)) {
-      throw new HttpError(403, "Only workspace owners and managers can issue refunds");
+      const { data: payerRow } = await admin
+        .from("property_transactions")
+        .select("payer_user_id, purpose")
+        .eq("id", transaction.id)
+        .maybeSingle();
+
+      const isGuestBookingRefund =
+        payerRow?.payer_user_id === user.id && payerRow?.purpose === "booking_fee";
+
+      if (!isGuestBookingRefund) {
+        throw new HttpError(403, "Only workspace owners and managers can issue refunds");
+      }
     }
 
     if (!["success", "reversal_pending"].includes(transaction.status)) {

@@ -4,9 +4,12 @@ import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { Input } from "../../components/ui/Input";
 import type { Database } from "../../../lib/database.types";
 import { financeReportService } from "../../../lib/finance-report.service";
+import { organizationWalletService } from "../../../lib/organization-wallet.service";
 import { paymentService } from "../../../lib/payment.service";
+import { useAuth } from "../../context/AuthContext";
 import type { MemberRole } from "../../../lib/workspace";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
@@ -33,14 +36,29 @@ export function WorkspaceFinance({
   organization,
   currentRole,
 }: WorkspaceFinanceProps) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<any[]>([]);
+  const [orgWallet, setOrgWallet] = useState<any>(null);
+  const [orgLedger, setOrgLedger] = useState<any[]>([]);
+  const [orgPayouts, setOrgPayouts] = useState<any[]>([]);
+  const [payoutAmount, setPayoutAmount] = useState("");
+  const [payoutDestination, setPayoutDestination] = useState("");
+  const [submittingPayout, setSubmittingPayout] = useState(false);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const rows = await paymentService.getOrganizationPropertyTransactions(organization.id);
+      const [rows, wallet, ledger, payouts] = await Promise.all([
+        paymentService.getOrganizationPropertyTransactions(organization.id),
+        organizationWalletService.getOrganizationWallet(organization.id),
+        organizationWalletService.getOrganizationLedger(organization.id),
+        organizationWalletService.getOrganizationPayoutRequests(organization.id),
+      ]);
       setPayments(rows || []);
+      setOrgWallet(wallet);
+      setOrgLedger(ledger || []);
+      setOrgPayouts(payouts || []);
     } catch (error) {
       console.error("Failed to load finance workspace:", error);
       toast.error("We couldn't load finance reporting right now.");
@@ -72,6 +90,48 @@ export function WorkspaceFinance({
   );
 
   const canSeeManagerMetrics = currentRole === "owner" || currentRole === "manager";
+
+  const handleRequestPayout = async () => {
+    if (!user) return;
+    const amountMinor = Math.round(Number.parseFloat(payoutAmount || "0") * 100);
+    if (!amountMinor || !payoutDestination.trim()) {
+      toast.error("Enter a valid amount and payout destination.");
+      return;
+    }
+
+    try {
+      setSubmittingPayout(true);
+      await organizationWalletService.requestOrganizationPayout({
+        organizationId: organization.id,
+        requestedByUserId: user.id,
+        amountMinor,
+        payoutDestination: payoutDestination.trim(),
+      });
+      toast.success("Payout request submitted.");
+      setPayoutAmount("");
+      setPayoutDestination("");
+      await loadData();
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : "Unable to request payout.");
+    } finally {
+      setSubmittingPayout(false);
+    }
+  };
+
+  const handleProcessPayout = async (
+    requestId: string,
+    action: "approve" | "mark_paid" | "reject"
+  ) => {
+    try {
+      await organizationWalletService.processOrganizationPayoutRequest(requestId, action);
+      toast.success(`Payout ${action.replace("_", " ")}.`);
+      await loadData();
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to update payout request.");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -115,6 +175,104 @@ export function WorkspaceFinance({
           <p className="text-2xl font-semibold mt-1">{attentionPayments.length}</p>
         </Card>
       </div>
+
+      {canSeeManagerMetrics && (
+        <div className="grid gap-6 xl:grid-cols-[1fr,1fr]">
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Wallet className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-semibold">Organization Wallet</h2>
+            </div>
+            <p className="text-3xl font-semibold">
+              {formatMoney(orgWallet?.available_minor || 0, orgWallet?.currency || "GHS")}
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Available balance after platform fees and escrow releases.
+            </p>
+            <div className="mt-6 space-y-3">
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Amount (GHS)"
+                value={payoutAmount}
+                onChange={(event) => setPayoutAmount(event.target.value)}
+              />
+              <Input
+                placeholder="Mobile money or bank destination"
+                value={payoutDestination}
+                onChange={(event) => setPayoutDestination(event.target.value)}
+              />
+              <Button onClick={() => void handleRequestPayout()} disabled={submittingPayout}>
+                {submittingPayout ? "Submitting..." : "Request Payout"}
+              </Button>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Payout Queue</h2>
+            {orgPayouts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No payout requests yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {orgPayouts.slice(0, 6).map((payout) => (
+                  <div key={payout.id} className="rounded-lg border border-border p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium">
+                          {formatMoney(payout.amount_minor, payout.currency || "GHS")}
+                        </p>
+                        <p className="text-sm text-muted-foreground">{payout.payout_destination}</p>
+                      </div>
+                      <Badge>{formatLabel(payout.status)}</Badge>
+                    </div>
+                    {["pending", "approved"].includes(payout.status) && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {payout.status === "pending" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => void handleProcessPayout(payout.id, "approve")}
+                          >
+                            Approve
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          onClick={() => void handleProcessPayout(payout.id, "mark_paid")}
+                        >
+                          Mark Paid
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => void handleProcessPayout(payout.id, "reject")}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {canSeeManagerMetrics && orgLedger.length > 0 && (
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Wallet Ledger</h2>
+          <div className="space-y-2">
+            {orgLedger.slice(0, 8).map((entry) => (
+              <div key={entry.id} className="flex items-center justify-between text-sm border-b pb-2">
+                <span>{entry.description || formatLabel(entry.entry_type)}</span>
+                <span>{formatMoney(entry.amount_minor, orgWallet?.currency || "GHS")}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr,1fr]">
         <Card className="p-6">

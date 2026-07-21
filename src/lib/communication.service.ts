@@ -39,13 +39,14 @@ interface CreateInAppNotificationOptions extends SendNotificationOptions {
   notificationType: string;
   subject: string;
   content: string;
+  notificationCategory?: string | null;
   respectPreferences?: boolean;
 }
 
 const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferencesSettings = {
-  email_enabled: true,
+  email_enabled: false,
   sms_enabled: false,
-  push_enabled: true,
+  push_enabled: false,
   in_app_enabled: true,
   whatsapp_enabled: false,
   notification_frequency: "daily",
@@ -134,6 +135,7 @@ function buildNotificationInsert(
     actor_user_id: params.actorUserId || null,
     conversation_id: params.conversationId || null,
     notification_type: params.notificationType,
+    notification_category: params.notificationCategory || null,
     channel: "in_app",
     subject: params.subject,
     content: params.content,
@@ -142,7 +144,7 @@ function buildNotificationInsert(
     delivered: true,
     delivered_at: new Date().toISOString(),
     read: false,
-  };
+  } as NotificationLogInsert;
 }
 
 async function getUserContactInfo(userId: string) {
@@ -226,6 +228,49 @@ export const communicationService = {
     return data;
   },
 
+  async notify(
+    userId: string,
+    notificationType: string,
+    subject: string,
+    content: string,
+    options: SendNotificationOptions & {
+      notificationCategory?: string | null;
+      respectPreferences?: boolean;
+      includeExternal?: boolean;
+    } = {}
+  ) {
+    const notification = await this.createInAppNotification({
+      userId,
+      notificationType,
+      subject,
+      content,
+      actorUserId: options.actorUserId,
+      conversationId: options.conversationId,
+      actionUrl: options.actionUrl,
+      metadata: options.metadata,
+      notificationCategory: options.notificationCategory,
+      respectPreferences: options.respectPreferences,
+    });
+
+    if (!options.includeExternal || !notification) {
+      return { inApp: notification, external: [] as Array<{ channel: NotificationChannel; success: boolean }> };
+    }
+
+    const externalChannels = (["email", "sms", "push", "whatsapp"] as const).filter(
+      (channel) => channel !== "in_app"
+    );
+    const external = await this.sendNotification(
+      userId,
+      [...externalChannels],
+      notificationType,
+      subject,
+      content,
+      options
+    );
+
+    return { inApp: notification, external };
+  },
+
   async sendNotification(
     userId: string,
     channels: NotificationChannel[],
@@ -235,7 +280,7 @@ export const communicationService = {
     options: SendNotificationOptions = {}
   ) {
     const preferences = await this.getNotificationPreferences(userId);
-    const uniqueChannels = Array.from(new Set(channels));
+    const uniqueChannels = Array.from(new Set(["in_app", ...channels]));
     const results: Array<{
       channel: NotificationChannel;
       success: boolean;
@@ -429,6 +474,47 @@ export const communicationService = {
       .eq("read", false);
 
     if (error) throw error;
+  },
+
+  categorizeNotification(notification: NotificationLogRow) {
+    const category =
+      notification.notification_category ||
+      (notification.metadata as Record<string, unknown> | null)?.category;
+
+    if (typeof category === "string") return category;
+
+    const type = String(notification.notification_type || "").toLowerCase();
+
+    if (type.includes("message") || notification.conversation_id) return "Messages";
+    if (type.includes("payment") || type.includes("transaction")) return "Transactions";
+    if (type.includes("booking") || type.includes("reservation")) return "Bookings";
+    if (type.includes("maintenance")) return "Maintenance";
+    if (type.includes("offer") || type.includes("deal")) return "Offers";
+    if (type.includes("security")) return "Security";
+    if (type.includes("marketing")) return "Marketing";
+    return "System";
+  },
+
+  async getGroupedNotifications(userId: string, limit = 100) {
+    const notifications = await this.getNotificationHistory(userId, limit);
+    const groups: Record<string, NotificationLogRow[]> = {
+      Messages: [],
+      Transactions: [],
+      Bookings: [],
+      Maintenance: [],
+      Offers: [],
+      System: [],
+      Marketing: [],
+      Security: [],
+    };
+
+    for (const notification of notifications) {
+      const bucket = this.categorizeNotification(notification);
+      groups[bucket] = groups[bucket] || [];
+      groups[bucket].push(notification);
+    }
+
+    return groups;
   },
 
   async getUnreadCount(userId: string) {

@@ -116,6 +116,24 @@ class MLSIntegrationService {
     return data;
   }
 
+  async getExternalListingCounts(organizationId: string) {
+    const { data, error } = await supabase
+      .from('external_listings')
+      .select('provider')
+      .eq('organization_id', organizationId);
+
+    if (error) {
+      console.error('Failed to fetch external listing counts:', error);
+      return {} as Record<string, number>;
+    }
+
+    return (data || []).reduce<Record<string, number>>((counts, row) => {
+      const provider = String(row.provider || '');
+      counts[provider] = (counts[provider] || 0) + 1;
+      return counts;
+    }, {});
+  }
+
   /**
    * Sync listings from MLS provider
    */

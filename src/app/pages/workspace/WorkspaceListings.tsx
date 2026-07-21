@@ -276,7 +276,7 @@ export function WorkspaceListings({
         neighborhood: draft.neighborhood,
         ghanaPostGps: draft.ghanaPostGps,
       });
-      const locationInsight = ghanaMarketService.getLocationInsight(
+      const locationInsight = await ghanaMarketService.getLocationInsight(
         draft.city,
         draft.region,
         draft.neighborhood

@@ -37,6 +37,8 @@ function getCaseTypeFromListingType(listingType?: string) {
       return "purchase_offer";
     case "lease":
       return "lease_application";
+    case "short_stay":
+      return "rental_application";
     default:
       return "rental_application";
   }
@@ -60,6 +62,8 @@ Deno.serve(async (req) => {
       typeof requestBody?.listingId === "string" ? requestBody.listingId.trim() : "";
     const dealCaseId =
       typeof requestBody?.dealCaseId === "string" ? requestBody.dealCaseId.trim() : null;
+    const bookingId =
+      typeof requestBody?.bookingId === "string" ? requestBody.bookingId.trim() : null;
     const purpose =
       typeof requestBody?.purpose === "string" && requestBody.purpose.trim()
         ? requestBody.purpose.trim()
@@ -185,6 +189,7 @@ Deno.serve(async (req) => {
       organizationId: listing.organization_id,
       payerUserId: user.id,
       dealCaseId: resolvedDealCaseId,
+      bookingId,
       purpose,
       customerPhone,
       customerName,

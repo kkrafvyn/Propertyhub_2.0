@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/badge';
+import { automationEngineService } from '../../../lib/automation-engine.service';
 import {
   Plus,
   Play,
@@ -65,93 +67,121 @@ const availableConditions = [
   { id: 'user_role', label: 'User Role', icon: '👤' },
 ];
 
-export default function CustomWorkflowsBuilder() {
-  const [workflows, setWorkflows] = useState<Workflow[]>([
-    {
-      id: '1',
-      name: 'Notify Agents on New Listing',
-      description: 'Send email notification to all agents when new listing is created',
-      status: 'active',
-      steps: [
-        { id: '1', type: 'trigger', name: 'New Listing Created', config: {} },
-        { id: '2', type: 'action', name: 'Send Email', config: { template: 'new_listing' } },
-      ],
-      createdAt: new Date('2024-03-15'),
-      runs: 247,
-      lastRun: new Date(Date.now() - 3600000),
-      successRate: 98,
-    },
-    {
-      id: '2',
-      name: 'Auto-Create Deal Case',
-      description: 'Automatically create deal case when price drops below threshold',
-      status: 'active',
-      steps: [
-        { id: '1', type: 'trigger', name: 'Price Changed', config: {} },
-        {
-          id: '2',
-          type: 'condition',
-          name: 'Price Below Threshold',
-          config: { threshold: 150000 },
-        },
-        { id: '3', type: 'action', name: 'Create Task', config: {} },
-      ],
-      createdAt: new Date('2024-02-10'),
-      runs: 89,
-      lastRun: new Date(Date.now() - 86400000),
-      successRate: 95,
-    },
-    {
-      id: '3',
-      name: 'Schedule Showing Reminders',
-      description: 'Send SMS reminder 24 hours before property showing',
-      status: 'draft',
-      steps: [
-        { id: '1', type: 'trigger', name: 'Time-based', config: { beforeEvent: '24h' } },
-        { id: '2', type: 'action', name: 'Send SMS', config: {} },
-      ],
-      createdAt: new Date('2024-04-01'),
-      runs: 0,
-      successRate: 0,
-    },
-  ]);
+interface CustomWorkflowsBuilderProps {
+  organizationId: string;
+  currentRole: 'owner' | 'manager' | 'agent' | 'analyst' | null;
+}
+
+function mapWorkflowRecord(record: any, stats: { runs: number; successRate: number; lastRun?: string | null }) {
+  const actions = record.actions || {};
+  const actionSteps = Object.entries(actions).map(([key, value], index) => ({
+    id: `action-${index + 1}`,
+    type: 'action' as const,
+    name: key.replace(/_/g, ' '),
+    config: (value as Record<string, any>) || {},
+  }));
+
+  return {
+    id: record.id,
+    name: record.name,
+    description: record.workflow_type || 'Custom automation workflow',
+    status: record.enabled ? ('active' as const) : ('inactive' as const),
+    steps: [
+      {
+        id: 'trigger-1',
+        type: 'trigger' as const,
+        name: String(record.trigger_type || 'trigger').replace(/_/g, ' '),
+        config: record.conditions || {},
+      },
+      ...actionSteps,
+    ],
+    createdAt: new Date(record.created_at),
+    runs: stats.runs,
+    lastRun: stats.lastRun ? new Date(stats.lastRun) : undefined,
+    successRate: stats.successRate,
+  };
+}
+
+export default function CustomWorkflowsBuilder({
+  organizationId,
+  currentRole,
+}: CustomWorkflowsBuilderProps) {
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const canManageWorkflows = currentRole === 'owner' || currentRole === 'manager';
 
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
   const [showBuilder, setShowBuilder] = useState(false);
   const [newWorkflowName, setNewWorkflowName] = useState('');
+  const [selectedTrigger, setSelectedTrigger] = useState('new_listing');
 
-  const toggleWorkflowStatus = (id: string) => {
-    setWorkflows(
-      workflows.map(w =>
-        w.id === id
-          ? { ...w, status: w.status === 'active' ? 'inactive' : 'active' }
-          : w
-      )
-    );
+  const loadWorkflows = async () => {
+    try {
+      setLoading(true);
+      const summaries = await automationEngineService.getWorkflowSummaries(organizationId);
+      setWorkflows(
+        summaries.map(({ workflow, stats }) => mapWorkflowRecord(workflow, stats))
+      );
+    } catch (error) {
+      console.error('Failed to load workflows:', error);
+      toast.error('We could not load workflows right now.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const deleteWorkflow = (id: string) => {
-    setWorkflows(workflows.filter(w => w.id !== id));
+  useEffect(() => {
+    void loadWorkflows();
+  }, [organizationId]);
+
+  const toggleWorkflowStatus = async (id: string) => {
+    const workflow = workflows.find((item) => item.id === id);
+    if (!workflow || !canManageWorkflows) return;
+
+    try {
+      await automationEngineService.toggleWorkflow(id, workflow.status !== 'active');
+      await loadWorkflows();
+    } catch (error) {
+      console.error('Failed to toggle workflow:', error);
+      toast.error('We could not update that workflow.');
+    }
   };
 
-  const createNewWorkflow = () => {
-    if (!newWorkflowName) return;
+  const deleteWorkflow = async (id: string) => {
+    if (!canManageWorkflows) return;
 
-    const newWorkflow: Workflow = {
-      id: Date.now().toString(),
-      name: newWorkflowName,
-      description: '',
-      status: 'draft',
-      steps: [],
-      createdAt: new Date(),
-      runs: 0,
-      successRate: 0,
-    };
-
-    setWorkflows([...workflows, newWorkflow]);
-    setNewWorkflowName('');
-    setShowBuilder(false);
+    try {
+      await automationEngineService.deleteWorkflow(id);
+      toast.success('Workflow deleted.');
+      await loadWorkflows();
+    } catch (error) {
+      console.error('Failed to delete workflow:', error);
+      toast.error('We could not delete that workflow.');
+    }
   };
+
+  const createNewWorkflow = async () => {
+    if (!newWorkflowName || !canManageWorkflows) return;
+
+    try {
+      await automationEngineService.createCustomWorkflow(
+        organizationId,
+        newWorkflowName.trim(),
+        selectedTrigger
+      );
+      setNewWorkflowName('');
+      setShowBuilder(false);
+      toast.success('Workflow created.');
+      await loadWorkflows();
+    } catch (error) {
+      console.error('Failed to create workflow:', error);
+      toast.error('We could not create that workflow.');
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-12 text-muted-foreground">Loading workflows...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -165,6 +195,7 @@ export default function CustomWorkflowsBuilder() {
         </div>
         <Button
           onClick={() => setShowBuilder(!showBuilder)}
+          disabled={!canManageWorkflows}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
         >
           <Plus className="w-4 h-4" />
@@ -184,6 +215,26 @@ export default function CustomWorkflowsBuilder() {
                 value={newWorkflowName}
                 onChange={e => setNewWorkflowName(e.target.value)}
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Trigger</label>
+              <div className="grid grid-cols-2 gap-2">
+                {availableTriggers.map((trigger) => (
+                  <button
+                    key={trigger.id}
+                    type="button"
+                    onClick={() => setSelectedTrigger(trigger.id)}
+                    className={`rounded-lg border px-3 py-2 text-left text-sm ${
+                      selectedTrigger === trigger.id
+                        ? 'border-blue-500 bg-blue-100'
+                        : 'border-gray-200 bg-white'
+                    }`}
+                  >
+                    <span className="mr-2">{trigger.icon}</span>
+                    {trigger.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="flex gap-2">
               <Button
@@ -205,6 +256,19 @@ export default function CustomWorkflowsBuilder() {
       )}
 
       {/* Workflows List */}
+      {workflows.length === 0 ? (
+        <Card className="p-8 text-center">
+          <Zap className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+          <h3 className="text-lg font-semibold mb-2">No workflows yet</h3>
+          <p className="text-muted-foreground mb-4">
+            Create your first automation workflow to streamline your workspace.
+          </p>
+          <Button onClick={() => setShowBuilder(true)} className="flex items-center gap-2 mx-auto">
+            <Plus className="w-4 h-4" />
+            Create Workflow
+          </Button>
+        </Card>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {workflows.map(workflow => (
           <Card
@@ -317,6 +381,7 @@ export default function CustomWorkflowsBuilder() {
           </Card>
         ))}
       </div>
+      )}
 
       {/* Workflow Details Modal */}
       {selectedWorkflow && (

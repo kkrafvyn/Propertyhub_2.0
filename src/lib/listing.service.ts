@@ -11,7 +11,7 @@ const LISTING_SELECT = `
     *,
     media:property_media(*)
   ),
-  organization:organizations(name, logo_url, verified)
+  organization:organizations(name, logo_url, verified, slug)
 `;
 
 export const listingService = {
@@ -54,6 +54,8 @@ export const listingService = {
       bathrooms?: number;
       propertyType?: string;
       listingType?: string;
+      organizationSlug?: string;
+      sort?: "newest" | "price_asc" | "price_desc";
     },
     limit = 20,
     offset = 0
@@ -70,8 +72,9 @@ export const listingService = {
     if (error) throw error;
 
     const normalizedLocation = filters.location?.trim().toLowerCase();
-    const filtered = (data || []).filter((listing) => {
+    let filtered = (data || []).filter((listing) => {
       const property = listing.property as Database["public"]["Tables"]["properties"]["Row"] | null;
+      const organization = listing.organization as { slug?: string } | null;
       const normalizedListingCategory = normalizePropertyCategory(property?.category);
       const locationHaystack = [property?.address, property?.city, property?.region, property?.country]
         .filter(Boolean)
@@ -85,9 +88,16 @@ export const listingService = {
       if (filters.bedrooms && (property?.bedrooms || 0) < filters.bedrooms) return false;
       if (filters.bathrooms && (property?.bathrooms || 0) < filters.bathrooms) return false;
       if (normalizedLocation && !locationHaystack.includes(normalizedLocation)) return false;
+      if (filters.organizationSlug && organization?.slug !== filters.organizationSlug) return false;
 
       return true;
     });
+
+    if (filters.sort === "price_asc") {
+      filtered = [...filtered].sort((a, b) => (a.price || 0) - (b.price || 0));
+    } else if (filters.sort === "price_desc") {
+      filtered = [...filtered].sort((a, b) => (b.price || 0) - (a.price || 0));
+    }
 
     return {
       results: filtered.slice(offset, offset + limit),
@@ -105,14 +115,16 @@ export const listingService = {
           *,
           media:property_media(*)
         ),
-        organization:organizations(name, logo_url, verified, email, phone)
+        organization:organizations(name, logo_url, verified, email, phone, slug)
       `
       )
       .eq("id", id)
+      .eq("status", "listed")
+      .eq("visibility", "public")
       .single();
 
     if (error) throw error;
-    return data || [];
+    return data;
   },
 
   async getOrganizationListings(organizationId: string) {
@@ -159,5 +171,52 @@ export const listingService = {
 
   async toggleFeatured(id: string, featured: boolean) {
     return this.updateListing(id, { featured });
+  },
+
+  async getBrowseStats() {
+    const { data, error } = await supabase
+      .from("listings")
+      .select("property:properties(category, neighborhood, city, region, location_confidence)")
+      .eq("status", "listed")
+      .eq("visibility", "public");
+
+    if (error) throw error;
+
+    const categoryCounts: Record<string, number> = {};
+    const locationCounts: Record<string, number> = {};
+    const locationMeta: Record<string, { city: string; region: string; count: number }> = {};
+
+    for (const listing of data || []) {
+      const property = listing.property as Database["public"]["Tables"]["properties"]["Row"] | null;
+      const category = normalizePropertyCategory(property?.category);
+      if (category) {
+        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+      }
+
+      const neighborhood = property?.neighborhood?.trim();
+      const city = property?.city?.trim();
+      const region = property?.region?.trim() || "Ghana";
+      const locationName = neighborhood || city;
+
+      if (locationName) {
+        locationCounts[locationName] = (locationCounts[locationName] || 0) + 1;
+        locationMeta[locationName] = {
+          city: city || locationName,
+          region,
+          count: locationCounts[locationName],
+        };
+      }
+    }
+
+    const popularLocations = Object.entries(locationMeta)
+      .map(([name, meta]) => ({ name, ...meta }))
+      .sort((a, b) => b.count - a.count);
+
+    return { categoryCounts, locationCounts, popularLocations };
+  },
+
+  async getPopularLocations(limit = 6) {
+    const { popularLocations } = await this.getBrowseStats();
+    return popularLocations.slice(0, limit);
   },
 };

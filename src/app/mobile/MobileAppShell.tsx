@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import {
-  BriefcaseBusiness,
   Building2,
   Camera,
   ChevronRight,
+  Compass,
   Heart,
   Home,
   KeyRound,
   Loader2,
-  MapPin,
+  MessageCircle,
   Mic,
   Navigation,
   Search,
@@ -22,17 +22,20 @@ import { useAuth } from "../context/AuthContext";
 import { listingService } from "../../lib/listing.service";
 import { organizationService } from "../../lib/organization.service";
 import { savedPropertyService } from "../../lib/savedproperty.service";
+import { consumerContextService } from "../../lib/consumer-context.service";
 import { getPropertyCoverImage } from "../../lib/property-media";
 import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
+import { NotificationBell } from "../components/NotificationBell";
 import "./mobile.css";
 
-type MobileTab = "discover" | "search" | "saved" | "workspace" | "profile";
-type ListingType = "rental" | "sale" | "lease";
+type MobileTab = "home" | "explore" | "saved" | "messages" | "profile";
+type ListingType = "rental" | "sale" | "lease" | "short_stay";
 
 const listingTabs: Array<{ label: string; value: ListingType }> = [
   { label: "Rent", value: "rental" },
   { label: "Buy", value: "sale" },
   { label: "Lease", value: "lease" },
+  { label: "Stay", value: "short_stay" },
 ];
 
 function formatPrice(amount?: number | null, currency = "GHS") {
@@ -48,6 +51,7 @@ function formatPrice(amount?: number | null, currency = "GHS") {
 function getListingLabel(type?: string) {
   if (type === "sale") return "For sale";
   if (type === "lease") return "Lease";
+  if (type === "short_stay") return "Short stay";
   return "For rent";
 }
 
@@ -142,16 +146,18 @@ function MobileTabButton({
 export function MobileAppShell() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<MobileTab>("discover");
+  const [activeTab, setActiveTab] = useState<MobileTab>("home");
   const [listingType, setListingType] = useState<ListingType>("rental");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [listings, setListings] = useState<any[]>([]);
   const [agencies, setAgencies] = useState<any[]>([]);
   const [saved, setSaved] = useState<any[]>([]);
-  const [organizations, setOrganizations] = useState<any[]>([]);
   const [fieldNote, setFieldNote] = useState("");
   const [lastLocation, setLastLocation] = useState<string | null>(null);
+  const [contextualNav, setContextualNav] = useState<
+    Array<{ label: string; href: string; section: string }>
+  >([]);
 
   const initialsSource = user?.user_metadata?.full_name || user?.email || "Property Hub";
   const initials = initialsSource
@@ -168,13 +174,13 @@ export function MobileAppShell() {
     const load = async () => {
       try {
         setLoading(true);
-        const [listingRows, agencyRows] = await Promise.all([
-          listingService.getPublicListings(8, 0),
+        const [searchResults, agencyRows] = await Promise.all([
+          listingService.searchListingsWithCount({ listingType }, 24, 0),
           organizationService.getVerifiedOrganizations(6),
         ]);
 
         if (!cancelled) {
-          setListings(listingRows || []);
+          setListings(searchResults.results || []);
           setAgencies(agencyRows || []);
         }
       } finally {
@@ -187,26 +193,38 @@ export function MobileAppShell() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [listingType]);
 
   useEffect(() => {
     if (!user) {
       setSaved([]);
-      setOrganizations([]);
       return;
     }
 
     let cancelled = false;
 
     const loadPrivateData = async () => {
-      const [savedRows, orgRows] = await Promise.all([
+      const [savedRows, nextContext] = await Promise.all([
         savedPropertyService.getSavedProperties(user.id).catch(() => []),
-        organizationService.getUserOrganizations(user.id).catch(() => []),
+        consumerContextService.getConsumerContext(user.id).catch(() => ({
+          hasBookingContext: false,
+          hasRentingContext: false,
+          hasBuyingContext: false,
+          bookings: [],
+          leases: [],
+          purchaseDeals: [],
+        })),
       ]);
 
       if (!cancelled) {
         setSaved(savedRows || []);
-        setOrganizations(orgRows || []);
+        setContextualNav(
+          consumerContextService.getContextualNavItems({
+            hasBookingContext: nextContext.hasBookingContext,
+            hasRentingContext: nextContext.hasRentingContext,
+            hasBuyingContext: nextContext.hasBuyingContext,
+          })
+        );
       }
     };
 
@@ -278,7 +296,7 @@ export function MobileAppShell() {
   };
 
   const renderContent = () => {
-    if (activeTab === "discover") {
+    if (activeTab === "home") {
       return (
         <>
           <section className="mobile-hero">
@@ -286,15 +304,18 @@ export function MobileAppShell() {
               <p className="mobile-eyebrow">Ghana property market</p>
               <h1>Find a place that feels settled.</h1>
             </div>
-            <button
-              type="button"
-              className="mobile-icon-button"
-              onClick={() => setActiveTab("profile")}
-              aria-label="Open profile"
-              title="Profile"
-            >
-              {user ? initials : <UserRound aria-hidden="true" />}
-            </button>
+            <div className="flex items-center gap-2">
+              {user ? <NotificationBell userId={user.id} /> : null}
+              <button
+                type="button"
+                className="mobile-icon-button"
+                onClick={() => setActiveTab("profile")}
+                aria-label="Open profile"
+                title="Profile"
+              >
+                {user ? initials : <UserRound aria-hidden="true" />}
+              </button>
+            </div>
           </section>
 
           <form
@@ -370,7 +391,13 @@ export function MobileAppShell() {
                   to={`/search?agency=${agency.slug}`}
                   className="mobile-agency-chip"
                 >
-                  <img src={agency.logo_url || "https://placehold.co/80x80"} alt="" />
+                  {agency.logo_url ? (
+                    <img src={agency.logo_url} alt="" />
+                  ) : (
+                    <div className="mobile-agency-logo-fallback" aria-hidden="true">
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                  )}
                   <span>{agency.name}</span>
                 </Link>
               ))}
@@ -380,10 +407,10 @@ export function MobileAppShell() {
       );
     }
 
-    if (activeTab === "search") {
+    if (activeTab === "explore") {
       return (
         <section className="mobile-pane">
-          <h1>Search</h1>
+          <h1>Explore</h1>
           <form
             className="mobile-search-stack"
             onSubmit={(event) => {
@@ -459,120 +486,135 @@ export function MobileAppShell() {
       );
     }
 
-    if (activeTab === "workspace") {
+    if (activeTab === "messages") {
+      if (!user) {
+        return (
+          <section className="mobile-pane">
+            <h1>Messages</h1>
+            <EmptyState
+              icon={MessageCircle}
+              title="Log in to message agents, owners, and property teams."
+              action={{ label: "Log in", to: "/login" }}
+            />
+          </section>
+        );
+      }
+
       return (
         <section className="mobile-pane">
-          <h1>Workspace</h1>
-          <div className="mobile-action-list">
-            <Link to={`${WORKSPACE_ENTRY_PATH}?next=new`} className="mobile-action-row">
-              <Building2 aria-hidden="true" />
-              <span>List a property</span>
-              <ChevronRight aria-hidden="true" />
-            </Link>
-            <Link to={workspacePath} className="mobile-action-row">
-              <BriefcaseBusiness aria-hidden="true" />
-              <span>Open operations</span>
-              <ChevronRight aria-hidden="true" />
-            </Link>
-            {organizations.map((item) => {
-              const organization = item.organization || item;
-              return (
-                <Link
-                  key={organization.id}
-                  to={`/workspace/${organization.slug}`}
-                  className="mobile-action-row"
-                >
-                  <ShieldCheck aria-hidden="true" />
-                  <span>{organization.name}</span>
-                  <ChevronRight aria-hidden="true" />
-                </Link>
-              );
-            })}
-          </div>
-
-          <section className="mobile-agent-kit">
-            <div className="mobile-section-heading">
-              <h2>Field agent kit</h2>
-            </div>
-            <div className="mobile-agent-grid">
-              <button type="button" onClick={captureLocation}>
-                <Navigation aria-hidden="true" />
-                <span>Capture GPS</span>
-              </button>
-              <Link to={`${WORKSPACE_ENTRY_PATH}?next=new`}>
-                <Camera aria-hidden="true" />
-                <span>Photo listing</span>
-              </Link>
-              <Link to="/app/payments">
-                <Wallet aria-hidden="true" />
-                <span>MoMo receipt</span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => toast.message("Voice notes are queued for native recording setup.")}
-              >
-                <Mic aria-hidden="true" />
-                <span>Voice note</span>
-              </button>
-            </div>
-            {lastLocation && <p className="mobile-agent-location">Last GPS: {lastLocation}</p>}
-            <textarea
-              value={fieldNote}
-              onChange={(event) => setFieldNote(event.target.value)}
-              placeholder="Quick note from a viewing, inspection, or owner handoff"
-            />
-            <button type="button" className="mobile-primary-button" onClick={saveFieldNote}>
-              Save offline note
-            </button>
-          </section>
+          <h1>Messages</h1>
+          <EmptyState
+            icon={MessageCircle}
+            title="Your conversations live in the web dashboard for now."
+            action={{ label: "Open messages", to: "/app/messages" }}
+          />
         </section>
       );
     }
 
-    return (
-      <section className="mobile-pane">
-        <h1>Profile</h1>
-        {user ? (
-          <div className="mobile-profile-card">
-            <div className="mobile-avatar">{initials}</div>
-            <div>
-              <strong>{user.user_metadata?.full_name || user.email}</strong>
-              <p>{user.email}</p>
+    if (activeTab === "profile") {
+      return (
+        <section className="mobile-pane">
+          <h1>Profile</h1>
+          {user ? (
+            <div className="mobile-profile-card">
+              <div className="mobile-avatar">{initials}</div>
+              <div>
+                <strong>{user.user_metadata?.full_name || user.email}</strong>
+                <p>{user.email}</p>
+              </div>
+              <Link to="/app" className="mobile-primary-link">
+                My BaytMiftah
+                <ChevronRight aria-hidden="true" />
+              </Link>
+              <Link to="/app/payments" className="mobile-primary-link">
+                Payments & receipts
+                <ChevronRight aria-hidden="true" />
+              </Link>
+              <Link to={workspacePath} className="mobile-primary-link">
+                Agency workspace
+                <ChevronRight aria-hidden="true" />
+              </Link>
+              <button type="button" className="mobile-secondary-button" onClick={() => void signOut()}>
+                Sign out
+              </button>
             </div>
-            <Link to="/app" className="mobile-primary-link">
-              Dashboard
-              <ChevronRight aria-hidden="true" />
-            </Link>
-            <button type="button" className="mobile-secondary-button" onClick={() => void signOut()}>
-              Sign out
-            </button>
-          </div>
-        ) : (
-          <EmptyState
-            icon={KeyRound}
-            title="Log in to manage searches, saved listings, payments, and workspace access."
-            action={{ label: "Log in", to: "/login" }}
-          />
-        )}
-      </section>
-    );
+          ) : (
+            <EmptyState
+              icon={KeyRound}
+              title="Log in to manage searches, saved listings, payments, and workspace access."
+              action={{ label: "Log in", to: "/login" }}
+            />
+          )}
+
+          {user ? (
+            <section className="mobile-agent-kit">
+              <div className="mobile-section-heading">
+                <h2>Field agent kit</h2>
+              </div>
+              <div className="mobile-agent-grid">
+                <button type="button" onClick={captureLocation}>
+                  <Navigation aria-hidden="true" />
+                  <span>Capture GPS</span>
+                </button>
+                <Link to={`${WORKSPACE_ENTRY_PATH}?next=new`}>
+                  <Camera aria-hidden="true" />
+                  <span>Photo listing</span>
+                </Link>
+                <Link to="/app/payments">
+                  <Wallet aria-hidden="true" />
+                  <span>MoMo receipt</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => toast.message("Voice notes are queued for native recording setup.")}
+                >
+                  <Mic aria-hidden="true" />
+                  <span>Voice note</span>
+                </button>
+              </div>
+              {lastLocation && <p className="mobile-agent-location">Last GPS: {lastLocation}</p>}
+              <textarea
+                value={fieldNote}
+                onChange={(event) => setFieldNote(event.target.value)}
+                placeholder="Quick note from a viewing, inspection, or owner handoff"
+              />
+              <button type="button" className="mobile-primary-button" onClick={saveFieldNote}>
+                Save offline note
+              </button>
+            </section>
+          ) : null}
+        </section>
+      );
+    }
+
+    return null;
   };
 
   return (
     <main className="mobile-app-shell">
       <div className="mobile-content">{renderContent()}</div>
+      {contextualNav.length > 0 && user ? (
+        <div className="mobile-context-nav" aria-label="Contextual navigation">
+          {contextualNav.slice(0, 4).map((item) => (
+            <Link key={item.href} to={item.href} className="mobile-context-link">
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      ) : null}
       <nav className="mobile-tab-bar" aria-label="Primary mobile navigation">
         <MobileTabButton
-          active={activeTab === "discover"}
+          active={activeTab === "home"}
           icon={Home}
           label="Home"
-          onClick={() => setActiveTab("discover")}
+          onClick={() => setActiveTab("home")}
         />
         <MobileTabButton
-          active={activeTab === "search"}
-          icon={Search}
-          label="Search"
-          onClick={() => setActiveTab("search")}
+          active={activeTab === "explore"}
+          icon={Compass}
+          label="Explore"
+          onClick={() => setActiveTab("explore")}
         />
         <MobileTabButton
           active={activeTab === "saved"}
@@ -581,15 +623,15 @@ export function MobileAppShell() {
           onClick={() => setActiveTab("saved")}
         />
         <MobileTabButton
-          active={activeTab === "workspace"}
-          icon={BriefcaseBusiness}
-          label="Work"
-          onClick={() => setActiveTab("workspace")}
+          active={activeTab === "messages"}
+          icon={MessageCircle}
+          label="Messages"
+          onClick={() => setActiveTab("messages")}
         />
         <MobileTabButton
           active={activeTab === "profile"}
           icon={UserRound}
-          label="Me"
+          label="Profile"
           onClick={() => setActiveTab("profile")}
         />
       </nav>
