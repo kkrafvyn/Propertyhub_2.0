@@ -4,6 +4,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { PropertyDetail } from "./PropertyDetail";
 import { useAuth } from "../context/AuthContext";
+import { renderWithProviders } from "../../test/render";
 import { listingService } from "../../lib/listing.service";
 import { savedPropertyService } from "../../lib/savedproperty.service";
 import { dealCaseService } from "../../lib/dealcase.service";
@@ -114,7 +115,7 @@ function renderPropertyDetail() {
     }
   );
 
-  render(<RouterProvider router={router} />);
+  renderWithProviders(<RouterProvider router={router} />);
 }
 
 describe("PropertyDetail inquiry flow", () => {

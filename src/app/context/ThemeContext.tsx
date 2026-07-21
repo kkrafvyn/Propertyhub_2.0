@@ -19,7 +19,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 function syncThemeMeta(theme: ThemeMode) {
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) {
-    meta.setAttribute("content", theme === "dark" ? "#0F2922" : "#0B211A");
+    meta.setAttribute("content", theme === "dark" ? "#0F2922" : "#ffffff");
   }
 }
 

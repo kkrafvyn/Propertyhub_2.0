@@ -5,58 +5,89 @@ import { RouteMonitoring } from "./RouteMonitoring";
 import { MobileAppShell } from "../mobile/MobileAppShell";
 import { MobileBottomNav } from "../mobile/MobileBottomNav";
 import { SplashScreen } from "./baytmiftah/splash/SplashScreen";
+import { PHONE_MEDIA, TABLET_MEDIA } from "../lib/viewports";
 
-function usePrefersMobileShell() {
-  const [prefersMobileShell, setPrefersMobileShell] = useState(() => {
-    if (Capacitor.isNativePlatform()) return true;
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(max-width: 767px)").matches;
+function useViewportFlags() {
+  const [flags, setFlags] = useState(() => {
+    if (typeof window === "undefined") {
+      return { isPhone: false, isTablet: false };
+    }
+    if (Capacitor.isNativePlatform()) {
+      return { isPhone: true, isTablet: false };
+    }
+    return {
+      isPhone: window.matchMedia(PHONE_MEDIA).matches,
+      isTablet: window.matchMedia(TABLET_MEDIA).matches,
+    };
   });
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      setPrefersMobileShell(true);
+      setFlags({ isPhone: true, isTablet: false });
       return;
     }
 
-    const query = window.matchMedia("(max-width: 767px)");
-    const update = () => setPrefersMobileShell(query.matches);
+    const phoneQuery = window.matchMedia(PHONE_MEDIA);
+    const tabletQuery = window.matchMedia(TABLET_MEDIA);
+
+    const update = () => {
+      setFlags({
+        isPhone: phoneQuery.matches,
+        isTablet: tabletQuery.matches,
+      });
+    };
 
     update();
-    query.addEventListener("change", update);
+    phoneQuery.addEventListener("change", update);
+    tabletQuery.addEventListener("change", update);
 
-    return () => query.removeEventListener("change", update);
+    return () => {
+      phoneQuery.removeEventListener("change", update);
+      tabletQuery.removeEventListener("change", update);
+    };
   }, []);
 
-  return prefersMobileShell;
+  return flags;
 }
 
-const MOBILE_CONSUMER_PREFIXES = ["/search", "/property/", "/app"];
+function isConsumerRoute(pathname: string) {
+  return (
+    pathname === "/" ||
+    pathname.startsWith("/search") ||
+    pathname.startsWith("/property/") ||
+    pathname.startsWith("/app")
+  );
+}
 
 export function Root() {
   const location = useLocation();
-  const prefersMobileShell = usePrefersMobileShell();
+  const { isPhone, isTablet } = useViewportFlags();
   const [splashDone, setSplashDone] = useState(false);
 
   if (!splashDone) {
     return <SplashScreen onComplete={() => setSplashDone(true)} />;
   }
 
-  if (prefersMobileShell && location.pathname === "/") {
+  if (isPhone && location.pathname === "/") {
     return <MobileAppShell />;
   }
 
-  const showMobileBottomNav =
-    prefersMobileShell &&
-    (location.pathname.startsWith("/search") ||
-      location.pathname.startsWith("/property/") ||
-      location.pathname.startsWith("/app"));
+  const onConsumerRoute = isConsumerRoute(location.pathname);
+  const showBottomNav = onConsumerRoute && (isPhone || isTablet);
+  const bottomNavVariant = isTablet ? "tablet" : "phone";
+
+  const shellClass = [
+    "mobile-bolt min-h-screen min-h-[100dvh] bg-bolt-bg",
+    showBottomNav ? (isTablet ? "has-tablet-tab-bar" : "has-mobile-tab-bar") : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div className={`mobile-bolt min-h-screen min-h-[100dvh] bg-bolt-bg ${showMobileBottomNav ? "pb-24" : ""}`}>
+    <div className={shellClass}>
       <RouteMonitoring />
       <Outlet />
-      {showMobileBottomNav ? <MobileBottomNav /> : null}
+      {showBottomNav ? <MobileBottomNav variant={bottomNavVariant} /> : null}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import {
   RENT_HUB_PATH,
   STAY_HUB_PATH,
 } from '../../lib/baytmiftah/journey-nav'
+import { CONSUMER_ROUTES } from '../../lib/consumer-routes'
 
 export default function ConsumerShell(props) {
   const { t } = useTranslation()
@@ -18,7 +19,7 @@ export default function ConsumerShell(props) {
     { to: LEASE_HUB_PATH, label: t('profileNav.leaseJourney') },
     { to: STAY_HUB_PATH, label: t('consumer.journeys.stay.title') },
     { to: INVEST_HUB_PATH, label: t('consumer.journeys.invest.title') },
-    { to: '/wallet', label: t('profileNav.wallet') },
+    { to: CONSUMER_ROUTES.wallet, label: t('profileNav.wallet') },
   ]
 
   return (

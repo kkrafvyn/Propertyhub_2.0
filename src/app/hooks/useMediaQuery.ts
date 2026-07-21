@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PHONE_MEDIA, TABLET_MEDIA, BELOW_DESKTOP_MEDIA, DESKTOP_MEDIA } from "../lib/viewports";
 
 export function useMediaQuery(query: string) {
   const [matches, setMatches] = useState(() =>
@@ -17,9 +18,17 @@ export function useMediaQuery(query: string) {
 }
 
 export function useIsMobileViewport() {
-  return useMediaQuery("(max-width: 1023px)");
+  return useMediaQuery(BELOW_DESKTOP_MEDIA);
 }
 
 export function useIsTabletViewport() {
-  return useMediaQuery("(min-width: 768px) and (max-width: 1023px)");
+  return useMediaQuery(TABLET_MEDIA);
+}
+
+export function useIsPhoneViewport() {
+  return useMediaQuery(PHONE_MEDIA);
+}
+
+export function useIsDesktopViewport() {
+  return useMediaQuery(DESKTOP_MEDIA);
 }

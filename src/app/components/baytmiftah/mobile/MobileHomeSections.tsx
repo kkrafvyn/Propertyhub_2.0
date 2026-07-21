@@ -111,7 +111,7 @@ const PROPERTY_TYPES = [
   { id: "townhouse", label: "Townhouses", bg: "bg-orange-50" },
   { id: "commercial", label: "Commercial", bg: "bg-purple-50" },
   { id: "land", label: "Land", bg: "bg-emerald-50" },
-  { id: "shortStay", label: "Short stay", bg: "bg-rose-50" },
+  { id: "shortStay", label: "Short stay", bg: "bg-orange-50" },
 ];
 
 export function MobilePropertyTypeRow({
@@ -228,7 +228,7 @@ export function MobileHomeListingCard({
           className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-surface/90 shadow-sm"
           aria-label="Save"
         >
-          <Heart className={`h-4 w-4 ${saved ? "fill-brand-accent text-brand-accent" : "text-ink"}`} />
+          <Heart className={`h-4 w-4 ${saved ? "fill-brand-orange text-brand-orange" : "text-ink"}`} />
         </button>
       )}
     </div>

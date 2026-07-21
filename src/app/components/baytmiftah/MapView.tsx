@@ -9,7 +9,7 @@ export type { MapListing };
 
 const pin = L.divIcon({
   className: "",
-  html: `<div style="background:#FF385C;color:#fff;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-size:10px;">●</span></div>`,
+  html: `<div style="background:#0F2922;color:#fff;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-size:10px;">●</span></div>`,
   iconSize: [28, 28],
   iconAnchor: [14, 28],
 });

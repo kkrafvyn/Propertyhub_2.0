@@ -12,7 +12,19 @@ export default {
     "aiPlaceholder": "Try: \"3-bedroom house in East Legon under 2000000\"",
     "showResults": "Show results",
     "scrollLeft": "Scroll left",
-    "scrollRight": "Scroll right"
+    "scrollRight": "Scroll right",
+    "heroEyebrow": "Ghana's property marketplace",
+    "heroTitle": "Find a place that feels like home",
+    "heroSubtitle": "Rent, buy, lease, or book short stays — curated listings across Accra and beyond.",
+    "heroForRent": "For rent",
+    "heroForSale": "For sale",
+    "heroShortStays": "Short stays",
+    "heroVerified": "Verified",
+    "heroListingsLive": "{{count}}+ listings live on BaytMiftah",
+    "noFilterMatches": "No listings match your filters. Try adjusting your search or",
+    "clearFilters": "clear filters",
+    "pageTitle": "Explore homes",
+    "pageDescription": "Discover properties across Ghana on BaytMiftah."
   },
   "listing": {
     "guestFavourite": "Guest favourite",

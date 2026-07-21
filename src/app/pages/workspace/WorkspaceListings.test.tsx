@@ -20,6 +20,48 @@ vi.mock("../../../lib/property.service", () => ({
   },
 }));
 
+vi.mock("../../../lib/ghana-market.service", () => ({
+  ghanaMarketService: {
+    calculateLocationConfidence: vi.fn().mockReturnValue(0.85),
+    getLocationInsight: vi.fn().mockResolvedValue({ floodRiskLevel: "low" }),
+    normalizeGhanaPostGps: vi.fn().mockReturnValue(null),
+  },
+}));
+
+vi.mock("../../../lib/listing-quality.service", () => ({
+  listingQualityService: {
+    evaluate: vi.fn().mockReturnValue({ score: 82, issues: [], checks: [] }),
+    syncListingQuality: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock("../../components/GhanaRegionInput", () => ({
+  GhanaRegionInput: ({
+    value,
+    onChange,
+    id,
+  }: {
+    value: string;
+    onChange: (value: string) => void;
+    id?: string;
+  }) => (
+    <input
+      id={id}
+      aria-label="Region"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  ),
+}));
+
+vi.mock("../../components/PropertyMediaPicker", () => ({
+  PropertyMediaPicker: () => <div>Media picker</div>,
+}));
+
+vi.mock("../../components/ListingQualityPanel", () => ({
+  ListingQualityPanel: () => <div>Listing quality</div>,
+}));
+
 vi.mock("../../../lib/ghana-api.service", () => ({
   FALLBACK_GHANA_REGIONS: [{ code: "GAR", label: "Greater Accra Region" }],
   ghanaApiService: {

@@ -38,6 +38,8 @@ import {
 } from "../components/baytmiftah/mobile/MobileHomeSections";
 import { mapListingToCard } from "../components/baytmiftah";
 import MobileHomeMenu from "../components/baytmiftah/mobile/MobileHomeMenu";
+import { ConsumerTabBar } from "./ConsumerTabBar";
+import { consumerTabItems } from "./MobileBottomNav";
 import "./mobile.css";
 
 type MobileTab = "home" | "explore" | "saved" | "messages" | "profile";
@@ -128,30 +130,6 @@ function EmptyState({
         </Link>
       )}
     </div>
-  );
-}
-
-function MobileTabButton({
-  active,
-  icon: Icon,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  icon: typeof Home;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      className={`mobile-tab-button ${active ? "is-active" : ""}`}
-      onClick={onClick}
-      aria-current={active ? "page" : undefined}
-    >
-      <Icon aria-hidden="true" />
-      <span>{label}</span>
-    </button>
   );
 }
 
@@ -567,38 +545,12 @@ export function MobileAppShell() {
           ))}
         </div>
       ) : null}
-      <nav className="mobile-tab-bar" aria-label="Primary mobile navigation">
-        <MobileTabButton
-          active={activeTab === "home"}
-          icon={Home}
-          label="Home"
-          onClick={() => setActiveTab("home")}
-        />
-        <MobileTabButton
-          active={activeTab === "explore"}
-          icon={Compass}
-          label="Explore"
-          onClick={() => setActiveTab("explore")}
-        />
-        <MobileTabButton
-          active={activeTab === "saved"}
-          icon={Heart}
-          label="Saved"
-          onClick={() => setActiveTab("saved")}
-        />
-        <MobileTabButton
-          active={activeTab === "messages"}
-          icon={MessageCircle}
-          label="Messages"
-          onClick={() => setActiveTab("messages")}
-        />
-        <MobileTabButton
-          active={activeTab === "profile"}
-          icon={UserRound}
-          label="Profile"
-          onClick={() => setActiveTab("profile")}
-        />
-      </nav>
+      <ConsumerTabBar
+        tabs={consumerTabItems}
+        activeId={activeTab}
+        onTabPress={(tab) => setActiveTab(tab.id as MobileTab)}
+        ariaLabel="Primary mobile navigation"
+      />
       <MobileHomeMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </main>
   );

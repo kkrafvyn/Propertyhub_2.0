@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { probeBackendConnection, type BackendStatus } from "../../../lib/backend-probe";
 
+/** Dev-only banner for offline or backend errors — never shown for empty listings. */
 export function BackendBanner() {
   const [status, setStatus] = useState<BackendStatus | null>(null);
 
@@ -8,7 +9,7 @@ export function BackendBanner() {
     probeBackendConnection().then(setStatus);
   }, []);
 
-  if (!status || status.mode === "live") return null;
+  if (!status || status.mode === "live" || status.mode === "empty") return null;
 
   return (
     <div className="mb-4 rounded-lg border border-amber-200/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
@@ -16,11 +17,6 @@ export function BackendBanner() {
         <p>
           <strong>Offline mode.</strong> Add <code className="text-xs">VITE_SUPABASE_URL</code> and{" "}
           <code className="text-xs">VITE_SUPABASE_ANON_KEY</code> to your environment, then redeploy.
-        </p>
-      )}
-      {status.mode === "empty" && (
-        <p>
-          <strong>Database connected.</strong> No public listings yet — publish listings from workspace.
         </p>
       )}
       {status.mode === "error" && (

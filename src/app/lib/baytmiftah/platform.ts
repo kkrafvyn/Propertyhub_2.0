@@ -1,3 +1,5 @@
+import { PHONE_MEDIA } from "../viewports";
+
 export function isNativeApp() {
   return typeof window !== "undefined" && Boolean((window as { Capacitor?: unknown }).Capacitor);
 }
@@ -16,5 +18,5 @@ export function shouldShowLaunchSplash() {
 
 export function shouldUseMobileShell() {
   if (typeof window === "undefined") return false;
-  return window.matchMedia("(max-width: 767px)").matches || isNativeApp();
+  return window.matchMedia(PHONE_MEDIA).matches || isNativeApp();
 }

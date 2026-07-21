@@ -4,6 +4,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { Login } from "./Login";
 import { useAuth } from "../../context/AuthContext";
+import { LocaleProvider } from "../../i18n/LocaleContext";
 
 vi.mock("../../context/AuthContext", () => ({
   useAuth: vi.fn(),
@@ -48,7 +49,11 @@ function renderLogin(initialEntry = "/login?next=%2Fworkspace%3Fnext%3Dnew") {
     }
   );
 
-  render(<RouterProvider router={router} />);
+  render(
+    <LocaleProvider>
+      <RouterProvider router={router} />
+    </LocaleProvider>,
+  );
   return router;
 }
 

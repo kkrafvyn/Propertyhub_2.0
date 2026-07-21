@@ -1,14 +1,15 @@
 import { Link, useNavigate } from "react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Compass, Home as HomeIcon, Key, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { listingService } from "../../lib/listing.service";
 import { savedPropertyService } from "../../lib/savedproperty.service";
 import { syncCompareIds, toggleCompareIdAsync } from "../../lib/compare-listings";
 import { normalizePropertyCategory } from "../../lib/property-category";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "../i18n/LocaleContext";
+import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
 import {
-  BackendBanner,
   CategoryBar,
   DesktopShell,
   ListingCard,
@@ -28,6 +29,7 @@ const MapView = lazy(() =>
 export function Home() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [category, setCategory] = useState("all");
   const [location, setLocation] = useState("");
   const [propertyType, setPropertyType] = useState("any");
@@ -38,7 +40,6 @@ export function Home() {
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [mapMode, setMapMode] = useState(false);
-  const [compareToast, setCompareToast] = useState("");
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -166,14 +167,15 @@ export function Home() {
     const { ids, capped } = await toggleCompareIdAsync(listingId);
     setCompareIds(ids);
     if (capped) {
-      setCompareToast("You can compare up to 4 properties.");
-      setTimeout(() => setCompareToast(""), 3000);
+      toast.message("You can compare up to 4 properties.");
     }
   };
 
+  const listPropertyPath = `${WORKSPACE_ENTRY_PATH}?next=new`;
+
   return (
     <>
-      <PageMeta title="Explore homes" description="Discover properties across Ghana on BaytMiftah." />
+      <PageMeta title={t("home.pageTitle")} description={t("home.pageDescription")} />
       <DesktopShell
         compareCount={compareIds.length}
       search={
@@ -197,13 +199,14 @@ export function Home() {
         />
       }
     >
-      <BackendBanner />
-
-      {compareToast && (
-        <p className="mb-4 rounded-xl border border-amber-200/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-          {compareToast}
-        </p>
+      {!mapMode && !loading && (
+        <DesktopHero
+          listingCount={cards.length}
+          onBrowse={() => navigate("/search")}
+          onListProperty={() => navigate(listPropertyPath)}
+        />
       )}
+
       {filtersOpen && (
         <FiltersPanel
           verifiedOnly={verifiedOnly}
@@ -214,9 +217,13 @@ export function Home() {
         />
       )}
 
-      {!loading && visible.length === 0 && (
-        <p className="mb-6 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-ink-secondary">
-          No listings match your filters yet. Try adjusting your search.
+      {!loading && visible.length === 0 && cards.length > 0 && (
+        <p className="desktop-inline-note mb-6">
+          {t("home.noFilterMatches")}{" "}
+          <button type="button" className="desktop-inline-link" onClick={() => setCategory("all")}>
+            {t("home.clearFilters")}
+          </button>
+          .
         </p>
       )}
 
@@ -237,7 +244,7 @@ export function Home() {
             </div>
           </div>
           <div className="sticky top-28 h-[calc(100vh-12rem)]">
-            <Suspense fallback={<div className="h-full animate-pulse rounded-xl bg-white/10" />}>
+            <Suspense fallback={<div className="h-full animate-pulse rounded-xl bg-surface-subtle" />}>
               <MapErrorBoundary>
                 <MapView listings={mapListings} />
               </MapErrorBoundary>
@@ -254,7 +261,7 @@ export function Home() {
         <>
           {featured.length > 0 && (
             <ListingCarousel
-              title="Popular in Accra"
+              title={t("home.popularInAccra")}
               listings={featured}
               savedIds={savedIds}
               compareIds={compareIds}
@@ -264,21 +271,25 @@ export function Home() {
           )}
 
           <section className={featured.length > 0 ? "mt-12" : ""}>
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="section-heading">
-                {location.trim() ? `Homes in ${location}` : "Explore homes"}
-              </h2>
-              <Link
-                to="/search"
-                className="inline-flex items-center gap-1 text-sm font-semibold text-ink underline underline-offset-2"
-              >
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="section-heading">
+                  {location.trim() ? t("home.homesIn", { location: location.trim() }) : t("home.exploreHomes")}
+                </h2>
+                {!loading && visible.length > 0 && (
+                  <p className="mt-1 text-sm text-ink-secondary">
+                    {visible.length} {visible.length === 1 ? "property" : "properties"} available
+                  </p>
+                )}
+              </div>
+              <Link to="/search" className="desktop-text-link">
                 View all
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
 
             {visible.length === 0 ? (
-              <EmptyState />
+              <EmptyState onBrowse={() => navigate("/search")} onListProperty={() => navigate(listPropertyPath)} />
             ) : (
               <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {visible.map((listing) => (
@@ -301,6 +312,57 @@ export function Home() {
   );
 }
 
+function DesktopHero({
+  listingCount,
+  onBrowse,
+  onListProperty,
+}: {
+  listingCount: number;
+  onBrowse: () => void;
+  onListProperty: () => void;
+}) {
+  const { t } = useTranslation();
+  const quickLinks = [
+    { label: t("home.heroForRent"), to: "/search?listingType=rental", icon: Key },
+    { label: t("home.heroForSale"), to: "/search?listingType=sale", icon: HomeIcon },
+    { label: t("home.heroShortStays"), to: "/search?listingType=short_stay", icon: Compass },
+    { label: t("home.heroVerified"), to: "/search?verified=true", icon: ShieldCheck },
+  ];
+
+  return (
+    <section className="desktop-hero mb-8 hidden md:block">
+      <div className="desktop-hero-glow" aria-hidden />
+      <div className="desktop-hero-content">
+        <p className="desktop-hero-eyebrow">{t("home.heroEyebrow")}</p>
+        <h1 className="desktop-hero-title">{t("home.heroTitle")}</h1>
+        <p className="desktop-hero-subtitle">{t("home.heroSubtitle")}</p>
+
+        <div className="desktop-hero-actions">
+          <button type="button" onClick={onBrowse} className="desktop-hero-btn desktop-hero-btn-primary">
+            {t("common.startExploring")}
+          </button>
+          <button type="button" onClick={onListProperty} className="desktop-hero-btn desktop-hero-btn-secondary">
+            {t("nav.listProperty")}
+          </button>
+        </div>
+
+        <div className="desktop-hero-chips">
+          {quickLinks.map(({ label, to, icon: Icon }) => (
+            <Link key={label} to={to} className="desktop-hero-chip">
+              <Icon className="h-4 w-4" aria-hidden />
+              {label}
+            </Link>
+          ))}
+        </div>
+
+        {listingCount > 0 && (
+          <p className="desktop-hero-meta">{t("home.heroListingsLive", { count: listingCount })}</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function ListingCarousel({
   title,
   listings,
@@ -316,6 +378,7 @@ function ListingCarousel({
   onToggleSave: (id: string) => void;
   onToggleCompare: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   function scrollBy(direction: number) {
@@ -331,7 +394,7 @@ function ListingCarousel({
             type="button"
             onClick={() => scrollBy(-1)}
             className="carousel-nav-btn"
-            aria-label="Scroll left"
+            aria-label={t("home.scrollLeft")}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -339,7 +402,7 @@ function ListingCarousel({
             type="button"
             onClick={() => scrollBy(1)}
             className="carousel-nav-btn"
-            aria-label="Scroll right"
+            aria-label={t("home.scrollRight")}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -383,7 +446,7 @@ function FiltersPanel({
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-brand-marketplace p-6 shadow-lg"
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-surface-border bg-white p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -391,7 +454,7 @@ function FiltersPanel({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 hover:bg-white/10"
+            className="rounded-full p-2 hover:bg-surface-hover"
             aria-label="Close"
           >
             <X className="h-4 w-4 text-ink" />
@@ -412,7 +475,7 @@ function FiltersPanel({
           <select
             value={minBedrooms}
             onChange={(e) => onMinBedroomsChange(Number(e.target.value))}
-            className="mt-1 w-full rounded-xl border border-white/20 bg-white/5 px-3 py-2"
+            className="mt-1 w-full rounded-xl border border-surface-border bg-white px-3 py-2"
           >
             <option value={0}>Any</option>
             {[1, 2, 3, 4, 5].map((n) => (
@@ -426,7 +489,7 @@ function FiltersPanel({
         <button
           type="button"
           onClick={onClose}
-          className="mt-6 w-full rounded-lg bg-brand-accent py-3.5 text-sm font-semibold text-white transition hover:opacity-90"
+          className="mt-6 w-full rounded-lg bg-brand-forest py-3.5 text-sm font-semibold text-white transition hover:opacity-90"
         >
           Show results
         </button>
@@ -435,11 +498,30 @@ function FiltersPanel({
   );
 }
 
-function EmptyState() {
+function EmptyState({
+  onBrowse,
+  onListProperty,
+}: {
+  onBrowse: () => void;
+  onListProperty: () => void;
+}) {
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/5 px-8 py-16 text-center">
-      <h2 className="text-xl font-semibold text-ink">No matches found</h2>
-      <p className="mt-2 text-ink-secondary">Try adjusting your filters or search in a different area.</p>
+    <div className="desktop-empty-state">
+      <div className="desktop-empty-state-icon" aria-hidden>
+        <HomeIcon className="h-7 w-7" />
+      </div>
+      <h2 className="text-xl font-semibold text-ink">No homes to show yet</h2>
+      <p className="mt-2 max-w-md text-ink-secondary">
+        New listings are added regularly. Browse all properties or list yours to be the first in your area.
+      </p>
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <button type="button" onClick={onBrowse} className="desktop-hero-btn desktop-hero-btn-primary">
+          Browse all properties
+        </button>
+        <button type="button" onClick={onListProperty} className="desktop-hero-btn desktop-hero-btn-secondary">
+          List a property
+        </button>
+      </div>
     </div>
   );
 }

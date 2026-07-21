@@ -38,7 +38,7 @@ export function ListingCard({
 
   return (
     <Link to={`/property/${listing.id}`} className={`group block ${widthClass}`}>
-      <div className="relative aspect-square overflow-hidden rounded-[var(--radius-listing)] bg-white/5">
+      <div className="relative aspect-square overflow-hidden rounded-[var(--radius-listing)] bg-surface-subtle">
         {photos.map((src, i) => (
           <img
             key={`${src}-${i}`}
@@ -68,7 +68,7 @@ export function ListingCard({
             aria-label={saved ? "Remove from saved" : "Save property"}
           >
             <Heart
-              className={`h-6 w-6 ${saved ? "fill-brand-accent text-brand-accent" : "fill-black/40 text-white"}`}
+              className={`h-6 w-6 ${saved ? "fill-brand-orange text-brand-orange" : "fill-black/40 text-white"}`}
             />
           </button>
         )}
@@ -148,11 +148,11 @@ export function ListingCardSkeleton({ compact = false }: { compact?: boolean }) 
     <div
       className={`animate-pulse ${compact ? "w-[min(100%,320px)] shrink-0 sm:w-[300px] lg:w-[320px]" : "w-full"}`}
     >
-      <div className="aspect-square rounded-[var(--radius-listing)] bg-white/10" />
+      <div className="aspect-square rounded-[var(--radius-listing)] bg-surface-subtle" />
       <div className="mt-3 space-y-2">
-        <div className="h-4 w-3/4 rounded bg-white/10" />
-        <div className="h-3 w-1/2 rounded bg-white/10" />
-        <div className="h-4 w-1/3 rounded bg-white/10" />
+        <div className="h-4 w-3/4 rounded bg-surface-subtle" />
+        <div className="h-3 w-1/2 rounded bg-surface-subtle" />
+        <div className="h-4 w-1/3 rounded bg-surface-subtle" />
       </div>
     </div>
   );

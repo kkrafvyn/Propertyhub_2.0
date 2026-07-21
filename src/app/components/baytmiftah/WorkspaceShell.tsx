@@ -1,62 +1,55 @@
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router";
 import { DesktopShell } from "./DesktopShell";
-
-export interface WorkspaceNavItem {
-  slug: string;
-  label: string;
-  icon?: ReactNode;
-}
+import type { ShellNavLink } from "../../lib/workspace-shell-nav";
+import { useTranslation } from "../../i18n/LocaleContext";
 
 interface WorkspaceShellProps {
-  title: string;
-  subtitle?: string;
-  navItems: WorkspaceNavItem[];
-  basePath: string;
-  activeSlug: string;
+  workspaceLabel: string;
+  homePath: string;
+  links: ShellNavLink[];
   children: ReactNode;
-  action?: ReactNode;
+  headerAction?: ReactNode;
 }
 
 export function WorkspaceShell({
-  title,
-  subtitle,
-  navItems,
-  basePath,
-  activeSlug,
+  workspaceLabel,
+  links,
   children,
-  action,
+  headerAction,
 }: WorkspaceShellProps) {
+  const { t } = useTranslation();
+
   return (
     <DesktopShell minimal>
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-white/10 pb-6">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-surface-border pb-6">
         <div>
-          <h1 className="section-heading">{title}</h1>
-          {subtitle && <p className="mt-2 text-base text-ink-secondary">{subtitle}</p>}
+          <p className="text-sm font-medium uppercase tracking-wide text-ink-secondary">
+            {workspaceLabel}
+          </p>
         </div>
-        {action}
+        {headerAction}
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[240px,minmax(0,1fr)]">
         <aside className="panel-card h-fit p-3 lg:sticky lg:top-24">
           <nav className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
-            {navItems.map((item) => (
+            {links.map((link) => (
               <NavLink
-                key={item.slug}
-                to={`${basePath}/${item.slug}`}
-                end={item.slug === ""}
+                key={`${link.to}-${link.label}`}
+                to={link.to}
+                end={link.end}
                 className={({ isActive }) =>
-                  `workspace-nav-link flex shrink-0 items-center gap-2 ${isActive || activeSlug === item.slug ? "active" : ""}`
+                  `workspace-nav-link flex shrink-0 items-center gap-2 ${isActive ? "active" : ""}`
                 }
               >
-                {item.icon}
-                {item.label}
+                {link.label}
               </NavLink>
             ))}
           </nav>
-          <div className="mt-4 hidden border-t border-white/10 pt-4 lg:block">
-            <Link to="/" className="text-sm text-ink-secondary hover:text-ink hover:underline">
-              ← Back to marketplace
+          <div className="mt-4 hidden border-t border-surface-border pt-4 lg:block">
+            <Link to="/" className="text-sm text-ink-secondary transition hover:text-ink hover:underline">
+              {t("common.backToHome")}
             </Link>
           </div>
         </aside>

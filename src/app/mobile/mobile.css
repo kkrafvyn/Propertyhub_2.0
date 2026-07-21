@@ -10,7 +10,27 @@
 .mobile-content {
   width: min(100%, 520px);
   margin: 0 auto;
-  padding: max(env(safe-area-inset-top), 14px) 16px calc(108px + env(safe-area-inset-bottom));
+  padding: max(env(safe-area-inset-top), 14px) 16px calc(118px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mobile-content {
+    width: min(100%, 720px);
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+.has-mobile-tab-bar .desktop-shell main {
+  padding-bottom: calc(7.25rem + env(safe-area-inset-bottom));
+}
+
+.has-tablet-tab-bar .desktop-shell main {
+  padding-bottom: calc(7.75rem + env(safe-area-inset-bottom));
+}
+
+.has-tablet-tab-bar .desktop-shell .desktop-footer {
+  margin-bottom: calc(4.5rem + env(safe-area-inset-bottom));
 }
 
 .mobile-hero,
@@ -61,7 +81,6 @@
 }
 
 .mobile-icon-button svg,
-.mobile-tab-button svg,
 .mobile-primary-button svg,
 .mobile-primary-link svg,
 .mobile-empty svg,
@@ -464,7 +483,7 @@
 .mobile-agent-grid svg {
   width: 20px;
   height: 20px;
-  color: #ff385c;
+  color: #0f2922;
 }
 
 .mobile-agent-location {
@@ -508,7 +527,7 @@
   height: 58px;
   place-items: center;
   border-radius: 999px;
-  background: #ff385c;
+  background: #0f2922;
   color: #ffffff;
   font-weight: 760;
 }
@@ -532,21 +551,22 @@
   bottom: 0;
   left: 0;
   z-index: 60;
-  padding: 0 12px calc(10px + env(safe-area-inset-bottom));
+  padding: 0 8px calc(10px + env(safe-area-inset-bottom));
   pointer-events: none;
 }
 
 .mobile-tab-bar-inner {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  max-width: 520px;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 4px;
+  width: 100%;
+  max-width: min(100%, 640px);
   margin: 0 auto;
   border: 1px solid rgba(15, 41, 34, 0.08);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.92);
-  padding: 6px 8px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 10px 10px 8px;
   box-shadow:
     0 18px 40px rgba(15, 41, 34, 0.12),
     0 2px 8px rgba(15, 41, 34, 0.06);
@@ -556,41 +576,59 @@
 
 .mobile-tab-button {
   position: relative;
-  display: grid;
-  width: min(20%, 72px);
-  min-height: 52px;
-  justify-items: center;
-  align-content: center;
-  gap: 2px;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+  min-height: 58px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   border: 0;
   border-radius: 16px;
   background: transparent;
   color: #9ca3af;
+  padding: 4px 2px;
   transition: color 0.2s ease, transform 0.15s ease;
 }
 
 .mobile-tab-button:active {
-  transform: scale(0.94);
+  transform: scale(0.96);
 }
 
 .mobile-tab-icon-wrap {
   position: relative;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 28px;
+  width: 36px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.mobile-tab-icon {
+  width: 22px;
+  height: 22px;
 }
 
 .mobile-tab-active-pill {
   position: absolute;
-  inset: -2px -6px;
+  inset: -4px -8px;
   border-radius: 999px;
   background: rgba(15, 41, 34, 0.1);
 }
 
-.mobile-tab-button span:last-child {
-  font-size: 0.68rem;
+.mobile-tab-label {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 0.72rem;
   font-weight: 700;
+  line-height: 1.1;
   letter-spacing: 0.01em;
 }
 
@@ -598,8 +636,38 @@
   color: #0f2922;
 }
 
-.mobile-tab-button.is-active svg {
+.mobile-tab-button.is-active .mobile-tab-icon {
   stroke-width: 2.25;
+}
+
+/* Tablet dock — same light style as phone, slightly wider */
+.tablet-tab-bar {
+  padding: 0 20px calc(14px + env(safe-area-inset-bottom));
+}
+
+.tablet-tab-bar .mobile-tab-bar-inner {
+  gap: 6px;
+  max-width: min(100%, 760px);
+  padding: 12px 14px 10px;
+}
+
+.tablet-tab-bar .mobile-tab-button {
+  min-height: 64px;
+  gap: 5px;
+}
+
+.tablet-tab-bar .mobile-tab-icon-wrap {
+  width: 40px;
+  height: 36px;
+}
+
+.tablet-tab-bar .mobile-tab-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.tablet-tab-bar .mobile-tab-label {
+  font-size: 0.78rem;
 }
 
 @keyframes mobile-spin {

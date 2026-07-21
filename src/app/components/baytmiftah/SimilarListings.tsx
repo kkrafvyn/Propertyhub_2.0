@@ -13,7 +13,7 @@ export function SimilarListings({
   if (!similar.length) return null;
 
   return (
-    <section className="mt-16 border-t border-white/10 pt-10">
+    <section className="mt-16 border-t border-surface-border pt-10">
       <h2 className="mb-6 text-xl font-semibold text-ink">Similar properties</h2>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {similar.map((listing) => (

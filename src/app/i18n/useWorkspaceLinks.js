@@ -1,6 +1,15 @@
 import { useMemo } from 'react'
 import { useTranslation } from './LocaleContext'
 import { isFullAdminRole } from '../lib/baytmiftah/roles'
+import { CONSUMER_ROUTES } from '../lib/consumer-routes'
+import { WORKSPACE_ENTRY_PATH } from '../../lib/workspace'
+
+function workspaceNext(page, end = false) {
+  return {
+    to: page ? `${WORKSPACE_ENTRY_PATH}?next=${page}` : WORKSPACE_ENTRY_PATH,
+    end,
+  }
+}
 
 function useNavLinks(entries) {
   const { t } = useTranslation()
@@ -27,35 +36,30 @@ const ADMIN_NAV_ENTRIES = [
 export function useAgentShellNav() {
   const { t } = useTranslation()
   const links = useNavLinks([
-    { to: '/agent', key: 'dashboard', end: true },
-    { to: '/agent/leads', key: 'leads' },
-    { to: '/agent/messages', key: 'messages' },
-    { to: '/agent/listings', key: 'listings' },
-    { to: '/agent/calendar', key: 'calendar' },
-    { to: '/agent/tasks', key: 'tasks' },
-    { to: '/agent/commissions', key: 'commissions' },
-    { to: '/agent/analytics', key: 'analytics' },
-    { to: '/agent/coach', key: 'listingCoach' },
+    { ...workspaceNext('', true), key: 'dashboard' },
+    { ...workspaceNext('leads'), key: 'leads' },
+    { to: CONSUMER_ROUTES.messages, key: 'messages' },
+    { ...workspaceNext('listings'), key: 'listings' },
+    { ...workspaceNext('team-collaboration'), key: 'tasks' },
+    { ...workspaceNext('predictive-analytics'), key: 'analytics' },
+    { ...workspaceNext('ai-assistant'), key: 'listingCoach' },
   ])
-  return { workspaceLabel: t('workspace.titles.agent'), homePath: '/agent', links }
+  return { workspaceLabel: t('workspace.titles.agent'), homePath: WORKSPACE_ENTRY_PATH, links }
 }
 
 export function useAgencyShellNav() {
   const { t } = useTranslation()
   const links = useNavLinks([
-    { to: '/agency', key: 'overview', end: true },
-    { to: '/agency/branches', key: 'branches' },
-    { to: '/agency/team', key: 'team' },
-    { to: '/agency/leads', key: 'leads' },
-    { to: '/agency/properties', key: 'properties' },
-    { to: '/agency/payroll', key: 'payroll' },
-    { to: '/agency/analytics', key: 'analytics' },
-    { to: '/agency/trust', key: 'trustScore' },
-    { to: '/agency/compliance', key: 'compliance' },
-    { to: '/agency/onboarding', key: 'onboarding' },
-    { to: '/documents', key: 'documents' },
+    { ...workspaceNext('', true), key: 'overview' },
+    { ...workspaceNext('team'), key: 'team' },
+    { ...workspaceNext('leads'), key: 'leads' },
+    { ...workspaceNext('listings'), key: 'properties' },
+    { ...workspaceNext('org-insights'), key: 'analytics' },
+    { ...workspaceNext('integrations'), key: 'compliance' },
+    { ...workspaceNext('settings'), key: 'onboarding' },
+    { to: CONSUMER_ROUTES.documents, key: 'documents' },
   ])
-  return { workspaceLabel: t('workspace.titles.agency'), homePath: '/agency', links }
+  return { workspaceLabel: t('workspace.titles.agency'), homePath: WORKSPACE_ENTRY_PATH, links }
 }
 
 export function useAdminShellNav(role) {
@@ -71,29 +75,27 @@ export function useAdminShellNav(role) {
 export function useRenterShellNav() {
   const { t } = useTranslation()
   const links = useNavLinks([
-    { to: '/consumer/lease', key: 'home', end: true },
-    { to: '/renter/leases', key: 'leases' },
-    { to: '/renter/payments', key: 'rentPayments' },
-    { to: '/renter/utilities', key: 'utilities' },
+    { to: CONSUMER_ROUTES.search + '?listingType=lease', key: 'home', end: true },
+    { to: CONSUMER_ROUTES.leases, key: 'leases' },
+    { to: CONSUMER_ROUTES.payments, key: 'rentPayments' },
+    { to: CONSUMER_ROUTES.maintenance, key: 'maintenance' },
     { to: '/renter/credit', key: 'credit' },
-    { to: '/renter/maintenance', key: 'maintenance' },
     { to: '/renter/sign', key: 'leaseSigning' },
   ])
-  return { workspaceLabel: t('profileNav.leaseJourney'), homePath: '/consumer/lease', links }
+  return { workspaceLabel: t('profileNav.leaseJourney'), homePath: CONSUMER_ROUTES.search, links }
 }
 
 export function useManageShellNav() {
   const { t } = useTranslation()
   const links = useNavLinks([
-    { to: '/manage', key: 'overview', end: true },
-    { to: '/manage/tenants', key: 'tenants' },
-    { to: '/manage/work-orders', key: 'workOrders' },
-    { to: '/manage/finance', key: 'rentExpenses' },
-    { to: '/manage/utilities', key: 'utilities' },
-    { to: '/manage/inspections', key: 'inspections' },
-    { to: '/manage/applications', key: 'applications' },
+    { ...workspaceNext('', true), key: 'overview' },
+    { ...workspaceNext('vendors'), key: 'workOrders' },
+    { ...workspaceNext('host'), key: 'tenants' },
+    { ...workspaceNext('workflows'), key: 'applications' },
+    { ...workspaceNext('notifications'), key: 'inspections' },
+    { ...workspaceNext('settings'), key: 'utilities' },
   ])
-  return { workspaceLabel: t('workspace.titles.manage'), homePath: '/manage', links }
+  return { workspaceLabel: t('workspace.titles.manage'), homePath: WORKSPACE_ENTRY_PATH, links }
 }
 
 export function useFinanceShellNav() {

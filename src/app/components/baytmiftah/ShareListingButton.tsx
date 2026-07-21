@@ -38,7 +38,7 @@ export function ShareListingButton({
       <button
         type="button"
         onClick={share}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 shadow-sm"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-surface-border bg-white shadow-sm"
         aria-label="Share listing"
       >
         <svg className="h-5 w-5 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -53,14 +53,14 @@ export function ShareListingButton({
       <button
         type="button"
         onClick={share}
-        className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-ink hover:bg-white/10"
+        className="rounded-lg border border-surface-border bg-white px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-hover"
       >
         Share on WhatsApp
       </button>
       <button
         type="button"
         onClick={copyLink}
-        className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-ink hover:bg-white/10"
+        className="rounded-lg border border-surface-border bg-white px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-hover"
       >
         {copied ? "Copied!" : "Copy link"}
       </button>

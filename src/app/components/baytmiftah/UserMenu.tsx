@@ -66,11 +66,11 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="user-menu-trigger flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-sm font-medium transition outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+          className="user-menu-trigger flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-sm font-medium transition outline-none focus-visible:ring-2 focus-visible:ring-brand-forest/20"
           aria-label="Account menu"
         >
           <Menu className="h-4 w-4 opacity-80" />
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-orange to-[#c45d44] text-xs font-semibold text-white shadow-sm ring-2 ring-white/15">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-orange to-[#c45d44] text-xs font-semibold text-white shadow-sm ring-2 ring-white">
             {initials}
           </span>
         </button>
@@ -79,45 +79,45 @@ export function UserMenu() {
       <DropdownMenuContent
         align="end"
         sideOffset={10}
-        className="bm-user-menu-panel w-[min(92vw,280px)] overflow-hidden rounded-2xl border-white/12 bg-[#0f2922] p-0 text-white shadow-menu"
+        className="bm-user-menu-panel w-[min(92vw,280px)] overflow-hidden rounded-2xl border border-surface-border bg-white p-0 text-ink shadow-menu"
       >
-        <div className="border-b border-white/10 bg-gradient-to-br from-white/[0.08] to-transparent px-4 py-4">
+        <div className="border-b border-surface-border bg-surface-subtle px-4 py-4">
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-orange to-[#c45d44] text-sm font-bold text-white shadow-md">
               {initials}
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-white">{displayName}</p>
-              <p className="truncate text-xs text-white/55">{user.email}</p>
+              <p className="truncate text-sm font-semibold text-ink">{displayName}</p>
+              <p className="truncate text-xs text-ink-secondary">{user.email}</p>
             </div>
           </div>
         </div>
 
         <div className="p-1.5">
-          <DropdownMenuLabel className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
+          <DropdownMenuLabel className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-muted">
             Account
           </DropdownMenuLabel>
           <DropdownMenuItem asChild className="bm-menu-item">
             <Link to="/app">
-              <LayoutDashboard className="h-4 w-4 text-white/70" />
+              <LayoutDashboard className="h-4 w-4 text-ink-secondary" />
               Dashboard
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="bm-menu-item">
             <Link to="/app/saved">
-              <Heart className="h-4 w-4 text-white/70" />
+              <Heart className="h-4 w-4 text-ink-secondary" />
               Saved properties
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="bm-menu-item">
             <Link to="/workspace">
-              <Briefcase className="h-4 w-4 text-white/70" />
+              <Briefcase className="h-4 w-4 text-ink-secondary" />
               Workspace
             </Link>
           </DropdownMenuItem>
         </div>
 
-        <DropdownMenuSeparator className="bg-white/10" />
+        <DropdownMenuSeparator className="bg-surface-border" />
 
         <div className="p-1.5">
           <DropdownMenuItem asChild className="bm-menu-item bm-menu-item-cta">
@@ -128,7 +128,7 @@ export function UserMenu() {
           </DropdownMenuItem>
         </div>
 
-        <DropdownMenuSeparator className="bg-white/10" />
+        <DropdownMenuSeparator className="bg-surface-border" />
 
         <div className="p-1.5">
           <DropdownMenuItem

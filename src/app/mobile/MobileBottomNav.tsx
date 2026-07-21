@@ -1,8 +1,9 @@
 import { useLocation, useNavigate } from "react-router";
 import { Compass, Heart, Home, MessageCircle, UserRound } from "lucide-react";
+import { ConsumerTabBar, type ConsumerTabItem } from "./ConsumerTabBar";
 import "./mobile.css";
 
-const tabs = [
+const tabs: readonly ConsumerTabItem[] = [
   { id: "home", label: "Home", icon: Home, href: "/" },
   { id: "explore", label: "Explore", icon: Compass, href: "/search" },
   { id: "saved", label: "Saved", icon: Heart, href: "/app/saved" },
@@ -10,43 +11,32 @@ const tabs = [
   { id: "profile", label: "Profile", icon: UserRound, href: "/app" },
 ] as const;
 
-export function MobileBottomNav() {
+function resolveActiveId(pathname: string) {
+  if (pathname === "/") return "home";
+  if (pathname.startsWith("/search")) return "explore";
+  if (pathname.startsWith("/app/saved")) return "saved";
+  if (pathname.startsWith("/app/messages")) return "messages";
+  if (pathname.startsWith("/app")) return "profile";
+  if (pathname.startsWith("/property/")) return "explore";
+  return "";
+}
+
+type BottomNavVariant = "phone" | "tablet";
+
+export function MobileBottomNav({ variant = "phone" }: { variant?: BottomNavVariant }) {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const activeId = (() => {
-    if (location.pathname === "/") return "home";
-    if (location.pathname.startsWith("/search")) return "explore";
-    if (location.pathname.startsWith("/app/saved")) return "saved";
-    if (location.pathname.startsWith("/app/messages")) return "messages";
-    if (location.pathname.startsWith("/app")) return "profile";
-    if (location.pathname.startsWith("/property/")) return "explore";
-    return "";
-  })();
+  const activeId = resolveActiveId(location.pathname);
 
   return (
-    <nav className="mobile-tab-bar mobile-tab-bar-fixed" aria-label="Mobile navigation">
-      <div className="mobile-tab-bar-inner">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeId === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              className={`mobile-tab-button ${isActive ? "is-active" : ""}`}
-              onClick={() => navigate(tab.href)}
-              aria-current={isActive ? "page" : undefined}
-            >
-              <span className="mobile-tab-icon-wrap" aria-hidden="true">
-                {isActive && <span className="mobile-tab-active-pill" />}
-                <Icon />
-              </span>
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </nav>
+    <ConsumerTabBar
+      tabs={tabs}
+      activeId={activeId}
+      onTabPress={(tab) => navigate(tab.href)}
+      className={variant === "tablet" ? "tablet-tab-bar" : ""}
+      ariaLabel={variant === "tablet" ? "Tablet navigation" : "Mobile navigation"}
+    />
   );
 }
+
+export { tabs as consumerTabItems, resolveActiveId as resolveConsumerTabId };

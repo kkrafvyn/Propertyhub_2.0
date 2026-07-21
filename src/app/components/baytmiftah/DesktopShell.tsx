@@ -1,12 +1,13 @@
 import { Link } from "react-router";
 import type { ReactNode } from "react";
-import { Heart, Moon, Scale, Sun } from "lucide-react";
-import { Logo } from "./Logo";
+import { Heart, Moon, Plus, Scale, Sun } from "lucide-react";
+import { Logo, LogoMark } from "./Logo";
 import { UserMenu } from "./UserMenu";
 import { NotificationBell } from "../NotificationBell";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useTranslation } from "../../i18n/LocaleContext";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 
 interface DesktopShellProps {
@@ -31,57 +32,82 @@ function Header({
 }) {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
   const listPropertyPath = `${WORKSPACE_ENTRY_PATH}?next=new`;
 
   return (
-    <header className="desktop-header sticky top-0 z-50 border-b border-surface-border bg-surface">
-      <div className="mx-auto w-full min-w-0 max-w-[var(--max-width-page)] px-4 sm:px-6 xl:px-20">
+    <header className="desktop-header sticky top-0 z-50 border-b border-surface-border bg-white/92 backdrop-blur-xl backdrop-saturate-150">
+      <div className="mx-auto w-full min-w-0 max-w-[var(--max-width-page)] px-4 sm:px-6 md:px-8 xl:px-20">
         <div
-          className={`flex min-w-0 items-center gap-3 sm:gap-4 ${minimal ? "h-[72px]" : "h-[72px] xl:h-[76px]"}`}
+          className={`flex min-w-0 items-center gap-2 sm:gap-3 md:gap-4 ${minimal ? "h-[68px] md:h-[72px]" : "h-[68px] md:h-[72px] xl:h-[76px]"}`}
         >
-          <Logo inverted />
+          <Logo size="sm" className="md:hidden" />
+          <Logo className="hidden md:flex" />
 
-          <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
+          <div className="ml-auto flex shrink-0 items-center gap-0.5 md:gap-1">
             {!minimal && (
               <>
-                <Link to="/search" className="nav-pill hidden items-center gap-2 lg:inline-flex">
-                  <Scale className="h-4 w-4 opacity-70" />
-                  Compare{compareCount > 0 ? ` (${compareCount})` : ""}
+                <Link
+                  to="/search"
+                  className="nav-pill nav-pill-icon hidden xl:inline-flex"
+                  title={`${t("nav.compare")}${compareCount > 0 ? ` (${compareCount})` : ""}`}
+                >
+                  <Scale className="h-4 w-4 opacity-80" />
+                  <span>
+                    {t("nav.compare")}
+                    {compareCount > 0 ? ` (${compareCount})` : ""}
+                  </span>
+                  {compareCount > 0 ? (
+                    <span className="nav-pill-badge xl:hidden">{compareCount}</span>
+                  ) : null}
                 </Link>
-                <Link to="/app/saved" className="nav-pill hidden items-center gap-2 lg:inline-flex">
-                  <Heart className="h-4 w-4 opacity-70" />
-                  Saved
+                <Link to="/app/saved" className="nav-pill nav-pill-icon hidden xl:inline-flex" title={t("nav.saved")}>
+                  <Heart className="h-4 w-4 opacity-80" />
+                  <span>{t("nav.saved")}</span>
                 </Link>
               </>
             )}
-            <Link to={listPropertyPath} className="nav-pill nav-pill-cta hidden items-center gap-2 lg:inline-flex">
-              List property
+            <Link
+              to={listPropertyPath}
+              className="nav-pill nav-pill-cta hidden md:inline-flex"
+              title={t("nav.listProperty")}
+            >
+              <Plus className="h-4 w-4 md:mr-0 xl:mr-1" />
+              <span className="hidden xl:inline">{t("nav.listProperty")}</span>
             </Link>
-            {!minimal && user && <NotificationBell userId={user.id} />}
+            {!minimal && user ? (
+              <div className="hidden md:block">
+                <NotificationBell userId={user.id} />
+              </div>
+            ) : null}
             <button
               type="button"
               onClick={toggleTheme}
-              className="nav-pill hidden lg:inline-flex"
+              className="nav-pill nav-pill-icon hidden md:inline-flex"
               aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             >
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
-            {!minimal && <LanguageSwitcher />}
+            {!minimal ? (
+              <div className="hidden lg:block">
+                <LanguageSwitcher />
+              </div>
+            ) : null}
             <UserMenu />
           </div>
         </div>
 
-        {!minimal && search && (
-          <div className="flex justify-center pb-5 pt-1">
+        {!minimal && search ? (
+          <div className="flex justify-center pb-4 pt-2 md:pb-5 md:pt-1">
             <div className="w-full max-w-[920px]">{search}</div>
           </div>
-        )}
+        ) : null}
 
-        {!minimal && categoryBar && (
-          <div className="desktop-category-row border-t border-white/10 pb-4 pt-3">
+        {!minimal && categoryBar ? (
+          <div className="desktop-category-row border-t border-surface-border pb-3 pt-2 md:pb-4 md:pt-3">
             {categoryBar}
           </div>
-        )}
+        ) : null}
       </div>
     </header>
   );
@@ -89,58 +115,69 @@ function Header({
 
 function Footer() {
   const year = new Date().getFullYear();
+  const { t } = useTranslation();
   const listPropertyPath = `${WORKSPACE_ENTRY_PATH}?next=new`;
 
   const columns = [
     {
-      title: "Support",
+      title: t("footer.support"),
       links: [
-        { label: "Help centre", to: "/app" },
-        { label: "Safety", to: "/app" },
-        { label: "Cancellation", to: "/app" },
+        { label: t("footer.helpCentre"), to: "/app" },
+        { label: t("footer.safety"), to: "/app" },
+        { label: t("footer.cancellation"), to: "/app" },
       ],
     },
     {
-      title: "Hosting",
+      title: t("footer.hosting"),
       links: [
-        { label: "List your property", to: listPropertyPath },
-        { label: "Host resources", to: "/workspace" },
-        { label: "Referrals", to: "/app" },
+        { label: t("footer.listProperty"), to: listPropertyPath },
+        { label: t("footer.hostResources"), to: "/workspace" },
+        { label: t("footer.referrals"), to: "/app" },
       ],
     },
     {
-      title: "Discover",
+      title: t("footer.discover"),
       links: [
-        { label: "Search homes", to: "/search" },
-        { label: "For rent", to: "/search?listingType=rental" },
-        { label: "For sale", to: "/search?listingType=sale" },
-        { label: "For lease", to: "/search?listingType=lease" },
+        { label: t("footer.searchHomes"), to: "/search" },
+        { label: t("footer.forRent"), to: "/search?listingType=rental" },
+        { label: t("footer.forSale"), to: "/search?listingType=sale" },
+        { label: t("footer.forLease"), to: "/search?listingType=lease" },
       ],
     },
     {
-      title: "Company",
+      title: t("footer.company"),
       links: [
-        { label: "About", to: "/app" },
-        { label: "Careers", to: "/app" },
-        { label: "Contact", to: "/app" },
+        { label: t("footer.about"), to: "/app" },
+        { label: t("footer.careers"), to: "/app" },
+        { label: t("footer.contact"), to: "/app" },
       ],
     },
   ];
 
   return (
-    <footer className="desktop-footer mt-12 border-t border-white/10">
-      <div className="mx-auto max-w-[var(--max-width-page)] px-4 py-12 sm:px-6 xl:px-20">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+    <footer className="desktop-footer mt-12 border-t border-surface-border bg-white md:mt-16">
+      <div className="mx-auto max-w-[var(--max-width-page)] px-4 py-10 sm:px-6 md:px-8 md:py-14 xl:px-20">
+        <div className="mb-8 flex flex-col gap-4 border-b border-surface-border pb-8 md:mb-10 md:pb-10 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <LogoMark className="h-10 w-10" />
+            <div>
+              <p className="text-base font-semibold text-ink">BaytMiftah</p>
+              <p className="text-sm text-ink-secondary">{t("footer.tagline")}</p>
+            </div>
+          </div>
+          <Link to={listPropertyPath} className="desktop-footer-cta">
+            {t("footer.listProperty")}
+          </Link>
+        </div>
+
+        <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {columns.map(({ title, links }) => (
             <div key={title}>
               <h3 className="mb-4 text-sm font-semibold text-ink">{title}</h3>
               <ul className="space-y-3">
                 {links.map(({ label, to }) => (
                   <li key={label}>
-                    <Link
-                      to={to}
-                      className="text-sm text-ink-secondary hover:text-ink hover:underline"
-                    >
+                    <Link to={to} className="text-sm text-ink-secondary transition hover:text-ink">
                       {label}
                     </Link>
                   </li>
@@ -152,17 +189,17 @@ function Footer() {
             <h3 className="mb-4 text-sm font-semibold text-ink">Legal</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/app" className="text-sm text-ink-secondary hover:text-ink hover:underline">
+                <Link to="/app" className="text-sm text-ink-secondary transition hover:text-ink">
                   Privacy
                 </Link>
               </li>
               <li>
-                <Link to="/app" className="text-sm text-ink-secondary hover:text-ink hover:underline">
+                <Link to="/app" className="text-sm text-ink-secondary transition hover:text-ink">
                   Terms
                 </Link>
               </li>
               <li>
-                <Link to="/search" className="text-sm text-ink-secondary hover:text-ink hover:underline">
+                <Link to="/search" className="text-sm text-ink-secondary transition hover:text-ink">
                   Sitemap
                 </Link>
               </li>
@@ -170,7 +207,7 @@ function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-6 text-sm text-ink-secondary">
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-surface-border pt-6 text-sm text-ink-secondary md:mt-10">
           <p>© {year} BaytMiftah. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <span>English (GH)</span>
@@ -192,12 +229,13 @@ export function DesktopShell({
 }: DesktopShellProps) {
   return (
     <div className="desktop-shell min-h-screen min-h-[100dvh] overflow-x-clip text-ink">
+      <div className="desktop-shell-ambient" aria-hidden />
       <Header search={search} minimal={minimal} categoryBar={categoryBar} compareCount={compareCount} />
       <main
         className={
           fullBleed
-            ? "w-full"
-            : "mx-auto w-full min-w-0 max-w-[var(--max-width-page)] px-4 py-6 sm:px-6 xl:px-20 xl:py-8"
+            ? "relative z-[1] w-full"
+            : "relative z-[1] mx-auto w-full min-w-0 max-w-[var(--max-width-page)] px-4 py-5 sm:px-6 md:px-8 md:py-6 xl:px-20 xl:py-8"
         }
       >
         {children}
