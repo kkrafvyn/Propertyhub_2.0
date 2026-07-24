@@ -1,30 +1,18 @@
-import { motion } from "motion/react";
+type HtmlDivProps = Omit<React.HTMLAttributes<HTMLDivElement>, "children">;
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface CardProps extends HtmlDivProps {
   children: React.ReactNode;
-  className?: string;
   hover?: boolean;
-  onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
 export function Card({ children, className = "", hover = false, onClick, ...props }: CardProps) {
   const baseStyles = "bg-card rounded-xl border border-border overflow-hidden";
-  const hoverStyles = hover ? "cursor-pointer transition-all duration-200" : "";
-
-  if (hover) {
-    return (
-      <motion.div
-        whileHover={{ y: -4, boxShadow: "0 12px 24px rgba(0, 0, 0, 0.08)" }}
-        className={`${baseStyles} ${hoverStyles} ${className}`}
-        onClick={onClick}
-      >
-        {children}
-      </motion.div>
-    );
-  }
+  const hoverStyles = hover
+    ? "cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]"
+    : "";
 
   return (
-    <div className={`${baseStyles} ${className}`} onClick={onClick} {...props}>
+    <div className={`${baseStyles} ${hoverStyles} ${className}`} onClick={onClick} {...props}>
       {children}
     </div>
   );
