@@ -23,11 +23,14 @@ export const walletService = {
     if (error) throw error;
 
     return (
-      data || {
+      data ?? {
+        id: "",
         user_id: userId,
         currency,
         available_minor: 0,
         pending_minor: 0,
+        created_at: null,
+        updated_at: null,
       }
     );
   },

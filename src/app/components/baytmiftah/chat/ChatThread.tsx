@@ -64,9 +64,9 @@ export default function ChatThread({
   const { t } = useTranslation()
   const { user, profile } = useAuth()
   const [draft, setDraft] = useState('')
-  const selfLabel = profile?.display_name || user?.user_metadata?.display_name || 'You'
+  const selfLabel = profile?.full_name || user?.user_metadata?.full_name || 'You'
   const { conversation, sending, error, live, send, isOwnMessage } = useChatThread(conversationId, {
-    selfLabel: mode === 'agent' ? (profile?.display_name || 'Agent') : selfLabel,
+    selfLabel: mode === 'agent' ? (profile?.full_name || 'Agent') : selfLabel,
     selfUserId: user?.id,
     sendMessageFn: mode === 'agent' ? sendAgentMessage : undefined,
   })

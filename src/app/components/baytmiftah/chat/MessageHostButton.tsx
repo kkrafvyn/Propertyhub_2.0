@@ -11,7 +11,12 @@ export default function MessageHostButton({
   listing,
   className = '',
   variant = 'secondary',
-  initialMessage,
+  initialMessage = undefined,
+}: {
+  listing: { id: string; title?: string; host?: string; hostUserId?: string }
+  className?: string
+  variant?: string
+  initialMessage?: string
 }) {
   const { t } = useTranslation()
   const { user } = useAuth()

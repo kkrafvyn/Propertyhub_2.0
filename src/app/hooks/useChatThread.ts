@@ -18,7 +18,14 @@ function mapMessageRow(row) {
   }
 }
 
-export function useChatThread(conversationId, { selfLabel = 'You', selfUserId, sendMessageFn } = {}) {
+export function useChatThread(
+  conversationId,
+  { selfLabel = 'You', selfUserId, sendMessageFn }: {
+    selfLabel?: string
+    selfUserId?: string
+    sendMessageFn?: typeof sendMessage
+  } = {},
+) {
   const [conversation, setConversation] = useState(null)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')

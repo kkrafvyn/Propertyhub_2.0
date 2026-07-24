@@ -38,6 +38,12 @@ const ALLOWED_WORKSPACE_PAGES = new Set([
   "recommendations",
   "team-collaboration",
   "workflows",
+  "payments",
+  "documents",
+  "finance",
+  "calendar",
+  "leases",
+  "maintenance",
 ]);
 
 function sanitizeRequestedPage(value: string | null) {

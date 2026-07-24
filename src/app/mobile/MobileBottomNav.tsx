@@ -1,42 +1,29 @@
 import { useLocation, useNavigate } from "react-router";
-import { Compass, Heart, Home, MessageCircle, UserRound } from "lucide-react";
-import { ConsumerTabBar, type ConsumerTabItem } from "./ConsumerTabBar";
+import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "../i18n/LocaleContext";
+import { ConsumerTabBar } from "./ConsumerTabBar";
+import { buildConsumerTabItems, resolveConsumerTabId } from "./consumer-bottom-tabs";
 import "./mobile.css";
-
-const tabs: readonly ConsumerTabItem[] = [
-  { id: "home", label: "Home", icon: Home, href: "/" },
-  { id: "explore", label: "Explore", icon: Compass, href: "/search" },
-  { id: "saved", label: "Saved", icon: Heart, href: "/app/saved" },
-  { id: "messages", label: "Messages", icon: MessageCircle, href: "/app/messages" },
-  { id: "profile", label: "Profile", icon: UserRound, href: "/app" },
-] as const;
-
-function resolveActiveId(pathname: string) {
-  if (pathname === "/") return "home";
-  if (pathname.startsWith("/search")) return "explore";
-  if (pathname.startsWith("/app/saved")) return "saved";
-  if (pathname.startsWith("/app/messages")) return "messages";
-  if (pathname.startsWith("/app")) return "profile";
-  if (pathname.startsWith("/property/")) return "explore";
-  return "";
-}
 
 type BottomNavVariant = "phone" | "tablet";
 
 export function MobileBottomNav({ variant = "phone" }: { variant?: BottomNavVariant }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const activeId = resolveActiveId(location.pathname);
+  const { user } = useAuth();
+  const { t } = useTranslation();
+  const tabs = buildConsumerTabItems(t, user);
+  const activeId = resolveConsumerTabId(location.pathname);
 
   return (
     <ConsumerTabBar
       tabs={tabs}
       activeId={activeId}
-      onTabPress={(tab) => navigate(tab.href)}
+      onTabPress={(tab) => navigate(tab.href, tab.href === "/login" ? { state: { from: location.pathname } } : undefined)}
       className={variant === "tablet" ? "tablet-tab-bar" : ""}
-      ariaLabel={variant === "tablet" ? "Tablet navigation" : "Mobile navigation"}
+      ariaLabel={variant === "tablet" ? t("mobile.tabletNav") : t("mobile.primaryNav")}
     />
   );
 }
 
-export { tabs as consumerTabItems, resolveActiveId as resolveConsumerTabId };
+export { resolveConsumerTabId as resolveConsumerTabId };

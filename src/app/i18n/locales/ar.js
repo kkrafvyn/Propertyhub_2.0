@@ -198,7 +198,7 @@ export default {
     "property_manager": "مدير عقارات",
     "developer": "مطوّر",
     "enterprise_operator": "مشغّل مؤسسي",
-    "consumer": "Consumer (buy, rent, stay, invest)",
+    "consumer": "مستهلك (شراء، إيجار، إيجار طويل، إقامة)",
     "agency_manager": "Agency manager",
     "agency_agent": "Agency agent",
     "platform_admin": "Platform admin",
@@ -1309,7 +1309,7 @@ export default {
   "consumer": {
     "dashboard": {
       "title": "My BaytMiftah",
-      "subtitle": "Buy, rent, stay, and invest — one account that grows with you",
+      "subtitle": "اشترِ، استأجر، أجر طويلاً، أو احجز إقامة قصيرة — حساب واحد لكل رحلة عقارية",
       "myActivity": "My activity",
       "aiAssistant": "AI assistant",
       "quickActions": "Quick actions"

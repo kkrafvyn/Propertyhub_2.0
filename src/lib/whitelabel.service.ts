@@ -158,7 +158,7 @@ export const whitelabelService = {
         --secondary-color: ${branding.secondary_color};
         --accent-color: ${branding.accent_color};
       }
-      ${branding.custom_css || ''}
+      ${"custom_css" in branding ? branding.custom_css || "" : ""}
     `
   },
 

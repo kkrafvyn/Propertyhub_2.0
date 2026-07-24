@@ -3,7 +3,6 @@ import { useTranslation } from '../../i18n/LocaleContext'
 import {
   BUY_HUB_PATH,
   CONSUMER_HUB_PATH,
-  INVEST_HUB_PATH,
   LEASE_HUB_PATH,
   RENT_HUB_PATH,
   STAY_HUB_PATH,
@@ -18,7 +17,6 @@ export default function ConsumerShell(props) {
     { to: RENT_HUB_PATH, label: t('profileNav.rentJourney') },
     { to: LEASE_HUB_PATH, label: t('profileNav.leaseJourney') },
     { to: STAY_HUB_PATH, label: t('consumer.journeys.stay.title') },
-    { to: INVEST_HUB_PATH, label: t('consumer.journeys.invest.title') },
     { to: CONSUMER_ROUTES.wallet, label: t('profileNav.wallet') },
   ]
 

@@ -386,9 +386,13 @@ export const notificationService = {
 
     if (error || !dealCase) return;
 
+    const listingRow = Array.isArray(dealCase.listing) ? dealCase.listing[0] : dealCase.listing;
+    const propertyRow = Array.isArray(listingRow?.property) ? listingRow.property[0] : listingRow?.property;
+    const organizationRow = Array.isArray(dealCase.organization) ? dealCase.organization[0] : dealCase.organization;
+
     const address =
-      dealCase.listing?.property?.address ||
-      dealCase.listing?.property?.city ||
+      propertyRow?.address ||
+      propertyRow?.city ||
       "the property";
     const amountLabel =
       options.amountMinor != null
@@ -398,13 +402,13 @@ export const notificationService = {
     if (event === "submitted") {
       await notificationService.notifyOrganizationTeam({
         organizationId: dealCase.organization_id,
-        organizationSlug: dealCase.organization?.slug,
+        organizationSlug: organizationRow?.slug,
         excludeUserId: options.actorUserId,
         notificationType: "counter_offer_submitted",
         subject: "New counter-offer",
         content: `${options.offeredByRole || "Buyer"} submitted ${amountLabel} for ${address}.`,
         category: "Offers",
-        actionUrl: workspacePath(dealCase.organization?.slug, "leads"),
+        actionUrl: workspacePath(organizationRow?.slug, "leads"),
         actorUserId: options.actorUserId,
         metadata: { dealCaseId, amountMinor: options.amountMinor },
       });
@@ -417,7 +421,7 @@ export const notificationService = {
           subject: "Counter-offer needs review",
           content: `${amountLabel} was submitted for ${address}.`,
           category: "Offers",
-          actionUrl: workspacePath(dealCase.organization?.slug, "leads"),
+          actionUrl: workspacePath(organizationRow?.slug, "leads"),
           metadata: { dealCaseId },
         });
       }
@@ -447,9 +451,12 @@ export const notificationService = {
 
     if (error || !lease?.tenant_user_id) return;
 
+    const listingRow = Array.isArray(lease.listing) ? lease.listing[0] : lease.listing;
+    const propertyRow = Array.isArray(listingRow?.property) ? listingRow.property[0] : listingRow?.property;
+
     const address =
-      lease.listing?.property?.address ||
-      lease.listing?.property?.city ||
+      propertyRow?.address ||
+      propertyRow?.city ||
       "your rental";
 
     await safeNotify({

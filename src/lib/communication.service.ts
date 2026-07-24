@@ -256,9 +256,7 @@ export const communicationService = {
       return { inApp: notification, external: [] as Array<{ channel: NotificationChannel; success: boolean }> };
     }
 
-    const externalChannels = (["email", "sms", "push", "whatsapp"] as const).filter(
-      (channel) => channel !== "in_app"
-    );
+    const externalChannels = (["email", "sms", "push", "whatsapp"] as const);
     const external = await this.sendNotification(
       userId,
       [...externalChannels],
@@ -478,7 +476,7 @@ export const communicationService = {
 
   categorizeNotification(notification: NotificationLogRow) {
     const category =
-      notification.notification_category ||
+      (notification as NotificationLogRow & { notification_category?: string | null }).notification_category ||
       (notification.metadata as Record<string, unknown> | null)?.category;
 
     if (typeof category === "string") return category;

@@ -124,7 +124,7 @@ export const organizationService = {
   async updateMemberRole(
     organizationId: string,
     userId: string,
-    role: 'owner' | 'manager' | 'agent' | 'analyst'
+    role: string
   ) {
     const { data, error } = await supabase
       .from('organization_members')

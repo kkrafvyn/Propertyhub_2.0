@@ -16,6 +16,8 @@ deployments/
 .codex*
 *.log
 .tmp/
+test-results/
+playwright-report/
 
 # Native build output
 android/.gradle/

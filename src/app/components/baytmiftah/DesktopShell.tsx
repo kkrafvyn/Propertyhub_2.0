@@ -48,7 +48,7 @@ function Header({
             {!minimal && (
               <>
                 <Link
-                  to="/search"
+                  to="/compare"
                   className="nav-pill nav-pill-icon hidden xl:inline-flex"
                   title={`${t("nav.compare")}${compareCount > 0 ? ` (${compareCount})` : ""}`}
                 >

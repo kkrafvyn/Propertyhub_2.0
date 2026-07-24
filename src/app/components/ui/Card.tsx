@@ -1,13 +1,13 @@
 import { motion } from "motion/react";
 
-interface CardProps {
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
   hover?: boolean;
-  onClick?: () => void;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
-export function Card({ children, className = "", hover = false, onClick }: CardProps) {
+export function Card({ children, className = "", hover = false, onClick, ...props }: CardProps) {
   const baseStyles = "bg-card rounded-xl border border-border overflow-hidden";
   const hoverStyles = hover ? "cursor-pointer transition-all duration-200" : "";
 
@@ -24,7 +24,7 @@ export function Card({ children, className = "", hover = false, onClick }: CardP
   }
 
   return (
-    <div className={`${baseStyles} ${className}`} onClick={onClick}>
+    <div className={`${baseStyles} ${className}`} onClick={onClick} {...props}>
       {children}
     </div>
   );

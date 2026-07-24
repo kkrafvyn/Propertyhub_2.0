@@ -105,16 +105,16 @@ export function SearchPill({
 }
 
 export function CompactSearch({
-  location,
-  propertyType,
-  budget,
+  location = "",
+  propertyType = "any",
+  budget = "",
   to = "/search",
 }: {
-  location: string;
-  propertyType: string;
-  budget: string;
+  location?: string;
+  propertyType?: string;
+  budget?: string;
   to?: string;
-}) {
+} = {}) {
   const locationLabel = location.trim() || "Anywhere";
   const typeLabel =
     propertyType === "any"

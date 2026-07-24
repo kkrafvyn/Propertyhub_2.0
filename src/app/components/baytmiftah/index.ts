@@ -11,7 +11,7 @@ export {
   type MapListing,
 } from "./listing-mappers";
 export { AuthPageLayout } from "./AuthPageLayout";
-export { WorkspaceShell, type WorkspaceNavItem } from "./WorkspaceShell";
+export { WorkspaceShell } from "./WorkspaceShell";
 export { MapView } from "./MapView";
 export { MapErrorBoundary } from "./MapErrorBoundary";
 export { SimilarListings } from "./SimilarListings";
@@ -36,6 +36,7 @@ export { default as MobileViewingModal } from "./mobile/MobileViewingModal";
 export { default as MobilePhotoGallery } from "./mobile/MobilePhotoGallery";
 export { default as MobileHomeMenu } from "./mobile/MobileHomeMenu";
 export { default as ConsumerShell } from "./ConsumerShell";
+/** Pro workspace shells — live pro UI is routed via `/workspace` (WorkspaceEntry). */
 export { default as HostShell } from "./HostShell";
 export { default as AgentShell } from "./AgentShell";
 export { default as WalletShell } from "./WalletShell";
@@ -48,7 +49,7 @@ export { default as IntelligenceShell } from "./IntelligenceShell";
 export { default as DeveloperShell } from "./DeveloperShell";
 export { default as EnterpriseShell } from "./EnterpriseShell";
 export { default as SmartShell } from "./SmartShell";
-export { default as InvestmentShell } from "./InvestmentShell";
+/** Consumer journey shells — sidebar chrome for resident/tenant experiences. */
 export { default as ResidentShell } from "./ResidentShell";
 export { default as TenantShell } from "./TenantShell";
 export { default as VendorShell } from "./VendorShell";

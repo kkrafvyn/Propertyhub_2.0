@@ -52,6 +52,26 @@ export default {
     "emptyDesc": "Request a viewing from any property page — your bookings will show up here.",
     "localAlert": "Showing locally saved trips — sign in and deploy backend for synced bookings."
   },
+  "shells": {
+    "resident": {
+      "label": "Smart resident",
+      "home": "Home",
+      "lease": "My lease",
+      "maintenance": "Maintenance",
+      "payments": "Payments",
+      "community": "Community"
+    },
+    "tenant": {
+      "label": "Tenant portal",
+      "portal": "Portal",
+      "lease": "Lease",
+      "payments": "Payments",
+      "maintenance": "Maintenance",
+      "visitorPasses": "Visitor passes",
+      "buildingAccess": "Building access",
+      "announcements": "Announcements"
+    }
+  },
   "comparePage": {
     "title": "Compare properties",
     "subtitle": "Up to 4 homes side by side",
@@ -66,7 +86,6 @@ export default {
     "type": "Type",
     "verified": "Verified",
     "mortgageEstimator": "Mortgage estimator",
-    "investmentCalculator": "Investment calculator",
     "maxReached": "You can compare up to 4 properties. Remove one to add another.",
     "remove": "Remove"
   },
@@ -143,7 +162,7 @@ export default {
   "consumer": {
     "dashboard": {
       "title": "My BaytMiftah",
-      "subtitle": "Buy, rent, stay, and invest — one account that grows with you",
+      "subtitle": "Buy, rent, lease, and stay — one account for your property journey",
       "myActivity": "My activity",
       "myJourneys": "My journeys",
       "aiAssistant": "AI assistant",
@@ -198,7 +217,7 @@ export default {
       },
       "hub": {
         "title": "My BaytMiftah",
-        "subtitle": "Buy · Rent · Lease · Stay · Invest — one account for every property journey",
+        "subtitle": "Buy · Rent · Lease · Stay — one account for every property journey",
         "stats": {
           "upcomingStays": "Upcoming stays",
           "monthlyRent": "Monthly rent",
@@ -210,7 +229,6 @@ export default {
         "rent": { "desc": "Browse rentals and apply for a home" },
         "lease": { "desc": "Leases, payments, signing, and maintenance" },
         "stay": { "desc": "Bookings, trips, guest receipts" },
-        "invest": { "desc": "Portfolio, ROI, market intelligence" },
         "tenant": { "desc": "Visitors, access, community" },
         "myHome": { "desc": "Smart locks, energy, announcements" },
         "wallet": { "desc": "Balance, escrow, payouts" },
@@ -244,13 +262,6 @@ export default {
         "reservations": "Your reservations",
         "trips": { "label": "Viewings & trips", "desc": "Scheduled property visits" },
         "browse": { "label": "Browse stays", "desc": "Find short-stay listings" }
-      },
-      "invest": {
-        "title": "Invest",
-        "subtitle": "Capital allocation and intelligence",
-        "center": { "desc": "Portfolio and deal analysis" },
-        "roi": { "label": "ROI calculator", "desc": "Cap rate and cash flow" },
-        "intel": { "desc": "Heatmaps and valuations" }
       },
       "mobile": {
         "saved": "Saved",

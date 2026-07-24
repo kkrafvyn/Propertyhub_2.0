@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/badge';
 import { automationEngineService } from '../../../lib/automation-engine.service';
+import type { MemberRole } from '../../../lib/workspace';
 import {
   Plus,
   Play,
@@ -69,7 +70,7 @@ const availableConditions = [
 
 interface CustomWorkflowsBuilderProps {
   organizationId: string;
-  currentRole: 'owner' | 'manager' | 'agent' | 'analyst' | null;
+  currentRole: MemberRole | null;
 }
 
 function mapWorkflowRecord(record: any, stats: { runs: number; successRate: number; lastRun?: string | null }) {

@@ -5,6 +5,35 @@ import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
 import { LegacyRouteRedirect } from "./components/LegacyRouteRedirect";
 import { NotFound } from "./pages/NotFound";
 
+const LEGACY_REDIRECT_SEGMENTS = [
+  "neighborhoods",
+  "agencies",
+  "agents",
+  "services",
+  "help",
+  "host",
+  "tenant",
+  "my-home",
+  "resident",
+  "investment",
+  "finance",
+  "intelligence",
+  "agent",
+  "agency",
+  "manage",
+  "developer",
+  "enterprise",
+  "smart",
+  "vendors",
+  "renter",
+  "buyer",
+] as const;
+
+const legacyRedirectRoutes = LEGACY_REDIRECT_SEGMENTS.flatMap((segment) => [
+  { path: segment, element: <LegacyRouteRedirect /> },
+  { path: `${segment}/*`, element: <LegacyRouteRedirect /> },
+]);
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -22,6 +51,13 @@ export const router = createBrowserRouter([
         lazy: async () => {
           const { PropertySearch } = await import("./pages/PropertySearch");
           return { Component: PropertySearch };
+        },
+      },
+      {
+        path: "compare",
+        lazy: async () => {
+          const { Compare } = await import("./pages/Compare");
+          return { Component: Compare };
         },
       },
       {
@@ -165,6 +201,7 @@ export const router = createBrowserRouter([
           };
         },
       },
+      ...legacyRedirectRoutes,
       { path: "*", Component: NotFound },
     ],
   },

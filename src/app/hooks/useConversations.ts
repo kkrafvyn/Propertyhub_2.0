@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth } from '../context/AuthContext'
 import { subscribeToAgentConversations, subscribeToUserConversations } from '../lib/baytmiftah/realtime'
 import {
   fetchAgentConversations,

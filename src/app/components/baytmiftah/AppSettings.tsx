@@ -37,7 +37,7 @@ export function CurrencyPanel() {
       <p className="mb-3 text-sm text-ink-secondary">{t('profile.currencyDesc')}</p>
       <div className="grid gap-2 sm:grid-cols-2">
         {CURRENCIES.map(({ code, label }) => (
-          <SettingOption key={code} active={currency === code} onClick={() => setCurrency(code)}>
+          <SettingOption key={code} active={currency === code} onClick={() => setCurrency(code as 'GHS' | 'USD')}>
             {label}
           </SettingOption>
         ))}

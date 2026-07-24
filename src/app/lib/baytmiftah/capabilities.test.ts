@@ -1,0 +1,51 @@
+import { describe, expect, it } from "vitest";
+import {
+  CAPABILITIES,
+  deriveConsumerCapabilities,
+  hasCapability,
+} from "./capabilities";
+import { getContextualTabs } from "./consumer-nav";
+
+describe("deriveConsumerCapabilities", () => {
+  it("returns base consumer capabilities for empty context", () => {
+    const caps = deriveConsumerCapabilities({
+      hasBookingContext: false,
+      hasRentingContext: false,
+      hasBuyingContext: false,
+    });
+
+    expect(caps).toEqual(
+      expect.arrayContaining([
+        CAPABILITIES.BUY,
+        CAPABILITIES.RENT,
+        CAPABILITIES.LEASE,
+        CAPABILITIES.STAY_GUEST,
+      ]),
+    );
+  });
+
+  it("adds smart resident when renting context is active", () => {
+    const caps = deriveConsumerCapabilities({
+      hasBookingContext: false,
+      hasRentingContext: true,
+      hasBuyingContext: false,
+    });
+
+    expect(hasCapability(caps, "smart_resident")).toBe(true);
+  });
+});
+
+describe("getContextualTabs", () => {
+  it("unlocks lease and rent tabs when capabilities are present", () => {
+    const tabs = getContextualTabs([
+      CAPABILITIES.LEASE,
+      CAPABILITIES.RENT,
+      CAPABILITIES.BUY,
+      CAPABILITIES.STAY_GUEST,
+    ]);
+
+    expect(tabs.some((tab) => tab.labelKey === "profileNav.leaseJourney")).toBe(true);
+    expect(tabs.some((tab) => tab.labelKey === "profileNav.rentJourney")).toBe(true);
+    expect(tabs.some((tab) => tab.labelKey === "profileNav.buyJourney")).toBe(true);
+  });
+});

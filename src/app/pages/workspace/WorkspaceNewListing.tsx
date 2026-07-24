@@ -158,7 +158,7 @@ export function WorkspaceNewListing({
           checks: qualityReport.checks,
           titleDocumentStatus: form.titleDocumentStatus,
           evaluatedAt: new Date().toISOString(),
-        },
+        } as any,
         last_quality_checked_at: new Date().toISOString(),
         verification_status: qualityReport.score >= 75 ? "submitted" : "draft",
         published_at: form.status === "listed" ? new Date().toISOString() : null,

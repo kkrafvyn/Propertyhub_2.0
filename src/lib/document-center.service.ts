@@ -97,7 +97,7 @@ export const documentCenterService = {
 
   async getUserDocumentsByFolder(userId: string) {
     const documents = await this.getUserDocuments(userId);
-    return documents.reduce<Record<string, typeof documents>>((acc, document) => {
+    return documents.reduce((acc, document) => {
       const folder = document.document_folder || "Other";
       acc[folder] = acc[folder] || [];
       acc[folder].push(document);

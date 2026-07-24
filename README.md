@@ -41,6 +41,29 @@ npm run dev
 
 Open `http://localhost:5173`.
 
+## Testing
+
+Run unit tests:
+
+```bash
+npm test
+```
+
+Run end-to-end tests (install browsers once per machine):
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
+
+Regenerate Supabase types when the database schema changes (requires `SUPABASE_DB_URL` or credentials in `supabase/.env.local`):
+
+```bash
+npm run db:types
+```
+
+If the CLI is unavailable, the repo includes `scripts/patch-database-types.py` as a fallback for missing tables.
+
 ## Project Structure
 
 ```text

@@ -173,7 +173,7 @@ export default {
     "reputationBadges": "Badges"
   },
   "roles": {
-    "consumer": "Consumer (buy, rent, lease, stay, invest)",
+    "consumer": "Consumer (buy, rent, lease, stay)",
     "buyer": "Buyer",
     "renter": "Renter",
     "investor": "Investor",

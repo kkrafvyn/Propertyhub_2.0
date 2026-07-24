@@ -24,7 +24,7 @@ export default function StayBookingCard({ listing }) {
 
   const nightlyRate = Number(listing.price) || 0
   const nights = checkIn && checkOut
-    ? Math.max(1, Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)))
+    ? Math.max(1, Math.ceil((Number(new Date(checkOut)) - Number(new Date(checkIn))) / (1000 * 60 * 60 * 24)))
     : 0
   const total = nights * nightlyRate
 
@@ -50,7 +50,7 @@ export default function StayBookingCard({ listing }) {
         total,
       })
       if (!result?.ok && !result?.reservation) {
-        throw new Error(result?.error || 'Could not create reservation')
+        throw new Error((result as { error?: string })?.error || 'Could not create reservation')
       }
       const reservationId = result.reservation?.id ?? result.id
       const pay = await payReservation({

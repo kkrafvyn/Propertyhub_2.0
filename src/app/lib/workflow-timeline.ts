@@ -165,7 +165,7 @@ export function buildBookingTimeline(booking: any, reviews?: any[]): TimelineSte
       status: status === "cancelled" ? "completed" : "upcoming",
       timestamp: booking?.cancelled_at,
     },
-  ].filter((step) => step.id !== "cancelled" || status === "cancelled");
+  ].filter((step) => step.id !== "cancelled" || status === "cancelled") as TimelineStep[];
 }
 
 export function buildMaintenanceTimeline(request: any): TimelineStep[] {

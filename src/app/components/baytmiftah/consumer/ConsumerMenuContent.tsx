@@ -24,7 +24,7 @@ import {
 } from '../../../lib/baytmiftah/consumer-nav'
 import { fetchConsumerActivity } from '../../../lib/baytmiftah/consumer-service'
 import { fetchReservations } from '../../../lib/baytmiftah/reservation-service'
-import { syncSavedIds } from '../../../lib/baytmiftah/saved-listings'
+import { getSavedIds } from '../../../lib/baytmiftah/saved-listings'
 import { CONSUMER_ROUTES } from '../../../lib/consumer-routes'
 
 const MENU_ICONS = {
@@ -51,7 +51,7 @@ function Section({ title, children }) {
   )
 }
 
-function MenuRow({ to, label, meta, authRequired, user, onNavigate, icon = 'route' }) {
+function MenuRow({ to, label, meta = null, authRequired = false, user, onNavigate, icon = 'route' }) {
   const dest = authRequired && !user ? CONSUMER_ROUTES.login : to
   const Icon = MENU_ICONS[icon] || MENU_ICONS.route
 
@@ -86,7 +86,7 @@ export default function ConsumerMenuContent({ onNavigate, showIntro = true }) {
   const [activityFeed, setActivityFeed] = useState([])
 
   useEffect(() => {
-    syncSavedIds().then((ids) => setSavedCount(ids.length))
+    setSavedCount(getSavedIds().length)
     if (user) {
       fetchReservations().then(({ reservations }) => setTripCount(reservations?.length ?? 0))
       fetchConsumerActivity().then(({ activity }) => setActivityFeed(activity ?? []))

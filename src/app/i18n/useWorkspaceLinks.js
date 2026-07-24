@@ -79,8 +79,8 @@ export function useRenterShellNav() {
     { to: CONSUMER_ROUTES.leases, key: 'leases' },
     { to: CONSUMER_ROUTES.payments, key: 'rentPayments' },
     { to: CONSUMER_ROUTES.maintenance, key: 'maintenance' },
-    { to: '/renter/credit', key: 'credit' },
-    { to: '/renter/sign', key: 'leaseSigning' },
+    { to: CONSUMER_ROUTES.profile, key: 'credit' },
+    { to: CONSUMER_ROUTES.documents, key: 'leaseSigning' },
   ])
   return { workspaceLabel: t('profileNav.leaseJourney'), homePath: CONSUMER_ROUTES.search, links }
 }
@@ -101,58 +101,58 @@ export function useManageShellNav() {
 export function useFinanceShellNav() {
   const { t } = useTranslation()
   const links = useNavLinks([
-    { to: '/finance', key: 'overview', end: true },
-    { to: '/finance/mortgages', key: 'mortgages' },
-    { to: '/finance/escrow', key: 'escrow' },
-    { to: '/finance/rent-collection', key: 'rentCollection' },
-    { to: '/finance/insurance', key: 'insurance' },
-    { to: '/finance/commissions', key: 'commissions' },
+    { ...workspaceNext('', true), key: 'overview' },
+    { ...workspaceNext('finance'), key: 'mortgages' },
+    { ...workspaceNext('payments'), key: 'escrow' },
+    { ...workspaceNext('payments'), key: 'rentCollection' },
+    { ...workspaceNext('integrations'), key: 'insurance' },
+    { ...workspaceNext('org-insights'), key: 'commissions' },
   ])
-  return { workspaceLabel: t('workspace.titles.finance'), homePath: '/finance', links }
+  return { workspaceLabel: t('workspace.titles.finance'), homePath: WORKSPACE_ENTRY_PATH, links }
 }
 
 export function useIntelligenceShellNav() {
   const { t } = useTranslation()
   const links = useNavLinks([
-    { to: '/intelligence', key: 'overview', end: true },
-    { to: '/intelligence/market', key: 'marketData' },
-    { to: '/intelligence/heatmap', key: 'priceHeatmap' },
-    { to: '/intelligence/valuation', key: 'aiValuation' },
+    { ...workspaceNext('market-intelligence', true), key: 'overview' },
+    { ...workspaceNext('market-intelligence'), key: 'marketData' },
+    { ...workspaceNext('location-intelligence'), key: 'priceHeatmap' },
+    { ...workspaceNext('predictive-analytics'), key: 'aiValuation' },
   ])
-  return { workspaceLabel: t('workspace.titles.intelligence'), homePath: '/intelligence', links }
+  return { workspaceLabel: t('workspace.titles.intelligence'), homePath: WORKSPACE_ENTRY_PATH, links }
 }
 
 export function useDeveloperShellNav() {
   const { t } = useTranslation()
   const links = useNavLinks([
-    { to: '/developer', key: 'overview', end: true },
-    { to: '/developer/projects', key: 'projects' },
-    { to: '/developer/construction', key: 'construction' },
-    { to: '/developer/buyers', key: 'buyerPortal' },
-    { to: '/developer/platform-api', key: 'platformApi' },
+    { ...workspaceNext('integrations', true), key: 'overview' },
+    { ...workspaceNext('integrations'), key: 'projects' },
+    { ...workspaceNext('whitelabel'), key: 'construction' },
+    { ...workspaceNext('mobile-settings'), key: 'buyerPortal' },
+    { ...workspaceNext('ai-assistant'), key: 'platformApi' },
   ])
-  return { workspaceLabel: t('workspace.titles.developer'), homePath: '/developer', links }
+  return { workspaceLabel: t('workspace.titles.developer'), homePath: WORKSPACE_ENTRY_PATH, links }
 }
 
 export function useEnterpriseShellNav() {
   const { t } = useTranslation()
   const links = useNavLinks([
-    { to: '/enterprise', key: 'overview', end: true },
-    { to: '/enterprise/portfolios', key: 'portfolios' },
-    { to: '/enterprise/organizations', key: 'organizations' },
-    { to: '/enterprise/esg', key: 'esgReporting' },
-    { to: '/enterprise/forecast', key: 'revenueForecast' },
+    { ...workspaceNext('org-insights', true), key: 'overview' },
+    { ...workspaceNext('org-insights'), key: 'portfolios' },
+    { ...workspaceNext('team'), key: 'organizations' },
+    { ...workspaceNext('settings'), key: 'esgReporting' },
+    { ...workspaceNext('predictive-analytics'), key: 'revenueForecast' },
   ])
-  return { workspaceLabel: t('workspace.titles.enterprise'), homePath: '/enterprise', links }
+  return { workspaceLabel: t('workspace.titles.enterprise'), homePath: WORKSPACE_ENTRY_PATH, links }
 }
 
 export function useSmartShellNav() {
   const { t } = useTranslation()
   const links = useNavLinks([
-    { to: '/smart', key: 'overview', end: true },
-    { to: '/smart/devices', key: 'devices' },
-    { to: '/smart/automations', key: 'automations' },
-    { to: '/smart/alerts', key: 'alertsLogs' },
+    { ...workspaceNext('host', true), key: 'overview' },
+    { ...workspaceNext('notifications'), key: 'devices' },
+    { ...workspaceNext('automation'), key: 'automations' },
+    { ...workspaceNext('workflows'), key: 'alertsLogs' },
   ])
-  return { workspaceLabel: t('workspace.titles.smart'), homePath: '/smart', links }
+  return { workspaceLabel: t('workspace.titles.smart'), homePath: WORKSPACE_ENTRY_PATH, links }
 }

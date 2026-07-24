@@ -325,7 +325,7 @@ export function WorkspaceListings({
           checks: qualityReport.checks,
           titleDocumentStatus: draft.titleDocumentStatus,
           evaluatedAt: new Date().toISOString(),
-        },
+        } as any,
         last_quality_checked_at: new Date().toISOString(),
         published_at: draft.status === "listed" ? listing.published_at || new Date().toISOString() : null,
       });

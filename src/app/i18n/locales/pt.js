@@ -198,7 +198,7 @@ export default {
     "property_manager": "Gestor de imóveis",
     "developer": "Desenvolvedor",
     "enterprise_operator": "Operador empresarial",
-    "consumer": "Consumer (buy, rent, stay, invest)",
+    "consumer": "Consumidor (comprar, alugar, arrendar, estadia)",
     "agency_manager": "Agency manager",
     "agency_agent": "Agency agent",
     "platform_admin": "Platform admin",
@@ -1309,7 +1309,7 @@ export default {
   "consumer": {
     "dashboard": {
       "title": "My BaytMiftah",
-      "subtitle": "Buy, rent, stay, and invest — one account that grows with you",
+      "subtitle": "Compre, alugue, arrende ou reserve estadias curtas — uma conta para cada jornada imobiliária",
       "myActivity": "My activity",
       "aiAssistant": "AI assistant",
       "quickActions": "Quick actions"

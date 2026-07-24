@@ -187,7 +187,11 @@ export const listingService = {
     const locationMeta: Record<string, { city: string; region: string; count: number }> = {};
 
     for (const listing of data || []) {
-      const property = listing.property as Database["public"]["Tables"]["properties"]["Row"] | null;
+      const propertyRow = listing.property as
+        | Database["public"]["Tables"]["properties"]["Row"]
+        | Database["public"]["Tables"]["properties"]["Row"][]
+        | null;
+      const property = Array.isArray(propertyRow) ? propertyRow[0] : propertyRow;
       const category = normalizePropertyCategory(property?.category);
       if (category) {
         categoryCounts[category] = (categoryCounts[category] || 0) + 1;

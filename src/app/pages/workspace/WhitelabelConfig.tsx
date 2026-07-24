@@ -4,11 +4,12 @@ import { Card } from '@/app/components/ui/Card'
 import { Button } from '@/app/components/ui/Button'
 import { Input } from '@/app/components/ui/Input'
 import { whitelabelService } from '@/lib/whitelabel.service'
+import type { MemberRole } from '@/lib/workspace'
 import { Palette, Globe, FileText } from 'lucide-react'
 
 interface WhitelabelConfigurationProps {
   organizationId: string
-  currentRole: 'owner' | 'manager' | 'agent' | 'analyst' | null
+  currentRole: MemberRole | null
 }
 
 export default function WhitelabelConfiguration({

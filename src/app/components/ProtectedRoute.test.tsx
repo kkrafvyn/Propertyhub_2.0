@@ -13,10 +13,15 @@ const useAuthMock = vi.mocked(useAuth);
 function createAuthState(overrides: Partial<ReturnType<typeof useAuth>> = {}) {
   return {
     user: null,
+    profile: null,
+    role: null,
+    capabilities: [],
     loading: false,
     error: null,
     signUp: vi.fn(),
     signIn: vi.fn(),
+    signInWithPhoneOtp: vi.fn(),
+    verifyPhoneOtp: vi.fn(),
     signInWithOAuth: vi.fn(),
     signOut: vi.fn(),
     resetPassword: vi.fn(),

@@ -5,10 +5,11 @@ import { Card } from "@/app/components/ui/Card";
 import { Button } from "@/app/components/ui/Button";
 import { Badge } from "@/app/components/ui/badge";
 import { automationEngineService } from "@/lib/automation-engine.service";
+import type { MemberRole } from "@/lib/workspace";
 
 interface AutomationWorkflowsProps {
   organizationId: string;
-  currentRole: "owner" | "manager" | "agent" | "analyst" | null;
+  currentRole: MemberRole | null;
 }
 
 export default function AutomationWorkflows({

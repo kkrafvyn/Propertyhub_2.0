@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Heart, Home, Menu, Search, User } from "luci
 import { Logo } from "../Logo";
 import { NotificationBell } from "../../NotificationBell";
 import { useAuth } from "../../../context/AuthContext";
+import { useTranslation } from "../../../i18n/LocaleContext";
 import { propertyTypeIcons } from "../icons";
 import { ListingCardImage } from "../ListingCardImage";
 import type { MarketplaceListingCard } from "../listing-mappers";
@@ -15,6 +16,7 @@ export function MobileReferenceHeader({
   menuEnabled?: boolean;
 }) {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <header className="sticky top-0 z-40 grid min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-2 bg-surface px-3 pb-3 pt-2 sm:px-4 sm:pt-4">
@@ -28,7 +30,7 @@ export function MobileReferenceHeader({
               type="button"
               onClick={onMenuClick}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface-subtle"
-              aria-label="Menu"
+              aria-label={t("mobile.menu")}
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -37,7 +39,7 @@ export function MobileReferenceHeader({
           <Link
             to="/app"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-subtle text-ink"
-            aria-label="Profile"
+            aria-label={t("mobile.profile")}
           >
             <User className="h-5 w-5" />
           </Link>
@@ -51,16 +53,18 @@ const HERO_IMAGE =
   "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80";
 
 export function MobileHeroBanner() {
+  const { t } = useTranslation();
+
   return (
     <section className="relative mx-3 mb-5 overflow-hidden rounded-2xl sm:mx-4">
       <img src={HERO_IMAGE} alt="" className="h-[180px] w-full object-cover sm:h-[200px]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
       <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
         <h2 className="text-lg font-bold leading-tight text-white sm:text-[22px]">
-          Find your next home in Ghana
+          {t("mobile.homeScreen.heroTitle")}
         </h2>
         <p className="mt-1.5 text-sm leading-snug text-white/90">
-          Rent, buy, lease, or book short stays with verified agencies.
+          {t("mobile.homeScreen.heroSubtitle")}
         </p>
       </div>
     </section>
@@ -76,11 +80,12 @@ export function MobileTransactionTabs({
   active: string;
   onChange: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const labels: Record<string, string> = {
-    buy: "Buy",
-    rent: "Rent",
-    lease: "Lease",
-    stay: "Stay",
+    buy: t("mobile.homeScreen.buy"),
+    rent: t("mobile.homeScreen.rent"),
+    lease: t("mobile.homeScreen.lease"),
+    stay: t("mobile.homeScreen.stay"),
   };
 
   return (
@@ -105,14 +110,14 @@ export function MobileTransactionTabs({
   );
 }
 
-const PROPERTY_TYPES = [
-  { id: "apartment", label: "Apartments", bg: "bg-blue-50" },
-  { id: "house", label: "Houses", bg: "bg-green-50" },
-  { id: "townhouse", label: "Townhouses", bg: "bg-orange-50" },
-  { id: "commercial", label: "Commercial", bg: "bg-purple-50" },
-  { id: "land", label: "Land", bg: "bg-emerald-50" },
-  { id: "shortStay", label: "Short stay", bg: "bg-orange-50" },
-];
+const PROPERTY_TYPE_KEYS = [
+  { id: "apartment", labelKey: "mobile.homeScreen.apartments", bg: "bg-blue-50" },
+  { id: "house", labelKey: "mobile.homeScreen.houses", bg: "bg-green-50" },
+  { id: "townhouse", labelKey: "mobile.homeScreen.townhouses", bg: "bg-orange-50" },
+  { id: "commercial", labelKey: "mobile.homeScreen.commercial", bg: "bg-purple-50" },
+  { id: "land", labelKey: "mobile.homeScreen.land", bg: "bg-emerald-50" },
+  { id: "shortStay", labelKey: "mobile.homeScreen.shortStay", bg: "bg-orange-50" },
+] as const;
 
 export function MobilePropertyTypeRow({
   active,
@@ -121,9 +126,11 @@ export function MobilePropertyTypeRow({
   active: string | null;
   onChange: (id: string | null) => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="mb-6 flex gap-5 overflow-x-auto px-4 sm:gap-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {PROPERTY_TYPES.map(({ id, label, bg }) => {
+      {PROPERTY_TYPE_KEYS.map(({ id, labelKey, bg }) => {
         const isActive = active === id;
         const Icon = propertyTypeIcons[id] || Home;
         return (
@@ -143,7 +150,7 @@ export function MobilePropertyTypeRow({
             <span
               className={`text-center text-[11px] font-medium leading-tight sm:text-xs ${isActive ? "text-mobile-forest" : "text-ink-secondary"}`}
             >
-              {label}
+              {t(labelKey)}
             </span>
           </button>
         );
@@ -161,13 +168,15 @@ export function MobileCarouselSection({
   seeAllTo?: string;
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
+
   return (
     <section className="mb-7">
       <div className="mb-3 flex items-center justify-between px-4">
         <h2 className="text-[17px] font-bold text-ink">{title}</h2>
         {seeAllTo && (
           <Link to={seeAllTo} className="text-sm font-semibold text-mobile-forest">
-            See all
+            {t("mobile.homeScreen.seeAll")}
           </Link>
         )}
       </div>
@@ -191,9 +200,10 @@ export function MobileHomeListingCard({
   saved?: boolean;
   onToggleSave?: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const displayBadge =
     badge ??
-    (listing.verified ? { label: "Verified", tone: "green" } : undefined);
+    (listing.verified ? { label: t("mobile.appShell.verified"), tone: "green" } : undefined);
 
   return (
     <div className="relative w-[min(260px,78vw)] shrink-0">
@@ -226,7 +236,7 @@ export function MobileHomeListingCard({
             onToggleSave(listing.id);
           }}
           className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-surface/90 shadow-sm"
-          aria-label="Save"
+          aria-label={t("listing.save")}
         >
           <Heart className={`h-4 w-4 ${saved ? "fill-brand-orange text-brand-orange" : "text-ink"}`} />
         </button>

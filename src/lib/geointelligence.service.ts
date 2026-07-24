@@ -273,10 +273,11 @@ export const geointelligenceService = {
     const grid: Record<string, any[]> = {}
     
     listings.forEach(listing => {
-      if (!listing.properties?.latitude) return
+      const property = Array.isArray(listing.properties) ? listing.properties[0] : listing.properties
+      if (!property?.latitude) return
       
-      const latCell = Math.floor(listing.properties.latitude / cellSize)
-      const lngCell = Math.floor(listing.properties.longitude / cellSize)
+      const latCell = Math.floor(property.latitude / cellSize)
+      const lngCell = Math.floor(property.longitude / cellSize)
       const key = `${latCell},${lngCell}`
       
       if (!grid[key]) grid[key] = []
