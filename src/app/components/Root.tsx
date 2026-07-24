@@ -5,6 +5,7 @@ import { RouteMonitoring } from "./RouteMonitoring";
 import { MobileAppShell } from "../mobile/MobileAppShell";
 import { MobileBottomNav } from "../mobile/MobileBottomNav";
 import { SplashScreen } from "./baytmiftah/splash/SplashScreen";
+import { shouldUseMobileShell } from "../lib/baytmiftah/platform";
 import { PHONE_MEDIA, TABLET_MEDIA } from "../lib/viewports";
 
 function useViewportFlags() {
@@ -62,9 +63,16 @@ function isConsumerRoute(pathname: string) {
 export function Root() {
   const location = useLocation();
   const { isPhone, isTablet } = useViewportFlags();
-  const [splashDone, setSplashDone] = useState(false);
+  const showSplash = shouldUseMobileShell();
+  const [splashDone, setSplashDone] = useState(() => !showSplash);
 
-  if (!splashDone) {
+  useEffect(() => {
+    if (!showSplash) {
+      setSplashDone(true);
+    }
+  }, [showSplash]);
+
+  if (showSplash && !splashDone) {
     return <SplashScreen onComplete={() => setSplashDone(true)} />;
   }
 
