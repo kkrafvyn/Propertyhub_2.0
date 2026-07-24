@@ -89,6 +89,10 @@ export default defineConfig({
     css: true,
     testTimeout: 10000,
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
+    env: {
+      VITE_SUPABASE_URL: 'https://test.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'test-anon-key',
+    },
   },
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })
