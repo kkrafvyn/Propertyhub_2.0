@@ -162,7 +162,7 @@ export const savedSearchAlertService = {
           nextMatchCount === 1
             ? "A new property matched your saved search."
             : `${nextMatchCount} properties now match your saved search.`,
-        actionUrl: "/search",
+        actionUrl: this.buildSearchUrlFromAlert(alert),
       });
     }
 
@@ -189,5 +189,26 @@ export const savedSearchAlertService = {
     );
 
     return refreshed.filter(Boolean);
+  },
+
+  buildSearchUrlFromAlert(alert: {
+    location_query?: string | null;
+    listing_type?: string | null;
+    property_type?: string | null;
+    price_min?: number | null;
+    price_max?: number | null;
+    bedrooms?: number | null;
+    bathrooms?: number | null;
+  }) {
+    const params = new URLSearchParams();
+    if (alert.location_query) params.set("q", alert.location_query);
+    if (alert.listing_type) params.set("listingType", alert.listing_type);
+    if (alert.property_type) params.set("propertyType", alert.property_type);
+    if (alert.price_min) params.set("priceMin", String(alert.price_min));
+    if (alert.price_max) params.set("priceMax", String(alert.price_max));
+    if (alert.bedrooms) params.set("bedrooms", String(alert.bedrooms));
+    if (alert.bathrooms) params.set("bathrooms", String(alert.bathrooms));
+    const query = params.toString();
+    return query ? `/search?${query}` : "/search";
   },
 };

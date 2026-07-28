@@ -1,6 +1,9 @@
 import { supabase } from "./supabase";
 import { notificationService } from "./notification.service";
 
+const MAINTENANCE_MEDIA_BUCKET =
+  import.meta.env.VITE_PROPERTY_MEDIA_BUCKET || "property-media";
+
 export const maintenanceService = {
   async getTenantRequests(userId: string) {
     const { data, error } = await supabase
@@ -27,6 +30,7 @@ export const maintenanceService = {
     title: string;
     description: string;
     priority?: "low" | "normal" | "high" | "urgent";
+    photoUrls?: string[];
   }) {
     const { data, error } = await supabase
       .from("maintenance_requests")
@@ -38,6 +42,7 @@ export const maintenanceService = {
         title: input.title,
         description: input.description,
         priority: input.priority || "normal",
+        photo_urls: input.photoUrls || [],
       })
       .select("*")
       .single();
@@ -48,6 +53,72 @@ export const maintenanceService = {
       actorUserId: input.tenantUserId,
     });
 
+    return data;
+  },
+
+  async uploadRequestPhotos(input: {
+    organizationId: string;
+    requestId: string;
+    files: File[];
+  }) {
+    const uploadedUrls: string[] = [];
+
+    for (const file of input.files) {
+      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${input.organizationId}/maintenance/${input.requestId}/${crypto.randomUUID()}.${extension}`;
+      const { error: uploadError } = await supabase.storage
+        .from(MAINTENANCE_MEDIA_BUCKET)
+        .upload(path, file, { cacheControl: "3600", contentType: file.type, upsert: false });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrl } = supabase.storage
+        .from(MAINTENANCE_MEDIA_BUCKET)
+        .getPublicUrl(path);
+
+      if (publicUrl?.publicUrl) uploadedUrls.push(publicUrl.publicUrl);
+    }
+
+    if (uploadedUrls.length === 0) return [];
+
+    const { data: existing } = await supabase
+      .from("maintenance_requests")
+      .select("photo_urls")
+      .eq("id", input.requestId)
+      .single();
+
+    const nextUrls = [...(existing?.photo_urls || []), ...uploadedUrls];
+    const { data, error } = await supabase
+      .from("maintenance_requests")
+      .update({ photo_urls: nextUrls, updated_at: new Date().toISOString() })
+      .eq("id", input.requestId)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async submitTenantRating(
+    requestId: string,
+    userId: string,
+    rating: number,
+    comment?: string
+  ) {
+    const { data, error } = await supabase
+      .from("maintenance_requests")
+      .update({
+        tenant_rating: rating,
+        tenant_rating_comment: comment || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", requestId)
+      .eq("tenant_user_id", userId)
+      .eq("status", "resolved")
+      .select("*")
+      .single();
+
+    if (error) throw error;
     return data;
   },
 
@@ -74,7 +145,11 @@ export const maintenanceService = {
   ) {
     const { data, error } = await supabase
       .from("maintenance_requests")
-      .update({ status })
+      .update({
+        status,
+        resolved_at: status === "resolved" ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", requestId)
       .select("*")
       .single();
@@ -94,6 +169,7 @@ export const maintenanceService = {
       .select(`
         *,
         tenant:users(full_name, email, phone),
+        vendor:vendors(id, business_name, phone),
         lease:leases(
           listing:listings(property:properties(address, city))
         )

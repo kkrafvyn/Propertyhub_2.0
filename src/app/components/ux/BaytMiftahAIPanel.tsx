@@ -105,9 +105,8 @@ export function BaytMiftahAIPanel({
         return;
       }
 
-      setAnswer(
-        "BaytMiftah AI can help with search, documents, payments, and maintenance. Try a specific question or open Explore."
-      );
+      const faqAnswer = aiAssistantService.answerFaq(query, context);
+      setAnswer(faqAnswer);
     } finally {
       setLoading(false);
     }

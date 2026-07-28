@@ -6,6 +6,7 @@ import { PropertyDetail } from "./PropertyDetail";
 import { useAuth } from "../context/AuthContext";
 import { renderWithProviders } from "../../test/render";
 import { listingService } from "../../lib/listing.service";
+import { geointelligenceService } from "../../lib/geointelligence.service";
 import { savedPropertyService } from "../../lib/savedproperty.service";
 import { dealCaseService } from "../../lib/dealcase.service";
 import { messageService } from "../../lib/message.service";
@@ -23,6 +24,13 @@ vi.mock("../../lib/listing.service", () => ({
   listingService: {
     getListingById: vi.fn(),
     getPublicListings: vi.fn(),
+    getSimilarListings: vi.fn(),
+  },
+}));
+
+vi.mock("../../lib/geointelligence.service", () => ({
+  geointelligenceService: {
+    getNearbyServices: vi.fn(),
   },
 }));
 
@@ -54,7 +62,8 @@ vi.mock("../../lib/organization.service", () => ({
 
 const useAuthMock = vi.mocked(useAuth);
 const getListingByIdMock = vi.mocked(listingService.getListingById);
-const getPublicListingsMock = vi.mocked(listingService.getPublicListings);
+const getSimilarListingsMock = vi.mocked(listingService.getSimilarListings);
+const getNearbyServicesMock = vi.mocked(geointelligenceService.getNearbyServices);
 const isPropertySavedMock = vi.mocked(savedPropertyService.isPropertySaved);
 const createDealCaseMock = vi.mocked(dealCaseService.createDealCase);
 const createOrGetOrganizationConversationMock = vi.mocked(
@@ -138,7 +147,8 @@ describe("PropertyDetail inquiry flow", () => {
     } as any);
 
     getListingByIdMock.mockResolvedValue(listing as any);
-    getPublicListingsMock.mockResolvedValue([]);
+    getSimilarListingsMock.mockResolvedValue([]);
+    getNearbyServicesMock.mockResolvedValue([]);
     isPropertySavedMock.mockResolvedValue(false);
     createDealCaseMock.mockResolvedValue({ id: "case-1" } as any);
     getOrganizationByIdMock.mockResolvedValue({

@@ -1,6 +1,6 @@
 import { SPLASH_COLORS } from "./constants";
 
-const ARC_PATH = "M9 33.5Q24 24.5 39 33.5";
+const HOUSE_PATH = "M24 13.5L34.5 22V35.5H13.5V22L24 13.5Z";
 
 export function SplashLogoMark({
   className = "splash-mark",
@@ -20,43 +20,42 @@ export function SplashLogoMark({
       aria-hidden="true"
     >
       <defs>
-        <radialGradient id="splashDotGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor={primary} stopOpacity="0.45" />
-          <stop offset="100%" stopColor={primary} stopOpacity="0" />
-        </radialGradient>
-        <filter id="splashArcBlur" x="-20%" y="-20%" width="140%" height="140%">
+        <filter id="splashMarkShadow" x="-20%" y="-20%" width="140%" height="140%">
           <feGaussianBlur stdDeviation="1.2" />
         </filter>
       </defs>
 
-      <circle
-        className="splash-mark__glow"
-        cx="24"
-        cy="15"
-        r="14"
-        fill="url(#splashDotGlow)"
-      />
-
       <ellipse
         className="splash-mark__arc-shadow"
         cx="24"
-        cy="34"
-        rx="16"
+        cy="40"
+        rx="14"
         ry="2.5"
         fill={shadow}
-        style={{ transformOrigin: "24px 34px" }}
+        style={{ transformOrigin: "24px 40px" }}
       />
 
-      <circle className="splash-mark__dot" cx="24" cy="15" r="5.5" fill={primary} />
+      <rect className="splash-mark__bg" width="48" height="48" rx="12" fill={primary} />
 
       <path
         className="splash-mark__arc"
-        d={ARC_PATH}
+        d={HOUSE_PATH}
         pathLength="1"
-        stroke={primary}
-        strokeWidth="2.25"
+        stroke="#FFFFFF"
+        strokeWidth="2.5"
+        strokeLinejoin="round"
         strokeLinecap="round"
         fill="none"
+      />
+
+      <rect
+        className="splash-mark__dot"
+        x="21"
+        y="28.5"
+        width="6"
+        height="7"
+        rx="1"
+        fill="#FFFFFF"
       />
     </svg>
   );

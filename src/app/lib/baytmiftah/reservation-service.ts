@@ -25,9 +25,17 @@ export async function createReservation({
 
   const { data: listing } = await supabase
     .from("listings")
-    .select("organization_id")
+    .select("organization_id, price, currency")
     .eq("id", listingId)
     .maybeSingle();
+
+  const nights = Math.max(
+    1,
+    Math.ceil(
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)
+    )
+  );
+  const nightlyRateMinor = Math.round((Number(listing?.price) || total / nights) * 100);
 
   const booking = await bookingService.createPendingBooking({
     listingId,
@@ -35,7 +43,8 @@ export async function createReservation({
     guestUserId: userId,
     checkIn,
     checkOut,
-    nightlyRateMinor: Math.round(total * 100),
+    nightlyRateMinor,
+    currency: listing?.currency || "GHS",
     guestNote: guests ? `${guests} guest(s)` : undefined,
   });
 

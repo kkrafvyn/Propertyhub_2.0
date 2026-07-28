@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { documentCenterService } from "./document-center.service";
 import { notificationService } from "./notification.service";
 
 export const leaseWorkflowService = {
@@ -94,6 +95,51 @@ export const leaseWorkflowService = {
     void notificationService.notifyLeaseEvent(leaseId, "renewal_requested");
 
     return data;
+  },
+
+  async getPendingLeaseDocument(
+    lease: { deal_case_id?: string | null },
+    userId: string
+  ) {
+    if (!lease.deal_case_id) return null;
+    const documents = await documentCenterService.getUserDocuments(userId);
+    return (
+      documents.find(
+        (doc: any) =>
+          doc.deal_case_id === lease.deal_case_id &&
+          doc.document_type === "lease_contract" &&
+          doc.signature_required &&
+          !["signed", "archived"].includes(String(doc.status))
+      ) || null
+    );
+  },
+
+  async signLeaseDocument(input: {
+    leaseId: string;
+    userId: string;
+    signerName: string;
+    signerEmail?: string | null;
+  }) {
+    const { data: lease, error: leaseError } = await supabase
+      .from("leases")
+      .select("id, deal_case_id")
+      .eq("id", input.leaseId)
+      .single();
+
+    if (leaseError) throw leaseError;
+
+    const pendingDocument = await this.getPendingLeaseDocument(lease, input.userId);
+    if (pendingDocument) {
+      await documentCenterService.signDocument({
+        documentId: pendingDocument.id,
+        signerUserId: input.userId,
+        signerName: input.signerName,
+        signerEmail: input.signerEmail,
+        signerRole: "tenant",
+      });
+    }
+
+    return this.markLeaseSigned(input.leaseId);
   },
 
   async markLeaseSigned(leaseId: string) {

@@ -7,6 +7,7 @@ import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import type { Database } from "../../../lib/database.types";
 import { financeReportService } from "../../../lib/finance-report.service";
+import { commissionService } from "../../../lib/commission.service";
 import { organizationWalletService } from "../../../lib/organization-wallet.service";
 import { paymentService } from "../../../lib/payment.service";
 import { useAuth } from "../../context/AuthContext";
@@ -42,6 +43,7 @@ export function WorkspaceFinance({
   const [orgWallet, setOrgWallet] = useState<any>(null);
   const [orgLedger, setOrgLedger] = useState<any[]>([]);
   const [orgPayouts, setOrgPayouts] = useState<any[]>([]);
+  const [commissions, setCommissions] = useState<any[]>([]);
   const [payoutAmount, setPayoutAmount] = useState("");
   const [payoutDestination, setPayoutDestination] = useState("");
   const [submittingPayout, setSubmittingPayout] = useState(false);
@@ -49,16 +51,18 @@ export function WorkspaceFinance({
   const loadData = async () => {
     try {
       setLoading(true);
-      const [rows, wallet, ledger, payouts] = await Promise.all([
+      const [rows, wallet, ledger, payouts, commissionRows] = await Promise.all([
         paymentService.getOrganizationPropertyTransactions(organization.id),
         organizationWalletService.getOrganizationWallet(organization.id),
         organizationWalletService.getOrganizationLedger(organization.id),
         organizationWalletService.getOrganizationPayoutRequests(organization.id),
+        commissionService.getOrganizationCommissions(organization.id),
       ]);
       setPayments(rows || []);
       setOrgWallet(wallet);
       setOrgLedger(ledger || []);
       setOrgPayouts(payouts || []);
+      setCommissions(commissionRows || []);
     } catch (error) {
       console.error("Failed to load finance workspace:", error);
       toast.error("We couldn't load finance reporting right now.");
@@ -175,6 +179,37 @@ export function WorkspaceFinance({
           <p className="text-2xl font-semibold mt-1">{attentionPayments.length}</p>
         </Card>
       </div>
+
+      {canSeeManagerMetrics ? (
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <LineChart className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-semibold">Commission Report</h2>
+          </div>
+          {commissions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No commissions recorded yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {commissions.slice(0, 8).map((commission) => (
+                <div key={commission.id} className="flex items-center justify-between text-sm">
+                  <div>
+                    <p className="font-medium">{commission.agentName}</p>
+                    <p className="text-muted-foreground capitalize">{commission.status}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">
+                      {formatMoney(Math.round(commission.amount * 100), commission.currency)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(commission.earnedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      ) : null}
 
       {canSeeManagerMetrics && (
         <div className="grid gap-6 xl:grid-cols-[1fr,1fr]">

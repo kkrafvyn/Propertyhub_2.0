@@ -43,19 +43,26 @@ import { realEstateComplianceService } from "../../lib/real-estate-compliance.se
 import { ConsumerTrustBadges } from "../components/ConsumerTrustBadges";
 import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
 import { monitoring } from "../../lib/monitoring";
+import { useMyKyc } from "../hooks/useMyKyc";
+import { canSubmitOffer } from "../lib/baytmiftah/kyc";
+import { CONSUMER_ROUTES } from "../lib/consumer-routes";
 import {
   resolvePaymentContextFromListing,
   shouldUsePaystackCheckout,
 } from "../../lib/payment-routing.service";
+import { geointelligenceService } from "../../lib/geointelligence.service";
+import { trackRecentlyViewed } from "../../lib/recently-viewed";
 
 export function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { kyc } = useMyKyc();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showContactForm, setShowContactForm] = useState(false);
   const [listing, setListing] = useState<any | null>(null);
   const [relatedListings, setRelatedListings] = useState<any[]>([]);
+  const [nearbyServices, setNearbyServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
@@ -125,18 +132,16 @@ export function PropertyDetail() {
         setLoading(true);
         const listingData = await listingService.getListingById(id);
         setListing(listingData);
+        trackRecentlyViewed(id);
 
-        const nearby = await listingService.getPublicListings(24, 0);
-        setRelatedListings(
-          nearby
-            .filter(
-              (item) =>
-                item.id !== listingData.id &&
-                item.listing_type === listingData.listing_type &&
-                item.property?.city === listingData.property?.city
-            )
-            .slice(0, 3)
-        );
+        const [similar, services] = await Promise.all([
+          listingService.getSimilarListings(id, 4),
+          listingData.property?.id
+            ? geointelligenceService.getNearbyServices(listingData.property.id).catch(() => [])
+            : Promise.resolve([]),
+        ]);
+        setRelatedListings(similar);
+        setNearbyServices(services || []);
       } catch (error) {
         console.error("Failed to load property:", error);
         toast.error("Unable to load this property right now.");
@@ -384,6 +389,12 @@ export function PropertyDetail() {
       return;
     }
 
+    if (!canSubmitOffer(kyc)) {
+      toast.error("Complete identity verification before submitting an offer.");
+      navigate(CONSUMER_ROUTES.kyc);
+      return;
+    }
+
     const amount = Number(offerForm.amount);
     if (!Number.isFinite(amount) || amount <= 0) {
       toast.error("Enter a valid offer amount.");
@@ -466,6 +477,12 @@ export function PropertyDetail() {
       }
 
       const nightlyRateMinor = Math.round(Number(listing.price || 0) * 100);
+      await bookingService.validateDatesAvailable(
+        listing.id,
+        bookingForm.checkIn,
+        bookingForm.checkOut
+      );
+
       const booking = await bookingService.createPendingBooking({
         listingId: listing.id,
         organizationId: listing.organization_id,
@@ -1471,6 +1488,34 @@ export function PropertyDetail() {
             listings={relatedListings.map(mapListingToCard)}
             currentId={listing.id}
           />
+        )}
+
+        {nearbyServices.length > 0 && (
+          <Card className="mt-8 p-6">
+            <h2 className="mb-4 text-xl font-semibold text-ink">Nearby amenities</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {nearbyServices.map((service) => (
+                <div
+                  key={service.id}
+                  className="flex items-start justify-between gap-3 rounded-lg border border-surface-border p-4"
+                >
+                  <div>
+                    <p className="font-medium text-ink">{service.service_name}</p>
+                    <p className="text-sm capitalize text-muted-foreground">
+                      {String(service.service_type || "service").replace(/_/g, " ")}
+                    </p>
+                  </div>
+                  {service.distance_meters ? (
+                    <span className="text-sm text-muted-foreground">
+                      {service.distance_meters < 1000
+                        ? `${service.distance_meters} m`
+                        : `${(service.distance_meters / 1000).toFixed(1)} km`}
+                    </span>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </Card>
         )}
 
         <div className="mt-8">

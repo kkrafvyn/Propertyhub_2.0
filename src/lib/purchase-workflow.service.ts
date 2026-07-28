@@ -81,6 +81,8 @@ export const purchaseWorkflowService = {
           message: `Counter-offer accepted at ${(data.amount_minor / 100).toLocaleString()} ${data.currency}`,
         })
         .eq("id", dealCaseId);
+
+      await this.markChecklistByKey(dealCaseId, "offer_accepted", data.offered_by_user_id);
     }
 
     void notificationService.notifyCounterOfferEvent(dealCaseId || data.deal_case_id, "responded", {
@@ -124,6 +126,37 @@ export const purchaseWorkflowService = {
 
     if (error) throw error;
     return data || [];
+  },
+
+  async markChecklistByKey(
+    dealCaseId: string,
+    itemKey: string,
+    userId: string,
+    completed = true
+  ) {
+    const { data: item, error: fetchError } = await supabase
+      .from("closing_checklist_items")
+      .select("id")
+      .eq("deal_case_id", dealCaseId)
+      .eq("item_key", itemKey)
+      .maybeSingle();
+
+    if (fetchError) throw fetchError;
+    if (!item) {
+      await this.ensureClosingChecklist(dealCaseId);
+      const { data: retryItem, error: retryError } = await supabase
+        .from("closing_checklist_items")
+        .select("id")
+        .eq("deal_case_id", dealCaseId)
+        .eq("item_key", itemKey)
+        .maybeSingle();
+
+      if (retryError) throw retryError;
+      if (!retryItem) return null;
+      return this.toggleChecklistItem(retryItem.id, userId, completed);
+    }
+
+    return this.toggleChecklistItem(item.id, userId, completed);
   },
 
   async toggleChecklistItem(itemId: string, userId: string, completed: boolean) {
@@ -176,7 +209,7 @@ export const purchaseWorkflowService = {
       signerUserId: input.userId,
       signerName: input.signerName,
       signerEmail: input.signerEmail,
-      signerRole: "buyer",
+      signerRole: "client",
     });
   },
 };

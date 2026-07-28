@@ -20,6 +20,7 @@ import MobileHomeMenu from "../components/baytmiftah/mobile/MobileHomeMenu";
 import { useTranslation } from "../i18n/LocaleContext";
 import { ConsumerTabBar } from "./ConsumerTabBar";
 import { buildConsumerTabItems } from "./consumer-bottom-tabs";
+import { readCachedMobileListings, writeCachedMobileListings } from "../../lib/mobile-offline-cache";
 import "./mobile.css";
 
 export function MobileAppShell() {
@@ -31,6 +32,7 @@ export function MobileAppShell() {
   const [propType, setPropType] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [listings, setListings] = useState<any[]>([]);
+  const [usingOfflineCache, setUsingOfflineCache] = useState(false);
   const [agencies, setAgencies] = useState<any[]>([]);
   const [contextualNav, setContextualNav] = useState<
     Array<{ label: string; href: string; section: string }>
@@ -52,7 +54,16 @@ export function MobileAppShell() {
         if (!cancelled) {
           setListings(searchResults.results || []);
           setAgencies(agencyRows || []);
+          setUsingOfflineCache(false);
+          writeCachedMobileListings(searchResults.results || []);
         }
+      } catch (error) {
+        const cached = readCachedMobileListings();
+        if (!cancelled && cached.length > 0) {
+          setListings(cached as any[]);
+          setUsingOfflineCache(true);
+        }
+        console.error("Failed to load mobile home listings:", error);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -123,6 +134,10 @@ export function MobileAppShell() {
         <MobileHeroBanner />
         <MobileTransactionTabs active={txTab} onChange={setTxTab} />
         <MobilePropertyTypeRow active={propType} onChange={setPropType} />
+
+        {usingOfflineCache ? (
+          <p className="px-4 text-sm text-muted-foreground">{t("mobile.appShell.offlineCache")}</p>
+        ) : null}
 
         <MobileCarouselSection title={t("mobile.appShell.availableNow")} seeAllTo="/search">
           {loading ? (

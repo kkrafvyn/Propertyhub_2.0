@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { savedSearchAlertService } from "../../lib/saved-search-alert.service";
 import { aiAssistantService } from "../../lib/ai-assistant.service";
+import { getRecentlyViewedIds } from "../../lib/recently-viewed";
 import { syncCompareIds, toggleCompareIdAsync } from "../../lib/compare-listings";
 import { useIsDesktopViewport } from "../hooks/useMediaQuery";
 import { useTranslation } from "../i18n/LocaleContext";
@@ -38,6 +39,8 @@ type SearchFilters = {
   listingType: string;
   agency: string;
   sort: string;
+  verifiedOnly: boolean;
+  featuredOnly: boolean;
 };
 
 function buildFiltersFromSearchParams(searchParams: URLSearchParams): SearchFilters {
@@ -57,6 +60,8 @@ function buildFiltersFromSearchParams(searchParams: URLSearchParams): SearchFilt
         : "rental"),
     agency: searchParams.get("agency") || "",
     sort: searchParams.get("sort") || "newest",
+    verifiedOnly: searchParams.get("verified") === "1",
+    featuredOnly: searchParams.get("featured") === "1",
   };
 }
 
@@ -79,6 +84,8 @@ export function PropertySearch() {
   const [selectedMapListingId, setSelectedMapListingId] = useState<string | null>(null);
   const [naturalLanguageQuery, setNaturalLanguageQuery] = useState(searchParams.get("q") || "");
   const [parsingQuery, setParsingQuery] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<any[]>([]);
+  const [recentlyViewedListings, setRecentlyViewedListings] = useState<any[]>([]);
 
   const [filters, setFilters] = useState(() => buildFiltersFromSearchParams(searchParams));
 
@@ -105,20 +112,47 @@ export function PropertySearch() {
 
     const loadUserData = async () => {
       try {
-        const [alerts, savedRows] = await Promise.all([
+        const [alerts, savedRows, searchHistory] = await Promise.all([
           savedSearchAlertService.getUserAlerts(user.id),
           savedPropertyService.getSavedProperties(user.id),
+          aiAssistantService.getSearchHistory(user.id, 6),
         ]);
         if (!cancelled) {
           setUserAlerts(alerts);
           setSavedListingIds(new Set((savedRows || []).map((row: any) => row.listing_id)));
+          setRecentSearches(searchHistory || []);
         }
       } catch (error) {
         console.error("Failed to load saved search data:", error);
       }
     };
 
+    const loadRecentlyViewed = async () => {
+      const ids = getRecentlyViewedIds();
+      if (ids.length === 0) {
+        if (!cancelled) setRecentlyViewedListings([]);
+        return;
+      }
+
+      try {
+        const listings = await Promise.all(
+          ids.slice(0, 6).map((listingId) =>
+            listingService.getListingById(listingId).catch(() => null)
+          )
+        );
+        if (!cancelled) {
+          setRecentlyViewedListings(listings.filter(Boolean));
+        }
+      } catch (error) {
+        console.error("Failed to load recently viewed listings:", error);
+      }
+    };
+
     void loadUserData();
+    void loadRecentlyViewed();
+    void savedSearchAlertService.evaluateUserAlerts(user.id).catch((error) => {
+      console.error("Failed to evaluate search alerts:", error);
+    });
 
     return () => {
       cancelled = true;
@@ -157,7 +191,9 @@ export function PropertySearch() {
           | "lease"
           | "short_stay",
         organizationSlug: activeFilters.agency || undefined,
-        sort: activeFilters.sort as "newest" | "price_asc" | "price_desc",
+        sort: activeFilters.sort as "newest" | "price_asc" | "price_desc" | "featured",
+        verifiedOnly: activeFilters.verifiedOnly,
+        featuredOnly: activeFilters.featuredOnly,
       };
 
       const offset = (currentPage - 1) * PAGE_SIZE;
@@ -237,6 +273,12 @@ export function PropertySearch() {
     if (filters.sort && filters.sort !== "newest") nextParams.set("sort", filters.sort);
     else nextParams.delete("sort");
 
+    if (filters.verifiedOnly) nextParams.set("verified", "1");
+    else nextParams.delete("verified");
+
+    if (filters.featuredOnly) nextParams.set("featured", "1");
+    else nextParams.delete("featured");
+
     nextParams.set("listingType", filters.listingType);
     nextParams.set("page", "1");
     setSearchParams(nextParams);
@@ -278,6 +320,9 @@ export function PropertySearch() {
     nextParams.delete("bedrooms");
     nextParams.delete("bathrooms");
     nextParams.delete("propertyType");
+    nextParams.delete("verified");
+    nextParams.delete("featured");
+    nextParams.delete("sort");
     nextParams.delete("page");
     nextParams.set("listingType", "rental");
     setSearchParams(nextParams);
@@ -414,6 +459,14 @@ export function PropertySearch() {
     setSearchParams(nextParams);
   };
 
+  const handleRecentSearchClick = (query: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("q", query);
+    nextParams.set("page", "1");
+    setNaturalLanguageQuery(query);
+    setSearchParams(nextParams);
+  };
+
   return (
     <DesktopShell
       compareCount={compareIds.length}
@@ -458,6 +511,60 @@ export function PropertySearch() {
           compact
           onNavigate={(href) => navigate(href)}
         />
+
+        <Card className="mb-6 p-4">
+          <div className="flex flex-col gap-3 md:flex-row">
+            <div className="relative flex-1">
+              <Sparkles className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-forest" />
+              <Input
+                value={naturalLanguageQuery}
+                onChange={(event) => setNaturalLanguageQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void handleNaturalLanguageSearch();
+                }}
+                placeholder={t("searchPage.aiSearchPlaceholder")}
+                className="pl-10"
+              />
+            </div>
+            <Button onClick={() => void handleNaturalLanguageSearch()} disabled={parsingQuery}>
+              {parsingQuery ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              {t("searchPage.aiSearch")}
+            </Button>
+          </div>
+          {user && recentSearches.length > 0 ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("searchPage.recentSearches")}
+              </span>
+              {recentSearches.map((entry) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  onClick={() => handleRecentSearchClick(entry.query)}
+                  className="rounded-full border border-surface-border bg-surface-subtle px-3 py-1 text-sm text-ink transition-colors hover:bg-surface-hover"
+                >
+                  {entry.query}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </Card>
+
+        {recentlyViewedListings.length > 0 ? (
+          <section className="mb-8">
+            <h2 className="mb-4 text-lg font-semibold text-ink">{t("searchPage.recentlyViewed")}</h2>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+              {recentlyViewedListings.map((listing) => (
+                <ListingCard
+                  key={listing.id}
+                  listing={mapListingToCard(listing)}
+                  saved={savedListingIds.has(listing.id)}
+                  onToggleSave={(listingId) => void handleToggleSave(listingId)}
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <div className="desktop-search-toolbar">
           <div>
@@ -832,7 +939,29 @@ function SearchFiltersPanel({
             <option value="newest">{t("searchPage.newest")}</option>
             <option value="price_asc">{t("searchPage.priceAsc")}</option>
             <option value="price_desc">{t("searchPage.priceDesc")}</option>
+            <option value="featured">{t("searchPage.featured")}</option>
           </select>
+        </div>
+
+        <div className="space-y-3">
+          <label className="flex items-center gap-3 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={filters.verifiedOnly}
+              onChange={(event) => setFilters({ ...filters, verifiedOnly: event.target.checked })}
+              className="h-4 w-4 rounded border-surface-border"
+            />
+            {t("searchPage.verifiedOnly")}
+          </label>
+          <label className="flex items-center gap-3 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={filters.featuredOnly}
+              onChange={(event) => setFilters({ ...filters, featuredOnly: event.target.checked })}
+              className="h-4 w-4 rounded border-surface-border"
+            />
+            {t("searchPage.featuredOnly")}
+          </label>
         </div>
 
         <div>

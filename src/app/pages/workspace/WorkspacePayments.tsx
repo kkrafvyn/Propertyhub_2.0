@@ -233,6 +233,32 @@ export function WorkspacePayments({
     }
   };
 
+  const handlePartialReleaseEscrow = async (hold: any) => {
+    const amountInput = window.prompt(
+      `Release partial amount (max ${formatPaymentAmount(hold.amount_minor, hold.currency)}):`
+    );
+    if (!amountInput?.trim()) return;
+
+    const amountMinor = Math.round(Number(amountInput) * 100);
+    if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
+      toast.error("Enter a valid amount.");
+      return;
+    }
+
+    try {
+      setReleasingHoldId(hold.id);
+      await escrowService.releasePartialEscrowHold(hold.id, amountMinor);
+      toast.success("Partial escrow released.");
+      const holds = await escrowService.getOrganizationEscrowHolds(organization.id);
+      setEscrowHolds(holds || []);
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to release partial escrow.");
+    } finally {
+      setReleasingHoldId(null);
+    }
+  };
+
   const handleDisputeEscrow = async (holdId: string) => {
     const note = window.prompt("Describe the escrow dispute:");
     if (!note?.trim()) return;
@@ -465,6 +491,14 @@ export function WorkspacePayments({
                         disabled={releasingHoldId === hold.id}
                       >
                         {releasingHoldId === hold.id ? "Releasing..." : "Release escrow"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void handlePartialReleaseEscrow(hold)}
+                        disabled={releasingHoldId === hold.id}
+                      >
+                        Partial release
                       </Button>
                       <Button
                         size="sm"

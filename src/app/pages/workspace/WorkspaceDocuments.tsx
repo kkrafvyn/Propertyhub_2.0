@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FileSignature, Globe, History, PenSquare, Plus } from "lucide-react";
+import { Download, FileSignature, Globe, History, PenSquare, Plus, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
@@ -84,6 +84,10 @@ export function WorkspaceDocuments({
     signerEmail: "",
     signerRole: "organization_representative",
   });
+  const [previewDocument, setPreviewDocument] = useState<any | null>(null);
+  const [versionHistory, setVersionHistory] = useState<any[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [uploadingDocId, setUploadingDocId] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
@@ -298,6 +302,39 @@ export function WorkspaceDocuments({
     }
   };
 
+  const handleShowVersions = async (document: any) => {
+    try {
+      setLoadingVersions(true);
+      const versions = await documentCenterService.getDocumentVersions(document.document_family_id);
+      setVersionHistory(versions);
+      setPreviewDocument(document);
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to load version history.");
+    } finally {
+      setLoadingVersions(false);
+    }
+  };
+
+  const handleUploadSignedCopy = async (document: any, file: File) => {
+    try {
+      setUploadingDocId(document.id);
+      await documentCenterService.uploadSignedCopy({
+        documentId: document.id,
+        organizationId: organization.id,
+        file,
+        uploadedBy: currentUserId,
+      });
+      toast.success("Signed copy uploaded.");
+      await loadData();
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to upload signed copy.");
+    } finally {
+      setUploadingDocId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -388,8 +425,51 @@ export function WorkspaceDocuments({
                     </div>
 
                     <div className="flex flex-wrap gap-2 lg:justify-end">
-                      <Button size="sm" variant="outline" onClick={() => handleOpenVersionDialog(latest)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setPreviewDocument(latest)}
+                      >
+                        View
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => documentCenterService.triggerMarkdownDownload(latest)}
+                      >
+                        <Download className="w-4 h-4" />
+                        Download
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => void handleShowVersions(latest)}>
                         <History className="w-4 h-4" />
+                        Versions
+                      </Button>
+                      <label className="inline-flex cursor-pointer">
+                        <input
+                          id={`upload-${latest.id}`}
+                          type="file"
+                          accept=".pdf,image/*"
+                          className="hidden"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (file) void handleUploadSignedCopy(latest, file);
+                            event.currentTarget.value = "";
+                          }}
+                          disabled={uploadingDocId === latest.id}
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          type="button"
+                          disabled={uploadingDocId === latest.id}
+                          onClick={() => window.document.getElementById(`upload-${latest.id}`)?.click()}
+                        >
+                          <Upload className="w-4 h-4" />
+                          {uploadingDocId === latest.id ? "Uploading..." : "Upload copy"}
+                        </Button>
+                      </label>
+                      <Button size="sm" variant="outline" onClick={() => handleOpenVersionDialog(latest)}>
+                        <PenSquare className="w-4 h-4" />
                         New Version
                       </Button>
                       <Button
@@ -651,6 +731,57 @@ export function WorkspaceDocuments({
             <Button onClick={() => void handleSignDocument()} disabled={saving}>
               {saving ? "Signing..." : "Complete Signature"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(previewDocument)} onOpenChange={() => {
+        setPreviewDocument(null);
+        setVersionHistory([]);
+      }}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{previewDocument?.title || "Document"}</DialogTitle>
+            <DialogDescription>
+              Preview content and version history for this document family.
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingVersions ? (
+            <p className="text-sm text-muted-foreground">Loading versions...</p>
+          ) : versionHistory.length > 0 ? (
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {versionHistory.map((version) => (
+                <div key={version.id} className="flex items-center justify-between text-sm border border-border rounded-lg p-2">
+                  <span>v{version.version_number} · {formatLabel(version.status)}</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPreviewDocument(version)}
+                  >
+                    Open
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          <pre className="whitespace-pre-wrap rounded-lg border border-border bg-secondary/20 p-4 text-sm max-h-[50vh] overflow-y-auto">
+            {previewDocument?.content_markdown || "No document content available."}
+          </pre>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setPreviewDocument(null);
+              setVersionHistory([]);
+            }}>
+              Close
+            </Button>
+            {previewDocument ? (
+              <Button onClick={() => documentCenterService.triggerMarkdownDownload(previewDocument)}>
+                Download
+              </Button>
+            ) : null}
           </DialogFooter>
         </DialogContent>
       </Dialog>

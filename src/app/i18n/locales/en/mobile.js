@@ -120,7 +120,8 @@ export default {
       "monthlyHomes": "Monthly homes",
       "shortStays": "Short stays",
       "verifiedAgencies": "Verified agencies",
-      "contextNav": "Contextual navigation"
+      "contextNav": "Contextual navigation",
+      "offlineCache": "Showing saved listings from your last visit while offline."
     },
     "agents": "Agents",
     "homeScreen": {

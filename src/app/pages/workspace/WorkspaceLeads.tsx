@@ -35,10 +35,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/ta
 import { Textarea } from "../../components/ui/textarea";
 import type { Database } from "../../../lib/database.types";
 import { dealCaseService } from "../../../lib/dealcase.service";
+import { workflowOrchestratorService } from "../../../lib/workflow-orchestrator.service";
 import { messageService } from "../../../lib/message.service";
 import { organizationService } from "../../../lib/organization.service";
 import { paymentService } from "../../../lib/payment.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
+import { inspectionService } from "../../../lib/inspection.service";
 import { PurchaseNegotiationPanel } from "./PurchaseNegotiationPanel";
 import { savedPropertyService } from "../../../lib/savedproperty.service";
 import { savedSearchAlertService } from "../../../lib/saved-search-alert.service";
@@ -215,6 +217,7 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
   const [sharedConversations, setSharedConversations] = useState<any[]>([]);
   const [organizationViewings, setOrganizationViewings] = useState<any[]>([]);
   const [organizationPayments, setOrganizationPayments] = useState<any[]>([]);
+  const [organizationInspections, setOrganizationInspections] = useState<any[]>([]);
   const [leadProfiles, setLeadProfiles] = useState<Record<string, any>>({});
   const [memberProfiles, setMemberProfiles] = useState<Record<string, any>>({});
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
@@ -264,19 +267,21 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
     try {
       setLoading(true);
 
-      const [organizationCases, inboxConversations, members, viewings, payments] =
+      const [organizationCases, inboxConversations, members, viewings, payments, inspections] =
         await Promise.all([
           dealCaseService.getDealCasesByOrganization(organization.id),
           messageService.getOrganizationInbox(organization.id),
           organizationService.getOrganizationMembers(organization.id),
           propertyViewingService.getOrganizationViewings(organization.id),
           paymentService.getOrganizationPropertyTransactions(organization.id),
+          inspectionService.getOrganizationInspections(organization.id),
         ]);
 
       setCases(organizationCases || []);
       setSharedConversations(inboxConversations || []);
       setOrganizationViewings(viewings || []);
       setOrganizationPayments(payments || []);
+      setOrganizationInspections(inspections || []);
       setMemberProfiles(
         (members || []).reduce<Record<string, any>>((acc, member) => {
           if (member.user_id) {
@@ -558,7 +563,7 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
         await dealCaseService.assignDealCase(caseId, currentUserId);
       }
       if (action === "approve") {
-        await dealCaseService.approveDealCase(caseId);
+        await workflowOrchestratorService.approveDealCase(caseId, currentUserId);
       }
       if (action === "reject") {
         await dealCaseService.rejectDealCase(caseId);
@@ -801,6 +806,7 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
           <TabsTrigger value="viewings">Viewings</TabsTrigger>
+          <TabsTrigger value="inspections">Inspections</TabsTrigger>
           <TabsTrigger value="inbox">Shared Inbox</TabsTrigger>
         </TabsList>
 
@@ -1349,6 +1355,61 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="inspections">
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Property inspections</h2>
+            {organizationInspections.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Inspections are auto-scheduled when purchase offers are approved.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {organizationInspections.map((inspection) => (
+                  <div
+                    key={inspection.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-4"
+                  >
+                    <div>
+                      <p className="font-medium capitalize">
+                        {inspection.inspection_type?.replace(/_/g, " ")}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {inspection.listing?.property?.address || "Property"}
+                        {inspection.scheduled_at
+                          ? ` · ${new Date(inspection.scheduled_at).toLocaleString()}`
+                          : ""}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="capitalize">
+                        {inspection.status}
+                      </Badge>
+                      {inspection.status === "scheduled" ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            try {
+                              await inspectionService.completeInspection(inspection.id);
+                              toast.success("Inspection marked complete.");
+                              await loadData();
+                            } catch (error) {
+                              console.error(error);
+                              toast.error("Unable to update inspection.");
+                            }
+                          }}
+                        >
+                          Complete
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </Card>

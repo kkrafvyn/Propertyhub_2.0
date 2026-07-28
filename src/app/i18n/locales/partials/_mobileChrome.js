@@ -1,6 +1,7 @@
 /** Mobile shell chrome merged into non-English locales at load time. */
 import enMobile from '../en/mobile.js'
 import { mergeLocale } from '../../mergeLocale.js'
+import { getMobileExtras } from './_mobileExtras.js'
 
 const EN_MOBILE_SHELL = {
   mobile: {
@@ -492,5 +493,5 @@ export const MOBILE_CHROME_BY_CODE = {
 
 export function getMobileChrome(code) {
   const partial = MOBILE_CHROME_BY_CODE[code] ?? {}
-  return mergeLocale(EN_MOBILE_SHELL, partial)
+  return mergeLocale(mergeLocale(EN_MOBILE_SHELL, partial), getMobileExtras(code))
 }

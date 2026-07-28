@@ -8,6 +8,10 @@ import { Input } from "../../components/ui/Input";
 import type { Database } from "../../../lib/database.types";
 import { communicationService } from "../../../lib/communication.service";
 import { organizationService } from "../../../lib/organization.service";
+import {
+  WORKSPACE_PERMISSION_LABELS,
+  type WorkspacePermission,
+} from "../../../lib/workspace-permissions";
 import { getWorkspaceRoute } from "../../../lib/workspace";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
@@ -147,6 +151,30 @@ export function WorkspaceTeam({
     } catch (error) {
       console.error("Failed to update member role:", error);
       toast.error("Unable to update that role.");
+    }
+  };
+
+  const toggleMemberPermission = async (
+    userId: string,
+    permission: WorkspacePermission,
+    currentPermissions: string[] = []
+  ) => {
+    if (!canManageTeam) {
+      toast.error("Only owners and managers can manage permissions.");
+      return;
+    }
+
+    const next = currentPermissions.includes(permission)
+      ? currentPermissions.filter((entry) => entry !== permission)
+      : [...currentPermissions, permission];
+
+    try {
+      await organizationService.updateMemberPermissions(organization.id, userId, next);
+      toast.success("Permissions updated.");
+      await loadTeamData();
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to update permissions.");
     }
   };
 
@@ -334,6 +362,33 @@ export function WorkspaceTeam({
                     <p className="text-xs text-muted-foreground mt-1">
                       Joined {new Date(member.joined_at).toLocaleDateString()}
                     </p>
+                    {canManageTeam && member.role !== "owner" ? (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {(["finance:write", "team:manage"] as WorkspacePermission[]).map((permission) => {
+                          const enabled = (member.permissions || []).includes(permission);
+                          return (
+                            <button
+                              key={permission}
+                              type="button"
+                              className={`rounded-full border px-3 py-1 text-xs ${
+                                enabled
+                                  ? "border-primary text-primary"
+                                  : "border-border text-muted-foreground"
+                              }`}
+                              onClick={() =>
+                                void toggleMemberPermission(
+                                  member.user_id,
+                                  permission,
+                                  member.permissions || []
+                                )
+                              }
+                            >
+                              {WORKSPACE_PERMISSION_LABELS[permission]}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="flex flex-wrap gap-3">

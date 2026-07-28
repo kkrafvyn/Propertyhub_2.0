@@ -9,6 +9,7 @@ import {
   Loader2,
   Shield,
   Sparkles,
+  Star,
   Wrench,
   Zap,
 } from "lucide-react";
@@ -19,14 +20,19 @@ import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { communicationService, type NotificationRecord } from "../../../lib/communication.service";
 import { documentCenterService } from "../../../lib/document-center.service";
+import { aiAssistantService } from "../../../lib/ai-assistant.service";
 import { mortgageInsuranceService } from "../../../lib/mortgage-insurance.service";
 import { maintenanceService } from "../../../lib/maintenance.service";
 import { vendorService } from "../../../lib/vendor.service";
 import { walletService } from "../../../lib/wallet.service";
+import { escrowService } from "../../../lib/escrow.service";
 import { ActivityTimeline, EmptyState } from "../../components/ux";
 import { CONSUMER_PAGE_CONFIG } from "../../lib/consumer-page-config";
 import { buildPurchaseTimeline, buildMaintenanceTimeline, buildEscrowTimeline } from "../../lib/workflow-timeline";
 import { purchaseWorkflowService } from "../../../lib/purchase-workflow.service";
+import { workflowOrchestratorService } from "../../../lib/workflow-orchestrator.service";
+import { CONSUMER_ROUTES, messageThreadPath } from "../../lib/consumer-routes";
+import { resolveDeepLinkPath, mobileCaptureProps } from "../../../lib/deep-link";
 
 function formatMoney(amountMinor?: number | null, currency = "GHS") {
   return walletService.formatWalletAmount(amountMinor, currency);
@@ -43,7 +49,25 @@ export function ResidentHomeSection({ profile }: { profile: any | null }) {
     );
   }
 
+  if (!profile.smart_access_enabled) {
+    return (
+      <section className="space-y-6">
+        <Card className="p-8 text-center">
+          <h3 className="text-lg font-semibold mb-2">Smart property access pending</h3>
+          <p className="text-muted-foreground">
+            Your property owner has not enabled smart building access for this lease yet. You will be
+            notified when door codes, meters, and connected devices become available.
+          </p>
+        </Card>
+      </section>
+    );
+  }
+
   const announcements = Array.isArray(profile.announcements) ? profile.announcements : [];
+  const devices = Array.isArray(profile.devices) ? profile.devices : [];
+  const doorLock = devices.find((device: any) => device.device_type === "door_lock");
+  const energyMeter = devices.find((device: any) => device.device_type === "energy_meter");
+  const waterMeter = devices.find((device: any) => device.device_type === "water_meter");
 
   return (
     <section className="space-y-6">
@@ -55,22 +79,47 @@ export function ResidentHomeSection({ profile }: { profile: any | null }) {
         <Card className="p-6">
           <DoorOpen className="w-5 h-5 text-primary mb-2" />
           <p className="text-sm text-muted-foreground">Door access</p>
-          <p className="text-xl font-semibold">{profile.door_access_code || "Assigned at move-in"}</p>
+          <p className="text-xl font-semibold">
+            {doorLock?.access_code || profile.door_access_code || "Assigned at move-in"}
+          </p>
           <p className="text-xs text-muted-foreground mt-2">
-            Visitor pass {profile.visitor_pass_enabled ? "enabled" : "disabled"}
+            {doorLock ? `${doorLock.label} · ${doorLock.status}` : `Visitor pass ${profile.visitor_pass_enabled ? "enabled" : "disabled"}`}
           </p>
         </Card>
         <Card className="p-6">
           <Zap className="w-5 h-5 text-primary mb-2" />
           <p className="text-sm text-muted-foreground">Energy usage</p>
-          <p className="text-xl font-semibold">{profile.energy_kwh} kWh</p>
+          <p className="text-xl font-semibold">
+            {energyMeter?.last_reading?.kwh ?? profile.energy_kwh ?? "—"} kWh
+          </p>
         </Card>
         <Card className="p-6">
           <Droplets className="w-5 h-5 text-primary mb-2" />
           <p className="text-sm text-muted-foreground">Water usage</p>
-          <p className="text-xl font-semibold">{profile.water_m3} m³</p>
+          <p className="text-xl font-semibold">
+            {waterMeter?.last_reading?.m3 ?? profile.water_m3 ?? "—"} m³
+          </p>
         </Card>
       </div>
+
+      {devices.length > 0 ? (
+        <Card className="p-6">
+          <h3 className="font-semibold mb-3">Connected devices</h3>
+          <div className="space-y-2">
+            {devices.map((device: any) => (
+              <div key={device.id} className="flex items-center justify-between text-sm">
+                <span>
+                  {device.label}
+                  {device.room ? ` · ${device.room}` : ""}
+                </span>
+                <Badge variant="outline" className="capitalize">
+                  {device.status}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
 
       <Card className="p-6">
         <h3 className="font-semibold mb-3">Building announcements</h3>
@@ -146,7 +195,11 @@ export function NotificationsCenterSection({
         await communicationService.markAsRead(notification.id);
         await onRefresh();
       }
-      navigate(notification.action_url || "/app/notifications");
+      if (notification.conversation_id) {
+        navigate(messageThreadPath(notification.conversation_id));
+        return;
+      }
+      navigate(resolveDeepLinkPath(notification.action_url, CONSUMER_ROUTES.notifications));
     } catch (error) {
       console.error(error);
       toast.error("Unable to open that notification.");
@@ -314,6 +367,15 @@ export function DocumentFoldersSection({
 }) {
   const [loading, setLoading] = useState(true);
   const [folders, setFolders] = useState<Record<string, any[]>>({});
+  const [previewDocument, setPreviewDocument] = useState<any | null>(null);
+  const [documentSummary, setDocumentSummary] = useState<string | null>(null);
+  const [signingId, setSigningId] = useState<string | null>(null);
+  const [downloadingAll, setDownloadingAll] = useState(false);
+
+  const reloadFolders = async () => {
+    const nextFolders = await documentCenterService.getUserDocumentsByFolder(userId);
+    setFolders(nextFolders);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -336,6 +398,38 @@ export function DocumentFoldersSection({
       cancelled = true;
     };
   }, [userId]);
+
+  const handleSign = async (document: any) => {
+    try {
+      setSigningId(document.id);
+      await documentCenterService.signDocument({
+        documentId: document.id,
+        signerUserId: userId,
+        signerName: "Client",
+        signerRole: "client",
+      });
+      toast.success("Document signed.");
+      await reloadFolders();
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to sign document.");
+    } finally {
+      setSigningId(null);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    try {
+      setDownloadingAll(true);
+      await documentCenterService.downloadAllUserDocuments(userId);
+      toast.success("Document vault downloaded.");
+    } catch (error) {
+      console.error(error);
+      toast.error("No documents are ready to download yet.");
+    } finally {
+      setDownloadingAll(false);
+    }
+  };
 
   const folderOrder = [
     "IDs",
@@ -360,6 +454,14 @@ export function DocumentFoldersSection({
 
   return (
     <section className="space-y-6">
+      {hasDocuments ? (
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={() => void handleDownloadAll()} disabled={downloadingAll}>
+            {downloadingAll ? "Preparing..." : "Download all documents"}
+          </Button>
+        </div>
+      ) : null}
+
       {!hasDocuments ? (
         <Card className="p-8 text-center text-muted-foreground">
           <FileText className="w-10 h-10 mx-auto mb-3 opacity-60" />
@@ -377,24 +479,109 @@ export function DocumentFoldersSection({
             <Card key={folder} className="p-6">
               <h3 className="font-semibold mb-4">{folder}</h3>
               <div className="space-y-3">
-                {(folders[folder] || []).map((document) => (
+                {(folders[folder] || []).map((document) => {
+                  const signedCopyUrl = documentCenterService.getSignedCopyPublicUrl(document);
+                  const canSign =
+                    document.signature_required &&
+                    !["signed", "archived"].includes(String(document.status));
+
+                  return (
                   <div key={document.id} className="flex items-start gap-3 rounded-lg border border-border p-3">
                     <FileText className="w-5 h-5 text-primary mt-0.5" />
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium">{document.title}</p>
                       <p className="text-sm text-muted-foreground capitalize">
                         {document.status?.replace(/_/g, " ")}
+                        {document.version_number ? ` · v${document.version_number}` : ""}
                         {document.listing?.property?.address
                           ? ` · ${document.listing.property.address}`
                           : ""}
                       </p>
                     </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setPreviewDocument(document)}
+                      >
+                        View
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => documentCenterService.triggerMarkdownDownload(document)}
+                      >
+                        Download
+                      </Button>
+                      {signedCopyUrl ? (
+                        <a
+                          href={signedCopyUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted"
+                        >
+                          Attachment
+                        </a>
+                      ) : null}
+                      {canSign ? (
+                        <Button
+                          size="sm"
+                          onClick={() => void handleSign(document)}
+                          disabled={signingId === document.id}
+                        >
+                          {signingId === document.id ? "Signing..." : "Sign"}
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
-                ))}
+                );
+                })}
               </div>
             </Card>
           ))
       )}
+
+      {previewDocument ? (
+        <Card className="p-6 space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="font-semibold">{previewDocument.title}</h3>
+              <p className="text-sm text-muted-foreground capitalize">
+                {previewDocument.status?.replace(/_/g, " ")}
+              </p>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => {
+              setPreviewDocument(null);
+              setDocumentSummary(null);
+            }}>
+              Close
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const summary = aiAssistantService.summarizeDocument(
+                  previewDocument.title,
+                  previewDocument.content_markdown || ""
+                );
+                setDocumentSummary(summary);
+              }}
+            >
+              Summarize with AI
+            </Button>
+          </div>
+          {documentSummary ? (
+            <pre className="whitespace-pre-wrap rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
+              {documentSummary}
+            </pre>
+          ) : null}
+          <pre className="whitespace-pre-wrap rounded-lg border border-border bg-muted/20 p-4 text-sm">
+            {previewDocument.content_markdown || "No document content available."}
+          </pre>
+        </Card>
+      ) : null}
     </section>
   );
 }
@@ -421,6 +608,7 @@ export function ApplicationsWorkflowSection({
   const [counterMessage, setCounterMessage] = useState<Record<string, string>>({});
   const [signingDocId, setSigningDocId] = useState<string | null>(null);
   const [loadingDealId, setLoadingDealId] = useState<string | null>(null);
+  const [downloadingPackId, setDownloadingPackId] = useState<string | null>(null);
 
   const loadPurchaseWorkflow = async (dealCaseId: string) => {
     try {
@@ -507,6 +695,16 @@ export function ApplicationsWorkflowSection({
         signerName: userName || "Buyer",
         signerEmail: userEmail,
       });
+      const signedDoc = workflowData[dealCaseId]?.pendingDocs?.find(
+        (doc: any) => doc.id === documentId
+      );
+      if (signedDoc?.document_type) {
+        void workflowOrchestratorService.onDocumentSigned(
+          dealCaseId,
+          signedDoc.document_type,
+          userId
+        );
+      }
       toast.success("Document signed.");
       await loadPurchaseWorkflow(dealCaseId);
     } catch (error) {
@@ -514,6 +712,19 @@ export function ApplicationsWorkflowSection({
       toast.error("Unable to sign document.");
     } finally {
       setSigningDocId(null);
+    }
+  };
+
+  const downloadDocumentPack = async (dealCaseId: string) => {
+    try {
+      setDownloadingPackId(dealCaseId);
+      await documentCenterService.downloadDealCasePack(dealCaseId, userId);
+      toast.success("Document pack downloaded.");
+    } catch (error) {
+      console.error(error);
+      toast.error("No documents are ready to download yet.");
+    } finally {
+      setDownloadingPackId(null);
     }
   };
 
@@ -597,11 +808,21 @@ export function ApplicationsWorkflowSection({
                 </Badge>
               ) : null}
               {isPurchase ? (
-                <Link to="/app/documents">
-                  <Button size="sm" variant="outline">
-                    View documents
+                <>
+                  <Link to="/app/documents">
+                    <Button size="sm" variant="outline">
+                      View documents
+                    </Button>
+                  </Link>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void downloadDocumentPack(item.id)}
+                    disabled={downloadingPackId === item.id}
+                  >
+                    {downloadingPackId === item.id ? "Preparing..." : "Download pack"}
                   </Button>
-                </Link>
+                </>
               ) : null}
             </div>
 
@@ -730,6 +951,10 @@ export function MaintenanceWithVendorsSection({
   const [description, setDescription] = useState("");
   const [leaseId, setLeaseId] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [ratingRequestId, setRatingRequestId] = useState<string | null>(null);
+  const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [ratingComments, setRatingComments] = useState<Record<string, string>>({});
   const [vendors, setVendors] = useState<any[]>([]);
   const [loadingVendors, setLoadingVendors] = useState(true);
   const [assigning, setAssigning] = useState<string | null>(null);
@@ -760,7 +985,7 @@ export function MaintenanceWithVendorsSection({
 
     try {
       setSubmitting(true);
-      await maintenanceService.createRequest({
+      const created = await maintenanceService.createRequest({
         tenantUserId: userId,
         organizationId: lease.organization_id,
         leaseId: lease.id,
@@ -768,9 +993,17 @@ export function MaintenanceWithVendorsSection({
         title: title.trim(),
         description: description.trim(),
       });
+      if (photoFiles.length > 0) {
+        await maintenanceService.uploadRequestPhotos({
+          organizationId: lease.organization_id,
+          requestId: created.id,
+          files: photoFiles,
+        });
+      }
       toast.success("Maintenance request submitted.");
       setTitle("");
       setDescription("");
+      setPhotoFiles([]);
       await onCreated();
     } catch (error) {
       console.error(error);
@@ -818,6 +1051,16 @@ export function MaintenanceWithVendorsSection({
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Describe the issue"
         />
+        <div>
+          <label className="text-sm text-muted-foreground block mb-2">Photos (optional)</label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(event) => setPhotoFiles(Array.from(event.target.files || []))}
+            {...mobileCaptureProps()}
+          />
+        </div>
         <Button onClick={() => void handleSubmit()} disabled={submitting || activeLeases.length === 0}>
           {submitting ? "Submitting..." : "Submit request"}
         </Button>
@@ -861,6 +1104,19 @@ export function MaintenanceWithVendorsSection({
                   {request.status.replace(/_/g, " ")}
                 </Badge>
               </div>
+              {Array.isArray(request.photo_urls) && request.photo_urls.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {request.photo_urls.map((url: string) => (
+                    <a key={url} href={url} target="_blank" rel="noreferrer">
+                      <img
+                        src={url}
+                        alt="Maintenance evidence"
+                        className="h-20 w-20 rounded-lg border border-border object-cover"
+                      />
+                    </a>
+                  ))}
+                </div>
+              ) : null}
               {request.status === "open" && vendors[0] ? (
                 <Button
                   size="sm"
@@ -872,6 +1128,70 @@ export function MaintenanceWithVendorsSection({
                     ? "Assigning..."
                     : `Hire ${vendors[0].business_name}`}
                 </Button>
+              ) : null}
+              {request.status === "resolved" && !request.tenant_rating ? (
+                <div className="rounded-lg border border-border p-4 space-y-3">
+                  <p className="text-sm font-medium">Rate this repair</p>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        className="p-1"
+                        onClick={() =>
+                          setRatings((current) => ({ ...current, [request.id]: value }))
+                        }
+                      >
+                        <Star
+                          className={`w-5 h-5 ${
+                            (ratings[request.id] || 0) >= value
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-muted-foreground"
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <Input
+                    value={ratingComments[request.id] || ""}
+                    onChange={(event) =>
+                      setRatingComments((current) => ({
+                        ...current,
+                        [request.id]: event.target.value,
+                      }))
+                    }
+                    placeholder="Optional comment"
+                  />
+                  <Button
+                    size="sm"
+                    disabled={!ratings[request.id] || ratingRequestId === request.id}
+                    onClick={async () => {
+                      try {
+                        setRatingRequestId(request.id);
+                        await maintenanceService.submitTenantRating(
+                          request.id,
+                          userId,
+                          ratings[request.id],
+                          ratingComments[request.id]
+                        );
+                        toast.success("Thanks for your feedback.");
+                        await onCreated();
+                      } catch (error) {
+                        console.error(error);
+                        toast.error("Unable to submit rating.");
+                      } finally {
+                        setRatingRequestId(null);
+                      }
+                    }}
+                  >
+                    {ratingRequestId === request.id ? "Submitting..." : "Submit rating"}
+                  </Button>
+                </div>
+              ) : request.tenant_rating ? (
+                <p className="text-sm text-muted-foreground">
+                  Your rating: {request.tenant_rating}/5
+                  {request.tenant_rating_comment ? ` — ${request.tenant_rating_comment}` : ""}
+                </p>
               ) : null}
               <ActivityTimeline steps={buildMaintenanceTimeline(request)} />
             </Card>
@@ -907,6 +1227,24 @@ export function WalletHubSection({
 }) {
   const [methodLabel, setMethodLabel] = useState("");
   const [savingMethod, setSavingMethod] = useState(false);
+  const [disputingHoldId, setDisputingHoldId] = useState<string | null>(null);
+
+  const handleDisputeEscrow = async (holdId: string) => {
+    const note = window.prompt("Describe the issue with this escrow hold:");
+    if (!note?.trim()) return;
+
+    try {
+      setDisputingHoldId(holdId);
+      await escrowService.disputeEscrowHold(holdId, note.trim());
+      toast.success("Escrow dispute submitted.");
+      await onRefresh();
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to submit escrow dispute.");
+    } finally {
+      setDisputingHoldId(null);
+    }
+  };
 
   const handleSaveMethod = async () => {
     if (!methodLabel.trim()) {
@@ -993,6 +1331,16 @@ export function WalletHubSection({
                 </Badge>
               </div>
               <ActivityTimeline steps={buildEscrowTimeline(hold)} />
+              {hold.status === "held" ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void handleDisputeEscrow(hold.id)}
+                  disabled={disputingHoldId === hold.id}
+                >
+                  {disputingHoldId === hold.id ? "Submitting..." : "Dispute hold"}
+                </Button>
+              ) : null}
             </div>
           ))
         )}

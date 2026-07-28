@@ -15,6 +15,7 @@ import {
   type NotificationRecord,
 } from "../../lib/communication.service";
 import { supabase } from "../../lib/supabase";
+import { resolveDeepLinkPath } from "../../lib/deep-link";
 interface NotificationBellProps {
   userId: string;
 }
@@ -127,7 +128,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
       console.error("Failed to mark notification as read:", error);
     } finally {
       setOpen(false);
-      navigate(notification.action_url || "/app/notifications");
+      navigate(resolveDeepLinkPath(notification.action_url, "/app/notifications"));
     }
   };
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { Button } from "./ui/Button";
+import { mobileCaptureProps } from "../../lib/deep-link";
 
 interface PropertyMediaPickerProps {
   files: File[];
@@ -68,6 +69,7 @@ export function PropertyMediaPicker({
             className="sr-only"
             onChange={handleSelect}
             disabled={disabled || files.length >= maxFiles}
+            {...mobileCaptureProps()}
           />
           <Button type="button" variant="outline" disabled={disabled || files.length >= maxFiles}>
             <ImagePlus className="w-4 h-4" />

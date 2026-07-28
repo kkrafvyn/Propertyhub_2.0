@@ -7,12 +7,17 @@ import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { leaseService } from "../../../lib/lease.service";
 import { leaseWorkflowService } from "../../../lib/lease-workflow.service";
+import { moveChecklistService } from "../../../lib/move-checklist.service";
 import { walletService } from "../../../lib/wallet.service";
 import { ActivityTimeline, EmptyState } from "../../components/ux";
 import { CONSUMER_PAGE_CONFIG } from "../../lib/consumer-page-config";
 import { buildBookingTimeline, buildEscrowTimeline, buildLeaseTimeline, buildMaintenanceTimeline } from "../../lib/workflow-timeline";
 import { maintenanceService } from "../../../lib/maintenance.service";
+import { mobileCaptureProps } from "../../../lib/deep-link";
+import { tenantNoticeService } from "../../../lib/tenant-notice.service";
+import { inspectionService } from "../../../lib/inspection.service";
 import { bookingService } from "../../../lib/booking.service";
+import MessageHostButton from "../../components/baytmiftah/chat/MessageHostButton";
 import { monitoring } from "../../../lib/monitoring";
 
 function formatMoney(amountMinor?: number | null, currency = "GHS") {
@@ -146,12 +151,54 @@ export function WalletSection({
 export function LeasesSection({ leases, userId }: { leases: any[]; userId?: string }) {
   const [payingLeaseId, setPayingLeaseId] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<Record<string, any[]>>({});
+  const [checklists, setChecklists] = useState<Record<string, any[]>>({});
   const [renewingId, setRenewingId] = useState<string | null>(null);
   const [signingId, setSigningId] = useState<string | null>(null);
+  const [loadingChecklistId, setLoadingChecklistId] = useState<string | null>(null);
+  const [pendingLeaseDocs, setPendingLeaseDocs] = useState<Record<string, any | null>>({});
+  const [leaseFilter, setLeaseFilter] = useState<"active" | "history">("active");
+  const [notices, setNotices] = useState<any[]>([]);
+  const [inspections, setInspections] = useState<any[]>([]);
+  const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null);
+  const [signingInspectionId, setSigningInspectionId] = useState<string | null>(null);
+
+  const activeStatuses = new Set(["active", "pending", "signed"]);
+  const historyStatuses = new Set(["completed", "terminated", "ended", "expired", "cancelled"]);
+
+  const filteredLeases = useMemo(() => {
+    if (leaseFilter === "active") {
+      return leases.filter((lease) => activeStatuses.has(lease.status));
+    }
+    return leases.filter((lease) => historyStatuses.has(lease.status));
+  }, [leaseFilter, leases]);
 
   const loadSchedule = async (lease: any) => {
     const rows = await leaseWorkflowService.ensureRentSchedule(lease);
     setSchedules((current) => ({ ...current, [lease.id]: rows }));
+  };
+
+  const loadChecklist = async (leaseId: string) => {
+    try {
+      setLoadingChecklistId(leaseId);
+      const rows = await moveChecklistService.ensureChecklists(leaseId);
+      setChecklists((current) => ({ ...current, [leaseId]: rows }));
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to load move checklist.");
+    } finally {
+      setLoadingChecklistId(null);
+    }
+  };
+
+  const toggleChecklistItem = async (leaseId: string, item: any) => {
+    if (!userId) return;
+    try {
+      await moveChecklistService.toggleItem(item.id, userId, !item.completed);
+      await loadChecklist(leaseId);
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to update checklist item.");
+    }
   };
 
   const handlePayRent = async (lease: any) => {
@@ -181,33 +228,205 @@ export function LeasesSection({ leases, userId }: { leases: any[]; userId?: stri
     }
   };
 
-  const handleSignLease = async (leaseId: string) => {
+  const handleSignLease = async (lease: any) => {
+    if (!userId) return;
     try {
-      setSigningId(leaseId);
-      await leaseWorkflowService.markLeaseSigned(leaseId);
-      monitoring.trackWorkflowStep("rent", "lease_signed", { leaseId });
-      toast.success("Lease marked as signed.");
+      setSigningId(lease.id);
+      await leaseWorkflowService.signLeaseDocument({
+        leaseId: lease.id,
+        userId,
+        signerName: "Tenant",
+      });
+      monitoring.trackWorkflowStep("rent", "lease_signed", { leaseId: lease.id });
+      toast.success("Lease signed.");
+      setPendingLeaseDocs((current) => ({ ...current, [lease.id]: null }));
     } catch (error) {
       console.error(error);
-      toast.error("Unable to update lease signing status.");
+      toast.error("Unable to sign lease.");
     } finally {
       setSigningId(null);
     }
   };
 
+  useEffect(() => {
+    if (!userId) return;
+    void tenantNoticeService.getTenantNotices(userId).then(setNotices).catch(() => setNotices([]));
+    void inspectionService.getTenantInspections(userId).then(setInspections).catch(() => setInspections([]));
+  }, [userId]);
+
+  const handleAcknowledgeNotice = async (noticeId: string) => {
+    if (!userId) return;
+    try {
+      setAcknowledgingId(noticeId);
+      await tenantNoticeService.acknowledgeNotice(noticeId, userId);
+      toast.success("Notice acknowledged.");
+      const rows = await tenantNoticeService.getTenantNotices(userId);
+      setNotices(rows);
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to acknowledge notice.");
+    } finally {
+      setAcknowledgingId(null);
+    }
+  };
+
+  const handleSignInspection = async (inspectionId: string) => {
+    if (!userId) return;
+    try {
+      setSigningInspectionId(inspectionId);
+      await inspectionService.tenantSignOff(inspectionId, userId, "Tenant");
+      toast.success("Inspection signed off.");
+      const rows = await inspectionService.getTenantInspections(userId);
+      setInspections(rows);
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to sign inspection.");
+    } finally {
+      setSigningInspectionId(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!userId || leases.length === 0) return;
+    let cancelled = false;
+
+    void Promise.all(
+      leases.map(async (lease) => {
+        const pending = await leaseWorkflowService.getPendingLeaseDocument(lease, userId);
+        return [lease.id, pending] as const;
+      })
+    ).then((entries) => {
+      if (cancelled) return;
+      setPendingLeaseDocs(Object.fromEntries(entries));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [leases, userId]);
+
   return (
     <div className="space-y-4">
-      {leases.length === 0 ? (
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant={leaseFilter === "active" ? "default" : "outline"}
+          onClick={() => setLeaseFilter("active")}
+        >
+          Active leases
+        </Button>
+        <Button
+          size="sm"
+          variant={leaseFilter === "history" ? "default" : "outline"}
+          onClick={() => setLeaseFilter("history")}
+        >
+          Lease history
+        </Button>
+      </div>
+
+      {notices.length > 0 ? (
+        <Card className="p-5 space-y-3">
+          <h3 className="font-semibold">Notices from your landlord</h3>
+          {notices.slice(0, 5).map((notice) => (
+            <div key={notice.id} className="rounded-lg border border-border p-4 space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium">{notice.title}</p>
+                  <p className="text-sm text-muted-foreground">{notice.body}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {notice.organization?.name || "Property team"} ·{" "}
+                    {new Date(notice.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <Badge variant="outline" className="capitalize">
+                  {notice.status}
+                </Badge>
+              </div>
+              {notice.status === "sent" ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void handleAcknowledgeNotice(notice.id)}
+                  disabled={acknowledgingId === notice.id}
+                >
+                  {acknowledgingId === notice.id ? "Acknowledging..." : "Acknowledge"}
+                </Button>
+              ) : null}
+            </div>
+          ))}
+        </Card>
+      ) : null}
+
+      {inspections.length > 0 ? (
+        <Card className="p-5 space-y-3">
+          <h3 className="font-semibold">Property inspections</h3>
+          {inspections.map((inspection) => {
+            const checklist = Array.isArray(inspection.checklist) ? inspection.checklist : [];
+            return (
+              <div key={inspection.id} className="rounded-lg border border-border p-4 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium capitalize">
+                      {inspection.inspection_type?.replace(/_/g, " ")}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {inspection.listing?.property?.address || "Property"}
+                      {inspection.scheduled_at
+                        ? ` · ${new Date(inspection.scheduled_at).toLocaleString()}`
+                        : ""}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="capitalize">
+                    {inspection.status}
+                  </Badge>
+                </div>
+                {checklist.length > 0 ? (
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    {checklist.map((item: any) => (
+                      <li key={item.key}>
+                        {item.completed ? "✓" : "○"} {item.label}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {inspection.status !== "completed" ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void handleSignInspection(inspection.id)}
+                    disabled={signingInspectionId === inspection.id}
+                  >
+                    {signingInspectionId === inspection.id ? "Signing..." : "Sign off inspection"}
+                  </Button>
+                ) : null}
+              </div>
+            );
+          })}
+        </Card>
+      ) : null}
+
+      {filteredLeases.length === 0 ? (
         <EmptyState
           icon={FileText}
-          title={CONSUMER_PAGE_CONFIG.leases.emptyTitle || "You don't have an active lease"}
-          description={CONSUMER_PAGE_CONFIG.leases.emptyDescription || ""}
-          actionLabel={CONSUMER_PAGE_CONFIG.leases.emptyActionLabel}
-          actionHref={CONSUMER_PAGE_CONFIG.leases.emptyActionHref}
+          title={
+            leaseFilter === "active"
+              ? CONSUMER_PAGE_CONFIG.leases.emptyTitle || "You don't have an active lease"
+              : "No past leases"
+          }
+          description={
+            leaseFilter === "active"
+              ? CONSUMER_PAGE_CONFIG.leases.emptyDescription || ""
+              : "Completed and ended leases will appear here."
+          }
+          actionLabel={leaseFilter === "active" ? CONSUMER_PAGE_CONFIG.leases.emptyActionLabel : undefined}
+          actionHref={leaseFilter === "active" ? CONSUMER_PAGE_CONFIG.leases.emptyActionHref : undefined}
         />
       ) : (
-        leases.map((lease) => {
+        filteredLeases.map((lease) => {
           const schedule = schedules[lease.id] || [];
+          const checklist = checklists[lease.id] || [];
+          const moveInItems = checklist.filter((item) => item.checklist_type === "move_in");
+          const moveOutItems = checklist.filter((item) => item.checklist_type === "move_out");
 
           return (
             <Card key={lease.id} className="p-5 space-y-4">
@@ -239,10 +458,14 @@ export function LeasesSection({ leases, userId }: { leases: any[]; userId?: stri
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => void handleSignLease(lease.id)}
+                        onClick={() => void handleSignLease(lease)}
                         disabled={signingId === lease.id}
                       >
-                        {signingId === lease.id ? "Saving..." : "Mark signed"}
+                        {signingId === lease.id
+                          ? "Signing..."
+                          : pendingLeaseDocs[lease.id]
+                            ? "Sign lease"
+                            : "Mark signed"}
                       </Button>
                     ) : null}
                     <Button
@@ -287,6 +510,62 @@ export function LeasesSection({ leases, userId }: { leases: any[]; userId?: stri
                 </div>
               )}
 
+              <div className="rounded-lg border border-border p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="text-sm font-semibold">Move-in / move-out checklist</h4>
+                  {checklist.length === 0 ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void loadChecklist(lease.id)}
+                      disabled={loadingChecklistId === lease.id}
+                    >
+                      {loadingChecklistId === lease.id ? "Loading..." : "Load checklist"}
+                    </Button>
+                  ) : null}
+                </div>
+                {moveInItems.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Move-in
+                    </p>
+                    {moveInItems.map((item) => (
+                      <label key={item.id} className="flex items-center gap-3 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={item.completed}
+                          onChange={() => void toggleChecklistItem(lease.id, item)}
+                          disabled={!userId}
+                        />
+                        <span className={item.completed ? "line-through text-muted-foreground" : ""}>
+                          {item.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                ) : null}
+                {moveOutItems.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Move-out
+                    </p>
+                    {moveOutItems.map((item) => (
+                      <label key={item.id} className="flex items-center gap-3 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={item.completed}
+                          onChange={() => void toggleChecklistItem(lease.id, item)}
+                          disabled={!userId}
+                        />
+                        <span className={item.completed ? "line-through text-muted-foreground" : ""}>
+                          {item.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+
               <ActivityTimeline steps={buildLeaseTimeline(lease, schedule)} />
             </Card>
           );
@@ -311,6 +590,10 @@ export function MaintenanceSection({
   const [description, setDescription] = useState("");
   const [leaseId, setLeaseId] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [ratingRequestId, setRatingRequestId] = useState<string | null>(null);
+  const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [ratingComments, setRatingComments] = useState<Record<string, string>>({});
 
   const activeLeases = useMemo(
     () => leases.filter((lease) => lease.status === "active"),
@@ -330,7 +613,7 @@ export function MaintenanceSection({
 
     try {
       setSubmitting(true);
-      await maintenanceService.createRequest({
+      const created = await maintenanceService.createRequest({
         tenantUserId: userId,
         organizationId: lease.organization_id,
         leaseId: lease.id,
@@ -338,10 +621,18 @@ export function MaintenanceSection({
         title: title.trim(),
         description: description.trim(),
       });
+      if (photoFiles.length > 0) {
+        await maintenanceService.uploadRequestPhotos({
+          organizationId: lease.organization_id,
+          requestId: created.id,
+          files: photoFiles,
+        });
+      }
       monitoring.trackWorkflowStep("maintenance", "request_submitted");
       toast.success("Maintenance request submitted.");
       setTitle("");
       setDescription("");
+      setPhotoFiles([]);
       await onCreated();
     } catch (error) {
       console.error(error);
@@ -375,6 +666,16 @@ export function MaintenanceSection({
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Describe the issue"
         />
+        <div>
+          <label className="text-sm text-muted-foreground block mb-2">Photos (optional)</label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(event) => setPhotoFiles(Array.from(event.target.files || []))}
+            {...mobileCaptureProps()}
+          />
+        </div>
         <Button onClick={() => void handleSubmit()} disabled={submitting || activeLeases.length === 0}>
           {submitting ? "Submitting..." : "Submit request"}
         </Button>
@@ -395,6 +696,83 @@ export function MaintenanceSection({
                   {request.status.replace(/_/g, " ")}
                 </Badge>
               </div>
+              {Array.isArray(request.photo_urls) && request.photo_urls.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {request.photo_urls.map((url: string) => (
+                    <a key={url} href={url} target="_blank" rel="noreferrer">
+                      <img
+                        src={url}
+                        alt="Maintenance evidence"
+                        className="h-20 w-20 rounded-lg border border-border object-cover"
+                      />
+                    </a>
+                  ))}
+                </div>
+              ) : null}
+              {request.status === "resolved" && !request.tenant_rating ? (
+                <div className="rounded-lg border border-border p-4 space-y-3">
+                  <p className="text-sm font-medium">Rate this repair</p>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        className="p-1"
+                        onClick={() =>
+                          setRatings((current) => ({ ...current, [request.id]: value }))
+                        }
+                      >
+                        <Star
+                          className={`w-5 h-5 ${
+                            (ratings[request.id] || 0) >= value
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-muted-foreground"
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <Input
+                    value={ratingComments[request.id] || ""}
+                    onChange={(event) =>
+                      setRatingComments((current) => ({
+                        ...current,
+                        [request.id]: event.target.value,
+                      }))
+                    }
+                    placeholder="Optional comment"
+                  />
+                  <Button
+                    size="sm"
+                    disabled={!ratings[request.id] || ratingRequestId === request.id}
+                    onClick={async () => {
+                      try {
+                        setRatingRequestId(request.id);
+                        await maintenanceService.submitTenantRating(
+                          request.id,
+                          userId,
+                          ratings[request.id],
+                          ratingComments[request.id]
+                        );
+                        toast.success("Thanks for your feedback.");
+                        await onCreated();
+                      } catch (error) {
+                        console.error(error);
+                        toast.error("Unable to submit rating.");
+                      } finally {
+                        setRatingRequestId(null);
+                      }
+                    }}
+                  >
+                    {ratingRequestId === request.id ? "Submitting..." : "Submit rating"}
+                  </Button>
+                </div>
+              ) : request.tenant_rating ? (
+                <p className="text-sm text-muted-foreground">
+                  Your rating: {request.tenant_rating}/5
+                  {request.tenant_rating_comment ? ` — ${request.tenant_rating_comment}` : ""}
+                </p>
+              ) : null}
               <ActivityTimeline steps={buildMaintenanceTimeline(request)} />
             </Card>
           ))
@@ -417,20 +795,36 @@ function BookingCard({
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [reviews, setReviews] = useState<any[]>([]);
+  const [checkInInfo, setCheckInInfo] = useState<any | null>(null);
   const today = new Date().toISOString().slice(0, 10);
-  const canCheckIn = booking.status === "confirmed" && !booking.checked_in_at && booking.check_in <= today;
+  const canCheckIn =
+    booking.status === "confirmed" &&
+    booking.transaction_id &&
+    !booking.checked_in_at &&
+    booking.check_in <= today;
   const canCheckOut = booking.checked_in_at && !booking.checked_out_at;
-  const canReview = booking.status === "completed" || booking.checked_out_at;
+  const canReview =
+    (booking.status === "completed" || booking.checked_out_at) &&
+    !reviews.some((row) => row.reviewer_user_id === userId && row.reviewer_role === "guest");
   const canCancel = ["pending", "confirmed"].includes(booking.status);
+  const needsPayment =
+    booking.status === "confirmed" && !booking.transaction_id && booking.booking_mode === "request";
 
   const loadReviews = async () => {
     const rows = await bookingService.getBookingReviews(booking.id);
     setReviews(rows);
   };
 
+  const loadCheckInInfo = async () => {
+    if (booking.status !== "confirmed" && !booking.checked_in_at) return;
+    const info = await bookingService.getCheckInInstructions(booking.id);
+    setCheckInInfo(info);
+  };
+
   useEffect(() => {
     void loadReviews();
-  }, [booking.id]);
+    void loadCheckInInfo();
+  }, [booking.id, booking.status]);
 
   const runAction = async (action: string, fn: () => Promise<unknown>) => {
     try {
@@ -469,6 +863,31 @@ function BookingCard({
       </div>
 
       <div className="flex flex-wrap gap-2">
+        {needsPayment ? (
+          <Button
+            size="sm"
+            disabled={busy === "pay"}
+            onClick={() =>
+              void runAction("pay", async () => {
+                const checkout = await bookingService.payForBooking(booking);
+                window.location.href = checkout.authorizationUrl;
+              })
+            }
+          >
+            {busy === "pay" ? "Redirecting..." : "Pay now"}
+          </Button>
+        ) : null}
+        {booking.listing?.id ? (
+          <MessageHostButton
+            listing={{
+              id: booking.listing.id,
+              title: booking.listing?.property?.address || "Short stay",
+            }}
+            variant="secondary"
+            initialMessage={`Hi, I have a booking ${booking.check_in} to ${booking.check_out}.`}
+            className="!rounded-lg !px-3 !py-1.5 !text-sm"
+          />
+        ) : null}
         {canCancel ? (
           <Button
             size="sm"
@@ -503,6 +922,20 @@ function BookingCard({
           </Button>
         ) : null}
       </div>
+
+      {checkInInfo?.check_in_instructions ? (
+        <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
+          <h4 className="text-sm font-semibold">Check-in instructions</h4>
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+            {checkInInfo.check_in_instructions}
+          </p>
+          {checkInInfo.house_rules ? (
+            <p className="text-xs text-muted-foreground">
+              House rules: {checkInInfo.house_rules}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {canReview && userId ? (
         <div className="rounded-lg border border-border p-4 space-y-3">

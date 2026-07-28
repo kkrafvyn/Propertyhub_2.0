@@ -28,13 +28,15 @@ import { messageService } from "../../../lib/message.service";
 import { paymentService } from "../../../lib/payment.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
 import { savedSearchAlertService } from "../../../lib/saved-search-alert.service";
+import { aiAssistantService } from "../../../lib/ai-assistant.service";
 import { savedPropertyService } from "../../../lib/savedproperty.service";
 import { getPropertyCoverImage } from "../../../lib/property-media";
 import { userService } from "../../../lib/user.service";
 import { walletService } from "../../../lib/wallet.service";
 import { escrowService } from "../../../lib/escrow.service";
-import { leaseService } from "../../../lib/lease.service";
+import { workflowOrchestratorService } from "../../../lib/workflow-orchestrator.service";
 import { bookingService } from "../../../lib/booking.service";
+import { leaseService } from "../../../lib/lease.service";
 import { maintenanceService } from "../../../lib/maintenance.service";
 import { consumerContextService } from "../../../lib/consumer-context.service";
 import { communicationService } from "../../../lib/communication.service";
@@ -69,7 +71,11 @@ import {
 } from "./ConsumerPortalSections";
 import ChatThread, { ChatThreadHeader } from "../../components/baytmiftah/chat/ChatThread";
 import { InboxList } from "../../components/baytmiftah/chat/InboxList";
+import { subscribeToUserConversations } from "../../lib/baytmiftah/realtime";
 import { AppSettingsPanels } from "../../components/baytmiftah/AppSettings";
+import ProfileKycCard from "../../components/baytmiftah/ProfileKycCard";
+import { KycVerificationPanel } from "../../components/baytmiftah/KycVerificationPanel";
+import { ConsumerNotificationPreferences } from "../../components/baytmiftah/ConsumerNotificationPreferences";
 
 function formatRelativeTime(dateString?: string | null) {
   if (!dateString) return "Recently";
@@ -239,6 +245,7 @@ export function UserDashboard() {
   const [residentProfile, setResidentProfile] = useState<any>(null);
   const [mortgageInquiries, setMortgageInquiries] = useState<any[]>([]);
   const [savedPaymentMethods, setSavedPaymentMethods] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const section = getSection(location.pathname);
@@ -349,10 +356,37 @@ export function UserDashboard() {
 
     loadDashboard();
 
+    void aiAssistantService
+      .getRecommendations(user.id, 4)
+      .then(async (items) => {
+        if (cancelled) return;
+        if (!items || items.length === 0) {
+          await aiAssistantService.generateRecommendations(user.id).catch(() => []);
+          const refreshed = await aiAssistantService.getRecommendations(user.id, 4);
+          if (!cancelled) setRecommendations(refreshed || []);
+          return;
+        }
+        setRecommendations(items || []);
+      })
+      .catch((error) => {
+        console.error("Failed to load recommendations:", error);
+      });
+
     return () => {
       cancelled = true;
     };
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const refreshConversations = () => {
+      void messageService.getUserConversations(user.id).then(setConversations).catch(() => undefined);
+    };
+
+    const unsubscribe = subscribeToUserConversations(user.id, refreshConversations);
+    return unsubscribe;
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) return;
@@ -390,6 +424,24 @@ export function UserDashboard() {
         });
 
         if (result.status === "success") {
+          const txn = result.transaction;
+          if (
+            txn?.purpose === "deposit" &&
+            txn?.deal_case_id &&
+            !result.alreadyProcessed
+          ) {
+            void workflowOrchestratorService.onDepositPaid(txn.deal_case_id, user.id);
+          }
+
+          if (
+            txn?.purpose === "booking_fee" &&
+            txn?.booking_id &&
+            txn?.id &&
+            !result.alreadyProcessed
+          ) {
+            void bookingService.onPaymentVerified(txn.booking_id, txn.id);
+          }
+
           toast.success(
             result.alreadyProcessed
               ? "Your payment was already verified."
@@ -1111,6 +1163,9 @@ export function UserDashboard() {
               </div>
 
               <div className="flex flex-wrap gap-3">
+                <Link to={savedSearchAlertService.buildSearchUrlFromAlert(alert)}>
+                  <Button variant="default">View matches</Button>
+                </Link>
                 <Button variant="outline" onClick={() => void handleToggleAlert(alert)}>
                   {alert.is_active ? "Pause" : "Resume"}
                 </Button>
@@ -1178,6 +1233,18 @@ export function UserDashboard() {
       </Card>
 
       <Card className="p-6 lg:col-span-3">
+        <ProfileKycCard variant="desktop" />
+      </Card>
+
+      <Card className="p-6 lg:col-span-3">
+        <KycVerificationPanel />
+      </Card>
+
+      <Card className="p-6 lg:col-span-3">
+        <ConsumerNotificationPreferences userId={user!.id} />
+      </Card>
+
+      <Card className="p-6 lg:col-span-3">
         <AppSettingsPanels includeLegal />
       </Card>
     </div>
@@ -1232,6 +1299,43 @@ export function UserDashboard() {
           </div>
           {renderSavedGrid(savedProperties.slice(0, 2))}
         </section>
+
+        {recommendations.length > 0 ? (
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold">Recommended for You</h2>
+              <Link to="/search">
+                <Button variant="outline" size="sm">
+                  Explore more
+                </Button>
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {recommendations.map((recommendation) => (
+                <Card key={recommendation.id} className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold">
+                        {recommendation.listing?.property?.address || "Recommended property"}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {recommendation.reason || "Based on your saved searches and preferences."}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        {recommendation.listing?.property?.city}, {recommendation.listing?.property?.region}
+                      </p>
+                    </div>
+                    <Link to={`/property/${recommendation.listing_id}`}>
+                      <Button size="sm" variant="outline">
+                        View
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section>
           <h2 className="text-2xl font-semibold mb-6">Recent Activity</h2>

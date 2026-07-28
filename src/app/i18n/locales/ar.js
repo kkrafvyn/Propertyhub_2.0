@@ -223,7 +223,6 @@ export default {
     "viewNeighborhoods": "عرض الأحياء",
     "noMatches": "لا توجد نتائج مطابقة",
     "tryAdjusting": "جرّب تعديل البحث أو التصفية.",
-    "sampleListings": "عرض عقارات تجريبية — اربط Supabase للمخزون الحي.",
     "filters": "تصفية",
     "aiSearch": "بحث ذكي",
     "aiPlaceholder": "مثال: \"منزل 3 غرف في East Legon أقل من 2000000\"",

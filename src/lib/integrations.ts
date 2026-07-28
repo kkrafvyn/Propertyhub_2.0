@@ -39,7 +39,9 @@ export const clientIntegrations = {
       return !!firstEnv("VITE_PAYSTACK_PUBLIC_KEY", "Live_Public_Key");
     },
     get checkoutReady() {
-      return clientIntegrations.supabase.configured;
+      return (
+        clientIntegrations.supabase.configured && clientIntegrations.paystack.clientConfigured
+      );
     },
     label: "Paystack",
     hint: "PAYSTACK_SECRET_KEY + PAYSTACK_WEBHOOK_SECRET in Supabase secrets",

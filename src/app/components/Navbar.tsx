@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
 import { NotificationBell } from "./NotificationBell";
 import { GlobalSearch } from "./ux/GlobalSearch";
+import { Logo } from "./baytmiftah/Logo";
 
 interface NavbarProps {
   transparent?: boolean;
@@ -31,15 +32,7 @@ export function Navbar({ transparent = false }: NavbarProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-            </div>
-            <span className="text-xl font-semibold text-foreground">Property Hub</span>
-          </Link>
+          <Logo to="/" size="sm" showText className="gap-2" />
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">

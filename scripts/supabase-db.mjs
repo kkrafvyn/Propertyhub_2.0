@@ -128,6 +128,11 @@ async function cmdPushPending() {
     for (const file of files) {
       const version = file.replace(/\.sql$/, "");
       if (appliedSet.has(version)) continue;
+      // Legacy bootstrap files predate schema_migrations tracking on this project.
+      if (/^00\d_|^010_/.test(file)) {
+        console.log(`Skipping legacy bootstrap migration ${file}`);
+        continue;
+      }
 
       const sql = fs.readFileSync(path.join(migrationsDir, file), "utf8");
       console.log(`Applying ${file}...`);

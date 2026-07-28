@@ -28,6 +28,7 @@ import {
   Workflow,
   Wrench,
   Zap,
+  ClipboardCheck,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
@@ -51,6 +52,7 @@ import CustomWorkflowsBuilder from "./CustomWorkflowsBuilder";
 import { IntegrationHub } from "./IntegrationHub";
 import { WorkspaceHost } from "./WorkspaceHost";
 import { WorkspaceMaintenance } from "./WorkspaceMaintenance";
+import { WorkspaceInspections } from "./WorkspaceInspections";
 import { WorkspaceLeases } from "./WorkspaceLeases";
 import { ErrorState, PageLoadingSkeleton, BaytMiftahAIPanel } from "../../components/ux";
 import { FraudAlerts } from "./FraudAlerts";
@@ -67,6 +69,9 @@ import { WorkspaceNewListing } from "./WorkspaceNewListing";
 import { WorkspacePayments } from "./WorkspacePayments";
 import { WorkspaceSettings } from "./WorkspaceSettings";
 import { WorkspaceTeam } from "./WorkspaceTeam";
+import { WorkspaceContacts } from "./WorkspaceContacts";
+import { WorkspaceTasks } from "./WorkspaceTasks";
+import { WorkspaceSmartProperty } from "./WorkspaceSmartProperty";
 import { Logo } from "../../components/baytmiftah";
 import {
   WORKSPACE_ENTRY_PATH,
@@ -87,12 +92,16 @@ const CORE_NAV_ITEMS: NavItem[] = [
   { slug: "", label: "Dashboard", icon: Home },
   { slug: "listings", label: "Listings", icon: Building2 },
   { slug: "leads", label: "Leads", icon: MessageCircle },
+  { slug: "contacts", label: "Contacts", icon: Users2 },
+  { slug: "tasks", label: "Tasks", icon: Workflow },
   { slug: "calendar", label: "Calendar", icon: CalendarDays },
   { slug: "payments", label: "Payments", icon: CreditCard },
   { slug: "team", label: "Team", icon: Users },
   { slug: "documents", label: "Documents", icon: FileText },
   { slug: "leases", label: "Leases", icon: KeyRound },
   { slug: "maintenance", label: "Maintenance", icon: Wrench },
+  { slug: "inspections", label: "Inspections", icon: ClipboardCheck },
+  { slug: "smart-property", label: "Smart Property", icon: Smartphone },
 ];
 
 const WORKSPACE_SECONDARY_NAV: NavItem[] = [
@@ -245,6 +254,20 @@ export function WorkspaceLayout() {
             currentUserId={user.id}
           />
         );
+      case "contacts":
+        return (
+          <WorkspaceContacts
+            organization={organization}
+            currentUserId={user.id}
+          />
+        );
+      case "tasks":
+        return (
+          <WorkspaceTasks
+            organization={organization}
+            currentUserId={user.id}
+          />
+        );
       case "team":
         return (
           <WorkspaceTeam
@@ -323,7 +346,7 @@ export function WorkspaceLayout() {
       case "vendors":
         return <VendorManagement />;
       case "ai-assistant":
-        return <AIAssistant />;
+        return <AIAssistant organizationId={organization.id} />;
       case "notifications":
         return <NotificationSettings />;
       case "location-intelligence":
@@ -352,6 +375,15 @@ export function WorkspaceLayout() {
         return <WorkspaceLeases organizationId={organization.id} />;
       case "maintenance":
         return <WorkspaceMaintenance organizationId={organization.id} />;
+      case "inspections":
+        return (
+          <WorkspaceInspections
+            organizationId={organization.id}
+            currentUserId={user.id}
+          />
+        );
+      case "smart-property":
+        return <WorkspaceSmartProperty organizationId={organization.id} />;
       case "advanced-search":
         return (
           <AdvancedSearch

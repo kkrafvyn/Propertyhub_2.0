@@ -43,6 +43,72 @@ function parseSearchQueryLocally(query: string) {
   return filters
 }
 
+const FAQ_ENTRIES: Array<{ keywords: string[]; answer: string }> = [
+  {
+    keywords: ['escrow', 'hold', 'release'],
+    answer:
+      'Escrow holds your payment securely until agreed milestones are met. Funds stay in your BaytMiftah wallet escrow balance and are released to the seller or landlord when both sides confirm the step (for example deposit received or lease signed).',
+  },
+  {
+    keywords: ['kyc', 'verify', 'verification', 'identity'],
+    answer:
+      'KYC verification confirms your identity before high-value actions like purchase offers. Upload a government ID in Settings → Verification. Our team reviews submissions and updates your verified badge when approved.',
+  },
+  {
+    keywords: ['rent', 'lease', 'tenant'],
+    answer:
+      'For rentals, apply from the listing page, track your application in My BaytMiftah, and sign your lease digitally once approved. Rent schedules and maintenance requests are available in the Leases and Maintenance sections.',
+  },
+  {
+    keywords: ['booking', 'short stay', 'check-in', 'guest'],
+    answer:
+      'Short-stay bookings can be instant or request-to-book depending on the host. After payment you receive confirmation, check-in instructions, and can message the host from Messages.',
+  },
+  {
+    keywords: ['offer', 'purchase', 'buy', 'negotiate'],
+    answer:
+      'To buy a property, schedule a viewing, submit an offer from the listing page, and respond to counter-offers in your Applications workflow. Deposits and closing steps are tracked in Documents and Payments.',
+  },
+  {
+    keywords: ['maintenance', 'repair', 'fix'],
+    answer:
+      'Tenants can submit maintenance requests with photos from My BaytMiftah → Maintenance. You will see status updates as the property manager assigns a vendor and completes the job.',
+  },
+  {
+    keywords: ['refund', 'cancel', 'cancellation'],
+    answer:
+      'Cancellation and refund rules depend on the listing type and host/agency policy. Check your booking or deal case timeline for the applicable policy and contact support if you need help.',
+  },
+  {
+    keywords: ['document', 'sign', 'lease agreement', 'contract'],
+    answer:
+      'Documents appear in My BaytMiftah → Documents grouped by folder. Pending items that require your signature are highlighted — open the document and use Sign when you are ready.',
+  },
+]
+
+function pickFaqAnswer(question: string) {
+  const lower = question.toLowerCase()
+  for (const entry of FAQ_ENTRIES) {
+    if (entry.keywords.some((keyword) => lower.includes(keyword))) {
+      return entry.answer
+    }
+  }
+  return null
+}
+
+function listingTypeLabel(listingType?: string) {
+  switch (listingType) {
+    case 'sale':
+      return 'for sale'
+    case 'lease':
+      return 'for lease'
+    case 'short_stay':
+      return 'for short stays'
+    default:
+      return 'for rent'
+  }
+}
+
 export const aiAssistantService = {
   async parseSearchQuery(query: string) {
     if (clientIntegrations.supabase.configured) {
@@ -262,5 +328,93 @@ export const aiAssistantService = {
     
     if (error) throw error
     return data
-  }
+  },
+
+  generateListingDescription(input: {
+    address?: string
+    city?: string
+    region?: string
+    category?: string
+    bedrooms?: number | null
+    bathrooms?: number | null
+    squareMeters?: number | null
+    amenities?: string[]
+    listingType?: string
+    price?: number | null
+    currency?: string
+  }) {
+    const location = [input.address, input.city, input.region].filter(Boolean).join(', ') || 'Ghana'
+    const category = input.category || 'property'
+    const beds = input.bedrooms ? `${input.bedrooms}-bedroom ` : ''
+    const baths = input.bathrooms ? `${input.bathrooms} bathroom` : ''
+    const size = input.squareMeters ? `${input.squareMeters} sqm` : ''
+    const amenityList = (input.amenities || []).filter(Boolean)
+    const priceLine =
+      input.price && input.price > 0
+        ? `Listed ${listingTypeLabel(input.listingType)} at ${input.currency || 'GHS'} ${input.price.toLocaleString()}.`
+        : `Available ${listingTypeLabel(input.listingType)}.`
+
+    const paragraphs = [
+      `Discover this ${beds}${category} ${listingTypeLabel(input.listingType)} in ${location}. ${priceLine}`,
+      [
+        beds && `${input.bedrooms} bedrooms`,
+        baths,
+        size,
+      ]
+        .filter(Boolean)
+        .join(' · ') || 'Flexible layout with practical living space.',
+      amenityList.length > 0
+        ? `Highlights include ${amenityList.slice(0, 6).join(', ')}.`
+        : 'Well positioned for convenient access to local amenities and transport.',
+      'Contact the listing team to arrange a viewing or request more details.',
+    ]
+
+    return paragraphs.filter(Boolean).join('\n\n')
+  },
+
+  summarizeDocument(title: string, content: string) {
+    const normalized = content.replace(/\s+/g, ' ').trim()
+    if (!normalized) {
+      return `No readable content found in "${title}".`
+    }
+
+    const sentences = normalized
+      .split(/(?<=[.!?])\s+/)
+      .map((sentence) => sentence.trim())
+      .filter((sentence) => sentence.length > 24)
+
+    const summaryPoints = (sentences.length > 0 ? sentences : [normalized]).slice(0, 4)
+    const wordCount = normalized.split(/\s+/).length
+
+    return [
+      `Summary of "${title}" (${wordCount} words):`,
+      ...summaryPoints.map((point, index) => `${index + 1}. ${point}`),
+      summaryPoints.length >= 4
+        ? 'Review the full document before signing or making a payment.'
+        : 'Open the full document for complete terms and obligations.',
+    ].join('\n')
+  },
+
+  answerFaq(question: string, context?: string) {
+    const contextual = pickFaqAnswer(question)
+    if (contextual) return contextual
+
+    if (context === 'documents') {
+      return 'Open Documents in My BaytMiftah to preview, download, or sign agreements. Ask about a specific document type such as lease, offer, or receipt.'
+    }
+
+    if (context === 'payments') {
+      return 'Your wallet shows balances, escrow holds, and transaction history. Escrow protects funds until deal milestones are confirmed.'
+    }
+
+    if (context === 'maintenance') {
+      return 'Describe the issue, add photos if possible, and submit a maintenance request. Urgent issues like water leaks or security problems should be flagged in your message.'
+    }
+
+    if (context === 'property') {
+      return 'Ask about neighborhood fit, commute, pricing, or next steps for this listing. You can schedule a viewing or message the host/agency directly from the property page.'
+    }
+
+    return 'BaytMiftah AI can help with search, documents, payments, escrow, bookings, and maintenance. Try asking about verification, offers, leases, or refunds.'
+  },
 }

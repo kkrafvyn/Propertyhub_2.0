@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Clock3,
   FileText,
+  LifeBuoy,
   Loader2,
   Settings,
   Shield,
@@ -19,8 +20,10 @@ import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
+import { Input } from "../../components/ui/Input";
 import { fraudDetectionService } from "../../../lib/fraud-detection.service";
 import { adminService } from "../../../lib/admin.service";
+import { AdminTrustReview } from "./AdminTrustReview";
 
 type AdminSection =
   | "overview"
@@ -28,6 +31,8 @@ type AdminSection =
   | "organizations"
   | "listings"
   | "moderation"
+  | "trust"
+  | "support"
   | "settings";
 
 const navItems: Array<{
@@ -41,6 +46,8 @@ const navItems: Array<{
   { key: "organizations", label: "Organizations", href: "/admin/organizations", icon: Building2 },
   { key: "listings", label: "Listings", href: "/admin/listings", icon: FileText },
   { key: "moderation", label: "Moderation", href: "/admin/moderation", icon: AlertTriangle },
+  { key: "trust", label: "Trust & KYC", href: "/admin/trust", icon: UserCheck },
+  { key: "support", label: "Support", href: "/admin/support", icon: LifeBuoy },
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -102,6 +109,7 @@ export function AdminLayout() {
   const [users, setUsers] = useState<any[]>([]);
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [listings, setListings] = useState<any[]>([]);
+  const [supportQuery, setSupportQuery] = useState("");
 
   const queueCount = triageAlerts.length + reviewCases.length;
 
@@ -721,6 +729,87 @@ export function AdminLayout() {
     </Card>
   );
 
+  const supportMatches = useMemo(() => {
+    const query = supportQuery.trim().toLowerCase();
+    if (!query) return users.slice(0, 5);
+
+    return users
+      .filter((entry) =>
+        [entry.email, entry.full_name, entry.phone, entry.id]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(query))
+      )
+      .slice(0, 8);
+  }, [supportQuery, users]);
+
+  const renderSupportSection = () => (
+    <div className="space-y-6">
+      <Card className="p-6 bg-white">
+        <h2 className="text-xl font-semibold mb-2">Support Toolkit</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Look up a user, review their account flags, and jump to moderation workflows.
+        </p>
+        <Input
+          value={supportQuery}
+          onChange={(event) => setSupportQuery(event.target.value)}
+          placeholder="Search by email, name, phone, or user ID"
+        />
+      </Card>
+
+      <Card className="p-6 bg-white">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold">Matched Accounts</h3>
+          <Badge variant="outline">{supportMatches.length}</Badge>
+        </div>
+        <div className="space-y-4">
+          {supportMatches.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
+              No users matched this query.
+            </div>
+          ) : (
+            supportMatches.map((entry) => (
+              <div key={entry.id} className="rounded-xl border border-border p-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <p className="font-semibold">{entry.full_name || "Unnamed user"}</p>
+                    <p className="text-sm text-muted-foreground">{entry.email || entry.phone || entry.id}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link to="/admin/users">
+                      <Button size="sm" variant="outline">
+                        Open Users
+                      </Button>
+                    </Link>
+                    <Link to="/admin/moderation">
+                      <Button size="sm" variant="outline">
+                        Moderation
+                      </Button>
+                    </Link>
+                    <Link to="/admin/trust">
+                      <Button size="sm" variant="outline">
+                        Trust Review
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
+
+      <Card className="p-6 bg-white">
+        <h3 className="font-semibold mb-3">Escalation Queue</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          {overview.escalatedCases} escalated moderation cases need policy review.
+        </p>
+        <Link to="/admin/moderation">
+          <Button variant="outline">Open Moderation Queue</Button>
+        </Link>
+      </Card>
+    </div>
+  );
+
   const renderSettingsSection = () => (
     <Card className="p-6 bg-white">
       <h2 className="text-xl font-semibold mb-2">Admin Settings</h2>
@@ -737,7 +826,39 @@ export function AdminLayout() {
   );
 
   const renderOverviewContent = () => (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <div className="space-y-6">
+      <Card className="p-6 bg-white">
+        <h2 className="text-xl font-semibold mb-4">Platform Analytics</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: "Users", value: overview.totalUsers, tone: "bg-primary/80" },
+            { label: "Organizations", value: overview.totalOrganizations, tone: "bg-accent/80" },
+            { label: "Listings", value: overview.totalListings, tone: "bg-chart-3/80" },
+            { label: "Open Cases", value: overview.openCases + overview.pendingAlerts, tone: "bg-destructive/80" },
+          ].map((item) => {
+            const max = Math.max(
+              overview.totalUsers,
+              overview.totalOrganizations,
+              overview.totalListings,
+              overview.openCases + overview.pendingAlerts,
+              1
+            );
+            const height = Math.max(12, Math.round((item.value / max) * 120));
+
+            return (
+              <div key={item.label} className="rounded-xl border border-border p-4">
+                <p className="text-sm text-muted-foreground">{item.label}</p>
+                <p className="text-2xl font-semibold mt-1">{item.value.toLocaleString()}</p>
+                <div className="mt-4 h-28 flex items-end">
+                  <div className={`w-full rounded-t-md ${item.tone}`} style={{ height }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <Card className="p-6 bg-white">
         <h2 className="text-xl font-semibold mb-4">Trust Snapshot</h2>
         <div className="space-y-4">
@@ -773,6 +894,7 @@ export function AdminLayout() {
       </Card>
 
       {renderAuditFeed()}
+    </div>
     </div>
   );
 
@@ -812,6 +934,14 @@ export function AdminLayout() {
       return renderListingsSection();
     }
 
+    if (currentSection === "trust") {
+      return <AdminTrustReview />;
+    }
+
+    if (currentSection === "support") {
+      return renderSupportSection();
+    }
+
     if (currentSection === "settings") {
       return renderSettingsSection();
     }
@@ -835,12 +965,18 @@ export function AdminLayout() {
       ? "Platform Overview"
       : currentSection === "moderation"
         ? "Moderation & Trust"
-        : `${currentSection.charAt(0).toUpperCase()}${currentSection.slice(1)}`;
+        : currentSection === "trust"
+          ? "Trust & KYC Review"
+          : `${currentSection.charAt(0).toUpperCase()}${currentSection.slice(1)}`;
 
   const sectionDescription =
     currentSection === "moderation"
       ? "Triage fraud alerts, assign investigators, escalate cases, and keep a clean audit trail."
-      : "Monitor operational health, trust signals, and moderation volume across Property Hub.";
+        : currentSection === "trust"
+          ? "Review consumer identity documents and agency trust verification requests."
+          : currentSection === "support"
+            ? "Find users quickly and route support issues into moderation and trust workflows."
+            : "Monitor operational health, trust signals, and moderation volume across Property Hub.";
 
   return (
     <div className="min-h-screen bg-background">

@@ -223,7 +223,6 @@ export default {
     "viewNeighborhoods": "Ver bairros",
     "noMatches": "Nenhuma correspondência exata",
     "tryAdjusting": "Tente ajustar sua pesquisa ou filtros.",
-    "sampleListings": "Listagens de exemplo — conecte o Supabase para inventário ao vivo.",
     "filters": "Filtros",
     "aiSearch": "Pesquisa IA",
     "aiPlaceholder": "Ex.: \"casa 3 quartos em East Legon abaixo de 2000000\"",

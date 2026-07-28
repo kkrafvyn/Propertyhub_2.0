@@ -114,4 +114,57 @@ export const trustVerificationService = {
     if (error) throw error;
     return data;
   },
+
+  async listPendingTrustRequests(limit = 50) {
+    const { data, error } = await supabase
+      .from("trust_verification_requests")
+      .select(`
+        *,
+        organization:organizations(id, name, slug, verified),
+        listing:listings(id, property:properties(address, city))
+      `)
+      .in("status", ["submitted", "in_review", "needs_changes"])
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async reviewTrustRequest(
+    requestId: string,
+    status: TrustRequestStatus,
+    reviewerNotes?: string
+  ) {
+    const { data, error } = await supabase
+      .from("trust_verification_requests")
+      .update({
+        status,
+        internal_notes: reviewerNotes || null,
+        reviewed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", requestId)
+      .select(`
+        *,
+        organization:organizations(id, name, verified),
+        listing:listings(id, verification_status)
+      `)
+      .single();
+
+    if (error) throw error;
+
+    if (status === "verified" && data?.organization_id && !data.listing_id) {
+      await supabase
+        .from("organizations")
+        .update({ verified: true, updated_at: new Date().toISOString() })
+        .eq("id", data.organization_id);
+    }
+
+    if (status === "verified" && data?.listing_id) {
+      await this.updateListingVerificationStatus(data.listing_id, "verified", reviewerNotes);
+    }
+
+    return data;
+  },
 };

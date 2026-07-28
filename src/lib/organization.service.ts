@@ -137,6 +137,23 @@ export const organizationService = {
     return data[0]
   },
 
+  async updateMemberPermissions(
+    organizationId: string,
+    userId: string,
+    permissions: string[]
+  ) {
+    const { data, error } = await supabase
+      .from('organization_members')
+      .update({ permissions })
+      .eq('organization_id', organizationId)
+      .eq('user_id', userId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
   async getOrganizationInvitations(organizationId: string) {
     const { data, error } = await supabase
       .from('organization_invitations')

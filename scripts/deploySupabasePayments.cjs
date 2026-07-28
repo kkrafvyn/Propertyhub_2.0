@@ -32,21 +32,54 @@ function printUsage() {
   console.log(
     [
       "Usage:",
-      "  node scripts/deploySupabasePayments.cjs --project-ref <ref> [--env-file <file>] [--skip-secrets]",
+      "  node scripts/deploySupabasePayments.cjs [--project-ref <ref>] [--env-file <file>]",
+      "                                        [--skip-secrets] [--skip-db]",
+      "",
+      "Auth (required on Windows):",
+      "  Add SUPABASE_ACCESS_TOKEN to supabase/.env.local",
+      "  Or run: npm run supabase:login",
       "",
       "Examples:",
-      "  node scripts/deploySupabasePayments.cjs --project-ref paobdnhpjmqsovideexo --env-file supabase/.env.payments",
-      "  npm run supabase:deploy:payments -- --project-ref paobdnhpjmqsovideexo --env-file supabase/.env.payments",
+      "  npm run supabase:login",
+      "  npm run supabase:deploy:payments -- --skip-db",
     ].join("\n")
   );
 }
 
-const projectRef = readFlag("--project-ref") || process.env.SUPABASE_PROJECT_REF;
+function loadEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return {};
+  return Object.fromEntries(
+    fs
+      .readFileSync(filePath, "utf8")
+      .split(/\r?\n/)
+      .filter((line) => line && !line.trim().startsWith("#"))
+      .map((line) => {
+        const index = line.indexOf("=");
+        return [line.slice(0, index), line.slice(index + 1)];
+      })
+      .filter(([key]) => key)
+  );
+}
+
+function loadProjectEnv() {
+  const rootEnv = loadEnvFile(path.join(projectRoot, ".env"));
+  const localEnv = loadEnvFile(path.join(projectRoot, "supabase", ".env.local"));
+  const merged = { ...rootEnv, ...localEnv, ...process.env };
+  if (merged.SUPABASE_ACCESS_TOKEN) {
+    process.env.SUPABASE_ACCESS_TOKEN = merged.SUPABASE_ACCESS_TOKEN;
+  }
+  return merged;
+}
+
+const projectEnv = loadProjectEnv();
+const projectRef =
+  readFlag("--project-ref") || projectEnv.SUPABASE_PROJECT_REF || process.env.SUPABASE_PROJECT_REF;
 const envFile =
   readFlag("--env-file") ||
   process.env.SUPABASE_SECRETS_ENV_FILE ||
   path.join("supabase", ".env.payments");
 const skipSecrets = hasFlag("--skip-secrets");
+const skipDb = hasFlag("--skip-db") || !hasFlag("--with-db");
 
 if (hasFlag("--help") || hasFlag("-h")) {
   printUsage();
@@ -55,6 +88,20 @@ if (hasFlag("--help") || hasFlag("-h")) {
 
 if (!projectRef) {
   printUsage();
+  process.exit(1);
+}
+
+if (!process.env.SUPABASE_ACCESS_TOKEN) {
+  console.error(
+    [
+      "Missing SUPABASE_ACCESS_TOKEN.",
+      "",
+      "Windows interactive `supabase login` often fails. Use token auth instead:",
+      "  1. Run: npm run supabase:login",
+      "  2. Or add SUPABASE_ACCESS_TOKEN=sbp_... to supabase/.env.local",
+      "     Create token: https://supabase.com/dashboard/account/tokens",
+    ].join("\n")
+  );
   process.exit(1);
 }
 
@@ -74,7 +121,10 @@ function runSupabase(commandArgs, label) {
     cwd: projectRoot,
     stdio: "inherit",
     shell: true,
-    env: process.env,
+    env: {
+      ...process.env,
+      SUPABASE_ACCESS_TOKEN: process.env.SUPABASE_ACCESS_TOKEN,
+    },
   });
 
   if (result.status !== 0) {
@@ -82,11 +132,20 @@ function runSupabase(commandArgs, label) {
   }
 }
 
-runSupabase(["link", "--project-ref", projectRef, "--workdir", ".", "--yes"], "Link project");
 runSupabase(
-  ["db", "push", "--include-all", "--workdir", ".", "--yes"],
-  "Apply remote migrations"
+  ["login", "--token", process.env.SUPABASE_ACCESS_TOKEN],
+  "Authenticate CLI with access token"
 );
+runSupabase(["link", "--project-ref", projectRef, "--workdir", ".", "--yes"], "Link project");
+
+if (!skipDb) {
+  runSupabase(
+    ["db", "push", "--include-all", "--workdir", ".", "--yes"],
+    "Apply remote migrations"
+  );
+} else {
+  console.log("\n==> Skipping db push (schema already applied via npm run db:reset:apply)");
+}
 
 if (!skipSecrets) {
   runSupabase(

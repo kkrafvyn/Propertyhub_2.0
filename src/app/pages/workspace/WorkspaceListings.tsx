@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router";
-import { Eye, ImagePlus, RotateCcw, SquarePen, Star, Trash2 } from "lucide-react";
+import { Eye, Copy, ImagePlus, RotateCcw, SquarePen, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
@@ -194,6 +194,8 @@ export function WorkspaceListings({
   const [pendingMediaFiles, setPendingMediaFiles] = useState<Record<string, File[]>>({});
   const [uploadingMediaForListingId, setUploadingMediaForListingId] = useState<string | null>(null);
   const [mediaActionId, setMediaActionId] = useState<string | null>(null);
+  const [selectedListingIds, setSelectedListingIds] = useState<string[]>([]);
+  const [bulkWorking, setBulkWorking] = useState(false);
   const createdListingId = (location.state as { createdListingId?: string } | null)?.createdListingId;
 
   useEffect(() => {
@@ -411,6 +413,68 @@ export function WorkspaceListings({
     }
   };
 
+  const toggleListingSelection = (listingId: string) => {
+    setSelectedListingIds((current) =>
+      current.includes(listingId)
+        ? current.filter((id) => id !== listingId)
+        : [...current, listingId]
+    );
+  };
+
+  const handleDuplicate = async (listingId: string) => {
+    try {
+      setSavingId(listingId);
+      const duplicated = await listingService.duplicateListing(listingId, organization.id);
+      toast.success("Listing duplicated as draft.");
+      setExpandedListingId(duplicated.id);
+      await loadListings();
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to duplicate listing.");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const runBulkAction = async (
+    action: "archive" | "publish" | "feature" | "unfeature"
+  ) => {
+    if (selectedListingIds.length === 0) {
+      toast.error("Select at least one listing.");
+      return;
+    }
+
+    try {
+      setBulkWorking(true);
+      if (action === "archive") {
+        await listingService.bulkUpdateListings(selectedListingIds, {
+          status: "archived",
+          published_at: null,
+        });
+      }
+      if (action === "publish") {
+        await listingService.bulkUpdateListings(selectedListingIds, {
+          status: "listed",
+          published_at: new Date().toISOString(),
+        });
+      }
+      if (action === "feature") {
+        await listingService.bulkUpdateListings(selectedListingIds, { featured: true });
+      }
+      if (action === "unfeature") {
+        await listingService.bulkUpdateListings(selectedListingIds, { featured: false });
+      }
+      toast.success(`Bulk ${action} completed.`);
+      setSelectedListingIds([]);
+      await loadListings();
+    } catch (error) {
+      console.error(error);
+      toast.error("Bulk action failed.");
+    } finally {
+      setBulkWorking(false);
+    }
+  };
+
   const handlePendingMediaChange = (listingId: string, files: File[]) => {
     setPendingMediaFiles((current) => ({
       ...current,
@@ -513,6 +577,27 @@ export function WorkspaceListings({
         </Card>
       </div>
 
+      {selectedListingIds.length > 0 ? (
+        <Card className="p-4 flex flex-wrap items-center gap-3">
+          <p className="text-sm font-medium">{selectedListingIds.length} selected</p>
+          <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("publish")}>
+            Publish
+          </Button>
+          <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("archive")}>
+            Archive
+          </Button>
+          <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("feature")}>
+            Feature
+          </Button>
+          <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("unfeature")}>
+            Unfeature
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedListingIds([])}>
+            Clear
+          </Button>
+        </Card>
+      ) : null}
+
       {loading ? (
         <Card className="p-8 text-center text-muted-foreground">Loading listings...</Card>
       ) : listings.length === 0 ? (
@@ -554,6 +639,12 @@ export function WorkspaceListings({
                       </div>
                       <div className="space-y-3">
                         <div className="flex items-center gap-3 flex-wrap">
+                          <input
+                            type="checkbox"
+                            checked={selectedListingIds.includes(listing.id)}
+                            onChange={() => toggleListingSelection(listing.id)}
+                            aria-label={`Select ${listing.property?.address || "listing"}`}
+                          />
                           <h2 className="text-xl font-semibold">
                             {listing.property?.address || "Untitled property"}
                           </h2>
@@ -916,6 +1007,14 @@ export function WorkspaceListings({
                     >
                       <Star className="w-4 h-4" />
                       {(draft?.featured || false) ? "Unfeature" : "Feature"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => void handleDuplicate(listing.id)}
+                      disabled={savingId === listing.id}
+                    >
+                      <Copy className="w-4 h-4" />
+                      Duplicate
                     </Button>
                     <Button
                       variant="outline"

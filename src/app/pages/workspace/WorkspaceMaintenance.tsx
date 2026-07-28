@@ -6,17 +6,23 @@ import { Card } from "../../components/ui/Card";
 import { ActivityTimeline } from "../../components/ux";
 import { buildMaintenanceTimeline } from "../../lib/workflow-timeline";
 import { maintenanceService } from "../../../lib/maintenance.service";
+import { vendorService } from "../../../lib/vendor.service";
 
 export function WorkspaceMaintenance({ organizationId }: { organizationId: string }) {
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const loadRequests = async () => {
     try {
       setLoading(true);
-      const rows = await maintenanceService.getOrganizationRequests(organizationId);
+      const [rows, vendorRows] = await Promise.all([
+        maintenanceService.getOrganizationRequests(organizationId),
+        vendorService.getVerifiedVendors("maintenance", 20),
+      ]);
       setRequests(rows || []);
+      setVendors(vendorRows || []);
     } catch (error) {
       console.error(error);
       toast.error("Unable to load maintenance queue.");
@@ -43,6 +49,20 @@ export function WorkspaceMaintenance({ organizationId }: { organizationId: strin
     }
   };
 
+  const assignVendor = async (requestId: string, vendorId: string) => {
+    try {
+      setUpdatingId(requestId);
+      await maintenanceService.assignVendor(requestId, vendorId);
+      toast.success("Vendor assigned.");
+      await loadRequests();
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to assign vendor.");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   if (loading) {
     return <Card className="p-8 text-center text-muted-foreground">Loading maintenance queue...</Card>;
   }
@@ -51,7 +71,7 @@ export function WorkspaceMaintenance({ organizationId }: { organizationId: strin
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-semibold mb-2">Maintenance Queue</h1>
-        <p className="text-muted-foreground">Tenant requests across your active leases.</p>
+        <p className="text-muted-foreground">Tenant requests, vendor assignment, and photo evidence.</p>
       </div>
 
       {requests.length === 0 ? (
@@ -67,11 +87,37 @@ export function WorkspaceMaintenance({ organizationId }: { organizationId: strin
                   {request.tenant?.full_name || request.tenant?.email || "Tenant"} ·{" "}
                   {request.lease?.listing?.property?.address || "Property"}
                 </p>
+                {request.vendor ? (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Vendor: {request.vendor.business_name}
+                  </p>
+                ) : null}
+                {request.tenant_rating ? (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Tenant rating: {request.tenant_rating}/5
+                    {request.tenant_rating_comment ? ` — ${request.tenant_rating_comment}` : ""}
+                  </p>
+                ) : null}
               </div>
               <Badge variant="outline" className="capitalize">
                 {request.status.replace(/_/g, " ")}
               </Badge>
             </div>
+
+            {Array.isArray(request.photo_urls) && request.photo_urls.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {request.photo_urls.map((url: string) => (
+                  <a key={url} href={url} target="_blank" rel="noreferrer">
+                    <img
+                      src={url}
+                      alt="Maintenance evidence"
+                      className="h-20 w-20 rounded-lg border border-border object-cover"
+                    />
+                  </a>
+                ))}
+              </div>
+            ) : null}
+
             <div className="flex flex-wrap gap-2">
               {request.status === "open" ? (
                 <Button
@@ -91,6 +137,25 @@ export function WorkspaceMaintenance({ organizationId }: { organizationId: strin
                 >
                   Mark resolved
                 </Button>
+              ) : null}
+              {!request.vendor_id && vendors.length > 0 ? (
+                <select
+                  className="rounded-lg border border-border px-3 py-2 text-sm"
+                  defaultValue=""
+                  onChange={(event) => {
+                    if (event.target.value) {
+                      void assignVendor(request.id, event.target.value);
+                    }
+                  }}
+                  disabled={updatingId === request.id}
+                >
+                  <option value="">Assign vendor</option>
+                  {vendors.map((vendor) => (
+                    <option key={vendor.id} value={vendor.id}>
+                      {vendor.business_name}
+                    </option>
+                  ))}
+                </select>
               ) : null}
             </div>
             <ActivityTimeline steps={buildMaintenanceTimeline(request)} />

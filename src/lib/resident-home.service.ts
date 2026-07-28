@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { smartDeviceService } from "./smart-device.service";
 
 export const residentHomeService = {
   async getTenantProfile(userId: string) {
@@ -23,7 +24,13 @@ export const residentHomeService = {
       .maybeSingle();
 
     if (error) throw error;
-    return data;
+    if (!data?.lease?.id) return data;
+
+    const devices = data.smart_access_enabled
+      ? await smartDeviceService.getLeaseDevices(data.lease.id).catch(() => [])
+      : [];
+
+    return { ...data, devices };
   },
 
   async getActiveTenantProfile(userId: string) {

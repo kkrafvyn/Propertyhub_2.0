@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import type { Database } from "./database.types";
 import { normalizePropertyCategory } from "./property-category";
+import { propertyService } from "./property.service";
 
 type ListingInsert = Database["public"]["Tables"]["listings"]["Insert"];
 type ListingUpdate = Database["public"]["Tables"]["listings"]["Update"];
@@ -55,7 +56,9 @@ export const listingService = {
       propertyType?: string;
       listingType?: string;
       organizationSlug?: string;
-      sort?: "newest" | "price_asc" | "price_desc";
+      sort?: "newest" | "price_asc" | "price_desc" | "featured";
+      verifiedOnly?: boolean;
+      featuredOnly?: boolean;
     },
     limit = 20,
     offset = 0
@@ -74,7 +77,7 @@ export const listingService = {
     const normalizedLocation = filters.location?.trim().toLowerCase();
     let filtered = (data || []).filter((listing) => {
       const property = listing.property as Database["public"]["Tables"]["properties"]["Row"] | null;
-      const organization = listing.organization as { slug?: string } | null;
+      const organization = listing.organization as { slug?: string; verified?: boolean } | null;
       const normalizedListingCategory = normalizePropertyCategory(property?.category);
       const locationHaystack = [property?.address, property?.city, property?.region, property?.country]
         .filter(Boolean)
@@ -89,6 +92,8 @@ export const listingService = {
       if (filters.bathrooms && (property?.bathrooms || 0) < filters.bathrooms) return false;
       if (normalizedLocation && !locationHaystack.includes(normalizedLocation)) return false;
       if (filters.organizationSlug && organization?.slug !== filters.organizationSlug) return false;
+      if (filters.verifiedOnly && !organization?.verified) return false;
+      if (filters.featuredOnly && !listing.featured) return false;
 
       return true;
     });
@@ -97,12 +102,38 @@ export const listingService = {
       filtered = [...filtered].sort((a, b) => (a.price || 0) - (b.price || 0));
     } else if (filters.sort === "price_desc") {
       filtered = [...filtered].sort((a, b) => (b.price || 0) - (a.price || 0));
+    } else if (filters.sort === "featured") {
+      filtered = [...filtered].sort(
+        (a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured))
+      );
     }
 
     return {
       results: filtered.slice(offset, offset + limit),
       total: filtered.length,
     };
+  },
+
+  async getSimilarListings(listingId: string, limit = 4) {
+    const listing = await this.getListingById(listingId);
+    const property = Array.isArray(listing.property) ? listing.property[0] : listing.property;
+    const price = listing.price || 0;
+
+    const { results } = await this.searchListingsWithCount(
+      {
+        location: property?.city || property?.neighborhood || undefined,
+        listingType: listing.listing_type,
+        propertyType: property?.category || undefined,
+        priceMin: price > 0 ? Math.floor(price * 0.75) : undefined,
+        priceMax: price > 0 ? Math.ceil(price * 1.25) : undefined,
+        bedrooms: property?.bedrooms || undefined,
+        sort: "featured",
+      },
+      limit + 1,
+      0
+    );
+
+    return results.filter((item) => item.id !== listingId).slice(0, limit);
   },
 
   async getListingById(id: string) {
@@ -243,6 +274,93 @@ export const listingService = {
       .sort((a, b) => b.count - a.count);
 
     return { categoryCounts, locationCounts, popularLocations };
+  },
+
+  async bulkUpdateListings(
+    listingIds: string[],
+    updates: ListingUpdate
+  ) {
+    if (listingIds.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from("listings")
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .in("id", listingIds)
+      .select();
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async duplicateListing(listingId: string, organizationId: string) {
+    const { data: source, error: fetchError } = await supabase
+      .from("listings")
+      .select(
+        `
+        *,
+        property:properties(*, media:property_media(*))
+      `
+      )
+      .eq("id", listingId)
+      .eq("organization_id", organizationId)
+      .single();
+
+    if (fetchError) throw fetchError;
+    if (!source) throw new Error("Listing not found");
+
+    const property = Array.isArray(source.property) ? source.property[0] : source.property;
+    if (!property) throw new Error("Property not found for listing");
+
+    const newProperty = await propertyService.createProperty({
+      organization_id: organizationId,
+      address: property.address ? `${property.address} (Copy)` : "Copy",
+      city: property.city,
+      region: property.region,
+      country: property.country,
+      neighborhood: property.neighborhood,
+      ghana_post_gps: property.ghana_post_gps,
+      category: property.category,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      square_meters: property.square_meters,
+      description: property.description,
+      amenities: property.amenities,
+      location_confidence: property.location_confidence,
+    });
+
+    const mediaItems = Array.isArray(property.media) ? property.media : [];
+    if (mediaItems.length > 0) {
+      const { error: mediaError } = await supabase.from("property_media").insert(
+        mediaItems.map((item: any, index: number) => ({
+          property_id: newProperty.id,
+          organization_id: organizationId,
+          storage_path: item.storage_path,
+          public_url: item.public_url,
+          alt_text: item.alt_text,
+          sort_order: item.sort_order ?? index,
+          is_primary: item.is_primary && index === 0,
+          media_type: item.media_type || "image",
+        }))
+      );
+      if (mediaError) throw mediaError;
+    }
+
+    const newListing = await this.createListing({
+      organization_id: organizationId,
+      property_id: newProperty.id,
+      listing_type: source.listing_type,
+      price: source.price,
+      currency: source.currency,
+      status: "draft",
+      visibility: source.visibility,
+      featured: false,
+      whatsapp_enabled: source.whatsapp_enabled,
+      inspection_fee_amount: source.inspection_fee_amount,
+      minimum_deposit_amount: source.minimum_deposit_amount,
+      title_document_status: source.title_document_status,
+    });
+
+    return newListing;
   },
 
   async getPopularLocations(limit = 6) {

@@ -27,6 +27,20 @@ export default function StayBookingCard({ listing }) {
     ? Math.max(1, Math.ceil((Number(new Date(checkOut)) - Number(new Date(checkIn))) / (1000 * 60 * 60 * 24)))
     : 0
   const total = nights * nightlyRate
+  const blockedDates = new Set(
+    availability.filter((row) => row.is_available === false).map((row) => row.available_date)
+  )
+
+  const hasBlockedSelection = () => {
+    if (!checkIn || !checkOut) return false
+    const start = new Date(checkIn)
+    const end = new Date(checkOut)
+    for (let cursor = new Date(start); cursor < end; cursor.setDate(cursor.getDate() + 1)) {
+      const key = cursor.toISOString().slice(0, 10)
+      if (blockedDates.has(key)) return true
+    }
+    return false
+  }
 
   async function handleBook() {
     if (!user) {
@@ -35,6 +49,10 @@ export default function StayBookingCard({ listing }) {
     }
     if (!checkIn || !checkOut || nights < 1) {
       setMessage('Select check-in and check-out dates.')
+      return
+    }
+    if (hasBlockedSelection()) {
+      setMessage('Some selected dates are unavailable.')
       return
     }
 

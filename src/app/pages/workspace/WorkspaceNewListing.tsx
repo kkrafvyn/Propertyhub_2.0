@@ -15,6 +15,7 @@ import { listingService } from "../../../lib/listing.service";
 import { listingQualityService } from "../../../lib/listing-quality.service";
 import { propertyMediaService } from "../../../lib/property-media.service";
 import { propertyService } from "../../../lib/property.service";
+import { aiAssistantService } from "../../../lib/ai-assistant.service";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 type PropertyCategory = Database["public"]["Tables"]["properties"]["Row"]["category"];
@@ -47,6 +48,7 @@ export function WorkspaceNewListing({
 }: WorkspaceNewListingProps) {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
   const [complianceReady, setComplianceReady] = useState(false);
   const [marketInsight, setMarketInsight] = useState<GhanaLocationInsight | null>(null);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
@@ -337,7 +339,42 @@ export function WorkspaceNewListing({
           </div>
 
           <div className="mt-4">
-            <label className="block mb-2 text-sm text-foreground">Description</label>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <label className="block text-sm text-foreground">Description</label>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={generatingDescription}
+                onClick={() => {
+                  setGeneratingDescription(true);
+                  try {
+                    const description = aiAssistantService.generateListingDescription({
+                      address: form.address,
+                      city: form.city,
+                      region: form.region,
+                      category: form.category,
+                      bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
+                      bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
+                      squareMeters: form.squareMeters ? Number(form.squareMeters) : null,
+                      amenities: form.amenities
+                        .split(",")
+                        .map((item) => item.trim())
+                        .filter(Boolean),
+                      listingType: form.listingType,
+                      price: form.price ? Number(form.price) : null,
+                      currency: form.currency,
+                    });
+                    updateField("description", description);
+                    toast.success("AI draft added. Edit before publishing.");
+                  } finally {
+                    setGeneratingDescription(false);
+                  }
+                }}
+              >
+                {generatingDescription ? "Generating..." : "Generate with AI"}
+              </Button>
+            </div>
             <textarea
               className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground min-h-32"
               value={form.description}

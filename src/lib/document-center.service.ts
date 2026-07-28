@@ -1,5 +1,8 @@
 import { supabase } from "./supabase";
 
+const DOCUMENT_MEDIA_BUCKET =
+  import.meta.env.VITE_PROPERTY_MEDIA_BUCKET || "property-media";
+
 async function sha256Hex(content: string) {
   const bytes = new TextEncoder().encode(content);
   const hash = await crypto.subtle.digest("SHA-256", bytes);
@@ -321,4 +324,144 @@ export const documentCenterService = {
     if (error) throw error;
     return data;
   },
+
+  triggerMarkdownDownload(doc: { title?: string | null; content_markdown?: string | null }) {
+    const content = doc.content_markdown || `# ${doc.title || "Document"}\n\nNo content available.`;
+    const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = window.document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${(doc.title || "document").replace(/[^\w\s-]/g, "").trim() || "document"}.md`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  },
+
+  async getDocumentVersions(documentFamilyId: string) {
+    const { data, error } = await supabase
+      .from("organization_documents")
+      .select(`
+        *,
+        signatures:document_signatures(*),
+        activity_logs:document_activity_logs(*)
+      `)
+      .eq("document_family_id", documentFamilyId)
+      .order("version_number", { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getDocumentActivity(documentId: string) {
+    const { data, error } = await supabase
+      .from("document_activity_logs")
+      .select("*")
+      .eq("document_id", documentId)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async uploadSignedCopy(input: {
+    documentId: string;
+    organizationId: string;
+    file: File;
+    uploadedBy: string;
+  }) {
+    const extension = input.file.name.split(".").pop()?.toLowerCase() || "pdf";
+    const path = `${input.organizationId}/documents/${input.documentId}/signed-${crypto.randomUUID()}.${extension}`;
+    const { error: uploadError } = await supabase.storage
+      .from(DOCUMENT_MEDIA_BUCKET)
+      .upload(path, input.file, {
+        cacheControl: "3600",
+        contentType: input.file.type,
+        upsert: false,
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data, error } = await supabase
+      .from("organization_documents")
+      .update({
+        signed_copy_bucket: DOCUMENT_MEDIA_BUCKET,
+        signed_copy_path: path,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", input.documentId)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+
+    await supabase.from("document_activity_logs").insert({
+      document_id: input.documentId,
+      actor_user_id: input.uploadedBy,
+      action: "signed_copy_uploaded",
+      details: { path },
+    });
+
+    return data;
+  },
+
+  getSignedCopyPublicUrl(document: {
+    signed_copy_bucket?: string | null;
+    signed_copy_path?: string | null;
+  }) {
+    if (!document.signed_copy_path) return null;
+    const bucket = document.signed_copy_bucket || DOCUMENT_MEDIA_BUCKET;
+    const { data } = supabase.storage.from(bucket).getPublicUrl(document.signed_copy_path);
+    return data?.publicUrl || null;
+  },
+
+  async downloadAllUserDocuments(userId: string) {
+    const documents = await this.getUserDocuments(userId);
+    if (documents.length === 0) {
+      throw new Error("No documents available to download yet.");
+    }
+
+    const sections = documents.map((doc: any) => {
+      const heading = doc.title || doc.document_type || "Document";
+      const folder = doc.document_folder || this.getDocumentFolder(doc.document_type);
+      const body = doc.content_markdown || "_No content captured._";
+      return `## ${heading}\n\nFolder: ${folder}\nStatus: ${doc.status || "draft"}\n\n${body}`;
+    });
+
+    const blob = new Blob(
+      [`# My documents\n\n${sections.join("\n\n---\n\n")}`],
+      { type: "text/markdown;charset=utf-8" }
+    );
+    const url = URL.createObjectURL(blob);
+    const anchor = window.document.createElement("a");
+    anchor.href = url;
+    anchor.download = `my-documents-${new Date().toISOString().slice(0, 10)}.md`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  },
+
+  async downloadDealCasePack(dealCaseId: string, userId: string) {
+    const documents = await this.getUserDocuments(userId);
+    const pack = documents.filter((doc: any) => doc.deal_case_id === dealCaseId);
+
+    if (pack.length === 0) {
+      throw new Error("No documents available for this application yet.");
+    }
+
+    const sections = pack.map((doc: any) => {
+      const heading = doc.title || doc.document_type || "Document";
+      const body = doc.content_markdown || "_No content captured._";
+      return `## ${heading}\n\nStatus: ${doc.status || "draft"}\n\n${body}`;
+    });
+
+    const blob = new Blob(
+      [`# Application documents\n\n${sections.join("\n\n---\n\n")}`],
+      { type: "text/markdown;charset=utf-8" }
+    );
+    const url = URL.createObjectURL(blob);
+    const anchor = window.document.createElement("a");
+    anchor.href = url;
+    anchor.download = `application-${dealCaseId.slice(0, 8)}-documents.md`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  },
 };
+

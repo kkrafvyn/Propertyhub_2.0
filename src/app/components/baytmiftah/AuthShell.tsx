@@ -1,14 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-
-function HomeIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" aria-hidden>
-      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  );
-}
+import { LogoMark } from "./Logo";
 
 export function AuthShell({
   title,
@@ -31,9 +23,7 @@ export function AuthShell({
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
             <Link to="/" className="mb-6 inline-flex items-center gap-2" aria-label="BaytMiftah home">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-forest">
-                <HomeIcon />
-              </div>
+              <LogoMark className="h-12 w-12" />
             </Link>
             <h1 className="text-3xl font-semibold text-foreground">{title}</h1>
             <p className="mt-2 text-muted-foreground">{subtitle}</p>

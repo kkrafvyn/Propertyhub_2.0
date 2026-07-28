@@ -60,6 +60,96 @@ export const bookingService = {
     return data || [];
   },
 
+  async validateDatesAvailable(listingId: string, checkIn: string, checkOut: string) {
+    const availability = await this.getListingAvailability(listingId, checkIn, checkOut);
+    const blocked = availability.filter((row) => row.is_available === false);
+    if (blocked.length > 0) {
+      throw new Error("Some of the selected dates are no longer available.");
+    }
+
+    const { data: overlapping, error } = await supabase
+      .from("short_stay_bookings")
+      .select("id")
+      .eq("listing_id", listingId)
+      .in("status", ["pending", "confirmed"])
+      .lt("check_in", checkOut)
+      .gt("check_out", checkIn);
+
+    if (error) throw error;
+    if (overlapping && overlapping.length > 0) {
+      throw new Error("Those dates overlap with an existing booking.");
+    }
+  },
+
+  async getCheckInInstructions(bookingId: string) {
+    const { data: booking, error } = await supabase
+      .from("short_stay_bookings")
+      .select("listing_id")
+      .eq("id", bookingId)
+      .single();
+
+    if (error) throw error;
+
+    const { data: settings } = await supabase
+      .from("host_listing_settings")
+      .select("check_in_instructions, house_rules, cleaning_notes")
+      .eq("listing_id", booking.listing_id)
+      .maybeSingle();
+
+    return settings;
+  },
+
+  async payForBooking(booking: {
+    id: string;
+    listing_id: string;
+    total_minor: number;
+    currency?: string;
+  }) {
+    const checkout = await paymentService.initializePropertyPayment({
+      listingId: booking.listing_id,
+      amount: booking.total_minor / 100,
+      purpose: "booking_fee",
+      bookingId: booking.id,
+    });
+
+    return checkout;
+  },
+
+  async onPaymentVerified(bookingId: string, transactionId: string) {
+    const { data: booking, error } = await supabase
+      .from("short_stay_bookings")
+      .update({ transaction_id: transactionId })
+      .eq("id", bookingId)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+
+    if (booking.status === "pending" || (booking.status === "confirmed" && !booking.checked_in_at)) {
+      return this.confirmBooking(bookingId);
+    }
+
+    return booking;
+  },
+
+  async approveBookingRequest(bookingId: string) {
+    const { data, error } = await supabase
+      .from("short_stay_bookings")
+      .update({ status: "confirmed" })
+      .eq("id", bookingId)
+      .eq("booking_mode", "request")
+      .select("*")
+      .single();
+
+    if (error) throw error;
+
+    void notificationService.notifyBookingEvent(bookingId, "confirmed", {
+      extraContent: "Complete payment to secure your dates.",
+    });
+
+    return data;
+  },
+
   async getListingAvailability(listingId: string, fromDate?: string, toDate?: string) {
     let query = supabase
       .from("listing_availability")
@@ -110,6 +200,8 @@ export const bookingService = {
     guestNote?: string;
     bookingMode?: "instant" | "request";
   }) {
+    await this.validateDatesAvailable(input.listingId, input.checkIn, input.checkOut);
+
     const nights = countNights(input.checkIn, input.checkOut);
     const totalMinor = input.nightlyRateMinor * nights;
 
@@ -211,6 +303,20 @@ export const bookingService = {
 
     const confirmed = await this.updateBookingStatus(bookingId, "confirmed");
     void notificationService.notifyBookingEvent(bookingId, "confirmed");
+
+    const instructions = await this.getCheckInInstructions(bookingId);
+    if (instructions?.check_in_instructions && booking.guest_user_id) {
+      void notificationService.notifyUser({
+        userId: booking.guest_user_id,
+        notificationType: "booking_check_in_instructions",
+        subject: "Check-in instructions",
+        content: instructions.check_in_instructions.slice(0, 500),
+        category: "Bookings",
+        actionUrl: "/app/trips",
+        metadata: { bookingId },
+      });
+    }
+
     return confirmed;
   },
 
@@ -332,6 +438,27 @@ export const bookingService = {
       .select("*")
       .eq("booking_id", bookingId)
       .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getOrganizationBookingReviews(organizationId: string, limit = 30) {
+    const { data, error } = await supabase
+      .from("booking_reviews")
+      .select(`
+        *,
+        booking:short_stay_bookings!inner(
+          id,
+          check_in,
+          check_out,
+          guest:users(full_name, email),
+          listing:listings(property:properties(address))
+        )
+      `)
+      .eq("booking.organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
 
     if (error) throw error;
     return data || [];

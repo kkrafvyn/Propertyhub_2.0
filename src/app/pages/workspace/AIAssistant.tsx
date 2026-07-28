@@ -8,9 +8,10 @@ import { Input } from "@/app/components/ui/Input";
 import { Badge } from "@/app/components/ui/badge";
 import { useAuth } from "@/app/context/AuthContext";
 import { aiAssistantService } from "@/lib/ai-assistant.service";
+import { recommendationEngineService } from "@/lib/recommendation-engine.service";
 import { listingService } from "@/lib/listing.service";
 
-export function AIAssistant() {
+export function AIAssistant({ organizationId }: { organizationId?: string }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,6 +21,30 @@ export function AIAssistant() {
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
   const [chatHistory, setChatHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [workflowOutput, setWorkflowOutput] = useState("");
+  const [agencyInsights, setAgencyInsights] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!organizationId) {
+      setAgencyInsights([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    void recommendationEngineService
+      .getAgentRecommendations(organizationId)
+      .then((insights) => {
+        if (!cancelled) setAgencyInsights(insights || []);
+      })
+      .catch((error) => {
+        console.error("Failed to load agency insights:", error);
+        if (!cancelled) setAgencyInsights([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [organizationId]);
 
   useEffect(() => {
     if (!user) {
@@ -32,7 +57,11 @@ export function AIAssistant() {
     const loadRecommendations = async () => {
       try {
         if (!cancelled) setLoadingRecommendations(true);
-        const data = await aiAssistantService.getRecommendations(user.id, 5);
+        let data = await aiAssistantService.getRecommendations(user.id, 5);
+        if (!data || data.length === 0) {
+          await aiAssistantService.generateRecommendations(user.id).catch(() => []);
+          data = await aiAssistantService.getRecommendations(user.id, 5);
+        }
         if (!cancelled) {
           setRecommendations(data || []);
         }
@@ -319,6 +348,30 @@ export function AIAssistant() {
               </p>
             </div>
           </Card>
+
+          {agencyInsights.length > 0 ? (
+            <Card className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold text-sm">Agency Insights</h3>
+              </div>
+              <div className="space-y-3">
+                {agencyInsights.map((insight) => (
+                  <div key={insight.title} className="rounded-lg border border-border p-3">
+                    <p className="font-medium text-sm">{insight.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{insight.description}</p>
+                    {Array.isArray(insight.suggestions) && insight.suggestions.length > 0 ? (
+                      <ul className="mt-2 space-y-1 text-xs text-muted-foreground list-disc pl-4">
+                        {insight.suggestions.slice(0, 3).map((suggestion: string) => (
+                          <li key={suggestion}>{suggestion}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ) : null}
         </div>
       </div>
     </div>

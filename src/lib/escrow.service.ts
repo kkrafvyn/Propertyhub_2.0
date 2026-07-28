@@ -75,4 +75,15 @@ export const escrowService = {
     if (error) throw error;
     return data;
   },
+
+  async releasePartialEscrowHold(holdId: string, amountMinor: number, releaseNote?: string) {
+    const { data, error } = await supabase.rpc("release_partial_escrow_hold", {
+      p_hold_id: holdId,
+      p_amount_minor: amountMinor,
+      p_note: releaseNote || "Partial escrow release.",
+    });
+
+    if (error) throw error;
+    return data;
+  },
 };

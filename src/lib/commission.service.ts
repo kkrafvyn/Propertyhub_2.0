@@ -157,7 +157,7 @@ class CommissionService {
             user_id: commission.userId,
             listing_id: commission.listingId,
             deal_case_id: commission.dealCaseId,
-            amount: commission.amount,
+            amount_minor: Math.round(commission.amount * 100),
             currency: commission.currency,
             commission_rate: commission.commissionRate,
             revenue_model: commission.revenueModel,
@@ -291,6 +291,26 @@ class CommissionService {
   }
 
   /**
+   * Get commissions for an organization
+   */
+  async getOrganizationCommissions(organizationId: string) {
+    const { data, error } = await supabase
+      .from('commissions')
+      .select(`
+        *,
+        users:user_id(full_name, email)
+      `)
+      .eq('organization_id', organizationId)
+      .order('earned_at', { ascending: false })
+
+    if (error) throw error
+    return (data || []).map((item) => ({
+      ...this.mapCommissionData(item),
+      agentName: item.users?.full_name || item.users?.email || 'Unknown',
+    }))
+  }
+
+  /**
    * Get commissions by listing for analysis
    */
   async getCommissionsByListing(
@@ -379,7 +399,7 @@ class CommissionService {
       userId: data.user_id,
       listingId: data.listing_id,
       dealCaseId: data.deal_case_id,
-      amount: data.amount,
+      amount: (data.amount_minor ?? data.amount ?? 0) / 100,
       currency: data.currency,
       commissionRate: data.commission_rate,
       revenueModel: data.revenue_model,
