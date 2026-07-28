@@ -15,6 +15,7 @@
     "test:e2e:ui": "playwright test --ui",
     "i18n:generate": "node scripts/generate-locale-chrome.mjs",
     "integrations:wire": "node scripts/wire-integrations.mjs",
+    "supabase:cleanup-secrets": "node scripts/cleanup-supabase-secrets.cjs",
     "cap:sync": "npx cap sync",
     "android:add": "npx cap add android",
     "android:sync": "npm run build:web && npx cap sync android",

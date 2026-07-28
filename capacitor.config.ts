@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.baymiftah.app",
-  appName: "Property Hub",
+  appName: "BaytMiftah",
   webDir: "dist",
   bundledWebRuntime: false,
   backgroundColor: "#ffffff",

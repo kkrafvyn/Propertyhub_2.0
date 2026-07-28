@@ -102,7 +102,7 @@ export const financeReportService = {
     const html = `
       <html>
         <head>
-          <title>Property Hub Finance Report</title>
+          <title>BaytMiftah Finance Report</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 32px; color: #111827; }
             h1, h2 { margin-bottom: 8px; }

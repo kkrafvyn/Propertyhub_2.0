@@ -83,7 +83,7 @@ export const pushNotificationService = {
 
     if (!this.isSupported()) {
       this.showLocalNotification({
-        title: "Property Hub alerts enabled",
+        title: "BaytMiftah alerts enabled",
         body: "In-app notifications are active. Full web push requires a supported browser.",
       });
       return null;

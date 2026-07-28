@@ -42,7 +42,7 @@ function getDbConfig() {
   const password = env.SUPABASE_DB_PASSWORD;
   if (!password) {
     throw new Error(
-      "Set SUPABASE_DB_URL or SUPABASE_DB_PASSWORD in supabase/.env.local"
+      "Set SUPABASE_DB_URL or SUPABASE_DB_PASSWORD in root .env"
     );
   }
 

@@ -68,7 +68,7 @@ export function ConsumerNotificationPreferences({ userId }: { userId: string }) 
       <div>
         <h3 className="font-semibold">Notification preferences</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Choose how Property Hub reaches you about messages, bookings, and payments.
+          Choose how BaytMiftah reaches you about messages, bookings, and payments.
         </p>
       </div>
 

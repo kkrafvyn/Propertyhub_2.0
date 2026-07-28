@@ -94,7 +94,7 @@ export default function NotificationSettings() {
         userId: user.id,
         notificationType: "test_notification",
         subject: "Notification center is working",
-        content: "Your in-app notifications are now live in Property Hub.",
+        content: "Your in-app notifications are now live in BaytMiftah.",
         actionUrl: `${WORKSPACE_ENTRY_PATH}?next=notifications`,
       });
 
@@ -491,7 +491,7 @@ export default function NotificationSettings() {
                         {!notification.read && <Badge>New</Badge>}
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">
-                        {notification.content || "Open Property Hub to review the update."}
+                        {notification.content || "Open BaytMiftah to review the update."}
                       </p>
                     </div>
                     <div className="text-xs text-muted-foreground whitespace-nowrap">

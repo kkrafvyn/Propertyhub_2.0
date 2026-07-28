@@ -70,7 +70,7 @@ export function Signup() {
   return (
     <AuthShell
       title="Create Account"
-      subtitle="Join Property Hub and start your journey"
+      subtitle="Join BaytMiftah and start your journey"
       heroTitle="Start Your Property Journey Today"
       heroSubtitle="Whether you're looking for a home or managing properties, we've got you covered"
       footer={

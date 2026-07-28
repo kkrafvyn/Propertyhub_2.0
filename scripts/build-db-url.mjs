@@ -35,7 +35,7 @@ const ref =
 
 const password = env.SUPABASE_DB_PASSWORD;
 if (!ref || !password) {
-  console.error("Missing SUPABASE_PROJECT_REF and SUPABASE_DB_PASSWORD in supabase/.env.local");
+  console.error("Missing SUPABASE_PROJECT_REF and SUPABASE_DB_PASSWORD in root .env");
   process.exit(1);
 }
 

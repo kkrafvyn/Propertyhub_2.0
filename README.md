@@ -1,4 +1,4 @@
-# Property Hub REOS
+# BaytMiftah REOS
 
 Production-ready real estate platform for managing properties, listings, deal cases, payments, team collaboration, and trust workflows. Built with React 18, TypeScript, Vite, and Supabase.
 
@@ -56,7 +56,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Regenerate Supabase types when the database schema changes (requires `SUPABASE_DB_URL` or credentials in `supabase/.env.local`):
+Regenerate Supabase types when the database schema changes (requires `SUPABASE_DB_URL` or credentials in root `.env`):
 
 ```bash
 npm run db:types

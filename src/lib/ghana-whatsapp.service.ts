@@ -30,17 +30,17 @@ export const ghanaWhatsappService = {
     }
   ) {
     const leadName = params.leadName || "there";
-    const agentName = params.agentName || "the Property Hub team";
-    const organizationName = params.organizationName || "Property Hub";
+    const agentName = params.agentName || "the BaytMiftah team";
+    const organizationName = params.organizationName || "BaytMiftah";
     const address = params.propertyAddress || "the property";
 
     switch (template) {
       case "viewing_confirmation":
         return `Hi ${leadName}, this is ${agentName} from ${organizationName}. Your viewing for ${address} is confirmed${params.viewingTime ? ` for ${params.viewingTime}` : ""}. Please share your GhanaPostGPS location if you need directions.`;
       case "documents_needed":
-        return `Hi ${leadName}, this is ${agentName} from ${organizationName}. To continue with ${address}, please share your ID/verification details and any required documents through Property Hub so we can keep the process secure.`;
+        return `Hi ${leadName}, this is ${agentName} from ${organizationName}. To continue with ${address}, please share your ID/verification details and any required documents through BaytMiftah so we can keep the process secure.`;
       case "payment_followup":
-        return `Hi ${leadName}, this is ${agentName} from ${organizationName}. Your ${params.paymentPurpose || "payment"} for ${address} can be completed securely through Property Hub using Mobile Money, card, or bank transfer.`;
+        return `Hi ${leadName}, this is ${agentName} from ${organizationName}. Your ${params.paymentPurpose || "payment"} for ${address} can be completed securely through BaytMiftah using Mobile Money, card, or bank transfer.`;
       case "first_response":
       default:
         return `Hi ${leadName}, this is ${agentName} from ${organizationName}. Thanks for your interest in ${address}. Are you available for a quick call or WhatsApp chat today?`;

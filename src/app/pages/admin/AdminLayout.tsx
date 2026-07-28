@@ -976,7 +976,7 @@ export function AdminLayout() {
           ? "Review consumer identity documents and agency trust verification requests."
           : currentSection === "support"
             ? "Find users quickly and route support issues into moderation and trust workflows."
-            : "Monitor operational health, trust signals, and moderation volume across Property Hub.";
+            : "Monitor operational health, trust signals, and moderation volume across BaytMiftah.";
 
   return (
     <div className="min-h-screen bg-background">
@@ -990,7 +990,7 @@ export function AdminLayout() {
                 </div>
                 <div>
                   <span className="text-xl font-semibold block">Admin Console</span>
-                  <span className="text-xs text-white/80">Property Hub REOS</span>
+                  <span className="text-xs text-white/80">BaytMiftah REOS</span>
                 </div>
               </Link>
             </div>

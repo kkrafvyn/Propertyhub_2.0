@@ -348,8 +348,8 @@ Deno.serve(async (req) => {
   }
 
   const channel = notification.channel as NotificationChannel;
-  const subject = notification.subject || "Property Hub notification";
-  const content = notification.content || "You have a new update in Property Hub.";
+  const subject = notification.subject || "BaytMiftah notification";
+  const content = notification.content || "You have a new update in BaytMiftah.";
 
   let deliveryResult:
     | { success: boolean; error?: string }

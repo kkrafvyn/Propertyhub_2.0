@@ -274,14 +274,14 @@ export const messageService = {
 
         const preview =
           content.trim().replace(/\s+/g, ' ').slice(0, 140) ||
-          'Open Property Hub to read the latest message.'
+          'Open BaytMiftah to read the latest message.'
 
         await communicationService.createInAppNotification({
           userId: recipientId,
           actorUserId: senderId,
           conversationId,
           notificationType: 'message_received',
-          subject: 'New message on Property Hub',
+          subject: 'New message on BaytMiftah',
           content: preview,
           actionUrl,
           respectPreferences: false,

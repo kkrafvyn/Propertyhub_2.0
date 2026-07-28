@@ -1,7 +1,7 @@
 /**
  * Client-side integration status derived from Vite environment variables.
  * Server-only secrets (Paystack secret, Resend, Twilio, VAPID private) live in
- * Supabase Edge Function secrets — see supabase/.env.payments.example.
+ * Supabase Edge Function secrets — see root `.env.example` (server section).
  */
 
 function envFlag(value: string | undefined) {

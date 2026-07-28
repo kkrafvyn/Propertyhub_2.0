@@ -246,7 +246,7 @@ export default {
     "lastUpdated": "Last updated: June 2026",
     "privacy": {
       "title": "Privacy Policy",
-      "intro": "BaytMiftah (\"we\", \"us\") operates the Property Hub marketplace in Ghana and neighbouring markets. This policy explains how we collect, use, and protect your personal information.",
+      "intro": "BaytMiftah (\"we\", \"us\") operates the BaytMiftah marketplace in Ghana and neighbouring markets. This policy explains how we collect, use, and protect your personal information.",
       "collectTitle": "Information we collect",
       "collectBody": "We collect account details (name, email, phone), listing and transaction data, device and usage analytics, and communications you send through the platform.",
       "useTitle": "How we use information",

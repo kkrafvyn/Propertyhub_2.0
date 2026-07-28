@@ -3,7 +3,7 @@ import { mergeLocale } from './mergeLocale.js'
 import { getDesktopChrome } from './locales/partials/_desktopChrome.js'
 import { getMobileChrome } from './locales/partials/_mobileChrome.js'
 import { getFeatureChrome } from './locales/partials/_featureChrome.js'
-import { getCoreChrome } from './locales/partials/_coreChrome.js'
+import { getOnboardingChrome } from './locales/partials/_onboardingChrome.js'
 
 /** @type {Record<string, () => Promise<{ default: object }>>} */
 export const LOCALE_LOADERS = {
@@ -106,12 +106,15 @@ export async function loadLocale(code) {
       : mergeLocale(
           mergeLocale(
             mergeLocale(
-              mergeLocale(mod.default, getDesktopChrome(code)),
-              getMobileChrome(code),
+              mergeLocale(
+                mergeLocale(mod.default, getDesktopChrome(code)),
+                getMobileChrome(code),
+              ),
+              getFeatureChrome(code),
             ),
-            getFeatureChrome(code),
+            getCoreChrome(code),
           ),
-          getCoreChrome(code),
+          getOnboardingChrome(code),
         )
   cache[code] = catalog
   return catalog

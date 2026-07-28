@@ -3,6 +3,10 @@
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
+const {
+  loadProjectEnv,
+  writeServerSecretsFile,
+} = require("./load-project-env.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const args = process.argv.slice(2);
@@ -38,7 +42,7 @@ function printUsage() {
       "                                        [--skip-secrets] [--skip-db]",
       "",
       "Auth (required on Windows):",
-      "  Add SUPABASE_ACCESS_TOKEN to supabase/.env.local",
+      "  Add SUPABASE_ACCESS_TOKEN to root .env",
       "  Or run: npm run supabase:login",
       "",
       "Examples:",
@@ -48,38 +52,20 @@ function printUsage() {
   );
 }
 
-function loadEnvFile(filePath) {
-  if (!fs.existsSync(filePath)) return {};
-  return Object.fromEntries(
-    fs
-      .readFileSync(filePath, "utf8")
-      .split(/\r?\n/)
-      .filter((line) => line && !line.trim().startsWith("#"))
-      .map((line) => {
-        const index = line.indexOf("=");
-        return [line.slice(0, index), line.slice(index + 1)];
-      })
-      .filter(([key]) => key)
-  );
-}
-
-function loadProjectEnv() {
-  const rootEnv = loadEnvFile(path.join(projectRoot, ".env"));
-  const localEnv = loadEnvFile(path.join(projectRoot, "supabase", ".env.local"));
-  const merged = { ...rootEnv, ...localEnv, ...process.env };
-  if (merged.SUPABASE_ACCESS_TOKEN) {
-    process.env.SUPABASE_ACCESS_TOKEN = merged.SUPABASE_ACCESS_TOKEN;
-  }
-  return merged;
-}
-
 const projectEnv = loadProjectEnv();
+if (projectEnv.SUPABASE_ACCESS_TOKEN) {
+  process.env.SUPABASE_ACCESS_TOKEN = projectEnv.SUPABASE_ACCESS_TOKEN;
+}
 const projectRef =
   readFlag("--project-ref") || projectEnv.SUPABASE_PROJECT_REF || process.env.SUPABASE_PROJECT_REF;
+const generatedSecretsFile = path.join("supabase", ".env.payments");
+if (!readFlag("--env-file") && !process.env.SUPABASE_SECRETS_ENV_FILE) {
+  writeServerSecretsFile(path.join(projectRoot, generatedSecretsFile), projectEnv);
+}
 const envFile =
   readFlag("--env-file") ||
   process.env.SUPABASE_SECRETS_ENV_FILE ||
-  path.join("supabase", ".env.payments");
+  generatedSecretsFile;
 const skipSecrets = hasFlag("--skip-secrets");
 const skipDb = hasFlag("--skip-db") || !hasFlag("--with-db");
 
@@ -100,7 +86,7 @@ if (!process.env.SUPABASE_ACCESS_TOKEN) {
       "",
       "Windows interactive `supabase login` often fails. Use token auth instead:",
       "  1. Run: npm run supabase:login",
-      "  2. Or add SUPABASE_ACCESS_TOKEN=sbp_... to supabase/.env.local",
+      "  2. Or add SUPABASE_ACCESS_TOKEN=sbp_... to root .env",
       "     Create token: https://supabase.com/dashboard/account/tokens",
     ].join("\n")
   );
@@ -111,7 +97,7 @@ if (!skipSecrets) {
   const resolvedEnvFile = path.resolve(projectRoot, envFile);
   if (!fs.existsSync(resolvedEnvFile)) {
     console.error(
-      `Secrets file not found at ${resolvedEnvFile}. Copy supabase/.env.payments.example to supabase/.env.payments or pass --env-file.`
+      `Secrets file not found at ${resolvedEnvFile}. Add server keys to root .env or pass --env-file.`
     );
     process.exit(1);
   }
