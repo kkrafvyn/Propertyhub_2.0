@@ -11,6 +11,7 @@ export {
   type MapListing,
 } from "./listing-mappers";
 export { AuthPageLayout } from "./AuthPageLayout";
+export { AuthShell } from "./AuthShell";
 export { WorkspaceShell } from "./WorkspaceShell";
 export { MapView } from "./MapView";
 export { MapErrorBoundary } from "./MapErrorBoundary";

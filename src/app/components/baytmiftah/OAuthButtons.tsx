@@ -39,7 +39,7 @@ export function OAuthButtons({
           type="button"
           disabled={disabled || busy}
           onClick={onGoogle}
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-ink px-4 py-3.5 text-sm font-semibold text-ink transition hover:bg-surface-hover disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-card px-4 py-3.5 text-sm font-semibold text-foreground transition hover:bg-muted disabled:opacity-60"
         >
           <GoogleIcon />
           {loadingProvider === "google" ? "Redirecting…" : "Continue with Google"}
@@ -50,7 +50,7 @@ export function OAuthButtons({
           type="button"
           disabled={disabled || busy}
           onClick={onApple}
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-ink bg-ink px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-ink/90 disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-foreground px-4 py-3.5 text-sm font-semibold text-background transition hover:opacity-90 disabled:opacity-60"
         >
           <AppleIcon />
           {loadingProvider === "apple" ? "Redirecting…" : "Continue with Apple"}
@@ -61,7 +61,7 @@ export function OAuthButtons({
           type="button"
           disabled={disabled || busy}
           onClick={onFacebook}
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-ink px-4 py-3.5 text-sm font-semibold text-ink transition hover:bg-surface-hover disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-card px-4 py-3.5 text-sm font-semibold text-foreground transition hover:bg-muted disabled:opacity-60"
         >
           {loadingProvider === "facebook" ? "Redirecting…" : "Continue with Facebook"}
         </button>
@@ -74,10 +74,10 @@ export function AuthDivider({ label = "Or continue with email" }: { label?: stri
   return (
     <div className="relative my-6">
       <div className="absolute inset-0 flex items-center" aria-hidden="true">
-        <div className="w-full border-t border-surface-border" />
+        <div className="w-full border-t border-border" />
       </div>
       <div className="relative flex justify-center text-xs uppercase tracking-wide">
-        <span className="bg-surface px-3 text-ink-secondary">{label}</span>
+        <span className="bg-background px-3 text-muted-foreground">{label}</span>
       </div>
     </div>
   );

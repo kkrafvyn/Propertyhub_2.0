@@ -1,25 +1,23 @@
 import { Link, useLocation, useNavigate } from "react-router";
-import { Mail, Loader2, Phone, ShieldCheck } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Input } from "../../components/ui/Input";
+import { Button } from "../../components/ui/Button";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
-import { AuthPageLayout, PrimaryButton, SecondaryButton } from "../../components/baytmiftah";
+import { AuthShell, AuthDivider, OAuthButtons } from "../../components/baytmiftah";
 
 export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loginMode, setLoginMode] = useState<"email" | "phone">("email");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [oauthLoadingProvider, setOauthLoadingProvider] = useState<
-    "google" | "facebook" | "apple" | null
-  >(null);
+  const [oauthLoadingProvider, setOauthLoadingProvider] = useState<"google" | "apple" | null>(
+    null
+  );
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signInWithOAuth, signInWithPhoneOtp, verifyPhoneOtp, user } = useAuth();
+  const { signIn, signInWithOAuth, user } = useAuth();
+
   const stateRedirectTo =
     typeof location.state === "object" &&
     location.state !== null &&
@@ -57,30 +55,7 @@ export function Login() {
     }
   };
 
-  const handlePhoneSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    try {
-      setLoading(true);
-
-      if (!otpSent) {
-        await signInWithPhoneOtp(phone);
-        setOtpSent(true);
-        toast.success("OTP sent to your phone.");
-        return;
-      }
-
-      await verifyPhoneOtp(phone, otp);
-      toast.success("Phone verified. Welcome back!");
-      navigate(redirectTo, { replace: true });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Phone login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleOAuthSignIn = async (provider: "google" | "facebook" | "apple") => {
+  const handleOAuthSignIn = async (provider: "google" | "apple") => {
     try {
       setOauthLoadingProvider(provider);
       await signInWithOAuth(provider, oauthRedirectUrl);
@@ -91,201 +66,71 @@ export function Login() {
   };
 
   return (
-    <AuthPageLayout
+    <AuthShell
       title="Welcome back"
       subtitle="Log in to your BaytMiftah account"
+      heroTitle="Your property journey continues here"
+      heroSubtitle="Rent, buy, lease, or book short stays — one account for every journey"
+      footer={
+        <p className="text-muted-foreground">
+          Don&apos;t have an account?{" "}
+          <Link to="/signup" className="font-semibold text-primary hover:underline">
+            Sign up
+          </Link>
+        </p>
+      }
     >
-      <div className="mb-6 grid grid-cols-2 rounded-xl bg-surface-subtle p-1">
-            <button
-              type="button"
-              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                loginMode === "email" ? "bg-white shadow-sm" : "text-muted-foreground"
-              }`}
-              onClick={() => setLoginMode("email")}
-            >
-              <Mail className="h-4 w-4" />
-              Email
-            </button>
-            <button
-              type="button"
-              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                loginMode === "phone" ? "bg-white shadow-sm" : "text-muted-foreground"
-              }`}
-              onClick={() => setLoginMode("phone")}
-            >
-              <Phone className="h-4 w-4" />
-              Phone OTP
-            </button>
-          </div>
+      <OAuthButtons
+        onGoogle={() => void handleOAuthSignIn("google")}
+        onApple={() => void handleOAuthSignIn("apple")}
+        loadingProvider={oauthLoadingProvider}
+        disabled={loading}
+      />
 
-          <form
-            onSubmit={loginMode === "email" ? handleSubmit : handlePhoneSubmit}
-            className="space-y-6"
-          >
-            {loginMode === "email" ? (
-              <>
-                <div>
-                  <Input
-                    label="Email Address"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+      <AuthDivider label="Or log in with email" />
 
-                <div>
-                  <Input
-                    label="Password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-              </>
-            ) : (
-              <div className="space-y-4 rounded-xl border border-border p-4">
-                <div className="flex gap-3 text-sm text-muted-foreground">
-                  <ShieldCheck className="mt-0.5 h-4 w-4 text-primary" />
-                  <p>
-                    Ghana launch supports phone-first access. Supabase SMS must be enabled in
-                    production before OTP delivery works live.
-                  </p>
-                </div>
-                <Input
-                  label="Phone Number"
-                  type="tel"
-                  placeholder="+233 24 123 4567"
-                  value={phone}
-                  onChange={(e) => {
-                    setPhone(e.target.value);
-                    setOtpSent(false);
-                    setOtp("");
-                  }}
-                  required
-                />
-                {otpSent && (
-                  <Input
-                    label="OTP Code"
-                    inputMode="numeric"
-                    placeholder="Enter the SMS code"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    required
-                  />
-                )}
-              </div>
-            )}
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <Input
+          label="Email Address"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoComplete="email"
+        />
 
-            <div className={loginMode === "phone" ? "hidden" : "flex items-center justify-between"}>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-border text-primary" />
-                <span className="text-sm text-muted-foreground">Remember me</span>
-              </label>
-              <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                Forgot password?
-              </Link>
-            </div>
+        <Input
+          label="Password"
+          type="password"
+          placeholder="Enter your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete="current-password"
+        />
 
-            <PrimaryButton type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {loginMode === "phone" ? "Verifying..." : "Logging in..."}
-                </>
-              ) : loginMode === "phone" ? (
-                otpSent ? "Verify OTP" : "Send OTP"
-              ) : (
-                "Log In"
-              )}
-            </PrimaryButton>
-          </form>
+        <div className="flex items-center justify-between">
+          <label className="flex cursor-pointer items-center gap-2">
+            <input type="checkbox" className="h-4 w-4 rounded border-border text-primary" />
+            <span className="text-sm text-muted-foreground">Remember me</span>
+          </label>
+          <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+            Forgot password?
+          </Link>
+        </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-ink-secondary">
-              Don't have an account?{" "}
-              <Link to="/signup" className="font-semibold text-ink underline hover:opacity-80">
-                Sign up
-              </Link>
-            </p>
-          </div>
-
-          <div className="mt-8">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-surface-border"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-surface px-4 text-ink-secondary">Or continue with</span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <SecondaryButton
-                type="button"
-                className="w-full"
-                onClick={() => void handleOAuthSignIn("google")}
-                disabled={Boolean(oauthLoadingProvider)}
-              >
-                {oauthLoadingProvider === "google" ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path
-                    fill="currentColor"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  />
-                </svg>
-                )}
-                Google
-              </SecondaryButton>
-              <SecondaryButton
-                type="button"
-                className="w-full"
-                onClick={() => void handleOAuthSignIn("apple")}
-                disabled={Boolean(oauthLoadingProvider)}
-              >
-                {oauthLoadingProvider === "apple" ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M19.665 16.149c-.277.637-.607 1.223-.99 1.756-.521.74-.949 1.251-1.286 1.533-.521.466-1.08.704-1.68.715-.43 0-.949-.124-1.556-.373-.608-.249-1.166-.373-1.674-.373-.532 0-1.102.124-1.709.373-.608.249-1.099.38-1.475.394-.576.024-1.149-.221-1.72-.736-.364-.315-.811-.845-1.34-1.59-.567-.792-1.034-1.711-1.402-2.76-.394-1.134-.591-2.231-.591-3.294 0-1.218.263-2.269.789-3.151.413-.707.964-1.265 1.652-1.674.688-.409 1.431-.618 2.228-.629.438 0 1.012.135 1.724.405.712.27 1.168.405 1.369.405.15 0 .659-.159 1.525-.478.819-.296 1.51-.419 2.072-.373 1.523.123 2.667.724 3.431 1.802-1.362.825-2.037 1.983-2.026 3.473.013 1.161.434 2.128 1.265 2.899.376.357.797.633 1.265.83-.102.295-.21.58-.326.855Zm-4.57-13.298c0 .91-.332 1.76-.994 2.549-.799.938-1.767 1.48-2.816 1.395a2.831 2.831 0 0 1-.021-.346c0-.874.38-1.81 1.056-2.577.337-.388.765-.71 1.283-.969.518-.255 1.008-.397 1.468-.427.017.124.024.249.024.375Z" />
-                  </svg>
-                )}
-                Apple
-              </SecondaryButton>
-              <SecondaryButton
-                type="button"
-                className="w-full"
-                onClick={() => void handleOAuthSignIn("facebook")}
-                disabled={Boolean(oauthLoadingProvider)}
-              >
-                {oauthLoadingProvider === "facebook" ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-                )}
-                Facebook
-              </SecondaryButton>
-            </div>
-          </div>
-    </AuthPageLayout>
+        <Button type="submit" size="lg" className="w-full" disabled={loading || Boolean(oauthLoadingProvider)}>
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Logging in...
+            </>
+          ) : (
+            "Log In"
+          )}
+        </Button>
+      </form>
+    </AuthShell>
   );
 }

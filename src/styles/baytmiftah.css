@@ -715,3 +715,12 @@ html.dark .mobile-tab-button.is-active {
 html.dark .desktop-shell {
   background-color: #0b211a;
 }
+
+/* Auth pages — consistent split layout in light & dark */
+.auth-shell-hero {
+  background: linear-gradient(135deg, #1b4332 0%, #0f2922 50%, #0b211a 100%);
+}
+
+html.dark .auth-shell .bg-brand-forest {
+  background-color: #1b4332;
+}
