@@ -15,36 +15,9 @@ import {
   type MembershipRow,
   type OrganizationMembership,
 } from "../../../lib/workspace";
+import { WORKSPACE_PAGE_SLUGS } from "../../lib/workspace-role-nav";
 
-const ALLOWED_WORKSPACE_PAGES = new Set([
-  "new",
-  "listings",
-  "leads",
-  "team",
-  "settings",
-  "market-intelligence",
-  "automation",
-  "ai-assistant",
-  "vendors",
-  "location-intelligence",
-  "org-insights",
-  "notifications",
-  "whitelabel",
-  "mobile-settings",
-  "integrations",
-  "host",
-  "advanced-search",
-  "predictive-analytics",
-  "recommendations",
-  "team-collaboration",
-  "workflows",
-  "payments",
-  "documents",
-  "finance",
-  "calendar",
-  "leases",
-  "maintenance",
-]);
+const ALLOWED_WORKSPACE_PAGES = new Set(WORKSPACE_PAGE_SLUGS);
 
 function sanitizeRequestedPage(value: string | null) {
   if (!value) return "";

@@ -136,6 +136,7 @@ describe("WorkspaceListings", () => {
           organization={organization as any}
           workspaceBasePath="/workspace/prime-properties"
           currentUserId="user-1"
+          currentRole="manager"
         />
       </MemoryRouter>
     );

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Building2, Loader2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { isWorkspaceRole } from "../lib/baytmiftah/roles";
+import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
 import { listingService } from "../../lib/listing.service";
 import { organizationService } from "../../lib/organization.service";
 import { consumerContextService } from "../../lib/consumer-context.service";
@@ -26,7 +28,7 @@ import "./mobile.css";
 
 export function MobileAppShell() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { t } = useTranslation();
   const { market, defaultListingMode } = useUserMarket();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -107,13 +109,24 @@ export function MobileAppShell() {
       }));
 
       if (!cancelled) {
-        setContextualNav(
-          consumerContextService.getContextualNavItems({
-            hasBookingContext: nextContext.hasBookingContext,
-            hasRentingContext: nextContext.hasRentingContext,
-            hasBuyingContext: nextContext.hasBuyingContext,
-          }),
-        );
+        const journeyNav = consumerContextService.getContextualNavItems({
+          hasBookingContext: nextContext.hasBookingContext,
+          hasRentingContext: nextContext.hasRentingContext,
+          hasBuyingContext: nextContext.hasBuyingContext,
+        });
+
+        const workspaceNav = isWorkspaceRole(role)
+          ? [
+              { label: t("mobile.menuWorkspace"), href: WORKSPACE_ENTRY_PATH, section: "workspace" },
+              {
+                label: t("nav.listProperty"),
+                href: `${WORKSPACE_ENTRY_PATH}?next=new`,
+                section: "new",
+              },
+            ]
+          : [];
+
+        setContextualNav([...workspaceNav, ...journeyNav]);
       }
     };
 
@@ -122,7 +135,7 @@ export function MobileAppShell() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, role, t]);
 
   const cards = listings.map(mapListingToCard);
   const homeListings = filterHomeListings(cards, txTab, propType);

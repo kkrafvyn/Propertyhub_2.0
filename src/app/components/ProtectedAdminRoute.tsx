@@ -1,16 +1,28 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router";
 import { useAuth } from "../context/AuthContext";
+import { isFullAdminRole } from "../lib/baytmiftah/roles";
 import { adminService } from "../../lib/admin.service";
+
+function hasAdminAccess(
+  user: { user_metadata?: { role?: string }; app_metadata?: { role?: string } } | null,
+  profile: { is_platform_admin?: boolean } | null,
+) {
+  return (
+    Boolean(profile?.is_platform_admin) ||
+    isFullAdminRole(user?.user_metadata?.role) ||
+    isFullAdminRole(user?.app_metadata?.role)
+  );
+}
 
 export function ProtectedAdminRoute({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth();
   const location = useLocation();
-  const [checkingAdmin, setCheckingAdmin] = useState(() => !profile?.is_platform_admin);
-  const [isAdmin, setIsAdmin] = useState(() => Boolean(profile?.is_platform_admin));
+  const [checkingAdmin, setCheckingAdmin] = useState(() => !hasAdminAccess(user, profile));
+  const [isAdmin, setIsAdmin] = useState(() => hasAdminAccess(user, profile));
 
   useEffect(() => {
-    if (profile?.is_platform_admin) {
+    if (hasAdminAccess(user, profile)) {
       setIsAdmin(true);
       setCheckingAdmin(false);
       return;
@@ -49,7 +61,7 @@ export function ProtectedAdminRoute({ children }: { children: React.ReactNode })
     return () => {
       cancelled = true;
     };
-  }, [user, profile?.is_platform_admin]);
+  }, [user, profile]);
 
   if (loading || checkingAdmin) {
     return (

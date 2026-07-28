@@ -10,6 +10,8 @@ import { PropertyMediaPicker } from "../../components/PropertyMediaPicker";
 import { ListingQualityPanel } from "../../components/ListingQualityPanel";
 import { GhanaRegionInput } from "../../components/GhanaRegionInput";
 import type { Database } from "../../../lib/database.types";
+import type { MemberRole } from "../../../lib/workspace";
+import { canWorkspace } from "../../../lib/workspace-permissions";
 import { ghanaMarketService } from "../../../lib/ghana-market.service";
 import { getPropertyCoverImage, getPropertyMediaItems } from "../../../lib/property-media";
 import { listingQualityService } from "../../../lib/listing-quality.service";
@@ -27,6 +29,7 @@ interface WorkspaceListingsProps {
   organization: Organization;
   workspaceBasePath: string;
   currentUserId: string;
+  currentRole: MemberRole | null;
 }
 
 type ListingDraft = {
@@ -184,7 +187,9 @@ export function WorkspaceListings({
   organization,
   workspaceBasePath,
   currentUserId,
+  currentRole,
 }: WorkspaceListingsProps) {
+  const canWrite = canWorkspace(currentRole, "listings:write");
   const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [listings, setListings] = useState<any[]>([]);
@@ -553,9 +558,11 @@ export function WorkspaceListings({
             Manage pricing, publication status, property details, and listing photos for {organization.name}.
           </p>
         </div>
-        <Link to={`${workspaceBasePath}/new`}>
-          <Button>Create New Listing</Button>
-        </Link>
+        {canWrite ? (
+          <Link to={`${workspaceBasePath}/new`}>
+            <Button>Create New Listing</Button>
+          </Link>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -577,7 +584,7 @@ export function WorkspaceListings({
         </Card>
       </div>
 
-      {selectedListingIds.length > 0 ? (
+      {canWrite && selectedListingIds.length > 0 ? (
         <Card className="p-4 flex flex-wrap items-center gap-3">
           <p className="text-sm font-medium">{selectedListingIds.length} selected</p>
           <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("publish")}>
@@ -604,11 +611,15 @@ export function WorkspaceListings({
         <Card className="p-8 text-center">
           <h2 className="text-xl font-semibold mb-2">No listings yet</h2>
           <p className="text-muted-foreground mb-5">
-            Add your first listing to start publishing inventory from this workspace.
+            {canWrite
+              ? "Add your first listing to start publishing inventory from this workspace."
+              : "No listings are visible in this workspace yet."}
           </p>
-          <Link to={`${workspaceBasePath}/new`}>
-            <Button>Create New Listing</Button>
-          </Link>
+          {canWrite ? (
+            <Link to={`${workspaceBasePath}/new`}>
+              <Button>Create New Listing</Button>
+            </Link>
+          ) : null}
         </Card>
       ) : (
         <div className="space-y-4">
@@ -627,6 +638,42 @@ export function WorkspaceListings({
 
             return (
               <Card key={listing.id} className="p-6">
+                {!canWrite ? (
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex gap-4">
+                      <div className="w-32 h-28 rounded-xl overflow-hidden border border-border flex-shrink-0 bg-secondary/20">
+                        <img
+                          src={coverImage}
+                          alt={listing.property?.address || "Property"}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-xl font-semibold">
+                            {listing.property?.address || "Untitled property"}
+                          </h2>
+                          <Badge variant="outline" className="capitalize">
+                            {listing.listing_type}
+                          </Badge>
+                          <Badge className="capitalize">{listing.status.replaceAll("_", " ")}</Badge>
+                        </div>
+                        <p className="text-muted-foreground">
+                          {listing.property?.city}, {listing.property?.region}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {currencyFormatter.format(listing.price)} · Quality {qualityReport.score}
+                        </p>
+                      </div>
+                    </div>
+                    <Link to={`/property/${listing.id}`}>
+                      <Button variant="outline">
+                        <Eye className="w-4 h-4" />
+                        Preview
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex gap-4">
@@ -1033,6 +1080,7 @@ export function WorkspaceListings({
                     </Button>
                   </div>
                 </div>
+                )}
               </Card>
             );
           })}

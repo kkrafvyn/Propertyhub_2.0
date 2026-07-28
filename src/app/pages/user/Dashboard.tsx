@@ -714,7 +714,12 @@ export function UserDashboard() {
     window.location.reload();
   };
 
-  const activityNavItems = contextualNavItems;
+  const activityNavItems = useMemo(() => {
+    if (isWorkspaceRole(role) && contextualNavItems.length === 0) {
+      return [];
+    }
+    return contextualNavItems;
+  }, [contextualNavItems, role]);
 
   const handleReceiptDownload = async (transaction: any) => {
     const receipt = Array.isArray(transaction.receipt)
@@ -1490,7 +1495,7 @@ export function UserDashboard() {
             breadcrumbs={section === "overview" ? pageConfig.breadcrumb : undefined}
           />
 
-          {section === "overview" && !loading ? (
+          {section === "overview" && !loading && !isWorkspaceRole(role) ? (
             <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-10">
                   <Card className="p-6">
                     <div className="flex items-center justify-between">
@@ -1590,7 +1595,8 @@ export function UserDashboard() {
         </div>
 
         <div className="flex flex-wrap gap-3 mb-8">
-          {activityNavItems.map((item) => {
+          {activityNavItems.length > 0
+            ? activityNavItems.map((item) => {
             const iconBySection: Record<string, typeof FileText> = {
               applications: FileText,
               viewings: CalendarDays,
@@ -1622,7 +1628,7 @@ export function UserDashboard() {
                 </Button>
               </Link>
             );
-          })}
+          }) : null}
         </div>
 
           {section === "overview" ? (

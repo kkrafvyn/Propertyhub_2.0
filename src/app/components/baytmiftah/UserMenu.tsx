@@ -146,6 +146,7 @@ export function UserMenu() {
 
         <DropdownMenuSeparator className="bg-surface-border" />
 
+        {!showWorkspaceFirst ? (
         <div className="p-1.5">
           <DropdownMenuItem asChild className="bm-menu-item bm-menu-item-cta">
             <Link to={workspacePath}>
@@ -154,8 +155,9 @@ export function UserMenu() {
             </Link>
           </DropdownMenuItem>
         </div>
+        ) : null}
 
-        <DropdownMenuSeparator className="bg-surface-border" />
+        {!showWorkspaceFirst ? <DropdownMenuSeparator className="bg-surface-border" /> : null}
 
         <div className="p-1.5">
           <DropdownMenuItem

@@ -39,6 +39,7 @@ export function resolveConsumerTabId(pathname: string): string {
   if (pathname.startsWith("/search") || pathname.startsWith("/property/") || pathname.startsWith("/compare")) return "explore";
   if (pathname.startsWith("/app/saved")) return "saved";
   if (pathname.startsWith("/app/messages")) return "messages";
+  if (pathname.startsWith("/app/settings")) return "profile";
   if (pathname.startsWith("/app")) return "profile";
   return "";
 }

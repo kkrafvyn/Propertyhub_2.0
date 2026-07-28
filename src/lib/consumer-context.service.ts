@@ -29,14 +29,6 @@ const BUYING_NAV: ContextualNavItem[] = [
   { label: "Mortgage", href: "/app/mortgage", section: "mortgage", context: "buying" },
 ];
 
-const DEFAULT_NAV: ContextualNavItem[] = [
-  { label: "Offers", href: "/app/applications", section: "applications", context: "default" },
-  { label: "Viewings", href: "/app/viewings", section: "viewings", context: "default" },
-  { label: "Payments", href: "/app/payments", section: "payments", context: "default" },
-  { label: "Alerts", href: "/app/alerts", section: "alerts", context: "default" },
-  { label: "Notifications", href: "/app/notifications", section: "notifications", context: "default" },
-];
-
 export const consumerContextService = {
   async getConsumerContext(userId: string) {
     const [bookings, leases, dealCases] = await Promise.all([
@@ -73,7 +65,7 @@ export const consumerContextService = {
     if (context.hasBuyingContext) items.push(...BUYING_NAV);
 
     if (items.length === 0) {
-      return DEFAULT_NAV;
+      return [];
     }
 
     const seen = new Set<string>();

@@ -46,7 +46,7 @@ const ROLE_DEFAULTS: Record<MemberRole, WorkspacePermission[]> = {
     "contacts:write",
     "tasks:write",
   ],
-  analyst: ["listings:read", "leads:read", "finance:read", "contacts:write", "tasks:write"],
+  analyst: ["listings:read", "leads:read", "finance:read"],
 };
 
 export function getMemberPermissions(

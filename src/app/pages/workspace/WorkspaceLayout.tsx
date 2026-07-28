@@ -29,6 +29,7 @@ import {
   Wrench,
   Zap,
   ClipboardCheck,
+  UserRound,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
@@ -275,6 +276,7 @@ export function WorkspaceLayout() {
             organization={organization}
             workspaceBasePath={workspaceBasePath}
             currentUserId={user.id}
+            currentRole={currentRole}
           />
         );
       case "leads":
@@ -289,6 +291,7 @@ export function WorkspaceLayout() {
           <WorkspaceContacts
             organization={organization}
             currentUserId={user.id}
+            currentRole={currentRole}
           />
         );
       case "tasks":
@@ -296,6 +299,7 @@ export function WorkspaceLayout() {
           <WorkspaceTasks
             organization={organization}
             currentUserId={user.id}
+            currentRole={currentRole}
           />
         );
       case "team":
@@ -626,6 +630,13 @@ export function WorkspaceLayout() {
               })}
             </div>
             )}
+
+            <div className="border-t pt-6">
+              <Link to="/app" className={getFeatureNavItemClasses(false)}>
+                <UserRound className="w-5 h-5" />
+                <span className="font-medium text-sm">My account</span>
+              </Link>
+            </div>
 
           </nav>
         </aside>

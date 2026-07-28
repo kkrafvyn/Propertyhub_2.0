@@ -8,7 +8,7 @@ export const CONSUMER_ROUTES = {
   compare: "/compare",
   saved: "/app/saved",
   messages: "/app/messages",
-  profile: "/app",
+  profile: "/app/settings",
   settings: "/app/settings",
   trips: "/app/trips",
   reservations: "/app/reservations",

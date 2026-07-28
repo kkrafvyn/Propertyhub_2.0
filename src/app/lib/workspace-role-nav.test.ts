@@ -28,10 +28,12 @@ describe("workspace-role-nav", () => {
         { slug: "listings", label: "Listings" },
         { slug: "team", label: "Team" },
         { slug: "payments", label: "Payments" },
+        { slug: "contacts", label: "Contacts" },
+        { slug: "tasks", label: "Tasks" },
       ],
       "analyst",
     );
 
-    expect(items.map((item) => item.slug)).toEqual(["listings", "payments"]);
+    expect(items.map((item) => item.slug)).toEqual(["listings", "payments", "contacts", "tasks"]);
   });
 });

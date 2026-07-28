@@ -7,8 +7,8 @@ export const WORKSPACE_SLUG_PERMISSIONS: Record<string, WorkspacePermission | nu
   "": null,
   listings: "listings:read",
   leads: "leads:read",
-  contacts: "contacts:write",
-  tasks: "tasks:write",
+  contacts: "leads:read",
+  tasks: "leads:read",
   calendar: "leads:read",
   payments: "finance:read",
   team: "team:manage",
@@ -67,6 +67,11 @@ export function filterWorkspaceNavItems<T extends { slug: string }>(
 ): T[] {
   return items.filter((item) => canAccessWorkspaceSlug(item.slug, role));
 }
+
+/** All routable workspace page slugs (excludes dashboard). */
+export const WORKSPACE_PAGE_SLUGS = Object.keys(WORKSPACE_SLUG_PERMISSIONS).filter(
+  (slug) => slug !== "",
+);
 
 export function getWorkspaceRoleDescription(role: MemberRole | null | undefined): string {
   switch (role) {

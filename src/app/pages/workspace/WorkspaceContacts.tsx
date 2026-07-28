@@ -6,6 +6,8 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import type { Database } from "../../../lib/database.types";
+import type { MemberRole } from "../../../lib/workspace";
+import { canWorkspace } from "../../../lib/workspace-permissions";
 import { contactsCrmService } from "../../../lib/contacts-crm.service";
 import { organizationService } from "../../../lib/organization.service";
 
@@ -14,10 +16,13 @@ type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 export function WorkspaceContacts({
   organization,
   currentUserId,
+  currentRole,
 }: {
   organization: Organization;
   currentUserId: string;
+  currentRole: MemberRole | null;
 }) {
+  const canWrite = canWorkspace(currentRole, "contacts:write");
   const [loading, setLoading] = useState(true);
   const [contacts, setContacts] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
@@ -112,6 +117,7 @@ export function WorkspaceContacts({
         </p>
       </div>
 
+      {canWrite ? (
       <Card className="p-6">
         <h2 className="text-lg font-semibold mb-4">Add contact</h2>
         <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleCreate}>
@@ -131,6 +137,7 @@ export function WorkspaceContacts({
           </Button>
         </form>
       </Card>
+      ) : null}
 
       <Card className="p-6">
         <h2 className="text-lg font-semibold mb-4">All contacts ({activeContacts.length})</h2>
@@ -160,25 +167,35 @@ export function WorkspaceContacts({
                   <Badge variant="outline" className="capitalize">
                     {contact.status}
                   </Badge>
-                  <select
-                    className="rounded-lg border border-border px-3 py-2 text-sm"
-                    value={contact.assigned_to || ""}
-                    onChange={(event) => void assignContact(contact.id, event.target.value)}
-                  >
-                    <option value="">Unassigned</option>
-                    {members.map((member) => (
-                      <option key={member.user_id} value={member.user_id}>
-                        {member.user?.full_name || member.user?.email}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void contactsCrmService.archiveContact(contact.id).then(loadData)}
-                  >
-                    Archive
-                  </Button>
+                  {canWrite ? (
+                    <>
+                      <select
+                        className="rounded-lg border border-border px-3 py-2 text-sm"
+                        value={contact.assigned_to || ""}
+                        onChange={(event) => void assignContact(contact.id, event.target.value)}
+                      >
+                        <option value="">Unassigned</option>
+                        {members.map((member) => (
+                          <option key={member.user_id} value={member.user_id}>
+                            {member.user?.full_name || member.user?.email}
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void contactsCrmService.archiveContact(contact.id).then(loadData)}
+                      >
+                        Archive
+                      </Button>
+                    </>
+                  ) : contact.assigned_to ? (
+                    <span className="text-sm text-muted-foreground">
+                      Assigned to{" "}
+                      {members.find((member) => member.user_id === contact.assigned_to)?.user?.full_name ||
+                        "team member"}
+                    </span>
+                  ) : null}
                 </div>
               </div>
             ))}

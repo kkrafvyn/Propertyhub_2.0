@@ -6,6 +6,8 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import type { Database } from "../../../lib/database.types";
+import type { MemberRole } from "../../../lib/workspace";
+import { canWorkspace } from "../../../lib/workspace-permissions";
 import { organizationService } from "../../../lib/organization.service";
 import { workspaceTasksService } from "../../../lib/workspace-tasks.service";
 
@@ -14,10 +16,13 @@ type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 export function WorkspaceTasks({
   organization,
   currentUserId,
+  currentRole,
 }: {
   organization: Organization;
   currentUserId: string;
+  currentRole: MemberRole | null;
 }) {
+  const canWrite = canWorkspace(currentRole, "tasks:write");
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
@@ -107,6 +112,7 @@ export function WorkspaceTasks({
         </p>
       </div>
 
+      {canWrite ? (
       <Card className="p-6">
         <h2 className="text-lg font-semibold mb-4">Create task</h2>
         <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleCreate}>
@@ -145,6 +151,7 @@ export function WorkspaceTasks({
           </Button>
         </form>
       </Card>
+      ) : null}
 
       <Card className="p-6">
         <h2 className="text-lg font-semibold mb-4">Follow-up inbox ({inbox.length})</h2>
@@ -172,10 +179,12 @@ export function WorkspaceTasks({
                     <Clock3 className="w-3 h-3 mr-1" />
                     {task.status.replace(/_/g, " ")}
                   </Badge>
-                  <Button size="sm" onClick={() => void completeTask(task.id)}>
-                    <CheckCircle2 className="w-4 h-4" />
-                    Complete
-                  </Button>
+                  {canWrite ? (
+                    <Button size="sm" onClick={() => void completeTask(task.id)}>
+                      <CheckCircle2 className="w-4 h-4" />
+                      Complete
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             ))}
