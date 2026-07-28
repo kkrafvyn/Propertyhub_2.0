@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Search, SlidersHorizontal, Grid3x3, List, Map, MapPin, Bed, Bath, X, Loader2, Bell, Sparkles, Heart } from "lucide-react";
 import { savedPropertyService } from "../../lib/savedproperty.service";
-import { EmptyState, PageHeader } from "../components/ux";
+import { EmptyState } from "../components/ux";
 import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
 import {
+  CategoryBar,
   DesktopShell,
   ListingCard,
   ListingCardSkeleton,
@@ -22,27 +23,25 @@ import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { savedSearchAlertService } from "../../lib/saved-search-alert.service";
 import { aiAssistantService } from "../../lib/ai-assistant.service";
+import { syncCompareIds, toggleCompareIdAsync } from "../../lib/compare-listings";
+import { useIsDesktopViewport } from "../hooks/useMediaQuery";
+import { useTranslation } from "../i18n/LocaleContext";
 
 const PAGE_SIZE = 12;
 
-export function PropertySearch() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const currentPage = Math.max(parseInt(searchParams.get("page") || "1", 10) || 1, 1);
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
-  const [showFilters, setShowFilters] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [listings, setListings] = useState<any[]>([]);
-  const [totalResults, setTotalResults] = useState(0);
-  const [savingAlert, setSavingAlert] = useState(false);
-  const [userAlerts, setUserAlerts] = useState<any[]>([]);
-  const [savedListingIds, setSavedListingIds] = useState<Set<string>>(new Set());
-  const [selectedMapListingId, setSelectedMapListingId] = useState<string | null>(null);
-  const [naturalLanguageQuery, setNaturalLanguageQuery] = useState(searchParams.get("q") || "");
-  const [parsingQuery, setParsingQuery] = useState(false);
+type SearchFilters = {
+  priceMin: string;
+  priceMax: string;
+  bedrooms: string;
+  bathrooms: string;
+  propertyType: string;
+  listingType: string;
+  agency: string;
+  sort: string;
+};
 
-  const buildFiltersFromSearchParams = () => ({
+function buildFiltersFromSearchParams(searchParams: URLSearchParams): SearchFilters {
+  return {
     priceMin: searchParams.get("priceMin") || "",
     priceMax: searchParams.get("priceMax") || "",
     bedrooms: searchParams.get("bedrooms") || "",
@@ -58,17 +57,42 @@ export function PropertySearch() {
         : "rental"),
     agency: searchParams.get("agency") || "",
     sort: searchParams.get("sort") || "newest",
-  });
+  };
+}
 
-  const [filters, setFilters] = useState(buildFiltersFromSearchParams());
+export function PropertySearch() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { t } = useTranslation();
+  const isDesktop = useIsDesktopViewport();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = Math.max(parseInt(searchParams.get("page") || "1", 10) || 1, 1);
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
+  const [showFilters, setShowFilters] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [listings, setListings] = useState<any[]>([]);
+  const [totalResults, setTotalResults] = useState(0);
+  const [savingAlert, setSavingAlert] = useState(false);
+  const [userAlerts, setUserAlerts] = useState<any[]>([]);
+  const [savedListingIds, setSavedListingIds] = useState<Set<string>>(new Set());
+  const [selectedMapListingId, setSelectedMapListingId] = useState<string | null>(null);
+  const [naturalLanguageQuery, setNaturalLanguageQuery] = useState(searchParams.get("q") || "");
+  const [parsingQuery, setParsingQuery] = useState(false);
+
+  const [filters, setFilters] = useState(() => buildFiltersFromSearchParams(searchParams));
 
   useEffect(() => {
-    setFilters(buildFiltersFromSearchParams());
+    setFilters(buildFiltersFromSearchParams(searchParams));
   }, [searchParams]);
 
   useEffect(() => {
     loadListings();
   }, [searchParams]);
+
+  useEffect(() => {
+    syncCompareIds().then(setCompareIds);
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -110,7 +134,7 @@ export function PropertySearch() {
   const loadListings = async () => {
     try {
       setLoading(true);
-      const activeFilters = buildFiltersFromSearchParams();
+      const activeFilters = buildFiltersFromSearchParams(searchParams);
       const queryText = searchParams.get("q") || "";
       const parsed = queryText ? await aiAssistantService.parseSearchQuery(queryText) : {};
       const searchFilter = {
@@ -156,7 +180,7 @@ export function PropertySearch() {
 
   const handleSaveAlert = async () => {
     if (!user) {
-      toast.error("Log in to save this search.");
+      toast.error(t("searchPage.loginSaveSearch"));
       navigate("/login", {
         state: {
           from: `/search${window.location.search || ""}`,
@@ -180,10 +204,10 @@ export function PropertySearch() {
       });
 
       setUserAlerts((current) => [alert, ...current.filter((item) => item.id !== alert.id)]);
-      toast.success("Search alert saved.");
+      toast.success(t("searchPage.alertSaved"));
     } catch (error) {
       console.error("Failed to save search alert:", error);
-      toast.error("We couldn't save this alert right now.");
+      toast.error(t("searchPage.alertSaveFailed"));
     } finally {
       setSavingAlert(false);
     }
@@ -221,7 +245,7 @@ export function PropertySearch() {
 
   const handleToggleSave = async (listingId: string) => {
     if (!user) {
-      toast.error("Log in to save properties.");
+      toast.error(t("searchPage.loginSaveProperty"));
       navigate("/login", { state: { from: `/search${window.location.search || ""}` } });
       return;
     }
@@ -234,10 +258,10 @@ export function PropertySearch() {
         else next.delete(listingId);
         return next;
       });
-      toast.success(result.saved ? "Property saved." : "Removed from saved.");
+      toast.success(result.saved ? t("searchPage.propertySaved") : t("searchPage.propertyUnsaved"));
     } catch (error) {
       console.error(error);
-      toast.error("Unable to update saved properties.");
+      toast.error(t("searchPage.savePropertyFailed"));
     }
   };
 
@@ -277,10 +301,10 @@ export function PropertySearch() {
       if (parsed.propertyType) nextParams.set("propertyType", parsed.propertyType);
 
       setSearchParams(nextParams);
-      toast.success("BaytMiftah AI applied your search.");
+      toast.success(t("searchPage.aiApplied"));
     } catch (error) {
       console.error(error);
-      toast.error("Unable to parse that search.");
+      toast.error(t("searchPage.aiParseFailed"));
     } finally {
       setParsingQuery(false);
     }
@@ -298,22 +322,15 @@ export function PropertySearch() {
   };
 
   const resultsTitle = useMemo(() => {
-    const listingTypeLabel =
-      filters.listingType === "sale"
-        ? "Sale"
-        : filters.listingType === "lease"
-          ? "Lease"
-          : filters.listingType === "short_stay"
-            ? "Short Stay"
-            : "Rent";
+    const listingTypeLabel = t(`searchPage.listingTypes.${filters.listingType}`);
     const locationLabel = searchParams.get("q");
 
     if (locationLabel) {
-      return `Properties for ${listingTypeLabel} in ${locationLabel}`;
+      return t("searchPage.resultsForIn", { type: listingTypeLabel, location: locationLabel });
     }
 
-    return `Properties for ${listingTypeLabel}`;
-  }, [filters.listingType, searchParams]);
+    return t("searchPage.resultsFor", { type: listingTypeLabel });
+  }, [filters.listingType, searchParams, t]);
 
   const totalPages = Math.max(1, Math.ceil(totalResults / PAGE_SIZE));
   const visiblePages = useMemo(() => {
@@ -324,12 +341,12 @@ export function PropertySearch() {
   }, [currentPage, totalPages]);
 
   const resultSummary = useMemo(() => {
-    if (totalResults === 0) return "0 properties found";
+    if (totalResults === 0) return t("searchPage.zeroResults");
 
     const start = (currentPage - 1) * PAGE_SIZE + 1;
     const end = Math.min(currentPage * PAGE_SIZE, totalResults);
-    return `Showing ${start}-${end} of ${totalResults} properties`;
-  }, [currentPage, totalResults]);
+    return t("searchPage.showing", { start, end, total: totalResults });
+  }, [currentPage, totalResults, t]);
 
   useEffect(() => {
     setSelectedMapListingId((current) => {
@@ -356,8 +373,8 @@ export function PropertySearch() {
         .join(", ");
     }
 
-    return searchParams.get("q") || "Accra, Ghana";
-  }, [searchParams, selectedMapListing]);
+    return searchParams.get("q") || t("searchPage.defaultLocation");
+  }, [searchParams, selectedMapListing, t]);
   const selectedMapEmbedUrl = `https://www.google.com/maps?q=${encodeURIComponent(
     selectedMapQuery
   )}&output=embed`;
@@ -365,6 +382,25 @@ export function PropertySearch() {
   const searchLocation = searchParams.get("q") || "";
   const searchPropertyType = filters.propertyType !== "all" ? filters.propertyType : "any";
   const searchBudget = filters.priceMax || "";
+
+  const handleToggleCompare = async (listingId: string) => {
+    const { ids, capped } = await toggleCompareIdAsync(listingId);
+    setCompareIds(ids);
+    if (capped) {
+      toast.message(t("comparePage.maxReached"));
+    }
+  };
+
+  const handleCategoryChange = (id: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (id === "all") nextParams.delete("propertyType");
+    else nextParams.set("propertyType", id);
+    nextParams.set("page", "1");
+    setSearchParams(nextParams);
+  };
+
+  const categoryActive =
+    filters.propertyType && filters.propertyType !== "all" ? filters.propertyType : "all";
 
   const handleHeaderSearch = () => {
     const nextParams = new URLSearchParams(searchParams);
@@ -380,6 +416,15 @@ export function PropertySearch() {
 
   return (
     <DesktopShell
+      compareCount={compareIds.length}
+      categoryBar={
+        <CategoryBar
+          active={categoryActive}
+          onChange={handleCategoryChange}
+          onFiltersClick={() => setShowFilters(true)}
+          showMapToggle={false}
+        />
+      }
       search={
         <SearchPill
           location={searchLocation}
@@ -414,53 +459,55 @@ export function PropertySearch() {
           onNavigate={(href) => navigate(href)}
         />
 
-        <PageHeader
-          title={resultsTitle}
-          description={resultSummary}
-          breadcrumbs={[{ label: "Explore", href: "/search" }]}
-          actions={
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void handleSaveAlert()}
-                disabled={savingAlert}
-              >
-                <Bell className="w-4 h-4" />
-                {savingAlert ? "Saving..." : "Save Alert"}
-              </Button>
-              <Button
-                variant={viewMode === "grid" ? "primary" : "outline"}
-                size="sm"
+        <div className="desktop-search-toolbar">
+          <div>
+            <h1>{resultsTitle}</h1>
+            <p>{resultSummary}</p>
+          </div>
+          <div className="desktop-search-toolbar-actions">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void handleSaveAlert()}
+              disabled={savingAlert}
+            >
+              <Bell className="w-4 h-4" />
+              {savingAlert ? t("searchPage.savingAlert") : t("searchPage.saveAlert")}
+            </Button>
+            <div className="desktop-view-toggle" role="group" aria-label={t("searchPage.viewMode")}>
+              <button
+                type="button"
+                className={viewMode === "grid" ? "is-active" : ""}
                 onClick={() => setViewMode("grid")}
+                aria-pressed={viewMode === "grid"}
               >
                 <Grid3x3 className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "primary" : "outline"}
-                size="sm"
+              </button>
+              <button
+                type="button"
+                className={viewMode === "list" ? "is-active" : ""}
                 onClick={() => setViewMode("list")}
+                aria-pressed={viewMode === "list"}
               >
                 <List className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === "map" ? "primary" : "outline"}
-                size="sm"
+              </button>
+              <button
+                type="button"
+                className={viewMode === "map" ? "is-active" : ""}
                 onClick={() => setViewMode("map")}
+                aria-pressed={viewMode === "map"}
               >
                 <Map className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowFilters(!showFilters)}
-              >
+              </button>
+            </div>
+            {!isDesktop ? (
+              <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
                 <SlidersHorizontal className="w-4 h-4" />
-                Filters
+                {t("searchPage.filters")}
               </Button>
-            </>
-          }
-        />
+            ) : null}
+          </div>
+        </div>
 
         {user && userAlerts.length > 0 && (
           <Card className="p-4 mb-6 bg-primary/5 border-primary/20">
@@ -482,189 +529,38 @@ export function PropertySearch() {
         )}
 
         <div className="flex gap-8">
-          {/* Filters Sidebar */}
-          <AnimatePresence>
-            {showFilters && (
-              <motion.aside
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="fixed inset-0 z-50 flex md:relative md:inset-auto md:block md:w-80 md:flex-shrink-0 bg-black/40 md:bg-transparent p-4 md:p-0"
-                onClick={() => setShowFilters(false)}
-              >
-                <Card
-                  className="p-6 sticky top-24 max-h-[90vh] overflow-y-auto w-full max-w-sm md:max-w-none"
-                  onClick={(event) => event.stopPropagation()}
+          {isDesktop ? (
+            <aside className="hidden lg:block w-72 shrink-0">
+              <SearchFiltersPanel
+                filters={filters}
+                setFilters={setFilters}
+                onApply={handleApplyFilters}
+                onClear={clearFilters}
+              />
+            </aside>
+          ) : (
+            <AnimatePresence>
+              {showFilters && (
+                <motion.aside
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="fixed inset-0 z-50 flex bg-black/40 p-4"
+                  onClick={() => setShowFilters(false)}
                 >
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold">Filters</h3>
-                    <button
-                      onClick={() => setShowFilters(false)}
-                      className="p-1 hover:bg-secondary rounded-lg transition-colors"
-                      type="button"
-                      aria-label="Close filters"
-                      title="Close filters"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
+                  <div className="w-full max-w-sm" onClick={(event) => event.stopPropagation()}>
+                    <SearchFiltersPanel
+                      filters={filters}
+                      setFilters={setFilters}
+                      onApply={handleApplyFilters}
+                      onClear={clearFilters}
+                      onClose={() => setShowFilters(false)}
+                    />
                   </div>
-
-                  <div className="space-y-6">
-                    {/* Listing Type */}
-                    <div>
-                      <label className="block mb-3 font-semibold">Listing Type</label>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setFilters({ ...filters, listingType: "rental" })}
-                          className={`flex-1 py-2 px-3 rounded-lg transition-all ${
-                            filters.listingType === "rental"
-                              ? "bg-primary text-white"
-                              : "bg-secondary hover:bg-muted"
-                          }`}
-                        >
-                          Rent
-                        </button>
-                        <button
-                          onClick={() => setFilters({ ...filters, listingType: "sale" })}
-                          className={`flex-1 py-2 px-3 rounded-lg transition-all ${
-                            filters.listingType === "sale"
-                              ? "bg-primary text-white"
-                              : "bg-secondary hover:bg-muted"
-                          }`}
-                        >
-                          Buy
-                        </button>
-                        <button
-                          onClick={() => setFilters({ ...filters, listingType: "lease" })}
-                          className={`flex-1 py-2 px-3 rounded-lg transition-all ${
-                            filters.listingType === "lease"
-                              ? "bg-primary text-white"
-                              : "bg-secondary hover:bg-muted"
-                          }`}
-                        >
-                          Lease
-                        </button>
-                        <button
-                          onClick={() => setFilters({ ...filters, listingType: "short_stay" })}
-                          className={`flex-1 py-2 px-3 rounded-lg transition-all ${
-                            filters.listingType === "short_stay"
-                              ? "bg-primary text-white"
-                              : "bg-secondary hover:bg-muted"
-                          }`}
-                        >
-                          Stay
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block mb-3 font-semibold" htmlFor="sort-filter">
-                        Sort by
-                      </label>
-                      <select
-                        id="sort-filter"
-                        value={filters.sort || "newest"}
-                        onChange={(e) => setFilters({ ...filters, sort: e.target.value })}
-                        className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
-                      >
-                        <option value="newest">Newest</option>
-                        <option value="price_asc">Price: low to high</option>
-                        <option value="price_desc">Price: high to low</option>
-                      </select>
-                    </div>
-
-                    {/* Price Range */}
-                    <div>
-                      <label className="block mb-3 font-semibold">Price Range (GHS)</label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="number"
-                          placeholder="Min"
-                          value={filters.priceMin}
-                          onChange={(e) => setFilters({ ...filters, priceMin: e.target.value })}
-                        />
-                        <Input
-                          type="number"
-                          placeholder="Max"
-                          value={filters.priceMax}
-                          onChange={(e) => setFilters({ ...filters, priceMax: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Property Type */}
-                    <div>
-                      <label className="block mb-3 font-semibold" htmlFor="property-type-filter">
-                        Property Type
-                      </label>
-                      <select
-                        id="property-type-filter"
-                        value={filters.propertyType}
-                        onChange={(e) => setFilters({ ...filters, propertyType: e.target.value })}
-                        className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
-                        aria-label="Property type"
-                        title="Property type"
-                      >
-                        <option value="all">All Types</option>
-                        <option value="apartment">Apartment</option>
-                        <option value="house">House</option>
-                        <option value="office">Office</option>
-                        <option value="commercial">Commercial</option>
-                        <option value="land">Land</option>
-                      </select>
-                    </div>
-
-                    {/* Bedrooms */}
-                    <div>
-                      <label className="block mb-3 font-semibold">Bedrooms</label>
-                      <div className="grid grid-cols-5 gap-2">
-                        {["Any", "1", "2", "3", "4+"].map((bed) => (
-                          <button
-                            key={bed}
-                            onClick={() => setFilters({ ...filters, bedrooms: bed === "Any" ? "" : bed })}
-                            className={`py-2 px-3 rounded-lg transition-all ${
-                              (filters.bedrooms || "Any") === bed
-                                ? "bg-primary text-white"
-                                : "bg-secondary hover:bg-muted"
-                            }`}
-                          >
-                            {bed}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Bathrooms */}
-                    <div>
-                      <label className="block mb-3 font-semibold">Bathrooms</label>
-                      <div className="grid grid-cols-5 gap-2">
-                        {["Any", "1", "2", "3", "4+"].map((bath) => (
-                          <button
-                            key={bath}
-                            onClick={() => setFilters({ ...filters, bathrooms: bath === "Any" ? "" : bath })}
-                            className={`py-2 px-3 rounded-lg transition-all ${
-                              (filters.bathrooms || "Any") === bath
-                                ? "bg-primary text-white"
-                                : "bg-secondary hover:bg-muted"
-                            }`}
-                          >
-                            {bath}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <Button className="w-full" size="lg" onClick={handleApplyFilters}>
-                      Apply Filters
-                    </Button>
-                    <Button variant="outline" className="w-full" onClick={clearFilters}>
-                      Clear Filters
-                    </Button>
-                  </div>
-                </Card>
-              </motion.aside>
-            )}
-          </AnimatePresence>
+                </motion.aside>
+              )}
+            </AnimatePresence>
+          )}
 
           {/* Properties Grid/List */}
           <div className="flex-1">
@@ -677,11 +573,11 @@ export function PropertySearch() {
             ) : listings.length === 0 ? (
               <EmptyState
                 icon={Search}
-                title="No properties found"
-                description="Try adjusting your filters or ask BaytMiftah AI to broaden the search."
-                actionLabel="Clear Filters"
+                title={t("searchPage.noPropertiesTitle")}
+                description={t("searchPage.noPropertiesDesc")}
+                actionLabel={t("searchPage.clearFilters")}
                 onAction={clearFilters}
-                secondaryActionLabel="Explore All Rentals"
+                secondaryActionLabel={t("searchPage.exploreRentals")}
                 secondaryActionHref="/search?listingType=rental"
               />
             ) : (
@@ -696,7 +592,9 @@ export function PropertySearch() {
                         key={listing.id}
                         listing={mapListingToCard(listing)}
                         saved={savedListingIds.has(listing.id)}
+                        compared={compareIds.includes(listing.id)}
                         onToggleSave={handleToggleSave}
+                        onToggleCompare={handleToggleCompare}
                       />
                     ))}
                   </div>
@@ -788,7 +686,7 @@ export function PropertySearch() {
                               </div>
                               <div className="min-w-0">
                                 <h3 className="font-semibold line-clamp-2">
-                                  {listing.property?.address || "Property"}
+                                  {listing.property?.address || t("searchPage.propertyFallback")}
                                 </h3>
                                 <p className="text-sm text-muted-foreground mt-2">
                                   {listing.property?.city}, {listing.property?.region}
@@ -855,5 +753,164 @@ export function PropertySearch() {
         </div>
       </div>
     </DesktopShell>
+  );
+}
+
+function filterChipClass(active: boolean) {
+  return `flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+    active ? "bg-brand-forest text-white" : "bg-surface-subtle text-ink hover:bg-surface-hover"
+  }`;
+}
+
+type SearchFiltersPanelProps = {
+  filters: SearchFilters;
+  setFilters: React.Dispatch<React.SetStateAction<SearchFilters>>;
+  onApply: () => void;
+  onClear: () => void;
+  onClose?: () => void;
+};
+
+function SearchFiltersPanel({
+  filters,
+  setFilters,
+  onApply,
+  onClear,
+  onClose,
+}: SearchFiltersPanelProps) {
+  const { t } = useTranslation();
+
+  return (
+    <Card className="desktop-filters-panel sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto p-6">
+      <div className="mb-6 flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-ink">{t("searchPage.filters")}</h3>
+        {onClose ? (
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1 transition-colors hover:bg-surface-subtle"
+            type="button"
+            aria-label={t("searchPage.closeFilters")}
+          >
+            <X className="h-5 w-5" />
+          </button>
+        ) : null}
+      </div>
+
+      <div className="space-y-6">
+        <div>
+          <label className="mb-3 block font-semibold text-ink">{t("searchPage.listingType")}</label>
+          <div className="grid grid-cols-2 gap-2">
+            {(
+              [
+                ["rental", "rent"],
+                ["sale", "buy"],
+                ["lease", "lease"],
+                ["short_stay", "stay"],
+              ] as const
+            ).map(([value, labelKey]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setFilters({ ...filters, listingType: value })}
+                className={filterChipClass(filters.listingType === value)}
+              >
+                {t(`searchPage.${labelKey}`)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-3 block font-semibold text-ink" htmlFor="sort-filter">
+            {t("searchPage.sortBy")}
+          </label>
+          <select
+            id="sort-filter"
+            value={filters.sort || "newest"}
+            onChange={(e) => setFilters({ ...filters, sort: e.target.value })}
+            className="w-full rounded-lg border border-surface-border bg-white px-4 py-3 text-ink"
+          >
+            <option value="newest">{t("searchPage.newest")}</option>
+            <option value="price_asc">{t("searchPage.priceAsc")}</option>
+            <option value="price_desc">{t("searchPage.priceDesc")}</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-3 block font-semibold text-ink">{t("searchPage.priceRange")}</label>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              placeholder={t("searchPage.min")}
+              value={filters.priceMin}
+              onChange={(e) => setFilters({ ...filters, priceMin: e.target.value })}
+            />
+            <Input
+              type="number"
+              placeholder={t("searchPage.max")}
+              value={filters.priceMax}
+              onChange={(e) => setFilters({ ...filters, priceMax: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-3 block font-semibold text-ink" htmlFor="property-type-filter">
+            {t("searchPage.propertyType")}
+          </label>
+          <select
+            id="property-type-filter"
+            value={filters.propertyType}
+            onChange={(e) => setFilters({ ...filters, propertyType: e.target.value })}
+            className="w-full rounded-lg border border-surface-border bg-white px-4 py-3 text-ink"
+          >
+            <option value="all">{t("searchPage.allTypes")}</option>
+            <option value="apartment">{t("searchPage.propertyTypes.apartment")}</option>
+            <option value="house">{t("searchPage.propertyTypes.house")}</option>
+            <option value="office">{t("searchPage.propertyTypes.office")}</option>
+            <option value="commercial">{t("searchPage.propertyTypes.commercial")}</option>
+            <option value="land">{t("searchPage.propertyTypes.land")}</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-3 block font-semibold text-ink">{t("searchPage.bedrooms")}</label>
+          <div className="grid grid-cols-5 gap-2">
+            {["Any", "1", "2", "3", "4+"].map((bed) => (
+              <button
+                key={bed}
+                type="button"
+                onClick={() => setFilters({ ...filters, bedrooms: bed === "Any" ? "" : bed })}
+                className={filterChipClass((filters.bedrooms || "Any") === bed)}
+              >
+                {bed === "Any" ? t("filters.any") : bed}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-3 block font-semibold text-ink">{t("searchPage.bathrooms")}</label>
+          <div className="grid grid-cols-5 gap-2">
+            {["Any", "1", "2", "3", "4+"].map((bath) => (
+              <button
+                key={bath}
+                type="button"
+                onClick={() => setFilters({ ...filters, bathrooms: bath === "Any" ? "" : bath })}
+                className={filterChipClass((filters.bathrooms || "Any") === bath)}
+              >
+                {bath === "Any" ? t("filters.any") : bath}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <Button className="w-full" size="lg" onClick={onApply}>
+          {t("searchPage.applyFilters")}
+        </Button>
+        <Button variant="outline" className="w-full" onClick={onClear}>
+          {t("searchPage.clearFilters")}
+        </Button>
+      </div>
+    </Card>
   );
 }

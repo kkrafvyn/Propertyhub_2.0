@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import type { ReactNode } from "react";
 import { Heart, Moon, Plus, Scale, Sun } from "lucide-react";
 import { Logo, LogoMark } from "./Logo";
@@ -9,6 +9,50 @@ import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from "../../i18n/LocaleContext";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
+import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
+
+const DESKTOP_EXPLORE_LINKS = [
+  { to: CONSUMER_ROUTES.home, labelKey: "mobile.home", end: true },
+  { to: "/search?listingType=rental", labelKey: "mobile.homeScreen.rent" },
+  { to: "/search?listingType=sale", labelKey: "mobile.homeScreen.buy" },
+  { to: "/search?listingType=lease", labelKey: "mobile.homeScreen.lease" },
+  { to: "/search?listingType=short_stay", labelKey: "mobile.homeScreen.stay" },
+] as const;
+
+function DesktopSubNav() {
+  const location = useLocation();
+  const { t } = useTranslation();
+
+  return (
+    <nav className="desktop-subnav hidden border-t border-surface-border lg:block" aria-label="Explore">
+      <div className="flex min-w-0 items-center gap-1 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {DESKTOP_EXPLORE_LINKS.map((link) => {
+          const { to, labelKey } = link;
+          const isHome = "end" in link && link.end;
+          const active = isHome
+            ? location.pathname === "/"
+            : location.pathname.startsWith("/search") && location.search.includes(to.split("?")[1] || "");
+
+          return (
+            <Link
+              key={to}
+              to={to}
+              className={`desktop-subnav-link${active ? " desktop-subnav-link--active" : ""}`}
+            >
+              {t(labelKey)}
+            </Link>
+          );
+        })}
+        <Link
+          to={CONSUMER_ROUTES.compare}
+          className={`desktop-subnav-link${location.pathname.startsWith("/compare") ? " desktop-subnav-link--active" : ""}`}
+        >
+          {t("nav.compare")}
+        </Link>
+      </div>
+    </nav>
+  );
+}
 
 interface DesktopShellProps {
   children: ReactNode;
@@ -49,7 +93,7 @@ function Header({
               <>
                 <Link
                   to="/compare"
-                  className="nav-pill nav-pill-icon hidden xl:inline-flex"
+                  className="nav-pill nav-pill-icon hidden lg:inline-flex"
                   title={`${t("nav.compare")}${compareCount > 0 ? ` (${compareCount})` : ""}`}
                 >
                   <Scale className="h-4 w-4 opacity-80" />
@@ -61,7 +105,7 @@ function Header({
                     <span className="nav-pill-badge xl:hidden">{compareCount}</span>
                   ) : null}
                 </Link>
-                <Link to="/app/saved" className="nav-pill nav-pill-icon hidden xl:inline-flex" title={t("nav.saved")}>
+                <Link to="/app/saved" className="nav-pill nav-pill-icon hidden lg:inline-flex" title={t("nav.saved")}>
                   <Heart className="h-4 w-4 opacity-80" />
                   <span>{t("nav.saved")}</span>
                 </Link>
@@ -96,6 +140,8 @@ function Header({
             <UserMenu />
           </div>
         </div>
+
+        {!minimal ? <DesktopSubNav /> : null}
 
         {!minimal && search ? (
           <div className="flex justify-center pb-4 pt-2 md:pb-5 md:pt-1">
@@ -189,12 +235,12 @@ function Footer() {
             <h3 className="mb-4 text-sm font-semibold text-ink">Legal</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/app" className="text-sm text-ink-secondary transition hover:text-ink">
+                <Link to="/privacy" className="text-sm text-ink-secondary transition hover:text-ink">
                   Privacy
                 </Link>
               </li>
               <li>
-                <Link to="/app" className="text-sm text-ink-secondary transition hover:text-ink">
+                <Link to="/terms" className="text-sm text-ink-secondary transition hover:text-ink">
                   Terms
                 </Link>
               </li>

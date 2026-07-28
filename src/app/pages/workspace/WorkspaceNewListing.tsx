@@ -7,8 +7,10 @@ import { Input } from "../../components/ui/Input";
 import { PropertyMediaPicker } from "../../components/PropertyMediaPicker";
 import { ListingQualityPanel } from "../../components/ListingQualityPanel";
 import { GhanaRegionInput } from "../../components/GhanaRegionInput";
+import { ListingComplianceChecklist } from "../../components/compliance/ListingComplianceChecklist";
 import type { Database } from "../../../lib/database.types";
 import { ghanaMarketService, type GhanaLocationInsight } from "../../../lib/ghana-market.service";
+import { realEstateComplianceService, type ListingType as ComplianceListingType } from "../../../lib/real-estate-compliance.service";
 import { listingService } from "../../../lib/listing.service";
 import { listingQualityService } from "../../../lib/listing-quality.service";
 import { propertyMediaService } from "../../../lib/property-media.service";
@@ -45,6 +47,7 @@ export function WorkspaceNewListing({
 }: WorkspaceNewListingProps) {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [complianceReady, setComplianceReady] = useState(false);
   const [marketInsight, setMarketInsight] = useState<GhanaLocationInsight | null>(null);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [form, setForm] = useState({
@@ -483,8 +486,18 @@ export function WorkspaceNewListing({
 
         <ListingQualityPanel report={qualityReport} />
 
+        <ListingComplianceChecklist
+          jurisdictionId={realEstateComplianceService.resolveFromProperty({
+            country: form.country,
+            region: form.region,
+            city: form.city,
+          })}
+          listingType={form.listingType as ComplianceListingType}
+          onValidated={setComplianceReady}
+        />
+
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" size="lg" disabled={submitting}>
+          <Button type="submit" size="lg" disabled={submitting || !complianceReady}>
             {submitting ? "Creating listing..." : "Create Listing"}
           </Button>
           <Button

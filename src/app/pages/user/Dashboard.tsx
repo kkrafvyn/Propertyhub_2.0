@@ -69,6 +69,7 @@ import {
 } from "./ConsumerPortalSections";
 import ChatThread, { ChatThreadHeader } from "../../components/baytmiftah/chat/ChatThread";
 import { InboxList } from "../../components/baytmiftah/chat/InboxList";
+import { AppSettingsPanels } from "../../components/baytmiftah/AppSettings";
 
 function formatRelativeTime(dateString?: string | null) {
   if (!dateString) return "Recently";
@@ -1174,6 +1175,10 @@ export function UserDashboard() {
             Sign Out
           </Button>
         </div>
+      </Card>
+
+      <Card className="p-6 lg:col-span-3">
+        <AppSettingsPanels includeLegal />
       </Card>
     </div>
   );

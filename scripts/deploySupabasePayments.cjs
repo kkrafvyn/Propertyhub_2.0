@@ -12,6 +12,7 @@ const EDGE_FUNCTIONS = [
   { name: "verify-paystack-payment" },
   { name: "initiate-paystack-refund" },
   { name: "paystack-webhook", noVerifyJwt: true },
+  { name: "parse-search-query" },
   { name: "dispatch-notification" },
   { name: "automation-dispatcher", noVerifyJwt: true },
   { name: "send-organization-invite" },

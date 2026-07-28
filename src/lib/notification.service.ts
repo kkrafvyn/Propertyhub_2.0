@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { communicationService } from "./communication.service";
+import { clientIntegrations } from "./integrations";
 import { organizationService } from "./organization.service";
 import { pushNotificationService } from "./push-notification.service";
 import { WORKSPACE_ENTRY_PATH } from "./workspace";
@@ -73,7 +74,15 @@ export const notificationService = {
 
   areExternalProvidersConfigured() {
     return {
-      webPush: !!import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY,
+      webPush: clientIntegrations.webPush.configured,
+      paystack: clientIntegrations.paystack.checkoutReady,
+      exchangeRates: clientIntegrations.exchangeRates.configured,
+      aiSearch: clientIntegrations.openAi.configured,
+      blockchain: clientIntegrations.blockchain.configured,
+      // Email/SMS/WhatsApp secrets are server-only; enabled once edge secrets are deployed.
+      email: clientIntegrations.supabase.configured,
+      sms: clientIntegrations.supabase.configured,
+      whatsapp: clientIntegrations.supabase.configured,
     };
   },
 

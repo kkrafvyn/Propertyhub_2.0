@@ -3,6 +3,10 @@ import { AlertCircle, Check, CreditCard, DollarSign, Globe, Loader, Lock } from 
 import { useAuth } from '../../context/AuthContext'
 import { currencyService } from '@/lib/currency.service'
 import { internationalPaymentService } from '@/lib/international-payment.service'
+import { paymentService } from '@/lib/payment.service'
+import { PAYSTACK_CHECKOUT_PROVIDER_IDS } from '@/lib/integrations'
+import { realEstateComplianceService } from '@/lib/real-estate-compliance.service'
+import { useTranslation } from '../../i18n/LocaleContext'
 
 type PaymentMethodType =
   | 'card'
@@ -61,6 +65,7 @@ export function PaymentCheckout({
   onCancel: () => void
 }) {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
   const [paymentState, setPaymentState] = useState<PaymentState>({
     amount: baseAmountUsd,
@@ -159,6 +164,21 @@ export function PaymentCheckout({
 
       if (!paymentState.selectedPaymentInfo) {
         throw new Error('Choose a payment method before continuing.')
+      }
+
+      if (PAYSTACK_CHECKOUT_PROVIDER_IDS.has(paymentState.selectedPaymentInfo.provider)) {
+        const checkout = await paymentService.initializePropertyPayment({
+          listingId,
+          amount: paymentState.totalAmount,
+          purpose: 'other',
+        })
+
+        if (checkout.authorizationUrl) {
+          window.location.href = checkout.authorizationUrl
+          return
+        }
+
+        throw new Error('Paystack checkout URL was not returned.')
       }
 
       const transaction = await internationalPaymentService.createTransaction(
@@ -530,6 +550,21 @@ export function PaymentCheckout({
                   Your payment information is encrypted and secure. We use industry-standard security
                   protocols.
                 </p>
+              </div>
+
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-sm text-gray-600 dark:text-gray-300">
+                <p className="mb-2 font-semibold text-gray-900 dark:text-white">
+                  {t("compliance.payment.regulatoryNotice")}
+                </p>
+                <ul className="list-disc space-y-1 pl-5">
+                  {realEstateComplianceService
+                    .getPaymentComplianceDisclosures(
+                      paymentState.currency === 'GHS' ? 'GH' : 'GLOBAL'
+                    )
+                    .disclosures.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                </ul>
               </div>
 
               <div className="flex gap-4 pt-4">

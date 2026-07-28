@@ -119,8 +119,14 @@ export const mobileAppService = {
 
   // Get app version info
   async getAppVersion(deviceType: 'ios' | 'android') {
-    const appVersion = import.meta.env.VITE_APP_VERSION || '0.0.1'
-    const minimumVersion = import.meta.env.VITE_APP_MIN_VERSION || appVersion
+    const appVersion =
+      import.meta.env.VITE_APP_VERSION ||
+      import.meta.env.VITE_APP_BUILD_NUMBER ||
+      '0.0.1'
+    const minimumVersion =
+      import.meta.env.VITE_APP_MIN_VERSION ||
+      import.meta.env.VITE_APP_MINIMUM_VERSION ||
+      appVersion
     const latestVersion = import.meta.env.VITE_APP_LATEST_VERSION || appVersion
     const iosUrl = import.meta.env.VITE_IOS_APP_URL || ''
     const androidUrl = import.meta.env.VITE_ANDROID_APP_URL || ''

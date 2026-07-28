@@ -62,7 +62,7 @@ function isConsumerRoute(pathname: string) {
 
 export function Root() {
   const location = useLocation();
-  const { isPhone, isTablet } = useViewportFlags();
+  const { isPhone } = useViewportFlags();
   const showSplash = shouldUseMobileShell();
   const [splashDone, setSplashDone] = useState(() => !showSplash);
 
@@ -81,12 +81,11 @@ export function Root() {
   }
 
   const onConsumerRoute = isConsumerRoute(location.pathname);
-  const showBottomNav = onConsumerRoute && (isPhone || isTablet);
-  const bottomNavVariant = isTablet ? "tablet" : "phone";
+  const showBottomNav = onConsumerRoute && isPhone;
 
   const shellClass = [
     "mobile-bolt min-h-screen min-h-[100dvh] bg-bolt-bg",
-    showBottomNav ? (isTablet ? "has-tablet-tab-bar" : "has-mobile-tab-bar") : "",
+    showBottomNav ? "has-mobile-tab-bar" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -95,7 +94,7 @@ export function Root() {
     <div className={shellClass}>
       <RouteMonitoring />
       <Outlet />
-      {showBottomNav ? <MobileBottomNav variant={bottomNavVariant} /> : null}
+      {showBottomNav ? <MobileBottomNav variant="phone" /> : null}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { createClient } from "supabase";
 import webpush from "web-push";
+import { getTwilioSmsFrom, getTwilioWhatsAppFrom } from "../_shared/twilio.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -367,7 +368,7 @@ Deno.serve(async (req) => {
       });
       break;
     case "sms": {
-      const from = Deno.env.get("TWILIO_SMS_FROM");
+      const from = getTwilioSmsFrom();
       if (!recipient.phone || !from) {
         deliveryResult = {
           success: false,
@@ -383,7 +384,7 @@ Deno.serve(async (req) => {
       break;
     }
     case "whatsapp": {
-      const from = Deno.env.get("TWILIO_WHATSAPP_FROM");
+      const from = getTwilioWhatsAppFrom();
       if (!recipient.phone || !from) {
         deliveryResult = {
           success: false,

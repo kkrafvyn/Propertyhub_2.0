@@ -54,6 +54,8 @@ import { WorkspaceMaintenance } from "./WorkspaceMaintenance";
 import { WorkspaceLeases } from "./WorkspaceLeases";
 import { ErrorState, PageLoadingSkeleton, BaytMiftahAIPanel } from "../../components/ux";
 import { FraudAlerts } from "./FraudAlerts";
+import ComplianceCenter from "./ComplianceCenter";
+import BlockchainVerification from "./BlockchainVerification";
 import { WorkspaceDashboard } from "./WorkspaceDashboard";
 import { CalendarOperations } from "./CalendarOperations";
 import { WorkspaceDocuments } from "./WorkspaceDocuments";
@@ -96,6 +98,7 @@ const CORE_NAV_ITEMS: NavItem[] = [
 const WORKSPACE_SECONDARY_NAV: NavItem[] = [
   { slug: "market-intelligence", label: "Analytics", icon: LineChart },
   { slug: "trust", label: "Trust", icon: Shield },
+  { slug: "compliance", label: "Compliance", icon: Shield },
   { slug: "automation", label: "Automation", icon: Zap },
   { slug: "ai-assistant", label: "AI", icon: Brain },
   { slug: "settings", label: "Settings", icon: Settings },
@@ -110,6 +113,7 @@ const TIER_TWO_NAV_ITEMS: NavItem[] = [
   { slug: "whitelabel", label: "White-Label", icon: Palette },
   { slug: "mobile-settings", label: "Mobile Apps", icon: Smartphone },
   { slug: "integrations", label: "Integrations", icon: Plug },
+  { slug: "blockchain", label: "Blockchain", icon: Shield },
   { slug: "host", label: "Host", icon: Home },
   { slug: "finance", label: "Finance", icon: BarChart3 },
 ];
@@ -270,6 +274,13 @@ export function WorkspaceLayout() {
             currentUserId={user.id}
           />
         );
+      case "compliance":
+        return (
+          <ComplianceCenter
+            organizationId={organization.id}
+            defaultJurisdiction="GH"
+          />
+        );
       case "calendar":
         return (
           <CalendarOperations
@@ -333,6 +344,8 @@ export function WorkspaceLayout() {
             workspaceBasePath={workspaceBasePath}
           />
         );
+      case "blockchain":
+        return <BlockchainVerification organizationId={organization.id} />;
       case "host":
         return <WorkspaceHost organizationId={organization.id} />;
       case "leases":

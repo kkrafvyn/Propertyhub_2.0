@@ -1,54 +1,65 @@
 import { supabase } from './supabase'
 import { Database } from './database.types'
+import { clientIntegrations } from './integrations'
 
 type AISearch = Database['public']['Tables']['ai_searches']['Row']
 type AIRecommendation = Database['public']['Tables']['ai_recommendations']['Row']
 
+function parseSearchQueryLocally(query: string) {
+  const filters: Record<string, any> = {}
+  const lower = query.toLowerCase()
+
+  const priceMatch = query.match(/(?:under|below|less than)\s+(\d+)/i)
+  if (priceMatch) filters.priceMax = parseInt(priceMatch[1])
+
+  const priceRangeMatch = query.match(/(\d+).*to.*(\d+)/i)
+  if (priceRangeMatch) {
+    filters.priceMin = parseInt(priceRangeMatch[1])
+    filters.priceMax = parseInt(priceRangeMatch[2])
+  }
+
+  const bedroomMatch = query.match(/(\d+)\s*(?:bed|br|bedroom)/i)
+  if (bedroomMatch) filters.bedrooms = parseInt(bedroomMatch[1])
+
+  const bathroomMatch = query.match(/(\d+)\s*(?:bath|bathroom)/i)
+  if (bathroomMatch) filters.bathrooms = parseInt(bathroomMatch[1])
+
+  if (/(rent|rental|monthly)/i.test(query)) filters.listingType = 'rental'
+  if (/(lease|leasing)/i.test(query)) filters.listingType = 'lease'
+  if (/(buy|sale|purchase|own)/i.test(query)) filters.listingType = 'sale'
+  if (/(short stay|airbnb|nightly|weekend stay|vacation)/i.test(query)) filters.listingType = 'short_stay'
+
+  if (/(apartment|flat|condo)/i.test(query)) filters.propertyType = 'apartment'
+  if (/(house|home|villa|duplex)/i.test(query)) filters.propertyType = 'house'
+  if (/(office|workspace)/i.test(query)) filters.propertyType = 'office'
+  if (/(commercial|shop|retail)/i.test(query)) filters.propertyType = 'commercial'
+  if (/(land|plot)/i.test(query)) filters.propertyType = 'land'
+
+  const locations = ['legon', 'osu', 'cantonments', 'accra', 'kumasi', 'tema', 'east legon', 'airport']
+  for (const loc of locations) {
+    if (lower.includes(loc)) filters.location = loc
+  }
+
+  return filters
+}
+
 export const aiAssistantService = {
-  // Natural language search - parse user query into filters
   async parseSearchQuery(query: string) {
-    // In production, integrate with Claude/GPT for NLP
-    // This is a basic implementation showing the pattern
-    const filters: Record<string, any> = {}
-    
-    // Simple keyword matching (replace with real NLP in production)
-    const lower = query.toLowerCase()
-    
-    // Extract price range
-    const priceMatch = query.match(/(?:under|below|less than)\s+(\d+)/i)
-    if (priceMatch) filters.priceMax = parseInt(priceMatch[1])
-    
-    const priceRangeMatch = query.match(/(\d+).*to.*(\d+)/i)
-    if (priceRangeMatch) {
-      filters.priceMin = parseInt(priceRangeMatch[1])
-      filters.priceMax = parseInt(priceRangeMatch[2])
+    if (clientIntegrations.supabase.configured) {
+      try {
+        const { data, error } = await supabase.functions.invoke('parse-search-query', {
+          body: { query },
+        })
+
+        if (!error && data && typeof data === 'object' && 'filters' in data) {
+          return (data as { filters: Record<string, unknown> }).filters
+        }
+      } catch (error) {
+        console.warn('AI search edge function unavailable, using local parser:', error)
+      }
     }
-    
-    // Extract bedrooms
-    const bedroomMatch = query.match(/(\d+)\s*(?:bed|br|bedroom)/i)
-    if (bedroomMatch) filters.bedrooms = parseInt(bedroomMatch[1])
 
-    const bathroomMatch = query.match(/(\d+)\s*(?:bath|bathroom)/i)
-    if (bathroomMatch) filters.bathrooms = parseInt(bathroomMatch[1])
-
-    if (/(rent|rental|monthly)/i.test(query)) filters.listingType = 'rental'
-    if (/(lease|leasing)/i.test(query)) filters.listingType = 'lease'
-    if (/(buy|sale|purchase|own)/i.test(query)) filters.listingType = 'sale'
-    if (/(short stay|airbnb|nightly|weekend stay|vacation)/i.test(query)) filters.listingType = 'short_stay'
-
-    if (/(apartment|flat|condo)/i.test(query)) filters.propertyType = 'apartment'
-    if (/(house|home|villa|duplex)/i.test(query)) filters.propertyType = 'house'
-    if (/(office|workspace)/i.test(query)) filters.propertyType = 'office'
-    if (/(commercial|shop|retail)/i.test(query)) filters.propertyType = 'commercial'
-    if (/(land|plot)/i.test(query)) filters.propertyType = 'land'
-    
-    // Extract location
-    const locations = ['legon', 'osu', 'cantonments', 'accra', 'kumasi', 'tema']
-    for (const loc of locations) {
-      if (lower.includes(loc)) filters.location = loc
-    }
-    
-    return filters
+    return parseSearchQueryLocally(query)
   },
 
   // Log search query

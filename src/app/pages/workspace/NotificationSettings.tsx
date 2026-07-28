@@ -201,7 +201,9 @@ export default function NotificationSettings() {
       id: "email",
       name: "Email notifications",
       icon: Mail,
-      description: "Saved for later. Email delivery activates once Resend keys are added on the server.",
+      description: externalProviders.email
+        ? "Email delivery via Resend once server secrets are deployed to Supabase."
+        : "Requires Supabase backend configuration.",
       key: "email_enabled" as const,
       alwaysAvailable: false,
     },
@@ -209,7 +211,9 @@ export default function NotificationSettings() {
       id: "sms",
       name: "SMS notifications",
       icon: MessageSquare,
-      description: "Saved for later. SMS delivery activates once Twilio keys are added.",
+      description: externalProviders.sms
+        ? "SMS delivery via Twilio once TWILIO_* secrets are deployed."
+        : "Requires Supabase backend configuration.",
       key: "sms_enabled" as const,
       alwaysAvailable: false,
     },

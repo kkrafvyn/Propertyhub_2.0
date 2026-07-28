@@ -1,10 +1,7 @@
 import { paymentService } from "../../../lib/payment.service";
+import { getDefaultProvider, PAYMENT_PROVIDERS } from "./payment-providers";
 
-export const PAYMENT_PROVIDERS = ["paystack", "flutterwave"] as const;
-
-export function getDefaultProvider() {
-  return "paystack";
-}
+export { PAYMENT_PROVIDERS, getDefaultProvider };
 
 export function providerMeta(provider: string) {
   return { id: provider, label: provider };

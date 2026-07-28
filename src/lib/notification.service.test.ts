@@ -11,8 +11,16 @@ describe("notificationService", () => {
   });
 
   it("reports external provider availability from env", () => {
-    expect(notificationService.areExternalProvidersConfigured()).toEqual({
+    const providers = notificationService.areExternalProvidersConfigured();
+    expect(providers).toMatchObject({
       webPush: false,
+      paystack: expect.any(Boolean),
+      exchangeRates: expect.any(Boolean),
+      aiSearch: expect.any(Boolean),
+      blockchain: false,
+      email: expect.any(Boolean),
+      sms: expect.any(Boolean),
+      whatsapp: expect.any(Boolean),
     });
   });
 });

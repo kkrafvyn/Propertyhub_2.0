@@ -38,6 +38,8 @@ import { bookingService } from "../../lib/booking.service";
 import { hostSettingsService } from "../../lib/host-settings.service";
 import { propertyViewingService } from "../../lib/property-viewing.service";
 import { trustCenterService } from "../../lib/trust-center.service";
+import { ComplianceDisclosurePanel } from "../components/compliance/ComplianceDisclosurePanel";
+import { realEstateComplianceService } from "../../lib/real-estate-compliance.service";
 import { ConsumerTrustBadges } from "../components/ConsumerTrustBadges";
 import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
 import { monitoring } from "../../lib/monitoring";
@@ -246,6 +248,16 @@ export function PropertyDetail() {
     if (!property) return "Property";
     return `${property.address}, ${property.city}`;
   }, [property]);
+
+  const jurisdictionId = useMemo(
+    () =>
+      realEstateComplianceService.resolveFromProperty({
+        country: property?.country,
+        region: property?.region,
+        city: property?.city,
+      }),
+    [property?.country, property?.region, property?.city]
+  );
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
 
   const caseType = useMemo(() => {
@@ -1430,6 +1442,13 @@ export function PropertyDetail() {
             currentId={listing.id}
           />
         )}
+
+        <div className="mt-8">
+          <ComplianceDisclosurePanel
+            jurisdictionId={jurisdictionId}
+            listingType={listing.listing_type}
+          />
+        </div>
 
         <ListingReviews listingId={listing.id} />
       </div>

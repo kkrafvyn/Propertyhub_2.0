@@ -2,6 +2,7 @@ import en from './locales/en.js'
 import { mergeLocale } from './mergeLocale.js'
 import { getDesktopChrome } from './locales/partials/_desktopChrome.js'
 import { getMobileChrome } from './locales/partials/_mobileChrome.js'
+import { getFeatureChrome } from './locales/partials/_featureChrome.js'
 
 /** @type {Record<string, () => Promise<{ default: object }>>} */
 export const LOCALE_LOADERS = {
@@ -101,7 +102,13 @@ export async function loadLocale(code) {
   const catalog =
     code === 'en'
       ? mod.default
-      : mergeLocale(mergeLocale(mod.default, getDesktopChrome(code)), getMobileChrome(code))
+      : mergeLocale(
+          mergeLocale(
+            mergeLocale(mod.default, getDesktopChrome(code)),
+            getMobileChrome(code),
+          ),
+          getFeatureChrome(code),
+        )
   cache[code] = catalog
   return catalog
 }

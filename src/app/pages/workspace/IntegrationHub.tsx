@@ -15,6 +15,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/badge';
 import { mlsIntegrationService } from '../../../lib/mls-integration.service';
 import { leadAggregationService } from '../../../lib/lead-aggregation.service';
+import { PlatformIntegrationsPanel } from '../../components/workspace/PlatformIntegrationsPanel';
 
 interface MLSIntegration {
   id: string;
@@ -178,6 +179,8 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
           Add Integration
         </Button>
       </div>
+
+      <PlatformIntegrationsPanel />
 
       {/* Metrics Cards */}
       {leadMetrics && (

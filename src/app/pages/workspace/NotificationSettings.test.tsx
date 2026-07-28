@@ -43,7 +43,16 @@ vi.mock("../../../lib/push-notification.service", () => ({
 
 vi.mock("../../../lib/notification.service", () => ({
   notificationService: {
-    areExternalProvidersConfigured: vi.fn(() => ({ webPush: false })),
+    areExternalProvidersConfigured: vi.fn(() => ({
+      webPush: false,
+      paystack: true,
+      exchangeRates: false,
+      aiSearch: true,
+      blockchain: false,
+      email: true,
+      sms: true,
+      whatsapp: true,
+    })),
   },
 }));
 

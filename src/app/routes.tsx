@@ -88,6 +88,20 @@ export const router = createBrowserRouter([
           return { Component: Signup };
         },
       },
+      {
+        path: "privacy",
+        lazy: async () => {
+          const { PrivacyPolicy } = await import("./pages/legal/PrivacyPolicy");
+          return { Component: PrivacyPolicy };
+        },
+      },
+      {
+        path: "terms",
+        lazy: async () => {
+          const { TermsOfService } = await import("./pages/legal/TermsOfService");
+          return { Component: TermsOfService };
+        },
+      },
       { path: "explore", element: <LegacyRouteRedirect /> },
       { path: "saved", element: <LegacyRouteRedirect /> },
       { path: "messages", element: <LegacyRouteRedirect /> },

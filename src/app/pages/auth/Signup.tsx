@@ -144,13 +144,13 @@ export function Signup() {
               />
               <label htmlFor="terms" className="text-sm text-muted-foreground">
                 I agree to the{" "}
-                <a href="#" className="text-primary hover:underline">
+                <Link to="/terms" className="text-primary hover:underline">
                   Terms of Service
-                </a>{" "}
+                </Link>{" "}
                 and{" "}
-                <a href="#" className="text-primary hover:underline">
+                <Link to="/privacy" className="text-primary hover:underline">
                   Privacy Policy
-                </a>
+                </Link>
               </label>
             </div>
 
