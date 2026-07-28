@@ -81,6 +81,12 @@ import {
   type MembershipRow,
   type OrganizationMembership,
 } from "../../../lib/workspace";
+import {
+  canAccessWorkspaceSlug,
+  filterWorkspaceNavItems,
+  getWorkspaceRoleDescription,
+} from "../../lib/workspace-role-nav";
+import { canWorkspace } from "../../../lib/workspace-permissions";
 
 interface NavItem {
   slug: string;
@@ -206,6 +212,30 @@ export function WorkspaceLayout() {
   const workspaceBasePath = organization
     ? getWorkspaceRoute(organization.slug)
     : WORKSPACE_ENTRY_PATH;
+
+  const visibleCoreNav = useMemo(
+    () => filterWorkspaceNavItems(CORE_NAV_ITEMS, currentRole),
+    [currentRole],
+  );
+  const visibleToolsNav = useMemo(
+    () => filterWorkspaceNavItems(WORKSPACE_SECONDARY_NAV, currentRole),
+    [currentRole],
+  );
+  const visibleMoreNav = useMemo(
+    () => filterWorkspaceNavItems(TIER_TWO_NAV_ITEMS, currentRole),
+    [currentRole],
+  );
+  const visibleAiNav = useMemo(
+    () => filterWorkspaceNavItems(AI_NAV_ITEMS, currentRole),
+    [currentRole],
+  );
+  const visibleEnterpriseNav = useMemo(
+    () => filterWorkspaceNavItems(ENTERPRISE_NAV_ITEMS, currentRole),
+    [currentRole],
+  );
+  const canCreateListing = canWorkspace(currentRole, "listings:write");
+  const pageAllowed =
+    currentPage === "" || canAccessWorkspaceSlug(currentPage, currentRole);
 
   const handleOrganizationChange = (organizationId: string) => {
     const nextMembership = memberships.find(
@@ -462,7 +492,7 @@ export function WorkspaceLayout() {
               <div>
                 <h2 className="font-semibold text-ink">{organization.name}</h2>
                 <p className="text-xs text-ink-secondary">
-                  Workspace · {getRoleLabel(currentRole)}
+                  Workspace · {getRoleLabel(currentRole)} — {getWorkspaceRoleDescription(currentRole)}
                 </p>
               </div>
             </div>
@@ -481,12 +511,14 @@ export function WorkspaceLayout() {
                   ))}
                 </select>
               )}
-              <Link to={`${workspaceBasePath}/new`}>
-                <Button>
-                  <Plus className="w-4 h-4" />
-                  New Listing
-                </Button>
-              </Link>
+              {canCreateListing && (
+                <Link to={`${workspaceBasePath}/new`}>
+                  <Button>
+                    <Plus className="w-4 h-4" />
+                    New Listing
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -497,7 +529,7 @@ export function WorkspaceLayout() {
           <nav className="space-y-2">
             <div className="mb-6">
               <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">CORE</h3>
-              {CORE_NAV_ITEMS.map((item) => {
+              {visibleCoreNav.map((item) => {
                 const Icon = item.icon;
                 const isActive = item.slug === "" ? currentPage === "" : currentPage === item.slug;
                 const href = item.slug ? `${workspaceBasePath}/${item.slug}` : workspaceBasePath;
@@ -519,7 +551,7 @@ export function WorkspaceLayout() {
               <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
                 TOOLS
               </h3>
-              {WORKSPACE_SECONDARY_NAV.map((item) => {
+              {visibleToolsNav.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
@@ -538,7 +570,7 @@ export function WorkspaceLayout() {
               <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
                 MORE
               </h3>
-              {TIER_TWO_NAV_ITEMS.map((item) => {
+              {visibleMoreNav.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
@@ -553,11 +585,12 @@ export function WorkspaceLayout() {
               })}
             </div>
 
+            {visibleAiNav.length > 0 && (
             <div className="border-t pt-6 mb-6">
               <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
-                PHASE 3: AI INTELLIGENCE
+                AI INTELLIGENCE
               </h3>
-              {AI_NAV_ITEMS.map((item) => {
+              {visibleAiNav.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
@@ -571,12 +604,14 @@ export function WorkspaceLayout() {
                 );
               })}
             </div>
+            )}
 
+            {visibleEnterpriseNav.length > 0 && (
             <div className="border-t pt-6 mb-6">
               <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
-                PHASE 4: ENTERPRISE
+                ENTERPRISE
               </h3>
-              {ENTERPRISE_NAV_ITEMS.map((item) => {
+              {visibleEnterpriseNav.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
@@ -590,13 +625,29 @@ export function WorkspaceLayout() {
                 );
               })}
             </div>
+            )}
 
           </nav>
         </aside>
 
         <main className="flex-1 p-8 overflow-y-auto">
           <div className="max-w-7xl grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-8">
-            <div>{renderPage()}</div>
+            <div>
+              {!pageAllowed && currentPage ? (
+                <Card className="p-8">
+                  <h2 className="text-xl font-semibold text-foreground mb-2">Access restricted</h2>
+                  <p className="text-muted-foreground mb-4">
+                    Your role ({getRoleLabel(currentRole)}) does not include access to this section.
+                    Contact an owner or manager if you need permission.
+                  </p>
+                  <Link to={workspaceBasePath}>
+                    <Button variant="outline">Back to dashboard</Button>
+                  </Link>
+                </Card>
+              ) : (
+                renderPage()
+              )}
+            </div>
             <aside className="hidden xl:block">
               <div className="sticky top-8">
                 <BaytMiftahAIPanel context="workspace" compact />

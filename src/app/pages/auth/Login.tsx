@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
+import { resolvePostAuthRedirect } from "../../lib/auth-routing";
 import { AuthShell, AuthDivider, OAuthButtons } from "../../components/baytmiftah";
 
 export function Login() {
@@ -16,7 +17,7 @@ export function Login() {
   );
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signInWithOAuth, user } = useAuth();
+  const { signIn, signInWithOAuth, user, profile } = useAuth();
 
   const stateRedirectTo =
     typeof location.state === "object" &&
@@ -29,12 +30,21 @@ export function Login() {
     const next = new URLSearchParams(location.search).get("next");
     return next || null;
   }, [location.search]);
-  const redirectTo = stateRedirectTo || queryRedirectTo || "/app";
+  const redirectTo = resolvePostAuthRedirect(
+    user,
+    profile,
+    stateRedirectTo || queryRedirectTo,
+  );
 
   useEffect(() => {
     if (!user) return;
-    navigate(redirectTo, { replace: true });
-  }, [navigate, redirectTo, user]);
+    const destination = resolvePostAuthRedirect(
+      user,
+      profile,
+      stateRedirectTo || queryRedirectTo,
+    );
+    navigate(destination, { replace: true });
+  }, [navigate, user, profile, stateRedirectTo, queryRedirectTo]);
 
   const oauthRedirectUrl = useMemo(() => {
     const next = encodeURIComponent(redirectTo);

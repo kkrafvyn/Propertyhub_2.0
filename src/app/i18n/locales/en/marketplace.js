@@ -202,7 +202,9 @@ export default {
       "reservations": "Reservations",
       "offers": "Offers",
       "transactions": "Transactions",
-      "myHome": "My home"
+      "myHome": "My home",
+      "hostDashboard": "Host workspace",
+      "listProperty": "List a property"
     },
     "access": {
       "proOnly": "This workspace is for real estate professionals. Use your consumer home for property search, bookings, and rentals.",

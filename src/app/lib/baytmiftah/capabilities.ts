@@ -1,3 +1,5 @@
+import { isWorkspaceRole } from "./roles";
+
 export const CAPABILITIES = {
   BUY: "buy",
   RENT: "rent",
@@ -16,12 +18,13 @@ export function hasCapability(capabilities: string[] = [], cap: string) {
   return capabilities.includes(cap);
 }
 
-/** Derive unlocked consumer capabilities from live account context. */
+/** Derive unlocked consumer capabilities from live account context and app role. */
 export function deriveConsumerCapabilities(
   context: Pick<
     ConsumerContextSnapshot,
     "hasBookingContext" | "hasRentingContext" | "hasBuyingContext"
   > | null,
+  appRole?: string | null,
 ): string[] {
   const caps = new Set<string>([
     CAPABILITIES.BUY,
@@ -29,6 +32,10 @@ export function deriveConsumerCapabilities(
     CAPABILITIES.LEASE,
     CAPABILITIES.STAY_GUEST,
   ]);
+
+  if (isWorkspaceRole(appRole) || appRole === "host" || appRole === "agent") {
+    caps.add(CAPABILITIES.STAY_HOST);
+  }
 
   if (!context) {
     return Array.from(caps);

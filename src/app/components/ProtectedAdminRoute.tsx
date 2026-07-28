@@ -4,12 +4,18 @@ import { useAuth } from "../context/AuthContext";
 import { adminService } from "../../lib/admin.service";
 
 export function ProtectedAdminRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const location = useLocation();
-  const [checkingAdmin, setCheckingAdmin] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(() => !profile?.is_platform_admin);
+  const [isAdmin, setIsAdmin] = useState(() => Boolean(profile?.is_platform_admin));
 
   useEffect(() => {
+    if (profile?.is_platform_admin) {
+      setIsAdmin(true);
+      setCheckingAdmin(false);
+      return;
+    }
+
     let cancelled = false;
 
     const checkAdmin = async () => {
@@ -43,7 +49,7 @@ export function ProtectedAdminRoute({ children }: { children: React.ReactNode })
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, profile?.is_platform_admin]);
 
   if (loading || checkingAdmin) {
     return (

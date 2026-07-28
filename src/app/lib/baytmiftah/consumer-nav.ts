@@ -9,7 +9,7 @@ export const CONSUMER_BOTTOM_TABS = [
   { id: 'explore', to: CONSUMER_ROUTES.search, labelKey: 'mobile.explore', icon: 'search' },
   { id: 'saved', to: CONSUMER_ROUTES.saved, labelKey: 'mobile.saved', icon: 'heart' },
   { id: 'messages', to: CONSUMER_ROUTES.messages, labelKey: 'mobile.inbox', icon: 'message', authRequired: true },
-  { id: 'profile', to: CONSUMER_ROUTES.profile, labelKey: 'mobile.profile', icon: 'user' },
+  { id: 'profile', to: CONSUMER_ROUTES.settings, labelKey: 'mobile.profile', icon: 'user' },
 ]
 
 /** Contextual tabs unlocked by capabilities */
@@ -46,6 +46,13 @@ export function getContextualTabs(capabilities = []) {
 
   if (hasCapability(capabilities, CAPABILITIES.LEASE) || hasCapability(capabilities, 'smart_resident')) {
     tabs.push({ to: CONSUMER_ROUTES.leases, labelKey: 'consumer.context.myHome' })
+  }
+
+  if (hasCapability(capabilities, CAPABILITIES.STAY_HOST)) {
+    tabs.push(
+      { to: WORKSPACE_ENTRY_PATH, labelKey: 'consumer.context.hostDashboard' },
+      { to: `${WORKSPACE_ENTRY_PATH}?next=new`, labelKey: 'consumer.context.listProperty' },
+    )
   }
 
   return tabs

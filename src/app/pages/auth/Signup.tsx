@@ -53,7 +53,7 @@ export function Signup() {
 
     try {
       setLoading(true);
-      await signUp(formData.email, formData.password, formData.fullName);
+      await signUp(formData.email, formData.password, formData.fullName, formData.accountType as "user" | "landlord");
       toast.success("Account created! Please check your email to verify.");
       navigate("/login", {
         state: {

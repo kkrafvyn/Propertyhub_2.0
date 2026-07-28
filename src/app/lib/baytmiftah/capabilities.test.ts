@@ -33,6 +33,12 @@ describe("deriveConsumerCapabilities", () => {
 
     expect(hasCapability(caps, "smart_resident")).toBe(true);
   });
+
+  it("adds stay host capability for workspace app roles", () => {
+    const caps = deriveConsumerCapabilities(null, "host");
+
+    expect(hasCapability(caps, CAPABILITIES.STAY_HOST)).toBe(true);
+  });
 });
 
 describe("getContextualTabs", () => {
@@ -47,5 +53,12 @@ describe("getContextualTabs", () => {
     expect(tabs.some((tab) => tab.labelKey === "profileNav.leaseJourney")).toBe(true);
     expect(tabs.some((tab) => tab.labelKey === "profileNav.rentJourney")).toBe(true);
     expect(tabs.some((tab) => tab.labelKey === "profileNav.buyJourney")).toBe(true);
+  });
+
+  it("unlocks host workspace tabs for stay hosts", () => {
+    const tabs = getContextualTabs([CAPABILITIES.STAY_HOST]);
+
+    expect(tabs.some((tab) => tab.labelKey === "consumer.context.hostDashboard")).toBe(true);
+    expect(tabs.some((tab) => tab.labelKey === "consumer.context.listProperty")).toBe(true);
   });
 });

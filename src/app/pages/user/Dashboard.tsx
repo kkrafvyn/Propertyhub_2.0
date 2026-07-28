@@ -76,6 +76,8 @@ import { AppSettingsPanels } from "../../components/baytmiftah/AppSettings";
 import ProfileKycCard from "../../components/baytmiftah/ProfileKycCard";
 import { KycVerificationPanel } from "../../components/baytmiftah/KycVerificationPanel";
 import { ConsumerNotificationPreferences } from "../../components/baytmiftah/ConsumerNotificationPreferences";
+import { isWorkspaceRole } from "../../lib/baytmiftah/roles";
+import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 
 function formatRelativeTime(dateString?: string | null) {
   if (!dateString) return "Recently";
@@ -218,7 +220,7 @@ export function UserDashboard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedConversationId = searchParams.get("conversation");
-  const { user, signOut } = useAuth();
+  const { user, signOut, role } = useAuth();
   const [loading, setLoading] = useState(true);
   const [savedProperties, setSavedProperties] = useState<any[]>([]);
   const [dealCases, setDealCases] = useState<any[]>([]);
@@ -1256,6 +1258,30 @@ export function UserDashboard() {
 
   const renderOverview = () => (
     <div className="space-y-8">
+      {isWorkspaceRole(role) ? (
+        <Card className="p-6 border-brand-forest/15 bg-brand-forest/[0.04]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Professional workspace</h2>
+              <p className="text-sm text-muted-foreground">
+                Manage listings, leads, calendar, and payouts from your workspace dashboard.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link to={WORKSPACE_ENTRY_PATH}>
+                <Button>
+                  Open workspace
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+              <Link to={`${WORKSPACE_ENTRY_PATH}?next=new`}>
+                <Button variant="outline">List property</Button>
+              </Link>
+            </div>
+          </div>
+        </Card>
+      ) : null}
+
       <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold">Upcoming Viewings</h2>

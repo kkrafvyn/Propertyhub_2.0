@@ -152,8 +152,8 @@ export default function ConsumerMenuContent({ onNavigate, showIntro = true }) {
           <div className="space-y-2">
             {hasCapability(capabilities, 'buy') && (
               <>
-                <MenuRow to="/offers" label={t('mobile.menuActiveOffers')} icon="document" user={user} onNavigate={onNavigate} />
-                <MenuRow to="/transactions" label={t('mobile.menuClosingPipeline')} icon="document" user={user} onNavigate={onNavigate} />
+                <MenuRow to={CONSUMER_ROUTES.applications} label={t('mobile.menuActiveOffers')} icon="document" user={user} onNavigate={onNavigate} />
+                <MenuRow to={CONSUMER_ROUTES.transactions} label={t('mobile.menuClosingPipeline')} icon="document" user={user} onNavigate={onNavigate} />
               </>
             )}
             {activityFeed
@@ -162,7 +162,7 @@ export default function ConsumerMenuContent({ onNavigate, showIntro = true }) {
               .map((item) => (
                 <MenuRow
                   key={item.id}
-                  to={item.link || '/offers'}
+                  to={item.link || CONSUMER_ROUTES.applications}
                   label={item.title}
                   meta={item.body}
                   icon="document"

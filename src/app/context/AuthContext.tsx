@@ -16,7 +16,7 @@ interface AuthContextType {
   capabilities: string[]
   loading: boolean
   error: Error | null
-  signUp: (email: string, password: string, fullName: string) => Promise<void>
+  signUp: (email: string, password: string, fullName: string, accountType?: "user" | "landlord") => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signInWithPhoneOtp: (phone: string) => Promise<void>
   verifyPhoneOtp: (phone: string, token: string) => Promise<void>
@@ -96,17 +96,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const context = await consumerContextService.getConsumerContext(user.id)
         if (!cancelled) {
-          setCapabilities(deriveConsumerCapabilities(context))
+          setCapabilities(deriveConsumerCapabilities(context, role))
         }
       } catch (capabilityError) {
         console.error('Failed to load consumer capabilities:', capabilityError)
         if (!cancelled) {
           setCapabilities(
-            deriveConsumerCapabilities({
-              hasBookingContext: false,
-              hasRentingContext: false,
-              hasBuyingContext: false,
-            }),
+            deriveConsumerCapabilities(
+              {
+                hasBookingContext: false,
+                hasRentingContext: false,
+                hasBuyingContext: false,
+              },
+              role,
+            ),
           )
         }
       }
@@ -116,16 +119,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [user?.id])
+  }, [user?.id, role])
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    accountType: "user" | "landlord" = "user",
+  ) => {
     try {
       setError(null)
+      const appRole = accountType === "landlord" ? "host" : "consumer"
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { full_name: fullName },
+          data: {
+            full_name: fullName,
+            role: appRole,
+            account_type: accountType,
+          },
         },
       })
       if (error) throw error

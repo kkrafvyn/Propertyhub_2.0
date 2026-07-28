@@ -5,9 +5,11 @@ import {
   LogOut,
   Menu,
   PlusCircle,
+  Shield,
   User,
   Briefcase,
 } from "lucide-react";
+import { isFullAdminRole, isWorkspaceRole } from "../../lib/baytmiftah/roles";
 import { useAuth } from "../../context/AuthContext";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 import {
@@ -37,9 +39,11 @@ function getDisplayName(user: { user_metadata?: { full_name?: string }; email?: 
 }
 
 export function UserMenu() {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut, role } = useAuth();
   const isAuthenticated = !!user;
   const workspacePath = `${WORKSPACE_ENTRY_PATH}?next=new`;
+  const showWorkspaceFirst = isWorkspaceRole(role);
+  const showAdminLink = Boolean(profile?.is_platform_admin || isFullAdminRole(role));
 
   if (!isAuthenticated) {
     return (
@@ -98,9 +102,9 @@ export function UserMenu() {
             Account
           </DropdownMenuLabel>
           <DropdownMenuItem asChild className="bm-menu-item">
-            <Link to="/app">
+            <Link to={showWorkspaceFirst ? "/workspace" : "/app"}>
               <LayoutDashboard className="h-4 w-4 text-ink-secondary" />
-              Dashboard
+              {showWorkspaceFirst ? "Workspace" : "Dashboard"}
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="bm-menu-item">
@@ -109,13 +113,36 @@ export function UserMenu() {
               Saved properties
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild className="bm-menu-item">
-            <Link to="/workspace">
-              <Briefcase className="h-4 w-4 text-ink-secondary" />
-              Workspace
-            </Link>
-          </DropdownMenuItem>
+          {showWorkspaceFirst ? (
+            <DropdownMenuItem asChild className="bm-menu-item">
+              <Link to="/app">
+                <User className="h-4 w-4 text-ink-secondary" />
+                My account
+              </Link>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem asChild className="bm-menu-item">
+              <Link to="/workspace">
+                <Briefcase className="h-4 w-4 text-ink-secondary" />
+                Workspace
+              </Link>
+            </DropdownMenuItem>
+          )}
         </div>
+
+        {showAdminLink ? (
+          <>
+            <DropdownMenuSeparator className="bg-surface-border" />
+            <div className="p-1.5">
+              <DropdownMenuItem asChild className="bm-menu-item">
+                <Link to="/admin">
+                  <Shield className="h-4 w-4 text-ink-secondary" />
+                  Admin console
+                </Link>
+              </DropdownMenuItem>
+            </div>
+          </>
+        ) : null}
 
         <DropdownMenuSeparator className="bg-surface-border" />
 

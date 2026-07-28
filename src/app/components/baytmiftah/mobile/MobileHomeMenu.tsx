@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '../../../context/AuthContext'
+import { isWorkspaceRole } from '../../../lib/baytmiftah/roles'
+import { WORKSPACE_ENTRY_PATH } from '../../../../lib/workspace'
 import { useTranslation } from '../../../i18n/LocaleContext'
 import { LogoMark } from '../Logo'
 import { IconClose } from '../icons'
@@ -21,7 +23,8 @@ function getInitials(user) {
 
 export default function MobileHomeMenu({ open, onClose }) {
   const { t } = useTranslation()
-  const { user } = useAuth()
+  const { user, role } = useAuth()
+  const accountPath = isWorkspaceRole(role) ? WORKSPACE_ENTRY_PATH : '/app'
 
   useEffect(() => {
     if (!open) return undefined
@@ -65,7 +68,7 @@ export default function MobileHomeMenu({ open, onClose }) {
 
           {user ? (
             <Link
-              to="/app"
+              to={accountPath}
               onClick={onClose}
               className="relative mt-4 flex items-center gap-3 rounded-2xl border border-white/12 bg-white/[0.08] px-3 py-2.5 backdrop-blur-sm transition hover:bg-white/[0.12]"
             >
