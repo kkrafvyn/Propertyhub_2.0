@@ -100,7 +100,7 @@ export function shouldUsePaystackCheckout(context: PaymentContext) {
 
 export function getPreferredProviderIds(context: PaymentContext): string[] {
   if (context.primaryProvider === "paystack") {
-    return ["paystack"];
+    return clientIntegrations.paystack.checkoutReady ? ["paystack"] : [];
   }
   return clientIntegrations.stripe.configured ? ["stripe"] : [];
 }

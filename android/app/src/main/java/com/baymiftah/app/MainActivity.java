@@ -1,4 +1,4 @@
-package com.propertyhub.app;
+package com.baymiftah.app;
 
 import com.getcapacitor.BridgeActivity;
 

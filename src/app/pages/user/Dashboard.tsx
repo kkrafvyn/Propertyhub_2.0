@@ -393,15 +393,19 @@ export function UserDashboard() {
 
     const searchParams = new URLSearchParams(location.search);
     const reference = searchParams.get("reference");
+    const sessionId = searchParams.get("session_id");
 
-    if (!reference) return;
+    if (!reference && !sessionId) return;
 
     let cancelled = false;
 
     const verifyPayment = async () => {
       try {
         setVerifyingReference(true);
-        const result = await paymentService.verifyPropertyPayment(reference);
+        const result = await paymentService.verifyCheckoutReturn({
+          reference,
+          sessionId,
+        });
 
         if (cancelled) return;
 
@@ -423,7 +427,7 @@ export function UserDashboard() {
           return [result.transaction, ...next];
         });
 
-        if (result.status === "success") {
+        if (result.status === "success" || result.status === "completed") {
           const txn = result.transaction;
           if (
             txn?.purpose === "deposit" &&

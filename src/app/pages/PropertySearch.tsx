@@ -27,6 +27,7 @@ import { getRecentlyViewedIds } from "../../lib/recently-viewed";
 import { syncCompareIds, toggleCompareIdAsync } from "../../lib/compare-listings";
 import { useIsDesktopViewport } from "../hooks/useMediaQuery";
 import { useTranslation } from "../i18n/LocaleContext";
+import { useUserMarket } from "../context/MarketContext";
 
 const PAGE_SIZE = 12;
 
@@ -69,6 +70,7 @@ export function PropertySearch() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { defaultSearchLocation } = useUserMarket();
   const isDesktop = useIsDesktopViewport();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = Math.max(parseInt(searchParams.get("page") || "1", 10) || 1, 1);
@@ -418,8 +420,8 @@ export function PropertySearch() {
         .join(", ");
     }
 
-    return searchParams.get("q") || t("searchPage.defaultLocation");
-  }, [searchParams, selectedMapListing, t]);
+    return searchParams.get("q") || defaultSearchLocation || t("searchPage.defaultLocation");
+  }, [searchParams, selectedMapListing, defaultSearchLocation, t]);
   const selectedMapEmbedUrl = `https://www.google.com/maps?q=${encodeURIComponent(
     selectedMapQuery
   )}&output=embed`;

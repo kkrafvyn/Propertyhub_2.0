@@ -15,7 +15,7 @@ export function resolveDeepLinkPath(actionUrl?: string | null, fallback = "/app"
   try {
     const resolved = trimmed.startsWith("http")
       ? new URL(trimmed)
-      : new URL(trimmed, "https://baytmiftah.local");
+      : new URL(trimmed, "https://baytmiftah.com");
 
     const mapped = LEGACY_PATH_MAP[resolved.pathname] || resolved.pathname;
     const next = `${mapped}${resolved.search}${resolved.hash}`;

@@ -151,7 +151,7 @@ async function sendPushNotifications(params: {
   const vapidPublicKey = Deno.env.get("WEB_PUSH_PUBLIC_KEY");
   const vapidPrivateKey = Deno.env.get("WEB_PUSH_PRIVATE_KEY");
   const vapidContactEmail =
-    Deno.env.get("WEB_PUSH_CONTACT_EMAIL") || "mailto:support@propertyhub.app";
+    Deno.env.get("WEB_PUSH_CONTACT_EMAIL") || "mailto:support@baytmiftah.com";
 
   if (!vapidPublicKey || !vapidPrivateKey) {
     return { success: false, error: "Web push is not configured" };

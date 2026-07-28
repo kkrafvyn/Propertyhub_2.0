@@ -86,16 +86,6 @@ const PAYMENT_PROVIDERS: Record<string, PaymentProvider> = {
     commissionPercentage: 1.2,
     documentation: 'https://www.safaricom.co.ke/mpesa',
   },
-  flutterwave: {
-    id: 'flutterwave',
-    name: 'Flutterwave',
-    type: 'mobile_money',
-    supportedCurrencies: ['GHS', 'NGN', 'ZAR', 'KES', 'UGX'],
-    supportedRegions: ['GH', 'NG', 'ZA', 'KE', 'UG'],
-    isActive: false,
-    commissionPercentage: 2.0,
-    documentation: 'https://flutterwave.com/docs',
-  },
 
   // Bank Transfers
   wise: {

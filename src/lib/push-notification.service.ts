@@ -75,7 +75,7 @@ export const pushNotificationService = {
     const vapidPublicKey = import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY;
     if (!vapidPublicKey) {
       this.showLocalNotification({
-        title: "Property Hub alerts enabled",
+        title: "BaytMiftah alerts enabled",
         body: "You'll receive in-app notifications and browser alerts while this app is open.",
       });
       return null;

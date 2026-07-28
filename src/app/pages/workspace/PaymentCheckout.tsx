@@ -216,57 +216,41 @@ export function PaymentCheckout({
 
       if (shouldUsePaystackCheckout(paymentContext)) {
         if (!clientIntegrations.paystack.checkoutReady) {
-          throw new Error('Paystack checkout is not configured for this property market.')
+          throw new Error("Paystack checkout is not configured for this property market.");
         }
 
         const checkout = await paymentService.initializePropertyPayment({
           listingId,
           amount: paymentState.totalAmount,
-          purpose: 'other',
-        })
+          purpose: "other",
+        });
 
         if (checkout.authorizationUrl) {
-          window.location.href = checkout.authorizationUrl
-          return
+          window.location.href = checkout.authorizationUrl;
+          return;
         }
 
-        throw new Error('Paystack checkout URL was not returned.')
+        throw new Error("Paystack checkout URL was not returned.");
       }
 
       if (!clientIntegrations.stripe.configured) {
         throw new Error(
           `Stripe checkout is not configured for properties in ${paymentContext.propertyLabel}.`
-        )
+        );
       }
 
-      const transaction = await internationalPaymentService.createTransaction(
-        user.id,
-        paymentState.amount,
-        paymentState.currency,
-        paymentState.selectedPaymentInfo.provider,
-        paymentState.selectedPaymentInfo.methodType,
-        `${listingId}-${Date.now()}`
-      )
+      const checkout = await paymentService.initializeStripePayment({
+        listingId,
+        amount: paymentState.totalAmount,
+        purpose: "other",
+      });
 
-      if (saveFuturePayment) {
-        await internationalPaymentService.savePaymentMethod(
-          user.id,
-          paymentState.selectedPaymentInfo.provider,
-          {
-            brand: paymentState.selectedPaymentInfo.label,
-          }
-        )
+      if (checkout.authorizationUrl) {
+        window.location.href = checkout.authorizationUrl;
+        return;
       }
 
-      await internationalPaymentService.updateTransactionStatus(transaction.id, 'completed')
-
-      setCompletedTransactionId(transaction.id)
-      setStep(4)
-      setLoading(false)
-
-      setTimeout(() => {
-        onSuccess(transaction.id)
-      }, 1200)
+      throw new Error("Stripe checkout URL was not returned.");
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment processing failed')
       setLoading(false)
@@ -284,30 +268,31 @@ export function PaymentCheckout({
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex justify-between mb-6">
+          <div className="mb-6 flex items-start">
             {steps.map((s, idx) => (
-              <div key={s.step} className="flex-1">
-                <div className="flex flex-col items-center">
+              <div key={s.step} className="flex min-w-0 flex-1 items-start">
+                <div className="flex w-full min-w-0 flex-col items-center px-0.5">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition ${
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold transition ${
                       step >= s.step
                         ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                        : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                     }`}
                   >
-                    {step > s.step ? <Check className="w-6 h-6" /> : s.step}
+                    {step > s.step ? <Check className="h-5 w-5" /> : s.step}
                   </div>
-                  <p className="text-xs font-medium mt-2 text-center text-gray-700 dark:text-gray-300">
+                  <p className="mt-2 w-full truncate text-center text-[0.68rem] font-medium leading-tight text-gray-700 dark:text-gray-300 sm:text-xs">
                     {s.title}
                   </p>
                 </div>
-                {idx < steps.length - 1 && (
+                {idx < steps.length - 1 ? (
                   <div
-                    className={`flex-1 h-1 mx-2 mt-2 ${
+                    className={`mt-5 h-1 min-w-[0.35rem] flex-1 rounded-full ${
                       step > s.step ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
                     }`}
-                  ></div>
-                )}
+                    aria-hidden="true"
+                  />
+                ) : null}
               </div>
             ))}
           </div>
@@ -679,7 +664,6 @@ function getPaymentIcon(provider: string) {
     case 'google_pay':
       return <CreditCard className="w-5 h-5 text-blue-500" />
     case 'paystack':
-    case 'flutterwave':
     case 'mtn_momo':
     case 'airtel_money':
     case 'mpesa':

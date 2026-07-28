@@ -65,6 +65,21 @@ export const paymentService = {
     };
   },
 
+  async initializeStripePayment(input: InitializePropertyPaymentInput) {
+    const { data, error } = await supabase.functions.invoke("initialize-stripe-payment", {
+      body: input,
+    });
+
+    if (error) throw error;
+    return data as {
+      transaction: any;
+      authorizationUrl: string;
+      sessionId: string;
+      reference: string;
+      callbackUrl: string;
+    };
+  },
+
   async verifyPropertyPayment(reference: string) {
     const { data, error } = await supabase.functions.invoke("verify-paystack-payment", {
       body: { reference },
@@ -78,6 +93,42 @@ export const paymentService = {
       blockchainRecord: any;
       alreadyProcessed: boolean;
     };
+  },
+
+  async verifyStripePayment(sessionId?: string, reference?: string) {
+    const { data, error } = await supabase.functions.invoke("verify-stripe-payment", {
+      body: { sessionId, reference },
+    });
+
+    if (error) throw error;
+    return data as {
+      status: string;
+      transaction: any;
+      alreadyProcessed: boolean;
+    };
+  },
+
+  async verifyCheckoutReturn(input: {
+    reference?: string | null;
+    sessionId?: string | null;
+  }) {
+    const reference = input.reference?.trim() || null;
+    const sessionId = input.sessionId?.trim() || null;
+
+    if (sessionId || reference?.startsWith("bm_stripe_")) {
+      const result = await this.verifyStripePayment(sessionId || undefined, reference || undefined);
+      return {
+        ...result,
+        receipt: null,
+        blockchainRecord: null,
+      };
+    }
+
+    if (reference) {
+      return this.verifyPropertyPayment(reference);
+    }
+
+    throw new Error("Missing payment reference.");
   },
 
   async initiatePropertyRefund(input: InitiatePropertyRefundInput) {

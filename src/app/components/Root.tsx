@@ -5,6 +5,8 @@ import { RouteMonitoring } from "./RouteMonitoring";
 import { MobileAppShell } from "../mobile/MobileAppShell";
 import { MobileBottomNav } from "../mobile/MobileBottomNav";
 import { SplashScreen } from "./baytmiftah/splash/SplashScreen";
+import { LocationOnboarding } from "./onboarding/LocationOnboarding";
+import { useUserMarket } from "../context/MarketContext";
 import { shouldUseMobileShell } from "../lib/baytmiftah/platform";
 import { PHONE_MEDIA, TABLET_MEDIA } from "../lib/viewports";
 
@@ -60,9 +62,23 @@ function isConsumerRoute(pathname: string) {
   );
 }
 
+function shouldSkipOnboarding(pathname: string) {
+  return (
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/workspace") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/privacy") ||
+    pathname.startsWith("/terms")
+  );
+}
+
 export function Root() {
   const location = useLocation();
   const { isPhone } = useViewportFlags();
+  const { ready: marketReady, onboardingComplete } = useUserMarket();
   const showSplash = shouldUseMobileShell();
   const [splashDone, setSplashDone] = useState(() => !showSplash);
 
@@ -74,6 +90,10 @@ export function Root() {
 
   if (showSplash && !splashDone) {
     return <SplashScreen onComplete={() => setSplashDone(true)} />;
+  }
+
+  if (marketReady && !onboardingComplete && !shouldSkipOnboarding(location.pathname)) {
+    return <LocationOnboarding />;
   }
 
   if (isPhone && location.pathname === "/") {

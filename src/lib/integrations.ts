@@ -74,7 +74,15 @@ export const clientIntegrations = {
       return envFlag(import.meta.env.VITE_OPENAI_ENABLED);
     },
     label: "AI search",
-    hint: "Local parser by default; set OPENAI_API_KEY in Supabase for GPT parsing",
+    hint: "Set OPENAI_API_KEY in Supabase secrets and VITE_OPENAI_ENABLED=true",
+  },
+
+  resend: {
+    get configured() {
+      return envFlag(import.meta.env.VITE_RESEND_CONFIGURED);
+    },
+    label: "Email (Resend)",
+    hint: "RESEND_API_KEY + NOTIFICATION_EMAIL_FROM in Supabase secrets",
   },
 
   stripe: {
@@ -83,14 +91,6 @@ export const clientIntegrations = {
     },
     label: "Stripe",
     hint: "VITE_STRIPE_PUBLIC_KEY + STRIPE_SECRET_KEY",
-  },
-
-  flutterwave: {
-    get configured() {
-      return !!firstEnv("VITE_FLUTTERWAVE_PUBLIC_KEY");
-    },
-    label: "Flutterwave",
-    hint: "VITE_FLUTTERWAVE_PUBLIC_KEY + FLUTTERWAVE_SECRET_KEY",
   },
 
   blockchain: {
@@ -144,9 +144,19 @@ export function getIntegrationSummary(): IntegrationStatus[] {
       hint: clientIntegrations.exchangeRates.hint,
     },
     {
-      configured: clientIntegrations.openAi.configured,
+      configured: clientIntegrations.openAi.enhanced,
       label: clientIntegrations.openAi.label,
       hint: clientIntegrations.openAi.hint,
+    },
+    {
+      configured: clientIntegrations.resend.configured,
+      label: clientIntegrations.resend.label,
+      hint: clientIntegrations.resend.hint,
+    },
+    {
+      configured: clientIntegrations.stripe.configured,
+      label: clientIntegrations.stripe.label,
+      hint: clientIntegrations.stripe.hint,
     },
     {
       configured: clientIntegrations.blockchain.configured,
@@ -162,5 +172,4 @@ export const PAYSTACK_CHECKOUT_PROVIDER_IDS = new Set([
   "mtn_momo",
   "airtel_money",
   "mpesa",
-  "flutterwave",
 ]);

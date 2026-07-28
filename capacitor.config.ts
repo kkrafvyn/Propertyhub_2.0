@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "com.propertyhub.app",
+  appId: "com.baymiftah.app",
   appName: "Property Hub",
   webDir: "dist",
   bundledWebRuntime: false,

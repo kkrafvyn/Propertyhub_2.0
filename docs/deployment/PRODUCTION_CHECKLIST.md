@@ -124,7 +124,7 @@ Complete these pages to finish MVP:
   - [ ] Set password requirements (min 8 chars, special chars)
   - [ ] Configure email templates
   - [ ] Set up email domain/DKIM
-  - [ ] Add allowed redirect URLs: `https://yourdomain.com/auth/callback`
+  - [ ] Add allowed redirect URLs: `https://baytmiftah.com/auth/callback`
 
 - [ ] **Database Settings**:
   - [ ] Enable automated backups

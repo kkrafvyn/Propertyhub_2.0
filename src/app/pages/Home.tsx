@@ -7,6 +7,7 @@ import { savedPropertyService } from "../../lib/savedproperty.service";
 import { syncCompareIds, toggleCompareIdAsync } from "../../lib/compare-listings";
 import { normalizePropertyCategory } from "../../lib/property-category";
 import { useAuth } from "../context/AuthContext";
+import { useUserMarket } from "../context/MarketContext";
 import { useTranslation } from "../i18n/LocaleContext";
 import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
 import {
@@ -30,8 +31,9 @@ export function Home() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { market } = useUserMarket();
   const [category, setCategory] = useState("all");
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState(() => market?.city || "");
   const [propertyType, setPropertyType] = useState("any");
   const [budget, setBudget] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -42,6 +44,12 @@ export function Home() {
   const [mapMode, setMapMode] = useState(false);
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (market?.city) {
+      setLocation(market.city);
+    }
+  }, [market?.city]);
 
   useEffect(() => {
     let ignore = false;
@@ -261,7 +269,11 @@ export function Home() {
         <>
           {featured.length > 0 && (
             <ListingCarousel
-              title={t("home.popularInAccra")}
+              title={
+                market?.city
+                  ? t("onboarding.popularTitle", { city: market.city })
+                  : t("home.popularInAccra")
+              }
               listings={featured}
               savedIds={savedIds}
               compareIds={compareIds}

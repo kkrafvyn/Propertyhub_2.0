@@ -2,35 +2,12 @@ import { Link } from "react-router";
 
 const BRAND_GREEN = "#0F2922";
 
-function HouseMarkPaths({
-  stroke,
-  fill,
-}: {
-  stroke: string;
-  fill: string;
-}) {
-  return (
-    <>
-      <path
-        d="M24 13.5L34.5 22V35.5H13.5V22L24 13.5Z"
-        stroke={stroke}
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-      <rect x="21" y="28.5" width="6" height="7" rx="1" fill={fill} />
-    </>
-  );
-}
-
 export function LogoMark({
   className = "h-9 w-9",
   inverted = false,
   ...props
 }: React.SVGProps<SVGSVGElement> & { inverted?: boolean }) {
-  const background = inverted ? "#FFFFFF" : BRAND_GREEN;
-  const stroke = inverted ? BRAND_GREEN : "#FFFFFF";
-  const fill = inverted ? BRAND_GREEN : "#FFFFFF";
+  const fill = inverted ? "#FFFFFF" : BRAND_GREEN;
 
   return (
     <svg
@@ -41,8 +18,13 @@ export function LogoMark({
       aria-hidden="true"
       {...props}
     >
-      <rect width="48" height="48" rx="12" fill={background} />
-      <HouseMarkPaths stroke={stroke} fill={fill} />
+      <circle cx="24" cy="15" r="5.5" fill={fill} />
+      <path
+        d="M9 33.5Q24 24.5 39 33.5"
+        stroke={fill}
+        strokeWidth="2.25"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

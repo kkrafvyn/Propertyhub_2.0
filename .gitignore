@@ -6,6 +6,9 @@ coverage/
 .env
 .env.local
 .env.*.local
+!.env.example
+!.env.vercel.example
+.env.vercel.production
 
 # Generated contract outputs
 artifacts/
@@ -35,3 +38,6 @@ supabase/.env.local
 .DS_Store
 .vercel
 .env*
+!.env.example
+!.env.vercel.example
+.env.vercel.production

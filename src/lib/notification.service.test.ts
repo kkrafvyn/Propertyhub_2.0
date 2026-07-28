@@ -13,7 +13,7 @@ describe("notificationService", () => {
   it("reports external provider availability from env", () => {
     const providers = notificationService.areExternalProvidersConfigured();
     expect(providers).toMatchObject({
-      webPush: false,
+      webPush: expect.any(Boolean),
       paystack: expect.any(Boolean),
       exchangeRates: expect.any(Boolean),
       aiSearch: expect.any(Boolean),

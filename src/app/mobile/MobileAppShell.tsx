@@ -18,6 +18,7 @@ import {
 import { mapListingToCard } from "../components/baytmiftah";
 import MobileHomeMenu from "../components/baytmiftah/mobile/MobileHomeMenu";
 import { useTranslation } from "../i18n/LocaleContext";
+import { useUserMarket } from "../context/MarketContext";
 import { ConsumerTabBar } from "./ConsumerTabBar";
 import { buildConsumerTabItems } from "./consumer-bottom-tabs";
 import { readCachedMobileListings, writeCachedMobileListings } from "../../lib/mobile-offline-cache";
@@ -27,8 +28,13 @@ export function MobileAppShell() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { market, defaultListingMode } = useUserMarket();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [txTab, setTxTab] = useState("rent");
+  const [txTab, setTxTab] = useState(() => {
+    if (defaultListingMode === "buy") return "buy";
+    if (defaultListingMode === "stay") return "stay";
+    return "rent";
+  });
   const [propType, setPropType] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [listings, setListings] = useState<any[]>([]);
@@ -39,6 +45,12 @@ export function MobileAppShell() {
   >([]);
 
   const tabs = useMemo(() => buildConsumerTabItems(t, user), [t, user]);
+
+  useEffect(() => {
+    if (defaultListingMode === "buy") setTxTab("buy");
+    else if (defaultListingMode === "stay") setTxTab("stay");
+    else setTxTab("rent");
+  }, [defaultListingMode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -127,8 +139,10 @@ export function MobileAppShell() {
     );
   };
 
+  const hasContextNav = contextualNav.length > 0 && Boolean(user);
+
   return (
-    <main className="mobile-bolt mobile-app-shell">
+    <main className={`mobile-bolt mobile-app-shell${hasContextNav ? " has-context-nav" : ""}`}>
       <div className="mobile-content">
         <MobileReferenceHeader menuEnabled onMenuClick={() => setMenuOpen(true)} />
         <MobileHeroBanner />

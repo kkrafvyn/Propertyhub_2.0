@@ -1,4 +1,4 @@
-/** Canonical consumer-facing routes for Propertyhub (not phub legacy paths). */
+/** Canonical consumer-facing routes for BaytMiftah (not phub legacy paths). */
 
 import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
 
@@ -50,7 +50,7 @@ export function exploreModeUrl(listingType: string) {
   }
 }
 
-/** Map phub-style paths to Propertyhub routes (for redirects / menu normalization). */
+/** Map phub-style paths to BaytMiftah routes (for redirects / menu normalization). */
 export const LEGACY_ROUTE_REDIRECTS: Record<string, string> = {
   "/explore": CONSUMER_ROUTES.search,
   "/saved": CONSUMER_ROUTES.saved,
@@ -89,7 +89,7 @@ export const LEGACY_ROUTE_REDIRECTS: Record<string, string> = {
   "/renter/utilities": CONSUMER_ROUTES.payments,
 };
 
-/** Prefix redirects for phub route trees not in Propertyhub router. */
+/** Prefix redirects for phub route trees not in BaytMiftah router. */
 export const LEGACY_PREFIX_REDIRECTS: Array<{ prefix: string; target: string }> = [
   { prefix: "/investment", target: CONSUMER_ROUTES.profile },
   { prefix: "/finance", target: `${WORKSPACE_ENTRY_PATH}?next=finance` },

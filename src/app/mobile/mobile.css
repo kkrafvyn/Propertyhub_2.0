@@ -1,4 +1,6 @@
 .mobile-app-shell {
+  --mobile-tab-bar-offset: calc(92px + env(safe-area-inset-bottom));
+  --mobile-content-bottom: calc(124px + env(safe-area-inset-bottom));
   min-height: 100vh;
   min-height: 100dvh;
   background:
@@ -7,10 +9,14 @@
   color: #111827;
 }
 
+.mobile-app-shell.has-context-nav {
+  --mobile-content-bottom: calc(176px + env(safe-area-inset-bottom));
+}
+
 .mobile-content {
   width: min(100%, 520px);
   margin: 0 auto;
-  padding: max(env(safe-area-inset-top), 14px) 16px calc(118px + env(safe-area-inset-bottom));
+  padding: max(env(safe-area-inset-top), 14px) 16px var(--mobile-content-bottom);
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
@@ -21,8 +27,12 @@
   }
 }
 
+.has-mobile-tab-bar {
+  --mobile-tab-bar-offset: calc(92px + env(safe-area-inset-bottom));
+}
+
 .has-mobile-tab-bar .desktop-shell main {
-  padding-bottom: calc(7.25rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(7.75rem + env(safe-area-inset-bottom));
 }
 
 .has-tablet-tab-bar .desktop-shell main {
@@ -559,14 +569,14 @@
   display: flex;
   align-items: stretch;
   justify-content: space-between;
-  gap: 4px;
+  gap: 2px;
   width: 100%;
-  max-width: min(100%, 640px);
+  max-width: min(100%, 680px);
   margin: 0 auto;
   border: 1px solid rgba(15, 41, 34, 0.08);
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.94);
-  padding: 10px 10px 8px;
+  padding: 10px 8px 8px;
   box-shadow:
     0 18px 40px rgba(15, 41, 34, 0.12),
     0 2px 8px rgba(15, 41, 34, 0.06);
@@ -580,16 +590,17 @@
   flex: 1 1 0;
   min-width: 0;
   max-width: none;
-  min-height: 58px;
+  min-height: 64px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 5px;
+  overflow: hidden;
   border: 0;
   border-radius: 16px;
   background: transparent;
   color: #9ca3af;
-  padding: 4px 2px;
+  padding: 4px 1px;
   transition: color 0.2s ease, transform 0.15s ease;
 }
 
@@ -601,20 +612,20 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 32px;
+  width: 40px;
+  height: 34px;
   flex-shrink: 0;
 }
 
 .mobile-tab-icon {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
 }
 
 .mobile-tab-active-pill {
   position: absolute;
-  inset: -4px -8px;
-  border-radius: 999px;
+  inset: 0;
+  border-radius: 12px;
   background: rgba(15, 41, 34, 0.1);
 }
 
@@ -626,10 +637,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: center;
-  font-size: 0.72rem;
+  font-size: clamp(0.64rem, 2.35vw, 0.74rem);
   font-weight: 700;
   line-height: 1.1;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
+  padding: 0 1px;
 }
 
 .mobile-tab-button.is-active {
@@ -680,14 +692,20 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(72px + env(safe-area-inset-bottom));
-  z-index: 29;
+  bottom: var(--mobile-tab-bar-offset, calc(92px + env(safe-area-inset-bottom)));
+  z-index: 55;
   display: flex;
   gap: 8px;
   overflow-x: auto;
   padding: 8px 12px;
   background: rgba(255, 255, 255, 0.94);
   border-top: 1px solid rgba(17, 24, 39, 0.06);
+  box-shadow: 0 -8px 24px rgba(17, 24, 39, 0.06);
+  scrollbar-width: none;
+}
+
+.mobile-context-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .mobile-context-link {

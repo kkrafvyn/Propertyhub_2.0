@@ -49,7 +49,7 @@ REALTOR_API_KEY=your_realtor_key
 
 # ===== EMAIL SERVICE =====
 SENDGRID_API_KEY=SG_...
-SENDGRID_FROM_EMAIL=noreply@yourdomain.com
+SENDGRID_FROM_EMAIL=noreply@baytmiftah.com
 
 # ===== FEATURE FLAGS =====
 VITE_FEATURE_MLS_SYNC=true
@@ -251,7 +251,7 @@ export async function GET(req: Request) {
 
 ```bash
 # Set up daily cron job at 2 AM UTC
-# URL: https://yourdomain.com/api/cron/sync-listings
+# URL: https://baytmiftah.com/api/cron/sync-listings
 # Header: Authorization: Bearer YOUR_CRON_SECRET
 # Frequency: Daily
 ```
@@ -274,7 +274,7 @@ git push origin main
 # Most platforms auto-deploy on git push
 
 # 5. Verify production
-# Go to https://yourapp.com/workspace/org-slug/integration-hub
+# Go to https://baytmiftah.com/workspace/org-slug/integration-hub
 # Should see Integration Hub page
 
 # 6. Monitor logs

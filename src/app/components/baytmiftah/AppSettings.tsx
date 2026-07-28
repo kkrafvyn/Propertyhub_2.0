@@ -3,9 +3,11 @@ import { Link } from 'react-router'
 import { LanguagePanel } from './LanguageSwitcher'
 import { IconMoon, IconSun } from './icons'
 import { useCurrency } from '../../context/CurrencyContext'
+import { useUserMarket } from '../../context/MarketContext'
 import { useTheme } from '../../context/ThemeContext'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { requestPushPermission } from '../../lib/baytmiftah/push-service'
+import { MARKET_PRESETS } from '../../../lib/user-market.service'
 
 const CURRENCIES = [
   { code: 'GHS', label: '₵ GHS' },
@@ -25,6 +27,50 @@ function SettingOption({ active, onClick, children }) {
     >
       {children}
     </button>
+  )
+}
+
+export function MarketPanel() {
+  const { t } = useTranslation()
+  const { market, summary, updateMarket } = useUserMarket()
+  const [saving, setSaving] = useState(false)
+
+  if (!market || !summary) return null
+
+  return (
+    <div>
+      <p className="mb-3 text-sm text-ink-secondary">{t('onboarding.settingsDesc')}</p>
+      <div className="mb-4 rounded-xl border border-surface-border bg-surface-subtle px-4 py-3 text-sm">
+        <p className="font-semibold text-ink">
+          {market.city}, {market.country}
+        </p>
+        <p className="mt-1 text-ink-secondary">
+          {summary.paymentProvider} · {summary.currency} · {summary.jurisdictionLabel}
+        </p>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {MARKET_PRESETS.map((preset) => (
+          <SettingOption
+            key={preset.jurisdictionId}
+            active={market.jurisdictionId === preset.jurisdictionId}
+            onClick={async () => {
+              setSaving(true)
+              try {
+                await updateMarket(preset.jurisdictionId, 0)
+              } finally {
+                setSaving(false)
+              }
+            }}
+          >
+            <span className="mr-2" aria-hidden="true">
+              {preset.flag}
+            </span>
+            {preset.label}
+          </SettingOption>
+        ))}
+      </div>
+      {saving ? <p className="mt-2 text-xs text-ink-secondary">{t('onboarding.saving')}</p> : null}
+    </div>
   )
 }
 
@@ -125,6 +171,10 @@ export function AppSettingsPanels({ includeLegal = false }) {
 
   return (
     <div className="space-y-6">
+      <section>
+        <h3 className="mb-3 text-sm font-semibold text-ink">{t('onboarding.settingsTitle')}</h3>
+        <MarketPanel />
+      </section>
       <section>
         <h3 className="mb-3 text-sm font-semibold text-ink">{t('profile.language')}</h3>
         <LanguagePanel />

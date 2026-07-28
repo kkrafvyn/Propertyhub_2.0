@@ -80,15 +80,25 @@ export const mobileAppService = {
       return ''
     }
 
-    const existing = window.localStorage.getItem('propertyhub-browser-device-id')
-    if (existing) return existing
+    const deviceIdKey = 'baytmiftah-browser-device-id'
+    const legacyDeviceIdKey = 'propertyhub-browser-device-id'
+
+    const existing =
+      window.localStorage.getItem(deviceIdKey) ||
+      window.localStorage.getItem(legacyDeviceIdKey)
+    if (existing) {
+      if (!window.localStorage.getItem(deviceIdKey)) {
+        window.localStorage.setItem(deviceIdKey, existing)
+      }
+      return existing
+    }
 
     const nextId =
       typeof crypto !== 'undefined' && 'randomUUID' in crypto
         ? crypto.randomUUID()
         : `browser-${Date.now()}`
 
-    window.localStorage.setItem('propertyhub-browser-device-id', nextId)
+    window.localStorage.setItem(deviceIdKey, nextId)
     return nextId
   },
 

@@ -6,6 +6,7 @@ import extensions from './extensions.js'
 import pages from './pages.js'
 import compliance from './compliance.js'
 import searchPage from './searchPage.js'
+import onboarding from './onboarding.js'
 
 export default {
   localeName: 'English',
@@ -17,4 +18,5 @@ export default {
   ...pages,
   compliance,
   searchPage,
+  onboarding,
 }

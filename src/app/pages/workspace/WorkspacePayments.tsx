@@ -327,7 +327,15 @@ export function WorkspacePayments({
   const handleVerify = async (payment: any) => {
     try {
       setVerifyingPaymentId(payment.id);
-      const result = await paymentService.verifyPropertyPayment(payment.provider_reference);
+      const result =
+        payment.provider === "stripe"
+          ? await paymentService.verifyStripePayment(
+              payment.access_code || undefined,
+              payment.provider_reference
+            )
+          : await paymentService.verifyPropertyPayment(payment.provider_reference);
+
+      const receipt = "receipt" in result ? result.receipt : null;
 
       setPayments((current) =>
         current.map((item) =>
@@ -335,13 +343,13 @@ export function WorkspacePayments({
             ? {
                 ...item,
                 ...result.transaction,
-                receipt: result.receipt || item.receipt,
+                receipt: receipt || item.receipt,
               }
             : item
         )
       );
 
-      if (result.status === "success") {
+      if (result.status === "success" || result.status === "completed") {
         toast.success(
           result.alreadyProcessed
             ? "Payment was already verified."

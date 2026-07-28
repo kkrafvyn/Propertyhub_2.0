@@ -184,7 +184,7 @@ export const calendarOperationsService = {
       "VERSION:2.0",
       "PRODID:-//Property Hub//Viewing Scheduler//EN",
       "BEGIN:VEVENT",
-      `UID:${viewing.id}@propertyhub`,
+      `UID:${viewing.id}@baytmiftah.com`,
       `DTSTAMP:${formatIcsDate(new Date().toISOString())}`,
       `DTSTART:${formatIcsDate(start)}`,
       `DTEND:${formatIcsDate(end)}`,
