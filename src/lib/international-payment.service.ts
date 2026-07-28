@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { clientIntegrations } from './integrations';
+import { getPreferredProviderIds, type PaymentContext } from './payment-routing.service';
 
 export type PaymentMethod = 'card' | 'bank_transfer' | 'mobile_money' | 'wallet' | 'crypto' | 'buy_now_pay_later';
 
@@ -207,19 +208,36 @@ class InternationalPaymentService {
     region: string
   ): InternationalPaymentConfig {
     const availableMethods = this.getPaymentMethods(currency, region);
+    const regionUpper = region.toUpperCase();
 
-    // Default method based on region
-    let defaultMethod = 'stripe'; // Global default
-    if (region.toUpperCase() === 'GH') defaultMethod = 'flutterwave';
-    if (region.toUpperCase() === 'KE') defaultMethod = 'mpesa';
-    if (region.toUpperCase() === 'NG') defaultMethod = 'flutterwave';
-    if (region.toUpperCase() === 'ZA') defaultMethod = 'flutterwave';
+    const paystackRegions = ['GH', 'NG', 'KE', 'ZA'];
+    let defaultMethod = paystackRegions.includes(regionUpper) ? 'paystack' : 'stripe';
+
+    if (!this.getProvider(defaultMethod)?.isActive) {
+      defaultMethod = availableMethods[0]?.id || defaultMethod;
+    }
 
     return {
       currency,
       region,
       availableMethods,
       defaultMethod,
+    };
+  }
+
+  /**
+   * Payment methods for a property market (region + currency from listing location).
+   */
+  getPaymentConfigForProperty(context: PaymentContext): InternationalPaymentConfig {
+    const preferredIds = new Set(getPreferredProviderIds(context));
+    const allMethods = this.getPaymentMethods(context.currency, context.region);
+    const availableMethods = allMethods.filter((method) => preferredIds.has(method.id));
+
+    return {
+      currency: context.currency,
+      region: context.region,
+      availableMethods,
+      defaultMethod: context.primaryProvider,
     };
   }
 

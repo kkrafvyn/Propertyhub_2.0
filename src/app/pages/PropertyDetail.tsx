@@ -43,6 +43,10 @@ import { realEstateComplianceService } from "../../lib/real-estate-compliance.se
 import { ConsumerTrustBadges } from "../components/ConsumerTrustBadges";
 import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
 import { monitoring } from "../../lib/monitoring";
+import {
+  resolvePaymentContextFromListing,
+  shouldUsePaystackCheckout,
+} from "../../lib/payment-routing.service";
 
 export function PropertyDetail() {
   const { id } = useParams();
@@ -223,6 +227,12 @@ export function PropertyDetail() {
 
   const property = listing?.property;
   const organization = listing?.organization;
+  const paymentContext = useMemo(
+    () => (listing ? resolvePaymentContextFromListing(listing) : null),
+    [listing]
+  );
+  const paymentCurrency = paymentContext?.currency || listing?.currency || "USD";
+  const paymentProviderLabel = paymentContext?.providerLabel || "Paystack";
   const images = getPropertyImageGallery(property);
   const locationQuery = property
     ? [property.address, property.city, property.region, property.country].filter(Boolean).join(", ")
@@ -388,7 +398,7 @@ export function PropertyDetail() {
         organization_id: listing.organization_id,
         case_type: "purchase_offer",
         message: [
-          `Offer amount: GHS ${amount.toLocaleString()}`,
+          `Offer amount: ${paymentCurrency} ${amount.toLocaleString()}`,
           offerForm.message.trim() || "Purchase offer submitted from property page.",
         ].join("\n\n"),
         pipeline_stage: "negotiation",
@@ -448,6 +458,13 @@ export function PropertyDetail() {
 
     try {
       setBookingSubmitting(true);
+      if (hostBookingMode !== "request" && paymentContext && !shouldUsePaystackCheckout(paymentContext)) {
+        toast.error(
+          `${paymentProviderLabel} checkout for properties in ${paymentContext.propertyLabel} is not available yet.`
+        );
+        return;
+      }
+
       const nightlyRateMinor = Math.round(Number(listing.price || 0) * 100);
       const booking = await bookingService.createPendingBooking({
         listingId: listing.id,
@@ -456,7 +473,7 @@ export function PropertyDetail() {
         checkIn: bookingForm.checkIn,
         checkOut: bookingForm.checkOut,
         nightlyRateMinor,
-        currency: listing.currency || "GHS",
+        currency: paymentCurrency,
         guestNote: bookingForm.guestNote,
         bookingMode: hostBookingMode,
       });
@@ -496,9 +513,16 @@ export function PropertyDetail() {
       return;
     }
 
+    if (!paymentContext || !shouldUsePaystackCheckout(paymentContext)) {
+      toast.error(
+        `${paymentProviderLabel} checkout for properties in ${paymentContext?.propertyLabel || "this market"} is not available yet.`
+      );
+      return;
+    }
+
     const amount = Number(paymentForm.amount);
     if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error("Enter a valid payment amount in GHS.");
+      toast.error(`Enter a valid payment amount in ${paymentCurrency}.`);
       return;
     }
 
@@ -515,7 +539,7 @@ export function PropertyDetail() {
       window.location.assign(result.authorizationUrl);
     } catch (error) {
       console.error("Failed to initialize payment:", error);
-      toast.error("Unable to start the Paystack checkout right now.");
+      toast.error(`Unable to start the ${paymentProviderLabel} checkout right now.`);
     } finally {
       setPaymentSubmitting(false);
     }
@@ -679,7 +703,7 @@ export function PropertyDetail() {
                     </div>
                   )}
                   <div className="text-4xl font-semibold text-primary">
-                    GHS {listing.price.toLocaleString()}
+                    {paymentCurrency} {listing.price.toLocaleString()}
                     <span className="text-lg text-muted-foreground ml-2">
                       {listing.listing_type === "rental" ? "/month" : listing.listing_type === "lease" ? "/lease" : ""}
                     </span>
@@ -759,7 +783,8 @@ export function PropertyDetail() {
                   <div>
                     <h3 className="text-lg font-semibold">Built for verified transactions</h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Payments run through Paystack, while receipts and agreement records can be
+                      Payments run through {paymentProviderLabel} based on this property&apos;s
+                      location ({paymentCurrency}), while receipts and agreement records can be
                       tracked through the platform&apos;s verification layer.
                     </p>
                     {!trustLoading && trustBadges.length > 0 ? (
@@ -811,7 +836,7 @@ export function PropertyDetail() {
                           {trustSnapshot?.securePaymentsEnabled ? "Receipt-ready" : "Standard"}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Completed Paystack payments generate downloadable receipts.
+                          Completed {paymentProviderLabel} payments generate downloadable receipts.
                         </p>
                       </div>
                     </div>
@@ -959,7 +984,7 @@ export function PropertyDetail() {
                   listing={{
                     id: listing.id,
                     price: listing.price,
-                    priceLabel: `GHS ${listing.price.toLocaleString()}`,
+                    priceLabel: `${paymentCurrency} ${listing.price.toLocaleString()}`,
                     instantBook: true,
                   }}
                 />
@@ -1112,7 +1137,7 @@ export function PropertyDetail() {
                   onClick={() => setShowPaymentForm(true)}
                 >
                   <CreditCard className="w-4 h-4" />
-                  Secure Payment via Paystack
+                  Secure Payment via {paymentProviderLabel}
                 </Button>
               )}
 
@@ -1210,7 +1235,7 @@ export function PropertyDetail() {
                   <h4 className="font-semibold mb-4">Make an offer</h4>
                   <form className="space-y-4" onSubmit={handleMakeOffer}>
                     <Input
-                      label="Offer amount (GHS)"
+                      label={`Offer amount (${paymentCurrency})`}
                       type="number"
                       value={offerForm.amount}
                       onChange={(event) =>
@@ -1318,7 +1343,7 @@ export function PropertyDetail() {
                         ? "Submitting..."
                         : hostBookingMode === "request"
                           ? "Request to book"
-                          : "Continue to Paystack"}
+                          : `Continue to ${paymentProviderLabel}`}
                     </Button>
                   </form>
                 </motion.div>
@@ -1337,13 +1362,16 @@ export function PropertyDetail() {
                     <div>
                       <h4 className="font-semibold">Secure Payment</h4>
                       <p className="text-sm text-muted-foreground">
-                        Pay with MTN MoMo, Telecel Cash, AT Money, card, or bank transfer through Paystack. After confirmation, your receipt is prepared for verification.
+                        {paymentContext?.primaryProvider === "paystack"
+                          ? "Pay with mobile money, card, or bank transfer through Paystack."
+                          : `Pay securely through ${paymentProviderLabel} in ${paymentCurrency}.`}{" "}
+                        After confirmation, your receipt is prepared for verification.
                       </p>
                     </div>
                   </div>
                   <form className="space-y-4" onSubmit={handleSecurePayment}>
                     <Input
-                      label="Amount (GHS)"
+                      label={`Amount (${paymentCurrency})`}
                       type="number"
                       min="1"
                       step="0.01"
@@ -1406,7 +1434,9 @@ export function PropertyDetail() {
                       type="submit"
                       disabled={paymentSubmitting}
                     >
-                      {paymentSubmitting ? "Redirecting to Paystack..." : "Continue to Paystack"}
+                      {paymentSubmitting
+                        ? `Redirecting to ${paymentProviderLabel}...`
+                        : `Continue to ${paymentProviderLabel}`}
                     </Button>
                   </form>
                 </motion.div>

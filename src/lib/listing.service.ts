@@ -127,6 +127,32 @@ export const listingService = {
     return data;
   },
 
+  async getListingForPayment(id: string) {
+    const { data, error } = await supabase
+      .from("listings")
+      .select(
+        `
+        id,
+        currency,
+        price,
+        listing_type,
+        status,
+        property:properties(
+          id,
+          address,
+          city,
+          region,
+          country
+        )
+      `
+      )
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  },
+
   async getOrganizationListings(organizationId: string) {
     const { data, error } = await supabase
       .from("listings")
