@@ -1,7 +1,13 @@
+import { Capacitor } from "@capacitor/core";
 import { PHONE_MEDIA } from "../viewports";
 
 export function isNativeApp() {
-  return typeof window !== "undefined" && Boolean((window as { Capacitor?: unknown }).Capacitor);
+  if (typeof window === "undefined") return false;
+  try {
+    return Capacitor.isNativePlatform();
+  } catch {
+    return false;
+  }
 }
 
 export function isStandalonePwa() {
@@ -12,8 +18,9 @@ export function isStandalonePwa() {
   );
 }
 
+/** Launch splash — native apps only (never regular browser / Vercel web). */
 export function shouldShowLaunchSplash() {
-  return isNativeApp() || isStandalonePwa();
+  return isNativeApp();
 }
 
 export function shouldUseMobileShell() {

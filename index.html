@@ -20,7 +20,20 @@
       <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192" />
       <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180" />
       <title>BaytMiftah</title>
-      <style>html, body { height: 100%; margin: 0; } #root { height: 100%; }</style>
+      <style>
+        html,
+        body {
+          min-height: 100%;
+          margin: 0;
+        }
+        body {
+          overflow-y: auto;
+          overflow-x: clip;
+        }
+        #root {
+          min-height: 100%;
+        }
+      </style>
     </head>
 
     <body>
