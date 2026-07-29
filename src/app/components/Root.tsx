@@ -71,7 +71,10 @@ function shouldSkipOnboarding(pathname: string) {
     pathname.startsWith("/workspace") ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/privacy") ||
-    pathname.startsWith("/terms")
+    pathname.startsWith("/terms") ||
+    pathname.startsWith("/search") ||
+    pathname.startsWith("/property/") ||
+    pathname.startsWith("/compare")
   );
 }
 
