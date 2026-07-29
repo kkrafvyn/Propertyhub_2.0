@@ -417,4 +417,56 @@ export const aiAssistantService = {
 
     return 'BaytMiftah AI can help with search, documents, payments, escrow, bookings, and maintenance. Try asking about verification, offers, leases, or refunds.'
   },
+
+  /** Ask the AI assistant (OpenAI when configured, local FAQ fallback otherwise). */
+  async askAssistant(params: {
+    message: string
+    context?: string
+    history?: Array<{ role: 'user' | 'assistant'; content: string }>
+  }): Promise<{ answer: string; source: 'openai' | 'local' }> {
+    if (clientIntegrations.supabase.configured) {
+      try {
+        const { data, error } = await supabase.functions.invoke('ai-assistant', {
+          body: {
+            action: 'chat',
+            message: params.message,
+            context: params.context,
+            history: params.history,
+          },
+        })
+
+        if (!error && data && typeof data === 'object' && 'answer' in data) {
+          const payload = data as { answer: string; source?: 'openai' | 'local' }
+          return {
+            answer: payload.answer,
+            source: payload.source === 'openai' ? 'openai' : 'local',
+          }
+        }
+      } catch (error) {
+        console.warn('AI assistant edge function unavailable, using local FAQ:', error)
+      }
+    }
+
+    return {
+      answer: this.answerFaq(params.message, params.context),
+      source: 'local',
+    }
+  },
+
+  async generateListingDescriptionRemote(input: Parameters<typeof this.generateListingDescription>[0]) {
+    if (clientIntegrations.openAi.enhanced && clientIntegrations.supabase.configured) {
+      try {
+        const { data, error } = await supabase.functions.invoke('ai-assistant', {
+          body: { action: 'describe_listing', listing: input },
+        })
+        if (!error && data && typeof data === 'object' && 'answer' in data) {
+          return (data as { answer: string }).answer
+        }
+      } catch (error) {
+        console.warn('Remote listing description failed, using template:', error)
+      }
+    }
+
+    return this.generateListingDescription(input)
+  },
 }

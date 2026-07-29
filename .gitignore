@@ -29,7 +29,9 @@ android/app/build/
 ios/App/build/
 ios/DerivedData/
 
-# Supabase local temp files
+# Local backups (never commit — may contain user data)
+backups/
+
 supabase/.temp/
 supabase/.env.payments
 supabase/.env.local

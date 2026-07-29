@@ -73,8 +73,11 @@ export const clientIntegrations = {
     get enhanced() {
       return envFlag(import.meta.env.VITE_OPENAI_ENABLED);
     },
-    label: "AI search",
-    hint: "Set OPENAI_API_KEY in Supabase secrets and VITE_OPENAI_ENABLED=true",
+    get available() {
+      return clientIntegrations.supabase.configured;
+    },
+    label: "BaytMiftah AI",
+    hint: "Works offline with guided help; set OPENAI_API_KEY + VITE_OPENAI_ENABLED=true for smart mode",
   },
 
   resend: {

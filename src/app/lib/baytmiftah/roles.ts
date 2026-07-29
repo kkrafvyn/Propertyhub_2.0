@@ -1,3 +1,5 @@
+import type { User } from "@supabase/supabase-js";
+
 export const USER_ROLES = {
   CONSUMER: "consumer",
   HOST: "host",
@@ -14,21 +16,27 @@ export const ROLE_HOME_PATHS: Record<string, string> = {
   wallet: "/app/wallet",
 };
 
+export function getMetadataRole(metadata: unknown): string | undefined {
+  if (!metadata || typeof metadata !== "object") return undefined;
+  const role = (metadata as { role?: unknown }).role;
+  return typeof role === "string" ? role : undefined;
+}
+
 export function getUserRole(
-  user?: { app_metadata?: { role?: string }; user_metadata?: { role?: string } } | null,
+  user?: User | { app_metadata?: unknown; user_metadata?: unknown } | null,
   profile?: { role?: string } | null
 ) {
   if (!user) return null;
   return (
     profile?.role ||
-    user.app_metadata?.role ||
-    user.user_metadata?.role ||
+    getMetadataRole(user.app_metadata) ||
+    getMetadataRole(user.user_metadata) ||
     USER_ROLES.CONSUMER
   );
 }
 
 export function getRoleHomePath(
-  user?: { app_metadata?: { role?: string }; user_metadata?: { role?: string } } | null,
+  user?: User | { app_metadata?: unknown; user_metadata?: unknown } | null,
   profile?: { role?: string } | null
 ) {
   const role = getUserRole(user, profile);

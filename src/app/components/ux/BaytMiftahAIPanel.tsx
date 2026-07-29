@@ -4,7 +4,9 @@ import { Sparkles } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Input } from "../ui/Input";
+import { Badge } from "../ui/badge";
 import { aiAssistantService } from "../../../lib/ai-assistant.service";
+import { clientIntegrations } from "../../../lib/integrations";
 
 export type AIContext =
   | "consumer"
@@ -72,7 +74,9 @@ export function BaytMiftahAIPanel({
   const copy = CONTEXT_COPY[context];
   const [query, setQuery] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
+  const [source, setSource] = useState<"openai" | "local" | null>(null);
   const [loading, setLoading] = useState(false);
+  const smartMode = clientIntegrations.openAi.enhanced;
 
   const suggestions = useMemo(() => {
     switch (context) {
@@ -105,8 +109,12 @@ export function BaytMiftahAIPanel({
         return;
       }
 
-      const faqAnswer = aiAssistantService.answerFaq(query, context);
-      setAnswer(faqAnswer);
+      const faqAnswer = await aiAssistantService.askAssistant({
+        message: query,
+        context,
+      });
+      setAnswer(faqAnswer.answer);
+      setSource(faqAnswer.source);
     } finally {
       setLoading(false);
     }
@@ -117,6 +125,9 @@ export function BaytMiftahAIPanel({
       <div className="flex items-center gap-2 mb-3">
         <Sparkles className="w-5 h-5 text-primary" aria-hidden="true" />
         <h3 className="font-semibold">{copy.title}</h3>
+        <Badge variant={smartMode ? "default" : "secondary"} className="ml-auto text-[10px]">
+          {smartMode ? "Smart AI" : "Guided help"}
+        </Badge>
       </div>
       <p className="text-sm text-muted-foreground mb-4">{copy.description}</p>
       <div className="flex flex-col sm:flex-row gap-3">
@@ -147,7 +158,16 @@ export function BaytMiftahAIPanel({
           </button>
         ))}
       </div>
-      {answer ? <p className="text-sm mt-4">{answer}</p> : null}
+      {answer ? (
+        <p className="text-sm mt-4">
+          {answer}
+          {source === "local" && !smartMode ? (
+            <span className="block text-xs text-muted-foreground mt-2">
+              Add OPENAI_API_KEY to unlock smarter responses.
+            </span>
+          ) : null}
+        </p>
+      ) : null}
       {copy.exploreHref ? (
         <Link to={copy.exploreHref} className="inline-block mt-4">
           <Button variant="outline" size="sm">

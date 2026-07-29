@@ -1,6 +1,8 @@
 # BaytMiftah Product Direction
 
-BaytMiftah is a focused Real Estate Operating System for property discovery, renting, leasing, short-stay bookings, transactions, property management, smart buildings, agency operations, and financial services.
+BaytMiftah is a focused Real Estate Operating System for property discovery, renting, leasing, short-stay bookings, transactions, property management, smart buildings, agency operations, and financial services — built to scale from **Ghana across West Africa and globally**.
+
+**Mission:** Become the trusted digital infrastructure for every property transaction in emerging markets.
 
 **Investment analytics are out of scope for the consumer product.** Investor-grade ROI, cap rate, portfolio, and appreciation tooling may return later as an enterprise or premium add-on.
 
@@ -129,3 +131,22 @@ Without the investment module, the product stays centered on:
 4. Managing property and buildings
 5. Running agency operations
 6. Delivering adjacent financial services
+
+## International expansion
+
+See [INTERNATIONAL_EXPANSION.md](./INTERNATIONAL_EXPANSION.md) for the country rollout plan:
+
+- **Wave 1:** Ghana (live)
+- **Wave 2:** Nigeria, Côte d'Ivoire, Senegal (West Africa)
+- **Wave 3:** Kenya, South Africa (East & Southern Africa)
+- **Wave 4:** UK, US, UAE diaspora markets
+
+## Infrastructure roadmap
+
+Current stack: **Vercel + Supabase** (optimal for launch velocity).
+
+Future: progressive migration to **AWS** when scale, compliance, or enterprise contracts require it. See [AWS_MIGRATION_PLAN.md](./AWS_MIGRATION_PLAN.md).
+
+## AI strategy
+
+BaytMiftah AI is integrated product-wide with **guided help** (no keys required) and **smart mode** when `OPENAI_API_KEY` is added. Future: regional models on AWS Bedrock. See [AI_INTEGRATION.md](./AI_INTEGRATION.md).

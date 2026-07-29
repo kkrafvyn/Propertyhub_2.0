@@ -23,6 +23,7 @@ import { useTranslation } from "../i18n/LocaleContext";
 import { useUserMarket } from "../context/MarketContext";
 import { ConsumerTabBar } from "./ConsumerTabBar";
 import { buildConsumerTabItems } from "./consumer-bottom-tabs";
+import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
 import { readCachedMobileListings, writeCachedMobileListings } from "../../lib/mobile-offline-cache";
 import "./mobile.css";
 
@@ -161,6 +162,14 @@ export function MobileAppShell() {
         <MobileHeroBanner />
         <MobileTransactionTabs active={txTab} onChange={setTxTab} />
         <MobilePropertyTypeRow active={propType} onChange={setPropType} />
+
+        <div className="px-4 mb-4">
+          <BaytMiftahAIPanel
+            context="search"
+            compact
+            onNavigate={(href) => navigate(href)}
+          />
+        </div>
 
         {usingOfflineCache ? (
           <p className="px-4 text-sm text-muted-foreground">{t("mobile.appShell.offlineCache")}</p>

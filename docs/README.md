@@ -1,8 +1,20 @@
 # Documentation Index
 
+## Product
+
+- **`APP_OVERVIEW_AND_ROADMAP.md`** — **Start here:** what BaytMiftah is, architecture, features, integrations, and roadmap
+- **`BaytMiftah_Pitch.docx`** — investor & partner pitch document (regenerate: `python scripts/generate-pitch-docx.py`)
+- **`AI_INTEGRATION.md`** — AI surfaces, edge functions, optional keys
+- **`AWS_MIGRATION_PLAN.md`** — future AWS infrastructure migration
+- **`INTERNATIONAL_EXPANSION.md`** — country rollout plan
+- `PRODUCT_DIRECTION.md` — product scope, role model, strategic build queue
+- `USER_ROLES.md` — per-role UI and permissions guide
+- `reference/property-hub-reos-mvp.md` — detailed MVP feature specification
+
 ## Setup
 
 - `setup/SUPABASE_SETUP.md` - Supabase project setup and database bootstrap
+- `setup/BACKUP_GUIDE.md` - database and storage backup / restore
 - `setup/INTERNATIONAL_MLS_SETUP.md` - internationalization, MLS, and payments setup
 
 ## Deployment

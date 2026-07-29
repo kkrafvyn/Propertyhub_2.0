@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router";
+import type { User } from "@supabase/supabase-js";
 import { useAuth } from "../context/AuthContext";
-import { isFullAdminRole } from "../lib/baytmiftah/roles";
+import { getMetadataRole, isFullAdminRole } from "../lib/baytmiftah/roles";
 import { adminService } from "../../lib/admin.service";
 
 function hasAdminAccess(
-  user: { user_metadata?: { role?: string }; app_metadata?: { role?: string } } | null,
+  user: User | { user_metadata?: unknown; app_metadata?: unknown } | null,
   profile: { is_platform_admin?: boolean } | null,
 ) {
+  const metadataRole = user
+    ? getMetadataRole(user.user_metadata) || getMetadataRole(user.app_metadata)
+    : undefined;
   return (
     Boolean(profile?.is_platform_admin) ||
-    isFullAdminRole(user?.user_metadata?.role) ||
-    isFullAdminRole(user?.app_metadata?.role)
+    isFullAdminRole(metadataRole)
   );
 }
 

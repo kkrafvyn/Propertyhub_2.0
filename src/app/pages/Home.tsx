@@ -22,6 +22,7 @@ import {
   mapListingToMapListing,
   type MarketplaceListingCard,
 } from "../components/baytmiftah";
+import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
 
 const MapView = lazy(() =>
   import("../components/baytmiftah/MapView").then((m) => ({ default: m.MapView })),
@@ -213,6 +214,16 @@ export function Home() {
           onBrowse={() => navigate("/search")}
           onListProperty={() => navigate(listPropertyPath)}
         />
+      )}
+
+      {!mapMode && (
+        <div className="mb-8">
+          <BaytMiftahAIPanel
+            context="search"
+            compact
+            onNavigate={(href) => navigate(href)}
+          />
+        </div>
       )}
 
       {filtersOpen && (

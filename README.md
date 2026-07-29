@@ -92,6 +92,12 @@ docs/
 
 ## Documentation
 
+- **Overview & roadmap:** [docs/APP_OVERVIEW_AND_ROADMAP.md](./docs/APP_OVERVIEW_AND_ROADMAP.md)
+- **User roles:** [docs/USER_ROLES.md](./docs/USER_ROLES.md)
+- **AI integration:** [docs/AI_INTEGRATION.md](./docs/AI_INTEGRATION.md)
+- **International expansion:** [docs/INTERNATIONAL_EXPANSION.md](./docs/INTERNATIONAL_EXPANSION.md)
+- **AWS migration plan:** [docs/AWS_MIGRATION_PLAN.md](./docs/AWS_MIGRATION_PLAN.md)
+- **Pitch deck:** [docs/BaytMiftah_Pitch.docx](./docs/BaytMiftah_Pitch.docx)
 - Setup: [docs/setup/SUPABASE_SETUP.md](./docs/setup/SUPABASE_SETUP.md)
 - Deployment checklist: [docs/deployment/PRODUCTION_CHECKLIST.md](./docs/deployment/PRODUCTION_CHECKLIST.md)
 - Deployment guide: [docs/deployment/DEPLOYMENT_GUIDE.md](./docs/deployment/DEPLOYMENT_GUIDE.md)
