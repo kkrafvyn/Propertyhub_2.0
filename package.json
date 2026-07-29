@@ -36,6 +36,7 @@
     "backup:db": "node scripts/backup/create-backup.mjs -- --db-only",
     "backup:storage": "node scripts/backup/create-backup.mjs -- --storage-only",
     "backup:list": "node scripts/backup/list-backups.mjs",
+    "vercel:env": "node scripts/sync-vercel-env.mjs",
     "contracts:deploy-all": "hardhat run scripts/deployAll.cjs --network polygonAmoy",
     "contracts:deploy-all-mainnet": "hardhat run scripts/deployAll.cjs --network polygonMainnet",
     "contracts:deploy-token": "hardhat run scripts/deployPropertyToken.cjs --network polygonAmoy",

@@ -7,7 +7,7 @@ import { MobileBottomNav } from "../mobile/MobileBottomNav";
 import { SplashScreen } from "./baytmiftah/splash/SplashScreen";
 import { LocationOnboarding } from "./onboarding/LocationOnboarding";
 import { useUserMarket } from "../context/MarketContext";
-import { shouldUseMobileShell } from "../lib/baytmiftah/platform";
+import { shouldShowLaunchSplash } from "../lib/baytmiftah/platform";
 import { PHONE_MEDIA, TABLET_MEDIA } from "../lib/viewports";
 
 function useViewportFlags() {
@@ -82,7 +82,7 @@ export function Root() {
   const location = useLocation();
   const { isPhone } = useViewportFlags();
   const { ready: marketReady, onboardingComplete } = useUserMarket();
-  const showSplash = shouldUseMobileShell();
+  const showSplash = shouldShowLaunchSplash();
   const [splashDone, setSplashDone] = useState(() => !showSplash);
 
   useEffect(() => {
