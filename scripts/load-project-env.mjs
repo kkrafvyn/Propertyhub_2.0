@@ -49,6 +49,8 @@ export function buildServerSecrets(env = loadProjectEnv()) {
     NOTIFICATION_EMAIL_REPLY_TO: env.NOTIFICATION_EMAIL_REPLY_TO || "support@baytmiftah.com",
     WEB_PUSH_CONTACT_EMAIL: env.WEB_PUSH_CONTACT_EMAIL || "mailto:support@baytmiftah.com",
     OPENAI_MODEL: env.OPENAI_MODEL || "gpt-4o-mini",
+    QWEN_MODEL: env.QWEN_MODEL || "qwen-plus",
+    AI_PROVIDER: env.AI_PROVIDER || "",
   };
 
   for (const key of SERVER_KEYS) {

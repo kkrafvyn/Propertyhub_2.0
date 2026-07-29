@@ -1,4 +1,11 @@
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
+import {
+  type AiSource,
+  chatCompletion,
+  isLlmConfigured,
+  resolveAiProvider,
+  smartModeHint,
+} from "../_shared/llm-provider.ts";
 
 type AssistantAction = "chat" | "describe_listing" | "summarize_document";
 
@@ -52,48 +59,27 @@ function localChatAnswer(message: string, context?: string) {
     return "Ask about neighborhood fit, commute, pricing, or next steps for this listing. You can schedule a viewing or message the host from the property page.";
   }
 
-  return "BaytMiftah AI can help with search, documents, payments, escrow, bookings, and maintenance. Add OPENAI_API_KEY to unlock smarter responses — guided help works without a key.";
+  return `BaytMiftah AI can help with search, documents, payments, escrow, bookings, and maintenance. ${smartModeHint()}`;
 }
 
-async function chatWithOpenAI(
+async function chatWithLlm(
   message: string,
   context?: string,
   history?: Array<{ role: string; content: string }>,
 ) {
-  const apiKey = Deno.env.get("OPENAI_API_KEY");
-  if (!apiKey) return null;
-
   const systemPrompt =
     context === "workspace"
       ? "You are BaytMiftah AI, a real estate operations copilot for agencies and landlords in Ghana and West Africa. Be concise, practical, and action-oriented."
       : "You are BaytMiftah AI, a helpful real estate assistant for property search, rentals, leases, short stays, and purchases in Ghana and West Africa. Be concise and trustworthy.";
 
-  const messages = [
-    { role: "system", content: systemPrompt },
-    ...(Array.isArray(history) ? history.slice(-6) : []),
-    { role: "user", content: message },
-  ];
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini",
-      temperature: 0.4,
-      messages,
-    }),
+  return chatCompletion({
+    messages: [
+      { role: "system", content: systemPrompt },
+      ...(Array.isArray(history) ? history.slice(-6) : []),
+      { role: "user", content: message },
+    ],
+    temperature: 0.4,
   });
-
-  if (!response.ok) {
-    throw new HttpError(502, `OpenAI request failed (${response.status})`);
-  }
-
-  const payload = await response.json();
-  const content = payload?.choices?.[0]?.message?.content;
-  return typeof content === "string" ? content.trim() : null;
 }
 
 Deno.serve(async (req) => {
@@ -111,20 +97,21 @@ Deno.serve(async (req) => {
     const message = typeof body?.message === "string" ? body.message.trim() : "";
     const context = typeof body?.context === "string" ? body.context : undefined;
     const history = Array.isArray(body?.history) ? body.history : [];
+    const activeProvider = resolveAiProvider();
 
     if (!message && action === "chat") {
       throw new HttpError(400, "message is required");
     }
 
     let answer: string | null = null;
-    let source: "openai" | "local" = "local";
+    let source: AiSource = "local";
 
     if (action === "chat") {
       try {
-        answer = await chatWithOpenAI(message, context, history);
-        if (answer) source = "openai";
+        answer = await chatWithLlm(message, context, history);
+        if (answer && activeProvider) source = activeProvider;
       } catch (error) {
-        console.warn("OpenAI chat failed, using local fallback:", error);
+        console.warn("LLM chat failed, using local fallback:", error);
       }
 
       if (!answer) {
@@ -136,10 +123,10 @@ Deno.serve(async (req) => {
       const prompt = `Write a compelling 2-paragraph property listing description for a ${input?.category || "property"} in ${location}. Bedrooms: ${input?.bedrooms ?? "N/A"}. Price: ${input?.currency || "GHS"} ${input?.price ?? "on request"}.`;
 
       try {
-        answer = await chatWithOpenAI(prompt, "workspace");
-        if (answer) source = "openai";
+        answer = await chatWithLlm(prompt, "workspace");
+        if (answer && activeProvider) source = activeProvider;
       } catch (error) {
-        console.warn("OpenAI listing description failed:", error);
+        console.warn("LLM listing description failed:", error);
       }
 
       if (!answer) {
@@ -150,10 +137,13 @@ Deno.serve(async (req) => {
       const content = typeof body?.content === "string" ? body.content : "";
 
       try {
-        answer = await chatWithOpenAI(`Summarize this document in 3 bullet points:\n\nTitle: ${title}\n\n${content.slice(0, 4000)}`, context);
-        if (answer) source = "openai";
+        answer = await chatWithLlm(
+          `Summarize this document in 3 bullet points:\n\nTitle: ${title}\n\n${content.slice(0, 4000)}`,
+          context,
+        );
+        if (answer && activeProvider) source = activeProvider;
       } catch (error) {
-        console.warn("OpenAI summarize failed:", error);
+        console.warn("LLM summarize failed:", error);
       }
 
       if (!answer) {
@@ -165,7 +155,11 @@ Deno.serve(async (req) => {
       throw new HttpError(400, "Unsupported action");
     }
 
-    return jsonResponse(200, { answer, source });
+    return jsonResponse(200, {
+      answer,
+      source,
+      provider: isLlmConfigured() ? activeProvider : null,
+    });
   } catch (error) {
     if (error instanceof HttpError) {
       return jsonResponse(error.status, { error: error.message });

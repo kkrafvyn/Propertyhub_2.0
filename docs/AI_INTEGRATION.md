@@ -1,6 +1,8 @@
 # BaytMiftah AI Integration
 
-BaytMiftah AI is **integrated across the product** and works **without API keys** using guided local help. When you add `OPENAI_API_KEY`, the same surfaces upgrade to smart mode automatically.
+BaytMiftah AI is **integrated across the product** and works **without API keys** using guided local help. When you add an API key for **OpenAI** or **Qwen**, the same surfaces upgrade to smart mode automatically.
+
+Switch providers with `AI_PROVIDER=openai` or `AI_PROVIDER=qwen` in `.env` (and Supabase Edge secrets).
 
 ## Where AI appears
 
@@ -29,7 +31,7 @@ ai-assistant.service.ts  ──►  Supabase Edge Functions
 
 ### Edge functions
 
-| Function | Purpose | OpenAI required? |
+| Function | Purpose | API key required? |
 |---|---|---|
 | `parse-search-query` | Turn natural language into search filters | No — local regex parser fallback |
 | `ai-assistant` | Chat, listing descriptions, document summaries | No — FAQ/template fallback |
@@ -46,15 +48,42 @@ npm run supabase:deploy:payments -- --skip-db
 Add to root `.env` (leave empty to use guided help only):
 
 ```env
-# Optional — smart mode
+# Provider: openai | qwen (auto-detected if only one key is set)
+AI_PROVIDER=openai
+
+# OpenAI
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-4o-mini
-VITE_OPENAI_ENABLED=
+
+# Qwen (Alibaba DashScope)
+QWEN_API_KEY=
+QWEN_MODEL=qwen-plus
+# QWEN_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+
+# Client flags (auto-set by npm run integrations:wire)
+VITE_AI_ENABLED=
+VITE_AI_PROVIDER=
 ```
 
-When `OPENAI_API_KEY` is set, `npm run integrations:wire` sets `VITE_OPENAI_ENABLED=true`.
+When an AI key is set for the active provider, `npm run integrations:wire` sets `VITE_AI_ENABLED=true` and `VITE_AI_PROVIDER`.
 
-**Never commit real keys.** Server secret `OPENAI_API_KEY` lives in Supabase Edge secrets only.
+**Never commit real keys.** Server secrets live in Supabase Edge only.
+
+### Switching providers
+
+| Goal | `.env` settings |
+|---|---|
+| Use OpenAI | `AI_PROVIDER=openai` + `OPENAI_API_KEY` |
+| Use Qwen | `AI_PROVIDER=qwen` + `QWEN_API_KEY` |
+| Both keys present | Set `AI_PROVIDER` explicitly |
+| Guided help only | Leave both keys empty |
+
+After changing provider, run:
+
+```bash
+npm run integrations:wire
+npm run supabase:deploy:payments -- --skip-db
+```
 
 ## Modes
 

@@ -1,4 +1,9 @@
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
+import {
+  type AiSource,
+  chatCompletion,
+  resolveAiProvider,
+} from "../_shared/llm-provider.ts";
 
 function parseSearchQueryLocally(query: string) {
   const filters: Record<string, unknown> = {};
@@ -40,38 +45,21 @@ function parseSearchQueryLocally(query: string) {
   return filters;
 }
 
-async function parseWithOpenAI(query: string) {
-  const apiKey = Deno.env.get("OPENAI_API_KEY");
-  if (!apiKey) return null;
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini",
-      temperature: 0,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            'Parse Ghana property search queries into JSON filters. Return only {"filters":{...}} with optional keys: priceMin, priceMax, bedrooms, bathrooms, listingType (rental|sale|lease|short_stay), propertyType (apartment|house|office|commercial|land), location.',
-        },
-        { role: "user", content: query },
-      ],
-    }),
+async function parseWithLlm(query: string) {
+  const content = await chatCompletion({
+    temperature: 0,
+    responseFormat: "json_object",
+    messages: [
+      {
+        role: "system",
+        content:
+          'Parse Ghana property search queries into JSON filters. Return only {"filters":{...}} with optional keys: priceMin, priceMax, bedrooms, bathrooms, listingType (rental|sale|lease|short_stay), propertyType (apartment|house|office|commercial|land), location.',
+      },
+      { role: "user", content: query },
+    ],
   });
 
-  if (!response.ok) {
-    throw new HttpError(502, `OpenAI request failed (${response.status})`);
-  }
-
-  const payload = await response.json();
-  const content = payload?.choices?.[0]?.message?.content;
-  if (typeof content !== "string") return null;
+  if (!content) return null;
 
   const parsed = JSON.parse(content);
   if (parsed?.filters && typeof parsed.filters === "object") {
@@ -99,20 +87,21 @@ Deno.serve(async (req) => {
     }
 
     let filters: Record<string, unknown> | null = null;
-    let source: "openai" | "local" = "local";
+    let source: AiSource = "local";
+    const activeProvider = resolveAiProvider();
 
     try {
-      filters = await parseWithOpenAI(query);
-      if (filters) source = "openai";
+      filters = await parseWithLlm(query);
+      if (filters && activeProvider) source = activeProvider;
     } catch (error) {
-      console.warn("OpenAI parse failed, falling back to local parser:", error);
+      console.warn("LLM parse failed, falling back to local parser:", error);
     }
 
     if (!filters) {
       filters = parseSearchQueryLocally(query);
     }
 
-    return jsonResponse(200, { filters, source });
+    return jsonResponse(200, { filters, source, provider: activeProvider });
   } catch (error) {
     if (error instanceof HttpError) {
       return jsonResponse(error.status, { error: error.message });

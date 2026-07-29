@@ -6,6 +6,7 @@ import { Card } from "../ui/Card";
 import { Input } from "../ui/Input";
 import { Badge } from "../ui/badge";
 import { aiAssistantService } from "../../../lib/ai-assistant.service";
+import type { AiSource } from "../../../lib/ai-assistant.service";
 import { clientIntegrations } from "../../../lib/integrations";
 
 export type AIContext =
@@ -74,9 +75,15 @@ export function BaytMiftahAIPanel({
   const copy = CONTEXT_COPY[context];
   const [query, setQuery] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
-  const [source, setSource] = useState<"openai" | "local" | null>(null);
+  const [source, setSource] = useState<AiSource | null>(null);
   const [loading, setLoading] = useState(false);
-  const smartMode = clientIntegrations.openAi.enhanced;
+  const smartMode = clientIntegrations.ai.enhanced;
+  const providerLabel =
+    clientIntegrations.ai.provider === "qwen"
+      ? "Qwen"
+      : clientIntegrations.ai.provider === "openai"
+        ? "OpenAI"
+        : "Smart AI";
 
   const suggestions = useMemo(() => {
     switch (context) {
@@ -126,7 +133,7 @@ export function BaytMiftahAIPanel({
         <Sparkles className="w-5 h-5 text-primary" aria-hidden="true" />
         <h3 className="font-semibold">{copy.title}</h3>
         <Badge variant={smartMode ? "default" : "secondary"} className="ml-auto text-[10px]">
-          {smartMode ? "Smart AI" : "Guided help"}
+          {smartMode ? providerLabel : "Guided help"}
         </Badge>
       </div>
       <p className="text-sm text-muted-foreground mb-4">{copy.description}</p>
@@ -163,7 +170,7 @@ export function BaytMiftahAIPanel({
           {answer}
           {source === "local" && !smartMode ? (
             <span className="block text-xs text-muted-foreground mt-2">
-              Add OPENAI_API_KEY to unlock smarter responses.
+              {clientIntegrations.ai.hint}
             </span>
           ) : null}
         </p>

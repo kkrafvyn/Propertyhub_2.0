@@ -2,6 +2,8 @@ import { supabase } from './supabase'
 import { Database } from './database.types'
 import { clientIntegrations } from './integrations'
 
+export type AiSource = 'openai' | 'qwen' | 'local'
+
 type AISearch = Database['public']['Tables']['ai_searches']['Row']
 type AIRecommendation = Database['public']['Tables']['ai_recommendations']['Row']
 
@@ -423,7 +425,7 @@ export const aiAssistantService = {
     message: string
     context?: string
     history?: Array<{ role: 'user' | 'assistant'; content: string }>
-  }): Promise<{ answer: string; source: 'openai' | 'local' }> {
+  }): Promise<{ answer: string; source: AiSource }> {
     if (clientIntegrations.supabase.configured) {
       try {
         const { data, error } = await supabase.functions.invoke('ai-assistant', {
@@ -436,10 +438,14 @@ export const aiAssistantService = {
         })
 
         if (!error && data && typeof data === 'object' && 'answer' in data) {
-          const payload = data as { answer: string; source?: 'openai' | 'local' }
+          const payload = data as { answer: string; source?: AiSource }
+          const source: AiSource =
+            payload.source === 'openai' || payload.source === 'qwen'
+              ? payload.source
+              : 'local'
           return {
             answer: payload.answer,
-            source: payload.source === 'openai' ? 'openai' : 'local',
+            source,
           }
         }
       } catch (error) {
@@ -454,7 +460,7 @@ export const aiAssistantService = {
   },
 
   async generateListingDescriptionRemote(input: Parameters<typeof this.generateListingDescription>[0]) {
-    if (clientIntegrations.openAi.enhanced && clientIntegrations.supabase.configured) {
+    if (clientIntegrations.ai.enhanced && clientIntegrations.supabase.configured) {
       try {
         const { data, error } = await supabase.functions.invoke('ai-assistant', {
           body: { action: 'describe_listing', listing: input },

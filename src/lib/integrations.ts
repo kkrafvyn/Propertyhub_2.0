@@ -68,16 +68,47 @@ export const clientIntegrations = {
 
   openAi: {
     get configured() {
+      return clientIntegrations.ai.configured;
+    },
+    get enhanced() {
+      return clientIntegrations.ai.enhanced;
+    },
+    get available() {
+      return clientIntegrations.ai.available;
+    },
+    label: "BaytMiftah AI",
+    hint: "Works offline with guided help; set AI_PROVIDER + API key for smart mode",
+  },
+
+  ai: {
+    get configured() {
       return clientIntegrations.supabase.configured;
     },
     get enhanced() {
-      return envFlag(import.meta.env.VITE_OPENAI_ENABLED);
+      return (
+        envFlag(import.meta.env.VITE_AI_ENABLED) ||
+        envFlag(import.meta.env.VITE_OPENAI_ENABLED)
+      );
     },
     get available() {
       return clientIntegrations.supabase.configured;
     },
-    label: "BaytMiftah AI",
-    hint: "Works offline with guided help; set OPENAI_API_KEY + VITE_OPENAI_ENABLED=true for smart mode",
+    get provider(): "openai" | "qwen" | null {
+      const value = firstEnv("VITE_AI_PROVIDER");
+      if (value === "openai" || value === "qwen") return value;
+      return null;
+    },
+    get label() {
+      if (this.provider === "qwen") return "BaytMiftah AI (Qwen)";
+      if (this.provider === "openai") return "BaytMiftah AI (OpenAI)";
+      return "BaytMiftah AI";
+    },
+    get hint() {
+      if (this.provider === "qwen") {
+        return "Set AI_PROVIDER=qwen + QWEN_API_KEY in Supabase secrets for smart mode";
+      }
+      return "Set AI_PROVIDER=openai + OPENAI_API_KEY in Supabase secrets for smart mode";
+    },
   },
 
   resend: {
@@ -147,9 +178,9 @@ export function getIntegrationSummary(): IntegrationStatus[] {
       hint: clientIntegrations.exchangeRates.hint,
     },
     {
-      configured: clientIntegrations.openAi.enhanced,
-      label: clientIntegrations.openAi.label,
-      hint: clientIntegrations.openAi.hint,
+      configured: clientIntegrations.ai.enhanced,
+      label: clientIntegrations.ai.label,
+      hint: clientIntegrations.ai.hint,
     },
     {
       configured: clientIntegrations.resend.configured,
