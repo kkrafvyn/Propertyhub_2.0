@@ -1,6 +1,8 @@
 import { supabase } from './supabase';
 import { clientIntegrations } from './integrations';
 import { getPreferredProviderIds, type PaymentContext } from './payment-routing.service';
+import { getGatewayFeePercent } from './revenue-fee-resolver';
+import { revenueManagementService } from './revenue-management.service';
 
 export type PaymentMethod = 'card' | 'bank_transfer' | 'mobile_money' | 'wallet' | 'crypto' | 'buy_now_pay_later';
 
@@ -238,6 +240,29 @@ class InternationalPaymentService {
     return PAYMENT_PROVIDERS[providerId] || null;
   }
 
+  async getProviderWithDynamicFees(providerId: string): Promise<PaymentProvider | null> {
+    const provider = this.getProvider(providerId);
+    if (!provider) return null;
+
+    try {
+      const gateways = await revenueManagementService.listPaymentGateways();
+      const gateway = gateways.find((item) => item.gateway_key === providerId);
+      if (!gateway) return provider;
+
+      return {
+        ...provider,
+        isActive: gateway.enabled && provider.isActive,
+        commissionPercentage:
+          gateway.fee_type === 'percentage'
+            ? Number(gateway.fee_value || provider.commissionPercentage)
+            : provider.commissionPercentage,
+      };
+    } catch (error) {
+      console.warn('Unable to load dynamic gateway fees, using defaults:', error);
+      return provider;
+    }
+  }
+
   /**
    * Calculate fees for a payment
    */
@@ -251,6 +276,27 @@ class InternationalPaymentService {
     }
 
     const fee = amount * (provider.commissionPercentage / 100);
+    return {
+      subtotal: amount,
+      fee: Math.round(fee * 100) / 100,
+      total: Math.round((amount + fee) * 100) / 100,
+    };
+  }
+
+  async calculateFeesAsync(
+    amount: number,
+    paymentProviderId: string
+  ): Promise<{ subtotal: number; fee: number; total: number }> {
+    const provider = await this.getProviderWithDynamicFees(paymentProviderId);
+    const commissionPercentage =
+      provider?.commissionPercentage ??
+      (await getGatewayFeePercent(paymentProviderId).catch(() => 0));
+
+    if (!provider && !commissionPercentage) {
+      return { subtotal: amount, fee: 0, total: amount };
+    }
+
+    const fee = amount * (commissionPercentage / 100);
     return {
       subtotal: amount,
       fee: Math.round(fee * 100) / 100,

@@ -14,6 +14,7 @@ import {
   ShieldAlert,
   UserCheck,
   Users,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
@@ -24,6 +25,7 @@ import { Input } from "../../components/ui/Input";
 import { fraudDetectionService } from "../../../lib/fraud-detection.service";
 import { adminService } from "../../../lib/admin.service";
 import { AdminTrustReview } from "./AdminTrustReview";
+import { AdminRevenueManagement } from "./revenue/AdminRevenueManagement";
 
 type AdminSection =
   | "overview"
@@ -33,7 +35,8 @@ type AdminSection =
   | "moderation"
   | "trust"
   | "support"
-  | "settings";
+  | "settings"
+  | "revenue";
 
 const navItems: Array<{
   key: AdminSection;
@@ -47,11 +50,13 @@ const navItems: Array<{
   { key: "listings", label: "Listings", href: "/admin/listings", icon: FileText },
   { key: "moderation", label: "Moderation", href: "/admin/moderation", icon: AlertTriangle },
   { key: "trust", label: "Trust & KYC", href: "/admin/trust", icon: UserCheck },
+  { key: "revenue", label: "Revenue", href: "/admin/revenue", icon: Wallet },
   { key: "support", label: "Support", href: "/admin/support", icon: LifeBuoy },
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 function getCurrentSection(pathname: string): AdminSection {
+  if (pathname.startsWith("/admin/revenue")) return "revenue";
   const section = pathname.split("/")[2] as AdminSection | undefined;
   return section || "overview";
 }
@@ -938,6 +943,10 @@ export function AdminLayout() {
       return <AdminTrustReview />;
     }
 
+    if (currentSection === "revenue") {
+      return <AdminRevenueManagement />;
+    }
+
     if (currentSection === "support") {
       return renderSupportSection();
     }
@@ -967,14 +976,18 @@ export function AdminLayout() {
         ? "Moderation & Trust"
         : currentSection === "trust"
           ? "Trust & KYC Review"
-          : `${currentSection.charAt(0).toUpperCase()}${currentSection.slice(1)}`;
+          : currentSection === "revenue"
+            ? "Revenue Management"
+            : `${currentSection.charAt(0).toUpperCase()}${currentSection.slice(1)}`;
 
   const sectionDescription =
     currentSection === "moderation"
       ? "Triage fraud alerts, assign investigators, escalate cases, and keep a clean audit trail."
         : currentSection === "trust"
           ? "Review consumer identity documents and agency trust verification requests."
-          : currentSection === "support"
+          : currentSection === "revenue"
+            ? "Configure fees, subscriptions, promos, taxes, and payment gateways without redeploying."
+            : currentSection === "support"
             ? "Find users quickly and route support issues into moderation and trust workflows."
             : "Monitor operational health, trust signals, and moderation volume across BaytMiftah.";
 
@@ -1014,7 +1027,8 @@ export function AdminLayout() {
             {navItems.map((item) => {
               const isActive =
                 currentSection === item.key ||
-                (item.key === "overview" && location.pathname === "/admin");
+                (item.key === "overview" && location.pathname === "/admin") ||
+                (item.key === "revenue" && location.pathname.startsWith("/admin/revenue"));
               const Icon = item.icon;
 
               return (
@@ -1049,7 +1063,7 @@ export function AdminLayout() {
               <p className="text-muted-foreground">{sectionDescription}</p>
             </div>
 
-            {renderStats()}
+            {currentSection !== "revenue" ? renderStats() : null}
             {renderSectionContent()}
           </div>
         </main>
