@@ -1,5 +1,6 @@
 import { createClient } from "supabase";
 import webpush from "web-push";
+import { buildTransactionalEmail } from "../_shared/email-template.ts";
 import { getTwilioSmsFrom, getTwilioWhatsAppFrom } from "../_shared/twilio.ts";
 
 const corsHeaders = {
@@ -42,6 +43,7 @@ async function sendEmail(params: {
   to: string;
   subject: string;
   text: string;
+  html: string;
 }) {
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
   const from = Deno.env.get("NOTIFICATION_EMAIL_FROM");
@@ -62,6 +64,7 @@ async function sendEmail(params: {
       to: [params.to],
       subject: params.subject,
       text: params.text,
+      html: params.html,
       reply_to: replyTo || undefined,
     }),
   });
@@ -361,10 +364,16 @@ Deno.serve(async (req) => {
         deliveryResult = { success: false, error: "Recipient has no email address" };
         break;
       }
+      const emailContent = buildTransactionalEmail({
+        title: subject,
+        body: content,
+        actionUrl: notification.action_url,
+      });
       deliveryResult = await sendEmail({
         to: recipient.email,
         subject,
-        text: content,
+        text: emailContent.text,
+        html: emailContent.html,
       });
       break;
     case "sms": {

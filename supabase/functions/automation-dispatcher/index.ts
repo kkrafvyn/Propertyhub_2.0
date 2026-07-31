@@ -1,3 +1,4 @@
+import { buildTransactionalEmail } from "../_shared/email-template.ts";
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
 
@@ -84,7 +85,12 @@ function matchesSavedAlert(alert: any, listing: any) {
   return true;
 }
 
-async function sendEmail(params: { to: string; subject: string; text: string }) {
+async function sendEmail(params: {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}) {
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
   const from = Deno.env.get("NOTIFICATION_EMAIL_FROM");
   if (!resendApiKey || !from || !params.to) return false;
@@ -100,6 +106,7 @@ async function sendEmail(params: { to: string; subject: string; text: string }) 
       to: [params.to],
       subject: params.subject,
       text: params.text,
+      html: params.html,
       reply_to: Deno.env.get("NOTIFICATION_EMAIL_REPLY_TO") || undefined,
     }),
   });
@@ -184,10 +191,16 @@ async function notifyUser(
   });
 
   if (input.sendEmailCopy && input.email) {
+    const emailContent = buildTransactionalEmail({
+      title: input.subject,
+      body: input.content,
+      actionUrl: input.actionUrl,
+    });
     const delivered = await sendEmail({
       to: input.email,
       subject: input.subject,
-      text: input.content,
+      text: emailContent.text,
+      html: emailContent.html,
     });
 
     await createNotification(admin, {
