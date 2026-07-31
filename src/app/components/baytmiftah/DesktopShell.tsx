@@ -10,6 +10,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from "../../i18n/LocaleContext";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
+import { LEGAL_DOCUMENTS } from "../../pages/legal/legal-documents";
 
 const DESKTOP_EXPLORE_LINKS = [
   { to: CONSUMER_ROUTES.home, labelKey: "mobile.home", end: true },
@@ -168,9 +169,9 @@ function Footer() {
     {
       title: t("footer.support"),
       links: [
-        { label: t("footer.helpCentre"), to: "/app" },
-        { label: t("footer.safety"), to: "/app" },
-        { label: t("footer.cancellation"), to: "/app" },
+        { label: t("footer.helpCentre"), to: "/help" },
+        { label: t("footer.safety"), to: "/safety" },
+        { label: t("footer.cancellation"), to: "/cancellation" },
       ],
     },
     {
@@ -193,9 +194,9 @@ function Footer() {
     {
       title: t("footer.company"),
       links: [
-        { label: t("footer.about"), to: "/app" },
-        { label: t("footer.careers"), to: "/app" },
-        { label: t("footer.contact"), to: "/app" },
+        { label: t("footer.about"), to: "/about" },
+        { label: t("footer.careers"), to: "/careers" },
+        { label: t("footer.contact"), to: "/contact" },
       ],
     },
   ];
@@ -232,21 +233,43 @@ function Footer() {
             </div>
           ))}
           <div>
-            <h3 className="mb-4 text-sm font-semibold text-ink">Legal</h3>
+            <h3 className="mb-4 text-sm font-semibold text-ink">{t("footer.legal")}</h3>
             <ul className="space-y-3">
               <li>
+                <Link to="/legal" className="text-sm text-ink-secondary transition hover:text-ink">
+                  All policies
+                </Link>
+              </li>
+              <li>
                 <Link to="/privacy" className="text-sm text-ink-secondary transition hover:text-ink">
-                  Privacy
+                  {t("footer.privacy")}
                 </Link>
               </li>
               <li>
                 <Link to="/terms" className="text-sm text-ink-secondary transition hover:text-ink">
-                  Terms
+                  {t("footer.terms")}
+                </Link>
+              </li>
+              {LEGAL_DOCUMENTS.filter((doc) => !["terms", "privacy"].includes(doc.slug)).map(
+                (doc) => (
+                  <li key={doc.slug}>
+                    <Link
+                      to={`/legal/${doc.slug}`}
+                      className="text-sm text-ink-secondary transition hover:text-ink"
+                    >
+                      {doc.title}
+                    </Link>
+                  </li>
+                ),
+              )}
+              <li>
+                <Link to="/complaint" className="text-sm text-ink-secondary transition hover:text-ink">
+                  File a complaint
                 </Link>
               </li>
               <li>
                 <Link to="/search" className="text-sm text-ink-secondary transition hover:text-ink">
-                  Sitemap
+                  {t("footer.sitemap")}
                 </Link>
               </li>
             </ul>

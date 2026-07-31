@@ -417,6 +417,10 @@ export const aiAssistantService = {
       return 'Ask about neighborhood fit, commute, pricing, or next steps for this listing. You can schedule a viewing or message the host/agency directly from the property page.'
     }
 
+    if (context === 'kyc') {
+      return 'Use a clear photo of your Ghana Card, passport, or national ID with all corners visible. Match your legal name exactly, avoid glare, and prefer JPG/PNG. Our team (with AI pre-screening) usually reviews within 1–2 business days.'
+    }
+
     return 'BaytMiftah AI can help with search, documents, payments, escrow, bookings, and maintenance. Try asking about verification, offers, leases, or refunds.'
   },
 

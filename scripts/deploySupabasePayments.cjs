@@ -20,6 +20,7 @@ const EDGE_FUNCTIONS = [
   { name: "verify-stripe-payment" },
   { name: "parse-search-query" },
   { name: "ai-assistant" },
+  { name: "kyc-ai-screen" },
   { name: "dispatch-notification" },
   { name: "automation-dispatcher", noVerifyJwt: true },
   { name: "send-organization-invite" },

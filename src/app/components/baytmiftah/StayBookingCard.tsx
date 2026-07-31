@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router'
 import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { createReservation, fetchListingAvailability } from '../../lib/baytmiftah/reservation-service'
-import { payReservation } from '../../lib/baytmiftah/payments-service'
-import { getDefaultProvider } from '../../lib/baytmiftah/payment-providers'
 import { CONSUMER_ROUTES } from '../../lib/consumer-routes'
+import { buildCheckoutPath } from '../../lib/checkout-navigation'
+import { LegalAcceptanceCheckbox } from '../legal/LegalAcceptanceCheckbox'
+import { legalAcceptanceService } from '../../../lib/legal-acceptance.service'
+import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from '../../../lib/legal-config'
 
 export default function StayBookingCard({ listing }) {
   const { user } = useAuth()
@@ -17,7 +19,7 @@ export default function StayBookingCard({ listing }) {
   const [availability, setAvailability] = useState([])
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
-
+  const [bookingTermsAccepted, setBookingTermsAccepted] = useState(false)
   useEffect(() => {
     fetchListingAvailability(listing.id).then(({ availability: rows }) => setAvailability(rows ?? []))
   }, [listing.id])
@@ -56,6 +58,11 @@ export default function StayBookingCard({ listing }) {
       return
     }
 
+    if (!bookingTermsAccepted) {
+      setMessage('Please accept the booking and payment terms to continue.')
+      return
+    }
+
     setStatus('loading')
     setMessage('')
 
@@ -71,19 +78,24 @@ export default function StayBookingCard({ listing }) {
         throw new Error((result as { error?: string })?.error || 'Could not create reservation')
       }
       const reservationId = result.reservation?.id ?? result.id
-      const pay = await payReservation({
-        reservationId,
-        amount: total,
-        listingId: listing.id,
-        provider: getDefaultProvider(),
-      })
-      if (pay.checkout_url) {
-        window.location.href = pay.checkout_url
-        return
+      if (user?.id) {
+        await legalAcceptanceService.recordAcceptance({
+          userId: user.id,
+          scope: 'short_stay_booking',
+          policySlugs: ACCEPTANCE_SCOPES.short_stay_booking.policySlugs,
+          policyVersion: LEGAL_POLICY_VERSION,
+        })
       }
-      setStatus('success')
-      setMessage('Reservation created. Complete payment from your trips.')
-      navigate(CONSUMER_ROUTES.trips)
+
+      navigate(
+        buildCheckoutPath({
+          listingId: listing.id,
+          amount: total,
+          purpose: 'booking_fee',
+          bookingId: String(reservationId),
+          returnTo: CONSUMER_ROUTES.trips,
+        }),
+      )
     } catch (err) {
       setStatus('error')
       setMessage(err.message || 'Booking failed')
@@ -138,6 +150,14 @@ export default function StayBookingCard({ listing }) {
         </p>
       )}
 
+      <LegalAcceptanceCheckbox
+        scope="short_stay_booking"
+        checked={bookingTermsAccepted}
+        onChange={setBookingTermsAccepted}
+        id="stay-booking-terms"
+        className="mt-4"
+      />
+
       {availability.length > 0 && (
         <p className="mt-2 text-xs text-ink-secondary">{availability.length} dates available this month</p>
       )}
@@ -145,7 +165,7 @@ export default function StayBookingCard({ listing }) {
       <button
         type="button"
         onClick={handleBook}
-        disabled={status === 'loading' || status === 'success'}
+        disabled={status === 'loading' || status === 'success' || !bookingTermsAccepted}
         className="mt-4 w-full rounded-lg bg-brand-accent py-3.5 text-base font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
       >
         {status === 'loading' ? 'Booking…' : status === 'success' ? 'Booked' : 'Book stay'}

@@ -13,6 +13,8 @@ import { ghanaMarketService, type GhanaLocationInsight } from "../../../lib/ghan
 import { realEstateComplianceService, type ListingType as ComplianceListingType } from "../../../lib/real-estate-compliance.service";
 import { listingService } from "../../../lib/listing.service";
 import { listingQualityService } from "../../../lib/listing-quality.service";
+import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
+import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from "../../../lib/legal-config";
 import { propertyMediaService } from "../../../lib/property-media.service";
 import { propertyService } from "../../../lib/property.service";
 import { aiAssistantService } from "../../../lib/ai-assistant.service";
@@ -182,6 +184,15 @@ export function WorkspaceNewListing({
           console.error("Failed to upload property media:", mediaError);
           toast.error("The listing was created, but one or more photos failed to upload.");
         }
+      }
+
+      if (form.status === "listed" && currentUserId) {
+        await legalAcceptanceService.recordAcceptance({
+          userId: currentUserId,
+          scope: "listing_publish",
+          policySlugs: ACCEPTANCE_SCOPES.listing_publish.policySlugs,
+          policyVersion: LEGAL_POLICY_VERSION,
+        });
       }
 
       toast.success("Listing created successfully.");

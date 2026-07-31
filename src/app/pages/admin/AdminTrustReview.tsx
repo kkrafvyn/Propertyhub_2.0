@@ -15,6 +15,12 @@ function formatLabel(value?: string | null) {
   return value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function recommendationBadgeClass(recommendation?: string | null) {
+  if (recommendation === "approve") return "border-green-300 text-green-700";
+  if (recommendation === "reject") return "border-red-300 text-red-700";
+  return "border-amber-300 text-amber-700";
+}
+
 export function AdminTrustReview() {
   const [loading, setLoading] = useState(true);
   const [kycQueue, setKycQueue] = useState<any[]>([]);
@@ -41,6 +47,20 @@ export function AdminTrustReview() {
   useEffect(() => {
     void loadQueues();
   }, []);
+
+  const rescreenKyc = async (submissionId: string) => {
+    try {
+      setWorkingId(`kyc:${submissionId}:screen`);
+      await kycService.requestAiScreening(submissionId);
+      toast.success("AI pre-screening completed.");
+      await loadQueues();
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to run AI pre-screening.");
+    } finally {
+      setWorkingId(null);
+    }
+  };
 
   const reviewKyc = async (submissionId: string, status: "verified" | "rejected") => {
     const notes =
@@ -130,7 +150,70 @@ export function AdminTrustReview() {
                   View document
                 </Button>
               ) : null}
-              <div className="flex gap-2">
+              {(submission.ai_screening_status || submission.ai_recommendation || submission.ai_summary) ? (
+                <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-medium">AI pre-screen</p>
+                    {submission.ai_recommendation ? (
+                      <Badge
+                        variant="outline"
+                        className={`capitalize ${recommendationBadgeClass(submission.ai_recommendation)}`}
+                      >
+                        {submission.ai_recommendation}
+                      </Badge>
+                    ) : null}
+                    {typeof submission.ai_confidence_score === "number" ? (
+                      <Badge variant="secondary">{submission.ai_confidence_score}% confidence</Badge>
+                    ) : null}
+                    {submission.ai_screening_status ? (
+                      <Badge variant="outline" className="capitalize">
+                        {formatLabel(submission.ai_screening_status)}
+                      </Badge>
+                    ) : null}
+                    {submission.ai_source ? (
+                      <Badge variant="outline" className="capitalize">
+                        {submission.ai_source}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  {submission.ai_summary ? (
+                    <p className="text-sm text-muted-foreground">{submission.ai_summary}</p>
+                  ) : null}
+                  {Array.isArray(submission.ai_flags) && submission.ai_flags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {submission.ai_flags.map((flag: string) => (
+                        <Badge key={flag} variant="outline" className="text-xs capitalize">
+                          {formatLabel(flag)}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : null}
+                  {submission.ai_extracted_data &&
+                  typeof submission.ai_extracted_data === "object" &&
+                  Object.keys(submission.ai_extracted_data).length > 0 ? (
+                    <details className="text-xs text-muted-foreground">
+                      <summary className="cursor-pointer">Extracted fields</summary>
+                      <pre className="mt-2 whitespace-pre-wrap rounded-md bg-background p-2 border border-border overflow-x-auto">
+                        {JSON.stringify(submission.ai_extracted_data, null, 2)}
+                      </pre>
+                    </details>
+                  ) : null}
+                  <p className="text-xs text-muted-foreground">
+                    AI output is advisory only — you must still verify the document manually.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No AI pre-screen yet.</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={workingId === `kyc:${submission.id}:screen`}
+                  onClick={() => void rescreenKyc(submission.id)}
+                >
+                  {workingId === `kyc:${submission.id}:screen` ? "Screening…" : "Run AI pre-screen"}
+                </Button>
                 <Button
                   size="sm"
                   disabled={workingId === `kyc:${submission.id}:verified`}

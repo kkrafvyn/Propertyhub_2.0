@@ -28,6 +28,8 @@ export type ConsumerSection =
   | "home"
   | "notifications"
   | "mortgage"
+  | "insurance"
+  | "vendors"
   | "settings";
 
 export type PageConfig = {
@@ -186,13 +188,31 @@ export const CONSUMER_PAGE_CONFIG: Record<ConsumerSection, PageConfig> = {
     emptyActionHref: "/search",
   },
   mortgage: {
-    title: "Mortgage & Insurance",
-    description: "Continue your purchase journey after an offer.",
+    title: "Mortgage Marketplace",
+    description: "Compare lenders, estimate payments, and request introductions.",
     breadcrumb: [{ label: "My BaytMiftah", href: "/app" }, { label: "Mortgage" }],
     emptyTitle: "No inquiries yet",
-    emptyDescription: "Submit a purchase offer first to unlock mortgage and insurance support.",
+    emptyDescription: "Browse mortgage partners and submit a quote request.",
     emptyActionLabel: "Browse for Sale",
     emptyActionHref: "/search?listingType=sale",
+  },
+  insurance: {
+    title: "Insurance Marketplace",
+    description: "Home and contents cover from verified Ghana insurers.",
+    breadcrumb: [{ label: "My BaytMiftah", href: "/app" }, { label: "Insurance" }],
+    emptyTitle: "No insurance inquiries yet",
+    emptyDescription: "Request quotes from partner insurers for your property.",
+    emptyActionLabel: "Browse for Sale",
+    emptyActionHref: "/search?listingType=sale",
+  },
+  vendors: {
+    title: "Vendor Marketplace",
+    description: "Verified maintenance and property service providers.",
+    breadcrumb: [{ label: "My BaytMiftah", href: "/app" }, { label: "Vendors" }],
+    emptyTitle: "No vendors in this category",
+    emptyDescription: "Check another category or submit a maintenance request from your lease.",
+    emptyActionLabel: "Maintenance",
+    emptyActionHref: "/app/maintenance",
   },
   settings: {
     title: "Profile & Settings",

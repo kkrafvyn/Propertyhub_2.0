@@ -178,6 +178,8 @@ export default {
       "wallet": "Wallet",
       "maintenance": "Maintenance",
       "billing": "Billing & plans",
+      "insurance": "Insurance marketplace",
+      "vendors": "Vendor marketplace",
       "recentSearches": "Recent searches",
       "recentlyViewed": "Recently viewed"
     },

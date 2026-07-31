@@ -45,7 +45,9 @@ import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
 import { monitoring } from "../../lib/monitoring";
 import { useMyKyc } from "../hooks/useMyKyc";
 import { canSubmitOffer } from "../lib/baytmiftah/kyc";
+import KycBanner from "../components/baytmiftah/KycBanner";
 import { CONSUMER_ROUTES } from "../lib/consumer-routes";
+import { buildCheckoutPath } from "../lib/checkout-navigation";
 import {
   resolvePaymentContextFromListing,
   shouldUsePaystackCheckout,
@@ -503,16 +505,17 @@ export function PropertyDetail() {
         return;
       }
 
-      const result = await paymentService.initializePropertyPayment({
-        listingId: listing.id,
-        amount: booking.total_minor / 100,
-        purpose: "booking_fee",
-        bookingId: booking.id,
-        customerName: user.user_metadata?.full_name,
-        customerPhone: bookingForm.guestNote,
-      });
-
-      window.location.assign(result.authorizationUrl);
+      navigate(
+        buildCheckoutPath({
+          listingId: listing.id,
+          amount: booking.total_minor / 100,
+          purpose: "booking_fee",
+          bookingId: booking.id,
+          returnTo: CONSUMER_ROUTES.reservations,
+          customerName: user.user_metadata?.full_name,
+          customerPhone: bookingForm.guestNote,
+        }),
+      );
     } catch (error) {
       console.error("Failed to start short-stay booking:", error);
       toast.error("Unable to start booking checkout right now.");
@@ -545,15 +548,16 @@ export function PropertyDetail() {
 
     try {
       setPaymentSubmitting(true);
-      const result = await paymentService.initializePropertyPayment({
-        listingId: listing.id,
-        amount,
-        purpose: paymentForm.purpose,
-        customerName: paymentForm.customerName,
-        customerPhone: paymentForm.customerPhone,
-      });
-
-      window.location.assign(result.authorizationUrl);
+      navigate(
+        buildCheckoutPath({
+          listingId: listing.id,
+          amount,
+          purpose: paymentForm.purpose,
+          returnTo: `/property/${listing.id}`,
+          customerName: paymentForm.customerName,
+          customerPhone: paymentForm.customerPhone,
+        }),
+      );
     } catch (error) {
       console.error("Failed to initialize payment:", error);
       toast.error(`Unable to start the ${paymentProviderLabel} checkout right now.`);
@@ -1250,6 +1254,7 @@ export function PropertyDetail() {
                   className="border-t border-border pt-6 mt-6"
                 >
                   <h4 className="font-semibold mb-4">Make an offer</h4>
+                  {!canSubmitOffer(kyc) ? <KycBanner kyc={kyc} /> : null}
                   <form className="space-y-4" onSubmit={handleMakeOffer}>
                     <Input
                       label={`Offer amount (${paymentCurrency})`}

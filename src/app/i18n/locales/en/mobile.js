@@ -151,6 +151,15 @@ export default {
       "shopNow": "Shop now",
       "viewDeals": "View deals",
       "propertiesCount": "{{count}} properties"
+    },
+    "workspace": {
+      "dockLabel": "Workspace shortcuts",
+      "dockTitle": "Pro workspace",
+      "dashboard": "Dashboard",
+      "listProperty": "List property",
+      "leads": "Leads",
+      "calendar": "Calendar",
+      "listings": "Listings"
     }
   }
 }

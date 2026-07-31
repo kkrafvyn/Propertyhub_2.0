@@ -15,11 +15,16 @@ const BOOKING_NAV: ContextualNavItem[] = [
   { label: "Calendar", href: "/app/viewings", section: "viewings", context: "booking" },
 ];
 
+const SERVICES_NAV: ContextualNavItem[] = [
+  { label: "Vendors", href: "/app/vendors", section: "vendors", context: "renting" },
+];
+
 const RENTING_NAV: ContextualNavItem[] = [
   { label: "Leases", href: "/app/leases", section: "leases", context: "renting" },
   { label: "Payments", href: "/app/payments", section: "payments", context: "renting" },
   { label: "Maintenance", href: "/app/maintenance", section: "maintenance", context: "renting" },
   { label: "My Home", href: "/app/home", section: "home", context: "renting" },
+  ...SERVICES_NAV,
 ];
 
 const BUYING_NAV: ContextualNavItem[] = [
@@ -27,6 +32,7 @@ const BUYING_NAV: ContextualNavItem[] = [
   { label: "Transactions", href: "/app/transactions", section: "transactions", context: "buying" },
   { label: "Documents", href: "/app/documents", section: "documents", context: "buying" },
   { label: "Mortgage", href: "/app/mortgage", section: "mortgage", context: "buying" },
+  { label: "Insurance", href: "/app/insurance", section: "insurance", context: "buying" },
 ];
 
 export const consumerContextService = {

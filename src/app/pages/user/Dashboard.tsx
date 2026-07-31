@@ -17,6 +17,7 @@ import {
   Settings,
   Shield,
   UserCircle2,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
@@ -58,11 +59,16 @@ import {
   ApplicationsWorkflowSection,
   DocumentFoldersSection,
   MaintenanceWithVendorsSection,
-  MortgageInsuranceSection,
   NotificationsCenterSection,
   ResidentHomeSection,
   WalletHubSection,
 } from "./ConsumerPortalExtended";
+import {
+  InsuranceMarketplaceSection,
+  MortgageMarketplaceSection,
+  VendorMarketplaceSection,
+} from "./FinancialMarketplaces";
+import { FinancialServicesNav } from "../../components/baytmiftah/FinancialServicesNav";
 import {
   LeasesSection,
   ReservationsSection,
@@ -75,9 +81,14 @@ import { subscribeToUserConversations } from "../../lib/baytmiftah/realtime";
 import { AppSettingsPanels } from "../../components/baytmiftah/AppSettings";
 import ProfileKycCard from "../../components/baytmiftah/ProfileKycCard";
 import { KycVerificationPanel } from "../../components/baytmiftah/KycVerificationPanel";
+import KycBanner from "../../components/baytmiftah/KycBanner";
+import { useMyKyc } from "../../hooks/useMyKyc";
+import { isKycVerified } from "../../lib/baytmiftah/kyc";
 import { ConsumerNotificationPreferences } from "../../components/baytmiftah/ConsumerNotificationPreferences";
 import { isWorkspaceRole } from "../../lib/baytmiftah/roles";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
+import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
+import { buildCheckoutPath } from "../../lib/checkout-navigation";
 
 function formatRelativeTime(dateString?: string | null) {
   if (!dateString) return "Recently";
@@ -126,6 +137,8 @@ function getSection(pathname: string) {
   if (pathname.startsWith("/app/home")) return "home";
   if (pathname.startsWith("/app/notifications")) return "notifications";
   if (pathname.startsWith("/app/mortgage")) return "mortgage";
+  if (pathname.startsWith("/app/insurance")) return "insurance";
+  if (pathname.startsWith("/app/vendors")) return "vendors";
   if (pathname.startsWith("/app/settings")) return "settings";
   return "overview";
 }
@@ -221,6 +234,7 @@ export function UserDashboard() {
   const [searchParams] = useSearchParams();
   const selectedConversationId = searchParams.get("conversation");
   const { user, signOut, role } = useAuth();
+  const { kyc, verified: kycVerified } = useMyKyc();
   const [loading, setLoading] = useState(true);
   const [savedProperties, setSavedProperties] = useState<any[]>([]);
   const [dealCases, setDealCases] = useState<any[]>([]);
@@ -251,6 +265,14 @@ export function UserDashboard() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const section = getSection(location.pathname);
+
+  useEffect(() => {
+    if (section === "settings" && location.hash === "#kyc") {
+      window.requestAnimationFrame(() => {
+        document.getElementById("kyc")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }, [section, location.hash]);
 
   useEffect(() => {
     if (!user) {
@@ -673,14 +695,15 @@ export function UserDashboard() {
           ? Math.max((dealCase.listing?.price || 0) * 0.1, 1)
           : dealCase.listing?.price || 0;
 
-      const checkout = await paymentService.initializePropertyPayment({
-        listingId: dealCase.listing_id,
-        amount,
-        purpose,
-        dealCaseId: dealCase.id,
-      });
-
-      window.location.href = checkout.authorizationUrl;
+      navigate(
+        buildCheckoutPath({
+          listingId: dealCase.listing_id,
+          amount,
+          purpose,
+          dealCaseId: dealCase.id,
+          returnTo: CONSUMER_ROUTES.applications,
+        }),
+      );
     } catch (error) {
       console.error(error);
       toast.error("Unable to start payment checkout.");
@@ -1243,7 +1266,7 @@ export function UserDashboard() {
         </div>
       </Card>
 
-      <Card className="p-6 lg:col-span-3">
+      <Card id="kyc" className="p-6 lg:col-span-3 scroll-mt-24">
         <ProfileKycCard variant="desktop" />
       </Card>
 
@@ -1263,6 +1286,7 @@ export function UserDashboard() {
 
   const renderOverview = () => (
     <div className="space-y-8">
+      {!kycVerified ? <KycBanner kyc={kyc} /> : null}
       {isWorkspaceRole(role) ? (
         <Card className="p-6 border-brand-forest/15 bg-brand-forest/[0.04]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1611,6 +1635,8 @@ export function UserDashboard() {
               home: Home,
               notifications: Bell,
               mortgage: Shield,
+              insurance: Shield,
+              vendors: Wrench,
             };
             const Icon = iconBySection[item.section] || FileText;
             const active = item.section === section;
@@ -1659,7 +1685,12 @@ export function UserDashboard() {
           ) : section === "alerts" ? (
             renderSectionShell(renderAlerts())
           ) : section === "payments" || section === "wallet" ? (
-            renderSectionShell(walletSection)
+            renderSectionShell(
+              <>
+                {!kycVerified ? <KycBanner kyc={kyc} /> : null}
+                {walletSection}
+              </>,
+            )
           ) : section === "leases" ? (
             renderSectionShell(<LeasesSection leases={leases} userId={user!.id} />)
           ) : section === "maintenance" ? (
@@ -1703,12 +1734,34 @@ export function UserDashboard() {
             )
           ) : section === "mortgage" ? (
             renderSectionShell(
-              <MortgageInsuranceSection
-                userId={user!.id}
-                dealCases={dealCases}
-                inquiries={mortgageInquiries}
-                onSubmitted={refreshMortgageInquiries}
-              />
+              <>
+                <FinancialServicesNav />
+                <MortgageMarketplaceSection
+                  userId={user!.id}
+                  dealCases={dealCases}
+                  inquiries={mortgageInquiries}
+                  onSubmitted={refreshMortgageInquiries}
+                />
+              </>,
+            )
+          ) : section === "insurance" ? (
+            renderSectionShell(
+              <>
+                <FinancialServicesNav />
+                <InsuranceMarketplaceSection
+                  userId={user!.id}
+                  dealCases={dealCases}
+                  inquiries={mortgageInquiries}
+                  onSubmitted={refreshMortgageInquiries}
+                />
+              </>,
+            )
+          ) : section === "vendors" ? (
+            renderSectionShell(
+              <>
+                <FinancialServicesNav />
+                <VendorMarketplaceSection />
+              </>,
             )
           ) : section === "settings" ? (
             renderSectionShell(renderSettings())

@@ -16,6 +16,9 @@ import {
   type OrganizationMembership,
 } from "../../../lib/workspace";
 import { WORKSPACE_PAGE_SLUGS } from "../../lib/workspace-role-nav";
+import { LegalAcceptanceCheckbox } from "../../components/legal/LegalAcceptanceCheckbox";
+import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
+import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from "../../../lib/legal-config";
 
 const ALLOWED_WORKSPACE_PAGES = new Set(WORKSPACE_PAGE_SLUGS);
 
@@ -49,6 +52,7 @@ export function WorkspaceEntry() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [memberships, setMemberships] = useState<OrganizationMembership[]>([]);
   const [slugEdited, setSlugEdited] = useState(false);
+  const [agencyTermsAccepted, setAgencyTermsAccepted] = useState(false);
   const [form, setForm] = useState({
     name: "",
     slug: "",
@@ -127,6 +131,11 @@ export function WorkspaceEntry() {
       return;
     }
 
+    if (!agencyTermsAccepted) {
+      toast.error("Please accept the agency and data processing terms.");
+      return;
+    }
+
     try {
       setCreating(true);
       const organization = await organizationService.createOrganization({
@@ -137,6 +146,13 @@ export function WorkspaceEntry() {
         phone: form.phone.trim() || null,
         website: form.website.trim() || null,
         owner_id: user.id,
+      });
+
+      await legalAcceptanceService.recordAcceptance({
+        userId: user.id,
+        scope: "agency_onboarding",
+        policySlugs: ACCEPTANCE_SCOPES.agency_onboarding.policySlugs,
+        policyVersion: LEGAL_POLICY_VERSION,
       });
 
       toast.success("Workspace created. You can start listing properties now.");
@@ -275,8 +291,15 @@ export function WorkspaceEntry() {
               placeholder="https://example.com"
             />
 
+            <LegalAcceptanceCheckbox
+              scope="agency_onboarding"
+              checked={agencyTermsAccepted}
+              onChange={setAgencyTermsAccepted}
+              id="agency-onboarding-terms"
+            />
+
             <div className="flex flex-wrap gap-3 pt-2">
-              <Button type="submit" size="lg" disabled={creating}>
+              <Button type="submit" size="lg" disabled={creating || !agencyTermsAccepted}>
                 {creating ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />

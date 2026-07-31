@@ -22,9 +22,12 @@ export const CONSUMER_ROUTES = {
   transactions: "/app/transactions",
   notifications: "/app/notifications",
   mortgage: "/app/mortgage",
+  insurance: "/app/insurance",
+  vendors: "/app/vendors",
   login: "/login",
   workspace: "/workspace",
-  kyc: "/app/settings",
+  kyc: "/app/settings#kyc",
+  checkout: "/checkout",
 } as const;
 
 export function propertyPath(id: string) {
@@ -100,7 +103,7 @@ export const LEGACY_PREFIX_REDIRECTS: Array<{ prefix: string; target: string }> 
   { prefix: "/developer", target: `${WORKSPACE_ENTRY_PATH}?next=integrations` },
   { prefix: "/enterprise", target: `${WORKSPACE_ENTRY_PATH}?next=org-insights` },
   { prefix: "/smart", target: `${WORKSPACE_ENTRY_PATH}?next=host` },
-  { prefix: "/vendors", target: `${WORKSPACE_ENTRY_PATH}?next=vendors` },
+  { prefix: "/vendors", target: CONSUMER_ROUTES.vendors },
   { prefix: "/renter", target: CONSUMER_ROUTES.leases },
   { prefix: "/buyer", target: CONSUMER_ROUTES.applications },
   { prefix: "/consumer", target: CONSUMER_ROUTES.profile },

@@ -1,10 +1,15 @@
 import { Capacitor } from "@capacitor/core";
+import { useAuth } from "../context/AuthContext";
+import { isWorkspaceRole } from "../lib/baytmiftah/roles";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router";
 import { RouteMonitoring } from "./RouteMonitoring";
 import { MobileAppShell } from "../mobile/MobileAppShell";
 import { MobileBottomNav } from "../mobile/MobileBottomNav";
+import { MobileWorkspaceDock } from "../mobile/MobileWorkspaceDock";
 import { LocationOnboarding } from "./onboarding/LocationOnboarding";
+import { CookieConsentBanner } from "./legal/CookieConsentBanner";
+import { PolicyUpdateBanner } from "./legal/PolicyUpdateBanner";
 import { useUserMarket } from "../context/MarketContext";
 import { PHONE_MEDIA, TABLET_MEDIA } from "../lib/viewports";
 
@@ -71,6 +76,15 @@ function shouldSkipOnboarding(pathname: string) {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/privacy") ||
     pathname.startsWith("/terms") ||
+    pathname.startsWith("/legal") ||
+    pathname.startsWith("/help") ||
+    pathname.startsWith("/safety") ||
+    pathname.startsWith("/cancellation") ||
+    pathname.startsWith("/about") ||
+    pathname.startsWith("/careers") ||
+    pathname.startsWith("/contact") ||
+    pathname.startsWith("/complaint") ||
+    pathname.startsWith("/checkout") ||
     pathname.startsWith("/search") ||
     pathname.startsWith("/property/") ||
     pathname.startsWith("/compare")
@@ -80,6 +94,7 @@ function shouldSkipOnboarding(pathname: string) {
 export function Root() {
   const location = useLocation();
   const { isPhone } = useViewportFlags();
+  const { role, user } = useAuth();
   const { ready: marketReady, onboardingComplete } = useUserMarket();
 
   if (marketReady && !onboardingComplete && !shouldSkipOnboarding(location.pathname)) {
@@ -92,10 +107,12 @@ export function Root() {
 
   const onConsumerRoute = isConsumerRoute(location.pathname);
   const showBottomNav = onConsumerRoute && isPhone;
+  const showWorkspaceDock = showBottomNav && Boolean(user) && isWorkspaceRole(role);
 
   const shellClass = [
     "mobile-bolt min-h-screen min-h-[100dvh] bg-bolt-bg",
     showBottomNav ? "has-mobile-tab-bar" : "",
+    showWorkspaceDock ? "has-workspace-dock" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -103,8 +120,11 @@ export function Root() {
   return (
     <div className={shellClass}>
       <RouteMonitoring />
+      <PolicyUpdateBanner />
       <Outlet />
+      {showBottomNav ? <MobileWorkspaceDock /> : null}
       {showBottomNav ? <MobileBottomNav variant="phone" /> : null}
+      <CookieConsentBanner />
     </div>
   );
 }

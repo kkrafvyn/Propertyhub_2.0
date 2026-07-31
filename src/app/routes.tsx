@@ -10,7 +10,6 @@ const LEGACY_REDIRECT_SEGMENTS = [
   "agencies",
   "agents",
   "services",
-  "help",
   "host",
   "tenant",
   "my-home",
@@ -102,6 +101,34 @@ export const router = createBrowserRouter([
           return { Component: TermsOfService };
         },
       },
+      {
+        path: "legal",
+        lazy: async () => {
+          const { LegalHub } = await import("./pages/legal/LegalHub");
+          return { Component: LegalHub };
+        },
+      },
+      {
+        path: "legal/:slug",
+        lazy: async () => {
+          const { LegalDocumentPage } = await import("./pages/legal/LegalHub");
+          return { Component: LegalDocumentPage };
+        },
+      },
+      {
+        path: "complaint",
+        lazy: async () => {
+          const { ComplaintForm } = await import("./pages/legal/ComplaintForm");
+          return { Component: ComplaintForm };
+        },
+      },
+      ...["help", "safety", "cancellation", "about", "careers", "contact"].map((slug) => ({
+        path: slug,
+        lazy: async () => {
+          const { StaticContentPage } = await import("./pages/legal/StaticContentPage");
+          return { Component: StaticContentPage };
+        },
+      })),
       { path: "explore", element: <LegacyRouteRedirect /> },
       { path: "saved", element: <LegacyRouteRedirect /> },
       { path: "messages", element: <LegacyRouteRedirect /> },
@@ -115,6 +142,21 @@ export const router = createBrowserRouter([
       { path: "documents", element: <LegacyRouteRedirect /> },
       { path: "consumer", element: <LegacyRouteRedirect /> },
       { path: "consumer/*", element: <LegacyRouteRedirect /> },
+      {
+        path: "checkout",
+        lazy: async () => {
+          const { InAppCheckoutPage } = await import("./pages/checkout/InAppCheckoutPage");
+          return {
+            Component: function ProtectedCheckoutRoute() {
+              return (
+                <ProtectedRoute>
+                  <InAppCheckoutPage />
+                </ProtectedRoute>
+              );
+            },
+          };
+        },
+      },
       {
         path: "app/*",
         lazy: async () => {

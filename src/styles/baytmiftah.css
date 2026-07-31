@@ -725,3 +725,24 @@ html.dark .desktop-shell {
 html.dark .auth-shell .bg-brand-forest {
   background-color: #1b4332;
 }
+
+@media print {
+  .desktop-footer,
+  .desktop-subnav,
+  .cookie-consent-banner,
+  .policy-update-banner,
+  nav,
+  button.print\\:hidden {
+    display: none !important;
+  }
+
+  .legal-document-print {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}

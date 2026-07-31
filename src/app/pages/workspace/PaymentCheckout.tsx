@@ -11,8 +11,12 @@ import {
   type PaymentContext,
 } from '@/lib/payment-routing.service'
 import { clientIntegrations } from '@/lib/integrations'
+import { openPaystackInline } from '@/lib/paystack-inline'
 import { realEstateComplianceService } from '@/lib/real-estate-compliance.service'
 import { useTranslation } from '../../i18n/LocaleContext'
+import { LegalAcceptanceCheckbox } from '../../components/legal/LegalAcceptanceCheckbox'
+import { legalAcceptanceService } from '@/lib/legal-acceptance.service'
+import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from '@/lib/legal-config'
 
 type PaymentMethodType =
   | 'card'
@@ -89,6 +93,7 @@ export function PaymentCheckout({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saveFuturePayment, setSaveFuturePayment] = useState(false)
+  const [escrowTermsAccepted, setEscrowTermsAccepted] = useState(false)
   const [completedTransactionId, setCompletedTransactionId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -214,6 +219,17 @@ export function PaymentCheckout({
         throw new Error('Choose a payment method before continuing.')
       }
 
+      if (!escrowTermsAccepted) {
+        throw new Error('Please accept the Payment & Escrow Terms before continuing.')
+      }
+
+      await legalAcceptanceService.recordAcceptance({
+        userId: user.id,
+        scope: 'escrow_checkout',
+        policySlugs: ACCEPTANCE_SCOPES.escrow_checkout.policySlugs,
+        policyVersion: LEGAL_POLICY_VERSION,
+      })
+
       if (shouldUsePaystackCheckout(paymentContext)) {
         if (!clientIntegrations.paystack.checkoutReady) {
           throw new Error("Paystack checkout is not configured for this property market.");
@@ -225,12 +241,28 @@ export function PaymentCheckout({
           purpose: "other",
         });
 
-        if (checkout.authorizationUrl) {
-          window.location.href = checkout.authorizationUrl;
-          return;
-        }
-
-        throw new Error("Paystack checkout URL was not returned.");
+        let paid = false;
+        await openPaystackInline({
+          email: user.email!,
+          amountMinor: Math.round(paymentState.totalAmount * 100),
+          currency: paymentContext.currency,
+          reference: checkout.reference,
+          accessCode: checkout.accessCode,
+          onClose: () => {
+            if (!paid) setLoading(false);
+          },
+          onSuccess: async (reference) => {
+            paid = true;
+            const result = await paymentService.verifyCheckoutReturn({ reference });
+            if (result.status !== "success" && result.status !== "completed") {
+              throw new Error("Payment verification failed.");
+            }
+            setCompletedTransactionId(result.transaction?.id || reference);
+            setStep(4);
+            onSuccess(result.transaction?.id || reference);
+          },
+        });
+        return;
       }
 
       if (!clientIntegrations.stripe.configured) {
@@ -578,6 +610,14 @@ export function PaymentCheckout({
                 </ul>
               </div>
 
+              <LegalAcceptanceCheckbox
+                scope="escrow_checkout"
+                checked={escrowTermsAccepted}
+                onChange={setEscrowTermsAccepted}
+                id="escrow-checkout-terms"
+                className="rounded-lg border border-gray-200 dark:border-gray-700 p-4"
+              />
+
               <div className="flex gap-4 pt-4">
                 <button
                   onClick={() => setStep(2)}
@@ -587,7 +627,7 @@ export function PaymentCheckout({
                 </button>
                 <button
                   onClick={() => void processPayment()}
-                  disabled={loading}
+                  disabled={loading || !escrowTermsAccepted}
                   className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (

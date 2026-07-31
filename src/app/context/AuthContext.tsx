@@ -16,7 +16,13 @@ interface AuthContextType {
   capabilities: string[]
   loading: boolean
   error: Error | null
-  signUp: (email: string, password: string, fullName: string, accountType?: "user" | "landlord") => Promise<void>
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    accountType?: "user" | "landlord",
+    legal?: { policyVersion: string; policySlugs: string[]; scope: string },
+  ) => Promise<{ user: User | null }>
   signIn: (email: string, password: string) => Promise<void>
   signInWithPhoneOtp: (phone: string) => Promise<void>
   verifyPhoneOtp: (phone: string, token: string) => Promise<void>
@@ -126,6 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     fullName: string,
     accountType: "user" | "landlord" = "user",
+    legal?: { policyVersion: string; policySlugs: string[]; scope: string },
   ) => {
     try {
       setError(null)
@@ -138,6 +145,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             full_name: fullName,
             role: appRole,
             account_type: accountType,
+            ...(legal
+              ? {
+                  legal_policy_version: legal.policyVersion,
+                  legal_accepted_at: new Date().toISOString(),
+                  legal_accepted_policies: legal.policySlugs,
+                  legal_accepted_scope: legal.scope,
+                }
+              : {}),
           },
         },
       })
@@ -146,6 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.session && data.user?.email) {
         await userService.ensureUserProfile(data.user.id, data.user.email, fullName)
       }
+      return { user: data.user ?? null }
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Sign up failed'))
       throw err

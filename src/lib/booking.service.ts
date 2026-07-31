@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { buildCheckoutPath } from "../app/lib/checkout-navigation";
 import { paymentService } from "./payment.service";
 import { notificationService } from "./notification.service";
 
@@ -105,14 +106,13 @@ export const bookingService = {
     total_minor: number;
     currency?: string;
   }) {
-    const checkout = await paymentService.initializePropertyPayment({
+    return buildCheckoutPath({
       listingId: booking.listing_id,
       amount: booking.total_minor / 100,
       purpose: "booking_fee",
       bookingId: booking.id,
+      returnTo: "/app/reservations",
     });
-
-    return checkout;
   },
 
   async onPaymentVerified(bookingId: string, transactionId: string) {

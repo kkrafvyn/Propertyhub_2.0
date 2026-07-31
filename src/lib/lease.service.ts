@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { paymentService } from "./payment.service";
+import { buildCheckoutPath } from "../app/lib/checkout-navigation";
 
 export const leaseService = {
   async getTenantLeases(userId: string) {
@@ -88,15 +88,13 @@ export const leaseService = {
     rent_minor: number;
     currency?: string;
   }) {
-    const checkout = await paymentService.initializePropertyPayment({
+    return buildCheckoutPath({
       listingId: lease.listing_id,
       amount: lease.rent_minor / 100,
       purpose: "rent",
-      dealCaseId: lease.deal_case_id || null,
+      dealCaseId: lease.deal_case_id || undefined,
+      returnTo: "/app/leases",
     });
-
-    window.location.href = checkout.authorizationUrl;
-    return checkout;
   },
 
   async advanceRentDueDate(leaseId: string) {

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { useAuth } from "../../context/AuthContext";
 import { organizationService } from "../../../lib/organization.service";
+import { LocaleProvider } from "../../i18n/LocaleContext";
 
 vi.mock("../../context/AuthContext", () => ({
   useAuth: vi.fn(),
@@ -55,7 +56,11 @@ function renderWorkspaceEntry(initialPath = "/workspace?next=listings") {
     }
   );
 
-  render(<RouterProvider router={router} />);
+  render(
+    <LocaleProvider>
+      <RouterProvider router={router} />
+    </LocaleProvider>,
+  );
   return router;
 }
 

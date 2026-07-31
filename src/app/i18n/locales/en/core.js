@@ -243,7 +243,65 @@ export default {
     "paymentDemo": "Payment provider is not configured. Add payment secrets in Supabase to enable live checkout."
   },
   "legal": {
-    "lastUpdated": "Last updated: June 2026",
+    "lastUpdated": "Last updated: July 2026",
+    "print": "Print / Save PDF",
+    "hub": {
+      "allPolicies": "All policies",
+      "paymentEscrow": "Payment & Escrow",
+      "marketplaceRules": "Marketplace Rules",
+      "fileComplaint": "File a complaint"
+    },
+    "acceptance": {
+      "and": "and",
+      "signupConsumer": "I agree to the",
+      "signupHost": "I agree to the",
+      "escrowCheckout": "I understand the",
+      "shortStayBooking": "I agree to the",
+      "listingPublish": "I confirm compliance with the",
+      "agencyOnboarding": "I agree to the",
+      "kycSubmission": "I consent to identity verification under the"
+    },
+    "cookies": {
+      "bannerTitle": "Cookie preferences",
+      "bannerBody": "We use essential cookies to run BaytMiftah and optional cookies to improve your experience.",
+      "policyLink": "Cookie Policy",
+      "acceptAll": "Accept all",
+      "essentialOnly": "Essential only",
+      "customize": "Customize",
+      "saveChoices": "Save choices",
+      "functional": "Functional",
+      "analytics": "Analytics",
+      "marketing": "Marketing",
+      "tableName": "Cookie",
+      "tablePurpose": "Purpose",
+      "tableDuration": "Duration"
+    },
+    "policyUpdate": {
+      "message": "We've updated our policies.",
+      "review": "Review changes",
+      "accept": "I accept"
+    },
+    "complaint": {
+      "title": "Complaint & dispute form",
+      "subtitle": "Submit a complaint, dispute, fraud report, or copyright notice. We aim to respond within 2 business days.",
+      "disputeNote": "For escrow disputes, see our",
+      "disputePolicy": "Dispute Resolution Policy",
+      "category": "Category",
+      "subject": "Subject",
+      "description": "Description",
+      "descriptionPlaceholder": "Include dates, transaction references, and what outcome you seek…",
+      "descriptionMin": "Please provide at least 20 characters describing the issue.",
+      "listingId": "Listing or booking ID",
+      "optional": "Optional",
+      "email": "Contact email",
+      "submit": "Submit complaint",
+      "submitting": "Submitting…",
+      "success": "Complaint submitted",
+      "error": "Could not submit complaint",
+      "received": "Thank you — your complaint has been received.",
+      "reference": "Reference",
+      "backHelp": "Back to Help Centre"
+    },
     "privacy": {
       "title": "Privacy Policy",
       "intro": "BaytMiftah (\"we\", \"us\") operates the BaytMiftah marketplace in Ghana and neighbouring markets. This policy explains how we collect, use, and protect your personal information.",

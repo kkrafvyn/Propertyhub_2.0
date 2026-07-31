@@ -5,6 +5,30 @@ const KYC_MEDIA_BUCKET =
 
 export type KycDocumentType = "national_id" | "passport" | "drivers_license" | "ghana_card";
 export type KycStatus = "submitted" | "in_review" | "verified" | "rejected";
+export type KycAiRecommendation = "approve" | "review" | "reject";
+export type KycAiScreeningStatus = "pending" | "processing" | "completed" | "failed" | "skipped";
+
+export type KycSubmission = {
+  id: string;
+  user_id: string;
+  document_type: KycDocumentType;
+  document_number?: string | null;
+  full_name?: string | null;
+  date_of_birth?: string | null;
+  status: KycStatus;
+  storage_path?: string | null;
+  reviewer_notes?: string | null;
+  submitted_at: string;
+  reviewed_at?: string | null;
+  ai_screening_status?: KycAiScreeningStatus | null;
+  ai_confidence_score?: number | null;
+  ai_recommendation?: KycAiRecommendation | null;
+  ai_extracted_data?: Record<string, unknown> | null;
+  ai_flags?: string[] | null;
+  ai_summary?: string | null;
+  ai_screened_at?: string | null;
+  ai_source?: string | null;
+};
 
 export const kycService = {
   async getLatestSubmission(userId: string) {
@@ -114,5 +138,18 @@ export const kycService = {
     }
 
     return data;
+  },
+
+  async requestAiScreening(submissionId: string) {
+    const { data, error } = await supabase.functions.invoke("kyc-ai-screen", {
+      body: { submissionId },
+    });
+
+    if (error) throw error;
+    if (data && typeof data === "object" && "error" in data && data.error) {
+      throw new Error(String(data.error));
+    }
+
+    return data as { ok: boolean; submission?: KycSubmission };
   },
 };

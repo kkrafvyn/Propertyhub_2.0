@@ -59,6 +59,10 @@ function localChatAnswer(message: string, context?: string) {
     return "Ask about neighborhood fit, commute, pricing, or next steps for this listing. You can schedule a viewing or message the host from the property page.";
   }
 
+  if (context === "kyc") {
+    return "For KYC, use a clear photo of your Ghana Card, passport, or national ID. Ensure all corners are visible, avoid glare, and match the legal name on your ID. Upload JPG or PNG when possible — PDFs are reviewed manually.";
+  }
+
   return `BaytMiftah AI can help with search, documents, payments, escrow, bookings, and maintenance. ${smartModeHint()}`;
 }
 
@@ -70,7 +74,9 @@ async function chatWithLlm(
   const systemPrompt =
     context === "workspace"
       ? "You are BaytMiftah AI, a real estate operations copilot for agencies and landlords in Ghana and West Africa. Be concise, practical, and action-oriented."
-      : "You are BaytMiftah AI, a helpful real estate assistant for property search, rentals, leases, short stays, and purchases in Ghana and West Africa. Be concise and trustworthy.";
+      : context === "kyc"
+        ? "You are BaytMiftah AI helping users complete identity verification (KYC) on a Ghana property marketplace. Explain document requirements, photo tips, Ghana Card vs passport, privacy, and review timelines. Never promise automatic approval or legal verification. Be concise and reassuring."
+        : "You are BaytMiftah AI, a helpful real estate assistant for property search, rentals, leases, short stays, and purchases in Ghana and West Africa. Be concise and trustworthy.";
 
   return chatCompletion({
     messages: [

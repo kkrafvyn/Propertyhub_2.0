@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { CreditCard, FileText, Loader2, Star } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
@@ -19,6 +20,8 @@ import { inspectionService } from "../../../lib/inspection.service";
 import { bookingService } from "../../../lib/booking.service";
 import MessageHostButton from "../../components/baytmiftah/chat/MessageHostButton";
 import { monitoring } from "../../../lib/monitoring";
+import { buildCheckoutPath } from "../../lib/checkout-navigation";
+import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
 
 function formatMoney(amountMinor?: number | null, currency = "GHS") {
   return walletService.formatWalletAmount(amountMinor, currency);
@@ -149,6 +152,7 @@ export function WalletSection({
 }
 
 export function LeasesSection({ leases, userId }: { leases: any[]; userId?: string }) {
+  const navigate = useNavigate();
   const [payingLeaseId, setPayingLeaseId] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<Record<string, any[]>>({});
   const [checklists, setChecklists] = useState<Record<string, any[]>>({});
@@ -205,7 +209,15 @@ export function LeasesSection({ leases, userId }: { leases: any[]; userId?: stri
     try {
       setPayingLeaseId(lease.id);
       monitoring.trackWorkflowStep("rent", "pay_rent_started", { leaseId: lease.id });
-      await leaseService.payRent(lease);
+      navigate(
+        buildCheckoutPath({
+          listingId: lease.listing_id,
+          amount: lease.rent_minor / 100,
+          purpose: "rent",
+          dealCaseId: lease.deal_case_id || undefined,
+          returnTo: CONSUMER_ROUTES.leases,
+        }),
+      );
     } catch (error) {
       console.error(error);
       monitoring.captureError(error, "rent_payment");
@@ -791,6 +803,7 @@ function BookingCard({
   userId?: string;
   onRefresh?: () => Promise<void>;
 }) {
+  const navigate = useNavigate();
   const [busy, setBusy] = useState<string | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
@@ -869,12 +882,19 @@ function BookingCard({
             disabled={busy === "pay"}
             onClick={() =>
               void runAction("pay", async () => {
-                const checkout = await bookingService.payForBooking(booking);
-                window.location.href = checkout.authorizationUrl;
+                navigate(
+                  buildCheckoutPath({
+                    listingId: booking.listing_id,
+                    amount: booking.total_minor / 100,
+                    purpose: "booking_fee",
+                    bookingId: booking.id,
+                    returnTo: CONSUMER_ROUTES.reservations,
+                  }),
+                );
               })
             }
           >
-            {busy === "pay" ? "Redirecting..." : "Pay now"}
+            {busy === "pay" ? "Opening checkout…" : "Pay now"}
           </Button>
         ) : null}
         {booking.listing?.id ? (

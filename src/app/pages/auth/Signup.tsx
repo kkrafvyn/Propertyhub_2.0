@@ -6,6 +6,12 @@ import { useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import { AuthShell, AuthDivider, OAuthButtons } from "../../components/baytmiftah";
+import {
+  LegalAcceptanceCheckbox,
+} from "../../components/legal/LegalAcceptanceCheckbox";
+import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION, LEGAL_VERSION_KEY } from "../../../lib/legal-config";
+import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
+import type { LegalAcceptanceScope } from "../../../lib/legal-config";
 
 export function Signup() {
   const [formData, setFormData] = useState({
@@ -16,6 +22,7 @@ export function Signup() {
     accountType: "user",
   });
   const [loading, setLoading] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [oauthLoadingProvider, setOauthLoadingProvider] = useState<"google" | "apple" | null>(
     null
   );
@@ -51,9 +58,32 @@ export function Signup() {
       return;
     }
 
+    if (!termsAccepted) {
+      toast.error("Please accept the required policies to continue");
+      return;
+    }
+
     try {
       setLoading(true);
-      await signUp(formData.email, formData.password, formData.fullName, formData.accountType as "user" | "landlord");
+      const scope: LegalAcceptanceScope =
+        formData.accountType === "landlord" ? "signup_host" : "signup_consumer";
+      const policySlugs = ACCEPTANCE_SCOPES[scope].policySlugs;
+      const { user } = await signUp(
+        formData.email,
+        formData.password,
+        formData.fullName,
+        formData.accountType as "user" | "landlord",
+        { policyVersion: LEGAL_POLICY_VERSION, policySlugs, scope },
+      );
+      if (user?.id) {
+        await legalAcceptanceService.recordAcceptance({
+          userId: user.id,
+          scope,
+          policySlugs,
+          policyVersion: LEGAL_POLICY_VERSION,
+        });
+        localStorage.setItem(LEGAL_VERSION_KEY, LEGAL_POLICY_VERSION);
+      }
       toast.success("Account created! Please check your email to verify.");
       navigate("/login", {
         state: {
@@ -164,24 +194,12 @@ export function Signup() {
           autoComplete="new-password"
         />
 
-        <div className="flex items-start gap-2">
-          <input
-            type="checkbox"
-            id="terms"
-            className="mt-1 h-4 w-4 rounded border-border text-primary"
-            required
-          />
-          <label htmlFor="terms" className="text-sm text-muted-foreground">
-            I agree to the{" "}
-            <Link to="/terms" className="text-primary hover:underline">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link to="/privacy" className="text-primary hover:underline">
-              Privacy Policy
-            </Link>
-          </label>
-        </div>
+        <LegalAcceptanceCheckbox
+          scope={formData.accountType === "landlord" ? "signup_host" : "signup_consumer"}
+          checked={termsAccepted}
+          onChange={setTermsAccepted}
+          id="terms"
+        />
 
         <Button
           type="submit"

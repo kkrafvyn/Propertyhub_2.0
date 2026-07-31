@@ -10,6 +10,7 @@ export function isKycPending(kyc?: { status?: string | null } | string | null) {
   return status === "submitted" || status === "in_review" || status === "pending";
 }
 
-export function canSubmitOffer(kyc?: { status?: string | null } | string | null) {
+export function canSubmitOffer(kyc?: { status?: string | null; verified?: boolean | null } | string | null) {
+  if (typeof kyc === "object" && kyc?.verified) return true;
   return isKycVerified(kyc);
 }

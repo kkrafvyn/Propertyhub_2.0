@@ -85,6 +85,8 @@ export const CONSUMER_AI_LINKS = [
   { to: CONSUMER_ROUTES.profile, labelKey: 'consumer.ai.recommendations' },
   { to: WORKSPACE_ENTRY_PATH, labelKey: 'consumer.ai.marketInsights' },
   { to: CONSUMER_ROUTES.mortgage, labelKey: 'consumer.ai.affordability' },
+  { to: CONSUMER_ROUTES.insurance, labelKey: 'consumer.activity.insurance', authRequired: true },
+  { to: CONSUMER_ROUTES.vendors, labelKey: 'consumer.activity.vendors', authRequired: true },
 ]
 
 /** Pro-only route prefixes consumers must not access */

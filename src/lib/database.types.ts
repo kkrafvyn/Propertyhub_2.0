@@ -1251,6 +1251,91 @@ export type Database = {
           },
         ]
       }
+      legal_acceptances: {
+        Row: {
+          accepted_at: string
+          id: string
+          policies: string[]
+          policy_version: string
+          scope: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          id?: string
+          policies?: string[]
+          policy_version: string
+          scope: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          id?: string
+          policies?: string[]
+          policy_version?: string
+          scope?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_acceptances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_complaints: {
+        Row: {
+          category: string
+          contact_email: string | null
+          created_at: string
+          description: string
+          id: string
+          listing_id: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          contact_email?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          listing_id?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          contact_email?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          listing_id?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_complaints_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fraud_reports: {
         Row: {
           created_at: string | null

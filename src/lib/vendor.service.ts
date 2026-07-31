@@ -55,9 +55,25 @@ export const vendorService = {
       .eq('verified', true)
       .order('rating_avg', { ascending: false })
       .limit(limit)
-    
+
     if (error) throw error
     return data
+  },
+
+  async listMarketplaceVendors(category: string, limit = 24) {
+    const { data, error } = await supabase
+      .from('vendors')
+      .select(`
+        *,
+        services:vendor_services(*)
+      `)
+      .eq('business_category', category)
+      .eq('verified', true)
+      .order('rating_avg', { ascending: false })
+      .limit(limit)
+
+    if (error) throw error
+    return data || []
   },
 
   // Add vendor service
