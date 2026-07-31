@@ -19,12 +19,11 @@ async function writeAuditLog(
   targetId: string,
   details: Record<string, unknown> = {}
 ) {
-  const { error } = await supabase.from("audit_logs").insert({
-    admin_id: adminId,
-    action,
-    target_type: targetType,
-    target_id: targetId,
-    details,
+  const { error } = await supabase.rpc("write_audit_log", {
+    p_action: action,
+    p_entity_type: targetType,
+    p_entity_id: targetId,
+    p_details: details,
   });
 
   if (error) {

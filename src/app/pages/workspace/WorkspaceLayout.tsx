@@ -74,6 +74,7 @@ import { WorkspaceContacts } from "./WorkspaceContacts";
 import { WorkspaceTasks } from "./WorkspaceTasks";
 import { WorkspaceSmartProperty } from "./WorkspaceSmartProperty";
 import { Logo } from "../../components/baytmiftah";
+import { WorkspaceMfaGate } from "../../components/security/WorkspaceMfaGate";
 import {
   WORKSPACE_ENTRY_PATH,
   getWorkspaceRoute,
@@ -486,6 +487,7 @@ export function WorkspaceLayout() {
   }
 
   return (
+    <WorkspaceMfaGate role={currentRole}>
     <div className="desktop-shell min-h-screen">
       <nav className="desktop-header border-b border-white/10 bg-brand-marketplace">
         <div className="mx-auto max-w-[var(--max-width-page)] px-6 py-4">
@@ -668,5 +670,6 @@ export function WorkspaceLayout() {
         </main>
       </div>
     </div>
+    </WorkspaceMfaGate>
   );
 }

@@ -1,19 +1,39 @@
-import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
+import { getCorsHeaders, HttpError, jsonResponse, safeErrorMessage } from "../_shared/http.ts";
+import { writeServerAuditLog } from "../_shared/audit-log.ts";
 import { retrieveStripeCheckoutSession } from "../_shared/stripe.ts";
 import { requireAuthenticatedUser, createAdminClient } from "../_shared/supabase.ts";
 
+async function canVerifyTransaction(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+  transaction: { payer_user_id: string; organization_id: string },
+) {
+  if (transaction.payer_user_id === userId) {
+    return true;
+  }
+
+  const { data: membership } = await admin
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", transaction.organization_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return membership?.role === "owner" || membership?.role === "manager";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   if (req.method !== "POST") {
-    return jsonResponse(405, { error: "Method not allowed" });
+    return jsonResponse(405, { error: "Method not allowed" }, req);
   }
 
   try {
     const authHeader = req.headers.get("Authorization");
-    await requireAuthenticatedUser(authHeader);
+    const { user } = await requireAuthenticatedUser(authHeader);
     const requestBody = await req.json().catch(() => null);
 
     const sessionId =
@@ -35,8 +55,13 @@ Deno.serve(async (req) => {
     }
 
     const { data: transaction, error: transactionError } = await transactionQuery.maybeSingle();
-    if (transactionError) throw new HttpError(500, transactionError.message);
+    if (transactionError) throw new HttpError(500, "Unable to load transaction");
     if (!transaction) throw new HttpError(404, "Transaction not found");
+
+    const authorized = await canVerifyTransaction(admin, user.id, transaction);
+    if (!authorized) {
+      throw new HttpError(403, "You are not allowed to verify this payment");
+    }
 
     const resolvedSessionId = sessionId || transaction.access_code;
     if (!resolvedSessionId) {
@@ -51,7 +76,7 @@ Deno.serve(async (req) => {
         status: session.payment_status || session.status || "pending",
         transaction,
         alreadyProcessed: transaction.status === "completed",
-      });
+      }, req);
     }
 
     if (transaction.status === "completed") {
@@ -59,7 +84,7 @@ Deno.serve(async (req) => {
         status: "completed",
         transaction,
         alreadyProcessed: true,
-      });
+      }, req);
     }
 
     const { data: updatedTransaction, error: updateError } = await admin
@@ -72,19 +97,27 @@ Deno.serve(async (req) => {
       .select("*")
       .single();
 
-    if (updateError) throw new HttpError(500, updateError.message);
+    if (updateError) throw new HttpError(500, "Unable to update transaction");
+
+    await writeServerAuditLog({
+      actorUserId: user.id,
+      action: "stripe_payment_verified",
+      entityType: "property_transaction",
+      entityId: transaction.id,
+      details: { reference: transaction.provider_reference },
+    });
 
     return jsonResponse(200, {
       status: "completed",
       transaction: updatedTransaction,
       alreadyProcessed: false,
-    });
+    }, req);
   } catch (error) {
     if (error instanceof HttpError) {
-      return jsonResponse(error.status, { error: error.message });
+      return jsonResponse(error.status, { error: error.message }, req);
     }
 
     console.error("verify-stripe-payment error:", error);
-    return jsonResponse(500, { error: "Unable to verify Stripe payment" });
+    return jsonResponse(500, { error: safeErrorMessage(error, "Unable to verify Stripe payment") }, req);
   }
 });

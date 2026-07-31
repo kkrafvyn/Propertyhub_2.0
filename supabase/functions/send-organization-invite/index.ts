@@ -1,18 +1,14 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { getAllowedOrigins, isAllowedAppUrl } from "../_shared/security.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 type InviteRole = "manager" | "agent" | "analyst";
 
-function jsonResponse(status: number, body: Record<string, unknown>) {
+function jsonResponse(status: number, body: Record<string, unknown>, req: Request) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
-      ...corsHeaders,
+      ...getCorsHeaders(req),
       "Content-Type": "application/json",
     },
   });
@@ -27,7 +23,12 @@ function isInviteRole(value: string): value is InviteRole {
 }
 
 function getAppUrl(req: Request, explicitAppUrl?: string) {
+  const allowed = getAllowedOrigins();
+
   if (explicitAppUrl) {
+    if (!isAllowedAppUrl(explicitAppUrl, allowed)) {
+      throw new Error("Invalid app URL");
+    }
     return explicitAppUrl.replace(/\/+$/, "");
   }
 
@@ -46,11 +47,11 @@ function getAppUrl(req: Request, explicitAppUrl?: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   if (req.method !== "POST") {
-    return jsonResponse(405, { error: "Method not allowed" });
+    return jsonResponse(405, { error: "Method not allowed" }, req);
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -60,11 +61,11 @@ Deno.serve(async (req) => {
   const authHeader = req.headers.get("Authorization");
 
   if (!supabaseUrl || !publishableKey || !serviceRoleKey) {
-    return jsonResponse(500, { error: "Missing Supabase environment configuration" });
+    return jsonResponse(500, { error: "Missing Supabase environment configuration" }, req);
   }
 
   if (!authHeader) {
-    return jsonResponse(401, { error: "Missing authorization header" });
+    return jsonResponse(401, { error: "Missing authorization header" }, req);
   }
 
   const userClient = createClient(supabaseUrl, publishableKey, {
@@ -92,7 +93,7 @@ Deno.serve(async (req) => {
   } = await userClient.auth.getUser();
 
   if (userError || !user) {
-    return jsonResponse(401, { error: "You must be signed in to send invites" });
+    return jsonResponse(401, { error: "You must be signed in to send invites" }, req);
   }
 
   const requestBody = await req.json().catch(() => null);
@@ -103,11 +104,11 @@ Deno.serve(async (req) => {
   const appUrl = typeof requestBody?.appUrl === "string" ? requestBody.appUrl : undefined;
 
   if (!organizationId || !rawEmail || !role) {
-    return jsonResponse(400, { error: "organizationId, email, and role are required" });
+    return jsonResponse(400, { error: "organizationId, email, and role are required" }, req);
   }
 
   if (!isInviteRole(role)) {
-    return jsonResponse(400, { error: "Invalid invite role" });
+    return jsonResponse(400, { error: "Invalid invite role" }, req);
   }
 
   const email = normalizeEmail(rawEmail);
@@ -125,11 +126,11 @@ Deno.serve(async (req) => {
     .maybeSingle();
 
   if (membershipError) {
-    return jsonResponse(500, { error: membershipError.message });
+    return jsonResponse(500, { error: "Unable to verify organization membership" }, req);
   }
 
   if (!membership || !["owner", "manager"].includes(membership.role)) {
-    return jsonResponse(403, { error: "Only owners and managers can send invites" });
+    return jsonResponse(403, { error: "Only owners and managers can send invites" }, req);
   }
 
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -164,11 +165,16 @@ Deno.serve(async (req) => {
 
   if (invitationError || !invitation) {
     return jsonResponse(500, {
-      error: invitationError?.message || "Unable to create invitation",
-    });
+      error: "Unable to create invitation",
+    }, req);
   }
 
-  const baseAppUrl = getAppUrl(req, appUrl);
+  let baseAppUrl: string;
+  try {
+    baseAppUrl = getAppUrl(req, appUrl);
+  } catch {
+    return jsonResponse(400, { error: "Invalid application URL" }, req);
+  }
   const redirectTo = `${baseAppUrl}/workspace/accept?invitation=${invitation.id}`;
 
   const { error: authInviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
@@ -187,12 +193,12 @@ Deno.serve(async (req) => {
     /registered|exists|already/i.test(authInviteError.message || "");
 
   if (authInviteError && !manualSignInRequired) {
-    return jsonResponse(500, { error: authInviteError.message });
+    return jsonResponse(500, { error: "Unable to send invitation email" }, req);
   }
 
   return jsonResponse(200, {
     invitation,
     delivery: manualSignInRequired ? "manual_sign_in_required" : "sent",
     redirectTo,
-  });
+  }, req);
 });

@@ -63,6 +63,12 @@ export function AdminTrustReview() {
   };
 
   const reviewKyc = async (submissionId: string, status: "verified" | "rejected") => {
+    const confirmMessage =
+      status === "verified"
+        ? "Approve this identity verification? This grants verified status to the user."
+        : "Reject this KYC submission?";
+    if (!window.confirm(confirmMessage)) return;
+
     const notes =
       status === "rejected"
         ? window.prompt("Rejection reason (optional):") || undefined
@@ -143,7 +149,7 @@ export function AdminTrustReview() {
                   size="sm"
                   variant="outline"
                   onClick={async () => {
-                    const url = await kycService.getDocumentPublicUrl(submission.storage_path);
+                    const url = await kycService.getDocumentSignedUrl(submission.storage_path);
                     if (url) window.open(url, "_blank", "noreferrer");
                   }}
                 >

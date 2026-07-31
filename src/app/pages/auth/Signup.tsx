@@ -9,9 +9,9 @@ import { AuthShell, AuthDivider, OAuthButtons } from "../../components/baytmifta
 import {
   LegalAcceptanceCheckbox,
 } from "../../components/legal/LegalAcceptanceCheckbox";
-import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION, LEGAL_VERSION_KEY } from "../../../lib/legal-config";
+import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION, LEGAL_VERSION_KEY, type LegalAcceptanceScope } from "../../../lib/legal-config";
 import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
-import type { LegalAcceptanceScope } from "../../../lib/legal-config";
+import { validatePassword } from "../../../lib/security/password-policy";
 
 export function Signup() {
   const [formData, setFormData] = useState({
@@ -53,8 +53,9 @@ export function Signup() {
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    const passwordCheck = validatePassword(formData.password);
+    if (!passwordCheck.valid) {
+      toast.error(passwordCheck.errors[0] || "Password does not meet requirements");
       return;
     }
 

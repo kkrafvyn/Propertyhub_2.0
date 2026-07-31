@@ -27,6 +27,10 @@ import { adminService } from "../../../lib/admin.service";
 import { AdminTrustReview } from "./AdminTrustReview";
 import { AdminRevenueManagement } from "./revenue/AdminRevenueManagement";
 
+function confirmAdminAction(message: string) {
+  return window.confirm(message);
+}
+
 type AdminSection =
   | "overview"
   | "users"
@@ -538,12 +542,13 @@ export function AdminLayout() {
                     size="sm"
                     variant="outline"
                     disabled={workingId === `user:${entry.id}:verify`}
-                    onClick={() =>
+                    onClick={() => {
+                      if (!confirmAdminAction(entry.verified ? "Revoke verification for this user?" : "Verify this user?")) return;
                       void runAction(`user:${entry.id}:verify`, async () => {
                         await adminService.updateUser(entry.id, { verified: !entry.verified });
                         toast.success(entry.verified ? "User marked unverified." : "User verified.");
-                      })
-                    }
+                      });
+                    }}
                   >
                     {entry.verified ? "Revoke Verify" : "Verify"}
                   </Button>
@@ -551,12 +556,13 @@ export function AdminLayout() {
                     size="sm"
                     variant="outline"
                     disabled={workingId === `user:${entry.id}:ban`}
-                    onClick={() =>
+                    onClick={() => {
+                      if (!confirmAdminAction(entry.banned ? "Unban this user?" : "Ban this user? They will lose access immediately.")) return;
                       void runAction(`user:${entry.id}:ban`, async () => {
                         await adminService.updateUser(entry.id, { banned: !entry.banned });
                         toast.success(entry.banned ? "User unbanned." : "User banned.");
-                      })
-                    }
+                      });
+                    }}
                   >
                     {entry.banned ? "Unban" : "Ban"}
                   </Button>
@@ -621,7 +627,8 @@ export function AdminLayout() {
                     size="sm"
                     variant="outline"
                     disabled={workingId === `org:${organization.id}:suspend`}
-                    onClick={() =>
+                    onClick={() => {
+                      if (!confirmAdminAction(organization.suspended ? "Reinstate this organization?" : "Suspend this organization? Members will lose workspace access.")) return;
                       void runAction(`org:${organization.id}:suspend`, async () => {
                         await adminService.updateOrganization(organization.id, {
                           suspended: !organization.suspended,
@@ -629,8 +636,8 @@ export function AdminLayout() {
                         toast.success(
                           organization.suspended ? "Organization reinstated." : "Organization suspended."
                         );
-                      })
-                    }
+                      });
+                    }}
                   >
                     {organization.suspended ? "Reinstate" : "Suspend"}
                   </Button>

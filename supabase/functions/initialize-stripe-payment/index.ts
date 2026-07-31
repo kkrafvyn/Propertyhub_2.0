@@ -1,4 +1,6 @@
-import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
+import { getCorsHeaders, HttpError, jsonResponse, safeErrorMessage } from "../_shared/http.ts";
+import { assertListingPayable, resolvePaymentAmountMinor } from "../_shared/payment-pricing.ts";
+import { enforceRateLimit, rateLimitKey } from "../_shared/rate-limit.ts";
 import { createStripeCheckoutSession } from "../_shared/stripe.ts";
 import { requireAuthenticatedUser, createAdminClient } from "../_shared/supabase.ts";
 
@@ -32,16 +34,21 @@ function buildReference() {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   if (req.method !== "POST") {
-    return jsonResponse(405, { error: "Method not allowed" });
+    return jsonResponse(405, { error: "Method not allowed" }, req);
   }
 
   try {
     const authHeader = req.headers.get("Authorization");
     const { user } = await requireAuthenticatedUser(authHeader);
+    await enforceRateLimit({
+      bucket: rateLimitKey("stripe-init", user.id),
+      maxHits: 10,
+      windowSeconds: 60,
+    });
     const requestBody = await req.json().catch(() => null);
 
     const listingId =
@@ -59,7 +66,8 @@ Deno.serve(async (req) => {
       throw new HttpError(400, "Authenticated user is missing an email address");
     }
 
-    const amountMinor = parseAmountToMinorUnits(requestBody?.amount);
+    const clientAmountMinor =
+      requestBody?.amount != null ? parseAmountToMinorUnits(requestBody.amount) : null;
     const admin = createAdminClient();
 
     const { data: listing, error: listingError } = await admin
@@ -68,8 +76,13 @@ Deno.serve(async (req) => {
       .eq("id", listingId)
       .maybeSingle();
 
-    if (listingError) throw new HttpError(500, listingError.message);
-    if (!listing) throw new HttpError(404, "Listing not found");
+    if (listingError) throw new HttpError(500, "Unable to load listing");
+    assertListingPayable(listing);
+    const amountMinor = resolvePaymentAmountMinor({
+      listing,
+      purpose,
+      clientAmountMinor,
+    });
 
     const currency = (listing.currency || "USD").toUpperCase();
     const reference = buildReference();
@@ -143,13 +156,13 @@ Deno.serve(async (req) => {
       sessionId: session.id,
       reference,
       callbackUrl: `${appUrl}/app/payments`,
-    });
+    }, req);
   } catch (error) {
     if (error instanceof HttpError) {
-      return jsonResponse(error.status, { error: error.message });
+      return jsonResponse(error.status, { error: error.message }, req);
     }
 
     console.error("initialize-stripe-payment error:", error);
-    return jsonResponse(500, { error: "Unable to initialize Stripe payment" });
+    return jsonResponse(500, { error: safeErrorMessage(error, "Unable to initialize Stripe payment") }, req);
   }
 });

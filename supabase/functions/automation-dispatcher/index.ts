@@ -8,14 +8,13 @@ function getAuthorizedAutomationKey(req: Request) {
   const apiKey = req.headers.get("apikey");
   const authorization = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   const internalKey = Deno.env.get("INTERNAL_AUTOMATIONS_KEY");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   const candidate = apiKey || authorization;
   if (!candidate) {
     throw new HttpError(401, "Missing automation key");
   }
 
-  if (candidate !== internalKey && candidate !== serviceRoleKey) {
+  if (!internalKey || candidate !== internalKey) {
     throw new HttpError(403, "Invalid automation key");
   }
 }

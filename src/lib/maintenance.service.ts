@@ -1,8 +1,8 @@
 import { supabase } from "./supabase";
 import { notificationService } from "./notification.service";
+import { validateClientUpload } from "./security/upload-validation";
 
-const MAINTENANCE_MEDIA_BUCKET =
-  import.meta.env.VITE_PROPERTY_MEDIA_BUCKET || "property-media";
+const MAINTENANCE_MEDIA_BUCKET = "maintenance-media";
 
 export const maintenanceService = {
   async getTenantRequests(userId: string) {
@@ -64,19 +64,15 @@ export const maintenanceService = {
     const uploadedUrls: string[] = [];
 
     for (const file of input.files) {
+      validateClientUpload({ file, maxBytes: 10 * 1024 * 1024 });
       const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `${input.organizationId}/maintenance/${input.requestId}/${crypto.randomUUID()}.${extension}`;
+      const path = `${input.organizationId}/${input.requestId}/${crypto.randomUUID()}.${extension}`;
       const { error: uploadError } = await supabase.storage
         .from(MAINTENANCE_MEDIA_BUCKET)
         .upload(path, file, { cacheControl: "3600", contentType: file.type, upsert: false });
 
       if (uploadError) throw uploadError;
-
-      const { data: publicUrl } = supabase.storage
-        .from(MAINTENANCE_MEDIA_BUCKET)
-        .getPublicUrl(path);
-
-      if (publicUrl?.publicUrl) uploadedUrls.push(publicUrl.publicUrl);
+      uploadedUrls.push(path);
     }
 
     if (uploadedUrls.length === 0) return [];
@@ -97,6 +93,14 @@ export const maintenanceService = {
 
     if (error) throw error;
     return data;
+  },
+
+  async getPhotoSignedUrl(path: string, expiresIn = 300) {
+    const { data, error } = await supabase.storage
+      .from(MAINTENANCE_MEDIA_BUCKET)
+      .createSignedUrl(path, expiresIn);
+    if (error) throw error;
+    return data?.signedUrl || null;
   },
 
   async submitTenantRating(

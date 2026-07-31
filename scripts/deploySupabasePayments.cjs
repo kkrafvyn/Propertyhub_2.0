@@ -12,6 +12,7 @@ const projectRoot = path.resolve(__dirname, "..");
 const args = process.argv.slice(2);
 
 const EDGE_FUNCTIONS = [
+  { name: "exchange-rates" },
   { name: "initialize-paystack-payment" },
   { name: "verify-paystack-payment" },
   { name: "initiate-paystack-refund" },

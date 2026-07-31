@@ -222,6 +222,15 @@ export const revenueManagementService = {
 
   async listPaymentGateways() {
     const { data, error } = await supabase
+      .from("payment_gateways_public")
+      .select("*")
+      .order("sort_order", { ascending: true });
+    if (error) throw error;
+    return (data || []) as PaymentGateway[];
+  },
+
+  async listPaymentGatewaysAdmin() {
+    const { data, error } = await supabase
       .from("payment_gateways")
       .select("*")
       .order("sort_order", { ascending: true });

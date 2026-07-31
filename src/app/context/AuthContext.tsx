@@ -5,6 +5,7 @@ import { userService } from '../../lib/user.service'
 import { deriveConsumerCapabilities } from '../lib/baytmiftah/capabilities'
 import { getUserRole } from '../lib/baytmiftah/roles'
 import { consumerContextService } from '../../lib/consumer-context.service'
+import { trackUserSession } from '../../lib/security/session-tracking'
 import type { Database } from '../../lib/database.types'
 
 type UserProfile = Database['public']['Tables']['users']['Row']
@@ -63,6 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           currentUser.phone
         )
         setProfile(ensured)
+        if (ensured?.banned) {
+          await supabase.auth.signOut({ scope: "global" })
+          setUser(null)
+          setProfile(null)
+        }
       } catch (profileError) {
         console.error('Failed to ensure user profile:', profileError)
         setProfile(null)
@@ -78,10 +84,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
         const nextUser = session?.user ?? null
         setUser(nextUser)
         await ensureProfile(nextUser)
+        if (nextUser && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+          void trackUserSession(nextUser.id)
+        }
       }
     )
 
@@ -239,9 +248,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       setError(null)
-      const { error } = await supabase.auth.signOut()
+      const { error } = await supabase.auth.signOut({ scope: "global" })
       if (error) throw error
       setUser(null)
+      setProfile(null)
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Sign out failed'))
       throw err

@@ -1,4 +1,5 @@
 import { HttpError, jsonResponse } from "../_shared/http.ts";
+import { recordWebhookEvent } from "../_shared/audit-log.ts";
 import { reconcilePaystackPayment } from "../_shared/payment-reconciliation.ts";
 import { reconcilePaystackRefundWebhook } from "../_shared/refund-reconciliation.ts";
 import { verifyPaystackTransaction, verifyPaystackWebhookSignature } from "../_shared/paystack.ts";
@@ -20,10 +21,23 @@ Deno.serve(async (req) => {
     const event = JSON.parse(rawBody) as {
       event?: string;
       data?: {
+        id?: number | string;
         reference?: string;
         transaction_reference?: string;
       };
     };
+
+    const eventId = String(event.data?.id || `${event.event}:${event.data?.reference || rawBody.slice(0, 64)}`);
+    const replay = await recordWebhookEvent({
+      provider: "paystack",
+      eventId,
+      reference: event.data?.reference || null,
+      payload: event as Record<string, unknown>,
+    });
+
+    if (replay.duplicate) {
+      return jsonResponse(200, { received: true, duplicate: true, event: event.event });
+    }
 
     if (event.event === "charge.success") {
       const reference = event.data?.reference?.trim();

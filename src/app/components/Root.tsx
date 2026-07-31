@@ -1,6 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { useAuth } from "../context/AuthContext";
 import { isWorkspaceRole } from "../lib/baytmiftah/roles";
+import { useIdleSessionTimeout } from "../hooks/useIdleSessionTimeout";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router";
 import { RouteMonitoring } from "./RouteMonitoring";
@@ -96,6 +97,7 @@ export function Root() {
   const { isPhone } = useViewportFlags();
   const { role, user } = useAuth();
   const { ready: marketReady, onboardingComplete } = useUserMarket();
+  useIdleSessionTimeout(Boolean(user));
 
   if (marketReady && !onboardingComplete && !shouldSkipOnboarding(location.pathname)) {
     return <LocationOnboarding />;

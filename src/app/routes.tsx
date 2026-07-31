@@ -1,7 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import { Root } from "./components/Root";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import { ProtectedAdminRoute } from "./components/ProtectedAdminRoute";
+import { ProtectedRoute, ProtectedAdminRoute } from "./components/ProtectedRoute";
 import { LegacyRouteRedirect } from "./components/LegacyRouteRedirect";
 import { NotFound } from "./pages/NotFound";
 
@@ -129,7 +128,11 @@ export const router = createBrowserRouter([
           return { Component: StaticContentPage };
         },
       })),
-      { path: "explore", element: <LegacyRouteRedirect /> },
+      { path: "verify-email", lazy: async () => {
+          const { VerifyEmailPage } = await import("./pages/auth/VerifyEmail");
+          return { Component: VerifyEmailPage };
+        },
+      },
       { path: "saved", element: <LegacyRouteRedirect /> },
       { path: "messages", element: <LegacyRouteRedirect /> },
       { path: "messages/:id", element: <LegacyRouteRedirect /> },
@@ -149,8 +152,23 @@ export const router = createBrowserRouter([
           return {
             Component: function ProtectedCheckoutRoute() {
               return (
-                <ProtectedRoute>
+                <ProtectedRoute requireVerifiedEmail>
                   <InAppCheckoutPage />
+                </ProtectedRoute>
+              );
+            },
+          };
+        },
+      },
+      {
+        path: "app/security",
+        lazy: async () => {
+          const { SecuritySettingsPage } = await import("./pages/user/SecuritySettings");
+          return {
+            Component: function ProtectedSecurityRoute() {
+              return (
+                <ProtectedRoute>
+                  <SecuritySettingsPage />
                 </ProtectedRoute>
               );
             },
@@ -181,7 +199,7 @@ export const router = createBrowserRouter([
           return {
             Component: function ProtectedWorkspaceEntryRoute() {
               return (
-                <ProtectedRoute>
+                <ProtectedRoute requireVerifiedEmail>
                   <WorkspaceEntry />
                 </ProtectedRoute>
               );
@@ -215,7 +233,7 @@ export const router = createBrowserRouter([
           return {
             Component: function ProtectedWorkspaceRoute() {
               return (
-                <ProtectedRoute>
+                <ProtectedRoute requireVerifiedEmail>
                   <WorkspaceLayout />
                 </ProtectedRoute>
               );
@@ -231,7 +249,7 @@ export const router = createBrowserRouter([
           return {
             Component: function ProtectedWorkspacePageRoute() {
               return (
-                <ProtectedRoute>
+                <ProtectedRoute requireVerifiedEmail>
                   <WorkspaceLayout />
                 </ProtectedRoute>
               );

@@ -103,25 +103,39 @@ function getPaystackSecretKey() {
   return secretKey;
 }
 
-export function verifyPaystackWebhookSignature(body: string, signature: string | null) {
+export async function verifyPaystackWebhookSignature(body: string, signature: string | null) {
   if (!signature) return false;
 
-  const secret = Deno.env.get("PAYSTACK_WEBHOOK_SECRET") || Deno.env.get("PAYSTACK_SECRET_KEY");
-  if (!secret) return false;
+  const secret = Deno.env.get("PAYSTACK_WEBHOOK_SECRET");
+  if (!secret) {
+    console.error("PAYSTACK_WEBHOOK_SECRET is not configured");
+    return false;
+  }
 
   const data = new TextEncoder().encode(body);
   const keyData = new TextEncoder().encode(secret);
 
-  return crypto.subtle
-    .importKey("raw", keyData, { name: "HMAC", hash: "SHA-512" }, false, ["sign"])
-    .then((key) => crypto.subtle.sign("HMAC", key, data))
-    .then((signatureBuffer) => {
-      const computed = Array.from(new Uint8Array(signatureBuffer))
-        .map((byte) => byte.toString(16).padStart(2, "0"))
-        .join("");
+  const key = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-512" },
+    false,
+    ["sign"],
+  );
+  const signatureBuffer = await crypto.subtle.sign("HMAC", key, data);
+  const computed = Array.from(new Uint8Array(signatureBuffer))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 
-      return computed === signature;
-    });
+  if (computed.length !== signature.length) {
+    return false;
+  }
+
+  let mismatch = 0;
+  for (let i = 0; i < computed.length; i += 1) {
+    mismatch |= computed.charCodeAt(i) ^ signature.charCodeAt(i);
+  }
+  return mismatch === 0;
 }
 
 async function paystackFetch<T>(path: string, init: RequestInit = {}) {

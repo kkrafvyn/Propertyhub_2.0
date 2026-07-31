@@ -1,4 +1,6 @@
-import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
+import { getCorsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
+import { enforceRateLimit, rateLimitKey } from "../_shared/rate-limit.ts";
+import { requireAuthenticatedUser } from "../_shared/supabase.ts";
 import {
   type AiSource,
   chatCompletion,
@@ -90,17 +92,25 @@ async function chatWithLlm(
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   if (req.method !== "POST") {
-    return jsonResponse(405, { error: "Method not allowed" });
+    return jsonResponse(405, { error: "Method not allowed" }, req);
   }
 
   try {
+    const authHeader = req.headers.get("Authorization");
+    const { user } = await requireAuthenticatedUser(authHeader);
+    await enforceRateLimit({
+      bucket: rateLimitKey("ai-assistant", user.id),
+      maxHits: 20,
+      windowSeconds: 60,
+    });
+
     const body = await req.json().catch(() => null);
     const action = (body?.action as AssistantAction) || "chat";
-    const message = typeof body?.message === "string" ? body.message.trim() : "";
+    const message = typeof body?.message === "string" ? body.message.trim().slice(0, 4000) : "";
     const context = typeof body?.context === "string" ? body.context : undefined;
     const history = Array.isArray(body?.history) ? body.history : [];
     const activeProvider = resolveAiProvider();
@@ -165,13 +175,13 @@ Deno.serve(async (req) => {
       answer,
       source,
       provider: isLlmConfigured() ? activeProvider : null,
-    });
+    }, req);
   } catch (error) {
     if (error instanceof HttpError) {
-      return jsonResponse(error.status, { error: error.message });
+      return jsonResponse(error.status, { error: error.message }, req);
     }
 
     console.error("ai-assistant error:", error);
-    return jsonResponse(500, { error: "Unable to process AI request" });
+    return jsonResponse(500, { error: "Unable to process AI request" }, req);
   }
 });

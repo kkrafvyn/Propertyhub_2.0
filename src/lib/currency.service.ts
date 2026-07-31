@@ -159,40 +159,20 @@ class CurrencyService {
    * You can use: exchangerate-api.com, fixer.io, or openexchangerates.org
    */
   private async fetchFromExternalAPI(from: string, to: string): Promise<number> {
-    const apiKey = import.meta.env.VITE_EXCHANGE_RATE_API_KEY
+    const { data, error } = await supabase.functions.invoke("exchange-rates", {
+      body: { from, to },
+    });
 
-    if (apiKey) {
-      const response = await fetch(
-        `https://v6.exchangerate-api.com/v6/${apiKey}/pair/${from}/${to}`
-      )
-
-      if (!response.ok) {
-        throw new Error(`Exchange rate API request failed (${response.status})`)
-      }
-
-      const payload = await response.json()
-      const rate = Number(payload?.conversion_rate)
-
-      if (!Number.isFinite(rate) || rate <= 0) {
-        throw new Error('Exchange rate API returned an invalid rate')
-      }
-
-      return rate
+    if (error) {
+      throw error;
     }
 
-    const response = await fetch(`https://open.er-api.com/v6/latest/${from}`)
-    if (!response.ok) {
-      throw new Error(`Public exchange rate request failed (${response.status})`)
-    }
-
-    const payload = await response.json()
-    const rate = Number(payload?.rates?.[to])
-
+    const rate = Number((data as { rate?: number } | null)?.rate);
     if (!Number.isFinite(rate) || rate <= 0) {
-      throw new Error(`No exchange rate returned for ${from} to ${to}`)
+      throw new Error("Exchange rate edge function returned an invalid rate");
     }
 
-    return rate
+    return rate;
   }
 
   /**

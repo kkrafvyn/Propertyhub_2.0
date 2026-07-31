@@ -1,5 +1,7 @@
 import { HttpError } from "./http.ts";
 import { PaystackTransactionData } from "./paystack.ts";
+import { assertPaystackAmountMatch } from "./payment-pricing.ts";
+import { writeServerAuditLog } from "./audit-log.ts";
 import { createAdminClient } from "./supabase.ts";
 
 type PropertyTransactionRow = {
@@ -521,6 +523,12 @@ export async function reconcilePaystackPayment(input: {
     throw new HttpError(404, "Property transaction not found");
   }
 
+  assertPaystackAmountMatch({
+    expectedMinor: transaction.amount_minor,
+    paystackAmountMajor: Number(input.verifiedTransaction.amount || 0),
+    currency: transaction.currency,
+  });
+
   const normalizedStatus = normalizeStatus(input.verifiedTransaction.status);
   const providerTransactionId =
     input.verifiedTransaction.id !== undefined
@@ -669,6 +677,19 @@ export async function reconcilePaystackPayment(input: {
   );
 
   await syncFinancialSideEffects(updatedTransaction);
+
+  await writeServerAuditLog({
+    actorUserId: input.verifiedByUserId || updatedTransaction.payer_user_id,
+    action: "payment_reconciled",
+    entityType: "property_transaction",
+    entityId: updatedTransaction.id,
+    details: {
+      reference: input.reference,
+      source: input.source,
+      amount_minor: updatedTransaction.amount_minor,
+      currency: updatedTransaction.currency,
+    },
+  });
 
   return {
     transaction: updatedTransaction,

@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
+import { validateClientUpload } from "./security/upload-validation";
 
-const KYC_MEDIA_BUCKET =
-  import.meta.env.VITE_PROPERTY_MEDIA_BUCKET || "property-media";
+const KYC_MEDIA_BUCKET = "kyc-documents";
 
 export type KycDocumentType = "national_id" | "passport" | "drivers_license" | "ghana_card";
 export type KycStatus = "submitted" | "in_review" | "verified" | "rejected";
@@ -71,8 +71,10 @@ export const kycService = {
   },
 
   async uploadDocument(input: { userId: string; file: File }) {
+    validateClientUpload({ file: input.file, maxBytes: 5 * 1024 * 1024, allowPdf: true });
+
     const extension = input.file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `kyc/${input.userId}/${crypto.randomUUID()}.${extension}`;
+    const path = `${input.userId}/${crypto.randomUUID()}.${extension}`;
     const { error: uploadError } = await supabase.storage
       .from(KYC_MEDIA_BUCKET)
       .upload(path, input.file, {
@@ -100,15 +102,19 @@ export const kycService = {
     return data || [];
   },
 
-  async getDocumentPublicUrl(storagePath: string) {
-    const { data } = supabase.storage.from(KYC_MEDIA_BUCKET).getPublicUrl(storagePath);
-    return data?.publicUrl || null;
+  async getDocumentSignedUrl(storagePath: string, expiresIn = 300) {
+    const { data, error } = await supabase.storage
+      .from(KYC_MEDIA_BUCKET)
+      .createSignedUrl(storagePath, expiresIn);
+
+    if (error) throw error;
+    return data?.signedUrl || null;
   },
 
   async reviewSubmission(
     submissionId: string,
     status: "verified" | "rejected",
-    reviewerNotes?: string
+    reviewerNotes?: string,
   ) {
     const { data, error } = await supabase
       .from("kyc_submissions")

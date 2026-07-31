@@ -6,6 +6,7 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { authService } from "../../../lib/auth.service";
 import { supabase } from "../../../lib/supabase";
+import { validatePassword } from "../../../lib/security/password-policy";
 
 type ResetMode = "request" | "reset";
 
@@ -64,8 +65,9 @@ export function ResetPassword() {
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password.length < 8) {
-      toast.error("Password must be at least 8 characters.");
+    const passwordCheck = validatePassword(password);
+    if (!passwordCheck.valid) {
+      toast.error(passwordCheck.errors[0] || "Password does not meet requirements");
       return;
     }
 

@@ -17,7 +17,7 @@ export function PaymentGatewaysEditor() {
   const load = async () => {
     try {
       setLoading(true);
-      setGateways(await revenueManagementService.listPaymentGateways());
+      setGateways(await revenueManagementService.listPaymentGatewaysAdmin());
     } catch (error) {
       console.error(error);
       toast.error("Unable to load payment gateways.");

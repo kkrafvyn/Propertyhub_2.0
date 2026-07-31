@@ -1,4 +1,6 @@
-import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
+import { getCorsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
+import { enforceRateLimit, rateLimitKey } from "../_shared/rate-limit.ts";
+import { requireAuthenticatedUser } from "../_shared/supabase.ts";
 import {
   type AiSource,
   chatCompletion,
@@ -71,16 +73,24 @@ async function parseWithLlm(query: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   if (req.method !== "POST") {
-    return jsonResponse(405, { error: "Method not allowed" });
+    return jsonResponse(405, { error: "Method not allowed" }, req);
   }
 
   try {
+    const authHeader = req.headers.get("Authorization");
+    const { user } = await requireAuthenticatedUser(authHeader);
+    await enforceRateLimit({
+      bucket: rateLimitKey("parse-search", user.id),
+      maxHits: 30,
+      windowSeconds: 60,
+    });
+
     const body = await req.json().catch(() => null);
-    const query = typeof body?.query === "string" ? body.query.trim() : "";
+    const query = typeof body?.query === "string" ? body.query.trim().slice(0, 500) : "";
 
     if (!query) {
       throw new HttpError(400, "query is required");
@@ -101,13 +111,13 @@ Deno.serve(async (req) => {
       filters = parseSearchQueryLocally(query);
     }
 
-    return jsonResponse(200, { filters, source, provider: activeProvider });
+    return jsonResponse(200, { filters, source, provider: activeProvider }, req);
   } catch (error) {
     if (error instanceof HttpError) {
-      return jsonResponse(error.status, { error: error.message });
+      return jsonResponse(error.status, { error: error.message }, req);
     }
 
     console.error("parse-search-query error:", error);
-    return jsonResponse(500, { error: "Unable to parse search query" });
+    return jsonResponse(500, { error: "Unable to parse search query" }, req);
   }
 });

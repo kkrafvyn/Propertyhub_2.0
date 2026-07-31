@@ -24,6 +24,7 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { useAuth } from "../../context/AuthContext";
+import { useFinancialAccessGuard } from "../../hooks/useFinancialAccessGuard";
 import { dealCaseService } from "../../../lib/dealcase.service";
 import { messageService } from "../../../lib/message.service";
 import { paymentService } from "../../../lib/payment.service";
@@ -265,6 +266,7 @@ export function UserDashboard() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const section = getSection(location.pathname);
+  useFinancialAccessGuard();
 
   useEffect(() => {
     if (section === "settings" && location.hash === "#kyc") {

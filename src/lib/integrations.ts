@@ -57,13 +57,13 @@ export const clientIntegrations = {
 
   exchangeRates: {
     get configured() {
-      return envFlag(import.meta.env.VITE_EXCHANGE_RATE_API_KEY);
+      return clientIntegrations.supabase.configured;
     },
     get available() {
-      return true;
+      return clientIntegrations.supabase.configured;
     },
     label: "Exchange rates",
-    hint: "VITE_EXCHANGE_RATE_API_KEY (optional — free API fallback)",
+    hint: "EXCHANGE_RATE_API_KEY in Supabase secrets (optional — free API fallback)",
   },
 
   openAi: {

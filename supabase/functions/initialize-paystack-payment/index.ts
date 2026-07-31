@@ -1,4 +1,6 @@
-import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
+import { getCorsHeaders, HttpError, jsonResponse, safeErrorMessage } from "../_shared/http.ts";
+import { assertListingPayable, resolvePaymentAmountMinor } from "../_shared/payment-pricing.ts";
+import { enforceRateLimit, rateLimitKey } from "../_shared/rate-limit.ts";
 import { initializePaystackTransaction } from "../_shared/paystack.ts";
 import { requireAuthenticatedUser, createAdminClient } from "../_shared/supabase.ts";
 
@@ -46,16 +48,22 @@ function getCaseTypeFromListingType(listingType?: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   if (req.method !== "POST") {
-    return jsonResponse(405, { error: "Method not allowed" });
+    return jsonResponse(405, { error: "Method not allowed" }, req);
   }
 
   try {
     const authHeader = req.headers.get("Authorization");
     const { user } = await requireAuthenticatedUser(authHeader);
+    await enforceRateLimit({
+      bucket: rateLimitKey("paystack-init", user.id),
+      maxHits: 10,
+      windowSeconds: 60,
+    });
+
     const requestBody = await req.json().catch(() => null);
 
     const listingId =
@@ -77,7 +85,8 @@ Deno.serve(async (req) => {
       throw new HttpError(400, "listingId is required");
     }
 
-    const amountMinor = parseAmountToMinorUnits(requestBody?.amount);
+    const clientAmountMinor =
+      requestBody?.amount != null ? parseAmountToMinorUnits(requestBody.amount) : null;
     const admin = createAdminClient();
 
     const { data: listing, error: listingError } = await admin
@@ -87,15 +96,30 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (listingError) {
-      throw new HttpError(500, listingError.message);
+      throw new HttpError(500, "Unable to load listing");
     }
 
-    if (!listing) {
-      throw new HttpError(404, "Listing not found");
-    }
+    assertListingPayable(listing);
+    const amountMinor = resolvePaymentAmountMinor({
+      listing,
+      purpose,
+      clientAmountMinor,
+    });
 
-    if (!["listed", "under_offer", "occupied", "leased", "sold"].includes(listing.status)) {
-      throw new HttpError(400, "This listing is not available for payment");
+    if (bookingId) {
+      const { data: booking, error: bookingError } = await admin
+        .from("short_stay_bookings")
+        .select("id, guest_user_id, listing_id, status")
+        .eq("id", bookingId)
+        .maybeSingle();
+
+      if (bookingError) {
+        throw new HttpError(500, "Unable to validate booking");
+      }
+
+      if (!booking || booking.guest_user_id !== user.id || booking.listing_id !== listingId) {
+        throw new HttpError(403, "Booking does not belong to this user or listing");
+      }
     }
 
     if (!user.email) {
@@ -249,13 +273,13 @@ Deno.serve(async (req) => {
       accessCode: paystack.access_code,
       reference: paystack.reference,
       callbackUrl,
-    });
+    }, req);
   } catch (error) {
     if (error instanceof HttpError) {
-      return jsonResponse(error.status, { error: error.message });
+      return jsonResponse(error.status, { error: error.message }, req);
     }
 
     console.error("initialize-paystack-payment error:", error);
-    return jsonResponse(500, { error: "Unable to initialize payment" });
+    return jsonResponse(500, { error: safeErrorMessage(error, "Unable to initialize payment") }, req);
   }
 });
