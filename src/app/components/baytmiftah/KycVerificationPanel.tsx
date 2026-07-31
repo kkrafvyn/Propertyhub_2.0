@@ -351,6 +351,7 @@ export function KycVerificationPanel() {
         <h3 className="font-semibold">{t("kycPage.title")}</h3>
 
         <p className="text-sm text-muted-foreground mt-1">{t("kycPage.subtitle")}</p>
+        <p className="text-xs text-muted-foreground mt-2">{t("kycPage.manualOnlyNote")}</p>
 
       </div>
 
