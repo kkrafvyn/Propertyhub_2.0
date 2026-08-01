@@ -22,6 +22,8 @@ const SERVER_KEYS = [
   "MLS_API_SECRET",
   "ZILLOW_API_KEY",
   "REALTOR_API_KEY",
+  "ALLOWED_ORIGINS",
+  "EXCHANGE_RATE_API_KEY",
 ];
 
 function parseEnvFile(filePath) {
@@ -63,8 +65,27 @@ function buildServerSecrets(env = loadProjectEnv()) {
     if (env[key]) secrets[key] = env[key];
   }
 
+  if (!secrets.PAYSTACK_WEBHOOK_SECRET && env.PAYSTACK_SECRET_KEY) {
+    secrets.PAYSTACK_WEBHOOK_SECRET = env.PAYSTACK_SECRET_KEY;
+  }
+
   if (!secrets.WEB_PUSH_PUBLIC_KEY && env.VITE_WEB_PUSH_PUBLIC_KEY) {
     secrets.WEB_PUSH_PUBLIC_KEY = env.VITE_WEB_PUSH_PUBLIC_KEY;
+  }
+
+  if (!secrets.ALLOWED_ORIGINS) {
+    const origins = new Set([
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      appUrl.replace(/\/+$/, ""),
+      "https://baytmiftah.com",
+      "https://www.baytmiftah.com",
+    ]);
+    secrets.ALLOWED_ORIGINS = [...origins].join(",");
+  }
+
+  if (!secrets.EXCHANGE_RATE_API_KEY && env.VITE_EXCHANGE_RATE_API_KEY) {
+    secrets.EXCHANGE_RATE_API_KEY = env.VITE_EXCHANGE_RATE_API_KEY;
   }
 
   return Object.fromEntries(SERVER_KEYS.map((key) => [key, secrets[key] || ""]));

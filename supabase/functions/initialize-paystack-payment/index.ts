@@ -1,5 +1,6 @@
 import { getCorsHeaders, HttpError, jsonResponse, safeErrorMessage } from "../_shared/http.ts";
-import { assertListingPayable, resolvePaymentAmountMinor } from "../_shared/payment-pricing.ts";
+import { assertListingPayable } from "../_shared/payment-pricing.ts";
+import { resolveCheckoutAmountMinor } from "../_shared/promo-pricing.ts";
 import { enforceRateLimit, rateLimitKey } from "../_shared/rate-limit.ts";
 import { initializePaystackTransaction } from "../_shared/paystack.ts";
 import { requireAuthenticatedUser, createAdminClient } from "../_shared/supabase.ts";
@@ -80,6 +81,8 @@ Deno.serve(async (req) => {
       typeof requestBody?.customerPhone === "string" ? requestBody.customerPhone.trim() : "";
     const customerName =
       typeof requestBody?.customerName === "string" ? requestBody.customerName.trim() : "";
+    const promoCode =
+      typeof requestBody?.promoCode === "string" ? requestBody.promoCode.trim() : "";
 
     if (!listingId) {
       throw new HttpError(400, "listingId is required");
@@ -100,11 +103,13 @@ Deno.serve(async (req) => {
     }
 
     assertListingPayable(listing);
-    const amountMinor = resolvePaymentAmountMinor({
+    const pricing = await resolveCheckoutAmountMinor(admin, {
       listing,
       purpose,
+      promoCode: promoCode || null,
       clientAmountMinor,
     });
+    const amountMinor = pricing.totalMinor;
 
     if (bookingId) {
       const { data: booking, error: bookingError } = await admin
@@ -217,6 +222,12 @@ Deno.serve(async (req) => {
       purpose,
       customerPhone,
       customerName,
+      promoCode: pricing.promo?.code || null,
+      promoId: pricing.promo?.promo_id || null,
+      baseAmountMinor: pricing.baseMinor,
+      platformFeeMinor: pricing.platformFeeMinor,
+      discountMinor: pricing.discountMinor,
+      feeBreakdown: pricing.feeBreakdown,
     };
 
     const { data: propertyTransaction, error: propertyTransactionError } = await admin
@@ -273,6 +284,13 @@ Deno.serve(async (req) => {
       accessCode: paystack.access_code,
       reference: paystack.reference,
       callbackUrl,
+      pricing: {
+        baseMinor: pricing.baseMinor,
+        platformFeeMinor: pricing.platformFeeMinor,
+        discountMinor: pricing.discountMinor,
+        totalMinor: pricing.totalMinor,
+        promoCode: pricing.promo?.code || null,
+      },
     }, req);
   } catch (error) {
     if (error instanceof HttpError) {

@@ -11,6 +11,9 @@ import { AuthShell, AuthDivider, OAuthButtons } from "../../components/baytmifta
 export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(
+    () => localStorage.getItem("bm_remember_me") === "true",
+  );
   const [loading, setLoading] = useState(false);
   const [oauthLoadingProvider, setOauthLoadingProvider] = useState<"google" | "apple" | null>(
     null
@@ -37,6 +40,13 @@ export function Login() {
   );
 
   useEffect(() => {
+    if (localStorage.getItem("bm_remember_me") === "true") {
+      const savedEmail = localStorage.getItem("bm_saved_email");
+      if (savedEmail) setEmail(savedEmail);
+    }
+  }, []);
+
+  useEffect(() => {
     if (!user) return;
     const destination = resolvePostAuthRedirect(
       user,
@@ -56,6 +66,13 @@ export function Login() {
     try {
       setLoading(true);
       await signIn(email, password);
+      if (rememberMe) {
+        localStorage.setItem("bm_remember_me", "true");
+        localStorage.setItem("bm_saved_email", email);
+      } else {
+        localStorage.removeItem("bm_remember_me");
+        localStorage.removeItem("bm_saved_email");
+      }
       toast.success("Logged in successfully!");
       navigate(redirectTo, { replace: true });
     } catch (error) {
@@ -122,7 +139,12 @@ export function Login() {
 
         <div className="flex items-center justify-between">
           <label className="flex cursor-pointer items-center gap-2">
-            <input type="checkbox" className="h-4 w-4 rounded border-border text-primary" />
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-border text-primary"
+              checked={rememberMe}
+              onChange={(event) => setRememberMe(event.target.checked)}
+            />
             <span className="text-sm text-muted-foreground">Remember me</span>
           </label>
           <Link to="/forgot-password" className="text-sm text-primary hover:underline">

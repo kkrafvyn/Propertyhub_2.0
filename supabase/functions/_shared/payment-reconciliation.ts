@@ -1,6 +1,7 @@
 import { HttpError } from "./http.ts";
 import { PaystackTransactionData } from "./paystack.ts";
 import { assertPaystackAmountMatch } from "./payment-pricing.ts";
+import { redeemPromoCode } from "./promo-pricing.ts";
 import { writeServerAuditLog } from "./audit-log.ts";
 import { createAdminClient } from "./supabase.ts";
 
@@ -625,6 +626,19 @@ export async function reconcilePaystackPayment(input: {
 
   if (updatedTransactionError) {
     throw new HttpError(500, updatedTransactionError.message);
+  }
+
+  const promoCode =
+    typeof mergedMetadata.promoCode === "string" ? mergedMetadata.promoCode.trim() : "";
+  if (promoCode && !mergedMetadata.promoRedeemed) {
+    const redeemed = await redeemPromoCode(admin, promoCode);
+    if (redeemed) {
+      mergedMetadata.promoRedeemed = true;
+      await admin
+        .from("property_transactions")
+        .update({ metadata: mergedMetadata })
+        .eq("id", transaction.id);
+    }
   }
 
   await syncDealCasePaymentState({

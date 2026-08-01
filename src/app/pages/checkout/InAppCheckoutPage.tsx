@@ -24,6 +24,9 @@ import { openPaystackInline } from "../../../lib/paystack-inline";
 import { clientIntegrations } from "../../../lib/integrations";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
 import { realEstateComplianceService } from "../../../lib/real-estate-compliance.service";
+import { revenueManagementService } from "../../../lib/revenue-management.service";
+import type { CheckoutPricingPreview } from "../../../lib/revenue-management.service";
+import { Input } from "../../components/ui/Input";
 
 type CheckoutPhase = "review" | "processing" | "success" | "error";
 
@@ -50,6 +53,11 @@ export function InAppCheckoutPage() {
   const [phase, setPhase] = useState<CheckoutPhase>("review");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [completedReference, setCompletedReference] = useState<string | null>(null);
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+  const [pricing, setPricing] = useState<CheckoutPricingPreview | null>(null);
+  const [pricingError, setPricingError] = useState<string | null>(null);
+  const [applyingPromo, setApplyingPromo] = useState(false);
 
   useEffect(() => {
     setCheckoutParams(parseCheckoutParams(searchParams));
@@ -89,6 +97,7 @@ export function InAppCheckoutPage() {
 
   const currency = listing?.currency || paymentContext?.currency || "GHS";
   const amount = checkoutParams?.amount ?? 0;
+  const payableAmount = pricing ? pricing.totalMinor / 100 : amount;
   const purposeLabel = checkoutParams
     ? PURPOSE_LABELS[checkoutParams.purpose] || "Payment"
     : "Payment";
@@ -101,6 +110,67 @@ export function InAppCheckoutPage() {
 
   const paystackReady = clientIntegrations.paystack.checkoutReady;
   const usePaystack = paymentContext ? shouldUsePaystackCheckout(paymentContext) : paystackReady;
+
+  useEffect(() => {
+    if (!checkoutParams || amount <= 0) {
+      setPricing(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    void revenueManagementService
+      .previewCheckoutPricing({
+        baseAmountMajor: amount,
+        purpose: checkoutParams.purpose,
+        promoCode: appliedPromo,
+      })
+      .then((preview) => {
+        if (!cancelled) {
+          setPricing(preview);
+          setPricingError(null);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setPricing(null);
+          setPricingError(error instanceof Error ? error.message : "Unable to calculate checkout total");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [amount, appliedPromo, checkoutParams]);
+
+  const handleApplyPromo = async () => {
+    if (!checkoutParams || !promoInput.trim()) return;
+    setApplyingPromo(true);
+    setPricingError(null);
+    try {
+      const preview = await revenueManagementService.previewCheckoutPricing({
+        baseAmountMajor: amount,
+        purpose: checkoutParams.purpose,
+        promoCode: promoInput.trim(),
+      });
+      setAppliedPromo(preview.promoCode);
+      setPricing(preview);
+      toast.success("Promo code applied.");
+    } catch (error) {
+      setAppliedPromo(null);
+      const message = error instanceof Error ? error.message : "Invalid promo code";
+      setPricingError(message);
+      toast.error(message);
+    } finally {
+      setApplyingPromo(false);
+    }
+  };
+
+  const handleClearPromo = () => {
+    setPromoInput("");
+    setAppliedPromo(null);
+    setPricingError(null);
+  };
 
   const handlePay = async () => {
     if (!user?.email || !checkoutParams) {
@@ -131,19 +201,20 @@ export function InAppCheckoutPage() {
 
       const checkout = await paymentService.initializePropertyPayment({
         listingId: checkoutParams.listingId,
-        amount: checkoutParams.amount,
+        amount: payableAmount,
         purpose: checkoutParams.purpose,
         bookingId: checkoutParams.bookingId,
         dealCaseId: checkoutParams.dealCaseId,
         customerName: checkoutParams.customerName || user.user_metadata?.full_name,
         customerPhone: checkoutParams.customerPhone,
+        promoCode: appliedPromo || undefined,
       });
 
       let paid = false;
 
       await openPaystackInline({
         email: user.email,
-        amountMinor: Math.round(checkoutParams.amount * 100),
+        amountMinor: Math.round(payableAmount * 100),
         currency,
         reference: checkout.reference,
         accessCode: checkout.accessCode,
@@ -215,7 +286,7 @@ export function InAppCheckoutPage() {
           </div>
           <h1 className="mt-6 text-2xl font-semibold text-ink">Payment successful</h1>
           <p className="mt-2 text-ink-secondary">
-            {formatMoney(amount, currency)} for {purposeLabel.toLowerCase()} has been received.
+            {formatMoney(payableAmount, currency)} for {purposeLabel.toLowerCase()} has been received.
           </p>
           {completedReference ? (
             <p className="mt-2 text-sm text-ink-secondary">
@@ -247,6 +318,37 @@ export function InAppCheckoutPage() {
 
         <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-6">
+            <section className="rounded-2xl border border-surface-border bg-white p-6 shadow-card">
+              <h2 className="text-lg font-semibold text-ink">Promo code</h2>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <Input
+                  value={promoInput}
+                  onChange={(event) => setPromoInput(event.target.value.toUpperCase())}
+                  placeholder="Enter promo code"
+                  disabled={Boolean(appliedPromo) || applyingPromo}
+                />
+                {appliedPromo ? (
+                  <Button variant="outline" onClick={handleClearPromo}>
+                    Remove
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    disabled={!promoInput.trim() || applyingPromo}
+                    onClick={() => void handleApplyPromo()}
+                  >
+                    {applyingPromo ? "Applying…" : "Apply"}
+                  </Button>
+                )}
+              </div>
+              {appliedPromo ? (
+                <p className="mt-2 text-sm text-green-700">Promo {appliedPromo} applied.</p>
+              ) : null}
+              {pricingError ? (
+                <p className="mt-2 text-sm text-red-700">{pricingError}</p>
+              ) : null}
+            </section>
+
             <section className="rounded-2xl border border-surface-border bg-white p-6 shadow-card">
               <h2 className="text-lg font-semibold text-ink">Payment method</h2>
               <div className="mt-4 flex items-start gap-3 rounded-xl border border-brand-forest/20 bg-brand-forest/5 p-4">
@@ -295,7 +397,7 @@ export function InAppCheckoutPage() {
             <Button
               size="lg"
               className="w-full"
-              disabled={loadingListing || phase === "processing" || !escrowAccepted || !paystackReady}
+              disabled={loadingListing || phase === "processing" || !escrowAccepted || !paystackReady || !pricing}
               onClick={() => void handlePay()}
             >
               {phase === "processing" ? (
@@ -304,7 +406,7 @@ export function InAppCheckoutPage() {
                   Opening secure payment…
                 </>
               ) : (
-                <>Pay {formatMoney(amount, currency)}</>
+                <>Pay {formatMoney(payableAmount, currency)}</>
               )}
             </Button>
 
@@ -331,11 +433,31 @@ export function InAppCheckoutPage() {
                   <p className="text-ink-secondary">Payment for</p>
                   <p className="font-medium text-ink">{purposeLabel}</p>
                 </div>
-                <div className="border-t border-surface-border pt-4">
+                <div className="border-t border-surface-border pt-4 space-y-2">
                   <div className="flex items-center justify-between">
+                    <span className="text-ink-secondary">Subtotal</span>
+                    <span className="font-medium text-ink">{formatMoney(amount, currency)}</span>
+                  </div>
+                  {pricing && pricing.platformFeeMinor > 0 ? (
+                    <div className="flex items-center justify-between">
+                      <span className="text-ink-secondary">Platform fee</span>
+                      <span className="font-medium text-ink">
+                        {formatMoney(pricing.platformFeeMinor / 100, currency)}
+                      </span>
+                    </div>
+                  ) : null}
+                  {pricing && pricing.discountMinor > 0 ? (
+                    <div className="flex items-center justify-between text-green-700">
+                      <span>Promo discount</span>
+                      <span className="font-medium">
+                        -{formatMoney(pricing.discountMinor / 100, currency)}
+                      </span>
+                    </div>
+                  ) : null}
+                  <div className="flex items-center justify-between border-t border-surface-border pt-3">
                     <span className="text-ink-secondary">Total</span>
                     <span className="text-xl font-semibold text-ink">
-                      {formatMoney(amount, currency)}
+                      {formatMoney(payableAmount, currency)}
                     </span>
                   </div>
                 </div>

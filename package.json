@@ -28,6 +28,7 @@
     "ios:build:sim": "cd ios/App && xcodebuild -project App.xcodeproj -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' build",
     "supabase:login": "powershell -ExecutionPolicy Bypass -File scripts/supabase-login.ps1",
     "supabase:deploy:payments": "node scripts/deploySupabasePayments.cjs --skip-db",
+    "supabase:configure-auth": "node scripts/configure-supabase-auth.mjs",
     "db:status": "node scripts/supabase-db.mjs status",
     "db:query": "node scripts/supabase-db.mjs query",
     "db:push": "node scripts/supabase-db.mjs push",
@@ -37,15 +38,17 @@
     "backup:storage": "node scripts/backup/create-backup.mjs -- --storage-only",
     "backup:list": "node scripts/backup/list-backups.mjs",
     "vercel:env": "node scripts/sync-vercel-env.mjs",
-    "contracts:deploy-all": "hardhat run scripts/deployAll.cjs --network polygonAmoy",
-    "contracts:deploy-all-mainnet": "hardhat run scripts/deployAll.cjs --network polygonMainnet",
-    "contracts:deploy-token": "hardhat run scripts/deployPropertyToken.cjs --network polygonAmoy",
-    "contracts:deploy-escrow": "hardhat run scripts/deployPropertyEscrow.cjs --network polygonAmoy",
-    "contracts:deploy-ownership": "hardhat run scripts/deployPropertyOwnership.cjs --network polygonAmoy",
-    "contracts:deploy-lease": "hardhat run scripts/deployPropertyLease.cjs --network polygonAmoy",
-    "contracts:deploy-verification-registry": "hardhat run scripts/deployVerificationRegistry.cjs --network polygonAmoy",
-    "contracts:test": "hardhat test",
-    "contracts:verify": "hardhat verify"
+    "contracts:install": "npm install --prefix blockchain",
+    "contracts:build": "npm run build --prefix blockchain",
+    "contracts:deploy-all": "npm run build --prefix blockchain && npm exec --prefix blockchain -- hardhat run ../scripts/deployAll.cjs --network polygonAmoy",
+    "contracts:deploy-all-mainnet": "npm run build --prefix blockchain && npm exec --prefix blockchain -- hardhat run ../scripts/deployAll.cjs --network polygonMainnet",
+    "contracts:deploy-token": "npm run build --prefix blockchain && npm exec --prefix blockchain -- hardhat run ../scripts/deployPropertyToken.cjs --network polygonAmoy",
+    "contracts:deploy-escrow": "npm run build --prefix blockchain && npm exec --prefix blockchain -- hardhat run ../scripts/deployPropertyEscrow.cjs --network polygonAmoy",
+    "contracts:deploy-ownership": "npm run build --prefix blockchain && npm exec --prefix blockchain -- hardhat run ../scripts/deployPropertyOwnership.cjs --network polygonAmoy",
+    "contracts:deploy-lease": "npm run build --prefix blockchain && npm exec --prefix blockchain -- hardhat run ../scripts/deployPropertyLease.cjs --network polygonAmoy",
+    "contracts:deploy-verification-registry": "npm run build --prefix blockchain && npm exec --prefix blockchain -- hardhat run ../scripts/deployVerificationRegistry.cjs --network polygonAmoy",
+    "contracts:test": "npm run test --prefix blockchain",
+    "contracts:verify": "npm run verify --prefix blockchain"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",
@@ -83,7 +86,6 @@
     "@radix-ui/react-toggle": "1.1.2",
     "@radix-ui/react-toggle-group": "1.1.2",
     "@radix-ui/react-tooltip": "1.1.8",
-    "@supabase/ssr": "^0.3.0",
     "@supabase/supabase-js": "^2.110.8",
     "canvas-confetti": "1.9.4",
     "class-variance-authority": "0.7.1",
@@ -97,15 +99,17 @@
     "lucide-react": "0.487.0",
     "motion": "12.23.24",
     "next-themes": "0.4.6",
+    "react": "19.2.7",
     "react-day-picker": "8.10.1",
     "react-dnd": "16.0.1",
     "react-dnd-html5-backend": "16.0.1",
+    "react-dom": "19.2.7",
     "react-hook-form": "7.55.0",
     "react-leaflet": "^4.2.1",
     "react-popper": "2.3.0",
     "react-resizable-panels": "2.1.7",
     "react-responsive-masonry": "2.7.1",
-    "react-router": "7.18.2",
+    "react-router": "8.3.0",
     "react-slick": "0.31.0",
     "recharts": "2.15.2",
     "sonner": "2.0.3",
@@ -115,9 +119,6 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.3.4",
-    "@nomicfoundation/hardhat-ethers": "^3.0.0",
-    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
-    "@nomiclabs/hardhat-etherscan": "^3.1.7",
     "@playwright/test": "^1.55.0",
     "@tailwindcss/vite": "4.1.12",
     "@testing-library/jest-dom": "^6.9.1",
@@ -130,18 +131,16 @@
     "chai": "^4.3.10",
     "google-translate-api-x": "^10.7.3",
     "happy-dom": "^20.11.0",
-    "hardhat": "^2.20.0",
-    "hardhat-gas-reporter": "^1.0.9",
     "jsdom": "^26.1.0",
     "pg": "^8.22.0",
     "tailwindcss": "4.1.12",
-    "vite": "6.3.5",
+    "vite": "6.4.3",
     "vitest": "^3.2.4",
     "web-push": "^3.6.7"
   },
   "peerDependencies": {
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   },
   "peerDependenciesMeta": {
     "react": {
@@ -151,9 +150,17 @@
       "optional": true
     }
   },
-  "pnpm": {
-    "overrides": {
-      "vite": "6.3.5"
-    }
+  "overrides": {
+    "vite": "6.4.3",
+    "cookie": "^0.7.2",
+    "ws": "^8.21.1",
+    "tmp": "^0.2.7",
+    "brace-expansion": "^5.0.9",
+    "serialize-javascript": "^7.0.7",
+    "undici": "^7.16.0",
+    "uuid": "^11.1.1",
+    "diff": "^8.0.3",
+    "adm-zip": "^0.6.0",
+    "bn.js": "^5.2.2"
   }
 }

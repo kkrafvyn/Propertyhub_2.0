@@ -39,6 +39,7 @@ export interface InitializePropertyPaymentInput {
   bookingId?: string | null;
   customerName?: string;
   customerPhone?: string;
+  promoCode?: string;
 }
 
 export interface InitiatePropertyRefundInput {

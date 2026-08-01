@@ -17,6 +17,7 @@ export function assertListingPayable(listing: ListingRow) {
   }
 }
 
+/** @deprecated Use resolveCheckoutAmountMinor from promo-pricing.ts for checkout flows. */
 export function resolvePaymentAmountMinor(input: {
   listing: ListingRow;
   purpose?: string | null;

@@ -106,9 +106,9 @@ function getPaystackSecretKey() {
 export async function verifyPaystackWebhookSignature(body: string, signature: string | null) {
   if (!signature) return false;
 
-  const secret = Deno.env.get("PAYSTACK_WEBHOOK_SECRET");
+  const secret = Deno.env.get("PAYSTACK_WEBHOOK_SECRET") || Deno.env.get("PAYSTACK_SECRET_KEY");
   if (!secret) {
-    console.error("PAYSTACK_WEBHOOK_SECRET is not configured");
+    console.error("PAYSTACK_WEBHOOK_SECRET and PAYSTACK_SECRET_KEY are not configured");
     return false;
   }
 

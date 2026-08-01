@@ -1,15 +1,15 @@
-const hre = require("hardhat");
+const { connectHardhat } = require("./_hh-connection.cjs");
 const fs = require("fs");
 const path = require("path");
 
 async function main() {
   console.log("Deploying PropertyEscrow contract...");
 
-  const [deployer] = await hre.ethers.getSigners();
+  const { ethers, networkName } = await connectHardhat();
+  const [deployer] = await ethers.getSigners();
   console.log("Deploying with account:", deployer.address);
 
-  const PropertyEscrow = await hre.ethers.getContractFactory("PropertyEscrow");
-  
+  const PropertyEscrow = await ethers.getContractFactory("PropertyEscrow");
   const escrow = await PropertyEscrow.deploy(deployer.address);
 
   await escrow.waitForDeployment();
@@ -18,7 +18,7 @@ async function main() {
   console.log("PropertyEscrow deployed to:", escrowAddress);
 
   const deploymentInfo = {
-    network: hre.network.name,
+    network: networkName,
     contractName: "PropertyEscrow",
     address: escrowAddress,
     escrowAgent: deployer.address,

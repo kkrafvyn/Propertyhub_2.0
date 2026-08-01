@@ -1,11 +1,12 @@
-const hre = require("hardhat");
+const { connectHardhat } = require("./_hh-connection.cjs");
 const fs = require("fs");
 const path = require("path");
 
 async function main() {
   console.log("Deploying VerificationRegistry contract...");
 
-  const VerificationRegistry = await hre.ethers.getContractFactory("VerificationRegistry");
+  const { ethers, networkName } = await connectHardhat();
+  const VerificationRegistry = await ethers.getContractFactory("VerificationRegistry");
   const registry = await VerificationRegistry.deploy();
 
   await registry.waitForDeployment();
@@ -14,7 +15,7 @@ async function main() {
   console.log("VerificationRegistry deployed to:", registryAddress);
 
   const deploymentInfo = {
-    network: hre.network.name,
+    network: networkName,
     contractName: "VerificationRegistry",
     address: registryAddress,
     deployedAt: new Date().toISOString(),

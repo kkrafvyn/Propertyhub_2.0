@@ -13,6 +13,10 @@ coverage/
 # Generated contract outputs
 artifacts/
 cache/
+blockchain/node_modules/
+blockchain/cache/
+blockchain/artifacts/
+blockchain/contracts
 deployments/
 
 # Local tooling output

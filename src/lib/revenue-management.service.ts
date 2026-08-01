@@ -64,6 +64,25 @@ export type PaymentGateway = {
   sort_order: number;
 };
 
+export type PromoValidationResult = {
+  valid: boolean;
+  code?: string;
+  label?: string | null;
+  discount_type?: "percentage" | "fixed";
+  discount_value?: number;
+  discount_minor?: number;
+  promo_id?: string;
+  error?: string;
+};
+
+export type CheckoutPricingPreview = {
+  baseMinor: number;
+  platformFeeMinor: number;
+  discountMinor: number;
+  totalMinor: number;
+  promoCode: string | null;
+};
+
 export type RevenueDashboardMetrics = {
   todayRevenueMinor: number;
   monthRevenueMinor: number;
@@ -274,6 +293,81 @@ export const revenueManagementService = {
       .single();
     if (error) throw error;
     return data;
+  },
+
+  async validatePromoCode(input: {
+    code: string;
+    purpose: string;
+    amountMinor: number;
+  }): Promise<PromoValidationResult> {
+    const { data, error } = await supabase.rpc("validate_promo_code", {
+      p_code: input.code.trim(),
+      p_purpose: input.purpose,
+      p_amount_minor: input.amountMinor,
+    });
+    if (error) throw error;
+    return (data || { valid: false, error: "Invalid promo code" }) as PromoValidationResult;
+  },
+
+  async previewCheckoutPricing(input: {
+    baseAmountMajor: number;
+    purpose: string;
+    promoCode?: string | null;
+  }): Promise<CheckoutPricingPreview> {
+    const baseMinor = Math.round(input.baseAmountMajor * 100);
+    const rules = await this.getActiveRules();
+    let platformFeeMinor = 0;
+
+    for (const rule of rules) {
+      if (rule.rule_key === "transaction_fee") {
+        platformFeeMinor += this.calculateFeeMinor(rule, baseMinor);
+      }
+      if (rule.rule_key === "booking_guest_fee" && input.purpose === "booking_fee") {
+        platformFeeMinor += this.calculateFeeMinor(rule, baseMinor);
+      }
+    }
+
+    const subtotalMinor = baseMinor + platformFeeMinor;
+    let discountMinor = 0;
+    let promoCode: string | null = null;
+
+    if (input.promoCode?.trim()) {
+      const promo = await this.validatePromoCode({
+        code: input.promoCode,
+        purpose: input.purpose,
+        amountMinor: subtotalMinor,
+      });
+      if (!promo.valid) {
+        throw new Error(promo.error || "Invalid promo code");
+      }
+      discountMinor = Number(promo.discount_minor || 0);
+      promoCode = promo.code || input.promoCode.trim().toUpperCase();
+    }
+
+    return {
+      baseMinor,
+      platformFeeMinor,
+      discountMinor,
+      totalMinor: Math.max(0, subtotalMinor - discountMinor),
+      promoCode,
+    };
+  },
+
+  calculateFeeMinor(rule: RevenueRule, baseMinor: number) {
+    const feeValue = Number(rule.fee_value || 0);
+    let feeMinor =
+      rule.fee_type === "percentage"
+        ? Math.round(baseMinor * (feeValue / 100))
+        : Math.round(feeValue * 100);
+
+    if (rule.min_fee != null) {
+      feeMinor = Math.max(feeMinor, Math.round(Number(rule.min_fee) * 100));
+    }
+    if (rule.max_fee != null) {
+      feeMinor = Math.min(feeMinor, Math.round(Number(rule.max_fee) * 100));
+    }
+
+    return Math.max(0, feeMinor);
   },
 
   async getDashboardMetrics(): Promise<RevenueDashboardMetrics> {

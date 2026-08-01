@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router";
-import { hasMfaAssurance, workspaceRoleRequiresMfa } from "../../lib/security/mfa";
+import { hasMfaAssurance, workspaceRoleRequiresMfa } from "../../../lib/security/mfa";
 
 export function WorkspaceMfaGate({
   role,

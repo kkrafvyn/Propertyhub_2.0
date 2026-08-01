@@ -1,19 +1,20 @@
-const hre = require("hardhat");
+const { connectHardhat } = require("./_hh-connection.cjs");
 const fs = require("fs");
 const path = require("path");
 
 async function main() {
   console.log("Deploying PropertyToken contract...");
 
-  const PropertyToken = await hre.ethers.getContractFactory("PropertyToken");
-  
+  const { ethers, networkName } = await connectHardhat();
+  const PropertyToken = await ethers.getContractFactory("PropertyToken");
+
   const token = await PropertyToken.deploy(
-    "Property Hub Token", // name
-    "PROP", // symbol
-    ethers.parseEther("1000000"), // 1M tokens initial supply
-    18, // decimals
-    "PROP-001", // propertyId
-    ethers.parseEther("500000") // 500k MATIC property value
+    "Property Hub Token",
+    "PROP",
+    ethers.parseEther("1000000"),
+    18,
+    "PROP-001",
+    ethers.parseEther("500000"),
   );
 
   await token.waitForDeployment();
@@ -21,9 +22,8 @@ async function main() {
 
   console.log("PropertyToken deployed to:", tokenAddress);
 
-  // Save deployment info
   const deploymentInfo = {
-    network: hre.network.name,
+    network: networkName,
     contractName: "PropertyToken",
     address: tokenAddress,
     deployedAt: new Date().toISOString(),

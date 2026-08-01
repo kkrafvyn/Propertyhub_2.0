@@ -1,12 +1,12 @@
-const hre = require("hardhat");
+const { connectHardhat } = require("./_hh-connection.cjs");
 const fs = require("fs");
 const path = require("path");
 
 async function main() {
   console.log("Deploying PropertyLease contract...");
 
-  const PropertyLease = await hre.ethers.getContractFactory("PropertyLease");
-  
+  const { ethers, networkName } = await connectHardhat();
+  const PropertyLease = await ethers.getContractFactory("PropertyLease");
   const lease = await PropertyLease.deploy();
 
   await lease.waitForDeployment();
@@ -15,7 +15,7 @@ async function main() {
   console.log("PropertyLease deployed to:", leaseAddress);
 
   const deploymentInfo = {
-    network: hre.network.name,
+    network: networkName,
     contractName: "PropertyLease",
     address: leaseAddress,
     deployedAt: new Date().toISOString(),
