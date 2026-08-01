@@ -485,9 +485,19 @@ const BASE_LEGAL_DOCUMENTS: LegalDocument[] = [
       {
         title: "Types",
         bullets: [
-          "Identity verification (KYC) for high-value actions.",
-          "Agency licence checks where submitted.",
-          "Listing checks and fraud signals where enabled.",
+          "Platform reviewed — internal checks on submitted agency or listing information.",
+          "ID checked — KYC identity review for high-value actions.",
+          "Listing quality score — completeness score only, not safety or title certification.",
+          "Licensed payment partner — payments processed by third parties such as Paystack.",
+        ],
+      },
+      {
+        title: "UI label glossary",
+        bullets: [
+          "Platform reviewed: workspace/agency information was reviewed; not a government licence or title guarantee.",
+          "ID checked: identity documents reviewed at a point in time.",
+          "Payment hold: funds may be held per Payment & Escrow Terms; BaytMiftah is not a bank.",
+          "Listing quality score: internal completeness metric only.",
         ],
       },
       {

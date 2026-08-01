@@ -3,10 +3,10 @@ export default {
     "title": "List your property",
     "signInSubtitle": "Sign in to start listing your home, apartment, or commercial space.",
     "heroTitle": "List your property on BaytMiftah",
-    "heroSubtitle": "Reach verified buyers and renters across Ghana. Our team reviews every listing for quality and trust.",
-    "benefit1": "Professional photos and verified address",
+    "heroSubtitle": "Reach buyers and renters across Ghana. Listings are reviewed for quality — always do your own due diligence.",
+    "benefit1": "Professional photos and platform-reviewed listing information",
     "benefit2": "Agency dashboard for leads and viewings",
-    "benefit3": "Secure document vault for transactions",
+    "benefit3": "Document vault for transaction records (not legal advice)",
     "getStarted": "Get started",
     "yourListings": "Your listings",
     "featureListing": "Feature your listing",
@@ -106,8 +106,8 @@ export default {
     "submitFailed": "Could not submit verification. Try again.",
     "nameRequired": "Enter your legal name.",
     "documentsRequired": "Upload at least one document.",
-    "verifiedTitle": "Identity verified",
-    "verifiedBody": "Your account is verified. You can submit offers and access financing.",
+    "verifiedTitle": "Identity checked",
+    "verifiedBody": "Your identity was reviewed at a point in time. You can submit offers and access financing features where enabled.",
     "pendingTitle": "Verification pending",
     "pendingBody": "Our team is reviewing your documents. This usually takes 1–2 business days.",
     "requiredTitle": "Verification required",
@@ -148,7 +148,7 @@ export default {
     "payments": "Payments",
     "paymentsBody": "Rent and featured boosts use Paystack (Ghana mobile money & cards) or Stripe (international cards). Configure secrets in Supabase Edge Functions.",
     "safety": "Trust & safety",
-    "safetyBody": "Verified listings and KYC-reviewed agencies help keep the marketplace trustworthy. Report suspicious activity to support."
+    "safetyBody": "Platform-reviewed listings and ID-checked agencies help reduce risk, but BaytMiftah does not guarantee property condition or title. Report suspicious activity to support."
   },
   "referral": {
     "title": "Refer a friend",

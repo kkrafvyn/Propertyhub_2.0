@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { TRUST_LABELS } from "./legal-disclaimers";
 
 export const trustCenterService = {
   async getListingTrustSnapshot(listingId: string, organizationId: string) {
@@ -26,12 +27,14 @@ export const trustCenterService = {
       organizationsResult.status === "fulfilled" ? organizationsResult.value.data : null;
     const signedDocumentCount = documents.filter((document) => document.signed_at).length;
     const trustHighlights = [
-      organization?.verified ? "Organization identity reviewed" : "Organization verification pending",
+      organization?.verified
+        ? TRUST_LABELS.platform_reviewed_agency.short
+        : "Organization review pending",
       publicDocumentCount > 0
-        ? `${publicDocumentCount} public verification document${publicDocumentCount === 1 ? "" : "s"} available`
-        : "No public verification documents published yet",
-      "Paystack handles Mobile Money, cards, and bank transfers",
-      "Successful payments generate downloadable receipts with SHA-256 verification",
+        ? `${publicDocumentCount} public document${publicDocumentCount === 1 ? "" : "s"} shared by host`
+        : "No public documents shared yet",
+      TRUST_LABELS.licensed_payment_partner.short,
+      "Completed payments may generate downloadable receipts",
     ];
 
     return {
@@ -59,28 +62,35 @@ export const trustCenterService = {
     return [
       {
         id: "agency",
-        label: snapshot.organizationVerified ? "Verified agency" : "Agency pending verification",
+        label: snapshot.organizationVerified
+          ? TRUST_LABELS.platform_reviewed_agency.short
+          : "Agency review pending",
+        disclaimer: TRUST_LABELS.platform_reviewed_agency.disclaimer,
         active: snapshot.organizationVerified,
       },
       {
         id: "documents",
         label:
           snapshot.publicDocumentCount > 0
-            ? `${snapshot.publicDocumentCount} public trust document${snapshot.publicDocumentCount === 1 ? "" : "s"}`
-            : "Documents not published",
+            ? `${snapshot.publicDocumentCount} shared document${snapshot.publicDocumentCount === 1 ? "" : "s"}`
+            : "No shared documents",
+        disclaimer:
+          "Documents are uploaded by the listing party. BaytMiftah does not certify title, ownership, or legal validity.",
         active: snapshot.publicDocumentCount > 0,
       },
       {
         id: "payments",
-        label: "Secure Paystack payments",
+        label: TRUST_LABELS.licensed_payment_partner.short,
+        disclaimer: TRUST_LABELS.licensed_payment_partner.disclaimer,
         active: snapshot.securePaymentsEnabled,
       },
       {
         id: "listing",
         label:
           (input.qualityScore || 0) >= 75
-            ? `Listing quality ${input.qualityScore}`
-            : "Listing under review",
+            ? `${TRUST_LABELS.listing_quality_score.short}: ${input.qualityScore}`
+            : "Listing review in progress",
+        disclaimer: TRUST_LABELS.listing_quality_score.disclaimer,
         active: (input.qualityScore || 0) >= 75,
       },
     ];

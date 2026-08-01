@@ -41,6 +41,9 @@ import { trustCenterService } from "../../lib/trust-center.service";
 import { ComplianceDisclosurePanel } from "../components/compliance/ComplianceDisclosurePanel";
 import { realEstateComplianceService } from "../../lib/real-estate-compliance.service";
 import { ConsumerTrustBadges } from "../components/ConsumerTrustBadges";
+import { MarketplaceDisclaimerStrip } from "../components/legal/MarketplaceDisclaimerStrip";
+import { TrustBadge } from "../components/legal/TrustBadge";
+import { TRUST_LABELS } from "../../lib/legal-disclaimers";
 import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
 import { monitoring } from "../../lib/monitoring";
 import { useMyKyc } from "../hooks/useMyKyc";
@@ -528,7 +531,7 @@ export function PropertyDetail() {
     e.preventDefault();
 
     if (!user) {
-      toast.error("Log in before starting a secure payment.");
+      toast.error("Log in before starting checkout.");
       navigate("/login", { state: { from: `/property/${id}` } });
       return;
     }
@@ -693,16 +696,18 @@ export function PropertyDetail() {
                   <div className="flex items-center gap-3 mb-2">
                     <h1 className="text-3xl font-semibold">{pageTitle}</h1>
                     {organization?.verified && (
-                      <div className="bg-accent text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                        <Check className="w-3 h-3" />
-                        Verified
-                      </div>
+                      <TrustBadge
+                        label={TRUST_LABELS.platform_reviewed_agency.short}
+                        disclaimer={TRUST_LABELS.platform_reviewed_agency.disclaimer}
+                        className="shrink-0"
+                      />
                     )}
                     {listingQualityScore !== null && listingQualityScore >= 75 && (
-                      <div className="bg-primary text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                        <Shield className="w-3 h-3" />
-                        Trust {listingQualityScore}
-                      </div>
+                      <TrustBadge
+                        label={`${TRUST_LABELS.listing_quality_score.short}: ${listingQualityScore}`}
+                        disclaimer={TRUST_LABELS.listing_quality_score.disclaimer}
+                        className="shrink-0"
+                      />
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground mb-4">
@@ -795,18 +800,18 @@ export function PropertyDetail() {
             </div>
 
             <div>
-              <h2 className="text-2xl font-semibold mb-4">Verification & Trust</h2>
+              <h2 className="text-2xl font-semibold mb-4">Trust signals (informational)</h2>
               <Card className="p-6 bg-primary/5 border-primary/15">
                 <div className="flex items-start gap-3 mb-5">
                   <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
                     <Shield className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold">Built for verified transactions</h3>
+                    <h3 className="text-lg font-semibold">Platform trust signals</h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Payments run through {paymentProviderLabel} based on this property&apos;s
-                      location ({paymentCurrency}), while receipts and agreement records can be
-                      tracked through the platform&apos;s verification layer.
+                      Payments for this listing are processed by {paymentProviderLabel} ({paymentCurrency}).
+                      Labels below describe platform checks only — not legal title, property condition, or
+                      investment suitability.
                     </p>
                     {!trustLoading && trustBadges.length > 0 ? (
                       <div className="mt-4">
@@ -830,10 +835,12 @@ export function PropertyDetail() {
                           Organization
                         </div>
                         <p className="text-lg font-semibold">
-                          {trustSnapshot?.organizationVerified ? "Verified" : "Review Pending"}
+                          {trustSnapshot?.organizationVerified
+                            ? TRUST_LABELS.platform_reviewed_agency.short
+                            : "Review pending"}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Workspace ownership and organization identity status.
+                          {TRUST_LABELS.platform_reviewed_agency.disclaimer}
                         </p>
                       </div>
                       <div className="rounded-xl border border-border bg-background p-4">
@@ -857,7 +864,7 @@ export function PropertyDetail() {
                           {trustSnapshot?.securePaymentsEnabled ? "Receipt-ready" : "Standard"}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Completed {paymentProviderLabel} payments generate downloadable receipts.
+                          {TRUST_LABELS.licensed_payment_partner.disclaimer}
                         </p>
                       </div>
                     </div>
@@ -872,7 +879,7 @@ export function PropertyDetail() {
                           {listingQualityScore !== null ? `${listingQualityScore}/100` : "Not scored"}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Photo, price, address, and document readiness checks.
+                          {TRUST_LABELS.listing_quality_score.disclaimer}
                         </p>
                       </div>
                       <div className="rounded-xl border border-border bg-background p-4">
@@ -884,9 +891,7 @@ export function PropertyDetail() {
                           {property.ghana_post_gps || locationConfidence || "Pending"}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {locationConfidence
-                            ? `${locationConfidence} location confidence`
-                            : "GhanaPostGPS and area confidence improve buyer safety."}
+                          Location metadata only. Always inspect the property in person.
                         </p>
                       </div>
                       <div className="rounded-xl border border-border bg-background p-4">
@@ -898,7 +903,7 @@ export function PropertyDetail() {
                           {listingVerificationStatus}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Internal checks can be promoted to public verification records.
+                          Internal workflow status only — not a legal or title certification.
                         </p>
                       </div>
                     </div>
@@ -919,7 +924,7 @@ export function PropertyDetail() {
 
                     {trustSnapshot?.publicDocuments?.length ? (
                       <div className="space-y-3">
-                        <h4 className="font-medium">Published verification records</h4>
+                        <h4 className="font-medium">Documents shared by listing party</h4>
                         {trustSnapshot.publicDocuments.map((document: any) => (
                           <div
                             key={document.id}
@@ -944,9 +949,12 @@ export function PropertyDetail() {
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        Public verification documents have not been published for this listing yet.
+                        No documents have been shared publicly for this listing yet.
                       </p>
                     )}
+                    <div className="mt-5 border-t border-border pt-4">
+                      <MarketplaceDisclaimerStrip compact />
+                    </div>
                   </>
                 )}
               </Card>

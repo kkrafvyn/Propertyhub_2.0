@@ -1,6 +1,7 @@
 import { supabase } from './supabase'
 import { Database } from './database.types'
 import { clientIntegrations } from './integrations'
+import { AI_ASSISTANT_DISCLAIMER, TRUST_LABELS } from './legal-disclaimers'
 
 export type AiSource = 'openai' | 'qwen' | 'local'
 
@@ -49,12 +50,12 @@ const FAQ_ENTRIES: Array<{ keywords: string[]; answer: string }> = [
   {
     keywords: ['escrow', 'hold', 'release'],
     answer:
-      'Escrow holds your payment securely until agreed milestones are met. Funds stay in your BaytMiftah wallet escrow balance and are released to the seller or landlord when both sides confirm the step (for example deposit received or lease signed).',
+      `Payment holds may apply until agreed milestones are met. ${TRUST_LABELS.payment_hold.disclaimer}`,
   },
   {
     keywords: ['kyc', 'verify', 'verification', 'identity'],
     answer:
-      'KYC verification confirms your identity before high-value actions like purchase offers. Upload a government ID in Settings → Verification. Our team reviews submissions and updates your verified badge when approved.',
+      `KYC helps confirm identity before high-value actions. Upload a government ID in Settings → Verification. ${TRUST_LABELS.id_checked.disclaimer}`,
   },
   {
     keywords: ['rent', 'lease', 'tenant'],
@@ -399,29 +400,29 @@ export const aiAssistantService = {
 
   answerFaq(question: string, context?: string) {
     const contextual = pickFaqAnswer(question)
-    if (contextual) return contextual
+    if (contextual) return `${contextual}\n\n${AI_ASSISTANT_DISCLAIMER}`
 
     if (context === 'documents') {
-      return 'Open Documents in My BaytMiftah to preview, download, or sign agreements. Ask about a specific document type such as lease, offer, or receipt.'
+      return `Open Documents in My BaytMiftah to preview, download, or sign agreements. Ask about a specific document type such as lease, offer, or receipt.\n\n${AI_ASSISTANT_DISCLAIMER}`
     }
 
     if (context === 'payments') {
-      return 'Your wallet shows balances, escrow holds, and transaction history. Escrow protects funds until deal milestones are confirmed.'
+      return `Your wallet shows balances, payment holds, and transaction history. ${TRUST_LABELS.payment_hold.disclaimer}\n\n${AI_ASSISTANT_DISCLAIMER}`
     }
 
     if (context === 'maintenance') {
-      return 'Describe the issue, add photos if possible, and submit a maintenance request. Urgent issues like water leaks or security problems should be flagged in your message.'
+      return `Describe the issue, add photos if possible, and submit a maintenance request. Urgent issues like water leaks or security problems should be flagged in your message.\n\n${AI_ASSISTANT_DISCLAIMER}`
     }
 
     if (context === 'property') {
-      return 'Ask about neighborhood fit, commute, pricing, or next steps for this listing. You can schedule a viewing or message the host/agency directly from the property page.'
+      return `Ask about neighborhood fit, commute, pricing, or next steps for this listing. You can schedule a viewing or message the host/agency directly from the property page.\n\n${AI_ASSISTANT_DISCLAIMER}`
     }
 
     if (context === 'kyc') {
-      return 'Use a clear photo of your Ghana Card, passport, or national ID with all corners visible. Match your legal name exactly, avoid glare, and prefer JPG/PNG. Our team (with AI pre-screening) usually reviews within 1–2 business days.'
+      return `Use a clear photo of your Ghana Card, passport, or national ID with all corners visible. Match your legal name exactly, avoid glare, and prefer JPG/PNG. Reviews are typically completed within 1–2 business days. ${TRUST_LABELS.id_checked.disclaimer}\n\n${AI_ASSISTANT_DISCLAIMER}`
     }
 
-    return 'BaytMiftah AI can help with search, documents, payments, escrow, bookings, and maintenance. Try asking about verification, offers, leases, or refunds.'
+    return `BaytMiftah AI can help with search, documents, payments, bookings, and maintenance. Try asking about verification, offers, leases, or refunds.\n\n${AI_ASSISTANT_DISCLAIMER}`
   },
 
   /** Ask the AI assistant (OpenAI when configured, local FAQ fallback otherwise). */

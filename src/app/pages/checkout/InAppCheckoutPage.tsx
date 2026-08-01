@@ -23,7 +23,8 @@ import { paymentService } from "../../../lib/payment.service";
 import { openPaystackInline } from "../../../lib/paystack-inline";
 import { clientIntegrations } from "../../../lib/integrations";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
-import { realEstateComplianceService } from "../../../lib/real-estate-compliance.service";
+import { MarketplaceDisclaimerStrip } from "../../components/legal/MarketplaceDisclaimerStrip";
+import { CHECKOUT_PAYMENT_DISCLAIMER } from "../../../lib/legal-disclaimers";
 import { revenueManagementService } from "../../../lib/revenue-management.service";
 import type { CheckoutPricingPreview } from "../../../lib/revenue-management.service";
 import { Input } from "../../components/ui/Input";
@@ -309,10 +310,11 @@ export function InAppCheckoutPage() {
       <PageMeta title="Secure checkout" description="Complete your BaytMiftah payment without leaving the app." />
       <div className="mx-auto max-w-3xl px-4 py-10 md:py-14">
         <div className="mb-8">
-          <p className="text-sm text-ink-secondary">BaytMiftah secure checkout</p>
+          <p className="text-sm text-ink-secondary">BaytMiftah checkout</p>
           <h1 className="mt-1 text-3xl font-semibold text-ink">Complete payment</h1>
           <p className="mt-2 text-ink-secondary">
-            Pay with card or mobile money — the payment form opens here, without redirecting you away.
+            Pay with card or mobile money through our licensed payment partner — the form opens here
+            without redirecting you away.
           </p>
         </div>
 
@@ -466,8 +468,9 @@ export function InAppCheckoutPage() {
 
             <div className="mt-6 flex items-start gap-2 rounded-lg bg-surface-subtle/60 p-3 text-xs text-ink-secondary">
               <Shield className="mt-0.5 h-4 w-4 shrink-0 text-brand-forest" />
-              <span>Funds may be held in escrow until booking or milestone conditions are met.</span>
+              <span>{CHECKOUT_PAYMENT_DISCLAIMER}</span>
             </div>
+            <MarketplaceDisclaimerStrip compact className="mt-3" />
           </aside>
         </div>
       </div>

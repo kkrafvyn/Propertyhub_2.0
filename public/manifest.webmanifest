@@ -1,7 +1,7 @@
 {
   "name": "BaytMiftah",
   "short_name": "BaytMiftah",
-  "description": "Discover, rent, buy, lease, and host properties across Ghana with verified agencies and secure payments.",
+  "description": "Discover, rent, buy, lease, and host properties across Ghana with platform-reviewed listings and licensed payment partners.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

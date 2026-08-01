@@ -77,7 +77,7 @@ export default {
     "agentViewings": "Pending viewings",
     "neighborhoodListings": "Homes in this area",
     "hostSubtitle": "Submit for moderation review",
-    "hostModerationNote": "Listings are reviewed before going live with a verified badge.",
+    "hostModerationNote": "Listings are reviewed before going live. Platform review is not a property inspection or title guarantee.",
     "home": "Home",
     "primaryNav": "Primary navigation",
     "tabletNav": "Tablet navigation",
@@ -126,7 +126,7 @@ export default {
     "agents": "Agents",
     "homeScreen": {
       "heroTitle": "Find your next home with confidence",
-      "heroSubtitle": "Verified properties. Trusted agents. Better decisions.",
+      "heroSubtitle": "Platform-reviewed listings. Licensed payment partners. Do your own due diligence.",
       "buy": "Buy",
       "rent": "Rent",
       "lease": "Lease",

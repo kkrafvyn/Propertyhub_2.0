@@ -704,7 +704,7 @@ export function WorkspaceListings({
                             Quality {qualityReport.score}
                           </Badge>
                           {listing.verification_status === "verified" && (
-                            <Badge variant="default">Verified Listing</Badge>
+                            <Badge variant="default">Platform reviewed</Badge>
                           )}
                           <Badge variant="outline">
                             <ImagePlus className="w-3 h-3" />

@@ -341,8 +341,8 @@ export default {
         "title": "Commission settlement"
       },
       "escrow": {
-        "subtitle": "Secure buyer deposits held until closing conditions are met",
-        "title": "Escrow platform"
+        "subtitle": "Buyer deposits may be held per Payment & Escrow Terms until closing conditions are met",
+        "title": "Payment holds"
       },
       "hub": {
         "subtitle": "Payments powered by Paystack (Africa) and Stripe (international)",
