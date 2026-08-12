@@ -337,7 +337,7 @@ export default {
     },
     "finance": {
       "commissionSettlement": {
-        "subtitle": "Pay agents via Paystack or Stripe payout rails",
+        "subtitle": "Pay agents via PayAngels or PayAngels payout rails",
         "title": "Commission settlement"
       },
       "escrow": {
@@ -345,7 +345,7 @@ export default {
         "title": "Payment holds"
       },
       "hub": {
-        "subtitle": "Payments powered by Paystack (Africa) and Stripe (international)",
+        "subtitle": "Payments powered by PayAngels (Africa) and PayAngels (international)",
         "title": "Financial services",
         "stats": {
           "escrowFunded": "Escrow funded",
@@ -366,7 +366,7 @@ export default {
         "title": "Mortgage calculator"
       },
       "rentCollection": {
-        "subtitle": "Collect rent via Paystack (Africa) or Stripe (international)",
+        "subtitle": "Collect rent via PayAngels (Africa) or PayAngels (international)",
         "title": "Rent collection rails"
       }
     },
@@ -480,7 +480,7 @@ export default {
         "title": "Maintenance requests"
       },
       "payments": {
-        "subtitle": "Pay with Paystack (mobile money, bank) or Stripe (international cards)",
+        "subtitle": "Pay with PayAngels (mobile money, bank) or PayAngels (international cards)",
         "title": "Rent payments"
       },
       "utilities": {

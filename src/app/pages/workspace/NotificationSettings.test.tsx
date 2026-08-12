@@ -45,7 +45,7 @@ vi.mock("../../../lib/notification.service", () => ({
   notificationService: {
     areExternalProvidersConfigured: vi.fn(() => ({
       webPush: false,
-      paystack: true,
+      payangels: true,
       exchangeRates: false,
       aiSearch: true,
       blockchain: false,

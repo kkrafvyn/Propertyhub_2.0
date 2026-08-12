@@ -835,7 +835,7 @@ export default {
     },
     "finance": {
       "commissionSettlement": {
-        "subtitle": "Agents de paiement via des rails de paiement Paystack ou Stripe",
+        "subtitle": "Agents de paiement via des rails de paiement PayAngels ou PayAngels",
         "title": "Règlement de commission"
       },
       "escrow": {
@@ -843,7 +843,7 @@ export default {
         "title": "Plateforme d'entiercement"
       },
       "hub": {
-        "subtitle": "Paiements alimentés par Paystack (Afrique) et Stripe (international)",
+        "subtitle": "Paiements alimentés par PayAngels (Afrique) et PayAngels (international)",
         "title": "Services financiers ",
         "stats": {
           "escrowFunded": "Séquestre financé",
@@ -864,7 +864,7 @@ export default {
         "title": "Calculateur d'Hypothèque"
       },
       "rentCollection": {
-        "subtitle": "Collecter le loyer via Paystack (Afrique) ou Stripe (international)",
+        "subtitle": "Collecter le loyer via PayAngels (Afrique) ou PayAngels (international)",
         "title": "Rails de collecte des loyers"
       }
     },
@@ -962,7 +962,7 @@ export default {
         "title": "Demandes de maintenance"
       },
       "payments": {
-        "subtitle": "Payer avec Paystack (argent mobile, banque) ou Stripe (cartes internationales)",
+        "subtitle": "Payer avec PayAngels (argent mobile, banque) ou PayAngels (cartes internationales)",
         "title": "Paiements de loyer"
       },
       "credit": {
@@ -1153,7 +1153,7 @@ export default {
     "listings": "Listing a property",
     "listingsBody": "Property owners submit listings at /host/list. Agency admins approve listings at /admin/moderation before they go live.",
     "payments": "Payments",
-    "paymentsBody": "Rent and featured boosts use Paystack (Ghana mobile money & cards) or Stripe (international cards). Configure secrets in Supabase Edge Functions.",
+    "paymentsBody": "Rent and featured boosts use PayAngels (Ghana mobile money & cards) or PayAngels (international cards). Configure secrets in Supabase Edge Functions.",
     "safety": "Trust & safety",
     "safetyBody": "Verified listings and KYC-reviewed agencies help keep the marketplace trustworthy. Report suspicious activity to support."
   },
@@ -1236,7 +1236,7 @@ export default {
       "instructions": "Composez ce code sur votre téléphone pour payer via MTN/Vodafone.",
       "mtn": "MTN MoMo",
       "telecel": "Telecel Cash",
-      "paystackHint": "Paystack will confirm MoMo payment automatically when configured."
+      "paystackHint": "PayAngels will confirm MoMo payment automatically when configured."
     },
     "docusign": {
       "signViaDocusign": "Signer avec DocuSign",
@@ -1280,7 +1280,7 @@ export default {
       "useTitle": "How we use information",
       "useBody": "We use your data to operate the marketplace, process viewings and payments, verify listings and agencies, improve search and recommendations, and comply with law.",
       "shareTitle": "Sharing",
-      "shareBody": "We share data with payment processors (Stripe, Paystack), identity and signing partners when you opt in, and service providers under contract. We do not sell personal data.",
+      "shareBody": "We share data with payment processors (PayAngels, PayAngels), identity and signing partners when you opt in, and service providers under contract. We do not sell personal data.",
       "securityTitle": "Security",
       "securityBody": "Data is stored on Supabase with row-level security. Secrets and payment keys are kept server-side only. Use a strong password and enable OAuth where available.",
       "rightsTitle": "Your rights",

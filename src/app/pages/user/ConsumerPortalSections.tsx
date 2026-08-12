@@ -1143,7 +1143,7 @@ export function PaymentsWithWalletSection({
         onRefresh={onRefreshWallet}
       />
       <div>
-        <h3 className="font-semibold mb-4">Paystack history</h3>
+        <h3 className="font-semibold mb-4">Payments history</h3>
         {payments.length === 0 ? (
           <Card className="p-8 text-center text-muted-foreground">No payments yet.</Card>
         ) : (

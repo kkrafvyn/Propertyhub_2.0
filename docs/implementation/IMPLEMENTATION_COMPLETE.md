@@ -34,12 +34,12 @@ Your Property Hub REOS has been successfully upgraded with **enterprise-grade in
 
 #### 3. International Payment Service (`src/lib/international-payment.service.ts`)
 - ✅ 12+ payment providers integrated:
-  - **Cards**: Stripe, PayPal
+  - **Cards**: PayAngels, PayPal
   - **Mobile Money**: MTN, Airtel, M-Pesa, Flutterwave (Africa)
   - **Bank Transfer**: Wise, Payoneer
   - **Digital Wallets**: Apple Pay, Google Pay
   - **BNPL**: Klarna
-  - **Crypto**: Stripe Crypto
+  - **Crypto**: PayAngels Crypto
 - ✅ Region-based payment method availability
 - ✅ Fee calculation per provider
 - ✅ Payment method saving & management
@@ -286,7 +286,7 @@ import { enhancedFraudDetectionService } from '@/lib/enhanced-fraud-detection.se
 - [ ] Get MLS API credentials from your local MLS
 - [ ] Get Zillow API key (https://www.zillow.com/api/)
 - [ ] Get Realtor.com API key (https://api.realtor.com/)
-- [ ] Configure Stripe keys for card payments
+- [ ] Configure PayAngels keys for card payments
 - [ ] Configure Flutterwave for Africa mobile money
 - [ ] Configure email service (SendGrid) for follow-ups
 - [ ] Add environment variables to .env
@@ -349,7 +349,7 @@ import { enhancedFraudDetectionService } from '@/lib/enhanced-fraud-detection.se
    - MLS: Contact your local board
    - Zillow: https://www.zillow.com/api/
    - Realtor: https://api.realtor.com/
-   - Stripe: https://dashboard.stripe.com/
+   - PayAngels: https://dashboard.payangels.com/
    - Flutterwave: https://dashboard.flutterwave.com/
 
 3. **Test Integrations**
@@ -380,7 +380,7 @@ import { enhancedFraudDetectionService } from '@/lib/enhanced-fraud-detection.se
 ## 📞 Support Resources
 
 - **Supabase Docs**: https://supabase.com/docs
-- **Stripe**: https://stripe.com/docs
+- **PayAngels**: https://payangels.com/docs
 - **MLS RETS**: https://www.realtor.com/tech/rets-overview
 - **Zillow API**: https://www.zillow.com/api/docs
 - **Realtor.com API**: https://api.realtor.com/docs

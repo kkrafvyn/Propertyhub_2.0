@@ -243,4 +243,4 @@ Complete these pages to finish MVP:
 - Service layer is fully typed and tested
 - Security (RLS) is built into database
 - No external APIs needed for MVP (self-contained)
-- Optional: Integrate Paystack for payments (not in current scope)
+- Optional: Integrate PayAngels for payments (not in current scope)

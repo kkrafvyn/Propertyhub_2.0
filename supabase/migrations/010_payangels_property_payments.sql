@@ -1,4 +1,4 @@
--- Paystack-backed property payments with blockchain receipt verification.
+-- PayAngels-backed property payments with blockchain receipt verification.
 -- This migration adds a dedicated property payment ledger, receipt records,
 -- and extends the blockchain verification layer to support payment receipts.
 
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.property_transactions (
   organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   deal_case_id UUID REFERENCES public.deal_cases(id) ON DELETE SET NULL,
   payer_user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  provider TEXT NOT NULL DEFAULT 'paystack' CHECK (provider IN ('paystack')),
+  provider TEXT NOT NULL DEFAULT 'payangels' CHECK (provider IN ('payangels')),
   provider_reference TEXT NOT NULL UNIQUE,
   provider_transaction_id TEXT,
   amount_minor BIGINT NOT NULL CHECK (amount_minor > 0),
@@ -172,5 +172,5 @@ BEFORE UPDATE ON public.transaction_receipts
 FOR EACH ROW
 EXECUTE FUNCTION public.set_row_updated_at();
 
-COMMENT ON TABLE public.property_transactions IS 'Property-specific fiat payments processed through Paystack.';
+COMMENT ON TABLE public.property_transactions IS 'Property-specific fiat payments processed through PayAngels.';
 COMMENT ON TABLE public.transaction_receipts IS 'Server-generated receipts and blockchain verification metadata for property transactions.';

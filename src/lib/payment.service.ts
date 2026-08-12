@@ -52,7 +52,7 @@ export interface InitiatePropertyRefundInput {
 
 export const paymentService = {
   async initializePropertyPayment(input: InitializePropertyPaymentInput) {
-    const { data, error } = await supabase.functions.invoke("initialize-paystack-payment", {
+    const { data, error } = await supabase.functions.invoke("initialize-payangels-payment", {
       body: input,
     });
 
@@ -67,7 +67,7 @@ export const paymentService = {
   },
 
   async initializeStripePayment(input: InitializePropertyPaymentInput) {
-    const { data, error } = await supabase.functions.invoke("initialize-stripe-payment", {
+    const { data, error } = await supabase.functions.invoke("initialize-payangels-payment", {
       body: input,
     });
 
@@ -82,7 +82,7 @@ export const paymentService = {
   },
 
   async verifyPropertyPayment(reference: string) {
-    const { data, error } = await supabase.functions.invoke("verify-paystack-payment", {
+    const { data, error } = await supabase.functions.invoke("verify-payangels-payment", {
       body: { reference },
     });
 
@@ -97,7 +97,7 @@ export const paymentService = {
   },
 
   async verifyStripePayment(sessionId?: string, reference?: string) {
-    const { data, error } = await supabase.functions.invoke("verify-stripe-payment", {
+    const { data, error } = await supabase.functions.invoke("verify-payangels-payment", {
       body: { sessionId, reference },
     });
 
@@ -133,7 +133,7 @@ export const paymentService = {
   },
 
   async initiatePropertyRefund(input: InitiatePropertyRefundInput) {
-    const { data, error } = await supabase.functions.invoke("initiate-paystack-refund", {
+    const { data, error } = await supabase.functions.invoke("initiate-payangels-refund", {
       body: input,
     });
 

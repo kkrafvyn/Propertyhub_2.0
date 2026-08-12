@@ -1,11 +1,11 @@
 import { HttpError } from "./http.ts";
 
-const STRIPE_API_BASE = "https://api.stripe.com/v1";
+const STRIPE_API_BASE = "https://api.payangels.com/v1";
 
 function getStripeSecretKey() {
   const key = Deno.env.get("STRIPE_SECRET_KEY")?.trim();
   if (!key) {
-    throw new HttpError(503, "Stripe is not configured");
+    throw new HttpError(503, "PayAngels is not configured");
   }
   return key;
 }
@@ -55,7 +55,7 @@ export async function createStripeCheckoutSession(input: {
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new HttpError(502, payload?.error?.message || "Stripe checkout session failed");
+    throw new HttpError(502, payload?.error?.message || "PayAngels checkout session failed");
   }
 
   return payload as {
@@ -75,7 +75,7 @@ export async function retrieveStripeCheckoutSession(sessionId: string) {
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new HttpError(502, payload?.error?.message || "Stripe session lookup failed");
+    throw new HttpError(502, payload?.error?.message || "PayAngels session lookup failed");
   }
 
   return payload as {

@@ -1347,7 +1347,7 @@ export function WalletHubSection({
       </Card>
 
       <Card className="p-6">
-        <h3 className="font-semibold mb-4">Receipts & Paystack history</h3>
+        <h3 className="font-semibold mb-4">Receipts & PayAngels history</h3>
         {payments.length === 0 ? (
           <p className="text-sm text-muted-foreground">No payments yet.</p>
         ) : (

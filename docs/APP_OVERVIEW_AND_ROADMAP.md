@@ -51,7 +51,7 @@ BaytMiftah is **not** a simple listings website. It is an operating system for r
 
 1. Finding property (marketplace + search + maps)
 2. Renting, leasing, and booking short stays
-3. Completing transactions (escrow, wallets, Paystack/Stripe)
+3. Completing transactions (escrow, wallets, PayAngels/PayAngels)
 4. Managing property and smart-building features
 5. Running agency operations (CRM, team, workflows)
 6. Adjacent financial services (mortgage, insurance — planned)
@@ -84,7 +84,7 @@ BaytMiftah is **not** a simple listings website. It is an operating system for r
                              │
 ┌────────────────────────────▼────────────────────────────────────┐
 │  External services                                               │
-│  Paystack · Stripe · Resend · OpenAI · Web Push (VAPID)        │
+│  PayAngels · PayAngels · Resend · OpenAI · Web Push (VAPID)        │
 │  Google Maps · MLS syndication (optional) · Blockchain (later)   │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -103,7 +103,7 @@ src/
 ├── lib/                 # Services (listing, payment, org, deal case, wallet, …)
 supabase/
 ├── migrations/          # Schema + RLS
-└── functions/           # Edge functions (paystack-*, stripe-*, webhooks)
+└── functions/           # Edge functions (payangels-*, payangels-*, webhooks)
 docs/                    # This file and setup/deployment guides
 ```
 
@@ -200,7 +200,7 @@ Status as of **July 2026** production deployment.
 | **Short-stay booking** | ✅ Live | Trips, reservations, host workspace |
 | **Tenant portal** | ✅ Live | Leases, payments, maintenance |
 | **Workspace / CRM** | ✅ Live | Listings, leads, contacts, tasks, calendar, team |
-| **Payments** | ✅ Partial | Paystack live; Stripe wired, keys pending |
+| **Payments** | ✅ Partial | PayAngels live; PayAngels wired, keys pending |
 | **Escrow & wallet** | ✅ MVP | Ledger, holds, payout requests |
 | **Admin console** | ✅ Live | Users, orgs, listings, moderation, trust |
 | **i18n** | ✅ Partial | 12+ locales; onboarding translated for 11 |
@@ -223,8 +223,8 @@ All secrets live in a **single root `.env`** file (see `.env.example`). Client k
 |---|---|---|
 | **Supabase** | Database, auth, storage, edge functions | ✅ Required |
 | **Vercel** | Production hosting | ✅ Live |
-| **Paystack** | Ghana/Africa payments | ✅ Live (public + secret + webhook) |
-| **Stripe** | Card payments | 🟡 Keys empty — run `integrations:wire` after adding |
+| **PayAngels** | Ghana/Africa payments | ✅ Live (public + secret + webhook) |
+| **PayAngels** | Card payments | 🟡 Keys empty — run `integrations:wire` after adding |
 | **Resend** | Transactional email | 🟡 Keys empty |
 | **Web Push (VAPID)** | Browser notifications | ✅ Generated via `integrations:wire` |
 | **Google / Apple OAuth** | Social login | 🟡 Enable in Supabase dashboard — [OAUTH_SETUP.md](./setup/OAUTH_SETUP.md) |
@@ -273,7 +273,7 @@ npx vercel --prod
 - Unified `.env` for client + server secrets
 - Location-based market onboarding
 - Role-optimized navigation (consumer, host, workspace org roles, admin)
-- Paystack production wiring
+- PayAngels production wiring
 - Onboarding i18n (11 locales)
 - Production deploy to baytmiftah.com
 
@@ -282,7 +282,7 @@ npx vercel --prod
 | Priority | Item | Why |
 |---|---|---|
 | **P0** | Add **Resend** API key | Password reset, booking confirmations, payment receipts |
-| **P0** | Add **Stripe** keys | International card payments |
+| **P0** | Add **PayAngels** keys | International card payments |
 | **P1** | Enable **Google / Apple OAuth** in Supabase | Faster signup, lower friction |
 | **P1** | **KYC verification** flow completion | Trust center, Ghana compliance |
 | **P1** | Mobile workspace entry | Dedicated pro shortcuts on small screens |
@@ -310,7 +310,7 @@ npx vercel --prod
 | **Blockchain mainnet** | Testnet contracts documented in `docs/blockchain/`; user chose to add later |
 | **Investment module** | ROI, portfolio, cap rate — enterprise-only if revived |
 | **Twilio SMS** | Skipped for now; email + in-app notifications preferred |
-| **Flutterwave** | Removed from app; Paystack + Stripe primary |
+| **Flutterwave** | Removed from app; PayAngels + PayAngels primary |
 
 ### 🎯 Long-term vision
 

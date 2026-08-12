@@ -1,40 +1,40 @@
-import { getPaystackPublicKey } from "./integrations";
+import { getPayangelsPublicKey } from "./integrations";
 
-const PAYSTACK_SCRIPT_SRC = "https://js.paystack.co/v1/inline.js";
+const PAYANGELS_SCRIPT_SRC = "https://js.payangels.co/v1/inline.js";
 
 let scriptPromise: Promise<NonNullable<Window["PaystackPop"]>> | null = null;
 
 export function loadPaystackInline(): Promise<NonNullable<Window["PaystackPop"]>> {
   if (typeof window === "undefined") {
-    return Promise.reject(new Error("Paystack inline is only available in the browser."));
+    return Promise.reject(new Error("PayAngels inline is only available in the browser."));
   }
 
-  if (window.PaystackPop) {
-    return Promise.resolve(window.PaystackPop);
+  if ((window as any).PaystackPop) {
+    return Promise.resolve((window as any).PaystackPop);
   }
 
   if (!scriptPromise) {
     scriptPromise = new Promise((resolve, reject) => {
       const existing = document.querySelector<HTMLScriptElement>(
-        `script[src="${PAYSTACK_SCRIPT_SRC}"]`,
+        `script[src="${PAYANGELS_SCRIPT_SRC}"]`,
       );
       if (existing) {
         existing.addEventListener("load", () => {
-          if (window.PaystackPop) resolve(window.PaystackPop);
-          else reject(new Error("Paystack inline failed to load."));
+          if ((window as any).PaystackPop) resolve((window as any).PaystackPop);
+          else reject(new Error("PayAngels inline failed to load."));
         });
-        existing.addEventListener("error", () => reject(new Error("Paystack inline failed to load.")));
+        existing.addEventListener("error", () => reject(new Error("PayAngels inline failed to load.")));
         return;
       }
 
       const script = document.createElement("script");
-      script.src = PAYSTACK_SCRIPT_SRC;
+      script.src = PAYANGELS_SCRIPT_SRC;
       script.async = true;
       script.onload = () => {
-        if (window.PaystackPop) resolve(window.PaystackPop);
-        else reject(new Error("Paystack inline failed to load."));
+        if ((window as any).PaystackPop) resolve((window as any).PaystackPop);
+        else reject(new Error("PayAngels inline failed to load."));
       };
-      script.onerror = () => reject(new Error("Paystack inline failed to load."));
+      script.onerror = () => reject(new Error("PayAngels inline failed to load."));
       document.body.appendChild(script);
     });
   }
@@ -53,9 +53,9 @@ export type OpenPaystackInlineInput = {
 };
 
 export async function openPaystackInline(input: OpenPaystackInlineInput) {
-  const publicKey = getPaystackPublicKey();
+  const publicKey = getPayangelsPublicKey();
   if (!publicKey) {
-    throw new Error("Paystack public key is not configured.");
+    throw new Error("PayAngels public key is not configured.");
   }
 
   const PaystackPop = await loadPaystackInline();

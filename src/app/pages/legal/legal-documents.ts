@@ -89,7 +89,7 @@ const BASE_LEGAL_DOCUMENTS: LegalDocument[] = [
         title: "Payments, wallets & escrow",
         body: "Where payment features are enabled, additional Payment & Escrow Terms apply. In summary:",
         bullets: [
-          "Payments may be processed by licensed third-party providers (e.g. Paystack, Stripe).",
+          "Payments may be processed by licensed third-party providers (e.g. PayAngels, PayAngels).",
           "Wallets and escrow holds are subject to release conditions, disputes, and applicable law.",
           "Fees, taxes, refunds, and currency conversion are disclosed at checkout where applicable.",
           "BaytMiftah may freeze funds where required by law, court order, or fraud investigation.",
@@ -206,7 +206,7 @@ const BASE_LEGAL_DOCUMENTS: LegalDocument[] = [
       {
         title: "Sharing",
         bullets: [
-          "Payment processors (Paystack, Stripe, and other licensed PSPs).",
+          "Payment processors (PayAngels, PayAngels, and other licensed PSPs).",
           "Identity, signing, and document partners when you opt in.",
           "Cloud infrastructure (Supabase and hosting providers) under contract.",
           "Agencies and counterparties when you initiate a transaction.",
@@ -488,7 +488,7 @@ const BASE_LEGAL_DOCUMENTS: LegalDocument[] = [
           "Platform reviewed — internal checks on submitted agency or listing information.",
           "ID checked — KYC identity review for high-value actions.",
           "Listing quality score — completeness score only, not safety or title certification.",
-          "Licensed payment partner — payments processed by third parties such as Paystack.",
+          "Licensed payment partner — payments processed by third parties such as PayAngels.",
         ],
       },
       {

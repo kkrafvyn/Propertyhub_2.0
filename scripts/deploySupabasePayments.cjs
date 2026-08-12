@@ -13,12 +13,12 @@ const args = process.argv.slice(2);
 
 const EDGE_FUNCTIONS = [
   { name: "exchange-rates" },
-  { name: "initialize-paystack-payment" },
-  { name: "verify-paystack-payment" },
-  { name: "initiate-paystack-refund" },
-  { name: "paystack-webhook", noVerifyJwt: true },
-  { name: "initialize-stripe-payment" },
-  { name: "verify-stripe-payment" },
+  { name: "initialize-payangels-payment" },
+  { name: "verify-payangels-payment" },
+  { name: "initiate-payangels-refund" },
+  { name: "payangels-webhook", noVerifyJwt: true },
+  { name: "initialize-payangels-payment" },
+  { name: "verify-payangels-payment" },
   { name: "parse-search-query" },
   { name: "ai-assistant" },
   { name: "kyc-ai-screen" },

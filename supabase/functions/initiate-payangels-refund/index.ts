@@ -3,7 +3,7 @@ import {
   getPropertyRefundSummary,
   recordInitiatedPropertyRefund,
 } from "../_shared/refund-reconciliation.ts";
-import { createPaystackRefund } from "../_shared/paystack.ts";
+import { createPayangelsRefund } from "../_shared/payangels.ts";
 import { createAdminClient, requireAuthenticatedUser } from "../_shared/supabase.ts";
 
 function parseRefundAmountToMinorUnits(amount: unknown) {
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
 
     const shouldPassAmount =
       amountMinor < transaction.amount_minor || refundSummary.processedAmountMinor > 0;
-    const paystackRefund = await createPaystackRefund({
+    const payangelsRefund = await createPayangelsRefund({
       transaction: transaction.provider_reference,
       amount: shouldPassAmount ? amountMinor : undefined,
       currency: transaction.currency,
@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
       refundReason,
       customerNote: customerNote || refundReason,
       merchantNote: merchantNote || refundReason,
-      paystackRefund,
+      paystackRefund: payangelsRefund,
     });
 
     return jsonResponse(200, {
@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
       return jsonResponse(error.status, { error: error.message });
     }
 
-    console.error("initiate-paystack-refund error:", error);
+    console.error("initiate-payangels-refund error:", error);
     return jsonResponse(500, { error: "Unable to initiate refund" });
   }
 });

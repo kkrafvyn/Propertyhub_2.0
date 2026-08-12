@@ -239,7 +239,7 @@ export default {
   },
   "integrations": {
     "oauthHint": "Sign in with Google or Apple — enable providers in Supabase Auth dashboard and add redirect URLs for this site.",
-    "paymentsHint": "Live checkout requires STRIPE_SECRET_KEY or PAYSTACK_SECRET_KEY in Supabase Edge Function secrets.",
+    "paymentsHint": "Live checkout requires PAYANGELS_SECRET_KEY in Supabase Edge Function secrets.",
     "paymentDemo": "Payment provider is not configured. Add payment secrets in Supabase to enable live checkout."
   },
   "legal": {
@@ -310,7 +310,7 @@ export default {
       "useTitle": "How we use information",
       "useBody": "We use your data to operate the marketplace, process viewings and payments, verify listings and agencies, improve search and recommendations, and comply with law.",
       "shareTitle": "Sharing",
-      "shareBody": "We share data with payment processors (Paystack and other licensed PSPs), identity and signing partners when you opt in, and service providers under contract. We do not sell personal data.",
+      "shareBody": "We share data with payment processors (PayAngels and other licensed PSPs), identity and signing partners when you opt in, and service providers under contract. We do not sell personal data.",
       "securityTitle": "Security",
       "securityBody": "Data is stored on Supabase with row-level security. Secrets and payment keys are kept server-side only. Use a strong password and enable OAuth where available.",
       "rightsTitle": "Your rights",

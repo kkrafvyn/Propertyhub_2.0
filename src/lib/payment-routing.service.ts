@@ -1,7 +1,7 @@
 import { clientIntegrations } from "./integrations";
 import { resolveJurisdiction, type JurisdictionId } from "./real-estate-compliance";
 
-export type PaymentProviderId = "paystack" | "stripe";
+export type PaymentProviderId = "payangels";
 
 const JURISDICTION_CURRENCY: Record<JurisdictionId, string> = {
   GH: "GHS",
@@ -18,8 +18,8 @@ const JURISDICTION_CURRENCY: Record<JurisdictionId, string> = {
   GLOBAL: "USD",
 };
 
-/** Markets where Paystack is the primary checkout provider. */
-const PAYSTACK_JURISDICTIONS = new Set<JurisdictionId>(["GH", "NG", "KE", "ZA"]);
+/** Markets where PayAngels is the primary checkout provider. */
+const PAYANGELS_JURISDICTIONS = new Set<JurisdictionId>(["GH", "NG", "KE", "ZA"]);
 
 export interface PaymentContext {
   jurisdictionId: JurisdictionId;
@@ -42,24 +42,20 @@ export function resolvePaymentContext(input: {
   const currency =
     input.currency?.trim().toUpperCase() || JURISDICTION_CURRENCY[jurisdictionId] || "USD";
 
-  const primaryProvider: PaymentProviderId = PAYSTACK_JURISDICTIONS.has(jurisdictionId)
-    ? "paystack"
-    : "stripe";
+  // All markets now route to PayAngels as the single provider.
+  const primaryProvider: PaymentProviderId = "payangels";
 
   const propertyLabel =
     [input.city, input.region, input.country].filter(Boolean).join(", ") || "this property";
 
-  const checkoutReady =
-    primaryProvider === "paystack"
-      ? clientIntegrations.paystack.checkoutReady
-      : clientIntegrations.stripe.configured;
+  const checkoutReady = clientIntegrations.payangels.checkoutReady;
 
   return {
     jurisdictionId,
     region,
     currency,
     primaryProvider,
-    providerLabel: primaryProvider === "paystack" ? "Paystack" : "Stripe",
+    providerLabel: "PayAngels",
     propertyLabel,
     checkoutReady,
   };
@@ -94,13 +90,15 @@ export function resolvePaymentContextFromListing(
   });
 }
 
+export function shouldUsePayangelsCheckout(context: PaymentContext) {
+  return context.primaryProvider === "payangels";
+}
+
+// Backwards-compatible alias for existing imports
 export function shouldUsePaystackCheckout(context: PaymentContext) {
-  return context.primaryProvider === "paystack";
+  return shouldUsePayangelsCheckout(context);
 }
 
 export function getPreferredProviderIds(context: PaymentContext): string[] {
-  if (context.primaryProvider === "paystack") {
-    return clientIntegrations.paystack.checkoutReady ? ["paystack"] : [];
-  }
-  return clientIntegrations.stripe.configured ? ["stripe"] : [];
+  return clientIntegrations.payangels.checkoutReady ? ["payangels"] : [];
 }

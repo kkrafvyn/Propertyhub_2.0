@@ -481,7 +481,7 @@ export function UserDashboard() {
           toast.message(`Payment status: ${result.status || "pending"}`);
         }
       } catch (error) {
-        console.error("Failed to verify paystack payment:", error);
+        console.error("Failed to verify payangels payment:", error);
         if (!cancelled) {
           toast.error("We couldn't verify that payment yet. Please refresh in a moment.");
         }
@@ -1012,7 +1012,7 @@ export function UserDashboard() {
           <CreditCard className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
           <h3 className="text-xl font-semibold mb-2">No payments yet</h3>
           <p className="text-muted-foreground mb-5">
-            When you complete a secure Paystack checkout, your receipts and verification status will show up here.
+            When you complete a secure PayAngels checkout, your receipts and verification status will show up here.
           </p>
           <Link to="/search">
             <Button aria-label="Browse listings" title="Browse listings">

@@ -143,7 +143,7 @@ def build_pitch() -> Document:
         "Short-stay booking + host workspace (trips, reservations, calendar)",
         "Tenant portal: leases, rent payments, maintenance requests",
         "Agency workspace: listings, leads, contacts, tasks, documents, automation",
-        "Paystack payments live; escrow & wallet MVP; Paystack webhooks deployed",
+        "PayAngels payments live; escrow & wallet MVP; PayAngels webhooks deployed",
         "12+ languages; location-based market onboarding",
         "Mobile PWA + Capacitor native wrappers (Android/iOS)",
         "Role-optimized UI for consumers, hosts, agents, analysts, and admins",
@@ -183,7 +183,7 @@ def build_pitch() -> Document:
         ],
     )
     doc.add_paragraph(
-        "Each market launch includes localized payments (Paystack/Stripe), currency, language, "
+        "Each market launch includes localized payments (PayAngels/PayAngels), currency, language, "
         "agency onboarding, and legal compliance. Multi-currency and 12+ language support are already built."
     )
 
@@ -232,7 +232,7 @@ def build_pitch() -> Document:
         ["Milestone", "Status"],
         [
             ["Production launch", "Live at www.baytmiftah.com (Vercel + Supabase)"],
-            ["Payments", "Paystack integrated; Stripe wired, keys pending"],
+            ["Payments", "PayAngels integrated; PayAngels wired, keys pending"],
             ["Test coverage", "58 automated tests passing"],
             ["Module readiness", "Marketplace 90% · Consumer 90% · Agency ERP 80%"],
             ["Mobile", "PWA live; native builds scaffolded"],
@@ -247,7 +247,7 @@ def build_pitch() -> Document:
     add_bullet(doc, "React 18, TypeScript, Vite — fast web and mobile UI")
     add_bullet(doc, "Supabase — PostgreSQL, auth, realtime, storage, edge functions")
     add_bullet(doc, "Vercel — global CDN hosting")
-    add_bullet(doc, "Paystack + Stripe — local and international payments")
+    add_bullet(doc, "PayAngels + PayAngels — local and international payments")
     add_bullet(doc, "Capacitor — single codebase for Android and iOS")
 
     # Roadmap
@@ -255,7 +255,7 @@ def build_pitch() -> Document:
     add_heading(doc, "Near term (2–4 weeks)", level=2)
     for item in [
         "Resend email (confirmations, receipts, password reset)",
-        "Stripe live for international cards",
+        "PayAngels live for international cards",
         "Google & Apple OAuth",
         "KYC verification completion",
         "Subscription billing (Pro / Enterprise)",
@@ -283,10 +283,10 @@ def build_pitch() -> Document:
     add_heading(doc, "Why BaytMiftah Wins")
     for item in [
         ("Full-stack REOS ", "— not just listings; operations, payments, and trust in one product"),
-        ("Ghana-first payments ", "— Paystack-native, mobile-money ready, escrow built in"),
+        ("Ghana-first payments ", "— PayAngels-native, mobile-money ready, escrow built in"),
         ("Role-aware product ", "— consumer and pro experiences optimized per user type"),
         ("Multi-tenant workspace ", "— agencies, teams, and permissions out of the box"),
-        ("International-ready ", "— 12+ locales, multi-currency, Stripe for global cards"),
+        ("International-ready ", "— 12+ locales, multi-currency, PayAngels for global cards"),
         ("Ship velocity ", "— production platform built and deployed; iterating weekly"),
     ]:
         add_bullet(doc, item[1], item[0])
@@ -340,8 +340,8 @@ def build_pitch() -> Document:
         [
             ["Supabase", "Database, auth, storage", "Live"],
             ["Vercel", "Hosting", "Live"],
-            ["Paystack", "Africa payments", "Live"],
-            ["Stripe", "International cards", "Wired"],
+            ["PayAngels", "Africa payments", "Live"],
+            ["PayAngels", "International cards", "Wired"],
             ["Resend", "Email", "Pending keys"],
             ["Google Maps", "Property maps", "Live"],
             ["OpenAI", "AI assistant", "Integrated (keys optional)"],

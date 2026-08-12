@@ -98,7 +98,7 @@ export const CONSUMER_PAGE_CONFIG: Record<ConsumerSection, PageConfig> = {
   },
   payments: {
     title: "Wallet & Payments",
-    description: "Balance, escrow, receipts, and Paystack history.",
+    description: "Balance, escrow, receipts, and PayAngels history.",
     breadcrumb: [{ label: "My BaytMiftah", href: "/app" }, { label: "Payments" }],
     emptyTitle: "Your wallet is empty",
     emptyDescription: "Use your wallet to pay deposits, rent, and booking fees.",

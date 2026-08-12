@@ -1,4 +1,4 @@
-import { clientIntegrations, getPaystackPublicKey } from "./integrations";
+import { clientIntegrations, getPayangelsPublicKey } from "./integrations";
 
 function getSupabaseAnonKey() {
   return (
@@ -25,9 +25,9 @@ export function getClientEnv() {
     supabaseAnonKey: getSupabaseAnonKey() as string,
     appVersion: import.meta.env.VITE_APP_VERSION as string | undefined,
     appUrl: clientIntegrations.appUrl.value,
-    paystackPublicKey: getPaystackPublicKey() || undefined,
+    payangelsPublicKey: getPayangelsPublicKey() || undefined,
     integrations: clientIntegrations,
   };
 }
 
-export { clientIntegrations, getPaystackPublicKey };
+export { clientIntegrations, getPayangelsPublicKey };

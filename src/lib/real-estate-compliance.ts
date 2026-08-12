@@ -65,7 +65,7 @@ const JURISDICTIONS: Record<JurisdictionId, JurisdictionRules> = {
       "House rules, check-in/out times, and cancellation policy must be visible before booking.",
     ],
     paymentRules: [
-      "Payments processed via licensed PSP (Paystack). BaytMiftah is not a bank or escrow agent unless stated.",
+      "Payments processed via licensed PSP (PayAngels). BaytMiftah is not a bank or escrow agent unless stated.",
       "Mobile money and card receipts must be retained for dispute resolution.",
       "Large transfers may trigger AML reporting obligations for regulated entities.",
     ],

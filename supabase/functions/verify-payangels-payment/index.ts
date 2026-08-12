@@ -1,6 +1,6 @@
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import { reconcilePaystackPayment } from "../_shared/payment-reconciliation.ts";
-import { verifyPaystackTransaction } from "../_shared/paystack.ts";
+import { verifyPayangelsTransaction } from "../_shared/payangels.ts";
 import { requireAuthenticatedUser, createAdminClient } from "../_shared/supabase.ts";
 
 Deno.serve(async (req) => {
@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
       throw new HttpError(403, "You are not allowed to verify this payment");
     }
 
-    const verifiedTransaction = await verifyPaystackTransaction(reference);
+    const verifiedTransaction = await verifyPayangelsTransaction(reference);
     const result = await reconcilePaystackPayment({
       reference,
       verifiedTransaction,
@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
       return jsonResponse(error.status, { error: error.message });
     }
 
-    console.error("verify-paystack-payment error:", error);
+    console.error("verify-payangels-payment error:", error);
     return jsonResponse(500, { error: "Unable to verify payment" });
   }
 });

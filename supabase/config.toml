@@ -1,4 +1,4 @@
-[functions.paystack-webhook]
+[functions.payangels-webhook]
 verify_jwt = false
 
 [functions.automation-dispatcher]

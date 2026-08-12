@@ -89,7 +89,7 @@ The `internationalPaymentService` handles multi-region payment methods.
 
 | Region | Methods |
 |--------|---------|
-| **US** | Card (Stripe/PayPal), Apple Pay, Google Pay, Crypto |
+| **US** | Card (PayAngels/PayPal), Apple Pay, Google Pay, Crypto |
 | **EU** | Card, Bank Transfer (Wise), Klarna |
 | **Africa (GH/NG/ZA/KE)** | Mobile Money (MTN, Airtel, M-Pesa), Flutterwave, Card |
 | **UK** | Card, Bank Transfer, Klarna |
@@ -109,11 +109,11 @@ const config = internationalPaymentService.getPaymentConfig('USD', 'US')
 // Result: { currency, region, availableMethods, defaultMethod }
 
 // Calculate payment fees
-const fees = internationalPaymentService.calculateFees(1000, 'stripe')
+const fees = internationalPaymentService.calculateFees(1000, 'payangels')
 // Result: { subtotal: 1000, fee: 29, total: 1029 }
 
 // Save payment method for future use
-await internationalPaymentService.savePaymentMethod(userId, 'stripe', {
+await internationalPaymentService.savePaymentMethod(userId, 'payangels', {
   lastFour: '4242',
   brand: 'visa'
 })
@@ -131,7 +131,7 @@ const transaction = await internationalPaymentService.createTransaction(
 **Setup Instructions:**
 
 1. Configure payment providers in `src/lib/international-payment.service.ts`
-2. For Stripe: Add keys to `.env`
+2. For PayAngels: Add keys to `.env`
    ```
    VITE_STRIPE_PUBLIC_KEY=pk_test_...
    STRIPE_SECRET_KEY=sk_test_...

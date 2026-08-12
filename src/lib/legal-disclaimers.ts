@@ -39,7 +39,7 @@ export const TRUST_LABELS: Record<
   licensed_payment_partner: {
     short: "Licensed payment partner",
     disclaimer:
-      "Card and mobile money payments are processed by licensed third-party providers (e.g. Paystack). BaytMiftah does not store full card numbers.",
+      "Card and mobile money payments are processed by licensed third-party providers (e.g. PayAngels). BaytMiftah does not store full card numbers.",
   },
   listing_quality_score: {
     short: "Listing quality score",

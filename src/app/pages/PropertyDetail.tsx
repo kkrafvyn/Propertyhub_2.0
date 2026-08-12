@@ -242,7 +242,7 @@ export function PropertyDetail() {
     [listing]
   );
   const paymentCurrency = paymentContext?.currency || listing?.currency || "USD";
-  const paymentProviderLabel = paymentContext?.providerLabel || "Paystack";
+  const paymentProviderLabel = paymentContext?.providerLabel || "PayAngels";
   const images = getPropertyImageGallery(property);
   const locationQuery = property
     ? [property.address, property.city, property.region, property.country].filter(Boolean).join(", ")
@@ -1392,8 +1392,8 @@ export function PropertyDetail() {
                     <div>
                       <h4 className="font-semibold">Secure Payment</h4>
                       <p className="text-sm text-muted-foreground">
-                        {paymentContext?.primaryProvider === "paystack"
-                          ? "Pay with mobile money, card, or bank transfer through Paystack."
+                        {paymentContext?.primaryProvider === "payangels"
+                          ? "Pay with mobile money, card, or bank transfer through PayAngels."
                           : `Pay securely through ${paymentProviderLabel} in ${paymentCurrency}.`}{" "}
                         After confirmation, your receipt is prepared for verification.
                       </p>

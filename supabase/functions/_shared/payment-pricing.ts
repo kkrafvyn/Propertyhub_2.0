@@ -47,6 +47,6 @@ export function assertPaystackAmountMatch(input: {
 }) {
   const paystackMinor = Math.round(Number(input.paystackAmountMajor) * 100);
   if (paystackMinor !== input.expectedMinor) {
-    throw new HttpError(400, "Paystack amount does not match transaction record");
+    throw new HttpError(400, "PayAngels amount does not match transaction record");
   }
 }

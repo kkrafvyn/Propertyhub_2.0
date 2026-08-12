@@ -12,7 +12,7 @@ Use this checklist before every production release of the consumer portal, works
 - [ ] Review open migrations in `supabase/migrations/` and confirm they are idempotent
 - [ ] Apply database changes: `npx supabase db push --include-all`
 - [ ] Deploy payment edge functions: `npm run supabase:deploy:payments`
-- [ ] Verify `.env` / hosting secrets: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, Paystack keys on edge
+- [ ] Verify `.env` / hosting secrets: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, PayAngels keys on edge
 - [ ] Confirm RLS policies for new tables (`organization_wallets`, `organization_payout_requests`, `deal_case_counter_offers`, `closing_checklist_items`, `lease_rent_schedule`, `booking_reviews`)
 
 ## Smoke test (manual)
@@ -25,7 +25,7 @@ Use this checklist before every production release of the consumer portal, works
 - [ ] Active lease → rent schedule, renewal request, pay rent redirect
 - [ ] Workspace → BaytMiftah AI panel visible on core pages
 - [ ] Workspace → Finance → org wallet balance, payout request, payout queue
-- [ ] Paystack checkout → webhook reconciles org wallet / escrow / booking confirm + in-app payment notifications
+- [ ] PayAngels checkout → webhook reconciles org wallet / escrow / booking confirm + in-app payment notifications
 
 ## Monitoring
 
@@ -39,7 +39,7 @@ Use this checklist before every production release of the consumer portal, works
 
 - [ ] Previous deployment artifact tagged in hosting provider
 - [ ] Database migrations are forward-only; document manual rollback SQL if needed
-- [ ] Paystack webhook endpoint unchanged or dual-run during cutover
+- [ ] PayAngels webhook endpoint unchanged or dual-run during cutover
 
 ## Post-deploy
 

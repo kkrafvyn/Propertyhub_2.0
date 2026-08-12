@@ -1,4 +1,4 @@
--- Paystack refund ledger and transaction refund lifecycle support.
+-- PayAngels refund ledger and transaction refund lifecycle support.
 -- This extends the property payment flow with partial/full refunds while
 -- keeping blockchain receipts as immutable proof of the original payment.
 
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS public.property_refunds (
   organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   property_id UUID NOT NULL REFERENCES public.properties(id) ON DELETE CASCADE,
   requested_by_user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
-  provider TEXT NOT NULL DEFAULT 'paystack' CHECK (provider IN ('paystack')),
+  provider TEXT NOT NULL DEFAULT 'payangels' CHECK (provider IN ('payangels')),
   provider_refund_id TEXT UNIQUE,
   provider_refund_reference TEXT,
   amount_minor BIGINT NOT NULL CHECK (amount_minor > 0),
@@ -126,4 +126,4 @@ BEFORE UPDATE ON public.property_refunds
 FOR EACH ROW
 EXECUTE FUNCTION public.set_row_updated_at();
 
-COMMENT ON TABLE public.property_refunds IS 'Refund attempts and webhook-driven lifecycle state for Paystack property payments.';
+COMMENT ON TABLE public.property_refunds IS 'Refund attempts and webhook-driven lifecycle state for PayAngels property payments.';

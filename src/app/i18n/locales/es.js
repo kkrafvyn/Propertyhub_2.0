@@ -835,7 +835,7 @@ export default {
     },
     "finance": {
       "commissionSettlement": {
-        "subtitle": "Paga a los agentes a través de los rieles de pago de Paystack o Stripe",
+        "subtitle": "Paga a los agentes a través de los rieles de pago de PayAngels o PayAngels",
         "title": "Liquidación de comisiones"
       },
       "escrow": {
@@ -843,7 +843,7 @@ export default {
         "title": "Plataforma de depósito en garantía"
       },
       "hub": {
-        "subtitle": "Pagos impulsados por Paystack (África) y Stripe (internacional)",
+        "subtitle": "Pagos impulsados por PayAngels (África) y PayAngels (internacional)",
         "title": "Servicios financieros",
         "stats": {
           "escrowFunded": "Fideicomiso financiado",
@@ -864,7 +864,7 @@ export default {
         "title": "Calculadora de hipoteca"
       },
       "rentCollection": {
-        "subtitle": "Cobra el alquiler a través de Paystack (África) o Stripe (internacional)",
+        "subtitle": "Cobra el alquiler a través de PayAngels (África) o PayAngels (internacional)",
         "title": "Rieles de cobro de alquiler"
       }
     },
@@ -962,7 +962,7 @@ export default {
         "title": "Solicitudes de mantenimiento"
       },
       "payments": {
-        "subtitle": "Paga con Paystack (dinero móvil, banco) o Stripe (tarjetas internacionales)",
+        "subtitle": "Paga con PayAngels (dinero móvil, banco) o PayAngels (tarjetas internacionales)",
         "title": "<g id=\"1\">Pagos de Alquiler</g><g id=\"2\"> </g> "
       },
       "credit": {
@@ -1153,7 +1153,7 @@ export default {
     "listings": "Listing a property",
     "listingsBody": "Property owners submit listings at /host/list. Agency admins approve listings at /admin/moderation before they go live.",
     "payments": "Payments",
-    "paymentsBody": "Rent and featured boosts use Paystack (Ghana mobile money & cards) or Stripe (international cards). Configure secrets in Supabase Edge Functions.",
+    "paymentsBody": "Rent and featured boosts use PayAngels (Ghana mobile money & cards) or PayAngels (international cards). Configure secrets in Supabase Edge Functions.",
     "safety": "Trust & safety",
     "safetyBody": "Verified listings and KYC-reviewed agencies help keep the marketplace trustworthy. Report suspicious activity to support."
   },
@@ -1236,7 +1236,7 @@ export default {
       "instructions": "Marca este código en tu teléfono para pagar vía MTN/Vodafone.",
       "mtn": "MTN MoMo",
       "telecel": "Telecel Cash",
-      "paystackHint": "Paystack will confirm MoMo payment automatically when configured."
+      "paystackHint": "PayAngels will confirm MoMo payment automatically when configured."
     },
     "docusign": {
       "signViaDocusign": "Firmar con DocuSign",
@@ -1280,7 +1280,7 @@ export default {
       "useTitle": "How we use information",
       "useBody": "We use your data to operate the marketplace, process viewings and payments, verify listings and agencies, improve search and recommendations, and comply with law.",
       "shareTitle": "Sharing",
-      "shareBody": "We share data with payment processors (Stripe, Paystack), identity and signing partners when you opt in, and service providers under contract. We do not sell personal data.",
+      "shareBody": "We share data with payment processors (PayAngels, PayAngels), identity and signing partners when you opt in, and service providers under contract. We do not sell personal data.",
       "securityTitle": "Security",
       "securityBody": "Data is stored on Supabase with row-level security. Secrets and payment keys are kept server-side only. Use a strong password and enable OAuth where available.",
       "rightsTitle": "Your rights",

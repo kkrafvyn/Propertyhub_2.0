@@ -561,7 +561,7 @@ Includes:
 
 Payment integrations are abstracted for:
 
-* Paystack
+* PayAngels
 * Mobile Money
 * Future providers
 
@@ -762,7 +762,7 @@ Security/CDN:
 
 Payments:
 
-* Paystack
+* PayAngels
 * Mobile Money abstraction
 
 ---

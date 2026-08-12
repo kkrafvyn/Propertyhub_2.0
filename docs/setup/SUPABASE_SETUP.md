@@ -203,7 +203,7 @@ Before production:
 - [ ] Set password requirements
 - [ ] Configure email templates
 - [ ] Create admin role and policies
-- [ ] Set up payment processor (Paystack integration)
+- [ ] Set up payment processor (PayAngels integration)
 - [ ] Enable HTTPS/SSL
 - [ ] Configure CORS
 - [ ] Set up automated backups

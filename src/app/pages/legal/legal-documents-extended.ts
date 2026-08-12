@@ -191,7 +191,7 @@ export const EXTENDED_LEGAL_DOCUMENTS: LegalDocument[] = [
       },
       {
         title: "Subprocessors",
-        body: "BaytMiftah uses Supabase, Vercel, Resend, Paystack, Stripe, and other providers listed in our Privacy Policy under contract.",
+        body: "BaytMiftah uses Supabase, Vercel, Resend, PayAngels, PayAngels, and other providers listed in our Privacy Policy under contract.",
       },
       {
         title: "Data subject requests",
@@ -347,7 +347,7 @@ export const DOCUMENT_SECTION_ENHANCEMENTS: Record<string, LegalDocument["sectio
     {
       title: "Third-party services",
       bullets: [
-        "Paystack, Stripe, Supabase, Vercel, Resend, Google Maps, and AI assistants are third-party services subject to their own terms.",
+        "PayAngels, PayAngels, Supabase, Vercel, Resend, Google Maps, and AI assistants are third-party services subject to their own terms.",
         "BaytMiftah is not responsible for third-party outages beyond reasonable care.",
       ],
     },
@@ -363,7 +363,7 @@ export const DOCUMENT_SECTION_ENHANCEMENTS: Record<string, LegalDocument["sectio
         "Supabase — database, auth, storage (EU/US).",
         "Vercel — web hosting and edge delivery.",
         "Resend — transactional email.",
-        "Paystack / Stripe — payment processing.",
+        "PayAngels / PayAngels — payment processing.",
         "Google — maps and optional analytics.",
       ],
     },

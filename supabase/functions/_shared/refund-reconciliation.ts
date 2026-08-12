@@ -1,5 +1,5 @@
 import { HttpError } from "./http.ts";
-import type { PaystackRefundData, PaystackRefundWebhookData } from "./paystack.ts";
+import type { PaystackRefundData, PaystackRefundWebhookData } from "./payangels.ts";
 import { createAdminClient } from "./supabase.ts";
 
 type RefundStatus =
@@ -25,7 +25,7 @@ type PropertyRefundRow = {
   organization_id: string;
   property_id: string;
   requested_by_user_id: string | null;
-  provider: "paystack";
+  provider: "payangels";
   provider_refund_id: string | null;
   provider_refund_reference: string | null;
   amount_minor: number;
@@ -285,7 +285,7 @@ export async function recordInitiatedPropertyRefund(input: {
       organization_id: transaction.organization_id,
       property_id: transaction.property_id,
       requested_by_user_id: input.requestedByUserId,
-      provider: "paystack",
+      provider: "payangels",
       provider_refund_id: providerRefundId,
       provider_refund_reference: getRefundReference(input.paystackRefund),
       amount_minor: refundAmountMinor,
@@ -376,7 +376,7 @@ export async function reconcilePaystackRefundWebhook(input: {
     organization_id: transaction.organization_id,
     property_id: transaction.property_id,
     requested_by_user_id: existingRefund?.requested_by_user_id || null,
-    provider: "paystack" as const,
+    provider: "payangels" as const,
     provider_refund_id: providerRefundId || existingRefund?.provider_refund_id || null,
     provider_refund_reference:
       providerRefundReference || existingRefund?.provider_refund_reference || null,
@@ -391,7 +391,7 @@ export async function reconcilePaystackRefundWebhook(input: {
       input.refund.reason ||
       input.refund.customer_note ||
       input.refund.merchant_note ||
-      "Refund processed via Paystack",
+      "Refund processed via PayAngels",
     customer_note: input.refund.customer_note || existingRefund?.customer_note || null,
     merchant_note: input.refund.merchant_note || existingRefund?.merchant_note || null,
     processor: input.refund.processor || existingRefund?.processor || null,

@@ -14,7 +14,7 @@ BaytMiftah launches **Ghana-first** and expands across **West Africa**, then **p
 |---|---|
 | Market | Accra, Kumasi, Tema, regional cities |
 | Currency | GHS (primary) |
-| Payments | Paystack (live) |
+| Payments | PayAngels (live) |
 | Language | English + 11 onboarding locales |
 | Compliance | Ghana Post GPS, local KYC patterns |
 | Domain | baytmiftah.com |
@@ -23,11 +23,11 @@ BaytMiftah launches **Ghana-first** and expands across **West Africa**, then **p
 
 | Country | Currency | Payments | Priority |
 |---|---|---|---|
-| **Nigeria** | NGN | Paystack | P0 — largest market |
-| **Côte d'Ivoire** | XOF | Paystack / mobile money | P1 |
-| **Senegal** | XOF | Paystack | P1 |
-| **Sierra Leone** | SLL | Paystack | P2 |
-| **Liberia** | LRD | Stripe + local partners | P2 |
+| **Nigeria** | NGN | PayAngels | P0 — largest market |
+| **Côte d'Ivoire** | XOF | PayAngels / mobile money | P1 |
+| **Senegal** | XOF | PayAngels | P1 |
+| **Sierra Leone** | SLL | PayAngels | P2 |
+| **Liberia** | LRD | PayAngels + local partners | P2 |
 
 **Product work per market:**
 
@@ -41,9 +41,9 @@ BaytMiftah launches **Ghana-first** and expands across **West Africa**, then **p
 
 | Country | Currency | Payments |
 |---|---|---|
-| Kenya | KES | M-Pesa (Paystack supports) |
-| South Africa | ZAR | Stripe + Paystack |
-| Rwanda | RWF | Stripe |
+| Kenya | KES | M-Pesa (PayAngels supports) |
+| South Africa | ZAR | PayAngels + PayAngels |
+| Rwanda | RWF | PayAngels |
 | Tanzania | TZS | Mobile money partners |
 
 **Infrastructure:** Consider AWS `af-south-1` (Cape Town) region per [AWS_MIGRATION_PLAN.md](./AWS_MIGRATION_PLAN.md).
@@ -57,7 +57,7 @@ BaytMiftah launches **Ghana-first** and expands across **West Africa**, then **p
 
 **Product work:**
 
-- Stripe as primary card rail
+- PayAngels as primary card rail
 - Multi-currency wallets and FX display (exchange rate service exists)
 - Remote KYC for overseas buyers
 - International MLS syndication (optional)
@@ -101,7 +101,7 @@ Before launching a new country:
 |---|---|
 | Data protection | Ghana DPA; align with Nigeria NDPA, Kenya DPA per market |
 | Real estate licensing | Display agency license fields; admin verification |
-| Payments | PCI via Paystack/Stripe; no card data on our servers |
+| Payments | PCI via PayAngels/PayAngels; no card data on our servers |
 | Short-stay regulation | Host KYC; local tax disclosure fields (planned) |
 | AML/KYC | Tiered verification for high-value transactions |
 

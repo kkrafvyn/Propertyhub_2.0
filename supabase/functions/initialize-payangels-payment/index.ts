@@ -2,7 +2,7 @@ import { getCorsHeaders, HttpError, jsonResponse, safeErrorMessage } from "../_s
 import { assertListingPayable } from "../_shared/payment-pricing.ts";
 import { resolveCheckoutAmountMinor } from "../_shared/promo-pricing.ts";
 import { enforceRateLimit, rateLimitKey } from "../_shared/rate-limit.ts";
-import { initializePaystackTransaction } from "../_shared/paystack.ts";
+import { initializePayangelsTransaction } from "../_shared/payangels.ts";
 import { requireAuthenticatedUser, createAdminClient } from "../_shared/supabase.ts";
 
 function getAppUrl(req: Request) {
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     const { user } = await requireAuthenticatedUser(authHeader);
     await enforceRateLimit({
-      bucket: rateLimitKey("paystack-init", user.id),
+      bucket: rateLimitKey("payangels-init", user.id),
       maxHits: 10,
       windowSeconds: 60,
     });
@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
         organization_id: listing.organization_id,
         deal_case_id: resolvedDealCaseId,
         payer_user_id: user.id,
-        provider: "paystack",
+        provider: "payangels",
         provider_reference: reference,
         amount_minor: amountMinor,
         currency: listing.currency || "GHS",
@@ -253,7 +253,7 @@ Deno.serve(async (req) => {
       throw new HttpError(500, propertyTransactionError.message);
     }
 
-    const paystack = await initializePaystackTransaction({
+    const payangels = await initializePayangelsTransaction({
       amount: String(amountMinor),
       email: user.email,
       currency: listing.currency || "GHS",
@@ -267,8 +267,8 @@ Deno.serve(async (req) => {
       .from("property_transactions")
       .update({
         status: "pending",
-        authorization_url: paystack.authorization_url,
-        access_code: paystack.access_code,
+        authorization_url: payangels.authorization_url,
+        access_code: payangels.access_code,
       })
       .eq("id", propertyTransaction.id)
       .select("*")
@@ -280,9 +280,9 @@ Deno.serve(async (req) => {
 
     return jsonResponse(200, {
       transaction: updatedTransaction,
-      authorizationUrl: paystack.authorization_url,
-      accessCode: paystack.access_code,
-      reference: paystack.reference,
+      authorizationUrl: payangels.authorization_url,
+      accessCode: payangels.access_code,
+      reference: payangels.reference,
       callbackUrl,
       pricing: {
         baseMinor: pricing.baseMinor,
@@ -297,7 +297,7 @@ Deno.serve(async (req) => {
       return jsonResponse(error.status, { error: error.message }, req);
     }
 
-    console.error("initialize-paystack-payment error:", error);
+    console.error("initialize-payangels-payment error:", error);
     return jsonResponse(500, { error: safeErrorMessage(error, "Unable to initialize payment") }, req);
   }
 });

@@ -2,7 +2,10 @@ import { HttpError, jsonResponse } from "../_shared/http.ts";
 import { recordWebhookEvent } from "../_shared/audit-log.ts";
 import { reconcilePaystackPayment } from "../_shared/payment-reconciliation.ts";
 import { reconcilePaystackRefundWebhook } from "../_shared/refund-reconciliation.ts";
-import { verifyPaystackTransaction, verifyPaystackWebhookSignature } from "../_shared/paystack.ts";
+import {
+  verifyPayangelsTransaction,
+  verifyPayangelsWebhookSignature,
+} from "../_shared/payangels.ts";
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
@@ -11,8 +14,8 @@ Deno.serve(async (req) => {
 
   try {
     const rawBody = await req.text();
-    const signature = req.headers.get("x-paystack-signature");
-    const isValidSignature = await verifyPaystackWebhookSignature(rawBody, signature);
+    const signature = req.headers.get("x-payangels-signature") || req.headers.get("x-payangels-signature");
+    const isValidSignature = await verifyPayangelsWebhookSignature(rawBody, signature);
 
     if (!isValidSignature) {
       throw new HttpError(401, "Invalid webhook signature");
@@ -29,7 +32,7 @@ Deno.serve(async (req) => {
 
     const eventId = String(event.data?.id || `${event.event}:${event.data?.reference || rawBody.slice(0, 64)}`);
     const replay = await recordWebhookEvent({
-      provider: "paystack",
+      provider: "payangels",
       eventId,
       reference: event.data?.reference || null,
       payload: event as Record<string, unknown>,
@@ -46,7 +49,7 @@ Deno.serve(async (req) => {
         throw new HttpError(400, "Webhook payload is missing a reference");
       }
 
-      const verifiedTransaction = await verifyPaystackTransaction(reference);
+      const verifiedTransaction = await verifyPayangelsTransaction(reference);
       const result = await reconcilePaystackPayment({
         reference,
         verifiedTransaction,
@@ -90,7 +93,7 @@ Deno.serve(async (req) => {
       return jsonResponse(error.status, { error: error.message });
     }
 
-    console.error("paystack-webhook error:", error);
+    console.error("payangels-webhook error:", error);
     return jsonResponse(500, { error: "Webhook processing failed" });
   }
 });

@@ -212,7 +212,7 @@ export const CORE_CHROME_BY_CODE = {
       energy: "Energianvändning",
       energyDesc: "Månadsförbrukning och kostnad",
       announcements: "Meddelanden",
-      announcementsDesc: "Communityuppdateringar",
+      announcementsDesc: "Community uppdateringar",
       unlock: "Låsa upp",
       grantTitle: "Ge hyresgästen tillträde",
       grantEmailPlaceholder: "Hyresgästens e-post på BaytMiftah",
@@ -296,14 +296,14 @@ export const CORE_CHROME_BY_CODE = {
       doorAccess: "Shigar kofa",
       doorAccessDesc: "Buɗe kofofin da ke da alaƙa da hayar ku",
       visitors: "Baƙi",
-      visitorsDesc: "Guest wucewa da rajistan ayyukan",
+      visitorsDesc: "Guest passs da logs",
       energy: "Amfanin makamashi",
-      energyDesc: "Amfani na wata-wata da farashi",
+      energyDesc: "Amfani da farashi na wata-wata",
       announcements: "Sanarwa",
       announcementsDesc: "Sabuntawar al'umma",
       unlock: "Buɗe",
-      grantTitle: "Bada damar mai haya",
-      grantEmailPlaceholder: "Imel na haya akan BaytMiftah",
+      grantTitle: "Bada izinin mai haya",
+      grantEmailPlaceholder: "Imel ɗin ɗan haya akan BaytMiftah",
       grantAction: "Bada damar IoT",
       grantSuccess: "An ba da damar shiga. Mai haya zai iya amfani da wannan na'urar.",
       grantFailed: "An kasa ba da damar shiga. Duba imel ɗin kuma a sake gwadawa."
@@ -322,7 +322,7 @@ export const CORE_CHROME_BY_CODE = {
       energy: "Matumizi ya nishati",
       energyDesc: "Matumizi ya kila mwezi na gharama",
       announcements: "Matangazo",
-      announcementsDesc: "Masasisho ya jumuiya",
+      announcementsDesc: "Taarifa za jumuiya",
       unlock: "Fungua",
       grantTitle: "Mpe mpangaji ufikiaji",
       grantEmailPlaceholder: "Barua pepe ya mpangaji kwenye BaytMiftah",
@@ -466,7 +466,7 @@ export const CORE_CHROME_BY_CODE = {
   zh: {
     residentAccess: {
       title: "还没有智能接入",
-      body: "您的业​​主必须授予 IoT 访问权限，然后您才能使用门、锁和设备。",
+      body: "您的业​​主必须先授予 IoT 访问权限，然后您才能使用门、锁和设备。",
       backToProfile: "返回个人资料",
       hubSubtitle: "建立通道、能源和社区",
       doorAccess: "门禁",
@@ -480,7 +480,7 @@ export const CORE_CHROME_BY_CODE = {
       unlock: "开锁",
       grantTitle: "授予租户访问权限",
       grantEmailPlaceholder: "BaytMiftah 上的租户电子邮件",
-      grantAction: "授予物联网访问权限",
+      grantAction: "授予 IoT 访问权限",
       grantSuccess: "已授予访问权限。 租户现在可以使用该设备。",
       grantFailed: "无法授予访问权限。 检查电子邮件并重试。"
     }
@@ -569,7 +569,7 @@ export const CORE_CHROME_BY_CODE = {
       grantTitle: "Cấp quyền truy cập cho người thuê",
       grantEmailPlaceholder: "Email người thuê trên BaytMiftah",
       grantAction: "Cấp quyền truy cập IoT",
-      grantSuccess: "Quyền truy cập được cấp. Người thuê bây giờ có thể sử dụng thiết bị này.",
+      grantSuccess: "Đã cấp quyền truy cập. Người thuê bây giờ có thể sử dụng thiết bị này.",
       grantFailed: "Không thể cấp quyền truy cập. Hãy kiểm tra email và thử lại."
     }
   },
@@ -635,7 +635,7 @@ export const CORE_CHROME_BY_CODE = {
       grantTitle: "ให้สิทธิ์การเข้าถึงของผู้เช่า",
       grantEmailPlaceholder: "อีเมลผู้เช่าบน BaytMiftah",
       grantAction: "ให้สิทธิ์การเข้าถึง IoT",
-      grantSuccess: "ได้รับสิทธิ์การเข้าถึงแล้ว ขณะนี้ผู้เช่าสามารถใช้อุปกรณ์นี้ได้",
+      grantSuccess: "ให้สิทธิ์การเข้าถึงแล้ว ขณะนี้ผู้เช่าสามารถใช้อุปกรณ์นี้ได้",
       grantFailed: "ไม่สามารถให้สิทธิ์การเข้าถึงได้ ตรวจสอบอีเมลแล้วลองอีกครั้ง"
     }
   },
@@ -653,7 +653,7 @@ export const CORE_CHROME_BY_CODE = {
       energyDesc: "মাসিক খরচ এবং খরচ",
       announcements: "ঘোষণা",
       announcementsDesc: "সম্প্রদায় আপডেট",
-      unlock: "আনলক",
+      unlock: "আনলক করুন",
       grantTitle: "ভাড়াটে অ্যাক্সেস মঞ্জুর করুন",
       grantEmailPlaceholder: "BaytMiftah এ ভাড়াটে ইমেল",
       grantAction: "IoT অ্যাক্সেস মঞ্জুর করুন",

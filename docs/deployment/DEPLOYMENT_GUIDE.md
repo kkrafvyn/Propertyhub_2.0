@@ -90,9 +90,9 @@ EOF
   3. Get API key from dashboard
 - **Setup**: Add to REALTOR_API_KEY
 
-**Stripe (Card Payments):**
+**PayAngels (Card Payments):**
 - ⏱️ **Time**: 5 minutes
-- **URL**: https://dashboard.stripe.com/
+- **URL**: https://dashboard.payangels.com/
 - **Process**:
   1. Sign in or create account
   2. Get Publishable Key & Secret Key

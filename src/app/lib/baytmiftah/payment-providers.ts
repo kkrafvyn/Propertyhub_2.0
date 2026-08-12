@@ -4,12 +4,11 @@ import {
   type PaymentContext,
 } from "../../../lib/payment-routing.service";
 
-export const PAYMENT_PROVIDERS = ["paystack", "stripe"] as const;
+export const PAYMENT_PROVIDERS = ["payangels"] as const;
 
 export function getDefaultProvider() {
-  if (clientIntegrations.paystack.checkoutReady) return "paystack";
-  if (clientIntegrations.stripe.configured) return "stripe";
-  return "paystack";
+  if (clientIntegrations.payangels.checkoutReady) return "payangels";
+  return "payangels";
 }
 
 export function getProviderForProperty(property?: {
@@ -22,7 +21,6 @@ export function getProviderForProperty(property?: {
 }
 
 export function providerMeta(provider: string) {
-  if (provider === "paystack") return { id: provider, label: "Paystack" };
-  if (provider === "stripe") return { id: provider, label: "Stripe" };
+  if (provider === "payangels") return { id: provider, label: "PayAngels" };
   return { id: provider, label: provider };
 }

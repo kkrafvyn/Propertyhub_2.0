@@ -11,7 +11,7 @@ import {
   type PaymentContext,
 } from '@/lib/payment-routing.service'
 import { clientIntegrations } from '@/lib/integrations'
-import { openPaystackInline } from '@/lib/paystack-inline'
+import { openPaystackInline } from '@/lib/payangels-inline'
 import { realEstateComplianceService } from '@/lib/real-estate-compliance.service'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { LegalAcceptanceCheckbox } from '../../components/legal/LegalAcceptanceCheckbox'
@@ -231,8 +231,8 @@ export function PaymentCheckout({
       })
 
       if (shouldUsePaystackCheckout(paymentContext)) {
-        if (!clientIntegrations.paystack.checkoutReady) {
-          throw new Error("Paystack checkout is not configured for this property market.");
+        if (!clientIntegrations.payangels.checkoutReady) {
+          throw new Error("PayAngels checkout is not configured for this property market.");
         }
 
         const checkout = await paymentService.initializePropertyPayment({
@@ -265,9 +265,9 @@ export function PaymentCheckout({
         return;
       }
 
-      if (!clientIntegrations.stripe.configured) {
+      if (!clientIntegrations.payangels.configured) {
         throw new Error(
-          `Stripe checkout is not configured for properties in ${paymentContext.propertyLabel}.`
+          `PayAngels checkout is not configured for properties in ${paymentContext.propertyLabel}.`
         );
       }
 
@@ -282,7 +282,7 @@ export function PaymentCheckout({
         return;
       }
 
-      throw new Error("Stripe checkout URL was not returned.");
+      throw new Error("PayAngels checkout URL was not returned.");
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment processing failed')
       setLoading(false)
@@ -695,7 +695,7 @@ export function PaymentCheckout({
 
 function getPaymentIcon(provider: string) {
   switch (provider.toLowerCase()) {
-    case 'stripe':
+    case 'payangels':
       return <CreditCard className="w-5 h-5 text-blue-600" />
     case 'paypal':
       return <CreditCard className="w-5 h-5 text-blue-700" />
@@ -703,7 +703,7 @@ function getPaymentIcon(provider: string) {
       return <CreditCard className="w-5 h-5 text-gray-800" />
     case 'google_pay':
       return <CreditCard className="w-5 h-5 text-blue-500" />
-    case 'paystack':
+    case 'payangels':
     case 'mtn_momo':
     case 'airtel_money':
     case 'mpesa':
