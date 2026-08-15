@@ -239,15 +239,15 @@ export default {
   },
   "integrations": {
     "oauthHint": "Sign in with Google or Apple — enable providers in Supabase Auth dashboard and add redirect URLs for this site.",
-    "paymentsHint": "Live checkout requires PAYANGELS_SECRET_KEY in Supabase Edge Function secrets.",
+    "paymentsHint": "Live checkout requires payment secrets in Supabase Edge Function secrets.",
     "paymentDemo": "Payment provider is not configured. Add payment secrets in Supabase to enable live checkout."
   },
   "legal": {
-    "lastUpdated": "Last updated: July 2026",
+    "lastUpdated": "Last updated: 14 August 2026",
     "print": "Print / Save PDF",
     "hub": {
       "allPolicies": "All policies",
-      "paymentEscrow": "Payment & Escrow",
+      "paymentsTransaction": "Payments & Transaction Processing",
       "marketplaceRules": "Marketplace Rules",
       "fileComplaint": "File a complaint"
     },
@@ -255,7 +255,7 @@ export default {
       "and": "and",
       "signupConsumer": "I agree to the",
       "signupHost": "I agree to the",
-      "escrowCheckout": "I understand the",
+      "paymentCheckout": "I understand the",
       "shortStayBooking": "I agree to the",
       "listingPublish": "I confirm compliance with the",
       "agencyOnboarding": "I agree to the",
@@ -284,7 +284,7 @@ export default {
     "complaint": {
       "title": "Complaint & dispute form",
       "subtitle": "Submit a complaint, dispute, fraud report, or copyright notice. We aim to respond within 2 business days.",
-      "disputeNote": "For escrow disputes, see our",
+      "disputeNote": "For transaction disputes, see our",
       "disputePolicy": "Dispute Resolution Policy",
       "category": "Category",
       "subject": "Subject",
@@ -308,9 +308,9 @@ export default {
       "collectTitle": "Information we collect",
       "collectBody": "We collect account details (name, email, phone), listing and transaction data, device and usage analytics, and communications you send through the platform.",
       "useTitle": "How we use information",
-      "useBody": "We use your data to operate the marketplace, process viewings and payments, verify listings and agencies, improve search and recommendations, and comply with law.",
+      "useBody": "We use your data to operate the marketplace, facilitate communications, verify listings and agencies where enabled, improve search and recommendations, and comply with law.",
       "shareTitle": "Sharing",
-      "shareBody": "We share data with payment processors (PayAngels and other licensed PSPs), identity and signing partners when you opt in, and service providers under contract. We do not sell personal data.",
+      "shareBody": "We share data with payment processors, identity and signing partners when you opt in, and service providers under contract. We do not sell personal data.",
       "securityTitle": "Security",
       "securityBody": "Data is stored on Supabase with row-level security. Secrets and payment keys are kept server-side only. Use a strong password and enable OAuth where available.",
       "rightsTitle": "Your rights",
@@ -326,7 +326,7 @@ export default {
       "listingsTitle": "Listings & content",
       "listingsBody": "You are responsible for listing accuracy. We may moderate, reject, or remove listings that violate law or community standards. Featured placement may require payment.",
       "paymentsTitle": "Payments",
-      "paymentsBody": "Rent, deposits, and boosts are processed via third-party providers. Fees and refund rules are shown at checkout. BaytMiftah is not a bank or escrow agent unless explicitly stated.",
+      "paymentsBody": "Where payment functionality is available, processing is handled by the applicable third-party payment provider. BaytMiftah does not hold, custody, or control customer funds and does not operate an escrow service.",
       "accountsTitle": "Accounts",
       "accountsBody": "Keep credentials secure. You are liable for activity under your account. We may suspend accounts for fraud, abuse, or KYC failure.",
       "liabilityTitle": "Limitation of liability",

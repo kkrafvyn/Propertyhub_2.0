@@ -391,7 +391,7 @@ export async function reconcilePaystackRefundWebhook(input: {
       input.refund.reason ||
       input.refund.customer_note ||
       input.refund.merchant_note ||
-      "Refund processed via PayAngels",
+      "Refund processed via the payment provider",
     customer_note: input.refund.customer_note || existingRefund?.customer_note || null,
     merchant_note: input.refund.merchant_note || existingRefund?.merchant_note || null,
     processor: input.refund.processor || existingRefund?.processor || null,

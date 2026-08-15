@@ -1,14 +1,18 @@
-import { Link } from "react-router";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import { DesktopShell } from "../../components/baytmiftah/DesktopShell";
 import {
-  LEGAL_DOCUMENTS,
+  LEGAL_EFFECTIVE_DATE,
   LEGAL_LAST_UPDATED,
-  SUPPORT_PAGES,
+  PLATFORM_ROLE_STATEMENT,
   getLegalDocument,
-} from "./legal-documents";
+  getPoliciesByCategory,
+} from "../../../content/legal";
+import { LEGAL_OPERATOR } from "../../../lib/legal-config";
 import { LegalDocumentView } from "./LegalDocumentView";
+import { LegalCentreShell } from "../../components/legal/LegalPageLayout";
+import { LegalPolicyCard } from "../../components/legal/LegalPolicyCard";
+import { LegalContactCard } from "../../components/legal/LegalRelatedPolicies";
 
 export function LegalDocumentPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -16,8 +20,8 @@ export function LegalDocumentPage() {
 
   if (!document) {
     return (
-      <DesktopShell minimal>
-        <PageMeta title="Document not found" />
+      <DesktopShell minimal showFooter>
+        <PageMeta title="Document not found" description="This policy may have moved or does not exist." />
         <div className="mx-auto max-w-3xl px-4 py-16 text-center">
           <h1 className="text-2xl font-semibold text-ink">Document not found</h1>
           <p className="mt-2 text-ink-secondary">This policy may have moved or does not exist.</p>
@@ -33,63 +37,85 @@ export function LegalDocumentPage() {
 }
 
 export function LegalHub() {
+  const groups = getPoliciesByCategory();
+
   return (
-    <DesktopShell minimal>
-      <PageMeta
-        title="Legal & policies"
-        description="BaytMiftah terms, privacy, marketplace rules, and trust policies."
-      />
-      <div className="mx-auto max-w-4xl px-4 py-10 md:py-14">
-        <p className="text-sm text-ink-secondary">Last updated: {LEGAL_LAST_UPDATED}</p>
-        <h1 className="mt-2 text-3xl font-semibold text-ink">Legal & policies</h1>
-        <p className="mt-4 text-ink-secondary">
-          BaytMiftah operates as a neutral technology marketplace. These documents define the
-          responsibilities of each party and the limits of our platform role.
+    <LegalCentreShell
+      title="BaytMiftah Legal & Policies"
+      description="BaytMiftah operates as a neutral technology marketplace. These policies explain how the platform works, what users are responsible for, and the limits of BaytMiftah's role."
+      canonicalPath="/legal"
+      breadcrumbs={[{ label: "Home", to: "/" }, { label: "Legal & Policies" }]}
+    >
+      <article>
+        <header>
+          <p className="text-sm font-medium uppercase tracking-wide text-brand-forest">Legal</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink md:text-4xl">
+            Legal & Policies
+          </h1>
+          <p className="mt-4 max-w-3xl text-lg leading-relaxed text-ink-secondary">
+            BaytMiftah operates as a neutral technology marketplace. These policies explain how the
+            platform works, what users are responsible for, and the limits of BaytMiftah's role.
+          </p>
+          <p className="mt-3 text-sm text-ink-secondary">
+            Effective: {LEGAL_EFFECTIVE_DATE} · Last updated: {LEGAL_LAST_UPDATED}
+          </p>
+        </header>
+
+        <div className="mt-8 rounded-xl border border-brand-forest/20 bg-brand-forest/5 p-5 text-sm leading-relaxed text-ink">
+          <strong>Central rule.</strong> {PLATFORM_ROLE_STATEMENT}
+        </div>
+
+        <p className="mt-6 leading-relaxed text-ink-secondary">
+          BaytMiftah connects property owners, landlords, sellers, buyers, renters, tenants, hosts,
+          guests, agents, agencies, developers, property managers, vendors, and other property-market
+          participants. Unless expressly stated otherwise in a separate agreement, BaytMiftah is not a
+          party to the underlying agreement between users. Where payment functionality exists, the
+          actual movement and custody of funds is handled by the applicable third-party payment
+          provider and the financial institutions involved in the transaction.
         </p>
 
-        <div className="mt-10 space-y-8">
-          <section>
-            <h2 className="text-lg font-semibold text-ink">Core legal documents</h2>
-            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-              {LEGAL_DOCUMENTS.map((doc) => (
-                <li key={doc.slug}>
-                  <Link
-                    to={`/legal/${doc.slug}`}
-                    className="block rounded-xl border border-surface-border bg-white p-4 transition hover:border-brand-forest/40 hover:shadow-sm"
-                  >
-                    <span className="font-medium text-ink">{doc.title}</span>
-                    <p className="mt-1 text-sm text-ink-secondary line-clamp-2">{doc.summary}</p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
+        <dl className="mt-8 grid gap-3 text-sm text-ink-secondary sm:grid-cols-2">
+          <div>
+            <dt className="font-medium text-ink">Operator</dt>
+            <dd>{LEGAL_OPERATOR.name}</dd>
+          </div>
+          {LEGAL_OPERATOR.registrationNumber ? (
+          <div>
+            <dt className="font-medium text-ink">Company registration</dt>
+            <dd>{LEGAL_OPERATOR.registrationNumber}</dd>
+          </div>
+          ) : null}
+          <div>
+            <dt className="font-medium text-ink">Registered address</dt>
+            <dd>{LEGAL_OPERATOR.registeredAddress}</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-ink">Governing law</dt>
+            <dd>Republic of Ghana</dd>
+          </div>
+        </dl>
 
-          <section>
-            <h2 className="text-lg font-semibold text-ink">Support</h2>
-            <ul className="mt-4 flex flex-wrap gap-3">
-              {SUPPORT_PAGES.map((doc) => (
-                <li key={doc.slug}>
-                  <Link
-                    to={`/${doc.slug}`}
-                    className="rounded-full border border-surface-border px-4 py-2 text-sm text-ink-secondary transition hover:border-brand-forest hover:text-brand-forest"
-                  >
-                    {doc.title}
-                  </Link>
-                </li>
-              ))}
-              <li>
-                <Link
-                  to="/complaint"
-                  className="rounded-full border border-brand-forest/40 bg-brand-forest/5 px-4 py-2 text-sm font-medium text-brand-forest transition hover:border-brand-forest"
-                >
-                  File a complaint
-                </Link>
-              </li>
-            </ul>
-          </section>
+        <div className="mt-12 space-y-12">
+          {groups.map((group) => (
+            <section key={group.id} aria-labelledby={`legal-group-${group.id}`}>
+              <h2 id={`legal-group-${group.id}`} className="text-xl font-semibold text-ink">
+                {group.label}
+              </h2>
+              <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                {group.documents.map((doc) => (
+                  <li key={doc.slug}>
+                    <LegalPolicyCard document={doc} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
         </div>
-      </div>
-    </DesktopShell>
+
+        <div className="mt-12 xl:hidden">
+          <LegalContactCard />
+        </div>
+      </article>
+    </LegalCentreShell>
   );
 }

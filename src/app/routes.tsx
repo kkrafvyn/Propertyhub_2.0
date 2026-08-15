@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Navigate } from "react-router";
 import { Root } from "./components/Root";
 import { ProtectedRoute, ProtectedAdminRoute } from "./components/ProtectedRoute";
 import { LegacyRouteRedirect } from "./components/LegacyRouteRedirect";
@@ -121,7 +121,11 @@ export const router = createBrowserRouter([
           return { Component: ComplaintForm };
         },
       },
-      ...["help", "safety", "cancellation", "about", "careers", "contact"].map((slug) => ({
+      {
+        path: "safety",
+        element: <Navigate to="/legal/safety" replace />,
+      },
+      ...["help", "cancellation", "about", "careers", "contact"].map((slug) => ({
         path: slug,
         lazy: async () => {
           const { StaticContentPage } = await import("./pages/legal/StaticContentPage");

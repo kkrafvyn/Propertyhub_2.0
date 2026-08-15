@@ -29,17 +29,17 @@ export const TRUST_LABELS: Record<
   id_checked: {
     short: "ID checked",
     disclaimer:
-      "Identity documents were reviewed at a point in time. KYC does not guarantee future conduct or financial standing.",
+      "Identity documents were reviewed at a point in time. Verification is a platform feature and does not guarantee future conduct or financial standing.",
   },
   payment_hold: {
-    short: "Payment hold",
+    short: "Third-party payment",
     disclaimer:
-      "Funds may be held until agreed milestones. BaytMiftah is not a bank or licensed escrow agent; payments are processed by third-party providers.",
+      "Payments are processed by the applicable third-party payment provider, bank, or financial institution. BaytMiftah does not hold, custody, or control customer funds and does not operate an escrow service.",
   },
   licensed_payment_partner: {
     short: "Licensed payment partner",
     disclaimer:
-      "Card and mobile money payments are processed by licensed third-party providers (e.g. PayAngels). BaytMiftah does not store full card numbers.",
+      "Card and mobile money payments are processed by licensed third-party providers. BaytMiftah does not store full card numbers and does not take possession of the funds.",
   },
   listing_quality_score: {
     short: "Listing quality score",
@@ -54,12 +54,13 @@ export const TRUST_LABELS: Record<
 };
 
 export const MARKETPLACE_FOOTER_DISCLAIMER =
-  "BaytMiftah is a technology marketplace connecting users. We are not a party to property contracts, not a bank, and not a licensed estate agent unless explicitly stated in writing.";
+  "BaytMiftah is a technology marketplace and property operating platform. It does not hold, custody, safeguard, or control customer funds and does not provide escrow or payment-custody services. Unless expressly stated otherwise in a separate agreement, BaytMiftah is not a party to the underlying agreement between users.";
 
 export const CHECKOUT_PAYMENT_DISCLAIMER =
-  "Payments are processed by licensed third-party providers. Payment holds follow our Payment & Escrow Terms. BaytMiftah is not a bank or escrow agent.";
+  "Supported payments are processed by the applicable third-party payment provider. BaytMiftah may initiate payment requests, display instructions, generate payment links, and update transaction status from provider notifications. A payment shown as completed means BaytMiftah received confirmation from the payment provider. BaytMiftah does not hold, custody, or control customer funds.";
 
 export const AI_ASSISTANT_DISCLAIMER =
   "AI responses are informational only and are not legal, financial, or investment advice. Verify important details independently.";
 
 export const TRUST_VERIFICATION_POLICY_PATH = "/legal/trust-verification";
+export const PAYMENTS_POLICY_PATH = "/legal/payments";

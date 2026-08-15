@@ -51,7 +51,7 @@ export function InAppCheckoutPage() {
   const [checkoutParams, setCheckoutParams] = useState<CheckoutParams | null>(null);
   const [listing, setListing] = useState<any>(null);
   const [loadingListing, setLoadingListing] = useState(true);
-  const [escrowAccepted, setEscrowAccepted] = useState(false);
+  const [paymentTermsAccepted, setPaymentTermsAccepted] = useState(false);
   const [phase, setPhase] = useState<CheckoutPhase>("review");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [completedReference, setCompletedReference] = useState<string | null>(null);
@@ -110,8 +110,8 @@ export function InAppCheckoutPage() {
     [listing?.property?.city, listing?.property?.region].filter(Boolean).join(", ") ||
     "Property";
 
-  const paystackReady = clientIntegrations.payangels.checkoutReady;
-  const usePaystack = paymentContext ? shouldUsePaystackCheckout(paymentContext) : paystackReady;
+  const payangelsReady = clientIntegrations.payangels.checkoutReady;
+  const usePayangels = paymentContext ? shouldUsePaystackCheckout(paymentContext) : payangelsReady;
 
   useEffect(() => {
     if (!checkoutParams || amount <= 0) {
@@ -180,13 +180,13 @@ export function InAppCheckoutPage() {
       return;
     }
 
-    if (!escrowAccepted) {
-      toast.error("Please accept the payment and escrow terms to continue.");
+    if (!paymentTermsAccepted) {
+      toast.error("Please accept the Payments & Transaction Processing Policy to continue.");
       return;
     }
 
-    if (!usePaystack) {
-      toast.error("In-app checkout is available for PayAngels markets. Contact support for help.");
+    if (!usePayangels) {
+      toast.error("In-app checkout is not available for this market. Contact support for help.");
       return;
     }
 
@@ -196,8 +196,8 @@ export function InAppCheckoutPage() {
 
       await legalAcceptanceService.recordAcceptance({
         userId: user.id,
-        scope: "escrow_checkout",
-        policySlugs: ACCEPTANCE_SCOPES.escrow_checkout.policySlugs,
+        scope: "payment_checkout",
+        policySlugs: ACCEPTANCE_SCOPES.payment_checkout.policySlugs,
         policyVersion: LEGAL_POLICY_VERSION,
       });
 
@@ -359,7 +359,8 @@ export function InAppCheckoutPage() {
                 <div>
                   <p className="font-medium text-ink">Card & mobile money</p>
                   <p className="mt-1 text-sm text-ink-secondary">
-                    Powered by PayAngels. Supports Visa, Mastercard, and Ghana mobile money wallets.
+                    Card, bank, and Ghana mobile money wallets are supported.
+                    BaytMiftah does not hold or custody the funds.
                   </p>
                 </div>
               </div>
@@ -367,8 +368,9 @@ export function InAppCheckoutPage() {
               <div className="mt-4 flex items-start gap-3 rounded-xl border border-surface-border bg-surface-subtle/50 p-4 text-sm text-ink-secondary">
                 <Lock className="mt-0.5 h-4 w-4 shrink-0 text-brand-forest" />
                 <p>
-                  Your card details are entered on PayAngels&apos;s secure form inside this page. BaytMiftah
-                  never stores your full card number.
+                  Your card details are entered on the payment provider&apos;s secure form inside this
+                  page. BaytMiftah never stores your full card number. A completed status means we
+                  received confirmation from the payment provider.
                 </p>
               </div>
 
@@ -384,10 +386,10 @@ export function InAppCheckoutPage() {
             </section>
 
             <LegalAcceptanceCheckbox
-              scope="escrow_checkout"
-              checked={escrowAccepted}
-              onChange={setEscrowAccepted}
-              id="in-app-escrow-terms"
+              scope="payment_checkout"
+              checked={paymentTermsAccepted}
+              onChange={setPaymentTermsAccepted}
+              id="in-app-payment-terms"
               className="rounded-2xl border border-surface-border bg-white p-4"
             />
 
@@ -400,7 +402,7 @@ export function InAppCheckoutPage() {
             <Button
               size="lg"
               className="w-full"
-              disabled={loadingListing || phase === "processing" || !escrowAccepted || !paystackReady || !pricing}
+              disabled={loadingListing || phase === "processing" || !paymentTermsAccepted || !payangelsReady || !pricing}
               onClick={() => void handlePay()}
             >
               {phase === "processing" ? (

@@ -44,8 +44,8 @@ export const clientIntegrations = {
     get configured() {
       return clientIntegrations.payangels.checkoutReady;
     },
-    label: "PayAngels",
-    hint: "VITE_PAYANGELS_PUBLIC_KEY + PAYANGELS_SECRET_KEY",
+    label: "Payments",
+    hint: "Payment public and secret keys",
   },
 
   webPush: {
@@ -185,7 +185,7 @@ export function getIntegrationSummary(): IntegrationStatus[] {
       label: clientIntegrations.resend.label,
       hint: clientIntegrations.resend.hint,
     },
-    // PayAngels is deprecated in this deployment; PayAngels replaces PayAngels/PayAngels.
+    // PayAngels is the live checkout provider for supported payment flows.
     {
       configured: clientIntegrations.blockchain.configured,
       label: clientIntegrations.blockchain.label,

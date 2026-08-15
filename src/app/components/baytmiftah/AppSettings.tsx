@@ -163,7 +163,7 @@ export function LegalLinks({ className = 'flex flex-col gap-2' }) {
       <Link to="/complaint" className={linkClass}>{t('legal.complaint.title')}</Link>
       <Link to="/privacy" className={linkClass}>{t('footer.privacy')}</Link>
       <Link to="/terms" className={linkClass}>{t('footer.terms')}</Link>
-      <Link to="/legal/payment-escrow" className={linkClass}>{t('legal.hub.paymentEscrow')}</Link>
+      <Link to="/legal/payments" className={linkClass}>{t('legal.hub.paymentsTransaction')}</Link>
       <Link to="/legal/marketplace-rules" className={linkClass}>{t('legal.hub.marketplaceRules')}</Link>
       <Link to="/referral" className={linkClass}>{t('referral.title')}</Link>
     </div>

@@ -47,7 +47,6 @@ import { mortgageInsuranceService } from "../../../lib/mortgage-insurance.servic
 import { CONSUMER_PAGE_CONFIG, CONSUMER_PRIMARY_NAV, type ConsumerSection } from "../../lib/consumer-page-config";
 import {
   ActivityFeed,
-  BaytMiftahAIPanel,
   DashboardStatsSkeleton,
   EmptyState,
   ErrorState,
@@ -1012,7 +1011,7 @@ export function UserDashboard() {
           <CreditCard className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
           <h3 className="text-xl font-semibold mb-2">No payments yet</h3>
           <p className="text-muted-foreground mb-5">
-            When you complete a secure PayAngels checkout, your receipts and verification status will show up here.
+            When you complete a secure checkout, your receipts and verification status will show up here.
           </p>
           <Link to="/search">
             <Button aria-label="Browse listings" title="Browse listings">
@@ -1475,7 +1474,6 @@ export function UserDashboard() {
       sidebar={
         section === "overview" ? (
           <>
-            <BaytMiftahAIPanel context="consumer" compact />
             <Card className="p-6">
               <h3 className="font-semibold mb-4">Quick Actions</h3>
               <div className="space-y-3">

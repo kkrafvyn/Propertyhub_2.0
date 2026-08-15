@@ -10,7 +10,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from "../../i18n/LocaleContext";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
-import { LEGAL_DOCUMENTS } from "../../pages/legal/legal-documents";
+import { FOOTER_LEGAL_LINKS, getLegalPath } from "../../../content/legal";
 
 const DESKTOP_EXPLORE_LINKS = [
   { to: CONSUMER_ROUTES.home, labelKey: "mobile.home", end: true },
@@ -62,6 +62,7 @@ interface DesktopShellProps {
   minimal?: boolean;
   fullBleed?: boolean;
   compareCount?: number;
+  showFooter?: boolean;
 }
 
 function Header({
@@ -235,36 +236,19 @@ function Footer() {
           <div>
             <h3 className="mb-4 text-sm font-semibold text-ink">{t("footer.legal")}</h3>
             <ul className="space-y-3">
+              {FOOTER_LEGAL_LINKS.map((item) => (
+                <li key={item.slug}>
+                  <Link
+                    to={getLegalPath(item.slug)}
+                    className="text-sm text-ink-secondary transition hover:text-ink"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
               <li>
                 <Link to="/legal" className="text-sm text-ink-secondary transition hover:text-ink">
-                  All policies
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="text-sm text-ink-secondary transition hover:text-ink">
-                  {t("footer.privacy")}
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="text-sm text-ink-secondary transition hover:text-ink">
-                  {t("footer.terms")}
-                </Link>
-              </li>
-              {LEGAL_DOCUMENTS.filter((doc) => !["terms", "privacy"].includes(doc.slug)).map(
-                (doc) => (
-                  <li key={doc.slug}>
-                    <Link
-                      to={`/legal/${doc.slug}`}
-                      className="text-sm text-ink-secondary transition hover:text-ink"
-                    >
-                      {doc.title}
-                    </Link>
-                  </li>
-                ),
-              )}
-              <li>
-                <Link to="/complaint" className="text-sm text-ink-secondary transition hover:text-ink">
-                  File a complaint
+                  All Policies
                 </Link>
               </li>
               <li>
@@ -276,12 +260,8 @@ function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-surface-border pt-6 text-sm text-ink-secondary md:mt-10">
+        <div className="mt-8 border-t border-surface-border pt-6 text-sm text-ink-secondary md:mt-10">
           <p>© {year} BaytMiftah. All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            <span>English (GH)</span>
-            <span>₵ GHS</span>
-          </div>
         </div>
       </div>
     </footer>
@@ -295,7 +275,9 @@ export function DesktopShell({
   minimal = false,
   fullBleed = false,
   compareCount = 0,
+  showFooter,
 }: DesktopShellProps) {
+  const footerVisible = showFooter ?? !minimal;
   return (
     <div className="desktop-shell min-h-screen min-h-[100dvh] overflow-x-clip text-ink">
       <div className="desktop-shell-ambient" aria-hidden />
@@ -309,7 +291,7 @@ export function DesktopShell({
       >
         {children}
       </main>
-      {!minimal && <Footer />}
+      {footerVisible ? <Footer /> : null}
     </div>
   );
 }

@@ -1,17 +1,34 @@
 /** Current policy bundle version — bump when material legal changes require re-acceptance. */
-export const LEGAL_POLICY_VERSION = "2026-07-30";
+export const LEGAL_POLICY_VERSION = "2026-08-14";
+
+function envValue(...keys: string[]) {
+  for (const key of keys) {
+    const value = (import.meta.env as Record<string, string | undefined>)[key]?.trim();
+    if (value) return value;
+  }
+  return "";
+}
+
+/** Registered operator shown in Legal Centre. Fill via VITE_LEGAL_* in production. */
+export const LEGAL_OPERATOR = {
+  name: envValue("VITE_LEGAL_COMPANY_NAME") || "BaytMiftah",
+  registrationNumber: envValue("VITE_LEGAL_REGISTRATION_NUMBER"),
+  registeredAddress: envValue("VITE_LEGAL_REGISTERED_ADDRESS") || "Accra, Ghana",
+} as const;
 
 export const LEGAL_CONTACT = {
   legal: "legal@baytmiftah.com",
   privacy: "privacy@baytmiftah.com",
   support: "support@baytmiftah.com",
   dpo: "privacy@baytmiftah.com",
+  complaints: "complaints@baytmiftah.com",
+  accessibility: "accessibility@baytmiftah.com",
 } as const;
 
 export type LegalAcceptanceScope =
   | "signup_consumer"
   | "signup_host"
-  | "escrow_checkout"
+  | "payment_checkout"
   | "short_stay_booking"
   | "listing_publish"
   | "agency_onboarding"
@@ -26,27 +43,27 @@ export const ACCEPTANCE_SCOPES: Record<
     labelKey: "legal.acceptance.signupConsumer",
   },
   signup_host: {
-    policySlugs: ["terms", "privacy", "marketplace-rules", "host-terms", "payment-escrow", "cookies"],
+    policySlugs: ["terms", "privacy", "marketplace-rules", "host-terms", "payments", "cookies"],
     labelKey: "legal.acceptance.signupHost",
   },
-  escrow_checkout: {
-    policySlugs: ["payment-escrow", "refund-cancellation"],
-    labelKey: "legal.acceptance.escrowCheckout",
+  payment_checkout: {
+    policySlugs: ["payments", "refunds"],
+    labelKey: "legal.acceptance.paymentCheckout",
   },
   short_stay_booking: {
-    policySlugs: ["tenant-guest-rules", "payment-escrow", "refund-cancellation"],
+    policySlugs: ["tenant-guest-rules", "payments", "refunds"],
     labelKey: "legal.acceptance.shortStayBooking",
   },
   listing_publish: {
-    policySlugs: ["owner-terms", "marketplace-rules", "fair-housing"],
+    policySlugs: ["property-owner-terms", "marketplace-rules", "non-discrimination"],
     labelKey: "legal.acceptance.listingPublish",
   },
   agency_onboarding: {
-    policySlugs: ["agency-terms", "data-processing", "trust-verification"],
+    policySlugs: ["agency-agent-terms", "data-processing", "trust-verification"],
     labelKey: "legal.acceptance.agencyOnboarding",
   },
   kyc_submission: {
-    policySlugs: ["kyc-identity", "privacy"],
+    policySlugs: ["kyc", "privacy"],
     labelKey: "legal.acceptance.kycSubmission",
   },
 };

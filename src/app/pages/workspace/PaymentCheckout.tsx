@@ -93,7 +93,7 @@ export function PaymentCheckout({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saveFuturePayment, setSaveFuturePayment] = useState(false)
-  const [escrowTermsAccepted, setEscrowTermsAccepted] = useState(false)
+  const [paymentTermsAccepted, setPaymentTermsAccepted] = useState(false)
   const [completedTransactionId, setCompletedTransactionId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -219,20 +219,20 @@ export function PaymentCheckout({
         throw new Error('Choose a payment method before continuing.')
       }
 
-      if (!escrowTermsAccepted) {
-        throw new Error('Please accept the Payment & Escrow Terms before continuing.')
+      if (!paymentTermsAccepted) {
+        throw new Error('Please accept the Payments & Transaction Processing Policy before continuing.')
       }
 
       await legalAcceptanceService.recordAcceptance({
         userId: user.id,
-        scope: 'escrow_checkout',
-        policySlugs: ACCEPTANCE_SCOPES.escrow_checkout.policySlugs,
+        scope: 'payment_checkout',
+        policySlugs: ACCEPTANCE_SCOPES.payment_checkout.policySlugs,
         policyVersion: LEGAL_POLICY_VERSION,
       })
 
       if (shouldUsePaystackCheckout(paymentContext)) {
         if (!clientIntegrations.payangels.checkoutReady) {
-          throw new Error("PayAngels checkout is not configured for this property market.");
+          throw new Error("Checkout is not configured for this property market.");
         }
 
         const checkout = await paymentService.initializePropertyPayment({
@@ -267,7 +267,7 @@ export function PaymentCheckout({
 
       if (!clientIntegrations.payangels.configured) {
         throw new Error(
-          `PayAngels checkout is not configured for properties in ${paymentContext.propertyLabel}.`
+          `Checkout is not configured for properties in ${paymentContext.propertyLabel}.`
         );
       }
 
@@ -282,7 +282,7 @@ export function PaymentCheckout({
         return;
       }
 
-      throw new Error("PayAngels checkout URL was not returned.");
+      throw new Error("Checkout URL was not returned.");
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment processing failed')
       setLoading(false)
@@ -351,8 +351,7 @@ export function PaymentCheckout({
                 <p className="font-semibold text-gray-900 dark:text-white">Property location</p>
                 <p className="text-sm text-gray-700 dark:text-gray-300">{paymentContext.propertyLabel}</p>
                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  Payments for this listing use{' '}
-                  <strong>{paymentContext.providerLabel}</strong> in{' '}
+                  Payments for this listing use a third-party payment provider in{' '}
                   <strong>{paymentContext.currency}</strong>.
                 </p>
               </div>
@@ -401,7 +400,7 @@ export function PaymentCheckout({
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">Payment provider:</span>
                     <span className="font-medium text-gray-900 dark:text-white">
-                      {paymentContext?.providerLabel}
+                      Secure checkout
                     </span>
                   </div>
                 </div>
@@ -611,10 +610,10 @@ export function PaymentCheckout({
               </div>
 
               <LegalAcceptanceCheckbox
-                scope="escrow_checkout"
-                checked={escrowTermsAccepted}
-                onChange={setEscrowTermsAccepted}
-                id="escrow-checkout-terms"
+                scope="payment_checkout"
+                checked={paymentTermsAccepted}
+                onChange={setPaymentTermsAccepted}
+                id="payment-checkout-terms"
                 className="rounded-lg border border-gray-200 dark:border-gray-700 p-4"
               />
 
@@ -627,7 +626,7 @@ export function PaymentCheckout({
                 </button>
                 <button
                   onClick={() => void processPayment()}
-                  disabled={loading || !escrowTermsAccepted}
+                  disabled={loading || !paymentTermsAccepted}
                   className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (

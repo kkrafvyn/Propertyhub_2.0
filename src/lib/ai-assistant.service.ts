@@ -48,9 +48,9 @@ function parseSearchQueryLocally(query: string) {
 
 const FAQ_ENTRIES: Array<{ keywords: string[]; answer: string }> = [
   {
-    keywords: ['escrow', 'hold', 'release'],
+    keywords: ['escrow', 'hold', 'release', 'payment', 'funds'],
     answer:
-      `Payment holds may apply until agreed milestones are met. ${TRUST_LABELS.payment_hold.disclaimer}`,
+      `BaytMiftah does not hold, custody, or control customer funds and does not operate an escrow service. ${TRUST_LABELS.payment_hold.disclaimer}`,
   },
   {
     keywords: ['kyc', 'verify', 'verification', 'identity'],

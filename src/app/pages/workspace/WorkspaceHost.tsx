@@ -368,7 +368,7 @@ export function WorkspaceHost({ organizationId }: { organizationId: string }) {
                     setBookingMode(event.target.value as "instant" | "request")
                   }
                 >
-                  <option value="instant">Instant book (PayAngels checkout)</option>
+                  <option value="instant">Instant book (secure checkout)</option>
                   <option value="request">Request to book (host approves)</option>
                 </select>
               </label>

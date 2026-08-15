@@ -55,7 +55,7 @@ export function resolvePaymentContext(input: {
     region,
     currency,
     primaryProvider,
-    providerLabel: "PayAngels",
+    providerLabel: "Secure checkout",
     propertyLabel,
     checkoutReady,
   };

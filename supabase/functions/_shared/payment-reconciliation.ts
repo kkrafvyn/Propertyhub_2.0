@@ -360,7 +360,7 @@ async function syncFinancialSideEffects(transaction: PropertyTransactionRow) {
     pendingMinor: wallet.pending_minor || 0,
     referenceType: "property_transaction",
     referenceId: transaction.id,
-    description: `PayAngels ${transaction.purpose} payment`,
+    description: `${transaction.purpose} payment`,
   });
 
   if (["deposit", "purchase_installment"].includes(transaction.purpose)) {

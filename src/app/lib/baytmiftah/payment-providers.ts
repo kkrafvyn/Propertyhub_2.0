@@ -21,6 +21,6 @@ export function getProviderForProperty(property?: {
 }
 
 export function providerMeta(provider: string) {
-  if (provider === "payangels") return { id: provider, label: "PayAngels" };
+  if (provider === "payangels") return { id: provider, label: "Secure checkout" };
   return { id: provider, label: provider };
 }

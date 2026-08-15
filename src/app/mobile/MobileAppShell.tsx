@@ -163,14 +163,6 @@ export function MobileAppShell() {
         <MobileTransactionTabs active={txTab} onChange={setTxTab} />
         <MobilePropertyTypeRow active={propType} onChange={setPropType} />
 
-        <div className="px-4 mb-4">
-          <BaytMiftahAIPanel
-            context="search"
-            compact
-            onNavigate={(href) => navigate(href)}
-          />
-        </div>
-
         {usingOfflineCache ? (
           <p className="px-4 text-sm text-muted-foreground">{t("mobile.appShell.offlineCache")}</p>
         ) : null}
@@ -253,6 +245,7 @@ export function MobileAppShell() {
         onTabPress={handleTabPress}
         ariaLabel={t("mobile.primaryNav")}
       />
+      <BaytMiftahAIPanel context="search" />
       <MobileHomeMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </main>
   );

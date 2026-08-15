@@ -16,6 +16,8 @@ import { Badge } from '../../components/ui/badge';
 import { mlsIntegrationService } from '../../../lib/mls-integration.service';
 import { leadAggregationService } from '../../../lib/lead-aggregation.service';
 import { PlatformIntegrationsPanel } from '../../components/workspace/PlatformIntegrationsPanel';
+import { LeadManagement } from './LeadManagement';
+import { toast } from 'sonner';
 
 interface MLSIntegration {
   id: string;
@@ -107,20 +109,17 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
     try {
       setSyncing(provider);
       await mlsIntegrationService.syncListingsFromProvider(organizationId, provider);
-      
-      // Reload data
       await loadIntegrations();
-      
-      // Show success message (toast)
-      console.log(`${provider} sync completed`);
+      toast.success("Listing sync completed.");
     } catch (error) {
       console.error(`Sync failed for ${provider}:`, error);
+      toast.error(error instanceof Error ? error.message : "Listing sync failed.");
     } finally {
       setSyncing(null);
     }
   };
 
-  const handleAddIntegration = async (apiKey: string, apiSecret?: string) => {
+  const handleAddIntegration = async (apiKey: string, apiSecret?: string, feedUrl?: string) => {
     if (!selectedProvider) return;
 
     try {
@@ -130,6 +129,7 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
         {
           apiKey,
           apiSecret,
+          accountId: feedUrl,
           syncFrequency: 'daily',
         }
       );
@@ -137,8 +137,10 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
       setShowAddIntegration(false);
       setSelectedProvider(null);
       await loadIntegrations();
+      toast.success("Integration connected.");
     } catch (error) {
       console.error('Failed to add integration:', error);
+      toast.error(error instanceof Error ? error.message : "Unable to save this integration.");
     }
   };
 
@@ -147,9 +149,11 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
 
     try {
       await mlsIntegrationService.deleteMLSCredentials(organizationId, provider);
+      toast.success("Integration removed.");
       await loadIntegrations();
     } catch (error) {
       console.error('Failed to delete integration:', error);
+      toast.error("Unable to remove this integration.");
     }
   };
 
@@ -335,6 +339,8 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
         </div>
       </Card>
 
+      <LeadManagement organizationId={organizationId} />
+
       {/* Add Integration Modal */}
       {showAddIntegration && (
         <AddIntegrationModal
@@ -446,17 +452,18 @@ function AddIntegrationModal({
 }: {
   provider: 'mls' | 'zillow' | 'realtor' | null;
   onClose: () => void;
-  onSubmit: (apiKey: string, apiSecret?: string) => void;
+  onSubmit: (apiKey: string, apiSecret?: string, feedUrl?: string) => void;
 }) {
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
+  const [feedUrl, setFeedUrl] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await onSubmit(apiKey, apiSecret);
+      await onSubmit(apiKey, apiSecret, feedUrl.trim() || undefined);
     } finally {
       setLoading(false);
     }
@@ -519,6 +526,19 @@ function AddIntegrationModal({
               />
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              JSON feed URL (recommended)
+            </label>
+            <input
+              type="url"
+              value={feedUrl}
+              onChange={(e) => setFeedUrl(e.target.value)}
+              placeholder="https://your-idx-feed.example/listings.json"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
 
           <p className="text-sm text-gray-600">
             Don't have an API key? <a href={info.docs} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">

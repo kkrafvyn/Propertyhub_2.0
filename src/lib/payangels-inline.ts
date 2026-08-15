@@ -6,7 +6,7 @@ let scriptPromise: Promise<NonNullable<Window["PaystackPop"]>> | null = null;
 
 export function loadPaystackInline(): Promise<NonNullable<Window["PaystackPop"]>> {
   if (typeof window === "undefined") {
-    return Promise.reject(new Error("PayAngels inline is only available in the browser."));
+    return Promise.reject(new Error("Checkout is only available in the browser."));
   }
 
   if ((window as any).PaystackPop) {
@@ -21,9 +21,9 @@ export function loadPaystackInline(): Promise<NonNullable<Window["PaystackPop"]>
       if (existing) {
         existing.addEventListener("load", () => {
           if ((window as any).PaystackPop) resolve((window as any).PaystackPop);
-          else reject(new Error("PayAngels inline failed to load."));
+          else reject(new Error("Checkout failed to load."));
         });
-        existing.addEventListener("error", () => reject(new Error("PayAngels inline failed to load.")));
+        existing.addEventListener("error", () => reject(new Error("Checkout failed to load.")));
         return;
       }
 
@@ -32,9 +32,9 @@ export function loadPaystackInline(): Promise<NonNullable<Window["PaystackPop"]>
       script.async = true;
       script.onload = () => {
         if ((window as any).PaystackPop) resolve((window as any).PaystackPop);
-        else reject(new Error("PayAngels inline failed to load."));
+        else reject(new Error("Checkout failed to load."));
       };
-      script.onerror = () => reject(new Error("PayAngels inline failed to load."));
+      script.onerror = () => reject(new Error("Checkout failed to load."));
       document.body.appendChild(script);
     });
   }
@@ -55,7 +55,7 @@ export type OpenPaystackInlineInput = {
 export async function openPaystackInline(input: OpenPaystackInlineInput) {
   const publicKey = getPayangelsPublicKey();
   if (!publicKey) {
-    throw new Error("PayAngels public key is not configured.");
+    throw new Error("Checkout is not configured.");
   }
 
   const PaystackPop = await loadPaystackInline();

@@ -55,7 +55,7 @@ import { WorkspaceHost } from "./WorkspaceHost";
 import { WorkspaceMaintenance } from "./WorkspaceMaintenance";
 import { WorkspaceInspections } from "./WorkspaceInspections";
 import { WorkspaceLeases } from "./WorkspaceLeases";
-import { ErrorState, PageLoadingSkeleton, BaytMiftahAIPanel } from "../../components/ux";
+import { ErrorState, PageLoadingSkeleton } from "../../components/ux";
 import { FraudAlerts } from "./FraudAlerts";
 import ComplianceCenter from "./ComplianceCenter";
 import BlockchainVerification from "./BlockchainVerification";
@@ -379,7 +379,7 @@ export function WorkspaceLayout() {
           />
         );
       case "vendors":
-        return <VendorManagement />;
+        return <VendorManagement organizationId={organization.id} />;
       case "ai-assistant":
         return <AIAssistant organizationId={organization.id} />;
       case "notifications":
@@ -644,28 +644,21 @@ export function WorkspaceLayout() {
         </aside>
 
         <main className="flex-1 p-8 overflow-y-auto">
-          <div className="max-w-7xl grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-8">
-            <div>
-              {!pageAllowed && currentPage ? (
-                <Card className="p-8">
-                  <h2 className="text-xl font-semibold text-foreground mb-2">Access restricted</h2>
-                  <p className="text-muted-foreground mb-4">
-                    Your role ({getRoleLabel(currentRole)}) does not include access to this section.
-                    Contact an owner or manager if you need permission.
-                  </p>
-                  <Link to={workspaceBasePath}>
-                    <Button variant="outline">Back to dashboard</Button>
-                  </Link>
-                </Card>
-              ) : (
-                renderPage()
-              )}
-            </div>
-            <aside className="hidden xl:block">
-              <div className="sticky top-8">
-                <BaytMiftahAIPanel context="workspace" compact />
-              </div>
-            </aside>
+          <div className="max-w-7xl">
+            {!pageAllowed && currentPage ? (
+              <Card className="p-8">
+                <h2 className="text-xl font-semibold text-foreground mb-2">Access restricted</h2>
+                <p className="text-muted-foreground mb-4">
+                  Your role ({getRoleLabel(currentRole)}) does not include access to this section.
+                  Contact an owner or manager if you need permission.
+                </p>
+                <Link to={workspaceBasePath}>
+                  <Button variant="outline">Back to dashboard</Button>
+                </Link>
+              </Card>
+            ) : (
+              renderPage()
+            )}
           </div>
         </main>
       </div>

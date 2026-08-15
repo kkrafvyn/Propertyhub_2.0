@@ -48,7 +48,7 @@ export const realEstateComplianceService = {
       "authority_confirmed",
       "disclosures_accurate",
       "agency_licensed",
-      "fair_housing",
+      "non_discrimination",
     ];
 
     if (listingType === "rental" || listingType === "lease") {

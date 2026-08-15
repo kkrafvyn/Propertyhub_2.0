@@ -46,7 +46,7 @@ ElastiCache Redis  →  Sessions, rate limits, search cache
 | Workload | Action |
 |---|---|
 | Media files | Move `property-media` bucket to **S3 + CloudFront**; keep Supabase URLs as redirect |
-| Edge functions | Port PayAngels/PayAngels webhooks to **Lambda** behind API Gateway |
+| Edge functions | Port PayAngels webhooks to **Lambda** behind API Gateway |
 | Email | **Amazon SES** replaces Resend for transactional mail |
 | Monitoring | **CloudWatch** + Sentry; AWS X-Ray for latency tracing |
 | Secrets | **AWS Secrets Manager** for payment and AI keys |
@@ -79,7 +79,7 @@ Dual-write period with feature flags; rollback path to Supabase.
 
 - **React + Vite** frontend codebase (deploy target changes, not app logic)
 - **Domain** `baytmiftah.com` on Route 53 + CloudFront
-- **PayAngels** for West Africa; PayAngels for international cards
+- **PayAngels** for supported card, bank, and mobile-money payments
 - **Role model, workspace permissions, consumer journeys** — no product rewrite
 
 ## Risk mitigation

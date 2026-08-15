@@ -10,6 +10,7 @@ import { MobileBottomNav } from "../mobile/MobileBottomNav";
 import { MobileWorkspaceDock } from "../mobile/MobileWorkspaceDock";
 import { LocationOnboarding } from "./onboarding/LocationOnboarding";
 import { CookieConsentBanner } from "./legal/CookieConsentBanner";
+import { BaytMiftahAIPanel } from "./ux/BaytMiftahAIPanel";
 import { PolicyUpdateBanner } from "./legal/PolicyUpdateBanner";
 import { useUserMarket } from "../context/MarketContext";
 import { PHONE_MEDIA, TABLET_MEDIA } from "../lib/viewports";
@@ -126,6 +127,7 @@ export function Root() {
       <Outlet />
       {showBottomNav ? <MobileWorkspaceDock /> : null}
       {showBottomNav ? <MobileBottomNav variant="phone" /> : null}
+      <BaytMiftahAIPanel />
       <CookieConsentBanner />
     </div>
   );

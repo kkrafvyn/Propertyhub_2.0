@@ -146,7 +146,7 @@ export default {
     "listings": "Listing a property",
     "listingsBody": "Property owners submit listings at /host/list. Agency admins approve listings at /admin/moderation before they go live.",
     "payments": "Payments",
-    "paymentsBody": "Rent and featured boosts use PayAngels (Ghana mobile money & cards) or PayAngels (international cards). Configure secrets in Supabase Edge Functions.",
+    "paymentsBody": "Rent and featured boosts use mobile money, bank, and card payments. BaytMiftah does not hold customer funds.",
     "safety": "Trust & safety",
     "safetyBody": "Platform-reviewed listings and ID-checked agencies help reduce risk, but BaytMiftah does not guarantee property condition or title. Report suspicious activity to support."
   },

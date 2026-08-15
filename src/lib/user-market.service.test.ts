@@ -25,7 +25,7 @@ describe("user-market.service", () => {
     const market = buildUserMarket("NG", 0);
     const summary = getMarketSummary(market);
     expect(summary.jurisdictionLabel).toBe("Nigeria");
-    expect(summary.paymentProvider).toBe("PayAngels");
+    expect(summary.paymentProvider).toBe("Secure checkout");
     expect(summary.currency).toBe("NGN");
   });
 

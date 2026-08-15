@@ -12,6 +12,9 @@ const replacements = [
   { from: /\bStripe\b/g, to: 'PayAngels' },
   { from: /\bstripe\b/g, to: 'payangels' },
   { from: /\bSTRIPE\b/g, to: 'PAYANGELS' },
+  // Ensure env var replacements for PayAngels
+  { from: /VITE_STRIPE_PUBLIC_KEY/g, to: 'VITE_PAYANGELS_PUBLIC_KEY' },
+  { from: /STRIPE_SECRET_KEY/g, to: 'PAYANGELS_SECRET_KEY' },
   // provider strings
   { from: /provider:\s*['"]payangels['"]/g, to: 'provider: "payangels"' },
   { from: /provider:\s*['"]payangels['"]/g, to: 'provider: "payangels"' },

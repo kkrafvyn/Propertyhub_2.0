@@ -31,6 +31,11 @@
   --mobile-tab-bar-offset: calc(92px + env(safe-area-inset-bottom));
 }
 
+.has-mobile-tab-bar .bm-ai-chat,
+.mobile-app-shell .bm-ai-chat {
+  bottom: calc(6.25rem + env(safe-area-inset-bottom));
+}
+
 .has-mobile-tab-bar .desktop-shell main {
   padding-bottom: calc(7.75rem + env(safe-area-inset-bottom));
 }

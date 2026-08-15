@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Send, Filter, Star, Archive, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -33,6 +34,7 @@ export function LeadManagement({ organizationId }: {
   const [filterSource, setFilterSource] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'leadScore' | 'createdAt' | 'quality'>('leadScore');
   const [followUpMessage, setFollowUpMessage] = useState('');
+  const [sendingFollowUp, setSendingFollowUp] = useState(false);
 
   useEffect(() => {
     loadLeads();
@@ -96,14 +98,17 @@ export function LeadManagement({ organizationId }: {
     if (!followUpMessage.trim()) return;
 
     try {
+      setSendingFollowUp(true);
       await leadAggregationService.sendFollowUp(leadId, followUpMessage);
+      toast.success("Follow-up sent.");
       setFollowUpMessage('');
       setSelectedLead(null);
-      
-      // Reload leads
       await loadLeads();
     } catch (error) {
       console.error('Failed to send follow-up:', error);
+      toast.error(error instanceof Error ? error.message : "Unable to send follow-up.");
+    } finally {
+      setSendingFollowUp(false);
     }
   };
 
@@ -340,11 +345,11 @@ export function LeadManagement({ organizationId }: {
             />
             <Button
               onClick={() => handleSendFollowUp(selectedLead.id)}
-              disabled={!followUpMessage.trim()}
+              disabled={!followUpMessage.trim() || sendingFollowUp}
               className="w-full gap-2"
             >
               <Send size={16} />
-              Send Message
+              {sendingFollowUp ? "Sending..." : "Send Message"}
             </Button>
           </div>
         </Card>

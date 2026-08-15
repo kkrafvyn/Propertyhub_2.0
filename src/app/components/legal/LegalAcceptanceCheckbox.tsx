@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { useTranslation } from "../../i18n/LocaleContext";
 import { ACCEPTANCE_SCOPES, type LegalAcceptanceScope } from "../../../lib/legal-config";
+import { getLegalDocument, getLegalPath } from "../../../content/legal";
 
 type Props = {
   scope: LegalAcceptanceScope;
@@ -11,9 +12,7 @@ type Props = {
 };
 
 function policyHref(slug: string) {
-  if (slug === "terms") return "/terms";
-  if (slug === "privacy") return "/privacy";
-  return `/legal/${slug}`;
+  return getLegalPath(slug);
 }
 
 export function LegalAcceptanceCheckbox({
@@ -40,10 +39,12 @@ export function LegalAcceptanceCheckbox({
       <label htmlFor={id} className="text-sm text-muted-foreground leading-relaxed">
         {t(config.labelKey)}{" "}
         {policies.map((slug, index) => {
-          const title = slug
-            .split("-")
-            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(" ");
+          const title =
+            getLegalDocument(slug)?.title ??
+            slug
+              .split("-")
+              .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+              .join(" ");
           return (
             <span key={slug}>
               {index > 0 && (index === policies.length - 1 ? ` ${t("legal.acceptance.and")} ` : ", ")}

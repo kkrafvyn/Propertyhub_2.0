@@ -42,7 +42,7 @@ BaytMiftah launches **Ghana-first** and expands across **West Africa**, then **p
 | Country | Currency | Payments |
 |---|---|---|
 | Kenya | KES | M-Pesa (PayAngels supports) |
-| South Africa | ZAR | PayAngels + PayAngels |
+| South Africa | ZAR | PayAngels |
 | Rwanda | RWF | PayAngels |
 | Tanzania | TZS | Mobile money partners |
 
@@ -101,7 +101,7 @@ Before launching a new country:
 |---|---|
 | Data protection | Ghana DPA; align with Nigeria NDPA, Kenya DPA per market |
 | Real estate licensing | Display agency license fields; admin verification |
-| Payments | PCI via PayAngels/PayAngels; no card data on our servers |
+| Payments | PCI via PayAngels; no card data on our servers |
 | Short-stay regulation | Host KYC; local tax disclosure fields (planned) |
 | AML/KYC | Tiered verification for high-value transactions |
 

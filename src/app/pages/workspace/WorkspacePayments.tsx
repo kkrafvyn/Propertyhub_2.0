@@ -442,7 +442,7 @@ export function WorkspacePayments({
         )
       );
 
-      toast.success("Refund request submitted to PayAngels.");
+      toast.success("Refund request submitted to the payment provider.");
       resetRefundDialog();
     } catch (error) {
       console.error("Failed to initiate refund:", error);
@@ -466,7 +466,7 @@ export function WorkspacePayments({
       <div className="mb-8">
         <h1 className="text-3xl font-semibold mb-2">Payments</h1>
         <p className="text-muted-foreground">
-          Track PayAngels payments, review receipts, download proof files, and manage
+          Track payments, review receipts, download proof files, and manage
           refunds for {organization.name}.
         </p>
       </div>
@@ -543,7 +543,7 @@ export function WorkspacePayments({
             <div>
               <p className="text-sm text-muted-foreground mb-1">Successful</p>
               <p className="text-3xl font-semibold">{stats.successful}</p>
-              <p className="text-xs text-accent mt-1">Completed through PayAngels</p>
+              <p className="text-xs text-accent mt-1">Completed through checkout</p>
             </div>
             <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
               <Wallet className="w-6 h-6 text-accent" />
@@ -583,7 +583,7 @@ export function WorkspacePayments({
           <div>
             <h2 className="text-lg font-semibold">Ghana Mobile Money readiness</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              PayAngels checkout requests mobile_money, card, bank transfer, and bank channels.
+              Checkout supports mobile money, card, bank transfer, and bank channels.
               Keep MoMo first when guiding clients through deposits and inspection fees.
             </p>
           </div>
@@ -730,7 +730,7 @@ export function WorkspacePayments({
                         )}
                         {latestRefund.status === "needs_attention" && (
                           <p className="text-destructive mt-2">
-                            PayAngels is waiting for customer bank details before this refund can
+                            The payment provider is waiting for customer bank details before this refund can
                             continue.
                           </p>
                         )}
@@ -798,7 +798,7 @@ export function WorkspacePayments({
           <DialogHeader>
             <DialogTitle>Request Refund</DialogTitle>
             <DialogDescription>
-              Start a PayAngels refund for this property payment. Leave the amount blank to refund
+              Start a refund for this property payment. Leave the amount blank to refund
               the full remaining balance.
             </DialogDescription>
           </DialogHeader>
@@ -857,7 +857,7 @@ export function WorkspacePayments({
                 <Textarea
                   value={merchantNote}
                   onChange={(event) => setMerchantNote(event.target.value)}
-                  placeholder="Optional operations note for PayAngels records"
+                  placeholder="Optional operations note for payment records"
                 />
               </div>
             </div>

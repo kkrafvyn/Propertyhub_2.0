@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
 
     const resolvedSessionId = sessionId || transaction.access_code;
     if (!resolvedSessionId) {
-      throw new HttpError(400, "PayAngels session id is missing");
+      throw new HttpError(400, "Checkout session id is missing");
     }
 
     const session = await retrieveStripeCheckoutSession(resolvedSessionId);
@@ -118,6 +118,6 @@ Deno.serve(async (req) => {
     }
 
     console.error("verify-payangels-payment error:", error);
-    return jsonResponse(500, { error: safeErrorMessage(error, "Unable to verify PayAngels payment") }, req);
+    return jsonResponse(500, { error: safeErrorMessage(error, "Unable to verify payment") }, req);
   }
 });

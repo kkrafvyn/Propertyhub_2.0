@@ -54,7 +54,7 @@ export default {
       "inspections": "Inspections",
       "applications": "Applications",
       "mortgages": "Mortgages",
-      "escrow": "Escrow",
+      "escrow": "Payments",
       "rentCollection": "Rent collection",
       "insurance": "Insurance",
       "marketData": "Market data",
@@ -337,18 +337,18 @@ export default {
     },
     "finance": {
       "commissionSettlement": {
-        "subtitle": "Pay agents via PayAngels or PayAngels payout rails",
+        "subtitle": "Pay agents via payout rails",
         "title": "Commission settlement"
       },
       "escrow": {
-        "subtitle": "Buyer deposits may be held per Payment & Escrow Terms until closing conditions are met",
-        "title": "Payment holds"
+        "subtitle": "Payment status is provided by the applicable third-party provider. BaytMiftah does not hold or custody customer funds.",
+        "title": "Transaction payments"
       },
       "hub": {
-        "subtitle": "Payments powered by PayAngels (Africa) and PayAngels (international)",
+        "subtitle": "Payments for mobile money, bank, and cards",
         "title": "Financial services",
         "stats": {
-          "escrowFunded": "Escrow funded",
+          "escrowFunded": "Payments in progress",
           "pendingCommissions": "Pending commissions",
           "mortgagePartners": "Mortgage partners"
         }
@@ -366,7 +366,7 @@ export default {
         "title": "Mortgage calculator"
       },
       "rentCollection": {
-        "subtitle": "Collect rent via PayAngels (Africa) or PayAngels (international)",
+        "subtitle": "Collect rent via mobile money, bank, and cards",
         "title": "Rent collection rails"
       }
     },
@@ -480,7 +480,7 @@ export default {
         "title": "Maintenance requests"
       },
       "payments": {
-        "subtitle": "Pay with PayAngels (mobile money, bank) or PayAngels (international cards)",
+        "subtitle": "Pay with mobile money, bank, and cards",
         "title": "Rent payments"
       },
       "utilities": {

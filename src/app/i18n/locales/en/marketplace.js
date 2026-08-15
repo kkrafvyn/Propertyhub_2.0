@@ -235,7 +235,7 @@ export default {
         "stay": { "desc": "Bookings, trips, guest receipts" },
         "tenant": { "desc": "Visitors, access, community" },
         "myHome": { "desc": "Smart locks, energy, announcements" },
-        "wallet": { "desc": "Balance, escrow, payouts" },
+        "wallet": { "desc": "Payment records and payouts" },
         "host": { "desc": "Listings, calendar, reservations" }
       },
       "buy": {

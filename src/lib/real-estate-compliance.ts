@@ -22,7 +22,7 @@ export interface JurisdictionRules {
   realEstateRegulator: string;
   amlKycRequired: boolean;
   agencyLicenseRequired: boolean;
-  fairHousingApplies: boolean;
+  nonDiscriminationApplies: boolean;
   coolingOffDays?: number;
   governingLaw: string;
   listingDisclosures: string[];
@@ -42,7 +42,7 @@ const JURISDICTIONS: Record<JurisdictionId, JurisdictionRules> = {
     realEstateRegulator: "Lands Commission · EPA · GRA",
     amlKycRequired: true,
     agencyLicenseRequired: true,
-    fairHousingApplies: true,
+    nonDiscriminationApplies: true,
     governingLaw: "Laws of the Republic of Ghana",
     listingDisclosures: [
       "Confirm land title or lawful authority to market the property.",
@@ -65,9 +65,9 @@ const JURISDICTIONS: Record<JurisdictionId, JurisdictionRules> = {
       "House rules, check-in/out times, and cancellation policy must be visible before booking.",
     ],
     paymentRules: [
-      "Payments processed via licensed PSP (PayAngels). BaytMiftah is not a bank or escrow agent unless stated.",
-      "Mobile money and card receipts must be retained for dispute resolution.",
-      "Large transfers may trigger AML reporting obligations for regulated entities.",
+      "Supported payments are processed by the applicable third-party payment provider. BaytMiftah does not hold, custody, or control customer funds and does not operate an escrow service.",
+      "Payment activities in Ghana are subject to the Payment Systems and Services Act, 2019 (Act 987) and Bank of Ghana licensing or authorisation for relevant payment-service activities.",
+      "Mobile money and card receipts, including the payment-provider transaction reference, should be retained for dispute resolution with the applicable payment provider and transaction parties.",
     ],
     consumerRights: [
       "Right to accurate listing information and good-faith negotiation.",
@@ -83,7 +83,7 @@ const JURISDICTIONS: Record<JurisdictionId, JurisdictionRules> = {
     realEstateRegulator: "State land registries · EFCC AML · Lagos tenancy laws",
     amlKycRequired: true,
     agencyLicenseRequired: true,
-    fairHousingApplies: true,
+    nonDiscriminationApplies: true,
     governingLaw: "Laws of the Federal Republic of Nigeria",
     listingDisclosures: [
       "Certificate of occupancy or lawful title documentation where applicable.",
@@ -116,7 +116,7 @@ const JURISDICTIONS: Record<JurisdictionId, JurisdictionRules> = {
     realEstateRegulator: "Land Control Boards · EARB · ODPC",
     amlKycRequired: true,
     agencyLicenseRequired: true,
-    fairHousingApplies: true,
+    nonDiscriminationApplies: true,
     governingLaw: "Laws of the Republic of Kenya",
     listingDisclosures: [
       "Land reference number and county where available.",
@@ -139,7 +139,7 @@ const JURISDICTIONS: Record<JurisdictionId, JurisdictionRules> = {
     realEstateRegulator: "EAAB · FIC (FICA AML) · Rental Housing Act",
     amlKycRequired: true,
     agencyLicenseRequired: true,
-    fairHousingApplies: true,
+    nonDiscriminationApplies: true,
     governingLaw: "Laws of the Republic of South Africa",
     listingDisclosures: [
       "FICA identification may be required before mandate or offer acceptance.",
@@ -165,7 +165,7 @@ const JURISDICTIONS: Record<JurisdictionId, JurisdictionRules> = {
     realEstateRegulator: "State real estate commissions · HUD Fair Housing · CFPB",
     amlKycRequired: true,
     agencyLicenseRequired: true,
-    fairHousingApplies: true,
+    nonDiscriminationApplies: true,
     coolingOffDays: 3,
     governingLaw: "Laws of the listing state and applicable federal law",
     listingDisclosures: [
@@ -199,7 +199,7 @@ const JURISDICTIONS: Record<JurisdictionId, JurisdictionRules> = {
     realEstateRegulator: "HMRC AML · Trading Standards · redress schemes",
     amlKycRequired: true,
     agencyLicenseRequired: true,
-    fairHousingApplies: true,
+    nonDiscriminationApplies: true,
     governingLaw: "Laws of England and Wales (unless otherwise stated)",
     listingDisclosures: [
       "EPC rating required for most marketed residential properties.",
@@ -227,7 +227,7 @@ const JURISDICTIONS: Record<JurisdictionId, JurisdictionRules> = {
     realEstateRegulator: "National land registries · AMLD6 · energy performance rules",
     amlKycRequired: true,
     agencyLicenseRequired: true,
-    fairHousingApplies: true,
+    nonDiscriminationApplies: true,
     coolingOffDays: 14,
     governingLaw: "Applicable member state law",
     listingDisclosures: [
@@ -251,7 +251,7 @@ const JURISDICTIONS: Record<JurisdictionId, JurisdictionRules> = {
     realEstateRegulator: "RERA (Dubai) · DLD · Trakheesi permit",
     amlKycRequired: true,
     agencyLicenseRequired: true,
-    fairHousingApplies: true,
+    nonDiscriminationApplies: true,
     governingLaw: "UAE federal and emirate-level law",
     listingDisclosures: [
       "Valid brokerage registration and Trakheesi permit for Dubai listings.",
@@ -271,7 +271,7 @@ const JURISDICTIONS: Record<JurisdictionId, JurisdictionRules> = {
     realEstateRegulator: "Provincial real estate councils · FINTRAC AML",
     amlKycRequired: true,
     agencyLicenseRequired: true,
-    fairHousingApplies: true,
+    nonDiscriminationApplies: true,
     governingLaw: "Provincial law of the listing jurisdiction",
     listingDisclosures: [
       "Provincial seller disclosure forms (e.g. SPIS in Ontario).",
@@ -291,7 +291,7 @@ const JURISDICTIONS: Record<JurisdictionId, JurisdictionRules> = {
     realEstateRegulator: "State fair trading · AUSTRAC AML",
     amlKycRequired: true,
     agencyLicenseRequired: true,
-    fairHousingApplies: true,
+    nonDiscriminationApplies: true,
     governingLaw: "State or territory law of the listing",
     listingDisclosures: [
       "Material facts disclosure required under state property law.",
@@ -311,7 +311,7 @@ const JURISDICTIONS: Record<JurisdictionId, JurisdictionRules> = {
     realEstateRegulator: "RERA (state authorities) · FEMA for foreign buyers",
     amlKycRequired: true,
     agencyLicenseRequired: true,
-    fairHousingApplies: true,
+    nonDiscriminationApplies: true,
     governingLaw: "Laws of India and applicable state RERA",
     listingDisclosures: [
       "RERA registration number for applicable projects.",
@@ -334,7 +334,7 @@ const JURISDICTIONS: Record<JurisdictionId, JurisdictionRules> = {
     realEstateRegulator: "Local land registry and licensing authority",
     amlKycRequired: true,
     agencyLicenseRequired: true,
-    fairHousingApplies: true,
+    nonDiscriminationApplies: true,
     governingLaw: "Local law of the property jurisdiction",
     listingDisclosures: [
       "Verify lawful authority to market the property.",
@@ -443,7 +443,7 @@ export function getListingComplianceChecklist(
     requiredDisclosures: [...rules.listingDisclosures, ...typeRules],
     requiresAgencyLicense: rules.agencyLicenseRequired,
     requiresKyc: rules.amlKycRequired,
-    fairHousing: rules.fairHousingApplies,
+    nonDiscrimination: rules.nonDiscriminationApplies,
   };
 }
 
@@ -468,7 +468,7 @@ export function validateListingCompliance(input: {
     "authority_confirmed",
     "disclosures_accurate",
     "agency_licensed",
-    "fair_housing",
+    "non_discrimination",
     ...(checklist.requiresKyc ? ["kyc_ready"] : []),
   ];
 

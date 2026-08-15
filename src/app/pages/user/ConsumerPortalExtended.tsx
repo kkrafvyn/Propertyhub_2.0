@@ -804,7 +804,7 @@ export function ApplicationsWorkflowSection({
               ) : null}
               {escrow ? (
                 <Badge variant="secondary" className="capitalize">
-                  Escrow {escrow.status}
+                  Payment {escrow.status}
                 </Badge>
               ) : null}
               {isPurchase ? (
@@ -1230,17 +1230,17 @@ export function WalletHubSection({
   const [disputingHoldId, setDisputingHoldId] = useState<string | null>(null);
 
   const handleDisputeEscrow = async (holdId: string) => {
-    const note = window.prompt("Describe the issue with this escrow hold:");
+    const note = window.prompt("Describe the issue with this payment:");
     if (!note?.trim()) return;
 
     try {
       setDisputingHoldId(holdId);
       await escrowService.disputeEscrowHold(holdId, note.trim());
-      toast.success("Escrow dispute submitted.");
+      toast.success("Payment dispute submitted.");
       await onRefresh();
     } catch (error) {
       console.error(error);
-      toast.error("Unable to submit escrow dispute.");
+      toast.error("Unable to submit payment dispute.");
     } finally {
       setDisputingHoldId(null);
     }
@@ -1275,14 +1275,14 @@ export function WalletHubSection({
           </p>
         </Card>
         <Card className="p-6">
-          <p className="text-sm text-muted-foreground mb-1">In escrow</p>
+          <p className="text-sm text-muted-foreground mb-1">Pending with provider</p>
           <p className="text-3xl font-semibold">
             {formatMoney(wallet.pending_minor, wallet.currency)}
           </p>
         </Card>
         <Card className="p-6">
           <Shield className="w-5 h-5 text-primary mb-2" />
-          <p className="text-sm text-muted-foreground">Active escrow holds</p>
+          <p className="text-sm text-muted-foreground">Active payment records</p>
           <p className="text-3xl font-semibold">
             {escrowHolds.filter((hold) => hold.status === "held").length}
           </p>
@@ -1318,9 +1318,9 @@ export function WalletHubSection({
       </Card>
 
       <Card className="p-6">
-        <h3 className="font-semibold mb-4">Escrow holds</h3>
+        <h3 className="font-semibold mb-4">Transaction payments</h3>
         {escrowHolds.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No escrow-backed payments yet.</p>
+          <p className="text-sm text-muted-foreground">No payment records yet.</p>
         ) : (
           escrowHolds.map((hold) => (
             <div key={hold.id} className="py-3 border-b border-border last:border-0 space-y-3">
@@ -1347,7 +1347,7 @@ export function WalletHubSection({
       </Card>
 
       <Card className="p-6">
-        <h3 className="font-semibold mb-4">Receipts & PayAngels history</h3>
+        <h3 className="font-semibold mb-4">Receipts & payment history</h3>
         {payments.length === 0 ? (
           <p className="text-sm text-muted-foreground">No payments yet.</p>
         ) : (

@@ -5,7 +5,7 @@ const WALLET_LINKS = [
   { to: CONSUMER_ROUTES.wallet, label: 'Overview', end: true },
   { to: CONSUMER_ROUTES.transactions, label: 'Transactions' },
   { to: CONSUMER_ROUTES.payments, label: 'Payouts' },
-  { to: '/wallet/escrow', label: 'Escrow holds' },
+  { to: '/wallet/escrow', label: 'Transaction payments' },
 ]
 
 export default function WalletShell(props) {

@@ -51,8 +51,8 @@ function renderSection(section: ReturnType<typeof resolveRevenueSection>) {
       return (
         <RevenueRuleEditor
           category="wallet_fees"
-          title="Wallet Fees"
-          description="Top-up and payout fees for BaytMiftah wallets."
+          title="Payment processing fees"
+          description="Fees for top-ups and payouts processed by third-party payment providers."
         />
       );
     case "payment-settings":

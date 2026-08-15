@@ -6,9 +6,8 @@ const ROOT_ENV_PATH = path.join(PROJECT_ROOT, ".env");
 
 const SERVER_KEYS = [
   "PUBLIC_APP_URL",
-  "PAYSTACK_SECRET_KEY",
-  "PAYSTACK_WEBHOOK_SECRET",
-  "STRIPE_SECRET_KEY",
+  "PAYANGELS_SECRET_KEY",
+  "PAYANGELS_WEBHOOK_SECRET",
   "INTERNAL_AUTOMATIONS_KEY",
   "RESEND_API_KEY",
   "NOTIFICATION_EMAIL_FROM",
@@ -65,8 +64,8 @@ function buildServerSecrets(env = loadProjectEnv()) {
     if (env[key]) secrets[key] = env[key];
   }
 
-  if (!secrets.PAYSTACK_WEBHOOK_SECRET && env.PAYSTACK_SECRET_KEY) {
-    secrets.PAYSTACK_WEBHOOK_SECRET = env.PAYSTACK_SECRET_KEY;
+  if (!secrets.PAYANGELS_WEBHOOK_SECRET && env.PAYANGELS_SECRET_KEY) {
+    secrets.PAYANGELS_WEBHOOK_SECRET = env.PAYANGELS_SECRET_KEY;
   }
 
   if (!secrets.WEB_PUSH_PUBLIC_KEY && env.VITE_WEB_PUSH_PUBLIC_KEY) {

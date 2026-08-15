@@ -3,7 +3,6 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { Search, SlidersHorizontal, Grid3x3, List, Map, MapPin, Bed, Bath, X, Loader2, Bell, Sparkles, Heart } from "lucide-react";
 import { savedPropertyService } from "../../lib/savedproperty.service";
 import { EmptyState } from "../components/ux";
-import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
 import {
   CategoryBar,
   DesktopShell,
@@ -508,12 +507,6 @@ export function PropertySearch() {
       }
     >
       <div className="pb-12">
-        <BaytMiftahAIPanel
-          context="search"
-          compact
-          onNavigate={(href) => navigate(href)}
-        />
-
         <Card className="mb-6 p-4">
           <div className="flex flex-col gap-3 md:flex-row">
             <div className="relative flex-1">

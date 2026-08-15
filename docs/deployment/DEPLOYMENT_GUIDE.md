@@ -36,8 +36,8 @@ supabase db push
 cat >> .env << 'EOF'
 
 # ===== CURRENCY & PAYMENTS =====
-VITE_STRIPE_PUBLIC_KEY=pk_test_...
-STRIPE_SECRET_KEY=sk_test_...
+VITE_PAYANGELS_PUBLIC_KEY=pk_test_...
+PAYANGELS_SECRET_KEY=sk_test_...
 VITE_FLUTTERWAVE_PUBLIC_KEY=FLWPUBK_...
 FLUTTERWAVE_SECRET_KEY=FLWSECK_...
 
@@ -97,7 +97,7 @@ EOF
   1. Sign in or create account
   2. Get Publishable Key & Secret Key
   3. Test mode keys for development
-- **Setup**: Add to VITE_STRIPE_PUBLIC_KEY & STRIPE_SECRET_KEY
+- **Setup**: Add to VITE_PAYANGELS_PUBLIC_KEY & PAYANGELS_SECRET_KEY
 
 **Flutterwave (Mobile Money - Africa):**
 - ⏱️ **Time**: 30 minutes

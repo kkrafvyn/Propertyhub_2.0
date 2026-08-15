@@ -27,7 +27,7 @@ export interface InternationalPaymentConfig {
 const PAYMENT_PROVIDERS: Record<string, PaymentProvider> = {
   payangels: {
     id: 'payangels',
-    name: 'PayAngels (Card, MoMo, Bank)',
+    name: 'Card, mobile money & bank',
     type: 'mobile_money',
     supportedCurrencies: ['GHS', 'NGN', 'ZAR', 'KES', 'USD'],
     supportedRegions: ['GH', 'NG', 'ZA', 'KE', 'GLOBAL'],
@@ -127,7 +127,7 @@ const PAYMENT_PROVIDERS: Record<string, PaymentProvider> = {
   // Crypto
   stripe_crypto: {
     id: 'stripe_crypto',
-    name: 'Crypto (via PayAngels)',
+    name: 'Crypto',
     type: 'crypto',
     supportedCurrencies: ['USD', 'EUR'],
     supportedRegions: ['GLOBAL'],

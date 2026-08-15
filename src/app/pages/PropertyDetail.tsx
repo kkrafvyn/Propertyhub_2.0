@@ -44,7 +44,6 @@ import { ConsumerTrustBadges } from "../components/ConsumerTrustBadges";
 import { MarketplaceDisclaimerStrip } from "../components/legal/MarketplaceDisclaimerStrip";
 import { TrustBadge } from "../components/legal/TrustBadge";
 import { TRUST_LABELS } from "../../lib/legal-disclaimers";
-import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
 import { monitoring } from "../../lib/monitoring";
 import { useMyKyc } from "../hooks/useMyKyc";
 import { canSubmitOffer } from "../lib/baytmiftah/kyc";
@@ -242,7 +241,6 @@ export function PropertyDetail() {
     [listing]
   );
   const paymentCurrency = paymentContext?.currency || listing?.currency || "USD";
-  const paymentProviderLabel = paymentContext?.providerLabel || "PayAngels";
   const images = getPropertyImageGallery(property);
   const locationQuery = property
     ? [property.address, property.city, property.region, property.country].filter(Boolean).join(", ")
@@ -476,7 +474,7 @@ export function PropertyDetail() {
       setBookingSubmitting(true);
       if (hostBookingMode !== "request" && paymentContext && !shouldUsePaystackCheckout(paymentContext)) {
         toast.error(
-          `${paymentProviderLabel} checkout for properties in ${paymentContext.propertyLabel} is not available yet.`
+          `Checkout for properties in ${paymentContext.propertyLabel} is not available yet.`
         );
         return;
       }
@@ -538,7 +536,7 @@ export function PropertyDetail() {
 
     if (!paymentContext || !shouldUsePaystackCheckout(paymentContext)) {
       toast.error(
-        `${paymentProviderLabel} checkout for properties in ${paymentContext?.propertyLabel || "this market"} is not available yet.`
+        `Checkout for properties in ${paymentContext?.propertyLabel || "this market"} is not available yet.`
       );
       return;
     }
@@ -563,7 +561,7 @@ export function PropertyDetail() {
       );
     } catch (error) {
       console.error("Failed to initialize payment:", error);
-      toast.error(`Unable to start the ${paymentProviderLabel} checkout right now.`);
+      toast.error("Unable to start checkout right now.");
     } finally {
       setPaymentSubmitting(false);
     }
@@ -809,7 +807,7 @@ export function PropertyDetail() {
                   <div>
                     <h3 className="text-lg font-semibold">Platform trust signals</h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Payments for this listing are processed by {paymentProviderLabel} ({paymentCurrency}).
+                      Payments for this listing are processed by a third-party payment provider ({paymentCurrency}).
                       Labels below describe platform checks only — not legal title, property condition, or
                       investment suitability.
                     </p>
@@ -1079,8 +1077,6 @@ export function PropertyDetail() {
                 </div>
               </div>
 
-              <BaytMiftahAIPanel context="property" compact />
-
               <div className="mb-6 mt-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
@@ -1166,7 +1162,7 @@ export function PropertyDetail() {
                   onClick={() => setShowPaymentForm(true)}
                 >
                   <CreditCard className="w-4 h-4" />
-                  Secure Payment via {paymentProviderLabel}
+                  Pay securely
                 </Button>
               )}
 
@@ -1373,7 +1369,7 @@ export function PropertyDetail() {
                         ? "Submitting..."
                         : hostBookingMode === "request"
                           ? "Request to book"
-                          : `Continue to ${paymentProviderLabel}`}
+                          : "Continue to checkout"}
                     </Button>
                   </form>
                 </motion.div>
@@ -1392,9 +1388,9 @@ export function PropertyDetail() {
                     <div>
                       <h4 className="font-semibold">Secure Payment</h4>
                       <p className="text-sm text-muted-foreground">
-                        {paymentContext?.primaryProvider === "payangels"
-                          ? "Pay with mobile money, card, or bank transfer through PayAngels."
-                          : `Pay securely through ${paymentProviderLabel} in ${paymentCurrency}.`}{" "}
+                        {paymentContext
+                          ? `Pay with mobile money, card, or bank transfer in ${paymentCurrency}.`
+                          : "Pay with mobile money, card, or bank transfer."}{" "}
                         After confirmation, your receipt is prepared for verification.
                       </p>
                     </div>
@@ -1465,8 +1461,8 @@ export function PropertyDetail() {
                       disabled={paymentSubmitting}
                     >
                       {paymentSubmitting
-                        ? `Redirecting to ${paymentProviderLabel}...`
-                        : `Continue to ${paymentProviderLabel}`}
+                        ? "Redirecting to checkout..."
+                        : "Continue to checkout"}
                     </Button>
                   </form>
                 </motion.div>
