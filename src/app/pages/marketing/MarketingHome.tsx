@@ -57,10 +57,10 @@ export function MarketingHome() {
     <>
       <PageMeta
         title="BaytMiftah — The Operating System for Real Estate"
-        description="Run your real-estate business from one operating system. BaytMiftah connects property discovery, leasing, operations, finance, maintenance, CRM, communications, and governed AI for consumers and property businesses."
+        description="Real estate businesses run on disconnected tools. BaytMiftah connects properties, people, money, and operations in one Real Estate Operating System."
         canonicalPath="/"
         ogTitle="BaytMiftah — The Operating System for Real Estate"
-        ogDescription="Stop running property operations across WhatsApp, Excel, and disconnected tools. One connected REOS for discovery, operations, finance, and trust."
+        ogDescription="Stop running properties, payments, maintenance, leasing, and teams across disconnected tools. One connected system for real-estate operations."
       />
 
       <HeroSection />
@@ -88,12 +88,11 @@ function HeroSection() {
             <p className="mk-eyebrow">Real Estate Operating System</p>
             <h1 className="mk-display">The Operating System for Real Estate.</h1>
             <p className="mk-lead">
-              Stop running your property business across WhatsApp, Excel, spreadsheets, and disconnected
-              systems. BaytMiftah brings discovery, operations, finance, maintenance, and communications
-              into one environment — so your organization runs from a single system.
+              Stop running your properties, payments, maintenance, leasing, and teams across disconnected
+              tools. BaytMiftah brings your real-estate operations into one connected system.
             </p>
             <p className="mk-hero-note">
-              BaytMiftah is a technology platform. Your team manages your properties and customer
+              BaytMiftah is a technology platform. Your team manages properties and customer
               relationships through the software — we do not automatically become your property manager.
             </p>
             <div className="mk-hero-actions">
@@ -114,19 +113,19 @@ function HeroSection() {
           <div className="mk-hero-grid-bg" />
           <div className="mk-product-stack">
             <div className="mk-product-card">
-              <p className="mk-product-label">Workspace</p>
-              <p className="mk-product-title">Portfolio &amp; unit operations</p>
-              <p className="mk-product-meta">Leases · occupancy · tasks · documents</p>
+              <p className="mk-product-label">Operations</p>
+              <p className="mk-product-title">See the entire operation</p>
+              <p className="mk-product-meta">Properties · units · leases · occupancy · tasks</p>
             </div>
             <div className="mk-product-card mk-product-card--offset">
               <p className="mk-product-label">Finance</p>
-              <p className="mk-product-title">Payments &amp; reconciliation</p>
-              <p className="mk-product-meta">Journal entries · bank feeds · owner statements</p>
+              <p className="mk-product-title">Know where the money stands</p>
+              <p className="mk-product-meta">Collections · reconciliation · owner statements</p>
             </div>
             <div className="mk-product-card mk-product-card--offset-right">
               <p className="mk-product-label">Maintenance</p>
-              <p className="mk-product-title">Tickets, SLAs &amp; contractors</p>
-              <p className="mk-product-meta">Dispatch · gate clearance · field updates</p>
+              <p className="mk-product-title">Tracked work—not lost messages</p>
+              <p className="mk-product-meta">Tickets · SLAs · contractors · field updates</p>
             </div>
           </div>
         </div>
@@ -140,12 +139,12 @@ function ProblemSection() {
     "WhatsApp",
     "Excel",
     "Email",
+    "Spreadsheets",
+    "Paper",
     "Bank statements",
-    "Paper documents",
-    "Maintenance messages",
+    "Manual follow-ups",
     "Separate CRM",
-    "Payment tools",
-    "Reporting spreadsheets",
+    "Disconnected payments",
   ];
 
   return (
@@ -153,11 +152,11 @@ function ProblemSection() {
       <div className="mk-container">
         <Reveal>
           <p className="mk-eyebrow">The problem</p>
-          <h2 className="mk-section-title">Real-estate operations are fragmented.</h2>
+          <h2 className="mk-section-title">Real estate is still running on disconnected tools.</h2>
           <p className="mk-section-copy">
-            Most property businesses stitch together messaging apps, spreadsheets, inboxes, and
-            one-off tools. Work falls through the cracks. Finance drifts from operations. Teams lose
-            visibility.
+            Your property business has grown, but your tools haven&apos;t grown with it. Work falls through
+            the cracks. Finance drifts from operations. Teams lose visibility — and owners spend too much
+            time asking instead of operating.
           </p>
         </Reveal>
 
@@ -178,7 +177,7 @@ function ProblemSection() {
         <Reveal>
           <div className="mk-unified-panel">
             <h3>BAYTMIFTAH</h3>
-            <p>One operating system for properties, people, workflows, and accountability.</p>
+            <p>Bring the entire operation together — one Real Estate Operating System.</p>
           </div>
         </Reveal>
       </div>
@@ -188,26 +187,26 @@ function ProblemSection() {
 
 function WorkflowSection() {
   const steps = [
-    "Discover",
-    "Lease / Transact",
-    "Operate",
-    "Maintain",
-    "Collect / Reconcile",
-    "Communicate",
-    "Analyze",
-    "Automate",
+    "Properties",
+    "People",
+    "Leases",
+    "Money",
+    "Maintenance",
+    "Communication",
+    "Data",
+    "AI",
   ];
 
   return (
     <section className="mk-section" id="workflow">
       <div className="mk-container">
         <Reveal>
-          <p className="mk-eyebrow">Operating model</p>
-          <h2 className="mk-section-title">Connected workflows, not isolated modules.</h2>
+          <p className="mk-eyebrow">One operating system</p>
+          <h2 className="mk-section-title">One system. Every part of the operation.</h2>
           <p className="mk-section-copy">
-            BaytMiftah links the lifecycle of real-estate work — from discovery and leasing through
-            day-to-day operations, collections, communication, and analysis — inside one platform
-            your teams actually use.
+            BaytMiftah connects the people, properties, money, and workflows behind real estate — from
+            discovery and leasing through daily operations, collections, communication, and analysis. Not
+            separate modules. One connected operation.
           </p>
         </Reveal>
         <div className="mk-flow">
@@ -230,28 +229,28 @@ function WorkflowSection() {
 function BusinessSection() {
   const modules = [
     {
-      title: "Property operations",
-      copy: "Manage properties, units, leases, occupancy, and operational work from workspace dashboards.",
+      title: "See the entire operation",
+      copy: "Know what is happening across every property. Properties, units, leases, occupancy, tasks, and teams in one place.",
     },
     {
-      title: "Finance",
-      copy: "Track payments, journal entries, bank reconciliation, owner statements, and finance workflows.",
+      title: "Know where the money stands",
+      copy: "Track payment workflows, collections, reconciliation, and financial activity without jumping between systems. BaytMiftah is not a bank — it is the operational layer around your finances.",
     },
     {
-      title: "Maintenance",
-      copy: "Handle tickets, technicians, contractors, SLAs, gate clearance, and escalations.",
+      title: "Maintenance shouldn't live in a chat thread",
+      copy: "Turn resident requests into tickets, assign work, track SLAs, escalate delays, and keep everyone informed — not buried in WhatsApp.",
     },
     {
-      title: "CRM & leasing",
-      copy: "Manage leads, contacts, viewings, applications, offers, and leasing pipelines.",
+      title: "Turn property interest into organized business",
+      copy: "Manage leads, viewings, applications, offers, and leasing workflows from one system — not a scattered pipeline.",
     },
     {
-      title: "Communications",
-      copy: "Connect messaging, notifications, and operational alerts to real workflows — not separate inboxes.",
+      title: "Messages become work",
+      copy: "When someone says the pipe is leaking, BaytMiftah can turn the conversation into a governed operational workflow — not another lost message.",
     },
     {
-      title: "Reporting",
-      copy: "Understand operational, financial, and organizational performance from connected data.",
+      title: "See performance from connected data",
+      copy: "Understand operational, financial, and organizational performance from the same underlying data your teams work in every day.",
     },
   ];
 
@@ -260,10 +259,11 @@ function BusinessSection() {
       <div className="mk-container">
         <Reveal>
           <p className="mk-eyebrow">For businesses</p>
-          <h2 className="mk-section-title">Run your real-estate business from one system.</h2>
+          <h2 className="mk-section-title">Run properties with visibility and control.</h2>
           <p className="mk-section-copy">
             Built for property owners, managers, agencies, developers, and enterprise operators who
-            need one operating environment — not another disconnected tool stack.
+            need one operating environment — not another tool stack. This is the system you use to run
+            your property operation.
           </p>
         </Reveal>
         <Reveal stagger>
@@ -277,8 +277,8 @@ function BusinessSection() {
           </div>
         </Reveal>
         <div className="mk-hero-actions" style={{ marginTop: "2rem" }}>
-          <a href={appPath("/workspace")} className="mk-btn mk-btn-primary">
-            Open Workspace
+          <a href={appPath("/signup")} className="mk-btn mk-btn-primary">
+            Get Started
           </a>
           <Link to="/contact" className="mk-btn mk-btn-secondary">
             Request a Demo
@@ -306,11 +306,11 @@ function ConsumerSection() {
       <div className="mk-container">
         <Reveal>
           <p className="mk-eyebrow">For consumers</p>
-          <h2 className="mk-section-title">Discover and manage property journeys in one place.</h2>
+          <h2 className="mk-section-title">Find a property without the friction.</h2>
           <p className="mk-section-copy">
-            Renters, buyers, hosts, and guests use BaytMiftah to search, compare, apply, book, pay,
-            and stay connected — separate from the business operating environment, but part of the
-            same platform.
+            Discover, compare, view, and move forward from one place. Renters, buyers, hosts, and guests
+            use BaytMiftah alongside the business operating system — connected to the same platform,
+            without the operational complexity.
           </p>
         </Reveal>
         <div className="mk-flow">
@@ -337,10 +337,10 @@ function ConsumerSection() {
 
 function AISection() {
   const pipeline = [
-    "Message or request arrives",
-    "AI understands intent within org context",
+    "A message or request arrives",
+    "AI understands intent within your organization",
     "Permission and governance checks run",
-    "Workflow, ticket, or task is created",
+    "A workflow, ticket, or task is created",
     "Work routes to the right role",
     "Progress is monitored",
     "Escalation or update when required",
@@ -351,12 +351,12 @@ function AISection() {
       <div className="mk-container">
         <Reveal>
           <p className="mk-eyebrow">Governed AI</p>
-          <h2 className="mk-section-title">AI that works inside your operations.</h2>
+          <h2 className="mk-section-title">AI that works inside your operation.</h2>
           <p className="mk-section-copy">
-            BaytMiftah AI assists with maintenance triage, collections, leasing workflows, document
-            summaries, SOP lookup, and operational alerts — with organization permissions, kill
-            switches, and human approval where required. It does not run unrestricted actions across
-            your business.
+            Let AI handle the operational work around your team — not just answer questions. BaytMiftah
+            AI assists with maintenance triage, collections, leasing workflows, document summaries, and
+            operational alerts — with organization permissions, kill switches, and human approval where
+            required.
           </p>
         </Reveal>
         <div className="mk-pipeline">
@@ -387,11 +387,11 @@ function NightWatchSection() {
       <div className="mk-container">
         <Reveal>
           <p className="mk-eyebrow">AI Night Watch</p>
-          <h2 className="mk-section-title">Your operations don&apos;t stop when you do.</h2>
+          <h2 className="mk-section-title">Don&apos;t wait for problems to find you.</h2>
           <p className="mk-section-copy">
-            Night Watch monitors configured operational exceptions — overdue payments, SLA breaches,
-            lease expirations, workflow failures, and similar signals — and surfaces governed
-            recommendations and alerts for your team to review.
+            AI Night Watch monitors operational exceptions — failed payments, overdue work, lease
+            deadlines, and workflow issues — and surfaces governed alerts and recommendations for your
+            team to review and act on earlier.
           </p>
         </Reveal>
         <div className="mk-watch-panel">
@@ -434,12 +434,11 @@ function TrustSection() {
     <section className="mk-section mk-problem">
       <div className="mk-container">
         <Reveal>
-          <p className="mk-eyebrow">Trust &amp; security</p>
-          <h2 className="mk-section-title">Built for trust. Designed for accountability.</h2>
+          <p className="mk-eyebrow">Trust &amp; accountability</p>
+          <h2 className="mk-section-title">Know who did what, when, and why.</h2>
           <p className="mk-section-copy">
-            Permission-based access, organization isolation, audit trails, verification workflows,
-            and controlled AI actions — so teams can operate with visibility and evidence, not blind
-            trust.
+            Permission-based access, organization isolation, audit trails, verification workflows, and
+            controlled AI actions — so teams operate with visibility and evidence, not blind trust.
           </p>
         </Reveal>
         <div className="mk-trust-chain">
@@ -465,7 +464,7 @@ function ExplorerSection() {
       <div className="mk-container">
         <Reveal>
           <p className="mk-eyebrow">Public explorer</p>
-          <h2 className="mk-section-title">A more transparent real-estate ecosystem.</h2>
+          <h2 className="mk-section-title">Transparency without exposing private data.</h2>
           <p className="mk-section-copy">
             The public Event Ledger lets anyone verify pseudonymous transaction references, unit
             identifiers, and listing signals — without exposing tenant names, private contact details,
@@ -483,34 +482,36 @@ function ExplorerSection() {
 }
 
 function TeamsSection() {
-  const teams = [
-    "Property management",
-    "Finance",
-    "Leasing / sales",
-    "Maintenance",
-    "Customer service",
-    "Procurement",
-    "Operations",
+  const audiences = [
+    "Owners",
+    "Property Managers",
+    "Agencies",
+    "Developers",
+    "Enterprise Operators",
+    "Consumers",
   ];
 
   return (
     <section className="mk-section mk-problem">
       <div className="mk-container">
         <Reveal>
-          <p className="mk-eyebrow">One platform, many teams</p>
-          <h2 className="mk-section-title">Role-aware experiences for every function.</h2>
+          <p className="mk-eyebrow">Who it&apos;s for</p>
+          <h2 className="mk-section-title">Built for the people behind real estate.</h2>
           <p className="mk-section-copy">
-            Executives, property managers, finance officers, leasing teams, and field staff each get
-            permissions and navigation suited to their work — connected to the same underlying
-            operating data.
+            <strong>Owners</strong> — know what is happening across your portfolio.{" "}
+            <strong>Property managers</strong> — run daily operations from one workspace.{" "}
+            <strong>Agencies</strong> — manage listings, leads, clients, and teams.{" "}
+            <strong>Developers</strong> — connect property activity from launch through operations.{" "}
+            <strong>Enterprise operators</strong> — standardize workflows across organizations.{" "}
+            <strong>Consumers</strong> — discover and interact with properties in one experience.
           </p>
         </Reveal>
         <div className="mk-team-tree">
-          <div className="mk-team-node mk-team-node--root">Executive</div>
+          <div className="mk-team-node mk-team-node--root">Real Estate Operating System</div>
           <div className="mk-team-children">
-            {teams.map((team) => (
-              <div key={team} className="mk-team-node">
-                {team}
+            {audiences.map((audience) => (
+              <div key={audience} className="mk-team-node">
+                {audience}
               </div>
             ))}
           </div>
@@ -526,15 +527,19 @@ function PlatformSection() {
       <div className="mk-container">
         <Reveal>
           <p className="mk-eyebrow">Desktop + mobile</p>
-          <h2 className="mk-section-title">Built for how teams actually work.</h2>
+          <h2 className="mk-section-title">Operate from the office or the field.</h2>
+          <p className="mk-section-copy">
+            Deep operational work on desktop. Respond, approve, and capture evidence on mobile — connected
+            to the same operating data.
+          </p>
         </Reveal>
         <div className="mk-platform-split">
           <article className="mk-platform-card">
             <h3>Desktop &amp; web</h3>
             <ul>
-              <li>Deep operational work and configuration</li>
-              <li>Finance, reporting, and portfolio analysis</li>
-              <li>Workspace management and team administration</li>
+              <li>Portfolio visibility and configuration</li>
+              <li>Finance, reporting, and team administration</li>
+              <li>Leasing pipelines and operational oversight</li>
             </ul>
           </article>
           <article className="mk-platform-card">
@@ -542,7 +547,7 @@ function PlatformSection() {
             <ul>
               <li>Respond and communicate in the field</li>
               <li>Approve actions and capture evidence</li>
-              <li>Inspect units and act on operational alerts</li>
+              <li>Act on maintenance and operational alerts</li>
             </ul>
           </article>
         </div>
@@ -558,18 +563,15 @@ function CTASection() {
         <Reveal>
           <h2 className="mk-display">Run real estate differently.</h2>
           <p className="mk-lead">
-            Bring your properties, people, workflows, and operations into one system — with governed
-            automation and AI where it helps.
+            One operating system for properties, people, and operations — from leasing to maintenance,
+            from payments to reporting.
           </p>
           <div className="mk-cta-actions">
             <a href={appPath("/signup")} className="mk-btn mk-btn-primary">
               Get Started
             </a>
-            <a href="#business" className="mk-btn mk-btn-secondary mk-btn-on-dark">
-              Talk to Sales
-            </a>
             <Link to="/contact" className="mk-btn mk-btn-secondary mk-btn-on-dark">
-              Contact Us
+              Request a Demo
             </Link>
           </div>
         </Reveal>

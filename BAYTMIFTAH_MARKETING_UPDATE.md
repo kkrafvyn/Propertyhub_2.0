@@ -1,235 +1,256 @@
-# BaytMiftah — Marketing Website Update
+# BaytMiftah — Marketing Strategy Update
 
 **Date:** 2026-09-01  
-**Scope:** Public marketing site at `baytmiftah.com` (within existing Vite monorepo)  
-**Build:** `npm run typecheck` ✅ · `npm run build` ✅ · `site-mode.test.ts` ✅
+**Scope:** Messaging and positioning only — **visual design unchanged**  
+**File updated:** `src/app/pages/marketing/MarketingHome.tsx`  
+**Design status:** Approved UI preserved (layout, colors, typography, components, animations)
 
 ---
 
-## 1. Audit — current state (before this update)
+## 1. Objective
 
-| Area | Finding |
-|------|---------|
-| Framework | Vite + React + TypeScript + Tailwind v4 (single SPA) |
-| Separate marketing repo | **Not present** — marketing lives in the same codebase as the product app |
-| `/` route | Served `Home.tsx` (marketplace listings), not a marketing page |
-| Hostname split | **Not implemented** — `baytmiftah.com` vs `app.baytmiftah.com` was architecture-only |
-| SEO | Basic `PageMeta`; `index.html` description was consumer-marketplace focused |
-| `robots.txt` / `sitemap.xml` | **Missing** |
-| Navigation | `DesktopShell` marketplace nav (search, compare, list property) |
-| About / contact / careers | **Exist** at `/about`, `/contact`, `/careers` via `StaticContentPage` |
-| Explorer | **Implemented** at `/explorer` (`PublicEventLedger`) |
-| Paystack references | Legacy fallbacks in edge code; marketing copy uses PayAngels positioning |
-| Fake metrics / testimonials | None added in prior homepage |
+Transform the marketing homepage from a **feature inventory** into a **Real Estate Operating System** story that answers:
 
-**Preserved:** Product app routes, workspace, consumer marketplace (`Home.tsx` on app subdomain), legal pages, explorer, auth flows.
-
-**Removed from marketing path:** Marketplace listing grid as the apex homepage (still available on `app.baytmiftah.com` and `/search`).
-
----
-
-## 2. Architecture decision
-
-Marketing and product remain **one deployable SPA** with **hostname-based mode**:
-
-| Host | `/` serves |
-|------|------------|
-| `baytmiftah.com` / `www.baytmiftah.com` | `MarketingHome` |
-| `app.baytmiftah.com` | `Home` (marketplace) |
-| `localhost` (default) | `Home` (dev marketplace) |
-| `localhost` + `VITE_SITE_MODE=marketing` | `MarketingHome` |
-
-CTAs on the marketing site link to **`VITE_APP_ORIGIN`** (default `https://app.baytmiftah.com`).
-
-This matches the frozen architecture without a second repository or duplicate build pipeline.
-
----
-
-## 3. Changes made
-
-### New files
-
-| File | Purpose |
-|------|---------|
-| `src/lib/site-mode.ts` | Hostname / env site mode detection |
-| `src/lib/site-mode.test.ts` | Unit tests for mode resolution |
-| `src/lib/marketing-urls.ts` | App vs marketing origin helpers |
-| `src/app/pages/ConsumerIndex.tsx` | Routes `/` to marketing or marketplace |
-| `src/app/pages/marketing/MarketingHome.tsx` | Full marketing page (all sections) |
-| `src/app/components/marketing/MarketingShell.tsx` | Sticky nav + premium footer |
-| `src/app/components/marketing/marketing.css` | Marketing design layer |
-| `public/robots.txt` | Crawl rules + sitemap pointer |
-| `public/sitemap.xml` | Core marketing + app search URLs |
-
-### Updated files
-
-| File | Change |
-|------|--------|
-| `src/app/routes/consumer.routes.tsx` | Index → `ConsumerIndex` |
-| `src/app/components/Root.tsx` | Marketing `/` on mobile skips marketplace shell |
-| `index.html` | REOS-focused meta + Open Graph + Twitter tags |
-| `.env.example` | `VITE_APP_ORIGIN`, `VITE_SITE_MODE` |
-| Brand wordmark (prior fix) | `BAYTMIFTAH` Latin A’s in logo/splash |
-
-### Page sections implemented
-
-1. Hero — REOS headline, problem statement, CTAs, illustrative product cards  
-2. Problem — fragmented tools → unified system  
-3. Workflow — Discover → … → Automate  
-4. Business — six capability areas + workspace / demo CTAs  
-5. Consumer — journey steps + explore CTA  
-6. AI — governed operational pipeline (no unrestricted autonomy claims)  
-7. AI Night Watch — illustrative alert panel (labeled **Illustrative UI**)  
-8. Trust — permission / audit chain  
-9. Public explorer — Event Ledger with privacy caveat  
-10. Teams — role-aware org tree  
-11. Desktop + mobile — work pattern split  
-12. Closing CTA + premium footer  
-
----
-
-## 4. Design decisions
-
-- **Visual identity:** Forest green `#0F2922`, ivory background, Playfair display + Inter — reused from existing `theme.css`
-- **No new npm dependencies** — CSS-only scroll reveals, `IntersectionObserver`, existing Lucide icons
-- **No stock hero photo** — product-style cards with **Illustrative UI** badges
-- **No fake customer counts, logos, testimonials, or uptime claims**
-- **`prefers-reduced-motion`** — reveal animations disabled
-- **Copy rule:** “Run your real-estate business from one system” — not “we manage your properties”
-
----
-
-## 5. Features represented (evidence classification)
-
-| Claim | Status | Evidence |
-|-------|--------|----------|
-| Property discovery / search | IMPLEMENTED | `PropertySearch`, consumer routes |
-| Leasing / applications | IMPLEMENTED | `PublicLeaseApplication`, lease workflows |
-| Workspace operations | IMPLEMENTED | `WorkspaceLayout`, estate operations pages |
-| Finance / GL / reconciliation | IMPLEMENTED | Migrations + `BankReconciliation`, journal entries |
-| Maintenance / gate clearance | IMPLEMENTED | `GateClearanceKiosk`, maintenance services |
-| CRM / contacts / leads | IMPLEMENTED | `WorkspaceContacts`, `LeadManagement` |
-| Communications | IMPLEMENTED | Messaging, notifications, SMS edge |
-| PayAngels payments | IMPLEMENTED | Edge functions; not custodian (legal copy) |
-| AI assistant | PARTIAL | `ai-assistant` edge; org kill switch in DB |
-| AI Night Watch | IMPLEMENTED | `scripts/workers/night-watch-audit.mjs`, `AICommandCenter` |
-| Public Event Ledger | IMPLEMENTED | `/explorer`, `verify_public_transaction` RPC |
-| Role-aware workspace | IMPLEMENTED | `workspace-permissions.ts`, role nav |
-| Mobile + desktop shells | IMPLEMENTED | Capacitor + Electron shells |
-| E-sign production provider | NOT FOUND | Simulation stub only — **not advertised** |
-| docs/status/blog subdomains | PLANNED | Footer notes “coming soon”, no broken links |
-
----
-
-## 6. Claims removed or avoided
-
-- “We manage your properties for you”
-- Guaranteed rental income / investment returns
-- Fake occupancy or revenue statistics (demo cards labeled illustrative)
-- Certification badges (SOC 2, ISO, etc.)
-- Paystack as primary payment brand on marketing copy
-- AI autonomously acting without permissions
-
----
-
-## 7. SEO changes
-
-| Item | Update |
-|------|--------|
-| `<title>` | BaytMiftah (PageMeta sets full REOS title on `/`) |
-| Meta description | Real-estate operating system positioning |
-| Open Graph | Title + description on marketing home |
-| Twitter card | `summary_large_image` in `index.html` |
-| Canonical | Via `PageMeta` + `VITE_SITE_URL` |
-| `robots.txt` | Added |
-| `sitemap.xml` | Added (marketing + `/explorer` + app search) |
-
-Keywords used naturally: real estate operating system, property operations, property management platform — not stuffed.
-
----
-
-## 8. Performance
-
-- Marketing page lazy-loaded via `ConsumerIndex` chunk (~11 KB gzip)
-- No animation libraries added
-- CSS scoped to `.marketing-page`
-- Product cards are DOM-only (no large images)
-- Build succeeds; no new bundle-size regressions beyond marketing chunk
-
----
-
-## 9. Accessibility
-
-- Semantic `<header>`, `<main>`, `<footer>`, `<nav>`, `<section>`
-- Heading hierarchy: one H1 in hero, H2 per section
-- Nav keyboard focus styles on links and buttons
-- Mobile menu: `aria-modal`, `aria-expanded`, backdrop dismiss
-- Logo link `aria-label="BaytMiftah"`
-- Reduced motion respected for scroll reveals
-
----
-
-## 10. Deployment configuration
-
-### Vercel (recommended split)
-
-| Project | Domain | `VITE_SITE_MODE` |
-|---------|--------|------------------|
-| Marketing | `baytmiftah.com` | unset (hostname auto) |
-| App | `app.baytmiftah.com` | unset |
-
-Local marketing preview:
-
-```bash
-VITE_SITE_MODE=marketing npm run dev
-```
-
-### Env vars
-
-```env
-VITE_SITE_URL=https://baytmiftah.com
-VITE_APP_ORIGIN=https://app.baytmiftah.com
-```
-
----
-
-## 11. Test results
+- What BaytMiftah is
+- What problem it solves
+- Who it is for
+- Why it is different
+- What action to take next
 
 ```text
-npm run typecheck     → pass
-npm run build         → pass
-npm run test -- src/lib/site-mode.test.ts → pass (3 tests)
+SAME DESIGN + BETTER POSITIONING + BETTER COPY + BETTER STORY + BETTER CONVERSION
 ```
 
-Not run this session: full vitest suite, Playwright e2e, Lighthouse (recommend before launch).
+---
+
+## 2. Original positioning
+
+| Element | Before |
+|---------|--------|
+| Core story | Feature-rich platform with many modules |
+| Hero pain | Disconnected tools (WhatsApp, Excel, spreadsheets) |
+| Workflow | Lifecycle steps: Discover → Lease → Operate → … |
+| Business section | Six capability labels (Property operations, Finance, Maintenance, CRM, Communications, Reporting) |
+| Consumer | "Discover and manage property journeys" |
+| AI | Governed AI with operational assistance |
+| Trust | "Built for trust. Designed for accountability." |
+| Audience | Implied through business section, not explicit |
+| Category | REOS mentioned but competing with feature-list framing |
 
 ---
 
-## 12. Remaining issues
+## 3. New positioning
 
-| Item | Priority |
-|------|----------|
-| Two Vercel projects or hostname routing in one project | P5 deploy |
-| `VITE_SITE_MODE=marketing` not set in `.env` locally — use env or hosts file to preview | Dev UX |
-| Marketing OG image asset not added | SEO polish |
-| AI dedicated legal policy page | P6 legal |
-| `docs.baytmiftah.com` / `status.baytmiftah.com` | Post-launch |
-| Production audit restore (CI, RLS, tenant secrets) | Separate track — see `BAYTMIFTAH_RISK_REGISTER.md` |
+| Element | After |
+|---------|--------|
+| Core story | **The Operating System for Real Estate** — connects people, properties, money, and operations |
+| Hero pain | Properties, payments, maintenance, leasing, and teams across disconnected tools |
+| Workflow | **One operating system:** Properties → People → Leases → Money → Maintenance → Communication → Data → AI |
+| Business section | **Outcome marketing** — visibility, money, maintenance, leasing, communications, performance |
+| Consumer | **Find a property without the friction** — aspirational, not search-only |
+| AI | **AI that works inside your operation** — not a generic chatbot |
+| Night Watch | **Don't wait for problems to find you** — prevention framing |
+| Trust | **Know who did what, when, and why** — accountability, not generic "secure" |
+| Audience | **Built for the people behind real estate** — owners, managers, agencies, developers, enterprise, consumers |
+| Category | Real Estate Operating System — real estate is more than listings |
 
----
+**What BaytMiftah is NOT marketed as (primary story):**
 
-## 13. Production sequence (not started here)
+- Property listing website only
+- Standalone CRM, ERP, payment app, or maintenance tool
+- Generic AI chatbot
 
-When you are ready for the audit remediation track:
-
-1. Commit/push CI + native restore + `2026090202`
-2. Green CI on `main`
-3. Apply RLS; prove analyst cannot write listings
-4. Configure tenant-isolation GitHub secrets
-5. Vercel/DNS (marketing + app origins) + PayAngels + Resend
-
-Say when to start that work — it was intentionally not bundled into this marketing UI pass.
+Those remain **capabilities within** the operating system.
 
 ---
 
-*Marketing site accurately represents implemented REOS capabilities. Illustrative UI is labeled. No fabricated social proof.*
+## 4. Headline changes (by section)
+
+| Section | Before | After |
+|---------|--------|-------|
+| Hero H1 | The Operating System for Real Estate. | *(unchanged — primary headline)* |
+| Problem | Real-estate operations are fragmented. | Real estate is still running on disconnected tools. |
+| Workflow | Connected workflows, not isolated modules. | One system. Every part of the operation. |
+| Business | Run your real-estate business from one system. | Run properties with visibility and control. |
+| Consumer | Discover and manage property journeys in one place. | Find a property without the friction. |
+| AI | AI that works inside your operations. | AI that works inside your operation. |
+| Night Watch | Your operations don't stop when you do. | Don't wait for problems to find you. |
+| Trust | Built for trust. Designed for accountability. | Know who did what, when, and why. |
+| Explorer | A more transparent real-estate ecosystem. | Transparency without exposing private data. |
+| Teams | Role-aware experiences for every function. | Built for the people behind real estate. |
+| Platform | Built for how teams actually work. | Operate from the office or the field. |
+| CTA | Run real estate differently. | *(unchanged)* |
+
+---
+
+## 5. Section messaging changes (detail)
+
+### Hero
+- **Lead:** Stop running properties, payments, maintenance, leasing, and teams across disconnected tools → one connected system.
+- **Product cards (copy only):** Operations / Finance / Maintenance reframed as outcomes (see entire operation, know where money stands, tracked work not lost messages).
+- **CTAs:** Get Started · For Businesses · Explore Properties *(unchanged structure)*
+
+### Problem
+- **Story:** Business has grown; tools haven't. Recognition chips updated (Spreadsheets, Paper, Manual follow-ups, Disconnected payments).
+- **Transformation panel:** Bring the entire operation together — one Real Estate Operating System.
+
+### Workflow (One operating system)
+- Flow labels changed from lifecycle verbs to connected domains: Properties, People, Leases, Money, Maintenance, Communication, Data, AI.
+
+### Business (outcome cards)
+| Before title | After title | Outcome |
+|--------------|-------------|---------|
+| Property operations | See the entire operation | Visibility across portfolio |
+| Finance | Know where the money stands | Operational finance layer (not a bank) |
+| Maintenance | *(feature list)* | Maintenance shouldn't live in a chat thread |
+| CRM & leasing | Turn property interest into organized business | Organized pipeline |
+| Communications | *(feature list)* | Messages become work |
+| Reporting | See performance from connected data | Connected operational intelligence |
+
+### Consumer
+- Journey steps preserved; headline and lead rewritten for low-friction discovery narrative.
+
+### AI
+- Pipeline steps tightened; copy emphasizes operational work with governance (permissions, kill switches, human approval).
+
+### AI Night Watch
+- Prevention framing; alerts for team review (no autonomous decision claims).
+
+### Trust
+- Accountability chain preserved (Identity → Evidence); copy emphasizes auditability and controlled AI.
+
+### Who it's for (Teams section)
+- Root node: **Real Estate Operating System**
+- Audience nodes: Owners, Property Managers, Agencies, Developers, Enterprise Operators, Consumers
+- Inline copy defines each audience's outcome
+
+### Platform
+- Bullet copy aligned to visibility (desktop) and field response (mobile).
+
+---
+
+## 6. CTA changes
+
+| Location | CTA | Intent |
+|----------|-----|--------|
+| Hero | Get Started | Business signup |
+| Hero | For Businesses | Scroll to business section |
+| Hero | Explore Properties | Consumer discovery |
+| Business | Get Started | Was "Open Workspace" — unified signup intent |
+| Business | Request a Demo | Larger operators |
+| Consumer | Explore Properties | Consumer discovery |
+| Explorer | Open Event Ledger | Public verification tool |
+| CTA footer | Get Started · Request a Demo | Conversion (removed redundant third button) |
+| Nav (shell) | Log in · Get Started | Existing users vs new *(unchanged)* |
+
+No generic "Learn More" buttons added.
+
+---
+
+## 7. Target audiences (priority)
+
+1. **Primary commercial:** Property owners, property managers, agencies, developers, growing operators, enterprise operators  
+2. **Secondary:** Consumers (renters, buyers, hosts, guests) — important but not the brand-establishing lead story
+
+Homepage order unchanged: business operating story leads; consumer section follows business + AI blocks.
+
+---
+
+## 8. Claims verified (implemented in repo)
+
+| Claim | Evidence |
+|-------|----------|
+| Workspace / portfolio operations | `WorkspaceLayout`, estate & unit routes |
+| Finance workflows | Journal, reconciliation, owner statements modules |
+| Maintenance tickets & SLAs | `WorkspaceMaintenance`, contractor dispatch |
+| CRM / leasing pipeline | `WorkspaceLeads`, viewings, applications |
+| Messaging → workflows | Realtime messaging, contextual inbox, AI intent routing |
+| Governed AI | AI panel, kill switches, org permissions in workspace |
+| AI Night Watch | Night Watch monitoring UI (demo panel on marketing page) |
+| Multi-tenant isolation | RLS, org-scoped data |
+| Public Event Ledger | `/explorer`, `PublicEventLedger` |
+| Consumer search & discovery | `PropertySearch`, `Home` on app subdomain |
+| Platform disclaimer | Hero note: technology platform, not automatic property manager |
+
+---
+
+## 9. Claims removed or avoided
+
+| Removed / avoided | Reason |
+|-------------------|--------|
+| "Illustrative UI" badges | Removed per product decision — no fake UI labeling |
+| Invented customer logos, testimonials, user counts | No verified social proof in repo |
+| "Revolutionary / game-changing AI" language | Strategy prohibits buzzword marketing |
+| BaytMiftah as bank or financial institution | Finance positioned as operational layer |
+| Autonomous AI decisions | Night Watch surfaces alerts for human review |
+| Competitor name attacks | Category differentiation only (REOS vs listings) |
+| Unverified transaction volume or properties managed | Not in codebase |
+
+---
+
+## 10. Competitive / category positioning
+
+**Not:** "Better than Buildium" or "Better than Airbnb."
+
+**Instead:**
+
+> Real estate is more than listings. It's an operating system.
+
+Repeated naturally via:
+
+- Real Estate Operating System (hero eyebrow)
+- One operating system (workflow section)
+- One Real Estate Operating System (problem transformation panel)
+
+---
+
+## 11. What was NOT changed (design freeze)
+
+- Colors, fonts, button styles, card styles
+- Layout, spacing system, section backgrounds
+- Animations, carousel, glass panels
+- Component architecture (`MarketingShell`, `Reveal`, grids, flow steps)
+- Navigation structure
+- Imagery and background carousel
+- CSS files (no styling edits in this update)
+
+---
+
+## 12. Remaining marketing gaps
+
+| Gap | Notes |
+|-----|-------|
+| `baytmiftah.com` DNS / apex routing | Infrastructure — not copy |
+| Verified social proof | Add only when real customers/metrics exist |
+| Case studies / logos | None fabricated |
+| `docs.baytmiftah.com` / `status.baytmiftah.com` | Footer marked coming soon |
+| Staging payment E2E for marketing claims | PayAngels config pending (P5) |
+| Localized marketing copy | English only today |
+| Dedicated `/maintenance` or `/finance` anchor sections | Outcomes live inside business grid — no new sections added |
+
+---
+
+## 13. Five-second marketing test (post-update)
+
+| Question | Expected answer after reading homepage |
+|----------|----------------------------------------|
+| **5s — What is it?** | The Operating System for Real Estate |
+| **15s — What problem?** | Property businesses run on disconnected tools; BaytMiftah connects the operation |
+| **30s — Why different?** | One connected system for properties, people, money, maintenance, communication — not another app stack |
+| **60s — Is it for me?** | Explicit audience block: owners, managers, agencies, developers, enterprise, consumers |
+| **Before leaving — Action?** | Get Started, Request a Demo, or Explore Properties |
+
+---
+
+## 14. Implementation log
+
+| Date | Change |
+|------|--------|
+| 2026-09-01 | Initial marketing site (hostname routing, sections, shell) |
+| 2026-09-01 | Full-page background carousel, theme lock, routing fixes |
+| 2026-09-01 | Removed "Illustrative UI" badges |
+| 2026-09-01 | **Messaging strategy update — copy only, design preserved** |
+
+---
+
+*The BaytMiftah marketing site looks the same. It now markets a Real Estate Operating System — not a collection of features.*
