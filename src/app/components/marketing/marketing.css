@@ -606,6 +606,65 @@ html[data-marketing-theme="locked"] .marketing-page {
   margin-top: 2rem;
 }
 
+.mk-problem-diagram {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-top: 2rem;
+}
+
+.mk-problem-diagram .mk-chaos-grid {
+  margin-top: 0;
+}
+
+.mk-transform-arrow--right {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .mk-problem-diagram {
+    flex-direction: row;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .mk-problem-diagram .mk-chaos-grid {
+    flex: 1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mk-problem-diagram .mk-transform-arrow--down {
+    display: none;
+  }
+
+  .mk-problem-diagram .mk-transform-arrow--right {
+    display: flex;
+    flex-shrink: 0;
+    margin: 0;
+    animation: mk-bounce-x 2.2s ease-in-out infinite;
+  }
+
+  .mk-problem-diagram .mk-unified-panel {
+    flex: 0 0 min(18rem, 34%);
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+@keyframes mk-bounce-x {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translateX(8px);
+    opacity: 1;
+  }
+}
+
 .mk-chaos-chip {
   padding: 0.75rem 0.85rem;
   border-radius: 0.75rem;
@@ -697,6 +756,59 @@ html[data-marketing-theme="locked"] .marketing-page {
 .mk-flow-arrow {
   color: var(--mk-muted);
   font-size: 0.85rem;
+}
+
+.mk-flow--vertical {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.mk-flow--vertical .mk-flow-step {
+  width: 100%;
+  max-width: 20rem;
+}
+
+.mk-flow--vertical .mk-flow-arrow {
+  align-self: center;
+  padding: 0.15rem 0;
+  transform: rotate(90deg);
+}
+
+.mk-flow--rail {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.mk-flow--rail .mk-flow-step {
+  width: 100%;
+  max-width: 20rem;
+}
+
+.mk-flow--rail .mk-flow-arrow {
+  align-self: center;
+  padding: 0.15rem 0;
+  transform: rotate(90deg);
+}
+
+@media (min-width: 768px) {
+  .mk-flow--rail {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .mk-flow--rail .mk-flow-step {
+    width: auto;
+    max-width: none;
+  }
+
+  .mk-flow--rail .mk-flow-arrow {
+    transform: none;
+    padding: 0;
+  }
 }
 
 /* ── Module grid ── */
@@ -819,6 +931,48 @@ html[data-marketing-theme="locked"] .marketing-page {
   padding-bottom: 0.75rem;
 }
 
+@media (min-width: 1024px) {
+  .mk-pipeline--horizontal {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.75rem 0.35rem;
+    max-width: none;
+  }
+
+  .mk-pipeline--horizontal > div {
+    display: flex;
+    flex: 1 1 9.5rem;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .mk-pipeline--horizontal .mk-pipeline-step {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+    gap: 0.5rem;
+  }
+
+  .mk-pipeline--horizontal .mk-pipeline-dot {
+    margin-top: 0;
+  }
+
+  .mk-pipeline--horizontal .mk-pipeline-text {
+    padding-bottom: 0;
+    font-size: 0.78rem;
+  }
+
+  .mk-pipeline--horizontal .mk-pipeline-line {
+    width: 1.25rem;
+    height: 1px;
+    margin-left: 0;
+    flex-shrink: 0;
+  }
+}
+
 /* ── Night watch panel ── */
 .mk-watch-panel {
   margin-top: 2rem;
@@ -884,6 +1038,23 @@ html[data-marketing-theme="locked"] .marketing-page {
   color: var(--mk-muted);
 }
 
+.mk-trust-chain--vertical {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  max-width: 20rem;
+}
+
+.mk-trust-chain--vertical .mk-trust-node {
+  width: 100%;
+}
+
+.mk-trust-chain--vertical .mk-trust-arrow {
+  align-self: center;
+  transform: rotate(90deg);
+  padding: 0.1rem 0;
+}
+
 /* ── Teams ── */
 .mk-team-tree {
   margin-top: 2rem;
@@ -915,6 +1086,41 @@ html[data-marketing-theme="locked"] .marketing-page {
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .mk-team-tree--horizontal {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .mk-team-tree--horizontal .mk-team-node--root {
+    flex: 0 0 min(14rem, 32%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+  }
+
+  .mk-team-tree--horizontal .mk-team-children {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+    align-content: center;
+  }
+
+  .mk-team-tree--horizontal .mk-team-node:not(.mk-team-node--root) {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mk-team-tree--horizontal .mk-team-children {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 /* ── Platform split ── */

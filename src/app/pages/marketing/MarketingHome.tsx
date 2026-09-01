@@ -161,23 +161,26 @@ function ProblemSection() {
         </Reveal>
 
         <Reveal stagger>
-          <div className="mk-chaos-grid mk-stagger-grid">
-            {tools.map((tool) => (
-              <div key={tool} className="mk-chaos-chip">
-                {tool}
-              </div>
-            ))}
-          </div>
-        </Reveal>
+          <div className="mk-problem-diagram">
+            <div className="mk-chaos-grid mk-stagger-grid">
+              {tools.map((tool) => (
+                <div key={tool} className="mk-chaos-chip">
+                  {tool}
+                </div>
+              ))}
+            </div>
 
-        <div className="mk-transform-arrow" aria-hidden="true">
-          ↓
-        </div>
+            <div className="mk-transform-arrow mk-transform-arrow--down" aria-hidden="true">
+              ↓
+            </div>
+            <div className="mk-transform-arrow mk-transform-arrow--right" aria-hidden="true">
+              →
+            </div>
 
-        <Reveal>
-          <div className="mk-unified-panel">
-            <h3>BAYTMIFTAH</h3>
-            <p>Bring the entire operation together — one Real Estate Operating System.</p>
+            <div className="mk-unified-panel">
+              <h3>BAYTMIFTAH</h3>
+              <p>Bring the entire operation together — one Real Estate Operating System.</p>
+            </div>
           </div>
         </Reveal>
       </div>
@@ -209,7 +212,7 @@ function WorkflowSection() {
             separate modules. One connected operation.
           </p>
         </Reveal>
-        <div className="mk-flow">
+        <div className="mk-flow mk-flow--rail">
           {steps.map((step, index) => (
             <span key={step} style={{ display: "contents" }}>
               <span className="mk-flow-step">{step}</span>
@@ -313,7 +316,7 @@ function ConsumerSection() {
             without the operational complexity.
           </p>
         </Reveal>
-        <div className="mk-flow">
+        <div className="mk-flow mk-flow--vertical">
           {steps.map((step, index) => (
             <span key={step} style={{ display: "contents" }}>
               <span className="mk-flow-step">{step}</span>
@@ -359,7 +362,7 @@ function AISection() {
             required.
           </p>
         </Reveal>
-        <div className="mk-pipeline">
+        <div className="mk-pipeline mk-pipeline--horizontal">
           {pipeline.map((step, index) => (
             <div key={step}>
               <div className="mk-pipeline-step">
@@ -441,7 +444,7 @@ function TrustSection() {
             controlled AI actions — so teams operate with visibility and evidence, not blind trust.
           </p>
         </Reveal>
-        <div className="mk-trust-chain">
+        <div className="mk-trust-chain mk-trust-chain--vertical">
           {nodes.map((node, index) => (
             <span key={node} style={{ display: "contents" }}>
               <span className="mk-trust-node">{node}</span>
@@ -506,7 +509,7 @@ function TeamsSection() {
             <strong>Consumers</strong> — discover and interact with properties in one experience.
           </p>
         </Reveal>
-        <div className="mk-team-tree">
+        <div className="mk-team-tree mk-team-tree--horizontal">
           <div className="mk-team-node mk-team-node--root">Real Estate Operating System</div>
           <div className="mk-team-children">
             {audiences.map((audience) => (
