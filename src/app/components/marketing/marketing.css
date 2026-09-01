@@ -436,6 +436,7 @@ html[data-marketing-theme="locked"] .marketing-page {
   font-weight: 500;
   line-height: 1.15;
   letter-spacing: -0.015em;
+  color: var(--mk-ink);
 }
 
 .mk-section-copy {
@@ -750,7 +751,8 @@ html[data-marketing-theme="locked"] .marketing-page {
   color: #fff;
 }
 
-.marketing-shell .mk-section-dark .mk-container {
+/* Beat glass panel rule: .mk-section:not(.mk-hero) .mk-container */
+.marketing-shell .mk-section.mk-section-dark:not(.mk-hero) .mk-container {
   background: rgba(15, 41, 34, 0.92);
   border-color: rgba(255, 255, 255, 0.12);
   box-shadow: 0 32px 80px rgba(0, 0, 0, 0.25);
@@ -1110,6 +1112,30 @@ html[data-marketing-theme="locked"] .marketing-page {
 
 .marketing-shell .mk-legal-body a:hover {
   color: var(--mk-accent);
+}
+
+/* Override global html.dark heading colors — marketing is always light-branded */
+html.dark .marketing-page h1,
+html.dark .marketing-page h2,
+html.dark .marketing-page h3,
+html.dark .marketing-page h4,
+html.dark .marketing-page h5,
+html.dark .marketing-page h6 {
+  color: var(--mk-ink);
+}
+
+html.dark .marketing-page .mk-section-dark h1,
+html.dark .marketing-page .mk-section-dark h2,
+html.dark .marketing-page .mk-section-dark h3,
+html.dark .marketing-page .mk-section-dark h4,
+html.dark .marketing-page .mk-cta h2 {
+  color: #fff;
+}
+
+html.dark .marketing-page .mk-module-card h3,
+html.dark .marketing-page .mk-platform-card h3,
+html.dark .marketing-page .mk-product-title {
+  color: var(--mk-ink);
 }
 
 /* ── Reveal animation ── */
