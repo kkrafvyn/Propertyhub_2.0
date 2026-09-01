@@ -321,7 +321,7 @@ export function InAppCheckoutPage() {
 
         <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-6">
-            <section className="rounded-2xl border border-surface-border bg-white p-6 shadow-card">
+            <section className="rounded-2xl border border-surface-border bg-surface p-6 shadow-card">
               <h2 className="text-lg font-semibold text-ink">Promo code</h2>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                 <Input
@@ -352,7 +352,7 @@ export function InAppCheckoutPage() {
               ) : null}
             </section>
 
-            <section className="rounded-2xl border border-surface-border bg-white p-6 shadow-card">
+            <section className="rounded-2xl border border-surface-border bg-surface p-6 shadow-card">
               <h2 className="text-lg font-semibold text-ink">Payment method</h2>
               <div className="mt-4 flex items-start gap-3 rounded-xl border border-brand-forest/20 bg-brand-forest/5 p-4">
                 <CreditCard className="mt-0.5 h-5 w-5 text-brand-forest" />
@@ -390,7 +390,7 @@ export function InAppCheckoutPage() {
               checked={paymentTermsAccepted}
               onChange={setPaymentTermsAccepted}
               id="in-app-payment-terms"
-              className="rounded-2xl border border-surface-border bg-white p-4"
+              className="rounded-2xl border border-surface-border bg-surface p-4"
             />
 
             {errorMessage ? (
@@ -424,7 +424,7 @@ export function InAppCheckoutPage() {
             </button>
           </div>
 
-          <aside className="h-fit rounded-2xl border border-surface-border bg-white p-6 shadow-card md:sticky md:top-24">
+          <aside className="h-fit rounded-2xl border border-surface-border bg-surface p-6 shadow-card md:sticky md:top-24">
             <h2 className="text-lg font-semibold text-ink">Order summary</h2>
             {loadingListing ? (
               <p className="mt-4 text-sm text-ink-secondary">Loading property…</p>

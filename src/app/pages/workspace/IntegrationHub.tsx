@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   Plus,
   Trash2,
@@ -9,6 +9,10 @@ import {
   TrendingUp,
   Zap,
   Lock,
+  Building2,
+  Search,
+  Globe,
+  Home,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -16,6 +20,7 @@ import { Badge } from '../../components/ui/badge';
 import { mlsIntegrationService } from '../../../lib/mls-integration.service';
 import { leadAggregationService } from '../../../lib/lead-aggregation.service';
 import { PlatformIntegrationsPanel } from '../../components/workspace/PlatformIntegrationsPanel';
+import { DeveloperApiStudio } from '../../components/workspace/DeveloperApiStudio';
 import { LeadManagement } from './LeadManagement';
 import { toast } from 'sonner';
 
@@ -170,8 +175,8 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Integration Hub</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-ink">Integration Hub</h1>
+          <p className="text-ink-secondary mt-1">
             Connect to MLS, Zillow, and Realtor.com to sync listings and aggregate leads
           </p>
         </div>
@@ -186,44 +191,46 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
 
       <PlatformIntegrationsPanel />
 
+      <DeveloperApiStudio organizationId={organizationId} />
+
       {/* Metrics Cards */}
       {leadMetrics && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="p-6">
+          <Card className="p-6 border-surface-border bg-surface">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Total Leads</p>
-                <p className="text-3xl font-bold text-gray-900">{leadMetrics.totalLeads}</p>
+                <p className="text-ink-secondary text-sm font-medium">Total Leads</p>
+                <p className="text-3xl font-bold text-ink">{leadMetrics.totalLeads}</p>
               </div>
               <TrendingUp className="text-blue-500" size={32} />
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 border-surface-border bg-surface">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">New Leads</p>
-                <p className="text-3xl font-bold text-gray-900">{leadMetrics.newLeads}</p>
+                <p className="text-ink-secondary text-sm font-medium">New Leads</p>
+                <p className="text-3xl font-bold text-ink">{leadMetrics.newLeads}</p>
               </div>
               <Zap className="text-yellow-500" size={32} />
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 border-surface-border bg-surface">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Conversion Rate</p>
-                <p className="text-3xl font-bold text-gray-900">{leadMetrics.conversionRate.toFixed(1)}%</p>
+                <p className="text-ink-secondary text-sm font-medium">Conversion Rate</p>
+                <p className="text-3xl font-bold text-ink">{leadMetrics.conversionRate.toFixed(1)}%</p>
               </div>
               <CheckCircle2 className="text-green-500" size={32} />
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 border-surface-border bg-surface">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Top Source</p>
-                <p className="text-xl font-bold text-gray-900 capitalize">{leadMetrics.topSource}</p>
+                <p className="text-ink-secondary text-sm font-medium">Top Source</p>
+                <p className="text-xl font-bold text-ink capitalize">{leadMetrics.topSource}</p>
               </div>
               <Lock className="text-purple-500" size={32} />
             </div>
@@ -250,7 +257,11 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
             setShowAddIntegration(true);
           }}
           isSyncing={syncing === 'mls'}
-          logo="🏠"
+          logo={
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <Building2 className="h-6 w-6" />
+            </div>
+          }
         />
 
         {/* Zillow */}
@@ -270,7 +281,11 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
             setShowAddIntegration(true);
           }}
           isSyncing={syncing === 'zillow'}
-          logo="🔍"
+          logo={
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <Search className="h-6 w-6" />
+            </div>
+          }
         />
 
         {/* Realtor.com */}
@@ -290,36 +305,40 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
             setShowAddIntegration(true);
           }}
           isSyncing={syncing === 'realtor'}
-          logo="🌐"
+          logo={
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <Globe className="h-6 w-6" />
+            </div>
+          }
         />
       </div>
 
       {/* Sync History */}
-      <Card className="p-6">
-        <h2 className="text-xl font-bold mb-4">Recent Sync History</h2>
+      <Card className="p-6 border-surface-border bg-surface">
+        <h2 className="text-xl font-bold mb-4 text-ink">Recent Sync History</h2>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="border-b">
+            <thead className="border-b border-surface-border">
               <tr>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Provider</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Synced</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Failed</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Completed</th>
+                <th className="text-left py-3 px-4 font-semibold text-ink-secondary">Provider</th>
+                <th className="text-left py-3 px-4 font-semibold text-ink-secondary">Status</th>
+                <th className="text-left py-3 px-4 font-semibold text-ink-secondary">Synced</th>
+                <th className="text-left py-3 px-4 font-semibold text-ink-secondary">Failed</th>
+                <th className="text-left py-3 px-4 font-semibold text-ink-secondary">Completed</th>
               </tr>
             </thead>
             <tbody>
               {syncHistory.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-gray-500">
+                  <td colSpan={5} className="py-8 text-center text-ink-muted">
                     No sync history yet
                   </td>
                 </tr>
               ) : (
                 syncHistory.slice(0, 10).map(job => (
-                  <tr key={job.id} className="border-b hover:bg-gray-50">
+                  <tr key={job.id} className="border-b border-surface-border hover:bg-surface-hover">
                     <td className="py-3 px-4">
-                      <span className="font-medium capitalize">{job.provider}</span>
+                      <span className="font-medium text-ink capitalize">{job.provider}</span>
                     </td>
                     <td className="py-3 px-4">
                       <Badge variant={job.status === 'completed' ? 'default' : job.status === 'failed' ? 'destructive' : 'secondary'}>
@@ -380,29 +399,31 @@ function IntegrationCard({
   onRemove: () => void;
   onAdd: () => void;
   isSyncing: boolean;
-  logo: string;
+  logo: ReactNode;
 }) {
   return (
-    <Card className="p-6">
-      <div className="flex items-start justify-between mb-4">
-        <div className="text-4xl">{logo}</div>
+    <Card className="p-6 border-surface-border bg-surface flex flex-col justify-between">
+      <div>
+        <div className="flex items-start justify-between mb-4">
+          <div>{logo}</div>
+          {isActive && (
+            <Badge className="bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300">Connected</Badge>
+          )}
+        </div>
+
+      <h3 className="text-lg font-bold text-ink mb-2">{name}</h3>
+      <p className="text-ink-secondary text-sm mb-4">{description}</p>
+
         {isActive && (
-          <Badge className="bg-green-100 text-green-800">Connected</Badge>
+          <div className="mb-4 p-3 bg-surface-subtle border border-surface-border rounded text-sm">
+            <p className="text-ink-secondary">
+              Last sync: <span className="font-medium text-ink">
+                {lastSync ? new Date(lastSync).toLocaleString() : 'Never'}
+              </span>
+            </p>
+          </div>
         )}
       </div>
-
-      <h3 className="text-lg font-bold mb-2">{name}</h3>
-      <p className="text-gray-600 text-sm mb-4">{description}</p>
-
-      {isActive && (
-        <div className="mb-4 p-3 bg-gray-50 rounded text-sm">
-          <p className="text-gray-600">
-            Last sync: <span className="font-medium">
-              {lastSync ? new Date(lastSync).toLocaleString() : 'Never'}
-            </span>
-          </p>
-        </div>
-      )}
 
       <div className="flex gap-2">
         {isActive ? (
@@ -421,7 +442,7 @@ function IntegrationCard({
               variant="outline"
               size="sm"
               onClick={onRemove}
-              className="text-red-600 gap-2"
+              className="text-red-600 dark:text-red-400 gap-2"
             >
               <Trash2 size={16} />
             </Button>
@@ -492,13 +513,13 @@ function AddIntegrationModal({
   const info = providerInfo[provider];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-md p-6">
-        <h2 className="text-2xl font-bold mb-4">Add {info.name} Integration</h2>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-md p-6 border-surface-border bg-surface">
+        <h2 className="text-2xl font-bold text-ink mb-4">Add {info.name} Integration</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-secondary mb-2">
               API Key
             </label>
             <input
@@ -507,13 +528,13 @@ function AddIntegrationModal({
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="Your API key"
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-2 border border-border bg-input-background text-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
           {info.requiresSecret && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-ink-secondary mb-2">
                 API Secret
               </label>
               <input
@@ -522,13 +543,13 @@ function AddIntegrationModal({
                 onChange={(e) => setApiSecret(e.target.value)}
                 placeholder="Your API secret"
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-2 border border-border bg-input-background text-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-secondary mb-2">
               JSON feed URL (recommended)
             </label>
             <input
@@ -536,11 +557,11 @@ function AddIntegrationModal({
               value={feedUrl}
               onChange={(e) => setFeedUrl(e.target.value)}
               placeholder="https://your-idx-feed.example/listings.json"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-2 border border-border bg-input-background text-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-ink-secondary">
             Don't have an API key? <a href={info.docs} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
               Get it here
             </a>

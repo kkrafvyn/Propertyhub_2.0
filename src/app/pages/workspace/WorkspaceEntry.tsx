@@ -348,7 +348,7 @@ export function WorkspaceEntry() {
             </div>
           </div>
 
-          <div className="mt-8 p-5 rounded-2xl bg-white border border-border">
+          <div className="mt-8 p-5 rounded-2xl bg-secondary/40 border border-border">
             <p className="text-sm text-muted-foreground">
               After setup, you&apos;ll land in
               <span className="font-medium text-foreground"> {WORKSPACE_ENTRY_PATH}</span>

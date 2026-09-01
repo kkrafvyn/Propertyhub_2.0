@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { notificationService } from './notification.service'
 
 export const automationEngineService = {
   // Create automation workflow
@@ -40,6 +41,18 @@ export const automationEngineService = {
     return data
   },
 
+  async setWorkflowEnabled(workflowId: string, enabled: boolean) {
+    const { data, error } = await supabase
+      .from('automation_workflows')
+      .update({ enabled })
+      .eq('id', workflowId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
   // Execute workflow (main automation logic)
   async executeWorkflow(workflowId: string, triggerSourceId: string) {
     const { data: workflow } = await supabase
@@ -49,6 +62,16 @@ export const automationEngineService = {
       .single()
     
     if (!workflow || !workflow.enabled) return null
+
+    // Persist the trigger for retry/observability. External delivery is handled by
+    // a worker/provider adapter, never assumed to be complete in the browser.
+    await supabase.from('estate_automation_events').insert({
+      organization_id: workflow.organization_id,
+      event_type: workflow.trigger_type,
+      entity_type: workflow.workflow_type,
+      entity_id: triggerSourceId || null,
+      payload: { workflow_id: workflowId, actions: workflow.actions },
+    })
     
     // Create log entry
     const { data: log } = await supabase
@@ -62,7 +85,7 @@ export const automationEngineService = {
       .single()
     
     try {
-      const result = await this.executeActions(workflow.actions, triggerSourceId)
+      const result = await this.executeActions(workflow.actions, triggerSourceId, workflow.organization_id)
       
       // Update log to completed
       await supabase
@@ -97,21 +120,21 @@ export const automationEngineService = {
   },
 
   // Execute automation actions
-  async executeActions(actions: Record<string, any>, sourceId: string) {
+  async executeActions(actions: Record<string, any>, sourceId: string, organizationId?: string) {
     const results: Record<string, any> = {}
     
     // Auto lead assignment
     if (actions.assign_lead) {
+      const orgId = actions.assign_lead.organization_id || organizationId
       const { data: assignee } = await supabase
         .from('organization_members')
         .select('user_id')
-        .eq('organization_id', actions.assign_lead.organization_id)
+        .eq('organization_id', orgId)
         .eq('role', 'agent')
         .limit(1)
         .single()
       
       if (assignee) {
-        // Assign deal case to agent
         await supabase
           .from('deal_cases')
           .update({ assigned_to: assignee.user_id })
@@ -122,9 +145,17 @@ export const automationEngineService = {
     }
     
     // Send notification
-    if (actions.send_notification) {
+    if (actions.send_notification && organizationId) {
+      await notificationService.notifyOrganizationTeam({
+        organizationId,
+        roles: actions.send_notification.recipient === 'agent' ? ['agent'] : ['owner', 'manager'],
+        notificationType: actions.send_notification.template || 'automation_notification',
+        subject: actions.send_notification.subject || 'Automation alert',
+        content: actions.send_notification.body || 'An automated workflow action requires your attention.',
+        category: 'System',
+        metadata: { sourceId, template: actions.send_notification.template },
+      })
       results.notification_sent = true
-      // Notification logic would go here
     }
     
     // Archive listing
@@ -138,9 +169,17 @@ export const automationEngineService = {
     }
     
     // Send reminder
-    if (actions.send_reminder) {
+    if (actions.send_reminder && organizationId) {
+      await notificationService.notifyOrganizationTeam({
+        organizationId,
+        roles: ['owner', 'manager', 'agent'],
+        notificationType: actions.send_reminder.template || 'automation_reminder',
+        subject: 'Workflow reminder',
+        content: `Reminder triggered for workflow item ${sourceId.slice(0, 8)}.`,
+        category: 'System',
+        metadata: { sourceId, days: actions.send_reminder.days },
+      })
       results.reminder_sent = true
-      // Reminder logic would go here
     }
     
     return results
@@ -206,6 +245,18 @@ export const automationEngineService = {
         }
       }
     )
+  },
+
+  async createEstateArrearsWorkflow(organizationId: string) {
+    return this.createWorkflow(organizationId, "Estate Arrears Follow-up", "custom", "estate_charge_overdue", { aging_days: 1 }, { send_reminder: { days: 0, template: "estate_arrears_reminder" }, send_notification: { recipient: "finance", template: "collection_task" } });
+  },
+
+  async createLeaseRenewalWorkflow(organizationId: string) {
+    return this.createWorkflow(organizationId, "Lease Renewal Sequence", "custom", "lease_nearing_expiry", { days_until_expiry: 60 }, { send_notification: { recipient: "manager", template: "lease_renewal_review" }, send_reminder: { days: 45, template: "resident_renewal_reminder" } });
+  },
+
+  async createMaintenanceSlaWorkflow(organizationId: string) {
+    return this.createWorkflow(organizationId, "Maintenance SLA Escalation", "custom", "estate_issue_sla_breached", { issue_status: "open" }, { send_notification: { recipient: "manager", template: "maintenance_sla_escalation" }, send_reminder: { days: 0, template: "assignee_escalation" } });
   },
 
   // Enable/disable workflow

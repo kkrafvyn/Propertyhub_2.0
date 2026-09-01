@@ -1,12 +1,12 @@
 import { Link, useLocation } from "react-router";
 import type { ReactNode } from "react";
-import { Heart, Moon, Plus, Scale, Sun } from "lucide-react";
+import { Heart, Plus, Scale } from "lucide-react";
 import { Logo, LogoMark } from "./Logo";
 import { UserMenu } from "./UserMenu";
 import { NotificationBell } from "../NotificationBell";
 import LanguageSwitcher from "./LanguageSwitcher";
+import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from "../../i18n/LocaleContext";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
@@ -77,12 +77,11 @@ function Header({
   compareCount?: number;
 }) {
   const { user } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const { t } = useTranslation();
   const listPropertyPath = `${WORKSPACE_ENTRY_PATH}?next=new`;
 
   return (
-    <header className="desktop-header sticky top-0 z-50 border-b border-surface-border bg-white/92 backdrop-blur-xl backdrop-saturate-150">
+    <header className="desktop-header sticky top-0 z-50 border-b border-surface-border bg-surface/90 backdrop-blur-xl backdrop-saturate-150 transition-colors duration-200">
       <div className="mx-auto w-full min-w-0 max-w-[var(--max-width-page)] px-4 sm:px-6 md:px-8 xl:px-20">
         <div
           className={`flex min-w-0 items-center gap-2 sm:gap-3 md:gap-4 ${minimal ? "h-[68px] md:h-[72px]" : "h-[68px] md:h-[72px] xl:h-[76px]"}`}
@@ -90,15 +89,15 @@ function Header({
           <Logo size="sm" className="md:hidden" />
           <Logo className="hidden md:flex" />
 
-          <div className="ml-auto flex shrink-0 items-center gap-0.5 md:gap-1">
+          <div className="ml-auto flex shrink-0 items-center gap-0.5 md:gap-1.5">
             {!minimal && (
               <>
                 <Link
                   to="/compare"
-                  className="nav-pill nav-pill-icon hidden lg:inline-flex"
+                  className="nav-pill nav-pill-icon hidden lg:inline-flex items-center gap-2"
                   title={`${t("nav.compare")}${compareCount > 0 ? ` (${compareCount})` : ""}`}
                 >
-                  <Scale className="h-4 w-4 opacity-80" />
+                  <Scale className="h-4 w-4 shrink-0 opacity-80" />
                   <span>
                     {t("nav.compare")}
                     {compareCount > 0 ? ` (${compareCount})` : ""}
@@ -107,18 +106,22 @@ function Header({
                     <span className="nav-pill-badge xl:hidden">{compareCount}</span>
                   ) : null}
                 </Link>
-                <Link to="/app/saved" className="nav-pill nav-pill-icon hidden lg:inline-flex" title={t("nav.saved")}>
-                  <Heart className="h-4 w-4 opacity-80" />
+                <Link
+                  to="/app/saved"
+                  className="nav-pill nav-pill-icon hidden lg:inline-flex items-center gap-2"
+                  title={t("nav.saved")}
+                >
+                  <Heart className="h-4 w-4 shrink-0 opacity-80" />
                   <span>{t("nav.saved")}</span>
                 </Link>
               </>
             )}
             <Link
               to={listPropertyPath}
-              className="nav-pill nav-pill-cta hidden md:inline-flex"
+              className="nav-pill nav-pill-cta hidden md:inline-flex items-center gap-1.5"
               title={t("nav.listProperty")}
             >
-              <Plus className="h-4 w-4 md:mr-0 xl:mr-1" />
+              <Plus className="h-4 w-4 shrink-0" />
               <span className="hidden xl:inline">{t("nav.listProperty")}</span>
             </Link>
             {!minimal && user ? (
@@ -126,14 +129,9 @@ function Header({
                 <NotificationBell userId={user.id} />
               </div>
             ) : null}
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="nav-pill nav-pill-icon hidden md:inline-flex"
-              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
+            <div className="hidden md:block">
+              <ThemeToggle />
+            </div>
             {!minimal ? (
               <div className="hidden lg:block">
                 <LanguageSwitcher />
@@ -203,7 +201,7 @@ function Footer() {
   ];
 
   return (
-    <footer className="desktop-footer mt-12 border-t border-surface-border bg-white md:mt-16">
+    <footer className="desktop-footer mt-12 border-t border-surface-border bg-surface md:mt-16 transition-colors duration-200">
       <div className="mx-auto max-w-[var(--max-width-page)] px-4 py-10 sm:px-6 md:px-8 md:py-14 xl:px-20">
         <div className="mb-8 flex flex-col gap-4 border-b border-surface-border pb-8 md:mb-10 md:pb-10 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">

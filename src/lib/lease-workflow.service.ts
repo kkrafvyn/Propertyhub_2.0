@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import { documentCenterService } from "./document-center.service";
 import { notificationService } from "./notification.service";
+import { calculateDepositSettlement, leaseDepositService } from "./lease-deposit.service";
 
 export const leaseWorkflowService = {
   async getRentSchedule(leaseId: string) {
@@ -160,6 +161,28 @@ export const leaseWorkflowService = {
     return data;
   },
 
+  async createESignatureRequest(input: { organizationId: string; leaseId: string; documentId?: string; provider: string; signers: Array<{ email: string; name: string; role: string }>; expiresAt?: string; createdBy: string }) {
+    if (!input.provider.trim() || !input.signers.length) throw new Error("Signature provider and at least one signer are required");
+    const { data, error } = await supabase.from("esignature_requests").insert({
+      organization_id: input.organizationId,
+      lease_id: input.leaseId,
+      document_id: input.documentId || null,
+      provider: input.provider.trim().toLowerCase(),
+      signers: input.signers,
+      expires_at: input.expiresAt || null,
+      created_by: input.createdBy,
+    }).select("*").single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateESignatureStatus(requestId: string, status: "sent" | "viewed" | "partially_signed" | "completed" | "declined" | "expired" | "failed", providerRequestId?: string, signingUrl?: string) {
+    const { data, error } = await supabase.from("esignature_requests").update({ status, provider_request_id: providerRequestId || null, signing_url: signingUrl || null, updated_at: new Date().toISOString() }).eq("id", requestId).select("*").single();
+    if (error) throw error;
+    if (status === "completed") await this.markLeaseSigned(data.lease_id);
+    return data;
+  },
+
   async respondToRenewal(leaseId: string, status: "approved" | "declined") {
     const { data, error } = await supabase
       .from("leases")
@@ -175,5 +198,16 @@ export const leaseWorkflowService = {
     });
 
     return data;
+  },
+
+  async completeMoveOut(input: { leaseId: string; occupancyId: string; depositAmountMinor: number; deductionsMinor: number; currency: string; recordedBy: string; deductionReason?: string }) {
+    const { data: checklist, error: checklistError } = await supabase.from("move_checklist_items").select("completed").eq("lease_id", input.leaseId).eq("checklist_type", "move_out");
+    if (checklistError) throw checklistError;
+    if (!checklist?.length || checklist.some((item: { completed: boolean }) => !item.completed)) throw new Error("Complete every move-out checklist item before settlement");
+    const settlement = calculateDepositSettlement(input.depositAmountMinor, input.deductionsMinor);
+    const deposit = await leaseDepositService.upsert({ leaseId: input.leaseId, ...settlement, currency: input.currency, reason: input.deductionReason, recordedBy: input.recordedBy });
+    const { data: moveEvent, error: moveError } = await supabase.from("estate_move_events").insert({ occupancy_id: input.occupancyId, event_type: "move_out", notes: input.deductionReason || "Move-out settlement completed", recorded_by: input.recordedBy }).select("*").single();
+    if (moveError) throw moveError;
+    return { deposit, moveEvent };
   },
 };

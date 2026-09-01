@@ -33,16 +33,16 @@ export function OAuthButtons({
   const busy = Boolean(loadingProvider);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {onGoogle && (
         <button
           type="button"
           disabled={disabled || busy}
           onClick={onGoogle}
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-card px-4 py-3.5 text-sm font-semibold text-foreground transition hover:bg-muted disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/20 lg:border-border/80 bg-white/10 lg:bg-background px-4 py-2.5 text-xs font-medium text-white lg:text-foreground transition hover:bg-white/15 lg:hover:bg-muted disabled:opacity-60 shadow-xs"
         >
-          <GoogleIcon />
-          {loadingProvider === "google" ? "Redirecting…" : "Continue with Google"}
+          <GoogleIcon className="h-4 w-4" />
+          <span>{loadingProvider === "google" ? "Connecting…" : "Continue with Google"}</span>
         </button>
       )}
       {onApple && (
@@ -50,10 +50,10 @@ export function OAuthButtons({
           type="button"
           disabled={disabled || busy}
           onClick={onApple}
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-foreground px-4 py-3.5 text-sm font-semibold text-background transition hover:opacity-90 disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/20 lg:border-border/80 bg-white/10 lg:bg-background px-4 py-2.5 text-xs font-medium text-white lg:text-foreground transition hover:bg-white/15 lg:hover:bg-muted disabled:opacity-60 shadow-xs"
         >
-          <AppleIcon />
-          {loadingProvider === "apple" ? "Redirecting…" : "Continue with Apple"}
+          <AppleIcon className="h-4 w-4" />
+          <span>{loadingProvider === "apple" ? "Connecting…" : "Continue with Apple"}</span>
         </button>
       )}
       {onFacebook && (
@@ -61,9 +61,9 @@ export function OAuthButtons({
           type="button"
           disabled={disabled || busy}
           onClick={onFacebook}
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-card px-4 py-3.5 text-sm font-semibold text-foreground transition hover:bg-muted disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/20 lg:border-border/80 bg-white/10 lg:bg-background px-4 py-2.5 text-xs font-medium text-white lg:text-foreground transition hover:bg-white/15 lg:hover:bg-muted disabled:opacity-60 shadow-xs"
         >
-          {loadingProvider === "facebook" ? "Redirecting…" : "Continue with Facebook"}
+          <span>{loadingProvider === "facebook" ? "Connecting…" : "Continue with Facebook"}</span>
         </button>
       )}
     </div>
@@ -72,12 +72,14 @@ export function OAuthButtons({
 
 export function AuthDivider({ label = "Or continue with email" }: { label?: string }) {
   return (
-    <div className="relative my-6">
+    <div className="relative my-5">
       <div className="absolute inset-0 flex items-center" aria-hidden="true">
-        <div className="w-full border-t border-border" />
+        <div className="w-full border-t border-white/15 lg:border-border/80" />
       </div>
-      <div className="relative flex justify-center text-xs uppercase tracking-wide">
-        <span className="bg-background px-3 text-muted-foreground">{label}</span>
+      <div className="relative flex justify-center text-[11px] uppercase tracking-wider font-mono">
+        <span className="bg-neutral-900/90 lg:bg-background px-3 text-white/70 lg:text-muted-foreground">
+          {label}
+        </span>
       </div>
     </div>
   );

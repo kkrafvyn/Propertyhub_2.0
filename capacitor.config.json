@@ -1,0 +1,36 @@
+{
+  "appId": "com.baymiftah.app",
+  "appName": "BaytMiftah REOS",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "backgroundColor": "#0f172a",
+  "plugins": {
+    "Camera": {
+      "presentationStyle": "fullscreen"
+    },
+    "Geolocation": {
+      "enableHighAccuracy": true
+    },
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#0f172a",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
+    }
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "scheme": "baytmiftah"
+  },
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https",
+    "allowNavigation": [
+      "https://*.supabase.co",
+      "https://*.payangels.com",
+      "https://*.arkesel.com",
+      "https://wa.me"
+    ]
+  }
+}

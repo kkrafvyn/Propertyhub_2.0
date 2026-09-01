@@ -394,6 +394,110 @@ export function PropertySearch() {
     return t("searchPage.showing", { start, end, total: totalResults });
   }, [currentPage, totalResults, t]);
 
+  const activeFilters = useMemo(() => {
+    const list: Array<{ label: string; onRemove: () => void }> = [];
+
+    const q = searchParams.get("q");
+    if (q) {
+      list.push({
+        label: `"${q}"`,
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("q");
+          next.set("page", "1");
+          setNaturalLanguageQuery("");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.propertyType && filters.propertyType !== "all") {
+      list.push({
+        label: `Type: ${filters.propertyType}`,
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("propertyType");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.priceMax) {
+      list.push({
+        label: `Max: GHS ${parseInt(filters.priceMax, 10).toLocaleString()}`,
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("priceMax");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.priceMin) {
+      list.push({
+        label: `Min: GHS ${parseInt(filters.priceMin, 10).toLocaleString()}`,
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("priceMin");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.bedrooms) {
+      list.push({
+        label: `${filters.bedrooms}+ Beds`,
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("bedrooms");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.bathrooms) {
+      list.push({
+        label: `${filters.bathrooms}+ Baths`,
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("bathrooms");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.verifiedOnly) {
+      list.push({
+        label: "Verified Only",
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("verified");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.featuredOnly) {
+      list.push({
+        label: "Featured Only",
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("featured");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    return list;
+  }, [searchParams, filters, setSearchParams]);
+
   useEffect(() => {
     setSelectedMapListingId((current) => {
       if (current && listings.some((listing) => listing.id === current)) {
@@ -611,6 +715,36 @@ export function PropertySearch() {
           </div>
         </div>
 
+        {/* Active Filter Tags */}
+        {activeFilters.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mb-5">
+            <span className="text-xs font-semibold text-ink-muted">Active Filters:</span>
+            {activeFilters.map((badge, idx) => (
+              <span
+                key={idx}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 transition-all hover:bg-primary/15"
+              >
+                <span>{badge.label}</span>
+                <button
+                  type="button"
+                  onClick={badge.onRemove}
+                  className="hover:text-destructive transition-colors p-0.5 rounded-full cursor-pointer"
+                  aria-label={`Remove filter ${badge.label}`}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-xs text-ink-muted hover:text-ink font-semibold underline underline-offset-2 ml-1 cursor-pointer"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
+
         {user && userAlerts.length > 0 && (
           <Card className="p-4 mb-6 bg-primary/5 border-primary/20">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -673,15 +807,36 @@ export function PropertySearch() {
                 ))}
               </div>
             ) : listings.length === 0 ? (
-              <EmptyState
-                icon={Search}
-                title={t("searchPage.noPropertiesTitle")}
-                description={t("searchPage.noPropertiesDesc")}
-                actionLabel={t("searchPage.clearFilters")}
-                onAction={clearFilters}
-                secondaryActionLabel={t("searchPage.exploreRentals")}
-                secondaryActionHref="/search?listingType=rental"
-              />
+              <div className="space-y-6">
+                <EmptyState
+                  icon={Search}
+                  title={t("searchPage.noPropertiesTitle")}
+                  description={t("searchPage.noPropertiesDesc")}
+                  actionLabel={t("searchPage.clearFilters")}
+                  onAction={clearFilters}
+                  secondaryActionLabel={t("searchPage.exploreRentals")}
+                  secondaryActionHref="/search?listingType=rental"
+                />
+
+                <Card className="p-6 text-center border-surface-border">
+                  <h3 className="text-sm font-semibold text-ink mb-3">Popular Locations</h3>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    {["Cantonments", "Airport Residential", "East Legon", "Osu", "Labone", "Dzorwulu"].map(
+                      (loc) => (
+                        <button
+                          key={loc}
+                          type="button"
+                          onClick={() => handleRecentSearchClick(loc)}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border border-surface-border bg-surface hover:bg-surface-hover hover:border-primary/40 text-ink transition cursor-pointer"
+                        >
+                          <MapPin className="h-3 w-3 text-emerald-500 shrink-0" />
+                          <span>{loc}</span>
+                        </button>
+                      )
+                    )}
+                  </div>
+                </Card>
+              </div>
             ) : (
               <>
                 <div className="mb-6">
@@ -929,7 +1084,7 @@ function SearchFiltersPanel({
             id="sort-filter"
             value={filters.sort || "newest"}
             onChange={(e) => setFilters({ ...filters, sort: e.target.value })}
-            className="w-full rounded-lg border border-surface-border bg-white px-4 py-3 text-ink"
+            className="w-full rounded-lg border border-surface-border bg-surface px-4 py-3 text-ink"
           >
             <option value="newest">{t("searchPage.newest")}</option>
             <option value="price_asc">{t("searchPage.priceAsc")}</option>
@@ -985,7 +1140,7 @@ function SearchFiltersPanel({
             id="property-type-filter"
             value={filters.propertyType}
             onChange={(e) => setFilters({ ...filters, propertyType: e.target.value })}
-            className="w-full rounded-lg border border-surface-border bg-white px-4 py-3 text-ink"
+            className="w-full rounded-lg border border-surface-border bg-surface px-4 py-3 text-ink"
           >
             <option value="all">{t("searchPage.allTypes")}</option>
             <option value="apartment">{t("searchPage.propertyTypes.apartment")}</option>

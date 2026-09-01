@@ -34,6 +34,43 @@ import { workflowOrchestratorService } from "../../../lib/workflow-orchestrator.
 import { CONSUMER_ROUTES, messageThreadPath } from "../../lib/consumer-routes";
 import { resolveDeepLinkPath, mobileCaptureProps } from "../../../lib/deep-link";
 
+function MaintenancePhotoThumb({ path }: { path: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void maintenanceService
+      .getPhotoSignedUrl(path)
+      .then((signed) => {
+        if (active) setUrl(signed);
+      })
+      .catch(() => {
+        if (active) setUrl(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [path]);
+
+  if (!url) {
+    return (
+      <div className="h-20 w-20 rounded-lg border border-border bg-muted flex items-center justify-center text-[10px] text-muted-foreground">
+        Photo
+      </div>
+    );
+  }
+
+  return (
+    <a href={url} target="_blank" rel="noreferrer">
+      <img
+        src={url}
+        alt="Maintenance evidence"
+        className="h-20 w-20 rounded-lg border border-border object-cover"
+      />
+    </a>
+  );
+}
+
 function formatMoney(amountMinor?: number | null, currency = "GHS") {
   return walletService.formatWalletAmount(amountMinor, currency);
 }
@@ -958,6 +995,7 @@ export function MaintenanceWithVendorsSection({
   const [vendors, setVendors] = useState<any[]>([]);
   const [loadingVendors, setLoadingVendors] = useState(true);
   const [assigning, setAssigning] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const activeLeases = useMemo(
     () => leases.filter((lease) => lease.status === "active"),
@@ -1024,6 +1062,20 @@ export function MaintenanceWithVendorsSection({
       toast.error("Unable to assign vendor.");
     } finally {
       setAssigning(null);
+    }
+  };
+
+  const cancelRequest = async (requestId: string) => {
+    try {
+      setCancellingId(requestId);
+      await maintenanceService.updateRequestStatus(requestId, "cancelled");
+      toast.success("Maintenance request cancelled.");
+      await onCreated();
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to cancel request.");
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -1107,28 +1159,34 @@ export function MaintenanceWithVendorsSection({
               {Array.isArray(request.photo_urls) && request.photo_urls.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {request.photo_urls.map((url: string) => (
-                    <a key={url} href={url} target="_blank" rel="noreferrer">
-                      <img
-                        src={url}
-                        alt="Maintenance evidence"
-                        className="h-20 w-20 rounded-lg border border-border object-cover"
-                      />
-                    </a>
+                    <MaintenancePhotoThumb key={url} path={url} />
                   ))}
                 </div>
               ) : null}
-              {request.status === "open" && vendors[0] ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => void hireVendor(request.id, vendors[0].id)}
-                  disabled={assigning === `${request.id}-${vendors[0].id}`}
-                >
-                  {assigning === `${request.id}-${vendors[0].id}`
-                    ? "Assigning..."
-                    : `Hire ${vendors[0].business_name}`}
-                </Button>
-              ) : null}
+              <div className="flex flex-wrap gap-2">
+                {request.status === "open" && vendors[0] ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void hireVendor(request.id, vendors[0].id)}
+                    disabled={assigning === `${request.id}-${vendors[0].id}`}
+                  >
+                    {assigning === `${request.id}-${vendors[0].id}`
+                      ? "Assigning..."
+                      : `Hire ${vendors[0].business_name}`}
+                  </Button>
+                ) : null}
+                {["open", "in_progress"].includes(request.status) ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => void cancelRequest(request.id)}
+                    disabled={cancellingId === request.id}
+                  >
+                    {cancellingId === request.id ? "Cancelling..." : "Cancel request"}
+                  </Button>
+                ) : null}
+              </div>
               {request.status === "resolved" && !request.tenant_rating ? (
                 <div className="rounded-lg border border-border p-4 space-y-3">
                   <p className="text-sm font-medium">Rate this repair</p>

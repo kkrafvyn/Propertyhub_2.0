@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
-import { ChevronDown, Printer } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { DesktopShell } from "../baytmiftah/DesktopShell";
 import { PageMeta } from "../baytmiftah/PageMeta";
 import { LegalBreadcrumbs } from "./LegalBreadcrumbs";
@@ -45,7 +45,7 @@ export function LegalCentreShell({
       />
       <a
         href="#legal-main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:shadow"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface focus:px-3 focus:py-2 focus:text-sm focus:shadow"
       >
         Skip to legal content
       </a>
@@ -56,11 +56,11 @@ export function LegalCentreShell({
 
         <div className="lg:hidden print:hidden">
           <Collapsible open={navOpen} onOpenChange={setNavOpen}>
-            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl border border-surface-border bg-white px-4 py-3 text-left text-sm font-medium text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-forest">
+            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl border border-surface-border bg-surface px-4 py-3 text-left text-sm font-medium text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-forest">
               Policy index
               <ChevronDown className={`h-4 w-4 transition ${navOpen ? "rotate-180" : ""}`} aria-hidden />
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-3 rounded-xl border border-surface-border bg-white p-4">
+            <CollapsibleContent className="mt-3 rounded-xl border border-surface-border bg-surface p-4">
               <LegalSidebar currentSlug={currentSlug} />
             </CollapsibleContent>
           </Collapsible>
@@ -103,26 +103,6 @@ export function LegalArticleHeader({
       </p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink md:text-4xl">{document.title}</h1>
       <p className="mt-4 max-w-3xl text-lg leading-relaxed text-ink-secondary">{document.description}</p>
-      <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm text-ink-secondary">
-        <div>
-          <dt className="inline font-medium text-ink">Effective: </dt>
-          <dd className="inline">{document.effectiveDate}</dd>
-        </div>
-        <div>
-          <dt className="inline font-medium text-ink">Last updated: </dt>
-          <dd className="inline">{document.lastUpdated}</dd>
-        </div>
-      </dl>
-      <div className="mt-4 print:hidden">
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="inline-flex items-center gap-2 rounded-lg border border-surface-border px-3 py-2 text-sm text-ink hover:bg-surface-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-forest"
-        >
-          <Printer className="h-4 w-4" aria-hidden />
-          Print / Save PDF
-        </button>
-      </div>
     </header>
   );
 }

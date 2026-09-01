@@ -94,12 +94,12 @@ export function SecuritySettingsPage() {
       </div>
 
       {mfaRequired ? (
-        <Card className="p-4 border-amber-300 bg-amber-50 text-amber-900">
+        <Card className="p-4 border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
           Platform admin access requires two-factor authentication. Enroll below to continue.
         </Card>
       ) : null}
       {workspaceMfaRequired ? (
-        <Card className="p-4 border-amber-300 bg-amber-50 text-amber-900">
+        <Card className="p-4 border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
           Agency owners and managers must enable two-factor authentication before using the workspace.
         </Card>
       ) : null}

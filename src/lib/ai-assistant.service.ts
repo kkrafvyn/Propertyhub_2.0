@@ -431,6 +431,7 @@ export const aiAssistantService = {
     context?: string
     history?: Array<{ role: 'user' | 'assistant'; content: string }>
   }): Promise<{ answer: string; source: AiSource }> {
+
     if (clientIntegrations.supabase.configured) {
       try {
         const { data, error } = await supabase.functions.invoke('ai-assistant', {

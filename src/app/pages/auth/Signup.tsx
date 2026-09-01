@@ -1,14 +1,12 @@
 import { Link, useNavigate } from "react-router";
-import { User, Building2, Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff, Check } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import { AuthShell, AuthDivider, OAuthButtons } from "../../components/baytmiftah";
-import {
-  LegalAcceptanceCheckbox,
-} from "../../components/legal/LegalAcceptanceCheckbox";
+import { LegalAcceptanceCheckbox } from "../../components/legal/LegalAcceptanceCheckbox";
 import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION, LEGAL_VERSION_KEY, type LegalAcceptanceScope } from "../../../lib/legal-config";
 import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
 import { validatePassword } from "../../../lib/security/password-policy";
@@ -19,8 +17,10 @@ export function Signup() {
     email: "",
     password: "",
     confirmPassword: "",
-    accountType: "user",
+    accountType: "user" as "user" | "landlord" | "agency",
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [oauthLoadingProvider, setOauthLoadingProvider] = useState<"google" | "apple" | null>(
@@ -31,9 +31,21 @@ export function Signup() {
 
   const oauthRedirectUrl = useMemo(() => {
     const next =
-      formData.accountType === "landlord" ? "/workspace?next=new" : "/app";
+      formData.accountType === "landlord" || formData.accountType === "agency"
+        ? "/workspace?next=new"
+        : "/app";
     return `${window.location.origin}/login?next=${encodeURIComponent(next)}`;
   }, [formData.accountType]);
+
+  const passwordCriteria = useMemo(() => {
+    const p = formData.password;
+    return {
+      minLength: p.length >= 8,
+      hasUpper: /[A-Z]/.test(p),
+      hasNumber: /\d/.test(p),
+      hasSpecial: /[^A-Za-z0-9]/.test(p),
+    };
+  }, [formData.password]);
 
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
     try {
@@ -49,7 +61,7 @@ export function Signup() {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords don't match");
+      toast.error("Passwords do not match");
       return;
     }
 
@@ -60,21 +72,23 @@ export function Signup() {
     }
 
     if (!termsAccepted) {
-      toast.error("Please accept the required policies to continue");
+      toast.error("Please accept the terms and conditions");
       return;
     }
 
     try {
       setLoading(true);
       const scope: LegalAcceptanceScope =
-        formData.accountType === "landlord" ? "signup_host" : "signup_consumer";
+        formData.accountType === "landlord" || formData.accountType === "agency"
+          ? "signup_host"
+          : "signup_consumer";
       const policySlugs = ACCEPTANCE_SCOPES[scope].policySlugs;
       const { user } = await signUp(
         formData.email,
         formData.password,
         formData.fullName,
-        formData.accountType as "user" | "landlord",
-        { policyVersion: LEGAL_POLICY_VERSION, policySlugs, scope },
+        formData.accountType === "user" ? "user" : "landlord",
+        { policyVersion: LEGAL_POLICY_VERSION, policySlugs, scope }
       );
       if (user?.id) {
         await legalAcceptanceService.recordAcceptance({
@@ -85,14 +99,17 @@ export function Signup() {
         });
         localStorage.setItem(LEGAL_VERSION_KEY, LEGAL_POLICY_VERSION);
       }
-      toast.success("Account created! Please check your email to verify.");
+      toast.success("Account created successfully. Check your email to verify.");
       navigate("/login", {
         state: {
-          from: formData.accountType === "landlord" ? "/workspace?next=new" : "/app",
+          from:
+            formData.accountType === "landlord" || formData.accountType === "agency"
+              ? "/workspace?next=new"
+              : "/app",
         },
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Signup failed");
+      toast.error(error instanceof Error ? error.message : "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -100,15 +117,16 @@ export function Signup() {
 
   return (
     <AuthShell
-      title="Create Account"
-      subtitle="Join BaytMiftah and start your journey"
-      heroTitle="Start Your Property Journey Today"
-      heroSubtitle="Whether you're looking for a home or managing properties, we've got you covered"
+      title="Create your account"
+      subtitle="Join the modern real estate operating system."
       footer={
-        <p className="text-muted-foreground">
+        <p className="text-white/80 lg:text-muted-foreground text-xs">
           Already have an account?{" "}
-          <Link to="/login" className="font-semibold text-primary hover:underline">
-            Log in
+          <Link
+            to="/login"
+            className="font-semibold text-white lg:text-foreground underline underline-offset-4 hover:text-white/80 lg:hover:text-neutral-600 transition-colors"
+          >
+            Sign in
           </Link>
         </p>
       }
@@ -120,93 +138,172 @@ export function Signup() {
         disabled={loading}
       />
 
-      <AuthDivider label="Or sign up with email" />
+      <AuthDivider label="Or register with email" />
 
-      <div className="mb-6">
-        <label className="mb-3 block font-semibold text-foreground">I want to</label>
-        <div className="grid grid-cols-2 gap-3">
+      {/* Segmented Account Type Control */}
+      <div className="space-y-1.5">
+        <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+          Account type
+        </label>
+        <div className="p-1 rounded-xl bg-white/10 lg:bg-muted/60 border border-white/20 lg:border-border/60 grid grid-cols-3 gap-1">
           <button
             type="button"
             onClick={() => setFormData({ ...formData, accountType: "user" })}
-            className={`rounded-lg border-2 p-4 transition-all ${
+            className={`py-2 rounded-lg text-xs font-medium transition-all ${
               formData.accountType === "user"
-                ? "border-brand-forest bg-brand-forest/10"
-                : "border-border hover:border-brand-forest/50"
+                ? "bg-white text-neutral-950 lg:bg-background lg:text-foreground shadow-xs font-bold"
+                : "text-white/80 lg:text-muted-foreground hover:text-white lg:hover:text-foreground"
             }`}
           >
-            <User className="mx-auto mb-2 h-6 w-6 text-brand-forest" />
-            <div className="font-semibold text-foreground">Find Property</div>
-            <div className="mt-1 text-xs text-muted-foreground">Search & rent</div>
+            Resident
           </button>
           <button
             type="button"
             onClick={() => setFormData({ ...formData, accountType: "landlord" })}
-            className={`rounded-lg border-2 p-4 transition-all ${
+            className={`py-2 rounded-lg text-xs font-medium transition-all ${
               formData.accountType === "landlord"
-                ? "border-brand-forest bg-brand-forest/10"
-                : "border-border hover:border-brand-forest/50"
+                ? "bg-white text-neutral-950 lg:bg-background lg:text-foreground shadow-xs font-bold"
+                : "text-white/80 lg:text-muted-foreground hover:text-white lg:hover:text-foreground"
             }`}
           >
-            <Building2 className="mx-auto mb-2 h-6 w-6 text-brand-forest" />
-            <div className="font-semibold text-foreground">List Property</div>
-            <div className="mt-1 text-xs text-muted-foreground">Landlord/Agent</div>
+            Owner
+          </button>
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, accountType: "agency" })}
+            className={`py-2 rounded-lg text-xs font-medium transition-all ${
+              formData.accountType === "agency"
+                ? "bg-white text-neutral-950 lg:bg-background lg:text-foreground shadow-xs font-bold"
+                : "text-white/80 lg:text-muted-foreground hover:text-white lg:hover:text-foreground"
+            }`}
+          >
+            Enterprise
           </button>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <Input
-          label="Full Name"
-          type="text"
-          placeholder="John Doe"
-          value={formData.fullName}
-          onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-          required
-          autoComplete="name"
-        />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+            Full name
+          </label>
+          <Input
+            type="text"
+            placeholder="Kwame Mensah"
+            value={formData.fullName}
+            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+            required
+            autoComplete="name"
+            className="h-10 text-sm bg-white/10 lg:bg-background border-white/20 lg:border-border/80 text-white lg:text-foreground placeholder:text-white/40 lg:placeholder:text-muted-foreground focus:border-white lg:focus:border-foreground"
+          />
+        </div>
 
-        <Input
-          label="Email Address"
-          type="email"
-          placeholder="you@example.com"
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          required
-          autoComplete="email"
-        />
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+            Email address
+          </label>
+          <Input
+            type="email"
+            placeholder="name@domain.com"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            required
+            autoComplete="email"
+            className="h-10 text-sm bg-white/10 lg:bg-background border-white/20 lg:border-border/80 text-white lg:text-foreground placeholder:text-white/40 lg:placeholder:text-muted-foreground focus:border-white lg:focus:border-foreground"
+          />
+        </div>
 
-        <Input
-          label="Password"
-          type="password"
-          placeholder="Create a password"
-          value={formData.password}
-          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-          required
-          autoComplete="new-password"
-        />
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+            Password
+          </label>
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="Minimum 8 characters"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              required
+              autoComplete="new-password"
+              className="h-10 text-sm pr-10 bg-white/10 lg:bg-background border-white/20 lg:border-border/80 text-white lg:text-foreground placeholder:text-white/40 lg:placeholder:text-muted-foreground focus:border-white lg:focus:border-foreground"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 lg:text-muted-foreground hover:text-white lg:hover:text-foreground transition-colors p-1"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+          </div>
 
-        <Input
-          label="Confirm Password"
-          type="password"
-          placeholder="Confirm your password"
-          value={formData.confirmPassword}
-          onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-          required
-          autoComplete="new-password"
-        />
+          {/* Minimalist Password Indicators */}
+          {formData.password.length > 0 && (
+            <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1.5 text-[11px] text-white/70 lg:text-muted-foreground font-mono">
+              <span className={`inline-flex items-center gap-1 ${passwordCriteria.minLength ? "text-emerald-400 lg:text-emerald-600 dark:lg:text-emerald-400 font-sans" : ""}`}>
+                {passwordCriteria.minLength && <Check className="w-3 h-3" />} 8+ chars
+              </span>
+              <span className={`inline-flex items-center gap-1 ${passwordCriteria.hasUpper ? "text-emerald-400 lg:text-emerald-600 dark:lg:text-emerald-400 font-sans" : ""}`}>
+                {passwordCriteria.hasUpper && <Check className="w-3 h-3" />} uppercase
+              </span>
+              <span className={`inline-flex items-center gap-1 ${passwordCriteria.hasNumber ? "text-emerald-400 lg:text-emerald-600 dark:lg:text-emerald-400 font-sans" : ""}`}>
+                {passwordCriteria.hasNumber && <Check className="w-3 h-3" />} number
+              </span>
+              <span className={`inline-flex items-center gap-1 ${passwordCriteria.hasSpecial ? "text-emerald-400 lg:text-emerald-600 dark:lg:text-emerald-400 font-sans" : ""}`}>
+                {passwordCriteria.hasSpecial && <Check className="w-3 h-3" />} symbol
+              </span>
+            </div>
+          )}
+        </div>
 
-        <LegalAcceptanceCheckbox
-          scope={formData.accountType === "landlord" ? "signup_host" : "signup_consumer"}
-          checked={termsAccepted}
-          onChange={setTermsAccepted}
-          id="terms"
-        />
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+            Confirm password
+          </label>
+          <div className="relative">
+            <Input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Re-enter password"
+              value={formData.confirmPassword}
+              onChange={(e) =>
+                setFormData({ ...formData, confirmPassword: e.target.value })
+              }
+              required
+              autoComplete="new-password"
+              className="h-10 text-sm pr-10 bg-white/10 lg:bg-background border-white/20 lg:border-border/80 text-white lg:text-foreground placeholder:text-white/40 lg:placeholder:text-muted-foreground focus:border-white lg:focus:border-foreground"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 lg:text-muted-foreground hover:text-white lg:hover:text-foreground transition-colors p-1"
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+            >
+              {showConfirmPassword ? (
+                <EyeOff className="w-3.5 h-3.5" />
+              ) : (
+                <Eye className="w-3.5 h-3.5" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="pt-1 text-white/90 lg:text-foreground">
+          <LegalAcceptanceCheckbox
+            scope={
+              formData.accountType === "landlord" || formData.accountType === "agency"
+                ? "signup_host"
+                : "signup_consumer"
+            }
+            checked={termsAccepted}
+            onChange={setTermsAccepted}
+          />
+        </div>
 
         <Button
           type="submit"
           size="lg"
-          className="w-full"
-          disabled={loading || Boolean(oauthLoadingProvider)}
+          className="w-full h-11 text-sm font-semibold bg-white text-neutral-950 hover:bg-neutral-100 lg:bg-neutral-900 lg:text-white lg:hover:bg-neutral-800 lg:dark:bg-white lg:dark:text-neutral-900 lg:dark:hover:bg-neutral-100 rounded-xl transition-all shadow-md"
+          disabled={loading || !termsAccepted || Boolean(oauthLoadingProvider)}
         >
           {loading ? (
             <>

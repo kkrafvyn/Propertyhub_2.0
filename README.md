@@ -1,21 +1,24 @@
 # BaytMiftah REOS
 
-Production-ready real estate platform for managing properties, listings, deal cases, payments, team collaboration, and trust workflows. Built with React 18, TypeScript, Vite, and Supabase.
+Production-ready real estate platform for managing properties, listings, deal cases, payments, team collaboration, and trust workflows. Built with React 19, TypeScript, Vite, and Supabase.
+
+> 📖 **Master Specification:** See [docs/BAYTMIFTAH_DEFINITIVE_MASTER_SPEC_2026.md](./docs/BAYTMIFTAH_DEFINITIVE_MASTER_SPEC_2026.md) for the definitive product site map, role taxonomy, 8-surface architecture, deterministic sub-ledger, and fleet of specialized agentic AI operating system specifications.  
+> 📊 **Delivery Report:** See [docs/BAYTMIFTAH_COMPLETE_DELIVERY_REPORT.md](./docs/BAYTMIFTAH_COMPLETE_DELIVERY_REPORT.md) for the full feature audit, test verification, and delivery report.
 
 ## Features
 
-- User authentication with Supabase Auth
-- Property and listing management
-- Search, saved properties, and inquiry workflows
-- Deal case collaboration and team messaging
-- Workspace dashboards for operations, finance, and fraud monitoring
-- PWA support plus Capacitor wrappers for Android and iOS
+- **8-Surface Architecture**: Distinct experiences across 3 product families (Consumer, Business, Admin) for Web, Desktop (Electron), and Mobile (Android/iOS).
+- **HD Voice & Video Calling**: WebRTC 256-bit encrypted audio/video calls, screen sharing, in-call chat, and live property co-browsing.
+- **Omnichannel Communications**: Ghana SMS gateway (Hubtel/Arkesel), WhatsApp Business Cloud API, and multi-estate broadcast notices.
+- **Draggable AI Copilot**: Multi-dialect query engine translating natural requests into REOS-QL, PostgreSQL, Supabase JS, and GraphQL.
+- **Enterprise ERP Modules**: General Ledger, Procurement Center, Portfolio Analytics, AI Command Center, Automation Builder, Bulk Operations, and Data Import/Export.
+- **Property & Leasing Lifecycle**: Full discover, apply, KYC, pay, lease, and maintenance dispatch workflow.
 
 ## Tech Stack
 
-- Frontend: React 18.3.1 + TypeScript
+- Frontend: React 19.2.7 + TypeScript
 - Build tool: Vite 6.3.5
-- Routing: React Router 7.13.0
+- Routing: React Router 8.3.0
 - UI: shadcn/ui, Radix UI, MUI
 - Styling: Tailwind CSS 4
 - Backend: Supabase (PostgreSQL, Auth, Realtime, Edge Functions)
@@ -55,6 +58,50 @@ Run end-to-end tests (install browsers once per machine):
 npx playwright install chromium
 npm run test:e2e
 ```
+
+## Mobile App Testing (Android Studio)
+
+BaytMiftah uses Capacitor to build native Android and iOS mobile packages from web assets.
+
+1. **Build the web bundle & sync with Android:**
+   ```bash
+   npm run android:sync
+   ```
+
+2. **Open the project in Android Studio:**
+   ```bash
+   npm run android:open
+   ```
+   *This automatically launches Android Studio with the `android/` project loaded.*
+
+3. **Run on an Android Virtual Device (AVD) or physical device:**
+   - In Android Studio, select your target device/emulator from the device dropdown.
+   - Click the green **Run (▶)** button (or press `Shift + F10`).
+
+4. **Build Debug APK via CLI (optional):**
+   ```bash
+   npm run android:build
+   ```
+   *The generated APK will be located at `android/app/build/outputs/apk/debug/app-debug.apk`.*
+
+## Desktop App (Electron)
+
+BaytMiftah includes an Electron desktop runtime with native windowing, system tray, desktop notifications, and application menu shortcuts.
+
+1. **Run in Desktop Development Mode (with Live Reload):**
+   ```bash
+   npm run desktop:dev
+   ```
+
+2. **Run the Desktop App against the Production Bundle:**
+   ```bash
+   npm run desktop:start
+   ```
+
+3. **Build & Package Desktop Executable:**
+   ```bash
+   npm run desktop:build
+   ```
 
 Regenerate Supabase types when the database schema changes (requires `SUPABASE_DB_URL` or credentials in root `.env`):
 

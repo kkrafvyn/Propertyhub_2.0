@@ -16,6 +16,7 @@ const EDGE_FUNCTIONS = [
   { name: "initialize-payangels-payment" },
   { name: "verify-payangels-payment" },
   { name: "initiate-payangels-refund" },
+  { name: "initiate-payangels-disbursement" },
   { name: "payangels-webhook", noVerifyJwt: true },
   { name: "parse-search-query" },
   { name: "ai-assistant" },

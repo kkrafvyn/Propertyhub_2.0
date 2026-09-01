@@ -56,9 +56,6 @@ export function LegalHub() {
             BaytMiftah operates as a neutral technology marketplace. These policies explain how the
             platform works, what users are responsible for, and the limits of BaytMiftah's role.
           </p>
-          <p className="mt-3 text-sm text-ink-secondary">
-            Effective: {LEGAL_EFFECTIVE_DATE} · Last updated: {LEGAL_LAST_UPDATED}
-          </p>
         </header>
 
         <div className="mt-8 rounded-xl border border-brand-forest/20 bg-brand-forest/5 p-5 text-sm leading-relaxed text-ink">

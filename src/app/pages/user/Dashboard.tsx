@@ -18,6 +18,8 @@ import {
   Shield,
   UserCircle2,
   Wrench,
+  QrCode,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
@@ -626,6 +628,14 @@ export function UserDashboard() {
       message: `${item.title} is ${item.is_active ? "active" : "paused"}.`,
     }));
 
+    const maintenanceActivity = maintenanceRequests.map((item) => ({
+      id: `maintenance-${item.id}`,
+      type: "maintenance",
+      href: "/app/maintenance",
+      createdAt: item.updated_at || item.created_at,
+      message: `Maintenance "${item.title}" is ${String(item.status).replace(/_/g, " ")}.`,
+    }));
+
     return [
       ...savedActivity,
       ...applicationActivity,
@@ -633,6 +643,7 @@ export function UserDashboard() {
       ...paymentActivity,
       ...viewingActivity,
       ...alertActivity,
+      ...maintenanceActivity,
     ]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 6);
@@ -644,6 +655,7 @@ export function UserDashboard() {
     savedAlerts,
     savedProperties,
     conversations,
+    maintenanceRequests,
     user?.id,
   ]);
 
@@ -1312,6 +1324,104 @@ export function UserDashboard() {
         </Card>
       ) : null}
 
+      {maintenanceRequests.filter((r) => !["resolved", "cancelled"].includes(r.status)).length > 0 ? (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <Wrench className="w-5 h-5 text-amber-600" />
+              Open Maintenance
+            </h2>
+            <Link to="/app/maintenance" className="text-sm text-primary hover:underline">
+              View all
+            </Link>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {maintenanceRequests
+              .filter((r) => !["resolved", "cancelled"].includes(r.status))
+              .slice(0, 3)
+              .map((request) => (
+                <Card key={request.id} className="p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-medium text-sm">{request.title}</p>
+                      <p className="text-xs text-muted-foreground mt-1 capitalize">
+                        {String(request.status).replace(/_/g, " ")}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="capitalize shrink-0">
+                      {request.priority || "normal"}
+                    </Badge>
+                  </div>
+                </Card>
+              ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* Quick Action Launchpad */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            Quick Actions
+          </h2>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <Link to="/app/payments" className="quick-action-card group">
+            <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-2.5 transition-transform group-hover:scale-110">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-semibold text-foreground">Pay Rent</span>
+            <span className="text-[11px] text-muted-foreground mt-0.5">MoMo & Cards</span>
+          </Link>
+
+          <Link to="/app/maintenance" className="quick-action-card group">
+            <div className="w-11 h-11 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-2.5 transition-transform group-hover:scale-110">
+              <Wrench className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-semibold text-foreground">Repairs</span>
+            <span className="text-[11px] text-muted-foreground mt-0.5">Request fix</span>
+          </Link>
+
+          <Link to="/app/home" className="quick-action-card group">
+            <div className="w-11 h-11 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-2.5 transition-transform group-hover:scale-110">
+              <QrCode className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-semibold text-foreground">Gate Pass</span>
+            <span className="text-[11px] text-muted-foreground mt-0.5">Visitor entry</span>
+          </Link>
+
+          <Link to="/app/messages" className="quick-action-card group">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-2.5 transition-transform group-hover:scale-110 relative">
+              <MessageCircle className="w-5 h-5" />
+              {unreadMessages > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-orange text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {unreadMessages}
+                </span>
+              )}
+            </div>
+            <span className="text-xs font-semibold text-foreground">Messages</span>
+            <span className="text-[11px] text-muted-foreground mt-0.5">Chat agent</span>
+          </Link>
+
+          <Link to="/app/documents" className="quick-action-card group">
+            <div className="w-11 h-11 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-2.5 transition-transform group-hover:scale-110">
+              <FileText className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-semibold text-foreground">Documents</span>
+            <span className="text-[11px] text-muted-foreground mt-0.5">Leases & KYC</span>
+          </Link>
+
+          <Link to="/search" className="quick-action-card group">
+            <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-2.5 transition-transform group-hover:scale-110">
+              <Search className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-semibold text-foreground">Explore</span>
+            <span className="text-[11px] text-muted-foreground mt-0.5">Find homes</span>
+          </Link>
+        </div>
+      </section>
+
       <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold">Upcoming Viewings</h2>
@@ -1420,7 +1530,9 @@ export function UserDashboard() {
                       ? MessageCircle
                       : activity.type === "payment"
                         ? CreditCard
-                        : FileText,
+                        : activity.type === "maintenance"
+                          ? Wrench
+                          : FileText,
               }))}
             />
           )}
@@ -1474,26 +1586,49 @@ export function UserDashboard() {
       sidebar={
         section === "overview" ? (
           <>
-            <Card className="p-6">
-              <h3 className="font-semibold mb-4">Quick Actions</h3>
-              <div className="space-y-3">
-                <Link to="/search">
-                  <Button variant="outline" className="w-full justify-start">
-                    <Search className="w-4 h-4" />
-                    Search Properties
-                  </Button>
+            <Card className="p-5 sm:p-6 bg-card/80 backdrop-blur-md border-border/80 shadow-xs">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-serif font-medium text-foreground tracking-tight text-base">Quick Actions</h3>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Portal</span>
+              </div>
+              <div className="space-y-2">
+                <Link
+                  to="/search"
+                  className="group flex items-center justify-between p-3 rounded-xl bg-muted/40 hover:bg-muted/80 border border-border/50 hover:border-border transition-all duration-200"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center transition-transform group-hover:scale-105">
+                      <Search className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-medium text-foreground">Search Properties</span>
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
                 </Link>
-                <Link to="/app/messages">
-                  <Button variant="outline" className="w-full justify-start">
-                    <MessageCircle className="w-4 h-4" />
-                    View Messages
-                  </Button>
+
+                <Link
+                  to="/app/messages"
+                  className="group flex items-center justify-between p-3 rounded-xl bg-muted/40 hover:bg-muted/80 border border-border/50 hover:border-border transition-all duration-200"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center transition-transform group-hover:scale-105">
+                      <MessageCircle className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-medium text-foreground">View Messages</span>
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
                 </Link>
-                <Link to="/app/payments">
-                  <Button variant="outline" className="w-full justify-start">
-                    <CreditCard className="w-4 h-4" />
-                    Wallet & Payments
-                  </Button>
+
+                <Link
+                  to="/app/payments"
+                  className="group flex items-center justify-between p-3 rounded-xl bg-muted/40 hover:bg-muted/80 border border-border/50 hover:border-border transition-all duration-200"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center transition-transform group-hover:scale-105">
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-medium text-foreground">Wallet & Payments</span>
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
                 </Link>
               </div>
             </Card>
@@ -1592,70 +1727,106 @@ export function UserDashboard() {
             </div>
           ) : null}
 
-          <div className="flex flex-wrap gap-3 mb-4">
-          {primaryNavItems.map((item) => {
-            const Icon = item.icon;
-            const active =
-              item.section === "overview"
-                ? section === "overview"
-                : item.section
-                  ? item.section === section
-                  : false;
+          {/* Segmented Scrollable Tab Navigation */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 border-b border-surface-border">
+            {primaryNavItems.map((item) => {
+              const Icon = item.icon;
+              const active =
+                item.section === "overview"
+                  ? section === "overview"
+                  : item.section
+                    ? item.section === section
+                    : false;
 
-            return (
-              <Link key={item.href} to={item.href}>
-                <Button
-                  variant={active ? "default" : "outline"}
-                  size="sm"
-                  aria-label={item.label}
-                  title={item.label}
-                >
-                  <Icon className="w-4 h-4" />
-                  {item.label}
-                </Button>
-              </Link>
-            );
-          })}
-        </div>
+              let badgeCount: number | null = null;
+              if (item.section === "saved") badgeCount = savedProperties.length;
+              if (item.section === "messages") badgeCount = unreadMessages;
 
-        <div className="flex flex-wrap gap-3 mb-8">
-          {activityNavItems.length > 0
-            ? activityNavItems.map((item) => {
-            const iconBySection: Record<string, typeof FileText> = {
-              applications: FileText,
-              viewings: CalendarDays,
-              payments: CreditCard,
-              alerts: Bell,
-              leases: FileText,
-              maintenance: Settings,
-              trips: CalendarDays,
-              reservations: CalendarDays,
-              documents: FileText,
-              transactions: CreditCard,
-              home: Home,
-              notifications: Bell,
-              mortgage: Shield,
-              insurance: Shield,
-              vendors: Wrench,
-            };
-            const Icon = iconBySection[item.section] || FileText;
-            const active = item.section === section;
+              return (
+                <Link key={item.href} to={item.href} className="shrink-0">
+                  <button
+                    type="button"
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 cursor-pointer ${
+                      active
+                        ? "bg-primary text-primary-foreground shadow-xs font-semibold"
+                        : "bg-surface text-ink-secondary hover:bg-surface-hover hover:text-ink border border-surface-border"
+                    }`}
+                    aria-label={item.label}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span>{item.label}</span>
+                    {badgeCount && badgeCount > 0 ? (
+                      <span
+                        className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                          active
+                            ? "bg-primary-foreground/20 text-primary-foreground"
+                            : "bg-primary/10 text-primary"
+                        }`}
+                      >
+                        {badgeCount}
+                      </span>
+                    ) : null}
+                  </button>
+                </Link>
+              );
+            })}
 
-            return (
-              <Link key={item.href} to={item.href}>
-                <Button
-                  variant={active ? "secondary" : "outline"}
-                  size="sm"
-                  aria-label={item.label}
-                  title={item.label}
-                >
-                  <Icon className="w-4 h-4" />
-                  {item.label}
-                </Button>
-              </Link>
-            );
-          }) : null}
-        </div>
+            {activityNavItems.length > 0
+              ? activityNavItems.map((item) => {
+                  const iconBySection: Record<string, typeof FileText> = {
+                    applications: FileText,
+                    viewings: CalendarDays,
+                    payments: CreditCard,
+                    alerts: Bell,
+                    leases: FileText,
+                    maintenance: Settings,
+                    trips: CalendarDays,
+                    reservations: CalendarDays,
+                    documents: FileText,
+                    transactions: CreditCard,
+                    home: Home,
+                    notifications: Bell,
+                    mortgage: Shield,
+                    insurance: Shield,
+                    vendors: Wrench,
+                  };
+                  const Icon = iconBySection[item.section] || FileText;
+                  const active = item.section === section;
+
+                  let badgeCount: number | null = null;
+                  if (item.section === "applications") badgeCount = dealCases.length;
+                  if (item.section === "viewings") badgeCount = propertyViewings.length;
+
+                  return (
+                    <Link key={item.href} to={item.href} className="shrink-0">
+                      <button
+                        type="button"
+                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 cursor-pointer ${
+                          active
+                            ? "bg-primary text-primary-foreground shadow-xs font-semibold"
+                            : "bg-surface text-ink-secondary hover:bg-surface-hover hover:text-ink border border-surface-border"
+                        }`}
+                        aria-label={item.label}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span>{item.label}</span>
+                        {badgeCount && badgeCount > 0 ? (
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                              active
+                                ? "bg-primary-foreground/20 text-primary-foreground"
+                                : "bg-primary/10 text-primary"
+                            }`}
+                          >
+                            {badgeCount}
+                          </span>
+                        ) : null}
+                      </button>
+                    </Link>
+                  );
+                })
+              : null}
+          </div>
 
           {section === "overview" ? (
             loading ? (

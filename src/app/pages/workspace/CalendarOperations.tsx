@@ -6,6 +6,7 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import type { Database } from "../../../lib/database.types";
 import { calendarOperationsService } from "../../../lib/calendar-operations.service";
+import { maintenanceCalendarService } from "../../../lib/staff-time.service";
 import { organizationService } from "../../../lib/organization.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
 
@@ -47,6 +48,7 @@ export function CalendarOperations({
   const [rules, setRules] = useState<any[]>([]);
   const [connections, setConnections] = useState<any[]>([]);
   const [viewings, setViewings] = useState<any[]>([]);
+  const [maintenanceEvents, setMaintenanceEvents] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState({
@@ -60,16 +62,18 @@ export function CalendarOperations({
   const loadData = async () => {
     try {
       setLoading(true);
-      const [ruleRows, connectionRows, viewingRows, memberRows] = await Promise.all([
+      const [ruleRows, connectionRows, viewingRows, memberRows, maintenanceRows] = await Promise.all([
         calendarOperationsService.getAvailabilityRules(organization.id),
         calendarOperationsService.getConnections(organization.id),
         propertyViewingService.getOrganizationViewings(organization.id),
         organizationService.getOrganizationMembers(organization.id),
+        maintenanceCalendarService.listEvents(organization.id).catch(() => []),
       ]);
       setRules(ruleRows || []);
       setConnections(connectionRows || []);
       setViewings(viewingRows || []);
       setMembers(memberRows || []);
+      setMaintenanceEvents(maintenanceRows || []);
     } catch (error) {
       console.error("Failed to load calendar operations:", error);
       toast.error("We couldn't load calendar operations right now.");
@@ -188,6 +192,18 @@ export function CalendarOperations({
           <p className="text-2xl font-semibold mt-1">{upcomingViewings.length}</p>
         </Card>
       </div>
+
+      {maintenanceEvents.length > 0 ? (
+        <Card className="p-5 space-y-2">
+          <h2 className="font-semibold">Maintenance calendar</h2>
+          {maintenanceEvents.slice(0, 8).map((event) => (
+            <div key={event.id} className="flex justify-between text-sm border border-border rounded-lg p-3">
+              <span>{event.title}</span>
+              <span className="text-muted-foreground">{new Date(event.starts_at).toLocaleString()}</span>
+            </div>
+          ))}
+        </Card>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[420px,1fr]">
         <Card className="p-6">

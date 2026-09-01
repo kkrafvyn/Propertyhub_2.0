@@ -36,13 +36,6 @@ export function LegalDocumentView({ document }: { document: LegalDocument }) {
     <article>
       <LegalArticleHeader document={document} categoryLabel={category} />
 
-      <div className="mt-8 rounded-xl border border-amber-200/80 bg-amber-50/80 p-4 text-sm leading-relaxed text-amber-950 print:border-gray-300 print:bg-white">
-        <strong>Important:</strong> These documents are provided for transparency and do not
-        constitute legal advice. They describe BaytMiftah's role as a technology marketplace and
-        should be reviewed with qualified counsel before relying on them for high-value
-        transactions.
-      </div>
-
       {inLegalCentre ? (
         <div className="mt-6 xl:hidden print:hidden">
           <LegalTableOfContents sections={document.sections} />
@@ -79,7 +72,7 @@ export function LegalDocumentView({ document }: { document: LegalDocument }) {
         </div>
       ) : null}
 
-      <div className="mt-12 space-y-8">
+      <div className="mt-12 space-y-8 print:hidden">
         <LegalRelatedPolicies documents={related} />
         {inLegalCentre ? (
           <div className="xl:hidden">
@@ -99,6 +92,7 @@ export function LegalDocumentView({ document }: { document: LegalDocument }) {
       </p>
     </article>
   );
+
 
   if (!inLegalCentre) {
     return (

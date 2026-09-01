@@ -4,6 +4,7 @@ import { Card } from "@/app/components/ui/Card";
 import { Button } from "@/app/components/ui/Button";
 import { Badge } from "@/app/components/ui/badge";
 import { vendorService } from "@/lib/vendor.service";
+import { vendorSLAService } from "@/lib/vendor-sla.service";
 import { propertyService } from "@/lib/property.service";
 import { Star, Wrench, MapPin, Phone } from "lucide-react";
 
@@ -51,7 +52,7 @@ type AssignmentRow = {
   property?: { address?: string | null } | null;
 };
 
-export default function VendorManagement({ organizationId }: { organizationId: string }) {
+export default function VendorManagement({ organizationId, currentUserId }: { organizationId: string; currentUserId: string }) {
   const [vendors, setVendors] = useState<VendorRow[]>([]);
   const [properties, setProperties] = useState<PropertyRow[]>([]);
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
@@ -61,6 +62,7 @@ export default function VendorManagement({ organizationId }: { organizationId: s
   const [propertyId, setPropertyId] = useState("");
   const [jobNotes, setJobNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [slaAlerts, setSlaAlerts] = useState<Array<{ id: string; alert_type?: string | null; severity?: string | null; triggered_at?: string | null }>>([]);
 
   const loadVendors = async () => {
     try {
@@ -87,17 +89,33 @@ export default function VendorManagement({ organizationId }: { organizationId: s
 
   const loadWorkspace = async () => {
     try {
-      const [propertyRows, assignmentRows] = await Promise.all([
+      const [propertyRows, assignmentRows, alerts] = await Promise.all([
         propertyService.getOrganizationProperties(organizationId),
         vendorService.getAssignments(organizationId),
+        vendorSLAService.getSLAAlerts(organizationId, { acknowledged: false }),
       ]);
       setProperties(propertyRows || []);
       setAssignments((assignmentRows || []) as AssignmentRow[]);
+      setSlaAlerts(alerts || []);
       if (!propertyId && propertyRows?.[0]?.id) {
         setPropertyId(propertyRows[0].id);
       }
     } catch (error) {
       console.error("Failed to load vendor workspace:", error);
+    }
+  };
+
+  const acknowledgeAlert = async (alertId: string) => {
+    try {
+      setSubmitting(true);
+      await vendorSLAService.acknowledgeSLAAlert(alertId, currentUserId);
+      setSlaAlerts((current) => current.filter((alert) => alert.id !== alertId));
+      toast.success("SLA alert acknowledged.");
+    } catch (error) {
+      console.error("Failed to acknowledge SLA alert:", error);
+      toast.error("Unable to acknowledge this SLA alert.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -176,6 +194,29 @@ export default function VendorManagement({ organizationId }: { organizationId: s
                 <Badge variant="outline" className="capitalize">
                   {assignment.status || "pending"}
                 </Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {slaAlerts.length > 0 && (
+        <Card className="border-amber-300 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-amber-950 dark:text-amber-100">Active SLA alerts</h2>
+              <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">Review overdue acknowledgement and resolution targets.</p>
+            </div>
+            <Badge variant="outline">{slaAlerts.length}</Badge>
+          </div>
+          <div className="mt-4 space-y-2">
+            {slaAlerts.slice(0, 6).map((alert) => (
+              <div key={alert.id} className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-white p-3 text-sm dark:border-amber-900 dark:bg-amber-950/40">
+                <div>
+                  <p className="font-medium">{alert.alert_type?.replaceAll("_", " ") || "SLA alert"}</p>
+                  <p className="text-xs capitalize text-muted-foreground">{alert.severity?.toLowerCase() || "medium"} · {alert.triggered_at ? new Date(alert.triggered_at).toLocaleString() : "Recently"}</p>
+                </div>
+                <Button size="sm" variant="outline" disabled={submitting} onClick={() => void acknowledgeAlert(alert.id)}>Acknowledge</Button>
               </div>
             ))}
           </div>

@@ -21,6 +21,15 @@ Serve the `dist/` folder over HTTPS or `localhost` to test installability.
 
 The repo now includes a Capacitor Android project in `android/`. Capacitor uses Gradle for native Android builds.
 
+The native launcher branding uses the supplied BaytMiftah app mark: forest-green rounded-square icon with the white person-and-horizon symbol. Android and iOS use the same canonical asset from `public/brand/app-icon.png`.
+
+BaytMiftah ships two mobile products from the shared Capacitor codebase:
+
+- Consumer Mobile: personal discovery, renting, buying, and resident journeys
+- Business Mobile: company operations, field work, and internal admin workflows
+
+Platform admins can open `/admin` from either app. The dashboard remains protected by the existing platform-admin and MFA checks; mobile app selection does not grant admin access.
+
 Useful commands:
 
 ```bash
@@ -28,6 +37,13 @@ npm run android:sync
 npm run android:open
 npm run android:gradle:debug
 npm run android:build
+```
+
+To prepare the web bundle and sync either product variant:
+
+```bash
+npm run mobile:consumer:sync
+npm run mobile:business:sync
 ```
 
 ## Android SDK requirement

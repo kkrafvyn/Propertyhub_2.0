@@ -34,6 +34,29 @@
           min-height: 100%;
         }
       </style>
+      <script>
+        (function() {
+          try {
+            var theme = localStorage.getItem('baytmiftah_theme') || 'system';
+            var accent = localStorage.getItem('baytmiftah_accent') || 'emerald';
+            var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            var root = document.documentElement;
+            if (isDark) {
+              root.classList.add('dark');
+              root.setAttribute('data-theme', 'dark');
+            } else {
+              root.classList.remove('dark');
+              root.setAttribute('data-theme', 'light');
+            }
+            root.setAttribute('data-theme-mode', theme);
+            root.setAttribute('data-accent', accent);
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) {
+              meta.setAttribute('content', isDark ? '#081713' : '#fcfbf9');
+            }
+          } catch (e) {}
+        })();
+      </script>
     </head>
 
     <body>

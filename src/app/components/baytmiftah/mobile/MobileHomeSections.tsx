@@ -98,7 +98,7 @@ export function MobileTransactionTabs({
             type="button"
             onClick={() => onChange(id)}
             className={`flex min-w-0 items-center justify-center gap-0.5 rounded-full px-1.5 py-2 text-xs font-semibold transition sm:gap-1 sm:px-2 sm:py-2.5 sm:text-sm ${
-              isActive ? "bg-mobile-forest text-white shadow-sm" : "bg-[#F5F5F5] text-ink-secondary"
+              isActive ? "bg-mobile-forest text-white shadow-sm" : "bg-surface-subtle text-ink-secondary"
             }`}
           >
             {id === "stay" && <Home className="h-3.5 w-3.5 shrink-0" />}
@@ -111,12 +111,12 @@ export function MobileTransactionTabs({
 }
 
 const PROPERTY_TYPE_KEYS = [
-  { id: "apartment", labelKey: "mobile.homeScreen.apartments", bg: "bg-blue-50" },
-  { id: "house", labelKey: "mobile.homeScreen.houses", bg: "bg-green-50" },
-  { id: "townhouse", labelKey: "mobile.homeScreen.townhouses", bg: "bg-orange-50" },
-  { id: "commercial", labelKey: "mobile.homeScreen.commercial", bg: "bg-purple-50" },
-  { id: "land", labelKey: "mobile.homeScreen.land", bg: "bg-emerald-50" },
-  { id: "shortStay", labelKey: "mobile.homeScreen.shortStay", bg: "bg-orange-50" },
+  { id: "apartment", labelKey: "mobile.homeScreen.apartments", bg: "bg-blue-100 dark:bg-blue-900/30" },
+  { id: "house", labelKey: "mobile.homeScreen.houses", bg: "bg-green-100 dark:bg-green-900/30" },
+  { id: "townhouse", labelKey: "mobile.homeScreen.townhouses", bg: "bg-orange-100 dark:bg-orange-900/30" },
+  { id: "commercial", labelKey: "mobile.homeScreen.commercial", bg: "bg-purple-100 dark:bg-purple-900/30" },
+  { id: "land", labelKey: "mobile.homeScreen.land", bg: "bg-emerald-100 dark:bg-emerald-900/30" },
+  { id: "shortStay", labelKey: "mobile.homeScreen.shortStay", bg: "bg-amber-100 dark:bg-amber-900/30" },
 ] as const;
 
 export function MobilePropertyTypeRow({

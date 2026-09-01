@@ -1,45 +1,178 @@
-import type { ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { Link } from "react-router";
-import { LogoMark } from "./Logo";
+import { Logo } from "./Logo";
+import { ArrowLeft } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
+
+interface CarouselSlide {
+  image: string;
+  title: string;
+  subtitle: string;
+  location: string;
+}
+
+const CAROUSEL_SLIDES: CarouselSlide[] = [
+  {
+    image:
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=85",
+    title: "The Architecture of Trust",
+    subtitle: "End-to-end lease governance, autonomous SLA dispatch, and verifiable ownership ledgers.",
+    location: "Airport Hills • Executive Enclaves",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85",
+    title: "Deterministic Financial Rigor",
+    subtitle: "Automated rental waterfall distributions, statutory GRA withholding, and immutable double-entry sub-ledgers.",
+    location: "Cantonments • Signature Residences",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=85",
+    title: "Living Enterprise Ecosystems",
+    subtitle: "Specialized AI workforce operating 24/7 across leasing, collections, and predictive maintenance triage.",
+    location: "East Legon • Prime Sanctuaries",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=85",
+    title: "Curated Luxury & Discovery",
+    subtitle: "Privacy-preserving public exploration paired with certified biometric digital agreements.",
+    location: "Ridge & Roman Ridge • High-Value Portfolios",
+  },
+];
 
 export function AuthShell({
   title,
   subtitle,
-  heroTitle,
-  heroSubtitle,
   children,
   footer,
 }: {
   title: string;
   subtitle: string;
-  heroTitle: string;
-  heroSubtitle: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % CAROUSEL_SLIDES.length);
+    }, 6500);
+    return () => clearInterval(timer);
+  }, []);
+
+  const slide = CAROUSEL_SLIDES[currentSlide];
+
   return (
-    <div className="auth-shell flex min-h-screen min-h-[100dvh] bg-background text-foreground">
-      <div className="flex flex-1 items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          <div className="mb-8 text-center">
-            <Link to="/" className="mb-6 inline-flex items-center gap-2" aria-label="BaytMiftah home">
-              <LogoMark className="h-12 w-12" />
-            </Link>
-            <h1 className="text-3xl font-semibold text-foreground">{title}</h1>
-            <p className="mt-2 text-muted-foreground">{subtitle}</p>
+    <div className="auth-shell min-h-screen min-h-[100dvh] flex bg-neutral-950 lg:bg-background text-foreground font-sans antialiased relative overflow-hidden">
+      {/* Mobile Full-Bleed Animated Carousel Background */}
+      <div className="lg:hidden absolute inset-0 z-0 select-none overflow-hidden">
+        {CAROUSEL_SLIDES.map((s, idx) => (
+          <div
+            key={idx}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+              idx === currentSlide ? "opacity-100 scale-100" : "opacity-0 scale-105"
+            } transform transition-transform duration-10000 ease-out`}
+          >
+            <img
+              src={s.image}
+              alt=""
+              className="w-full h-full object-cover brightness-[0.55] contrast-[1.05]"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/80 via-neutral-950/50 to-neutral-950/90" />
+          </div>
+        ))}
+      </div>
+
+      {/* Left Form Surface */}
+      <div className="flex-1 flex flex-col justify-between px-4 sm:px-10 lg:px-16 xl:px-20 py-8 lg:py-12 overflow-y-auto max-w-2xl mx-auto lg:mx-0 w-full relative z-10">
+        {/* Top Header */}
+        <div className="flex items-center justify-between w-full">
+          <Link
+            to="/"
+            className="group inline-flex items-center gap-2 text-xs tracking-wider uppercase font-medium text-white/80 lg:text-muted-foreground hover:text-white lg:hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" />
+            <span>Return to Home</span>
+          </Link>
+          <ThemeToggle />
+        </div>
+
+        {/* Form Container */}
+        <div className="my-auto py-6 sm:py-10 w-full max-w-md mx-auto">
+          {/* Brand Identity */}
+          <div className="mb-6 sm:mb-8">
+            <div className="mb-6">
+              <Logo to="/" inverted={true} className="lg:hidden" />
+              <Logo to="/" className="hidden lg:flex" />
+            </div>
+
+            <h1 className="font-serif text-2xl sm:text-3xl font-medium tracking-tight text-white lg:text-foreground">
+              {title}
+            </h1>
+            <p className="mt-2 text-xs sm:text-sm text-white/70 lg:text-muted-foreground leading-relaxed">
+              {subtitle}
+            </p>
           </div>
 
-          {children}
+          {/* Form Content Card on Mobile */}
+          <div className="bg-neutral-900/80 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none border border-white/10 lg:border-none p-6 sm:p-8 lg:p-0 rounded-3xl shadow-2xl lg:shadow-none space-y-6">
+            {children}
+          </div>
 
-          {footer ? <div className="mt-6 text-center">{footer}</div> : null}
+          {footer && (
+            <div className="mt-6 text-center text-xs text-white/70 lg:text-muted-foreground">
+              {footer}
+            </div>
+          )}
+        </div>
+
+        {/* Minimal Footer */}
+        <div className="text-[11px] text-white/50 lg:text-muted-foreground/80 flex items-center justify-between">
+          <span>© {new Date().getFullYear()} BaytMiftah Technologies</span>
         </div>
       </div>
 
-      <div className="auth-shell-hero relative hidden flex-1 lg:block">
-        <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 to-transparent p-12">
-          <div className="text-white">
-            <h2 className="mb-4 text-4xl font-semibold">{heroTitle}</h2>
-            <p className="text-xl text-white/90">{heroSubtitle}</p>
+      {/* Right Architectural Photography Carousel (Desktop) */}
+      <div className="hidden lg:flex flex-1 relative bg-neutral-950 overflow-hidden select-none">
+        {/* Background Images with Smooth Cross-Fade */}
+        {CAROUSEL_SLIDES.map((s, idx) => (
+          <div
+            key={idx}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+              idx === currentSlide ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none"
+            } transform transition-transform duration-10000 ease-out`}
+          >
+            <img
+              src={s.image}
+              alt={s.title}
+              className="w-full h-full object-cover brightness-[0.72] contrast-[1.05]"
+            />
+            {/* Cinematic Gradient Vignette */}
+            <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-neutral-950/20" />
+            <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/50 via-transparent to-transparent" />
+          </div>
+        ))}
+
+        {/* Carousel Content Container */}
+        <div className="relative z-10 w-full h-full p-12 xl:p-16 flex flex-col justify-end text-white">
+          {/* Bottom Editorial Caption */}
+          <div className="space-y-4 max-w-xl">
+            <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-white/70">
+              {slide.location}
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="font-serif text-3xl xl:text-4xl font-normal tracking-tight text-white leading-tight">
+                {slide.title}
+              </h2>
+              <p className="text-sm text-white/80 leading-relaxed font-light max-w-lg">
+                {slide.subtitle}
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -36,7 +36,7 @@ export function LegalAcceptanceCheckbox({
         className="mt-1 h-4 w-4 rounded border-border text-primary"
         required
       />
-      <label htmlFor={id} className="text-sm text-muted-foreground leading-relaxed">
+      <label htmlFor={id} className="text-xs text-white/80 lg:text-muted-foreground leading-relaxed">
         {t(config.labelKey)}{" "}
         {policies.map((slug, index) => {
           const title =
@@ -48,7 +48,7 @@ export function LegalAcceptanceCheckbox({
           return (
             <span key={slug}>
               {index > 0 && (index === policies.length - 1 ? ` ${t("legal.acceptance.and")} ` : ", ")}
-              <Link to={policyHref(slug)} className="text-primary hover:underline">
+              <Link to={policyHref(slug)} className="text-white lg:text-primary underline lg:no-underline hover:underline font-medium">
                 {title}
               </Link>
             </span>

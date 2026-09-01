@@ -76,7 +76,7 @@ export function CookieConsentBanner() {
 
   return (
     <div
-      className="cookie-consent-banner fixed inset-x-0 bottom-0 z-[100] border-t border-surface-border bg-white p-4 shadow-lg md:p-6"
+      className="cookie-consent-banner fixed inset-x-0 bottom-0 z-[100] border-t border-surface-border bg-surface p-4 shadow-lg md:p-6"
       role="dialog"
       aria-label={t("legal.cookies.bannerTitle")}
     >

@@ -1,0 +1,35 @@
+name: Scheduled Background Jobs
+
+on:
+  schedule:
+    # Hourly worker pass: recurring charges, promise verification, automation
+    # events, estate operations, night watch, statement deliveries, broadcasts.
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  run-workers:
+    runs-on: ubuntu-latest
+    # Runs only when the live Supabase secrets have been configured; otherwise
+    # the job is skipped so forks/staging repos stay green.
+    if: ${{ vars.ENABLE_SCHEDULED_JOBS == 'true' }}
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run all background jobs
+        run: npm run jobs:run-all
+
+      - name: Operational health check
+        run: npm run ops:health

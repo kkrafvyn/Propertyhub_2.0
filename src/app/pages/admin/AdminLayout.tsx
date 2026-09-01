@@ -24,6 +24,7 @@ import { Badge } from "../../components/ui/badge";
 import { Input } from "../../components/ui/Input";
 import { fraudDetectionService } from "../../../lib/fraud-detection.service";
 import { adminService } from "../../../lib/admin.service";
+import { isElectron } from "../../../lib/surface-detection";
 import { AdminTrustReview } from "./AdminTrustReview";
 import { AdminRevenueManagement } from "./revenue/AdminRevenueManagement";
 
@@ -233,7 +234,7 @@ export function AdminLayout() {
 
   const renderStats = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-      <Card className="p-6 bg-white">
+      <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground mb-1">Total Users</p>
@@ -246,7 +247,7 @@ export function AdminLayout() {
         </div>
       </Card>
 
-      <Card className="p-6 bg-white">
+      <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground mb-1">Organizations</p>
@@ -261,7 +262,7 @@ export function AdminLayout() {
         </div>
       </Card>
 
-      <Card className="p-6 bg-white">
+      <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground mb-1">Active Listings</p>
@@ -274,7 +275,7 @@ export function AdminLayout() {
         </div>
       </Card>
 
-      <Card className="p-6 bg-white">
+      <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground mb-1">Moderation Queue</p>
@@ -292,7 +293,7 @@ export function AdminLayout() {
   );
 
   const renderTriageAlerts = () => (
-    <Card className="p-6 bg-white">
+    <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-semibold">Needs Triage</h2>
@@ -357,7 +358,7 @@ export function AdminLayout() {
   );
 
   const renderReviewCases = () => (
-    <Card className="p-6 bg-white">
+    <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-semibold">Active Review Cases</h2>
@@ -469,7 +470,7 @@ export function AdminLayout() {
   );
 
   const renderAuditFeed = () => (
-    <Card className="p-6 bg-white">
+    <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-semibold">Audit Trail</h2>
@@ -507,7 +508,7 @@ export function AdminLayout() {
   );
 
   const renderUsersSection = () => (
-    <Card className="p-6 bg-white">
+    <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-semibold">User Directory</h2>
@@ -576,7 +577,7 @@ export function AdminLayout() {
   );
 
   const renderOrganizationsSection = () => (
-    <Card className="p-6 bg-white">
+    <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-semibold">Organizations</h2>
@@ -651,7 +652,7 @@ export function AdminLayout() {
   );
 
   const renderListingsSection = () => (
-    <Card className="p-6 bg-white">
+    <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-semibold">Listings</h2>
@@ -756,7 +757,7 @@ export function AdminLayout() {
 
   const renderSupportSection = () => (
     <div className="space-y-6">
-      <Card className="p-6 bg-white">
+      <Card className="p-6">
         <h2 className="text-xl font-semibold mb-2">Support Toolkit</h2>
         <p className="text-sm text-muted-foreground mb-4">
           Look up a user, review their account flags, and jump to moderation workflows.
@@ -768,7 +769,7 @@ export function AdminLayout() {
         />
       </Card>
 
-      <Card className="p-6 bg-white">
+      <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">Matched Accounts</h3>
           <Badge variant="outline">{supportMatches.length}</Badge>
@@ -810,7 +811,7 @@ export function AdminLayout() {
         </div>
       </Card>
 
-      <Card className="p-6 bg-white">
+      <Card className="p-6">
         <h3 className="font-semibold mb-3">Escalation Queue</h3>
         <p className="text-sm text-muted-foreground mb-4">
           {overview.escalatedCases} escalated moderation cases need policy review.
@@ -823,7 +824,7 @@ export function AdminLayout() {
   );
 
   const renderSettingsSection = () => (
-    <Card className="p-6 bg-white">
+    <Card className="p-6">
       <h2 className="text-xl font-semibold mb-2">Admin Settings</h2>
       <p className="text-muted-foreground mb-4">
         Platform admin access is controlled by the <code>is_platform_admin</code> flag on user
@@ -839,7 +840,7 @@ export function AdminLayout() {
 
   const renderOverviewContent = () => (
     <div className="space-y-6">
-      <Card className="p-6 bg-white">
+      <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4">Platform Analytics</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
@@ -871,7 +872,7 @@ export function AdminLayout() {
       </Card>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-      <Card className="p-6 bg-white">
+      <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4">Trust Snapshot</h2>
         <div className="space-y-4">
           <div className="rounded-xl bg-secondary/30 p-4 flex items-start gap-3">
@@ -913,7 +914,7 @@ export function AdminLayout() {
   const renderSectionContent = () => {
     if (loading) {
       return (
-        <Card className="p-10 bg-white text-center">
+        <Card className="p-10 text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />
           <p className="text-muted-foreground">Loading the admin console...</p>
         </Card>
@@ -964,7 +965,7 @@ export function AdminLayout() {
 
     return (
       <div className="space-y-6">
-        <Card className="p-6 bg-white">
+        <Card className="p-6">
           <h2 className="text-xl font-semibold mb-2">Admin Surface In Progress</h2>
           <p className="text-muted-foreground">
             This section now shares the live moderation and audit data layer. The next step is
@@ -998,6 +999,20 @@ export function AdminLayout() {
             ? "Find users quickly and route support issues into moderation and trust workflows."
             : "Monitor operational health, trust signals, and moderation volume across BaytMiftah.";
 
+  if (isElectron()) {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground mb-1">{sectionTitle}</h1>
+          <p className="text-sm text-muted-foreground">{sectionDescription}</p>
+        </div>
+
+        {currentSection !== "revenue" ? renderStats() : null}
+        {renderSectionContent()}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <nav className="bg-gradient-to-r from-primary to-accent text-white">
@@ -1029,7 +1044,7 @@ export function AdminLayout() {
       </nav>
 
       <div className="flex">
-        <aside className="w-64 border-r border-border bg-white min-h-[calc(100vh-73px)] p-6">
+        <aside className="w-64 border-r border-border bg-card min-h-[calc(100vh-73px)] p-6">
           <nav className="space-y-2">
             {navItems.map((item) => {
               const isActive =

@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { isWorkspaceRole } from "../lib/baytmiftah/roles";
 import { useIdleSessionTimeout } from "../hooks/useIdleSessionTimeout";
 import { useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router";
+import { Navigate, Outlet, useLocation } from "react-router";
 import { RouteMonitoring } from "./RouteMonitoring";
 import { MobileAppShell } from "../mobile/MobileAppShell";
 import { MobileBottomNav } from "../mobile/MobileBottomNav";
@@ -13,7 +13,16 @@ import { CookieConsentBanner } from "./legal/CookieConsentBanner";
 import { BaytMiftahAIPanel } from "./ux/BaytMiftahAIPanel";
 import { PolicyUpdateBanner } from "./legal/PolicyUpdateBanner";
 import { useUserMarket } from "../context/MarketContext";
+import { SurfaceProvider } from "../context/SurfaceContext";
+import { CallProvider } from "../context/CallContext";
+import { CallModal } from "./communication/CallModal";
+import { IncomingCallBanner } from "./communication/IncomingCallBanner";
+import { ActiveCallBar } from "./communication/ActiveCallBar";
 import { PHONE_MEDIA, TABLET_MEDIA } from "../lib/viewports";
+import { isBusinessMobileApp } from "../../lib/mobile-app";
+import { isElectron } from "../../lib/surface-detection";
+import { AdminDesktopShell } from "../shells/AdminDesktopShell";
+import { GettingStartedChecklist, NewUserTutorial } from "./onboarding/NewUserTutorial";
 
 function useViewportFlags() {
   const [flags, setFlags] = useState(() => {
@@ -96,16 +105,34 @@ function shouldSkipOnboarding(pathname: string) {
 export function Root() {
   const location = useLocation();
   const { isPhone } = useViewportFlags();
-  const { role, user } = useAuth();
+  const { role, profile, user } = useAuth();
   const { ready: marketReady, onboardingComplete } = useUserMarket();
   useIdleSessionTimeout(Boolean(user));
+
+  const isPlatformAdmin = Boolean(profile?.is_platform_admin) || role === "admin" || role === "platform_admin";
+  const showAdminDesktopShell = isElectron() && location.pathname.startsWith("/admin");
 
   if (marketReady && !onboardingComplete && !shouldSkipOnboarding(location.pathname)) {
     return <LocationOnboarding />;
   }
 
+  // Both native apps expose the same protected admin dashboard to admins.
+  // The app variant changes the mobile experience, not authorization.
+  if (Capacitor.isNativePlatform() && isPlatformAdmin && location.pathname === "/") {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (Capacitor.isNativePlatform() && isBusinessMobileApp() && location.pathname === "/") {
+    return <Navigate to="/workspace" replace />;
+  }
+
   if (isPhone && location.pathname === "/") {
-    return <MobileAppShell />;
+    return (
+      <SurfaceProvider>
+        <MobileAppShell />
+        <NewUserTutorial />
+      </SurfaceProvider>
+    );
   }
 
   const onConsumerRoute = isConsumerRoute(location.pathname);
@@ -121,14 +148,29 @@ export function Root() {
     .join(" ");
 
   return (
-    <div className={shellClass}>
-      <RouteMonitoring />
-      <PolicyUpdateBanner />
-      <Outlet />
-      {showBottomNav ? <MobileWorkspaceDock /> : null}
-      {showBottomNav ? <MobileBottomNav variant="phone" /> : null}
-      <BaytMiftahAIPanel />
-      <CookieConsentBanner />
-    </div>
+    <SurfaceProvider>
+      <CallProvider>
+        <div className={shellClass}>
+          <RouteMonitoring />
+          <PolicyUpdateBanner />
+          {showAdminDesktopShell ? (
+            <AdminDesktopShell>
+              <Outlet />
+            </AdminDesktopShell>
+          ) : (
+            <Outlet />
+          )}
+          {showBottomNav ? <MobileWorkspaceDock /> : null}
+          {showBottomNav ? <MobileBottomNav variant="phone" /> : null}
+          <BaytMiftahAIPanel />
+          <CookieConsentBanner />
+          <CallModal />
+          <IncomingCallBanner />
+          <ActiveCallBar />
+          <NewUserTutorial />
+          <GettingStartedChecklist />
+        </div>
+      </CallProvider>
+    </SurfaceProvider>
   );
 }

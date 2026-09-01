@@ -94,6 +94,9 @@ export function WorkspaceFinance({
   );
 
   const canSeeManagerMetrics = currentRole === "owner" || currentRole === "manager";
+  const trustAvailableMinor = orgWallet?.available_minor || 0;
+  const trustPendingMinor = orgWallet?.pending_minor || 0;
+  const payoutQueueOpen = orgPayouts.filter((payout) => ["pending", "approved"].includes(payout.status)).length;
 
   const handleRequestPayout = async () => {
     if (!user) return;
@@ -143,7 +146,7 @@ export function WorkspaceFinance({
         <div>
           <h1 className="text-3xl font-semibold">Finance Workspace</h1>
           <p className="text-muted-foreground mt-2">
-            Reconciliation summaries, refund analytics, and export-ready payment reporting.
+            Trust accounting, payout approvals, reconciliation summaries, and export-ready payment reporting.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -181,6 +184,26 @@ export function WorkspaceFinance({
       </div>
 
       {canSeeManagerMetrics ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="p-4">
+            <p className="text-sm text-muted-foreground">Trust balance</p>
+            <p className="text-2xl font-semibold mt-1">{formatMoney(trustAvailableMinor, orgWallet?.currency || "GHS")}</p>
+            <p className="text-xs text-muted-foreground mt-1">Available for approved owner and operating payouts.</p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-sm text-muted-foreground">Pending reserve</p>
+            <p className="text-2xl font-semibold mt-1">{formatMoney(trustPendingMinor, orgWallet?.currency || "GHS")}</p>
+            <p className="text-xs text-muted-foreground mt-1">Held back until reconciliation or approvals clear.</p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-sm text-muted-foreground">Payout queue</p>
+            <p className="text-2xl font-semibold mt-1">{payoutQueueOpen}</p>
+            <p className="text-xs text-muted-foreground mt-1">Requests waiting on human review or disbursement.</p>
+          </Card>
+        </div>
+      ) : null}
+
+      {canSeeManagerMetrics ? (
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <LineChart className="w-5 h-5 text-primary" />
@@ -216,13 +239,20 @@ export function WorkspaceFinance({
           <Card className="p-6">
             <div className="flex items-center gap-2 mb-4">
               <Wallet className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold">Organization Wallet</h2>
+              <h2 className="text-xl font-semibold">Trust account & payout requests</h2>
             </div>
-            <p className="text-3xl font-semibold">
-              {formatMoney(orgWallet?.available_minor || 0, orgWallet?.currency || "GHS")}
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Available balance after platform fees and escrow releases.
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-border p-4">
+                <p className="text-sm text-muted-foreground">Available trust balance</p>
+                <p className="mt-1 text-2xl font-semibold">{formatMoney(trustAvailableMinor, orgWallet?.currency || "GHS")}</p>
+              </div>
+              <div className="rounded-xl border border-border p-4">
+                <p className="text-sm text-muted-foreground">Held in reserve</p>
+                <p className="mt-1 text-2xl font-semibold">{formatMoney(trustPendingMinor, orgWallet?.currency || "GHS")}</p>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mt-3">
+              Use this queue for human-approved owner payouts and operating withdrawals. Provider execution stays replaceable.
             </p>
             <div className="mt-6 space-y-3">
               <Input
@@ -245,7 +275,10 @@ export function WorkspaceFinance({
           </Card>
 
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Payout Queue</h2>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <h2 className="text-xl font-semibold">Payout Queue</h2>
+              <Badge variant="outline">{payoutQueueOpen} open</Badge>
+            </div>
             {orgPayouts.length === 0 ? (
               <p className="text-sm text-muted-foreground">No payout requests yet.</p>
             ) : (
@@ -258,6 +291,9 @@ export function WorkspaceFinance({
                           {formatMoney(payout.amount_minor, payout.currency || "GHS")}
                         </p>
                         <p className="text-sm text-muted-foreground">{payout.payout_destination}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Requested {new Date(payout.created_at).toLocaleString()}
+                        </p>
                       </div>
                       <Badge>{formatLabel(payout.status)}</Badge>
                     </div>

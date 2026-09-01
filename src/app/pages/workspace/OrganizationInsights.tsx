@@ -249,13 +249,13 @@ export default function OrganizationInsights({
         )}
       </div>
 
-      <Card className="p-6 border-blue-200 bg-blue-50/50">
+      <Card className="p-6 border-blue-200/60 bg-blue-50/50 dark:border-blue-900/40 dark:bg-blue-950/20">
         <div className="flex items-start gap-4">
-          <div className="p-2 bg-blue-200 rounded-lg">
-            <Target className="w-5 h-5 text-blue-700" />
+          <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+            <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <h3 className="font-semibold">Operational Recommendations</h3>
+            <h3 className="font-semibold text-foreground">Operational Recommendations</h3>
             <ul className="space-y-2 mt-3 text-sm">
               {recommendations.length === 0 ? (
                 <li>Your organization insights are connected and ready for more live activity.</li>

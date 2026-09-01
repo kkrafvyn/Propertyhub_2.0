@@ -1,4 +1,5 @@
 import {
+  Building,
   Building2,
   Home,
   LayoutGrid,
@@ -14,7 +15,7 @@ const categoryIcons: Record<(typeof categoryIds)[number], LucideIcon> = {
   all: LayoutGrid,
   apartment: Building2,
   house: Home,
-  commercial: Building2,
+  commercial: Building,
   verified: ShieldCheck,
 };
 

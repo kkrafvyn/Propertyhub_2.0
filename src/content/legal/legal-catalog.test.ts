@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  LEGAL_CONTACT,
+  LEGAL_LAUNCH_CHECKLIST,
+  LEGAL_OPERATOR,
+  LEGAL_PLATFORM_POSITION,
+} from "../../lib/legal-config";
+import {
   FOOTER_LEGAL_LINKS,
   LEGAL_CATEGORIES,
   LEGAL_DOCUMENTS,
@@ -117,5 +123,15 @@ describe("legal catalog", () => {
     expect(text).not.toContain("[LEGAL COMPANY NAME]");
     expect(text).not.toContain("[REGISTERED ADDRESS]");
     expect(text).not.toContain("[REGISTRATION NUMBER]");
+  });
+
+  it("keeps the legal platform role, jurisdiction, and launch checklist configured", () => {
+    expect(LEGAL_OPERATOR.name).toBeTruthy();
+    expect(LEGAL_OPERATOR.jurisdiction).toContain("Ghana");
+    expect(LEGAL_CONTACT.legal).toMatch(/@/);
+    expect(LEGAL_CONTACT.privacy).toMatch(/@/);
+    expect(LEGAL_PLATFORM_POSITION.summary).toContain("BaytMiftah");
+    expect(LEGAL_PLATFORM_POSITION.doesNotAutomaticallyActAs.length).toBeGreaterThan(0);
+    expect(LEGAL_LAUNCH_CHECKLIST.length).toBeGreaterThan(0);
   });
 });

@@ -1,7 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { LanguagePanel } from './LanguageSwitcher'
-import { IconMoon, IconSun } from './icons'
+import {
+  ThemeSunIcon,
+  ThemeMoonIcon,
+  ThemeSystemIcon,
+  ThemeLightCardPreview,
+  ThemeDarkCardPreview,
+  ThemeSystemCardPreview,
+  AccentSwatch,
+} from './ThemeIcons'
 import { useCurrency } from '../../context/CurrencyContext'
 import { useUserMarket } from '../../context/MarketContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -93,25 +101,140 @@ export function CurrencyPanel() {
 }
 
 export function ThemePanel() {
-  const { theme, toggleTheme } = useTheme()
+  const { theme, resolvedTheme, accent, setTheme, setAccent } = useTheme()
   const { t } = useTranslation()
-  const isDark = theme === 'dark'
+
+  const THEME_OPTIONS = [
+    {
+      id: 'light' as const,
+      label: t('profile.themeLight'),
+      desc: 'Daylight Ivory & Forest Emerald',
+      icon: ThemeSunIcon,
+      preview: ThemeLightCardPreview,
+    },
+    {
+      id: 'dark' as const,
+      label: t('profile.themeDark'),
+      desc: 'Emerald Midnight & Jade Glow',
+      icon: ThemeMoonIcon,
+      preview: ThemeDarkCardPreview,
+    },
+    {
+      id: 'system' as const,
+      label: 'System (Auto)',
+      desc: `Sync with device (${resolvedTheme === 'dark' ? 'currently dark' : 'currently light'})`,
+      icon: ThemeSystemIcon,
+      preview: ThemeSystemCardPreview,
+    },
+  ]
+
+  const ACCENT_OPTIONS = [
+    {
+      id: 'emerald' as const,
+      label: 'Emerald Forest',
+      color1: '#0f2922',
+      color2: '#52b788',
+    },
+    {
+      id: 'midnight' as const,
+      label: 'Midnight Sapphire',
+      color1: '#0369a1',
+      color2: '#38bdf8',
+    },
+    {
+      id: 'oasis' as const,
+      label: 'Sandstone Oasis',
+      color1: '#c2410c',
+      color2: '#fb923c',
+    },
+  ]
 
   return (
-    <div>
-      <p className="mb-3 text-sm text-ink-secondary">{t('profile.themeDesc')}</p>
-      <button
-        type="button"
-        onClick={toggleTheme}
-        className="flex w-full items-center justify-between rounded-xl border border-surface-border px-4 py-3 text-sm font-semibold text-ink transition hover:bg-surface-hover"
-        aria-pressed={isDark}
-      >
-        <span>{isDark ? t('profile.themeDark') : t('profile.themeLight')}</span>
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-subtle">
-          {isDark ? <IconSun className="h-4 w-4" /> : <IconMoon className="h-4 w-4" />}
-        </span>
-      </button>
-      <p className="mt-2 text-xs text-ink-secondary">{t('profile.themeTapToSwitch')}</p>
+    <div className="space-y-6">
+      <div>
+        <p className="mb-3 text-sm text-ink-secondary">
+          {t('profile.themeDesc')}
+        </p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {THEME_OPTIONS.map(({ id, label, desc, icon: Icon, preview: PreviewComponent }) => {
+            const isSelected = theme === id
+
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={(e) => setTheme(id, e)}
+                className={`group relative flex flex-col rounded-2xl border p-3 text-left transition-all duration-200 ${
+                  isSelected
+                    ? 'border-primary bg-surface-subtle shadow-md ring-2 ring-primary/20'
+                    : 'border-surface-border bg-surface hover:border-ink-secondary/30 hover:bg-surface-hover'
+                }`}
+                aria-pressed={isSelected}
+              >
+                {/* SVG Visual Card Preview */}
+                <div className="mb-3 w-full overflow-hidden rounded-xl border border-surface-border/60 transition-transform duration-300 group-hover:scale-[1.02]">
+                  <PreviewComponent className="w-full h-auto" />
+                </div>
+
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <Icon className="h-4 w-4 shrink-0 text-ink" />
+                      <p className="truncate text-sm font-semibold text-ink">{label}</p>
+                    </div>
+                    <p className="mt-0.5 text-xs text-ink-secondary">{desc}</p>
+                  </div>
+
+                  {/* Active Radio Badge */}
+                  <div
+                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all ${
+                      isSelected
+                        ? 'border-primary bg-primary text-white shadow-sm'
+                        : 'border-surface-border bg-surface'
+                    }`}
+                  >
+                    {isSelected && (
+                      <svg
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        className="h-3 w-3"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M3.5 8.5L6.5 11.5L12.5 4.5" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="border-t border-surface-border pt-5">
+        <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-muted">
+          Palette Accent Highlights
+        </p>
+        <p className="mb-3 text-sm text-ink-secondary">
+          Personalize active highlights, tags, and brand tones.
+        </p>
+        <div className="grid gap-2.5 sm:grid-cols-3">
+          {ACCENT_OPTIONS.map((item) => (
+            <AccentSwatch
+              key={item.id}
+              accent={item.id}
+              selected={accent === item.id}
+              onClick={() => setAccent(item.id)}
+              label={item.label}
+              color1={item.color1}
+              color2={item.color2}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

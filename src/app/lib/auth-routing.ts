@@ -5,7 +5,7 @@ type AuthUser = User | { user_metadata?: unknown; app_metadata?: unknown } | nul
 
 type AuthProfile = { role?: string; is_platform_admin?: boolean } | null;
 
-/** Resolve where to send a user after login when no explicit ?next= is provided. */
+/** Resolve the dashboard for the shared web app after login. */
 export function resolvePostAuthRedirect(
   user: AuthUser,
   profile: AuthProfile,

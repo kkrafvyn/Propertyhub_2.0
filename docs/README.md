@@ -2,7 +2,10 @@
 
 ## Product
 
-- **`APP_OVERVIEW_AND_ROADMAP.md`** — **Start here:** what BaytMiftah is, architecture, features, integrations, and roadmap
+- **`BAYTMIFTAH_COMPLETE_DELIVERY_REPORT.md`** — **Comprehensive Platform Delivery & Feature Inventory Report:** Complete feature audit, test verification, 8-surface summary, and release documentation
+- **`BAYTMIFTAH_FINAL_REOS_MASTER_SPEC.md`** — **Master Product & Architecture Specification:** Universal Role Taxonomy, 8-Surface Architecture, Deterministic Financial Sub-Ledger, Unit 360, and Fleet of Agentic AI
+- **`APP_OVERVIEW_AND_ROADMAP.md`** — Overview: architecture, features, integrations, and roadmap
+- **`BAYTMIFTAH_FINAL_REOS_SPEC_AUDIT.md`** — Master implementation and delivery audit checklist
 - **`BaytMiftah_Pitch.docx`** — investor & partner pitch document (regenerate: `python scripts/generate-pitch-docx.py`)
 - **`AI_INTEGRATION.md`** — AI surfaces, edge functions, optional keys
 - **`AWS_MIGRATION_PLAN.md`** — future AWS infrastructure migration

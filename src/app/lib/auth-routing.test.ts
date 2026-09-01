@@ -19,6 +19,13 @@ describe("resolvePostAuthRedirect", () => {
         { is_platform_admin: true },
       ),
     ).toBe("/admin");
+
+    expect(
+      resolvePostAuthRedirect(
+        { user_metadata: { role: "platform_admin" } },
+        null,
+      ),
+    ).toBe("/admin");
   });
 
   it("sends workspace roles to /workspace", () => {

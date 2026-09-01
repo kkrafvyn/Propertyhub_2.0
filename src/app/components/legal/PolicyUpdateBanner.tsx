@@ -43,7 +43,7 @@ export function PolicyUpdateBanner() {
   };
 
   return (
-    <div className="policy-update-banner border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+    <div className="policy-update-banner border-b border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-200">
       <div className="mx-auto flex max-w-[var(--max-width-page)] flex-wrap items-center justify-between gap-3">
         <p>
           {t("legal.policyUpdate.message")}{" "}
@@ -55,7 +55,7 @@ export function PolicyUpdateBanner() {
           type="button"
           disabled={dismissing}
           onClick={() => void accept()}
-          className="rounded-lg bg-amber-900 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-60"
+          className="rounded-lg bg-amber-900 dark:bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-60"
         >
           {t("legal.policyUpdate.accept")}
         </button>

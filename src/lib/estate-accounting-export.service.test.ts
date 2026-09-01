@@ -1,0 +1,3 @@
+import { describe, expect, it } from "vitest";
+import { buildEstateReceivablesCsv } from "./estate-accounting-export.service";
+describe("estate accounting export", () => { it("exports charge, allocation and derived outstanding values", () => { const csv = buildEstateReceivablesCsv([{ id:"charge", unit_id:"unit", amount_minor:150000, due_date:"2026-08-01", type:"rent", description:"August rent", currency:"GHS", payment_allocations:[{amount_minor:50000}] }], () => "A-01"); expect(csv).toContain('"A-01"'); expect(csv).toContain('"150000"'); expect(csv).toContain('"50000"'); expect(csv).toContain('"100000"'); }); });

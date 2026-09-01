@@ -23,13 +23,14 @@ import { useTranslation } from "../i18n/LocaleContext";
 import { useUserMarket } from "../context/MarketContext";
 import { ConsumerTabBar } from "./ConsumerTabBar";
 import { buildConsumerTabItems } from "./consumer-bottom-tabs";
-import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
+import { useSurfaceContext } from "../context/SurfaceContext";
 import { readCachedMobileListings, writeCachedMobileListings } from "../../lib/mobile-offline-cache";
 import "./mobile.css";
 
 export function MobileAppShell() {
   const navigate = useNavigate();
   const { user, role } = useAuth();
+  const { surface } = useSurfaceContext();
   const { t } = useTranslation();
   const { market, defaultListingMode } = useUserMarket();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -245,7 +246,6 @@ export function MobileAppShell() {
         onTabPress={handleTabPress}
         ariaLabel={t("mobile.primaryNav")}
       />
-      <BaytMiftahAIPanel context="search" />
       <MobileHomeMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </main>
   );

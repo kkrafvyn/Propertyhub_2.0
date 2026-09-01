@@ -20,6 +20,7 @@ const redirectUrls = [
   "http://127.0.0.1:5173/**",
   `${siteUrl.replace(/\/+$/, "")}/**`,
   "https://www.baytmiftah.com/**",
+  "https://*.vercel.app/**",
 ].join(",");
 
 const payload = {

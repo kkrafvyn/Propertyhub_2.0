@@ -8,6 +8,7 @@ import {
   Heart,
   Share2,
   Phone,
+  Video as VideoIcon,
   Mail,
   MessageCircle,
   Check,
@@ -26,6 +27,7 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { useAuth } from "../context/AuthContext";
+import { useCall } from "../context/CallContext";
 import { listingService } from "../../lib/listing.service";
 import { getPropertyCoverImage, getPropertyImageGallery } from "../../lib/property-media";
 import { savedPropertyService } from "../../lib/savedproperty.service";
@@ -62,6 +64,7 @@ export function PropertyDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { kyc } = useMyKyc();
+  const { startCall } = useCall();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showContactForm, setShowContactForm] = useState(false);
   const [listing, setListing] = useState<any | null>(null);
@@ -1056,13 +1059,55 @@ export function PropertyDetail() {
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                    onClick={() => {
+                      void startCall(
+                        {
+                          name: organization?.name || "Listing Host & Agent",
+                          role: "Listing Agent",
+                        },
+                        "voice",
+                        {
+                          listingId: listing.id,
+                          listingTitle: pageTitle,
+                        }
+                      );
+                    }}
+                  >
+                    <Phone className="w-4 h-4 text-emerald-500" />
+                    Voice Call
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-teal-500/30 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/40"
+                    onClick={() => {
+                      void startCall(
+                        {
+                          name: organization?.name || "Listing Host & Agent",
+                          role: "Listing Agent",
+                        },
+                        "video",
+                        {
+                          listingId: listing.id,
+                          listingTitle: pageTitle,
+                        }
+                      );
+                    }}
+                  >
+                    <VideoIcon className="w-4 h-4 text-teal-500" />
+                    Live Video Tour
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => void handleShare()}>
                     <Share2 className="w-4 h-4" />
                     Share
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => setShowContactForm(true)}>
                     <MessageCircle className="w-4 h-4" />
-                    Contact agent
+                    Contact
                   </Button>
                   {listing.listing_type === "sale" ? (
                     <Button
@@ -1071,7 +1116,7 @@ export function PropertyDetail() {
                       onClick={() => navigate("/app/mortgage")}
                     >
                       <Shield className="w-4 h-4" />
-                      Mortgage estimate
+                      Mortgage
                     </Button>
                   ) : null}
                 </div>

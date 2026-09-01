@@ -591,7 +591,7 @@ export function WorkspacePayments({
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           {GHANA_PAYMENT_CHANNELS.map((channel) => (
-            <div key={channel.id} className="rounded-xl border border-border bg-white p-3">
+            <div key={channel.id} className="rounded-xl border border-border bg-card p-3">
               <p className="font-medium">{channel.label}</p>
               <p className="mt-1 text-xs text-muted-foreground">{channel.helper}</p>
               <p className="mt-2 text-xs text-primary">{channel.settlementHint}</p>

@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { useTheme } from "../../context/ThemeContext";
 
 const BRAND_GREEN = "#0F2922";
 
@@ -7,7 +8,8 @@ export function LogoMark({
   inverted = false,
   ...props
 }: React.SVGProps<SVGSVGElement> & { inverted?: boolean }) {
-  const fill = inverted ? "#FFFFFF" : BRAND_GREEN;
+  const { resolvedTheme } = useTheme();
+  const fill = inverted || resolvedTheme === "dark" ? "#FFFFFF" : BRAND_GREEN;
 
   return (
     <svg
@@ -44,15 +46,17 @@ export function Logo({
   size = "md",
   inverted = false,
 }: LogoProps) {
+  const { resolvedTheme } = useTheme();
   const textSize = size === "sm" ? "text-sm" : "text-lg";
   const markSize = size === "sm" ? "h-8 w-8" : "h-9 w-9";
+  const textColor = inverted || resolvedTheme === "dark" ? "text-white" : "text-brand-forest";
 
   return (
     <Link to={to} className={`flex shrink-0 items-center gap-2.5 ${className}`}>
       <LogoMark className={markSize} inverted={inverted} />
       {showText && (
         <span
-          className={`${textSize} font-bold tracking-[0.14em] ${inverted ? "text-white" : "text-brand-forest"}`}
+          className={`${textSize} font-bold tracking-[0.14em] ${textColor}`}
         >
           BΛYTMIFTΛH
         </span>

@@ -1,4 +1,5 @@
 export { Logo, LogoMark } from "./Logo";
+export { ThemeToggle } from "./ThemeToggle";
 export { DesktopShell } from "./DesktopShell";
 export { SearchPill, CompactSearch } from "./SearchPill";
 export { CategoryBar } from "./CategoryBar";
@@ -60,3 +61,5 @@ export * from "./AirbnbUI";
 export * from "./MobileUI";
 export * from "./icons";
 export * from "./mobile/MobileHomeSections";
+export { NativeCameraCapture } from "./NativeCameraCapture";
+export { BiometricLoginButton } from "./BiometricLoginButton";

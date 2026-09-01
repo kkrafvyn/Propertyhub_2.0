@@ -1,7 +1,41 @@
 import type { Database } from "./database.types";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
-export type MemberRole = Database["public"]["Tables"]["organization_members"]["Row"]["role"];
+
+export type StandardMemberRole = Database["public"]["Tables"]["organization_members"]["Row"]["role"];
+
+export type ExtendedCompanyRole =
+  | "managing_director"
+  | "head_property_management"
+  | "property_manager"
+  | "facilities_manager"
+  | "estate_officer"
+  | "caretaker"
+  | "technician"
+  | "finance_manager"
+  | "finance_officer"
+  | "collections_officer"
+  | "sales_manager"
+  | "sales_agent"
+  | "marketing_manager"
+  | "marketing_officer"
+  | "customer_service_manager"
+  | "customer_service_agent"
+  | "developer"
+  | "enterprise_operator";
+
+export type PlatformRole =
+  | "platform_admin"
+  | "platform_ops"
+  | "trust_safety"
+  | "platform_support"
+  | "platform_finance"
+  | "platform_analyst"
+  | "platform_dev";
+
+export type ExternalRole = "property_owner" | "contractor" | "vendor";
+
+export type MemberRole = StandardMemberRole | ExtendedCompanyRole | PlatformRole | ExternalRole;
 
 export interface MembershipRow {
   organization: Organization | Organization[] | null;

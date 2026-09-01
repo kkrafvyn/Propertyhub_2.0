@@ -1,40 +1,96 @@
 import { useEffect, useMemo, useState, type ComponentType } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import {
+  Activity,
+  AlertOctagon,
+  AlertTriangle,
+  AreaChart,
+  ArrowUpRight,
+  BadgeCheck,
+  Banknote,
   BarChart3,
   Bell,
+  Blocks,
+  BookOpen,
+  BookOpenCheck,
+  Bot,
   Brain,
+  Briefcase,
+  Building,
   Building2,
   CalendarDays,
+  CheckSquare,
+  CircleDollarSign,
+  ClipboardCheck,
+  Clock,
+  Coins,
+  Compass,
+  Contact,
+  Cpu,
   CreditCard,
+  Database,
+  FileBarChart,
+  FileCheck,
+  FileCheck2,
+  FileCode2,
+  FileSearch,
+  FileSignature,
+  FileSpreadsheet,
   FileText,
+  FolderTree,
+  Gauge,
+  Grid3X3,
+  Hammer,
+  Headphones,
   Heart,
+  HeartHandshake,
+  HelpCircle,
   Home,
+  Inbox,
   KeyRound,
+  Landmark,
+  LayoutDashboard,
   LineChart,
   Map,
+  MapPin,
+  Megaphone,
+  Menu,
   MessageCircle,
-  AlertTriangle,
+  MessagesSquare,
+  MessageSquare,
   Palette,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PieChart,
   Plug,
   Plus,
+  QrCode,
+  Receipt,
+  Rocket,
+  Scale,
   Search,
   Settings,
   Shield,
+  ShieldAlert,
+  ShieldCheck,
   Smartphone,
+  Sparkles,
   TrendingUp,
+  Truck,
+  UserCheck,
+  UserPlus,
+  UserRound,
   Users,
   Users2,
   Workflow,
   Wrench,
+  X,
   Zap,
-  ClipboardCheck,
-  UserRound,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
-import type { Database } from "../../../lib/database.types";
+import type { Database as DatabaseTypes } from "../../../lib/database.types";
 import { organizationService } from "../../../lib/organization.service";
 import MarketIntelligenceDashboard from "./MarketIntelligence";
 import AutomationWorkflows from "./AutomationWorkflows";
@@ -45,12 +101,19 @@ import NotificationSettings from "./NotificationSettings";
 import LocationIntelligence from "./LocationIntelligence";
 import OrganizationInsights from "./OrganizationInsights";
 import MobileAppSettings from "./MobileAppSettings";
+import { UtilitySubmetering } from "./UtilitySubmetering";
+import { AILeaseAnalyzer } from "./AILeaseAnalyzer";
+import { GateClearanceKiosk } from "./GateClearanceKiosk";
+import { ContractorWorkOrders } from "./ContractorWorkOrders";
 import AdvancedSearch from "./AdvancedSearch";
 import PredictiveAnalytics from "./PredictiveAnalytics";
 import RecommendationEngine from "./RecommendationEngine";
 import TeamCollaborationHub from "./TeamCollaborationHub";
 import CustomWorkflowsBuilder from "./CustomWorkflowsBuilder";
 import { IntegrationHub } from "./IntegrationHub";
+import { AIRentYieldPredictor } from "./AIRentYieldPredictor";
+import { WhatsAppAutomationHub } from "./WhatsAppAutomationHub";
+import { MultiCurrencyHedgingHub } from "./MultiCurrencyHedgingHub";
 import { WorkspaceHost } from "./WorkspaceHost";
 import { WorkspaceMaintenance } from "./WorkspaceMaintenance";
 import { WorkspaceInspections } from "./WorkspaceInspections";
@@ -73,7 +136,54 @@ import { WorkspaceTeam } from "./WorkspaceTeam";
 import { WorkspaceContacts } from "./WorkspaceContacts";
 import { WorkspaceTasks } from "./WorkspaceTasks";
 import { WorkspaceSmartProperty } from "./WorkspaceSmartProperty";
-import { Logo } from "../../components/baytmiftah";
+import { EstateOperations } from "./EstateOperations";
+import { EstateFinance } from "./EstateFinance";
+import { EstateCommunications } from "./EstateCommunications";
+import { ContextualInboxHub } from "./ContextualInboxHub";
+import { StakeholderPortals } from "./StakeholderPortals";
+import { EnterpriseOperations } from "./EnterpriseOperations";
+import { CommandCenter } from "./CommandCenter";
+import { DataMigration } from "./DataMigration";
+import { Property360 } from "./Property360";
+import { Customer360 } from "./Customer360";
+import { TechnicianJobs } from "./TechnicianJobs";
+import { EstateAIOperations } from "./EstateAIOperations";
+import { CompanyLaunchpad } from "./CompanyLaunchpad";
+import { OpeningBalanceImport } from "./OpeningBalanceImport";
+import { PaymentImport } from "./PaymentImport";
+import { EstatePayables } from "./EstatePayables";
+import { OwnerStatements } from "./OwnerStatements";
+import { ServiceDesk } from "./ServiceDesk";
+import { Unit360 } from "./Unit360";
+import { GeneralLedger } from "./GeneralLedger";
+import { ProcurementCenter } from "./ProcurementCenter";
+import { BankReconciliation } from "./BankReconciliation";
+import { PortfolioAnalytics } from "./PortfolioAnalytics";
+import { AICommandCenter } from "./AICommandCenter";
+import { AutomationBuilder } from "./AutomationBuilder";
+import { BulkOperations } from "./BulkOperations";
+import { DataImportExport } from "./DataImportExport";
+import { ChartOfAccountsAdmin } from "./ChartOfAccountsAdmin";
+import { JournalEntryManager } from "./JournalEntryManager";
+import { FinancialStatementsViewer } from "./FinancialStatementsViewer";
+import { CollectionsCases } from "./CollectionsCases";
+import { LeasingApplications } from "./LeasingApplications";
+import { ESignature } from "./ESignature";
+import { OwnerDisbursements } from "./OwnerDisbursements";
+import { ApprovalCenter } from "./ApprovalCenter";
+import { ExceptionCenter } from "./ExceptionCenter";
+import { CompanyKnowledgeHub } from "./CompanyKnowledgeHub";
+import { EvidenceCenter } from "./EvidenceCenter";
+import { CustomerHealthCenter } from "./CustomerHealthCenter";
+import { ProductivityWorkspace } from "./ProductivityWorkspace";
+import { MyWorkQueue } from "./MyWorkQueue";
+import { StaffTimeTracking } from "./StaffTimeTracking";
+import { DataRetentionCenter } from "./DataRetentionCenter";
+import { ContractorPortal } from "./ContractorPortal";
+import { UniversalCommandBar } from "../../components/navigation/UniversalCommandBar";
+import { ShowMeHowOverlay } from "../../components/ux/ShowMeHowOverlay";
+import { practiceModeService } from "../../../lib/practice-mode-fixtures";
+import { Logo, ThemeToggle } from "../../components/baytmiftah";
 import { WorkspaceMfaGate } from "../../components/security/WorkspaceMfaGate";
 import {
   WORKSPACE_ENTRY_PATH,
@@ -89,6 +199,7 @@ import {
   getWorkspaceRoleDescription,
 } from "../../lib/workspace-role-nav";
 import { canWorkspace } from "../../../lib/workspace-permissions";
+import { canAccessOrganization } from "../../../lib/organization-access";
 
 interface NavItem {
   slug: string;
@@ -99,9 +210,9 @@ interface NavItem {
 const CORE_NAV_ITEMS: NavItem[] = [
   { slug: "", label: "Dashboard", icon: Home },
   { slug: "listings", label: "Listings", icon: Building2 },
-  { slug: "leads", label: "Leads", icon: MessageCircle },
-  { slug: "contacts", label: "Contacts", icon: Users2 },
-  { slug: "tasks", label: "Tasks", icon: Workflow },
+  { slug: "leads", label: "Leads", icon: UserPlus },
+  { slug: "contacts", label: "Contacts", icon: Contact },
+  { slug: "tasks", label: "Tasks", icon: CheckSquare },
   { slug: "calendar", label: "Calendar", icon: CalendarDays },
   { slug: "payments", label: "Payments", icon: CreditCard },
   { slug: "team", label: "Team", icon: Users },
@@ -109,36 +220,79 @@ const CORE_NAV_ITEMS: NavItem[] = [
   { slug: "leases", label: "Leases", icon: KeyRound },
   { slug: "maintenance", label: "Maintenance", icon: Wrench },
   { slug: "inspections", label: "Inspections", icon: ClipboardCheck },
-  { slug: "smart-property", label: "Smart Property", icon: Smartphone },
+  { slug: "smart-property", label: "Smart Property", icon: Cpu },
+  { slug: "estate-operations", label: "Estate Operations", icon: Building },
+  { slug: "estate-finance", label: "Estate Finance", icon: CircleDollarSign },
+  { slug: "contextual-inbox", label: "Realtime Inbox", icon: MessagesSquare },
+  { slug: "estate-communications", label: "Client Communications", icon: Megaphone },
+  { slug: "stakeholder-portals", label: "Stakeholder Portals", icon: UserRound },
+  { slug: "enterprise-operations", label: "Enterprise Operations", icon: Briefcase },
+  { slug: "command-center", label: "Command Center", icon: LayoutDashboard },
+  { slug: "data-migration", label: "Data Migration", icon: Database },
+  { slug: "property-360", label: "Property 360", icon: Compass },
+  { slug: "customer-360", label: "Customer 360", icon: HeartHandshake },
+  { slug: "technician-jobs", label: "My Jobs", icon: Hammer },
+  { slug: "ai-operations", label: "AI Briefing", icon: Sparkles },
+  { slug: "company-launchpad", label: "Company Launchpad", icon: Rocket },
+  { slug: "opening-balances", label: "Opening Balances", icon: Receipt },
+  { slug: "payment-import", label: "Payment Import", icon: FileSpreadsheet },
+  { slug: "estate-payables", label: "Payables", icon: ArrowUpRight },
+  { slug: "owner-statements", label: "Owner Statements", icon: FileBarChart },
+  { slug: "service-desk", label: "Service Desk", icon: Headphones },
+  { slug: "unit-360", label: "Unit 360", icon: Grid3X3 },
+  { slug: "utility-metering", label: "Utility Sub-Metering", icon: Gauge },
+  { slug: "ai-lease-analyzer", label: "AI Lease Analyzer", icon: FileSearch },
+  { slug: "gate-clearance", label: "Gate Clearance Kiosk", icon: QrCode },
+  { slug: "contractor-work-orders", label: "Contractor MoMo", icon: Banknote },
+  { slug: "whatsapp-hub", label: "WhatsApp Hub", icon: MessageSquare },
+  { slug: "multi-currency-fx", label: "FX & Hedging", icon: Coins },
+  { slug: "chart-of-accounts", label: "Chart of Accounts", icon: FolderTree },
+  { slug: "journal-entries", label: "Journal Entries", icon: BookOpenCheck },
+  { slug: "financial-statements", label: "Financial Reports", icon: Scale },
+  { slug: "collections-cases", label: "Collections Cases", icon: ShieldAlert },
+  { slug: "leasing-applications", label: "Lease Applications", icon: UserCheck },
+  { slug: "esignature", label: "eSignature Hub", icon: FileSignature },
+  { slug: "owner-disbursements", label: "Owner Payouts", icon: Landmark },
+  { slug: "approval-center", label: "Approval Center", icon: BadgeCheck },
+  { slug: "exception-center", label: "Exception Center", icon: AlertOctagon },
+  { slug: "my-work", label: "My Work", icon: Inbox },
+  { slug: "staff-time", label: "Staff Time", icon: Clock },
+  { slug: "contractor-portal", label: "Contractor Portal", icon: Hammer },
+  { slug: "data-retention", label: "Retention & Holds", icon: Shield },
+  { slug: "company-knowledge", label: "Company SOP AI", icon: BookOpen },
+  { slug: "evidence-center", label: "Evidence Dossier", icon: FileCheck },
+  { slug: "customer-health", label: "SaaS Health & Ops", icon: Activity },
+  { slug: "productivity", label: "Living Documents", icon: FileCode2 },
 ];
 
 const WORKSPACE_SECONDARY_NAV: NavItem[] = [
   { slug: "market-intelligence", label: "Analytics", icon: LineChart },
-  { slug: "trust", label: "Trust", icon: Shield },
-  { slug: "compliance", label: "Compliance", icon: Shield },
+  { slug: "trust", label: "Trust", icon: ShieldCheck },
+  { slug: "compliance", label: "Compliance", icon: FileCheck2 },
   { slug: "automation", label: "Automation", icon: Zap },
-  { slug: "ai-assistant", label: "AI", icon: Brain },
+  { slug: "ai-assistant", label: "AI", icon: Bot },
   { slug: "settings", label: "Settings", icon: Settings },
 ];
 
 const TIER_TWO_NAV_ITEMS: NavItem[] = [
   { slug: "fraud-alerts", label: "Fraud Alerts", icon: AlertTriangle },
-  { slug: "vendors", label: "Vendors", icon: Wrench },
-  { slug: "location-intelligence", label: "Location Intel", icon: Map },
-  { slug: "org-insights", label: "Org Insights", icon: BarChart3 },
+  { slug: "vendors", label: "Vendors", icon: Truck },
+  { slug: "location-intelligence", label: "Location Intel", icon: MapPin },
+  { slug: "org-insights", label: "Org Insights", icon: PieChart },
   { slug: "notifications", label: "Notifications", icon: Bell },
   { slug: "whitelabel", label: "White-Label", icon: Palette },
   { slug: "mobile-settings", label: "Mobile Apps", icon: Smartphone },
   { slug: "integrations", label: "Integrations", icon: Plug },
-  { slug: "blockchain", label: "Blockchain", icon: Shield },
+  { slug: "blockchain", label: "Blockchain", icon: Blocks },
   { slug: "host", label: "Host", icon: Home },
   { slug: "finance", label: "Finance", icon: BarChart3 },
 ];
 
 const AI_NAV_ITEMS: NavItem[] = [
+  { slug: "ai-rent-yield", label: "AI Yield Predictor", icon: TrendingUp },
   { slug: "advanced-search", label: "Advanced Search", icon: Search },
-  { slug: "predictive-analytics", label: "Predictive Analytics", icon: TrendingUp },
-  { slug: "recommendations", label: "Recommendations", icon: Heart },
+  { slug: "predictive-analytics", label: "Predictive Analytics", icon: AreaChart },
+  { slug: "recommendations", label: "Recommendations", icon: Sparkles },
 ];
 
 const ENTERPRISE_NAV_ITEMS: NavItem[] = [
@@ -146,13 +300,12 @@ const ENTERPRISE_NAV_ITEMS: NavItem[] = [
   { slug: "workflows", label: "Workflows", icon: Workflow },
 ];
 
+// Kept for external consumers; internal rendering uses renderNavGroup
 function getNavItemClasses(isActive: boolean) {
   return `workspace-nav-link flex items-center gap-3 ${isActive ? "active" : ""}`;
 }
 
-function getFeatureNavItemClasses(isActive: boolean) {
-  return `workspace-nav-link flex items-center gap-3 ${isActive ? "active" : ""}`;
-}
+void getNavItemClasses; // suppress unused-var lint
 
 function getRoleLabel(role: MemberRole | null) {
   if (!role) return "Member";
@@ -160,12 +313,46 @@ function getRoleLabel(role: MemberRole | null) {
 }
 
 export function WorkspaceLayout() {
-  const { user } = useAuth();
+  const { user, profile, role } = useAuth();
   const navigate = useNavigate();
   const { organizationSlug = "", page } = useParams();
   const [loading, setLoading] = useState(true);
   const [memberships, setMemberships] = useState<OrganizationMembership[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [previewRole, setPreviewRole] = useState<MemberRole | null>(null);
+  const [toolSearch, setToolSearch] = useState("");
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [showMeHowOpen, setShowMeHowOpen] = useState(false);
+  const [isPracticeMode, setIsPracticeMode] = useState(() => practiceModeService.isPracticeMode());
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("bm_workspace_collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  const toggleCollapsed = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("bm_workspace_collapsed", String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCommandOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -207,37 +394,84 @@ export function WorkspaceLayout() {
     [memberships, organizationSlug]
   );
 
+  const userOrganizationIds = useMemo(
+    () => memberships.map((membership) => membership.organization.id),
+    [memberships],
+  );
+
+  const isPlatformAdmin = Boolean(profile?.is_platform_admin) || role === "platform_admin";
+  const isCurrentOrgAccessible = canAccessOrganization({
+    userOrganizationIds,
+    targetOrganizationId: currentMembership?.organization.id ?? null,
+    isPlatformAdmin,
+  });
+
   const fallbackMembership = memberships[0] || null;
   const organization = currentMembership?.organization || null;
   const currentRole = currentMembership?.role || null;
+  const effectiveRole: MemberRole = previewRole || currentRole || "owner";
   const currentPage = page || "";
   const workspaceBasePath = organization
     ? getWorkspaceRoute(organization.slug)
     : WORKSPACE_ENTRY_PATH;
 
   const visibleCoreNav = useMemo(
-    () => filterWorkspaceNavItems(CORE_NAV_ITEMS, currentRole),
-    [currentRole],
+    () => filterWorkspaceNavItems(CORE_NAV_ITEMS, effectiveRole),
+    [effectiveRole],
   );
   const visibleToolsNav = useMemo(
-    () => filterWorkspaceNavItems(WORKSPACE_SECONDARY_NAV, currentRole),
-    [currentRole],
+    () => filterWorkspaceNavItems(WORKSPACE_SECONDARY_NAV, effectiveRole),
+    [effectiveRole],
   );
   const visibleMoreNav = useMemo(
-    () => filterWorkspaceNavItems(TIER_TWO_NAV_ITEMS, currentRole),
-    [currentRole],
+    () => filterWorkspaceNavItems(TIER_TWO_NAV_ITEMS, effectiveRole),
+    [effectiveRole],
   );
   const visibleAiNav = useMemo(
-    () => filterWorkspaceNavItems(AI_NAV_ITEMS, currentRole),
-    [currentRole],
+    () => filterWorkspaceNavItems(AI_NAV_ITEMS, effectiveRole),
+    [effectiveRole],
   );
   const visibleEnterpriseNav = useMemo(
-    () => filterWorkspaceNavItems(ENTERPRISE_NAV_ITEMS, currentRole),
-    [currentRole],
+    () => filterWorkspaceNavItems(ENTERPRISE_NAV_ITEMS, effectiveRole),
+    [effectiveRole],
   );
-  const canCreateListing = canWorkspace(currentRole, "listings:write");
+
+  const filteredSearchResults = useMemo(() => {
+    const query = toolSearch.trim().toLowerCase();
+    if (!query) return null;
+
+    const sections = [
+      { category: "Core", items: visibleCoreNav },
+      { category: "Tools", items: visibleToolsNav },
+      { category: "More", items: visibleMoreNav },
+      { category: "AI Intelligence", items: visibleAiNav },
+      { category: "Enterprise", items: visibleEnterpriseNav },
+    ];
+
+    const results: Array<NavItem & { category: string }> = [];
+    for (const section of sections) {
+      for (const item of section.items) {
+        if (
+          item.label.toLowerCase().includes(query) ||
+          item.slug.toLowerCase().includes(query)
+        ) {
+          results.push({ ...item, category: section.category });
+        }
+      }
+    }
+    return results;
+  }, [
+    toolSearch,
+    visibleCoreNav,
+    visibleToolsNav,
+    visibleMoreNav,
+    visibleAiNav,
+    visibleEnterpriseNav,
+  ]);
+
+  const canCreateListing = canWorkspace(effectiveRole, "listings:write");
   const pageAllowed =
-    currentPage === "" || canAccessWorkspaceSlug(currentPage, currentRole);
+    currentPage === "" || canAccessWorkspaceSlug(currentPage, effectiveRole);
 
   const handleOrganizationChange = (organizationId: string) => {
     const nextMembership = memberships.find(
@@ -261,6 +495,8 @@ export function WorkspaceLayout() {
           <WorkspaceDashboard
             organization={organization}
             workspaceBasePath={workspaceBasePath}
+            currentRole={effectiveRole}
+            onRoleChange={(r) => setPreviewRole(r)}
           />
         );
       case "new":
@@ -379,7 +615,7 @@ export function WorkspaceLayout() {
           />
         );
       case "vendors":
-        return <VendorManagement organizationId={organization.id} />;
+        return <VendorManagement organizationId={organization.id} currentUserId={user.id} />;
       case "ai-assistant":
         return <AIAssistant organizationId={organization.id} />;
       case "notifications":
@@ -419,6 +655,52 @@ export function WorkspaceLayout() {
         );
       case "smart-property":
         return <WorkspaceSmartProperty organizationId={organization.id} />;
+      case "estate-operations":
+        return <EstateOperations organizationId={organization.id} currentUserId={user.id} />;
+      case "estate-finance":
+        return <EstateFinance organizationId={organization.id} currentUserId={user.id} />;
+      case "estate-communications":
+        return <EstateCommunications organizationId={organization.id} currentUserId={user.id} />;
+      case "contextual-inbox":
+        return <ContextualInboxHub organizationId={organization.id} currentUserId={user.id} />;
+      case "stakeholder-portals":
+        return <StakeholderPortals organizationId={organization.id} />;
+      case "enterprise-operations":
+        return <EnterpriseOperations organizationId={organization.id} currentUserId={user.id} />;
+      case "command-center":
+        return <CommandCenter organizationId={organization.id} />;
+      case "data-migration":
+        return <DataMigration organizationId={organization.id} currentUserId={user.id} />;
+      case "property-360":
+        return <Property360 organizationId={organization.id} />;
+      case "customer-360":
+        return <Customer360 organizationId={organization.id} />;
+      case "technician-jobs":
+        return <TechnicianJobs organizationId={organization.id} currentUserId={user.id} />;
+      case "ai-operations":
+        return <EstateAIOperations organizationId={organization.id} currentUserId={user.id} />;
+      case "company-launchpad":
+        return <CompanyLaunchpad organizationId={organization.id} />;
+      case "opening-balances":
+        return <OpeningBalanceImport organizationId={organization.id} currentUserId={user.id} />;
+      case "payment-import":
+        return <PaymentImport organizationId={organization.id} currentUserId={user.id} />;
+      case "estate-payables":
+        return <EstatePayables organizationId={organization.id} currentUserId={user.id} />;
+      case "owner-statements":
+        return <OwnerStatements organizationId={organization.id} />;
+      case "service-desk":
+        return <ServiceDesk organizationId={organization.id} />;
+      case "unit-360":
+        return <Unit360 organizationId={organization.id} />;
+      case "utility-metering":
+        return <UtilitySubmetering organizationId={organization.id} />;
+      case "ai-lease-analyzer":
+        return <AILeaseAnalyzer />;
+      case "gate-clearance":
+        return <GateClearanceKiosk organizationId={organization.id} currentUserId={user.id} />;
+      case "contractor-work-orders":
+        return <ContractorWorkOrders organizationId={organization.id} currentUserId={user.id} />;
       case "advanced-search":
         return (
           <AdvancedSearch
@@ -428,6 +710,12 @@ export function WorkspaceLayout() {
         );
       case "predictive-analytics":
         return <PredictiveAnalytics organizationId={organization.id} />;
+      case "ai-rent-yield":
+        return <AIRentYieldPredictor organizationId={organization.id} />;
+      case "whatsapp-hub":
+        return <WhatsAppAutomationHub />;
+      case "multi-currency-fx":
+        return <MultiCurrencyHedgingHub />;
       case "recommendations":
         return <RecommendationEngine />;
       case "team-collaboration":
@@ -445,11 +733,64 @@ export function WorkspaceLayout() {
             currentRole={currentRole}
           />
         );
+      // ── Desktop-Exclusive Enterprise Modules ──────────────────────
+      case "general-ledger":
+        return <GeneralLedger organizationId={organization.id} />;
+      case "procurement":
+        return <ProcurementCenter organizationId={organization.id} currentUserId={user.id} />;
+      case "bank-reconciliation":
+        return <BankReconciliation organizationId={organization.id} currentUserId={user.id} />;
+      case "portfolio-analytics":
+        return <PortfolioAnalytics organizationId={organization.id} />;
+      case "ai-command-center":
+        return <AICommandCenter organizationId={organization.id} />;
+      case "automation-builder":
+        return <AutomationBuilder organizationId={organization.id} />;
+      case "bulk-operations":
+        return <BulkOperations organizationId={organization.id} />;
+      case "data-import-export":
+        return <DataImportExport />;
+      case "chart-of-accounts":
+        return <ChartOfAccountsAdmin organizationId={organization.id} />;
+      case "journal-entries":
+        return <JournalEntryManager organizationId={organization.id} />;
+      case "financial-statements":
+        return <FinancialStatementsViewer organizationId={organization.id} />;
+      case "collections-cases":
+        return <CollectionsCases organizationId={organization.id} />;
+      case "leasing-applications":
+        return <LeasingApplications organizationId={organization.id} />;
+      case "esignature":
+        return <ESignature organizationId={organization.id} />;
+      case "owner-disbursements":
+        return <OwnerDisbursements organizationId={organization.id} />;
+      case "approval-center":
+        return <ApprovalCenter organizationId={organization.id} />;
+      case "exception-center":
+        return <ExceptionCenter organizationId={organization.id} />;
+      case "my-work":
+        return <MyWorkQueue organizationId={organization.id} />;
+      case "staff-time":
+        return <StaffTimeTracking organizationId={organization.id} />;
+      case "contractor-portal":
+        return <ContractorPortal organizationId={organization.id} />;
+      case "data-retention":
+        return <DataRetentionCenter organizationId={organization.id} />;
+      case "company-knowledge":
+        return <CompanyKnowledgeHub organizationId={organization.id} />;
+      case "evidence-center":
+        return <EvidenceCenter organizationId={organization.id} />;
+      case "customer-health":
+        return <CustomerHealthCenter organizationId={organization.id} />;
+      case "productivity":
+        return <ProductivityWorkspace organizationId={organization.id} />;
       default:
         return (
           <WorkspaceDashboard
             organization={organization}
             workspaceBasePath={workspaceBasePath}
+            currentRole={effectiveRole}
+            onRoleChange={(r) => setPreviewRole(r)}
           />
         );
     }
@@ -475,6 +816,10 @@ export function WorkspaceLayout() {
     );
   }
 
+  if (organizationSlug && memberships.length > 0 && !isCurrentOrgAccessible) {
+    return <Navigate to={WORKSPACE_ENTRY_PATH} replace />;
+  }
+
   if (!organization && fallbackMembership) {
     const redirectPath = page
       ? getWorkspaceRoute(fallbackMembership.organization.slug, page)
@@ -486,183 +831,426 @@ export function WorkspaceLayout() {
     return <Navigate to={WORKSPACE_ENTRY_PATH} replace />;
   }
 
+  const renderNavGroup = (
+    title: string,
+    items: NavItem[],
+    categoryTag?: string,
+    isMobile = false
+  ) => {
+    if (items.length === 0) return null;
+
+    return (
+      <div className="mb-5">
+        {!isCollapsed || isMobile ? (
+          <div className="flex items-center justify-between px-3 mb-1.5">
+            <h3 className="text-[10px] font-extrabold text-ink-muted uppercase tracking-[0.12em]">
+              {title}
+            </h3>
+            <span className="text-[9px] font-bold bg-primary/8 text-primary px-1.5 py-0.5 rounded-full tabular-nums">
+              {items.length}
+            </span>
+          </div>
+        ) : (
+          <div className="h-px bg-surface-border/60 my-3 mx-2" />
+        )}
+        <div className="space-y-0.5">
+          {items.map((item) => {
+            const Icon = item.icon;
+            const isActive =
+              item.slug === "" ? currentPage === "" : currentPage === item.slug;
+            const href = item.slug
+              ? `${workspaceBasePath}/${item.slug}`
+              : workspaceBasePath;
+
+            return (
+              <Link
+                key={item.slug || "dashboard"}
+                to={href}
+                onClick={() => isMobile && setMobileDrawerOpen(false)}
+                title={isCollapsed && !isMobile ? `${item.label}` : undefined}
+                className={`workspace-nav-link group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all duration-150 ${
+                  isActive
+                    ? "bg-primary/10 font-semibold text-primary"
+                    : "text-ink-secondary hover:bg-surface-hover hover:text-ink"
+                } ${isCollapsed && !isMobile ? "justify-center px-0 py-2.5" : ""}`}
+              >
+                {/* Active accent bar */}
+                {isActive && (
+                  <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-primary" />
+                )}
+
+                <Icon
+                  className={`shrink-0 transition-all duration-150 ${
+                    isCollapsed && !isMobile ? "w-5 h-5" : "w-4 h-4"
+                  } ${
+                    isActive
+                      ? "text-primary"
+                      : "text-ink-tertiary group-hover:text-ink"
+                  }`}
+                />
+
+                {(!isCollapsed || isMobile) && (
+                  <div className="flex items-center justify-between flex-1 min-w-0">
+                    <span className="truncate text-[13px]">{item.label}</span>
+                    {categoryTag && (
+                      <span className="text-[9px] uppercase font-extrabold text-ink-muted bg-surface-subtle border border-surface-border/60 px-1.5 py-0.5 rounded ml-2 shrink-0 tracking-wider">
+                        {categoryTag}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <WorkspaceMfaGate role={currentRole}>
-    <div className="desktop-shell min-h-screen">
-      <nav className="desktop-header border-b border-white/10 bg-brand-marketplace">
-        <div className="mx-auto max-w-[var(--max-width-page)] px-6 py-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
-              <Logo inverted />
-              <div className="h-8 w-px bg-white/15 hidden md:block" />
-              <div>
-                <h2 className="font-semibold text-ink">{organization.name}</h2>
-                <p className="text-xs text-ink-secondary">
-                  Workspace · {getRoleLabel(currentRole)} — {getWorkspaceRoleDescription(currentRole)}
-                </p>
+    <WorkspaceMfaGate role={effectiveRole}>
+      <div className="desktop-shell min-h-screen">
+        {/* ── Top Header ─────────────────────────────────────────────── */}
+        <nav className="desktop-header sticky top-0 z-50 border-b border-surface-border bg-surface/95 backdrop-blur-xl">
+          <div className="mx-auto max-w-[var(--max-width-page)] px-4 sm:px-6">
+            <div className="flex h-14 items-center justify-between gap-3">
+
+              {/* Left: toggle + logo + org info */}
+              <div className="flex items-center gap-2.5">
+                {/* Mobile hamburger */}
+                <button
+                  type="button"
+                  onClick={() => setMobileDrawerOpen(true)}
+                  className="lg:hidden p-2 rounded-lg border border-surface-border bg-surface hover:bg-surface-hover text-ink-secondary transition-colors"
+                  aria-label="Open workspace menu"
+                >
+                  <Menu className="w-4.5 h-4.5" />
+                </button>
+
+                {/* Desktop collapse toggle */}
+                <button
+                  type="button"
+                  onClick={toggleCollapsed}
+                  className="hidden lg:flex p-2 rounded-lg border border-surface-border bg-surface hover:bg-surface-hover text-ink-secondary transition-colors"
+                  title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                  {isCollapsed ? (
+                    <PanelLeftOpen className="w-4 h-4" />
+                  ) : (
+                    <PanelLeftClose className="w-4 h-4" />
+                  )}
+                </button>
+
+                <div className="h-5 w-px bg-surface-border" />
+                <Logo />
+
+                {/* Org info – desktop only */}
+                <div className="hidden sm:flex flex-col justify-center ml-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-ink text-sm leading-tight truncate max-w-[12rem]">
+                      {organization.name}
+                    </span>
+                    <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20 shrink-0">
+                      {getRoleLabel(effectiveRole)}
+                    </span>
+                    {isPracticeMode && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20 shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        Sandbox
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-ink-muted truncate max-w-[16rem] leading-tight">
+                    {getWorkspaceRoleDescription(effectiveRole)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Right: actions */}
+              <div className="flex items-center gap-2">
+                {/* Org switcher */}
+                {memberships.length > 1 && (
+                  <select
+                    className="hidden sm:block px-2.5 py-1.5 rounded-lg border border-surface-border bg-surface text-xs text-ink outline-none transition focus:border-primary max-w-[9rem]"
+                    value={organization.id}
+                    onChange={(event) => handleOrganizationChange(event.target.value)}
+                    aria-label="Switch organization"
+                  >
+                    {memberships.map((membership) => (
+                      <option key={membership.organization.id} value={membership.organization.id}>
+                        {membership.organization.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {/* Sandbox toggle – mobile uses icon-only */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !isPracticeMode;
+                    setIsPracticeMode(next);
+                    practiceModeService.setPracticeMode(next);
+                  }}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                    isPracticeMode
+                      ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                      : "border-surface-border bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink"
+                  }`}
+                  title="Toggle Sandbox / Practice Mode"
+                >
+                  <span className="hidden sm:inline">Sandbox</span>
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${isPracticeMode ? "bg-amber-500 animate-ping" : "bg-ink-muted/30"}`} />
+                </button>
+
+                {/* Universal command */}
+                <button
+                  type="button"
+                  onClick={() => setCommandOpen(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-surface-border bg-surface hover:bg-surface-hover text-xs text-ink-muted transition-colors"
+                  title="Universal Command (Cmd+K)"
+                >
+                  <Search className="w-3.5 h-3.5 text-primary" />
+                  <span className="hidden md:inline text-ink font-medium">Search...</span>
+                  <kbd className="hidden sm:inline text-[10px] font-mono bg-surface-subtle border border-surface-border px-1.5 py-0.5 rounded text-ink-muted">⌘K</kbd>
+                </button>
+
+                {/* Show Me How */}
+                <button
+                  type="button"
+                  onClick={() => setShowMeHowOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary/20 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold transition-colors"
+                  title="Interactive Guide"
+                >
+                  <HelpCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span className="hidden lg:inline">Show Me How</span>
+                </button>
+
+                <ThemeToggle />
+
+                {canCreateListing && (
+                  <Link to={`${workspaceBasePath}/new`}>
+                    <Button size="sm" className="hidden sm:inline-flex items-center gap-1.5">
+                      <Plus className="w-4 h-4" />
+                      <span>New Listing</span>
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
+          </div>
+        </nav>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              {memberships.length > 1 && (
-                <select
-                  className="px-4 py-2.5 rounded-lg border border-border bg-input-background"
-                  value={organization.id}
-                  onChange={(event) => handleOrganizationChange(event.target.value)}
+        {/* ── Mobile Slide-over Drawer ───────────────────────────────── */}
+        {mobileDrawerOpen && (
+          <div className="fixed inset-0 z-[80] lg:hidden flex">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setMobileDrawerOpen(false)}
+            />
+
+            {/* Drawer panel */}
+            <div className="relative w-72 max-w-[85vw] bg-surface border-r border-surface-border flex flex-col h-full shadow-2xl z-10 animate-in slide-in-from-left-4 duration-200">
+              {/* Drawer header */}
+              <div className="px-4 py-3 border-b border-surface-border flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-ink text-sm truncate">{organization.name}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-px rounded-full border border-primary/20">
+                      {getRoleLabel(effectiveRole)}
+                    </span>
+                    {isPracticeMode && (
+                      <span className="text-[10px] font-bold uppercase tracking-wide bg-amber-500/10 text-amber-600 px-1.5 py-px rounded-full border border-amber-500/20">
+                        Sandbox
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMobileDrawerOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-surface-hover text-ink-secondary flex-shrink-0"
+                  aria-label="Close menu"
                 >
-                  {memberships.map((membership) => (
-                    <option key={membership.organization.id} value={membership.organization.id}>
-                      {membership.organization.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-              {canCreateListing && (
-                <Link to={`${workspaceBasePath}/new`}>
-                  <Button>
-                    <Plus className="w-4 h-4" />
-                    New Listing
-                  </Button>
+                  <X className="w-4.5 h-4.5" />
+                </button>
+              </div>
+
+              {/* Search */}
+              <div className="px-4 py-3 border-b border-surface-border">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
+                  <input
+                    type="text"
+                    value={toolSearch}
+                    onChange={(e) => setToolSearch(e.target.value)}
+                    placeholder="Search tools & modules..."
+                    className="w-full pl-8 pr-8 py-2 rounded-lg bg-surface-subtle border border-surface-border text-xs text-ink placeholder:text-ink-muted outline-none focus:border-primary focus:bg-surface transition-colors"
+                  />
+                  {toolSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setToolSearch("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Nav list */}
+              <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+                {filteredSearchResults ? (
+                  <div>
+                    <p className="text-[11px] text-ink-muted mb-3 font-semibold px-2">
+                      {filteredSearchResults.length} result{filteredSearchResults.length !== 1 ? "s" : ""}
+                    </p>
+                    {renderNavGroup("Search Results", filteredSearchResults, undefined, true)}
+                  </div>
+                ) : (
+                  <>
+                    {renderNavGroup("Core Operations", visibleCoreNav, undefined, true)}
+                    {renderNavGroup("Tools & Management", visibleToolsNav, undefined, true)}
+                    {renderNavGroup("More Modules", visibleMoreNav, undefined, true)}
+                    {renderNavGroup("AI Suite", visibleAiNav, undefined, true)}
+                    {renderNavGroup("Enterprise", visibleEnterpriseNav, undefined, true)}
+                  </>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="px-3 py-3 border-t border-surface-border">
+                <Link
+                  to="/app"
+                  onClick={() => setMobileDrawerOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-surface-hover text-ink-secondary text-sm font-medium transition-colors"
+                >
+                  <UserRound className="w-4 h-4 text-primary shrink-0" />
+                  <span>Consumer Portal</span>
                 </Link>
-              )}
+              </div>
             </div>
           </div>
+        )}
+
+        {/* Main Content Layout */}
+        <div className="flex">
+          {/* ── Desktop Collapsible Sidebar ────────────────────────── */}
+          <aside
+            className={`hidden lg:flex flex-col border-r border-surface-border bg-surface min-h-[calc(100vh-56px)] transition-[width] duration-300 ease-in-out shrink-0 ${
+              isCollapsed ? "w-[4.5rem]" : "w-64"
+            }`}
+          >
+            <div className={`flex flex-col h-full ${isCollapsed ? "px-2 py-4" : "px-3 py-4"}`}>
+              {/* Search – expanded only */}
+              {!isCollapsed && (
+                <div className="mb-4 px-1">
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
+                    <input
+                      type="text"
+                      value={toolSearch}
+                      onChange={(e) => setToolSearch(e.target.value)}
+                      placeholder="Search tools & modules..."
+                      className="w-full pl-8 pr-8 py-2 rounded-lg bg-surface-subtle border border-surface-border text-xs text-ink placeholder:text-ink-muted outline-none transition-colors focus:border-primary focus:bg-surface"
+                    />
+                    {toolSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setToolSearch("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Nav groups */}
+              <nav className="flex-1 overflow-y-auto space-y-1 pr-0.5">
+                {filteredSearchResults ? (
+                  <div>
+                    {!isCollapsed && (
+                      <p className="text-[11px] text-ink-muted mb-3 font-semibold px-3">
+                        {filteredSearchResults.length} result{filteredSearchResults.length !== 1 ? "s" : ""}
+                      </p>
+                    )}
+                    {renderNavGroup("Results", filteredSearchResults)}
+                  </div>
+                ) : (
+                  <>
+                    {renderNavGroup("Core", visibleCoreNav)}
+                    {renderNavGroup("Tools", visibleToolsNav)}
+                    {renderNavGroup("More", visibleMoreNav)}
+                    {renderNavGroup("AI Suite", visibleAiNav)}
+                    {renderNavGroup("Enterprise", visibleEnterpriseNav)}
+                  </>
+                )}
+              </nav>
+
+              {/* Sidebar footer */}
+              <div className="mt-2 pt-3 border-t border-surface-border">
+                {!isCollapsed && profile && (
+                  <div className="px-3 py-2 mb-1 rounded-xl bg-surface-subtle border border-surface-border/60">
+                    <p className="text-xs font-semibold text-ink truncate">{profile.full_name || "My Account"}</p>
+                    <p className="text-[10px] text-ink-muted truncate">{user?.email}</p>
+                  </div>
+                )}
+                <Link
+                  to="/app"
+                  title={isCollapsed ? "Consumer Portal" : undefined}
+                  className={`group flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-ink-secondary hover:bg-surface-hover hover:text-ink transition-colors ${
+                    isCollapsed ? "justify-center" : ""
+                  }`}
+                >
+                  <UserRound className="w-4 h-4 text-primary shrink-0" />
+                  {!isCollapsed && <span className="text-[13px] font-medium">Consumer Portal</span>}
+                </Link>
+              </div>
+            </div>
+          </aside>
+
+          {/* Main Content Area */}
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-full">
+            <div className="max-w-7xl mx-auto">
+              {!pageAllowed && currentPage ? (
+                <Card className="p-8">
+                  <h2 className="text-xl font-semibold text-foreground mb-2">Access restricted</h2>
+                  <p className="text-muted-foreground mb-4">
+                    Your role ({getRoleLabel(effectiveRole)}) does not include access to this section.
+                    Contact an owner or manager if you need permission.
+                  </p>
+                  <Link to={workspaceBasePath}>
+                    <Button variant="outline">Back to dashboard</Button>
+                  </Link>
+                </Card>
+              ) : (
+                renderPage()
+              )}
+            </div>
+          </main>
         </div>
-      </nav>
 
-      <div className="flex">
-        <aside className="w-64 border-r border-white/10 bg-brand-marketplace/80 min-h-[calc(100vh-73px)] p-6 overflow-y-auto">
-          <nav className="space-y-2">
-            <div className="mb-6">
-              <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">CORE</h3>
-              {visibleCoreNav.map((item) => {
-                const Icon = item.icon;
-                const isActive = item.slug === "" ? currentPage === "" : currentPage === item.slug;
-                const href = item.slug ? `${workspaceBasePath}/${item.slug}` : workspaceBasePath;
+        {/* Universal Command Bar Modal */}
+        {commandOpen && (
+          <UniversalCommandBar
+            workspaceBasePath={workspaceBasePath}
+            onClose={() => setCommandOpen(false)}
+          />
+        )}
 
-                return (
-                  <Link
-                    key={item.label}
-                    to={href}
-                    className={getNavItemClasses(isActive)}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-
-            <div className="border-t pt-6 mb-6">
-              <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
-                TOOLS
-              </h3>
-              {visibleToolsNav.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.label}
-                    to={`${workspaceBasePath}/${item.slug}`}
-                    className={getFeatureNavItemClasses(currentPage === item.slug)}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium text-sm">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-
-            <div className="border-t pt-6 mb-6">
-              <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
-                MORE
-              </h3>
-              {visibleMoreNav.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.label}
-                    to={`${workspaceBasePath}/${item.slug}`}
-                    className={getFeatureNavItemClasses(currentPage === item.slug)}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium text-sm">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-
-            {visibleAiNav.length > 0 && (
-            <div className="border-t pt-6 mb-6">
-              <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
-                AI INTELLIGENCE
-              </h3>
-              {visibleAiNav.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.label}
-                    to={`${workspaceBasePath}/${item.slug}`}
-                    className={getFeatureNavItemClasses(currentPage === item.slug)}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium text-sm">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-            )}
-
-            {visibleEnterpriseNav.length > 0 && (
-            <div className="border-t pt-6 mb-6">
-              <h3 className="text-xs font-semibold text-muted-foreground mb-2 px-4">
-                ENTERPRISE
-              </h3>
-              {visibleEnterpriseNav.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.label}
-                    to={`${workspaceBasePath}/${item.slug}`}
-                    className={getFeatureNavItemClasses(currentPage === item.slug)}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium text-sm">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-            )}
-
-            <div className="border-t pt-6">
-              <Link to="/app" className={getFeatureNavItemClasses(false)}>
-                <UserRound className="w-5 h-5" />
-                <span className="font-medium text-sm">My account</span>
-              </Link>
-            </div>
-
-          </nav>
-        </aside>
-
-        <main className="flex-1 p-8 overflow-y-auto">
-          <div className="max-w-7xl">
-            {!pageAllowed && currentPage ? (
-              <Card className="p-8">
-                <h2 className="text-xl font-semibold text-foreground mb-2">Access restricted</h2>
-                <p className="text-muted-foreground mb-4">
-                  Your role ({getRoleLabel(currentRole)}) does not include access to this section.
-                  Contact an owner or manager if you need permission.
-                </p>
-                <Link to={workspaceBasePath}>
-                  <Button variant="outline">Back to dashboard</Button>
-                </Link>
-              </Card>
-            ) : (
-              renderPage()
-            )}
-          </div>
-        </main>
+        {/* Show Me How Interactive Tour Overlay */}
+        {showMeHowOpen && (
+          <ShowMeHowOverlay
+            currentModule={currentPage}
+            onClose={() => setShowMeHowOpen(false)}
+          />
+        )}
       </div>
-    </div>
     </WorkspaceMfaGate>
   );
 }

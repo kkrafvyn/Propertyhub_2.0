@@ -451,13 +451,13 @@ function FiltersPanel({
 }) {
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 backdrop-blur-xs p-4 sm:items-center"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-surface-border bg-white p-6 shadow-2xl"
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-surface-border bg-surface p-6 text-ink shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -486,7 +486,7 @@ function FiltersPanel({
           <select
             value={minBedrooms}
             onChange={(e) => onMinBedroomsChange(Number(e.target.value))}
-            className="mt-1 w-full rounded-xl border border-surface-border bg-white px-3 py-2"
+            className="mt-1 w-full rounded-xl border border-surface-border bg-surface text-ink px-3 py-2"
           >
             <option value={0}>Any</option>
             {[1, 2, 3, 4, 5].map((n) => (
