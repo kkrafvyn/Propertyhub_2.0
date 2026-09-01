@@ -2,7 +2,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Menu, X } from "lucide-react";
 import { Logo } from "../baytmiftah/Logo";
-import { ThemeToggle } from "../baytmiftah/ThemeToggle";
 import { appPath } from "../../../lib/marketing-urls";
 import { MarketingBackgroundCarousel } from "./MarketingBackgroundCarousel";
 import "./marketing.css";
@@ -50,14 +49,13 @@ export function MarketingShell({ children }: { children: ReactNode }) {
       <div className="mk-page-scrim" aria-hidden="true" />
       <header className={`mk-nav${scrolled ? " mk-nav--scrolled" : ""}`}>
         <div className="mk-nav-inner">
-          <Logo to="/" size="sm" />
+          <Logo to="/" size="sm" inverted={false} />
           <nav className="mk-nav-links" aria-label="Primary">
             {NAV_LINKS.map((link) => (
               <NavLink key={link.href} {...link} />
             ))}
           </nav>
           <div className="mk-nav-actions">
-            <ThemeToggle />
             <a href={appPath("/login")} className="mk-btn mk-btn-secondary hidden sm:inline-flex">
               Log in
             </a>
@@ -82,7 +80,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           <button type="button" className="absolute inset-0" aria-label="Close menu" onClick={closeMenu} />
           <div className="mk-mobile-panel">
             <div className="flex items-center justify-between mb-4">
-              <Logo to="/" size="sm" />
+              <Logo to="/" size="sm" inverted={false} />
               <button type="button" className="mk-menu-toggle" aria-label="Close menu" onClick={closeMenu}>
                 <X className="h-5 w-5" />
               </button>
@@ -114,7 +112,7 @@ function MarketingFooter() {
     <footer className="mk-footer">
       <div className="mk-container mk-footer-grid">
         <div className="mk-footer-brand">
-          <Logo to="/" size="sm" />
+          <Logo to="/" size="sm" inverted={false} />
           <p>The Operating System for Real Estate.</p>
         </div>
 

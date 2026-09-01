@@ -1,6 +1,8 @@
 import { Link } from "react-router";
 import { DesktopShell } from "../../components/baytmiftah/DesktopShell";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
+import { MarketingSubpage } from "../../components/marketing/MarketingSubpage";
+import { isMarketingSite } from "../../../lib/site-mode";
 import {
   LEGAL_CATEGORIES,
   getAdjacentPolicies,
@@ -25,7 +27,13 @@ function categoryLabel(document: LegalDocument) {
   return LEGAL_CATEGORIES.find((category) => category.id === document.category)?.label ?? "Legal";
 }
 
-export function LegalDocumentView({ document }: { document: LegalDocument }) {
+export function LegalDocumentView({
+  document,
+  surface = "app",
+}: {
+  document: LegalDocument;
+  surface?: "app" | "marketing";
+}) {
   const related = getRelatedDocuments(document.relatedPolicies);
   const { previous, next } = getAdjacentPolicies(document.slug);
   const category = categoryLabel(document);
@@ -93,6 +101,21 @@ export function LegalDocumentView({ document }: { document: LegalDocument }) {
     </article>
   );
 
+
+  if (surface === "marketing") {
+    return (
+      <MarketingSubpage>
+        <PageMeta
+          title={document.seoTitle}
+          description={document.seoDescription}
+          canonicalPath={path}
+          ogTitle={document.seoTitle}
+          ogDescription={document.seoDescription}
+        />
+        <div className="mk-legal-body">{article}</div>
+      </MarketingSubpage>
+    );
+  }
 
   if (!inLegalCentre) {
     return (

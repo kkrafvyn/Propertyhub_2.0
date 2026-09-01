@@ -59,3 +59,25 @@ export function isMarketingSite(hostname?: string): boolean {
 export function isAppSite(hostname?: string): boolean {
   return resolveSiteMode(hostname) === "app";
 }
+
+const MARKETING_PUBLIC_PREFIXES = [
+  "/about",
+  "/careers",
+  "/contact",
+  "/help",
+  "/cancellation",
+  "/explorer",
+  "/privacy",
+  "/terms",
+  "/legal",
+  "/complaint",
+] as const;
+
+/** Paths served on the marketing site (baytmiftah.com) with marketing chrome. */
+export function isMarketingPublicPath(pathname: string): boolean {
+  const path = pathname.split("?")[0]?.split("#")[0] || "/";
+  if (path === "/") return true;
+  return MARKETING_PUBLIC_PREFIXES.some(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+  );
+}

@@ -1,6 +1,8 @@
 import { Link, useParams } from "react-router";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import { DesktopShell } from "../../components/baytmiftah/DesktopShell";
+import { MarketingSubpage } from "../../components/marketing/MarketingSubpage";
+import { isMarketingSite } from "../../../lib/site-mode";
 import {
   LEGAL_EFFECTIVE_DATE,
   LEGAL_LAST_UPDATED,
@@ -19,6 +21,19 @@ export function LegalDocumentPage() {
   const document = slug ? getLegalDocument(slug) : undefined;
 
   if (!document) {
+    if (isMarketingSite()) {
+      return (
+        <MarketingSubpage>
+          <PageMeta title="Document not found" description="This policy may have moved or does not exist." />
+          <h1 className="mk-section-title">Document not found</h1>
+          <p className="mk-section-copy">This policy may have moved or does not exist.</p>
+          <Link to="/legal" className="mk-btn mk-btn-primary mt-6">
+            View all legal documents
+          </Link>
+        </MarketingSubpage>
+      );
+    }
+
     return (
       <DesktopShell minimal showFooter>
         <PageMeta title="Document not found" description="This policy may have moved or does not exist." />
@@ -33,20 +48,14 @@ export function LegalDocumentPage() {
     );
   }
 
-  return <LegalDocumentView document={document} />;
+  return <LegalDocumentView document={document} surface={isMarketingSite() ? "marketing" : "app"} />;
 }
 
 export function LegalHub() {
   const groups = getPoliciesByCategory();
 
-  return (
-    <LegalCentreShell
-      title="BaytMiftah Legal & Policies"
-      description="BaytMiftah operates as a neutral technology marketplace. These policies explain how the platform works, what users are responsible for, and the limits of BaytMiftah's role."
-      canonicalPath="/legal"
-      breadcrumbs={[{ label: "Home", to: "/" }, { label: "Legal & Policies" }]}
-    >
-      <article>
+  const hubArticle = (
+    <article>
         <header>
           <p className="text-sm font-medium uppercase tracking-wide text-brand-forest">Legal</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink md:text-4xl">
@@ -113,6 +122,29 @@ export function LegalHub() {
           <LegalContactCard />
         </div>
       </article>
+  );
+
+  if (isMarketingSite()) {
+    return (
+      <MarketingSubpage>
+        <PageMeta
+          title="BaytMiftah Legal & Policies"
+          description="BaytMiftah operates as a neutral technology marketplace. These policies explain how the platform works, what users are responsible for, and the limits of BaytMiftah's role."
+          canonicalPath="/legal"
+        />
+        <div className="mk-legal-body">{hubArticle}</div>
+      </MarketingSubpage>
+    );
+  }
+
+  return (
+    <LegalCentreShell
+      title="BaytMiftah Legal & Policies"
+      description="BaytMiftah operates as a neutral technology marketplace. These policies explain how the platform works, what users are responsible for, and the limits of BaytMiftah's role."
+      canonicalPath="/legal"
+      breadcrumbs={[{ label: "Home", to: "/" }, { label: "Legal & Policies" }]}
+    >
+      {hubArticle}
     </LegalCentreShell>
   );
 }

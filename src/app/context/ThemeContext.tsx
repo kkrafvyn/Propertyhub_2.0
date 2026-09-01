@@ -7,6 +7,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import {
+  isMarketingThemeLocked,
+  MARKETING_THEME_LOCK_EVENT,
+} from "../../lib/marketing-theme-lock";
 
 export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
@@ -72,6 +76,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   });
 
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);
+  const [marketingThemeLocked, setMarketingThemeLocked] = useState(() =>
+    typeof window !== "undefined" ? isMarketingThemeLocked() : false,
+  );
+
+  useEffect(() => {
+    const syncLock = () => setMarketingThemeLocked(isMarketingThemeLocked());
+    window.addEventListener(MARKETING_THEME_LOCK_EVENT, syncLock);
+    return () => window.removeEventListener(MARKETING_THEME_LOCK_EVENT, syncLock);
+  }, []);
 
   // Listen to OS system theme changes
   useEffect(() => {
@@ -92,10 +105,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Apply classes and data attributes
   useEffect(() => {
     const root = document.documentElement;
-    const isDark = resolvedTheme === "dark";
+    const isDark = !marketingThemeLocked && resolvedTheme === "dark";
 
     root.classList.toggle("dark", isDark);
-    root.dataset.theme = resolvedTheme;
+    root.dataset.theme = marketingThemeLocked ? "light" : resolvedTheme;
     root.dataset.themeMode = theme;
     root.dataset.accent = accent;
 
@@ -106,8 +119,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
 
-    syncThemeMeta(resolvedTheme);
-  }, [theme, resolvedTheme, accent]);
+    syncThemeMeta(marketingThemeLocked ? "light" : resolvedTheme);
+  }, [theme, resolvedTheme, accent, marketingThemeLocked]);
 
   // Handle smooth transition with View Transitions API or smooth CSS class
   const applyThemeWithTransition = useCallback(

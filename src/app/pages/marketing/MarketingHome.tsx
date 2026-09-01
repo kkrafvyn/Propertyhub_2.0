@@ -1,7 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
-import { MarketingShell } from "../../components/marketing/MarketingShell";
 import { appPath } from "../../../lib/marketing-urls";
 
 function useReveal() {
@@ -59,7 +58,7 @@ function DemoBadge() {
 
 export function MarketingHome() {
   return (
-    <MarketingShell>
+    <>
       <PageMeta
         title="BaytMiftah — The Operating System for Real Estate"
         description="Run your real-estate business from one operating system. BaytMiftah connects property discovery, leasing, operations, finance, maintenance, CRM, communications, and governed AI for consumers and property businesses."
@@ -80,7 +79,7 @@ export function MarketingHome() {
       <TeamsSection />
       <PlatformSection />
       <CTASection />
-    </MarketingShell>
+    </>
   );
 }
 
@@ -89,27 +88,29 @@ function HeroSection() {
     <section className="mk-section mk-hero">
       <div className="mk-container mk-hero-grid mk-hero-content">
         <Reveal>
-          <p className="mk-eyebrow">Real Estate Operating System</p>
-          <h1 className="mk-display">The Operating System for Real Estate.</h1>
-          <p className="mk-lead">
-            Stop running your property business across WhatsApp, Excel, spreadsheets, and disconnected
-            systems. BaytMiftah brings discovery, operations, finance, maintenance, and communications
-            into one environment — so your organization runs from a single system.
-          </p>
-          <p className="mk-hero-note">
-            BaytMiftah is a technology platform. Your team manages your properties and customer
-            relationships through the software — we do not automatically become your property manager.
-          </p>
-          <div className="mk-hero-actions">
-            <a href={appPath("/signup")} className="mk-btn mk-btn-primary">
-              Get Started
-            </a>
-            <a href="#business" className="mk-btn mk-btn-secondary">
-              For Businesses
-            </a>
-            <a href={appPath("/search")} className="mk-btn mk-btn-secondary">
-              Explore Properties
-            </a>
+          <div className="mk-hero-copy-panel">
+            <p className="mk-eyebrow">Real Estate Operating System</p>
+            <h1 className="mk-display">The Operating System for Real Estate.</h1>
+            <p className="mk-lead">
+              Stop running your property business across WhatsApp, Excel, spreadsheets, and disconnected
+              systems. BaytMiftah brings discovery, operations, finance, maintenance, and communications
+              into one environment — so your organization runs from a single system.
+            </p>
+            <p className="mk-hero-note">
+              BaytMiftah is a technology platform. Your team manages your properties and customer
+              relationships through the software — we do not automatically become your property manager.
+            </p>
+            <div className="mk-hero-actions">
+              <a href={appPath("/signup")} className="mk-btn mk-btn-primary">
+                Get Started
+              </a>
+              <a href="#business" className="mk-btn mk-btn-secondary">
+                For Businesses
+              </a>
+              <a href={appPath("/search")} className="mk-btn mk-btn-secondary">
+                Explore Properties
+              </a>
+            </div>
           </div>
         </Reveal>
 
@@ -571,8 +572,11 @@ function CTASection() {
             <a href={appPath("/signup")} className="mk-btn mk-btn-primary">
               Get Started
             </a>
-            <Link to="/contact" className="mk-btn mk-btn-secondary">
-              For Businesses
+            <a href="#business" className="mk-btn mk-btn-secondary mk-btn-on-dark">
+              Talk to Sales
+            </a>
+            <Link to="/contact" className="mk-btn mk-btn-secondary mk-btn-on-dark">
+              Contact Us
             </Link>
           </div>
         </Reveal>

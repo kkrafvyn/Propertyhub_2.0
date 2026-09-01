@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isMarketingSite, resolveSiteMode } from "./site-mode";
+import { isMarketingPublicPath, isMarketingSite, resolveSiteMode } from "./site-mode";
 
 describe("site-mode", () => {
   it("treats baytmiftah.com as marketing", () => {
@@ -27,5 +27,15 @@ describe("site-mode", () => {
   it("keeps the app Vercel project on consumer mode", () => {
     expect(resolveSiteMode("propertyhub-2-0.vercel.app")).toBe("app");
     expect(resolveSiteMode("baytmiftah-phjg2gys9-krafvyn.vercel.app")).toBe("app");
+  });
+});
+
+describe("isMarketingPublicPath", () => {
+  it("includes marketing content routes", () => {
+    expect(isMarketingPublicPath("/")).toBe(true);
+    expect(isMarketingPublicPath("/contact")).toBe(true);
+    expect(isMarketingPublicPath("/legal/privacy")).toBe(true);
+    expect(isMarketingPublicPath("/explorer")).toBe(true);
+    expect(isMarketingPublicPath("/search")).toBe(false);
   });
 });

@@ -1,6 +1,8 @@
 import { Link, useLocation } from "react-router";
 import { DesktopShell } from "../../components/baytmiftah/DesktopShell";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
+import { MarketingSubpage } from "../../components/marketing/MarketingSubpage";
+import { isMarketingSite } from "../../../lib/site-mode";
 import { getLegalDocument } from "./legal-documents";
 import { LegalDocumentView } from "./LegalDocumentView";
 
@@ -13,6 +15,18 @@ export function StaticContentPage() {
   const document = STATIC_SLUGS.has(slug) ? getLegalDocument(slug) : undefined;
 
   if (!document) {
+    if (isMarketingSite()) {
+      return (
+        <MarketingSubpage>
+          <PageMeta title="Page not found" />
+          <h1 className="mk-section-title">Page not found</h1>
+          <Link to="/" className="mk-btn mk-btn-primary mt-6">
+            Back to home
+          </Link>
+        </MarketingSubpage>
+      );
+    }
+
     return (
       <DesktopShell minimal>
         <PageMeta title="Page not found" />
@@ -24,6 +38,10 @@ export function StaticContentPage() {
         </div>
       </DesktopShell>
     );
+  }
+
+  if (isMarketingSite()) {
+    return <LegalDocumentView document={document} surface="marketing" />;
   }
 
   return <LegalDocumentView document={document} />;

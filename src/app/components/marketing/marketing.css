@@ -6,14 +6,62 @@
   --mk-bg-soft: #f4f6f5;
   --mk-ink: #1a1f1d;
   --mk-muted: #5a6460;
-  --mk-border: rgba(15, 41, 34, 0.1);
-  --mk-accent: #e07a5f;
+  --mk-border: rgba(15, 41, 34, 0.14);
+  --mk-accent: #c45a3a;
+  --mk-accent-hover: #a8482e;
   --mk-max: 1180px;
-  --mk-glass: rgba(255, 255, 255, 0.88);
-  --mk-glass-border: rgba(255, 255, 255, 0.55);
+  --mk-glass: rgba(255, 255, 255, 0.92);
+  --mk-glass-border: rgba(255, 255, 255, 0.72);
   background: transparent;
   color: var(--mk-ink);
   font-family: var(--font-sans);
+  color-scheme: light;
+  scroll-behavior: smooth;
+}
+
+.marketing-page .text-brand-forest,
+.marketing-page .text-brand-forest * {
+  color: var(--mk-bg-deep) !important;
+}
+
+.marketing-shell .mk-nav a[aria-label="BaytMiftah"] span,
+.marketing-shell .mk-footer a[aria-label="BaytMiftah"] span {
+  color: var(--mk-bg-deep) !important;
+}
+
+/* Lock marketing to brand light tokens even if global app theme is dark */
+html[data-marketing-theme="locked"] .marketing-page {
+  --background: #fcfbf9;
+  --foreground: #1a1f1d;
+  --card: #ffffff;
+  --card-foreground: #1a1f1d;
+  --popover: #ffffff;
+  --popover-foreground: #1a1f1d;
+  --primary: #0f2922;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f5f4;
+  --secondary-foreground: #1a1f1d;
+  --muted: #f4f5f4;
+  --muted-foreground: #6b7280;
+  --accent: #1b4332;
+  --accent-foreground: #ffffff;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --input-background: #ffffff;
+  --ring: #0f2922;
+  --surface: #ffffff;
+  --surface-subtle: #f7f8f7;
+  --surface-border: #e5e7eb;
+  --ink: #1a1f1d;
+  --ink-secondary: #5a6460;
+  --ink-muted: #94a09a;
+  --brand-forest: #0f2922;
+  --brand-accent: #c45a3a;
+  color-scheme: light;
+}
+
+.marketing-page [id] {
+  scroll-margin-top: 5.5rem;
 }
 
 .marketing-page *,
@@ -100,17 +148,7 @@
   z-index: 1;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(252, 251, 249, 0.72) 0%, rgba(252, 251, 249, 0.82) 35%, rgba(252, 251, 249, 0.88) 100%);
-  animation: mk-scrim-breathe 18s ease-in-out infinite alternate;
-}
-
-@keyframes mk-scrim-breathe {
-  from {
-    opacity: 0.92;
-  }
-  to {
-    opacity: 1;
-  }
+    linear-gradient(180deg, rgba(252, 251, 249, 0.78) 0%, rgba(252, 251, 249, 0.86) 40%, rgba(252, 251, 249, 0.9) 100%);
 }
 
 .mk-bg-carousel-dots {
@@ -248,13 +286,27 @@
 }
 
 .mk-btn-secondary {
-  background: transparent;
-  border-color: var(--mk-border);
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(15, 41, 34, 0.2);
   color: var(--mk-ink);
 }
 
 .mk-btn-secondary:hover {
-  background: rgba(15, 41, 34, 0.04);
+  background: #fff;
+  border-color: rgba(15, 41, 34, 0.28);
+}
+
+.mk-btn-on-dark,
+.marketing-shell .mk-cta .mk-btn-secondary {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.mk-btn-on-dark:hover,
+.marketing-shell .mk-cta .mk-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.65);
 }
 
 .mk-btn-accent {
@@ -263,7 +315,7 @@
 }
 
 .mk-btn-accent:hover {
-  filter: brightness(1.05);
+  background: var(--mk-accent-hover);
 }
 
 .mk-menu-toggle {
@@ -355,19 +407,8 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--mk-muted);
-  animation: mk-eyebrow-glow 4s ease-in-out infinite;
-}
-
-@keyframes mk-eyebrow-glow {
-  0%,
-  100% {
-    opacity: 0.85;
-  }
-  50% {
-    opacity: 1;
-    color: var(--mk-bg-deep);
-  }
+  color: var(--mk-bg-deep);
+  opacity: 0.88;
 }
 
 .mk-display {
@@ -421,11 +462,25 @@
   width: 100%;
 }
 
+.mk-hero-copy-panel {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 1.35rem;
+  padding: 2rem 1.75rem;
+  box-shadow: 0 20px 56px rgba(15, 41, 34, 0.1);
+}
+
+@media (min-width: 768px) {
+  .mk-hero-copy-panel {
+    padding: 2.25rem 2rem;
+  }
+}
+
 .mk-hero .mk-display,
 .mk-hero .mk-lead,
-.mk-hero .mk-hero-note,
-.mk-hero .mk-eyebrow {
-  text-shadow: 0 2px 28px rgba(252, 251, 249, 0.85);
+.mk-hero .mk-hero-note {
+  text-shadow: none;
 }
 
 .mk-hero .mk-product-card {
@@ -778,9 +833,9 @@
 /* ── Night watch panel ── */
 .mk-watch-panel {
   margin-top: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--mk-border);
   border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.82);
   padding: 1.25rem;
 }
 
@@ -790,8 +845,9 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.65rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--mk-border);
   font-size: 0.875rem;
+  color: var(--mk-ink);
 }
 
 .mk-watch-row:last-child {
@@ -808,13 +864,13 @@
 }
 
 .mk-severity-high {
-  background: rgba(224, 122, 95, 0.2);
-  color: #f4b5a3;
+  background: rgba(196, 90, 58, 0.15);
+  color: #9a3f24;
 }
 
 .mk-severity-medium {
-  background: rgba(233, 195, 73, 0.15);
-  color: #e9c349;
+  background: rgba(180, 140, 20, 0.15);
+  color: #7a6110;
 }
 
 /* ── Trust chain ── */
@@ -1017,6 +1073,58 @@
   color: var(--mk-muted);
 }
 
+/* ── Subpages (about, contact, legal, explorer) ── */
+.mk-subpage {
+  padding: 2rem 1.25rem 4.5rem;
+}
+
+.mk-subpage-inner {
+  max-width: var(--mk-max);
+  margin: 0 auto;
+}
+
+.mk-subpage-panel {
+  background: var(--mk-glass);
+  backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid var(--mk-glass-border);
+  border-radius: 1.5rem;
+  padding: 2rem 1.75rem;
+  box-shadow: 0 24px 64px rgba(15, 41, 34, 0.08);
+}
+
+@media (min-width: 768px) {
+  .mk-subpage-panel {
+    padding: 2.5rem 2.25rem;
+  }
+}
+
+.marketing-shell .mk-legal-body {
+  color: var(--mk-ink);
+}
+
+.marketing-shell .mk-legal-body .text-ink,
+.marketing-shell .mk-legal-body h1,
+.marketing-shell .mk-legal-body h2,
+.marketing-shell .mk-legal-body h3,
+.marketing-shell .mk-legal-body dt {
+  color: var(--mk-ink);
+}
+
+.marketing-shell .mk-legal-body .text-ink-secondary,
+.marketing-shell .mk-legal-body p,
+.marketing-shell .mk-legal-body dd,
+.marketing-shell .mk-legal-body li {
+  color: var(--mk-muted);
+}
+
+.marketing-shell .mk-legal-body a {
+  color: var(--mk-bg-deep);
+}
+
+.marketing-shell .mk-legal-body a:hover {
+  color: var(--mk-accent);
+}
+
 /* ── Reveal animation ── */
 .mk-reveal {
   opacity: 0;
@@ -1126,9 +1234,7 @@
   .mk-bg-carousel-slide img,
   .mk-hero .mk-product-card,
   .mk-transform-arrow,
-  .mk-eyebrow,
-  .mk-pipeline-dot,
-  .mk-page-scrim {
+  .mk-pipeline-dot {
     animation: none !important;
   }
 

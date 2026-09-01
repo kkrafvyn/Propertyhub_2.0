@@ -4,6 +4,8 @@ import { Search, ShieldCheck } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
+import { MarketingSubpage } from "../components/marketing/MarketingSubpage";
+import { isMarketingSite } from "../../lib/site-mode";
 import { publicEventLedgerService, type PublicLedgerKind, type PublicLedgerRecord } from "../../lib/public-event-ledger.service";
 
 export function PublicEventLedger() {
@@ -37,15 +39,16 @@ export function PublicEventLedger() {
     }
   };
 
-  return (
-    <div className="mx-auto max-w-2xl px-4 py-12 space-y-6">
+  const body = (
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <ShieldCheck className="h-6 w-6 text-emerald-600" />
+        <h1 className="mk-section-title flex items-center gap-2">
+          <ShieldCheck className="h-6 w-6 text-emerald-700" />
           Public Event Ledger
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Pseudonymous verification of units, listings, and payment references. Occupant and owner identities are never shown.
+        <p className="mk-section-copy mt-2">
+          Pseudonymous verification of units, listings, and payment references. Occupant and owner
+          identities are never shown.
         </p>
       </div>
       <Card className="p-6">
@@ -78,7 +81,9 @@ export function PublicEventLedger() {
           <ul className="text-xs space-y-2">
             {record.events.map((ev, idx) => (
               <li key={idx} className="border-t border-border pt-2">
-                <span className="font-mono text-muted-foreground">{ev.at ? new Date(ev.at).toLocaleString() : ""}</span>
+                <span className="font-mono text-muted-foreground">
+                  {ev.at ? new Date(ev.at).toLocaleString() : ""}
+                </span>
                 <div>{ev.label}</div>
               </li>
             ))}
@@ -87,4 +92,10 @@ export function PublicEventLedger() {
       ) : null}
     </div>
   );
+
+  if (isMarketingSite()) {
+    return <MarketingSubpage>{body}</MarketingSubpage>;
+  }
+
+  return <div className="mx-auto max-w-2xl px-4 py-12">{body}</div>;
 }

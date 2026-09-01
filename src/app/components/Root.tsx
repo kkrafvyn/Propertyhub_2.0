@@ -26,7 +26,8 @@ import { AdminDesktopShell } from "../shells/AdminDesktopShell";
 import { DesktopNavigationBridge } from "./DesktopNavigationBridge";
 import { DesktopProfessionalGateway } from "./DesktopProfessionalGateway";
 import { GettingStartedChecklist, NewUserTutorial } from "./onboarding/NewUserTutorial";
-import { isMarketingSite } from "../../lib/site-mode";
+import { isMarketingSite, isMarketingPublicPath } from "../../lib/site-mode";
+import { MarketingSiteFrame } from "../components/marketing/MarketingSiteFrame";
 import { MarketingHome } from "../pages/marketing/MarketingHome";
 
 function useViewportFlags() {
@@ -135,14 +136,9 @@ export function Root() {
     return <Navigate to="/workspace" replace />;
   }
 
-  if (isMarketingSite() && location.pathname === "/") {
+  if (isMarketingSite() && isMarketingPublicPath(location.pathname)) {
     return (
-      <SurfaceProvider>
-        <RouteMonitoring />
-        <PolicyUpdateBanner />
-        <MarketingHome />
-        <CookieConsentBanner />
-      </SurfaceProvider>
+      <MarketingSiteFrame home={location.pathname === "/" ? <MarketingHome /> : undefined} />
     );
   }
 
