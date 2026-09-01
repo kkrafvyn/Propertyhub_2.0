@@ -17,4 +17,15 @@ describe("site-mode", () => {
     expect(resolveSiteMode("localhost")).toBe("app");
     expect(resolveSiteMode("127.0.0.1")).toBe("app");
   });
+
+  it("treats the baytmiftah-marketing Vercel project as marketing", () => {
+    expect(resolveSiteMode("baytmiftah-marketing.vercel.app")).toBe("marketing");
+    expect(resolveSiteMode("baytmiftah-marketing-mca3288ud-krafvyn.vercel.app")).toBe("marketing");
+    expect(isMarketingSite("baytmiftah-marketing.vercel.app")).toBe(true);
+  });
+
+  it("keeps the app Vercel project on consumer mode", () => {
+    expect(resolveSiteMode("propertyhub-2-0.vercel.app")).toBe("app");
+    expect(resolveSiteMode("baytmiftah-phjg2gys9-krafvyn.vercel.app")).toBe("app");
+  });
 });

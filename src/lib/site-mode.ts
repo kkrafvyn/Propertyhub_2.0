@@ -9,6 +9,24 @@ function normalizeHost(hostname: string): string {
   return hostname.trim().toLowerCase().replace(/^www\./, "");
 }
 
+/** Hostnames that should render the public marketing site (not the consumer app home). */
+function isMarketingHostname(host: string): boolean {
+  if (host === "baytmiftah.com") {
+    return true;
+  }
+
+  if (host === "marketing.baytmiftah.com") {
+    return true;
+  }
+
+  // Vercel project: baytmiftah-marketing (*.vercel.app preview + production URLs)
+  if (host.includes("baytmiftah-marketing")) {
+    return true;
+  }
+
+  return false;
+}
+
 export function resolveSiteMode(hostname?: string): SiteMode {
   const forced = import.meta.env.VITE_SITE_MODE?.trim().toLowerCase();
   if (forced === "marketing" || forced === "app") {
@@ -27,7 +45,7 @@ export function resolveSiteMode(hostname?: string): SiteMode {
     return "app";
   }
 
-  if (host === "baytmiftah.com") {
+  if (isMarketingHostname(host)) {
     return "marketing";
   }
 

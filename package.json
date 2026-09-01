@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
+    "build:marketing": "cross-env VITE_SITE_MODE=marketing VITE_SITE_URL=https://baytmiftah.com VITE_APP_ORIGIN=https://app.baytmiftah.com vite build",
     "build:web": "vite build",
     "dev": "vite",
     "preview": "vite preview",
