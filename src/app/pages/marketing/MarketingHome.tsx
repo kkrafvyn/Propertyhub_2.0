@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import { MarketingShell } from "../../components/marketing/MarketingShell";
+import { MarketingHeroCarousel } from "../../components/marketing/MarketingHeroCarousel";
 import { appPath } from "../../../lib/marketing-urls";
 
 function useReveal() {
@@ -76,7 +77,8 @@ export function MarketingHome() {
 function HeroSection() {
   return (
     <section className="mk-section mk-hero">
-      <div className="mk-container mk-hero-grid">
+      <MarketingHeroCarousel />
+      <div className="mk-container mk-hero-grid mk-hero-content">
         <Reveal>
           <p className="mk-eyebrow">Real Estate Operating System</p>
           <h1 className="mk-display">The Operating System for Real Estate.</h1>
