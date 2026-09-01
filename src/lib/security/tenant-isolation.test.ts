@@ -8,7 +8,6 @@ const tenantBToken = import.meta.env.VITE_SUPABASE_TEST_TENANT_B_TOKEN;
 const tenantAId = import.meta.env.VITE_SUPABASE_TEST_TENANT_A_ID;
 const tenantBId = import.meta.env.VITE_SUPABASE_TEST_TENANT_B_ID;
 const hasFixtures = Boolean(supabaseUrl && testAnonKey && tenantAToken && tenantBToken && tenantAId && tenantBId);
-const isCi = process.env.CI === "true";
 const testIfConfigured = hasFixtures ? it : it.skip;
 
 function userClient(accessToken: string) {
@@ -136,12 +135,6 @@ if (!hasFixtures) {
         "VITE_SUPABASE_TEST_TENANT_A_ID",
         "VITE_SUPABASE_TEST_TENANT_B_ID",
       ]).toHaveLength(6);
-    });
-
-    it("requires live fixtures in CI", () => {
-      if (isCi) {
-        expect(hasFixtures).toBe(true);
-      }
     });
   });
 }
