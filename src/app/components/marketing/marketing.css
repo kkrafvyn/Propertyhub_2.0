@@ -811,6 +811,66 @@ html[data-marketing-theme="locked"] .marketing-page {
   }
 }
 
+/* ── Consumer journey grid ── */
+.mk-journey-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mk-journey-card {
+  border: 1px solid var(--mk-border);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 1.1rem 1.15rem;
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.mk-journey-card:hover {
+  border-color: rgba(15, 41, 34, 0.22);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(15, 41, 34, 0.08);
+}
+
+.mk-journey-index {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--mk-accent);
+}
+
+.mk-journey-title {
+  margin: 0.45rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mk-ink);
+}
+
+.mk-journey-copy {
+  margin: 0.35rem 0 0;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--mk-muted);
+}
+
+@media (min-width: 640px) {
+  .mk-journey-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .mk-journey-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 /* ── Module grid ── */
 .mk-module-grid {
   display: grid;
@@ -1016,43 +1076,80 @@ html[data-marketing-theme="locked"] .marketing-page {
   color: #7a6110;
 }
 
-/* ── Trust chain ── */
-.mk-trust-chain {
+/* ── Trust rail ── */
+.mk-trust-rail {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  align-items: stretch;
+  gap: 0.65rem;
   margin-top: 2rem;
+}
+
+.mk-trust-rail-item {
+  display: flex;
   align-items: center;
+  flex: 1 1 9.5rem;
+  min-width: 0;
 }
 
-.mk-trust-node {
-  padding: 0.5rem 0.85rem;
-  border-radius: 0.65rem;
+.mk-trust-card {
+  flex: 1;
   border: 1px solid var(--mk-border);
+  border-radius: 0.85rem;
   background: #fff;
-  font-size: 0.82rem;
-  font-weight: 600;
+  padding: 0.85rem 0.95rem;
+  min-height: 100%;
 }
 
-.mk-trust-arrow {
+.mk-trust-card-title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--mk-ink);
+}
+
+.mk-trust-card-copy {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
   color: var(--mk-muted);
 }
 
-.mk-trust-chain--vertical {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.35rem;
-  max-width: 20rem;
+.mk-trust-rail-connector {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1px;
+  margin-inline: 0.15rem;
+  background: linear-gradient(90deg, rgba(15, 41, 34, 0.08), rgba(15, 41, 34, 0.28), rgba(15, 41, 34, 0.08));
 }
 
-.mk-trust-chain--vertical .mk-trust-node {
-  width: 100%;
+@media (max-width: 767px) {
+  .mk-trust-rail {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mk-trust-rail-item {
+    flex-direction: column;
+    flex: 1 1 auto;
+  }
+
+  .mk-trust-rail-connector {
+    width: 1px;
+    height: 1rem;
+    margin: 0.15rem auto;
+    background: linear-gradient(180deg, rgba(15, 41, 34, 0.08), rgba(15, 41, 34, 0.28), rgba(15, 41, 34, 0.08));
+  }
 }
 
-.mk-trust-chain--vertical .mk-trust-arrow {
-  align-self: center;
-  transform: rotate(90deg);
-  padding: 0.1rem 0;
+html.dark .marketing-page .mk-journey-title,
+html.dark .marketing-page .mk-trust-card-title {
+  color: var(--mk-ink);
+}
+
+html.dark .marketing-page .mk-journey-copy,
+html.dark .marketing-page .mk-trust-card-copy {
+  color: var(--mk-muted);
 }
 
 /* ── Teams ── */

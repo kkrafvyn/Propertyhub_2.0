@@ -294,14 +294,14 @@ function BusinessSection() {
 
 function ConsumerSection() {
   const steps = [
-    "Discover",
-    "Compare",
-    "View",
-    "Apply / Offer",
-    "Book / Transact",
-    "Communicate",
-    "Manage stay / lease",
-    "Request support",
+    { title: "Discover", copy: "Search and filter properties in one place." },
+    { title: "Compare", copy: "Evaluate options side by side before you commit." },
+    { title: "View", copy: "Schedule viewings and move forward with confidence." },
+    { title: "Apply / Offer", copy: "Submit applications or offers without scattered paperwork." },
+    { title: "Book / Transact", copy: "Complete bookings and payments in the same flow." },
+    { title: "Communicate", copy: "Stay connected with owners, agents, and managers." },
+    { title: "Manage stay / lease", copy: "Handle your lease or stay from one account." },
+    { title: "Request support", copy: "Raise maintenance or service requests when needed." },
   ];
 
   return (
@@ -316,18 +316,15 @@ function ConsumerSection() {
             without the operational complexity.
           </p>
         </Reveal>
-        <div className="mk-flow mk-flow--vertical">
+        <ol className="mk-journey-grid">
           {steps.map((step, index) => (
-            <span key={step} style={{ display: "contents" }}>
-              <span className="mk-flow-step">{step}</span>
-              {index < steps.length - 1 ? (
-                <span className="mk-flow-arrow" aria-hidden="true">
-                  →
-                </span>
-              ) : null}
-            </span>
+            <li key={step.title} className="mk-journey-card">
+              <span className="mk-journey-index">{String(index + 1).padStart(2, "0")}</span>
+              <p className="mk-journey-title">{step.title}</p>
+              <p className="mk-journey-copy">{step.copy}</p>
+            </li>
           ))}
-        </div>
+        </ol>
         <div className="mk-hero-actions" style={{ marginTop: "2rem" }}>
           <a href={appPath("/search")} className="mk-btn mk-btn-accent">
             Explore Properties
@@ -424,13 +421,13 @@ function NightWatchSection() {
 
 function TrustSection() {
   const nodes = [
-    "Identity",
-    "Permissions",
-    "Organization",
-    "Property",
-    "Transaction",
-    "Audit trail",
-    "Evidence",
+    { title: "Identity", copy: "Who acted — tied to verified users and roles." },
+    { title: "Permissions", copy: "What they were allowed to do in that moment." },
+    { title: "Organization", copy: "Which tenant boundary the action belonged to." },
+    { title: "Property", copy: "Which asset or unit the work affected." },
+    { title: "Transaction", copy: "What changed in the operational record." },
+    { title: "Audit trail", copy: "When it happened and how it flowed through the system." },
+    { title: "Evidence", copy: "Proof attached — documents, approvals, and field capture." },
   ];
 
   return (
@@ -444,16 +441,17 @@ function TrustSection() {
             controlled AI actions — so teams operate with visibility and evidence, not blind trust.
           </p>
         </Reveal>
-        <div className="mk-trust-chain mk-trust-chain--vertical">
+        <div className="mk-trust-rail" role="list">
           {nodes.map((node, index) => (
-            <span key={node} style={{ display: "contents" }}>
-              <span className="mk-trust-node">{node}</span>
+            <div key={node.title} className="mk-trust-rail-item" role="listitem">
+              <article className="mk-trust-card">
+                <p className="mk-trust-card-title">{node.title}</p>
+                <p className="mk-trust-card-copy">{node.copy}</p>
+              </article>
               {index < nodes.length - 1 ? (
-                <span className="mk-trust-arrow" aria-hidden="true">
-                  →
-                </span>
+                <span className="mk-trust-rail-connector" aria-hidden="true" />
               ) : null}
-            </span>
+            </div>
           ))}
         </div>
       </div>
