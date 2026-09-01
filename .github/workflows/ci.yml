@@ -54,6 +54,7 @@ jobs:
       - name: Tenant isolation integration tests
         run: npm run test -- src/lib/security/tenant-isolation.test.ts
         env:
+          RUN_TENANT_ISOLATION_TESTS: true
           VITE_SUPABASE_TEST_URL: ${{ secrets.VITE_SUPABASE_TEST_URL }}
           VITE_SUPABASE_TEST_ANON_KEY: ${{ secrets.VITE_SUPABASE_TEST_ANON_KEY }}
           VITE_SUPABASE_TEST_TENANT_A_TOKEN: ${{ secrets.VITE_SUPABASE_TEST_TENANT_A_TOKEN }}

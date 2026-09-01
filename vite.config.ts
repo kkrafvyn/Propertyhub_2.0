@@ -91,7 +91,12 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
     css: true,
     testTimeout: 10000,
-    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**', '**/tenant-isolation.test.ts'],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      'e2e/**',
+      ...(process.env.RUN_TENANT_ISOLATION_TESTS ? [] : ['**/tenant-isolation.test.ts']),
+    ],
     env: {
       VITE_SUPABASE_URL: 'https://test.supabase.co',
       VITE_SUPABASE_ANON_KEY: 'test-anon-key',
