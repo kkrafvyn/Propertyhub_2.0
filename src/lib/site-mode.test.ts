@@ -35,6 +35,8 @@ describe("isMarketingPublicPath", () => {
     expect(isMarketingPublicPath("/")).toBe(true);
     expect(isMarketingPublicPath("/contact")).toBe(true);
     expect(isMarketingPublicPath("/legal/privacy")).toBe(true);
+    expect(isMarketingPublicPath("/docs")).toBe(true);
+    expect(isMarketingPublicPath("/status")).toBe(true);
     expect(isMarketingPublicPath("/explorer")).toBe(true);
     expect(isMarketingPublicPath("/search")).toBe(false);
   });

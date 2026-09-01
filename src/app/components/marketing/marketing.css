@@ -1468,6 +1468,71 @@ html.dark .marketing-page .mk-cta .mk-btn-on-dark {
   }
 }
 
+.mk-inline-link {
+  color: var(--mk-bg-deep);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mk-inline-link:hover {
+  color: var(--mk-accent);
+}
+
+.mk-status-panel {
+  margin-top: 1.75rem;
+  border: 1px solid var(--mk-border);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  overflow: hidden;
+}
+
+.mk-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--mk-border);
+  font-size: 0.9rem;
+  color: var(--mk-ink);
+}
+
+.mk-status-row:last-child {
+  border-bottom: 0;
+}
+
+.mk-status-pill {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.mk-status-pill--ok {
+  background: rgba(27, 67, 50, 0.12);
+  color: #1b4332;
+}
+
+.mk-status-pill--pending {
+  background: rgba(90, 100, 96, 0.12);
+  color: var(--mk-muted);
+}
+
+.mk-status-pill--warn {
+  background: rgba(196, 90, 58, 0.15);
+  color: #9a3f24;
+}
+
+.mk-status-meta {
+  margin: 0.85rem 0 0;
+  font-size: 0.82rem;
+  color: var(--mk-muted);
+}
+
 .marketing-shell .mk-legal-body {
   color: var(--mk-ink);
 }

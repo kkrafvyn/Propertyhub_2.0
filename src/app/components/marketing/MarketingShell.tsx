@@ -162,10 +162,10 @@ function MarketingFooter() {
               <Link to="/help">Help Center</Link>
             </li>
             <li>
-              <span>Documentation — docs.baytmiftah.com (coming soon)</span>
+              <Link to="/legal">Documentation</Link>
             </li>
             <li>
-              <span>Status — status.baytmiftah.com (coming soon)</span>
+              <Link to="/status">Status</Link>
             </li>
           </ul>
           <h4 className="mt-6">Legal</h4>

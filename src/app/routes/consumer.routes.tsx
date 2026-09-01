@@ -160,6 +160,17 @@ export const consumerRoutes: RouteObject[] = [
     },
   },
   {
+    path: 'docs',
+    element: <Navigate to="/legal" replace />,
+  },
+  {
+    path: 'status',
+    lazy: async () => {
+      const { PublicStatusPage } = await import('../pages/marketing/PublicStatusPage');
+      return { Component: PublicStatusPage };
+    },
+  },
+  {
     path: 'safety',
     element: <Navigate to="/legal/safety" replace />,
   },
