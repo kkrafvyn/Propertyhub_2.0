@@ -593,19 +593,6 @@ html[data-marketing-theme="locked"] .marketing-page {
   color: var(--mk-muted);
 }
 
-.mk-demo-badge {
-  display: inline-block;
-  margin-top: 0.5rem;
-  padding: 0.15rem 0.45rem;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border-radius: 0.35rem;
-  background: rgba(15, 41, 34, 0.06);
-  color: var(--mk-muted);
-}
-
 /* ── Problem / transform ── */
 .mk-problem {
   background: transparent;

@@ -52,10 +52,6 @@ function Reveal({
   );
 }
 
-function DemoBadge() {
-  return <span className="mk-demo-badge">Illustrative UI</span>;
-}
-
 export function MarketingHome() {
   return (
     <>
@@ -121,19 +117,16 @@ function HeroSection() {
               <p className="mk-product-label">Workspace</p>
               <p className="mk-product-title">Portfolio &amp; unit operations</p>
               <p className="mk-product-meta">Leases · occupancy · tasks · documents</p>
-              <DemoBadge />
             </div>
             <div className="mk-product-card mk-product-card--offset">
               <p className="mk-product-label">Finance</p>
               <p className="mk-product-title">Payments &amp; reconciliation</p>
               <p className="mk-product-meta">Journal entries · bank feeds · owner statements</p>
-              <DemoBadge />
             </div>
             <div className="mk-product-card mk-product-card--offset-right">
               <p className="mk-product-label">Maintenance</p>
               <p className="mk-product-title">Tickets, SLAs &amp; contractors</p>
               <p className="mk-product-meta">Dispatch · gate clearance · field updates</p>
-              <DemoBadge />
             </div>
           </div>
         </div>
@@ -403,7 +396,7 @@ function NightWatchSection() {
         </Reveal>
         <div className="mk-watch-panel">
           <p className="mk-product-label" style={{ color: "var(--mk-muted)" }}>
-            AI Night Watch <DemoBadge />
+            AI Night Watch
           </p>
           <p className="mk-product-title" style={{ marginTop: "0.5rem" }}>
             3 issues need attention
