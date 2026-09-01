@@ -1033,49 +1033,6 @@ html[data-marketing-theme="locked"] .marketing-page {
   }
 }
 
-/* ── Night watch panel ── */
-.mk-watch-panel {
-  margin-top: 2rem;
-  border: 1px solid var(--mk-border);
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.82);
-  padding: 1.25rem;
-}
-
-.mk-watch-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.65rem 0;
-  border-bottom: 1px solid var(--mk-border);
-  font-size: 0.875rem;
-  color: var(--mk-ink);
-}
-
-.mk-watch-row:last-child {
-  border-bottom: 0;
-}
-
-.mk-severity {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.2rem 0.45rem;
-  border-radius: 0.35rem;
-}
-
-.mk-severity-high {
-  background: rgba(196, 90, 58, 0.15);
-  color: #9a3f24;
-}
-
-.mk-severity-medium {
-  background: rgba(180, 140, 20, 0.15);
-  color: #7a6110;
-}
-
 /* ── Trust rail ── */
 .mk-trust-rail {
   display: flex;

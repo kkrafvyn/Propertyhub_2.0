@@ -376,12 +376,6 @@ function AISection() {
 }
 
 function NightWatchSection() {
-  const issues = [
-    { label: "Payment failure", severity: "HIGH" as const },
-    { label: "Lease expiration window", severity: "MEDIUM" as const },
-    { label: "Maintenance SLA breach", severity: "HIGH" as const },
-  ];
-
   return (
     <section className="mk-section">
       <div className="mk-container">
@@ -394,26 +388,6 @@ function NightWatchSection() {
             team to review and act on earlier.
           </p>
         </Reveal>
-        <div className="mk-watch-panel">
-          <p className="mk-product-label" style={{ color: "var(--mk-muted)" }}>
-            AI Night Watch
-          </p>
-          <p className="mk-product-title" style={{ marginTop: "0.5rem" }}>
-            3 issues need attention
-          </p>
-          {issues.map((issue) => (
-            <div key={issue.label} className="mk-watch-row">
-              <span>{issue.label}</span>
-              <span
-                className={`mk-severity ${
-                  issue.severity === "HIGH" ? "mk-severity-high" : "mk-severity-medium"
-                }`}
-              >
-                {issue.severity}
-              </span>
-            </div>
-          ))}
-        </div>
       </div>
     </section>
   );
