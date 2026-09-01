@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { useTheme } from "../../context/ThemeContext";
 import { isBusinessMobileApp } from "../../../lib/mobile-app";
-import { SPLASH_WORDMARK } from "./splash/constants";
+import { BRAND_NAME, SPLASH_WORDMARK } from "./splash/constants";
 
 const BRAND_GREEN = "#0F2922";
 const WORKSPACE_NAVY = "#0B2545";
@@ -97,11 +97,16 @@ export function Logo({
         : "text-brand-forest";
 
   return (
-    <Link to={to} className={`flex shrink-0 items-center gap-2.5 ${className}`}>
+    <Link
+      to={to}
+      aria-label={BRAND_NAME}
+      className={`flex shrink-0 items-center gap-2.5 ${className}`}
+    >
       <LogoMark className={markSize} inverted={inverted} variant={logoVariant} />
       {showText && (
         <span
-          className={`${textSize} font-bold tracking-[0.14em] ${textColor}`}
+          className={`${textSize} font-bold tracking-[0.08em] ${textColor}`}
+          aria-hidden="true"
         >
           {SPLASH_WORDMARK}
         </span>

@@ -1,0 +1,20 @@
+import { describe, expect, it } from "vitest";
+import { isMarketingSite, resolveSiteMode } from "./site-mode";
+
+describe("site-mode", () => {
+  it("treats baytmiftah.com as marketing", () => {
+    expect(resolveSiteMode("baytmiftah.com")).toBe("marketing");
+    expect(resolveSiteMode("www.baytmiftah.com")).toBe("marketing");
+    expect(isMarketingSite("baytmiftah.com")).toBe(true);
+  });
+
+  it("treats app subdomain as product app", () => {
+    expect(resolveSiteMode("app.baytmiftah.com")).toBe("app");
+    expect(isMarketingSite("app.baytmiftah.com")).toBe(false);
+  });
+
+  it("defaults localhost to app unless VITE_SITE_MODE is set", () => {
+    expect(resolveSiteMode("localhost")).toBe("app");
+    expect(resolveSiteMode("127.0.0.1")).toBe("app");
+  });
+});

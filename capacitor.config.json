@@ -1,0 +1,18 @@
+{
+  "appId": "com.baymiftah.app",
+  "appName": "BaytMiftah",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "backgroundColor": "#ffffff",
+  "ios": {
+    "contentInset": "automatic",
+    "path": "ios"
+  },
+  "android": {
+    "path": "android"
+  },
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https"
+  }
+}

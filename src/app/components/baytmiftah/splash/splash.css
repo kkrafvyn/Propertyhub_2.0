@@ -91,10 +91,10 @@
   font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: clamp(1.35rem, 5.2vw, 1.75rem);
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.08em;
   line-height: 1.2;
   color: var(--splash-primary);
-  text-indent: 0.18em;
+  text-indent: 0.08em;
 }
 
 .splash-wordmark__char {
@@ -186,9 +186,9 @@
   font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: clamp(1rem, 4vw, 1.25rem);
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.08em;
   color: var(--splash-reflection, rgba(13, 79, 60, 0.12));
-  text-indent: 0.18em;
+  text-indent: 0.08em;
 }
 
 /* Keyframes */

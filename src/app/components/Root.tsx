@@ -26,6 +26,8 @@ import { AdminDesktopShell } from "../shells/AdminDesktopShell";
 import { DesktopNavigationBridge } from "./DesktopNavigationBridge";
 import { DesktopProfessionalGateway } from "./DesktopProfessionalGateway";
 import { GettingStartedChecklist, NewUserTutorial } from "./onboarding/NewUserTutorial";
+import { isMarketingSite } from "../../lib/site-mode";
+import { MarketingHome } from "../pages/marketing/MarketingHome";
 
 function useViewportFlags() {
   const [flags, setFlags] = useState(() => {
@@ -131,6 +133,17 @@ export function Root() {
 
   if (Capacitor.isNativePlatform() && isBusinessMobileApp() && location.pathname === "/") {
     return <Navigate to="/workspace" replace />;
+  }
+
+  if (isMarketingSite() && location.pathname === "/") {
+    return (
+      <SurfaceProvider>
+        <RouteMonitoring />
+        <PolicyUpdateBanner />
+        <MarketingHome />
+        <CookieConsentBanner />
+      </SurfaceProvider>
+    );
   }
 
   if (isMobileLayout && location.pathname === "/" && !isBusinessMobileApp()) {

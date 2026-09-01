@@ -1,4 +1,4 @@
-import { SPLASH_PHASES, SPLASH_WORDMARK, WORDMARK_CHAR_STAGGER_MS } from "./constants";
+import { BRAND_NAME, SPLASH_PHASES, SPLASH_WORDMARK, WORDMARK_CHAR_STAGGER_MS } from "./constants";
 
 export function SplashWordmark({
   text = SPLASH_WORDMARK,
@@ -10,7 +10,7 @@ export function SplashWordmark({
   const chars = [...text];
 
   return (
-    <h1 className={className} aria-label={text.replace(/Λ/g, "A")}>
+    <h1 className={className} aria-label={BRAND_NAME}>
       {chars.map((char, index) => (
         <span
           key={`${char}-${index}`}

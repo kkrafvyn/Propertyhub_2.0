@@ -62,6 +62,7 @@ export const SPLASH_EASING = {
   arc: "cubic-bezier(0.33, 0, 0.2, 1)",
 };
 
-export const SPLASH_WORDMARK = "BΛYTMIFTΛH";
+export const BRAND_NAME = "BaytMiftah";
+export const SPLASH_WORDMARK = "BAYTMIFTAH";
 export const SPLASH_TAGLINE = "UNLOCKING PROPERTY OPPORTUNITIES";
 export const WORDMARK_CHAR_STAGGER_MS = 52;

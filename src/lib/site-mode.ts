@@ -1,0 +1,43 @@
+/**
+ * Distinguishes the public marketing site (baytmiftah.com)
+ * from the product application (app.baytmiftah.com).
+ */
+
+export type SiteMode = "marketing" | "app";
+
+function normalizeHost(hostname: string): string {
+  return hostname.trim().toLowerCase().replace(/^www\./, "");
+}
+
+export function resolveSiteMode(hostname?: string): SiteMode {
+  const forced = import.meta.env.VITE_SITE_MODE?.trim().toLowerCase();
+  if (forced === "marketing" || forced === "app") {
+    return forced;
+  }
+
+  const host = normalizeHost(
+    hostname ?? (typeof window !== "undefined" ? window.location.hostname : ""),
+  );
+
+  if (!host || host === "localhost" || host === "127.0.0.1") {
+    return "app";
+  }
+
+  if (host.startsWith("app.")) {
+    return "app";
+  }
+
+  if (host === "baytmiftah.com") {
+    return "marketing";
+  }
+
+  return "app";
+}
+
+export function isMarketingSite(hostname?: string): boolean {
+  return resolveSiteMode(hostname) === "marketing";
+}
+
+export function isAppSite(hostname?: string): boolean {
+  return resolveSiteMode(hostname) === "app";
+}

@@ -15,7 +15,7 @@ export function AuthPageLayout({
     <DesktopShell minimal>
       <div className="mx-auto flex min-h-[calc(100dvh-72px)] max-w-md flex-col justify-center py-8 sm:py-12">
         <div className="mb-8 text-center">
-          <Logo className="justify-center" inverted />
+          <Logo className="justify-center" />
           <h1 className="section-heading mt-6">{title}</h1>
           {subtitle && <p className="mt-2 text-ink-secondary">{subtitle}</p>}
         </div>

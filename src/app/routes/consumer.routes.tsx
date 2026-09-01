@@ -32,8 +32,8 @@ export const consumerRoutes: RouteObject[] = [
   {
     index: true,
     lazy: async () => {
-      const { Home } = await import('../pages/Home');
-      return { Component: Home };
+      const { ConsumerIndex } = await import('../pages/ConsumerIndex');
+      return { Component: ConsumerIndex };
     },
   },
   {

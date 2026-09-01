@@ -1,0 +1,18 @@
+{
+  "appId": "com.baymiftah.workspace",
+  "appName": "BaytMiftah Workspace",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "backgroundColor": "#0f172a",
+  "ios": {
+    "contentInset": "automatic",
+    "path": "ios-business"
+  },
+  "android": {
+    "path": "android-business"
+  },
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https"
+  }
+}

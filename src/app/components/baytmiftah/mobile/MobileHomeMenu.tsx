@@ -70,7 +70,7 @@ export default function MobileHomeMenu({
                 <LogoMark className="h-6 w-6" inverted />
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-white/60">
                   {SPLASH_WORDMARK}
                 </p>
                 <h2 className="text-base font-bold text-white leading-tight">
