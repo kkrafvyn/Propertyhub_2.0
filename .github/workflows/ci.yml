@@ -34,8 +34,22 @@ jobs:
       - name: Production readiness gate
         run: npm run production:check
 
+      - name: Legal catalog tests
+        run: npm run test -- src/content/legal/legal-catalog.test.ts
+
+      - name: Backup restore drill (fixture)
+        run: npm run backup:restore-drill:fixture
+
       - name: Tenant isolation fixture status
         run: npm run security:tenant-fixtures
+        env:
+          CI: true
+          VITE_SUPABASE_TEST_URL: ${{ secrets.VITE_SUPABASE_TEST_URL }}
+          VITE_SUPABASE_TEST_ANON_KEY: ${{ secrets.VITE_SUPABASE_TEST_ANON_KEY }}
+          VITE_SUPABASE_TEST_TENANT_A_TOKEN: ${{ secrets.VITE_SUPABASE_TEST_TENANT_A_TOKEN }}
+          VITE_SUPABASE_TEST_TENANT_B_TOKEN: ${{ secrets.VITE_SUPABASE_TEST_TENANT_B_TOKEN }}
+          VITE_SUPABASE_TEST_TENANT_A_ID: ${{ secrets.VITE_SUPABASE_TEST_TENANT_A_ID }}
+          VITE_SUPABASE_TEST_TENANT_B_ID: ${{ secrets.VITE_SUPABASE_TEST_TENANT_B_ID }}
 
       - name: Tenant isolation integration tests
         run: npm run test -- src/lib/security/tenant-isolation.test.ts

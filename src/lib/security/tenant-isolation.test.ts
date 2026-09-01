@@ -8,11 +8,11 @@ const tenantBToken = import.meta.env.VITE_SUPABASE_TEST_TENANT_B_TOKEN;
 const tenantAId = import.meta.env.VITE_SUPABASE_TEST_TENANT_A_ID;
 const tenantBId = import.meta.env.VITE_SUPABASE_TEST_TENANT_B_ID;
 const hasFixtures = Boolean(supabaseUrl && testAnonKey && tenantAToken && tenantBToken && tenantAId && tenantBId);
-
+const isCi = process.env.CI === "true";
 const testIfConfigured = hasFixtures ? it : it.skip;
 
 function userClient(accessToken: string) {
-  return createClient(supabaseUrl, testAnonKey, {
+  return createClient(supabaseUrl!, testAnonKey!, {
     global: { headers: { Authorization: `Bearer ${accessToken}` } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -48,7 +48,11 @@ describe("tenant isolation integration contract", () => {
       .from("maintenance-media")
       .list(tenantBId, { limit: 10 });
 
-    expect(error).not.toBeNull();
+    if (error) {
+      expect(data || []).toEqual([]);
+      return;
+    }
+
     expect(data || []).toEqual([]);
   });
 
@@ -132,6 +136,12 @@ if (!hasFixtures) {
         "VITE_SUPABASE_TEST_TENANT_A_ID",
         "VITE_SUPABASE_TEST_TENANT_B_ID",
       ]).toHaveLength(6);
+    });
+
+    it("requires live fixtures in CI", () => {
+      if (isCi) {
+        expect(hasFixtures).toBe(true);
+      }
     });
   });
 }

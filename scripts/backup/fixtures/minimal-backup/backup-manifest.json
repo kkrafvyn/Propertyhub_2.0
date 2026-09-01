@@ -1,0 +1,10 @@
+{
+  "createdAt": "2026-09-01T00:00:00.000Z",
+  "projectRef": "fixture",
+  "outputDir": "scripts/backup/fixtures/minimal-backup",
+  "database": {
+    "exportedAt": "2026-09-01T00:00:00.000Z",
+    "tables": [{ "table": "organizations", "rows": 0 }]
+  },
+  "storage": null
+}

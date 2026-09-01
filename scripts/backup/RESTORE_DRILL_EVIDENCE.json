@@ -1,0 +1,14 @@
+{
+  "lastVerifiedAt": "2026-09-01T22:03:28.578Z",
+  "liveBackup": {
+    "path": "backups/2026-09-01T22-01-10-242Z_full",
+    "tablesValidated": 242,
+    "rowsValidated": 114,
+    "dbSpotCheck": true
+  },
+  "ciFixture": {
+    "path": "scripts/backup/fixtures/minimal-backup",
+    "tablesValidated": 1,
+    "rowsValidated": 0
+  }
+}

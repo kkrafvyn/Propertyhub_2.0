@@ -41,6 +41,11 @@ requireFile('public/sw.js');
 requireFile('capacitor.config.json');
 requireFile('electron/main.cjs');
 requireFile('android/app/src/main/AndroidManifest.xml');
+requireFile('src/content/legal/policies.ts', 'legal policies catalog');
+requireFile('src/content/legal/legal-catalog.test.ts', 'legal catalog tests');
+requireFile('src/lib/legal-config.ts', 'legal operator config');
+requireFile('scripts/backup/restore-drill.mjs', 'backup restore drill');
+requireFile('scripts/backup/fixtures/minimal-backup/backup-manifest.json', 'backup drill fixture');
 
 const migrationsDir = path.join(root, 'supabase/migrations');
 if (existsSync(migrationsDir)) {

@@ -7,8 +7,8 @@ test.describe("Search journey", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: /properties for rent in accra/i }),
     ).toBeVisible();
-    await expect(page.getByPlaceholder(/describe what you're looking for/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /search with ai/i })).toBeVisible();
+    await expect(page.getByPlaceholder(/search destinations/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /^search$/i })).toBeVisible();
   });
 
   test("opens property detail from search results when available", async ({ page }) => {

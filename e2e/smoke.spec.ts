@@ -14,7 +14,8 @@ test.describe("BaytMiftah smoke", () => {
 
   test("login page loads", async ({ page }) => {
     await openRoute(page, "/login");
-    await expect(page.getByRole("button", { name: /sign in|log in/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /sign in to your account/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^continue$/i })).toBeVisible();
   });
 
   test("search page accepts listing type filter", async ({ page }) => {
@@ -22,7 +23,7 @@ test.describe("BaytMiftah smoke", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: /properties for short stay/i }),
     ).toBeVisible();
-    await expect(page.getByPlaceholder(/describe what you're looking for/i)).toBeVisible();
+    await expect(page.getByPlaceholder(/search destinations/i)).toBeVisible();
   });
 
   test("property detail route loads or redirects safely", async ({ page }) => {

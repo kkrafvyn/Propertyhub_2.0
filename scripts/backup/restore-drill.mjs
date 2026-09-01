@@ -13,9 +13,14 @@ import { loadProjectEnv } from "../load-project-env.mjs";
 import { BACKUPS_ROOT, PROJECT_ROOT } from "./lib/paths.mjs";
 
 function parseArgs(argv) {
-  const pathArg = argv.find((arg) => arg.startsWith("--path="))?.split("=")[1];
+  const equalsPath = argv.find((arg) => arg.startsWith("--path="))?.split("=")[1];
+  const pathFlagIndex = argv.indexOf("--path");
+  const spacedPath =
+    pathFlagIndex >= 0 && argv[pathFlagIndex + 1] && !argv[pathFlagIndex + 1].startsWith("--")
+      ? argv[pathFlagIndex + 1]
+      : null;
   return {
-    backupPath: pathArg ? path.resolve(PROJECT_ROOT, pathArg) : null,
+    backupPath: equalsPath || spacedPath ? path.resolve(PROJECT_ROOT, equalsPath || spacedPath) : null,
     verifyDb: argv.includes("--verify-db"),
   };
 }
