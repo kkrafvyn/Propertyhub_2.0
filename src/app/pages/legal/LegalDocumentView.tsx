@@ -1,107 +1,128 @@
 import { Link } from "react-router";
-import { Printer } from "lucide-react";
-import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import { DesktopShell } from "../../components/baytmiftah/DesktopShell";
-import { useTranslation } from "../../i18n/LocaleContext";
+import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import {
-  LEGAL_LAST_UPDATED,
-  type LegalDocument,
-  type LegalSection,
+  LEGAL_CATEGORIES,
+  getAdjacentPolicies,
+  getLegalPath,
   getRelatedDocuments,
-} from "./legal-documents";
+  type LegalDocument,
+} from "../../../content/legal";
+import {
+  LegalArticleHeader,
+  LegalCentreShell,
+  LegalPrevNext,
+  LegalSectionBlock,
+} from "../../components/legal/LegalPageLayout";
+import { LegalRelatedPolicies, LegalContactCard } from "../../components/legal/LegalRelatedPolicies";
+import { LegalTableOfContents } from "../../components/legal/LegalTableOfContents";
+import { openCookiePreferences } from "../../components/legal/CookieConsentBanner";
+import { ComplaintFormPanel } from "./ComplaintForm";
 
-function SectionBlock({ section }: { section: LegalSection }) {
-  return (
-    <section>
-      <h2 className="text-xl font-semibold text-ink">{section.title}</h2>
-      {section.body ? (
-        <p className="mt-2 leading-relaxed text-ink-secondary">{section.body}</p>
-      ) : null}
-      {section.bullets?.length ? (
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-ink-secondary">
-          {section.bullets.map((item) => (
-            <li key={item} className="leading-relaxed">
-              {item}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </section>
-  );
+function categoryLabel(document: LegalDocument) {
+  if (document.category === "company") return "Company";
+  if (document.category === "support") return "Support";
+  return LEGAL_CATEGORIES.find((category) => category.id === document.category)?.label ?? "Legal";
 }
 
 export function LegalDocumentView({ document }: { document: LegalDocument }) {
-  const related = getRelatedDocuments(document.relatedSlugs);
-  const { t } = useTranslation();
+  const related = getRelatedDocuments(document.relatedPolicies);
+  const { previous, next } = getAdjacentPolicies(document.slug);
+  const category = categoryLabel(document);
+  const path = getLegalPath(document.slug);
+  const inLegalCentre = document.category !== "support" && document.category !== "company";
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const article = (
+    <article>
+      <LegalArticleHeader document={document} categoryLabel={category} />
 
-  return (
-    <DesktopShell minimal>
-      <PageMeta title={document.title} description={document.summary} />
-      <div className="legal-document-print mx-auto max-w-6xl px-4 py-10 md:py-14">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 print:hidden">
-          <Link to="/legal" className="text-sm text-brand-forest hover:underline">
-            ← {t("legal.hub.allPolicies")}
-          </Link>
+      {inLegalCentre ? (
+        <div className="mt-6 xl:hidden print:hidden">
+          <LegalTableOfContents sections={document.sections} />
+        </div>
+      ) : null}
+
+      <div className="mt-10 space-y-10">
+        {document.sections.map((section) => (
+          <LegalSectionBlock key={section.heading} section={section} />
+        ))}
+      </div>
+
+      {document.showCookieControls ? (
+        <div className="mt-8 print:hidden">
           <button
             type="button"
-            onClick={handlePrint}
-            className="inline-flex items-center gap-2 rounded-lg border border-surface-border px-3 py-2 text-sm text-ink hover:bg-surface-subtle"
+            onClick={() => openCookiePreferences()}
+            className="rounded-lg bg-brand-forest px-4 py-2 text-sm font-medium text-white hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-forest"
           >
-            <Printer className="h-4 w-4" />
-            {t("legal.print")}
+            Manage cookie preferences
           </button>
         </div>
-        <div className="grid gap-10 lg:grid-cols-[1fr_280px]">
-          <article className="min-w-0">
-            <p className="text-sm text-ink-secondary">Last updated: {LEGAL_LAST_UPDATED}</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">{document.title}</h1>
-            <p className="mt-4 text-lg text-ink-secondary">{document.summary}</p>
+      ) : null}
 
-            <div className="mt-6 rounded-xl border border-amber-200/80 bg-amber-50/80 p-4 text-sm leading-relaxed text-amber-950 print:border-gray-300 print:bg-white">
-              <strong>Important:</strong> These documents are provided for transparency and do not
-              constitute legal advice. BaytMiftah recommends review by qualified counsel experienced
-              in technology, real estate, payments, and Ghanaian commercial law before relying on
-              them for high-value transactions.
-            </div>
-
-            <div className="mt-10 space-y-8">
-              {document.sections.map((section) => (
-                <SectionBlock key={section.title} section={section} />
-              ))}
-            </div>
-
-            <p className="mt-10 text-sm text-ink-secondary">
-              <Link to="/legal" className="text-brand-forest hover:underline">
-                ← All legal documents
-              </Link>
-            </p>
-          </article>
-
-          {related.length > 0 ? (
-            <aside className="lg:sticky lg:top-24 lg:self-start print:hidden">
-              <div className="rounded-xl border border-surface-border bg-surface-subtle/40 p-5">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-ink">Related</h2>
-                <ul className="mt-3 space-y-2">
-                  {related.map((doc) => (
-                    <li key={doc.slug}>
-                      <Link
-                        to={`/legal/${doc.slug}`}
-                        className="text-sm text-brand-forest hover:underline"
-                      >
-                        {doc.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </aside>
-          ) : null}
+      {document.showComplaintForm ? (
+        <div className="mt-12 print:hidden">
+          <h2 className="text-xl font-semibold text-ink">Submit a complaint</h2>
+          <p className="mt-2 text-sm text-ink-secondary">
+            Use the form below or email complaints@baytmiftah.com.
+          </p>
+          <div className="mt-6">
+            <ComplaintFormPanel embedded />
+          </div>
         </div>
+      ) : null}
+
+      <div className="mt-12 space-y-8 print:hidden">
+        <LegalRelatedPolicies documents={related} />
+        {inLegalCentre ? (
+          <div className="xl:hidden">
+            <LegalContactCard />
+          </div>
+        ) : (
+          <LegalContactCard />
+        )}
       </div>
-    </DesktopShell>
+
+      {inLegalCentre ? <LegalPrevNext previous={previous} next={next} /> : null}
+
+      <p className="mt-10 text-sm text-ink-secondary print:hidden">
+        <Link to="/legal" className="text-brand-forest hover:underline">
+          ← All policies
+        </Link>
+      </p>
+    </article>
+  );
+
+
+  if (!inLegalCentre) {
+    return (
+      <DesktopShell minimal showFooter>
+        <PageMeta
+          title={document.seoTitle}
+          description={document.seoDescription}
+          canonicalPath={path}
+          ogTitle={document.seoTitle}
+          ogDescription={document.seoDescription}
+        />
+        <div className="legal-document-print mx-auto max-w-3xl py-6 md:py-10">{article}</div>
+      </DesktopShell>
+    );
+  }
+
+  return (
+    <LegalCentreShell
+      title={document.seoTitle}
+      description={document.seoDescription}
+      canonicalPath={path}
+      currentSlug={document.slug}
+      breadcrumbs={[
+        { label: "Home", to: "/" },
+        { label: "Legal", to: "/legal" },
+        { label: document.title },
+      ]}
+      tocSections={document.sections}
+    >
+      {article}
+    </LegalCentreShell>
   );
 }

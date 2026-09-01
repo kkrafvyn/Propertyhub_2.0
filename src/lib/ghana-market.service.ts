@@ -28,31 +28,31 @@ const GHANA_PAYMENT_CHANNELS: GhanaPaymentChannel[] = [
     id: "mtn_momo",
     label: "MTN Mobile Money",
     helper: "Best default for Ghana tenants and buyers.",
-    settlementHint: "Usually routed through Paystack mobile_money.",
+    settlementHint: "Usually routed through mobile money.",
   },
   {
     id: "telecel_cash",
     label: "Telecel Cash",
     helper: "Useful for Vodafone/Telecel customers.",
-    settlementHint: "Confirm availability in your Paystack dashboard.",
+    settlementHint: "Confirm availability with the payment provider.",
   },
   {
     id: "at_money",
     label: "AT Money",
     helper: "Covers AirtelTigo mobile money users.",
-    settlementHint: "Confirm availability in your Paystack dashboard.",
+    settlementHint: "Confirm availability with the payment provider.",
   },
   {
     id: "card",
     label: "Card",
     helper: "Good fallback for diaspora and corporate clients.",
-    settlementHint: "Runs through Paystack card authorization.",
+    settlementHint: "Runs through card authorization.",
   },
   {
     id: "bank_transfer",
     label: "Bank Transfer",
     helper: "Works well for larger deposits and business payments.",
-    settlementHint: "Runs through Paystack bank transfer or bank channel.",
+    settlementHint: "Runs through bank transfer.",
   },
 ];
 

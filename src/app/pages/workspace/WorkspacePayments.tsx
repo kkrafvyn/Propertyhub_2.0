@@ -328,7 +328,7 @@ export function WorkspacePayments({
     try {
       setVerifyingPaymentId(payment.id);
       const result =
-        payment.provider === "stripe"
+        payment.provider === "payangels"
           ? await paymentService.verifyStripePayment(
               payment.access_code || undefined,
               payment.provider_reference
@@ -442,7 +442,7 @@ export function WorkspacePayments({
         )
       );
 
-      toast.success("Refund request submitted to Paystack.");
+      toast.success("Refund request submitted to the payment provider.");
       resetRefundDialog();
     } catch (error) {
       console.error("Failed to initiate refund:", error);
@@ -466,7 +466,7 @@ export function WorkspacePayments({
       <div className="mb-8">
         <h1 className="text-3xl font-semibold mb-2">Payments</h1>
         <p className="text-muted-foreground">
-          Track Paystack payments, review receipts, download proof files, and manage
+          Track payments, review receipts, download proof files, and manage
           refunds for {organization.name}.
         </p>
       </div>
@@ -543,7 +543,7 @@ export function WorkspacePayments({
             <div>
               <p className="text-sm text-muted-foreground mb-1">Successful</p>
               <p className="text-3xl font-semibold">{stats.successful}</p>
-              <p className="text-xs text-accent mt-1">Completed through Paystack</p>
+              <p className="text-xs text-accent mt-1">Completed through checkout</p>
             </div>
             <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
               <Wallet className="w-6 h-6 text-accent" />
@@ -583,7 +583,7 @@ export function WorkspacePayments({
           <div>
             <h2 className="text-lg font-semibold">Ghana Mobile Money readiness</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Paystack checkout requests mobile_money, card, bank transfer, and bank channels.
+              Checkout supports mobile money, card, bank transfer, and bank channels.
               Keep MoMo first when guiding clients through deposits and inspection fees.
             </p>
           </div>
@@ -591,7 +591,7 @@ export function WorkspacePayments({
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           {GHANA_PAYMENT_CHANNELS.map((channel) => (
-            <div key={channel.id} className="rounded-xl border border-border bg-white p-3">
+            <div key={channel.id} className="rounded-xl border border-border bg-card p-3">
               <p className="font-medium">{channel.label}</p>
               <p className="mt-1 text-xs text-muted-foreground">{channel.helper}</p>
               <p className="mt-2 text-xs text-primary">{channel.settlementHint}</p>
@@ -730,7 +730,7 @@ export function WorkspacePayments({
                         )}
                         {latestRefund.status === "needs_attention" && (
                           <p className="text-destructive mt-2">
-                            Paystack is waiting for customer bank details before this refund can
+                            The payment provider is waiting for customer bank details before this refund can
                             continue.
                           </p>
                         )}
@@ -798,7 +798,7 @@ export function WorkspacePayments({
           <DialogHeader>
             <DialogTitle>Request Refund</DialogTitle>
             <DialogDescription>
-              Start a Paystack refund for this property payment. Leave the amount blank to refund
+              Start a refund for this property payment. Leave the amount blank to refund
               the full remaining balance.
             </DialogDescription>
           </DialogHeader>
@@ -857,7 +857,7 @@ export function WorkspacePayments({
                 <Textarea
                   value={merchantNote}
                   onChange={(event) => setMerchantNote(event.target.value)}
-                  placeholder="Optional operations note for Paystack records"
+                  placeholder="Optional operations note for payment records"
                 />
               </div>
             </div>

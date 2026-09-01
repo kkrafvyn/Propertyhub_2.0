@@ -83,7 +83,7 @@ export function UserMenu() {
       <DropdownMenuContent
         align="end"
         sideOffset={10}
-        className="bm-user-menu-panel w-[min(92vw,280px)] overflow-hidden rounded-2xl border border-surface-border bg-white p-0 text-ink shadow-menu"
+        className="bm-user-menu-panel w-[min(92vw,280px)] overflow-hidden rounded-2xl border border-surface-border bg-surface p-0 text-ink shadow-menu"
       >
         <div className="border-b border-surface-border bg-surface-subtle px-4 py-4">
           <div className="flex items-center gap-3">

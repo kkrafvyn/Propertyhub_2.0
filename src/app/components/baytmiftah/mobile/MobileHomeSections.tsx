@@ -7,20 +7,29 @@ import { useTranslation } from "../../../i18n/LocaleContext";
 import { propertyTypeIcons } from "../icons";
 import { ListingCardImage } from "../ListingCardImage";
 import type { MarketplaceListingCard } from "../listing-mappers";
+import { MobileBiometricQuickSignIn } from "../../../mobile/MobileBiometricQuickSignIn";
 
 export function MobileReferenceHeader({
   onMenuClick,
   menuEnabled = false,
+  onBiometricSuccess,
+  onBiometricError,
 }: {
   onMenuClick?: () => void;
   menuEnabled?: boolean;
+  onBiometricSuccess?: (credentials: { username: string; password: string }) => void;
+  onBiometricError?: (message: string) => void;
 }) {
   const { user } = useAuth();
   const { t } = useTranslation();
 
   return (
-    <header className="sticky top-0 z-40 grid min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-2 bg-surface px-3 pb-3 pt-2 sm:px-4 sm:pt-4">
-      <div aria-hidden />
+    <header className="sticky top-0 z-40 grid min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-2 bg-surface px-3 pb-3 pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-4 sm:pt-4">
+      <div className="flex min-w-0 items-center justify-start">
+        {!user && onBiometricSuccess ? (
+          <MobileBiometricQuickSignIn onSuccess={onBiometricSuccess} onError={onBiometricError} />
+        ) : null}
+      </div>
       <Logo to="/" size="sm" className="min-w-0 justify-center" />
       <div className="flex items-center justify-end">
         {menuEnabled ? (
@@ -37,7 +46,7 @@ export function MobileReferenceHeader({
           </>
         ) : (
           <Link
-            to="/app"
+            to="/app/settings"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-subtle text-ink"
             aria-label={t("mobile.profile")}
           >
@@ -98,7 +107,7 @@ export function MobileTransactionTabs({
             type="button"
             onClick={() => onChange(id)}
             className={`flex min-w-0 items-center justify-center gap-0.5 rounded-full px-1.5 py-2 text-xs font-semibold transition sm:gap-1 sm:px-2 sm:py-2.5 sm:text-sm ${
-              isActive ? "bg-mobile-forest text-white shadow-sm" : "bg-[#F5F5F5] text-ink-secondary"
+              isActive ? "bg-mobile-forest text-white shadow-sm" : "bg-surface-subtle text-ink-secondary"
             }`}
           >
             {id === "stay" && <Home className="h-3.5 w-3.5 shrink-0" />}
@@ -111,12 +120,12 @@ export function MobileTransactionTabs({
 }
 
 const PROPERTY_TYPE_KEYS = [
-  { id: "apartment", labelKey: "mobile.homeScreen.apartments", bg: "bg-blue-50" },
-  { id: "house", labelKey: "mobile.homeScreen.houses", bg: "bg-green-50" },
-  { id: "townhouse", labelKey: "mobile.homeScreen.townhouses", bg: "bg-orange-50" },
-  { id: "commercial", labelKey: "mobile.homeScreen.commercial", bg: "bg-purple-50" },
-  { id: "land", labelKey: "mobile.homeScreen.land", bg: "bg-emerald-50" },
-  { id: "shortStay", labelKey: "mobile.homeScreen.shortStay", bg: "bg-orange-50" },
+  { id: "apartment", labelKey: "mobile.homeScreen.apartments", bg: "bg-blue-100 dark:bg-blue-900/30" },
+  { id: "house", labelKey: "mobile.homeScreen.houses", bg: "bg-green-100 dark:bg-green-900/30" },
+  { id: "townhouse", labelKey: "mobile.homeScreen.townhouses", bg: "bg-orange-100 dark:bg-orange-900/30" },
+  { id: "commercial", labelKey: "mobile.homeScreen.commercial", bg: "bg-purple-100 dark:bg-purple-900/30" },
+  { id: "land", labelKey: "mobile.homeScreen.land", bg: "bg-emerald-100 dark:bg-emerald-900/30" },
+  { id: "shortStay", labelKey: "mobile.homeScreen.shortStay", bg: "bg-amber-100 dark:bg-amber-900/30" },
 ] as const;
 
 export function MobilePropertyTypeRow({
@@ -129,7 +138,31 @@ export function MobilePropertyTypeRow({
   const { t } = useTranslation();
 
   return (
-    <div className="mb-6 flex gap-5 overflow-x-auto px-4 sm:gap-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div
+      className="mobile-type-scroll mb-6 flex gap-4 overflow-x-auto px-3 sm:gap-5 sm:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      role="tablist"
+      aria-label={t("mobile.homeScreen.propertyTypes")}
+    >
+      <button
+        type="button"
+        role="tab"
+        aria-selected={active === null}
+        onClick={() => onChange(null)}
+        className="flex w-[68px] shrink-0 snap-start flex-col items-center gap-2 sm:w-[76px]"
+      >
+        <span
+          className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-subtle transition sm:h-14 sm:w-14 ${
+            active === null ? "ring-2 ring-mobile-forest ring-offset-2" : ""
+          }`}
+        >
+          <Home className={`h-6 w-6 sm:h-7 sm:w-7 ${active === null ? "text-mobile-forest" : "text-ink-secondary"}`} />
+        </span>
+        <span
+          className={`text-center text-[10px] font-medium leading-tight sm:text-[11px] ${active === null ? "text-mobile-forest" : "text-ink-secondary"}`}
+        >
+          {t("categoryBar.all")}
+        </span>
+      </button>
       {PROPERTY_TYPE_KEYS.map(({ id, labelKey, bg }) => {
         const isActive = active === id;
         const Icon = propertyTypeIcons[id] || Home;
@@ -137,18 +170,20 @@ export function MobilePropertyTypeRow({
           <button
             key={id}
             type="button"
+            role="tab"
+            aria-selected={isActive}
             onClick={() => onChange(isActive ? null : id)}
-            className="flex w-[76px] shrink-0 flex-col items-center gap-2.5 sm:w-[84px]"
+            className="flex w-[68px] shrink-0 snap-start flex-col items-center gap-2 sm:w-[76px]"
           >
             <span
-              className={`flex h-14 w-14 items-center justify-center rounded-2xl transition sm:h-[3.75rem] sm:w-[3.75rem] ${
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl transition sm:h-14 sm:w-14 ${
                 isActive ? "ring-2 ring-mobile-forest ring-offset-2" : ""
               } ${bg}`}
             >
-              <Icon className={`h-7 w-7 ${isActive ? "text-mobile-forest" : "text-ink-secondary"}`} />
+              <Icon className={`h-6 w-6 sm:h-7 sm:w-7 ${isActive ? "text-mobile-forest" : "text-ink-secondary"}`} />
             </span>
             <span
-              className={`text-center text-[11px] font-medium leading-tight sm:text-xs ${isActive ? "text-mobile-forest" : "text-ink-secondary"}`}
+              className={`text-center text-[10px] font-medium leading-tight sm:text-[11px] ${isActive ? "text-mobile-forest" : "text-ink-secondary"}`}
             >
               {t(labelKey)}
             </span>
@@ -245,29 +280,31 @@ export function MobileHomeListingCard({
   );
 }
 
-const PROMO_GRADIENTS = [
-  "from-emerald-700 to-emerald-900",
-  "from-slate-700 to-slate-900",
-  "from-teal-700 to-teal-900",
-];
+export const EXPLORE_MODE_IMAGES = {
+  buy: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80",
+  rent: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80",
+  lease: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80",
+  stay: "https://images.unsplash.com/photo-1631049307264-da486c479a4d?auto=format&fit=crop&w=600&q=80",
+} as const;
 
 export function MobilePromoCard({
   title,
   subtitle,
   to,
-  index = 0,
+  image,
 }: {
   title: string;
   subtitle: string;
   to: string;
-  index?: number;
+  image: string;
 }) {
   return (
     <Link
       to={to}
-      className={`relative flex h-[160px] w-[130px] shrink-0 flex-col justify-end overflow-hidden rounded-2xl bg-gradient-to-br p-3 text-white ${PROMO_GRADIENTS[index % PROMO_GRADIENTS.length]}`}
+      className="relative flex h-[168px] w-[148px] shrink-0 flex-col justify-end overflow-hidden rounded-2xl p-3 text-white shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
     >
-      <div className="absolute inset-0 bg-black/20" />
+      <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
       <div className="relative">
         <p className="text-sm font-bold leading-tight">{title}</p>
         <p className="mt-2 inline-flex items-center gap-0.5 text-[11px] font-semibold text-white/90">
@@ -288,6 +325,7 @@ export function MobileAreaCard({
   count: number;
   to: string;
 }) {
+  const { t } = useTranslation();
   const image =
     "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80";
 
@@ -297,7 +335,7 @@ export function MobileAreaCard({
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 p-3">
         <p className="text-sm font-bold text-white">{area.name}</p>
-        <p className="text-[11px] text-white/85">{count} properties</p>
+        <p className="text-[11px] text-white/85">{t("mobile.homeScreen.propertiesCount", { count })}</p>
       </div>
     </Link>
   );
@@ -317,7 +355,7 @@ export function filterHomeListings(
           : txTab === "lease"
             ? l.listingType === "lease"
             : txTab === "stay"
-              ? l.listingType === "stay" || l.listingType === "rent"
+              ? l.listingType === "stay"
               : true;
 
     const matchType = !propType
@@ -345,6 +383,8 @@ export function MobileHeader({
   backTo?: string;
   showLogo?: boolean;
 }) {
+  const { t } = useTranslation();
+
   return (
     <header className="sticky top-0 z-40 border-b border-surface-border bg-surface px-4 py-3">
       <div className="flex items-center gap-3">
@@ -352,7 +392,7 @@ export function MobileHeader({
           <NavLink
             to={backTo}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-subtle text-ink"
-            aria-label="Go back"
+            aria-label={t("mobile.goBack")}
           >
             <ChevronLeft className="h-5 w-5" />
           </NavLink>
@@ -371,12 +411,15 @@ export function MobileHeader({
 export function MobileSearchBar({
   value,
   onChange,
-  placeholder = "Search listings",
+  placeholder,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
 }) {
+  const { t } = useTranslation();
+  const resolvedPlaceholder = placeholder ?? t("mobile.searchListings");
+
   return (
     <div className="px-4 py-3">
       <div className="flex items-center gap-3 rounded-xl bg-surface-subtle px-4 py-3.5">
@@ -385,7 +428,7 @@ export function MobileSearchBar({
           type="search"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-secondary"
         />
       </div>
@@ -426,6 +469,8 @@ export function MobileCategoryChips({
 }
 
 export function MobileFiltersRow({ onFiltersClick }: { onFiltersClick: () => void }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex gap-2 px-4 pb-3">
       <button
@@ -433,7 +478,7 @@ export function MobileFiltersRow({ onFiltersClick }: { onFiltersClick: () => voi
         onClick={onFiltersClick}
         className="flex items-center gap-2 rounded-full border border-surface-border bg-surface px-4 py-2 text-sm font-semibold text-ink"
       >
-        Filters
+        {t("mobile.filters")}
       </button>
     </div>
   );

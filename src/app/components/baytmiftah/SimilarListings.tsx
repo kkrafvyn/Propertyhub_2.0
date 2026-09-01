@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { ListingCard } from "./ListingCard";
 import type { MarketplaceListingCard } from "./listing-mappers";
+import { useTranslation } from "../../i18n/LocaleContext";
 
 export function SimilarListings({
   listings,
@@ -9,19 +10,20 @@ export function SimilarListings({
   listings: MarketplaceListingCard[];
   currentId?: string;
 }) {
+  const { t } = useTranslation();
   const similar = listings.filter((l) => l.id !== currentId).slice(0, 4);
   if (!similar.length) return null;
 
   return (
     <section className="mt-16 border-t border-surface-border pt-10">
-      <h2 className="mb-6 text-xl font-semibold text-ink">Similar properties</h2>
+      <h2 className="mb-6 text-xl font-semibold text-ink">{t("property.similarProperties")}</h2>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {similar.map((listing) => (
           <ListingCard key={listing.id} listing={listing} />
         ))}
       </div>
       <Link to="/search" className="mt-4 inline-block text-sm font-semibold text-ink underline">
-        Browse more homes
+        {t("property.browseMoreHomes")}
       </Link>
     </section>
   );

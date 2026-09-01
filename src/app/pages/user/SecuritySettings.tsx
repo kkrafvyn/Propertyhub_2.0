@@ -1,14 +1,22 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
+import { Capacitor } from "@capacitor/core";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { supabase } from "../../../lib/supabase";
+import { nativePluginsService } from "../../../lib/native-plugins.service";
+import {
+  isBiometricAppLockEnabled,
+  setBiometricAppLockEnabled,
+} from "../../../lib/biometric-preferences";
+import { useTranslation } from "../../i18n/LocaleContext";
 import { toast } from "sonner";
 
 export function SecuritySettingsPage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const mfaRequired = searchParams.get("mfa") === "required";
   const workspaceMfaRequired = searchParams.get("mfa") === "workspace-required";
@@ -16,6 +24,8 @@ export function SecuritySettingsPage() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [verifyCode, setVerifyCode] = useState("");
   const [enrolling, setEnrolling] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [appLockEnabled, setAppLockEnabled] = useState(() => isBiometricAppLockEnabled());
   const [sessions, setSessions] = useState<
     Array<{ id: string; session_label: string | null; last_seen_at: string; user_agent: string | null }>
   >([]);
@@ -23,6 +33,10 @@ export function SecuritySettingsPage() {
   useEffect(() => {
     void loadSessions();
   }, [user?.id]);
+
+  useEffect(() => {
+    void nativePluginsService.isBiometricAvailable().then(setBiometricAvailable);
+  }, []);
 
   const loadSessions = async () => {
     if (!user?.id) return;
@@ -42,9 +56,9 @@ export function SecuritySettingsPage() {
       if (error) throw error;
       setFactorId(data.id);
       setQrCode(data.totp?.qr_code || null);
-      toast.success("Scan the QR code with your authenticator app.");
+      toast.success(t("securityPage.scanQrToast"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to start MFA enrollment");
+      toast.error(error instanceof Error ? error.message : t("securityPage.mfaStartFailed"));
     } finally {
       setEnrolling(false);
     }
@@ -63,90 +77,117 @@ export function SecuritySettingsPage() {
       });
       if (verify.error) throw verify.error;
 
-      toast.success("Two-factor authentication enabled.");
+      toast.success(t("securityPage.mfaEnabledToast"));
       setQrCode(null);
       setVerifyCode("");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Invalid verification code");
+      toast.error(error instanceof Error ? error.message : t("securityPage.mfaVerifyFailed"));
     }
   };
 
   const revokeSession = async (sessionId: string) => {
-    if (!window.confirm("Revoke this session?")) return;
+    if (!window.confirm(t("securityPage.revokeConfirm"))) return;
     await supabase
       .from("user_sessions")
       .update({ revoked_at: new Date().toISOString() })
       .eq("id", sessionId);
-    toast.success("Session revoked.");
+    toast.success(t("securityPage.sessionRevoked"));
     void loadSessions();
   };
 
   const signOutEverywhere = async () => {
-    if (!window.confirm("Sign out on all devices?")) return;
+    if (!window.confirm(t("securityPage.signOutConfirm"))) return;
     await supabase.auth.signOut({ scope: "global" });
   };
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Security</h1>
-        <p className="text-muted-foreground">Manage MFA, sessions, and account protection.</p>
+        <h1 className="text-2xl font-semibold">{t("securityPage.title")}</h1>
+        <p className="text-muted-foreground">{t("securityPage.subtitle")}</p>
       </div>
 
       {mfaRequired ? (
-        <Card className="p-4 border-amber-300 bg-amber-50 text-amber-900">
-          Platform admin access requires two-factor authentication. Enroll below to continue.
+        <Card className="p-4 border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+          {t("securityPage.adminMfaRequired")}
         </Card>
       ) : null}
       {workspaceMfaRequired ? (
-        <Card className="p-4 border-amber-300 bg-amber-50 text-amber-900">
-          Agency owners and managers must enable two-factor authentication before using the workspace.
+        <Card className="p-4 border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+          {t("securityPage.workspaceMfaRequired")}
+        </Card>
+      ) : null}
+
+      {Capacitor.isNativePlatform() && biometricAvailable ? (
+        <Card className="p-6 space-y-4">
+          <div>
+            <h2 className="font-semibold">{t("mobile.biometric.appLockTitle")}</h2>
+            <p className="text-sm text-muted-foreground">{t("mobile.biometric.appLockDescription")}</p>
+          </div>
+          <label className="flex items-center justify-between gap-4">
+            <span className="text-sm font-medium">{t("mobile.biometric.appLockTitle")}</span>
+            <input
+              type="checkbox"
+              checked={appLockEnabled}
+              onChange={(event) => {
+                const enabled = event.target.checked;
+                setBiometricAppLockEnabled(enabled);
+                setAppLockEnabled(enabled);
+                toast.success(
+                  enabled ? t("mobile.biometric.appLockEnabled") : t("mobile.biometric.appLockDisabled"),
+                );
+              }}
+              className="h-5 w-5 accent-brand-forest"
+            />
+          </label>
         </Card>
       ) : null}
 
       <Card className="p-6 space-y-4">
-        <h2 className="font-semibold">Two-factor authentication (TOTP)</h2>
+        <h2 className="font-semibold">{t("securityPage.totpTitle")}</h2>
         {!qrCode ? (
           <Button onClick={() => void startMfaEnrollment()} disabled={enrolling}>
-            {enrolling ? "Starting…" : "Enable authenticator app"}
+            {enrolling ? t("securityPage.startingMfa") : t("securityPage.startMfa")}
           </Button>
         ) : (
           <div className="space-y-3">
             {qrCode ? (
-              <img src={qrCode} alt="MFA QR code" className="w-48 h-48 border rounded-lg" />
+              <img src={qrCode} alt={t("securityPage.mfaQrAlt")} className="w-48 h-48 border rounded-lg" />
             ) : null}
             <Input
               value={verifyCode}
               onChange={(event) => setVerifyCode(event.target.value)}
-              placeholder="Enter 6-digit code"
+              placeholder={t("securityPage.verifyCodePlaceholder")}
               inputMode="numeric"
             />
-            <Button onClick={() => void verifyMfaEnrollment()}>Verify and enable MFA</Button>
+            <Button onClick={() => void verifyMfaEnrollment()}>{t("securityPage.verifyEnableMfa")}</Button>
           </div>
         )}
       </Card>
 
       <Card className="p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Active sessions</h2>
+          <h2 className="font-semibold">{t("securityPage.activeSessions")}</h2>
           <Button variant="outline" size="sm" onClick={() => void signOutEverywhere()}>
-            Sign out everywhere
+            {t("securityPage.signOutEverywhere")}
           </Button>
         </div>
         {sessions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No tracked sessions yet.</p>
+          <p className="text-sm text-muted-foreground">{t("securityPage.noSessions")}</p>
         ) : (
           sessions.map((session) => (
             <div key={session.id} className="flex items-center justify-between border rounded-lg p-3">
               <div>
-                <p className="font-medium">{session.session_label || "Browser session"}</p>
+                <p className="font-medium">{session.session_label || t("securityPage.browserSession")}</p>
                 <p className="text-xs text-muted-foreground">
-                  {session.user_agent || "Unknown device"} · Last seen{" "}
-                  {new Date(session.last_seen_at).toLocaleString()}
+                  {session.user_agent || t("securityPage.unknownDevice")} ·{" "}
+                  {t("securityPage.lastSeen", {
+                    time: new Date(session.last_seen_at).toLocaleString(),
+                  })}
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={() => void revokeSession(session.id)}>
-                Revoke
+                {t("securityPage.revokeSession")}
               </Button>
             </div>
           ))

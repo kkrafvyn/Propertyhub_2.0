@@ -17,6 +17,29 @@ export const WORKSPACE_SLUG_PERMISSIONS: Record<string, WorkspacePermission | nu
   maintenance: "listings:read",
   inspections: "listings:read",
   "smart-property": "listings:read",
+  "estate-operations": "listings:read",
+  "estate-finance": "finance:read",
+  "estate-communications": "leads:read",
+  "contextual-inbox": "leads:read",
+  "stakeholder-portals": "listings:read",
+  "enterprise-operations": "listings:read",
+  "command-center": "finance:read",
+  "data-migration": "team:manage",
+  "property-360": "listings:read",
+  "customer-360": "leads:read",
+  "technician-jobs": "listings:read",
+  "ai-operations": "finance:read",
+  "company-launchpad": "team:manage",
+  "opening-balances": "finance:read",
+  "payment-import": "finance:read",
+  "estate-payables": "finance:read",
+  "owner-statements": "finance:read",
+  "service-desk": "leads:read",
+  "unit-360": "listings:read",
+  "utility-metering": "listings:read",
+  "ai-lease-analyzer": "listings:read",
+  "gate-clearance": "listings:read",
+  "contractor-work-orders": "listings:write",
   "market-intelligence": "leads:read",
   trust: "listings:read",
   compliance: "finance:read",
@@ -36,10 +59,38 @@ export const WORKSPACE_SLUG_PERMISSIONS: Record<string, WorkspacePermission | nu
   finance: "finance:read",
   "advanced-search": "leads:read",
   "predictive-analytics": "leads:read",
+  "ai-rent-yield": "listings:read",
+  "whatsapp-hub": "leads:read",
+  "multi-currency-fx": "finance:read",
   recommendations: "leads:read",
   "team-collaboration": "team:manage",
   workflows: "team:manage",
   new: "listings:write",
+  "general-ledger": "finance:read",
+  procurement: "finance:read",
+  "bank-reconciliation": "finance:read",
+  "portfolio-analytics": "finance:read",
+  "ai-command-center": "finance:read",
+  "automation-builder": "team:manage",
+  "bulk-operations": "finance:read",
+  "data-import-export": "team:manage",
+  "chart-of-accounts": "finance:read",
+  "journal-entries": "finance:read",
+  "financial-statements": "finance:read",
+  "collections-cases": "finance:read",
+  "leasing-applications": "listings:read",
+  esignature: "listings:write",
+  "owner-disbursements": "finance:read",
+  "approval-center": "finance:read",
+  "exception-center": "listings:read",
+  "company-knowledge": "listings:read",
+  "evidence-center": "finance:read",
+  "customer-health": "team:manage",
+  productivity: "listings:read",
+  "my-work": null,
+  "staff-time": "listings:read",
+  "contractor-portal": "listings:read",
+  "data-retention": "team:manage",
 };
 
 export function canAccessWorkspaceSlug(
@@ -76,13 +127,54 @@ export const WORKSPACE_PAGE_SLUGS = Object.keys(WORKSPACE_SLUG_PERMISSIONS).filt
 export function getWorkspaceRoleDescription(role: MemberRole | null | undefined): string {
   switch (role) {
     case "owner":
-      return "Full access to listings, finance, team, and settings.";
+      return "Organization owner: full control over company, billing, and integrations.";
+    case "managing_director":
+      return "Executive leadership: portfolio revenue, yields, and strategic briefing.";
+    case "head_property_management":
+      return "Department head: entire portfolio SLAs, occupancy, and contractor budgets.";
     case "manager":
-      return "Manage listings, leads, payouts, and your team.";
+    case "property_manager":
+      return "Property manager: leases, occupancies, work orders, and tenant follow-up.";
+    case "facilities_manager":
+      return "Facilities manager: physical assets, preventive maintenance, and utilities.";
+    case "estate_officer":
+      return "Estate officer: mobile inspections, meter readings, and on-site notices.";
+    case "caretaker":
+      return "Caretaker: day-to-day estate presence, defect logging, and resident assistance.";
+    case "technician":
+      return "In-house technician: mobile job queue, status updates, and material tracking.";
+    case "finance_manager":
+      return "Finance manager: general ledger, bank reconciliations, and owner statements.";
+    case "finance_officer":
+      return "Finance officer: payment allocations, receivable aging, and invoice processing.";
+    case "collections_officer":
+      return "Collections officer: arrears aging, payment plans, and legal notice enforcement.";
+    case "sales_manager":
+      return "Sales manager: deal pipelines, viewing schedules, and agent commissions.";
     case "agent":
-      return "List properties, work leads, and manage day-to-day deals.";
+    case "sales_agent":
+      return "Leasing & sales agent: lead follow-up, property viewings, and Act 220 lease drafting.";
+    case "marketing_manager":
+    case "marketing_officer":
+      return "Marketing: campaign management, promotion budgets, and channel analytics.";
+    case "customer_service_manager":
+    case "customer_service_agent":
+      return "Customer service: resident inquiry intake, ticket routing, and SLA tracking.";
     case "analyst":
-      return "Read-only analytics and reporting across the workspace.";
+    case "platform_analyst":
+      return "Data analyst: market intelligence, cap rate modeling, and compliance audits.";
+    case "platform_admin":
+    case "platform_ops":
+      return "Platform administration: platform governance, moderation, and infrastructure.";
+    case "property_owner":
+      return "Property owner: individual asset oversight, unit statements, and yield tracking.";
+    case "contractor":
+    case "vendor":
+      return "External service provider: quote submissions, job execution, and invoice tracking.";
+    case "developer":
+      return "Property developer: project handover, snagging, and unit warranty transition.";
+    case "enterprise_operator":
+      return "Enterprise operator: multi-company portfolio aggregation and cross-regional ops.";
     default:
       return "Workspace member";
   }

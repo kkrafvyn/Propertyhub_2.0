@@ -1,5 +1,5 @@
 import { HttpError } from "./http.ts";
-import { PaystackTransactionData } from "./paystack.ts";
+import { PaystackTransactionData } from "./payangels.ts";
 import { assertPaystackAmountMatch } from "./payment-pricing.ts";
 import { redeemPromoCode } from "./promo-pricing.ts";
 import { writeServerAuditLog } from "./audit-log.ts";
@@ -124,7 +124,7 @@ function buildReceiptPayload(
   return {
     receiptId,
     receiptNumber,
-    provider: "paystack",
+    provider: "payangels",
     providerReference: transaction.provider_reference,
     providerTransactionId:
       transaction.provider_transaction_id || String(paystackData.id || ""),
@@ -360,7 +360,7 @@ async function syncFinancialSideEffects(transaction: PropertyTransactionRow) {
     pendingMinor: wallet.pending_minor || 0,
     referenceType: "property_transaction",
     referenceId: transaction.id,
-    description: `Paystack ${transaction.purpose} payment`,
+    description: `${transaction.purpose} payment`,
   });
 
   if (["deposit", "purchase_installment"].includes(transaction.purpose)) {
@@ -537,7 +537,7 @@ export async function reconcilePaystackPayment(input: {
       : transaction.provider_transaction_id;
   const mergedMetadata = {
     ...(transaction.metadata || {}),
-    paystack: input.verifiedTransaction,
+    payangels: input.verifiedTransaction,
     reconciliationSource: input.source,
   };
 

@@ -196,10 +196,10 @@ export function buildEscrowTimeline(hold: any): TimelineStep[] {
   const status = String(hold?.status || "held");
 
   return [
-    { id: "held", label: "Funds held in escrow", status: "completed", timestamp: hold?.created_at },
+    { id: "held", label: "Payment recorded with provider", status: "completed", timestamp: hold?.created_at },
     {
       id: "review",
-      label: "Escrow review",
+      label: "Payment review",
       status: status === "held" ? "current" : "completed",
     },
     {

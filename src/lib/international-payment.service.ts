@@ -25,27 +25,18 @@ export interface InternationalPaymentConfig {
 }
 
 const PAYMENT_PROVIDERS: Record<string, PaymentProvider> = {
-  paystack: {
-    id: 'paystack',
-    name: 'Paystack (Card, MoMo, Bank)',
+  payangels: {
+    id: 'payangels',
+    name: 'Card, mobile money & bank',
     type: 'mobile_money',
     supportedCurrencies: ['GHS', 'NGN', 'ZAR', 'KES', 'USD'],
     supportedRegions: ['GH', 'NG', 'ZA', 'KE', 'GLOBAL'],
-    isActive: clientIntegrations.paystack.checkoutReady,
+    isActive: clientIntegrations.payangels.checkoutReady,
     commissionPercentage: 1.5,
-    documentation: 'https://paystack.com/docs',
+    documentation: 'https://payangels.com/docs',
   },
   // Card Payments
-  stripe: {
-    id: 'stripe',
-    name: 'Stripe',
-    type: 'card',
-    supportedCurrencies: ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'SGD', 'HKD', 'INR', 'AED'],
-    supportedRegions: ['US', 'EU', 'GB', 'JP', 'AU', 'CA', 'SG', 'HK', 'IN', 'AE'],
-    isActive: clientIntegrations.stripe.configured,
-    commissionPercentage: 2.9,
-    documentation: 'https://stripe.com/docs',
-  },
+
   paypal: {
     id: 'paypal',
     name: 'PayPal',
@@ -136,13 +127,13 @@ const PAYMENT_PROVIDERS: Record<string, PaymentProvider> = {
   // Crypto
   stripe_crypto: {
     id: 'stripe_crypto',
-    name: 'Crypto (via Stripe)',
+    name: 'Crypto',
     type: 'crypto',
     supportedCurrencies: ['USD', 'EUR'],
     supportedRegions: ['GLOBAL'],
     isActive: false,
     commissionPercentage: 3.5,
-    documentation: 'https://stripe.com/crypto',
+    documentation: 'https://payangels.com/crypto',
   },
 
   // Buy Now Pay Later
@@ -203,8 +194,7 @@ class InternationalPaymentService {
     const regionUpper = region.toUpperCase();
 
     const paystackRegions = ['GH', 'NG', 'KE', 'ZA'];
-    let defaultMethod = paystackRegions.includes(regionUpper) ? 'paystack' : 'stripe';
-
+    let defaultMethod = 'payangels';
     if (!this.getProvider(defaultMethod)?.isActive) {
       defaultMethod = availableMethods[0]?.id || defaultMethod;
     }

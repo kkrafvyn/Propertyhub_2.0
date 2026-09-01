@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { hideNativeSplash } from "../../../lib/baytmiftah/capacitor-init";
 import { isNativeApp } from "../../../lib/baytmiftah/platform";
+import { isBusinessMobileApp } from "../../../../lib/mobile-app";
 import {
   NATIVE_SPLASH_COLORS,
   SPLASH_COLORS,
   SPLASH_DURATION_MS,
+  WORKSPACE_NATIVE_SPLASH_COLORS,
 } from "./constants";
+import { LogoMark } from "../Logo";
 import { SplashLogoMark } from "./SplashLogoMark";
 import { SplashReflection } from "./SplashReflection";
 import { SplashTagline } from "./SplashTagline";
@@ -46,7 +49,11 @@ export function SplashScreen({
   sessionKey?: string;
   native?: boolean;
 }) {
-  const colors = native ? NATIVE_SPLASH_COLORS : SPLASH_COLORS;
+  const colors = native
+    ? isBusinessMobileApp()
+      ? WORKSPACE_NATIVE_SPLASH_COLORS
+      : NATIVE_SPLASH_COLORS
+    : SPLASH_COLORS;
   const [exiting, setExiting] = useState(false);
   const [visible, setVisible] = useState(true);
   const completedRef = useRef(false);
@@ -111,7 +118,11 @@ export function SplashScreen({
         className={`splash-screen__stage${!exiting ? " splash-screen__stage--polish" : ""}`}
       >
         <div className="splash-screen__mark-wrap">
-          <SplashLogoMark primary={colors.primary} shadow={colors.shadow} />
+          {native && isBusinessMobileApp() ? (
+            <LogoMark variant="workspace" className="splash-mark h-16 w-16" />
+          ) : (
+            <SplashLogoMark primary={colors.primary} shadow={colors.shadow} />
+          )}
         </div>
 
         <SplashWordmark />

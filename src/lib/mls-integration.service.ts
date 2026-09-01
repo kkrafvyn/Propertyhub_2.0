@@ -165,18 +165,9 @@ class MLSIntegrationService {
 
       const cred = credentials[0];
 
-      // Fetch listings based on provider
-      let listings: ExternalListing[] = [];
-      switch (provider) {
-        case 'mls':
-          listings = await this.fetchFromMLS(cred);
-          break;
-        case 'zillow':
-          listings = await this.fetchFromZillow(cred);
-          break;
-        case 'realtor':
-          listings = await this.fetchFromRealtor(cred);
-          break;
+      const listings = await this.fetchProviderListings(provider, cred);
+      if (!listings.length) {
+        throw new Error("The listing feed returned no properties. Check the feed URL and API key.");
       }
 
       // Sync listings to database
@@ -223,97 +214,228 @@ class MLSIntegrationService {
     }
   }
 
+  private resolveFeedUrl(credentials: any): string | null {
+    const candidate = String(credentials?.account_id || credentials?.feed_url || "").trim();
+    if (/^https?:\/\//i.test(candidate)) return candidate;
+    return null;
+  }
+
+  private async fetchJson(url: string, credentials: any) {
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+    };
+    if (credentials?.api_key) {
+      headers.Authorization = `Bearer ${credentials.api_key}`;
+      headers["X-API-Key"] = credentials.api_key;
+    }
+    if (credentials?.api_secret) {
+      headers["X-API-Secret"] = credentials.api_secret;
+    }
+
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      throw new Error(`Listing feed error (${response.status}): ${response.statusText}`);
+    }
+
+    const payload = await response.json().catch(() => null);
+    if (!payload) {
+      throw new Error("Listing feed did not return JSON");
+    }
+    return payload;
+  }
+
+  private mapFeedItem(item: any, provider: ExternalListing["provider"], index: number): ExternalListing {
+    const externalId = String(
+      item.externalId || item.external_id || item.zpid || item.property_id || item.id || item.mlsId || index
+    );
+    const address = item.address?.line || item.address || item.title || "Property";
+    return {
+      id: `${provider}-${externalId}`,
+      externalId,
+      provider,
+      title: item.title || address,
+      description: item.description || item.shortDescription || "",
+      price: Number(item.price || item.list_price || 0),
+      currency: item.currency || "GHS",
+      bedrooms: Number(item.bedrooms || item.beds || 0),
+      bathrooms: Number(item.bathrooms || item.baths || 0),
+      propertyType: item.propertyType || item.property_type || item.prop_type || "residential",
+      address: typeof address === "string" ? address : "",
+      city: item.city || item.address?.city || "",
+      state: item.state || item.region || item.address?.state_code || "",
+      zipCode: item.zipCode || item.postal_code || item.address?.postal_code || "",
+      latitude: Number(item.latitude || item.lat || item.latLong?.latitude || item.address?.lat || 0),
+      longitude: Number(item.longitude || item.lng || item.latLong?.longitude || item.address?.lon || 0),
+      squareFeet: item.squareFeet || item.sqft,
+      images: Array.isArray(item.images)
+        ? item.images
+        : item.imgSrc
+          ? [item.imgSrc]
+          : item.photos?.map((p: any) => p.href || p).filter(Boolean) || [],
+      agentName: item.agentName || item.listingAgent?.name || item.list_agent?.name,
+      agentEmail: item.agentEmail || item.listingAgent?.email || item.list_agent?.email,
+      agentPhone: item.agentPhone || item.listingAgent?.phone || item.list_agent?.phone,
+      listDate: item.listDate || item.list_date,
+      status: item.status === "sold" || item.statusType === "SOLD" ? "sold" : "active",
+      rawData: item,
+    };
+  }
+
+  private parseJsonFeed(payload: any, provider: ExternalListing["provider"]): ExternalListing[] {
+    if (!payload) return [];
+    const rows = Array.isArray(payload)
+      ? payload
+      : payload.listings ||
+        payload.results ||
+        payload.data ||
+        payload.searchResults?.listResults ||
+        [];
+    if (!Array.isArray(rows)) return [];
+    return rows.map((item: any, index: number) => this.mapFeedItem(item, provider, index));
+  }
+
+  private async fetchProviderListings(
+    provider: ExternalListing["provider"],
+    credentials: any
+  ): Promise<ExternalListing[]> {
+    const feedUrl = this.resolveFeedUrl(credentials);
+    if (feedUrl) {
+      const payload = await this.fetchJson(feedUrl, credentials);
+      return this.parseJsonFeed(payload, provider);
+    }
+
+    if (provider === "mls") {
+      return this.fetchFromMLS(credentials);
+    }
+    if (provider === "zillow") {
+      return this.fetchFromZillow(credentials);
+    }
+    return this.fetchFromRealtor(credentials);
+  }
+
   /**
    * Fetch listings from MLS provider
-   * Integration with actual MLS API (RETS protocol commonly used)
    */
   private async fetchFromMLS(credentials: any): Promise<ExternalListing[]> {
-    // This would integrate with MLS RETS API
-    // Each MLS has different endpoints, using a generic approach
+    const response = await fetch(`https://rets-gateway.realogy.com/rets?Version=1.5`, {
+      method: "GET",
+      headers: {
+        Authorization: `Basic ${btoa(`${credentials.api_key}:${credentials.api_secret || ""}`)}`,
+        Accept: "application/json, application/xml, text/xml, text/plain",
+      },
+    });
 
-    try {
-      const response = await fetch(`https://rets-gateway.realogy.com/rets?Version=1.5`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Basic ${btoa(`${credentials.api_key}:${credentials.api_secret}`)}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`MLS API error: ${response.statusText}`);
-      }
-
-      // Parse RETS response (simplified - actual RETS is complex)
-      const data = await response.text();
-      return this.parseMLSResponse(data);
-    } catch (error) {
-      console.error('MLS fetch error:', error);
-      return [];
+    if (!response.ok) {
+      throw new Error(`MLS API error (${response.status}): ${response.statusText}`);
     }
+
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("json")) {
+      const payload = await response.json();
+      const listings = this.parseJsonFeed(payload, "mls");
+      if (!listings.length) {
+        throw new Error("MLS returned JSON but no listings could be parsed.");
+      }
+      return listings;
+    }
+
+    const data = await response.text();
+    const listings = this.parseMLSResponse(data);
+    if (!listings.length) {
+      throw new Error("MLS returned no parseable listings. Add a JSON feed URL in Account ID.");
+    }
+    return listings;
   }
 
   /**
    * Fetch listings from Zillow API
    */
   private async fetchFromZillow(credentials: any): Promise<ExternalListing[]> {
-    try {
-      // Using Zillow API (requires API key from Zillow)
-      const response = await fetch(`https://www.zillow.com/api/searchresults`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': credentials.api_key,
-        },
-        body: JSON.stringify({
-          accountId: credentials.account_id,
-        }),
-      });
+    const response = await fetch(`https://www.zillow.com/api/searchresults`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": credentials.api_key,
+      },
+      body: JSON.stringify({
+        accountId: credentials.account_id,
+      }),
+    });
 
-      if (!response.ok) {
-        throw new Error(`Zillow API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return this.parseZillowResponse(data);
-    } catch (error) {
-      console.error('Zillow fetch error:', error);
-      return [];
+    if (!response.ok) {
+      throw new Error(
+        `Zillow request failed (${response.status}). Add a JSON feed URL in Account ID, or check the API key.`
+      );
     }
+
+    const data = await response.json();
+    const listings = this.parseZillowResponse(data);
+    if (!listings.length) {
+      throw new Error("Zillow returned no listings. Add a JSON feed URL if you use a custom IDX feed.");
+    }
+    return listings;
   }
 
   /**
    * Fetch listings from Realtor.com API
    */
   private async fetchFromRealtor(credentials: any): Promise<ExternalListing[]> {
-    try {
-      // Using Realtor.com API
-      const response = await fetch(`https://api.realtor.com/listings/search`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${credentials.api_key}`,
-        },
-      });
+    const response = await fetch(`https://api.realtor.com/listings/search`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${credentials.api_key}`,
+      },
+    });
 
-      if (!response.ok) {
-        throw new Error(`Realtor.com API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return this.parseRealtorResponse(data);
-    } catch (error) {
-      console.error('Realtor.com fetch error:', error);
-      return [];
+    if (!response.ok) {
+      throw new Error(
+        `Realtor.com request failed (${response.status}). Add a JSON feed URL in Account ID, or check the API key.`
+      );
     }
+
+    const data = await response.json();
+    const listings = this.parseRealtorResponse(data);
+    if (!listings.length) {
+      throw new Error("Realtor.com returned no listings. Add a JSON feed URL if you use a custom IDX feed.");
+    }
+    return listings;
   }
 
   /**
    * Parse MLS RETS response
    */
   private parseMLSResponse(data: string): ExternalListing[] {
-    // Simplified parsing - actual RETS parsing is complex
-    const listings: ExternalListing[] = [];
-    // Parse RETS XML/text format
-    return listings;
+    const listings = this.parseJsonFeed(
+      (() => {
+        try {
+          return JSON.parse(data);
+        } catch {
+          return null;
+        }
+      })(),
+      "mls"
+    );
+    if (listings.length) return listings;
+
+    const listingBlocks = data.match(/<Listing[\s\S]*?<\/Listing>/gi) || [];
+    return listingBlocks.map((block, index) => {
+      const pick = (tag: string) => block.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, "i"))?.[1]?.trim() || "";
+      return this.mapFeedItem(
+        {
+          id: pick("ListingID") || pick("ListingKey") || String(index),
+          title: pick("UnparsedAddress") || pick("StreetName") || "MLS listing",
+          description: pick("PublicRemarks"),
+          price: pick("ListPrice"),
+          bedrooms: pick("BedroomsTotal"),
+          bathrooms: pick("BathroomsTotalInteger") || pick("BathroomsTotal"),
+          city: pick("City"),
+          state: pick("StateOrProvince"),
+          zipCode: pick("PostalCode"),
+        },
+        "mls",
+        index
+      );
+    });
   }
 
   /**

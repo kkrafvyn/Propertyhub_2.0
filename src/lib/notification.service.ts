@@ -75,7 +75,7 @@ export const notificationService = {
   areExternalProvidersConfigured() {
     return {
       webPush: clientIntegrations.webPush.configured,
-      paystack: clientIntegrations.paystack.checkoutReady,
+      payangels: clientIntegrations.payangels.checkoutReady,
       exchangeRates: clientIntegrations.exchangeRates.configured,
       aiSearch: clientIntegrations.openAi.configured,
       blockchain: clientIntegrations.blockchain.configured,

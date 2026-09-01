@@ -1,11 +1,14 @@
 import type { User } from "@supabase/supabase-js";
+import { Capacitor } from "@capacitor/core";
+import { getMobileAppId } from "../../lib/mobile-app";
+import { isElectron } from "../../lib/surface-detection";
 import { getMetadataRole, isFullAdminRole, isWorkspaceRole } from "./baytmiftah/roles";
 
 type AuthUser = User | { user_metadata?: unknown; app_metadata?: unknown } | null;
 
 type AuthProfile = { role?: string; is_platform_admin?: boolean } | null;
 
-/** Resolve where to send a user after login when no explicit ?next= is provided. */
+/** Resolve the dashboard for the shared web app after login. */
 export function resolvePostAuthRedirect(
   user: AuthUser,
   profile: AuthProfile,
@@ -19,7 +22,26 @@ export function resolvePostAuthRedirect(
     return explicitRedirect;
   }
 
+  const mobileApp = typeof window !== "undefined" ? getMobileAppId() : "consumer";
+  const isNative = typeof window !== "undefined" && Capacitor.isNativePlatform();
+
+  if (isNative && mobileApp === "business") {
+    return "/workspace";
+  }
+
+  if (isNative && mobileApp === "consumer") {
+    return "/";
+  }
+
   const metadataRole = getMetadataRole(user.user_metadata) || getMetadataRole(user.app_metadata);
+
+  if (typeof window !== "undefined" && isElectron()) {
+    if (profile?.is_platform_admin || isFullAdminRole(metadataRole)) {
+      return "/admin";
+    }
+    return "/workspace";
+  }
+
   if (profile?.is_platform_admin || isFullAdminRole(metadataRole)) {
     return "/admin";
   }

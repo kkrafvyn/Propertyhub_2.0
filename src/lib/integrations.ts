@@ -1,6 +1,6 @@
 /**
  * Client-side integration status derived from Vite environment variables.
- * Server-only secrets (Paystack secret, Resend, Twilio, VAPID private) live in
+ * Server-only secrets (PayAngels secret, Resend, Twilio, VAPID private) live in
  * Supabase Edge Function secrets — see root `.env.example` (server section).
  */
 
@@ -34,17 +34,18 @@ export const clientIntegrations = {
     hint: "VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY",
   },
 
-  paystack: {
+  payangels: {
     get clientConfigured() {
-      return !!firstEnv("VITE_PAYSTACK_PUBLIC_KEY", "Live_Public_Key");
+      return !!firstEnv("VITE_PAYANGELS_PUBLIC_KEY");
     },
     get checkoutReady() {
-      return (
-        clientIntegrations.supabase.configured && clientIntegrations.paystack.clientConfigured
-      );
+      return clientIntegrations.supabase.configured && clientIntegrations.payangels.clientConfigured;
     },
-    label: "Paystack",
-    hint: "PAYSTACK_SECRET_KEY + PAYSTACK_WEBHOOK_SECRET in Supabase secrets",
+    get configured() {
+      return clientIntegrations.payangels.checkoutReady;
+    },
+    label: "Payments",
+    hint: "Payment public and secret keys",
   },
 
   webPush: {
@@ -119,13 +120,6 @@ export const clientIntegrations = {
     hint: "RESEND_API_KEY + NOTIFICATION_EMAIL_FROM in Supabase secrets",
   },
 
-  stripe: {
-    get configured() {
-      return !!firstEnv("VITE_STRIPE_PUBLIC_KEY");
-    },
-    label: "Stripe",
-    hint: "VITE_STRIPE_PUBLIC_KEY + STRIPE_SECRET_KEY",
-  },
 
   blockchain: {
     get configured() {
@@ -152,7 +146,11 @@ export const clientIntegrations = {
 } as const;
 
 export function getPaystackPublicKey() {
-  return firstEnv("VITE_PAYSTACK_PUBLIC_KEY", "Live_Public_Key");
+  return firstEnv("VITE_PAYANGELS_PUBLIC_KEY", "VITE_PAYSTACK_PUBLIC_KEY", "Live_Public_Key");
+}
+
+export function getPayangelsPublicKey() {
+  return firstEnv("VITE_PAYANGELS_PUBLIC_KEY", "Live_Public_Key");
 }
 
 export function getIntegrationSummary(): IntegrationStatus[] {
@@ -163,9 +161,9 @@ export function getIntegrationSummary(): IntegrationStatus[] {
       hint: clientIntegrations.supabase.hint,
     },
     {
-      configured: clientIntegrations.paystack.checkoutReady,
-      label: clientIntegrations.paystack.label,
-      hint: clientIntegrations.paystack.hint,
+      configured: clientIntegrations.payangels.checkoutReady,
+      label: clientIntegrations.payangels.label,
+      hint: clientIntegrations.payangels.hint,
     },
     {
       configured: clientIntegrations.webPush.configured,
@@ -187,11 +185,7 @@ export function getIntegrationSummary(): IntegrationStatus[] {
       label: clientIntegrations.resend.label,
       hint: clientIntegrations.resend.hint,
     },
-    {
-      configured: clientIntegrations.stripe.configured,
-      label: clientIntegrations.stripe.label,
-      hint: clientIntegrations.stripe.hint,
-    },
+    // PayAngels is the live checkout provider for supported payment flows.
     {
       configured: clientIntegrations.blockchain.configured,
       label: clientIntegrations.blockchain.label,
@@ -200,9 +194,9 @@ export function getIntegrationSummary(): IntegrationStatus[] {
   ];
 }
 
-/** Providers routed through the live Paystack edge-function checkout. */
-export const PAYSTACK_CHECKOUT_PROVIDER_IDS = new Set([
-  "paystack",
+/** Providers routed through the live PayAngels edge-function checkout. */
+export const PAYANGELS_CHECKOUT_PROVIDER_IDS = new Set([
+  "payangels",
   "mtn_momo",
   "airtel_money",
   "mpesa",

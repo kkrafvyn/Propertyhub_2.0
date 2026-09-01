@@ -55,7 +55,7 @@ function resolveSiteUrl(siteUrl?: string) {
     siteUrl ||
     Deno.env.get("PUBLIC_APP_URL") ||
     Deno.env.get("SITE_URL") ||
-    "https://baytmiftah.com";
+    "https://app.baytmiftah.com";
   return configured.replace(/\/+$/, "");
 }
 

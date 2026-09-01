@@ -1,16 +1,19 @@
 import { Link, useLocation } from "react-router";
 import type { ReactNode } from "react";
-import { Heart, Moon, Plus, Scale, Sun } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { Heart, Plus, Scale } from "lucide-react";
+import { isElectron } from "../../../lib/surface-detection";
 import { Logo, LogoMark } from "./Logo";
 import { UserMenu } from "./UserMenu";
 import { NotificationBell } from "../NotificationBell";
 import LanguageSwitcher from "./LanguageSwitcher";
+import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from "../../i18n/LocaleContext";
+import { useIsPhoneViewport } from "../../hooks/useMediaQuery";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
-import { LEGAL_DOCUMENTS } from "../../pages/legal/legal-documents";
+import { FOOTER_LEGAL_LINKS, getLegalPath } from "../../../content/legal";
 
 const DESKTOP_EXPLORE_LINKS = [
   { to: CONSUMER_ROUTES.home, labelKey: "mobile.home", end: true },
@@ -62,6 +65,7 @@ interface DesktopShellProps {
   minimal?: boolean;
   fullBleed?: boolean;
   compareCount?: number;
+  showFooter?: boolean;
 }
 
 function Header({
@@ -76,12 +80,11 @@ function Header({
   compareCount?: number;
 }) {
   const { user } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const { t } = useTranslation();
   const listPropertyPath = `${WORKSPACE_ENTRY_PATH}?next=new`;
 
   return (
-    <header className="desktop-header sticky top-0 z-50 border-b border-surface-border bg-white/92 backdrop-blur-xl backdrop-saturate-150">
+    <header className="desktop-header sticky top-0 z-50 border-b border-surface-border bg-surface/90 backdrop-blur-xl backdrop-saturate-150 transition-colors duration-200">
       <div className="mx-auto w-full min-w-0 max-w-[var(--max-width-page)] px-4 sm:px-6 md:px-8 xl:px-20">
         <div
           className={`flex min-w-0 items-center gap-2 sm:gap-3 md:gap-4 ${minimal ? "h-[68px] md:h-[72px]" : "h-[68px] md:h-[72px] xl:h-[76px]"}`}
@@ -89,15 +92,15 @@ function Header({
           <Logo size="sm" className="md:hidden" />
           <Logo className="hidden md:flex" />
 
-          <div className="ml-auto flex shrink-0 items-center gap-0.5 md:gap-1">
+          <div className="ml-auto flex shrink-0 items-center gap-0.5 md:gap-1.5">
             {!minimal && (
               <>
                 <Link
                   to="/compare"
-                  className="nav-pill nav-pill-icon hidden lg:inline-flex"
+                  className="nav-pill nav-pill-icon hidden lg:inline-flex items-center gap-2"
                   title={`${t("nav.compare")}${compareCount > 0 ? ` (${compareCount})` : ""}`}
                 >
-                  <Scale className="h-4 w-4 opacity-80" />
+                  <Scale className="h-4 w-4 shrink-0 opacity-80" />
                   <span>
                     {t("nav.compare")}
                     {compareCount > 0 ? ` (${compareCount})` : ""}
@@ -106,18 +109,22 @@ function Header({
                     <span className="nav-pill-badge xl:hidden">{compareCount}</span>
                   ) : null}
                 </Link>
-                <Link to="/app/saved" className="nav-pill nav-pill-icon hidden lg:inline-flex" title={t("nav.saved")}>
-                  <Heart className="h-4 w-4 opacity-80" />
+                <Link
+                  to="/app/saved"
+                  className="nav-pill nav-pill-icon hidden lg:inline-flex items-center gap-2"
+                  title={t("nav.saved")}
+                >
+                  <Heart className="h-4 w-4 shrink-0 opacity-80" />
                   <span>{t("nav.saved")}</span>
                 </Link>
               </>
             )}
             <Link
               to={listPropertyPath}
-              className="nav-pill nav-pill-cta hidden md:inline-flex"
+              className="nav-pill nav-pill-cta hidden md:inline-flex items-center gap-1.5"
               title={t("nav.listProperty")}
             >
-              <Plus className="h-4 w-4 md:mr-0 xl:mr-1" />
+              <Plus className="h-4 w-4 shrink-0" />
               <span className="hidden xl:inline">{t("nav.listProperty")}</span>
             </Link>
             {!minimal && user ? (
@@ -125,14 +132,9 @@ function Header({
                 <NotificationBell userId={user.id} />
               </div>
             ) : null}
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="nav-pill nav-pill-icon hidden md:inline-flex"
-              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
+            <div className="hidden md:block">
+              <ThemeToggle />
+            </div>
             {!minimal ? (
               <div className="hidden lg:block">
                 <LanguageSwitcher />
@@ -202,13 +204,13 @@ function Footer() {
   ];
 
   return (
-    <footer className="desktop-footer mt-12 border-t border-surface-border bg-white md:mt-16">
+    <footer className="desktop-footer mt-12 border-t border-surface-border bg-surface md:mt-16 transition-colors duration-200">
       <div className="mx-auto max-w-[var(--max-width-page)] px-4 py-10 sm:px-6 md:px-8 md:py-14 xl:px-20">
         <div className="mb-8 flex flex-col gap-4 border-b border-surface-border pb-8 md:mb-10 md:pb-10 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <LogoMark className="h-10 w-10" />
             <div>
-              <p className="text-base font-semibold text-ink">BaytMiftah</p>
+              <p className="text-base font-semibold text-ink">{t("brand.name")}</p>
               <p className="text-sm text-ink-secondary">{t("footer.tagline")}</p>
             </div>
           </div>
@@ -235,36 +237,19 @@ function Footer() {
           <div>
             <h3 className="mb-4 text-sm font-semibold text-ink">{t("footer.legal")}</h3>
             <ul className="space-y-3">
+              {FOOTER_LEGAL_LINKS.map((item) => (
+                <li key={item.slug}>
+                  <Link
+                    to={getLegalPath(item.slug)}
+                    className="text-sm text-ink-secondary transition hover:text-ink"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
               <li>
                 <Link to="/legal" className="text-sm text-ink-secondary transition hover:text-ink">
-                  All policies
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="text-sm text-ink-secondary transition hover:text-ink">
-                  {t("footer.privacy")}
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="text-sm text-ink-secondary transition hover:text-ink">
-                  {t("footer.terms")}
-                </Link>
-              </li>
-              {LEGAL_DOCUMENTS.filter((doc) => !["terms", "privacy"].includes(doc.slug)).map(
-                (doc) => (
-                  <li key={doc.slug}>
-                    <Link
-                      to={`/legal/${doc.slug}`}
-                      className="text-sm text-ink-secondary transition hover:text-ink"
-                    >
-                      {doc.title}
-                    </Link>
-                  </li>
-                ),
-              )}
-              <li>
-                <Link to="/complaint" className="text-sm text-ink-secondary transition hover:text-ink">
-                  File a complaint
+                  All Policies
                 </Link>
               </li>
               <li>
@@ -276,12 +261,8 @@ function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-surface-border pt-6 text-sm text-ink-secondary md:mt-10">
+        <div className="mt-8 border-t border-surface-border pt-6 text-sm text-ink-secondary md:mt-10">
           <p>© {year} BaytMiftah. All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            <span>English (GH)</span>
-            <span>₵ GHS</span>
-          </div>
         </div>
       </div>
     </footer>
@@ -295,7 +276,11 @@ export function DesktopShell({
   minimal = false,
   fullBleed = false,
   compareCount = 0,
+  showFooter,
 }: DesktopShellProps) {
+  const isPhone = useIsPhoneViewport();
+  const hideFooterOnMobile = Capacitor.isNativePlatform() || isPhone;
+  const footerVisible = !isElectron() && (showFooter ?? !minimal) && !hideFooterOnMobile;
   return (
     <div className="desktop-shell min-h-screen min-h-[100dvh] overflow-x-clip text-ink">
       <div className="desktop-shell-ambient" aria-hidden />
@@ -309,7 +294,7 @@ export function DesktopShell({
       >
         {children}
       </main>
-      {!minimal && <Footer />}
+      {footerVisible ? <Footer /> : null}
     </div>
   );
 }

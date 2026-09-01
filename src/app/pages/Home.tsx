@@ -22,8 +22,6 @@ import {
   mapListingToMapListing,
   type MarketplaceListingCard,
 } from "../components/baytmiftah";
-import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
-
 const MapView = lazy(() =>
   import("../components/baytmiftah/MapView").then((m) => ({ default: m.MapView })),
 );
@@ -62,7 +60,7 @@ export function Home() {
         if (!ignore) setListings(rows);
       } catch (error) {
         console.error("Failed to load listings:", error);
-        if (!ignore) toast.error("Failed to load listings");
+        if (!ignore) toast.error(t("searchPage.loadListingsFailed"));
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -162,7 +160,7 @@ export function Home() {
       );
     } catch (error) {
       console.error("Failed to toggle saved property:", error);
-      toast.error("Could not update saved property");
+      toast.error(t("home.savePropertyFailed"));
     }
   };
 
@@ -176,7 +174,7 @@ export function Home() {
     const { ids, capped } = await toggleCompareIdAsync(listingId);
     setCompareIds(ids);
     if (capped) {
-      toast.message("You can compare up to 4 properties.");
+      toast.message(t("comparePage.maxReached"));
     }
   };
 
@@ -214,16 +212,6 @@ export function Home() {
           onBrowse={() => navigate("/search")}
           onListProperty={() => navigate(listPropertyPath)}
         />
-      )}
-
-      {!mapMode && (
-        <div className="mb-8">
-          <BaytMiftahAIPanel
-            context="search"
-            compact
-            onNavigate={(href) => navigate(href)}
-          />
-        </div>
       )}
 
       {filtersOpen && (
@@ -301,12 +289,14 @@ export function Home() {
                 </h2>
                 {!loading && visible.length > 0 && (
                   <p className="mt-1 text-sm text-ink-secondary">
-                    {visible.length} {visible.length === 1 ? "property" : "properties"} available
+                    {visible.length === 1
+                      ? t("home.propertyAvailable")
+                      : t("home.propertiesAvailable", { count: visible.length })}
                   </p>
                 )}
               </div>
               <Link to="/search" className="desktop-text-link">
-                View all
+                {t("home.viewAll")}
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -461,24 +451,26 @@ function FiltersPanel({
   onMinBedroomsChange: (value: number) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 backdrop-blur-xs p-4 sm:items-center"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-surface-border bg-white p-6 shadow-2xl"
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-surface-border bg-surface p-6 text-ink shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-ink">Filters</h2>
+          <h2 className="text-lg font-semibold text-ink">{t("home.filters")}</h2>
           <button
             type="button"
             onClick={onClose}
             className="rounded-full p-2 hover:bg-surface-hover"
-            aria-label="Close"
+            aria-label={t("common.close")}
           >
             <X className="h-4 w-4 text-ink" />
           </button>
@@ -490,17 +482,17 @@ function FiltersPanel({
             checked={verifiedOnly}
             onChange={(e) => onVerifiedOnlyChange(e.target.checked)}
           />
-          Verified agencies only
+          {t("home.verifiedAgenciesOnly")}
         </label>
 
         <label className="mb-4 block text-sm text-ink">
-          Minimum bedrooms
+          {t("home.minBedrooms")}
           <select
             value={minBedrooms}
             onChange={(e) => onMinBedroomsChange(Number(e.target.value))}
-            className="mt-1 w-full rounded-xl border border-surface-border bg-white px-3 py-2"
+            className="mt-1 w-full rounded-xl border border-surface-border bg-surface text-ink px-3 py-2"
           >
-            <option value={0}>Any</option>
+            <option value={0}>{t("search.any")}</option>
             {[1, 2, 3, 4, 5].map((n) => (
               <option key={n} value={n}>
                 {n}+
@@ -514,7 +506,7 @@ function FiltersPanel({
           onClick={onClose}
           className="mt-6 w-full rounded-lg bg-brand-forest py-3.5 text-sm font-semibold text-white transition hover:opacity-90"
         >
-          Show results
+          {t("home.showResults")}
         </button>
       </div>
     </div>
@@ -528,21 +520,21 @@ function EmptyState({
   onBrowse: () => void;
   onListProperty: () => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="desktop-empty-state">
       <div className="desktop-empty-state-icon" aria-hidden>
         <HomeIcon className="h-7 w-7" />
       </div>
-      <h2 className="text-xl font-semibold text-ink">No homes to show yet</h2>
-      <p className="mt-2 max-w-md text-ink-secondary">
-        New listings are added regularly. Browse all properties or list yours to be the first in your area.
-      </p>
+      <h2 className="text-xl font-semibold text-ink">{t("home.emptyTitle")}</h2>
+      <p className="mt-2 max-w-md text-ink-secondary">{t("home.emptyDesc")}</p>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
         <button type="button" onClick={onBrowse} className="desktop-hero-btn desktop-hero-btn-primary">
-          Browse all properties
+          {t("home.browseAll")}
         </button>
         <button type="button" onClick={onListProperty} className="desktop-hero-btn desktop-hero-btn-secondary">
-          List a property
+          {t("nav.listProperty")}
         </button>
       </div>
     </div>

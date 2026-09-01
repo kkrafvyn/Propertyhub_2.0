@@ -65,7 +65,7 @@ export default {
       "instructions": "Dial this code on your phone to pay via MTN/Vodafone mobile money.",
       "mtn": "MTN MoMo",
       "telecel": "Telecel Cash",
-      "paystackHint": "Paystack will confirm MoMo payment automatically when configured."
+      "paystackHint": "Live payments require payment secrets in Edge Function secrets."
     },
     "docusign": {
       "signViaDocusign": "Sign with DocuSign",

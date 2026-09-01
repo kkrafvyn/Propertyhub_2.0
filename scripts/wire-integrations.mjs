@@ -87,8 +87,7 @@ function main() {
   if (!rootEnv.VITE_SITE_URL) clientUpdates.VITE_SITE_URL = payments.PUBLIC_APP_URL;
 
   for (const key of [
-    "VITE_PAYSTACK_PUBLIC_KEY",
-    "VITE_STRIPE_PUBLIC_KEY",
+    "VITE_PAYANGELS_PUBLIC_KEY",
     "VITE_EXCHANGE_RATE_API_KEY",
     "VITE_PROPERTY_TOKEN_ADDRESS",
     "VITE_PROPERTY_ESCROW_ADDRESS",
@@ -103,12 +102,12 @@ function main() {
   console.log(`Updated ${path.relative(PROJECT_ROOT, ROOT_ENV_PATH)}`);
 
   const configured = {
-    paystack: Boolean(payments.PAYSTACK_SECRET_KEY && rootEnv.VITE_PAYSTACK_PUBLIC_KEY),
+    payangels: Boolean(payments.PAYANGELS_SECRET_KEY && rootEnv.VITE_PAYANGELS_PUBLIC_KEY),
     resend: Boolean(payments.RESEND_API_KEY),
     webPush: Boolean(payments.WEB_PUSH_PUBLIC_KEY && payments.WEB_PUSH_PRIVATE_KEY),
     openAi: aiEnabled,
     ai: aiEnabled,
-    stripe: Boolean(payments.STRIPE_SECRET_KEY && rootEnv.VITE_STRIPE_PUBLIC_KEY),
+    // payangels: Boolean(payments.STRIPE_SECRET_KEY && rootEnv.VITE_STRIPE_PUBLIC_KEY),
     exchangeRates: Boolean(rootEnv.VITE_EXCHANGE_RATE_API_KEY),
     blockchain: Boolean(
       rootEnv.VITE_PROPERTY_TOKEN_ADDRESS ||
@@ -124,16 +123,14 @@ function main() {
   }
 
   const missing = [];
-  if (!configured.paystack) {
-    missing.push("Paystack: VITE_PAYSTACK_PUBLIC_KEY + PAYSTACK_SECRET_KEY in .env");
+  if (!configured.payangels) {
+    missing.push("PayAngels: VITE_PAYANGELS_PUBLIC_KEY + PAYANGELS_SECRET_KEY in .env");
   }
   if (!configured.resend) missing.push("Resend: RESEND_API_KEY in .env");
   if (!configured.ai) {
     missing.push("AI: set AI_PROVIDER=openai + OPENAI_API_KEY, or AI_PROVIDER=qwen + QWEN_API_KEY");
   }
-  if (!configured.stripe) {
-    missing.push("Stripe: VITE_STRIPE_PUBLIC_KEY + STRIPE_SECRET_KEY in .env");
-  }
+  // PayAngels is no longer required in this deployment.
   if (!configured.blockchain) missing.push("Deploy contracts + VITE_PROPERTY_*_ADDRESS");
   if (!configured.mls) missing.push("MLS/Zillow/Realtor keys (optional)");
 

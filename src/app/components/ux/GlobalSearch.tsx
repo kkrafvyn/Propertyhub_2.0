@@ -38,7 +38,7 @@ const BASE_ITEMS: SearchItem[] = [
   { id: "app", label: "My BaytMiftah", href: "/app", group: "Consumer" },
   { id: "saved", label: "Saved Properties", href: "/app/saved", group: "Consumer" },
   { id: "messages", label: "Messages", href: "/app/messages", group: "Consumer" },
-  { id: "payments", label: "Wallet & Payments", href: "/app/payments", group: "Consumer", keywords: ["wallet", "escrow"] },
+  { id: "payments", label: "Payments", href: "/app/payments", group: "Consumer", keywords: ["payments", "receipts"] },
   { id: "leases", label: "Leases", href: "/app/leases", group: "Consumer" },
   { id: "maintenance", label: "Maintenance", href: "/app/maintenance", group: "Consumer" },
   { id: "documents", label: "Documents", href: "/app/documents", group: "Consumer" },

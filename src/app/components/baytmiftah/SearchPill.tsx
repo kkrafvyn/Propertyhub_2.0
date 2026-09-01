@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { CreditCard, Home, MapPin, Search } from "lucide-react";
 import type { ReactNode } from "react";
+import { useTranslation } from "../../i18n/LocaleContext";
 
 function SearchSegment({
   icon: Icon,
@@ -28,6 +29,14 @@ function SearchSegment({
   );
 }
 
+const PROPERTY_TYPE_KEYS: Record<string, string> = {
+  any: "search.anyType",
+  apartment: "search.apartments",
+  house: "search.houses",
+  commercial: "search.commercial",
+  land: "search.land",
+};
+
 interface SearchPillProps {
   location: string;
   onLocationChange: (value: string) => void;
@@ -47,34 +56,36 @@ export function SearchPill({
   onBudgetChange,
   onSearch,
 }: SearchPillProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="search-pill min-w-0 w-full max-w-full">
-      <SearchSegment icon={MapPin} label="Where" htmlFor="search-location">
+      <SearchSegment icon={MapPin} label={t("search.where")} htmlFor="search-location">
         <input
           id="search-location"
           type="text"
           value={location}
           onChange={(e) => onLocationChange(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && onSearch?.()}
-          placeholder="Search destinations"
+          placeholder={t("search.searchDestinations")}
           className="search-segment-value"
         />
       </SearchSegment>
 
       <div className="search-divider" />
 
-      <SearchSegment icon={Home} label="Type" htmlFor="search-type">
+      <SearchSegment icon={Home} label={t("search.type")} htmlFor="search-type">
         <select
           id="search-type"
           value={propertyType}
           onChange={(e) => onTypeChange(e.target.value)}
           className="search-segment-value cursor-pointer"
         >
-          <option value="any">Any type</option>
-          <option value="apartment">Apartments</option>
-          <option value="house">Houses</option>
-          <option value="commercial">Commercial</option>
-          <option value="land">Land</option>
+          {Object.entries(PROPERTY_TYPE_KEYS).map(([value, key]) => (
+            <option key={value} value={value}>
+              {t(key)}
+            </option>
+          ))}
         </select>
       </SearchSegment>
 
@@ -82,7 +93,7 @@ export function SearchPill({
 
       <SearchSegment
         icon={CreditCard}
-        label="Budget"
+        label={t("search.budget")}
         htmlFor="search-budget"
         className="hidden xl:flex"
       >
@@ -92,12 +103,17 @@ export function SearchPill({
           value={budget}
           onChange={(e) => onBudgetChange?.(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && onSearch?.()}
-          placeholder="Any"
+          placeholder={t("search.any")}
           className="search-segment-value"
         />
       </SearchSegment>
 
-      <button type="button" className="search-orb shrink-0" aria-label="Search" onClick={onSearch}>
+      <button
+        type="button"
+        className="search-orb shrink-0"
+        aria-label={t("search.search")}
+        onClick={onSearch}
+      >
         <Search className="h-5 w-5" />
       </button>
     </div>
@@ -115,12 +131,10 @@ export function CompactSearch({
   budget?: string;
   to?: string;
 } = {}) {
-  const locationLabel = location.trim() || "Anywhere";
-  const typeLabel =
-    propertyType === "any"
-      ? "Any type"
-      : propertyType.charAt(0).toUpperCase() + propertyType.slice(1);
-  const budgetLabel = budget.trim() || "Any";
+  const { t } = useTranslation();
+  const locationLabel = location.trim() || t("search.anywhere");
+  const typeLabel = t(PROPERTY_TYPE_KEYS[propertyType] ?? PROPERTY_TYPE_KEYS.any);
+  const budgetLabel = budget.trim() || t("search.any");
 
   return (
     <Link to={to} className="compact-search-pill">

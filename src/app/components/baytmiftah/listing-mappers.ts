@@ -86,6 +86,17 @@ export function mapListingToCard(listing: any): MarketplaceListingCard {
 export function mapListingToMapListing(listing: any): MapListing {
   const card = mapListingToCard(listing);
   const property = listing.property || {};
+  const latitude = Number(property.latitude);
+  const longitude = Number(property.longitude);
+
+  if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+    return {
+      ...card,
+      lat: latitude,
+      lng: longitude,
+    };
+  }
+
   const cityKey = String(property.city || "accra")
     .toLowerCase()
     .split(",")[0]

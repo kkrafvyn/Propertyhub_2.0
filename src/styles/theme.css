@@ -1,83 +1,165 @@
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark, .dark *));
 
 :root {
+  color-scheme: light;
   --font-size: 16px;
-  --background: #ffffff;
-  --foreground: #222222;
+
+  /* Original Daylight Ivory & Brand Forest Semantic Tokens */
+  --background: #fcfbf9;
+  --foreground: #1a1f1d;
   --card: #ffffff;
-  --card-foreground: #222222;
+  --card-foreground: #1a1f1d;
   --popover: #ffffff;
-  --popover-foreground: #222222;
+  --popover-foreground: #1a1f1d;
   --primary: #0f2922;
   --primary-foreground: #ffffff;
-  --secondary: #F7F7F7;
-  --secondary-foreground: #222222;
-  --muted: #F7F7F7;
-  --muted-foreground: #717171;
+  --secondary: #f4f5f4;
+  --secondary-foreground: #1a1f1d;
+  --muted: #f4f5f4;
+  --muted-foreground: #6b7280;
   --accent: #1b4332;
   --accent-foreground: #ffffff;
-  --destructive: #C13515;
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #DDDDDD;
-  --input: transparent;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
   --input-background: #ffffff;
-  --switch-background: #cbced4;
+  --switch-background: #d1d5db;
   --font-weight-medium: 600;
   --font-weight-normal: 400;
-  --ring: #222222;
+  --ring: #0f2922;
+
+  /* Charts */
   --chart-1: #0f2922;
   --chart-2: #e07a5f;
   --chart-3: #e9c349;
   --chart-4: #1b4332;
   --chart-5: #c45d44;
   --radius: 0.75rem;
-  --sidebar: #F7F7F7;
-  --sidebar-foreground: #222222;
-  --sidebar-primary: #222222;
+
+  /* Sidebar */
+  --sidebar: #f8faf9;
+  --sidebar-foreground: #1a1f1d;
+  --sidebar-primary: #0f2922;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #ffffff;
-  --sidebar-accent-foreground: #222222;
-  --sidebar-border: #DDDDDD;
-  --sidebar-ring: #222222;
+  --sidebar-accent-foreground: #1a1f1d;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: #0f2922;
+
+  /* Surface & Brand Palette (Light / Daylight Ivory) */
+  --surface: #ffffff;
+  --surface-subtle: #f7f8f7;
+  --surface-border: #e5e7eb;
+  --surface-hover: #f0f2f1;
+  --ink: #1a1f1d;
+  --ink-secondary: #5a6460;
+  --ink-muted: #94a09a;
+
+  --brand-forest: #0f2922;
+  --brand-marketplace: #0b211a;
+  --brand-accent: #e07a5f;
+  --brand-orange: #e07a5f;
+  --brand-gold: #e9c349;
+
+  --mobile-forest: #0f2922;
+  --bolt-green: #22c55e;
+  --bolt-green-dark: #16a34a;
+  --bolt-bg: #fcfbf9;
+  --bolt-card: #ffffff;
+
+  --max-width-page: 1760px;
+  --radius-listing: 12px;
+  --radius-card: 12px;
+
+  /* Elevation Shadows */
+  --shadow-search: 0 2px 8px rgba(15, 41, 34, 0.06), 0 8px 24px rgba(15, 41, 34, 0.04);
+  --shadow-search-hover: 0 4px 12px rgba(15, 41, 34, 0.08), 0 14px 36px rgba(15, 41, 34, 0.08);
+  --shadow-card: 0 4px 16px rgba(15, 41, 34, 0.05);
+  --shadow-bolt-card: 0 2px 8px rgba(15, 41, 34, 0.04);
+  --shadow-bolt-nav: 0 -2px 12px rgba(15, 41, 34, 0.06);
+  --shadow-menu: 0 12px 36px -4px rgba(15, 41, 34, 0.12), 0 4px 16px -2px rgba(15, 41, 34, 0.06);
+  --shadow-glow: 0 0 24px rgba(15, 41, 34, 0.12);
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-serif: "Playfair Display", Georgia, Cambria, "Times New Roman", serif;
 }
 
-.dark {
-  --background: #0f2922;
-  --foreground: #f7f7f7;
-  --card: #1a3830;
-  --card-foreground: #f7f7f7;
-  --popover: #1a3830;
-  --popover-foreground: #f7f7f7;
+.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Base semantic tokens (Dark / Emerald Midnight - High Contrast Inverted Text) */
+  --background: #081713;
+  --foreground: #ffffff;
+  --card: #0f2820;
+  --card-foreground: #ffffff;
+  --popover: #132f26;
+  --popover-foreground: #ffffff;
   --primary: #52b788;
-  --primary-foreground: #0f2922;
-  --secondary: #1a3830;
-  --secondary-foreground: #f7f7f7;
-  --muted: #1a3830;
-  --muted-foreground: #b0b0b0;
-  --accent: #1b4332;
-  --accent-foreground: #f7f7f7;
-  --destructive: #e07a5f;
+  --primary-foreground: #081713;
+  --secondary: #16362c;
+  --secondary-foreground: #ffffff;
+  --muted: #16362c;
+  --muted-foreground: #a7b7b1;
+  --accent: #1e4539;
+  --accent-foreground: #ffffff;
+  --destructive: #f87171;
   --destructive-foreground: #ffffff;
-  --border: #3d5a52;
-  --input: #3d5a52;
-  --input-background: #1a3830;
-  --switch-background: #3d5a52;
+  --border: #1e4539;
+  --input: #1e4539;
+  --input-background: #0f2820;
+  --switch-background: #1e4539;
   --ring: #52b788;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
+
+  /* Charts */
   --chart-1: #52b788;
   --chart-2: #e07a5f;
   --chart-3: #e9c349;
   --chart-4: #1b4332;
   --chart-5: #c45d44;
-  --sidebar: #1a3830;
-  --sidebar-foreground: #f7f7f7;
+
+  /* Sidebar */
+  --sidebar: #0f2820;
+  --sidebar-foreground: #ffffff;
   --sidebar-primary: #52b788;
-  --sidebar-primary-foreground: #0f2922;
-  --sidebar-accent: #243d35;
-  --sidebar-accent-foreground: #f7f7f7;
-  --sidebar-border: #3d5a52;
+  --sidebar-primary-foreground: #081713;
+  --sidebar-accent: #16362c;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1e4539;
   --sidebar-ring: #52b788;
+
+  /* Surface & Brand Palette (Dark / Inverted High-Contrast Typography) */
+  --surface: #0f2820;
+  --surface-subtle: #15372d;
+  --surface-border: #1f493d;
+  --surface-hover: #1c4538;
+  --ink: #ffffff;
+  --ink-secondary: #d1dad6;
+  --ink-muted: #94a59e;
+
+  --brand-forest: #102b22;
+  --brand-marketplace: #081713;
+  --brand-accent: #e07a5f;
+  --brand-orange: #e07a5f;
+  --brand-gold: #fbbf24;
+
+  --mobile-forest: #52b788;
+  --bolt-green: #4ade80;
+  --bolt-green-dark: #22c55e;
+  --bolt-bg: #081713;
+  --bolt-card: #0f2820;
+
+  /* Dark Elevation Shadows */
+  --shadow-search: 0 4px 20px rgba(0, 0, 0, 0.45);
+  --shadow-search-hover: 0 8px 32px rgba(0, 0, 0, 0.65), 0 0 20px rgba(82, 183, 136, 0.15);
+  --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.4);
+  --shadow-bolt-card: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-bolt-nav: 0 -4px 18px rgba(0, 0, 0, 0.4);
+  --shadow-menu: 0 16px 44px rgba(0, 0, 0, 0.6), 0 0 1px rgba(82, 183, 136, 0.3);
+  --shadow-glow: 0 0 30px rgba(82, 183, 136, 0.25);
 }
 
 @theme inline {
@@ -119,33 +201,51 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --color-brand-forest: #0f2922;
-  --color-brand-marketplace: #0b211a;
-  --color-brand-accent: #e07a5f;
-  --color-brand-orange: #e07a5f;
-  --color-brand-gold: #e9c349;
-  --color-ink: #222222;
-  --color-ink-secondary: #717171;
-  --color-ink-muted: #b0b0b0;
-  --color-surface: #ffffff;
-  --color-surface-subtle: #f7f7f7;
-  --color-surface-border: #dddddd;
-  --color-surface-hover: #f7f7f7;
-  --color-mobile-forest: #1b4332;
-  --color-bolt-green: #34bb09;
-  --color-bolt-green-dark: #2da008;
-  --color-bolt-bg: #ffffff;
-  --color-bolt-card: #ffffff;
-  --max-width-page: 1760px;
-  --radius-listing: 12px;
-  --radius-card: 12px;
-  --shadow-search: 0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
-  --shadow-search-hover: 0 2px 4px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.12);
-  --shadow-card: 0 6px 16px rgba(0, 0, 0, 0.08);
-  --shadow-bolt-card: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-bolt-nav: 0 -2px 12px rgba(0, 0, 0, 0.08);
-  --shadow-menu: 0 8px 28px rgba(0, 0, 0, 0.12);
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+  /* Dynamic Brand & Surface utilities mapped to CSS variables */
+  --color-brand-forest: var(--brand-forest);
+  --color-brand-marketplace: var(--brand-marketplace);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-orange: var(--brand-orange);
+  --color-brand-gold: var(--brand-gold);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-muted: var(--ink-muted);
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-surface-border: var(--surface-border);
+  --color-surface-hover: var(--surface-hover);
+  --color-mobile-forest: var(--mobile-forest);
+  --color-bolt-green: var(--bolt-green);
+  --color-bolt-green-dark: var(--bolt-green-dark);
+  --color-bolt-bg: var(--bolt-bg);
+  --color-bolt-card: var(--bolt-card);
+
+  --max-width-page: var(--max-width-page);
+  --radius-listing: var(--radius-listing);
+  --radius-card: var(--radius-card);
+  --shadow-search: var(--shadow-search);
+  --shadow-search-hover: var(--shadow-search-hover);
+  --shadow-card: var(--shadow-card);
+  --shadow-bolt-card: var(--shadow-bolt-card);
+  --shadow-bolt-nav: var(--shadow-bolt-nav);
+  --shadow-menu: var(--shadow-menu);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+}
+
+/* Global Smooth Color Transition on Theme Switch */
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-transitioning,
+  html.theme-transitioning *,
+  html.theme-transitioning *::before,
+  html.theme-transitioning *::after {
+    transition:
+      background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+      color 0.25s ease,
+      box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
 }
 
 @layer base {
@@ -153,47 +253,50 @@
     @apply border-border outline-ring/50;
   }
 
-  body {
-    @apply bg-background text-foreground;
-  }
-
-  /**
-  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
-  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
-  */
-
   html {
     font-size: var(--font-size);
+    color: var(--foreground);
+    background-color: var(--background);
+  }
+
+  body {
+    color: var(--foreground);
+    background-color: var(--background);
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--ink);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+  }
+
+  .font-serif {
+    font-family: var(--font-serif);
   }
 
   h1 {
     font-size: var(--text-2xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
   }
 
   h2 {
     font-size: var(--text-xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
   }
 
   h3 {
     font-size: var(--text-lg);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
   }
 
   h4 {
     font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
   }
 
   label {
     font-size: var(--text-base);
     font-weight: var(--font-weight-medium);
     line-height: 1.5;
+    color: var(--ink);
   }
 
   button {
@@ -202,9 +305,29 @@
     line-height: 1.5;
   }
 
-  input {
+  input, textarea, select {
     font-size: var(--text-base);
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
+    color: var(--ink);
+    background-color: var(--input-background);
+    border-color: var(--border);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--ink-muted);
+  }
+
+  table {
+    color: var(--ink);
+  }
+
+  th {
+    color: var(--ink-secondary);
+  }
+
+  td {
+    color: var(--ink);
   }
 }

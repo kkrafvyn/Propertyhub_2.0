@@ -8,6 +8,7 @@ import {
   Heart,
   Share2,
   Phone,
+  Video as VideoIcon,
   Mail,
   MessageCircle,
   Check,
@@ -26,6 +27,7 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { useAuth } from "../context/AuthContext";
+import { useCall } from "../context/CallContext";
 import { listingService } from "../../lib/listing.service";
 import { getPropertyCoverImage, getPropertyImageGallery } from "../../lib/property-media";
 import { savedPropertyService } from "../../lib/savedproperty.service";
@@ -44,7 +46,6 @@ import { ConsumerTrustBadges } from "../components/ConsumerTrustBadges";
 import { MarketplaceDisclaimerStrip } from "../components/legal/MarketplaceDisclaimerStrip";
 import { TrustBadge } from "../components/legal/TrustBadge";
 import { TRUST_LABELS } from "../../lib/legal-disclaimers";
-import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
 import { monitoring } from "../../lib/monitoring";
 import { useMyKyc } from "../hooks/useMyKyc";
 import { canSubmitOffer } from "../lib/baytmiftah/kyc";
@@ -63,6 +64,7 @@ export function PropertyDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { kyc } = useMyKyc();
+  const { startCall } = useCall();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showContactForm, setShowContactForm] = useState(false);
   const [listing, setListing] = useState<any | null>(null);
@@ -242,7 +244,6 @@ export function PropertyDetail() {
     [listing]
   );
   const paymentCurrency = paymentContext?.currency || listing?.currency || "USD";
-  const paymentProviderLabel = paymentContext?.providerLabel || "Paystack";
   const images = getPropertyImageGallery(property);
   const locationQuery = property
     ? [property.address, property.city, property.region, property.country].filter(Boolean).join(", ")
@@ -476,7 +477,7 @@ export function PropertyDetail() {
       setBookingSubmitting(true);
       if (hostBookingMode !== "request" && paymentContext && !shouldUsePaystackCheckout(paymentContext)) {
         toast.error(
-          `${paymentProviderLabel} checkout for properties in ${paymentContext.propertyLabel} is not available yet.`
+          `Checkout for properties in ${paymentContext.propertyLabel} is not available yet.`
         );
         return;
       }
@@ -538,7 +539,7 @@ export function PropertyDetail() {
 
     if (!paymentContext || !shouldUsePaystackCheckout(paymentContext)) {
       toast.error(
-        `${paymentProviderLabel} checkout for properties in ${paymentContext?.propertyLabel || "this market"} is not available yet.`
+        `Checkout for properties in ${paymentContext?.propertyLabel || "this market"} is not available yet.`
       );
       return;
     }
@@ -563,7 +564,7 @@ export function PropertyDetail() {
       );
     } catch (error) {
       console.error("Failed to initialize payment:", error);
-      toast.error(`Unable to start the ${paymentProviderLabel} checkout right now.`);
+      toast.error("Unable to start checkout right now.");
     } finally {
       setPaymentSubmitting(false);
     }
@@ -809,7 +810,7 @@ export function PropertyDetail() {
                   <div>
                     <h3 className="text-lg font-semibold">Platform trust signals</h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Payments for this listing are processed by {paymentProviderLabel} ({paymentCurrency}).
+                      Payments for this listing are processed by a third-party payment provider ({paymentCurrency}).
                       Labels below describe platform checks only — not legal title, property condition, or
                       investment suitability.
                     </p>
@@ -1058,13 +1059,55 @@ export function PropertyDetail() {
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                    onClick={() => {
+                      void startCall(
+                        {
+                          name: organization?.name || "Listing Host & Agent",
+                          role: "Listing Agent",
+                        },
+                        "voice",
+                        {
+                          listingId: listing.id,
+                          listingTitle: pageTitle,
+                        }
+                      );
+                    }}
+                  >
+                    <Phone className="w-4 h-4 text-emerald-500" />
+                    Voice Call
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-teal-500/30 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/40"
+                    onClick={() => {
+                      void startCall(
+                        {
+                          name: organization?.name || "Listing Host & Agent",
+                          role: "Listing Agent",
+                        },
+                        "video",
+                        {
+                          listingId: listing.id,
+                          listingTitle: pageTitle,
+                        }
+                      );
+                    }}
+                  >
+                    <VideoIcon className="w-4 h-4 text-teal-500" />
+                    Live Video Tour
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => void handleShare()}>
                     <Share2 className="w-4 h-4" />
                     Share
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => setShowContactForm(true)}>
                     <MessageCircle className="w-4 h-4" />
-                    Contact agent
+                    Contact
                   </Button>
                   {listing.listing_type === "sale" ? (
                     <Button
@@ -1073,13 +1116,11 @@ export function PropertyDetail() {
                       onClick={() => navigate("/app/mortgage")}
                     >
                       <Shield className="w-4 h-4" />
-                      Mortgage estimate
+                      Mortgage
                     </Button>
                   ) : null}
                 </div>
               </div>
-
-              <BaytMiftahAIPanel context="property" compact />
 
               <div className="mb-6 mt-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -1166,7 +1207,7 @@ export function PropertyDetail() {
                   onClick={() => setShowPaymentForm(true)}
                 >
                   <CreditCard className="w-4 h-4" />
-                  Secure Payment via {paymentProviderLabel}
+                  Pay securely
                 </Button>
               )}
 
@@ -1373,7 +1414,7 @@ export function PropertyDetail() {
                         ? "Submitting..."
                         : hostBookingMode === "request"
                           ? "Request to book"
-                          : `Continue to ${paymentProviderLabel}`}
+                          : "Continue to checkout"}
                     </Button>
                   </form>
                 </motion.div>
@@ -1392,9 +1433,9 @@ export function PropertyDetail() {
                     <div>
                       <h4 className="font-semibold">Secure Payment</h4>
                       <p className="text-sm text-muted-foreground">
-                        {paymentContext?.primaryProvider === "paystack"
-                          ? "Pay with mobile money, card, or bank transfer through Paystack."
-                          : `Pay securely through ${paymentProviderLabel} in ${paymentCurrency}.`}{" "}
+                        {paymentContext
+                          ? `Pay with mobile money, card, or bank transfer in ${paymentCurrency}.`
+                          : "Pay with mobile money, card, or bank transfer."}{" "}
                         After confirmation, your receipt is prepared for verification.
                       </p>
                     </div>
@@ -1465,8 +1506,8 @@ export function PropertyDetail() {
                       disabled={paymentSubmitting}
                     >
                       {paymentSubmitting
-                        ? `Redirecting to ${paymentProviderLabel}...`
-                        : `Continue to ${paymentProviderLabel}`}
+                        ? "Redirecting to checkout..."
+                        : "Continue to checkout"}
                     </Button>
                   </form>
                 </motion.div>

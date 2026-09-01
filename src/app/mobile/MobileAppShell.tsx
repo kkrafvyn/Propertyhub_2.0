@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Building2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { isWorkspaceRole } from "../lib/baytmiftah/roles";
 import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
@@ -8,6 +9,7 @@ import { listingService } from "../../lib/listing.service";
 import { organizationService } from "../../lib/organization.service";
 import { consumerContextService } from "../../lib/consumer-context.service";
 import {
+  EXPLORE_MODE_IMAGES,
   MobileCarouselSection,
   MobileHeroBanner,
   MobileHomeListingCard,
@@ -17,19 +19,21 @@ import {
   MobileTransactionTabs,
   filterHomeListings,
 } from "../components/baytmiftah/mobile/MobileHomeSections";
+import { exploreModeUrl } from "../lib/consumer-routes";
 import { mapListingToCard } from "../components/baytmiftah";
 import MobileHomeMenu from "../components/baytmiftah/mobile/MobileHomeMenu";
 import { useTranslation } from "../i18n/LocaleContext";
 import { useUserMarket } from "../context/MarketContext";
 import { ConsumerTabBar } from "./ConsumerTabBar";
 import { buildConsumerTabItems } from "./consumer-bottom-tabs";
-import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
+import { useSurfaceContext } from "../context/SurfaceContext";
 import { readCachedMobileListings, writeCachedMobileListings } from "../../lib/mobile-offline-cache";
 import "./mobile.css";
 
 export function MobileAppShell() {
   const navigate = useNavigate();
-  const { user, role } = useAuth();
+  const { user, role, signIn } = useAuth();
+  const { surface } = useSurfaceContext();
   const { t } = useTranslation();
   const { market, defaultListingMode } = useUserMarket();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -49,6 +53,15 @@ export function MobileAppShell() {
 
   const tabs = useMemo(() => buildConsumerTabItems(t, user), [t, user]);
 
+  const handleBiometricSignIn = async (credentials: { username: string; password: string }) => {
+    try {
+      await signIn(credentials.username, credentials.password);
+      toast.success(t("mobile.biometric.signInSuccess"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("mobile.biometric.failed"));
+    }
+  };
+
   useEffect(() => {
     if (defaultListingMode === "buy") setTxTab("buy");
     else if (defaultListingMode === "stay") setTxTab("stay");
@@ -62,7 +75,7 @@ export function MobileAppShell() {
       try {
         setLoading(true);
         const [searchResults, agencyRows] = await Promise.all([
-          listingService.searchListingsWithCount({ listingType: "rental" }, 24, 0),
+          listingService.searchListingsWithCount({}, 48, 0),
           organizationService.getVerifiedOrganizations(6),
         ]);
 
@@ -110,11 +123,14 @@ export function MobileAppShell() {
       }));
 
       if (!cancelled) {
-        const journeyNav = consumerContextService.getContextualNavItems({
-          hasBookingContext: nextContext.hasBookingContext,
-          hasRentingContext: nextContext.hasRentingContext,
-          hasBuyingContext: nextContext.hasBuyingContext,
-        });
+        const journeyNav = consumerContextService.getContextualNavItems(
+          {
+            hasBookingContext: nextContext.hasBookingContext,
+            hasRentingContext: nextContext.hasRentingContext,
+            hasBuyingContext: nextContext.hasBuyingContext,
+          },
+          t,
+        );
 
         const workspaceNav = isWorkspaceRole(role)
           ? [
@@ -140,6 +156,9 @@ export function MobileAppShell() {
 
   const cards = listings.map(mapListingToCard);
   const homeListings = filterHomeListings(cards, txTab, propType);
+  const seeAllTo = exploreModeUrl(
+    txTab === "buy" ? "buy" : txTab === "lease" ? "lease" : txTab === "stay" ? "shortStay" : "rent",
+  );
 
   const handleTabPress = (tab: { id: string; href: string }) => {
     if (tab.id === "home") {
@@ -158,24 +177,21 @@ export function MobileAppShell() {
   return (
     <main className={`mobile-bolt mobile-app-shell${hasContextNav ? " has-context-nav" : ""}`}>
       <div className="mobile-content">
-        <MobileReferenceHeader menuEnabled onMenuClick={() => setMenuOpen(true)} />
+        <MobileReferenceHeader
+          menuEnabled
+          onMenuClick={() => setMenuOpen(true)}
+          onBiometricSuccess={(credentials) => void handleBiometricSignIn(credentials)}
+          onBiometricError={(message) => toast.error(message)}
+        />
         <MobileHeroBanner />
         <MobileTransactionTabs active={txTab} onChange={setTxTab} />
         <MobilePropertyTypeRow active={propType} onChange={setPropType} />
-
-        <div className="px-4 mb-4">
-          <BaytMiftahAIPanel
-            context="search"
-            compact
-            onNavigate={(href) => navigate(href)}
-          />
-        </div>
 
         {usingOfflineCache ? (
           <p className="px-4 text-sm text-muted-foreground">{t("mobile.appShell.offlineCache")}</p>
         ) : null}
 
-        <MobileCarouselSection title={t("mobile.appShell.availableNow")} seeAllTo="/search">
+        <MobileCarouselSection title={t("mobile.appShell.availableNow")} seeAllTo={seeAllTo}>
           {loading ? (
             <div className="mobile-loading px-4">
               <Loader2 aria-hidden="true" />
@@ -195,20 +211,20 @@ export function MobileAppShell() {
           <MobilePromoCard
             title={t("mobile.homeScreen.buy")}
             subtitle={t("mobile.appShell.browseSales")}
-            to="/search?listingType=sale"
-            index={0}
+            to={exploreModeUrl("buy")}
+            image={EXPLORE_MODE_IMAGES.buy}
           />
           <MobilePromoCard
             title={t("mobile.homeScreen.rent")}
             subtitle={t("mobile.appShell.monthlyHomes")}
-            to="/search?listingType=rental"
-            index={1}
+            to={exploreModeUrl("rent")}
+            image={EXPLORE_MODE_IMAGES.rent}
           />
           <MobilePromoCard
             title={t("mobile.homeScreen.stay")}
             subtitle={t("mobile.appShell.shortStays")}
-            to="/search?listingType=short_stay"
-            index={2}
+            to={exploreModeUrl("shortStay")}
+            image={EXPLORE_MODE_IMAGES.stay}
           />
         </MobileCarouselSection>
 

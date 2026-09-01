@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { PropertyDetail } from "./PropertyDetail";
 import { useAuth } from "../context/AuthContext";
 import { renderWithProviders } from "../../test/render";
@@ -11,9 +11,16 @@ import { savedPropertyService } from "../../lib/savedproperty.service";
 import { dealCaseService } from "../../lib/dealcase.service";
 import { messageService } from "../../lib/message.service";
 import { organizationService } from "../../lib/organization.service";
+import { communicationService } from "../../lib/communication.service";
+import { trustCenterService } from "../../lib/trust-center.service";
+import { hostSettingsService } from "../../lib/host-settings.service";
 
 vi.mock("../context/AuthContext", () => ({
   useAuth: vi.fn(),
+}));
+
+vi.mock("../hooks/useMyKyc", () => ({
+  useMyKyc: () => ({ kyc: null, loading: false }),
 }));
 
 vi.mock("../components/Navbar", () => ({
@@ -60,6 +67,29 @@ vi.mock("../../lib/organization.service", () => ({
   },
 }));
 
+vi.mock("../../lib/communication.service", () => ({
+  communicationService: {
+    createInAppNotification: vi.fn(),
+  },
+}));
+
+vi.mock("../../lib/trust-center.service", () => ({
+  trustCenterService: {
+    getListingTrustSnapshot: vi.fn(),
+    getConsumerTrustBadges: vi.fn(),
+  },
+}));
+
+vi.mock("../../lib/host-settings.service", () => ({
+  hostSettingsService: {
+    getListingSettings: vi.fn(),
+  },
+}));
+
+vi.mock("../../lib/recently-viewed", () => ({
+  trackRecentlyViewed: vi.fn(),
+}));
+
 const useAuthMock = vi.mocked(useAuth);
 const getListingByIdMock = vi.mocked(listingService.getListingById);
 const getSimilarListingsMock = vi.mocked(listingService.getSimilarListings);
@@ -71,6 +101,9 @@ const createOrGetOrganizationConversationMock = vi.mocked(
 );
 const sendMessageMock = vi.mocked(messageService.sendMessage);
 const getOrganizationByIdMock = vi.mocked(organizationService.getOrganizationById);
+const createInAppNotificationMock = vi.mocked(communicationService.createInAppNotification);
+const getListingTrustSnapshotMock = vi.mocked(trustCenterService.getListingTrustSnapshot);
+const getConsumerTrustBadgesMock = vi.mocked(trustCenterService.getConsumerTrustBadges);
 
 const listing = {
   id: "listing-1",
@@ -128,6 +161,13 @@ function renderPropertyDetail() {
 }
 
 describe("PropertyDetail inquiry flow", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getListingTrustSnapshotMock.mockResolvedValue(null as any);
+    getConsumerTrustBadgesMock.mockResolvedValue([]);
+    createInAppNotificationMock.mockResolvedValue({} as any);
+  });
+
   it("creates a deal case and shared inbox conversation from an inquiry", async () => {
     useAuthMock.mockReturnValue({
       user: {
@@ -166,11 +206,13 @@ describe("PropertyDetail inquiry flow", () => {
     expect(await screen.findByText("5 Independence Ave, Accra")).toBeInTheDocument();
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /start inquiry/i }));
-    await user.type(
-      screen.getByPlaceholderText("I'm interested in this property and would like more details."),
-      "I would like to schedule a viewing this weekend."
+    const startButtons = await screen.findAllByRole("button", { name: /start inquiry/i });
+    await user.click(startButtons[0]);
+
+    const messageField = await screen.findByPlaceholderText(
+      "I'm interested in this property and would like more details."
     );
+    await user.type(messageField, "I would like to schedule a viewing this weekend.");
     await user.click(screen.getByRole("button", { name: /send inquiry/i }));
 
     await waitFor(() => {

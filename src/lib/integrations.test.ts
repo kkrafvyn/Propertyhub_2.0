@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
-  PAYSTACK_CHECKOUT_PROVIDER_IDS,
+  PAYANGELS_CHECKOUT_PROVIDER_IDS,
   clientIntegrations,
   getIntegrationSummary,
 } from "./integrations";
 
 describe("integrations", () => {
-  it("includes paystack in live checkout provider ids", () => {
-    expect(PAYSTACK_CHECKOUT_PROVIDER_IDS.has("paystack")).toBe(true);
-    expect(PAYSTACK_CHECKOUT_PROVIDER_IDS.has("mtn_momo")).toBe(true);
+  it("includes payangels in live checkout provider ids", () => {
+    expect(PAYANGELS_CHECKOUT_PROVIDER_IDS.has("payangels")).toBe(true);
+    expect(PAYANGELS_CHECKOUT_PROVIDER_IDS.has("mtn_momo")).toBe(true);
   });
 
   it("returns integration summary entries", () => {

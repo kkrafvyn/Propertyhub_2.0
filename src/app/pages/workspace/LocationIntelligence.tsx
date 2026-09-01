@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Card } from '@/app/components/ui/Card'
 import { Button } from '@/app/components/ui/Button'
 import { Badge } from '@/app/components/ui/badge'
+import { Input } from '@/app/components/ui/Input'
 import { geointelligenceService } from '@/lib/geointelligence.service'
 import { ghanaMarketService } from '@/lib/ghana-market.service'
-import { MapPin, Zap, GraduationCap } from 'lucide-react'
+import { MapPin, Zap, GraduationCap, Search } from 'lucide-react'
 
 type SelectableLocation = {
   name: string
@@ -16,6 +17,7 @@ type SelectableLocation = {
 export default function LocationIntelligence() {
   const [selectedLocation, setSelectedLocation] = useState<SelectableLocation | null>(null)
   const [locations, setLocations] = useState<SelectableLocation[]>([])
+  const [locationQuery, setLocationQuery] = useState('')
   const [locationScore, setLocationScore] = useState<any>(null)
   const [nearbyServices, setNearbyServices] = useState<any[]>([])
   const [heatmapData, setHeatmapData] = useState<any[]>([])
@@ -25,7 +27,8 @@ export default function LocationIntelligence() {
     let cancelled = false
 
     void ghanaMarketService
-      .getSelectableLocations(12)
+      // Load up to 500 locations — effectively all
+      .getSelectableLocations(500)
       .then((nextLocations) => {
         if (cancelled) return
         setLocations(nextLocations)
@@ -49,7 +52,6 @@ export default function LocationIntelligence() {
 
   useEffect(() => {
     if (!selectedLocation) return
-
     void loadLocationData(selectedLocation)
   }, [selectedLocation])
 
@@ -70,6 +72,18 @@ export default function LocationIntelligence() {
       setLoading(false)
     }
   }
+
+  // Filter locations based on search query
+  const filteredLocations = useMemo(() => {
+    const q = locationQuery.trim().toLowerCase()
+    if (!q) return locations
+    return locations.filter(
+      (loc) =>
+        loc.name.toLowerCase().includes(q) ||
+        loc.city.toLowerCase().includes(q) ||
+        loc.region.toLowerCase().includes(q)
+    )
+  }, [locations, locationQuery])
 
   if (loading && !selectedLocation) {
     return <div className="text-center py-12 text-muted-foreground">Loading location data...</div>
@@ -112,22 +126,57 @@ export default function LocationIntelligence() {
       </div>
 
       <Card className="p-4">
-        <h2 className="font-semibold mb-3">Select Location</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {locations.map((location) => (
-            <Button
-              key={location.name}
-              variant={selectedLocation?.name === location.name ? 'default' : 'outline'}
-              onClick={() => setSelectedLocation(location)}
-              className="justify-start"
-            >
-              <MapPin className="w-4 h-4 mr-2" />
-              <span className="truncate">
-                {location.name}
-                {location.count > 0 ? ` (${location.count})` : ''}
-              </span>
-            </Button>
-          ))}
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-semibold">
+            Select Location
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              ({filteredLocations.length} of {locations.length})
+            </span>
+          </h2>
+          {selectedLocation && (
+            <Badge variant="default" className="flex items-center gap-1">
+              <MapPin className="w-3 h-3" />
+              {selectedLocation.name}
+            </Badge>
+          )}
+        </div>
+
+        {/* Search / filter input */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input
+            id="location-search"
+            placeholder="Search locations…"
+            value={locationQuery}
+            onChange={(e) => setLocationQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        {/* Scrollable location grid */}
+        <div className="max-h-48 overflow-y-auto pr-1">
+          {filteredLocations.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No locations match &ldquo;{locationQuery}&rdquo;
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {filteredLocations.map((location) => (
+                <Button
+                  key={location.name}
+                  variant={selectedLocation?.name === location.name ? 'default' : 'outline'}
+                  onClick={() => setSelectedLocation(location)}
+                  className="justify-start"
+                >
+                  <MapPin className="w-4 h-4 mr-2 shrink-0" />
+                  <span className="truncate">
+                    {location.name}
+                    {location.count > 0 ? ` (${location.count})` : ''}
+                  </span>
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
       </Card>
 
@@ -185,7 +234,7 @@ export default function LocationIntelligence() {
 
       {!loading && nearbyServices.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Nearby Services & Amenities</h2>
+          <h2 className="text-lg font-semibold">Nearby Services &amp; Amenities</h2>
           <div className="grid md:grid-cols-2 gap-4">
             {nearbyServices.map((service, idx) => {
               const icons: { [key: string]: any } = {

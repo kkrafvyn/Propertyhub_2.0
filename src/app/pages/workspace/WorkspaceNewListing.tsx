@@ -18,6 +18,7 @@ import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from "../../../lib/legal-conf
 import { propertyMediaService } from "../../../lib/property-media.service";
 import { propertyService } from "../../../lib/property.service";
 import { aiAssistantService } from "../../../lib/ai-assistant.service";
+import { openStreetMapService, type GeocodingResult } from "../../../lib/openstreetmap.service";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 type PropertyCategory = Database["public"]["Tables"]["properties"]["Row"]["category"];
@@ -54,6 +55,8 @@ export function WorkspaceNewListing({
   const [complianceReady, setComplianceReady] = useState(false);
   const [marketInsight, setMarketInsight] = useState<GhanaLocationInsight | null>(null);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [geocoding, setGeocoding] = useState(false);
+  const [geocodingResult, setGeocodingResult] = useState<GeocodingResult | null>(null);
   const [form, setForm] = useState({
     address: "",
     ghanaPostGps: "",
@@ -125,6 +128,8 @@ export function WorkspaceNewListing({
         region: form.region,
         neighborhood: form.neighborhood.trim() || null,
         country: form.country,
+        latitude: geocodingResult?.latitude || null,
+        longitude: geocodingResult?.longitude || null,
         location_confidence: ghanaMarketService.calculateLocationConfidence({
           address: form.address,
           city: form.city,
@@ -239,6 +244,26 @@ export function WorkspaceNewListing({
     locationConfidence,
   });
 
+  const findAddressOnMap = async () => {
+    if (!form.address || !form.city || !form.country) {
+      toast.error("Enter an address, city, and country first.");
+      return;
+    }
+
+    try {
+      setGeocoding(true);
+      const result = await openStreetMapService.geocodeAddress(form.address, form.city, form.region, form.country);
+      setGeocodingResult(result);
+      if (result) toast.success("Location found on OpenStreetMap.");
+      else toast.error("No matching location found. Check the address details.");
+    } catch (error) {
+      console.error("Failed to geocode listing address:", error);
+      toast.error("Unable to find this address on the map.");
+    } finally {
+      setGeocoding(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -285,6 +310,19 @@ export function WorkspaceNewListing({
               onChange={(event) => updateField("neighborhood", event.target.value)}
               placeholder="East Legon, Labone, Osu"
             />
+            <div className="flex items-end gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="mb-2 text-sm text-foreground">Map location</p>
+                <p className="truncate text-xs text-muted-foreground" title={geocodingResult?.displayName}>
+                  {geocodingResult
+                    ? `${geocodingResult.latitude.toFixed(5)}, ${geocodingResult.longitude.toFixed(5)}`
+                    : "Coordinates not selected"}
+                </p>
+              </div>
+              <Button type="button" variant="outline" onClick={() => void findAddressOnMap()} disabled={geocoding}>
+                {geocoding ? "Finding..." : "Find on map"}
+              </Button>
+            </div>
             <Input
               label="Country"
               value={form.country}
@@ -357,9 +395,32 @@ export function WorkspaceNewListing({
                 size="sm"
                 variant="outline"
                 disabled={generatingDescription}
-                onClick={() => {
+                onClick={async () => {
                   setGeneratingDescription(true);
                   try {
+                    const description = await aiAssistantService.generateListingDescriptionRemote(
+                      {
+                        address: form.address,
+                        city: form.city,
+                        region: form.region,
+                        category: form.category,
+                        bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
+                        bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
+                        squareMeters: form.squareMeters ? Number(form.squareMeters) : null,
+                        amenities: form.amenities
+                          .split(",")
+                          .map((item) => item.trim())
+                          .filter(Boolean),
+                        listingType: form.listingType,
+                        price: form.price ? Number(form.price) : null,
+                        currency: form.currency,
+                      },
+                      organization.id,
+                    );
+                    updateField("description", description);
+                    toast.success("AI draft added. Edit before publishing.");
+                  } catch {
+                    toast.error("AI draft unavailable. Using local template.");
                     const description = aiAssistantService.generateListingDescription({
                       address: form.address,
                       city: form.city,
@@ -377,7 +438,6 @@ export function WorkspaceNewListing({
                       currency: form.currency,
                     });
                     updateField("description", description);
-                    toast.success("AI draft added. Edit before publishing.");
                   } finally {
                     setGeneratingDescription(false);
                   }

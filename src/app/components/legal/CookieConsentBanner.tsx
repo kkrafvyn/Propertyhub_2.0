@@ -23,6 +23,10 @@ function saveConsent(consent: CookieConsent) {
   window.dispatchEvent(new CustomEvent("bm:cookie-consent", { detail: consent }));
 }
 
+export function openCookiePreferences() {
+  window.dispatchEvent(new Event("bm:open-cookie-preferences"));
+}
+
 export function CookieConsentBanner() {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
@@ -31,6 +35,13 @@ export function CookieConsentBanner() {
 
   useEffect(() => {
     setVisible(!readConsent());
+    const open = () => {
+      setDraft(readConsent() ?? DEFAULT_COOKIE_CONSENT);
+      setShowDetails(true);
+      setVisible(true);
+    };
+    window.addEventListener("bm:open-cookie-preferences", open);
+    return () => window.removeEventListener("bm:open-cookie-preferences", open);
   }, []);
 
   if (!visible) return null;
@@ -65,7 +76,7 @@ export function CookieConsentBanner() {
 
   return (
     <div
-      className="cookie-consent-banner fixed inset-x-0 bottom-0 z-[100] border-t border-surface-border bg-white p-4 shadow-lg md:p-6"
+      className="cookie-consent-banner fixed inset-x-0 bottom-0 z-[100] border-t border-surface-border bg-surface p-4 shadow-lg md:p-6"
       role="dialog"
       aria-label={t("legal.cookies.bannerTitle")}
     >

@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { Phone, Video as VideoIcon } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
 import { useTranslation } from '../../../i18n/LocaleContext'
+import { useCall } from '../../../context/CallContext'
 import { inputClass } from '../AirbnbUI'
 import { useChatScroll, useChatThread } from '../../../hooks/useChatThread'
 import { getListingPath } from '../../../lib/baytmiftah/listing-links'
@@ -159,30 +161,83 @@ export default function ChatThread({
   )
 }
 
-export function ChatThreadHeader({ conversation, mode = 'consumer' }) {
+export function ChatThreadHeader({ conversation, mode = 'consumer' }: { conversation: any; mode?: 'consumer' | 'agent' }) {
   const { t } = useTranslation()
+  const { startCall } = useCall()
   if (!conversation) return null
   const listingId = conversation.listing_id || conversation.listingId
   const title = mode === 'agent'
     ? (conversation.listingTitle || conversation.listing_title || t('messagesPage.buyerThread'))
-  : conversation.participant
+    : conversation.participant || 'BaytMiftah Member'
+
+  const handleStartVoiceCall = () => {
+    void startCall(
+      {
+        name: title,
+        role: mode === 'agent' ? 'Buyer / Lead' : 'Listing Host / Agent',
+        phone: conversation.phone,
+      },
+      'voice',
+      {
+        listingId,
+        listingTitle: conversation.listingTitle || conversation.listing_title,
+      }
+    )
+  }
+
+  const handleStartVideoCall = () => {
+    void startCall(
+      {
+        name: title,
+        role: mode === 'agent' ? 'Buyer / Lead' : 'Listing Host / Agent',
+        phone: conversation.phone,
+      },
+      'video',
+      {
+        listingId,
+        listingTitle: conversation.listingTitle || conversation.listing_title,
+      }
+    )
+  }
 
   return (
-    <div className="border-b border-surface-border px-4 py-3">
-      <p className="font-semibold text-ink">{title}</p>
-      {mode === 'agent' ? (
-        <p className="text-sm text-ink-secondary">{t('messagesPage.agentInquiry')}</p>
-      ) : conversation.listingTitle && (
-        <p className="text-sm text-ink-secondary">{conversation.listingTitle}</p>
-      )}
-      {listingId && (
-        <Link
-          to={getListingPath(listingId)}
-          className="mt-2 inline-block text-sm font-semibold text-brand-accent underline"
+    <div className="flex items-center justify-between border-b border-surface-border px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-ink truncate">{title}</p>
+        {mode === 'agent' ? (
+          <p className="text-xs text-ink-secondary">{t('messagesPage.agentInquiry')}</p>
+        ) : conversation.listingTitle ? (
+          <p className="text-xs text-ink-secondary truncate">{conversation.listingTitle}</p>
+        ) : null}
+        {listingId && (
+          <Link
+            to={getListingPath(listingId)}
+            className="mt-1 inline-block text-xs font-semibold text-brand-accent underline"
+          >
+            {t('messagesPage.viewListing')}
+          </Link>
+        )}
+      </div>
+
+      <div className="flex items-center gap-1.5 shrink-0 pl-2">
+        <button
+          type="button"
+          onClick={handleStartVoiceCall}
+          title="Start Voice Call"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-subtle text-ink transition hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-950/50"
         >
-          {t('messagesPage.viewListing')}
-        </Link>
-      )}
+          <Phone className="h-4 w-4" />
+        </button>
+
+        <button
+          type="button"
+          onClick={handleStartVideoCall}
+          title="Start HD Video Tour / Call"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-subtle text-ink transition hover:bg-teal-50 hover:text-teal-600 dark:hover:bg-teal-950/50"
+        >
+          <VideoIcon className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   )
 }

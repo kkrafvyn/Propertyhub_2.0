@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { Building2, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -19,6 +19,8 @@ import { WORKSPACE_PAGE_SLUGS } from "../../lib/workspace-role-nav";
 import { LegalAcceptanceCheckbox } from "../../components/legal/LegalAcceptanceCheckbox";
 import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
 import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from "../../../lib/legal-config";
+import { BusinessMobileShell } from "../../shells/BusinessMobileShell";
+import { shouldUseBusinessMobileShell } from "../../lib/business-mobile-nav";
 
 const ALLOWED_WORKSPACE_PAGES = new Set(WORKSPACE_PAGE_SLUGS);
 
@@ -174,21 +176,31 @@ export function WorkspaceEntry() {
   };
 
   const firstMembership = memberships[0] || null;
+  const useBusinessShell = shouldUseBusinessMobileShell();
+
+  const wrapEntryShell = (content: ReactNode) =>
+    useBusinessShell ? (
+      <BusinessMobileShell showNav={false} jobRole="property_manager">
+        {content}
+      </BusinessMobileShell>
+    ) : (
+      content
+    );
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background p-8">
-        <Card className="max-w-xl mx-auto p-8 text-center text-muted-foreground">
+    return wrapEntryShell(
+      <div className="min-h-[50vh] flex items-center justify-center p-8">
+        <Card className="max-w-xl w-full p-8 text-center text-muted-foreground">
           Loading workspace...
         </Card>
-      </div>
+      </div>,
     );
   }
 
   if (loadError) {
-    return (
-      <div className="min-h-screen bg-background p-8">
-        <Card className="max-w-xl mx-auto p-8 text-center">
+    return wrapEntryShell(
+      <div className="min-h-[50vh] flex items-center justify-center p-8">
+        <Card className="max-w-xl w-full p-8 text-center">
           <h1 className="text-2xl font-semibold mb-3">Workspace unavailable</h1>
           <p className="text-muted-foreground mb-6">{loadError}</p>
           <div className="flex justify-center gap-3">
@@ -198,11 +210,11 @@ export function WorkspaceEntry() {
             </Link>
           </div>
         </Card>
-      </div>
+      </div>,
     );
   }
 
-  if (firstMembership) {
+  if (memberships.length === 1 && firstMembership) {
     return (
       <Navigate
         to={getWorkspaceRoute(
@@ -214,7 +226,42 @@ export function WorkspaceEntry() {
     );
   }
 
-  return (
+  if (memberships.length > 1) {
+    const orgPicker = (
+      <div className="min-h-[50vh] px-4 py-8">
+        <Card className="max-w-lg mx-auto p-6">
+          <h1 className="text-2xl font-semibold mb-2">Choose a workspace</h1>
+          <p className="text-muted-foreground mb-6">
+            Select which organization you want to open.
+          </p>
+          <div className="space-y-3">
+            {memberships.map((membership) => (
+              <Link
+                key={membership.organization.id}
+                to={getWorkspaceRoute(
+                  membership.organization.slug,
+                  requestedPage || undefined,
+                )}
+                className="flex items-center gap-3 rounded-xl border border-border p-4 transition hover:border-primary hover:bg-primary/5"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Building2 className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold truncate">{membership.organization.name}</p>
+                  <p className="text-xs text-muted-foreground">{membership.organization.slug}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </Card>
+      </div>
+    );
+
+    return wrapEntryShell(orgPicker);
+  }
+
+  const entryBody = (
     <div className="min-h-screen bg-background px-4 py-10">
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr,0.9fr] gap-8">
         <Card className="p-8 lg:p-10">
@@ -348,7 +395,7 @@ export function WorkspaceEntry() {
             </div>
           </div>
 
-          <div className="mt-8 p-5 rounded-2xl bg-white border border-border">
+          <div className="mt-8 p-5 rounded-2xl bg-secondary/40 border border-border">
             <p className="text-sm text-muted-foreground">
               After setup, you&apos;ll land in
               <span className="font-medium text-foreground"> {WORKSPACE_ENTRY_PATH}</span>
@@ -359,4 +406,14 @@ export function WorkspaceEntry() {
       </div>
     </div>
   );
+
+  if (useBusinessShell) {
+    return (
+      <BusinessMobileShell showNav={false} jobRole="property_manager">
+        {entryBody}
+      </BusinessMobileShell>
+    );
+  }
+
+  return entryBody;
 }

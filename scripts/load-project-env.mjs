@@ -41,7 +41,7 @@ export function buildServerSecrets(env = loadProjectEnv()) {
     env.PUBLIC_APP_URL ||
     env.VITE_PUBLIC_APP_URL ||
     env.VITE_SITE_URL ||
-    "https://baytmiftah.com";
+    "https://app.baytmiftah.com";
 
   const secrets = {
     PUBLIC_APP_URL: appUrl,

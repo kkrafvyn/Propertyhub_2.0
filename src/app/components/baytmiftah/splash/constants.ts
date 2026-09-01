@@ -20,6 +20,16 @@ export const NATIVE_SPLASH_COLORS = {
   line: "rgba(255, 255, 255, 0.35)",
 };
 
+export const WORKSPACE_NATIVE_SPLASH_COLORS = {
+  background: "#0B2545",
+  primary: "#FFFFFF",
+  glow: "rgba(255, 255, 255, 0.35)",
+  shadow: "rgba(255, 255, 255, 0.12)",
+  reflection: "rgba(255, 255, 255, 0.06)",
+  tagline: "rgba(255, 255, 255, 0.72)",
+  line: "rgba(255, 255, 255, 0.35)",
+};
+
 export const SPLASH_DURATION_MS = 3000;
 
 export const SPLASH_PHASES = {

@@ -11,7 +11,7 @@ import {
   type PaymentContext,
 } from '@/lib/payment-routing.service'
 import { clientIntegrations } from '@/lib/integrations'
-import { openPaystackInline } from '@/lib/paystack-inline'
+import { openPaystackInline } from '@/lib/payangels-inline'
 import { realEstateComplianceService } from '@/lib/real-estate-compliance.service'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { LegalAcceptanceCheckbox } from '../../components/legal/LegalAcceptanceCheckbox'
@@ -93,7 +93,7 @@ export function PaymentCheckout({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saveFuturePayment, setSaveFuturePayment] = useState(false)
-  const [escrowTermsAccepted, setEscrowTermsAccepted] = useState(false)
+  const [paymentTermsAccepted, setPaymentTermsAccepted] = useState(false)
   const [completedTransactionId, setCompletedTransactionId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -219,20 +219,20 @@ export function PaymentCheckout({
         throw new Error('Choose a payment method before continuing.')
       }
 
-      if (!escrowTermsAccepted) {
-        throw new Error('Please accept the Payment & Escrow Terms before continuing.')
+      if (!paymentTermsAccepted) {
+        throw new Error('Please accept the Payments & Transaction Processing Policy before continuing.')
       }
 
       await legalAcceptanceService.recordAcceptance({
         userId: user.id,
-        scope: 'escrow_checkout',
-        policySlugs: ACCEPTANCE_SCOPES.escrow_checkout.policySlugs,
+        scope: 'payment_checkout',
+        policySlugs: ACCEPTANCE_SCOPES.payment_checkout.policySlugs,
         policyVersion: LEGAL_POLICY_VERSION,
       })
 
       if (shouldUsePaystackCheckout(paymentContext)) {
-        if (!clientIntegrations.paystack.checkoutReady) {
-          throw new Error("Paystack checkout is not configured for this property market.");
+        if (!clientIntegrations.payangels.checkoutReady) {
+          throw new Error("Checkout is not configured for this property market.");
         }
 
         const checkout = await paymentService.initializePropertyPayment({
@@ -265,9 +265,9 @@ export function PaymentCheckout({
         return;
       }
 
-      if (!clientIntegrations.stripe.configured) {
+      if (!clientIntegrations.payangels.configured) {
         throw new Error(
-          `Stripe checkout is not configured for properties in ${paymentContext.propertyLabel}.`
+          `Checkout is not configured for properties in ${paymentContext.propertyLabel}.`
         );
       }
 
@@ -282,7 +282,7 @@ export function PaymentCheckout({
         return;
       }
 
-      throw new Error("Stripe checkout URL was not returned.");
+      throw new Error("Checkout URL was not returned.");
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment processing failed')
       setLoading(false)
@@ -338,22 +338,21 @@ export function PaymentCheckout({
         )}
 
         {listingLoading ? (
-          <div className="flex items-center justify-center rounded-lg bg-white p-12 shadow-lg dark:bg-gray-800">
-            <Loader className="h-8 w-8 animate-spin text-blue-600" />
+          <div className="flex items-center justify-center rounded-lg bg-surface border border-surface-border p-12 shadow-lg">
+            <Loader className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : null}
 
         {!listingLoading && paymentContext ? (
-          <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+          <div className="mb-6 rounded-lg border border-primary/20 bg-primary/10 p-4">
             <div className="flex items-start gap-3">
-              <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
+              <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
               <div>
-                <p className="font-semibold text-gray-900 dark:text-white">Property location</p>
-                <p className="text-sm text-gray-700 dark:text-gray-300">{paymentContext.propertyLabel}</p>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  Payments for this listing use{' '}
-                  <strong>{paymentContext.providerLabel}</strong> in{' '}
-                  <strong>{paymentContext.currency}</strong>.
+                <p className="font-semibold text-ink">Property location</p>
+                <p className="text-sm text-ink-secondary">{paymentContext.propertyLabel}</p>
+                <p className="mt-1 text-sm text-ink-muted">
+                  Payments for this listing use a third-party payment provider in{' '}
+                  <strong className="text-ink">{paymentContext.currency}</strong>.
                 </p>
               </div>
             </div>
@@ -361,18 +360,18 @@ export function PaymentCheckout({
         ) : null}
 
         {step === 1 && !listingLoading && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          <div className="bg-surface border border-surface-border rounded-lg shadow-lg p-8">
+            <h2 className="text-2xl font-bold text-ink mb-6">
               Payment Amount
             </h2>
 
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-ink-secondary mb-2">
                   Amount ({paymentState.currency})
                 </label>
                 <div className="relative">
-                  <DollarSign className="absolute left-4 top-3 w-5 h-5 text-gray-400" />
+                  <DollarSign className="absolute left-4 top-3 w-5 h-5 text-ink-muted" />
                   <input
                     type="number"
                     value={paymentState.amount}
@@ -390,28 +389,28 @@ export function PaymentCheckout({
                         totalAmount: feeSummary.total,
                       }))
                     }}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full pl-10 pr-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary outline-none bg-input-background text-ink"
                     placeholder="0.00"
                   />
                 </div>
               </div>
 
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+              <div className="bg-surface-subtle border border-surface-border rounded-lg p-4">
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Payment provider:</span>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {paymentContext?.providerLabel}
+                    <span className="text-ink-secondary">Payment provider:</span>
+                    <span className="font-medium text-ink">
+                      Secure checkout
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+              <div className="bg-surface-subtle border border-surface-border rounded-lg p-4">
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Amount in {paymentState.currency}:</span>
-                    <span className="font-medium text-gray-900 dark:text-white">
+                    <span className="text-ink-secondary">Amount in {paymentState.currency}:</span>
+                    <span className="font-medium text-ink">
                       {currencyService.formatCurrency(paymentState.amount, paymentState.currency)}
                     </span>
                   </div>
@@ -421,14 +420,14 @@ export function PaymentCheckout({
               <div className="flex gap-4 pt-4">
                 <button
                   onClick={onCancel}
-                  className="flex-1 px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  className="flex-1 px-6 py-3 border border-border rounded-lg text-ink font-medium hover:bg-surface-hover transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => setStep(2)}
                   disabled={paymentState.amount <= 0 || paymentMethods.length === 0}
-                  className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Continue to Payment
                 </button>
@@ -438,15 +437,15 @@ export function PaymentCheckout({
         )}
 
         {step === 2 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          <div className="bg-surface border border-surface-border rounded-lg shadow-lg p-8">
+            <h2 className="text-2xl font-bold text-ink mb-6">
               Select Payment Method
             </h2>
 
             <div className="space-y-6">
               {savedMethods.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                  <h3 className="text-sm font-semibold text-ink mb-3">
                     Saved Payment Methods
                   </h3>
                   <div className="space-y-2">
@@ -456,30 +455,30 @@ export function PaymentCheckout({
                         onClick={() => void handlePaymentMethodSelect(method.payment_provider)}
                         className={`w-full p-4 border-2 rounded-lg transition text-left ${
                           paymentState.paymentMethod === method.payment_provider
-                            ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-gray-200 dark:border-gray-700'
+                            ? 'border-primary bg-primary/10'
+                            : 'border-surface-border hover:border-border'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <CreditCard className="w-5 h-5 text-gray-600" />
-                            <span className="font-medium">
+                            <CreditCard className="w-5 h-5 text-ink-secondary" />
+                            <span className="font-medium text-ink">
                               {method.method_details?.brand || method.payment_provider}
                             </span>
                           </div>
-                          <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                          <span className="text-xs bg-surface-subtle text-ink-secondary px-2 py-1 rounded border border-surface-border">
                             Saved
                           </span>
                         </div>
                       </button>
                     ))}
                   </div>
-                  <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+                  <div className="border-t border-surface-border my-4"></div>
                 </div>
               )}
 
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                <h3 className="text-sm font-semibold text-ink mb-3">
                   Available Payment Methods
                 </h3>
                 <div className="grid grid-cols-1 gap-3">
@@ -489,19 +488,19 @@ export function PaymentCheckout({
                       onClick={() => void handlePaymentMethodSelect(method.id)}
                       className={`p-4 border-2 rounded-lg transition text-left ${
                         paymentState.paymentMethod === method.id
-                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                          ? 'border-primary bg-primary/10'
+                          : 'border-surface-border hover:border-border'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           {method.icon}
                           <div>
-                            <p className="font-medium text-gray-900 dark:text-white">{method.label}</p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">{method.provider}</p>
+                            <p className="font-medium text-ink">{method.label}</p>
+                            <p className="text-xs text-ink-secondary">{method.provider}</p>
                           </div>
                         </div>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <span className="text-sm font-medium text-ink-secondary">
                           {method.fees}%
                         </span>
                       </div>
@@ -516,9 +515,9 @@ export function PaymentCheckout({
                     type="checkbox"
                     checked={saveFuturePayment}
                     onChange={(event) => setSaveFuturePayment(event.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300"
+                    className="w-4 h-4 rounded border-border"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-ink-secondary">
                     Save this payment method for future purchases
                   </span>
                 </label>
@@ -527,14 +526,14 @@ export function PaymentCheckout({
               <div className="flex gap-4 pt-4">
                 <button
                   onClick={() => setStep(1)}
-                  className="flex-1 px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  className="flex-1 px-6 py-3 border border-border rounded-lg text-ink font-medium hover:bg-surface-hover transition"
                 >
                   Back
                 </button>
                 <button
                   onClick={() => setStep(3)}
                   disabled={!paymentState.paymentMethod}
-                  className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Review Payment
                 </button>
@@ -544,64 +543,64 @@ export function PaymentCheckout({
         )}
 
         {step === 3 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          <div className="bg-surface border border-surface-border rounded-lg shadow-lg p-8">
+            <h2 className="text-2xl font-bold text-ink mb-6">
               Review Payment
             </h2>
 
             <div className="space-y-6">
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 space-y-3">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h3>
+              <div className="bg-surface-subtle border border-surface-border rounded-lg p-6 space-y-3">
+                <h3 className="font-semibold text-ink mb-4">Order Summary</h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
-                    <span className="font-medium text-gray-900 dark:text-white">
+                    <span className="text-ink-secondary">Subtotal:</span>
+                    <span className="font-medium text-ink">
                       {currencyService.formatCurrency(paymentState.amount, paymentState.currency)}
                     </span>
                   </div>
                   {paymentContext ? (
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Property:</span>
-                      <span className="font-medium text-gray-900 dark:text-white text-right">
+                      <span className="text-ink-secondary">Property:</span>
+                      <span className="font-medium text-ink text-right">
                         {paymentContext.propertyLabel}
                       </span>
                     </div>
                   ) : null}
-                  <div className="border-t border-gray-300 dark:border-gray-600 pt-3 flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Processing Fee:</span>
-                    <span className="font-medium text-gray-900 dark:text-white">
+                  <div className="border-t border-surface-border pt-3 flex justify-between">
+                    <span className="text-ink-secondary">Processing Fee:</span>
+                    <span className="font-medium text-ink">
                       {currencyService.formatCurrency(paymentState.feesCalculated, paymentState.currency)}
                     </span>
                   </div>
-                  <div className="border-t border-gray-300 dark:border-gray-600 pt-3 flex justify-between text-lg">
-                    <span className="font-bold text-gray-900 dark:text-white">Total Amount:</span>
-                    <span className="font-bold text-blue-600">
+                  <div className="border-t border-surface-border pt-3 flex justify-between text-lg">
+                    <span className="font-bold text-ink">Total Amount:</span>
+                    <span className="font-bold text-primary">
                       {currencyService.formatCurrency(paymentState.totalAmount, paymentState.currency)}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Payment Method</p>
-                <p className="font-semibold text-gray-900 dark:text-white">
+              <div className="border border-surface-border rounded-lg p-4">
+                <p className="text-sm text-ink-secondary mb-2">Payment Method</p>
+                <p className="font-semibold text-ink">
                   {paymentState.selectedPaymentInfo?.label}
                 </p>
               </div>
 
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start gap-3">
-                <Lock className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-blue-800 dark:text-blue-300">
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 flex items-start gap-3">
+                <Lock className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-ink">
                   Your payment information is encrypted and secure. We use industry-standard security
                   protocols.
                 </p>
               </div>
 
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-sm text-gray-600 dark:text-gray-300">
-                <p className="mb-2 font-semibold text-gray-900 dark:text-white">
+              <div className="rounded-lg border border-surface-border p-4 text-sm text-ink-secondary">
+                <p className="mb-2 font-semibold text-ink">
                   {t("compliance.payment.regulatoryNotice")}
                 </p>
-                <ul className="list-disc space-y-1 pl-5">
+                <ul className="list-disc space-y-1 pl-5 text-ink-secondary">
                   {realEstateComplianceService
                     .getPaymentComplianceDisclosures(paymentContext?.jurisdictionId || 'GLOBAL')
                     .disclosures.map((item) => (
@@ -611,23 +610,23 @@ export function PaymentCheckout({
               </div>
 
               <LegalAcceptanceCheckbox
-                scope="escrow_checkout"
-                checked={escrowTermsAccepted}
-                onChange={setEscrowTermsAccepted}
-                id="escrow-checkout-terms"
-                className="rounded-lg border border-gray-200 dark:border-gray-700 p-4"
+                scope="payment_checkout"
+                checked={paymentTermsAccepted}
+                onChange={setPaymentTermsAccepted}
+                id="payment-checkout-terms"
+                className="rounded-lg border border-surface-border p-4 text-ink"
               />
 
               <div className="flex gap-4 pt-4">
                 <button
                   onClick={() => setStep(2)}
-                  className="flex-1 px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                  className="flex-1 px-6 py-3 border border-border rounded-lg text-ink font-medium hover:bg-surface-hover transition"
                 >
                   Back
                 </button>
                 <button
                   onClick={() => void processPayment()}
-                  disabled={loading || !escrowTermsAccepted}
+                  disabled={loading || !paymentTermsAccepted}
                   className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (
@@ -648,41 +647,41 @@ export function PaymentCheckout({
         )}
 
         {step === 4 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+          <div className="bg-surface border border-surface-border rounded-lg shadow-lg p-8 text-center">
             <div className="mb-6">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Check className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <h2 className="text-3xl font-bold text-ink mb-2">
                 Payment Successful!
               </h2>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-ink-secondary">
                 Your transaction has been processed successfully.
               </p>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-6 text-left space-y-2">
+            <div className="bg-surface-subtle border border-surface-border rounded-lg p-6 mb-6 text-left space-y-2">
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Amount Paid:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">
+                <span className="text-ink-secondary">Amount Paid:</span>
+                <span className="font-semibold text-ink">
                   {currencyService.formatCurrency(paymentState.totalAmount, paymentState.currency)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Payment Method:</span>
-                <span className="font-semibold text-gray-900 dark:text-white">
+                <span className="text-ink-secondary">Payment Method:</span>
+                <span className="font-semibold text-ink">
                   {paymentState.selectedPaymentInfo?.label}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Status:</span>
-                <span className="font-semibold text-green-600">Completed</span>
+                <span className="text-ink-secondary">Status:</span>
+                <span className="font-semibold text-green-600 dark:text-green-400">Completed</span>
               </div>
             </div>
 
             <button
               onClick={() => onSuccess(completedTransactionId || `${listingId}-${Date.now()}`)}
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+              className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition"
             >
               Continue
             </button>
@@ -695,7 +694,7 @@ export function PaymentCheckout({
 
 function getPaymentIcon(provider: string) {
   switch (provider.toLowerCase()) {
-    case 'stripe':
+    case 'payangels':
       return <CreditCard className="w-5 h-5 text-blue-600" />
     case 'paypal':
       return <CreditCard className="w-5 h-5 text-blue-700" />
@@ -703,7 +702,7 @@ function getPaymentIcon(provider: string) {
       return <CreditCard className="w-5 h-5 text-gray-800" />
     case 'google_pay':
       return <CreditCard className="w-5 h-5 text-blue-500" />
-    case 'paystack':
+    case 'payangels':
     case 'mtn_momo':
     case 'airtel_money':
     case 'mpesa':

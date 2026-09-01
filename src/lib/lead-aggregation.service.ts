@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { communicationService } from './communication.service';
 
 export interface AggregatedLead {
   id: string;
@@ -260,36 +261,61 @@ class LeadAggregationService {
   }
 
   /**
-   * Send automated follow-up to lead
+   * Send a follow-up to a lead by email, and in-app if they have an account.
    */
   async sendFollowUp(leadId: string, message: string) {
-    // This would integrate with communication service
+    const trimmed = message.trim();
+    if (!trimmed) {
+      throw new Error("Follow-up message is required");
+    }
+
     const { data: lead, error: leadError } = await supabase
-      .from('aggregated_leads')
-      .select('lead_email, lead_phone, lead_name')
-      .eq('id', leadId)
+      .from("aggregated_leads")
+      .select("id, organization_id, lead_email, lead_phone, lead_name, assigned_to")
+      .eq("id", leadId)
       .single();
 
     if (leadError || !lead) {
-      console.error('Lead not found:', leadError);
-      throw leadError;
+      throw leadError || new Error("Lead not found");
     }
 
-    // Send email (via communication service)
-    // await communicationService.sendEmail({
-    //   to: lead.lead_email,
-    //   subject: 'Update on Your Property Interest',
-    //   body: message
-    // });
+    if (!lead.lead_email) {
+      throw new Error("This lead has no email address");
+    }
 
-    // Update lead status
-    await supabase
-      .from('aggregated_leads')
+    await communicationService.sendOutboundEmail({
+      organizationId: lead.organization_id,
+      to: lead.lead_email,
+      subject: "Update on your BaytMiftah property enquiry",
+      content: `Hello ${lead.lead_name || "there"},\n\n${trimmed}\n\nBaytMiftah`,
+    });
+
+    const { data: recipient } = await supabase
+      .from("users")
+      .select("id")
+      .eq("email", lead.lead_email)
+      .maybeSingle();
+
+    if (recipient?.id) {
+      await communicationService.createInAppNotification({
+        userId: recipient.id,
+        notificationType: "lead_follow_up",
+        subject: "Property enquiry follow-up",
+        content: trimmed,
+        respectPreferences: false,
+        metadata: { leadId: lead.id },
+      });
+    }
+
+    const { error: updateError } = await supabase
+      .from("aggregated_leads")
       .update({
-        status: 'contacted',
+        status: "contacted",
         updated_at: new Date().toISOString(),
       })
-      .eq('id', leadId);
+      .eq("id", leadId);
+
+    if (updateError) throw updateError;
   }
 
   /**

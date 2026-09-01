@@ -63,14 +63,17 @@ export default function AutomationWorkflows({
     }
   };
 
-  const handleCreatePreset = async (preset: "lead" | "listing" | "payment") => {
+  const handleCreatePreset = async (preset: "lead" | "listing" | "payment" | "arrears" | "renewal" | "maintenance") => {
     try {
       if (preset === "lead") {
         await automationEngineService.createLeadFollowUpWorkflow(organizationId);
       } else if (preset === "listing") {
         await automationEngineService.createListingExpiryWorkflow(organizationId);
       } else {
-        await automationEngineService.createPaymentReminderWorkflow(organizationId);
+        if (preset === "payment") await automationEngineService.createPaymentReminderWorkflow(organizationId);
+        else if (preset === "arrears") await automationEngineService.createEstateArrearsWorkflow(organizationId);
+        else if (preset === "renewal") await automationEngineService.createLeaseRenewalWorkflow(organizationId);
+        else await automationEngineService.createMaintenanceSlaWorkflow(organizationId);
       }
 
       toast.success("Workflow template created.");
@@ -145,6 +148,21 @@ export default function AutomationWorkflows({
               title: "Payment Reminders",
               description:
                 "Create a workflow skeleton for pending payment follow-up and reminders.",
+            },
+            {
+              id: "arrears" as const,
+              title: "Estate Arrears Follow-up",
+              description: "Create finance reminders and collection tasks when a unit charge becomes overdue.",
+            },
+            {
+              id: "renewal" as const,
+              title: "Lease Renewal Sequence",
+              description: "Prompt managers and residents before a lease reaches its renewal window.",
+            },
+            {
+              id: "maintenance" as const,
+              title: "Maintenance SLA Escalation",
+              description: "Escalate open maintenance work when an SLA target is breached.",
             },
           ].map((template) => (
             <Card key={template.id} className="p-4">

@@ -1,4 +1,5 @@
 import {
+  Building,
   Building2,
   Home,
   LayoutGrid,
@@ -7,6 +8,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useTranslation } from "../../i18n/LocaleContext";
 
 const categoryIds = ["all", "apartment", "house", "commercial", "verified"] as const;
 
@@ -14,16 +16,16 @@ const categoryIcons: Record<(typeof categoryIds)[number], LucideIcon> = {
   all: LayoutGrid,
   apartment: Building2,
   house: Home,
-  commercial: Building2,
+  commercial: Building,
   verified: ShieldCheck,
 };
 
-const categoryLabels: Record<(typeof categoryIds)[number], string> = {
-  all: "All",
-  apartment: "Apartments",
-  house: "Houses",
-  commercial: "Commercial",
-  verified: "Verified",
+const categoryLabelKeys: Record<(typeof categoryIds)[number], string> = {
+  all: "categoryBar.all",
+  apartment: "categoryBar.apartment",
+  house: "categoryBar.house",
+  commercial: "categoryBar.commercial",
+  verified: "categoryBar.verified",
 };
 
 interface CategoryBarProps {
@@ -43,9 +45,15 @@ export function CategoryBar({
   onToggleMap,
   showMapToggle = true,
 }: CategoryBarProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-      <div className="listing-scroll min-w-0 flex-1 lg:justify-start">
+      <div
+        className="listing-scroll min-w-0 flex-1 lg:justify-start"
+        role="tablist"
+        aria-label={t("categoryBar.label")}
+      >
         {categoryIds.map((id) => {
           const Icon = categoryIcons[id];
           const isActive = active === id;
@@ -54,16 +62,18 @@ export function CategoryBar({
             <button
               key={id}
               type="button"
+              role="tab"
+              aria-selected={isActive}
               onClick={() => onChange(id)}
               className={`category-chip ${isActive ? "active" : ""}`}
             >
               <Icon
-                className={`h-6 w-6 shrink-0 ${isActive ? "text-ink" : "text-ink-secondary"}`}
+                className={`h-5 w-5 shrink-0 sm:h-6 sm:w-6 ${isActive ? "text-ink" : "text-ink-secondary"}`}
               />
               <span
-                className={`whitespace-nowrap text-xs font-medium sm:text-[13px] ${isActive ? "text-ink" : "text-ink-secondary"}`}
+                className={`max-w-[5.5rem] truncate text-center text-[11px] font-medium leading-tight sm:max-w-none sm:text-xs sm:whitespace-nowrap md:text-[13px] ${isActive ? "text-ink" : "text-ink-secondary"}`}
               >
-                {categoryLabels[id]}
+                {t(categoryLabelKeys[id])}
               </span>
             </button>
           );
@@ -74,7 +84,7 @@ export function CategoryBar({
         {onFiltersClick && (
           <button type="button" onClick={onFiltersClick} className="filter-chip">
             <SlidersHorizontal className="h-4 w-4" />
-            Filters
+            {t("searchPage.filters")}
           </button>
         )}
         {showMapToggle && onToggleMap && (
@@ -84,7 +94,7 @@ export function CategoryBar({
             className={`filter-chip ${mapMode ? "bg-ink text-white hover:bg-ink/90" : ""}`}
           >
             <Map className="h-4 w-4" />
-            {mapMode ? "Show list" : "Show map"}
+            {mapMode ? t("categoryBar.showList") : t("categoryBar.showMap")}
           </button>
         )}
       </div>

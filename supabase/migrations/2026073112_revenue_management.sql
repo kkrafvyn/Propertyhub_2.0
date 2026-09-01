@@ -182,7 +182,7 @@ ON CONFLICT (code) DO NOTHING;
 
 -- Payment gateways
 INSERT INTO public.payment_gateways (gateway_key, display_name, enabled, fee_type, fee_value, supported_currencies, supported_regions, api_status, sort_order) VALUES
-  ('paystack', 'Paystack', TRUE, 'percentage', 1.5, ARRAY['GHS','NGN','ZAR','KES','USD'], ARRAY['GH','NG','ZA','KE','GLOBAL'], 'unknown', 1),
-  ('stripe', 'Stripe', FALSE, 'percentage', 2.9, ARRAY['USD','EUR','GBP'], ARRAY['US','EU','GB','GLOBAL'], 'unknown', 2),
+  ('payangels', 'Secure checkout', TRUE, 'percentage', 1.5, ARRAY['GHS','NGN','ZAR','KES','USD'], ARRAY['GH','NG','ZA','KE','GLOBAL'], 'unknown', 1),
+  ('payangels', 'Secure checkout', FALSE, 'percentage', 2.9, ARRAY['USD','EUR','GBP'], ARRAY['US','EU','GB','GLOBAL'], 'unknown', 2),
   ('mobile_money', 'Mobile Money (Direct)', FALSE, 'percentage', 1.5, ARRAY['GHS'], ARRAY['GH'], 'disconnected', 3)
 ON CONFLICT (gateway_key) DO NOTHING;

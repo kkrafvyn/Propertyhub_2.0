@@ -835,7 +835,7 @@ export default {
     },
     "finance": {
       "commissionSettlement": {
-        "subtitle": "Agents de paiement via des rails de paiement Paystack ou Stripe",
+        "subtitle": "Agents de paiement via des rails de paiement",
         "title": "Règlement de commission"
       },
       "escrow": {
@@ -843,7 +843,7 @@ export default {
         "title": "Plateforme d'entiercement"
       },
       "hub": {
-        "subtitle": "Paiements alimentés par Paystack (Afrique) et Stripe (international)",
+        "subtitle": "Paiements par argent mobile, banque et cartes",
         "title": "Services financiers ",
         "stats": {
           "escrowFunded": "Séquestre financé",
@@ -864,7 +864,7 @@ export default {
         "title": "Calculateur d'Hypothèque"
       },
       "rentCollection": {
-        "subtitle": "Collecter le loyer via Paystack (Afrique) ou Stripe (international)",
+        "subtitle": "Collecter le loyer via argent mobile, banque et cartes",
         "title": "Rails de collecte des loyers"
       }
     },
@@ -962,7 +962,7 @@ export default {
         "title": "Demandes de maintenance"
       },
       "payments": {
-        "subtitle": "Payer avec Paystack (argent mobile, banque) ou Stripe (cartes internationales)",
+        "subtitle": "Payer avec argent mobile, banque et cartes",
         "title": "Paiements de loyer"
       },
       "credit": {
@@ -1153,7 +1153,7 @@ export default {
     "listings": "Listing a property",
     "listingsBody": "Property owners submit listings at /host/list. Agency admins approve listings at /admin/moderation before they go live.",
     "payments": "Payments",
-    "paymentsBody": "Rent and featured boosts use Paystack (Ghana mobile money & cards) or Stripe (international cards). Configure secrets in Supabase Edge Functions.",
+    "paymentsBody": "Rent and featured boosts use mobile money, bank, and card payments. BaytMiftah does not hold customer funds.",
     "safety": "Trust & safety",
     "safetyBody": "Verified listings and KYC-reviewed agencies help keep the marketplace trustworthy. Report suspicious activity to support."
   },
@@ -1236,7 +1236,7 @@ export default {
       "instructions": "Composez ce code sur votre téléphone pour payer via MTN/Vodafone.",
       "mtn": "MTN MoMo",
       "telecel": "Telecel Cash",
-      "paystackHint": "Paystack will confirm MoMo payment automatically when configured."
+      "paystackHint": "Mobile money payment is confirmed automatically when checkout is configured."
     },
     "docusign": {
       "signViaDocusign": "Signer avec DocuSign",
@@ -1267,11 +1267,11 @@ export default {
   },
   "integrations": {
     "oauthHint": "Connectez-vous avec Google ou Apple — activez les fournisseurs dans Supabase Auth et ajoutez les URL de redirection.",
-    "paymentsHint": "Le paiement en direct nécessite STRIPE_SECRET_KEY ou PAYSTACK_SECRET_KEY dans les secrets Edge Functions.",
+    "paymentsHint": "Le paiement en direct nécessite les secrets de paiement dans Edge Functions.",
     "paymentDemo": "Le fournisseur de paiement n'est pas configuré. Ajoutez les secrets Supabase pour activer le paiement."
   },
   "legal": {
-    "lastUpdated": "Dernière mise à jour : juin 2026",
+    "lastUpdated": "Dernière mise à jour : 14 août 2026",
     "privacy": {
       "title": "Politique de confidentialité",
       "intro": "Cette politique explique comment nous collectons, utilisons et protégeons vos données sur BaytMiftah.",
@@ -1280,7 +1280,7 @@ export default {
       "useTitle": "How we use information",
       "useBody": "We use your data to operate the marketplace, process viewings and payments, verify listings and agencies, improve search and recommendations, and comply with law.",
       "shareTitle": "Sharing",
-      "shareBody": "We share data with payment processors (Stripe, Paystack), identity and signing partners when you opt in, and service providers under contract. We do not sell personal data.",
+      "shareBody": "We share data with payment processors, identity and signing partners when you opt in, and service providers under contract. We do not sell personal data.",
       "securityTitle": "Security",
       "securityBody": "Data is stored on Supabase with row-level security. Secrets and payment keys are kept server-side only. Use a strong password and enable OAuth where available.",
       "rightsTitle": "Your rights",
@@ -1296,7 +1296,7 @@ export default {
       "listingsTitle": "Listings & content",
       "listingsBody": "You are responsible for listing accuracy. We may moderate, reject, or remove listings that violate law or community standards. Featured placement may require payment.",
       "paymentsTitle": "Payments",
-      "paymentsBody": "Rent, deposits, and boosts are processed via third-party providers. Fees and refund rules are shown at checkout. BaytMiftah is not a bank or escrow agent unless explicitly stated.",
+      "paymentsBody": "Where payment functionality is available, processing is handled by the applicable third-party payment provider. BaytMiftah does not hold, custody, or control customer funds and does not operate an escrow service.",
       "accountsTitle": "Accounts",
       "accountsBody": "Keep credentials secure. You are liable for activity under your account. We may suspend accounts for fraud, abuse, or KYC failure.",
       "liabilityTitle": "Limitation of liability",

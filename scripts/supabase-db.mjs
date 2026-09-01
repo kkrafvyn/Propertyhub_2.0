@@ -127,7 +127,12 @@ async function cmdPushPending() {
     let appliedCount = 0;
     for (const file of files) {
       const version = file.replace(/\.sql$/, "");
+      const legacyVersion = version.replace(/payangels/g, "paystack");
       if (appliedSet.has(version)) continue;
+      if (legacyVersion !== version && appliedSet.has(legacyVersion)) {
+        console.log(`Skipping renamed migration ${file} (already applied as ${legacyVersion})`);
+        continue;
+      }
       // Legacy bootstrap files predate schema_migrations tracking on this project.
       if (/^00\d_|^010_/.test(file)) {
         console.log(`Skipping legacy bootstrap migration ${file}`);

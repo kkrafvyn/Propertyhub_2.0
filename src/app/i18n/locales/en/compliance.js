@@ -37,13 +37,15 @@ export default {
     authority_confirmed: "I have lawful authority to market this property.",
     disclosures_accurate: "Listing details and material facts are accurate.",
     agency_licensed: "Required agency/broker licenses are valid for this market.",
-    fair_housing: "Listing complies with fair housing and anti-discrimination rules.",
+    non_discrimination:
+      "Listing complies with applicable anti-discrimination laws and BaytMiftah community standards.",
     tenancy_terms:
       "Tenancy terms, deposits, and notice rules are disclosed where required.",
     title_disclosed:
       "Title, encumbrance, and transfer-cost disclosures are available on request.",
     short_stay_permits:
       "Short-stay permits, taxes, and cancellation policy are disclosed.",
-    kyc_ready: "KYC/AML checks will be completed before accepting funds.",
+    kyc_ready:
+      "Identity verification will be completed where required for this listing or transaction.",
   },
 };

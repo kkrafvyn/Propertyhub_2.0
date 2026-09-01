@@ -81,13 +81,11 @@ export const CONSUMER_ACTIVITY_LINKS = [
   { to: CONSUMER_ROUTES.payments, labelKey: 'consumer.activity.billing', icon: 'card', authRequired: true, cap: CAPABILITIES.LEASE },
 ]
 
-export const CONSUMER_AI_LINKS = [
-  { to: CONSUMER_ROUTES.profile, labelKey: 'consumer.ai.recommendations' },
-  { to: WORKSPACE_ENTRY_PATH, labelKey: 'consumer.ai.marketInsights' },
-  { to: CONSUMER_ROUTES.mortgage, labelKey: 'consumer.ai.affordability' },
-  { to: CONSUMER_ROUTES.insurance, labelKey: 'consumer.activity.insurance', authRequired: true },
-  { to: CONSUMER_ROUTES.vendors, labelKey: 'consumer.activity.vendors', authRequired: true },
-]
+/** Single mobile menu entry — opens the global REOS Copilot panel. */
+export const CONSUMER_AI_MENU = {
+  labelKey: 'consumer.ai.copilot',
+  descriptionKey: 'consumer.ai.copilotDescription',
+}
 
 /** Pro-only route prefixes consumers must not access */
 export const PRO_ROUTE_PREFIXES = [

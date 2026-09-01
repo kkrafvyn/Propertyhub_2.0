@@ -48,9 +48,9 @@ function parseSearchQueryLocally(query: string) {
 
 const FAQ_ENTRIES: Array<{ keywords: string[]; answer: string }> = [
   {
-    keywords: ['escrow', 'hold', 'release'],
+    keywords: ['escrow', 'hold', 'release', 'payment', 'funds'],
     answer:
-      `Payment holds may apply until agreed milestones are met. ${TRUST_LABELS.payment_hold.disclaimer}`,
+      `BaytMiftah does not hold, custody, or control customer funds and does not operate an escrow service. ${TRUST_LABELS.payment_hold.disclaimer}`,
   },
   {
     keywords: ['kyc', 'verify', 'verification', 'identity'],
@@ -429,8 +429,10 @@ export const aiAssistantService = {
   async askAssistant(params: {
     message: string
     context?: string
+    organizationId?: string
     history?: Array<{ role: 'user' | 'assistant'; content: string }>
   }): Promise<{ answer: string; source: AiSource }> {
+
     if (clientIntegrations.supabase.configured) {
       try {
         const { data, error } = await supabase.functions.invoke('ai-assistant', {
@@ -438,6 +440,7 @@ export const aiAssistantService = {
             action: 'chat',
             message: params.message,
             context: params.context,
+            organizationId: params.organizationId,
             history: params.history,
           },
         })
@@ -464,12 +467,15 @@ export const aiAssistantService = {
     }
   },
 
-  async generateListingDescriptionRemote(input: Parameters<typeof this.generateListingDescription>[0]) {
+  async generateListingDescriptionRemote(
+    input: Parameters<typeof this.generateListingDescription>[0],
+    organizationId?: string,
+  ) {
     if (clientIntegrations.ai.enhanced && clientIntegrations.supabase.configured) {
       try {
         const { data, error } = await supabase.functions.invoke('ai-assistant', {
-          body: { action: 'describe_listing', listing: input },
-        })
+          body: { action: 'describe_listing', listing: input, organizationId },
+        });
         if (!error && data && typeof data === 'object' && 'answer' in data) {
           return (data as { answer: string }).answer
         }

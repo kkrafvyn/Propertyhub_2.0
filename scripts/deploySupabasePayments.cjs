@@ -13,12 +13,11 @@ const args = process.argv.slice(2);
 
 const EDGE_FUNCTIONS = [
   { name: "exchange-rates" },
-  { name: "initialize-paystack-payment" },
-  { name: "verify-paystack-payment" },
-  { name: "initiate-paystack-refund" },
-  { name: "paystack-webhook", noVerifyJwt: true },
-  { name: "initialize-stripe-payment" },
-  { name: "verify-stripe-payment" },
+  { name: "initialize-payangels-payment" },
+  { name: "verify-payangels-payment" },
+  { name: "initiate-payangels-refund" },
+  { name: "initiate-payangels-disbursement" },
+  { name: "payangels-webhook", noVerifyJwt: true },
   { name: "parse-search-query" },
   { name: "ai-assistant" },
   { name: "kyc-ai-screen" },
@@ -106,7 +105,7 @@ if (!skipSecrets) {
   }
 }
 
-function runSupabase(commandArgs, label) {
+function runSupabase(commandArgs, label, options = {}) {
   console.log(`\n==> ${label}`);
   const result = spawnSync("npx", ["supabase", ...commandArgs], {
     cwd: projectRoot,
@@ -119,6 +118,10 @@ function runSupabase(commandArgs, label) {
   });
 
   if (result.status !== 0) {
+    if (options.optional) {
+      console.warn(`Continuing without ${label.toLowerCase()} (CLI returned ${result.status}).`);
+      return;
+    }
     process.exit(result.status || 1);
   }
 }
@@ -127,7 +130,11 @@ runSupabase(
   ["login", "--token", process.env.SUPABASE_ACCESS_TOKEN],
   "Authenticate CLI with access token"
 );
-runSupabase(["link", "--project-ref", projectRef, "--workdir", ".", "--yes"], "Link project");
+runSupabase(
+  ["link", "--project-ref", projectRef, "--workdir", ".", "--yes"],
+  "Link project",
+  { optional: true }
+);
 
 if (!skipDb) {
   runSupabase(

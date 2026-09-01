@@ -4,7 +4,7 @@ import { notificationService } from "./notification.service";
 
 const DEFAULT_CLOSING_ITEMS = [
   { item_key: "offer_accepted", label: "Offer accepted", sort_order: 1 },
-  { item_key: "deposit_paid", label: "Deposit paid into escrow", sort_order: 2 },
+  { item_key: "deposit_paid", label: "Deposit paid via payment provider", sort_order: 2 },
   { item_key: "inspection", label: "Property inspection completed", sort_order: 3 },
   { item_key: "financing", label: "Mortgage / financing confirmed", sort_order: 4 },
   { item_key: "sale_agreement", label: "Sale agreement signed", sort_order: 5 },

@@ -1,49 +1,79 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import {
+  Building2,
   Calendar,
   ChevronRight,
   CreditCard,
+  FileCheck,
   FileText,
   Heart,
   Home,
-  MessageCircle,
-  Route,
+  KeyRound,
+  LayoutDashboard,
+  MessageSquare,
   Search,
+  ShieldCheck,
   Sparkles,
+  TrendingUp,
+  Wallet,
   Wrench,
+  type LucideIcon,
 } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
 import { useTranslation } from '../../../i18n/LocaleContext'
 import { hasCapability } from '../../../lib/baytmiftah/capabilities'
 import {
   CONSUMER_ACTIVITY_LINKS,
-  CONSUMER_AI_LINKS,
+  CONSUMER_AI_MENU,
   CONSUMER_QUICK_ACTIONS,
   getContextualTabs,
 } from '../../../lib/baytmiftah/consumer-nav'
+import { openBaytMiftahAIPanel } from '../../../lib/baytmiftah/ai-panel'
 import { fetchConsumerActivity } from '../../../lib/baytmiftah/consumer-service'
 import { fetchReservations } from '../../../lib/baytmiftah/reservation-service'
 import { getSavedIds } from '../../../lib/baytmiftah/saved-listings'
 import { CONSUMER_ROUTES } from '../../../lib/consumer-routes'
 
-const MENU_ICONS = {
+const ICON_MAP: Record<string, LucideIcon> = {
   search: Search,
   heart: Heart,
-  message: MessageCircle,
+  message: MessageSquare,
   calendar: Calendar,
   document: FileText,
   home: Home,
   card: CreditCard,
   wrench: Wrench,
   sparkles: Sparkles,
-  route: Route,
+  wallet: Wallet,
+  dashboard: LayoutDashboard,
+  lease: KeyRound,
+  offers: FileCheck,
+  transactions: ShieldCheck,
+  insights: TrendingUp,
+  host: Building2,
 }
 
-function Section({ title, children }) {
+function getTabIcon(to: string, labelKey: string): string {
+  if (to.includes('lease')) return 'lease'
+  if (to.includes('rental')) return 'home'
+  if (to.includes('payment') || to.includes('billing')) return 'card'
+  if (to.includes('maintenance')) return 'wrench'
+  if (to.includes('trip') || to.includes('reservation')) return 'calendar'
+  if (to.includes('application') || to.includes('offer')) return 'offers'
+  if (to.includes('transaction')) return 'transactions'
+  if (to.includes('workspace')) return 'host'
+  if (to.includes('saved')) return 'heart'
+  if (to.includes('message')) return 'message'
+  if (to.includes('search')) return 'search'
+  if (to.includes('wallet')) return 'wallet'
+  return 'document'
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mb-5">
-      <h2 className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#6b7280]">
+      <h2 className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-secondary">
         {title}
       </h2>
       {children}
@@ -51,39 +81,94 @@ function Section({ title, children }) {
   )
 }
 
-function MenuRow({ to, label, meta = null, authRequired = false, user, onNavigate, icon = 'route' }) {
+function MenuActionRow({
+  label,
+  description,
+  onAction,
+  icon = 'document',
+}: {
+  label: string
+  description?: string
+  onAction: () => void
+  icon?: string
+}) {
+  const Icon = ICON_MAP[icon] || ICON_MAP.document
+
+  return (
+    <button
+      type="button"
+      onClick={onAction}
+      className="bm-menu-row group flex w-full items-center gap-3.5 rounded-2xl border border-surface-border bg-surface px-3.5 py-3 text-left shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-forest/30 hover:bg-surface-hover hover:shadow-md"
+    >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-forest/10 text-brand-forest transition-colors duration-200 group-hover:bg-brand-forest group-hover:text-white dark:bg-emerald-500/20 dark:text-emerald-400">
+        <Icon className="h-5 w-5" aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-semibold text-ink">{label}</span>
+        {description ? (
+          <span className="mt-0.5 block truncate text-xs text-ink-secondary">{description}</span>
+        ) : null}
+      </span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-ink-secondary transition-transform duration-200 group-hover:translate-x-1 group-hover:text-brand-forest" />
+    </button>
+  )
+}
+
+function MenuRow({
+  to,
+  label,
+  meta = null,
+  authRequired = false,
+  user,
+  onNavigate,
+  icon = 'document',
+}: {
+  to: string
+  label: string
+  meta?: any
+  authRequired?: boolean
+  user?: any
+  onNavigate?: () => void
+  icon?: string
+}) {
   const dest = authRequired && !user ? CONSUMER_ROUTES.login : to
-  const Icon = MENU_ICONS[icon] || MENU_ICONS.route
+  const Icon = ICON_MAP[icon] || ICON_MAP.document
 
   return (
     <Link
       to={dest}
       state={authRequired && !user ? { from: to } : undefined}
       onClick={onNavigate}
-      className="bm-menu-row group flex items-center gap-3 rounded-2xl border border-[#e8e8e4] bg-white px-3.5 py-3 shadow-[0_8px_24px_rgba(15,41,34,0.04)] transition hover:-translate-y-px hover:border-[#0f2922]/15 hover:shadow-[0_12px_28px_rgba(15,41,34,0.08)]"
+      className="bm-menu-row group flex items-center gap-3.5 rounded-2xl border border-surface-border bg-surface px-3.5 py-3 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-forest/30 hover:bg-surface-hover hover:shadow-md"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f2922]/[0.06] text-[#0f2922] transition group-hover:bg-[#0f2922] group-hover:text-white">
-        <Icon className="h-[18px] w-[18px]" aria-hidden />
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-forest/10 text-brand-forest transition-colors duration-200 group-hover:bg-brand-forest group-hover:text-white dark:bg-emerald-500/20 dark:text-emerald-400">
+        <Icon className="h-5 w-5" aria-hidden />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-[#111827]">{label}</span>
+        <span className="block truncate text-sm font-semibold text-ink">{label}</span>
       </span>
       {meta != null && (
-        <span className="rounded-full bg-[#0f2922]/10 px-2 py-0.5 text-xs font-bold text-[#0f2922]">
+        <span className="rounded-full bg-brand-forest/10 px-2.5 py-0.5 text-xs font-bold text-brand-forest dark:bg-emerald-500/20 dark:text-emerald-400">
           {meta}
         </span>
       )}
-      <ChevronRight className="h-4 w-4 shrink-0 text-[#9ca3af] transition group-hover:translate-x-0.5 group-hover:text-[#0f2922]" />
+      <ChevronRight className="h-4 w-4 shrink-0 text-ink-secondary transition-transform duration-200 group-hover:translate-x-1 group-hover:text-brand-forest" />
     </Link>
   )
 }
 
-export default function ConsumerMenuContent({ onNavigate, showIntro = true }) {
+export default function ConsumerMenuContent({
+  onNavigate,
+  showIntro = true,
+}: {
+  onNavigate?: () => void
+  showIntro?: boolean
+}) {
   const { t } = useTranslation()
   const { user, capabilities } = useAuth()
   const [savedCount, setSavedCount] = useState(0)
   const [tripCount, setTripCount] = useState(0)
-  const [activityFeed, setActivityFeed] = useState([])
+  const [activityFeed, setActivityFeed] = useState<any[]>([])
 
   useEffect(() => {
     setSavedCount(getSavedIds().length)
@@ -100,28 +185,32 @@ export default function ConsumerMenuContent({ onNavigate, showIntro = true }) {
     (a) => !a.cap || hasCapability(capabilities, a.cap),
   )
   const contextualTabs = getContextualTabs(capabilities)
-  const activityMeta = {
+  const activityMeta: Record<string, any> = {
     [CONSUMER_ROUTES.saved]: savedCount || undefined,
     [CONSUMER_ROUTES.trips]: tripCount || undefined,
   }
+
+  const uniqueContextualTabs = contextualTabs.filter(
+    (tab, index, self) => index === self.findIndex((t) => t.to === tab.to && t.labelKey === tab.labelKey),
+  )
 
   return (
     <div className="px-4 pb-8 pt-4">
       {showIntro && (
         <div className="mb-5">
-          <h1 className="text-xl font-bold text-[#111827]">{t('consumer.dashboard.title')}</h1>
+          <h1 className="text-xl font-bold text-ink">{t('consumer.dashboard.title')}</h1>
         </div>
       )}
 
-      {contextualTabs.length > 0 && (
+      {uniqueContextualTabs.length > 0 && (
         <Section title={t('consumer.dashboard.myJourneys')}>
           <div className="space-y-2">
-            {contextualTabs.map(({ to, labelKey }) => (
+            {uniqueContextualTabs.map(({ to, labelKey }, idx) => (
               <MenuRow
-                key={to}
+                key={`${to}-${labelKey}-${idx}`}
                 to={to}
                 label={t(labelKey)}
-                icon="route"
+                icon={getTabIcon(to, labelKey)}
                 user={user}
                 onNavigate={onNavigate}
               />
@@ -152,8 +241,20 @@ export default function ConsumerMenuContent({ onNavigate, showIntro = true }) {
           <div className="space-y-2">
             {hasCapability(capabilities, 'buy') && (
               <>
-                <MenuRow to={CONSUMER_ROUTES.applications} label={t('mobile.menuActiveOffers')} icon="document" user={user} onNavigate={onNavigate} />
-                <MenuRow to={CONSUMER_ROUTES.transactions} label={t('mobile.menuClosingPipeline')} icon="document" user={user} onNavigate={onNavigate} />
+                <MenuRow
+                  to={CONSUMER_ROUTES.applications}
+                  label={t('mobile.menuActiveOffers')}
+                  icon="offers"
+                  user={user}
+                  onNavigate={onNavigate}
+                />
+                <MenuRow
+                  to={CONSUMER_ROUTES.transactions}
+                  label={t('mobile.menuClosingPipeline')}
+                  icon="transactions"
+                  user={user}
+                  onNavigate={onNavigate}
+                />
               </>
             )}
             {activityFeed
@@ -175,11 +276,15 @@ export default function ConsumerMenuContent({ onNavigate, showIntro = true }) {
       )}
 
       <Section title={t('consumer.dashboard.aiAssistant')}>
-        <div className="space-y-2">
-          {CONSUMER_AI_LINKS.map(({ to, labelKey }) => (
-            <MenuRow key={to} to={to} label={t(labelKey)} icon="sparkles" user={user} onNavigate={onNavigate} />
-          ))}
-        </div>
+        <MenuActionRow
+          label={t(CONSUMER_AI_MENU.labelKey)}
+          description={t(CONSUMER_AI_MENU.descriptionKey)}
+          icon="sparkles"
+          onAction={() => {
+            openBaytMiftahAIPanel()
+            onNavigate?.()
+          }}
+        />
       </Section>
 
       <Section title={t('consumer.dashboard.quickActions')}>
@@ -189,7 +294,7 @@ export default function ConsumerMenuContent({ onNavigate, showIntro = true }) {
               key={to}
               to={to}
               onClick={onNavigate}
-              className="rounded-full border border-[#0f2922]/15 bg-white px-4 py-2 text-sm font-semibold text-[#0f2922] shadow-sm transition hover:-translate-y-px hover:border-[#0f2922]/30 hover:bg-[#0f2922] hover:text-white hover:shadow-md"
+              className="rounded-full border border-surface-border bg-surface px-4 py-2 text-sm font-semibold text-ink shadow-xs transition hover:-translate-y-0.5 hover:border-brand-forest/30 hover:bg-brand-forest hover:text-white hover:shadow-sm"
             >
               {t(labelKey)}
             </Link>

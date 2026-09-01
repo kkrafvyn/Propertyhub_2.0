@@ -174,6 +174,34 @@ export const communicationService = {
     return !!data?.success;
   },
 
+  async sendOutboundEmail(input: {
+    organizationId: string;
+    to: string;
+    subject: string;
+    content: string;
+  }) {
+    const { data, error } = await supabase.functions.invoke("dispatch-notification", {
+      body: {
+        organizationId: input.organizationId,
+        to: input.to,
+        subject: input.subject,
+        content: input.content,
+      },
+    });
+
+    if (error) {
+      throw new Error(error.message || "Unable to send email");
+    }
+
+    if (!data?.success) {
+      throw new Error(
+        typeof data?.error === "string" ? data.error : "Email was not delivered"
+      );
+    }
+
+    return true;
+  },
+
   async getNotificationPreferences(userId: string) {
     const { data, error } = await supabase
       .from("notification_preferences")

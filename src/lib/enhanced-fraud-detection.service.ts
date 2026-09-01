@@ -243,22 +243,99 @@ class EnhancedFraudDetectionService {
   }
 
   /**
-   * Check for bait and switch tactics
+   * Flag a lead that expressed interest far below the listed price.
    */
   private async checkBaitAndSwitch(lead: any): Promise<boolean> {
-    // This would require tracking offer history
-    // For now, returning false as placeholder
-    return false;
+    const interestedPrice = Number(lead?.interested_price);
+    if (!Number.isFinite(interestedPrice) || interestedPrice <= 0) return false;
+
+    let askingPrice: number | null = null;
+
+    if (lead.listing_id) {
+      const { data: listing } = await supabase
+        .from("listings")
+        .select("price")
+        .eq("id", lead.listing_id)
+        .maybeSingle();
+      askingPrice = listing?.price != null ? Number(listing.price) : null;
+    }
+
+    if ((!askingPrice || askingPrice <= 0) && lead.organization_id && lead.lead_email) {
+      const { data: prior } = await supabase
+        .from("aggregated_leads")
+        .select("interested_price, created_at")
+        .eq("organization_id", lead.organization_id)
+        .eq("lead_email", lead.lead_email)
+        .order("created_at", { ascending: true });
+
+      const firstPrice = Number(prior?.[0]?.interested_price);
+      if (Number.isFinite(firstPrice) && firstPrice > 0 && interestedPrice < firstPrice * 0.55) {
+        return true;
+      }
+    }
+
+    return Boolean(askingPrice && askingPrice > 0 && interestedPrice < askingPrice * 0.55);
   }
 
   /**
-   * Detect image reuse across listings (reverse image search)
+   * Detect reused photos across properties and external listings.
    */
   async detectImageReuse(organizationId: string): Promise<Array<{ listingId: string; reusedFrom: string; confidence: number }>> {
-    void organizationId;
-    // This would integrate with an image hashing API like Google Vision or Amazon Rekognition
-    // Placeholder implementation
-    return [];
+    const issues: Array<{ listingId: string; reusedFrom: string; confidence: number }> = [];
+    const seen = new Map<string, { listingId: string; source: string }>();
+
+    const remember = (rawUrl: string | null | undefined, listingId: string, source: string) => {
+      const key = String(rawUrl || "")
+        .trim()
+        .split("?")[0]
+        .toLowerCase();
+      if (!key) return;
+      const existing = seen.get(key);
+      if (existing && existing.listingId !== listingId) {
+        issues.push({
+          listingId,
+          reusedFrom: existing.listingId,
+          confidence: 0.95,
+        });
+      } else if (!existing) {
+        seen.set(key, { listingId, source });
+      }
+    };
+
+    const { data: media } = await supabase
+      .from("property_media")
+      .select("property_id, public_url, storage_path")
+      .eq("organization_id", organizationId);
+
+    for (const row of media || []) {
+      remember(row.public_url, row.property_id, "property_media");
+      remember(row.storage_path, row.property_id, "property_media");
+    }
+
+    const { data: external } = await supabase
+      .from("external_listings")
+      .select("id, images")
+      .eq("organization_id", organizationId);
+
+    for (const listing of external || []) {
+      for (const image of listing.images || []) {
+        remember(image, listing.id, "external_listings");
+      }
+    }
+
+    const unique = new Map<string, { listingId: string; reusedFrom: string; confidence: number }>();
+    for (const issue of issues) {
+      unique.set(`${issue.listingId}:${issue.reusedFrom}`, issue);
+      await this.createFraudAlert(organizationId, {
+        alertType: "image_reuse",
+        severity: "high",
+        title: "Reused listing photo detected",
+        description: `The same photo appears on more than one listing (${issue.listingId} and ${issue.reusedFrom}).`,
+        evidence: issue,
+      });
+    }
+
+    return [...unique.values()];
   }
 
   /**

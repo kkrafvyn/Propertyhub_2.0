@@ -3,24 +3,34 @@ import { useAuth } from "../context/AuthContext";
 import { isWorkspaceRole } from "../lib/baytmiftah/roles";
 import { useIdleSessionTimeout } from "../hooks/useIdleSessionTimeout";
 import { useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router";
+import { Navigate, Outlet, useLocation } from "react-router";
 import { RouteMonitoring } from "./RouteMonitoring";
 import { MobileAppShell } from "../mobile/MobileAppShell";
+import { MobileBiometricGate } from "../mobile/MobileBiometricGate";
 import { MobileBottomNav } from "../mobile/MobileBottomNav";
 import { MobileWorkspaceDock } from "../mobile/MobileWorkspaceDock";
 import { LocationOnboarding } from "./onboarding/LocationOnboarding";
 import { CookieConsentBanner } from "./legal/CookieConsentBanner";
+import { BaytMiftahAIPanel } from "./ux/BaytMiftahAIPanel";
 import { PolicyUpdateBanner } from "./legal/PolicyUpdateBanner";
 import { useUserMarket } from "../context/MarketContext";
+import { SurfaceProvider } from "../context/SurfaceContext";
+import { CallProvider } from "../context/CallContext";
+import { CallModal } from "./communication/CallModal";
+import { IncomingCallBanner } from "./communication/IncomingCallBanner";
+import { ActiveCallBar } from "./communication/ActiveCallBar";
 import { PHONE_MEDIA, TABLET_MEDIA } from "../lib/viewports";
+import { isBusinessMobileApp } from "../../lib/mobile-app";
+import { isElectron } from "../../lib/surface-detection";
+import { AdminDesktopShell } from "../shells/AdminDesktopShell";
+import { DesktopNavigationBridge } from "./DesktopNavigationBridge";
+import { DesktopProfessionalGateway } from "./DesktopProfessionalGateway";
+import { GettingStartedChecklist, NewUserTutorial } from "./onboarding/NewUserTutorial";
 
 function useViewportFlags() {
   const [flags, setFlags] = useState(() => {
     if (typeof window === "undefined") {
       return { isPhone: false, isTablet: false };
-    }
-    if (Capacitor.isNativePlatform()) {
-      return { isPhone: true, isTablet: false };
     }
     return {
       isPhone: window.matchMedia(PHONE_MEDIA).matches,
@@ -29,11 +39,6 @@ function useViewportFlags() {
   });
 
   useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      setFlags({ isPhone: true, isTablet: false });
-      return;
-    }
-
     const phoneQuery = window.matchMedia(PHONE_MEDIA);
     const tabletQuery = window.matchMedia(TABLET_MEDIA);
 
@@ -62,6 +67,7 @@ function isConsumerRoute(pathname: string) {
     pathname === "/" ||
     pathname.startsWith("/search") ||
     pathname.startsWith("/property/") ||
+    pathname.startsWith("/compare") ||
     pathname.startsWith("/app")
   );
 }
@@ -94,21 +100,64 @@ function shouldSkipOnboarding(pathname: string) {
 
 export function Root() {
   const location = useLocation();
-  const { isPhone } = useViewportFlags();
-  const { role, user } = useAuth();
+  const { isPhone, isTablet } = useViewportFlags();
+  const isMobileLayout = isPhone || isTablet;
+  const { role, profile, user } = useAuth();
   const { ready: marketReady, onboardingComplete } = useUserMarket();
   useIdleSessionTimeout(Boolean(user));
 
-  if (marketReady && !onboardingComplete && !shouldSkipOnboarding(location.pathname)) {
-    return <LocationOnboarding />;
+  const showAdminDesktopShell = isElectron() && location.pathname.startsWith("/admin");
+  const isDesktopApp = isElectron();
+
+  if (isDesktopApp && isConsumerRoute(location.pathname)) {
+    return (
+      <>
+        <DesktopNavigationBridge />
+        <DesktopProfessionalGateway>
+          <Navigate to={user ? "/workspace" : "/login"} replace />
+        </DesktopProfessionalGateway>
+      </>
+    );
   }
 
-  if (isPhone && location.pathname === "/") {
-    return <MobileAppShell />;
+  if (marketReady && !onboardingComplete && !shouldSkipOnboarding(location.pathname)) {
+    return (
+      <>
+        {isElectron() ? <DesktopNavigationBridge /> : null}
+        <LocationOnboarding />
+      </>
+    );
+  }
+
+  if (Capacitor.isNativePlatform() && isBusinessMobileApp() && location.pathname === "/") {
+    return <Navigate to="/workspace" replace />;
+  }
+
+  if (isMobileLayout && location.pathname === "/" && !isBusinessMobileApp()) {
+    return (
+      <SurfaceProvider>
+        <CallProvider>
+          <MobileBiometricGate>
+            <div className="mobile-bolt min-h-screen min-h-[100dvh] bg-bolt-bg has-mobile-tab-bar">
+              {isElectron() ? <DesktopNavigationBridge /> : null}
+              <RouteMonitoring />
+              <PolicyUpdateBanner />
+              <MobileAppShell />
+              <BaytMiftahAIPanel />
+              <CookieConsentBanner />
+              <CallModal />
+              <IncomingCallBanner />
+              <ActiveCallBar />
+              <NewUserTutorial />
+            </div>
+          </MobileBiometricGate>
+        </CallProvider>
+      </SurfaceProvider>
+    );
   }
 
   const onConsumerRoute = isConsumerRoute(location.pathname);
-  const showBottomNav = onConsumerRoute && isPhone;
+  const showBottomNav = onConsumerRoute && isMobileLayout && !isBusinessMobileApp();
   const showWorkspaceDock = showBottomNav && Boolean(user) && isWorkspaceRole(role);
 
   const shellClass = [
@@ -120,13 +169,34 @@ export function Root() {
     .join(" ");
 
   return (
-    <div className={shellClass}>
-      <RouteMonitoring />
-      <PolicyUpdateBanner />
-      <Outlet />
-      {showBottomNav ? <MobileWorkspaceDock /> : null}
-      {showBottomNav ? <MobileBottomNav variant="phone" /> : null}
-      <CookieConsentBanner />
-    </div>
+    <SurfaceProvider>
+      <CallProvider>
+        <MobileBiometricGate>
+          <div className={shellClass}>
+            {isElectron() ? <DesktopNavigationBridge /> : null}
+            <RouteMonitoring />
+            <PolicyUpdateBanner />
+            {showAdminDesktopShell ? (
+              <AdminDesktopShell>
+                <Outlet />
+              </AdminDesktopShell>
+            ) : (
+              <DesktopProfessionalGateway>
+                <Outlet />
+              </DesktopProfessionalGateway>
+            )}
+            {!isDesktopApp && showWorkspaceDock ? <MobileWorkspaceDock /> : null}
+            {!isDesktopApp && showBottomNav ? <MobileBottomNav variant="phone" /> : null}
+            {!isDesktopApp ? <BaytMiftahAIPanel /> : null}
+            {!isDesktopApp ? <CookieConsentBanner /> : null}
+            <CallModal />
+            <IncomingCallBanner />
+            <ActiveCallBar />
+            {!isDesktopApp ? <NewUserTutorial /> : null}
+            {!isDesktopApp ? <GettingStartedChecklist /> : null}
+          </div>
+        </MobileBiometricGate>
+      </CallProvider>
+    </SurfaceProvider>
   );
 }

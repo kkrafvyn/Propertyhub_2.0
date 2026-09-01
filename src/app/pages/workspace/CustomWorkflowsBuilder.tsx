@@ -22,6 +22,25 @@ import {
   Copy,
   Eye,
   BarChart3,
+  FileText,
+  Edit3,
+  Handshake,
+  MessageSquare,
+  DollarSign,
+  Mail,
+  Smartphone,
+  CheckSquare,
+  RefreshCw,
+  Bell,
+  Webhook,
+  MapPin,
+  Building,
+  User,
+  Target,
+  Sliders,
+  Sparkles,
+  X,
+  Check,
 } from 'lucide-react';
 
 interface WorkflowStep {
@@ -44,28 +63,28 @@ interface Workflow {
 }
 
 const availableTriggers = [
-  { id: 'new_listing', label: 'New Listing Created', icon: '📋' },
-  { id: 'property_updated', label: 'Property Updated', icon: '✏️' },
-  { id: 'deal_created', label: 'Deal Created', icon: '🤝' },
-  { id: 'message_received', label: 'Message Received', icon: '💬' },
-  { id: 'price_change', label: 'Price Changed', icon: '💰' },
+  { id: 'new_listing', label: 'New Listing Created', icon: FileText },
+  { id: 'property_updated', label: 'Property Updated', icon: Edit3 },
+  { id: 'deal_created', label: 'Deal Created', icon: Handshake },
+  { id: 'message_received', label: 'Message Received', icon: MessageSquare },
+  { id: 'price_change', label: 'Price Changed', icon: DollarSign },
 ];
 
 const availableActions = [
-  { id: 'send_email', label: 'Send Email', icon: '📧' },
-  { id: 'send_sms', label: 'Send SMS', icon: '📱' },
-  { id: 'create_task', label: 'Create Task', icon: '✅' },
-  { id: 'update_field', label: 'Update Field', icon: '🔄' },
-  { id: 'create_notification', label: 'Create Notification', icon: '🔔' },
-  { id: 'webhook', label: 'Call Webhook', icon: '🔗' },
+  { id: 'send_email', label: 'Send Email', icon: Mail },
+  { id: 'send_sms', label: 'Send SMS', icon: Smartphone },
+  { id: 'create_task', label: 'Create Task', icon: CheckSquare },
+  { id: 'update_field', label: 'Update Field', icon: RefreshCw },
+  { id: 'create_notification', label: 'Create Notification', icon: Bell },
+  { id: 'webhook', label: 'Call Webhook', icon: Webhook },
 ];
 
 const availableConditions = [
-  { id: 'price_range', label: 'Price Range', icon: '💵' },
-  { id: 'location', label: 'Location Match', icon: '📍' },
-  { id: 'property_type', label: 'Property Type', icon: '🏠' },
-  { id: 'time', label: 'Time-based', icon: '⏰' },
-  { id: 'user_role', label: 'User Role', icon: '👤' },
+  { id: 'price_range', label: 'Price Range', icon: DollarSign },
+  { id: 'location', label: 'Location Match', icon: MapPin },
+  { id: 'property_type', label: 'Property Type', icon: Building },
+  { id: 'time', label: 'Time-based', icon: Clock },
+  { id: 'user_role', label: 'User Role', icon: User },
 ];
 
 interface CustomWorkflowsBuilderProps {
@@ -206,8 +225,8 @@ export default function CustomWorkflowsBuilder({
 
       {/* Workflow Builder */}
       {showBuilder && (
-        <Card className="p-6 border-2 border-blue-500 bg-blue-50">
-          <h3 className="font-bold mb-4">Create New Workflow</h3>
+        <Card className="p-6 border-2 border-primary/40 bg-primary/5 dark:bg-primary/10">
+          <h3 className="font-bold mb-4 text-foreground">Create New Workflow</h3>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">Workflow Name</label>
@@ -227,11 +246,11 @@ export default function CustomWorkflowsBuilder({
                     onClick={() => setSelectedTrigger(trigger.id)}
                     className={`rounded-lg border px-3 py-2 text-left text-sm ${
                       selectedTrigger === trigger.id
-                        ? 'border-blue-500 bg-blue-100'
-                        : 'border-gray-200 bg-white'
+                        ? 'border-blue-500 bg-blue-100 dark:bg-blue-900/30 dark:border-blue-600'
+                        : 'border-border bg-card hover:bg-secondary'
                     }`}
                   >
-                    <span className="mr-2">{trigger.icon}</span>
+                    {(() => { const Icon = trigger.icon; return <Icon className="inline-block w-4 h-4 mr-1" />; })()}
                     {trigger.label}
                   </button>
                 ))}
@@ -287,7 +306,7 @@ export default function CustomWorkflowsBuilder({
                         ? 'bg-green-100 text-green-800'
                         : workflow.status === 'draft'
                           ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-gray-100 text-gray-800'
+                          : 'bg-muted text-muted-foreground'
                     }
                   >
                     {workflow.status === 'active' && <CheckCircle className="w-3 h-3 mr-1" />}
@@ -295,7 +314,7 @@ export default function CustomWorkflowsBuilder({
                     {workflow.status.charAt(0).toUpperCase() + workflow.status.slice(1)}
                   </Badge>
                 </div>
-                <p className="text-gray-600 text-sm mt-2">{workflow.description}</p>
+                <p className="text-muted-foreground text-sm mt-2">{workflow.description}</p>
               </div>
               <div className="flex gap-2">
                 <Button
@@ -332,22 +351,22 @@ export default function CustomWorkflowsBuilder({
             </div>
 
             {/* Workflow Steps Preview */}
-            <div className="mb-4 p-3 bg-white rounded-lg border">
+            <div className="mb-4 p-3 bg-card rounded-lg border border-border">
               <div className="space-y-2">
                 {workflow.steps.map((step, idx) => (
                   <div key={step.id}>
                     <div
                       className={`p-2 rounded text-sm font-medium flex items-center gap-2 ${
                         step.type === 'trigger'
-                          ? 'bg-blue-100 text-blue-800'
+                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
                           : step.type === 'condition'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-green-100 text-green-800'
+                            ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                            : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
                       }`}
                     >
-                      {step.type === 'trigger' && '🎯'}
-                      {step.type === 'condition' && '⚙️'}
-                      {step.type === 'action' && '✨'}
+                      {step.type === 'trigger' && <Target className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />}
+                      {step.type === 'condition' && <Sliders className="w-4 h-4 text-yellow-600 dark:text-yellow-400 shrink-0" />}
+                      {step.type === 'action' && <Sparkles className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />}
                       {step.name}
                     </div>
                     {idx < workflow.steps.length - 1 && (
@@ -363,16 +382,16 @@ export default function CustomWorkflowsBuilder({
             {/* Stats */}
             <div className="grid grid-cols-3 gap-3 pt-4 border-t">
               <div>
-                <div className="text-sm text-gray-600">Runs</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Runs</div>
                 <div className="text-lg font-bold">{workflow.runs}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Success Rate</div>
-                <div className="text-lg font-bold text-green-600">{workflow.successRate}%</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Success Rate</div>
+                <div className="text-lg font-bold text-green-600 dark:text-green-400">{workflow.successRate}%</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Last Run</div>
-                <div className="text-xs text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-400">Last Run</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">
                   {workflow.lastRun
                     ? workflow.lastRun.toLocaleDateString()
                     : 'Never'}
@@ -386,19 +405,21 @@ export default function CustomWorkflowsBuilder({
 
       {/* Workflow Details Modal */}
       {selectedWorkflow && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <Card className="p-6 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border-surface-border bg-surface text-ink">
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h2 className="text-2xl font-bold">{selectedWorkflow.name}</h2>
-                <p className="text-gray-600 mt-2">{selectedWorkflow.description}</p>
+                <p className="text-muted-foreground mt-1">{selectedWorkflow.description}</p>
               </div>
               <Button
                 onClick={() => setSelectedWorkflow(null)}
                 variant="outline"
-                className="px-2"
+                size="sm"
+                className="h-8 w-8 p-0 rounded-full"
+                aria-label="Close"
               >
-                ✕
+                <X className="h-4 w-4" />
               </Button>
             </div>
 
@@ -413,76 +434,97 @@ export default function CustomWorkflowsBuilder({
                 <div className="space-y-4 mb-6">
                   {/* Available Triggers */}
                   <div>
-                    <label className="text-sm font-medium block mb-3">🎯 Triggers</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {availableTriggers.map(trigger => (
-                        <div
-                          key={trigger.id}
-                          className="p-3 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors"
-                        >
-                          <span className="text-lg mr-2">{trigger.icon}</span>
-                          <span className="text-sm">{trigger.label}</span>
-                        </div>
-                      ))}
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2.5">
+                      <Target className="h-3.5 w-3.5 text-blue-500" /> Triggers
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {availableTriggers.map(trigger => {
+                        const Icon = trigger.icon;
+                        return (
+                          <div
+                            key={trigger.id}
+                            className="p-3 border border-surface-border rounded-xl hover:bg-blue-50/60 dark:hover:bg-blue-900/20 cursor-pointer transition flex items-center gap-2.5"
+                          >
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <span className="text-xs font-medium text-ink">{trigger.label}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
                   {/* Available Actions */}
                   <div>
-                    <label className="text-sm font-medium block mb-3">✨ Actions</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {availableActions.map(action => (
-                        <div
-                          key={action.id}
-                          className="p-3 border rounded-lg hover:bg-green-50 cursor-pointer transition-colors"
-                        >
-                          <span className="text-lg mr-2">{action.icon}</span>
-                          <span className="text-sm">{action.label}</span>
-                        </div>
-                      ))}
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2.5">
+                      <Sparkles className="h-3.5 w-3.5 text-green-500" /> Actions
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {availableActions.map(action => {
+                        const Icon = action.icon;
+                        return (
+                          <div
+                            key={action.id}
+                            className="p-3 border border-surface-border rounded-xl hover:bg-green-50/60 dark:hover:bg-green-900/20 cursor-pointer transition flex items-center gap-2.5"
+                          >
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-500/10 text-green-600 dark:text-green-400">
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <span className="text-xs font-medium text-ink">{action.label}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
                   {/* Available Conditions */}
                   <div>
-                    <label className="text-sm font-medium block mb-3">⚙️ Conditions</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {availableConditions.map(condition => (
-                        <div
-                          key={condition.id}
-                          className="p-3 border rounded-lg hover:bg-yellow-50 cursor-pointer transition-colors"
-                        >
-                          <span className="text-lg mr-2">{condition.icon}</span>
-                          <span className="text-sm">{condition.label}</span>
-                        </div>
-                      ))}
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-2.5">
+                      <Sliders className="h-3.5 w-3.5 text-yellow-500" /> Conditions
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {availableConditions.map(condition => {
+                        const Icon = condition.icon;
+                        return (
+                          <div
+                            key={condition.id}
+                            className="p-3 border border-surface-border rounded-xl hover:bg-yellow-50/60 dark:hover:bg-yellow-900/20 cursor-pointer transition flex items-center gap-2.5"
+                          >
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <span className="text-xs font-medium text-ink">{condition.label}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-3 gap-4 p-4 bg-surface-subtle border border-surface-border rounded-xl">
                 <div>
-                  <div className="text-sm text-gray-600">Total Runs</div>
-                  <div className="text-2xl font-bold">{selectedWorkflow.runs}</div>
+                  <div className="text-xs text-muted-foreground">Total Runs</div>
+                  <div className="text-xl font-bold text-ink">{selectedWorkflow.runs}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600">Success Rate</div>
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-xs text-muted-foreground">Success Rate</div>
+                  <div className="text-xl font-bold text-green-600 dark:text-green-400">
                     {selectedWorkflow.successRate}%
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600">Created</div>
-                  <div className="text-sm font-medium">
+                  <div className="text-xs text-muted-foreground">Created</div>
+                  <div className="text-xs font-semibold text-ink">
                     {selectedWorkflow.createdAt.toLocaleDateString()}
                   </div>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 pt-4 border-t">
+              <div className="flex gap-2 pt-4 border-t border-surface-border">
                 <Button className="flex items-center gap-2">
                   <Copy className="w-4 h-4" />
                   Duplicate
@@ -502,16 +544,28 @@ export default function CustomWorkflowsBuilder({
       )}
 
       {/* Quick Help */}
-      <Card className="p-6 bg-blue-50">
-        <h3 className="font-bold mb-2 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-blue-600" />
+      <Card className="p-6 bg-surface border-surface-border">
+        <h3 className="font-bold mb-3 flex items-center gap-2 text-ink text-sm">
+          <Zap className="w-4 h-4 text-emerald-500" />
           Workflow Tips
         </h3>
-        <ul className="text-sm text-gray-700 space-y-2">
-          <li>✓ Workflows run automatically based on triggers</li>
-          <li>✓ Add conditions to filter when actions execute</li>
-          <li>✓ Multiple actions can run sequentially</li>
-          <li>✓ Test workflows before activating them</li>
+        <ul className="text-xs text-ink-secondary space-y-2">
+          <li className="flex items-center gap-2">
+            <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+            <span>Workflows run automatically based on triggers</span>
+          </li>
+          <li className="flex items-center gap-2">
+            <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+            <span>Add conditions to filter when actions execute</span>
+          </li>
+          <li className="flex items-center gap-2">
+            <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+            <span>Multiple actions can run sequentially</span>
+          </li>
+          <li className="flex items-center gap-2">
+            <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+            <span>Test workflows before activating them</span>
+          </li>
         </ul>
       </Card>
     </div>

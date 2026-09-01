@@ -54,7 +54,7 @@ export default {
       "inspections": "Inspections",
       "applications": "Applications",
       "mortgages": "Mortgages",
-      "escrow": "Escrow",
+      "escrow": "Payments",
       "rentCollection": "Rent collection",
       "insurance": "Insurance",
       "marketData": "Market data",
@@ -337,18 +337,18 @@ export default {
     },
     "finance": {
       "commissionSettlement": {
-        "subtitle": "Pay agents via Paystack or Stripe payout rails",
+        "subtitle": "Pay agents via payout rails",
         "title": "Commission settlement"
       },
       "escrow": {
-        "subtitle": "Buyer deposits may be held per Payment & Escrow Terms until closing conditions are met",
-        "title": "Payment holds"
+        "subtitle": "Payment status is provided by the applicable third-party provider. BaytMiftah does not hold or custody customer funds.",
+        "title": "Transaction payments"
       },
       "hub": {
-        "subtitle": "Payments powered by Paystack (Africa) and Stripe (international)",
+        "subtitle": "Payments for mobile money, bank, and cards",
         "title": "Financial services",
         "stats": {
-          "escrowFunded": "Escrow funded",
+          "escrowFunded": "Payments in progress",
           "pendingCommissions": "Pending commissions",
           "mortgagePartners": "Mortgage partners"
         }
@@ -366,7 +366,7 @@ export default {
         "title": "Mortgage calculator"
       },
       "rentCollection": {
-        "subtitle": "Collect rent via Paystack (Africa) or Stripe (international)",
+        "subtitle": "Collect rent via mobile money, bank, and cards",
         "title": "Rent collection rails"
       }
     },
@@ -480,7 +480,7 @@ export default {
         "title": "Maintenance requests"
       },
       "payments": {
-        "subtitle": "Pay with Paystack (mobile money, bank) or Stripe (international cards)",
+        "subtitle": "Pay with mobile money, bank, and cards",
         "title": "Rent payments"
       },
       "utilities": {
@@ -572,6 +572,47 @@ export default {
     "recentLeads": "Recent leads",
     "topListings": "Top listings",
     "upcoming": "Upcoming"
+  },
+  "mobileShell": {
+    "primaryNav": "Workspace navigation",
+    "openMenu": "Open full menu",
+    "switchOrg": "Switch organization",
+    "orgShort": "{{slug}}",
+    "jobRoles": {
+      "property_manager": "Property manager",
+      "finance": "Finance",
+      "sales": "Sales",
+      "estate_officer": "Estate officer",
+      "technician": "Technician",
+      "facilities": "Facilities",
+      "customer_service": "Customer service"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "leases": "Leases",
+      "maintenance": "Maintenance",
+      "issues": "Issues",
+      "leads": "Leads",
+      "finance": "Finance",
+      "payments": "Payments",
+      "arrears": "Arrears",
+      "listings": "Listings",
+      "tasks": "Tasks",
+      "estate": "Estate",
+      "inspections": "Inspections",
+      "myJobs": "My jobs",
+      "serviceDesk": "Service desk",
+      "contacts": "Contacts"
+    }
+  },
+  "adminMobile": {
+    "primaryNav": "Admin navigation",
+    "badge": "Admin triage",
+    "liveTriage": "Live triage",
+    "alerts": "Alerts",
+    "kycQueue": "KYC queue",
+    "moderation": "Moderation",
+    "disputes": "Disputes"
   },
   "profileNav": {
     "hosting": "Hosting",

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { CreditCard, FileText, Loader2, Star } from "lucide-react";
+import { CreditCard, FileText, Loader2, Star, Check, Circle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
@@ -395,8 +395,13 @@ export function LeasesSection({ leases, userId }: { leases: any[]; userId?: stri
                 {checklist.length > 0 ? (
                   <ul className="text-sm text-muted-foreground space-y-1">
                     {checklist.map((item: any) => (
-                      <li key={item.key}>
-                        {item.completed ? "✓" : "○"} {item.label}
+                      <li key={item.key} className="flex items-center gap-2">
+                        {item.completed ? (
+                          <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                        ) : (
+                          <Circle className="h-3 w-3 text-muted-foreground shrink-0" />
+                        )}
+                        <span>{item.label}</span>
                       </li>
                     ))}
                   </ul>
@@ -1143,7 +1148,7 @@ export function PaymentsWithWalletSection({
         onRefresh={onRefreshWallet}
       />
       <div>
-        <h3 className="font-semibold mb-4">Paystack history</h3>
+        <h3 className="font-semibold mb-4">Payments history</h3>
         {payments.length === 0 ? (
           <Card className="p-8 text-center text-muted-foreground">No payments yet.</Card>
         ) : (

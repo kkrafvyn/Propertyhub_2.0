@@ -290,6 +290,43 @@ Deno.serve(async (req) => {
 
   const requestBody = await req.json().catch(() => null);
   const notificationId = getRequestBodyValue(requestBody, "notificationId");
+  const outboundTo = getRequestBodyValue(requestBody, "to");
+  const outboundSubject = getRequestBodyValue(requestBody, "subject");
+  const outboundContent = getRequestBodyValue(requestBody, "content");
+  const organizationId = getRequestBodyValue(requestBody, "organizationId");
+
+  if (outboundTo && outboundSubject && outboundContent && organizationId && !notificationId) {
+    const { data: membership, error: membershipError } = await adminClient
+      .from("organization_members")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (membershipError || !membership) {
+      return jsonResponse(403, { error: "You are not allowed to send this message" });
+    }
+
+    const emailContent = buildTransactionalEmail({
+      title: outboundSubject,
+      body: outboundContent,
+    });
+    const deliveryResult = await sendEmail({
+      to: outboundTo,
+      subject: outboundSubject,
+      text: emailContent.text,
+      html: emailContent.html,
+    });
+
+    if (!deliveryResult.success) {
+      return jsonResponse(200, {
+        success: false,
+        error: deliveryResult.error || "Delivery failed",
+      });
+    }
+
+    return jsonResponse(200, { success: true });
+  }
 
   if (!notificationId) {
     return jsonResponse(400, { error: "notificationId is required" });

@@ -14,6 +14,7 @@ import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/badge";
 import { marketIntelligenceService } from "../../../lib/market-intelligence.service";
+import { ghanaMarketService } from "../../../lib/ghana-market.service";
 
 interface PredictiveAnalyticsProps {
   organizationId: string;
@@ -35,6 +36,7 @@ export default function PredictiveAnalytics({
   const [analytics, setAnalytics] = useState<any[]>([]);
   const [forecast, setForecast] = useState<any[]>([]);
   const [topLocations, setTopLocations] = useState<any[]>([]);
+  const [allLocations, setAllLocations] = useState<{ name: string; city: string; region: string; count: number }[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,15 +45,17 @@ export default function PredictiveAnalytics({
       try {
         setLoading(true);
 
-        const [insightsData, refreshedInsights, locations] = await Promise.all([
+        const [insightsData, refreshedInsights, locations, allLocs] = await Promise.all([
           marketIntelligenceService.getOrganizationInsights(organizationId),
           marketIntelligenceService.updateOrganizationInsights(organizationId),
           marketIntelligenceService.getTopLocations(5),
+          ghanaMarketService.getSelectableLocations(500),
         ]);
 
         if (!cancelled) {
           setInsights(refreshedInsights || insightsData);
           setTopLocations(locations);
+          setAllLocations(allLocs);
           if (locations[0]?.city) {
             setSelectedLocation(locations[0].city);
           }
@@ -239,9 +243,14 @@ export default function PredictiveAnalytics({
                 onChange={(event) => setSelectedLocation(event.target.value)}
                 className="border rounded-md px-3 py-2 bg-input-background"
               >
-                {[selectedLocation, ...topLocations.map((location) => location.city)]
+                {[
+                  selectedLocation,
+                  ...allLocations.map((loc) => loc.city || loc.name),
+                  ...topLocations.map((location) => location.city),
+                ]
                   .filter(Boolean)
                   .filter((value, index, array) => array.indexOf(value) === index)
+                  .sort((a, b) => a.localeCompare(b))
                   .map((value) => (
                     <option key={value} value={value}>
                       {value}

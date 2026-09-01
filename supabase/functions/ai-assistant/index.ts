@@ -1,6 +1,7 @@
 import { getCorsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import { enforceRateLimit, rateLimitKey } from "../_shared/rate-limit.ts";
-import { requireAuthenticatedUser } from "../_shared/supabase.ts";
+import { assertOrgAiEnabled, requireOrgMembership } from "../_shared/org-auth.ts";
+import { createAdminClient, requireAuthenticatedUser } from "../_shared/supabase.ts";
 import {
   type AiSource,
   chatCompletion,
@@ -10,6 +11,8 @@ import {
 } from "../_shared/llm-provider.ts";
 
 type AssistantAction = "chat" | "describe_listing" | "summarize_document";
+
+const WORKSPACE_CONTEXTS = new Set(["workspace", "listing", "document"]);
 
 const FAQ_ENTRIES: Array<{ keywords: string[]; answer: string }> = [
   {
@@ -90,6 +93,10 @@ async function chatWithLlm(
   });
 }
 
+function requiresWorkspaceOrgScope(context?: string, action?: AssistantAction) {
+  return context === "workspace" || action === "describe_listing";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: getCorsHeaders(req) });
@@ -113,10 +120,26 @@ Deno.serve(async (req) => {
     const message = typeof body?.message === "string" ? body.message.trim().slice(0, 4000) : "";
     const context = typeof body?.context === "string" ? body.context : undefined;
     const history = Array.isArray(body?.history) ? body.history : [];
+    const organizationId =
+      typeof body?.organizationId === "string" ? body.organizationId.trim() : "";
     const activeProvider = resolveAiProvider();
 
     if (!message && action === "chat") {
       throw new HttpError(400, "message is required");
+    }
+
+    if (requiresWorkspaceOrgScope(context, action)) {
+      if (!organizationId) {
+        throw new HttpError(400, "organizationId is required for workspace AI actions");
+      }
+
+      const admin = createAdminClient();
+      await requireOrgMembership(admin, user.id, organizationId);
+      await assertOrgAiEnabled(admin, organizationId);
+    } else if (organizationId && WORKSPACE_CONTEXTS.has(context || "")) {
+      const admin = createAdminClient();
+      await requireOrgMembership(admin, user.id, organizationId);
+      await assertOrgAiEnabled(admin, organizationId);
     }
 
     let answer: string | null = null;

@@ -7,7 +7,7 @@ import {
 } from "./user-market.service";
 
 describe("user-market.service", () => {
-  it("builds a Ghana market with Paystack currency", () => {
+  it("builds a Ghana market with PayAngels currency", () => {
     const market = buildUserMarket("GH", 0);
     expect(market.country).toBe("Ghana");
     expect(market.city).toBe("Accra");
@@ -15,7 +15,7 @@ describe("user-market.service", () => {
     expect(market.currency).toBe("GHS");
   });
 
-  it("builds a US market with Stripe currency", () => {
+  it("builds a US market with PayAngels currency", () => {
     const market = buildUserMarket("US", 0);
     expect(market.currency).toBe("USD");
     expect(getDisplayCurrencyForMarket(market)).toBe("USD");
@@ -25,7 +25,7 @@ describe("user-market.service", () => {
     const market = buildUserMarket("NG", 0);
     const summary = getMarketSummary(market);
     expect(summary.jurisdictionLabel).toBe("Nigeria");
-    expect(summary.paymentProvider).toBe("Paystack");
+    expect(summary.paymentProvider).toBe("Secure checkout");
     expect(summary.currency).toBe("NGN");
   });
 

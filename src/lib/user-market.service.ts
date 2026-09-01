@@ -48,7 +48,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "rent",
     timezone: "Africa/Accra",
-    paymentHint: "Paystack · GHS",
+    paymentHint: "Secure checkout · GHS",
     cities: [
       { city: "Accra", region: "Greater Accra", searchLocation: "Accra, Ghana" },
       { city: "Kumasi", region: "Ashanti", searchLocation: "Kumasi, Ghana" },
@@ -63,7 +63,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "rent",
     timezone: "Africa/Lagos",
-    paymentHint: "Paystack · NGN",
+    paymentHint: "Secure checkout · NGN",
     cities: [
       { city: "Lagos", region: "Lagos", searchLocation: "Lagos, Nigeria" },
       { city: "Abuja", region: "FCT", searchLocation: "Abuja, Nigeria" },
@@ -78,7 +78,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "rent",
     timezone: "Africa/Nairobi",
-    paymentHint: "Paystack · KES",
+    paymentHint: "Secure checkout · KES",
     cities: [
       { city: "Nairobi", region: "Nairobi", searchLocation: "Nairobi, Kenya" },
       { city: "Mombasa", region: "Coast", searchLocation: "Mombasa, Kenya" },
@@ -92,7 +92,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "rent",
     timezone: "Africa/Johannesburg",
-    paymentHint: "Paystack · ZAR",
+    paymentHint: "Secure checkout · ZAR",
     cities: [
       { city: "Johannesburg", region: "Gauteng", searchLocation: "Johannesburg, South Africa" },
       { city: "Cape Town", region: "Western Cape", searchLocation: "Cape Town, South Africa" },
@@ -106,7 +106,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "buy",
     timezone: "America/New_York",
-    paymentHint: "Stripe · USD",
+    paymentHint: "Secure checkout · USD",
     cities: [
       { city: "New York", region: "New York", searchLocation: "New York, United States" },
       { city: "Los Angeles", region: "California", searchLocation: "Los Angeles, United States" },
@@ -121,7 +121,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "rent",
     timezone: "Europe/London",
-    paymentHint: "Stripe · GBP",
+    paymentHint: "Secure checkout · GBP",
     cities: [
       { city: "London", region: "England", searchLocation: "London, United Kingdom" },
       { city: "Manchester", region: "England", searchLocation: "Manchester, United Kingdom" },
@@ -135,7 +135,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "rent",
     timezone: "Europe/Berlin",
-    paymentHint: "Stripe · EUR",
+    paymentHint: "Secure checkout · EUR",
     cities: [
       { city: "Berlin", region: "Germany", searchLocation: "Berlin, Germany" },
       { city: "Paris", region: "France", searchLocation: "Paris, France" },
@@ -150,7 +150,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "ar",
     defaultListingMode: "rent",
     timezone: "Asia/Dubai",
-    paymentHint: "Stripe · AED",
+    paymentHint: "Secure checkout · AED",
     cities: [
       { city: "Dubai", region: "Dubai", searchLocation: "Dubai, United Arab Emirates" },
       { city: "Abu Dhabi", region: "Abu Dhabi", searchLocation: "Abu Dhabi, United Arab Emirates" },
@@ -164,7 +164,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "buy",
     timezone: "America/Toronto",
-    paymentHint: "Stripe · CAD",
+    paymentHint: "Secure checkout · CAD",
     cities: [
       { city: "Toronto", region: "Ontario", searchLocation: "Toronto, Canada" },
       { city: "Vancouver", region: "British Columbia", searchLocation: "Vancouver, Canada" },
@@ -178,7 +178,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "buy",
     timezone: "Australia/Sydney",
-    paymentHint: "Stripe · AUD",
+    paymentHint: "Secure checkout · AUD",
     cities: [
       { city: "Sydney", region: "New South Wales", searchLocation: "Sydney, Australia" },
       { city: "Melbourne", region: "Victoria", searchLocation: "Melbourne, Australia" },
@@ -192,7 +192,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "hi",
     defaultListingMode: "buy",
     timezone: "Asia/Kolkata",
-    paymentHint: "Stripe · INR",
+    paymentHint: "Secure checkout · INR",
     cities: [
       { city: "Mumbai", region: "Maharashtra", searchLocation: "Mumbai, India" },
       { city: "Bengaluru", region: "Karnataka", searchLocation: "Bengaluru, India" },
@@ -206,7 +206,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "rent",
     timezone: "UTC",
-    paymentHint: "Stripe · USD",
+    paymentHint: "Secure checkout · USD",
     cities: [
       { city: "Worldwide", region: "Global", searchLocation: "" },
     ],

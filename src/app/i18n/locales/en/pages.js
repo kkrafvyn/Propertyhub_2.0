@@ -146,7 +146,7 @@ export default {
     "listings": "Listing a property",
     "listingsBody": "Property owners submit listings at /host/list. Agency admins approve listings at /admin/moderation before they go live.",
     "payments": "Payments",
-    "paymentsBody": "Rent and featured boosts use Paystack (Ghana mobile money & cards) or Stripe (international cards). Configure secrets in Supabase Edge Functions.",
+    "paymentsBody": "Rent and featured boosts use mobile money, bank, and card payments. BaytMiftah does not hold customer funds.",
     "safety": "Trust & safety",
     "safetyBody": "Platform-reviewed listings and ID-checked agencies help reduce risk, but BaytMiftah does not guarantee property condition or title. Report suspicious activity to support."
   },
@@ -165,5 +165,31 @@ export default {
     "promoteFailed": "Could not update user role.",
     "saving": "Saving…",
     "you": "you"
+  },
+  "securityPage": {
+    "title": "Security",
+    "subtitle": "Manage MFA, sessions, and account protection.",
+    "adminMfaRequired": "Platform admin access requires two-factor authentication. Enroll below to continue.",
+    "workspaceMfaRequired": "Agency owners and managers must enable two-factor authentication before using the workspace.",
+    "totpTitle": "Two-factor authentication (TOTP)",
+    "startMfa": "Enable authenticator app",
+    "startingMfa": "Starting…",
+    "mfaQrAlt": "MFA QR code",
+    "verifyCodePlaceholder": "Enter 6-digit code",
+    "verifyEnableMfa": "Verify and enable MFA",
+    "scanQrToast": "Scan the QR code with your authenticator app.",
+    "mfaStartFailed": "Unable to start MFA enrollment",
+    "mfaEnabledToast": "Two-factor authentication enabled.",
+    "mfaVerifyFailed": "Invalid verification code",
+    "activeSessions": "Active sessions",
+    "signOutEverywhere": "Sign out everywhere",
+    "noSessions": "No tracked sessions yet.",
+    "browserSession": "Browser session",
+    "unknownDevice": "Unknown device",
+    "lastSeen": "Last seen {{time}}",
+    "revokeSession": "Revoke",
+    "revokeConfirm": "Revoke this session?",
+    "sessionRevoked": "Session revoked.",
+    "signOutConfirm": "Sign out on all devices?"
   }
 }

@@ -8,8 +8,6 @@ export default {
     "tryAdjusting": "Try adjusting your search or filters.",
     "noListings": "No listings available yet. Connect Supabase and apply migrations to load live inventory.",
     "filters": "Filters",
-    "aiSearch": "AI search",
-    "aiPlaceholder": "Try: \"3-bedroom house in East Legon under 2000000\"",
     "showResults": "Show results",
     "scrollLeft": "Scroll left",
     "scrollRight": "Scroll right",
@@ -24,7 +22,26 @@ export default {
     "noFilterMatches": "No listings match your filters. Try adjusting your search or",
     "clearFilters": "clear filters",
     "pageTitle": "Explore homes",
-    "pageDescription": "Discover properties across Ghana on BaytMiftah."
+    "pageDescription": "Discover properties across Ghana on BaytMiftah.",
+    "propertyAvailable": "1 property available",
+    "propertiesAvailable": "{{count}} properties available",
+    "verifiedAgenciesOnly": "Verified agencies only",
+    "minBedrooms": "Minimum bedrooms",
+    "emptyTitle": "No homes to show yet",
+    "emptyDesc": "New listings are added regularly. Browse all properties or list yours to be the first in your area.",
+    "browseAll": "Browse all properties",
+    "viewAll": "View all",
+    "savePropertyFailed": "Could not update saved property"
+  },
+  "categoryBar": {
+    "label": "Property categories",
+    "all": "All",
+    "apartment": "Apartments",
+    "house": "Houses",
+    "commercial": "Commercial",
+    "verified": "Verified",
+    "showMap": "Show map",
+    "showList": "Show list"
   },
   "listing": {
     "guestFavourite": "Guest favourite",
@@ -118,7 +135,9 @@ export default {
     "noSlotsYet": "No viewing times published yet. Contact the agent or check back soon.",
     "selectSlot": "Select a time",
     "openHouseSlot": "Open house — {{date}} {{time}} ({{count}} spots)",
-    "viewingSlot": "Viewing — {{date}} {{time}} ({{count}} spots)"
+    "viewingSlot": "Viewing — {{date}} {{time}} ({{count}} spots)",
+    "similarProperties": "Similar properties",
+    "browseMoreHomes": "Browse more homes"
   },
   "viewingSchedule": {
     "title": "Viewing & open house schedule",
@@ -184,6 +203,8 @@ export default {
       "recentlyViewed": "Recently viewed"
     },
     "ai": {
+      "copilot": "REOS Copilot",
+      "copilotDescription": "Search, insights, affordability & more",
       "recommendations": "Property recommendations",
       "marketInsights": "Market insights",
       "affordability": "Affordability analysis"
@@ -235,7 +256,7 @@ export default {
         "stay": { "desc": "Bookings, trips, guest receipts" },
         "tenant": { "desc": "Visitors, access, community" },
         "myHome": { "desc": "Smart locks, energy, announcements" },
-        "wallet": { "desc": "Balance, escrow, payouts" },
+        "wallet": { "desc": "Payment records and payouts" },
         "host": { "desc": "Listings, calendar, reservations" }
       },
       "buy": {

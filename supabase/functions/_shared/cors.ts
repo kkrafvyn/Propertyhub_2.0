@@ -11,7 +11,11 @@ export function getAllowedOrigins(): string[] {
     .filter(Boolean);
 
   if (origins.length === 0) {
-    return ["https://baytmiftah.com", "https://www.baytmiftah.com"];
+    return [
+      "https://app.baytmiftah.com",
+      "https://baytmiftah.com",
+      "https://www.baytmiftah.com",
+    ];
   }
 
   return origins;

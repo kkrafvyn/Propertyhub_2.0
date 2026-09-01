@@ -14,7 +14,7 @@ describe("notificationService", () => {
     const providers = notificationService.areExternalProvidersConfigured();
     expect(providers).toMatchObject({
       webPush: expect.any(Boolean),
-      paystack: expect.any(Boolean),
+      payangels: expect.any(Boolean),
       exchangeRates: expect.any(Boolean),
       aiSearch: expect.any(Boolean),
       blockchain: false,

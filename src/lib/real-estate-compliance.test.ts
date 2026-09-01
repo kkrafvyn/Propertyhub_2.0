@@ -35,7 +35,7 @@ describe("real-estate-compliance", () => {
         authority_confirmed: true,
         disclosures_accurate: true,
         agency_licensed: true,
-        fair_housing: true,
+        non_discrimination: true,
         kyc_ready: true,
       },
     });

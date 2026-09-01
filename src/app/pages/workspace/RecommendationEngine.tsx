@@ -217,7 +217,7 @@ export default function RecommendationEngine() {
         </Button>
       </div>
 
-      <Card className="p-6 bg-gradient-to-r from-amber-50 to-emerald-50">
+      <Card className="p-6 bg-gradient-to-r from-amber-50 to-emerald-50 dark:from-amber-950/20 dark:to-emerald-950/20 border-amber-200/60 dark:border-amber-900/30">
         <h3 className="font-bold mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5" />
           Recommendation Signals
@@ -320,9 +320,9 @@ export default function RecommendationEngine() {
                     </div>
                   </div>
 
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-900 flex items-start gap-2">
-                      <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 rounded-lg">
+                    <p className="text-sm text-blue-900 dark:text-blue-200 flex items-start gap-2">
+                      <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
                       <span>{matchReasons.slice(0, 2).join(" | ")}</span>
                     </p>
                   </div>

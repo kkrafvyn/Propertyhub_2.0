@@ -15,7 +15,7 @@ export async function enforceRateLimit(input: {
 
   if (error) {
     console.error("rate limit check failed:", error.message);
-    return;
+    throw new HttpError(503, "Request protection is temporarily unavailable");
   }
 
   if (data === false) {

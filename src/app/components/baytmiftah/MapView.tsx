@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
 import L from "leaflet";
 import { Link } from "react-router";
+import { LocateFixed } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import type { MapListing } from "./listing-mappers";
 
@@ -28,6 +29,30 @@ interface MapViewProps {
   userLocation?: { lat: number; lng: number; accuracy?: number } | null;
 }
 
+function MapViewport({ listings, userLocation }: Pick<MapViewProps, "listings" | "userLocation">) {
+  const map = useMap();
+
+  useEffect(() => {
+    const points = listings
+      .filter((listing) => listing.lat != null && listing.lng != null)
+      .map((listing) => [Number(listing.lat), Number(listing.lng)] as [number, number]);
+
+    if (userLocation?.lat != null && userLocation.lng != null) {
+      points.push([userLocation.lat, userLocation.lng]);
+    }
+
+    if (points.length === 0) return;
+    if (points.length === 1) {
+      map.setView(points[0], Math.max(map.getZoom(), 13));
+      return;
+    }
+
+    map.fitBounds(points, { padding: [32, 32], maxZoom: 15 });
+  }, [listings, map, userLocation]);
+
+  return null;
+}
+
 export function MapView({
   listings,
   center = [5.6037, -0.187],
@@ -35,16 +60,33 @@ export function MapView({
   userLocation = null,
 }: MapViewProps) {
   const [ready, setReady] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState(userLocation);
 
   useEffect(() => {
     setReady(true);
     return () => setReady(false);
   }, []);
 
+  useEffect(() => {
+    setCurrentLocation(userLocation);
+  }, [userLocation]);
+
   const mappable = (listings ?? []).filter((l) => l.lat != null && l.lng != null);
   const mapCenter =
-    userLocation?.lat != null ? [Number(userLocation.lat), Number(userLocation.lng)] : center;
+    currentLocation?.lat != null ? [Number(currentLocation.lat), Number(currentLocation.lng)] : center;
   const mapKey = `${Number(mapCenter[0]).toFixed(4)}-${Number(mapCenter[1]).toFixed(4)}-${zoom}`;
+
+  const locateUser = () => {
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition((position) => {
+      setCurrentLocation({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+      });
+    });
+  };
 
   if (!ready) {
     return (
@@ -56,23 +98,25 @@ export function MapView({
 
   return (
     <div className="h-full min-h-[280px] overflow-hidden rounded-xl border border-surface-border">
-      <MapContainer
-        key={mapKey}
-        center={mapCenter as [number, number]}
-        zoom={zoom}
-        className="h-full w-full"
-        scrollWheelZoom
-      >
+      <div className="relative h-full">
+        <MapContainer
+          key={mapKey}
+          center={mapCenter as [number, number]}
+          zoom={zoom}
+          className="h-full w-full"
+          scrollWheelZoom
+        >
+        <MapViewport listings={mappable} userLocation={currentLocation} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {userLocation?.lat != null && (
+        {currentLocation?.lat != null && (
           <>
-            <Marker position={[userLocation.lat, userLocation.lng]} icon={userDot} />
+            <Marker position={[currentLocation.lat, currentLocation.lng]} icon={userDot} />
             <Circle
-              center={[userLocation.lat, userLocation.lng]}
-              radius={Math.min(userLocation.accuracy ?? 120, 400)}
+              center={[currentLocation.lat, currentLocation.lng]}
+              radius={Math.min(currentLocation.accuracy ?? 120, 400)}
               pathOptions={{ color: "#2563eb", fillColor: "#2563eb", fillOpacity: 0.12, weight: 1 }}
             />
           </>
@@ -96,7 +140,17 @@ export function MapView({
             </Popup>
           </Marker>
         ))}
-      </MapContainer>
+        </MapContainer>
+        <button
+          type="button"
+          onClick={locateUser}
+          className="absolute end-3 top-3 z-[1000] rounded-lg border border-surface-border bg-white p-2 text-ink shadow-md transition hover:bg-surface-subtle"
+          aria-label="Use my location"
+          title="Use my location"
+        >
+          <LocateFixed className="h-5 w-5" />
+        </button>
+      </div>
     </div>
   );
 }

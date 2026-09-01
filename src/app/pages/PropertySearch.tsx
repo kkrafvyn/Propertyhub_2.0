@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { Search, SlidersHorizontal, Grid3x3, List, Map, MapPin, Bed, Bath, X, Loader2, Bell, Sparkles, Heart } from "lucide-react";
+import { SlidersHorizontal, Grid3x3, List, Map, MapPin, Bed, Bath, X, Loader2, Bell, Heart, Search } from "lucide-react";
 import { savedPropertyService } from "../../lib/savedproperty.service";
 import { EmptyState } from "../components/ux";
-import { BaytMiftahAIPanel } from "../components/ux/BaytMiftahAIPanel";
 import {
   CategoryBar,
   DesktopShell,
@@ -22,8 +21,8 @@ import { normalizePropertyCategory } from "../../lib/property-category";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { savedSearchAlertService } from "../../lib/saved-search-alert.service";
-import { aiAssistantService } from "../../lib/ai-assistant.service";
 import { getRecentlyViewedIds } from "../../lib/recently-viewed";
+import { POPULAR_SEARCH_LOCATIONS } from "../../lib/search-locations";
 import { syncCompareIds, toggleCompareIdAsync } from "../../lib/compare-listings";
 import { useIsDesktopViewport } from "../hooks/useMediaQuery";
 import { useTranslation } from "../i18n/LocaleContext";
@@ -84,9 +83,6 @@ export function PropertySearch() {
   const [userAlerts, setUserAlerts] = useState<any[]>([]);
   const [savedListingIds, setSavedListingIds] = useState<Set<string>>(new Set());
   const [selectedMapListingId, setSelectedMapListingId] = useState<string | null>(null);
-  const [naturalLanguageQuery, setNaturalLanguageQuery] = useState(searchParams.get("q") || "");
-  const [parsingQuery, setParsingQuery] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<any[]>([]);
   const [recentlyViewedListings, setRecentlyViewedListings] = useState<any[]>([]);
 
   const [filters, setFilters] = useState(() => buildFiltersFromSearchParams(searchParams));
@@ -114,15 +110,13 @@ export function PropertySearch() {
 
     const loadUserData = async () => {
       try {
-        const [alerts, savedRows, searchHistory] = await Promise.all([
+        const [alerts, savedRows] = await Promise.all([
           savedSearchAlertService.getUserAlerts(user.id),
           savedPropertyService.getSavedProperties(user.id),
-          aiAssistantService.getSearchHistory(user.id, 6),
         ]);
         if (!cancelled) {
           setUserAlerts(alerts);
           setSavedListingIds(new Set((savedRows || []).map((row: any) => row.listing_id)));
-          setRecentSearches(searchHistory || []);
         }
       } catch (error) {
         console.error("Failed to load saved search data:", error);
@@ -172,26 +166,15 @@ export function PropertySearch() {
       setLoading(true);
       const activeFilters = buildFiltersFromSearchParams(searchParams);
       const queryText = searchParams.get("q") || "";
-      const parsed = queryText ? await aiAssistantService.parseSearchQuery(queryText) : {};
       const searchFilter = {
-        location: parsed.location || queryText || undefined,
-        priceMin: activeFilters.priceMin
-          ? parseInt(activeFilters.priceMin, 10)
-          : parsed.priceMin || undefined,
-        priceMax: activeFilters.priceMax
-          ? parseInt(activeFilters.priceMax, 10)
-          : parsed.priceMax || undefined,
-        bedrooms: parseCountFilter(activeFilters.bedrooms) ?? parsed.bedrooms,
-        bathrooms: parseCountFilter(activeFilters.bathrooms) ?? parsed.bathrooms,
+        location: queryText || undefined,
+        priceMin: activeFilters.priceMin ? parseInt(activeFilters.priceMin, 10) : undefined,
+        priceMax: activeFilters.priceMax ? parseInt(activeFilters.priceMax, 10) : undefined,
+        bedrooms: parseCountFilter(activeFilters.bedrooms),
+        bathrooms: parseCountFilter(activeFilters.bathrooms),
         propertyType:
-          activeFilters.propertyType !== "all"
-            ? activeFilters.propertyType
-            : parsed.propertyType || undefined,
-        listingType: (parsed.listingType || activeFilters.listingType) as
-          | "rental"
-          | "sale"
-          | "lease"
-          | "short_stay",
+          activeFilters.propertyType !== "all" ? activeFilters.propertyType : undefined,
+        listingType: activeFilters.listingType as "rental" | "sale" | "lease" | "short_stay",
         organizationSlug: activeFilters.agency || undefined,
         sort: activeFilters.sort as "newest" | "price_asc" | "price_desc" | "featured",
         verifiedOnly: activeFilters.verifiedOnly,
@@ -202,15 +185,9 @@ export function PropertySearch() {
       const data = await listingService.searchListingsWithCount(searchFilter, PAGE_SIZE, offset);
       setListings(data.results);
       setTotalResults(data.total);
-
-      if (user && queryText) {
-        void aiAssistantService
-          .logSearch(user.id, null, queryText, data.total)
-          .catch((error) => console.error("Failed to log AI search:", error));
-      }
     } catch (error) {
-      console.error('Failed to load listings:', error);
-      toast.error('Failed to load listings');
+      console.error("Failed to load listings:", error);
+      toast.error(t("searchPage.loadListingsFailed"));
     } finally {
       setLoading(false);
     }
@@ -330,33 +307,6 @@ export function PropertySearch() {
     setSearchParams(nextParams);
   };
 
-  const handleNaturalLanguageSearch = async () => {
-    if (!naturalLanguageQuery.trim()) return;
-
-    try {
-      setParsingQuery(true);
-      const parsed = await aiAssistantService.parseSearchQuery(naturalLanguageQuery);
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.set("q", naturalLanguageQuery.trim());
-      nextParams.set("page", "1");
-
-      if (parsed.listingType) nextParams.set("listingType", parsed.listingType);
-      if (parsed.priceMin) nextParams.set("priceMin", String(parsed.priceMin));
-      if (parsed.priceMax) nextParams.set("priceMax", String(parsed.priceMax));
-      if (parsed.bedrooms) nextParams.set("bedrooms", String(parsed.bedrooms));
-      if (parsed.bathrooms) nextParams.set("bathrooms", String(parsed.bathrooms));
-      if (parsed.propertyType) nextParams.set("propertyType", parsed.propertyType);
-
-      setSearchParams(nextParams);
-      toast.success(t("searchPage.aiApplied"));
-    } catch (error) {
-      console.error(error);
-      toast.error(t("searchPage.aiParseFailed"));
-    } finally {
-      setParsingQuery(false);
-    }
-  };
-
   const handlePageChange = (page: number) => {
     const nextPage = Math.max(page, 1);
     const nextParams = new URLSearchParams(searchParams);
@@ -394,6 +344,113 @@ export function PropertySearch() {
     const end = Math.min(currentPage * PAGE_SIZE, totalResults);
     return t("searchPage.showing", { start, end, total: totalResults });
   }, [currentPage, totalResults, t]);
+
+  const activeFilters = useMemo(() => {
+    const list: Array<{ label: string; onRemove: () => void }> = [];
+
+    const q = searchParams.get("q");
+    if (q) {
+      list.push({
+        label: `"${q}"`,
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("q");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.propertyType && filters.propertyType !== "all") {
+      list.push({
+        label: t("searchPage.filterType", { type: filters.propertyType }),
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("propertyType");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.priceMax) {
+      list.push({
+        label: t("searchPage.filterMaxPrice", {
+          amount: parseInt(filters.priceMax, 10).toLocaleString(),
+        }),
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("priceMax");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.priceMin) {
+      list.push({
+        label: t("searchPage.filterMinPrice", {
+          amount: parseInt(filters.priceMin, 10).toLocaleString(),
+        }),
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("priceMin");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.bedrooms) {
+      list.push({
+        label: t("searchPage.filterBeds", { count: filters.bedrooms }),
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("bedrooms");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.bathrooms) {
+      list.push({
+        label: t("searchPage.filterBaths", { count: filters.bathrooms }),
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("bathrooms");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.verifiedOnly) {
+      list.push({
+        label: t("searchPage.verifiedOnly"),
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("verified");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.featuredOnly) {
+      list.push({
+        label: t("searchPage.featuredOnly"),
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("featured");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    return list;
+  }, [searchParams, filters, setSearchParams, t]);
 
   useEffect(() => {
     setSelectedMapListingId((current) => {
@@ -461,14 +518,6 @@ export function PropertySearch() {
     setSearchParams(nextParams);
   };
 
-  const handleRecentSearchClick = (query: string) => {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.set("q", query);
-    nextParams.set("page", "1");
-    setNaturalLanguageQuery(query);
-    setSearchParams(nextParams);
-  };
-
   return (
     <DesktopShell
       compareCount={compareIds.length}
@@ -508,50 +557,6 @@ export function PropertySearch() {
       }
     >
       <div className="pb-12">
-        <BaytMiftahAIPanel
-          context="search"
-          compact
-          onNavigate={(href) => navigate(href)}
-        />
-
-        <Card className="mb-6 p-4">
-          <div className="flex flex-col gap-3 md:flex-row">
-            <div className="relative flex-1">
-              <Sparkles className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-forest" />
-              <Input
-                value={naturalLanguageQuery}
-                onChange={(event) => setNaturalLanguageQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") void handleNaturalLanguageSearch();
-                }}
-                placeholder={t("searchPage.aiSearchPlaceholder")}
-                className="pl-10"
-              />
-            </div>
-            <Button onClick={() => void handleNaturalLanguageSearch()} disabled={parsingQuery}>
-              {parsingQuery ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              {t("searchPage.aiSearch")}
-            </Button>
-          </div>
-          {user && recentSearches.length > 0 ? (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("searchPage.recentSearches")}
-              </span>
-              {recentSearches.map((entry) => (
-                <button
-                  key={entry.id}
-                  type="button"
-                  onClick={() => handleRecentSearchClick(entry.query)}
-                  className="rounded-full border border-surface-border bg-surface-subtle px-3 py-1 text-sm text-ink transition-colors hover:bg-surface-hover"
-                >
-                  {entry.query}
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </Card>
-
         {recentlyViewedListings.length > 0 ? (
           <section className="mb-8">
             <h2 className="mb-4 text-lg font-semibold text-ink">{t("searchPage.recentlyViewed")}</h2>
@@ -618,19 +623,50 @@ export function PropertySearch() {
           </div>
         </div>
 
+        {/* Active Filter Tags */}
+        {activeFilters.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mb-5">
+            <span className="text-xs font-semibold text-ink-muted">{t("searchPage.activeFilters")}:</span>
+            {activeFilters.map((badge, idx) => (
+              <span
+                key={idx}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 transition-all hover:bg-primary/15"
+              >
+                <span>{badge.label}</span>
+                <button
+                  type="button"
+                  onClick={badge.onRemove}
+                  className="hover:text-destructive transition-colors p-0.5 rounded-full cursor-pointer"
+                  aria-label={t("searchPage.removeFilter", { label: badge.label })}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-xs text-ink-muted hover:text-ink font-semibold underline underline-offset-2 ml-1 cursor-pointer"
+            >
+              {t("searchPage.clearAll")}
+            </button>
+          </div>
+        )}
+
         {user && userAlerts.length > 0 && (
           <Card className="p-4 mb-6 bg-primary/5 border-primary/20">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="font-semibold">Saved Search Alerts</p>
+                <p className="font-semibold">{t("searchPage.savedSearchAlerts")}</p>
                 <p className="text-sm text-muted-foreground">
-                  You have {userAlerts.filter((alert) => alert.is_active).length} active alerts
-                  watching for new matches.
+                  {t("searchPage.savedSearchAlertsDesc", {
+                    count: userAlerts.filter((alert) => alert.is_active).length,
+                  })}
                 </p>
               </div>
               <Link to="/app/alerts">
                 <Button variant="outline" size="sm">
-                  Manage Alerts
+                  {t("searchPage.manageAlerts")}
                 </Button>
               </Link>
             </div>
@@ -680,15 +716,39 @@ export function PropertySearch() {
                 ))}
               </div>
             ) : listings.length === 0 ? (
-              <EmptyState
-                icon={Search}
-                title={t("searchPage.noPropertiesTitle")}
-                description={t("searchPage.noPropertiesDesc")}
-                actionLabel={t("searchPage.clearFilters")}
-                onAction={clearFilters}
-                secondaryActionLabel={t("searchPage.exploreRentals")}
-                secondaryActionHref="/search?listingType=rental"
-              />
+              <div className="space-y-6">
+                <EmptyState
+                  icon={Search}
+                  title={t("searchPage.noPropertiesTitle")}
+                  description={t("searchPage.noPropertiesDesc")}
+                  actionLabel={t("searchPage.clearFilters")}
+                  onAction={clearFilters}
+                  secondaryActionLabel={t("searchPage.exploreRentals")}
+                  secondaryActionHref="/search?listingType=rental"
+                />
+
+                <Card className="p-6 text-center border-surface-border">
+                  <h3 className="text-sm font-semibold text-ink mb-3">{t("searchPage.popularLocations")}</h3>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    {POPULAR_SEARCH_LOCATIONS.map((loc) => (
+                      <button
+                        key={loc}
+                        type="button"
+                        onClick={() => {
+                          const nextParams = new URLSearchParams(searchParams);
+                          nextParams.set("q", loc);
+                          nextParams.set("page", "1");
+                          setSearchParams(nextParams);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border border-surface-border bg-surface hover:bg-surface-hover hover:border-primary/40 text-ink transition cursor-pointer"
+                      >
+                        <MapPin className="h-3 w-3 text-emerald-500 shrink-0" />
+                        <span>{loc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </Card>
+              </div>
             ) : (
               <>
                 <div className="mb-6">
@@ -729,14 +789,14 @@ export function PropertySearch() {
                               <div className="flex-1 p-6 flex flex-col justify-between">
                                 <div>
                                   <h3 className="font-semibold text-xl mb-2">
-                                    {listing.property?.address || 'Property'}
+                                    {listing.property?.address || t("searchPage.propertyFallback")}
                                   </h3>
                                   <div className="flex items-center gap-1 text-muted-foreground mb-4">
                                     <MapPin className="w-4 h-4" />
                                     <span>{listing.property?.city}, {listing.property?.region}</span>
                                   </div>
                                   <p className="text-muted-foreground text-sm mb-4">
-                                    {listing.property?.description || 'Property available'}
+                                    {listing.property?.description || t("searchPage.propertyAvailable")}
                                   </p>
                                 </div>
                                 <div className="flex items-center justify-between">
@@ -745,7 +805,7 @@ export function PropertySearch() {
                                       GHS {listing.price.toLocaleString()}
                                     </span>
                                     {listing.listing_type === 'rental' && (
-                                      <span className="text-sm text-muted-foreground">/month</span>
+                                      <span className="text-sm text-muted-foreground">{t("searchPage.perMonth")}</span>
                                     )}
                                   </div>
                                   {listing.property?.bedrooms && (
@@ -812,7 +872,7 @@ export function PropertySearch() {
 
                     <Card className="overflow-hidden sticky top-24 h-[880px]">
                       <iframe
-                        title={`Map search for ${selectedMapQuery}`}
+                        title={t("searchPage.mapSearchTitle", { location: selectedMapQuery })}
                         src={selectedMapEmbedUrl}
                         className="h-full w-full border-0"
                         loading="lazy"
@@ -835,7 +895,7 @@ export function PropertySearch() {
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                   >
-                    Previous
+                    {t("searchPage.previous")}
                   </Button>
                   {visiblePages.map((page) => (
                     <Button
@@ -853,7 +913,7 @@ export function PropertySearch() {
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                   >
-                    Next
+                    {t("searchPage.next")}
                   </Button>
                 </div>
               </div>
@@ -936,7 +996,7 @@ function SearchFiltersPanel({
             id="sort-filter"
             value={filters.sort || "newest"}
             onChange={(e) => setFilters({ ...filters, sort: e.target.value })}
-            className="w-full rounded-lg border border-surface-border bg-white px-4 py-3 text-ink"
+            className="w-full rounded-lg border border-surface-border bg-surface px-4 py-3 text-ink"
           >
             <option value="newest">{t("searchPage.newest")}</option>
             <option value="price_asc">{t("searchPage.priceAsc")}</option>
@@ -992,7 +1052,7 @@ function SearchFiltersPanel({
             id="property-type-filter"
             value={filters.propertyType}
             onChange={(e) => setFilters({ ...filters, propertyType: e.target.value })}
-            className="w-full rounded-lg border border-surface-border bg-white px-4 py-3 text-ink"
+            className="w-full rounded-lg border border-surface-border bg-surface px-4 py-3 text-ink"
           >
             <option value="all">{t("searchPage.allTypes")}</option>
             <option value="apartment">{t("searchPage.propertyTypes.apartment")}</option>

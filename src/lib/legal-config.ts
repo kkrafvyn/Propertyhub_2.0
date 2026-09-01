@@ -1,17 +1,71 @@
 /** Current policy bundle version — bump when material legal changes require re-acceptance. */
-export const LEGAL_POLICY_VERSION = "2026-07-30";
+export const LEGAL_POLICY_VERSION = "2026-08-14";
+
+function envValue(...keys: string[]) {
+  for (const key of keys) {
+    const value = (import.meta.env as Record<string, string | undefined>)[key]?.trim();
+    if (value) return value;
+  }
+  return "";
+}
+
+/** Registered operator shown in Legal Centre. Fill via VITE_LEGAL_* in production. */
+export const LEGAL_OPERATOR = {
+  name: envValue("VITE_LEGAL_COMPANY_NAME") || "BaytMiftah",
+  legalEntityType: "Technology marketplace and property operating platform",
+  jurisdiction: "Republic of Ghana",
+  registrationNumber: envValue("VITE_LEGAL_REGISTRATION_NUMBER"),
+  registeredAddress: envValue("VITE_LEGAL_REGISTERED_ADDRESS") || "Accra, Ghana",
+  dataProtectionAuthority: "Data Protection Commission, Ghana",
+  cyberAuthority: "Cyber Security Authority, Ghana",
+} as const;
 
 export const LEGAL_CONTACT = {
-  legal: "legal@baytmiftah.com",
-  privacy: "privacy@baytmiftah.com",
-  support: "support@baytmiftah.com",
-  dpo: "privacy@baytmiftah.com",
+  legal: envValue("VITE_LEGAL_EMAIL") || "legal@baytmiftah.com",
+  privacy: envValue("VITE_PRIVACY_EMAIL") || "privacy@baytmiftah.com",
+  support: envValue("VITE_SUPPORT_EMAIL") || "support@baytmiftah.com",
+  dpo: envValue("VITE_DPO_EMAIL") || "privacy@baytmiftah.com",
+  complaints: envValue("VITE_COMPLAINTS_EMAIL") || "complaints@baytmiftah.com",
+  accessibility: envValue("VITE_ACCESSIBILITY_EMAIL") || "accessibility@baytmiftah.com",
 } as const;
+
+export const LEGAL_PLATFORM_POSITION = {
+  summary:
+    "BaytMiftah provides technology, marketplace infrastructure, and workflow tooling. Customers, owners, agents, and service providers remain responsible for their own business operations, property information, listing accuracy, legal compliance, approvals, and transaction decisions unless a separate written agreement places a different responsibility on BaytMiftah.",
+  doesNotAutomaticallyActAs:
+    [
+      "property owner",
+      "landlord",
+      "tenant",
+      "seller",
+      "buyer",
+      "broker",
+      "agent",
+      "property manager",
+      "contractor",
+      "legal adviser",
+      "financial adviser",
+      "guarantor",
+    ],
+  managedServicesRequireSeparateAgreement: true,
+  platformAndProviderResponsibilitiesMustBeSeparable: true,
+} as const;
+
+export const LEGAL_LAUNCH_CHECKLIST = [
+  "confirm final legal entity identity and registration details",
+  "review managed-services and property-management terms for client-specific responsibilities",
+  "confirm PayAngels and payment-provider legal disclosures and refund allocation wording",
+  "execute data-processing and DPA review for enterprise customer workflows",
+  "confirm privacy, cookie, and complaints handling for production use",
+  "review AI action approval and audit-log controls for material business decisions",
+  "validate retention, offboarding, and deletion procedures for customer data",
+  "verify tenant isolation and security controls before wider rollout",
+] as const;
 
 export type LegalAcceptanceScope =
   | "signup_consumer"
   | "signup_host"
-  | "escrow_checkout"
+  | "payment_checkout"
   | "short_stay_booking"
   | "listing_publish"
   | "agency_onboarding"
@@ -26,27 +80,27 @@ export const ACCEPTANCE_SCOPES: Record<
     labelKey: "legal.acceptance.signupConsumer",
   },
   signup_host: {
-    policySlugs: ["terms", "privacy", "marketplace-rules", "host-terms", "payment-escrow", "cookies"],
+    policySlugs: ["terms", "privacy", "marketplace-rules", "host-terms", "payments", "cookies"],
     labelKey: "legal.acceptance.signupHost",
   },
-  escrow_checkout: {
-    policySlugs: ["payment-escrow", "refund-cancellation"],
-    labelKey: "legal.acceptance.escrowCheckout",
+  payment_checkout: {
+    policySlugs: ["payments", "refunds"],
+    labelKey: "legal.acceptance.paymentCheckout",
   },
   short_stay_booking: {
-    policySlugs: ["tenant-guest-rules", "payment-escrow", "refund-cancellation"],
+    policySlugs: ["tenant-guest-rules", "payments", "refunds"],
     labelKey: "legal.acceptance.shortStayBooking",
   },
   listing_publish: {
-    policySlugs: ["owner-terms", "marketplace-rules", "fair-housing"],
+    policySlugs: ["property-owner-terms", "marketplace-rules", "non-discrimination"],
     labelKey: "legal.acceptance.listingPublish",
   },
   agency_onboarding: {
-    policySlugs: ["agency-terms", "data-processing", "trust-verification"],
+    policySlugs: ["agency-agent-terms", "data-processing", "trust-verification"],
     labelKey: "legal.acceptance.agencyOnboarding",
   },
   kyc_submission: {
-    policySlugs: ["kyc-identity", "privacy"],
+    policySlugs: ["kyc", "privacy"],
     labelKey: "legal.acceptance.kycSubmission",
   },
 };

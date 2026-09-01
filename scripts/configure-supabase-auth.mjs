@@ -14,16 +14,20 @@ if (!projectRef || !token) {
   process.exit(1);
 }
 
-const siteUrl = env.VITE_PUBLIC_APP_URL || env.PUBLIC_APP_URL || "https://baytmiftah.com";
+const appUrl = (env.VITE_PUBLIC_APP_URL || env.PUBLIC_APP_URL || "https://app.baytmiftah.com").replace(/\/+$/, "");
+const marketingUrl = (env.VITE_SITE_URL || "https://baytmiftah.com").replace(/\/+$/, "");
 const redirectUrls = [
   "http://localhost:5173/**",
   "http://127.0.0.1:5173/**",
-  `${siteUrl.replace(/\/+$/, "")}/**`,
+  `${appUrl}/**`,
+  `${marketingUrl}/**`,
   "https://www.baytmiftah.com/**",
+  "https://app.baytmiftah.com/**",
+  "https://*.vercel.app/**",
 ].join(",");
 
 const payload = {
-  site_url: siteUrl.replace(/\/+$/, ""),
+  site_url: appUrl,
   uri_allow_list: redirectUrls,
   mailer_autoconfirm: false,
   mfa_totp_enroll_enabled: true,

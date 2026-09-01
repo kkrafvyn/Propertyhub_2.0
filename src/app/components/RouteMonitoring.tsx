@@ -6,6 +6,10 @@ export function RouteMonitoring() {
   const location = useLocation();
 
   useEffect(() => {
+    monitoring.trackHealthPing({ route: location.pathname });
+  }, []);
+
+  useEffect(() => {
     monitoring.trackPageView(location.pathname + location.search);
   }, [location.pathname, location.search]);
 

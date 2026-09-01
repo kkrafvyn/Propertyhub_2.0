@@ -34,6 +34,43 @@ import { workflowOrchestratorService } from "../../../lib/workflow-orchestrator.
 import { CONSUMER_ROUTES, messageThreadPath } from "../../lib/consumer-routes";
 import { resolveDeepLinkPath, mobileCaptureProps } from "../../../lib/deep-link";
 
+function MaintenancePhotoThumb({ path }: { path: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void maintenanceService
+      .getPhotoSignedUrl(path)
+      .then((signed) => {
+        if (active) setUrl(signed);
+      })
+      .catch(() => {
+        if (active) setUrl(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [path]);
+
+  if (!url) {
+    return (
+      <div className="h-20 w-20 rounded-lg border border-border bg-muted flex items-center justify-center text-[10px] text-muted-foreground">
+        Photo
+      </div>
+    );
+  }
+
+  return (
+    <a href={url} target="_blank" rel="noreferrer">
+      <img
+        src={url}
+        alt="Maintenance evidence"
+        className="h-20 w-20 rounded-lg border border-border object-cover"
+      />
+    </a>
+  );
+}
+
 function formatMoney(amountMinor?: number | null, currency = "GHS") {
   return walletService.formatWalletAmount(amountMinor, currency);
 }
@@ -804,7 +841,7 @@ export function ApplicationsWorkflowSection({
               ) : null}
               {escrow ? (
                 <Badge variant="secondary" className="capitalize">
-                  Escrow {escrow.status}
+                  Payment {escrow.status}
                 </Badge>
               ) : null}
               {isPurchase ? (
@@ -958,6 +995,7 @@ export function MaintenanceWithVendorsSection({
   const [vendors, setVendors] = useState<any[]>([]);
   const [loadingVendors, setLoadingVendors] = useState(true);
   const [assigning, setAssigning] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const activeLeases = useMemo(
     () => leases.filter((lease) => lease.status === "active"),
@@ -1024,6 +1062,20 @@ export function MaintenanceWithVendorsSection({
       toast.error("Unable to assign vendor.");
     } finally {
       setAssigning(null);
+    }
+  };
+
+  const cancelRequest = async (requestId: string) => {
+    try {
+      setCancellingId(requestId);
+      await maintenanceService.updateRequestStatus(requestId, "cancelled");
+      toast.success("Maintenance request cancelled.");
+      await onCreated();
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to cancel request.");
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -1107,28 +1159,34 @@ export function MaintenanceWithVendorsSection({
               {Array.isArray(request.photo_urls) && request.photo_urls.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {request.photo_urls.map((url: string) => (
-                    <a key={url} href={url} target="_blank" rel="noreferrer">
-                      <img
-                        src={url}
-                        alt="Maintenance evidence"
-                        className="h-20 w-20 rounded-lg border border-border object-cover"
-                      />
-                    </a>
+                    <MaintenancePhotoThumb key={url} path={url} />
                   ))}
                 </div>
               ) : null}
-              {request.status === "open" && vendors[0] ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => void hireVendor(request.id, vendors[0].id)}
-                  disabled={assigning === `${request.id}-${vendors[0].id}`}
-                >
-                  {assigning === `${request.id}-${vendors[0].id}`
-                    ? "Assigning..."
-                    : `Hire ${vendors[0].business_name}`}
-                </Button>
-              ) : null}
+              <div className="flex flex-wrap gap-2">
+                {request.status === "open" && vendors[0] ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void hireVendor(request.id, vendors[0].id)}
+                    disabled={assigning === `${request.id}-${vendors[0].id}`}
+                  >
+                    {assigning === `${request.id}-${vendors[0].id}`
+                      ? "Assigning..."
+                      : `Hire ${vendors[0].business_name}`}
+                  </Button>
+                ) : null}
+                {["open", "in_progress"].includes(request.status) ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => void cancelRequest(request.id)}
+                    disabled={cancellingId === request.id}
+                  >
+                    {cancellingId === request.id ? "Cancelling..." : "Cancel request"}
+                  </Button>
+                ) : null}
+              </div>
               {request.status === "resolved" && !request.tenant_rating ? (
                 <div className="rounded-lg border border-border p-4 space-y-3">
                   <p className="text-sm font-medium">Rate this repair</p>
@@ -1230,17 +1288,17 @@ export function WalletHubSection({
   const [disputingHoldId, setDisputingHoldId] = useState<string | null>(null);
 
   const handleDisputeEscrow = async (holdId: string) => {
-    const note = window.prompt("Describe the issue with this escrow hold:");
+    const note = window.prompt("Describe the issue with this payment:");
     if (!note?.trim()) return;
 
     try {
       setDisputingHoldId(holdId);
       await escrowService.disputeEscrowHold(holdId, note.trim());
-      toast.success("Escrow dispute submitted.");
+      toast.success("Payment dispute submitted.");
       await onRefresh();
     } catch (error) {
       console.error(error);
-      toast.error("Unable to submit escrow dispute.");
+      toast.error("Unable to submit payment dispute.");
     } finally {
       setDisputingHoldId(null);
     }
@@ -1275,14 +1333,14 @@ export function WalletHubSection({
           </p>
         </Card>
         <Card className="p-6">
-          <p className="text-sm text-muted-foreground mb-1">In escrow</p>
+          <p className="text-sm text-muted-foreground mb-1">Pending with provider</p>
           <p className="text-3xl font-semibold">
             {formatMoney(wallet.pending_minor, wallet.currency)}
           </p>
         </Card>
         <Card className="p-6">
           <Shield className="w-5 h-5 text-primary mb-2" />
-          <p className="text-sm text-muted-foreground">Active escrow holds</p>
+          <p className="text-sm text-muted-foreground">Active payment records</p>
           <p className="text-3xl font-semibold">
             {escrowHolds.filter((hold) => hold.status === "held").length}
           </p>
@@ -1318,9 +1376,9 @@ export function WalletHubSection({
       </Card>
 
       <Card className="p-6">
-        <h3 className="font-semibold mb-4">Escrow holds</h3>
+        <h3 className="font-semibold mb-4">Transaction payments</h3>
         {escrowHolds.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No escrow-backed payments yet.</p>
+          <p className="text-sm text-muted-foreground">No payment records yet.</p>
         ) : (
           escrowHolds.map((hold) => (
             <div key={hold.id} className="py-3 border-b border-border last:border-0 space-y-3">
@@ -1347,7 +1405,7 @@ export function WalletHubSection({
       </Card>
 
       <Card className="p-6">
-        <h3 className="font-semibold mb-4">Receipts & Paystack history</h3>
+        <h3 className="font-semibold mb-4">Receipts & payment history</h3>
         {payments.length === 0 ? (
           <p className="text-sm text-muted-foreground">No payments yet.</p>
         ) : (

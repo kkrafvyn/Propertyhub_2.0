@@ -1,6 +1,6 @@
 import { getCorsHeaders, HttpError, jsonResponse, safeErrorMessage } from "../_shared/http.ts";
 import { writeServerAuditLog } from "../_shared/audit-log.ts";
-import { retrieveStripeCheckoutSession } from "../_shared/stripe.ts";
+import { retrieveStripeCheckoutSession } from "../_shared/payangels.ts";
 import { requireAuthenticatedUser, createAdminClient } from "../_shared/supabase.ts";
 
 async function canVerifyTransaction(
@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     }
 
     const admin = createAdminClient();
-    let transactionQuery = admin.from("property_transactions").select("*").eq("provider", "stripe");
+    let transactionQuery = admin.from("property_transactions").select("*").eq("provider", "payangels");
 
     if (reference) {
       transactionQuery = transactionQuery.eq("provider_reference", reference);
@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
 
     const resolvedSessionId = sessionId || transaction.access_code;
     if (!resolvedSessionId) {
-      throw new HttpError(400, "Stripe session id is missing");
+      throw new HttpError(400, "Checkout session id is missing");
     }
 
     const session = await retrieveStripeCheckoutSession(resolvedSessionId);
@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
 
     await writeServerAuditLog({
       actorUserId: user.id,
-      action: "stripe_payment_verified",
+      action: "payangels_payment_verified",
       entityType: "property_transaction",
       entityId: transaction.id,
       details: { reference: transaction.provider_reference },
@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
       return jsonResponse(error.status, { error: error.message }, req);
     }
 
-    console.error("verify-stripe-payment error:", error);
-    return jsonResponse(500, { error: safeErrorMessage(error, "Unable to verify Stripe payment") }, req);
+    console.error("verify-payangels-payment error:", error);
+    return jsonResponse(500, { error: safeErrorMessage(error, "Unable to verify payment") }, req);
   }
 });
