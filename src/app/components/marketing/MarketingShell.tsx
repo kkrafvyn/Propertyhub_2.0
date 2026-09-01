@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import { Logo } from "../baytmiftah/Logo";
 import { ThemeToggle } from "../baytmiftah/ThemeToggle";
 import { appPath } from "../../../lib/marketing-urls";
+import { MarketingBackgroundCarousel } from "./MarketingBackgroundCarousel";
 import "./marketing.css";
 
 const NAV_LINKS = [
@@ -45,6 +46,8 @@ export function MarketingShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="marketing-page marketing-shell">
+      <MarketingBackgroundCarousel />
+      <div className="mk-page-scrim" aria-hidden="true" />
       <header className={`mk-nav${scrolled ? " mk-nav--scrolled" : ""}`}>
         <div className="mk-nav-inner">
           <Logo to="/" size="sm" />

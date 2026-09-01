@@ -2,7 +2,6 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import { MarketingShell } from "../../components/marketing/MarketingShell";
-import { MarketingHeroCarousel } from "../../components/marketing/MarketingHeroCarousel";
 import { appPath } from "../../../lib/marketing-urls";
 
 function useReveal() {
@@ -34,10 +33,21 @@ function useReveal() {
   return ref;
 }
 
-function Reveal({ children, className = "" }: { children: ReactNode; className?: string }) {
+function Reveal({
+  children,
+  className = "",
+  stagger = false,
+}: {
+  children: ReactNode;
+  className?: string;
+  stagger?: boolean;
+}) {
   const ref = useReveal();
   return (
-    <div ref={ref} className={`mk-reveal ${className}`.trim()}>
+    <div
+      ref={ref}
+      className={`mk-reveal${stagger ? " mk-reveal--stagger" : ""} ${className}`.trim()}
+    >
       {children}
     </div>
   );
@@ -77,7 +87,6 @@ export function MarketingHome() {
 function HeroSection() {
   return (
     <section className="mk-section mk-hero">
-      <MarketingHeroCarousel />
       <div className="mk-container mk-hero-grid mk-hero-content">
         <Reveal>
           <p className="mk-eyebrow">Real Estate Operating System</p>
@@ -158,13 +167,15 @@ function ProblemSection() {
           </p>
         </Reveal>
 
-        <div className="mk-chaos-grid">
-          {tools.map((tool) => (
-            <div key={tool} className="mk-chaos-chip">
-              {tool}
-            </div>
-          ))}
-        </div>
+        <Reveal stagger>
+          <div className="mk-chaos-grid mk-stagger-grid">
+            {tools.map((tool) => (
+              <div key={tool} className="mk-chaos-chip">
+                {tool}
+              </div>
+            ))}
+          </div>
+        </Reveal>
 
         <div className="mk-transform-arrow" aria-hidden="true">
           ↓
@@ -261,14 +272,16 @@ function BusinessSection() {
             need one operating environment — not another disconnected tool stack.
           </p>
         </Reveal>
-        <div className="mk-module-grid mk-module-grid--3">
-          {modules.map((mod) => (
-            <article key={mod.title} className="mk-module-card">
-              <h3>{mod.title}</h3>
-              <p>{mod.copy}</p>
-            </article>
-          ))}
-        </div>
+        <Reveal stagger>
+          <div className="mk-module-grid mk-module-grid--3">
+            {modules.map((mod) => (
+              <article key={mod.title} className="mk-module-card">
+                <h3>{mod.title}</h3>
+                <p>{mod.copy}</p>
+              </article>
+            ))}
+          </div>
+        </Reveal>
         <div className="mk-hero-actions" style={{ marginTop: "2rem" }}>
           <a href={appPath("/workspace")} className="mk-btn mk-btn-primary">
             Open Workspace
