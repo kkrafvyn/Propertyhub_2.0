@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import { appPath } from "../../../lib/marketing-urls";
@@ -485,38 +485,92 @@ function ExplorerSection() {
 }
 
 function TeamsSection() {
-  const audiences = [
-    "Owners",
-    "Property Managers",
-    "Agencies",
-    "Developers",
-    "Enterprise Operators",
-    "Consumers",
-  ];
+  const roles = [
+    {
+      id: "executive",
+      label: "Executive",
+      title: "Portfolio visibility without the status meeting.",
+      copy: "See collections, occupancy, maintenance risk, and operational exceptions from one command view — connected to the same data your teams work in every day.",
+    },
+    {
+      id: "property-management",
+      label: "Property management",
+      title: "Run estates from one operational workspace.",
+      copy: "Manage properties, units, leases, occupancies, inspections, and daily tasks without switching between spreadsheets, chats, and separate maintenance tools.",
+    },
+    {
+      id: "finance",
+      label: "Finance",
+      title: "Know where the money stands.",
+      copy: "Track receivables, journal entries, bank reconciliation, owner statements, and collections workflows in the operational layer around your finances — not a disconnected accounting export.",
+    },
+    {
+      id: "leasing",
+      label: "Leasing / sales",
+      title: "Turn property interest into organized business.",
+      copy: "Manage leads, viewings, applications, offers, and leasing pipelines from one system — with the same property and contact records the rest of the operation uses.",
+    },
+    {
+      id: "maintenance",
+      label: "Maintenance",
+      title: "Turn problems into tracked work.",
+      copy: "Convert resident requests into tickets, assign contractors, track SLAs, escalate delays, and capture field evidence — instead of losing requests in message threads.",
+    },
+    {
+      id: "customer-service",
+      label: "Customer service",
+      title: "Messages become work.",
+      copy: "Route resident inquiries into governed tickets and workflows, track SLAs, and keep communication tied to the property, lease, and operational record.",
+    },
+    {
+      id: "procurement",
+      label: "Procurement",
+      title: "Control spend with governed approvals.",
+      copy: "Run purchase requests, purchase orders, and invoice matching with approval workflows and audit evidence — connected to estate operations and finance.",
+    },
+    {
+      id: "operations",
+      label: "Operations",
+      title: "Standardize how work moves through the business.",
+      copy: "Coordinate automations, exception handling, approvals, and cross-team workflows from one operating environment — without multiplying tools as the portfolio grows.",
+    },
+  ] as const;
+
+  const [activeRoleId, setActiveRoleId] = useState<(typeof roles)[number]["id"]>("executive");
+  const activeRole = roles.find((role) => role.id === activeRoleId) ?? roles[0];
 
   return (
-    <section className="mk-section mk-problem">
+    <section className="mk-section mk-problem" id="teams">
       <div className="mk-container">
         <Reveal>
-          <p className="mk-eyebrow">Who it&apos;s for</p>
-          <h2 className="mk-section-title">Built for the people behind real estate.</h2>
-          <p className="mk-section-copy">
-            <strong>Owners</strong> — know what is happening across your portfolio.{" "}
-            <strong>Property managers</strong> — run daily operations from one workspace.{" "}
-            <strong>Agencies</strong> — manage listings, leads, clients, and teams.{" "}
-            <strong>Developers</strong> — connect property activity from launch through operations.{" "}
-            <strong>Enterprise operators</strong> — standardize workflows across organizations.{" "}
-            <strong>Consumers</strong> — discover and interact with properties in one experience.
-          </p>
+          <p className="mk-eyebrow">One platform, many teams</p>
+          <h2 className="mk-section-title">Role-aware experiences for every function.</h2>
         </Reveal>
-        <div className="mk-team-tree mk-team-tree--horizontal">
-          <div className="mk-team-node mk-team-node--root">Real Estate Operating System</div>
-          <div className="mk-team-children">
-            {audiences.map((audience) => (
-              <div key={audience} className="mk-team-node">
-                {audience}
-              </div>
-            ))}
+
+        <div className="mk-teams-interactive">
+          <div className="mk-role-detail" aria-live="polite">
+            <h3 className="mk-role-detail-title">{activeRole.title}</h3>
+            <p className="mk-role-detail-copy">{activeRole.copy}</p>
+          </div>
+
+          <div className="mk-role-picker" role="tablist" aria-label="Team roles">
+            {roles.map((role) => {
+              const isActive = role.id === activeRoleId;
+              return (
+                <button
+                  key={role.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`mk-team-node mk-role-button${isActive ? " mk-team-node--active" : ""}${
+                    role.id === "executive" ? " mk-role-button--lead" : ""
+                  }`}
+                  onClick={() => setActiveRoleId(role.id)}
+                >
+                  {role.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
