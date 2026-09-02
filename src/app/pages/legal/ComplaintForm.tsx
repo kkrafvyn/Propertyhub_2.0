@@ -154,7 +154,22 @@ export function ComplaintFormPanel({ embedded = false }: { embedded?: boolean })
   );
 }
 
-/** Legacy /complaint route — canonical page is /legal/complaints. */
 export function ComplaintForm() {
-  return <Navigate to="/legal/complaints" replace />;
+  return (
+    <div className="mx-auto max-w-2xl px-4 py-12">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight text-ink">Submit a Complaint</h1>
+        <p className="mt-2 text-sm text-ink-secondary">
+          We take all concerns seriously. Submit your report below or email directly to{" "}
+          <a href="mailto:support@baytmiftah.com" className="font-medium text-brand-forest underline">
+            support@baytmiftah.com
+          </a>
+          . Your complaint will be assigned a unique tracking reference and investigated by our support team.
+        </p>
+      </div>
+      <div className="rounded-2xl border border-surface-border bg-card p-6 shadow-sm sm:p-8">
+        <ComplaintFormPanel />
+      </div>
+    </div>
+  );
 }

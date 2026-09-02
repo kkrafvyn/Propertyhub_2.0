@@ -21,12 +21,12 @@ export const LEGAL_OPERATOR = {
 } as const;
 
 export const LEGAL_CONTACT = {
-  legal: envValue("VITE_LEGAL_EMAIL") || "legal@baytmiftah.com",
-  privacy: envValue("VITE_PRIVACY_EMAIL") || "privacy@baytmiftah.com",
+  legal: envValue("VITE_LEGAL_EMAIL") || "support@baytmiftah.com",
+  privacy: envValue("VITE_PRIVACY_EMAIL") || "support@baytmiftah.com",
   support: envValue("VITE_SUPPORT_EMAIL") || "support@baytmiftah.com",
-  dpo: envValue("VITE_DPO_EMAIL") || "privacy@baytmiftah.com",
-  complaints: envValue("VITE_COMPLAINTS_EMAIL") || "complaints@baytmiftah.com",
-  accessibility: envValue("VITE_ACCESSIBILITY_EMAIL") || "accessibility@baytmiftah.com",
+  dpo: envValue("VITE_DPO_EMAIL") || "support@baytmiftah.com",
+  complaints: envValue("VITE_SUPPORT_EMAIL") || "support@baytmiftah.com",
+  accessibility: envValue("VITE_SUPPORT_EMAIL") || "support@baytmiftah.com",
 } as const;
 
 export const LEGAL_PLATFORM_POSITION = {

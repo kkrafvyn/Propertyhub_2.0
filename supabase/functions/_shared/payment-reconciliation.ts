@@ -2,6 +2,7 @@ import { HttpError } from "./http.ts";
 import { PaystackTransactionData } from "./payangels.ts";
 import { assertPaystackAmountMatch } from "./payment-pricing.ts";
 import { redeemPromoCode } from "./promo-pricing.ts";
+import { resolveOrganizationCreditMinor } from "./platform-fee.ts";
 import { writeServerAuditLog } from "./audit-log.ts";
 import { createAdminClient } from "./supabase.ts";
 
@@ -260,19 +261,15 @@ async function appendWalletLedger(
   });
 }
 
-function calculatePlatformFee(amountMinor: number) {
-  return Math.max(0, Math.round(amountMinor * 0.025));
-}
-
-function calculateNetAmount(amountMinor: number) {
-  return amountMinor - calculatePlatformFee(amountMinor);
-}
-
 async function creditOrganizationFromPayment(
   admin: ReturnType<typeof createAdminClient>,
   transaction: PropertyTransactionRow
 ) {
-  const netMinor = calculateNetAmount(transaction.amount_minor);
+  const netMinor = await resolveOrganizationCreditMinor(admin, {
+    amountMinor: transaction.amount_minor,
+    purpose: transaction.purpose,
+    metadata: transaction.metadata,
+  });
   if (netMinor <= 0) return;
 
   const { data: existingLedger } = await admin

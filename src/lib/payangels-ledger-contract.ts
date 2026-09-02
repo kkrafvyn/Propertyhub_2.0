@@ -3,12 +3,12 @@
  * Live sandbox calls are skipped unless PAYANGELS_SANDBOX_WEBHOOK_SECRET is configured.
  */
 
-export function calculatePlatformFeeMinor(amountMinor: number) {
-  return Math.max(0, Math.round(amountMinor * 0.025));
+export function calculatePlatformFeeMinor(amountMinor: number, feePercent = 1.5) {
+  return Math.max(0, Math.round(amountMinor * (feePercent / 100)));
 }
 
-export function calculateNetCreditMinor(amountMinor: number) {
-  return amountMinor - calculatePlatformFeeMinor(amountMinor);
+export function calculateNetCreditMinor(amountMinor: number, feePercent = 1.5) {
+  return amountMinor - calculatePlatformFeeMinor(amountMinor, feePercent);
 }
 
 export type PayangelsWebhookEvent = {
@@ -33,11 +33,15 @@ export function projectPaymentLedgerAfterWebhook(input: {
   reference: string;
   amountMinor: number;
   webhook: PayangelsWebhookEvent;
+  platformFeeMinor?: number;
+  feePercent?: number;
 }): PaymentLedgerProjection {
   const success = input.webhook.event === "charge.success";
   const grossMinor = input.amountMinor;
-  const platformFeeMinor = calculatePlatformFeeMinor(grossMinor);
-  const orgWalletCreditMinor = success ? calculateNetCreditMinor(grossMinor) : 0;
+  const platformFeeMinor =
+    input.platformFeeMinor ??
+    calculatePlatformFeeMinor(grossMinor, input.feePercent ?? 1.5);
+  const orgWalletCreditMinor = success ? grossMinor - platformFeeMinor : 0;
 
   return {
     transactionStatus: success ? "success" : "failed",

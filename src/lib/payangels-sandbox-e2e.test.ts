@@ -19,8 +19,8 @@ async function createTestSignature(secret: string, payload: string) {
 describe("Pay Angels sandbox E2E contract", () => {
   it("computes platform fee and org wallet credit for a successful charge", () => {
     const amountMinor = 250_00;
-    expect(calculatePlatformFeeMinor(amountMinor)).toBe(625);
-    expect(calculateNetCreditMinor(amountMinor)).toBe(243_75);
+    expect(calculatePlatformFeeMinor(amountMinor)).toBe(375);
+    expect(calculateNetCreditMinor(amountMinor)).toBe(246_25);
   });
 
   it("projects ledger state after charge.success webhook", () => {

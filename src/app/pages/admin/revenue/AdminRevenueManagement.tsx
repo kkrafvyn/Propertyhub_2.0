@@ -28,7 +28,7 @@ function renderSection(section: ReturnType<typeof resolveRevenueSection>) {
         <RevenueRuleEditor
           category="transaction_fees"
           title="Transaction Fees"
-          description="Platform fees on property transactions."
+          description="Platform fee charged on every property payment. The percentage you set here is added at checkout and recorded on each transaction."
         />
       );
     case "booking-fees":

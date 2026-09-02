@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { Card } from "../../../components/ui/Card";
 import { Badge } from "../../../components/ui/badge";
 import {
   revenueManagementService,
   type RevenueDashboardMetrics,
 } from "../../../../lib/revenue-management.service";
+import { getTransactionFeePercent } from "../../../../lib/revenue-fee-resolver";
 
 function formatMoney(minor: number, currency = "GHS") {
   return new Intl.NumberFormat("en-GH", {
@@ -63,12 +65,18 @@ function BarChart({
 
 export function RevenueDashboard() {
   const [metrics, setMetrics] = useState<RevenueDashboardMetrics | null>(null);
+  const [transactionFeePercent, setTransactionFeePercent] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    void revenueManagementService
-      .getDashboardMetrics()
-      .then(setMetrics)
+    void Promise.all([
+      revenueManagementService.getDashboardMetrics(),
+      getTransactionFeePercent(),
+    ])
+      .then(([nextMetrics, feePercent]) => {
+        setMetrics(nextMetrics);
+        setTransactionFeePercent(feePercent);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -90,6 +98,11 @@ export function RevenueDashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard
+          label="Platform transaction fee"
+          value={`${transactionFeePercent}%`}
+          hint="Applied to every checkout"
+        />
         <MetricCard label="Today's Revenue" value={formatMoney(metrics.todayRevenueMinor)} hint={`${metrics.transactionCountToday} transactions`} />
         <MetricCard label="This Month" value={formatMoney(metrics.monthRevenueMinor)} hint={`${metrics.transactionCountMonth} transactions`} />
         <MetricCard label="Recurring Revenue (MRR est.)" value={formatMoney(metrics.recurringRevenueMinor)} hint={`${metrics.activeSubscriptions} active plans`} />
@@ -98,6 +111,21 @@ export function RevenueDashboard() {
         <MetricCard label="Wallet Balance" value={formatMoney(metrics.walletBalanceMinor)} />
         <MetricCard label="Platform Commission" value={formatMoney(metrics.platformCommissionMinor)} />
       </div>
+
+      <Card className="p-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="font-semibold">Transaction fee settings</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Admins control the platform percentage charged on every property transaction at checkout.
+          </p>
+        </div>
+        <Link
+          to="/admin/revenue/transaction-fees"
+          className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
+        >
+          Edit transaction fee ({transactionFeePercent}%)
+        </Link>
+      </Card>
 
       <div className="grid gap-4 xl:grid-cols-2">
         <BarChart title="Monthly revenue" series={metrics.monthlySeries} valueKey="amountMinor" labelKey="month" />

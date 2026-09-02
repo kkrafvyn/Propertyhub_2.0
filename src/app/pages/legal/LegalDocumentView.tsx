@@ -72,7 +72,7 @@ export function LegalDocumentView({
         <div className="mt-12 print:hidden">
           <h2 className="text-xl font-semibold text-ink">Submit a complaint</h2>
           <p className="mt-2 text-sm text-ink-secondary">
-            Use the form below or email complaints@baytmiftah.com.
+            Use the form below or email support@baytmiftah.com.
           </p>
           <div className="mt-6">
             <ComplaintFormPanel embedded />

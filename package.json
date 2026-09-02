@@ -70,6 +70,7 @@
     "backup:restore-drill": "node scripts/backup/restore-drill.mjs",
     "security:tenant-fixtures": "node scripts/security/seed-tenant-isolation-fixtures.mjs",
     "security:provision-tenant-fixtures": "node scripts/security/provision-tenant-isolation-fixtures.mjs",
+    "security:grant-platform-admin": "node scripts/security/grant-platform-admin.mjs",
     "backup:restore-drill:fixture": "node scripts/backup/restore-drill.mjs -- --path scripts/backup/fixtures/minimal-backup",
     "vercel:env": "node scripts/sync-vercel-env.mjs",
     "contracts:install": "npm install --prefix blockchain",

@@ -25,10 +25,17 @@ function NavLink({ href, label, onClick }: { href: string; label: string; onClic
 
 export function MarketingShell({ children }: { children: ReactNode }) {
   const [scrolled, setScrolled] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 8);
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalHeight > 0) {
+        setScrollProgress(Math.min(100, Math.max(0, (window.scrollY / totalHeight) * 100)));
+      }
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -47,6 +54,11 @@ export function MarketingShell({ children }: { children: ReactNode }) {
     <div className="marketing-page marketing-shell">
       <MarketingBackgroundCarousel />
       <div className="mk-page-scrim" aria-hidden="true" />
+      <div
+        className="mk-scroll-progress-bar"
+        style={{ width: `${scrollProgress}%` }}
+        aria-hidden="true"
+      />
       <header className={`mk-nav${scrolled ? " mk-nav--scrolled" : ""}`}>
         <div className="mk-nav-inner">
           <Logo to="/" size="sm" inverted={false} />
@@ -181,6 +193,9 @@ function MarketingFooter() {
             </li>
             <li>
               <Link to="/legal/acceptable-use">Acceptable Use</Link>
+            </li>
+            <li>
+              <Link to="/complaint">Submit a Complaint</Link>
             </li>
           </ul>
         </div>

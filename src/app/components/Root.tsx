@@ -136,9 +136,18 @@ export function Root() {
     return <Navigate to="/workspace" replace />;
   }
 
-  if (isMarketingSite() && isMarketingPublicPath(location.pathname)) {
+  if (
+    location.pathname === "/marketing" ||
+    (isMarketingSite() && isMarketingPublicPath(location.pathname))
+  ) {
     return (
-      <MarketingSiteFrame home={location.pathname === "/" ? <MarketingHome /> : undefined} />
+      <MarketingSiteFrame
+        home={
+          location.pathname === "/" || location.pathname === "/marketing" ? (
+            <MarketingHome />
+          ) : undefined
+        }
+      />
     );
   }
 

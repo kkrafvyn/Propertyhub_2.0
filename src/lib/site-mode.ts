@@ -33,6 +33,26 @@ export function resolveSiteMode(hostname?: string): SiteMode {
     return forced;
   }
 
+  if (typeof window !== "undefined") {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlMode = params.get("mode")?.trim().toLowerCase() || params.get("site")?.trim().toLowerCase();
+      if (urlMode === "marketing" || urlMode === "app") {
+        sessionStorage.setItem("baytmiftah_site_mode", urlMode);
+        return urlMode;
+      }
+      const stored = sessionStorage.getItem("baytmiftah_site_mode") || localStorage.getItem("baytmiftah_site_mode");
+      if (stored === "marketing" || stored === "app") {
+        return stored;
+      }
+      if (window.location.pathname === "/marketing" || window.location.pathname.startsWith("/marketing/")) {
+        return "marketing";
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+
   const host = normalizeHost(
     hostname ?? (typeof window !== "undefined" ? window.location.hostname : ""),
   );
@@ -61,6 +81,7 @@ export function isAppSite(hostname?: string): boolean {
 }
 
 const MARKETING_PUBLIC_PREFIXES = [
+  "/marketing",
   "/about",
   "/careers",
   "/contact",
@@ -78,7 +99,7 @@ const MARKETING_PUBLIC_PREFIXES = [
 /** Paths served on the marketing site (baytmiftah.com) with marketing chrome. */
 export function isMarketingPublicPath(pathname: string): boolean {
   const path = pathname.split("?")[0]?.split("#")[0] || "/";
-  if (path === "/") return true;
+  if (path === "/" || path === "/marketing") return true;
   return MARKETING_PUBLIC_PREFIXES.some(
     (prefix) => path === prefix || path.startsWith(`${prefix}/`),
   );
