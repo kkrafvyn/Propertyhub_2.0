@@ -43,7 +43,10 @@ export const messageService = {
       )
       .order('last_message_at', { ascending: false })
 
-    if (error) throw error
+    if (error) {
+      console.error('Failed to load conversations:', error)
+      return []
+    }
     return (data || []).map(sortMessages)
   },
 
