@@ -1,12 +1,4 @@
 import { useState } from "react";
-import {
-  ClipboardCheck,
-  Globe,
-  Lock,
-  Paperclip,
-  Shield,
-  Sparkles,
-} from "lucide-react";
 
 const EVENTS = [
   {
@@ -81,101 +73,24 @@ const EVENTS = [
   },
 ] as const;
 
-const PILLARS = [
-  {
-    id: "permissions",
-    label: "Permission-based access",
-    icon: Lock,
-    tone: "blue",
-    eventId: "permissions",
-  },
-  {
-    id: "organization",
-    label: "Organization isolation",
-    icon: Globe,
-    tone: "blue",
-    eventId: "organization",
-  },
-  {
-    id: "audit-trails",
-    label: "Audit trails",
-    icon: Shield,
-    tone: "blue",
-    eventId: "audit",
-  },
-  {
-    id: "verification",
-    label: "Verification workflows",
-    icon: ClipboardCheck,
-    tone: "green",
-    eventId: "identity",
-  },
-  {
-    id: "evidence",
-    label: "Evidence & attachments",
-    icon: Paperclip,
-    tone: "green",
-    eventId: "evidence",
-  },
-  {
-    id: "ai",
-    label: "Controlled AI actions",
-    icon: Sparkles,
-    tone: "purple",
-    eventId: "transaction",
-  },
-] as const;
-
 type EventId = (typeof EVENTS)[number]["id"];
-type PillarId = (typeof PILLARS)[number]["id"];
 
 export function TrustTraceShowcase() {
   const [activeEvent, setActiveEvent] = useState<EventId>("transaction");
-  const [activePillar, setActivePillar] = useState<PillarId | null>(null);
   const selected = EVENTS.find((event) => event.id === activeEvent) ?? EVENTS[4];
-
-  function selectPillar(pillar: (typeof PILLARS)[number]) {
-    setActivePillar(pillar.id);
-    setActiveEvent(pillar.eventId);
-  }
-
-  function selectEvent(eventId: EventId) {
-    setActiveEvent(eventId);
-    const pillar = PILLARS.find((item) => item.eventId === eventId);
-    setActivePillar(pillar?.id ?? null);
-  }
 
   return (
     <div className="mk-showcase-split mk-showcase-split--trust">
-      <div className="mk-showcase-copy mk-showcase-copy--trust">
-        <p className="mk-eyebrow mk-eyebrow--trust">Trust &amp; accountability</p>
+      <div className="mk-showcase-copy">
+        <p className="mk-eyebrow">Trust &amp; accountability</p>
         <h2 className="mk-section-title">Know who did what, when, and why.</h2>
-        <p className="mk-section-copy mk-showcase-intro">
+        <p className="mk-section-copy">
           Permission-based access, organization isolation, audit trails, verification workflows, and
           controlled AI actions — so teams operate with visibility and evidence, not blind trust.
         </p>
-
-        <div className="mk-trust-pillars" role="list" aria-label="Trust capabilities">
-          {PILLARS.map((pillar) => {
-            const Icon = pillar.icon;
-            const isActive = activePillar === pillar.id;
-
-            return (
-              <button
-                key={pillar.id}
-                type="button"
-                role="listitem"
-                className={`mk-trust-pillar mk-trust-pillar--${pillar.tone}${isActive ? " mk-trust-pillar--active" : ""}`}
-                onClick={() => selectPillar(pillar)}
-              >
-                <span className="mk-trust-pillar-icon" aria-hidden="true">
-                  <Icon size={18} strokeWidth={1.75} />
-                </span>
-                <span className="mk-trust-pillar-label">{pillar.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        <p className="mk-showcase-tab-hint">
+          Select an event in the activity stream to inspect actor, scope, action, and linked evidence.
+        </p>
       </div>
 
       <div className="mk-showcase-stage">
@@ -197,7 +112,7 @@ export function TrustTraceShowcase() {
                     <button
                       type="button"
                       className={`mk-trace-event${activeEvent === event.id ? " mk-trace-event--active" : ""}`}
-                      onClick={() => selectEvent(event.id)}
+                      onClick={() => setActiveEvent(event.id)}
                     >
                       <span className="mk-trace-time">{event.time}</span>
                       <span className="mk-trace-event-title">{event.title}</span>
