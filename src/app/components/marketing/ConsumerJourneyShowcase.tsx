@@ -1,4 +1,15 @@
 import { useState } from "react";
+import {
+  ChevronRight,
+  CreditCard,
+  Eye,
+  FileText,
+  Headphones,
+  Home,
+  MessageCircle,
+  Scale,
+  Search,
+} from "lucide-react";
 import { appPath } from "../../../lib/marketing-urls";
 
 const PROPERTY_A =
@@ -10,42 +21,50 @@ const STEPS = [
   {
     id: "discover",
     label: "Discover",
-    hint: "Search destinations, filters, and map in one view.",
+    hint: "Search smart. Find what fits.",
+    icon: Search,
   },
   {
     id: "compare",
     label: "Compare",
-    hint: "Evaluate price, location, and amenities side by side.",
+    hint: "Compare properties side by side.",
+    icon: Scale,
   },
   {
     id: "view",
     label: "View",
-    hint: "Property details, gallery, and viewing availability.",
+    hint: "View details, photos, and locations.",
+    icon: Eye,
   },
   {
     id: "apply",
     label: "Apply / Offer",
-    hint: "Applications and offers tied to the listing record.",
+    hint: "Submit applications or offers.",
+    icon: FileText,
   },
   {
     id: "transact",
     label: "Book / Transact",
-    hint: "Booking and payment status in the same flow.",
+    hint: "Secure and complete your booking.",
+    icon: CreditCard,
   },
   {
     id: "communicate",
     label: "Communicate",
-    hint: "Messages with property context — not a lost thread.",
+    hint: "Chat and get updates in real time.",
+    icon: MessageCircle,
   },
   {
     id: "manage",
     label: "Manage stay / lease",
-    hint: "Lease, payments, and stay information in one account.",
+    hint: "Manage payments, requests, and more.",
+    icon: Home,
   },
   {
     id: "support",
     label: "Request support",
-    hint: "Support requests become tracked operational work.",
+    hint: "Get help when you need it.",
+    icon: Headphones,
   },
 ] as const;
 
@@ -231,35 +250,44 @@ function JourneyVisual({ stepId }: { stepId: StepId }) {
 
 export function ConsumerJourneyShowcase() {
   const [activeStep, setActiveStep] = useState<StepId>("discover");
-  const active = STEPS.find((step) => step.id === activeStep) ?? STEPS[0];
 
   return (
     <div className="mk-showcase-split">
       <div className="mk-showcase-copy">
         <p className="mk-eyebrow">For consumers</p>
         <h2 className="mk-section-title">Find a property without the friction.</h2>
-        <p className="mk-section-copy">
+        <p className="mk-section-copy mk-showcase-intro">
           Discover, compare, view, and move forward from one place. Renters, buyers, hosts, and guests
           use BaytMiftah alongside the business operating system — connected to the same platform,
           without the operational complexity.
         </p>
 
-        <p className="mk-showcase-journey-label">Journey</p>
-        <div className="mk-showcase-tabs" role="tablist" aria-label="Consumer journey">
-          {STEPS.map((step) => (
-            <button
-              key={step.id}
-              type="button"
-              role="tab"
-              aria-selected={activeStep === step.id}
-              className={`mk-showcase-tab${activeStep === step.id ? " mk-showcase-tab--active" : ""}`}
-              onClick={() => setActiveStep(step.id)}
-            >
-              {step.label}
-            </button>
-          ))}
+        <div className="mk-journey-nav" role="tablist" aria-label="Consumer journey">
+          {STEPS.map((step) => {
+            const Icon = step.icon;
+            const isActive = activeStep === step.id;
+
+            return (
+              <button
+                key={step.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                className={`mk-journey-item${isActive ? " mk-journey-item--active" : ""}`}
+                onClick={() => setActiveStep(step.id)}
+              >
+                <span className="mk-journey-item-icon" aria-hidden="true">
+                  <Icon size={18} strokeWidth={1.75} />
+                </span>
+                <span className="mk-journey-item-copy">
+                  <span className="mk-journey-item-label">{step.label}</span>
+                  <span className="mk-journey-item-hint">{step.hint}</span>
+                </span>
+                <ChevronRight className="mk-journey-item-chevron" size={16} strokeWidth={2} aria-hidden="true" />
+              </button>
+            );
+          })}
         </div>
-        <p className="mk-showcase-tab-hint">{active.hint}</p>
       </div>
 
       <div className="mk-showcase-stage">
@@ -281,6 +309,7 @@ export function ConsumerJourneyShowcase() {
 
       <a href={appPath("/search")} className="mk-btn mk-btn-accent mk-showcase-cta">
         Explore Properties
+        <ChevronRight size={18} strokeWidth={2} aria-hidden="true" />
       </a>
     </div>
   );
