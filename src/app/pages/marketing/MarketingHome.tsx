@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
+import { ConsumerJourneyShowcase } from "../../components/marketing/ConsumerJourneyShowcase";
+import { TrustTraceShowcase } from "../../components/marketing/TrustTraceShowcase";
 import { appPath } from "../../../lib/marketing-urls";
 
 function useReveal() {
@@ -293,48 +295,12 @@ function BusinessSection() {
 }
 
 function ConsumerSection() {
-  const steps = [
-    "Discover",
-    "Compare",
-    "View",
-    "Apply / Offer",
-    "Book / Transact",
-    "Communicate",
-    "Manage stay / lease",
-    "Request support",
-  ];
-
   return (
-    <section className="mk-section" id="consumers">
+    <section className="mk-section mk-section-showcase" id="consumers">
       <div className="mk-container">
         <Reveal>
-          <p className="mk-eyebrow">For consumers</p>
-          <h2 className="mk-section-title">Find a property without the friction.</h2>
-          <p className="mk-section-copy">
-            Discover, compare, view, and move forward from one place. Renters, buyers, hosts, and guests
-            use BaytMiftah alongside the business operating system — connected to the same platform,
-            without the operational complexity.
-          </p>
+          <ConsumerJourneyShowcase />
         </Reveal>
-        <div className="mk-step-track">
-          <ol className="mk-step-track-list">
-            {steps.map((step, index) => (
-              <li key={step}>
-                <span className="mk-flow-step">{step}</span>
-                {index < steps.length - 1 ? (
-                  <span className="mk-step-track-sep" aria-hidden="true">
-                    →
-                  </span>
-                ) : null}
-              </li>
-            ))}
-          </ol>
-        </div>
-        <div className="mk-hero-actions" style={{ marginTop: "2rem" }}>
-          <a href={appPath("/search")} className="mk-btn mk-btn-accent">
-            Explore Properties
-          </a>
-        </div>
       </div>
     </section>
   );
@@ -399,41 +365,12 @@ function NightWatchSection() {
 }
 
 function TrustSection() {
-  const nodes = [
-    "Identity",
-    "Permissions",
-    "Organization",
-    "Property",
-    "Transaction",
-    "Audit trail",
-    "Evidence",
-  ];
-
   return (
-    <section className="mk-section mk-problem">
+    <section className="mk-section mk-problem mk-section-showcase">
       <div className="mk-container">
         <Reveal>
-          <p className="mk-eyebrow">Trust &amp; accountability</p>
-          <h2 className="mk-section-title">Know who did what, when, and why.</h2>
-          <p className="mk-section-copy">
-            Permission-based access, organization isolation, audit trails, verification workflows, and
-            controlled AI actions — so teams operate with visibility and evidence, not blind trust.
-          </p>
+          <TrustTraceShowcase />
         </Reveal>
-        <div className="mk-step-track mk-step-track--trust">
-          <ol className="mk-step-track-list">
-            {nodes.map((node, index) => (
-              <li key={node}>
-                <span className="mk-trust-node">{node}</span>
-                {index < nodes.length - 1 ? (
-                  <span className="mk-step-track-sep" aria-hidden="true">
-                    →
-                  </span>
-                ) : null}
-              </li>
-            ))}
-          </ol>
-        </div>
       </div>
     </section>
   );
