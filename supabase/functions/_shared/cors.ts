@@ -1,3 +1,39 @@
+function normalizeOrigin(origin: string): string {
+  return origin.trim().replace(/\/+$/, "");
+}
+
+function isDevOrigin(origin: string): boolean {
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+}
+
+function isVercelAppOrigin(origin: string): boolean {
+  try {
+    const { hostname } = new URL(origin);
+    return hostname.endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
+}
+
+function isBaytMiftahOrigin(origin: string): boolean {
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === "baytmiftah.com" || hostname.endsWith(".baytmiftah.com");
+  } catch {
+    return false;
+  }
+}
+
+export function isOriginAllowed(origin: string, allowed: string[]): boolean {
+  if (!origin) return false;
+  const normalized = normalizeOrigin(origin);
+  if (allowed.includes(normalized)) return true;
+  if (isDevOrigin(normalized)) return true;
+  if (isVercelAppOrigin(normalized)) return true;
+  if (isBaytMiftahOrigin(normalized)) return true;
+  return false;
+}
+
 export function getAllowedOrigins(): string[] {
   const configured =
     Deno.env.get("ALLOWED_ORIGINS") ||
@@ -15,6 +51,7 @@ export function getAllowedOrigins(): string[] {
       "https://app.baytmiftah.com",
       "https://baytmiftah.com",
       "https://www.baytmiftah.com",
+      "https://propertyhub-2-0-ecru.vercel.app",
     ];
   }
 
@@ -22,16 +59,19 @@ export function getAllowedOrigins(): string[] {
 }
 
 export function buildCorsHeaders(req: Request) {
-  const origin = req.headers.get("Origin")?.replace(/\/+$/, "") || "";
+  const origin = normalizeOrigin(req.headers.get("Origin") || "");
   const allowed = getAllowedOrigins();
-  const allowOrigin = allowed.includes(origin) ? origin : allowed[0];
+  const allowOrigin =
+    origin && isOriginAllowed(origin, allowed)
+      ? origin
+      : allowed[0] || "https://app.baytmiftah.com";
 
   return {
     "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Headers":
       "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Vary": "Origin",
+    Vary: "Origin",
   };
 }
 

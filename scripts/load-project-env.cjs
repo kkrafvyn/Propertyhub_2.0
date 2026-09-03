@@ -73,12 +73,16 @@ function buildServerSecrets(env = loadProjectEnv()) {
   }
 
   if (!secrets.ALLOWED_ORIGINS) {
+    const vercelPublic =
+      env.VERCEL_PUBLIC_APP_URL || "https://propertyhub-2-0-ecru.vercel.app";
     const origins = new Set([
       "http://localhost:5173",
       "http://127.0.0.1:5173",
       appUrl.replace(/\/+$/, ""),
+      vercelPublic.replace(/\/+$/, ""),
       "https://baytmiftah.com",
       "https://www.baytmiftah.com",
+      "https://app.baytmiftah.com",
     ]);
     secrets.ALLOWED_ORIGINS = [...origins].join(",");
   }

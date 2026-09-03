@@ -42,6 +42,7 @@ import { workflowOrchestratorService } from "../../../lib/workflow-orchestrator.
 import { bookingService } from "../../../lib/booking.service";
 import { tenantEsignatureService } from "../../../lib/tenant-esignature.service";
 import { maintenanceService } from "../../../lib/maintenance.service";
+import { leaseService } from "../../../lib/lease.service";
 import { consumerContextService } from "../../../lib/consumer-context.service";
 import { useTranslation } from "../../i18n/LocaleContext";
 import { communicationService } from "../../../lib/communication.service";

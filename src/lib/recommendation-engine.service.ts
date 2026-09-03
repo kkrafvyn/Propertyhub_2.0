@@ -8,7 +8,7 @@ export const recommendationEngineService = {
       .from('user_preferences')
       .select('*')
       .eq('user_id', userId)
-      .single()
+      .maybeSingle()
     
     if (!prefs) return []
     
