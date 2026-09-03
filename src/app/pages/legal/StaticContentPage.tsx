@@ -6,7 +6,7 @@ import { isMarketingSite } from "../../../lib/site-mode";
 import { getLegalDocument } from "./legal-documents";
 import { LegalDocumentView } from "./LegalDocumentView";
 
-const STATIC_SLUGS = new Set(["help", "cancellation", "about", "careers", "contact"]);
+const STATIC_SLUGS = new Set(["help", "cancellation", "host-resources", "about", "careers", "contact"]);
 
 /** Renders support and company pages from shared legal content. */
 export function StaticContentPage() {

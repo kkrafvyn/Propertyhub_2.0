@@ -142,13 +142,13 @@ export default {
     "title": "Help Centre",
     "subtitle": "Guides for buyers, hosts, and agencies on BaytMiftah.",
     "gettingStarted": "Getting started",
-    "gettingStartedBody": "Create an account, save homes, request viewings, and track offers from your buyer workspace.",
+    "gettingStartedBody": "Search all listings by region and type, save homes, compare properties, and manage viewings from your dashboard at /app.",
     "listings": "Listing a property",
-    "listingsBody": "Property owners submit listings at /host/list. Agency admins approve listings at /admin/moderation before they go live.",
+    "listingsBody": "Property owners and agencies list from Workspace with jurisdiction compliance checks. Ghana (16 regions), Nigeria, and US subdivisions are supported before publish.",
     "payments": "Payments",
-    "paymentsBody": "Rent and featured boosts use mobile money, bank, and card payments. BaytMiftah does not hold customer funds.",
+    "paymentsBody": "Rent, deposits, and featured boosts use supported payment providers. BaytMiftah does not hold customer funds — see /legal/payments.",
     "safety": "Trust & safety",
-    "safetyBody": "Platform-reviewed listings and ID-checked agencies help reduce risk, but BaytMiftah does not guarantee property condition or title. Report suspicious activity to support."
+    "safetyBody": "Verification badges and KYC reduce risk but do not guarantee title or condition. Report issues via /complaint or support@baytmiftah.com."
   },
   "referral": {
     "title": "Refer a friend",

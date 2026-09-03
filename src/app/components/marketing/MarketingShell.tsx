@@ -129,25 +129,55 @@ function MarketingFooter() {
         </div>
 
         <div className="mk-footer-col">
-          <h4>Product</h4>
+          <h4>Discover</h4>
           <ul>
             <li>
-              <a href="#product">Platform</a>
+              <Link to="/search">Search homes</Link>
             </li>
             <li>
-              <a href="#workflow">Workflow</a>
+              <Link to="/search?listingType=rental">For rent</Link>
             </li>
             <li>
-              <a href="#ai">AI</a>
+              <Link to="/search?listingType=sale">For sale</Link>
             </li>
             <li>
-              <a href="#business">Businesses</a>
+              <Link to="/search?listingType=lease">For lease</Link>
             </li>
             <li>
-              <a href="#consumers">Consumers</a>
+              <Link to="/compare">Compare homes</Link>
             </li>
             <li>
-              <Link to="/explorer">Explorer</Link>
+              <Link to="/explorer">Property explorer</Link>
+            </li>
+          </ul>
+        </div>
+
+        <div className="mk-footer-col">
+          <h4>Support</h4>
+          <ul>
+            <li>
+              <Link to="/help">Help Centre</Link>
+            </li>
+            <li>
+              <Link to="/legal/safety">Safety</Link>
+            </li>
+            <li>
+              <Link to="/cancellation">Cancellation options</Link>
+            </li>
+            <li>
+              <Link to="/status">Status</Link>
+            </li>
+          </ul>
+          <h4 className="mt-6">Hosting</h4>
+          <ul>
+            <li>
+              <Link to="/workspace?next=new">List your property</Link>
+            </li>
+            <li>
+              <Link to="/host-resources">Host resources</Link>
+            </li>
+            <li>
+              <Link to="/referral">Referrals</Link>
             </li>
           </ul>
         </div>
@@ -165,21 +195,6 @@ function MarketingFooter() {
               <Link to="/careers">Careers</Link>
             </li>
           </ul>
-        </div>
-
-        <div className="mk-footer-col">
-          <h4>Resources</h4>
-          <ul>
-            <li>
-              <Link to="/help">Help Center</Link>
-            </li>
-            <li>
-              <Link to="/legal">Documentation</Link>
-            </li>
-            <li>
-              <Link to="/status">Status</Link>
-            </li>
-          </ul>
           <h4 className="mt-6">Legal</h4>
           <ul>
             <li>
@@ -192,10 +207,28 @@ function MarketingFooter() {
               <Link to="/legal/cookies">Cookies</Link>
             </li>
             <li>
-              <Link to="/legal/acceptable-use">Acceptable Use</Link>
+              <Link to="/legal/payments">Payments</Link>
             </li>
             <li>
-              <Link to="/complaint">Submit a Complaint</Link>
+              <Link to="/legal/marketplace-rules">Marketplace Rules</Link>
+            </li>
+            <li>
+              <Link to="/legal/refunds">Refunds</Link>
+            </li>
+            <li>
+              <Link to="/legal/fees">Fees</Link>
+            </li>
+            <li>
+              <Link to="/legal/trust-verification">Trust & Verification</Link>
+            </li>
+            <li>
+              <Link to="/complaint">Complaints</Link>
+            </li>
+            <li>
+              <Link to="/legal">All Policies</Link>
+            </li>
+            <li>
+              <Link to="/sitemap">Sitemap</Link>
             </li>
           </ul>
         </div>

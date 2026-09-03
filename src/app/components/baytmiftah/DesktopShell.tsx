@@ -14,6 +14,12 @@ import { useIsPhoneViewport } from "../../hooks/useMediaQuery";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
 import { FOOTER_LEGAL_LINKS, getLegalPath } from "../../../content/legal";
+import {
+  FOOTER_COMPANY_LINKS,
+  FOOTER_DISCOVER_LINKS,
+  FOOTER_HOSTING_LINKS,
+  FOOTER_SUPPORT_LINKS,
+} from "../../../content/site-links";
 
 const DESKTOP_EXPLORE_LINKS = [
   { to: CONSUMER_ROUTES.home, labelKey: "mobile.home", end: true },
@@ -170,36 +176,31 @@ function Footer() {
   const columns = [
     {
       title: t("footer.support"),
-      links: [
-        { label: t("footer.helpCentre"), to: "/help" },
-        { label: t("footer.safety"), to: "/safety" },
-        { label: t("footer.cancellation"), to: "/cancellation" },
-      ],
+      links: FOOTER_SUPPORT_LINKS.map(({ labelKey, to }) => ({
+        label: t(labelKey),
+        to,
+      })),
     },
     {
       title: t("footer.hosting"),
-      links: [
-        { label: t("footer.listProperty"), to: listPropertyPath },
-        { label: t("footer.hostResources"), to: "/workspace" },
-        { label: t("footer.referrals"), to: "/app" },
-      ],
+      links: FOOTER_HOSTING_LINKS.map(({ labelKey, to, useListPropertyPath }) => ({
+        label: t(labelKey),
+        to: useListPropertyPath ? listPropertyPath : to,
+      })),
     },
     {
       title: t("footer.discover"),
-      links: [
-        { label: t("footer.searchHomes"), to: "/search" },
-        { label: t("footer.forRent"), to: "/search?listingType=rental" },
-        { label: t("footer.forSale"), to: "/search?listingType=sale" },
-        { label: t("footer.forLease"), to: "/search?listingType=lease" },
-      ],
+      links: FOOTER_DISCOVER_LINKS.map(({ labelKey, to }) => ({
+        label: t(labelKey),
+        to,
+      })),
     },
     {
       title: t("footer.company"),
-      links: [
-        { label: t("footer.about"), to: "/about" },
-        { label: t("footer.careers"), to: "/careers" },
-        { label: t("footer.contact"), to: "/contact" },
-      ],
+      links: FOOTER_COMPANY_LINKS.map(({ labelKey, to }) => ({
+        label: t(labelKey),
+        to,
+      })),
     },
   ];
 
@@ -249,11 +250,11 @@ function Footer() {
               ))}
               <li>
                 <Link to="/legal" className="text-sm text-ink-secondary transition hover:text-ink">
-                  All Policies
+                  {t("footer.allPolicies")}
                 </Link>
               </li>
               <li>
-                <Link to="/search" className="text-sm text-ink-secondary transition hover:text-ink">
+                <Link to="/sitemap" className="text-sm text-ink-secondary transition hover:text-ink">
                   {t("footer.sitemap")}
                 </Link>
               </li>

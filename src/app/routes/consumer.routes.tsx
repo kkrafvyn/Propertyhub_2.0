@@ -202,13 +202,27 @@ export const consumerRoutes: RouteObject[] = [
     path: 'safety',
     element: <Navigate to="/legal/safety" replace />,
   },
-  ...['help', 'cancellation', 'about', 'careers', 'contact'].map((slug) => ({
+  ...['help', 'cancellation', 'host-resources', 'about', 'careers', 'contact'].map((slug) => ({
     path: slug,
     lazy: async () => {
       const { StaticContentPage } = await import('../pages/legal/StaticContentPage');
       return { Component: StaticContentPage };
     },
   })),
+  {
+    path: 'sitemap',
+    lazy: async () => {
+      const { SiteMapPage } = await import('../pages/legal/SiteMapPage');
+      return { Component: SiteMapPage };
+    },
+  },
+  {
+    path: 'referral',
+    lazy: async () => {
+      const { ReferralPage } = await import('../pages/user/ReferralPage');
+      return { Component: ReferralPage };
+    },
+  },
 
   // ── Checkout ────────────────────────────────────────────────────
   {
