@@ -22,6 +22,7 @@ import MessageHostButton from "../../components/baytmiftah/chat/MessageHostButto
 import { monitoring } from "../../../lib/monitoring";
 import { buildCheckoutPath } from "../../lib/checkout-navigation";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
+import { tenantEsignatureService } from "../../../lib/tenant-esignature.service";
 
 function formatMoney(amountMinor?: number | null, currency = "GHS") {
   return walletService.formatWalletAmount(amountMinor, currency);
@@ -165,6 +166,15 @@ export function LeasesSection({ leases, userId }: { leases: any[]; userId?: stri
   const [inspections, setInspections] = useState<any[]>([]);
   const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null);
   const [signingInspectionId, setSigningInspectionId] = useState<string | null>(null);
+  const [pendingEsignatures, setPendingEsignatures] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    if (!userId) return;
+    void tenantEsignatureService
+      .listPending(userId)
+      .then((rows) => setPendingEsignatures(tenantEsignatureService.pendingByLeaseId(rows)))
+      .catch(() => setPendingEsignatures({}));
+  }, [userId, leases.length]);
 
   const activeStatuses = new Set(["active", "pending", "signed"]);
   const historyStatuses = new Set(["completed", "terminated", "ended", "expired", "cancelled"]);
@@ -336,6 +346,33 @@ export function LeasesSection({ leases, userId }: { leases: any[]; userId?: stri
         </Button>
       </div>
 
+      {Object.keys(pendingEsignatures).length > 0 ? (
+        <Card className="p-4 border-amber-500/30 bg-amber-500/5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-medium">Signature required</p>
+              <p className="text-sm text-muted-foreground">
+                {Object.keys(pendingEsignatures).length} lease(s) include jurisdiction-specific clauses awaiting your sign-off.
+              </p>
+            </div>
+            {Object.values(pendingEsignatures)[0]?.public_sign_token ? (
+              <Button
+                size="sm"
+                onClick={() =>
+                  window.open(
+                    CONSUMER_ROUTES.signLease(Object.values(pendingEsignatures)[0].public_sign_token),
+                    "_blank",
+                    "noopener,noreferrer"
+                  )
+                }
+              >
+                Review & sign
+              </Button>
+            ) : null}
+          </div>
+        </Card>
+      ) : null}
+
       {notices.length > 0 ? (
         <Card className="p-5 space-y-3">
           <h3 className="font-semibold">Notices from your landlord</h3>
@@ -471,6 +508,20 @@ export function LeasesSection({ leases, userId }: { leases: any[]; userId?: stri
                     <p className="text-xs text-muted-foreground">Next rent due {lease.next_rent_due_at}</p>
                   ) : null}
                   <div className="flex flex-wrap gap-2 justify-end">
+                    {pendingEsignatures[lease.id]?.public_sign_token ? (
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          window.open(
+                            CONSUMER_ROUTES.signLease(pendingEsignatures[lease.id].public_sign_token || ""),
+                            "_blank",
+                            "noopener,noreferrer"
+                          )
+                        }
+                      >
+                        Sign lease online
+                      </Button>
+                    ) : null}
                     {lease.signing_status !== "signed" ? (
                       <Button
                         size="sm"

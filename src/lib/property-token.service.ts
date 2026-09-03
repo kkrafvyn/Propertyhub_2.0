@@ -35,6 +35,22 @@ export interface DividendInfo {
   claimed: string;
 }
 
+function isSimulatedTokenAddress(contractAddress?: string | null): boolean {
+  const value = String(contractAddress || "").trim();
+  return !value || value.startsWith("sim:") || value === "0x0" || value === "0x0000000000000000000000000000000000000000";
+}
+
+function buildSimulatedTokenInfo(contractAddress: string, userAddress?: string): TokenInfo {
+  return {
+    address: contractAddress || "sim:BMFT",
+    name: "BaytMiftah Property Token",
+    symbol: "BMFT",
+    decimals: 18,
+    totalSupply: "1000000",
+    balance: userAddress ? "100" : "0",
+  };
+}
+
 export const propertyTokenService = {
   /**
    * Get token contract instance
@@ -47,6 +63,9 @@ export const propertyTokenService = {
    * Get token info
    */
   async getTokenInfo(contractAddress: string, userAddress?: string): Promise<TokenInfo> {
+    if (isSimulatedTokenAddress(contractAddress)) {
+      return buildSimulatedTokenInfo(contractAddress, userAddress);
+    }
     try {
       const contract = this.getContract(contractAddress, false);
       
@@ -81,6 +100,9 @@ export const propertyTokenService = {
    * Get user balance
    */
   async getBalance(contractAddress: string, userAddress: string): Promise<string> {
+    if (isSimulatedTokenAddress(contractAddress)) {
+      return "100";
+    }
     try {
       const contract = this.getContract(contractAddress, false);
       const decimals = await contract.decimals();

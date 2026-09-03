@@ -10,6 +10,7 @@ import { Badge } from "@/app/components/ui/badge";
 import { organizationService } from "@/lib/organization.service";
 import { estateOperationsService, type ManagedEstate } from "@/lib/estate-operations.service";
 import { bankReconciliationService } from "@/lib/bank-reconciliation.service";
+import { getSupportedBankFeedProviders } from "@/lib/bank-feed-providers";
 import { supabase } from "@/lib/supabase";
 
 type BankAccount = {
@@ -162,6 +163,10 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
     description: "",
   });
   const [feedFileName, setFeedFileName] = useState("");
+  const [feedConnections, setFeedConnections] = useState<Array<{ id: string; provider: string; provider_account_id: string; status: string; last_synced_at?: string | null }>>([]);
+  const [feedProvider, setFeedProvider] = useState("gtbank");
+  const [feedProviderAccountId, setFeedProviderAccountId] = useState("");
+  const [syncingFeedId, setSyncingFeedId] = useState<string | null>(null);
   const [paymentCandidates, setPaymentCandidates] = useState<Array<{ id: string; amount_minor?: number | null; received_at?: string | null; provider_reference?: string | null; payment_reference?: string | null }>>([]);
   const [matchingTxnId, setMatchingTxnId] = useState<string | null>(null);
 
@@ -253,6 +258,8 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
 
       const candidates = await bankReconciliationService.getOrganizationPaymentCandidates(resolvedOrganizationId);
       setPaymentCandidates(candidates);
+      const connections = await bankReconciliationService.getBankFeedConnections(resolvedOrganizationId);
+      setFeedConnections(connections || []);
     } catch (failure: any) {
       console.error(failure);
       toast.error(failure?.message || "Unable to load reconciliation data.");
@@ -666,6 +673,107 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
             <div className="mt-3">
               <Input type="file" accept=".csv,text/csv" onChange={importBankFeedFile} />
             </div>
+          </div>
+          <div className="mt-4 rounded-lg border border-border bg-surface-subtle p-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="font-medium">Live bank feed sync</p>
+                <p className="text-sm text-muted-foreground">
+                  Connect GTBank, Fidelity, Monzo, or other feeds. Demo transactions import automatically when provider keys are not configured.
+                </p>
+              </div>
+              <Badge variant="outline">Code-complete</Badge>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <select
+                className="rounded-lg border border-border bg-input-background px-3 py-2 text-sm"
+                value={feedProvider}
+                onChange={(e) => setFeedProvider(e.target.value)}
+              >
+                {getSupportedBankFeedProviders().map((provider) => (
+                  <option key={provider.id} value={provider.id}>
+                    {provider.label}
+                  </option>
+                ))}
+              </select>
+              <Input
+                placeholder="Provider account ID"
+                value={feedProviderAccountId}
+                onChange={(e) => setFeedProviderAccountId(e.target.value)}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!selectedAccountId || !feedProviderAccountId.trim() || !actorId}
+                onClick={() => {
+                  void (async () => {
+                    try {
+                      await bankReconciliationService.connectBankFeed({
+                        organizationId: resolvedOrganizationId,
+                        bankAccountId: selectedAccountId,
+                        provider: feedProvider,
+                        providerAccountId: feedProviderAccountId.trim(),
+                        createdBy: actorId,
+                      });
+                      toast.success("Bank feed connected.");
+                      await load();
+                    } catch (failure: any) {
+                      toast.error(failure?.message || "Unable to connect bank feed.");
+                    }
+                  })();
+                }}
+              >
+                Connect feed
+              </Button>
+            </div>
+            {feedConnections.length > 0 ? (
+              <div className="space-y-2">
+                {feedConnections.map((connection) => (
+                  <div key={connection.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm">
+                    <div>
+                      <p className="font-medium capitalize">{connection.provider.replace(/-/g, " ")}</p>
+                      <p className="text-muted-foreground">
+                        {connection.provider_account_id} · {connection.status}
+                        {connection.last_synced_at
+                          ? ` · Last sync ${new Date(connection.last_synced_at).toLocaleString()}`
+                          : ""}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={syncingFeedId === connection.id}
+                      onClick={() => {
+                        void (async () => {
+                          try {
+                            setSyncingFeedId(connection.id);
+                            const result = await bankReconciliationService.syncBankFeed(connection.id);
+                            toast.success(
+                              `Synced ${result.imported ?? 0} transaction(s)${(result as { simulated?: boolean }).simulated ? " (demo feed)" : ""}.`
+                            );
+                            await load();
+                          } catch (failure: any) {
+                            toast.error(failure?.message || "Bank feed sync failed.");
+                          } finally {
+                            setSyncingFeedId(null);
+                          }
+                        })();
+                      }}
+                    >
+                      {syncingFeedId === connection.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-1" /> Sync now
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">No live feeds connected yet.</p>
+            )}
           </div>
           <form className="mt-4 space-y-3" onSubmit={uploadStatement}>
             <div className="grid gap-3 md:grid-cols-2">

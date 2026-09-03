@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from '../../i18n/LocaleContext'
+import { useCurrency } from '../../context/CurrencyContext'
 import { createReservation, fetchListingAvailability } from '../../lib/baytmiftah/reservation-service'
 import { CONSUMER_ROUTES } from '../../lib/consumer-routes'
 import { buildCheckoutPath } from '../../lib/checkout-navigation'
@@ -12,6 +13,7 @@ import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from '../../../lib/legal-conf
 export default function StayBookingCard({ listing }) {
   const { user } = useAuth()
   const { t } = useTranslation()
+  const { formatPrice } = useCurrency()
   const navigate = useNavigate()
   const [checkIn, setCheckIn] = useState('')
   const [checkOut, setCheckOut] = useState('')
@@ -146,7 +148,7 @@ export default function StayBookingCard({ listing }) {
 
       {nights > 0 && (
         <p className="mt-3 text-sm text-ink-secondary">
-          {nights} night{nights > 1 ? 's' : ''} · GHS {total.toLocaleString()} total
+          {nights} night{nights > 1 ? 's' : ''} · {formatPrice(total, { currency: listing.currency || undefined })} total
         </p>
       )}
 

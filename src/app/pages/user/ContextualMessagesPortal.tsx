@@ -27,6 +27,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
+import { PageHeader, PageLayout } from "../../components/ux";
 import { useAuth } from "../../context/AuthContext";
 
 function ResidentInboxContent() {
@@ -91,30 +92,28 @@ function ResidentInboxContent() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-6 px-4">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Resident Portal & Messages</h1>
-          <p className="text-sm text-muted-foreground">
-            Direct real-time connection to your estate manager, leasing team, and 24/7 AI operations.
-          </p>
-        </div>
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 text-xs font-semibold border border-violet-500/20">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>AI Operations Active</span>
-        </div>
-      </div>
+    <PageLayout variant="consumer" maxWidthClassName="max-w-6xl">
+      <PageHeader
+        title="Resident Portal & Messages"
+        description="Direct real-time connection to your estate manager, leasing team, and 24/7 AI operations."
+        actions={
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 text-xs font-semibold border border-violet-500/20">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>AI Operations Active</span>
+          </div>
+        }
+      />
 
-      <div className="h-[600px] flex rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+      <div className="h-[600px] flex rounded-2xl border border-surface-border bg-surface/90 shadow-xs overflow-hidden">
         {/* ── Left list ──────────────────────────────────────────────────────── */}
-        <div className="w-72 sm:w-80 border-r border-border flex flex-col bg-muted/20">
-          <div className="p-3.5 border-b border-border font-semibold text-xs text-foreground">
+        <div className="w-72 sm:w-80 border-r border-surface-border flex flex-col bg-surface-subtle/80">
+          <div className="p-3.5 border-b border-surface-border font-semibold text-xs text-ink">
             Your Property Threads
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-border/40">
+          <div className="flex-1 overflow-y-auto divide-y divide-surface-border/60">
             {conversations.length === 0 ? (
-              <div className="p-6 text-center text-xs text-muted-foreground">
+              <div className="p-6 text-center text-xs text-ink-secondary">
                 <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p>No active conversations.</p>
               </div>
@@ -126,7 +125,7 @@ function ResidentInboxContent() {
                     key={conv.id}
                     onClick={() => setActiveConversationId(conv.id)}
                     className={`w-full text-left p-3 transition-colors flex items-start gap-2.5 ${
-                      isSelected ? "bg-primary/10 border-l-4 border-primary" : "hover:bg-muted/40"
+                      isSelected ? "bg-primary/10 border-l-4 border-primary" : "hover:bg-surface-hover"
                     }`}
                   >
                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
@@ -136,7 +135,7 @@ function ResidentInboxContent() {
                       <h4 className="text-xs font-semibold text-foreground truncate">
                         {conv.title || "Estate Management"}
                       </h4>
-                      <p className="text-[11px] text-muted-foreground truncate">
+                      <p className="text-[11px] text-ink-secondary truncate">
                         {conv.last_message_preview || "Say something to management..."}
                       </p>
                     </div>
@@ -148,21 +147,21 @@ function ResidentInboxContent() {
         </div>
 
         {/* ── Right: Live Feed ───────────────────────────────────────────────── */}
-        <div className="flex-1 flex flex-col min-w-0 bg-background/50">
+        <div className="flex-1 flex flex-col min-w-0 bg-surface/50">
           {activeConversation ? (
             <>
               <ContextHeaderBanner conversation={activeConversation} />
 
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {messages.length === 0 ? (
-                  <div className="py-12 text-center text-muted-foreground space-y-3">
+                  <div className="py-12 text-center text-ink-secondary space-y-3">
                     <p className="text-xs">You can describe any issue or request in your own words.</p>
                     <div className="flex flex-wrap gap-2 justify-center max-w-md mx-auto">
                       {samplePrompts.map((prompt, i) => (
                         <button
                           key={i}
                           onClick={() => setInputText(prompt)}
-                          className="text-[11px] px-3 py-1.5 rounded-full bg-card border border-border hover:border-primary/40 text-foreground transition-colors text-left"
+                          className="text-[11px] px-3 py-1.5 rounded-full bg-surface border border-surface-border hover:border-primary/40 text-ink transition-colors text-left"
                         >
                           "{prompt}"
                         </button>
@@ -180,7 +179,7 @@ function ResidentInboxContent() {
                         className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
                       >
                         {!isMe && (
-                          <span className="text-[10px] text-muted-foreground font-medium mb-1 px-1 flex items-center gap-1">
+                          <span className="text-[10px] text-ink-secondary font-medium mb-1 px-1 flex items-center gap-1">
                             {isAI && <Sparkles className="w-3 h-3 text-violet-500" />}
                             {msg.sender_name || (isAI ? "BaytMiftah AI" : "Property Manager")}
                           </span>
@@ -192,7 +191,7 @@ function ResidentInboxContent() {
                               ? "bg-primary text-primary-foreground rounded-br-xs"
                               : isAI
                               ? "bg-violet-500/10 text-foreground border border-violet-500/20 rounded-bl-xs"
-                              : "bg-card border border-border text-foreground rounded-bl-xs"
+                              : "bg-surface border border-surface-border text-ink rounded-bl-xs"
                           }`}
                         >
                           <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
@@ -220,7 +219,7 @@ function ResidentInboxContent() {
                 )}
 
                 {activeTypingUsers.length > 0 && (
-                  <div className="text-xs text-muted-foreground italic px-2">
+                  <div className="text-xs text-ink-secondary italic px-2">
                     Management is typing...
                   </div>
                 )}
@@ -229,7 +228,7 @@ function ResidentInboxContent() {
               </div>
 
               {/* Input */}
-              <form onSubmit={handleSend} className="p-3 border-t border-border bg-card flex items-center gap-2">
+              <form onSubmit={handleSend} className="p-3 border-t border-surface-border bg-surface flex items-center gap-2">
                 <input
                   type="text"
                   placeholder="Describe an issue, request a repair, or ask a question..."
@@ -238,7 +237,7 @@ function ResidentInboxContent() {
                     setInputText(e.target.value);
                     broadcastTypingStatus(e.target.value.length > 0);
                   }}
-                  className="flex-1 bg-muted/60 border border-border rounded-xl px-4 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  className="app-input flex-1 py-2.5 text-xs"
                 />
 
                 <Button
@@ -253,14 +252,14 @@ function ResidentInboxContent() {
               </form>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-ink-secondary">
               <MessageCircle className="w-10 h-10 mb-2 opacity-50" />
               <p className="text-xs">Select a conversation thread to begin.</p>
             </div>
           )}
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }
 

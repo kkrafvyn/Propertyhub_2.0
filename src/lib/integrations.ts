@@ -39,13 +39,13 @@ export const clientIntegrations = {
       return !!firstEnv("VITE_PAYANGELS_PUBLIC_KEY");
     },
     get checkoutReady() {
-      return clientIntegrations.supabase.configured && clientIntegrations.payangels.clientConfigured;
+      return clientIntegrations.supabase.configured;
     },
     get configured() {
       return clientIntegrations.payangels.checkoutReady;
     },
     label: "Payments",
-    hint: "Payment public and secret keys",
+    hint: "PayAngels/Stripe keys optional — server simulates checkout when secrets are absent",
   },
 
   webPush: {

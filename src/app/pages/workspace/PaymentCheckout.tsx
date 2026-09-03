@@ -241,6 +241,18 @@ export function PaymentCheckout({
           purpose: "other",
         });
 
+        if (checkout.simulated || String(checkout.accessCode || "").startsWith("sim_")) {
+          const result = await paymentService.verifyCheckoutReturn({ reference: checkout.reference });
+          if (result.status !== "success" && result.status !== "completed") {
+            throw new Error("Simulated payment verification failed.");
+          }
+          setCompletedTransactionId(result.transaction?.id || checkout.reference);
+          setStep(4);
+          onSuccess(result.transaction?.id || checkout.reference);
+          setLoading(false);
+          return;
+        }
+
         let paid = false;
         await openPaystackInline({
           email: user.email!,
@@ -276,6 +288,18 @@ export function PaymentCheckout({
         amount: paymentState.totalAmount,
         purpose: "other",
       });
+
+      if (checkout.simulated || !checkout.authorizationUrl) {
+        const result = await paymentService.verifyCheckoutReturn({ reference: checkout.reference });
+        if (result.status !== "success" && result.status !== "completed") {
+          throw new Error("Simulated payment verification failed.");
+        }
+        setCompletedTransactionId(result.transaction?.id || checkout.reference);
+        setStep(4);
+        onSuccess(result.transaction?.id || checkout.reference);
+        setLoading(false);
+        return;
+      }
 
       if (checkout.authorizationUrl) {
         window.location.href = checkout.authorizationUrl;

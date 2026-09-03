@@ -7,7 +7,7 @@
  * - Automated Broadcast Queues (Estate power/water notices, rent billing cycles)
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   MessageSquare,
   Send,
@@ -26,6 +26,9 @@ import {
   Zap,
   PhoneCall,
   BellRing,
+  Link2,
+  Radio,
+  Hash,
 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -37,6 +40,11 @@ import {
   type WhatsAppRentInvoiceParams,
   type WhatsAppMaintenanceDispatchParams,
 } from '../../../lib/whatsapp-business-bot.service';
+import {
+  whatsappGroupBotService,
+  type WhatsAppGroupChannel,
+  type WhatsAppInboundMessage,
+} from '../../../lib/whatsapp-group-bot.service';
 
 interface ChatMessage {
   id: string;
@@ -46,8 +54,8 @@ interface ChatMessage {
   quickReplies?: string[];
 }
 
-export function WhatsAppAutomationHub() {
-  const [activeTab, setActiveTab] = useState<'dispatcher' | 'simulator' | 'broadcast'>('dispatcher');
+export function WhatsAppAutomationHub({ organizationId }: { organizationId?: string }) {
+  const [activeTab, setActiveTab] = useState<'dispatcher' | 'simulator' | 'broadcast' | 'groups'>('dispatcher');
   const [activeDispatcher, setActiveDispatcher] = useState<'gate_pass' | 'rent_invoice' | 'maintenance'>('gate_pass');
 
   // Gate Pass Form State
@@ -97,6 +105,82 @@ export function WhatsAppAutomationHub() {
     },
   ]);
   const [simInput, setSimInput] = useState('');
+
+  const [linkedGroups, setLinkedGroups] = useState<WhatsAppGroupChannel[]>([]);
+  const [inboundMessages, setInboundMessages] = useState<WhatsAppInboundMessage[]>([]);
+  const [groupLinkForm, setGroupLinkForm] = useState({ groupId: '', groupName: '', respondWithoutMention: false });
+  const [groupSimInput, setGroupSimInput] = useState('');
+  const [groupSimSignDemo, setGroupSimSignDemo] = useState(true);
+  const [groupSimLog, setGroupSimLog] = useState<Array<{ user: string; bot?: string; skipped?: boolean }>>([]);
+  const webhookUrl = whatsappGroupBotService.getWebhookUrl();
+
+  useEffect(() => {
+    if (!organizationId) return;
+    void whatsappGroupBotService.listGroups(organizationId).then(setLinkedGroups).catch(() => setLinkedGroups([]));
+    void whatsappGroupBotService.listInboundMessages(organizationId).then(setInboundMessages).catch(() => setInboundMessages([]));
+  }, [organizationId]);
+
+  const handleLinkGroup = async () => {
+    if (!organizationId || !groupLinkForm.groupId.trim() || !groupLinkForm.groupName.trim()) {
+      toast.error('Group ID and name are required.');
+      return;
+    }
+    try {
+      const linked = await whatsappGroupBotService.linkGroup({
+        organizationId,
+        groupId: groupLinkForm.groupId.trim(),
+        groupName: groupLinkForm.groupName.trim(),
+        respondWithoutMention: groupLinkForm.respondWithoutMention,
+      });
+      setLinkedGroups((prev) => [linked, ...prev.filter((g) => g.id !== linked.id)]);
+      setGroupLinkForm({ groupId: '', groupName: '', respondWithoutMention: false });
+      toast.success('WhatsApp group linked to BaytMiftah bot.');
+    } catch (err: any) {
+      toast.error(err.message || 'Unable to link group.');
+    }
+  };
+
+  const handleGroupSimSend = () => {
+    if (!groupSimInput.trim()) return;
+    void (async () => {
+      const demoContext = groupSimSignDemo
+        ? {
+            pendingLeaseSignUrl: 'https://app.baytmiftah.com/sign/demo-token-abc',
+            pendingLeaseDocumentName: 'Residential lease — Unit 4B',
+            jurisdictionLabel: 'Greater Accra, Ghana',
+          }
+        : {};
+
+      const result = organizationId
+        ? await whatsappGroupBotService.simulateGroupMessageLive({
+            organizationId,
+            text: groupSimInput,
+            senderPhone: '233244123456',
+            ...demoContext,
+          })
+        : whatsappGroupBotService.simulateGroupMessage({
+            text: groupSimInput,
+            senderPhone: '233244123456',
+            context: {
+              tenantUserId: 'demo-tenant',
+              tenantName: 'Demo Tenant',
+              unitLabel: '4B',
+              estateName: 'Cantonments Luxury Suites',
+              currency: 'GHS',
+              outstandingMinor: 650000,
+              paymentUrl: 'https://app.baytmiftah.com/app/payments',
+              ...demoContext,
+            },
+          });
+
+      if (!result.responded) {
+        setGroupSimLog((prev) => [...prev, { user: groupSimInput, skipped: true }]);
+      } else {
+        setGroupSimLog((prev) => [...prev, { user: groupSimInput, bot: result.bot.replyMessage }]);
+      }
+      setGroupSimInput('');
+    })();
+  };
 
   // Generated template preview
   const currentPreviewText = () => {
@@ -218,6 +302,18 @@ export function WhatsAppAutomationHub() {
         >
           <BellRing className="w-4 h-4" />
           Broadcast Automation Queue
+        </button>
+
+        <button
+          onClick={() => setActiveTab('groups')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 ${
+            activeTab === 'groups'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-ink-secondary hover:bg-surface-hover hover:text-ink'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          Group Bot
         </button>
       </div>
 
@@ -631,6 +727,160 @@ export function WhatsAppAutomationHub() {
             </div>
           </div>
         </Card>
+      )}
+
+      {activeTab === 'groups' && (
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          <div className="xl:col-span-5 space-y-4">
+            <Card className="p-5 border-surface-border bg-surface space-y-4">
+              <h3 className="text-base font-bold text-ink flex items-center gap-2">
+                <Link2 className="w-5 h-5 text-emerald-500" />
+                Webhook & setup
+              </h3>
+              <p className="text-xs text-ink-secondary leading-relaxed">
+                Add your BaytMiftah WhatsApp Business number to any resident or estate group. In Meta Developer Console, set the webhook URL below and subscribe to <strong>messages</strong>.
+              </p>
+              <div className="rounded-lg bg-surface-subtle border border-surface-border p-3 text-xs font-mono break-all">
+                {webhookUrl}
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  void navigator.clipboard.writeText(webhookUrl);
+                  toast.success('Webhook URL copied.');
+                }}
+              >
+                <Copy className="w-4 h-4 mr-1" /> Copy webhook URL
+              </Button>
+              <ol className="text-xs text-muted-foreground list-decimal pl-4 space-y-1">
+                <li>Add the business number to your WhatsApp group as a participant.</li>
+                <li>Tenants type <strong>@BaytMiftah menu</strong> or <strong>/bm 1</strong> for rent, gate pass, etc.</li>
+                <li>Copy the <strong>Group ID</strong> from the live feed below and link it here.</li>
+              </ol>
+            </Card>
+
+            <Card className="p-5 border-surface-border bg-surface space-y-3">
+              <h3 className="text-sm font-bold text-ink flex items-center gap-2">
+                <Hash className="w-4 h-4" />
+                Link group manually
+              </h3>
+              <input
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                placeholder="Group ID (from inbound feed)"
+                value={groupLinkForm.groupId}
+                onChange={(e) => setGroupLinkForm({ ...groupLinkForm, groupId: e.target.value })}
+              />
+              <input
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                placeholder="Group name (e.g. East Legon Block A)"
+                value={groupLinkForm.groupName}
+                onChange={(e) => setGroupLinkForm({ ...groupLinkForm, groupName: e.target.value })}
+              />
+              <label className="flex items-center gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={groupLinkForm.respondWithoutMention}
+                  onChange={(e) => setGroupLinkForm({ ...groupLinkForm, respondWithoutMention: e.target.checked })}
+                />
+                Respond to all group messages (no @mention required)
+              </label>
+              <Button size="sm" onClick={() => void handleLinkGroup()} disabled={!organizationId}>
+                Link group
+              </Button>
+            </Card>
+
+            <Card className="p-5 border-surface-border bg-surface">
+              <h3 className="text-sm font-bold mb-3">Linked groups ({linkedGroups.length})</h3>
+              {linkedGroups.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No groups linked yet. Messages from new groups auto-register on first webhook.</p>
+              ) : (
+                <div className="space-y-2">
+                  {linkedGroups.map((group) => (
+                    <div key={group.id} className="rounded-lg border p-3 text-xs">
+                      <p className="font-semibold">{group.group_name || group.group_id}</p>
+                      <p className="text-muted-foreground font-mono truncate">{group.group_id}</p>
+                      <div className="flex gap-2 mt-2">
+                        <Badge variant="outline">{group.is_active ? 'Active' : 'Paused'}</Badge>
+                        {group.respond_without_mention ? <Badge variant="secondary">All messages</Badge> : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
+
+          <div className="xl:col-span-7 space-y-4">
+            <Card className="p-5 border-surface-border bg-surface">
+              <h3 className="text-sm font-bold flex items-center gap-2 mb-3">
+                <Radio className="w-4 h-4 text-emerald-500" />
+                Live inbound messages
+              </h3>
+              {inboundMessages.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No messages yet. Send a test message in your linked WhatsApp group.</p>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {inboundMessages.map((msg) => (
+                    <div key={msg.id} className="rounded-lg border p-3 text-xs">
+                      <div className="flex justify-between gap-2">
+                        <span className="font-semibold">{msg.sender_name || msg.sender_phone}</span>
+                        <span className="text-muted-foreground">{new Date(msg.received_at).toLocaleString()}</span>
+                      </div>
+                      {msg.is_group ? <Badge variant="outline" className="mt-1">Group {msg.group_id?.slice(-8)}</Badge> : null}
+                      <p className="mt-2">{msg.message_text}</p>
+                      {msg.bot_replied && msg.bot_reply_text ? (
+                        <p className="mt-2 text-emerald-700 whitespace-pre-line bg-emerald-50 rounded p-2">{msg.bot_reply_text}</p>
+                      ) : (
+                        <p className="mt-2 text-muted-foreground italic">No bot reply (mention required)</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <Card className="p-5 border-surface-border bg-surface">
+              <h3 className="text-sm font-bold flex items-center gap-2 mb-3">
+                <Bot className="w-4 h-4" />
+                Group message simulator
+              </h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                Test how the bot responds when tagged in a group. Try <strong>@BaytMiftah menu</strong>, <strong>/bm 2</strong>, or <strong>/bm 6</strong> for lease signing.
+              </p>
+              <label className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                <input
+                  type="checkbox"
+                  checked={groupSimSignDemo}
+                  onChange={(e) => setGroupSimSignDemo(e.target.checked)}
+                />
+                Simulate pending lease sign lookup (command 6)
+              </label>
+              <div className="space-y-2 max-h-48 overflow-y-auto mb-3">
+                {groupSimLog.map((entry, idx) => (
+                  <div key={idx} className="text-xs space-y-1">
+                    <p className="text-right bg-[#005c4b]/10 rounded p-2">{entry.user}</p>
+                    {entry.skipped ? (
+                      <p className="text-muted-foreground italic pl-2">Bot ignored (no mention)</p>
+                    ) : entry.bot ? (
+                      <p className="bg-surface-subtle rounded p-2 whitespace-pre-line">{entry.bot}</p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                  placeholder="@BaytMiftah menu"
+                  value={groupSimInput}
+                  onChange={(e) => setGroupSimInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleGroupSimSend()}
+                />
+                <Button size="sm" onClick={handleGroupSimSend}>Send</Button>
+              </div>
+            </Card>
+          </div>
+        </div>
       )}
     </div>
   );

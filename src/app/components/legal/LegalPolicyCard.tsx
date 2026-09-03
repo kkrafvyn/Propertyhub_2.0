@@ -6,7 +6,7 @@ export function LegalPolicyCard({ document }: { document: LegalDocument }) {
   return (
     <Link
       to={getLegalPath(document.slug)}
-      className="group block rounded-2xl border border-surface-border/80 dark:border-white/[0.08] bg-surface/90 dark:bg-card/80 backdrop-blur-xs p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-forest/40 dark:hover:border-white/20 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-forest"
+      className="group block rounded-2xl border border-surface-border/80 dark:border-white/[0.08] bg-surface/90 dark:bg-card/80 backdrop-blur-xs p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-forest/40 dark:hover:border-white/20 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-forest"
     >
       <div className="flex items-start justify-between gap-2">
         <span className="font-serif font-medium text-foreground tracking-tight text-base group-hover:text-primary transition-colors">

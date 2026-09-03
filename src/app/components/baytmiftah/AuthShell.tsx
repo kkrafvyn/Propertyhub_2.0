@@ -67,7 +67,7 @@ export function AuthShell({
   const slide = CAROUSEL_SLIDES[currentSlide];
 
   return (
-    <div className="auth-shell min-h-screen min-h-[100dvh] flex bg-neutral-950 lg:bg-background text-foreground font-sans antialiased relative overflow-hidden">
+    <div className="auth-shell min-h-[100dvh] flex bg-neutral-950 lg:bg-background text-foreground font-sans antialiased relative overflow-hidden">
       {/* Mobile Full-Bleed Animated Carousel Background */}
       <div className="lg:hidden absolute inset-0 z-0 select-none overflow-hidden">
         {CAROUSEL_SLIDES.map((s, idx) => (

@@ -1,0 +1,79 @@
+/* BaytMiftah app-wide UI (consumer, workspace, auth, marketing — not admin) */
+
+@layer components {
+  .app-page-header {
+    @apply mb-8 space-y-4;
+  }
+
+  .app-page-title {
+    @apply font-serif text-3xl sm:text-4xl font-semibold tracking-tight text-ink;
+  }
+
+  .app-page-description {
+    @apply text-sm sm:text-base text-ink-secondary leading-relaxed max-w-3xl;
+  }
+
+  .app-surface-card {
+    @apply rounded-2xl border border-surface-border bg-surface/90 shadow-card backdrop-blur-xl transition-all duration-300;
+    box-shadow: var(--shadow-card), var(--border-sheen);
+  }
+
+  .app-surface-card-hover {
+    @apply hover:border-primary/30 hover:shadow-card-hover hover:-translate-y-1;
+  }
+
+  .app-input {
+    @apply w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ink-muted outline-none transition-all duration-200 focus:border-primary focus:ring-4 focus:ring-primary/10 shadow-xs;
+  }
+
+  .app-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-orange to-[#c45d44] px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer;
+    box-shadow: 0 4px 14px rgba(224, 122, 95, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  .app-btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-surface-border bg-surface px-5 py-2.5 text-sm font-medium text-ink transition-all duration-200 hover:bg-surface-hover hover:border-primary/30 hover:text-ink active:scale-[0.98] cursor-pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), var(--border-sheen);
+  }
+
+  .workspace-portal .workspace-sidebar {
+    @apply border-r border-surface-border bg-surface/95 backdrop-blur-md;
+  }
+
+  .workspace-portal .workspace-main-panel {
+    @apply relative;
+    background:
+      radial-gradient(ellipse 70% 45% at 100% 0%, rgba(15, 41, 34, 0.04), transparent 55%),
+      transparent;
+  }
+
+  .dark .workspace-portal .workspace-main-panel {
+    background:
+      radial-gradient(ellipse 70% 45% at 100% 0%, rgba(82, 183, 136, 0.06), transparent 55%),
+      transparent;
+  }
+
+  .workspace-portal .workspace-nav-link.active {
+    @apply bg-brand-forest/10 text-brand-forest font-semibold shadow-xs;
+  }
+
+  .dark .workspace-portal .workspace-nav-link.active {
+    @apply bg-primary/15 text-primary;
+  }
+
+  .auth-form-panel {
+    @apply rounded-3xl border border-surface-border bg-surface/95 p-6 sm:p-8 shadow-lg backdrop-blur-md;
+  }
+
+  .app-status-pill {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-surface/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-ink-secondary;
+  }
+
+  .app-divider {
+    @apply h-px w-full bg-surface-border;
+  }
+
+  .app-textarea {
+    @apply w-full min-h-32 resize-y rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ink-muted outline-none transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/15;
+  }
+}

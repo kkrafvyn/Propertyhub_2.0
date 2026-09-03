@@ -3,10 +3,10 @@ import { Link } from "react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export const inputClass =
-  "w-full rounded-lg border border-surface-border bg-transparent px-4 py-3 text-sm text-ink outline-none transition focus:border-ink";
+  "app-input";
 
 export const selectClass =
-  "w-full rounded-lg border border-surface-border bg-transparent px-4 py-3 text-sm text-ink outline-none transition focus:border-ink";
+  "app-input";
 
 export function PageTitle({
   title,

@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { Card } from "../../../components/ui/Card";
 import { Badge } from "../../../components/ui/badge";
 import {
   revenueManagementService,
   type RevenueDashboardMetrics,
 } from "../../../../lib/revenue-management.service";
-import { getTransactionFeePercent } from "../../../../lib/revenue-fee-resolver";
+import { revenueJurisdictionEventsService } from "../../../../lib/revenue-jurisdiction-events.service";
 
 function formatMoney(minor: number, currency = "GHS") {
   return new Intl.NumberFormat("en-GH", {
@@ -65,19 +64,19 @@ function BarChart({
 
 export function RevenueDashboard() {
   const [metrics, setMetrics] = useState<RevenueDashboardMetrics | null>(null);
-  const [transactionFeePercent, setTransactionFeePercent] = useState(0);
+  const [esignStats, setEsignStats] = useState<Awaited<
+    ReturnType<typeof revenueJurisdictionEventsService.getPlatformEsignStats>
+  > | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     void Promise.all([
-      revenueManagementService.getDashboardMetrics(),
-      getTransactionFeePercent(),
-    ])
-      .then(([nextMetrics, feePercent]) => {
-        setMetrics(nextMetrics);
-        setTransactionFeePercent(feePercent);
-      })
-      .finally(() => setLoading(false));
+      revenueManagementService.getDashboardMetrics().then(setMetrics),
+      revenueJurisdictionEventsService
+        .getPlatformEsignStats()
+        .then(setEsignStats)
+        .catch(() => setEsignStats(null)),
+    ]).finally(() => setLoading(false));
   }, []);
 
   if (loading) {
@@ -98,11 +97,6 @@ export function RevenueDashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard
-          label="Platform transaction fee"
-          value={`${transactionFeePercent}%`}
-          hint="Applied to every checkout"
-        />
         <MetricCard label="Today's Revenue" value={formatMoney(metrics.todayRevenueMinor)} hint={`${metrics.transactionCountToday} transactions`} />
         <MetricCard label="This Month" value={formatMoney(metrics.monthRevenueMinor)} hint={`${metrics.transactionCountMonth} transactions`} />
         <MetricCard label="Recurring Revenue (MRR est.)" value={formatMoney(metrics.recurringRevenueMinor)} hint={`${metrics.activeSubscriptions} active plans`} />
@@ -112,25 +106,51 @@ export function RevenueDashboard() {
         <MetricCard label="Platform Commission" value={formatMoney(metrics.platformCommissionMinor)} />
       </div>
 
-      <Card className="p-5 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 className="font-semibold">Transaction fee settings</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Admins control the platform percentage charged on every property transaction at checkout.
-          </p>
-        </div>
-        <Link
-          to="/admin/revenue/transaction-fees"
-          className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
-        >
-          Edit transaction fee ({transactionFeePercent}%)
-        </Link>
-      </Card>
-
       <div className="grid gap-4 xl:grid-cols-2">
         <BarChart title="Monthly revenue" series={metrics.monthlySeries} valueKey="amountMinor" labelKey="month" />
         <BarChart title="Daily transactions (last 7 days)" series={metrics.dailySeries} valueKey="amountMinor" labelKey="day" />
       </div>
+
+      {metrics.jurisdictionBreakdown.length > 0 ? (
+        <BarChart
+          title="Revenue by jurisdiction (this month)"
+          series={metrics.jurisdictionBreakdown.map((row) => ({
+            jurisdiction: `${row.jurisdiction} (${row.count})`,
+            amountMinor: row.amountMinor,
+          }))}
+          valueKey="amountMinor"
+          labelKey="jurisdiction"
+        />
+      ) : null}
+
+      {esignStats && esignStats.breakdown.length > 0 ? (
+        <Card className="p-5 space-y-4">
+          <h3 className="font-semibold">Lease e-signatures by jurisdiction</h3>
+          <div className="grid gap-4 md:grid-cols-3 text-sm">
+            <div>
+              <p className="text-muted-foreground">Envelopes sent</p>
+              <p className="text-xl font-semibold">{esignStats.totalSent}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Completed</p>
+              <p className="text-xl font-semibold">{esignStats.totalCompleted}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Attributed lease GMV</p>
+              <p className="text-xl font-semibold">{formatMoney(esignStats.attributedGmvMinor)}</p>
+            </div>
+          </div>
+          <BarChart
+            title="Completed e-sign GMV by jurisdiction"
+            series={esignStats.breakdown.map((row) => ({
+              jurisdiction: `${row.jurisdiction} (${row.completed} signed)`,
+              amountMinor: row.amountMinor,
+            }))}
+            valueKey="amountMinor"
+            labelKey="jurisdiction"
+          />
+        </Card>
+      ) : null}
 
       <Card className="p-5 space-y-4">
         <h3 className="font-semibold">Top revenue sources</h3>

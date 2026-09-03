@@ -282,7 +282,7 @@ export function DesktopShell({
   const hideFooterOnMobile = Capacitor.isNativePlatform() || isPhone;
   const footerVisible = !isElectron() && (showFooter ?? !minimal) && !hideFooterOnMobile;
   return (
-    <div className="desktop-shell min-h-screen min-h-[100dvh] overflow-x-clip text-ink">
+    <div className="desktop-shell min-h-[100dvh] overflow-x-clip text-ink">
       <div className="desktop-shell-ambient" aria-hidden />
       <Header search={search} minimal={minimal} categoryBar={categoryBar} compareCount={compareCount} />
       <main

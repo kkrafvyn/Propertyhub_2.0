@@ -284,6 +284,7 @@ Deno.serve(async (req) => {
       accessCode: payangels.access_code,
       reference: payangels.reference,
       callbackUrl,
+      simulated: Boolean((payangels as { simulated?: boolean }).simulated),
       pricing: {
         baseMinor: pricing.baseMinor,
         platformFeeMinor: pricing.platformFeeMinor,

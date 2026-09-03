@@ -18,6 +18,10 @@ import { listingQualityService } from "../../../lib/listing-quality.service";
 import { propertyMediaService } from "../../../lib/property-media.service";
 import { listingService } from "../../../lib/listing.service";
 import { propertyService } from "../../../lib/property.service";
+import { PropertyJurisdictionFields } from "../../components/compliance/PropertyJurisdictionFields";
+import { countryRulesService } from "../../../lib/country-rules.service";
+import { resolveSubdivisionCode } from "../../../lib/country-rules/subdivision-resolver";
+import { resolveJurisdiction } from "../../../lib/real-estate-compliance";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 type ListingStatus = Database["public"]["Tables"]["listings"]["Row"]["status"];
@@ -39,6 +43,7 @@ type ListingDraft = {
   region: string;
   neighborhood: string;
   country: string;
+  subdivisionCode: string;
   category: PropertyCategory;
   bedrooms: string;
   bathrooms: string;
@@ -93,6 +98,7 @@ function createDraft(listing: any): ListingDraft {
     region: listing.property?.region || "",
     neighborhood: listing.property?.neighborhood || "",
     country: listing.property?.country || "Ghana",
+    subdivisionCode: listing.property?.subdivision_code || "",
     category: (listing.property?.category || "apartment") as PropertyCategory,
     bedrooms: listing.property?.bedrooms != null ? String(listing.property.bedrooms) : "",
     bathrooms: listing.property?.bathrooms != null ? String(listing.property.bathrooms) : "",
@@ -135,6 +141,7 @@ function isDraftDirty(listing: any, draft?: ListingDraft) {
     original.region !== draft.region ||
     original.neighborhood !== draft.neighborhood ||
     original.country !== draft.country ||
+    original.subdivisionCode !== draft.subdivisionCode ||
     original.category !== draft.category ||
     original.bedrooms !== draft.bedrooms ||
     original.bathrooms !== draft.bathrooms ||
@@ -202,6 +209,18 @@ export function WorkspaceListings({
   const [selectedListingIds, setSelectedListingIds] = useState<string[]>([]);
   const [bulkWorking, setBulkWorking] = useState(false);
   const createdListingId = (location.state as { createdListingId?: string } | null)?.createdListingId;
+  const [orgMarket, setOrgMarket] = useState<{ jurisdiction?: string; subdivision?: string; currency?: string }>({});
+
+  useEffect(() => {
+    void countryRulesService.getOrganizationSettings(organization.id).then((settings) => {
+      if (!settings) return;
+      setOrgMarket({
+        jurisdiction: settings.default_jurisdiction,
+        subdivision: settings.default_subdivision || undefined,
+        currency: settings.default_currency || undefined,
+      });
+    });
+  }, [organization.id]);
 
   useEffect(() => {
     void loadListings();
@@ -296,6 +315,16 @@ export function WorkspaceListings({
         Boolean(organization.verified)
       );
 
+      const jurisdictionId = resolveJurisdiction({
+        country: draft.country,
+        region: draft.region,
+        city: draft.city,
+      });
+      const subdivisionCode =
+        draft.subdivisionCode.trim().toUpperCase() ||
+        resolveSubdivisionCode(jurisdictionId, draft.region, draft.city) ||
+        null;
+
       await propertyService.updateProperty(listing.property_id, {
         address: draft.address.trim(),
         ghana_post_gps: ghanaMarketService.normalizeGhanaPostGps(draft.ghanaPostGps) || null,
@@ -303,6 +332,7 @@ export function WorkspaceListings({
         region: draft.region.trim(),
         neighborhood: draft.neighborhood.trim() || null,
         country: draft.country.trim(),
+        subdivision_code: subdivisionCode,
         location_confidence: locationConfidence,
         flood_risk_level: locationInsight?.floodRiskLevel || listing.property?.flood_risk_level || "unknown",
         category: draft.category,
@@ -852,6 +882,28 @@ export function WorkspaceListings({
                           value={draft?.country || ""}
                           onChange={(event) => updateDraft(listing.id, "country", event.target.value)}
                         />
+                        {draft ? (
+                          <PropertyJurisdictionFields
+                            values={{
+                              country: draft.country,
+                              region: draft.region,
+                              city: draft.city,
+                              subdivisionCode: draft.subdivisionCode,
+                              currency: draft.currency,
+                            }}
+                            orgJurisdiction={orgMarket.jurisdiction as any}
+                            orgSubdivision={orgMarket.subdivision}
+                            orgCurrency={orgMarket.currency}
+                            onChange={(patch) => {
+                              if (patch.subdivisionCode != null) {
+                                updateDraft(listing.id, "subdivisionCode", patch.subdivisionCode);
+                              }
+                              if (patch.currency != null) {
+                                updateDraft(listing.id, "currency", patch.currency);
+                              }
+                            }}
+                          />
+                        ) : null}
                         <div>
                           <label className="block mb-2 text-sm text-foreground">Category</label>
                           <select

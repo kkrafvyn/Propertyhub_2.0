@@ -204,16 +204,21 @@ export const blockchainService = {
    */
   async tokenizeProperty(tokenization: TokenizationRequest) {
     try {
+      const contractAddress =
+        tokenization.contractAddress?.trim() ||
+        `sim:BMFT-${tokenization.propertyId.slice(0, 8)}-${Date.now().toString(36)}`;
+      const simulated = isSimulatedTokenAddress(tokenization.contractAddress);
+
       const { data, error } = await supabase
         .from('tokenized_assets')
         .insert({
           organization_id: tokenization.organizationId,
           property_id: tokenization.propertyId,
-          token_contract_address: tokenization.contractAddress,
+          token_contract_address: contractAddress,
           token_symbol: tokenization.tokenSymbol,
           token_name: tokenization.tokenName,
           total_supply: tokenization.totalSupply,
-          chain_id: 137, // Polygon
+          chain_id: simulated ? 0 : 137,
           status: 'pending',
           metadata_uri: tokenization.metadata?.metadataUri || '',
         })

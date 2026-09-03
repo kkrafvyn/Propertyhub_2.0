@@ -41,6 +41,7 @@ import { hostSettingsService } from "../../lib/host-settings.service";
 import { propertyViewingService } from "../../lib/property-viewing.service";
 import { trustCenterService } from "../../lib/trust-center.service";
 import { ComplianceDisclosurePanel } from "../components/compliance/ComplianceDisclosurePanel";
+import { PropertyJurisdictionBadge } from "../components/compliance/PropertyJurisdictionBadge";
 import { realEstateComplianceService } from "../../lib/real-estate-compliance.service";
 import { ConsumerTrustBadges } from "../components/ConsumerTrustBadges";
 import { MarketplaceDisclaimerStrip } from "../components/legal/MarketplaceDisclaimerStrip";
@@ -694,7 +695,7 @@ export function PropertyDetail() {
             <div>
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <h1 className="text-3xl font-semibold">{pageTitle}</h1>
                     {organization?.verified && (
                       <TrustBadge
@@ -711,6 +712,19 @@ export function PropertyDetail() {
                       />
                     )}
                   </div>
+                  {property ? (
+                    <div className="mb-3">
+                      <PropertyJurisdictionBadge
+                        property={{
+                          country: property.country,
+                          region: property.region,
+                          city: property.city,
+                          subdivision_code: property.subdivision_code,
+                          currency: listing?.currency,
+                        }}
+                      />
+                    </div>
+                  ) : null}
                   <div className="flex items-center gap-2 text-muted-foreground mb-4">
                     <MapPin className="w-5 h-5" />
                     <span>
@@ -1576,6 +1590,12 @@ export function PropertyDetail() {
           <ComplianceDisclosurePanel
             jurisdictionId={jurisdictionId}
             listingType={listing.listing_type}
+            property={{
+              country: property?.country,
+              region: property?.region,
+              city: property?.city,
+              subdivision_code: property?.subdivision_code,
+            }}
           />
         </div>
 

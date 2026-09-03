@@ -28,50 +28,40 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <Card
-      className={`p-8 md:p-12 text-center bg-card/60 backdrop-blur-sm border-border/60 ${className}`}
+      className={`p-8 md:p-12 text-center ${className}`}
       role="status"
       aria-live="polite"
     >
       {Icon && (
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-primary/20 shadow-xs">
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-xs">
           <Icon className="h-6 w-6" aria-hidden="true" />
         </div>
       )}
 
-      <h3 className="text-xl font-serif font-medium tracking-tight text-foreground mb-2">
+      <h3 className="mb-2 text-xl font-serif font-medium tracking-tight text-ink">
         {title}
       </h3>
 
-      <p className="text-muted-foreground text-sm max-w-md mx-auto mb-6 leading-relaxed">
+      <p className="mx-auto mb-6 max-w-md text-sm leading-relaxed text-ink-secondary">
         {description}
       </p>
 
       <div className="flex flex-wrap items-center justify-center gap-3">
         {actionLabel && actionHref && (
           <Link to={actionHref}>
-            <Button size="sm" className="h-10 px-5 rounded-xl font-medium shadow-xs" aria-label={actionLabel}>
+            <Button size="sm" aria-label={actionLabel}>
               {actionLabel}
             </Button>
           </Link>
         )}
         {actionLabel && onAction && (
-          <Button
-            size="sm"
-            onClick={onAction}
-            className="h-10 px-5 rounded-xl font-medium shadow-xs"
-            aria-label={actionLabel}
-          >
+          <Button size="sm" onClick={onAction} aria-label={actionLabel}>
             {actionLabel}
           </Button>
         )}
         {secondaryActionLabel && secondaryActionHref && (
           <Link to={secondaryActionHref}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-10 px-5 rounded-xl font-medium border-border/80"
-              aria-label={secondaryActionLabel}
-            >
+            <Button variant="outline" size="sm" aria-label={secondaryActionLabel}>
               {secondaryActionLabel}
             </Button>
           </Link>

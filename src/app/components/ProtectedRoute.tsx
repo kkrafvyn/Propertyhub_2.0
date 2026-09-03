@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from "react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { AppLoadingScreen } from "../components/ux/AppLoadingScreen";
 import { adminService } from "../../lib/admin.service";
 import { isEmailVerified, isUserBanned } from "../../lib/security/password-policy";
 import { supabase } from "../../lib/supabase";
@@ -18,11 +19,7 @@ export function ProtectedRoute({
   const location = useLocation();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <AppLoadingScreen />;
   }
 
   if (!user) {
@@ -105,8 +102,8 @@ export function ProtectedAdminRoute({ children }: { children: React.ReactNode })
 
   if (loading || checkingAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }

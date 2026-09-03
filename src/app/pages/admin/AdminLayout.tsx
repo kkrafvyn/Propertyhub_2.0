@@ -1019,7 +1019,7 @@ export function AdminLayout() {
   if (shouldUseAdminMobileShell()) {
     return (
       <AdminMobileShell>
-        <div className="space-y-4">
+        <div className="admin-legacy-ui space-y-4">
           <div>
             <h1 className="text-lg font-bold text-foreground">{sectionTitle}</h1>
             <p className="text-sm text-muted-foreground">{sectionDescription}</p>
@@ -1032,7 +1032,7 @@ export function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="admin-legacy-ui min-h-screen bg-background">
       <nav className="bg-gradient-to-r from-primary to-accent text-white">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">

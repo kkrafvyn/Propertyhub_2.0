@@ -1,8 +1,9 @@
 import { buildTransactionalEmail } from "../_shared/email-template.ts";
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
+import { sendWhatsAppTextMessage } from "../_shared/whatsapp-cloud.ts";
 
-type NotificationChannel = "in_app" | "email" | "sms";
+type NotificationChannel = "in_app" | "email" | "sms" | "whatsapp";
 
 function getAuthorizedAutomationKey(req: Request) {
   const apiKey = req.headers.get("apikey");
@@ -141,6 +142,16 @@ async function sendSms(params: { to: string; body: string }) {
   return response.ok;
 }
 
+async function sendWhatsApp(params: { to: string; body: string }) {
+  try {
+    const result = await sendWhatsAppTextMessage({ to: params.to, text: params.body });
+    return result.success;
+  } catch (error) {
+    console.error("sendWhatsApp:", error);
+    return false;
+  }
+}
+
 async function createNotification(
   admin: ReturnType<typeof createAdminClient>,
   input: {
@@ -178,6 +189,7 @@ async function notifyUser(
     phone?: string | null;
     sendEmailCopy?: boolean;
     sendSmsCopy?: boolean;
+    sendWhatsAppCopy?: boolean;
   }
 ) {
   await createNotification(admin, {
@@ -222,6 +234,23 @@ async function notifyUser(
     await createNotification(admin, {
       userId: input.userId,
       channel: "sms",
+      notificationType: input.notificationType,
+      subject: input.subject,
+      content: input.content,
+      actionUrl: input.actionUrl,
+      delivered,
+    });
+  }
+
+  if (input.sendWhatsAppCopy && input.phone) {
+    const delivered = await sendWhatsApp({
+      to: input.phone,
+      body: input.content,
+    });
+
+    await createNotification(admin, {
+      userId: input.userId,
+      channel: "whatsapp",
       notificationType: input.notificationType,
       subject: input.subject,
       content: input.content,
@@ -300,6 +329,94 @@ async function runRentReminders(admin: ReturnType<typeof createAdminClient>) {
         reminded_at: new Date().toISOString(),
         reminder_type: isOverdue ? "overdue" : "upcoming",
         status: isOverdue ? "overdue" : row.status,
+      })
+      .eq("id", row.id);
+
+    reminded += 1;
+  }
+
+  return { reminded };
+}
+
+async function runLeaseEsignReminders(admin: ReturnType<typeof createAdminClient>) {
+  const now = new Date();
+  const staleCutoff = new Date(now);
+  staleCutoff.setDate(staleCutoff.getDate() - 2);
+
+  const { data: rows, error } = await admin
+    .from("esignature_requests")
+    .select(`
+      id,
+      document_name,
+      signing_url,
+      public_sign_token,
+      reminder_count,
+      last_reminder_at,
+      created_at,
+      expires_at,
+      signers,
+      lease:leases(
+        id,
+        tenant_user_id,
+        tenant:users(email, phone)
+      )
+    `)
+    .in("status", ["sent", "viewed", "partially_signed"])
+    .lt("reminder_count", 3);
+
+  if (error) throw error;
+
+  let reminded = 0;
+  const appUrl = (Deno.env.get("PUBLIC_APP_URL") || "https://app.baytmiftah.com").replace(/\/+$/, "");
+  const oneDayAgo = new Date(now);
+  oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
+  for (const row of rows || []) {
+    if (row.expires_at && new Date(row.expires_at) < now) continue;
+
+    if (!row.last_reminder_at) {
+      const createdAt = row.created_at ? new Date(row.created_at) : now;
+      if (createdAt > oneDayAgo) continue;
+    } else if (new Date(row.last_reminder_at) > staleCutoff) {
+      continue;
+    }
+
+    const lease = row.lease as {
+      id?: string;
+      tenant_user_id?: string;
+      tenant?: { email?: string; phone?: string };
+    } | null;
+    if (!lease?.tenant_user_id) continue;
+
+    const signer = Array.isArray(row.signers) ? row.signers[0] : null;
+    const signingUrl =
+      row.signing_url ||
+      (row.public_sign_token ? `${appUrl}/sign/${row.public_sign_token}` : null);
+    if (!signingUrl) continue;
+
+    const subject = "Reminder: lease awaiting your signature";
+    const content = `${row.document_name || "Your lease agreement"} is still awaiting signature. Open: ${signingUrl}`;
+    const phone = signer?.phone || lease.tenant?.phone;
+
+    await notifyUser(admin, {
+      userId: lease.tenant_user_id,
+      subject,
+      content,
+      notificationType: "lease_signature_reminder",
+      actionUrl: signingUrl.replace(/^https?:\/\/[^/]+/, ""),
+      email: signer?.email || lease.tenant?.email,
+      phone,
+      sendEmailCopy: true,
+      sendSmsCopy: Boolean(phone),
+      sendWhatsAppCopy: Boolean(phone),
+    });
+
+    await admin
+      .from("esignature_requests")
+      .update({
+        reminder_count: (row.reminder_count || 0) + 1,
+        last_reminder_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .eq("id", row.id);
 
@@ -833,6 +950,7 @@ Deno.serve(async (req) => {
       staleSummary,
       viewingSummary,
       rentReminderSummary,
+      leaseEsignReminderSummary,
       marketAnalyticsSummary,
     ] = await Promise.all([
       withAutomationRun(admin, "saved_search_alerts", () => runSavedSearchAlerts(admin)),
@@ -840,6 +958,7 @@ Deno.serve(async (req) => {
       withAutomationRun(admin, "stale_pipeline", () => runStalePipelineNudges(admin)),
       withAutomationRun(admin, "viewing_reminders", () => runViewingReminders(admin)),
       withAutomationRun(admin, "rent_reminders", () => runRentReminders(admin)),
+      withAutomationRun(admin, "lease_esign_reminders", () => runLeaseEsignReminders(admin)),
       withAutomationRun(admin, "market_analytics_snapshot", () =>
         runMarketAnalyticsSnapshots(admin)
       ),
@@ -852,6 +971,7 @@ Deno.serve(async (req) => {
       staleSummary,
       viewingSummary,
       rentReminderSummary,
+      leaseEsignReminderSummary,
       marketAnalyticsSummary,
     });
   } catch (error) {

@@ -7,13 +7,16 @@ import {
   type ReactNode,
 } from "react";
 import { currencyService } from "../../lib/currency.service";
+import { formatMoneyMajor } from "../../lib/currency-format";
 
-type CurrencyCode = "GHS" | "USD";
+type DisplayCurrency = string;
 
 interface CurrencyContextValue {
-  currency: CurrencyCode;
-  setCurrency: (code: CurrencyCode) => void;
-  formatPrice: (amount: number, opts?: { perMonth?: boolean }) => string;
+  currency: DisplayCurrency;
+  baseCurrency: DisplayCurrency;
+  setCurrency: (code: DisplayCurrency) => void;
+  setBaseCurrency: (code: DisplayCurrency) => void;
+  formatPrice: (amount: number, opts?: { perMonth?: boolean; currency?: string }) => string;
   ratesLoading: boolean;
 }
 
@@ -21,21 +24,34 @@ const FALLBACK_USD_RATE = 1 / 15.5;
 
 const CurrencyContext = createContext<CurrencyContextValue>({
   currency: "GHS",
+  baseCurrency: "GHS",
   setCurrency: () => {},
+  setBaseCurrency: () => {},
   formatPrice: (n) => `GHS ${n}`,
   ratesLoading: false,
 });
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [currency, setCurrencyState] = useState<CurrencyCode>(() => {
+  const [baseCurrency, setBaseCurrencyState] = useState<DisplayCurrency>("GHS");
+  const [currency, setCurrencyState] = useState<DisplayCurrency>(() => {
     try {
-      return (localStorage.getItem("baytmiftah_currency") as CurrencyCode) || "GHS";
+      return localStorage.getItem("baytmiftah_currency") || "GHS";
     } catch {
       return "GHS";
     }
   });
   const [ghsToUsd, setGhsToUsd] = useState(FALLBACK_USD_RATE);
   const [ratesLoading, setRatesLoading] = useState(true);
+
+  const setBaseCurrency = (code: DisplayCurrency) => {
+    const next = code.trim().toUpperCase();
+    setBaseCurrencyState(next);
+    setCurrencyState(next);
+  };
+
+  const setCurrency = (code: DisplayCurrency) => {
+    setCurrencyState(code.trim().toUpperCase());
+  };
 
   useEffect(() => {
     try {
@@ -70,23 +86,28 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const value = useMemo<CurrencyContextValue>(
     () => ({
       currency,
-      setCurrency: setCurrencyState,
+      baseCurrency,
+      setCurrency,
+      setBaseCurrency,
       ratesLoading,
       formatPrice(amount, opts = {}) {
         const n = Number(amount) || 0;
-        if (currency === "USD") {
+        const listingCurrency = (opts.currency || baseCurrency).toUpperCase();
+        const displayCurrency = currency.toUpperCase();
+
+        if (displayCurrency === "USD" && listingCurrency === "GHS") {
           const usd = n * ghsToUsd;
-          const formatted = usd.toLocaleString(undefined, {
-            maximumFractionDigits: 0,
-          });
-          return opts.perMonth ? `$${formatted} / mo` : `$${formatted}`;
+          return formatMoneyMajor(usd, "USD", undefined, opts);
         }
-        return opts.perMonth
-          ? `GHS ${n.toLocaleString()} / month`
-          : `GHS ${n.toLocaleString()}`;
+
+        if (displayCurrency !== listingCurrency && listingCurrency === "GHS" && displayCurrency === "USD") {
+          return formatMoneyMajor(n * ghsToUsd, "USD", undefined, opts);
+        }
+
+        return formatMoneyMajor(n, displayCurrency, undefined, opts);
       },
     }),
-    [currency, ghsToUsd, ratesLoading]
+    [currency, baseCurrency, ghsToUsd, ratesLoading]
   );
 
   return (

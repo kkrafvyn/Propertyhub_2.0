@@ -13,7 +13,9 @@ import { moveChecklistService } from "../../../lib/move-checklist.service";
 import { leaseDepositService } from "../../../lib/lease-deposit.service";
 import { dealCaseService } from "../../../lib/dealcase.service";
 import { leaseScreeningService } from "../../../lib/lease-screening.service";
+import { PropertyLeaseClausePanel } from "../../components/compliance/PropertyLeaseClausePanel";
 import { useAuth } from "../../context/AuthContext";
+import { leaseEsignatureService } from "../../../lib/lease-esignature.service";
 
 function formatMoney(amountMinor?: number | null, currency = "GHS") {
   return walletService.formatWalletAmount(amountMinor, currency);
@@ -37,7 +39,7 @@ export function WorkspaceLeases({ organizationId }: { organizationId: string }) 
   const [applications, setApplications] = useState<any[]>([]);
   const [screenings, setScreenings] = useState<any[]>([]);
   const [screeningCaseId, setScreeningCaseId] = useState("");
-  const [screeningProvider, setScreeningProvider] = useState("manual_review");
+  const [clauseLeaseId, setClauseLeaseId] = useState("");
 
   const loadLeases = async () => {
     try {
@@ -146,6 +148,37 @@ export function WorkspaceLeases({ organizationId }: { organizationId: string }) 
       console.error(error);
       toast.error("Unable to request renewal.");
     } finally { setBusyId(null); }
+  };
+
+  const sendForEsignature = async (lease: any, forceOverride = false) => {
+    if (!user) return;
+    try {
+      setBusyId(`esign-${lease.id}`);
+      const request = await leaseEsignatureService.sendLeaseForSigning({
+        organizationId,
+        lease,
+        requestedBy: user.id,
+        forceOverride,
+      });
+      toast.success(`Lease sent for signature.${request.signing_url ? " Signing link ready." : ""}`);
+    } catch (error: any) {
+      console.error(error);
+      if (error?.name === "LeaseAuditBlockedError" && window.confirm(
+        `${error.message}\n\nSend anyway with manager override?`
+      )) {
+        await sendForEsignature(lease, true);
+        return;
+      }
+      if (error?.name === "CounselSignoffRequiredError" && window.confirm(
+        `${error.message}\n\nRecord counsel sign-off in International Markets, or send with manager override?`
+      )) {
+        await sendForEsignature(lease, true);
+        return;
+      }
+      toast.error(error?.message || "Unable to send lease for e-signature.");
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const signLease = async (lease: any) => {
@@ -258,6 +291,47 @@ export function WorkspaceLeases({ organizationId }: { organizationId: string }) 
         <h1 className="text-3xl font-semibold mb-2">Leases</h1>
         <p className="text-muted-foreground">Active tenancies, renewals, rent schedules, and tenant notices.</p>
       </div>
+
+      <Card className="p-5 space-y-4">
+        <div>
+          <h2 className="font-semibold">Jurisdiction lease schedule</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Generate mandatory clauses and audit drafts against property-specific rent and deposit caps.
+          </p>
+        </div>
+        {leases.length > 0 ? (
+          <>
+            <select
+              className="w-full rounded-lg border border-border px-3 py-2"
+              value={clauseLeaseId || leases[0]?.id || ""}
+              onChange={(event) => setClauseLeaseId(event.target.value)}
+            >
+              {leases.map((lease) => (
+                <option key={lease.id} value={lease.id}>
+                  {lease.listing?.property?.address || "Property"} —{" "}
+                  {lease.tenant?.full_name || lease.tenant?.email || "Tenant"}
+                </option>
+              ))}
+            </select>
+            {(() => {
+              const lease =
+                leases.find((entry) => entry.id === (clauseLeaseId || leases[0]?.id)) || leases[0];
+              const property = lease?.listing?.property;
+              return (
+                <PropertyLeaseClausePanel
+                  property={property}
+                  landlordName={lease?.landlord?.full_name || undefined}
+                  tenantName={lease?.tenant?.full_name || lease?.tenant?.email || undefined}
+                  rentAmountMajor={lease?.rent_minor ? lease.rent_minor / 100 : undefined}
+                  currency={lease?.currency || property?.currency || "GHS"}
+                />
+              );
+            })()}
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">Active leases will appear here for schedule generation.</p>
+        )}
+      </Card>
 
       <Card className="p-5 space-y-4">
         <div>
@@ -447,6 +521,9 @@ export function WorkspaceLeases({ organizationId }: { organizationId: string }) 
               </div>
             ) : null}
             <div className="flex flex-wrap gap-2 border-t border-border pt-3">
+              <Button size="sm" variant="outline" onClick={() => void sendForEsignature(lease)} disabled={busyId === `esign-${lease.id}` || !lease.tenant?.email}>
+                {busyId === `esign-${lease.id}` ? "Sending..." : "Send for e-signature"}
+              </Button>
               <Button size="sm" variant="outline" onClick={() => void prepareRentSchedule(lease)} disabled={busyId === `schedule-${lease.id}`}>
                 {busyId === `schedule-${lease.id}` ? "Preparing..." : "Prepare rent schedule"}
               </Button>

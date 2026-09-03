@@ -5,81 +5,85 @@
   --font-size: 16px;
 
   /* Original Daylight Ivory & Brand Forest Semantic Tokens */
-  --background: #fcfbf9;
-  --foreground: #1a1f1d;
+  --background: #faf8f5;
+  --foreground: #0f1f1b;
   --card: #ffffff;
-  --card-foreground: #1a1f1d;
+  --card-foreground: #0f1f1b;
   --popover: #ffffff;
-  --popover-foreground: #1a1f1d;
-  --primary: #0f2922;
+  --popover-foreground: #0f1f1b;
+  --primary: #0d2821;
   --primary-foreground: #ffffff;
-  --secondary: #f4f5f4;
-  --secondary-foreground: #1a1f1d;
-  --muted: #f4f5f4;
-  --muted-foreground: #6b7280;
-  --accent: #1b4332;
+  --secondary: #f3f5f3;
+  --secondary-foreground: #0f1f1b;
+  --muted: #f3f5f3;
+  --muted-foreground: #5e6b66;
+  --accent: #173b31;
   --accent-foreground: #ffffff;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #e5e7eb;
-  --input: #e5e7eb;
+  --border: #e6e9e7;
+  --input: #e6e9e7;
   --input-background: #ffffff;
-  --switch-background: #d1d5db;
+  --switch-background: #cbd2ce;
   --font-weight-medium: 600;
   --font-weight-normal: 400;
-  --ring: #0f2922;
+  --ring: #0d2821;
 
   /* Charts */
-  --chart-1: #0f2922;
+  --chart-1: #0d2821;
   --chart-2: #e07a5f;
-  --chart-3: #e9c349;
-  --chart-4: #1b4332;
+  --chart-3: #d4a342;
+  --chart-4: #173b31;
   --chart-5: #c45d44;
-  --radius: 0.75rem;
+  --radius: 0.875rem;
 
   /* Sidebar */
-  --sidebar: #f8faf9;
-  --sidebar-foreground: #1a1f1d;
-  --sidebar-primary: #0f2922;
+  --sidebar: #f7f9f8;
+  --sidebar-foreground: #0f1f1b;
+  --sidebar-primary: #0d2821;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #ffffff;
-  --sidebar-accent-foreground: #1a1f1d;
-  --sidebar-border: #e5e7eb;
-  --sidebar-ring: #0f2922;
+  --sidebar-accent-foreground: #0f1f1b;
+  --sidebar-border: #e6e9e7;
+  --sidebar-ring: #0d2821;
 
   /* Surface & Brand Palette (Light / Daylight Ivory) */
   --surface: #ffffff;
-  --surface-subtle: #f7f8f7;
-  --surface-border: #e5e7eb;
-  --surface-hover: #f0f2f1;
-  --ink: #1a1f1d;
-  --ink-secondary: #5a6460;
-  --ink-muted: #94a09a;
+  --surface-subtle: #f5f7f6;
+  --surface-border: #e6e9e7;
+  --surface-hover: #edf1ef;
+  --ink: #0f1f1b;
+  --ink-secondary: #4a5752;
+  --ink-muted: #83918b;
 
-  --brand-forest: #0f2922;
-  --brand-marketplace: #0b211a;
+  --brand-forest: #0d2821;
+  --brand-marketplace: #081a15;
   --brand-accent: #e07a5f;
   --brand-orange: #e07a5f;
-  --brand-gold: #e9c349;
+  --brand-gold: #d4a342;
 
-  --mobile-forest: #0f2922;
-  --bolt-green: #22c55e;
-  --bolt-green-dark: #16a34a;
-  --bolt-bg: #fcfbf9;
+  --mobile-forest: #0d2821;
+  --bolt-green: #10b981;
+  --bolt-green-dark: #059669;
+  --bolt-bg: #faf8f5;
   --bolt-card: #ffffff;
 
   --max-width-page: 1760px;
-  --radius-listing: 12px;
-  --radius-card: 12px;
+  --radius-listing: 16px;
+  --radius-card: 18px;
 
-  /* Elevation Shadows */
-  --shadow-search: 0 2px 8px rgba(15, 41, 34, 0.06), 0 8px 24px rgba(15, 41, 34, 0.04);
-  --shadow-search-hover: 0 4px 12px rgba(15, 41, 34, 0.08), 0 14px 36px rgba(15, 41, 34, 0.08);
-  --shadow-card: 0 4px 16px rgba(15, 41, 34, 0.05);
-  --shadow-bolt-card: 0 2px 8px rgba(15, 41, 34, 0.04);
-  --shadow-bolt-nav: 0 -2px 12px rgba(15, 41, 34, 0.06);
-  --shadow-menu: 0 12px 36px -4px rgba(15, 41, 34, 0.12), 0 4px 16px -2px rgba(15, 41, 34, 0.06);
-  --shadow-glow: 0 0 24px rgba(15, 41, 34, 0.12);
+  /* Elevation Shadows & Glass Depth */
+  --shadow-search: 0 4px 16px -2px rgba(13, 40, 33, 0.08), 0 12px 32px -4px rgba(13, 40, 33, 0.05);
+  --shadow-search-hover: 0 8px 24px -2px rgba(13, 40, 33, 0.12), 0 18px 48px -4px rgba(13, 40, 33, 0.08);
+  --shadow-card: 0 2px 10px -2px rgba(13, 40, 33, 0.06), 0 8px 24px -4px rgba(13, 40, 33, 0.04);
+  --shadow-card-hover: 0 12px 36px -4px rgba(13, 40, 33, 0.12), 0 4px 12px -2px rgba(13, 40, 33, 0.06);
+  --shadow-bolt-card: 0 2px 10px rgba(13, 40, 33, 0.05);
+  --shadow-bolt-nav: 0 -4px 20px rgba(13, 40, 33, 0.06);
+  --shadow-menu: 0 16px 40px -4px rgba(13, 40, 33, 0.14), 0 4px 16px -2px rgba(13, 40, 33, 0.06);
+  --shadow-glow: 0 0 24px rgba(13, 40, 33, 0.12);
+  --shadow-glow-terracotta: 0 0 24px rgba(224, 122, 95, 0.28);
+  --shadow-glow-emerald: 0 0 24px rgba(16, 185, 129, 0.25);
+  --border-sheen: inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
 
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   --font-serif: "Playfair Display", Georgia, Cambria, "Times New Roman", serif;
@@ -132,34 +136,38 @@
   --sidebar-ring: #52b788;
 
   /* Surface & Brand Palette (Dark / Inverted High-Contrast Typography) */
-  --surface: #0f2820;
-  --surface-subtle: #15372d;
-  --surface-border: #1f493d;
-  --surface-hover: #1c4538;
+  --surface: #0c231c;
+  --surface-subtle: #112d24;
+  --surface-border: #1a4235;
+  --surface-hover: #163a2f;
   --ink: #ffffff;
-  --ink-secondary: #d1dad6;
-  --ink-muted: #94a59e;
+  --ink-secondary: #cdd9d4;
+  --ink-muted: #889e95;
 
-  --brand-forest: #102b22;
-  --brand-marketplace: #081713;
+  --brand-forest: #0d2821;
+  --brand-marketplace: #061410;
   --brand-accent: #e07a5f;
   --brand-orange: #e07a5f;
   --brand-gold: #fbbf24;
 
   --mobile-forest: #52b788;
-  --bolt-green: #4ade80;
-  --bolt-green-dark: #22c55e;
-  --bolt-bg: #081713;
-  --bolt-card: #0f2820;
+  --bolt-green: #34d399;
+  --bolt-green-dark: #10b981;
+  --bolt-bg: #061410;
+  --bolt-card: #0c231c;
 
-  /* Dark Elevation Shadows */
-  --shadow-search: 0 4px 20px rgba(0, 0, 0, 0.45);
-  --shadow-search-hover: 0 8px 32px rgba(0, 0, 0, 0.65), 0 0 20px rgba(82, 183, 136, 0.15);
-  --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.4);
-  --shadow-bolt-card: 0 4px 14px rgba(0, 0, 0, 0.35);
-  --shadow-bolt-nav: 0 -4px 18px rgba(0, 0, 0, 0.4);
-  --shadow-menu: 0 16px 44px rgba(0, 0, 0, 0.6), 0 0 1px rgba(82, 183, 136, 0.3);
+  /* Dark Elevation Shadows & Emerald Ambient Glow */
+  --shadow-search: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --shadow-search-hover: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 24px rgba(82, 183, 136, 0.2);
+  --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.45);
+  --shadow-card-hover: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 20px rgba(82, 183, 136, 0.18);
+  --shadow-bolt-card: 0 4px 14px rgba(0, 0, 0, 0.4);
+  --shadow-bolt-nav: 0 -4px 22px rgba(0, 0, 0, 0.5);
+  --shadow-menu: 0 16px 48px rgba(0, 0, 0, 0.7), 0 0 1px rgba(82, 183, 136, 0.35);
   --shadow-glow: 0 0 30px rgba(82, 183, 136, 0.25);
+  --shadow-glow-terracotta: 0 0 28px rgba(224, 122, 95, 0.35);
+  --shadow-glow-emerald: 0 0 28px rgba(82, 183, 136, 0.35);
+  --border-sheen: inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
 }
 
 @theme inline {
@@ -227,9 +235,14 @@
   --shadow-search: var(--shadow-search);
   --shadow-search-hover: var(--shadow-search-hover);
   --shadow-card: var(--shadow-card);
+  --shadow-card-hover: var(--shadow-card-hover);
   --shadow-bolt-card: var(--shadow-bolt-card);
   --shadow-bolt-nav: var(--shadow-bolt-nav);
   --shadow-menu: var(--shadow-menu);
+  --shadow-glow: var(--shadow-glow);
+  --shadow-glow-terracotta: var(--shadow-glow-terracotta);
+  --shadow-glow-emerald: var(--shadow-glow-emerald);
+  --border-sheen: var(--border-sheen);
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
 }

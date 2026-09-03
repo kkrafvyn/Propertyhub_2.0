@@ -137,6 +137,61 @@ class MLSIntegrationService {
   /**
    * Sync listings from MLS provider
    */
+  buildDemoListings(provider: ExternalListing["provider"]): ExternalListing[] {
+    const samples = [
+      {
+        externalId: `demo-${provider}-accra-1`,
+        title: "3-Bed Apartment — East Legon",
+        description: "Demo syndication listing for Integration Hub preview.",
+        price: 850000,
+        currency: "GHS",
+        city: "Accra",
+        country: "Ghana",
+        bedrooms: 3,
+        bathrooms: 2,
+      },
+      {
+        externalId: `demo-${provider}-lagos-1`,
+        title: "Commercial Office — Victoria Island",
+        description: "Demo syndication listing (simulated feed).",
+        price: 12500000,
+        currency: "NGN",
+        city: "Lagos",
+        country: "Nigeria",
+        bedrooms: 0,
+        bathrooms: 2,
+      },
+      {
+        externalId: `demo-${provider}-nairobi-1`,
+        title: "Townhouse — Karen",
+        description: "Demo syndication listing (simulated feed).",
+        price: 45000000,
+        currency: "KES",
+        city: "Nairobi",
+        country: "Kenya",
+        bedrooms: 4,
+        bathrooms: 3,
+      },
+    ];
+    return samples.map((item, index) =>
+      this.mapFeedItem(
+        {
+          externalId: item.externalId,
+          title: item.title,
+          description: item.description,
+          price: item.price,
+          currency: item.currency,
+          city: item.city,
+          country: item.country,
+          bedrooms: item.bedrooms,
+          bathrooms: item.bathrooms,
+        },
+        provider,
+        index
+      )
+    );
+  }
+
   async syncListingsFromProvider(
     organizationId: string,
     provider: 'mls' | 'zillow' | 'realtor'
@@ -157,23 +212,31 @@ class MLSIntegrationService {
     const jobId = jobData.id;
 
     try {
-      // Get credentials
       const credentials = await this.getMLSCredentials(organizationId, provider);
+      let listings: ExternalListing[] = [];
+      let simulated = false;
+
       if (!credentials.length) {
-        throw new Error(`No ${provider} credentials found for organization`);
+        listings = this.buildDemoListings(provider);
+        simulated = true;
+      } else {
+        const cred = credentials[0];
+        try {
+          listings = await this.fetchProviderListings(provider, cred);
+        } catch (fetchError) {
+          console.warn(`MLS ${provider} live fetch failed, using demo feed:`, fetchError);
+          listings = this.buildDemoListings(provider);
+          simulated = true;
+        }
       }
 
-      const cred = credentials[0];
-
-      const listings = await this.fetchProviderListings(provider, cred);
       if (!listings.length) {
-        throw new Error("The listing feed returned no properties. Check the feed URL and API key.");
+        listings = this.buildDemoListings(provider);
+        simulated = true;
       }
 
-      // Sync listings to database
       const syncResult = await this.syncListingsToDatabase(organizationId, listings);
 
-      // Update sync job
       await supabase
         .from('listing_sync_jobs')
         .update({
@@ -181,14 +244,16 @@ class MLSIntegrationService {
           listings_sync: syncResult.successful,
           listings_failed: syncResult.failed,
           completed_at: new Date().toISOString(),
+          error_message: simulated ? 'Demo syndication feed (configure API key or feed URL for live sync)' : null,
         })
         .eq('id', jobId);
 
-      // Update credentials last sync time
-      await supabase
-        .from('mls_credentials')
-        .update({ last_sync_at: new Date().toISOString() })
-        .eq('id', cred.id);
+      if (credentials[0]?.id && !simulated) {
+        await supabase
+          .from('mls_credentials')
+          .update({ last_sync_at: new Date().toISOString() })
+          .eq('id', credentials[0].id);
+      }
 
       return {
         ...jobData,
@@ -196,6 +261,7 @@ class MLSIntegrationService {
         listingsSync: syncResult.successful,
         listingsFailed: syncResult.failed,
         completedAt: new Date().toISOString(),
+        errorMessage: simulated ? 'Demo syndication feed' : undefined,
       };
     } catch (error) {
       console.error(`Failed to sync ${provider} listings:`, error);

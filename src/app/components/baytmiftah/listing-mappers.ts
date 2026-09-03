@@ -1,4 +1,6 @@
 import { getPropertyImageGallery } from "../../../lib/property-media";
+import { formatMoneyMajor } from "../../../lib/currency-format";
+import { buildPropertyComplianceSnapshot } from "../../../lib/property-country-context.service";
 
 export interface MarketplaceListingCard {
   id: string;
@@ -12,6 +14,8 @@ export interface MarketplaceListingCard {
   featured?: boolean;
   verified?: boolean;
   type?: string;
+  marketLabel?: string;
+  currency?: string;
 }
 
 export interface MapListing extends MarketplaceListingCard {
@@ -42,14 +46,13 @@ function formatPriceLabel(listing: {
 }) {
   const price = Number(listing.price) || 0;
   const currency = listing.currency || "GHS";
-  const prefix = currency === "GHS" ? "₵" : `${currency} `;
   const suffix =
     listing.listing_type === "rental"
       ? "/mo"
       : listing.listing_type === "short_stay"
         ? "/night"
         : "";
-  return `${prefix}${price.toLocaleString()}${suffix}`;
+  return `${formatMoneyMajor(price, currency)}${suffix}`;
 }
 
 export function mapListingToCard(listing: any): MarketplaceListingCard {
@@ -68,12 +71,22 @@ export function mapListingToCard(listing: any): MarketplaceListingCard {
           ? "stay"
           : "rent";
 
+  const compliance = buildPropertyComplianceSnapshot({
+    country: property.country,
+    region: property.region,
+    city: property.city,
+    subdivision_code: property.subdivision_code,
+    currency: listing.currency,
+  });
+
   return {
     id: listing.id,
     title: property.address || "Property",
     location,
     priceLabel: formatPriceLabel(listing),
     listingType,
+    marketLabel: compliance.subdivisionLabel || compliance.context.pack.label,
+    currency: listing.currency || compliance.context.currency,
     bedrooms: property.bedrooms ?? undefined,
     rating: listing.quality_score ? (listing.quality_score / 20).toFixed(1) : "4.8",
     photos: getPropertyImageGallery(property),

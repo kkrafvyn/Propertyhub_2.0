@@ -9,10 +9,10 @@ export function PageLoadingSkeleton() {
         <Skeleton className="h-9 w-72 max-w-full" />
         <Skeleton className="h-5 w-96 max-w-full" />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Skeleton className="h-28 rounded-xl" />
-        <Skeleton className="h-28 rounded-xl" />
-        <Skeleton className="h-28 rounded-xl" />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4" aria-hidden="true">
+        <Skeleton className="h-28 rounded-2xl" />
+        <Skeleton className="h-28 rounded-2xl" />
+        <Skeleton className="h-28 rounded-2xl" />
       </div>
       <CardGridSkeleton count={4} />
     </div>
@@ -57,7 +57,7 @@ export function ListSkeleton({ rows = 5 }: { rows?: number }) {
 
 export function DashboardStatsSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-6 gap-6" aria-hidden="true">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4" aria-hidden="true">
       {Array.from({ length: 6 }).map((_, index) => (
         <Card key={index} className="p-6">
           <Skeleton className="h-4 w-24 mb-3" />

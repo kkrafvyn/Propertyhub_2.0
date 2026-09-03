@@ -56,7 +56,7 @@ export function LegalCentreShell({
 
         <div className="lg:hidden print:hidden">
           <Collapsible open={navOpen} onOpenChange={setNavOpen}>
-            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl border border-surface-border bg-surface px-4 py-3 text-left text-sm font-medium text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-forest">
+            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl border border-surface-border bg-surface px-4 py-3 text-left text-sm font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-forest">
               Policy index
               <ChevronDown className={`h-4 w-4 transition ${navOpen ? "rotate-180" : ""}`} aria-hidden />
             </CollapsibleTrigger>
@@ -146,7 +146,7 @@ export function LegalPrevNext({
       {previous ? (
         <Link
           to={getLegalPath(previous.slug)}
-          className="rounded-xl border border-surface-border p-4 text-sm hover:border-brand-forest/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-forest"
+          className="rounded-xl border border-surface-border p-4 text-sm hover:border-brand-forest/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-forest"
         >
           <span className="block text-xs uppercase tracking-wide text-ink-secondary">Previous</span>
           <span className="mt-1 block font-medium text-ink">{previous.title}</span>
@@ -157,7 +157,7 @@ export function LegalPrevNext({
       {next ? (
         <Link
           to={getLegalPath(next.slug)}
-          className="rounded-xl border border-surface-border p-4 text-right text-sm hover:border-brand-forest/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-forest"
+          className="rounded-xl border border-surface-border p-4 text-right text-sm hover:border-brand-forest/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-forest"
         >
           <span className="block text-xs uppercase tracking-wide text-ink-secondary">Next</span>
           <span className="mt-1 block font-medium text-ink">{next.title}</span>

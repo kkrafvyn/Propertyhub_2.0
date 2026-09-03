@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useTranslation } from "../../i18n/LocaleContext";
 import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
 import { toast } from "sonner";
+import { StandalonePageShell } from "../../components/ux/StandalonePageShell";
 
 const CATEGORIES = [
   "Fraudulent listing",
@@ -90,7 +91,7 @@ export function ComplaintFormPanel({ embedded = false }: { embedded?: boolean })
           id="complaint-category"
           value={form.category}
           onChange={(e) => setForm({ ...form, category: e.target.value })}
-          className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm"
+          className="app-input"
           required
         >
           {CATEGORIES.map((cat) => (
@@ -117,7 +118,7 @@ export function ComplaintFormPanel({ embedded = false }: { embedded?: boolean })
           rows={6}
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
-          className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm"
+          className="app-input min-h-32"
           placeholder={t("legal.complaint.descriptionPlaceholder")}
           required
         />
@@ -156,20 +157,22 @@ export function ComplaintFormPanel({ embedded = false }: { embedded?: boolean })
 
 export function ComplaintForm() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-ink">Submit a Complaint</h1>
-        <p className="mt-2 text-sm text-ink-secondary">
-          We take all concerns seriously. Submit your report below or email directly to{" "}
-          <a href="mailto:support@baytmiftah.com" className="font-medium text-brand-forest underline">
-            support@baytmiftah.com
-          </a>
-          . Your complaint will be assigned a unique tracking reference and investigated by our support team.
-        </p>
+    <StandalonePageShell maxWidthClassName="max-w-2xl">
+      <div className="py-10">
+        <div className="mb-8">
+          <h1 className="app-page-title">Submit a Complaint</h1>
+          <p className="app-page-description mt-2">
+            We take all concerns seriously. Submit your report below or email directly to{" "}
+            <a href="mailto:support@baytmiftah.com" className="font-medium text-brand-forest underline">
+              support@baytmiftah.com
+            </a>
+            . Your complaint will be assigned a unique tracking reference and investigated by our support team.
+          </p>
+        </div>
+        <div className="app-surface-card p-6 sm:p-8">
+          <ComplaintFormPanel />
+        </div>
       </div>
-      <div className="rounded-2xl border border-surface-border bg-card p-6 shadow-sm sm:p-8">
-        <ComplaintFormPanel />
-      </div>
-    </div>
+    </StandalonePageShell>
   );
 }

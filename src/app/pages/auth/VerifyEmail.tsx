@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { MailCheck } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
-import { Card } from "../../components/ui/Card";
-import { Input } from "../../components/ui/Input";
+import { AuthShell } from "../../components/baytmiftah/AuthShell";
 import { supabase } from "../../../lib/supabase";
 import { toast } from "sonner";
 import { isEmailVerified } from "../../../lib/security/password-policy";
@@ -33,22 +33,27 @@ export function VerifyEmailPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <Card className="max-w-md w-full p-8 space-y-4 text-center">
-        <h1 className="text-2xl font-semibold">Verify your email</h1>
-        <p className="text-muted-foreground">
-          We sent a confirmation link to <strong>{user?.email}</strong>. Verify your email before
-          using payments, wallet, or workspace features.
+    <AuthShell
+      title="Verify your email"
+      subtitle="Confirm your address to unlock payments, wallet, and workspace features."
+      footer={
+        <Link to="/login" className="font-semibold text-primary hover:underline">
+          Back to sign in
+        </Link>
+      }
+    >
+      <div className="space-y-5 text-center lg:text-left">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary lg:mx-0">
+          <MailCheck className="h-6 w-6" />
+        </div>
+        <p className="text-sm leading-relaxed text-white/80 lg:text-ink-secondary">
+          We sent a confirmation link to{" "}
+          <strong className="text-white lg:text-ink">{user?.email || "your email"}</strong>.
         </p>
-        <Button onClick={() => void resend()} disabled={sending}>
+        <Button onClick={() => void resend()} disabled={sending} size="lg" className="w-full">
           {sending ? "Sending…" : "Resend verification email"}
         </Button>
-        <p className="text-sm">
-          <Link to="/login" className="text-primary underline">
-            Back to sign in
-          </Link>
-        </p>
-      </Card>
-    </div>
+      </div>
+    </AuthShell>
   );
 }

@@ -33,14 +33,33 @@ import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/badge';
 import {
   aiLeaseAnalyzerService,
-  type LeaseAnalysisResult,
   type GhanaCardSigner,
 } from '../../../lib/ai-lease-analyzer.service';
+import {
+  analyzeLeaseForProperty,
+  type JurisdictionLeaseAnalysis,
+} from '../../../lib/jurisdiction-lease-analyzer.service';
+import type { PropertyLocationInput } from '../../../lib/property-country-context.service';
+
+const MARKET_PRESETS: Array<{ id: string; label: string; property: PropertyLocationInput }> = [
+  { id: 'GH-AA', label: 'Ghana · Greater Accra', property: { country: 'Ghana', region: 'Greater Accra', city: 'Accra', subdivision_code: 'AA' } },
+  { id: 'KE-NBI', label: 'Kenya · Nairobi', property: { country: 'Kenya', region: 'Nairobi', city: 'Nairobi', subdivision_code: 'NBI' } },
+  { id: 'NG-LA', label: 'Nigeria · Lagos', property: { country: 'Nigeria', region: 'Lagos', city: 'Lagos', subdivision_code: 'LA' } },
+  { id: 'GB-ENG', label: 'United Kingdom · England', property: { country: 'United Kingdom', region: 'England', city: 'London', subdivision_code: 'ENG' } },
+  { id: 'US-CA', label: 'United States · California', property: { country: 'United States', region: 'California', city: 'Los Angeles', subdivision_code: 'CA' } },
+  { id: 'ZA-GT', label: 'South Africa · Gauteng', property: { country: 'South Africa', region: 'Gauteng', city: 'Johannesburg', subdivision_code: 'GT' } },
+];
+
+function runAnalysis(text: string, property: PropertyLocationInput, title = 'Tenancy Agreement'): JurisdictionLeaseAnalysis {
+  return analyzeLeaseForProperty(text, property, undefined, title);
+}
 
 export function AILeaseAnalyzer() {
+  const [marketId, setMarketId] = useState(MARKET_PRESETS[0].id);
+  const market = MARKET_PRESETS.find((preset) => preset.id === marketId) || MARKET_PRESETS[0];
   const [agreementText, setAgreementText] = useState(() => aiLeaseAnalyzerService.getSampleAgreement());
-  const [analysis, setAnalysis] = useState<LeaseAnalysisResult | null>(() =>
-    aiLeaseAnalyzerService.analyzeLease(aiLeaseAnalyzerService.getSampleAgreement())
+  const [analysis, setAnalysis] = useState<JurisdictionLeaseAnalysis | null>(() =>
+    runAnalysis(aiLeaseAnalyzerService.getSampleAgreement(), market.property)
   );
   const [activeTab, setActiveTab] = useState<'audit' | 'redline' | 'signing'>('audit');
   const [isAuditing, setIsAuditing] = useState(false);
@@ -73,10 +92,12 @@ export function AILeaseAnalyzer() {
   const handleRunAudit = () => {
     setIsAuditing(true);
     setTimeout(() => {
-      const result = aiLeaseAnalyzerService.analyzeLease(agreementText);
+      const result = runAnalysis(agreementText, market.property);
       setAnalysis(result);
       setIsAuditing(false);
-      toast.success(`Lease Audited! Compliance Score: ${result.overallScore}/100 (${result.complianceGrade})`);
+      toast.success(
+        `Lease audited for ${result.subdivisionLabel || result.jurisdictionLabel}! Score: ${result.overallScore}/100`
+      );
     }, 400);
   };
 
@@ -87,7 +108,7 @@ export function AILeaseAnalyzer() {
     try {
       const ocrResult = await aiLeaseAnalyzerService.ocrExtractFromDocument(file.name);
       setAgreementText(ocrResult.extractedText);
-      const auditRes = aiLeaseAnalyzerService.analyzeLease(ocrResult.extractedText, ocrResult.title);
+      const auditRes = runAnalysis(ocrResult.extractedText, market.property, ocrResult.title);
       setAnalysis(auditRes);
       toast.success(`Scanned & parsed ${file.name} successfully via OCR!`);
     } catch (err: any) {
@@ -100,9 +121,9 @@ export function AILeaseAnalyzer() {
   const handleApplyRedline = () => {
     if (!analysis) return;
     setAgreementText(analysis.redlinedText);
-    const updated = aiLeaseAnalyzerService.analyzeLease(analysis.redlinedText, 'Compliant Tenancy Agreement');
+    const updated = runAnalysis(analysis.redlinedText, market.property, 'Compliant Tenancy Agreement');
     setAnalysis(updated);
-    toast.success('Applied all legally compliant Ghana Rent Act clauses!');
+    toast.success('Applied jurisdiction-compliant redlines.');
   };
 
   const handleSignWithGhanaCard = (signerId: string) => {
@@ -137,15 +158,32 @@ export function AILeaseAnalyzer() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-ink">
-              AI Lease Analyzer & Ghana Rent Act Engine
+              Multi-Jurisdiction Lease Analyzer
             </h1>
             <p className="text-xs text-muted-foreground">
-              Automated compliance verification against Act 220, unfair clause detection, legal redlines, and Ghana Card e-signing.
+              Property-aware compliance against national and sub-national lease rules, with Ghana Act 220 deep engine and Ghana Card e-signing.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <select
+            className="rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold bg-surface"
+            value={marketId}
+            onChange={(e) => {
+              const next = e.target.value;
+              setMarketId(next);
+              const preset = MARKET_PRESETS.find((entry) => entry.id === next) || MARKET_PRESETS[0];
+              setAnalysis(runAnalysis(agreementText, preset.property));
+            }}
+          >
+            {MARKET_PRESETS.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.label}
+              </option>
+            ))}
+          </select>
+
           <label className="cursor-pointer">
             <input
               type="file"
@@ -165,8 +203,8 @@ export function AILeaseAnalyzer() {
             onClick={() => {
               const sample = aiLeaseAnalyzerService.getSampleAgreement();
               setAgreementText(sample);
-              setAnalysis(aiLeaseAnalyzerService.analyzeLease(sample));
-              toast.info('Loaded standard draft with typical Ghanaian clauses');
+              setAnalysis(runAnalysis(sample, market.property));
+              toast.info('Loaded Ghana sample draft — switch market for other jurisdictions');
             }}
             className="border-surface-border text-ink"
           >
@@ -240,7 +278,7 @@ export function AILeaseAnalyzer() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Ghana Rent Act Compliance Score
+                    {analysis.subdivisionLabel || analysis.jurisdictionLabel} compliance score
                   </span>
                   <div className="flex items-baseline gap-3 mt-1">
                     <span className="text-3xl font-extrabold text-ink">
@@ -260,9 +298,14 @@ export function AILeaseAnalyzer() {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
+                    Governing law: {analysis.governingLaw}
+                    {analysis.depositCapMonths != null ? ` · Deposit cap ${analysis.depositCapMonths} mo` : ''}
+                    {analysis.advanceRentCapMonths != null ? ` · Advance cap ${analysis.advanceRentCapMonths} mo` : ''}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
                     {analysis.violationsCount === 0
                       ? 'No statutory violations detected. Safe to execute.'
-                      : `${analysis.violationsCount} clause(s) breach Ghanaian statutory landlord-tenant laws.`}
+                      : `${analysis.violationsCount} clause(s) breach local landlord-tenant rules.`}
                   </p>
                 </div>
 
@@ -315,7 +358,7 @@ export function AILeaseAnalyzer() {
                 activeTab === 'signing'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:bg-surface-subtle'
-              }`}
+              } ${market.property.country !== 'Ghana' ? 'opacity-50 pointer-events-none' : ''}`}
             >
               <PenTool className="h-3.5 w-3.5" />
               Ghana Card E-Signatures

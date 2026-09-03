@@ -99,6 +99,27 @@ export const consumerRoutes: RouteObject[] = [
       return { Component: PublicLeaseApplication };
     },
   },
+  {
+    path: 'sign/:token',
+    lazy: async () => {
+      const { PublicSignDocument } = await import('../pages/PublicSignDocument');
+      return { Component: PublicSignDocument };
+    },
+  },
+  {
+    path: 'portal/owner/:token',
+    lazy: async () => {
+      const { OwnerPortal } = await import('../pages/OwnerPortal');
+      return { Component: OwnerPortal };
+    },
+  },
+  {
+    path: 'portal/board/:token',
+    lazy: async () => {
+      const { OwnerPortal } = await import('../pages/OwnerPortal');
+      return { Component: OwnerPortal };
+    },
+  },
 
   // ── Auth ────────────────────────────────────────────────────────
   {

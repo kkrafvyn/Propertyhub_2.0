@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Compass, Home as HomeIcon, Key, ShieldCheck, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Compass, Home as HomeIcon, Key, RotateCcw, ShieldCheck, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { listingService } from "../../lib/listing.service";
 import { savedPropertyService } from "../../lib/savedproperty.service";
@@ -343,10 +343,14 @@ function DesktopHero({
   ];
 
   return (
-    <section className="desktop-hero mb-8 hidden md:block">
+    <section className="desktop-hero mb-10 hidden md:block">
       <div className="desktop-hero-glow" aria-hidden />
+      <div className="desktop-hero-glow-secondary" aria-hidden />
       <div className="desktop-hero-content">
-        <p className="desktop-hero-eyebrow">{t("home.heroEyebrow")}</p>
+        <p className="desktop-hero-eyebrow">
+          <Sparkles className="h-3.5 w-3.5 text-brand-orange" />
+          <span>{t("home.heroEyebrow")}</span>
+        </p>
         <h1 className="desktop-hero-title">{t("home.heroTitle")}</h1>
         <p className="desktop-hero-subtitle">{t("home.heroSubtitle")}</p>
 
@@ -362,14 +366,17 @@ function DesktopHero({
         <div className="desktop-hero-chips">
           {quickLinks.map(({ label, to, icon: Icon }) => (
             <Link key={label} to={to} className="desktop-hero-chip">
-              <Icon className="h-4 w-4" aria-hidden />
-              {label}
+              <Icon className="h-4 w-4 shrink-0 text-brand-orange" aria-hidden />
+              <span>{label}</span>
             </Link>
           ))}
         </div>
 
         {listingCount > 0 && (
-          <p className="desktop-hero-meta">{t("home.heroListingsLive", { count: listingCount })}</p>
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-surface-border bg-surface/85 px-3.5 py-1 text-xs font-medium text-ink-secondary backdrop-blur-md shadow-xs">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{t("home.heroListingsLive", { count: listingCount })}</span>
+          </div>
         )}
       </div>
     </section>
@@ -406,7 +413,7 @@ function ListingCarousel({
           <button
             type="button"
             onClick={() => scrollBy(-1)}
-            className="carousel-nav-btn"
+            className="carousel-nav-btn cursor-pointer"
             aria-label={t("home.scrollLeft")}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -414,7 +421,7 @@ function ListingCarousel({
           <button
             type="button"
             onClick={() => scrollBy(1)}
-            className="carousel-nav-btn"
+            className="carousel-nav-btn cursor-pointer"
             aria-label={t("home.scrollRight")}
           >
             <ChevronRight className="h-4 w-4" />
@@ -453,58 +460,91 @@ function FiltersPanel({
 }) {
   const { t } = useTranslation();
 
+  // UX: Close modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  const handleReset = () => {
+    onVerifiedOnlyChange(false);
+    onMinBedroomsChange(0);
+  };
+
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 backdrop-blur-xs p-4 sm:items-center"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm p-4 sm:items-center animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-surface-border bg-surface p-6 text-ink shadow-2xl"
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-surface-border bg-surface p-6 sm:p-7 text-ink shadow-2xl animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-ink">{t("home.filters")}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full p-2 hover:bg-surface-hover"
-            aria-label={t("common.close")}
-          >
-            <X className="h-4 w-4 text-ink" />
-          </button>
+        <div className="mb-6 flex items-center justify-between border-b border-surface-border pb-4">
+          <h2 className="text-xl font-bold tracking-tight text-ink">{t("home.filters")}</h2>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-ink-secondary hover:bg-surface-hover hover:text-ink cursor-pointer transition"
+              title="Reset all filters"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>{t("home.clearFilters")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full p-2 text-ink-secondary hover:bg-surface-hover hover:text-ink cursor-pointer transition"
+              aria-label={t("common.close")}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
-        <label className="mb-4 flex items-center gap-2 text-sm text-ink">
-          <input
-            type="checkbox"
-            checked={verifiedOnly}
-            onChange={(e) => onVerifiedOnlyChange(e.target.checked)}
-          />
-          {t("home.verifiedAgenciesOnly")}
-        </label>
+        <div className="space-y-5">
+          <label className="flex items-center justify-between rounded-xl border border-surface-border bg-surface-subtle p-3.5 text-sm font-medium text-ink cursor-pointer hover:bg-surface-hover transition-colors">
+            <span className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+              {t("home.verifiedAgenciesOnly")}
+            </span>
+            <input
+              type="checkbox"
+              checked={verifiedOnly}
+              onChange={(e) => onVerifiedOnlyChange(e.target.checked)}
+              className="h-4 w-4 rounded border-surface-border text-brand-forest focus:ring-primary cursor-pointer accent-brand-forest"
+            />
+          </label>
 
-        <label className="mb-4 block text-sm text-ink">
-          {t("home.minBedrooms")}
-          <select
-            value={minBedrooms}
-            onChange={(e) => onMinBedroomsChange(Number(e.target.value))}
-            className="mt-1 w-full rounded-xl border border-surface-border bg-surface text-ink px-3 py-2"
-          >
-            <option value={0}>{t("search.any")}</option>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <option key={n} value={n}>
-                {n}+
-              </option>
-            ))}
-          </select>
-        </label>
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-ink-secondary mb-1.5">
+              {t("home.minBedrooms")}
+            </label>
+            <select
+              value={minBedrooms}
+              onChange={(e) => onMinBedroomsChange(Number(e.target.value))}
+              className="w-full rounded-xl border border-surface-border bg-surface text-ink px-4 py-3 font-medium outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer"
+            >
+              <option value={0}>{t("search.any")}</option>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <option key={n} value={n}>
+                  {n}+ {n === 1 ? "bedroom" : "bedrooms"}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         <button
           type="button"
           onClick={onClose}
-          className="mt-6 w-full rounded-lg bg-brand-forest py-3.5 text-sm font-semibold text-white transition hover:opacity-90"
+          className="mt-8 w-full rounded-xl bg-gradient-to-r from-brand-orange to-[#c45d44] py-3.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:scale-[1.01] active:scale-[0.98] cursor-pointer"
         >
           {t("home.showResults")}
         </button>

@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { useAuth } from "../../context/AuthContext";
+import { AppLoadingScreen } from "../../components/ux/AppLoadingScreen";
+import { StandalonePageShell } from "../../components/ux/StandalonePageShell";
 import { communicationService } from "../../../lib/communication.service";
 import { organizationService } from "../../../lib/organization.service";
 import { getWorkspaceRoute } from "../../../lib/workspace";
@@ -100,31 +102,25 @@ export function WorkspaceInviteAccept() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background p-8">
-        <Card className="max-w-xl mx-auto p-8 text-center text-muted-foreground">
-          Loading invitation...
-        </Card>
-      </div>
-    );
+    return <AppLoadingScreen label="Loading invitation…" />;
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-10">
-      <Card className="max-w-2xl mx-auto p-8 lg:p-10">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
-            <MailCheck className="w-6 h-6 text-primary" />
+    <StandalonePageShell maxWidthClassName="max-w-2xl">
+      <Card className="my-10 p-8 lg:p-10">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+            <MailCheck className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <p className="text-sm text-primary font-medium">Team Invitation</p>
-            <h1 className="text-3xl font-semibold">Join this workspace</h1>
+            <p className="text-sm font-medium text-primary">Team Invitation</p>
+            <h1 className="app-page-title text-3xl">Join this workspace</h1>
           </div>
         </div>
 
         {error ? (
           <>
-            <p className="text-muted-foreground mb-6">{error}</p>
+            <p className="mb-6 text-ink-secondary">{error}</p>
             <div className="flex flex-wrap gap-3">
               <Link to="/workspace">
                 <Button>Back to Workspace</Button>
@@ -136,35 +132,35 @@ export function WorkspaceInviteAccept() {
           </>
         ) : (
           <>
-            <p className="text-muted-foreground mb-8">
+            <p className="mb-8 text-ink-secondary">
               You&apos;ve been invited to join
-              <span className="font-medium text-foreground"> {invitation?.organization?.name}</span>
+              <span className="font-medium text-ink"> {invitation?.organization?.name}</span>
               as a
-              <span className="font-medium text-foreground"> {invitation?.role}</span>.
+              <span className="font-medium text-ink"> {invitation?.role}</span>.
             </p>
 
-            <div className="rounded-2xl border border-border bg-secondary/20 p-5 space-y-3 mb-8">
+            <div className="app-surface-card mb-8 space-y-3 p-5">
               <div className="flex items-center justify-between gap-4">
-                <span className="text-sm text-muted-foreground">Invited email</span>
-                <span className="font-medium">{invitation?.email}</span>
+                <span className="text-sm text-ink-secondary">Invited email</span>
+                <span className="font-medium text-ink">{invitation?.email}</span>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className="text-sm text-muted-foreground">Sent by</span>
-                <span className="font-medium">
+                <span className="text-sm text-ink-secondary">Sent by</span>
+                <span className="font-medium text-ink">
                   {invitation?.inviter?.full_name || invitation?.inviter?.email || "Workspace team"}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className="text-sm text-muted-foreground">Status</span>
-                <span className="font-medium capitalize">
+                <span className="text-sm text-ink-secondary">Status</span>
+                <span className="font-medium capitalize text-ink">
                   {isExpired && invitation?.status === "pending"
                     ? "expired"
                     : invitation?.status || "pending"}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className="text-sm text-muted-foreground">Expires</span>
-                <span className="font-medium">
+                <span className="text-sm text-ink-secondary">Expires</span>
+                <span className="font-medium text-ink">
                   {invitation?.expires_at
                     ? new Date(invitation.expires_at).toLocaleString()
                     : "Not set"}
@@ -184,7 +180,7 @@ export function WorkspaceInviteAccept() {
               >
                 {accepting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     Joining workspace...
                   </>
                 ) : (
@@ -198,6 +194,6 @@ export function WorkspaceInviteAccept() {
           </>
         )}
       </Card>
-    </div>
+    </StandalonePageShell>
   );
 }

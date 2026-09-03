@@ -19,6 +19,7 @@ import {
   Building,
   Building2,
   CalendarDays,
+  Calculator,
   CheckSquare,
   CircleDollarSign,
   ClipboardCheck,
@@ -39,6 +40,7 @@ import {
   FileText,
   FolderTree,
   Gauge,
+  Globe,
   Grid3X3,
   Hammer,
   Headphones,
@@ -169,6 +171,14 @@ import { FinancialStatementsViewer } from "./FinancialStatementsViewer";
 import { CollectionsCases } from "./CollectionsCases";
 import { LeasingApplications } from "./LeasingApplications";
 import { ESignature } from "./ESignature";
+import { HoaManagement } from "./HoaManagement";
+import { CamBilling } from "./CamBilling";
+import { Contractor1099 } from "./Contractor1099";
+import { TrustAccounting } from "./TrustAccounting";
+import { TenantScreeningCenter } from "./TenantScreeningCenter";
+import { IntegrationMarketplace } from "./IntegrationMarketplace";
+import { CommercialLeaseEscalations } from "./CommercialLeaseEscalations";
+import { InternationalRulesHub } from "./InternationalRulesHub";
 import { OwnerDisbursements } from "./OwnerDisbursements";
 import { ApprovalCenter } from "./ApprovalCenter";
 import { ExceptionCenter } from "./ExceptionCenter";
@@ -260,6 +270,13 @@ const CORE_NAV_ITEMS: NavItem[] = [
   { slug: "financial-statements", label: "Financial Reports", icon: Scale },
   { slug: "collections-cases", label: "Collections Cases", icon: ShieldAlert },
   { slug: "leasing-applications", label: "Lease Applications", icon: UserCheck },
+  { slug: "tenant-screening", label: "Tenant Screening", icon: ShieldCheck },
+  { slug: "hoa-management", label: "HOA & Associations", icon: Building },
+  { slug: "cam-billing", label: "CAM Billing", icon: Calculator },
+  { slug: "contractor-1099", label: "1099 Reporting", icon: FileSpreadsheet },
+  { slug: "trust-accounting", label: "Trust Accounting", icon: Landmark },
+  { slug: "commercial-escalations", label: "Lease Escalations", icon: TrendingUp },
+  { slug: "integration-marketplace", label: "Integration Marketplace", icon: Plug },
   { slug: "esignature", label: "eSignature Hub", icon: FileSignature },
   { slug: "owner-disbursements", label: "Owner Payouts", icon: Landmark },
   { slug: "approval-center", label: "Approval Center", icon: BadgeCheck },
@@ -278,6 +295,7 @@ const WORKSPACE_SECONDARY_NAV: NavItem[] = [
   { slug: "market-intelligence", label: "Analytics", icon: LineChart },
   { slug: "trust", label: "Trust", icon: ShieldCheck },
   { slug: "compliance", label: "Compliance", icon: FileCheck2 },
+  { slug: "international-rules", label: "International Markets", icon: Globe },
   { slug: "automation", label: "Automation", icon: Zap },
   { slug: "ai-assistant", label: "AI", icon: Bot },
   { slug: "settings", label: "Settings", icon: Settings },
@@ -603,9 +621,10 @@ export function WorkspaceLayout() {
         return (
           <ComplianceCenter
             organizationId={organization.id}
-            defaultJurisdiction="GH"
           />
         );
+      case "international-rules":
+        return <InternationalRulesHub organizationId={organization.id} />;
       case "calendar":
         return (
           <CalendarOperations
@@ -744,7 +763,7 @@ export function WorkspaceLayout() {
       case "ai-rent-yield":
         return <AIRentYieldPredictor organizationId={organization.id} />;
       case "whatsapp-hub":
-        return <WhatsAppAutomationHub />;
+        return <WhatsAppAutomationHub organizationId={organization.id} />;
       case "multi-currency-fx":
         return <MultiCurrencyHedgingHub />;
       case "recommendations":
@@ -791,6 +810,20 @@ export function WorkspaceLayout() {
         return <CollectionsCases organizationId={organization.id} />;
       case "leasing-applications":
         return <LeasingApplications organizationId={organization.id} />;
+      case "tenant-screening":
+        return <TenantScreeningCenter organizationId={organization.id} />;
+      case "hoa-management":
+        return <HoaManagement organizationId={organization.id} />;
+      case "cam-billing":
+        return <CamBilling organizationId={organization.id} />;
+      case "contractor-1099":
+        return <Contractor1099 organizationId={organization.id} />;
+      case "trust-accounting":
+        return <TrustAccounting organizationId={organization.id} />;
+      case "commercial-escalations":
+        return <CommercialLeaseEscalations organizationId={organization.id} />;
+      case "integration-marketplace":
+        return <IntegrationMarketplace organizationId={organization.id} />;
       case "esignature":
         return <ESignature organizationId={organization.id} />;
       case "owner-disbursements":
@@ -901,7 +934,7 @@ export function WorkspaceLayout() {
                 title={isCollapsed && !isMobile ? `${item.label}` : undefined}
                 className={`workspace-nav-link group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all duration-150 ${
                   isActive
-                    ? "bg-primary/10 font-semibold text-primary"
+                    ? "active bg-primary/10 font-semibold text-primary"
                     : "text-ink-secondary hover:bg-surface-hover hover:text-ink"
                 } ${isCollapsed && !isMobile ? "justify-center px-0 py-2.5" : ""}`}
               >
@@ -1043,7 +1076,7 @@ export function WorkspaceLayout() {
 
   return (
     <WorkspaceMfaGate role={effectiveRole}>
-      <div className="desktop-shell min-h-screen">
+      <div className="desktop-shell workspace-portal min-h-screen">
         {/* ── Top Header ─────────────────────────────────────────────── */}
         <nav className="desktop-header sticky top-0 z-50 border-b border-surface-border bg-surface/95 backdrop-blur-xl">
           <div className="mx-auto max-w-[var(--max-width-page)] px-4 sm:px-6">
@@ -1274,7 +1307,7 @@ export function WorkspaceLayout() {
         <div className="flex">
           {/* ── Desktop Collapsible Sidebar ────────────────────────── */}
           <aside
-            className={`hidden lg:flex flex-col border-r border-surface-border bg-surface min-h-[calc(100vh-56px)] transition-[width] duration-300 ease-in-out shrink-0 ${
+            className={`workspace-sidebar hidden lg:flex flex-col min-h-[calc(100vh-56px)] transition-[width] duration-300 ease-in-out shrink-0 ${
               isCollapsed ? "w-[4.5rem]" : "w-64"
             }`}
           >
@@ -1349,7 +1382,7 @@ export function WorkspaceLayout() {
           </aside>
 
           {/* Main Content Area */}
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-full">
+          <main className="workspace-main-panel flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-full">
             <div className="max-w-7xl mx-auto">
               {workspacePageContent}
             </div>

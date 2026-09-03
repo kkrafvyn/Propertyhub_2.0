@@ -6,8 +6,8 @@ import {
   Heart,
   Home,
   MessageCircle,
-  Search,
   Settings,
+  Wrench,
 } from "lucide-react";
 
 export type ConsumerSection =
@@ -223,8 +223,17 @@ export const CONSUMER_PAGE_CONFIG: Record<ConsumerSection, PageConfig> = {
 
 export const CONSUMER_PRIMARY_NAV = [
   { label: "Home", href: "/app", icon: Home, section: "overview" as const },
-  { label: "Explore", href: "/search", icon: Search, section: null },
   { label: "Saved", href: "/app/saved", icon: Heart, section: "saved" as const },
   { label: "Messages", href: "/app/messages", icon: MessageCircle, section: "messages" as const },
+  { label: "Applications", href: "/app/applications", icon: FileText, section: "applications" as const },
+  { label: "Payments", href: "/app/payments", icon: CreditCard, section: "payments" as const },
   { label: "Profile", href: "/app/settings", icon: Settings, section: "settings" as const },
+];
+
+export const CONSUMER_SECONDARY_NAV = [
+  { label: "Viewings", href: "/app/viewings", icon: CalendarDays, section: "viewings" as const },
+  { label: "Alerts", href: "/app/alerts", icon: Bell, section: "alerts" as const },
+  { label: "Leases", href: "/app/leases", icon: FileText, section: "leases" as const },
+  { label: "Documents", href: "/app/documents", icon: FileText, section: "documents" as const },
+  { label: "Maintenance", href: "/app/maintenance", icon: Wrench, section: "maintenance" as const },
 ];

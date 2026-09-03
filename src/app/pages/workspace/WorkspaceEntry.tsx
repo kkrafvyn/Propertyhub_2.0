@@ -20,6 +20,7 @@ import { LegalAcceptanceCheckbox } from "../../components/legal/LegalAcceptanceC
 import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
 import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from "../../../lib/legal-config";
 import { BusinessMobileShell } from "../../shells/BusinessMobileShell";
+import { DesktopShell } from "../../components/baytmiftah/DesktopShell";
 import { shouldUseBusinessMobileShell } from "../../lib/business-mobile-nav";
 
 const ALLOWED_WORKSPACE_PAGES = new Set(WORKSPACE_PAGE_SLUGS);
@@ -184,13 +185,15 @@ export function WorkspaceEntry() {
         {content}
       </BusinessMobileShell>
     ) : (
-      content
+      <DesktopShell minimal showFooter={false}>
+        <div className="mx-auto w-full max-w-5xl px-4 py-10">{content}</div>
+      </DesktopShell>
     );
 
   if (loading) {
     return wrapEntryShell(
       <div className="min-h-[50vh] flex items-center justify-center p-8">
-        <Card className="max-w-xl w-full p-8 text-center text-muted-foreground">
+        <Card className="max-w-xl w-full p-8 text-center text-ink-secondary">
           Loading workspace...
         </Card>
       </div>,
@@ -202,7 +205,7 @@ export function WorkspaceEntry() {
       <div className="min-h-[50vh] flex items-center justify-center p-8">
         <Card className="max-w-xl w-full p-8 text-center">
           <h1 className="text-2xl font-semibold mb-3">Workspace unavailable</h1>
-          <p className="text-muted-foreground mb-6">{loadError}</p>
+          <p className="text-ink-secondary mb-6">{loadError}</p>
           <div className="flex justify-center gap-3">
             <Button onClick={() => void loadMemberships()}>Try Again</Button>
             <Link to="/">
@@ -231,7 +234,7 @@ export function WorkspaceEntry() {
       <div className="min-h-[50vh] px-4 py-8">
         <Card className="max-w-lg mx-auto p-6">
           <h1 className="text-2xl font-semibold mb-2">Choose a workspace</h1>
-          <p className="text-muted-foreground mb-6">
+          <p className="text-ink-secondary mb-6">
             Select which organization you want to open.
           </p>
           <div className="space-y-3">
@@ -249,7 +252,7 @@ export function WorkspaceEntry() {
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold truncate">{membership.organization.name}</p>
-                  <p className="text-xs text-muted-foreground">{membership.organization.slug}</p>
+                  <p className="text-xs text-ink-secondary">{membership.organization.slug}</p>
                 </div>
               </Link>
             ))}
@@ -262,7 +265,7 @@ export function WorkspaceEntry() {
   }
 
   const entryBody = (
-    <div className="min-h-screen bg-background px-4 py-10">
+    <div className="px-4 py-10">
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr,0.9fr] gap-8">
         <Card className="p-8 lg:p-10">
           <div className="flex items-center gap-3 mb-6">
@@ -275,7 +278,7 @@ export function WorkspaceEntry() {
             </div>
           </div>
 
-          <p className="text-muted-foreground mb-8">
+          <p className="text-ink-secondary mb-8">
             Your account is ready, but you still need a workspace before you can publish
             listings, manage leads, or invite teammates.
           </p>
@@ -300,7 +303,7 @@ export function WorkspaceEntry() {
             <div>
               <label className="block mb-2 text-sm text-foreground">Description</label>
               <textarea
-                className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground min-h-32"
+                className="app-input min-h-32"
                 value={form.description}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, description: event.target.value }))
@@ -374,21 +377,21 @@ export function WorkspaceEntry() {
           <div className="space-y-5">
             <div>
               <h2 className="font-semibold mb-1">Publish listings quickly</h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-ink-secondary">
                 Create properties, manage pricing, and control public visibility from one
                 dashboard.
               </p>
             </div>
             <div>
               <h2 className="font-semibold mb-1">Manage leads as a team</h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-ink-secondary">
                 Track deal cases, stay on top of conversations, and invite teammates when
                 you&apos;re ready.
               </p>
             </div>
             <div>
               <h2 className="font-semibold mb-1">Grow into the full platform</h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-ink-secondary">
                 The same workspace becomes the entry point for analytics, automation,
                 integrations, and enterprise features.
               </p>
@@ -396,7 +399,7 @@ export function WorkspaceEntry() {
           </div>
 
           <div className="mt-8 p-5 rounded-2xl bg-secondary/40 border border-border">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-ink-secondary">
               After setup, you&apos;ll land in
               <span className="font-medium text-foreground"> {WORKSPACE_ENTRY_PATH}</span>
               and we&apos;ll route you into the right organization automatically.

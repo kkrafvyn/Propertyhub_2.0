@@ -7,6 +7,13 @@
  */
 
 import { ghanaMarketService } from './ghana-market.service';
+import {
+  processGroupBotMessage,
+  shouldRespondInGroup,
+  stripGroupBotPrefix,
+  normalizeGroupBotAliases,
+  type GroupBotContext,
+} from './whatsapp-group-bot-core';
 
 export type WhatsAppMessageType =
   | 'gate_pass'
@@ -135,112 +142,56 @@ export const whatsappBusinessBotService = {
     ].join('\n');
   },
 
-  /**
-   * Process Incoming WhatsApp Webhook message via conversational state machine
-   */
-  processIncomingMessage(senderPhone: string, messageText: string): WhatsAppBotResponse {
-    const cleanText = messageText.trim().toLowerCase();
+  formatLeaseSigningMessage(params: {
+    recipientName: string;
+    documentName: string;
+    signingUrl: string;
+    jurisdictionLabel?: string;
+    isCosignReminder?: boolean;
+  }): string {
+    const heading = params.isCosignReminder
+      ? '📝 *LEASE COUNTERSIGNATURE REQUIRED*'
+      : '📝 *LEASE READY FOR SIGNATURE*';
+    return [
+      heading,
+      `━━━━━━━━━━━━━━━━━━━━━━`,
+      `Hello *${params.recipientName}*,`,
+      params.isCosignReminder
+        ? `The tenant has signed *${params.documentName}*. Your countersignature is required to execute the agreement.`
+        : `Your tenancy agreement *${params.documentName}* is ready for electronic signature.`,
+      params.jurisdictionLabel ? `📍 *Jurisdiction:* ${params.jurisdictionLabel}` : '',
+      ``,
+      `✍️ *Sign securely:*`,
+      params.signingUrl,
+      ``,
+      `Review all jurisdiction-specific clauses before signing. Powered by BaytMiftah.`,
+    ].filter(Boolean).join('\n');
+  },
 
-    // Menu / Greeting
-    if (cleanText === 'hi' || cleanText === 'hello' || cleanText === 'menu' || cleanText === 'start') {
-      return {
-        replyMessage: [
-          `🏢 *Welcome to BaytMiftah Estate Concierge!*`,
-          `How can we assist you today? Reply with a number:`,
-          ``,
-          `1️⃣ *Check Rent Balance & Pay (MoMo)*`,
-          `2️⃣ *Generate Visitor Gate Pass*`,
-          `3️⃣ *Report Maintenance Defect*`,
-          `4️⃣ *Check Active Ticket Status*`,
-          `5️⃣ *Speak with Estate Manager*`,
-        ].join('\n'),
-        quickReplies: ['1. Rent Balance', '2. Gate Pass', '3. Maintenance', '5. Support'],
-        actionRequired: 'NONE',
-      };
+  buildLeaseSigningUrl(phone: string | null | undefined, message: string): string {
+    return this.buildDirectChatUrl(phone || '', message);
+  },
+
+  /** Group chat: only respond when mentioned or prefixed (unless respondWithoutMention). */
+  shouldRespondInGroup,
+  stripGroupPrefix: stripGroupBotPrefix,
+  normalizeGroupAliases: normalizeGroupBotAliases,
+
+  processGroupMessage(
+    senderPhone: string,
+    messageText: string,
+    options?: { aliases?: string[]; respondWithoutMention?: boolean; context?: GroupBotContext }
+  ): WhatsAppBotResponse | null {
+    const aliases = normalizeGroupBotAliases(options?.aliases);
+    if (!shouldRespondInGroup(messageText, aliases, options?.respondWithoutMention)) {
+      return null;
     }
+    const command = stripGroupBotPrefix(messageText, aliases);
+    return processGroupBotMessage(senderPhone, command, true, options?.context);
+  },
 
-    // 1. Rent Balance & Payment
-    if (cleanText === '1' || cleanText.includes('rent') || cleanText.includes('balance') || cleanText.includes('pay')) {
-      return {
-        replyMessage: [
-          `💳 *Your BaytMiftah Rent Status:*`,
-          `• Unit: Cantonments Luxury Suites - Unit 4B`,
-          `• Current Balance: GHS 0.00 (Paid in Full)`,
-          `• Next Billing Date: 1st of Next Month`,
-          ``,
-          `To make an advance or utility payment, tap below:`,
-          `👉 https://baytmiftah.com/pay/rent?ref=TENANT-${senderPhone.slice(-4)}`,
-        ].join('\n'),
-        actionRequired: 'TRIGGER_MOMO',
-        quickReplies: ['Menu', 'Get Gate Pass', 'Report Issue'],
-      };
-    }
-
-    // 2. Generate Visitor Gate Pass
-    if (cleanText === '2' || cleanText.includes('gate') || cleanText.includes('pass') || cleanText.includes('visitor')) {
-      const pin = Math.floor(100000 + Math.random() * 900000).toString();
-      return {
-        replyMessage: [
-          `🛡️ *Gate Pass Generated Successfully!*`,
-          `• Visitor Access PIN: *${pin}*`,
-          `• Validity: 6 Hours from now`,
-          `• Estate: Cantonments Luxury Suites`,
-          ``,
-          `Forward this PIN to your visitor for entry clearance at the security kiosk.`,
-        ].join('\n'),
-        actionRequired: 'DISPATCH_GATE_PIN',
-        quickReplies: ['Menu', 'Check Balance'],
-      };
-    }
-
-    // 3. Report Maintenance Defect
-    if (cleanText === '3' || cleanText.includes('plumb') || cleanText.includes('leak') || cleanText.includes('ac') || cleanText.includes('light')) {
-      return {
-        replyMessage: [
-          `🛠️ *Maintenance Desk:*`,
-          `We have opened an emergency request for your unit.`,
-          `Please reply with a brief description or send a photo of the defect here.`,
-          `An estate artisan will be dispatched shortly.`,
-        ].join('\n'),
-        actionRequired: 'ALERT_MANAGER',
-        quickReplies: ['Menu', 'View Tickets'],
-      };
-    }
-
-    // 4. Ticket Status
-    if (cleanText === '4' || cleanText.includes('ticket') || cleanText.includes('status')) {
-      return {
-        replyMessage: [
-          `📋 *Active Work Orders:*`,
-          `• Ticket #WO-8921 (AC Servicing) — *In Progress (Artisan Dispatched)*`,
-          `• Scheduled Arrival: Today at 2:30 PM`,
-          `• Artisan: Master Kwabena (+233 24 555 1234)`,
-        ].join('\n'),
-        actionRequired: 'NONE',
-        quickReplies: ['Menu', 'Support'],
-      };
-    }
-
-    // 5. Human Agent Handoff
-    if (cleanText === '5' || cleanText.includes('agent') || cleanText.includes('manager') || cleanText.includes('help')) {
-      return {
-        replyMessage: [
-          `📞 *Estate Manager Connected:*`,
-          `Your request has been forwarded to the resident property manager on duty.`,
-          `They will respond in this chat within 15 minutes. For immediate emergencies, call +233 30 200 1234.`,
-        ].join('\n'),
-        actionRequired: 'ALERT_MANAGER',
-        quickReplies: ['Menu'],
-      };
-    }
-
-    // Fallback response
-    return {
-      replyMessage: [
-        `I didn't quite understand that. Please reply *MENU* to see available options or *5* to chat with an estate manager.`,
-      ].join('\n'),
-      quickReplies: ['Menu', '1. Pay Rent', '2. Gate Pass'],
-      actionRequired: 'NONE',
-    };
+  /** Direct-message bot with optional live tenant context. */
+  processIncomingMessage(senderPhone: string, messageText: string, context?: GroupBotContext): WhatsAppBotResponse {
+    return processGroupBotMessage(senderPhone, messageText, false, context);
   },
 };

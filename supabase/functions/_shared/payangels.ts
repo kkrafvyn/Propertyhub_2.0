@@ -107,6 +107,14 @@ function getPayangelsSecretKey() {
   return secretKey;
 }
 
+export function isPayangelsConfigured() {
+  return Boolean(
+    Deno.env.get("PAYANGELS_SECRET_KEY")?.trim() ||
+      Deno.env.get("PAYSTACK_SECRET_KEY")?.trim() ||
+      Deno.env.get("STRIPE_SECRET_KEY")?.trim()
+  );
+}
+
 export function verifyPayangelsWebhookSignature(body: string, signature: string | null) {
   if (!signature) return false;
 
@@ -157,6 +165,14 @@ async function payangelsFetch<T>(path: string, init: RequestInit = {}) {
 }
 
 export async function initializePayangelsTransaction(input: PaystackInitializeInput) {
+  if (!isPayangelsConfigured()) {
+    return {
+      authorization_url: null as string | null,
+      access_code: `sim_${input.reference}`,
+      reference: input.reference,
+      simulated: true,
+    };
+  }
   return payangelsFetch<{
     authorization_url: string;
     access_code: string;
@@ -168,6 +184,18 @@ export async function initializePayangelsTransaction(input: PaystackInitializeIn
 }
 
 export async function verifyPayangelsTransaction(reference: string) {
+  if (!isPayangelsConfigured() && reference.startsWith("ph_pay_")) {
+    return {
+      status: "success",
+      reference,
+      amount: 0,
+      currency: "GHS",
+      channel: "simulated",
+      gateway_response: "Simulated checkout (no payment provider keys configured)",
+      paid_at: new Date().toISOString(),
+      metadata: { simulated: true },
+    } as PaystackTransactionData;
+  }
   return payangelsFetch<PaystackTransactionData>(
     `/transaction/verify/${encodeURIComponent(reference)}`,
     {

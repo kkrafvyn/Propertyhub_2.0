@@ -36,7 +36,7 @@ export const leaseService = {
         tenant:users(full_name, email, phone),
         listing:listings(
           id,
-          property:properties(address, city, region)
+          property:properties(address, city, region, country, subdivision_code, ghana_post_gps)
         )
       `)
       .eq("organization_id", organizationId)

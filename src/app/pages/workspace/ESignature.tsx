@@ -20,6 +20,13 @@ import {
   type DocumentType,
 } from "../../../lib/esignature.service";
 import { useAuth } from "../../context/AuthContext";
+import { leaseService } from "../../../lib/lease.service";
+import { leaseEsignReminderService } from "../../../lib/lease-esign-reminder.service";
+import {
+  leaseEsignatureService,
+  prepareLeaseEnvelope,
+} from "../../../lib/lease-esignature.service";
+import { LEASE_TEMPLATE_PRESETS } from "../../../lib/lease-template.service";
 
 export function ESignature({
   organizationId,
@@ -39,6 +46,13 @@ export function ESignature({
   const [signerEmail, setSignerEmail] = useState("");
   const [signerPhone, setSignerPhone] = useState("");
   const [expiresInDays, setExpiresInDays] = useState("14");
+  const [leases, setLeases] = useState<any[]>([]);
+  const [selectedLeaseId, setSelectedLeaseId] = useState("");
+  const [templateId, setTemplateId] = useState("residential_standard");
+  const [clausePreview, setClausePreview] = useState("");
+  const [auditScore, setAuditScore] = useState<number | null>(null);
+  const [forceOverride, setForceOverride] = useState(false);
+  const [remindingId, setRemindingId] = useState<string | null>(null);
 
   const loadRequests = async () => {
     if (!organizationId) return;
@@ -55,17 +69,59 @@ export function ESignature({
 
   useEffect(() => {
     loadRequests();
+    if (!organizationId) return;
+    void leaseService.getOrganizationLeases(organizationId).then(setLeases).catch(() => setLeases([]));
   }, [organizationId]);
+
+  useEffect(() => {
+    if (docType !== "lease_agreement" || !selectedLeaseId) {
+      setClausePreview("");
+      return;
+    }
+    const lease = leases.find((entry) => entry.id === selectedLeaseId);
+    if (!lease) return;
+    const prepared = prepareLeaseEnvelope({
+      organizationId: organizationId!,
+      lease,
+      templateId,
+    });
+    setDocName(prepared.documentName);
+    setClausePreview(prepared.documentBody);
+    setAuditScore(prepared.auditScore);
+    if (lease.tenant?.full_name) setSignerName(lease.tenant.full_name);
+    if (lease.tenant?.email) setSignerEmail(lease.tenant.email);
+  }, [docType, selectedLeaseId, templateId, leases, organizationId]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!organizationId) return;
     try {
       setSaving(true);
+      if (docType === "lease_agreement" && selectedLeaseId) {
+        const lease = leases.find((entry) => entry.id === selectedLeaseId);
+        if (lease) {
+          await leaseEsignatureService.sendLeaseForSigning({
+            organizationId,
+            lease,
+            requestedBy: user?.id,
+            templateId,
+            expiresInDays: parseInt(expiresInDays) || 14,
+            forceOverride,
+          });
+          toast.success("Lease envelope sent with jurisdiction clauses");
+          setSelectedLeaseId("");
+          setClausePreview("");
+          setTab("list");
+          loadRequests();
+          return;
+        }
+      }
+
       await eSignatureService.createRequest({
         organizationId,
         documentName: docName,
         documentType: docType,
+        documentBody: clausePreview || undefined,
         signerName,
         signerEmail,
         signerPhone: signerPhone || undefined,
@@ -81,6 +137,38 @@ export function ESignature({
       setTab("list");
       loadRequests();
     } catch (err: any) {
+      if (
+        err?.name === "CounselSignoffRequiredError" &&
+        window.confirm(`${err.message}\n\nSend with manager override?`)
+      ) {
+        setForceOverride(true);
+        try {
+          if (docType === "lease_agreement" && selectedLeaseId) {
+            const lease = leases.find((entry) => entry.id === selectedLeaseId);
+            if (lease) {
+              await leaseEsignatureService.sendLeaseForSigning({
+                organizationId,
+                lease,
+                requestedBy: user?.id,
+                templateId,
+                expiresInDays: parseInt(expiresInDays) || 14,
+                forceOverride: true,
+              });
+              toast.success("Lease envelope sent with manager override");
+              setSelectedLeaseId("");
+              setClausePreview("");
+              setTab("list");
+              loadRequests();
+              return;
+            }
+          }
+        } catch (retryErr: any) {
+          toast.error(retryErr.message || "Failed to send eSignature request");
+        } finally {
+          setSaving(false);
+        }
+        return;
+      }
       toast.error(err.message || "Failed to send eSignature request");
     } finally {
       setSaving(false);
@@ -95,6 +183,19 @@ export function ESignature({
       loadRequests();
     } catch (err: any) {
       toast.error(err.message || "Failed to update request");
+    }
+  };
+
+  const handleSendReminder = async (id: string) => {
+    try {
+      setRemindingId(id);
+      await leaseEsignReminderService.sendReminder(id, user?.id);
+      toast.success("Signing reminder sent (email, SMS if phone on file)");
+      loadRequests();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send reminder");
+    } finally {
+      setRemindingId(null);
     }
   };
 
@@ -180,10 +281,10 @@ export function ESignature({
                       </td>
                       <td className="px-4 py-3">
                         <div className="text-ink font-semibold">
-                          {r.signer_name}
+                          {(r.signers?.[0]?.name) || "—"}
                         </div>
                         <div className="text-xs text-ink-muted">
-                          {r.signer_email}
+                          {(r.signers?.[0]?.email) || "—"}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-xs uppercase font-mono text-ink-muted">
@@ -216,6 +317,18 @@ export function ESignature({
                             Sign Link
                             <ExternalLink className="w-3 h-3 ml-1" />
                           </a>
+                        )}
+                        {["sent", "viewed", "partially_signed"].includes(r.status) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={remindingId === r.id}
+                            onClick={() => void handleSendReminder(r.id)}
+                            className="text-amber-600 hover:bg-amber-50"
+                          >
+                            <Clock className="w-3.5 h-3.5 mr-1" />
+                            Remind
+                          </Button>
                         )}
                         {r.status === "sent" && (
                           <Button
@@ -302,6 +415,62 @@ export function ESignature({
                 />
               </div>
             </div>
+
+            {docType === "lease_agreement" && leases.length > 0 ? (
+              <div className="space-y-3 rounded-xl border border-surface-border p-4 bg-surface-subtle">
+                <h3 className="text-sm font-bold text-ink">Auto-clauses from property jurisdiction</h3>
+                <select
+                  className="w-full px-3 py-2 rounded-xl border border-surface-border bg-surface text-ink text-sm"
+                  value={selectedLeaseId}
+                  onChange={(e) => setSelectedLeaseId(e.target.value)}
+                >
+                  <option value="">Manual document (no lease link)</option>
+                  {leases.map((lease) => (
+                    <option key={lease.id} value={lease.id}>
+                      {lease.listing?.property?.address || "Property"} — {lease.tenant?.full_name || "Tenant"}
+                    </option>
+                  ))}
+                </select>
+                {selectedLeaseId ? (
+                  <select
+                    className="w-full px-3 py-2 rounded-xl border border-surface-border bg-surface text-ink text-sm"
+                    value={templateId}
+                    onChange={(e) => setTemplateId(e.target.value)}
+                  >
+                    {LEASE_TEMPLATE_PRESETS.map((preset) => (
+                      <option key={preset.id} value={preset.id}>
+                        {preset.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+                {clausePreview ? (
+                  <details className="text-xs">
+                    <summary className="cursor-pointer font-medium">Preview generated clauses</summary>
+                    {auditScore != null ? (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Compliance score: {auditScore}/100
+                        {auditScore < 50 ? " — below minimum; enable manager override to send." : ""}
+                      </p>
+                    ) : null}
+                    <pre className="mt-2 max-h-48 overflow-y-auto rounded-lg bg-surface p-3 whitespace-pre-wrap font-mono text-[11px]">
+                      {clausePreview.slice(0, 2400)}
+                      {clausePreview.length > 2400 ? "\n…" : ""}
+                    </pre>
+                  </details>
+                ) : null}
+                {selectedLeaseId && auditScore != null && auditScore < 50 ? (
+                  <label className="flex items-center gap-2 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={forceOverride}
+                      onChange={(e) => setForceOverride(e.target.checked)}
+                    />
+                    Manager override — send despite low compliance score
+                  </label>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="border-t border-surface-border pt-4">
               <h3 className="text-sm font-bold text-ink mb-3">

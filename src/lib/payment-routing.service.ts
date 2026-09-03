@@ -1,7 +1,16 @@
 import { clientIntegrations } from "./integrations";
+import {
+  getAvailablePaymentRails,
+  resolveCountryContext,
+  type CountryCode,
+} from "./country-rules";
+import { isPayAngelsWorldwideRail } from "./country-rules/payangels-rails";
 import { resolveJurisdiction, type JurisdictionId } from "./real-estate-compliance";
+import { resolveEffectiveSubdivision } from "./property-country-context.service";
+import { resolveSubdivisionCode } from "./country-rules/subdivision-resolver";
 
-export type PaymentProviderId = "payangels";
+/** PayAngels is the sole primary checkout provider worldwide. */
+export type PaymentProviderId = "payangels" | "momo_mtn" | "mpesa" | "bank_transfer";
 
 const JURISDICTION_CURRENCY: Record<JurisdictionId, string> = {
   GH: "GHS",
@@ -18,9 +27,6 @@ const JURISDICTION_CURRENCY: Record<JurisdictionId, string> = {
   GLOBAL: "USD",
 };
 
-/** Markets where PayAngels is the primary checkout provider. */
-const PAYANGELS_JURISDICTIONS = new Set<JurisdictionId>(["GH", "NG", "KE", "ZA"]);
-
 export interface PaymentContext {
   jurisdictionId: JurisdictionId;
   region: string;
@@ -29,6 +35,7 @@ export interface PaymentContext {
   providerLabel: string;
   propertyLabel: string;
   checkoutReady: boolean;
+  availableRails: ReturnType<typeof getAvailablePaymentRails>;
 }
 
 export function resolvePaymentContext(input: {
@@ -36,28 +43,58 @@ export function resolvePaymentContext(input: {
   region?: string | null;
   city?: string | null;
   currency?: string | null;
+  subdivisionCode?: string | null;
+  propertySubdivisionCode?: string | null;
 }): PaymentContext {
-  const jurisdictionId = resolveJurisdiction(input);
-  const region = jurisdictionId === "GLOBAL" ? "GLOBAL" : jurisdictionId;
-  const currency =
-    input.currency?.trim().toUpperCase() || JURISDICTION_CURRENCY[jurisdictionId] || "USD";
+  const jurisdictionId = resolveJurisdiction({
+    country: input.country,
+    region: input.region,
+    city: input.city,
+  });
 
-  // All markets now route to PayAngels as the single provider.
-  const primaryProvider: PaymentProviderId = "payangels";
+  const { code: effectiveSubdivision } = resolveEffectiveSubdivision(
+    jurisdictionId,
+    {
+      country: input.country,
+      region: input.region,
+      city: input.city,
+      subdivision_code: input.propertySubdivisionCode || input.subdivisionCode,
+    },
+    input.subdivisionCode
+  );
+
+  const countryContext = resolveCountryContext({
+    country: input.country,
+    region: input.region,
+    city: input.city,
+    subdivisionCode:
+      effectiveSubdivision ||
+      resolveSubdivisionCode(jurisdictionId, input.region, input.city),
+    currency: input.currency,
+  });
+
+  const resolvedId = countryContext.jurisdictionId;
+  const region = resolvedId === "GLOBAL" ? "GLOBAL" : resolvedId;
+  const currency =
+    input.currency?.trim().toUpperCase() ||
+    countryContext.currency ||
+    JURISDICTION_CURRENCY[resolvedId] ||
+    "USD";
+
+  const availableRails = getAvailablePaymentRails(countryContext, "rent");
 
   const propertyLabel =
     [input.city, input.region, input.country].filter(Boolean).join(", ") || "this property";
 
-  const checkoutReady = clientIntegrations.payangels.checkoutReady;
-
   return {
-    jurisdictionId,
+    jurisdictionId: resolvedId,
     region,
     currency,
-    primaryProvider,
-    providerLabel: "Secure checkout",
+    primaryProvider: "payangels",
+    providerLabel: "PayAngels",
     propertyLabel,
-    checkoutReady,
+    checkoutReady: clientIntegrations.payangels.checkoutReady,
+    availableRails,
   };
 }
 
@@ -87,18 +124,23 @@ export function resolvePaymentContextFromListing(
     region: property?.region,
     city: property?.city || property?.address,
     currency: listing?.currency,
+    propertySubdivisionCode: (property as { subdivision_code?: string | null })?.subdivision_code,
   });
 }
 
-export function shouldUsePayangelsCheckout(context: PaymentContext) {
-  return context.primaryProvider === "payangels";
+export function shouldUsePayangelsCheckout(_context?: PaymentContext) {
+  return true;
 }
 
-// Backwards-compatible alias for existing imports
 export function shouldUsePaystackCheckout(context: PaymentContext) {
   return shouldUsePayangelsCheckout(context);
 }
 
 export function getPreferredProviderIds(context: PaymentContext): string[] {
-  return clientIntegrations.payangels.checkoutReady ? ["payangels"] : [];
+  if (clientIntegrations.payangels.checkoutReady) {
+    return ["payangels", ...context.availableRails.map((r) => r.id).filter((id) => !isPayAngelsWorldwideRail(id))];
+  }
+  return context.availableRails.map((r) => r.id);
 }
+
+export type { CountryCode };

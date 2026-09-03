@@ -2942,6 +2942,7 @@ export type Database = {
           organization_id: string | null
           region: string
           square_meters: number | null
+          subdivision_code: string | null
           updated_at: string | null
         }
         Insert: {
@@ -2967,6 +2968,7 @@ export type Database = {
           organization_id?: string | null
           region: string
           square_meters?: number | null
+          subdivision_code?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -2992,6 +2994,7 @@ export type Database = {
           organization_id?: string | null
           region?: string
           square_meters?: number | null
+          subdivision_code?: string | null
           updated_at?: string | null
         }
         Relationships: [

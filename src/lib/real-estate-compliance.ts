@@ -415,7 +415,7 @@ export function resolveJurisdiction(input?: {
     if (locationKey.includes(needle)) return jurisdiction;
   }
 
-  return "GH";
+  return "GLOBAL";
 }
 
 export function getJurisdictionRules(id: JurisdictionId = "GH") {

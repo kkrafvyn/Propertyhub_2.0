@@ -2,11 +2,13 @@ import {
   revenueManagementService,
   type RevenueRule,
 } from "./revenue-management.service";
+import { getCountryPack, type CountryCode } from "./country-rules";
 
 export type FeeCalculationInput = {
   ruleKey: string;
   amountMajor: number;
   currency?: string;
+  jurisdictionId?: string;
   context?: Record<string, unknown>;
 };
 
@@ -29,8 +31,17 @@ function clampFee(fee: number, rule: RevenueRule | null) {
 export async function calculateRevenueFee(
   input: FeeCalculationInput,
 ): Promise<FeeCalculationResult> {
-  const rule = await revenueManagementService.getRule(input.ruleKey);
-  const currency = input.currency || rule?.currency || "GHS";
+  const jurisdiction = (input.jurisdictionId || "GLOBAL") as CountryCode;
+  let rule = await revenueManagementService.getRule(input.ruleKey);
+
+  // Prefer jurisdiction-scoped rule when revenue_rules.jurisdiction_id is set
+  if (input.jurisdictionId) {
+    const scoped = await revenueManagementService.getRuleForJurisdiction(input.ruleKey, jurisdiction);
+    if (scoped) rule = scoped;
+  }
+
+  const pack = getCountryPack(jurisdiction === "GLOBAL" ? "GH" : jurisdiction);
+  const currency = input.currency || rule?.currency || pack.currency;
 
   if (!rule || !rule.enabled) {
     return { enabled: false, feeMajor: 0, feeType: null, currency, rule };

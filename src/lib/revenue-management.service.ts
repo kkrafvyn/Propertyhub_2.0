@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { buildPropertyComplianceSnapshot } from "./property-country-context.service";
 
 export type FeeType = "fixed" | "percentage" | "tiered" | "custom";
 
@@ -20,6 +21,7 @@ export type RevenueRule = {
   effective_until: string | null;
   sort_order: number;
   updated_at: string;
+  jurisdiction_id?: string | null;
 };
 
 export type SubscriptionPlan = {
@@ -98,6 +100,7 @@ export type RevenueDashboardMetrics = {
   monthlySeries: Array<{ month: string; amountMinor: number }>;
   dailySeries: Array<{ day: string; amountMinor: number }>;
   categoryBreakdown: Array<{ category: string; amountMinor: number }>;
+  jurisdictionBreakdown: Array<{ jurisdiction: string; amountMinor: number; count: number }>;
 };
 
 const RULES_CACHE_TTL_MS = 60_000;
@@ -149,6 +152,26 @@ export const revenueManagementService = {
       .maybeSingle();
     if (error) throw error;
     return data ? mapRule(data) : null;
+  },
+
+  async getRuleForJurisdiction(ruleKey: string, jurisdictionId: string) {
+    const db = supabase as any;
+    const { data, error } = await db
+      .from("revenue_rules")
+      .select("*")
+      .eq("rule_key", ruleKey)
+      .eq("jurisdiction_id", jurisdictionId)
+      .maybeSingle();
+    if (error) throw error;
+    if (data) return mapRule(data);
+    const { data: globalRule, error: globalError } = await db
+      .from("revenue_rules")
+      .select("*")
+      .eq("rule_key", ruleKey)
+      .eq("jurisdiction_id", "GLOBAL")
+      .maybeSingle();
+    if (globalError) throw globalError;
+    return globalRule ? mapRule(globalRule) : null;
   },
 
   async upsertRule(rule: Partial<RevenueRule> & { rule_key: string; label: string; category: string }) {
@@ -313,17 +336,25 @@ export const revenueManagementService = {
     baseAmountMajor: number;
     purpose: string;
     promoCode?: string | null;
+    jurisdictionId?: string | null;
   }): Promise<CheckoutPricingPreview> {
     const baseMinor = Math.round(input.baseAmountMajor * 100);
-    const rules = await this.getActiveRules();
+    const jurisdictionId = input.jurisdictionId?.trim().toUpperCase() || null;
     let platformFeeMinor = 0;
 
-    for (const rule of rules) {
-      if (rule.rule_key === "transaction_fee") {
-        platformFeeMinor += this.calculateFeeMinor(rule, baseMinor);
-      }
-      if (rule.rule_key === "booking_guest_fee" && input.purpose === "booking_fee") {
-        platformFeeMinor += this.calculateFeeMinor(rule, baseMinor);
+    const transactionRule = jurisdictionId
+      ? await this.getRuleForJurisdiction("transaction_fee", jurisdictionId)
+      : await this.getRule("transaction_fee");
+    if (transactionRule && isRuleEffective(transactionRule)) {
+      platformFeeMinor += this.calculateFeeMinor(transactionRule, baseMinor);
+    }
+
+    if (input.purpose === "booking_fee") {
+      const guestRule = jurisdictionId
+        ? await this.getRuleForJurisdiction("booking_guest_fee", jurisdictionId)
+        : await this.getRule("booking_guest_fee");
+      if (guestRule && isRuleEffective(guestRule)) {
+        platformFeeMinor += this.calculateFeeMinor(guestRule, baseMinor);
       }
     }
 
@@ -393,7 +424,7 @@ export const revenueManagementService = {
         .gte("created_at", startOfDay.toISOString()),
       supabase
         .from("property_transactions")
-        .select("amount_minor, purpose, status, created_at")
+        .select("amount_minor, purpose, status, created_at, property:properties(country, region, city, subdivision_code)")
         .eq("status", "success")
         .gte("created_at", startOfMonth.toISOString()),
       supabase.from("escrow_holds").select("amount_minor, status").in("status", ["held", "partially_released"]),
@@ -475,6 +506,31 @@ export const revenueManagementService = {
       .filter((plan) => plan.is_active && !plan.is_custom_pricing && plan.price_amount)
       .reduce((total, plan) => total + Number(plan.price_amount) * 100, 0);
 
+    const jurisdictionMap = new Map<string, { amountMinor: number; count: number }>();
+    for (const txn of monthTxns || []) {
+      const property = (txn as {
+        property?: {
+          country?: string | null;
+          region?: string | null;
+          city?: string | null;
+          subdivision_code?: string | null;
+        } | null;
+      }).property;
+      const snapshot = buildPropertyComplianceSnapshot(property || {});
+      const label = snapshot.subdivisionLabel
+        ? `${snapshot.jurisdictionId} · ${snapshot.subdivisionLabel}`
+        : snapshot.context.pack.label;
+      const current = jurisdictionMap.get(label) || { amountMinor: 0, count: 0 };
+      current.amountMinor += Number(txn.amount_minor || 0);
+      current.count += 1;
+      jurisdictionMap.set(label, current);
+    }
+
+    const jurisdictionBreakdown = [...jurisdictionMap.entries()]
+      .map(([jurisdiction, stats]) => ({ jurisdiction, ...stats }))
+      .sort((a, b) => b.amountMinor - a.amountMinor)
+      .slice(0, 8);
+
     return {
       todayRevenueMinor,
       monthRevenueMinor,
@@ -493,6 +549,7 @@ export const revenueManagementService = {
         category: item.source,
         amountMinor: item.amountMinor,
       })),
+      jurisdictionBreakdown,
     };
   },
 };

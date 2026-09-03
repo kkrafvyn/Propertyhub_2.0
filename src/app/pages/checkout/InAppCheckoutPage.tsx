@@ -27,7 +27,8 @@ import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
 import { MarketplaceDisclaimerStrip } from "../../components/legal/MarketplaceDisclaimerStrip";
 import { CHECKOUT_PAYMENT_DISCLAIMER } from "../../../lib/legal-disclaimers";
 import { revenueManagementService } from "../../../lib/revenue-management.service";
-import type { CheckoutPricingPreview } from "../../../lib/revenue-management.service";
+import type { PropertyCheckoutPricing } from "../../../lib/property-checkout-pricing.service";
+import { PropertyJurisdictionBadge } from "../../components/compliance/PropertyJurisdictionBadge";
 import { Input } from "../../components/ui/Input";
 
 type CheckoutPhase = "review" | "processing" | "success" | "error";
@@ -57,7 +58,7 @@ export function InAppCheckoutPage() {
   const [completedReference, setCompletedReference] = useState<string | null>(null);
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
-  const [pricing, setPricing] = useState<CheckoutPricingPreview | null>(null);
+  const [pricing, setPricing] = useState<PropertyCheckoutPricing | null>(null);
   const [pricingError, setPricingError] = useState<string | null>(null);
   const [applyingPromo, setApplyingPromo] = useState(false);
 
@@ -97,9 +98,9 @@ export function InAppCheckoutPage() {
     [listing],
   );
 
-  const currency = listing?.currency || paymentContext?.currency || "GHS";
+  const currency = pricing?.currency || listing?.currency || paymentContext?.currency || "GHS";
   const amount = checkoutParams?.amount ?? 0;
-  const payableAmount = pricing ? pricing.totalMinor / 100 : amount;
+  const payableAmount = pricing ? pricing.totalWithTaxMinor / 100 : amount;
   const purposeLabel = checkoutParams
     ? PURPOSE_LABELS[checkoutParams.purpose] || "Payment"
     : "Payment";
@@ -121,12 +122,21 @@ export function InAppCheckoutPage() {
 
     let cancelled = false;
 
-    void revenueManagementService
-      .previewCheckoutPricing({
-        baseAmountMajor: amount,
-        purpose: checkoutParams.purpose,
-        promoCode: appliedPromo,
-      })
+    void previewPropertyCheckoutPricing({
+      baseAmountMajor: amount,
+      purpose: checkoutParams.purpose,
+      promoCode: appliedPromo,
+      property: listing?.property
+        ? {
+            country: listing.property.country,
+            region: listing.property.region,
+            city: listing.property.city,
+            subdivision_code: listing.property.subdivision_code,
+            currency: listing.currency,
+          }
+        : null,
+      organizationId: listing?.organization_id,
+    })
       .then((preview) => {
         if (!cancelled) {
           setPricing(preview);
@@ -143,17 +153,27 @@ export function InAppCheckoutPage() {
     return () => {
       cancelled = true;
     };
-  }, [amount, appliedPromo, checkoutParams]);
+  }, [amount, appliedPromo, checkoutParams, listing]);
 
   const handleApplyPromo = async () => {
     if (!checkoutParams || !promoInput.trim()) return;
     setApplyingPromo(true);
     setPricingError(null);
     try {
-      const preview = await revenueManagementService.previewCheckoutPricing({
+      const preview = await previewPropertyCheckoutPricing({
         baseAmountMajor: amount,
         purpose: checkoutParams.purpose,
         promoCode: promoInput.trim(),
+        property: listing?.property
+          ? {
+              country: listing.property.country,
+              region: listing.property.region,
+              city: listing.property.city,
+              subdivision_code: listing.property.subdivision_code,
+              currency: listing.currency,
+            }
+          : null,
+        organizationId: listing?.organization_id,
       });
       setAppliedPromo(preview.promoCode);
       setPricing(preview);
@@ -433,6 +453,11 @@ export function InAppCheckoutPage() {
                 <div>
                   <p className="text-ink-secondary">Property</p>
                   <p className="font-medium text-ink">{propertyLabel}</p>
+                  {listing?.property ? (
+                    <div className="mt-2">
+                      <PropertyJurisdictionBadge property={listing.property} compact />
+                    </div>
+                  ) : null}
                 </div>
                 <div>
                   <p className="text-ink-secondary">Payment for</p>
@@ -458,6 +483,19 @@ export function InAppCheckoutPage() {
                         -{formatMoney(pricing.discountMinor / 100, currency)}
                       </span>
                     </div>
+                  ) : null}
+                  {pricing?.taxLines.map((line) => (
+                    <div key={line.id} className="flex items-center justify-between">
+                      <span className="text-ink-secondary">{line.label}</span>
+                      <span className="font-medium text-ink">
+                        {formatMoney(line.amountMinor / 100, currency)}
+                      </span>
+                    </div>
+                  ))}
+                  {pricing?.subdivisionLabel ? (
+                    <p className="text-xs text-ink-secondary pt-1">
+                      Tax rules: {pricing.subdivisionLabel} ({pricing.jurisdictionId})
+                    </p>
                   ) : null}
                   <div className="flex items-center justify-between border-t border-surface-border pt-3">
                     <span className="text-ink-secondary">Total</span>

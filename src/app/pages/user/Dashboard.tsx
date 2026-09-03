@@ -40,17 +40,16 @@ import { walletService } from "../../../lib/wallet.service";
 import { escrowService } from "../../../lib/escrow.service";
 import { workflowOrchestratorService } from "../../../lib/workflow-orchestrator.service";
 import { bookingService } from "../../../lib/booking.service";
-import { leaseService } from "../../../lib/lease.service";
+import { tenantEsignatureService } from "../../../lib/tenant-esignature.service";
 import { maintenanceService } from "../../../lib/maintenance.service";
 import { consumerContextService } from "../../../lib/consumer-context.service";
 import { useTranslation } from "../../i18n/LocaleContext";
 import { communicationService } from "../../../lib/communication.service";
 import { residentHomeService } from "../../../lib/resident-home.service";
 import { mortgageInsuranceService } from "../../../lib/mortgage-insurance.service";
-import { CONSUMER_PAGE_CONFIG, CONSUMER_PRIMARY_NAV, type ConsumerSection } from "../../lib/consumer-page-config";
+import { CONSUMER_PAGE_CONFIG, CONSUMER_PRIMARY_NAV, CONSUMER_SECONDARY_NAV, type ConsumerSection } from "../../lib/consumer-page-config";
 import {
   ActivityFeed,
-  DashboardStatsSkeleton,
   EmptyState,
   ErrorState,
   ListSkeleton,
@@ -88,6 +87,9 @@ import KycBanner from "../../components/baytmiftah/KycBanner";
 import { useMyKyc } from "../../hooks/useMyKyc";
 import { isKycVerified } from "../../lib/baytmiftah/kyc";
 import { ConsumerNotificationPreferences } from "../../components/baytmiftah/ConsumerNotificationPreferences";
+import { ConsumerPortalNav, type ConsumerNavItem } from "../../components/baytmiftah/consumer/ConsumerPortalNav";
+import { ConsumerStatCard } from "../../components/baytmiftah/consumer/ConsumerStatCard";
+import { ConsumerWelcomeHero } from "../../components/baytmiftah/consumer/ConsumerWelcomeHero";
 import { isWorkspaceRole } from "../../lib/baytmiftah/roles";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
@@ -254,6 +256,7 @@ export function UserDashboard() {
   const [escrowHolds, setEscrowHolds] = useState<any[]>([]);
   const [payoutRequests, setPayoutRequests] = useState<any[]>([]);
   const [leases, setLeases] = useState<any[]>([]);
+  const [pendingEsignatureCount, setPendingEsignatureCount] = useState(0);
   const [bookings, setBookings] = useState<any[]>([]);
   const [maintenanceRequests, setMaintenanceRequests] = useState<any[]>([]);
   const [consumerContext, setConsumerContext] = useState({
@@ -312,6 +315,7 @@ export function UserDashboard() {
           nextResidentProfile,
           nextMortgageInquiries,
           nextSavedMethods,
+          pendingEsignatures,
         ] = await Promise.all([
           savedPropertyService.getSavedProperties(user.id),
           dealCaseService.getDealCasesByUser(user.id),
@@ -331,6 +335,7 @@ export function UserDashboard() {
           residentHomeService.getActiveTenantProfile(user.id),
           mortgageInsuranceService.getUserInquiries(user.id),
           walletService.getSavedPaymentMethods(user.id),
+          tenantEsignatureService.listPending(user.id).catch(() => []),
         ]);
 
         if (!cancelled) {
@@ -356,6 +361,7 @@ export function UserDashboard() {
           setResidentProfile(nextResidentProfile);
           setMortgageInquiries(nextMortgageInquiries || []);
           setSavedPaymentMethods(nextSavedMethods || []);
+          setPendingEsignatureCount(pendingEsignatures?.length || 0);
         }
 
         void savedSearchAlertService
@@ -742,7 +748,6 @@ export function UserDashboard() {
     [consumerContext, t],
   );
 
-  const primaryNavItems = CONSUMER_PRIMARY_NAV;
   const pageConfig = CONSUMER_PAGE_CONFIG[section as ConsumerSection] || CONSUMER_PAGE_CONFIG.overview;
 
   const reloadDashboard = () => {
@@ -758,6 +763,84 @@ export function UserDashboard() {
     }
     return contextualNavItems;
   }, [contextualNavItems, role]);
+
+  const contextualNavIcons: Record<string, typeof FileText> = {
+    applications: FileText,
+    viewings: CalendarDays,
+    payments: CreditCard,
+    alerts: Bell,
+    leases: FileText,
+    maintenance: Wrench,
+    trips: CalendarDays,
+    reservations: CalendarDays,
+    documents: FileText,
+    transactions: CreditCard,
+    home: Home,
+    notifications: Bell,
+    mortgage: Shield,
+    insurance: Shield,
+    vendors: Wrench,
+  };
+
+  const portalNavItems = useMemo(() => {
+    const seen = new Set<string>();
+    const merged: ConsumerNavItem[] = [];
+
+    const append = (
+      items: Array<{ label: string; href: string; icon: typeof Home; section: string | null }>,
+      badgeForSection?: (section: string | null) => number | null,
+    ) => {
+      for (const item of items) {
+        if (seen.has(item.href)) continue;
+        seen.add(item.href);
+        merged.push({
+          label: item.label,
+          href: item.href,
+          icon: item.icon,
+          section: item.section,
+          badgeCount: badgeForSection?.(item.section) ?? null,
+        });
+      }
+    };
+
+    append(CONSUMER_PRIMARY_NAV, (navSection) => {
+      if (navSection === "saved") return savedProperties.length;
+      if (navSection === "messages") return unreadMessages;
+      if (navSection === "applications") return dealCases.length;
+      if (navSection === "payments") return propertyTransactions.length;
+      return null;
+    });
+
+    append(CONSUMER_SECONDARY_NAV, (navSection) => {
+      if (navSection === "viewings") return propertyViewings.length;
+      if (navSection === "alerts") return savedAlerts.filter((alert) => alert.is_active).length;
+      if (navSection === "leases") return pendingEsignatureCount;
+      return null;
+    });
+
+    for (const item of activityNavItems) {
+      if (seen.has(item.href)) continue;
+      seen.add(item.href);
+      merged.push({
+        label: item.label,
+        href: item.href,
+        icon: contextualNavIcons[item.section] || FileText,
+        section: item.section,
+        badgeCount: null,
+      });
+    }
+
+    return merged;
+  }, [
+    activityNavItems,
+    dealCases.length,
+    propertyTransactions.length,
+    propertyViewings.length,
+    savedAlerts,
+    savedProperties.length,
+    unreadMessages,
+    pendingEsignatureCount,
+  ]);
 
   const handleReceiptDownload = async (transaction: any) => {
     const receipt = Array.isArray(transaction.receipt)
@@ -1363,7 +1446,7 @@ export function UserDashboard() {
       {/* Quick Action Launchpad */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+          <h2 className="consumer-section-heading">
             <Sparkles className="w-5 h-5 text-primary" />
             Quick Actions
           </h2>
@@ -1426,7 +1509,7 @@ export function UserDashboard() {
 
       <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold">Upcoming Viewings</h2>
+            <h2 className="consumer-section-heading">Upcoming Viewings</h2>
             <Link to="/app/viewings">
               <Button variant="outline" size="sm">
                 View All
@@ -1434,13 +1517,13 @@ export function UserDashboard() {
             </Link>
           </div>
           {propertyViewings.length === 0 ? (
-            <Card className="p-6 text-muted-foreground">
+            <div className="consumer-panel-card p-6 text-ink-secondary">
               Book a property viewing and it will appear here for quick follow-up.
-            </Card>
+            </div>
           ) : (
             <div className="space-y-3">
               {propertyViewings.slice(0, 2).map((viewing) => (
-                <Card key={viewing.id} className="p-4">
+                <Card key={viewing.id} className="consumer-panel-card p-4">
                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="font-semibold">
@@ -1462,7 +1545,7 @@ export function UserDashboard() {
 
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold">Saved Properties</h2>
+            <h2 className="consumer-section-heading">Saved Properties</h2>
             <Link to="/app/saved">
               <Button variant="outline" size="sm" aria-label="View all saved properties" title="View all saved properties">
                 View All
@@ -1475,7 +1558,7 @@ export function UserDashboard() {
         {recommendations.length > 0 ? (
           <section>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold">Recommended for You</h2>
+              <h2 className="consumer-section-heading">Recommended for You</h2>
               <Link to="/search">
                 <Button variant="outline" size="sm">
                   Explore more
@@ -1510,7 +1593,7 @@ export function UserDashboard() {
         ) : null}
 
         <section>
-          <h2 className="text-2xl font-semibold mb-6">Recent Activity</h2>
+          <h2 className="consumer-section-heading mb-6">Recent Activity</h2>
           {recentActivity.length === 0 ? (
             <EmptyState
               title="No recent activity"
@@ -1585,55 +1668,56 @@ export function UserDashboard() {
 
   return (
     <PageLayout
+      variant="consumer"
       sidebar={
         section === "overview" ? (
           <>
-            <Card className="p-5 sm:p-6 bg-card/80 backdrop-blur-md border-border/80 shadow-xs">
+            <div className="consumer-panel-card p-5 sm:p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-serif font-medium text-foreground tracking-tight text-base">Quick Actions</h3>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Portal</span>
+                <h3 className="font-serif font-medium text-ink tracking-tight text-base">Quick Actions</h3>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-ink-secondary">Portal</span>
               </div>
               <div className="space-y-2">
                 <Link
                   to="/search"
-                  className="group flex items-center justify-between p-3 rounded-xl bg-muted/40 hover:bg-muted/80 border border-border/50 hover:border-border transition-all duration-200"
+                  className="group flex items-center justify-between p-3 rounded-xl bg-surface-hover/60 hover:bg-surface-hover border border-surface-border transition-all duration-200"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center transition-transform group-hover:scale-105">
                       <Search className="w-4 h-4" />
                     </div>
-                    <span className="text-xs font-medium text-foreground">Search Properties</span>
+                    <span className="text-xs font-medium text-ink">Search Properties</span>
                   </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+                  <ArrowRight className="w-3.5 h-3.5 text-ink-secondary transition-transform group-hover:translate-x-0.5 group-hover:text-ink" />
                 </Link>
 
                 <Link
                   to="/app/messages"
-                  className="group flex items-center justify-between p-3 rounded-xl bg-muted/40 hover:bg-muted/80 border border-border/50 hover:border-border transition-all duration-200"
+                  className="group flex items-center justify-between p-3 rounded-xl bg-surface-hover/60 hover:bg-surface-hover border border-surface-border transition-all duration-200"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center transition-transform group-hover:scale-105">
                       <MessageCircle className="w-4 h-4" />
                     </div>
-                    <span className="text-xs font-medium text-foreground">View Messages</span>
+                    <span className="text-xs font-medium text-ink">View Messages</span>
                   </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+                  <ArrowRight className="w-3.5 h-3.5 text-ink-secondary transition-transform group-hover:translate-x-0.5 group-hover:text-ink" />
                 </Link>
 
                 <Link
                   to="/app/payments"
-                  className="group flex items-center justify-between p-3 rounded-xl bg-muted/40 hover:bg-muted/80 border border-border/50 hover:border-border transition-all duration-200"
+                  className="group flex items-center justify-between p-3 rounded-xl bg-surface-hover/60 hover:bg-surface-hover border border-surface-border transition-all duration-200"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center transition-transform group-hover:scale-105">
                       <CreditCard className="w-4 h-4" />
                     </div>
-                    <span className="text-xs font-medium text-foreground">Wallet & Payments</span>
+                    <span className="text-xs font-medium text-ink">Wallet & Payments</span>
                   </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+                  <ArrowRight className="w-3.5 h-3.5 text-ink-secondary transition-transform group-hover:translate-x-0.5 group-hover:text-ink" />
                 </Link>
               </div>
-            </Card>
+            </div>
           </>
         ) : undefined
       }
@@ -1646,189 +1730,62 @@ export function UserDashboard() {
         />
       ) : (
         <>
-          <PageHeader
-            title={section === "overview" ? pageConfig.title : undefined}
-            description={
-              section === "overview"
-                ? `Welcome back, ${displayName}. ${pageConfig.description}`
-                : undefined
-            }
-            breadcrumbs={section === "overview" ? pageConfig.breadcrumb : undefined}
-          />
+          {section === "overview" ? (
+            <ConsumerWelcomeHero
+              displayName={displayName}
+              description={pageConfig.description}
+              unreadMessages={unreadMessages}
+            />
+          ) : null}
 
           {section === "overview" && !loading && !isWorkspaceRole(role) ? (
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-10">
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Saved Properties</p>
-                        <p className="text-3xl font-semibold">{savedProperties.length}</p>
-                      </div>
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Heart className="w-6 h-6 text-primary" />
-                      </div>
-                    </div>
-                  </Card>
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Payments</p>
-                        <p className="text-3xl font-semibold">{propertyTransactions.length}</p>
-                      </div>
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <CreditCard className="w-6 h-6 text-primary" />
-                      </div>
-                    </div>
-                  </Card>
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Applications</p>
-                        <p className="text-3xl font-semibold">{dealCases.length}</p>
-                      </div>
-                      <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                        <FileText className="w-6 h-6 text-accent" />
-                      </div>
-                    </div>
-                  </Card>
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Viewings</p>
-                        <p className="text-3xl font-semibold">{propertyViewings.length}</p>
-                      </div>
-                      <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                        <CalendarDays className="w-6 h-6 text-accent" />
-                      </div>
-                    </div>
-                  </Card>
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Conversations</p>
-                        <p className="text-3xl font-semibold">{conversations.length}</p>
-                      </div>
-                      <div className="w-12 h-12 bg-chart-3/10 rounded-lg flex items-center justify-center">
-                        <MessageCircle className="w-6 h-6 text-chart-3" />
-                      </div>
-                    </div>
-                  </Card>
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Alerts</p>
-                        <p className="text-3xl font-semibold">
-                          {savedAlerts.filter((alert) => alert.is_active).length}
-                        </p>
-                      </div>
-                      <div className="w-12 h-12 bg-chart-1/10 rounded-lg flex items-center justify-center">
-                        <Bell className="w-6 h-6 text-chart-1" />
-                      </div>
-                    </div>
-                  </Card>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+              <ConsumerStatCard
+                label="Saved Properties"
+                value={savedProperties.length}
+                icon={Heart}
+                tone="primary"
+                href="/app/saved"
+              />
+              <ConsumerStatCard
+                label="Payments"
+                value={propertyTransactions.length}
+                icon={CreditCard}
+                tone="primary"
+                href="/app/payments"
+              />
+              <ConsumerStatCard
+                label="Applications"
+                value={dealCases.length}
+                icon={FileText}
+                tone="accent"
+                href="/app/applications"
+              />
+              <ConsumerStatCard
+                label="Viewings"
+                value={propertyViewings.length}
+                icon={CalendarDays}
+                tone="accent"
+                href="/app/viewings"
+              />
+              <ConsumerStatCard
+                label="Conversations"
+                value={conversations.length}
+                icon={MessageCircle}
+                tone="info"
+                href="/app/messages"
+              />
+              <ConsumerStatCard
+                label="Alerts"
+                value={savedAlerts.filter((alert) => alert.is_active).length}
+                icon={Bell}
+                tone="warm"
+                href="/app/alerts"
+              />
             </div>
           ) : null}
 
-          {/* Segmented Scrollable Tab Navigation */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 border-b border-surface-border">
-            {primaryNavItems.map((item) => {
-              const Icon = item.icon;
-              const active =
-                item.section === "overview"
-                  ? section === "overview"
-                  : item.section
-                    ? item.section === section
-                    : false;
-
-              let badgeCount: number | null = null;
-              if (item.section === "saved") badgeCount = savedProperties.length;
-              if (item.section === "messages") badgeCount = unreadMessages;
-
-              return (
-                <Link key={item.href} to={item.href} className="shrink-0">
-                  <button
-                    type="button"
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 cursor-pointer ${
-                      active
-                        ? "bg-primary text-primary-foreground shadow-xs font-semibold"
-                        : "bg-surface text-ink-secondary hover:bg-surface-hover hover:text-ink border border-surface-border"
-                    }`}
-                    aria-label={item.label}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span>{item.label}</span>
-                    {badgeCount && badgeCount > 0 ? (
-                      <span
-                        className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
-                          active
-                            ? "bg-primary-foreground/20 text-primary-foreground"
-                            : "bg-primary/10 text-primary"
-                        }`}
-                      >
-                        {badgeCount}
-                      </span>
-                    ) : null}
-                  </button>
-                </Link>
-              );
-            })}
-
-            {activityNavItems.length > 0
-              ? activityNavItems.map((item) => {
-                  const iconBySection: Record<string, typeof FileText> = {
-                    applications: FileText,
-                    viewings: CalendarDays,
-                    payments: CreditCard,
-                    alerts: Bell,
-                    leases: FileText,
-                    maintenance: Settings,
-                    trips: CalendarDays,
-                    reservations: CalendarDays,
-                    documents: FileText,
-                    transactions: CreditCard,
-                    home: Home,
-                    notifications: Bell,
-                    mortgage: Shield,
-                    insurance: Shield,
-                    vendors: Wrench,
-                  };
-                  const Icon = iconBySection[item.section] || FileText;
-                  const active = item.section === section;
-
-                  let badgeCount: number | null = null;
-                  if (item.section === "applications") badgeCount = dealCases.length;
-                  if (item.section === "viewings") badgeCount = propertyViewings.length;
-
-                  return (
-                    <Link key={item.href} to={item.href} className="shrink-0">
-                      <button
-                        type="button"
-                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 cursor-pointer ${
-                          active
-                            ? "bg-primary text-primary-foreground shadow-xs font-semibold"
-                            : "bg-surface text-ink-secondary hover:bg-surface-hover hover:text-ink border border-surface-border"
-                        }`}
-                        aria-label={item.label}
-                      >
-                        <Icon className="w-4 h-4 shrink-0" />
-                        <span>{item.label}</span>
-                        {badgeCount && badgeCount > 0 ? (
-                          <span
-                            className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
-                              active
-                                ? "bg-primary-foreground/20 text-primary-foreground"
-                                : "bg-primary/10 text-primary"
-                            }`}
-                          >
-                            {badgeCount}
-                          </span>
-                        ) : null}
-                      </button>
-                    </Link>
-                  );
-                })
-              : null}
-          </div>
+          <ConsumerPortalNav items={portalNavItems} activeSection={section} />
 
           {section === "overview" ? (
             loading ? (

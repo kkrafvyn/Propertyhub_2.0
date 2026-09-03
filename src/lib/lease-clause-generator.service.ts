@@ -1,0 +1,169 @@
+import { buildPropertyComplianceSnapshot, type PropertyLocationInput } from "./property-country-context.service";
+import { formatMoneyMajor } from "./currency-format";
+import { getSubdivisionClauseAddendum } from "./country-rules/subdivision-clause-addenda";
+
+export type LeaseScheduleInput = {
+  property: PropertyLocationInput & {
+    address?: string | null;
+  };
+  org?: {
+    default_jurisdiction?: string | null;
+    default_subdivision?: string | null;
+    default_currency?: string | null;
+  };
+  landlordName?: string;
+  tenantName?: string;
+  rentAmountMajor?: number;
+  currency?: string;
+  startDate?: string;
+  termMonths?: number;
+  listingType?: "rental" | "lease" | "commercial";
+};
+
+export type GeneratedLeaseSchedule = {
+  markdown: string;
+  plainText: string;
+  mandatoryClauses: string[];
+  statutoryReferences: string[];
+  jurisdictionLabel: string;
+  subdivisionLabel?: string;
+  governingLaw: string;
+  paymentRail: string;
+  warnings: string[];
+  addendumTitle?: string;
+  addendumClauses: string[];
+};
+
+export function generateLeaseSchedule(input: LeaseScheduleInput): GeneratedLeaseSchedule {
+  const snapshot = buildPropertyComplianceSnapshot(input.property, input.org as any);
+  const { context, jurisdictionId, subdivisionLabel, governingLaw, leaseHighlights, paymentLabel } = snapshot;
+  const subdivisionCode =
+    input.property.subdivision_code?.trim().toUpperCase() ||
+    snapshot.subdivisionCode;
+  const addendum = getSubdivisionClauseAddendum(jurisdictionId, subdivisionCode);
+  const lease = context.pack.leaseRules;
+  const currency = input.currency || context.currency;
+  const warnings: string[] = [];
+
+  if (lease.rentControlApplies) {
+    warnings.push("Rent control may apply — verify local caps before finalizing rent escalation.");
+  }
+  if (lease.maxAdvanceRentMonths != null) {
+    warnings.push(`Advance rent must not exceed ${lease.maxAdvanceRentMonths} month(s) in this market.`);
+  }
+  if (lease.maxSecurityDepositMonths != null) {
+    warnings.push(`Security deposit cap: ${lease.maxSecurityDepositMonths} month(s) rent.`);
+  }
+
+  const address = [input.property.address, input.property.city, input.property.region, input.property.country]
+    .filter(Boolean)
+    .join(", ");
+
+  const rentLine =
+    input.rentAmountMajor != null
+      ? formatMoneyMajor(input.rentAmountMajor, currency)
+      : "[monthly rent amount]";
+
+  const mandatoryClauses = [
+    ...lease.requiredLeaseClauses,
+    ...(addendum?.clauses || []),
+  ];
+  const statutoryReferences = [
+    ...lease.statutoryReferences,
+    ...(addendum?.registrations?.map((r) => `Registration: ${r}`) || []),
+  ];
+
+  if (addendum?.disclosures.length) {
+    warnings.push(...addendum.disclosures.slice(0, 2));
+  }
+
+  const sections = [
+    `# ${input.listingType === "commercial" ? "Commercial" : "Residential"} Tenancy Agreement`,
+    "",
+    `**Jurisdiction:** ${context.pack.label}${subdivisionLabel ? ` · ${subdivisionLabel}` : ""}`,
+    `**Governing law:** ${governingLaw}`,
+    `**Payments:** ${paymentLabel}`,
+    "",
+    "## Parties",
+    `- **Landlord:** ${input.landlordName || "[Landlord full name]"}`,
+    `- **Tenant:** ${input.tenantName || "[Tenant full name]"}`,
+    "",
+    "## Premises",
+    address || "[Property address]",
+    ...(input.property.ghana_post_gps
+      ? [`GhanaPostGPS: ${input.property.ghana_post_gps}`]
+      : []),
+    "",
+    "## Term & rent",
+    `- **Commencement:** ${input.startDate || "[start date]"}`,
+    `- **Term:** ${input.termMonths || 12} months`,
+    `- **Rent:** ${rentLine} per month, payable via PayAngels`,
+    ...(lease.maxAdvanceRentMonths != null
+      ? [`- **Advance rent:** Not to exceed ${lease.maxAdvanceRentMonths} months (statutory cap)`]
+      : []),
+    ...(lease.maxSecurityDepositMonths != null
+      ? [`- **Security deposit:** Not to exceed ${lease.maxSecurityDepositMonths} month(s) rent`]
+      : []),
+    ...(lease.minNoticeDaysTenant != null
+      ? [`- **Tenant notice to quit:** Minimum ${lease.minNoticeDaysTenant} days`]
+      : []),
+    ...(lease.minNoticeDaysLandlord != null
+      ? [`- **Landlord notice:** Minimum ${lease.minNoticeDaysLandlord} days`]
+      : []),
+    "",
+    "## Mandatory clauses (jurisdiction)",
+    ...mandatoryClauses.map((c, i) => `${i + 1}. ${c}`),
+    ...(addendum
+      ? [
+          "",
+          `## ${addendum.title}`,
+          ...addendum.clauses.map((c, i) => `${i + 1}. ${c}`),
+          ...(addendum.disclosures.length
+            ? ["", "### Disclosures", ...addendum.disclosures.map((d) => `- ${d}`)]
+            : []),
+        ]
+      : []),
+    "",
+    "## Statutory references",
+    ...statutoryReferences.map((r) => `- ${r}`),
+    "",
+    "## Compliance highlights",
+    ...(leaseHighlights.length ? leaseHighlights.map((h) => `- ${h}`) : ["- National default rules apply"]),
+    "",
+    "---",
+    "*Generated by BaytMiftah — review with qualified local counsel before execution.*",
+  ];
+
+  const markdown = sections.join("\n");
+  const plainText = markdown.replace(/\*\*/g, "");
+
+  return {
+    markdown,
+    plainText,
+    mandatoryClauses,
+    statutoryReferences,
+    jurisdictionLabel: context.pack.label,
+    subdivisionLabel,
+    governingLaw,
+    paymentRail: paymentLabel,
+    warnings,
+    addendumTitle: addendum?.title,
+    addendumClauses: addendum?.clauses || [],
+  };
+}
+
+export function downloadLeaseSchedule(schedule: GeneratedLeaseSchedule, filename = "lease-schedule.md") {
+  if (typeof window === "undefined") return;
+  const blob = new Blob([schedule.markdown], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export const leaseClauseGeneratorService = {
+  generateLeaseSchedule,
+  downloadLeaseSchedule,
+};

@@ -8,9 +8,13 @@ import { PropertyMediaPicker } from "../../components/PropertyMediaPicker";
 import { ListingQualityPanel } from "../../components/ListingQualityPanel";
 import { GhanaRegionInput } from "../../components/GhanaRegionInput";
 import { ListingComplianceChecklist } from "../../components/compliance/ListingComplianceChecklist";
+import { PropertyJurisdictionFields } from "../../components/compliance/PropertyJurisdictionFields";
 import type { Database } from "../../../lib/database.types";
 import { ghanaMarketService, type GhanaLocationInsight } from "../../../lib/ghana-market.service";
 import { realEstateComplianceService, type ListingType as ComplianceListingType } from "../../../lib/real-estate-compliance.service";
+import { countryRulesService } from "../../../lib/country-rules.service";
+import { resolveSubdivisionCode } from "../../../lib/country-rules/subdivision-resolver";
+import { resolveJurisdiction } from "../../../lib/real-estate-compliance";
 import { listingService } from "../../../lib/listing.service";
 import { listingQualityService } from "../../../lib/listing-quality.service";
 import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
@@ -57,6 +61,7 @@ export function WorkspaceNewListing({
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [geocoding, setGeocoding] = useState(false);
   const [geocodingResult, setGeocodingResult] = useState<GeocodingResult | null>(null);
+  const [orgMarket, setOrgMarket] = useState<{ jurisdiction?: string; subdivision?: string; currency?: string }>({});
   const [form, setForm] = useState({
     address: "",
     ghanaPostGps: "",
@@ -64,6 +69,7 @@ export function WorkspaceNewListing({
     region: "",
     neighborhood: "",
     country: "Ghana",
+    subdivisionCode: "",
     category: "apartment" as PropertyCategory,
     bedrooms: "",
     bathrooms: "",
@@ -85,6 +91,20 @@ export function WorkspaceNewListing({
   const updateField = (field: keyof typeof form, value: string | boolean) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
+
+  useEffect(() => {
+    void countryRulesService.getOrganizationSettings(organization.id).then((settings) => {
+      if (!settings) return;
+      setOrgMarket({
+        jurisdiction: settings.default_jurisdiction,
+        subdivision: settings.default_subdivision || undefined,
+        currency: settings.default_currency || undefined,
+      });
+      if (settings.default_currency) {
+        setForm((current) => ({ ...current, currency: settings.default_currency! }));
+      }
+    });
+  }, [organization.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,6 +140,16 @@ export function WorkspaceNewListing({
         form.neighborhood
       );
 
+      const jurisdictionId = resolveJurisdiction({
+        country: form.country,
+        region: form.region,
+        city: form.city,
+      });
+      const subdivisionCode =
+        form.subdivisionCode.trim().toUpperCase() ||
+        resolveSubdivisionCode(jurisdictionId, form.region, form.city) ||
+        null;
+
       const property = await propertyService.createProperty({
         organization_id: organization.id,
         address: form.address,
@@ -128,6 +158,7 @@ export function WorkspaceNewListing({
         region: form.region,
         neighborhood: form.neighborhood.trim() || null,
         country: form.country,
+        subdivision_code: subdivisionCode,
         latitude: geocodingResult?.latitude || null,
         longitude: geocodingResult?.longitude || null,
         location_confidence: ghanaMarketService.calculateLocationConfidence({
@@ -594,6 +625,29 @@ export function WorkspaceNewListing({
 
         <ListingQualityPanel report={qualityReport} />
 
+        <PropertyJurisdictionFields
+          values={{
+            country: form.country,
+            region: form.region,
+            city: form.city,
+            subdivisionCode: form.subdivisionCode,
+            currency: form.currency,
+          }}
+          orgJurisdiction={orgMarket.jurisdiction as any}
+          orgSubdivision={orgMarket.subdivision}
+          orgCurrency={orgMarket.currency}
+          onChange={(patch) => {
+            setForm((current) => ({
+              ...current,
+              ...(patch.country != null ? { country: patch.country } : {}),
+              ...(patch.region != null ? { region: patch.region } : {}),
+              ...(patch.city != null ? { city: patch.city } : {}),
+              ...(patch.subdivisionCode != null ? { subdivisionCode: patch.subdivisionCode } : {}),
+              ...(patch.currency != null ? { currency: patch.currency } : {}),
+            }));
+          }}
+        />
+
         <ListingComplianceChecklist
           jurisdictionId={realEstateComplianceService.resolveFromProperty({
             country: form.country,
@@ -601,6 +655,12 @@ export function WorkspaceNewListing({
             city: form.city,
           })}
           listingType={form.listingType as ComplianceListingType}
+          property={{
+            country: form.country,
+            region: form.region,
+            city: form.city,
+            subdivision_code: form.subdivisionCode || undefined,
+          }}
           onValidated={setComplianceReady}
         />
 

@@ -13,6 +13,7 @@ import {
 } from "../../../lib/biometric-preferences";
 import { useTranslation } from "../../i18n/LocaleContext";
 import { toast } from "sonner";
+import { PageHeader, PageLayout } from "../../components/ux";
 
 export function SecuritySettingsPage() {
   const { user } = useAuth();
@@ -101,12 +102,10 @@ export function SecuritySettingsPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{t("securityPage.title")}</h1>
-        <p className="text-muted-foreground">{t("securityPage.subtitle")}</p>
-      </div>
+    <PageLayout variant="consumer" maxWidthClassName="max-w-2xl">
+      <PageHeader title={t("securityPage.title")} description={t("securityPage.subtitle")} />
 
+      <div className="space-y-6">
       {mfaRequired ? (
         <Card className="p-4 border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
           {t("securityPage.adminMfaRequired")}
@@ -122,7 +121,7 @@ export function SecuritySettingsPage() {
         <Card className="p-6 space-y-4">
           <div>
             <h2 className="font-semibold">{t("mobile.biometric.appLockTitle")}</h2>
-            <p className="text-sm text-muted-foreground">{t("mobile.biometric.appLockDescription")}</p>
+            <p className="text-sm text-ink-secondary">{t("mobile.biometric.appLockDescription")}</p>
           </div>
           <label className="flex items-center justify-between gap-4">
             <span className="text-sm font-medium">{t("mobile.biometric.appLockTitle")}</span>
@@ -173,13 +172,13 @@ export function SecuritySettingsPage() {
           </Button>
         </div>
         {sessions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("securityPage.noSessions")}</p>
+          <p className="text-sm text-ink-secondary">{t("securityPage.noSessions")}</p>
         ) : (
           sessions.map((session) => (
             <div key={session.id} className="flex items-center justify-between border rounded-lg p-3">
               <div>
                 <p className="font-medium">{session.session_label || t("securityPage.browserSession")}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-ink-secondary">
                   {session.user_agent || t("securityPage.unknownDevice")} ·{" "}
                   {t("securityPage.lastSeen", {
                     time: new Date(session.last_seen_at).toLocaleString(),
@@ -193,6 +192,7 @@ export function SecuritySettingsPage() {
           ))
         )}
       </Card>
-    </div>
+      </div>
+    </PageLayout>
   );
 }

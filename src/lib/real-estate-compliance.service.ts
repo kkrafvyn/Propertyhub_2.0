@@ -8,6 +8,13 @@ import {
   type JurisdictionId,
   type ListingType,
 } from "./real-estate-compliance";
+import {
+  calculateCountryTaxes,
+  getAvailablePaymentRails,
+  getCountryPack,
+  listCountryPacks,
+  resolveCountryContext,
+} from "./country-rules";
 
 export const realEstateComplianceService = {
   resolveJurisdiction,
@@ -16,6 +23,11 @@ export const realEstateComplianceService = {
   getListingComplianceChecklist,
   getPaymentComplianceDisclosures,
   validateListingCompliance,
+  resolveCountryContext,
+  getCountryPack,
+  listCountryPacks,
+  calculateCountryTaxes,
+  getAvailablePaymentRails,
 
   resolveFromProperty(property?: {
     country?: string | null;

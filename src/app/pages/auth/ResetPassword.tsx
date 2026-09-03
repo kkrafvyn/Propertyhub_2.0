@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { AuthShell } from "../../components/baytmiftah/AuthShell";
 import { authService } from "../../../lib/auth.service";
 import { supabase } from "../../../lib/supabase";
 import { validatePassword } from "../../../lib/security/password-policy";
@@ -90,82 +91,76 @@ export function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-              {mode === "request" ? <Mail className="w-6 h-6 text-white" /> : <Lock className="w-6 h-6 text-white" />}
-            </div>
-          </Link>
-          <h1 className="text-3xl font-semibold mb-2">
-            {mode === "request" ? "Reset Password" : "Choose a New Password"}
-          </h1>
-          <p className="text-muted-foreground">
-            {mode === "request"
-              ? "We’ll email you a secure link to reset your password."
-              : "Your recovery session is active. Set a new password below."}
-          </p>
-        </div>
-
-        {mode === "request" ? (
-          <form onSubmit={handleRequestReset} className="space-y-6">
-            <Input
-              label="Email Address"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <Button type="submit" size="lg" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Sending reset email...
-                </>
-              ) : (
-                "Send Reset Link"
-              )}
-            </Button>
-          </form>
-        ) : (
-          <form onSubmit={handleUpdatePassword} className="space-y-6">
-            <Input
-              label="New Password"
-              type="password"
-              placeholder="Create a new password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <Input
-              label="Confirm Password"
-              type="password"
-              placeholder="Confirm your new password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-            <Button type="submit" size="lg" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Updating password...
-                </>
-              ) : (
-                "Update Password"
-              )}
-            </Button>
-          </form>
-        )}
-
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          <Link to="/login" className="text-primary hover:underline font-semibold">
-            Back to login
-          </Link>
-        </div>
-      </div>
-    </div>
+    <AuthShell
+      title={mode === "request" ? "Reset password" : "Choose a new password"}
+      subtitle={
+        mode === "request"
+          ? "We'll email you a secure link to reset your password."
+          : "Your recovery session is active. Set a new password below."
+      }
+      footer={
+        <Link to="/login" className="font-semibold text-primary hover:underline">
+          Back to login
+        </Link>
+      }
+    >
+      {mode === "request" ? (
+        <form onSubmit={handleRequestReset} className="space-y-5">
+          <Input
+            label="Email address"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Sending reset email...
+              </>
+            ) : (
+              <>
+                <Mail className="w-4 h-4" />
+                Send reset link
+              </>
+            )}
+          </Button>
+        </form>
+      ) : (
+        <form onSubmit={handleUpdatePassword} className="space-y-5">
+          <Input
+            label="New password"
+            type="password"
+            placeholder="Create a new password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <Input
+            label="Confirm password"
+            type="password"
+            placeholder="Confirm your new password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Updating password...
+              </>
+            ) : (
+              <>
+                <Lock className="w-4 h-4" />
+                Update password
+              </>
+            )}
+          </Button>
+        </form>
+      )}
+    </AuthShell>
   );
 }

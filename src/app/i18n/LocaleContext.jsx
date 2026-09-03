@@ -70,10 +70,18 @@ export function LocaleProvider({ children }) {
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>
 }
 
+const defaultLocaleContext = {
+  locale: 'en',
+  setLocale: () => {},
+  t: (key, vars) => translate(enMessages, key, vars),
+  dir: 'ltr',
+  locales: SUPPORTED_LOCALES,
+  localeReady: true,
+}
+
 export function useLocale() {
   const ctx = useContext(LocaleContext)
-  if (!ctx) throw new Error('useLocale must be used within LocaleProvider')
-  return ctx
+  return ctx ?? defaultLocaleContext
 }
 
 export function useTranslation() {

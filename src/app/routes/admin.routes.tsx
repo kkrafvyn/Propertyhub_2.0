@@ -1,12 +1,11 @@
 /**
  * BaytMiftah Admin Routes
  * ───────────────────────
- * Compatibility routes for internal admin workflows.
+ * Routes for the Admin product family (Web + Desktop + Mobile).
  *
  * Web: Everyday platform administration (users, orgs, listings, trust, fraud, complaints, audit, analytics)
  * Desktop: Deep platform operations (investigations, bulk moderation, AI oversight)
- * Native access is available from both mobile products; there is no separate
- * Admin Mobile application.
+ * Mobile: Urgent action & alerts (alerts, moderation approvals, fraud alerts, trust cases)
  */
 
 import type { RouteObject } from 'react-router';

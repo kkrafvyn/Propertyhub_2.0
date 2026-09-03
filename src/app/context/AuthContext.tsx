@@ -295,10 +295,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
+export const DEFAULT_AUTH_CONTEXT: AuthContextType = {
+  user: null,
+  profile: null,
+  role: null,
+  capabilities: [],
+  loading: false,
+  error: null,
+  signUp: async () => ({ user: null }),
+  signIn: async () => {},
+  signInWithPhoneOtp: async () => {},
+  verifyPhoneOtp: async () => {},
+  signInWithOAuth: async () => {},
+  signOut: async () => {},
+  resetPassword: async () => {},
 }
+
+export function useAuth(): AuthContextType {
+  const context = useContext(AuthContext)
+  return context ?? DEFAULT_AUTH_CONTEXT
+}
+
+export const useOptionalAuth = useAuth
+

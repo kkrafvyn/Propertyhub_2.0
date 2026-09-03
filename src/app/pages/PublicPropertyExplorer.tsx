@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
-import { ArrowRight, Bath, BedDouble, MapPin, Ruler, ShieldCheck } from "lucide-react";
+import { ArrowRight, Bath, BedDouble, MapPin, Ruler, ShieldCheck, Building2, Eye, Lock } from "lucide-react";
 import { listingService } from "../../lib/listing.service";
 import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
+import { AppLoadingScreen } from "../components/ux/AppLoadingScreen";
+import { StandalonePageShell } from "../components/ux/StandalonePageShell";
 
 export function PublicPropertyExplorer() {
   const { id } = useParams();
@@ -56,115 +57,185 @@ export function PublicPropertyExplorer() {
   const property = listing?.property || {};
 
   if (loading) {
-    return (
-      <div className="mx-auto max-w-5xl px-4 py-12 text-slate-800 dark:text-slate-100">
-        <p>Loading BaytMiftah Property Explorer…</p>
-      </div>
-    );
+    return <AppLoadingScreen label="Loading property explorer…" />;
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 text-slate-800 dark:text-slate-100">
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700 dark:text-sky-300">
-            BaytMiftah Property Explorer
-          </p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-            Public property preview
-          </h1>
-        </div>
-        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-700/80 dark:bg-emerald-950/60 dark:text-emerald-300">
-          Public profile mode
-        </span>
-      </div>
-
-      <Card className="overflow-hidden border border-slate-200 bg-white/80 dark:border-slate-700 dark:bg-slate-900/80">
-        <div className="grid gap-6 p-6 md:grid-cols-[1.4fr_0.7fr]">
+    <StandalonePageShell maxWidthClassName="max-w-4xl">
+      <div className="py-8 space-y-8">
+        {/* Header */}
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="mb-4 flex items-center gap-3">
-              <div className="rounded-full bg-sky-100 px-3 py-1 text-sm font-semibold text-sky-800 dark:bg-sky-900/60 dark:text-sky-200">
-                Unit: {publicUnitId}
-              </div>
-              {isVerified ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  Verified identity
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
-                  Verification pending
-                </span>
-              )}
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-surface-border bg-surface/80 px-3.5 py-1 text-xs font-semibold uppercase tracking-widest text-ink-secondary backdrop-blur-sm shadow-sm">
+              <Building2 className="h-3.5 w-3.5 text-ink-secondary" />
+              BaytMiftah Property Explorer
             </div>
-
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Property: {propertyName}</h2>
-
-            <div className="mt-4 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-              <MapPin className="h-4 w-4" />
-              <span>
-                {property.address || "5 Independence Ave"}, {property.city || "Accra"}
-              </span>
-            </div>
-
-            <p className="mt-5 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-              {property.description || "Bright and modern apartment with secure access, flexible viewing windows, and a verified ownership trail."}
+            <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+              Public Property Preview
+            </h1>
+            <p className="mt-1 text-sm text-ink-secondary">
+              Verified listing data — occupant &amp; owner identities are never shown.
             </p>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/60">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  <BedDouble className="h-4 w-4" /> Bedrooms
-                </div>
-                <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
-                  {property.bedrooms ?? 3}
-                </div>
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/60">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  <Bath className="h-4 w-4" /> Bathrooms
-                </div>
-                <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
-                  {property.bathrooms ?? 2}
-                </div>
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/60">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  <Ruler className="h-4 w-4" /> Size
-                </div>
-                <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
-                  {property.square_meters ?? 120} m²
-                </div>
-              </div>
-            </div>
           </div>
+          <span
+            className="self-start sm:self-auto inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold"
+            style={{
+              background: "rgba(16,185,129,0.1)",
+              border: "1px solid rgba(16,185,129,0.25)",
+              color: "#059669",
+            }}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Public profile mode
+          </span>
+        </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-700 dark:bg-slate-800/70">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-              Buyer Public ID:
-            </p>
-            <div className="mt-3 text-lg font-semibold text-slate-900 dark:text-white">{buyerPublicId}</div>
+        {/* Main Card */}
+        <div
+          className="overflow-hidden rounded-3xl border border-surface-border shadow-xl"
+          style={{ background: "var(--surface)" }}
+        >
+          <div className="grid md:grid-cols-[1.5fr_0.65fr]">
+            {/* Left — Property details */}
+            <div className="p-7 md:p-9">
+              {/* Badges */}
+              <div className="mb-5 flex flex-wrap items-center gap-2">
+                <span
+                  className="rounded-full px-3 py-1 text-xs font-bold tracking-wider"
+                  style={{
+                    background: "rgba(14,165,233,0.1)",
+                    border: "1px solid rgba(14,165,233,0.2)",
+                    color: "#0284c7",
+                  }}
+                >
+                  Unit: {publicUnitId}
+                </span>
+                {isVerified ? (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
+                    style={{
+                      background: "rgba(16,185,129,0.1)",
+                      border: "1px solid rgba(16,185,129,0.25)",
+                      color: "#059669",
+                    }}
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Verified identity
+                  </span>
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
+                    style={{
+                      background: "rgba(245,158,11,0.1)",
+                      border: "1px solid rgba(245,158,11,0.25)",
+                      color: "#d97706",
+                    }}
+                  >
+                    Verification pending
+                  </span>
+                )}
+              </div>
 
-            <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900/60">
-              <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-300">
-                <span>Identity status</span>
-                <span className="font-medium text-emerald-600 dark:text-emerald-300">
-                  {isVerified ? "Verified" : "Pending"}
+              <h2 className="text-2xl font-bold tracking-tight text-ink">
+                Property: {propertyName}
+              </h2>
+
+              <div className="mt-3 flex items-center gap-2 text-sm text-ink-secondary">
+                <MapPin className="h-4 w-4 shrink-0" />
+                <span>
+                  {property.address || "5 Independence Ave"}, {property.city || "Accra"}
                 </span>
               </div>
-              <div className="mt-3 flex items-center justify-between text-sm text-slate-600 dark:text-slate-300">
-                <span>Public visibility</span>
-                <span className="font-medium text-slate-900 dark:text-white">Limited</span>
+
+              <p className="mt-5 max-w-xl text-sm leading-7 text-ink-secondary">
+                {property.description ||
+                  "Bright and modern apartment with secure access, flexible viewing windows, and a verified ownership trail."}
+              </p>
+
+              {/* Stat tiles */}
+              <div className="mt-7 grid gap-3 sm:grid-cols-3">
+                {[
+                  { icon: BedDouble, label: "Bedrooms", value: property.bedrooms ?? 3 },
+                  { icon: Bath, label: "Bathrooms", value: property.bathrooms ?? 2 },
+                  { icon: Ruler, label: "Size", value: `${property.square_meters ?? 120} m²` },
+                ].map(({ icon: Icon, label, value }) => (
+                  <div
+                    key={label}
+                    className="rounded-2xl border border-surface-border p-4 transition-all hover:shadow-md"
+                    style={{ background: "var(--surface-subtle)" }}
+                  >
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-ink-secondary">
+                      <Icon className="h-4 w-4" />
+                      {label}
+                    </div>
+                    <div className="mt-2.5 text-2xl font-bold text-ink">{value}</div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <Button className="mt-6 w-full" variant="default">
-              Request private access
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            {/* Right — Trust panel */}
+            <div
+              className="flex flex-col justify-between p-7 md:p-9 border-t md:border-t-0 md:border-l border-surface-border"
+              style={{ background: "var(--surface-subtle)" }}
+            >
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-ink-secondary mb-1">
+                  Buyer Public ID:
+                </p>
+                <div className="mt-2 rounded-xl border border-surface-border bg-surface px-4 py-3 font-mono text-base font-semibold text-ink shadow-sm">
+                  {buyerPublicId}
+                </div>
+
+                <div className="mt-6 space-y-3">
+                  {[
+                    {
+                      icon: ShieldCheck,
+                      label: "Identity status",
+                      value: isVerified ? "Verified" : "Pending",
+                      valueColor: isVerified ? "#059669" : "#d97706",
+                    },
+                    { icon: Eye, label: "Public visibility", value: "Limited", valueColor: "var(--ink)" },
+                    { icon: Lock, label: "Owner privacy", value: "Protected", valueColor: "var(--ink)" },
+                  ].map(({ icon: Icon, label, value, valueColor }) => (
+                    <div
+                      key={label}
+                      className="flex items-center justify-between rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm shadow-sm"
+                    >
+                      <span className="flex items-center gap-2 text-ink-secondary">
+                        <Icon className="h-3.5 w-3.5" />
+                        {label}
+                      </span>
+                      <span className="font-semibold" style={{ color: valueColor }}>
+                        {value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Button
+                className="mt-8 w-full h-11 rounded-xl font-semibold"
+                variant="default"
+                style={{
+                  background: "linear-gradient(135deg, #e07a5f, #c45d44)",
+                  border: "none",
+                  color: "#fff",
+                  boxShadow: "0 4px 16px rgba(224,122,95,0.3)",
+                }}
+              >
+                Request private access
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
-      </Card>
-    </div>
+
+        <p className="text-center text-xs text-ink-secondary">
+          This page is publicly accessible. No personal data is shown.{" "}
+          <span className="font-semibold text-ink">BaytMiftah</span> · Verified Property Network
+        </p>
+      </div>
+    </StandalonePageShell>
   );
 }

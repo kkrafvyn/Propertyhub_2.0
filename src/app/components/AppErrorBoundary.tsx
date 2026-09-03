@@ -1,5 +1,9 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Link } from "react-router";
 import { monitoring } from "../../lib/monitoring";
+import { Button } from "./ui/Button";
+import { ErrorState } from "./ux/ErrorState";
+import { StandalonePageShell } from "./ux/StandalonePageShell";
 
 interface Props {
   children: ReactNode;
@@ -23,17 +27,25 @@ export class AppErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center p-6 text-center">
-          <div>
-            <h1 className="text-2xl font-semibold">Something went wrong</h1>
-            <p className="text-muted-foreground mt-2">
-              Refresh the page or return to the home screen.
-            </p>
-            <a href="/" className="inline-block mt-4 text-primary underline">
-              Go home
-            </a>
+        <StandalonePageShell maxWidthClassName="max-w-xl">
+          <div className="py-16">
+            <ErrorState
+              title="Something went wrong"
+              message="Refresh the page or return to the home screen."
+              retryLabel="Go home"
+              onRetry={() => {
+                window.location.href = "/";
+              }}
+            />
+            <div className="mt-4 text-center">
+              <Link to="/search">
+                <Button variant="outline" size="sm">
+                  Browse properties
+                </Button>
+              </Link>
+            </div>
           </div>
-        </div>
+        </StandalonePageShell>
       );
     }
 

@@ -47,7 +47,7 @@ const MarketContext = createContext<MarketContextValue>({
 
 export function MarketProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const { setCurrency } = useCurrency();
+  const { setBaseCurrency } = useCurrency();
   const { setLocale } = useTranslation();
   const [market, setMarket] = useState<UserMarket | null>(() => readStoredMarket());
   const [ready, setReady] = useState(false);
@@ -55,12 +55,12 @@ export function MarketProvider({ children }: { children: ReactNode }) {
 
   const applyMarketSideEffects = useCallback(
     (nextMarket: UserMarket) => {
-      setCurrency(getDisplayCurrencyForMarket(nextMarket));
+      setBaseCurrency(getDisplayCurrencyForMarket(nextMarket));
       if (nextMarket.suggestedLocale) {
         setLocale(nextMarket.suggestedLocale);
       }
     },
-    [setCurrency, setLocale],
+    [setBaseCurrency, setLocale],
   );
 
   const persistMarket = useCallback(
@@ -79,6 +79,7 @@ export function MarketProvider({ children }: { children: ReactNode }) {
             market_city: nextMarket.city,
             market_search_location: nextMarket.searchLocation,
             market_currency: nextMarket.currency,
+            market_subdivision: nextMarket.subdivisionCode,
           },
         });
       }

@@ -80,21 +80,29 @@ export function CategoryBar({
         })}
       </div>
 
-      <div className="desktop-category-row flex shrink-0 items-center gap-2 sm:gap-3 sm:border-s sm:border-white/15 sm:ps-4">
+      <div className="desktop-category-row flex shrink-0 items-center gap-2 sm:gap-3 sm:border-s sm:border-surface-border sm:ps-4">
         {onFiltersClick && (
-          <button type="button" onClick={onFiltersClick} className="filter-chip">
+          <button
+            type="button"
+            onClick={onFiltersClick}
+            className="filter-chip hover:border-primary/40 hover:bg-surface-hover cursor-pointer"
+          >
             <SlidersHorizontal className="h-4 w-4" />
-            {t("searchPage.filters")}
+            <span>{t("searchPage.filters")}</span>
           </button>
         )}
         {showMapToggle && onToggleMap && (
           <button
             type="button"
             onClick={onToggleMap}
-            className={`filter-chip ${mapMode ? "bg-ink text-white hover:bg-ink/90" : ""}`}
+            className={`filter-chip cursor-pointer transition-colors ${
+              mapMode
+                ? "bg-primary text-primary-foreground hover:opacity-90"
+                : "hover:border-primary/40 hover:bg-surface-hover"
+            }`}
           >
             <Map className="h-4 w-4" />
-            {mapMode ? t("categoryBar.showList") : t("categoryBar.showMap")}
+            <span>{mapMode ? t("categoryBar.showList") : t("categoryBar.showMap")}</span>
           </button>
         )}
       </div>

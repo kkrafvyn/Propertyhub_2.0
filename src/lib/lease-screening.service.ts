@@ -1,4 +1,6 @@
 import { supabase } from "./supabase";
+import { getProviderForCheck, type ScreeningCheckType } from "./tenant-screening-providers";
+
 const db = supabase as any;
 
 export function validateLeaseApplicationInput(input: { applicantName: string; applicantEmail: string; householdSize: number }) {
@@ -65,4 +67,61 @@ export const leaseScreeningService = {
     if (error) throw error; return data;
   },
   async listForOrganization(organizationId: string) { const { data, error } = await db.from("estate_lease_screenings").select("*, deal_case:deal_cases!inner(id,case_type,status,organization_id,user_id)").eq("deal_case.organization_id", organizationId).order("created_at", { ascending: false }); if (error) throw error; return data || []; },
+
+  async submitScreeningCheck(input: {
+    organizationId: string;
+    screeningId?: string;
+    applicationId?: string;
+    checkType: ScreeningCheckType;
+    applicantName: string;
+    applicantEmail: string;
+    reviewedBy?: string;
+  }) {
+    const provider = getProviderForCheck(input.checkType);
+    if (!provider) throw new Error(`No provider configured for ${input.checkType} checks.`);
+
+    const result = await provider.submitCheck({
+      applicantName: input.applicantName,
+      applicantEmail: input.applicantEmail,
+      checkType: input.checkType,
+    });
+
+    const { data, error } = await db.from("tenant_screening_checks").insert({
+      organization_id: input.organizationId,
+      screening_id: input.screeningId || null,
+      application_id: input.applicationId || null,
+      check_type: input.checkType,
+      provider: result.provider,
+      provider_reference: result.providerReference,
+      status: "completed",
+      recommendation: result.recommendation,
+      result_summary: result.resultSummary,
+      result_payload: result.resultPayload,
+      reviewed_by: input.reviewedBy || null,
+      reviewed_at: new Date().toISOString(),
+    }).select("*").single();
+    if (error) throw error;
+    return data;
+  },
+
+  async listScreeningChecks(organizationId: string, filters?: { checkType?: ScreeningCheckType; applicationId?: string }) {
+    let query = db.from("tenant_screening_checks").select("*").eq("organization_id", organizationId).order("created_at", { ascending: false });
+    if (filters?.checkType) query = query.eq("check_type", filters.checkType);
+    if (filters?.applicationId) query = query.eq("application_id", filters.applicationId);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+
+  async runFullUsScreeningPack(input: {
+    organizationId: string;
+    applicationId?: string;
+    screeningId?: string;
+    applicantName: string;
+    applicantEmail: string;
+    reviewedBy?: string;
+  }) {
+    const types: ScreeningCheckType[] = ["credit", "criminal", "eviction"];
+    return Promise.all(types.map((checkType) => this.submitScreeningCheck({ ...input, checkType })));
+  },
 };

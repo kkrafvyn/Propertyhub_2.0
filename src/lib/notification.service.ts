@@ -3,6 +3,8 @@ import { communicationService } from "./communication.service";
 import { clientIntegrations } from "./integrations";
 import { organizationService } from "./organization.service";
 import { pushNotificationService } from "./push-notification.service";
+import { sendLeaseSigningSms } from "./sms-gateway.service";
+import { whatsappNotifyService } from "./whatsapp-notify.service";
 import { WORKSPACE_ENTRY_PATH } from "./workspace";
 
 export type NotificationCategory =
@@ -366,6 +368,134 @@ export const notificationService = {
         actionUrl: "/app/leases",
         metadata: { leaseId },
       });
+    }
+  },
+
+  async notifyLeaseSignatureRequested(input: {
+    leaseId: string;
+    tenantUserId?: string | null;
+    tenantEmail: string;
+    tenantPhone?: string | null;
+    documentName: string;
+    signingUrl: string | null;
+    jurisdictionLabel?: string;
+    actorUserId?: string;
+    organizationId?: string;
+  }) {
+    const signPath = input.signingUrl
+      ? input.signingUrl.replace(/^https?:\/\/[^/]+/, "")
+      : "/app/leases";
+
+    if (input.tenantUserId) {
+      await safeNotify({
+        userId: input.tenantUserId,
+        actorUserId: input.actorUserId,
+        notificationType: "lease_signature_requested",
+        subject: "Lease ready for your signature",
+        content: `${input.documentName} is ready. Review jurisdiction clauses (${input.jurisdictionLabel || "local rules"}) and sign electronically.`,
+        category: "Offers",
+        actionUrl: signPath.startsWith("/app/") ? signPath : `/app${signPath}`,
+        metadata: {
+          leaseId: input.leaseId,
+          signingUrl: input.signingUrl,
+          jurisdictionLabel: input.jurisdictionLabel,
+        },
+      });
+    }
+
+    const { data: leaseRow } = await supabase
+      .from("leases")
+      .select("organization_id")
+      .eq("id", input.leaseId)
+      .maybeSingle();
+
+    if (leaseRow?.organization_id) {
+      await communicationService
+        .sendOutboundEmail({
+          organizationId: leaseRow.organization_id,
+          to: input.tenantEmail,
+          subject: `Sign your lease — ${input.documentName}`,
+          content: `Your tenancy agreement is ready for electronic signature.\n\nOpen: ${input.signingUrl || signPath}\n\nJurisdiction: ${input.jurisdictionLabel || "local market rules"}`,
+        })
+        .catch(() => undefined);
+    }
+
+    if (input.tenantPhone && input.signingUrl) {
+      void sendLeaseSigningSms(
+        input.tenantPhone,
+        input.documentName,
+        input.signingUrl,
+        input.organizationId || leaseRow?.organization_id
+      ).catch(() => undefined);
+
+      void whatsappNotifyService
+        .sendLeaseSigningMessage({
+          to: input.tenantPhone,
+          recipientName: input.tenantEmail.split("@")[0] || "Tenant",
+          documentName: input.documentName,
+          signingUrl: input.signingUrl,
+          jurisdictionLabel: input.jurisdictionLabel,
+          organizationId: input.organizationId || leaseRow?.organization_id,
+        })
+        .catch(() => undefined);
+    }
+  },
+
+  async notifyLeaseCosignRequested(input: {
+    leaseId: string;
+    landlordUserId: string;
+    landlordEmail: string;
+    landlordPhone?: string | null;
+    documentName: string;
+    signingUrl: string | null;
+    tenantName?: string;
+    organizationId?: string;
+    actorUserId?: string;
+  }) {
+    const signPath = input.signingUrl
+      ? input.signingUrl.replace(/^https?:\/\/[^/]+/, "")
+      : "/sign";
+
+    await safeNotify({
+      userId: input.landlordUserId,
+      actorUserId: input.actorUserId,
+      notificationType: "lease_cosign_requested",
+      subject: "Tenant signed — your countersignature required",
+      content: `${input.tenantName || "The tenant"} signed ${input.documentName}. Review and countersign to execute the lease.`,
+      category: "Offers",
+      actionUrl: signPath.startsWith("/") ? signPath : `/sign${signPath}`,
+      metadata: { leaseId: input.leaseId, signingUrl: input.signingUrl },
+    });
+
+    if (input.organizationId) {
+      await communicationService
+        .sendOutboundEmail({
+          organizationId: input.organizationId,
+          to: input.landlordEmail,
+          subject: `Countersign lease — ${input.documentName}`,
+          content: `The tenant has signed ${input.documentName}.\n\nCountersign here: ${input.signingUrl || signPath}`,
+        })
+        .catch(() => undefined);
+    }
+
+    if (input.landlordPhone && input.signingUrl) {
+      void sendLeaseSigningSms(
+        input.landlordPhone,
+        input.documentName,
+        input.signingUrl,
+        input.organizationId
+      ).catch(() => undefined);
+
+      void whatsappNotifyService
+        .sendLeaseSigningMessage({
+          to: input.landlordPhone,
+          recipientName: input.landlordEmail.split("@")[0] || "Landlord",
+          documentName: input.documentName,
+          signingUrl: input.signingUrl,
+          isCosignReminder: true,
+          organizationId: input.organizationId,
+        })
+        .catch(() => undefined);
     }
   },
 

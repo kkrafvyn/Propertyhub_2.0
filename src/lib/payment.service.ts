@@ -59,10 +59,11 @@ export const paymentService = {
     if (error) throw error;
     return data as {
       transaction: any;
-      authorizationUrl: string;
-      accessCode: string;
+      authorizationUrl: string | null;
+      accessCode?: string;
       reference: string;
-      callbackUrl: string;
+      callbackUrl?: string;
+      simulated?: boolean;
     };
   },
 
@@ -74,10 +75,12 @@ export const paymentService = {
     if (error) throw error;
     return data as {
       transaction: any;
-      authorizationUrl: string;
-      sessionId: string;
+      authorizationUrl: string | null;
+      accessCode?: string;
+      sessionId?: string;
       reference: string;
-      callbackUrl: string;
+      callbackUrl?: string;
+      simulated?: boolean;
     };
   },
 

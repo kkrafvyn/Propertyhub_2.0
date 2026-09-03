@@ -4,6 +4,7 @@ import {
   type JurisdictionId,
 } from "./real-estate-compliance";
 import { resolvePaymentContext } from "./payment-routing.service";
+import { resolveSubdivisionCode } from "./country-rules/subdivision-resolver";
 
 export interface UserMarket {
   jurisdictionId: JurisdictionId;
@@ -12,6 +13,7 @@ export interface UserMarket {
   city: string;
   searchLocation: string;
   currency: string;
+  subdivisionCode?: string;
   timezone: string;
   suggestedLocale: string;
   defaultListingMode: "rent" | "buy" | "stay";
@@ -48,7 +50,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "rent",
     timezone: "Africa/Accra",
-    paymentHint: "Secure checkout · GHS",
+    paymentHint: "PayAngels · GHS",
     cities: [
       { city: "Accra", region: "Greater Accra", searchLocation: "Accra, Ghana" },
       { city: "Kumasi", region: "Ashanti", searchLocation: "Kumasi, Ghana" },
@@ -63,7 +65,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "rent",
     timezone: "Africa/Lagos",
-    paymentHint: "Secure checkout · NGN",
+    paymentHint: "PayAngels · NGN",
     cities: [
       { city: "Lagos", region: "Lagos", searchLocation: "Lagos, Nigeria" },
       { city: "Abuja", region: "FCT", searchLocation: "Abuja, Nigeria" },
@@ -78,7 +80,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "rent",
     timezone: "Africa/Nairobi",
-    paymentHint: "Secure checkout · KES",
+    paymentHint: "PayAngels · KES",
     cities: [
       { city: "Nairobi", region: "Nairobi", searchLocation: "Nairobi, Kenya" },
       { city: "Mombasa", region: "Coast", searchLocation: "Mombasa, Kenya" },
@@ -92,7 +94,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "rent",
     timezone: "Africa/Johannesburg",
-    paymentHint: "Secure checkout · ZAR",
+    paymentHint: "PayAngels · ZAR",
     cities: [
       { city: "Johannesburg", region: "Gauteng", searchLocation: "Johannesburg, South Africa" },
       { city: "Cape Town", region: "Western Cape", searchLocation: "Cape Town, South Africa" },
@@ -106,7 +108,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "buy",
     timezone: "America/New_York",
-    paymentHint: "Secure checkout · USD",
+    paymentHint: "PayAngels · USD",
     cities: [
       { city: "New York", region: "New York", searchLocation: "New York, United States" },
       { city: "Los Angeles", region: "California", searchLocation: "Los Angeles, United States" },
@@ -121,7 +123,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "rent",
     timezone: "Europe/London",
-    paymentHint: "Secure checkout · GBP",
+    paymentHint: "PayAngels · GBP",
     cities: [
       { city: "London", region: "England", searchLocation: "London, United Kingdom" },
       { city: "Manchester", region: "England", searchLocation: "Manchester, United Kingdom" },
@@ -135,7 +137,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "rent",
     timezone: "Europe/Berlin",
-    paymentHint: "Secure checkout · EUR",
+    paymentHint: "PayAngels · EUR",
     cities: [
       { city: "Berlin", region: "Germany", searchLocation: "Berlin, Germany" },
       { city: "Paris", region: "France", searchLocation: "Paris, France" },
@@ -150,7 +152,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "ar",
     defaultListingMode: "rent",
     timezone: "Asia/Dubai",
-    paymentHint: "Secure checkout · AED",
+    paymentHint: "PayAngels · AED",
     cities: [
       { city: "Dubai", region: "Dubai", searchLocation: "Dubai, United Arab Emirates" },
       { city: "Abu Dhabi", region: "Abu Dhabi", searchLocation: "Abu Dhabi, United Arab Emirates" },
@@ -164,7 +166,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "buy",
     timezone: "America/Toronto",
-    paymentHint: "Secure checkout · CAD",
+    paymentHint: "PayAngels · CAD",
     cities: [
       { city: "Toronto", region: "Ontario", searchLocation: "Toronto, Canada" },
       { city: "Vancouver", region: "British Columbia", searchLocation: "Vancouver, Canada" },
@@ -178,7 +180,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "buy",
     timezone: "Australia/Sydney",
-    paymentHint: "Secure checkout · AUD",
+    paymentHint: "PayAngels · AUD",
     cities: [
       { city: "Sydney", region: "New South Wales", searchLocation: "Sydney, Australia" },
       { city: "Melbourne", region: "Victoria", searchLocation: "Melbourne, Australia" },
@@ -192,7 +194,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "hi",
     defaultListingMode: "buy",
     timezone: "Asia/Kolkata",
-    paymentHint: "Secure checkout · INR",
+    paymentHint: "PayAngels · INR",
     cities: [
       { city: "Mumbai", region: "Maharashtra", searchLocation: "Mumbai, India" },
       { city: "Bengaluru", region: "Karnataka", searchLocation: "Bengaluru, India" },
@@ -206,7 +208,7 @@ export const MARKET_PRESETS: MarketPreset[] = [
     suggestedLocale: "en",
     defaultListingMode: "rent",
     timezone: "UTC",
-    paymentHint: "Secure checkout · USD",
+    paymentHint: "PayAngels · USD",
     cities: [
       { city: "Worldwide", region: "Global", searchLocation: "" },
     ],
@@ -223,10 +225,12 @@ export function buildUserMarket(
 ): UserMarket {
   const preset = getMarketPreset(jurisdictionId) ?? getMarketPreset("GLOBAL")!;
   const city = preset.cities[cityIndex] ?? preset.cities[0];
+  const subdivisionCode = resolveSubdivisionCode(jurisdictionId, city.region, city.city);
   const payment = resolvePaymentContext({
     country: preset.country,
     region: city.region,
     city: city.city,
+    subdivisionCode,
   });
 
   return {
@@ -236,6 +240,7 @@ export function buildUserMarket(
     city: city.city,
     searchLocation: city.searchLocation,
     currency: payment.currency,
+    subdivisionCode,
     timezone: preset.timezone,
     suggestedLocale: preset.suggestedLocale,
     defaultListingMode: preset.defaultListingMode,
@@ -243,8 +248,8 @@ export function buildUserMarket(
   };
 }
 
-export function getDisplayCurrencyForMarket(market: UserMarket): "GHS" | "USD" {
-  return market.jurisdictionId === "GH" ? "GHS" : "USD";
+export function getDisplayCurrencyForMarket(market: UserMarket): string {
+  return market.currency?.trim().toUpperCase() || "USD";
 }
 
 export function getMarketSummary(market: UserMarket) {
@@ -254,6 +259,7 @@ export function getMarketSummary(market: UserMarket) {
     region: market.region,
     city: market.city,
     currency: market.currency,
+    subdivisionCode: market.subdivisionCode,
   });
 
   return {
@@ -313,6 +319,7 @@ export function marketFromAuthMetadata(metadata?: Record<string, unknown> | null
     country: preset.country,
     region,
     city,
+    subdivisionCode: resolveSubdivisionCode(jurisdictionId, region, city),
   });
 
   return {
@@ -322,6 +329,7 @@ export function marketFromAuthMetadata(metadata?: Record<string, unknown> | null
     city,
     searchLocation,
     currency: String(metadata.market_currency || payment.currency),
+    subdivisionCode: resolveSubdivisionCode(jurisdictionId, region, city),
     timezone: preset.timezone,
     suggestedLocale: preset.suggestedLocale,
     defaultListingMode: preset.defaultListingMode,
