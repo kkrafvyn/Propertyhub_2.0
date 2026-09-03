@@ -14,6 +14,7 @@ import { ghanaMarketService, type GhanaLocationInsight } from "../../../lib/ghan
 import { realEstateComplianceService, type ListingType as ComplianceListingType } from "../../../lib/real-estate-compliance.service";
 import { countryRulesService } from "../../../lib/country-rules.service";
 import { resolveSubdivisionCode } from "../../../lib/country-rules/subdivision-resolver";
+import { validatePropertyLocationForPublish } from "../../../lib/property-jurisdiction-validation";
 import { resolveJurisdiction } from "../../../lib/real-estate-compliance";
 import { listingService } from "../../../lib/listing.service";
 import { listingQualityService } from "../../../lib/listing-quality.service";
@@ -129,6 +130,25 @@ export function WorkspaceNewListing({
     if (!form.address || !form.city || !form.region || !form.price) {
       toast.error("Address, city, region, and price are required.");
       return;
+    }
+
+    if (form.status === "listed" || form.status === "pending_review") {
+      if (!complianceReady) {
+        toast.error("Complete the compliance checklist before publishing.");
+        return;
+      }
+      const locationCheck = validatePropertyLocationForPublish({
+        country: form.country,
+        region: form.region,
+        city: form.city,
+        address: form.address,
+        subdivision_code: form.subdivisionCode || undefined,
+        ghana_post_gps: form.ghanaPostGps,
+      });
+      if (!locationCheck.valid) {
+        toast.error(locationCheck.errors[0] || "Property location is not valid for publish.");
+        return;
+      }
     }
 
     try {

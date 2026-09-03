@@ -1,30 +1,14 @@
 import type { CountryCode } from "./types";
+import { GHANA_REGION_ALIASES } from "../ghana-regions";
+import { NIGERIA_STATE_ALIASES } from "../nigeria-states";
+import { US_STATE_ALIASES } from "../us-states-expansion";
 import { SUBDIVISION_OVERLAYS } from "./subdivisions";
 
 /** Maps region/city names (uppercase) to subdivision codes per jurisdiction. */
 const REGION_ALIASES: Partial<Record<CountryCode, Record<string, string>>> = {
-  GH: {
-    "GREATER ACCRA": "AA",
-    ACCRA: "AA",
-    ASHANTI: "AS",
-    KUMASI: "AS",
-    WESTERN: "WE",
-    TAKORADI: "WE",
-    "CENTRAL REGION": "CP",
-    CAPE: "CP",
-    "EASTERN REGION": "ER",
-    "NORTHERN REGION": "NR",
-  },
-  NG: {
-    LAGOS: "LA",
-    FCT: "FC",
-    "FEDERAL CAPITAL TERRITORY": "FC",
-    ABUJA: "FC",
-    RIVERS: "RI",
-    "PORT HARCOURT": "RI",
-    OGUN: "OG",
-    KANO: "KN",
-  },
+  GH: GHANA_REGION_ALIASES,
+  NG: NIGERIA_STATE_ALIASES,
+  US: US_STATE_ALIASES,
   KE: {
     NAIROBI: "NBI",
     "NAIROBI COUNTY": "NBI",
@@ -59,24 +43,6 @@ const REGION_ALIASES: Partial<Record<CountryCode, Record<string, string>>> = {
     CARDIFF: "WLS",
     "NORTHERN IRELAND": "NIR",
     BELFAST: "NIR",
-  },
-  US: {
-    CALIFORNIA: "CA",
-    "NEW YORK": "NY",
-    TEXAS: "TX",
-    FLORIDA: "FL",
-    WASHINGTON: "WA",
-    ILLINOIS: "IL",
-    MASSACHUSETTS: "MA",
-    COLORADO: "CO",
-    "NEW JERSEY": "NJ",
-    GEORGIA: "GA",
-    ARIZONA: "AZ",
-    NEVADA: "NV",
-    "NORTH CAROLINA": "NC",
-    VIRGINIA: "VA",
-    PENNSYLVANIA: "PA",
-    OREGON: "OR",
   },
   CA: {
     ONTARIO: "ON",

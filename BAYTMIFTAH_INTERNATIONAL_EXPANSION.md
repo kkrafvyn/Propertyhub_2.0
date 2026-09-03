@@ -65,12 +65,12 @@ Select a **state, province, emirate, or member state** in Workspace → Internat
 
 | Jurisdiction | Subdivisions | What overlays add |
 |--------------|--------------|-------------------|
-| **GH** | Greater Accra, Ashanti, Western, Central, Eastern, Northern | Act 220 rent control (Accra), regional tenancy |
+| **GH** | **16 regions** (all administrative regions) | Act 220 rent control (Greater Accra), regional tenancy overlays |
+| **NG** | **37** (36 states + FCT Abuja) | State tenancy law, Lagos 6-month advance cap, FCT federal land disclosures |
+| **US** | **51** (50 states + DC) | Deposit caps, rent control flags, state sales tax on fees — 16 states with enhanced overlays |
 | **KE** | Nairobi, Mombasa, Kisumu, Nakuru, Kiambu | County VAT notes, coastal tourism levy, WHT patches |
 | **ZA** | Gauteng, Western Cape, KZN, Eastern Cape, Limpopo, Mpumalanga | Provincial tribunals, VAT/tourism tax patches |
 | **GB** | England, Scotland, Wales, Northern Ireland | AST vs PRT, Rent Smart Wales, NI deposit scheme |
-| **US** | 16 states (CA, NY, TX, FL, WA, IL, MA, CO, NJ, GA, AZ, NV, NC, VA, PA, OR) | Deposit caps, rent control flags, state sales tax on fees |
-| **NG** | Lagos, FCT Abuja, Rivers, Ogun, Kano | Advance rent limits, state tenancy references |
 | **CA** | ON, BC, QC, AB, MB, SK | Provincial HST/GST/PST rates, deposit rules |
 | **AU** | NSW, VIC, QLD, WA, SA | Bond limits, state tenancy acts |
 | **AE** | Dubai, Abu Dhabi, Sharjah, Ajman | Ejari/Tawtheeq, deposit caps, tourism levy |

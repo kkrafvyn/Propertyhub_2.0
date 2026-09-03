@@ -2,6 +2,7 @@ import { supabase } from "./supabase";
 import type { Database } from "./database.types";
 import { normalizePropertyCategory } from "./property-category";
 import { propertyService } from "./property.service";
+import { propertyMatchesGhanaRegion } from "./ghana-regions";
 
 type ListingInsert = Database["public"]["Tables"]["listings"]["Insert"];
 type ListingUpdate = Database["public"]["Tables"]["listings"]["Update"];
@@ -56,6 +57,8 @@ export const listingService = {
       propertyType?: string;
       listingType?: string;
       organizationSlug?: string;
+      region?: string;
+      country?: string;
       sort?: "newest" | "price_asc" | "price_desc" | "featured";
       verifiedOnly?: boolean;
       featuredOnly?: boolean;
@@ -91,6 +94,29 @@ export const listingService = {
       if (filters.bedrooms && (property?.bedrooms || 0) < filters.bedrooms) return false;
       if (filters.bathrooms && (property?.bathrooms || 0) < filters.bathrooms) return false;
       if (normalizedLocation && !locationHaystack.includes(normalizedLocation)) return false;
+      if (
+        filters.region &&
+        filters.region !== "all" &&
+        (property?.country || "").toLowerCase().includes("ghana")
+      ) {
+        if (
+          !propertyMatchesGhanaRegion(
+            property?.region,
+            property?.city,
+            property?.address,
+            filters.region
+          )
+        ) {
+          return false;
+        }
+      } else if (
+        filters.region &&
+        filters.region !== "all" &&
+        !(property?.country || "").toLowerCase().includes("ghana")
+      ) {
+        const regionNeedle = filters.region.replace(/_/g, " ").toLowerCase();
+        if (!locationHaystack.includes(regionNeedle)) return false;
+      }
       if (filters.organizationSlug && organization?.slug !== filters.organizationSlug) return false;
       if (filters.verifiedOnly && !organization?.verified) return false;
       if (filters.featuredOnly && !listing.featured) return false;

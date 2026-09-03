@@ -27,6 +27,7 @@ import { syncCompareIds, toggleCompareIdAsync } from "../../lib/compare-listings
 import { useIsDesktopViewport } from "../hooks/useMediaQuery";
 import { useTranslation } from "../i18n/LocaleContext";
 import { useUserMarket } from "../context/MarketContext";
+import { GHANA_REGIONS } from "../../lib/ghana-regions";
 
 const PAGE_SIZE = 12;
 
@@ -38,6 +39,7 @@ type SearchFilters = {
   propertyType: string;
   listingType: string;
   agency: string;
+  region: string;
   sort: string;
   verifiedOnly: boolean;
   featuredOnly: boolean;
@@ -59,6 +61,7 @@ function buildFiltersFromSearchParams(searchParams: URLSearchParams): SearchFilt
         ? (searchParams.get("type") as "rental" | "sale" | "lease" | "short_stay")
         : "rental"),
     agency: searchParams.get("agency") || "",
+    region: searchParams.get("region") || "all",
     sort: searchParams.get("sort") || "newest",
     verifiedOnly: searchParams.get("verified") === "1",
     featuredOnly: searchParams.get("featured") === "1",
@@ -176,6 +179,7 @@ export function PropertySearch() {
           activeFilters.propertyType !== "all" ? activeFilters.propertyType : undefined,
         listingType: activeFilters.listingType as "rental" | "sale" | "lease" | "short_stay",
         organizationSlug: activeFilters.agency || undefined,
+        region: activeFilters.region !== "all" ? activeFilters.region : undefined,
         sort: activeFilters.sort as "newest" | "price_asc" | "price_desc" | "featured",
         verifiedOnly: activeFilters.verifiedOnly,
         featuredOnly: activeFilters.featuredOnly,
@@ -249,6 +253,9 @@ export function PropertySearch() {
     if (filters.agency) nextParams.set("agency", filters.agency);
     else nextParams.delete("agency");
 
+    if (filters.region && filters.region !== "all") nextParams.set("region", filters.region);
+    else nextParams.delete("region");
+
     if (filters.sort && filters.sort !== "newest") nextParams.set("sort", filters.sort);
     else nextParams.delete("sort");
 
@@ -299,6 +306,7 @@ export function PropertySearch() {
     nextParams.delete("bedrooms");
     nextParams.delete("bathrooms");
     nextParams.delete("propertyType");
+    nextParams.delete("region");
     nextParams.delete("verified");
     nextParams.delete("featured");
     nextParams.delete("sort");
@@ -367,6 +375,20 @@ export function PropertySearch() {
         onRemove: () => {
           const next = new URLSearchParams(searchParams);
           next.delete("propertyType");
+          next.set("page", "1");
+          setSearchParams(next);
+        },
+      });
+    }
+
+    if (filters.region && filters.region !== "all") {
+      const regionLabel =
+        GHANA_REGIONS.find((region) => region.code === filters.region)?.label || filters.region;
+      list.push({
+        label: regionLabel,
+        onRemove: () => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("region");
           next.set("page", "1");
           setSearchParams(next);
         },
@@ -986,6 +1008,25 @@ function SearchFiltersPanel({
               </button>
             ))}
           </div>
+        </div>
+
+        <div>
+          <label className="mb-3 block font-semibold text-ink" htmlFor="region-filter">
+            {t("searchPage.region")}
+          </label>
+          <select
+            id="region-filter"
+            value={filters.region || "all"}
+            onChange={(e) => setFilters({ ...filters, region: e.target.value })}
+            className="w-full rounded-lg border border-surface-border bg-surface px-4 py-3 text-ink"
+          >
+            <option value="all">{t("searchPage.allRegions")}</option>
+            {GHANA_REGIONS.map((region) => (
+              <option key={region.code} value={region.code}>
+                {region.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

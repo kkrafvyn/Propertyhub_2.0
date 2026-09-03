@@ -1,4 +1,7 @@
 import type { CountryCode, LeaseRuleSet, TaxComponent } from "./types";
+import { GHANA_SUBDIVISION_OVERLAYS } from "../ghana-regions";
+import { NIGERIA_SUBDIVISION_OVERLAYS } from "../nigeria-states";
+import { US_BASE_SUBDIVISION_OVERLAYS } from "../us-states-expansion";
 
 export interface SubdivisionOption {
   code: string;
@@ -26,6 +29,7 @@ const us = (code: string, label: string, lease: Partial<LeaseRuleSet>, taxBps?: 
 
 export const SUBDIVISION_OVERLAYS: SubdivisionRegistry = {
   US: {
+    ...US_BASE_SUBDIVISION_OVERLAYS,
     CA: us("CA", "California", {
       maxSecurityDepositMonths: 2,
       rentControlApplies: true,
@@ -116,57 +120,7 @@ export const SUBDIVISION_OVERLAYS: SubdivisionRegistry = {
       minNoticeDaysLandlord: 30,
     }, 0),
   },
-  NG: {
-    LA: {
-      code: "LA",
-      label: "Lagos State",
-      leaseRules: {
-        maxAdvanceRentMonths: 6,
-        maxSecurityDepositMonths: 1,
-        statutoryReferences: ["Lagos State Tenancy Law 2011", "Lagos rent tribunal procedures"],
-        requiredLeaseClauses: ["Written tenancy agreement registration where required", "Advance rent not to exceed 6 months (Lagos enforcement practice)"],
-        minNoticeDaysTenant: 7,
-        minNoticeDaysLandlord: 30,
-      },
-    },
-    FC: {
-      code: "FC",
-      label: "FCT (Abuja)",
-      leaseRules: {
-        maxAdvanceRentMonths: 12,
-        statutoryReferences: ["Abuja Area Courts tenancy practice", "FCT rent dispute resolution"],
-        requiredLeaseClauses: ["Governor's consent disclosure for federal land leases"],
-        minNoticeDaysLandlord: 30,
-      },
-    },
-    RI: {
-      code: "RI",
-      label: "Rivers State",
-      leaseRules: {
-        maxAdvanceRentMonths: 12,
-        statutoryReferences: ["Rivers State tenancy customs", "Port Harcourt rent tribunal"],
-        minNoticeDaysLandlord: 30,
-      },
-    },
-    OG: {
-      code: "OG",
-      label: "Ogun State",
-      leaseRules: {
-        maxAdvanceRentMonths: 12,
-        statutoryReferences: ["Ogun State tenancy practice (Lagos corridor)"],
-        minNoticeDaysLandlord: 30,
-      },
-    },
-    KN: {
-      code: "KN",
-      label: "Kano State",
-      leaseRules: {
-        maxAdvanceRentMonths: 12,
-        statutoryReferences: ["Kano State Sharia / customary tenancy overlay where applicable"],
-        minNoticeDaysLandlord: 30,
-      },
-    },
-  },
+  NG: NIGERIA_SUBDIVISION_OVERLAYS,
   CA: {
     ON: {
       code: "ON",
@@ -466,71 +420,7 @@ export const SUBDIVISION_OVERLAYS: SubdivisionRegistry = {
       },
     },
   },
-  GH: {
-    AA: {
-      code: "AA",
-      label: "Greater Accra",
-      leaseRules: {
-        rentControlApplies: true,
-        statutoryReferences: ["Rent Control Act 1963 (Act 220) — Accra/Tema designated areas", "Greater Accra rent tribunal"],
-        requiredLeaseClauses: ["Advance rent cap where rent control applies", "GhanaPostGPS on lease schedule"],
-        maxAdvanceRentMonths: 6,
-        maxSecurityDepositMonths: 3,
-        minNoticeDaysLandlord: 90,
-      },
-      taxProfile: [
-        {
-          id: "stamp_duty",
-          label: "Stamp duty (Greater Accra lease)",
-          rateBasisPoints: 50,
-          appliesTo: ["sale"],
-          authority: "GRA",
-          notes: "0.5% on sale; lease stamp varies by instrument",
-        },
-      ],
-    },
-    AS: {
-      code: "AS",
-      label: "Ashanti Region",
-      leaseRules: {
-        statutoryReferences: ["Ashanti Regional rent practice", "Kumasi Metropolitan Assembly bylaws"],
-        maxAdvanceRentMonths: 12,
-        minNoticeDaysLandlord: 60,
-      },
-    },
-    WE: {
-      code: "WE",
-      label: "Western Region",
-      leaseRules: {
-        statutoryReferences: ["Western Region tenancy practice", "Takoradi/Sekondi port-area leases"],
-        minNoticeDaysLandlord: 60,
-      },
-    },
-    CP: {
-      code: "CP",
-      label: "Central Region",
-      leaseRules: {
-        statutoryReferences: ["Central Region customary land tenure disclosures", "Cape Coast municipality rules"],
-        minNoticeDaysLandlord: 60,
-      },
-    },
-    ER: {
-      code: "ER",
-      label: "Eastern Region",
-      leaseRules: {
-        statutoryReferences: ["Eastern Region land documentation", "Koforidua tenancy practice"],
-        minNoticeDaysLandlord: 60,
-      },
-    },
-    NR: {
-      code: "NR",
-      label: "Northern Region",
-      leaseRules: {
-        statutoryReferences: ["Northern Region customary tenancy", "Tamale rent dispute resolution"],
-        minNoticeDaysLandlord: 90,
-      },
-    },
-  },
+  GH: GHANA_SUBDIVISION_OVERLAYS,
   KE: {
     NBI: {
       code: "NBI",

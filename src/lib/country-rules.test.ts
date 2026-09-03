@@ -50,8 +50,9 @@ describe("country-rules", () => {
 
   it("lists subdivision options for all overlay-enabled markets", () => {
     expect(SUBDIVISION_OPTIONS.US?.length).toBeGreaterThanOrEqual(16);
-    expect(SUBDIVISION_OPTIONS.NG?.length).toBeGreaterThanOrEqual(5);
-    expect(SUBDIVISION_OPTIONS.EU?.length).toBeGreaterThanOrEqual(8);
+    expect(SUBDIVISION_OPTIONS.NG?.length).toBe(37);
+    expect(SUBDIVISION_OPTIONS.GH?.length).toBe(16);
+    expect(SUBDIVISION_OPTIONS.US?.length).toBeGreaterThanOrEqual(51);
   });
 
   it("calculates Ghana rent withholding tax", () => {

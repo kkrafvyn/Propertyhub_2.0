@@ -5,6 +5,7 @@ import {
 } from "./real-estate-compliance";
 import { resolvePaymentContext } from "./payment-routing.service";
 import { resolveSubdivisionCode } from "./country-rules/subdivision-resolver";
+import { GHANA_REGIONS } from "./ghana-regions";
 
 export interface UserMarket {
   jurisdictionId: JurisdictionId;
@@ -51,11 +52,11 @@ export const MARKET_PRESETS: MarketPreset[] = [
     defaultListingMode: "rent",
     timezone: "Africa/Accra",
     paymentHint: "PayAngels · GHS",
-    cities: [
-      { city: "Accra", region: "Greater Accra", searchLocation: "Accra, Ghana" },
-      { city: "Kumasi", region: "Ashanti", searchLocation: "Kumasi, Ghana" },
-      { city: "Takoradi", region: "Western", searchLocation: "Takoradi, Ghana" },
-    ],
+    cities: GHANA_REGIONS.map((region) => ({
+      city: region.capital,
+      region: region.label,
+      searchLocation: `${region.capital}, Ghana`,
+    })),
   },
   {
     jurisdictionId: "NG",

@@ -7,6 +7,8 @@ export default {
   savingAlert: "Saving...",
   viewMode: "View mode",
   filters: "Filters",
+  region: "Region",
+  allRegions: "All Ghana regions",
   listingType: "Listing Type",
   sortBy: "Sort by",
   priceRange: "Price Range (GHS)",

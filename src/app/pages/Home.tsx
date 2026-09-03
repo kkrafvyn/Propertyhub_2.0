@@ -10,6 +10,7 @@ import { useAuth } from "../context/AuthContext";
 import { useUserMarket } from "../context/MarketContext";
 import { useTranslation } from "../i18n/LocaleContext";
 import { WORKSPACE_ENTRY_PATH } from "../../lib/workspace";
+import { GHANA_REGIONS, propertyMatchesGhanaRegion } from "../../lib/ghana-regions";
 import {
   CategoryBar,
   DesktopShell,
@@ -32,7 +33,8 @@ export function Home() {
   const { t } = useTranslation();
   const { market } = useUserMarket();
   const [category, setCategory] = useState("all");
-  const [location, setLocation] = useState(() => market?.city || "");
+  const [location, setLocation] = useState("");
+  const [ghanaRegion, setGhanaRegion] = useState("all");
   const [propertyType, setPropertyType] = useState("any");
   const [budget, setBudget] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -45,10 +47,8 @@ export function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (market?.city) {
-      setLocation(market.city);
-    }
-  }, [market?.city]);
+    syncCompareIds().then(setCompareIds);
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -56,7 +56,7 @@ export function Home() {
     const load = async () => {
       try {
         setLoading(true);
-        const rows = await listingService.getPublicListings(60, 0);
+        const rows = await listingService.getPublicListings(200, 0);
         if (!ignore) setListings(rows);
       } catch (error) {
         console.error("Failed to load listings:", error);
@@ -70,11 +70,7 @@ export function Home() {
     return () => {
       ignore = true;
     };
-  }, []);
-
-  useEffect(() => {
-    syncCompareIds().then(setCompareIds);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!user) {
@@ -101,11 +97,31 @@ export function Home() {
     };
   }, [user]);
 
-  const cards = useMemo(() => listings.map(mapListingToCard), [listings]);
-
-  const visible = useMemo(() => {
+  const listingFiltered = useMemo(() => {
     const query = location.trim().toLowerCase();
 
+    return listings.filter((listing) => {
+      const property = listing.property || {};
+      const haystack = [property.address, property.city, property.region, property.country]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      const matchesQuery = !query || haystack.includes(query);
+      const matchesRegion = propertyMatchesGhanaRegion(
+        property.region,
+        property.city,
+        property.address,
+        ghanaRegion
+      );
+
+      return matchesQuery && matchesRegion;
+    });
+  }, [listings, location, ghanaRegion]);
+
+  const cards = useMemo(() => listingFiltered.map(mapListingToCard), [listingFiltered]);
+
+  const visible = useMemo(() => {
     return cards.filter((listing) => {
       const matchesCategory =
         category === "all" ||
@@ -124,24 +140,17 @@ export function Home() {
 
       const matchesVerified = !verifiedOnly || listing.verified;
       const matchesBeds = !minBedrooms || (listing.bedrooms ?? 0) >= minBedrooms;
-      const matchesQuery = !query || haystack.includes(query);
 
-      return (
-        matchesCategory &&
-        matchesType &&
-        matchesBudget &&
-        matchesVerified &&
-        matchesBeds &&
-        matchesQuery
-      );
+      return matchesCategory && matchesType && matchesBudget && matchesVerified && matchesBeds;
     });
-  }, [cards, category, location, propertyType, budget, verifiedOnly, minBedrooms]);
+  }, [cards, category, propertyType, budget, verifiedOnly, minBedrooms]);
 
   const featured = useMemo(() => cards.filter((l) => l.featured).slice(0, 12), [cards]);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (location.trim()) params.set("q", location.trim());
+    if (ghanaRegion !== "all") params.set("region", ghanaRegion);
     if (propertyType !== "any") params.set("propertyType", propertyType);
     if (budget.trim()) params.set("priceMax", budget.replace(/\D/g, ""));
     navigate(`/search?${params.toString()}`);
@@ -220,8 +229,42 @@ export function Home() {
           onVerifiedOnlyChange={setVerifiedOnly}
           minBedrooms={minBedrooms}
           onMinBedroomsChange={setMinBedrooms}
+          ghanaRegion={ghanaRegion}
+          onGhanaRegionChange={setGhanaRegion}
           onClose={() => setFiltersOpen(false)}
         />
+      )}
+
+      {!loading && (
+        <section className="mb-8 overflow-x-auto" aria-label={t("searchPage.region")}>
+          <div className="flex min-w-max gap-2 pb-1">
+            <button
+              type="button"
+              onClick={() => setGhanaRegion("all")}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                ghanaRegion === "all"
+                  ? "bg-brand-forest text-white"
+                  : "bg-surface-subtle text-ink hover:bg-surface-hover"
+              }`}
+            >
+              {t("searchPage.allRegions")}
+            </button>
+            {GHANA_REGIONS.map((region) => (
+              <button
+                key={region.code}
+                type="button"
+                onClick={() => setGhanaRegion(region.code)}
+                className={`rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition ${
+                  ghanaRegion === region.code
+                    ? "bg-brand-forest text-white"
+                    : "bg-surface-subtle text-ink hover:bg-surface-hover"
+                }`}
+              >
+                {region.label}
+              </button>
+            ))}
+          </div>
+        </section>
       )}
 
       {!loading && visible.length === 0 && cards.length > 0 && (
@@ -450,12 +493,16 @@ function FiltersPanel({
   onVerifiedOnlyChange,
   minBedrooms,
   onMinBedroomsChange,
+  ghanaRegion,
+  onGhanaRegionChange,
   onClose,
 }: {
   verifiedOnly: boolean;
   onVerifiedOnlyChange: (value: boolean) => void;
   minBedrooms: number;
   onMinBedroomsChange: (value: number) => void;
+  ghanaRegion: string;
+  onGhanaRegionChange: (value: string) => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -472,6 +519,7 @@ function FiltersPanel({
   const handleReset = () => {
     onVerifiedOnlyChange(false);
     onMinBedroomsChange(0);
+    onGhanaRegionChange("all");
   };
 
   return (
@@ -509,6 +557,24 @@ function FiltersPanel({
         </div>
 
         <div className="space-y-5">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-ink-secondary mb-1.5">
+              {t("searchPage.region")}
+            </label>
+            <select
+              value={ghanaRegion}
+              onChange={(e) => onGhanaRegionChange(e.target.value)}
+              className="w-full rounded-xl border border-surface-border bg-surface-subtle px-3 py-2.5 text-sm text-ink"
+            >
+              <option value="all">{t("searchPage.allRegions")}</option>
+              {GHANA_REGIONS.map((region) => (
+                <option key={region.code} value={region.code}>
+                  {region.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <label className="flex items-center justify-between rounded-xl border border-surface-border bg-surface-subtle p-3.5 text-sm font-medium text-ink cursor-pointer hover:bg-surface-hover transition-colors">
             <span className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-emerald-500" />
