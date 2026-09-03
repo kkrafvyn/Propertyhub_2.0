@@ -7,6 +7,7 @@ export type OrganizationPermissionInput = {
   role?: MemberRole | null;
   permission?: WorkspacePermission;
   isPlatformAdmin?: boolean;
+  isPlatformStaff?: boolean;
 };
 
 export function canAccessOrganizationForAction(input: OrganizationPermissionInput): boolean {
@@ -16,9 +17,10 @@ export function canAccessOrganizationForAction(input: OrganizationPermissionInpu
     role,
     permission,
     isPlatformAdmin = false,
+    isPlatformStaff = false,
   } = input;
 
-  if (isPlatformAdmin) return true;
+  if (isPlatformAdmin || isPlatformStaff) return true;
   if (!targetOrganizationId) return false;
   if (!userOrganizationIds.includes(targetOrganizationId)) return false;
   if (!permission) return true;
@@ -39,11 +41,20 @@ export function getAuthorizationError(input: OrganizationPermissionInput): strin
     return 'Authorization denied: missing organization context.';
   }
 
-  if (!input.userOrganizationIds.includes(input.targetOrganizationId) && !input.isPlatformAdmin) {
+  if (
+    !input.userOrganizationIds.includes(input.targetOrganizationId) &&
+    !input.isPlatformAdmin &&
+    !input.isPlatformStaff
+  ) {
     return 'Authorization denied: user is not a member of this organization.';
   }
 
-  if (input.permission && !canWorkspace(input.role, input.permission) && !input.isPlatformAdmin) {
+  if (
+    input.permission &&
+    !canWorkspace(input.role, input.permission) &&
+    !input.isPlatformAdmin &&
+    !input.isPlatformStaff
+  ) {
     return `Authorization denied: role does not permit ${input.permission}.`;
   }
 

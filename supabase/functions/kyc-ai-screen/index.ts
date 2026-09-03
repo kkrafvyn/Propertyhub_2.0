@@ -51,13 +51,13 @@ function bytesToBase64(bytes: Uint8Array) {
   return btoa(binary);
 }
 
-async function isPlatformAdmin(admin: ReturnType<typeof createAdminClient>, userId: string) {
+async function isPlatformStaff(admin: ReturnType<typeof createAdminClient>, userId: string) {
   const { data } = await admin
     .from("users")
-    .select("is_platform_admin")
+    .select("is_platform_admin, is_platform_manager")
     .eq("id", userId)
     .maybeSingle();
-  return Boolean(data?.is_platform_admin);
+  return Boolean(data?.is_platform_admin || data?.is_platform_manager);
 }
 
 function ruleBasedScreen(submission: {
@@ -323,7 +323,7 @@ Deno.serve(async (req) => {
     }
 
     const ownsSubmission = submission.user_id === user.id;
-    const adminReviewer = await isPlatformAdmin(admin, user.id);
+    const adminReviewer = await isPlatformStaff(admin, user.id);
     if (!ownsSubmission && !adminReviewer) {
       throw new HttpError(403, "You are not allowed to screen this submission");
     }

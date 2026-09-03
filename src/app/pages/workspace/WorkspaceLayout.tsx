@@ -122,6 +122,7 @@ import { WorkspaceInspections } from "./WorkspaceInspections";
 import { WorkspaceLeases } from "./WorkspaceLeases";
 import { ErrorState, PageLoadingSkeleton } from "../../components/ux";
 import { SignatureActionBanner } from "../../components/ux/SignatureActionBanner";
+import { hasPlatformConsoleAccess } from "../../../lib/platform-access";
 import { eSignatureService } from "../../../lib/esignature.service";
 import { FraudAlerts } from "./FraudAlerts";
 import ComplianceCenter from "./ComplianceCenter";
@@ -437,11 +438,13 @@ export function WorkspaceLayout() {
     [memberships],
   );
 
+  const isPlatformStaff = hasPlatformConsoleAccess(profile) || role === "platform_admin";
   const isPlatformAdmin = Boolean(profile?.is_platform_admin) || role === "platform_admin";
   const isCurrentOrgAccessible = canAccessOrganization({
     userOrganizationIds,
     targetOrganizationId: currentMembership?.organization.id ?? null,
     isPlatformAdmin,
+    isPlatformStaff,
   });
 
   const fallbackMembership = memberships[0] || null;

@@ -65,9 +65,9 @@ export function NewUserTutorial() {
   const [checklist, setChecklist] = useState<boolean[]>([]);
 
   const detectedRole = useMemo(() => {
-    if (profile?.is_platform_admin) return "platform_admin" as const;
+    if (profile?.is_platform_admin || profile?.is_platform_manager) return "platform_admin" as const;
     return resolveTutorialRole(role);
-  }, [profile?.is_platform_admin, role]);
+  }, [profile?.is_platform_admin, profile?.is_platform_manager, role]);
 
   const definition = selectedRole ? getTutorialDefinition(selectedRole) : null;
   const step = definition?.steps[stepIndex] || null;

@@ -2,13 +2,19 @@ export type OrganizationAccessCheckInput = {
   userOrganizationIds: string[];
   targetOrganizationId?: string | null;
   isPlatformAdmin?: boolean;
+  isPlatformStaff?: boolean;
 };
 
 export function canAccessOrganization(input: OrganizationAccessCheckInput): boolean {
-  const { userOrganizationIds, targetOrganizationId, isPlatformAdmin = false } = input;
+  const {
+    userOrganizationIds,
+    targetOrganizationId,
+    isPlatformAdmin = false,
+    isPlatformStaff = false,
+  } = input;
 
   if (!targetOrganizationId) return false;
-  if (isPlatformAdmin) return true;
+  if (isPlatformAdmin || isPlatformStaff) return true;
 
   return userOrganizationIds.includes(targetOrganizationId);
 }

@@ -25,12 +25,12 @@ describe('organization access checks', () => {
     ).toBe(false);
   });
 
-  it('allows platform admins to access any organization', () => {
+  it('allows platform staff to access any organization', () => {
     expect(
       canAccessOrganization({
         userOrganizationIds: [],
         targetOrganizationId: 'org-2',
-        isPlatformAdmin: true,
+        isPlatformStaff: true,
       }),
     ).toBe(true);
   });

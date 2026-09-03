@@ -4095,6 +4095,8 @@ export type Database = {
           full_name: string | null
           id: string
           is_platform_admin: boolean
+          is_platform_manager: boolean
+          platform_console_grants: string[]
           phone: string | null
           phone_verified_at: string | null
           preferred_contact_channel: string
@@ -4110,6 +4112,8 @@ export type Database = {
           full_name?: string | null
           id: string
           is_platform_admin?: boolean
+          is_platform_manager?: boolean
+          platform_console_grants?: string[]
           phone?: string | null
           phone_verified_at?: string | null
           preferred_contact_channel?: string
@@ -4125,6 +4129,8 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_platform_admin?: boolean
+          is_platform_manager?: boolean
+          platform_console_grants?: string[]
           phone?: string | null
           phone_verified_at?: string | null
           preferred_contact_channel?: string

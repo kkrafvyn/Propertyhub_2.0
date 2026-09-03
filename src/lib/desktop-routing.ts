@@ -2,8 +2,9 @@ import type { User } from "@supabase/supabase-js";
 import { getWorkspaceRoute, WORKSPACE_ENTRY_PATH } from "./workspace";
 import { getDesktopLastOrg } from "./desktop-navigation";
 import { getMetadataRole, isFullAdminRole, isWorkspaceRole } from "../app/lib/baytmiftah/roles";
+import { hasPlatformConsoleAccess } from "./platform-access";
 
-type AuthProfile = { role?: string; is_platform_admin?: boolean } | null;
+type AuthProfile = { role?: string; is_platform_admin?: boolean; is_platform_manager?: boolean } | null;
 
 const DESKTOP_AUTH_PATHS = ["/login", "/signup", "/reset-password", "/auth", "/verify-email"];
 
@@ -30,7 +31,7 @@ export function resolveDesktopProfessionalHome(
   }
 
   const metadataRole = getMetadataRole(user.user_metadata) || getMetadataRole(user.app_metadata);
-  if (profile?.is_platform_admin || isFullAdminRole(metadataRole)) {
+  if (hasPlatformConsoleAccess(profile) || isFullAdminRole(metadataRole)) {
     return "/admin";
   }
 

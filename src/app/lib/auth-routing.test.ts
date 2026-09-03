@@ -28,6 +28,15 @@ describe("resolvePostAuthRedirect", () => {
     ).toBe("/admin");
   });
 
+  it("sends platform managers to the admin console", () => {
+    expect(
+      resolvePostAuthRedirect(
+        { user_metadata: { role: "consumer" } },
+        { is_platform_manager: true },
+      ),
+    ).toBe("/admin");
+  });
+
   it("sends workspace roles to /workspace", () => {
     expect(
       resolvePostAuthRedirect(

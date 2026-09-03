@@ -25,6 +25,15 @@ import { Badge } from "../../components/ui/badge";
 import { Input } from "../../components/ui/Input";
 import { fraudDetectionService } from "../../../lib/fraud-detection.service";
 import { adminService } from "../../../lib/admin.service";
+import {
+  canAccessAdminSection,
+  canManagePlatformRoles,
+  getPlatformGrants,
+  hasConsoleGrant,
+  platformRoleLabel,
+} from "../../../lib/platform-access";
+import { formatPlatformGrantSummary, PLATFORM_CONSOLE_GRANT_LABELS } from "../../../lib/platform-console-grants";
+import { PlatformRoleAssignmentDialog } from "../../components/admin/PlatformRoleAssignmentDialog";
 import { isElectron } from "../../../lib/surface-detection";
 import { shouldUseAdminMobileShell } from "../../lib/admin-mobile-nav";
 import { AdminMobileShell } from "../../shells/AdminMobileShell";
@@ -33,6 +42,17 @@ import { AdminRevenueManagement } from "./revenue/AdminRevenueManagement";
 
 function confirmAdminAction(message: string) {
   return window.confirm(message);
+}
+
+function renderAccessDenied(sectionLabel: string) {
+  return (
+    <Card className="p-8">
+      <h2 className="text-xl font-semibold mb-2">{sectionLabel} access restricted</h2>
+      <p className="text-muted-foreground">
+        Your assigned platform roles do not include this area. Ask a platform admin to grant access.
+      </p>
+    </Card>
+  );
 }
 
 type AdminSection =
@@ -102,7 +122,12 @@ function formatTimestamp(value?: string | null) {
 
 export function AdminLayout() {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const canManageRoles = canManagePlatformRoles(profile);
+  const visibleNavItems = useMemo(
+    () => navItems.filter((item) => canAccessAdminSection(profile, item.key)),
+    [profile],
+  );
   const currentSection = useMemo(() => getCurrentSection(location.pathname), [location.pathname]);
 
   const [loading, setLoading] = useState(true);
@@ -123,12 +148,19 @@ export function AdminLayout() {
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [listings, setListings] = useState<any[]>([]);
   const [supportQuery, setSupportQuery] = useState("");
+  const [roleDialogUser, setRoleDialogUser] = useState<any | null>(null);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
 
   const queueCount = triageAlerts.length + reviewCases.length;
 
   const loadAdminState = async () => {
     try {
       setLoading(true);
+      const canModeration = canAccessAdminSection(profile, "moderation");
+      const canUsers = canAccessAdminSection(profile, "users");
+      const canOrganizations = canAccessAdminSection(profile, "organizations");
+      const canListings = canAccessAdminSection(profile, "listings");
+
       const [
         nextOverview,
         nextReviewCases,
@@ -137,12 +169,12 @@ export function AdminLayout() {
         nextOrganizations,
         nextListings,
       ] = await Promise.all([
-        fraudDetectionService.getModerationOverview(),
-        fraudDetectionService.getReviewCases("active", 12),
-        fraudDetectionService.getPendingAlertsWithoutCase(8),
-        adminService.listUsers(50),
-        adminService.listOrganizations(50),
-        adminService.listListings(50),
+        canModeration ? fraudDetectionService.getModerationOverview() : Promise.resolve(overview),
+        canModeration ? fraudDetectionService.getReviewCases("active", 12) : Promise.resolve([]),
+        canModeration ? fraudDetectionService.getPendingAlertsWithoutCase(8) : Promise.resolve([]),
+        canUsers ? adminService.listUsers(50) : Promise.resolve([]),
+        canOrganizations ? adminService.listOrganizations(50) : Promise.resolve([]),
+        canListings ? adminService.listListings(50) : Promise.resolve([]),
       ]);
 
       setOverview(nextOverview);
@@ -161,7 +193,7 @@ export function AdminLayout() {
 
   useEffect(() => {
     void loadAdminState();
-  }, []);
+  }, [profile?.id, profile?.is_platform_admin, profile?.platform_console_grants?.join("|")]);
 
   const runAction = async (actionKey: string, task: () => Promise<void>) => {
     try {
@@ -516,7 +548,7 @@ export function AdminLayout() {
         <div>
           <h2 className="text-xl font-semibold">User Directory</h2>
           <p className="text-sm text-muted-foreground">
-            Review accounts, verification status, and platform admin access.
+            Review accounts, verification status, and platform roles.
           </p>
         </div>
         <Badge variant="outline">{users.length} shown</Badge>
@@ -542,6 +574,15 @@ export function AdminLayout() {
                   {entry.verified ? <Badge>Verified</Badge> : <Badge variant="outline">Unverified</Badge>}
                   {entry.banned ? <Badge variant="destructive">Banned</Badge> : null}
                   {entry.is_platform_admin ? <Badge variant="secondary">Platform Admin</Badge> : null}
+                  {!entry.is_platform_admin
+                    ? getPlatformGrants(entry).map((grant) => (
+                        <Badge key={grant} variant="secondary">
+                          {PLATFORM_CONSOLE_GRANT_LABELS[grant]}
+                        </Badge>
+                      ))
+                    : null}
+                  {hasConsoleGrant(profile, "users") ? (
+                    <>
                   <Button
                     size="sm"
                     variant="outline"
@@ -570,6 +611,20 @@ export function AdminLayout() {
                   >
                     {entry.banned ? "Unban" : "Ban"}
                   </Button>
+                    </>
+                  ) : null}
+                  {canManageRoles && entry.id !== user?.id ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setRoleDialogUser(entry);
+                        setRoleDialogOpen(true);
+                      }}
+                    >
+                      Assign roles
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -830,13 +885,18 @@ export function AdminLayout() {
     <Card className="p-6">
       <h2 className="text-xl font-semibold mb-2">Admin Settings</h2>
       <p className="text-muted-foreground mb-4">
-        Platform admin access is controlled by the <code>is_platform_admin</code> flag on user
-        profiles. Grant it directly in Supabase or through a trusted SQL migration for your first
-        admin account.
+        Platform roles are managed from the Users screen. <strong>Platform admins</strong> have every
+        console area. For everyone else, pick only the responsibilities they should handle — for
+        example moderation only, trust review only, or user support.
       </p>
-      <div className="rounded-xl bg-secondary/30 p-4 text-sm text-muted-foreground">
-        Signed in as {user?.email || user?.id}. Moderation, audit, and directory tools are active
-        for platform admins only.
+      <div className="rounded-xl bg-secondary/30 p-4 text-sm text-muted-foreground space-y-2">
+        <p>
+          Signed in as {user?.email || user?.id} · {platformRoleLabel(profile)}
+        </p>
+        {!profile?.is_platform_admin && getPlatformGrants(profile).length > 0 ? (
+          <p>Your roles: {formatPlatformGrantSummary(getPlatformGrants(profile))}</p>
+        ) : null}
+        <p>Only platform admins can assign or change platform roles.</p>
       </div>
     </Card>
   );
@@ -924,6 +984,14 @@ export function AdminLayout() {
       );
     }
 
+    if (currentSection !== "overview" && !canAccessAdminSection(profile, currentSection)) {
+      const label =
+        currentSection === "trust"
+          ? "Trust & KYC"
+          : `${currentSection.charAt(0).toUpperCase()}${currentSection.slice(1)}`;
+      return renderAccessDenied(label);
+    }
+
     if (currentSection === "moderation") {
       return (
         <div className="space-y-6">
@@ -1002,8 +1070,33 @@ export function AdminLayout() {
             ? "Find users quickly and route support issues into moderation and trust workflows."
             : "Monitor operational health, trust signals, and moderation volume across BaytMiftah.";
 
+  const roleAssignmentDialog = (
+    <PlatformRoleAssignmentDialog
+      open={roleDialogOpen}
+      onOpenChange={setRoleDialogOpen}
+      user={roleDialogUser}
+      saving={workingId === `user:${roleDialogUser?.id}:roles`}
+      onSave={async ({ isPlatformAdmin, grants }) => {
+        if (!roleDialogUser) return;
+        await runAction(`user:${roleDialogUser.id}:roles`, async () => {
+          await adminService.setPlatformAccess(roleDialogUser.id, { isPlatformAdmin, grants });
+          toast.success(
+            isPlatformAdmin
+              ? "User promoted to platform admin."
+              : grants.length === 0
+                ? "Platform roles cleared."
+                : `Platform roles updated: ${formatPlatformGrantSummary(grants)}.`,
+          );
+          setRoleDialogOpen(false);
+          setRoleDialogUser(null);
+        });
+      }}
+    />
+  );
+
   if (isElectron()) {
     return (
+      <>
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-foreground mb-1">{sectionTitle}</h1>
@@ -1013,11 +1106,14 @@ export function AdminLayout() {
         {currentSection !== "revenue" ? renderStats() : null}
         {renderSectionContent()}
       </div>
+      {roleAssignmentDialog}
+      </>
     );
   }
 
   if (shouldUseAdminMobileShell()) {
     return (
+      <>
       <AdminMobileShell>
         <div className="admin-legacy-ui space-y-4">
           <div>
@@ -1028,10 +1124,13 @@ export function AdminLayout() {
           {renderSectionContent()}
         </div>
       </AdminMobileShell>
+      {roleAssignmentDialog}
+      </>
     );
   }
 
   return (
+    <>
     <div className="admin-legacy-ui min-h-screen bg-background">
       <nav className="bg-gradient-to-r from-primary to-accent text-white">
         <div className="px-6 py-4">
@@ -1049,6 +1148,9 @@ export function AdminLayout() {
             </div>
             <div className="flex items-center gap-3">
               <Badge className="bg-white/15 text-white border-white/20">
+                {platformRoleLabel(profile)}
+              </Badge>
+              <Badge className="bg-white/15 text-white border-white/20">
                 {queueCount} in queue
               </Badge>
               <Link to="/">
@@ -1064,7 +1166,7 @@ export function AdminLayout() {
       <div className="flex">
         <aside className="w-64 border-r border-border bg-card min-h-[calc(100vh-73px)] p-6">
           <nav className="space-y-2">
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const isActive =
                 currentSection === item.key ||
                 (item.key === "overview" && location.pathname === "/admin") ||
@@ -1109,5 +1211,7 @@ export function AdminLayout() {
         </main>
       </div>
     </div>
+    {roleAssignmentDialog}
+    </>
   );
 }

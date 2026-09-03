@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { AppLoadingScreen } from "../components/ux/AppLoadingScreen";
 import { adminService } from "../../lib/admin.service";
+import { hasPlatformConsoleAccess } from "../../lib/platform-access";
 import { isEmailVerified, isUserBanned } from "../../lib/security/password-policy";
 import { supabase } from "../../lib/supabase";
 
@@ -66,7 +67,7 @@ export function ProtectedAdminRoute({ children }: { children: React.ReactNode })
 
       try {
         const allowed =
-          Boolean(profile?.is_platform_admin) || (await adminService.isPlatformAdmin(user.id));
+          hasPlatformConsoleAccess(profile) || (await adminService.hasConsoleAccess(user.id));
 
         if (!allowed) {
           if (!cancelled) {

@@ -11,6 +11,7 @@ export const PLATFORM_ROLES = {
   developer: "developer",
   enterpriseOperator: "enterprise_operator",
   platformModerator: "platform_moderator",
+  platformManager: "platform_manager",
   platformAdmin: "platform_admin",
 } as const;
 
@@ -38,6 +39,7 @@ export const PLATFORM_STAFF_ROLES = [
   PLATFORM_ROLES.developer,
   PLATFORM_ROLES.enterpriseOperator,
   PLATFORM_ROLES.platformModerator,
+  PLATFORM_ROLES.platformManager,
   PLATFORM_ROLES.platformAdmin,
 ] as const;
 

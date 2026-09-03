@@ -10,6 +10,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { isFullAdminRole, isWorkspaceRole } from "../../lib/baytmiftah/roles";
+import { hasPlatformConsoleAccess } from "../../../lib/platform-access";
 import { useAuth } from "../../context/AuthContext";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 import {
@@ -43,7 +44,7 @@ export function UserMenu() {
   const isAuthenticated = !!user;
   const workspacePath = `${WORKSPACE_ENTRY_PATH}?next=new`;
   const showWorkspaceFirst = isWorkspaceRole(role);
-  const showAdminLink = Boolean(profile?.is_platform_admin || isFullAdminRole(role));
+  const showAdminLink = hasPlatformConsoleAccess(profile) || isFullAdminRole(role);
 
   if (!isAuthenticated) {
     return (

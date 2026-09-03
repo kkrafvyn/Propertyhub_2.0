@@ -162,7 +162,7 @@
 | Role-based access (20+ roles) | ✅ | ✅ | Org RBAC throughout |
 | Desktop ERP app (Electron) | ❌ | ✅ | GL, procurement, bulk ops |
 | Branded mobile apps (whitelabel) | ❌ | ✅ | `WhitelabelConfig.tsx`, Launchpad |
-| Platform admin (SaaS operator) | ❌ | ✅ | `/admin/*` revenue, trust, moderation |
+| Platform admin (SaaS operator) | ❌ | ✅ | `/admin/*` — admin assigns granular roles (users, moderation, trust, revenue, …) |
 | Public blockchain event ledger | ❌ | ✅ | `/explorer/*` — privacy review open |
 | Property tokenization / Web3 | ❌ | ✅ | `property-token.service.ts` — `sim:` contracts + mock reads |
 
