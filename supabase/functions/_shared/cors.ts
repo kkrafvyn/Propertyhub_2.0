@@ -34,6 +34,13 @@ export function isOriginAllowed(origin: string, allowed: string[]): boolean {
   return false;
 }
 
+const DEFAULT_ALLOWED_ORIGINS = [
+  "https://app.baytmiftah.com",
+  "https://baytmiftah.com",
+  "https://www.baytmiftah.com",
+  "https://propertyhub-2-0-ecru.vercel.app",
+];
+
 export function getAllowedOrigins(): string[] {
   const configured =
     Deno.env.get("ALLOWED_ORIGINS") ||
@@ -47,15 +54,10 @@ export function getAllowedOrigins(): string[] {
     .filter(Boolean);
 
   if (origins.length === 0) {
-    return [
-      "https://app.baytmiftah.com",
-      "https://baytmiftah.com",
-      "https://www.baytmiftah.com",
-      "https://propertyhub-2-0-ecru.vercel.app",
-    ];
+    return [...DEFAULT_ALLOWED_ORIGINS];
   }
 
-  return origins;
+  return [...new Set([...origins, ...DEFAULT_ALLOWED_ORIGINS])];
 }
 
 export function buildCorsHeaders(req: Request) {

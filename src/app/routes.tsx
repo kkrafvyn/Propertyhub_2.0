@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import { Root } from "./components/Root";
 import { NotFound } from "./pages/NotFound";
+import { PageLoadingSkeleton } from "./components/ux";
 import { consumerRoutes } from "./routes/consumer.routes";
 import { businessRoutes } from "./routes/business.routes";
 import { adminRoutes } from "./routes/admin.routes";
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
   {
     path: "/",
     Component: Root,
+    HydrateFallback: PageLoadingSkeleton,
     children: [
       ...consumerRoutes,
       ...businessRoutes,

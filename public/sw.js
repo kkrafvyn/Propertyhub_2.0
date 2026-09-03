@@ -1,7 +1,5 @@
-const CACHE_NAME = "baytmiftah-v1";
+const CACHE_NAME = "baytmiftah-v2";
 const APP_SHELL = [
-  "/",
-  "/index.html",
   "/manifest.webmanifest",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
@@ -11,7 +9,7 @@ const APP_SHELL = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()),
   );
 });
 
@@ -25,14 +23,23 @@ self.addEventListener("activate", (event) => {
             if (key !== CACHE_NAME) {
               return caches.delete(key);
             }
-
             return Promise.resolve(false);
-          })
-        )
+          }),
+        ),
       )
-      .then(() => self.clients.claim())
+      .then(() => self.clients.claim()),
   );
 });
+
+function isAppAsset(url) {
+  return (
+    url.pathname.startsWith("/assets/") ||
+    url.pathname.startsWith("/icons/") ||
+    url.pathname.endsWith(".js") ||
+    url.pathname.endsWith(".css") ||
+    url.pathname.endsWith(".woff2")
+  );
+}
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") {
@@ -47,39 +54,36 @@ self.addEventListener("fetch", (event) => {
   if (event.request.mode === "navigate") {
     event.respondWith(
       fetch(event.request)
-        .then((response) => {
-          const responseClone = response.clone();
-          void caches.open(CACHE_NAME).then((cache) => cache.put("/index.html", responseClone));
-          return response;
-        })
+        .then((response) => response)
         .catch(async () => {
           const cachedShell = await caches.match("/index.html");
           return cachedShell || caches.match("/");
-        })
+        }),
     );
     return;
   }
 
-  const isStaticAsset =
-    url.pathname.startsWith("/assets/") ||
-    url.pathname.startsWith("/icons/") ||
-    ["script", "style", "image", "font"].includes(event.request.destination);
-
-  if (!isStaticAsset) {
+  if (!isAppAsset(url)) {
     return;
   }
 
+  // Network-first for hashed build assets so deploys never serve stale JS as HTML.
   event.respondWith(
-    caches.match(event.request).then(async (cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      const response = await fetch(event.request);
-      const responseClone = response.clone();
-      void caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
-      return response;
-    })
+    fetch(event.request)
+      .then((response) => {
+        if (response.ok) {
+          const responseClone = response.clone();
+          void caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        }
+        return response;
+      })
+      .catch(async () => {
+        const cachedResponse = await caches.match(event.request);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        throw new Error(`Offline and asset not cached: ${url.pathname}`);
+      }),
   );
 });
 
@@ -97,7 +101,7 @@ self.addEventListener("push", (event) => {
       data: {
         url,
       },
-    })
+    }),
   );
 });
 
@@ -115,6 +119,6 @@ self.addEventListener("notificationclick", (event) => {
       }
 
       return self.clients.openWindow(targetUrl);
-    })
+    }),
   );
 });

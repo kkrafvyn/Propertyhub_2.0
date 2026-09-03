@@ -74,13 +74,15 @@ class CurrencyService {
     }
 
     try {
-      // Try to get from Supabase cache
-      const { data: cachedRate } = await supabase
+      // Try to get from Supabase cache (array query avoids PostgREST 406 on empty rows)
+      const { data: cachedRows } = await supabase
         .from('currency_rates')
         .select('*')
         .eq('from', from)
         .eq('to', to)
-        .maybeSingle();
+        .limit(1);
+
+      const cachedRate = cachedRows?.[0];
 
       if (cachedRate && Date.now() - cachedRate.timestamp < CACHE_TTL) {
         rateCache.set(cacheKey, {
@@ -181,23 +183,27 @@ class CurrencyService {
   private async getDefaultRate(from: string, to: string): Promise<number> {
     if (from === to) return 1
 
-    const { data: cachedRate } = await supabase
+    const { data: cachedRows } = await supabase
       .from('currency_rates')
       .select('*')
       .eq('from', from)
       .eq('to', to)
-      .maybeSingle()
+      .limit(1)
+
+    const cachedRate = cachedRows?.[0]
 
     if (cachedRate?.rate) {
       return cachedRate.rate
     }
 
-    const { data: reverseRate } = await supabase
+    const { data: reverseRows } = await supabase
       .from('currency_rates')
       .select('*')
       .eq('from', to)
       .eq('to', from)
-      .maybeSingle()
+      .limit(1)
+
+    const reverseRate = reverseRows?.[0]
 
     if (reverseRate?.rate) {
       return 1 / reverseRate.rate

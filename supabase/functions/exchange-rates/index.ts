@@ -32,6 +32,25 @@ async function fetchRate(from: string, to: string) {
   return rate;
 }
 
+async function resolveRateLimitBucket(req: Request, authHeader: string | null) {
+  if (authHeader?.startsWith("Bearer ")) {
+    try {
+      const { user } = await requireAuthenticatedUser(authHeader);
+      return rateLimitKey("exchange-rates", user.id);
+    } catch {
+      // Fall through to IP-based limiting for anon sessions using the publishable key.
+    }
+  }
+
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-real-ip") ||
+    "unknown";
+
+  return rateLimitKey("exchange-rates", `ip:${ip}`);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: getCorsHeaders(req) });
@@ -43,9 +62,9 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    const { user } = await requireAuthenticatedUser(authHeader);
+    const bucket = await resolveRateLimitBucket(req, authHeader);
     await enforceRateLimit({
-      bucket: rateLimitKey("exchange-rates", user.id),
+      bucket,
       maxHits: 60,
       windowSeconds: 60,
     });
