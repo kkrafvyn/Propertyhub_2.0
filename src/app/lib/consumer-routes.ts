@@ -17,7 +17,10 @@ export const CONSUMER_ROUTES = {
   payments: "/app/payments",
   wallet: "/app/wallet",
   leases: "/app/leases",
-  signLease: (token: string) => `/sign/${token}`,
+  signLease: (token: string, signerToken?: string | null) =>
+    signerToken
+      ? `/sign/${token}?st=${encodeURIComponent(signerToken)}`
+      : `/sign/${token}`,
   maintenance: "/app/maintenance",
   documents: "/app/documents",
   transactions: "/app/transactions",

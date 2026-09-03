@@ -9,6 +9,7 @@ export type TenantPendingEsignature = {
   document_type: string | null;
   lease_id: string | null;
   public_sign_token: string | null;
+  signer_token: string | null;
   expires_at: string | null;
   property_address: string | null;
   jurisdiction_label: string | null;
@@ -23,8 +24,8 @@ export const tenantEsignatureService = {
     return (data || []) as TenantPendingEsignature[];
   },
 
-  signingUrl(token: string | null) {
-    return eSignatureService.getSigningUrl(token);
+  signingUrl(token: string | null, signerToken?: string | null) {
+    return eSignatureService.getSigningUrl(token, signerToken);
   },
 
   pendingByLeaseId(rows: TenantPendingEsignature[]) {

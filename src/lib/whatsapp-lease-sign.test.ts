@@ -36,8 +36,8 @@ describe("whatsapp lease sign", () => {
     expect(text).toContain("Ama");
   });
 
-  it("buildSigningUrl uses origin path", () => {
-    const url = whatsappLeaseSignService.buildSigningUrl("tok_xyz");
-    expect(url).toMatch(/\/sign\/tok_xyz$/);
+  it("buildSigningUrl includes signer token query param", () => {
+    const url = whatsappLeaseSignService.buildSigningUrl("tok_xyz", "signer_abc");
+    expect(url).toMatch(/\/sign\/tok_xyz\?st=signer_abc$/);
   });
 });

@@ -51,23 +51,24 @@ describe("whatsapp group bot live context", () => {
 });
 
 describe("handleLeaseSigningProgress", () => {
-  it("returns null for partially_signed without finalizing", async () => {
+  it("returns null for partially_signed without cosign notify flag", async () => {
     const { handleLeaseSigningProgress } = await import("./lease-esignature.service");
-    const result = await handleLeaseSigningProgress(
-      {
-        status: "partially_signed",
-        esignature_request_id: "req-1",
-        lease_id: "lease-1",
-        signer_email: "tenant@test.com",
-        organizationId: "org-1",
-      },
-      {
-        document_name: "Lease",
-        signing_url: "https://app.baytmiftah.com/sign/tok",
-        metadata: { cosignRequired: false },
-        organization_id: "org-1",
-      }
-    );
+    const result = await handleLeaseSigningProgress({
+      status: "partially_signed",
+      esignature_request_id: "req-1",
+      lease_id: "lease-1",
+      signer_email: "tenant@test.com",
+    });
+    expect(result).toBeNull();
+  });
+
+  it("returns null for completed (server finalizes lease)", async () => {
+    const { handleLeaseSigningProgress } = await import("./lease-esignature.service");
+    const result = await handleLeaseSigningProgress({
+      status: "completed",
+      esignature_request_id: "req-1",
+      lease_id: "lease-1",
+    });
     expect(result).toBeNull();
   });
 });

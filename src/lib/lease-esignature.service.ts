@@ -224,7 +224,7 @@ export async function sendLeaseForSigning(input: SendLeaseForSigningInput) {
       tenantEmail,
       tenantPhone: input.lease.tenant?.phone,
       documentName: prepared.documentName,
-      signingUrl: request.signing_url,
+      signingUrl: eSignatureService.signingUrlForSigner(request, tenantEmail),
       jurisdictionLabel: prepared.subdivisionLabel || prepared.jurisdictionLabel,
       actorUserId: input.requestedBy,
       organizationId: input.organizationId,
@@ -330,14 +330,21 @@ export async function completeLeaseSigningFromToken(result: {
 async function notifyLandlordCosignAfterTenantSign(result: {
   esignature_request_id?: string;
   lease_id?: string | null;
+  signer_name?: string;
   signer_email?: string;
-  organizationId?: string;
-  documentName?: string;
-  signingUrl?: string | null;
-  metadata?: Record<string, unknown>;
 }) {
-  const landlordUserId = result.metadata?.landlordSignerUserId as string | undefined;
-  if (!landlordUserId || !result.organizationId) return;
+  if (!result.esignature_request_id) return;
+
+  const { data: esigRow, error } = await supabase
+    .from("esignature_requests")
+    .select("document_name, signers, public_sign_token, metadata, organization_id, lease_id")
+    .eq("id", result.esignature_request_id)
+    .maybeSingle();
+  if (error || !esigRow) return;
+
+  const metadata = (esigRow.metadata || {}) as Record<string, unknown>;
+  const landlordUserId = metadata.landlordSignerUserId as string | undefined;
+  if (!landlordUserId || !esigRow.organization_id) return;
 
   const { data: landlord } = await supabase
     .from("users")
@@ -347,63 +354,48 @@ async function notifyLandlordCosignAfterTenantSign(result: {
 
   if (!landlord?.email) return;
 
+  const signingUrl = eSignatureService.signingUrlForSigner(
+    {
+      public_sign_token: esigRow.public_sign_token,
+      signers: Array.isArray(esigRow.signers) ? esigRow.signers : [],
+    },
+    landlord.email,
+  );
+
   void notificationService
     .notifyLeaseCosignRequested({
-      leaseId: result.lease_id || result.esignature_request_id || "",
+      leaseId: esigRow.lease_id || result.esignature_request_id,
       landlordUserId: landlord.id,
       landlordEmail: landlord.email,
       landlordPhone: landlord.phone,
-      documentName: result.documentName || "Lease agreement",
-      signingUrl: result.signingUrl || null,
-      tenantName: result.signer_email,
-      organizationId: result.organizationId,
+      documentName: esigRow.document_name || "Lease agreement",
+      signingUrl: signingUrl || null,
+      tenantName: result.signer_name || result.signer_email,
+      organizationId: esigRow.organization_id,
     })
     .catch(() => undefined);
 }
 
-/** Route signing progress: finalize lease on completion, notify landlord on partial. */
-export async function handleLeaseSigningProgress(
-  result: {
-    esignature_request_id?: string;
-    lease_id?: string | null;
-    organization_document_id?: string | null;
-    signer_name?: string;
-    signer_email?: string;
-    status?: string;
-    signerUserId?: string | null;
-    organizationId?: string;
-    jurisdictionId?: string;
-    subdivisionCode?: string | null;
-    amountMinor?: number;
-    currency?: string;
-  },
-  request?: {
-    document_name?: string | null;
-    signing_url?: string | null;
-    metadata?: Record<string, unknown>;
-    organization_id?: string;
-  }
-) {
+/** Route signing progress: server RPC finalizes on completion; notify landlord on partial cosign. */
+export async function handleLeaseSigningProgress(result: {
+  esignature_request_id?: string;
+  lease_id?: string | null;
+  organization_document_id?: string | null;
+  signer_name?: string;
+  signer_email?: string;
+  status?: string;
+  notify_cosign?: boolean;
+}) {
   if (result.status === "completed") {
-    return completeLeaseSigningFromToken({
-      ...result,
-      organizationId: result.organizationId || request?.organization_id,
-      jurisdictionId: (request?.metadata?.jurisdictionId as string) || result.jurisdictionId,
-      subdivisionCode: request?.metadata?.subdivisionLabel
-        ? String(request.metadata.subdivisionLabel)
-        : result.subdivisionCode,
-    });
+    return null;
   }
 
-  if (result.status === "partially_signed" && request?.metadata?.cosignRequired) {
+  if (result.status === "partially_signed" && result.notify_cosign) {
     await notifyLandlordCosignAfterTenantSign({
       esignature_request_id: result.esignature_request_id,
       lease_id: result.lease_id,
+      signer_name: result.signer_name,
       signer_email: result.signer_email,
-      organizationId: result.organizationId || request.organization_id,
-      documentName: request.document_name || undefined,
-      signingUrl: request.signing_url,
-      metadata: request.metadata,
     });
   }
 

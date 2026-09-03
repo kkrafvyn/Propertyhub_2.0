@@ -53,7 +53,10 @@ export const leaseEsignReminderService = {
     const tenant = row.lease?.tenant;
     const tenantUserId = row.lease?.tenant_user_id;
     const signingUrl =
-      row.signing_url || eSignatureService.getSigningUrl(row.public_sign_token);
+      eSignatureService.signingUrlForSigner(
+        { public_sign_token: row.public_sign_token, signers: Array.isArray(row.signers) ? row.signers : [] },
+        signer?.email,
+      ) || row.signing_url;
 
     await notificationService.notifyLeaseSignatureRequested({
       leaseId: row.lease_id || row.id,

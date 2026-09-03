@@ -5,6 +5,7 @@ export type PendingLeaseSignRow = {
   lease_id: string;
   document_name: string | null;
   public_sign_token: string;
+  signer_token: string | null;
   jurisdiction_label: string | null;
 };
 
@@ -26,8 +27,11 @@ export async function lookupPendingLeaseSignForPhone(
   if (!row?.public_sign_token) return null;
 
   const appUrl = (Deno.env.get("PUBLIC_APP_URL") || "https://app.baytmiftah.com").replace(/\/+$/, "");
+  const signingPath = row.signer_token
+    ? `/sign/${row.public_sign_token}?st=${encodeURIComponent(row.signer_token)}`
+    : `/sign/${row.public_sign_token}`;
   return {
-    signingUrl: `${appUrl}/sign/${row.public_sign_token}`,
+    signingUrl: `${appUrl}${signingPath}`,
     documentName: row.document_name || "Lease agreement",
     jurisdictionLabel: row.jurisdiction_label,
   };

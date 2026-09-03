@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { buildPublicSigningUrl } from "./esignature-signer-token";
 
 export type PendingLeaseSignLink = {
   esignatureRequestId: string;
@@ -8,17 +9,11 @@ export type PendingLeaseSignLink = {
   jurisdictionLabel?: string | null;
 };
 
-function buildSigningUrl(publicSignToken: string | null): string | null {
-  if (!publicSignToken) return null;
-  const base =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : import.meta.env.VITE_PUBLIC_APP_URL || "https://app.baytmiftah.com";
-  return `${String(base).replace(/\/+$/, "")}/sign/${publicSignToken}`;
-}
-
 export const whatsappLeaseSignService = {
-  buildSigningUrl,
+  buildSigningUrl(publicSignToken: string | null, signerToken?: string | null): string | null {
+    if (!publicSignToken) return null;
+    return buildPublicSigningUrl(publicSignToken, signerToken);
+  },
 
   async getPendingForPhone(organizationId: string, phone: string): Promise<PendingLeaseSignLink | null> {
     const { data, error } = await supabase.rpc("get_pending_lease_sign_for_phone", {
@@ -28,11 +23,13 @@ export const whatsappLeaseSignService = {
     if (error) throw error;
     const row = Array.isArray(data) ? data[0] : data;
     if (!row?.public_sign_token) return null;
+    const signingUrl = buildPublicSigningUrl(row.public_sign_token, row.signer_token);
+    if (!signingUrl) return null;
     return {
       esignatureRequestId: row.esignature_request_id,
       leaseId: row.lease_id,
       documentName: row.document_name || "Lease agreement",
-      signingUrl: buildSigningUrl(row.public_sign_token)!,
+      signingUrl,
       jurisdictionLabel: row.jurisdiction_label,
     };
   },

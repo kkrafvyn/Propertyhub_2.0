@@ -4,6 +4,7 @@
  */
 
 import { supabase } from './supabase';
+import { buildPublicSigningUrl, withSignerTokens } from './esignature-signer-token';
 
 const db = supabase as any;
 
@@ -33,6 +34,7 @@ export type EsigSigner = {
   status?: 'pending' | 'signed';
   signed_at?: string;
   signature_name?: string;
+  signer_token?: string;
 };
 
 export interface EsigRequest {
@@ -99,21 +101,23 @@ export const eSignatureService = {
       ? new Date(Date.now() + input.expiresInDays * 86400000).toISOString()
       : null;
 
-    const signers: EsigSigner[] = input.signers?.length
-      ? input.signers.map((signer, index) => ({
-          ...signer,
-          email: signer.email.toLowerCase().trim(),
-          routing_order: signer.routing_order ?? index + 1,
-          status: signer.status || 'pending',
-        }))
-      : [{
-          name: input.signerName.trim(),
-          email: input.signerEmail.toLowerCase().trim(),
-          phone: input.signerPhone?.trim(),
-          role: 'tenant',
-          routing_order: 1,
-          status: 'pending',
-        }];
+    const signers: EsigSigner[] = withSignerTokens(
+      input.signers?.length
+        ? input.signers.map((signer, index) => ({
+            ...signer,
+            email: signer.email.toLowerCase().trim(),
+            routing_order: signer.routing_order ?? index + 1,
+            status: signer.status || 'pending',
+          }))
+        : [{
+            name: input.signerName.trim(),
+            email: input.signerEmail.toLowerCase().trim(),
+            phone: input.signerPhone?.trim(),
+            role: 'tenant',
+            routing_order: 1,
+            status: 'pending',
+          }],
+    );
 
     if (!signers.every((s) => s.email.includes('@'))) {
       throw new Error('Valid signer email is required for each party.');
@@ -153,7 +157,10 @@ export const eSignatureService = {
       .single();
     if (fetchError) throw fetchError;
 
-    const signingUrl = this.getSigningUrl(row.public_sign_token);
+    const signers: EsigSigner[] = withSignerTokens(
+      Array.isArray(row.signers) ? row.signers : [],
+    );
+    const signingUrl = this.getSigningUrl(row.public_sign_token, signers[0]?.signer_token);
     const provider = resolveProvider();
     const envelopeId = provider === 'docusign' ? `ds_${requestId.slice(0, 8)}` : `native_${requestId.slice(0, 8)}`;
 
@@ -174,9 +181,18 @@ export const eSignatureService = {
     return data as EsigRequest;
   },
 
-  getSigningUrl(publicSignToken: string | null): string {
-    const base = typeof window !== 'undefined' ? window.location.origin : 'https://app.baytmiftah.com';
-    return `${base}/sign/${publicSignToken}`;
+  getSigningUrl(publicSignToken: string | null, signerToken?: string | null): string {
+    if (!publicSignToken) return '';
+    return buildPublicSigningUrl(publicSignToken, signerToken);
+  },
+
+  signingUrlForSigner(request: Pick<EsigRequest, 'public_sign_token' | 'signers'>, email?: string | null) {
+    const normalized = email?.trim().toLowerCase();
+    const signer =
+      request.signers.find((entry) => entry.email?.toLowerCase() === normalized) ||
+      request.signers.find((entry) => entry.status !== 'signed') ||
+      request.signers[0];
+    return this.getSigningUrl(request.public_sign_token, signer?.signer_token);
   },
 
   async getRequestStatus(requestId: string): Promise<EsigRequest> {
@@ -185,16 +201,36 @@ export const eSignatureService = {
     return data as EsigRequest;
   },
 
-  async getRequestByToken(token: string) {
-    const { data, error } = await db.rpc('get_esignature_for_signing', { p_token: token });
+  async getRequestByToken(token: string, signerToken: string) {
+    const { data, error } = await db.rpc('get_esignature_for_signing', {
+      p_token: token,
+      p_signer_token: signerToken,
+    });
     if (error) throw error;
-    return Array.isArray(data) ? data[0] : data;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) throw new Error('Signing request not found or expired');
+    return row as {
+      id: string;
+      document_name: string | null;
+      document_type: string | null;
+      document_url: string | null;
+      document_body: string | null;
+      status: string;
+      expires_at: string | null;
+      current_signer_name: string | null;
+      current_signer_email: string | null;
+      current_signer_role: string | null;
+      routing_position: number;
+      total_signers: number;
+      signers_summary: Array<{ name?: string; role?: string; status?: string }>;
+      cosign_required: boolean;
+    };
   },
 
-  async signWithToken(token: string, signerEmail: string, signatureName: string) {
+  async signWithToken(token: string, signerToken: string, signatureName: string) {
     const { data, error } = await db.rpc('sign_esignature_document', {
       p_token: token,
-      p_signer_email: signerEmail,
+      p_signer_token: signerToken,
       p_signature_name: signatureName,
     });
     if (error) throw error;
@@ -206,6 +242,8 @@ export const eSignatureService = {
       organization_document_id?: string | null;
       signer_email?: string;
       signer_name?: string;
+      signer_role?: string;
+      notify_cosign?: boolean;
     };
   },
 

@@ -358,13 +358,14 @@ export function LeasesSection({ leases, userId }: { leases: any[]; userId?: stri
             {Object.values(pendingEsignatures)[0]?.public_sign_token ? (
               <Button
                 size="sm"
-                onClick={() =>
+                onClick={() => {
+                  const pending = Object.values(pendingEsignatures)[0];
                   window.open(
-                    CONSUMER_ROUTES.signLease(Object.values(pendingEsignatures)[0].public_sign_token),
+                    CONSUMER_ROUTES.signLease(pending.public_sign_token, pending.signer_token),
                     "_blank",
-                    "noopener,noreferrer"
-                  )
-                }
+                    "noopener,noreferrer",
+                  );
+                }}
               >
                 Review & sign
               </Button>
@@ -511,13 +512,17 @@ export function LeasesSection({ leases, userId }: { leases: any[]; userId?: stri
                     {pendingEsignatures[lease.id]?.public_sign_token ? (
                       <Button
                         size="sm"
-                        onClick={() =>
+                        onClick={() => {
+                          const pending = pendingEsignatures[lease.id];
                           window.open(
-                            CONSUMER_ROUTES.signLease(pendingEsignatures[lease.id].public_sign_token || ""),
+                            CONSUMER_ROUTES.signLease(
+                              pending.public_sign_token || "",
+                              pending.signer_token,
+                            ),
                             "_blank",
-                            "noopener,noreferrer"
-                          )
-                        }
+                            "noopener,noreferrer",
+                          );
+                        }}
                       >
                         Sign lease online
                       </Button>
