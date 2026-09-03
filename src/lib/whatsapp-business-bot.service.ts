@@ -58,7 +58,7 @@ export interface WhatsAppMaintenanceDispatchParams {
 
 export interface WhatsAppBotResponse {
   replyMessage: string;
-  actionRequired?: 'NONE' | 'TRIGGER_MOMO' | 'DISPATCH_GATE_PIN' | 'ALERT_MANAGER';
+  actionRequired?: 'NONE' | 'TRIGGER_MOMO' | 'DISPATCH_GATE_PIN' | 'ALERT_MANAGER' | 'LEASE_SIGN';
   quickReplies?: string[];
 }
 

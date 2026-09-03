@@ -28,6 +28,7 @@ import { MarketplaceDisclaimerStrip } from "../../components/legal/MarketplaceDi
 import { CHECKOUT_PAYMENT_DISCLAIMER } from "../../../lib/legal-disclaimers";
 import { revenueManagementService } from "../../../lib/revenue-management.service";
 import type { PropertyCheckoutPricing } from "../../../lib/property-checkout-pricing.service";
+import { previewPropertyCheckoutPricing } from "../../../lib/property-checkout-pricing.service";
 import { PropertyJurisdictionBadge } from "../../components/compliance/PropertyJurisdictionBadge";
 import { Input } from "../../components/ui/Input";
 

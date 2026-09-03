@@ -15,7 +15,13 @@ export function CommercialLeaseEscalations({ organizationId }: { organizationId:
   const { user } = useAuth();
   const [escalations, setEscalations] = useState<CommercialEscalation[]>([]);
   const [leases, setLeases] = useState<any[]>([]);
-  const [form, setForm] = useState({ leaseId: "", effectiveDate: "", type: "percentage" as const, basisPoints: "300", amount: "" });
+  const [form, setForm] = useState<{ leaseId: string; effectiveDate: string; type: CommercialEscalation["escalation_type"]; basisPoints: string; amount: string }>({
+    leaseId: "",
+    effectiveDate: "",
+    type: "percentage",
+    basisPoints: "300",
+    amount: "",
+  });
 
   const load = async () => {
     const [e, l] = await Promise.all([

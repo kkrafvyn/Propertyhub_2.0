@@ -15,6 +15,7 @@ export type PropertyLocationInput = {
   city?: string | null;
   subdivision_code?: string | null;
   currency?: string | null;
+  ghana_post_gps?: string | null;
 };
 
 export type PropertyComplianceSnapshot = {

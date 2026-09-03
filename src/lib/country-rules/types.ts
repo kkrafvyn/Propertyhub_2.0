@@ -28,7 +28,7 @@ export interface TaxComponent {
   id: TaxComponentId;
   label: string;
   rateBasisPoints: number;
-  appliesTo: ("rent" | "sale" | "service_fee" | "short_stay" | "contractor")[];
+  appliesTo: ("rent" | "sale" | "lease" | "service_fee" | "short_stay" | "contractor")[];
   authority?: string;
   notes?: string;
 }

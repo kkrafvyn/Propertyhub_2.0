@@ -30,7 +30,7 @@ export function OwnerPortal() {
   const units = snapshot?.units || [];
 
   return (
-    <StandalonePageShell title="Owner Portal">
+    <StandalonePageShell>
       <div className="mx-auto max-w-3xl py-8 px-4 space-y-6">
         {loading ? (
           <div className="flex justify-center py-20 text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading portal...</div>

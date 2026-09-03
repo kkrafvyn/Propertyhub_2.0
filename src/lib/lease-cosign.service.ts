@@ -28,12 +28,11 @@ export const leaseCosignService = {
 
     if (!member?.user) return null;
 
-    const user = member.user as {
-      id: string;
-      full_name?: string | null;
-      email?: string | null;
-      phone?: string | null;
-    };
+    const rawUser = member.user as
+      | { id: string; full_name?: string | null; email?: string | null; phone?: string | null }
+      | Array<{ id: string; full_name?: string | null; email?: string | null; phone?: string | null }>;
+    const user = Array.isArray(rawUser) ? rawUser[0] : rawUser;
+    if (!user?.id || !user.email) return null;
 
     return {
       userId: user.id,

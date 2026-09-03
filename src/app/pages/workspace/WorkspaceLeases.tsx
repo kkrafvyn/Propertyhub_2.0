@@ -39,6 +39,7 @@ export function WorkspaceLeases({ organizationId }: { organizationId: string }) 
   const [applications, setApplications] = useState<any[]>([]);
   const [screenings, setScreenings] = useState<any[]>([]);
   const [screeningCaseId, setScreeningCaseId] = useState("");
+  const [screeningProvider, setScreeningProvider] = useState<"manual_review" | "provider_pending_setup">("manual_review");
   const [clauseLeaseId, setClauseLeaseId] = useState("");
 
   const loadLeases = async () => {
@@ -347,7 +348,7 @@ export function WorkspaceLeases({ organizationId }: { organizationId: string }) 
                 </option>
               ))}
             </select>
-            <select className="rounded-lg border border-border px-3 py-2" value={screeningProvider} onChange={(event) => setScreeningProvider(event.target.value)}>
+            <select className="rounded-lg border border-border px-3 py-2" value={screeningProvider} onChange={(event) => setScreeningProvider(event.target.value as "manual_review" | "provider_pending_setup")}>
               <option value="manual_review">Manual review</option>
               <option value="provider_pending_setup">Connected provider (setup required)</option>
             </select>

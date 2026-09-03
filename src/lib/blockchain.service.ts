@@ -2,6 +2,11 @@ import { supabase } from './supabase';
 import type { Database } from './database.types';
 import { sha256Hex } from './browser-crypto';
 
+function isSimulatedTokenAddress(contractAddress?: string | null): boolean {
+  const value = String(contractAddress || "").trim();
+  return !value || value.startsWith("sim:") || value === "0x0" || value === "0x0000000000000000000000000000000000000000";
+}
+
 type BlockchainRecords = Database['public']['Tables']['blockchain_records'];
 type VerificationHashes = Database['public']['Tables']['verification_hashes'];
 type SmartContractEvents = Database['public']['Tables']['smart_contract_events'];

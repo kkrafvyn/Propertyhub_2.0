@@ -293,9 +293,9 @@ export function ESignature({
                       <td className="px-4 py-3">
                         <Badge
                           className={
-                            r.status === "completed" || r.status === "signed"
+                            r.status === "completed"
                               ? "bg-emerald-500/10 text-emerald-600 border-none"
-                              : r.status === "voided"
+                              : r.status === "declined" || r.status === "expired"
                               ? "bg-rose-500/10 text-rose-600 border-none"
                               : "bg-blue-500/10 text-blue-600 border-none"
                           }

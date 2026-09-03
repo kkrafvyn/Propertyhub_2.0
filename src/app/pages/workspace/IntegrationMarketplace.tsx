@@ -4,10 +4,10 @@ import { Plug, CheckCircle2, ExternalLink } from "lucide-react";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/badge";
-import { integrationMarketplaceService } from "../../../lib/integration-marketplace.service";
+import { integrationMarketplaceService, type IntegrationCatalogWithStatus } from "../../../lib/integration-marketplace.service";
 
 export function IntegrationMarketplace({ organizationId }: { organizationId: string }) {
-  const [items, setItems] = useState<Awaited<ReturnType<typeof integrationMarketplaceService.getCatalogWithStatus>>>([]);
+  const [items, setItems] = useState<IntegrationCatalogWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("all");
 
@@ -25,7 +25,7 @@ export function IntegrationMarketplace({ organizationId }: { organizationId: str
 
   useEffect(() => { void load(); }, [organizationId]);
 
-  const categories = ["all", ...Array.from(new Set(items.map((i) => i.category)))];
+  const categories: string[] = ["all", ...Array.from(new Set(items.map((i) => i.category)))];
 
   const filtered = category === "all" ? items : items.filter((i) => i.category === category);
 

@@ -24,6 +24,11 @@ export type OrganizationIntegration = {
   last_sync_at: string | null;
 };
 
+export type IntegrationCatalogWithStatus = IntegrationCatalogItem & {
+  orgStatus: OrganizationIntegration["status"] | "available";
+  orgIntegration: OrganizationIntegration | null;
+};
+
 export const integrationMarketplaceService = {
   async getCatalog(): Promise<IntegrationCatalogItem[]> {
     const { data, error } = await db.from('integration_catalog').select('*').eq('is_active', true).order('sort_order');
@@ -37,12 +42,14 @@ export const integrationMarketplaceService = {
     return data || [];
   },
 
-  async getCatalogWithStatus(organizationId: string) {
+  async getCatalogWithStatus(organizationId: string): Promise<IntegrationCatalogWithStatus[]> {
     const [catalog, orgIntegrations] = await Promise.all([
       this.getCatalog(),
       this.getOrganizationIntegrations(organizationId),
     ]);
-    const statusMap = new Map(orgIntegrations.map((i) => [i.catalog_slug, i]));
+    const statusMap = new Map<string, OrganizationIntegration>(
+      orgIntegrations.map((integration) => [integration.catalog_slug, integration]),
+    );
     return catalog.map((item) => ({
       ...item,
       orgStatus: statusMap.get(item.slug)?.status || 'available',

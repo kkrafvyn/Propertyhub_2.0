@@ -167,7 +167,7 @@ export const GB_PACK: CountryRulePack = {
     ["Deposit protection scheme within 30 days", "How to Rent guide", "Gas safety certificate"]
   ),
   screening: { checkTypes: ["identity", "income", "credit"], requiredFor: ["residential"] },
-  addressFormat: { requiredFields: ["address", "city", "postcode"], postalCodeLabel: "Postcode" },
+  addressFormat: { requiredFields: ["address", "city", "postcode"], optionalFields: [], postalCodeLabel: "Postcode" },
   enabledModules: ["lease-applications", "deposit-protection", "right-to-rent"],
   expansionNotes: ["Right to Rent checks required for England"],
 };
@@ -189,7 +189,7 @@ export const EU_PACK: CountryRulePack = {
     ["GDPR lawful basis for tenant data", "Deposit rules per member state", "Energy performance certificate"]
   ),
   screening: { checkTypes: ["identity", "income"], requiredFor: ["residential"] },
-  addressFormat: { requiredFields: ["address", "city", "postal_code", "country"], postalCodeLabel: "Postal code" },
+  addressFormat: { requiredFields: ["address", "city", "postal_code", "country"], optionalFields: [], postalCodeLabel: "Postal code" },
   enabledModules: ["gdpr-retention", "multi-currency-fx"],
   expansionNotes: ["EU member overlays: DE, FR, IE, NL, ES, IT, PT, BE — VAT and tenancy localized"],
 };
@@ -234,7 +234,7 @@ export const CA_PACK: CountryRulePack = {
     ["Provincial standard lease form where mandated", "Deposit rules vary by province", "Rent increase guidelines"]
   ),
   screening: { checkTypes: ["credit", "identity", "income"], requiredFor: ["residential"] },
-  addressFormat: { requiredFields: ["address", "city", "province", "postal_code"], postalCodeLabel: "Postal code" },
+  addressFormat: { requiredFields: ["address", "city", "province", "postal_code"], optionalFields: [], postalCodeLabel: "Postal code" },
   enabledModules: ["provincial-tenancy", "pipeda-retention"],
   expansionNotes: ["Ontario, BC, Quebec, Alberta, Manitoba, Saskatchewan provincial overlays available"],
 };
@@ -256,7 +256,7 @@ export const AU_PACK: CountryRulePack = {
     ["Bond lodgement with state authority", "Condition report", "Minimum notice periods per state"]
   ),
   screening: { checkTypes: ["identity", "income"], requiredFor: ["residential"] },
-  addressFormat: { requiredFields: ["address", "suburb", "state", "postcode"], postalCodeLabel: "Postcode" },
+  addressFormat: { requiredFields: ["address", "suburb", "state", "postcode"], optionalFields: [], postalCodeLabel: "Postcode" },
   enabledModules: ["bond-lodgement", "state-tenancy"],
   expansionNotes: ["NSW, VIC, QLD, WA, SA state bond and tenancy overlays"],
 };
@@ -279,7 +279,7 @@ export const IN_PACK: CountryRulePack = {
     ["Stamp duty on lease deed", "Security deposit cap where state law applies", "Rent escalation clauses"]
   ),
   screening: { checkTypes: ["identity", "income"], requiredFor: ["residential"] },
-  addressFormat: { requiredFields: ["address", "city", "state", "pincode"], postalCodeLabel: "PIN code" },
+  addressFormat: { requiredFields: ["address", "city", "state", "pincode"], optionalFields: [], postalCodeLabel: "PIN code" },
   enabledModules: ["lease-registration", "tds-rent"],
   expansionNotes: ["State overlays: Maharashtra, Delhi, Karnataka, Tamil Nadu, Telangana"],
 };

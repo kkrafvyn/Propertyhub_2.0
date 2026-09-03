@@ -5,6 +5,7 @@ import {
   resolvePropertyCountryContext,
   type PropertyLocationInput,
 } from "./property-country-context.service";
+import type { CountryCode } from "./country-rules";
 import { countryRulesService } from "./country-rules.service";
 import {
   revenueManagementService,
@@ -67,7 +68,11 @@ export function computePropertyTaxes(
     default_currency?: string | null;
   }
 ) {
-  const snapshot = buildPropertyComplianceSnapshot(property ?? {}, org ?? undefined);
+  const snapshot = buildPropertyComplianceSnapshot(property ?? {}, org as {
+    default_jurisdiction?: CountryCode | null;
+    default_subdivision?: string | null;
+    default_currency?: string | null;
+  } | undefined);
   const taxInput = taxLinesForPurpose(purpose, baseMinor, platformFeeMinor);
   if (!taxInput.length) {
     return { snapshot, taxMinor: 0, taxLines: [] as Array<{ id: string; label: string; amountMinor: number }> };

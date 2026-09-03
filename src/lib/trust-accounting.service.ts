@@ -112,10 +112,10 @@ export const trustAccountingService = {
   async getTrustSummary(organizationId: string) {
     const accounts = await this.listAccounts(organizationId);
     const totalBalance = accounts.reduce((sum, a) => sum + a.balance_minor, 0);
-    const byType = accounts.reduce<Record<string, number>>((acc, a) => {
-      acc[a.account_type] = (acc[a.account_type] || 0) + a.balance_minor;
-      return acc;
-    }, {});
+    const byType: Record<string, number> = {};
+    for (const account of accounts) {
+      byType[account.account_type] = (byType[account.account_type] || 0) + account.balance_minor;
+    }
     return { accounts, totalBalance, byType };
   },
 };

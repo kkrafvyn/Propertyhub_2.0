@@ -94,7 +94,7 @@ export function PublicSignDocument() {
   };
 
   return (
-    <StandalonePageShell title="Sign Document">
+    <StandalonePageShell>
       <div className="mx-auto max-w-lg py-8 px-4">
         {loading ? (
           <p className="text-center text-muted-foreground">Loading document...</p>
