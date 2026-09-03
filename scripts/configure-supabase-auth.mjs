@@ -16,15 +16,26 @@ if (!projectRef || !token) {
 
 const appUrl = (env.VITE_PUBLIC_APP_URL || env.PUBLIC_APP_URL || "https://app.baytmiftah.com").replace(/\/+$/, "");
 const marketingUrl = (env.VITE_SITE_URL || "https://baytmiftah.com").replace(/\/+$/, "");
-const redirectUrls = [
+const vercelPublicAppUrl = (env.VERCEL_PUBLIC_APP_URL || "https://propertyhub-2-0-ecru.vercel.app").replace(/\/+$/, "");
+const extraRedirects = (env.SUPABASE_EXTRA_REDIRECT_URLS || "")
+  .split(",")
+  .map((value) => value.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+
+const redirectUrlSet = new Set([
   "http://localhost:5173/**",
   "http://127.0.0.1:5173/**",
   `${appUrl}/**`,
   `${marketingUrl}/**`,
+  `${vercelPublicAppUrl}/**`,
   "https://www.baytmiftah.com/**",
   "https://app.baytmiftah.com/**",
+  "https://propertyhub-2-0-ecru.vercel.app/**",
   "https://*.vercel.app/**",
-].join(",");
+  ...extraRedirects.map((url) => `${url}/**`),
+]);
+
+const redirectUrls = [...redirectUrlSet].join(",");
 
 const payload = {
   site_url: appUrl,
