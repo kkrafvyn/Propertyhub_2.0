@@ -94,6 +94,7 @@ import { ConsumerWelcomeHero } from "../../components/baytmiftah/consumer/Consum
 import { isWorkspaceRole } from "../../lib/baytmiftah/roles";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
+import { SignatureActionBanner } from "../../components/ux/SignatureActionBanner";
 import { buildCheckoutPath } from "../../lib/checkout-navigation";
 
 function formatRelativeTime(dateString?: string | null) {
@@ -258,6 +259,9 @@ export function UserDashboard() {
   const [payoutRequests, setPayoutRequests] = useState<any[]>([]);
   const [leases, setLeases] = useState<any[]>([]);
   const [pendingEsignatureCount, setPendingEsignatureCount] = useState(0);
+  const [pendingEsignatures, setPendingEsignatures] = useState<
+    Awaited<ReturnType<typeof tenantEsignatureService.listPending>>
+  >([]);
   const [bookings, setBookings] = useState<any[]>([]);
   const [maintenanceRequests, setMaintenanceRequests] = useState<any[]>([]);
   const [consumerContext, setConsumerContext] = useState({
@@ -363,6 +367,7 @@ export function UserDashboard() {
           setMortgageInquiries(nextMortgageInquiries || []);
           setSavedPaymentMethods(nextSavedMethods || []);
           setPendingEsignatureCount(pendingEsignatures?.length || 0);
+          setPendingEsignatures(pendingEsignatures || []);
         }
 
         void savedSearchAlertService
@@ -1736,6 +1741,26 @@ export function UserDashboard() {
               displayName={displayName}
               description={pageConfig.description}
               unreadMessages={unreadMessages}
+            />
+          ) : null}
+
+          {section === "overview" && !loading && pendingEsignatures.length > 0 ? (
+            <SignatureActionBanner
+              title="Signature required"
+              description={`${pendingEsignatures.length} lease agreement${pendingEsignatures.length === 1 ? "" : "s"} awaiting your electronic signature.`}
+              actionLabel="Review & sign"
+              onAction={() => {
+                const pending = pendingEsignatures[0];
+                if (!pending?.public_sign_token) {
+                  navigate(CONSUMER_ROUTES.leases);
+                  return;
+                }
+                window.open(
+                  CONSUMER_ROUTES.signLease(pending.public_sign_token, pending.signer_token),
+                  "_blank",
+                  "noopener,noreferrer",
+                );
+              }}
             />
           ) : null}
 

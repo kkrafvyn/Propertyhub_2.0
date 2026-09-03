@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { buildSigningActionPath } from "./esignature-signer-token";
 import { communicationService } from "./communication.service";
 import { clientIntegrations } from "./integrations";
 import { organizationService } from "./organization.service";
@@ -382,9 +383,7 @@ export const notificationService = {
     actorUserId?: string;
     organizationId?: string;
   }) {
-    const signPath = input.signingUrl
-      ? input.signingUrl.replace(/^https?:\/\/[^/]+/, "")
-      : "/app/leases";
+    const signPath = buildSigningActionPath(input.signingUrl, "/app/leases");
 
     if (input.tenantUserId) {
       await safeNotify({
@@ -394,7 +393,7 @@ export const notificationService = {
         subject: "Lease ready for your signature",
         content: `${input.documentName} is ready. Review jurisdiction clauses (${input.jurisdictionLabel || "local rules"}) and sign electronically.`,
         category: "Offers",
-        actionUrl: signPath.startsWith("/app/") ? signPath : `/app${signPath}`,
+        actionUrl: signPath,
         metadata: {
           leaseId: input.leaseId,
           signingUrl: input.signingUrl,
@@ -452,9 +451,7 @@ export const notificationService = {
     organizationId?: string;
     actorUserId?: string;
   }) {
-    const signPath = input.signingUrl
-      ? input.signingUrl.replace(/^https?:\/\/[^/]+/, "")
-      : "/sign";
+    const signPath = buildSigningActionPath(input.signingUrl, "/sign");
 
     await safeNotify({
       userId: input.landlordUserId,
@@ -463,7 +460,7 @@ export const notificationService = {
       subject: "Tenant signed — your countersignature required",
       content: `${input.tenantName || "The tenant"} signed ${input.documentName}. Review and countersign to execute the lease.`,
       category: "Offers",
-      actionUrl: signPath.startsWith("/") ? signPath : `/sign${signPath}`,
+      actionUrl: signPath,
       metadata: { leaseId: input.leaseId, signingUrl: input.signingUrl },
     });
 

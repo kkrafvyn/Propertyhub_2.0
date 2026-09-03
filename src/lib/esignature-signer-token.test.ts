@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildPublicSigningUrl,
+  buildSigningActionPath,
   findNextPendingSigner,
   findSignerByToken,
   withSignerTokens,
@@ -27,6 +28,12 @@ describe("esignature-signer-token", () => {
     const url = buildPublicSigningUrl("pub-tok", "signer-tok");
     expect(url).toContain("/sign/pub-tok");
     expect(url).toContain("st=signer-tok");
+  });
+
+  it("builds signing action path with signer token", () => {
+    expect(buildSigningActionPath("https://app.baytmiftah.com/sign/tok?st=abc")).toBe(
+      "/sign/tok?st=abc",
+    );
   });
 
   it("finds signer by token and next pending signer", () => {

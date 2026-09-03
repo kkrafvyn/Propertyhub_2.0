@@ -16,6 +16,7 @@ import { leaseScreeningService } from "../../../lib/lease-screening.service";
 import { PropertyLeaseClausePanel } from "../../components/compliance/PropertyLeaseClausePanel";
 import { useAuth } from "../../context/AuthContext";
 import { leaseEsignatureService } from "../../../lib/lease-esignature.service";
+import { eSignatureService } from "../../../lib/esignature.service";
 
 function formatMoney(amountMinor?: number | null, currency = "GHS") {
   return walletService.formatWalletAmount(amountMinor, currency);
@@ -41,20 +42,23 @@ export function WorkspaceLeases({ organizationId }: { organizationId: string }) 
   const [screeningCaseId, setScreeningCaseId] = useState("");
   const [screeningProvider, setScreeningProvider] = useState<"manual_review" | "provider_pending_setup">("manual_review");
   const [clauseLeaseId, setClauseLeaseId] = useState("");
+  const [pendingEsignByLease, setPendingEsignByLease] = useState<Record<string, any>>({});
 
   const loadLeases = async () => {
     try {
       setLoading(true);
-      const [rows, noticeRows, dealCases, screeningRows] = await Promise.all([
+      const [rows, noticeRows, dealCases, screeningRows, pendingEsigns] = await Promise.all([
         leaseService.getOrganizationLeases(organizationId),
         tenantNoticeService.getOrganizationNotices(organizationId),
         dealCaseService.getDealCasesByOrganization(organizationId),
         leaseScreeningService.listForOrganization(organizationId),
+        eSignatureService.pendingEsignByLeaseId(organizationId).catch(() => ({})),
       ]);
       setLeases(rows || []);
       setNotices(noticeRows || []);
       setApplications((dealCases || []).filter((dealCase: any) => ["rental_application", "lease_application"].includes(dealCase.case_type)));
       setScreenings(screeningRows || []);
+      setPendingEsignByLease(pendingEsigns || {});
       const depositRows = await leaseDepositService.getByLeaseIds((rows || []).map((lease) => lease.id));
       setDeposits(depositRows);
     } catch (error) {
@@ -528,11 +532,40 @@ export function WorkspaceLeases({ organizationId }: { organizationId: string }) 
               <Button size="sm" variant="outline" onClick={() => void prepareRentSchedule(lease)} disabled={busyId === `schedule-${lease.id}`}>
                 {busyId === `schedule-${lease.id}` ? "Preparing..." : "Prepare rent schedule"}
               </Button>
-              {lease.signing_status !== "signed" ? (
-                <Button size="sm" variant="outline" onClick={() => void signLease(lease)} disabled={busyId === `sign-${lease.id}`}>
-                  {busyId === `sign-${lease.id}` ? "Signing..." : "Record e-signature"}
-                </Button>
-              ) : <Badge variant="outline">E-signed</Badge>}
+              {(() => {
+                const activeEsign = pendingEsignByLease[lease.id];
+                const landlordUserId = String(activeEsign?.metadata?.landlordSignerUserId || "");
+                const landlordSigner = activeEsign?.signers?.find((signer: any) => signer.role === "landlord");
+                const countersignUrl =
+                  activeEsign?.status === "partially_signed" && landlordUserId === user?.id
+                    ? eSignatureService.signingUrlForSigner(activeEsign, landlordSigner?.email)
+                    : null;
+
+                if (countersignUrl) {
+                  return (
+                    <Button
+                      size="sm"
+                      onClick={() => window.open(countersignUrl, "_blank", "noopener,noreferrer")}
+                    >
+                      Countersign lease
+                    </Button>
+                  );
+                }
+
+                if (activeEsign) {
+                  return <Badge variant="outline">E-sign in progress</Badge>;
+                }
+
+                if (lease.signing_status !== "signed") {
+                  return (
+                    <Button size="sm" variant="outline" onClick={() => void signLease(lease)} disabled={busyId === `sign-${lease.id}`}>
+                      {busyId === `sign-${lease.id}` ? "Signing..." : "Record e-signature"}
+                    </Button>
+                  );
+                }
+
+                return <Badge variant="outline">E-signed</Badge>;
+              })()}
               {!lease.renewal_status || lease.renewal_status === "declined" ? (
                 <Button size="sm" variant="outline" onClick={() => void requestRenewal(lease.id)} disabled={busyId === `renew-${lease.id}`}>
                   {busyId === `renew-${lease.id}` ? "Requesting..." : "Request renewal"}

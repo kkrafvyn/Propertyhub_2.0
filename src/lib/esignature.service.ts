@@ -4,7 +4,12 @@
  */
 
 import { supabase } from './supabase';
-import { buildPublicSigningUrl, withSignerTokens } from './esignature-signer-token';
+import {
+  buildPublicSigningUrl,
+  buildSigningActionPath,
+  findNextPendingSigner,
+  withSignerTokens,
+} from './esignature-signer-token';
 
 const db = supabase as any;
 
@@ -190,9 +195,63 @@ export const eSignatureService = {
     const normalized = email?.trim().toLowerCase();
     const signer =
       request.signers.find((entry) => entry.email?.toLowerCase() === normalized) ||
-      request.signers.find((entry) => entry.status !== 'signed') ||
+      findNextPendingSigner(request.signers) ||
       request.signers[0];
     return this.getSigningUrl(request.public_sign_token, signer?.signer_token);
+  },
+
+  signingActionPathForSigner(
+    request: Pick<EsigRequest, 'public_sign_token' | 'signers'>,
+    email?: string | null,
+    fallback = '/app/leases',
+  ) {
+    return buildSigningActionPath(this.signingUrlForSigner(request, email), fallback);
+  },
+
+  pendingSignerLinks(request: EsigRequest) {
+    const signers = Array.isArray(request.signers) ? request.signers : [];
+    return signers
+      .filter((signer) => signer.status !== 'signed')
+      .sort(
+        (a, b) =>
+          (a.routing_order ?? Number.MAX_SAFE_INTEGER) - (b.routing_order ?? Number.MAX_SAFE_INTEGER),
+      )
+      .map((signer) => ({
+        name: signer.name || signer.email || 'Signer',
+        role: signer.role,
+        url: this.signingUrlForSigner(request, signer.email),
+        path: this.signingActionPathForSigner(request, signer.email),
+      }))
+      .filter((entry) => Boolean(entry.url));
+  },
+
+  async pendingEsignByLeaseId(organizationId: string) {
+    const rows = await this.getPendingRequests(organizationId);
+    return rows.reduce((acc: Record<string, EsigRequest>, row) => {
+      if (row.lease_id) acc[row.lease_id] = row;
+      return acc;
+    }, {} as Record<string, EsigRequest>);
+  },
+
+  async listPendingCosignForLandlord(organizationId: string, userId: string) {
+    const rows = await this.getPendingRequests(organizationId);
+    return rows
+      .filter(
+        (row) =>
+          row.status === 'partially_signed' &&
+          String((row.metadata as Record<string, unknown>)?.landlordSignerUserId || '') === userId,
+      )
+      .map((row) => {
+        const landlordSigner = row.signers.find((signer) => signer.role === 'landlord');
+        return {
+          id: row.id,
+          leaseId: row.lease_id,
+          documentName: row.document_name || 'Lease agreement',
+          signingUrl: this.signingUrlForSigner(row, landlordSigner?.email),
+          signPath: this.signingActionPathForSigner(row, landlordSigner?.email, '/sign'),
+        };
+      })
+      .filter((row) => Boolean(row.signPath));
   },
 
   async getRequestStatus(requestId: string): Promise<EsigRequest> {

@@ -36,3 +36,22 @@ export function findNextPendingSigner(signers: EsigSigner[]) {
     )
     .find((signer) => signer.status !== "signed" && !signer.signed_at);
 }
+
+/** Relative app path for in-app navigation (preserves ?st= signer token). */
+export function buildSigningActionPath(
+  signingUrl?: string | null,
+  fallback = "/app/leases",
+): string {
+  const value = String(signingUrl || "").trim();
+  if (!value) return fallback;
+
+  try {
+    const parsed = value.startsWith("http")
+      ? new URL(value)
+      : new URL(value, "https://app.baytmiftah.com");
+    const path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    return path.startsWith("/sign/") ? path : path || fallback;
+  } catch {
+    return value.startsWith("/") ? value : fallback;
+  }
+}

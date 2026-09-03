@@ -307,17 +307,21 @@ export function ESignature({
                         {r.expires_at ? r.expires_at.slice(0, 10) : "14 days"}
                       </td>
                       <td className="px-4 py-3 text-right space-x-1">
-                        {r.signing_url && r.status === "sent" && (
-                          <a
-                            href={r.signing_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center text-xs text-primary font-semibold hover:underline mr-2"
-                          >
-                            Sign Link
-                            <ExternalLink className="w-3 h-3 ml-1" />
-                          </a>
-                        )}
+                        {["sent", "viewed", "partially_signed"].includes(r.status)
+                          ? eSignatureService.pendingSignerLinks(r).map((link) => (
+                              <a
+                                key={`${r.id}-${link.name}`}
+                                href={link.url || "#"}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center text-xs text-primary font-semibold hover:underline mr-2"
+                              >
+                                {link.name}
+                                {link.role ? ` (${link.role})` : ""}
+                                <ExternalLink className="w-3 h-3 ml-1" />
+                              </a>
+                            ))
+                          : null}
                         {["sent", "viewed", "partially_signed"].includes(r.status) && (
                           <Button
                             variant="ghost"

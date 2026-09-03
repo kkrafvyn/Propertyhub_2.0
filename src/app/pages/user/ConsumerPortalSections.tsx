@@ -526,19 +526,14 @@ export function LeasesSection({ leases, userId }: { leases: any[]; userId?: stri
                       >
                         Sign lease online
                       </Button>
-                    ) : null}
-                    {lease.signing_status !== "signed" ? (
+                    ) : lease.signing_status !== "signed" && pendingLeaseDocs[lease.id] ? (
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => void handleSignLease(lease)}
                         disabled={signingId === lease.id}
                       >
-                        {signingId === lease.id
-                          ? "Signing..."
-                          : pendingLeaseDocs[lease.id]
-                            ? "Sign lease"
-                            : "Mark signed"}
+                        {signingId === lease.id ? "Signing..." : "Sign lease"}
                       </Button>
                     ) : null}
                     <Button

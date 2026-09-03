@@ -121,6 +121,8 @@ import { WorkspaceMaintenance } from "./WorkspaceMaintenance";
 import { WorkspaceInspections } from "./WorkspaceInspections";
 import { WorkspaceLeases } from "./WorkspaceLeases";
 import { ErrorState, PageLoadingSkeleton } from "../../components/ux";
+import { SignatureActionBanner } from "../../components/ux/SignatureActionBanner";
+import { eSignatureService } from "../../../lib/esignature.service";
 import { FraudAlerts } from "./FraudAlerts";
 import ComplianceCenter from "./ComplianceCenter";
 import BlockchainVerification from "./BlockchainVerification";
@@ -359,6 +361,9 @@ export function WorkspaceLayout() {
     }
   });
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [pendingCosigns, setPendingCosigns] = useState<
+    Awaited<ReturnType<typeof eSignatureService.listPendingCosignForLandlord>>
+  >([]);
 
   const toggleCollapsed = () => {
     setIsCollapsed((prev) => {
@@ -448,6 +453,18 @@ export function WorkspaceLayout() {
       sessionStorage.setItem("bm_workspace_org_id", organization.id);
     }
   }, [organization?.id]);
+
+  useEffect(() => {
+    if (!organization?.id || !user?.id) {
+      setPendingCosigns([]);
+      return;
+    }
+
+    void eSignatureService
+      .listPendingCosignForLandlord(organization.id, user.id)
+      .then(setPendingCosigns)
+      .catch(() => setPendingCosigns([]));
+  }, [organization?.id, user?.id]);
   const effectiveRole: MemberRole = previewRole || currentRole || "owner";
   const accessRole: MemberRole =
     shouldUseBusinessMobileShell() ? currentRole || "owner" : effectiveRole;
@@ -971,21 +988,44 @@ export function WorkspaceLayout() {
     );
   };
 
-  const workspacePageContent =
-    !pageAllowed && currentPage ? (
-      <Card className="p-8">
-        <h2 className="text-xl font-semibold text-foreground mb-2">Access restricted</h2>
-        <p className="text-muted-foreground mb-4">
-          Your role ({getRoleLabel(effectiveRole)}) does not include access to this section.
-          Contact an owner or manager if you need permission.
-        </p>
-        <Link to={workspaceBasePath}>
-          <Button variant="outline">Back to dashboard</Button>
-        </Link>
-      </Card>
-    ) : (
-      renderPage()
-    );
+  const cosignBanner =
+    pendingCosigns.length > 0 ? (
+      <SignatureActionBanner
+        title="Countersignature required"
+        description={`${pendingCosigns.length} lease${pendingCosigns.length === 1 ? "" : "s"} waiting for your signature after tenant sign-off.`}
+        actionLabel="Countersign now"
+        onAction={() => {
+          const pending = pendingCosigns[0];
+          if (pending?.signPath?.startsWith("/sign/")) {
+            window.open(pending.signPath, "_blank", "noopener,noreferrer");
+            return;
+          }
+          if (pending?.signingUrl) {
+            window.open(pending.signingUrl, "_blank", "noopener,noreferrer");
+          }
+        }}
+      />
+    ) : null;
+
+  const workspacePageContent = (
+    <>
+      {cosignBanner}
+      {!pageAllowed && currentPage ? (
+        <Card className="p-8">
+          <h2 className="text-xl font-semibold text-foreground mb-2">Access restricted</h2>
+          <p className="text-muted-foreground mb-4">
+            Your role ({getRoleLabel(effectiveRole)}) does not include access to this section.
+            Contact an owner or manager if you need permission.
+          </p>
+          <Link to={workspaceBasePath}>
+            <Button variant="outline">Back to dashboard</Button>
+          </Link>
+        </Card>
+      ) : (
+        renderPage()
+      )}
+    </>
+  );
 
   const workspaceModals = (
     <>
