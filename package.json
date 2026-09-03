@@ -6,10 +6,10 @@
   "scripts": {
     "build": "vite build",
     "build:vercel": "node scripts/vercel-build.mjs",
-    "build:marketing": "cross-env VITE_SITE_MODE=marketing VITE_SITE_URL=https://baytmiftah.com VITE_APP_ORIGIN=https://app.baytmiftah.com vite build",
+    "build:marketing": "cross-env VITE_SITE_MODE=marketing VITE_SITE_URL=https://baytmiftah.com VITE_APP_ORIGIN=https://propertyhub-2-0-ecru.vercel.app vite build",
     "build:web": "vite build",
     "dev": "vite",
-    "dev:marketing": "cross-env VITE_SITE_MODE=marketing VITE_SITE_URL=https://baytmiftah.com VITE_APP_ORIGIN=https://app.baytmiftah.com vite",
+    "dev:marketing": "cross-env VITE_SITE_MODE=marketing VITE_SITE_URL=https://baytmiftah.com VITE_APP_ORIGIN=https://propertyhub-2-0-ecru.vercel.app vite",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

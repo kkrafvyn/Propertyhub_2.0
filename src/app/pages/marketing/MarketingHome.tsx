@@ -934,9 +934,9 @@ function ExplorerSection() {
           </p>
         </Reveal>
         <div className="mk-hero-actions" style={{ marginTop: "1.5rem" }}>
-          <Link to="/explorer" className="mk-btn mk-btn-secondary" id="explorer-cta">
+          <a href={appPath("/explorer")} className="mk-btn mk-btn-secondary" id="explorer-cta">
             Open Event Ledger
-          </Link>
+          </a>
         </div>
       </div>
     </section>

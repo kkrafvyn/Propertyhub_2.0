@@ -132,22 +132,22 @@ function MarketingFooter() {
           <h4>Discover</h4>
           <ul>
             <li>
-              <Link to="/search">Search homes</Link>
+              <a href={appPath("/search")}>Search homes</a>
             </li>
             <li>
-              <Link to="/search?listingType=rental">For rent</Link>
+              <a href={appPath("/search?listingType=rental")}>For rent</a>
             </li>
             <li>
-              <Link to="/search?listingType=sale">For sale</Link>
+              <a href={appPath("/search?listingType=sale")}>For sale</a>
             </li>
             <li>
-              <Link to="/search?listingType=lease">For lease</Link>
+              <a href={appPath("/search?listingType=lease")}>For lease</a>
             </li>
             <li>
-              <Link to="/compare">Compare homes</Link>
+              <a href={appPath("/compare")}>Compare homes</a>
             </li>
             <li>
-              <Link to="/explorer">Property explorer</Link>
+              <a href={appPath("/explorer")}>Property explorer</a>
             </li>
           </ul>
         </div>
@@ -171,7 +171,7 @@ function MarketingFooter() {
           <h4 className="mt-6">Hosting</h4>
           <ul>
             <li>
-              <Link to="/workspace?next=new">List your property</Link>
+              <a href={appPath("/workspace?next=new")}>List your property</a>
             </li>
             <li>
               <Link to="/host-resources">Host resources</Link>

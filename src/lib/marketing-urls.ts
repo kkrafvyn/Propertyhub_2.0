@@ -1,6 +1,7 @@
 import { isMarketingSite } from "./site-mode";
 
-const DEFAULT_APP_ORIGIN = "https://app.baytmiftah.com";
+/** Temporary default until app.baytmiftah.com is the primary product URL. */
+const DEFAULT_APP_ORIGIN = "https://propertyhub-2-0-ecru.vercel.app";
 const DEFAULT_MARKETING_ORIGIN = "https://baytmiftah.com";
 
 function trimTrailingSlash(value: string): string {
@@ -16,28 +17,25 @@ export function getMarketingOrigin(): string {
 }
 
 export function getAppOrigin(): string {
-  return trimTrailingSlash(import.meta.env.VITE_APP_ORIGIN || DEFAULT_APP_ORIGIN);
+  return trimTrailingSlash(
+    import.meta.env.VITE_APP_ORIGIN ||
+      import.meta.env.VERCEL_PUBLIC_APP_URL ||
+      DEFAULT_APP_ORIGIN,
+  );
 }
 
 /**
  * Product-app URL for CTAs from the marketing site.
- * Uses same-origin paths on marketing preview deploys; production uses app.baytmiftah.com.
+ * Always points at the configured app origin (Vercel app for now).
  */
 export function appPath(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
-  const appOrigin = getAppOrigin();
 
-  if (typeof window !== "undefined" && isMarketingSite()) {
-    const host = window.location.hostname.toLowerCase();
-    const onPreviewHost = host.includes("vercel.app") || host === "localhost" || host === "127.0.0.1";
-    const configuredAppOrigin = import.meta.env.VITE_APP_ORIGIN?.trim();
-
-    if (onPreviewHost || !configuredAppOrigin || appOrigin === getMarketingOrigin()) {
-      return normalized;
-    }
+  if (typeof window !== "undefined" && !isMarketingSite()) {
+    return normalized;
   }
 
-  return `${appOrigin}${normalized}`;
+  return `${getAppOrigin()}${normalized}`;
 }
 
 export function marketingPath(path: string): string {
