@@ -1,14 +1,20 @@
 import { createClient } from "@supabase/supabase-js";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_TEST_URL;
 const testAnonKey = import.meta.env.VITE_SUPABASE_TEST_ANON_KEY;
-const tenantAToken = import.meta.env.VITE_SUPABASE_TEST_TENANT_A_TOKEN;
-const tenantBToken = import.meta.env.VITE_SUPABASE_TEST_TENANT_B_TOKEN;
 const tenantAId = import.meta.env.VITE_SUPABASE_TEST_TENANT_A_ID;
 const tenantBId = import.meta.env.VITE_SUPABASE_TEST_TENANT_B_ID;
-const hasFixtures = Boolean(supabaseUrl && testAnonKey && tenantAToken && tenantBToken && tenantAId && tenantBId);
+const fixturePassword =
+  import.meta.env.TENANT_FIXTURE_PASSWORD || "BaytMiftah-TenantIsolation-CI-2026!";
+const tenantAEmail = "tenant-a-isolation@mailinator.com";
+const tenantBEmail = "tenant-b-isolation@mailinator.com";
+
+const hasFixtures = Boolean(supabaseUrl && testAnonKey && tenantAId && tenantBId);
 const testIfConfigured = hasFixtures ? it : it.skip;
+
+let tenantAToken = "";
+let tenantBToken = "";
 
 function userClient(accessToken: string) {
   return createClient(supabaseUrl!, testAnonKey!, {
@@ -17,7 +23,27 @@ function userClient(accessToken: string) {
   });
 }
 
+async function signInFixtureToken(email: string) {
+  const client = createClient(supabaseUrl!, testAnonKey!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data, error } = await client.auth.signInWithPassword({
+    email,
+    password: fixturePassword,
+  });
+  if (error || !data.session?.access_token) {
+    throw error ?? new Error(`No access token for ${email}`);
+  }
+  return data.session.access_token;
+}
+
 describe("tenant isolation integration contract", () => {
+  beforeAll(async () => {
+    if (!hasFixtures) return;
+    tenantAToken = await signInFixtureToken(tenantAEmail);
+    tenantBToken = await signInFixtureToken(tenantBEmail);
+  }, 30_000);
+
   testIfConfigured("allows tenant A to see only tenant A bank-feed connections", async () => {
     const client = userClient(tenantAToken);
     const { data, error } = await client
@@ -130,11 +156,9 @@ if (!hasFixtures) {
       expect([
         "VITE_SUPABASE_TEST_URL",
         "VITE_SUPABASE_TEST_ANON_KEY",
-        "VITE_SUPABASE_TEST_TENANT_A_TOKEN",
-        "VITE_SUPABASE_TEST_TENANT_B_TOKEN",
         "VITE_SUPABASE_TEST_TENANT_A_ID",
         "VITE_SUPABASE_TEST_TENANT_B_ID",
-      ]).toHaveLength(6);
+      ]).toHaveLength(4);
     });
   });
 }

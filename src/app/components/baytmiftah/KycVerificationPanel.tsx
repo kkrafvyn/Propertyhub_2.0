@@ -27,8 +27,6 @@ import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
 
 import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from "../../../lib/legal-config";
 
-import { KycAiGuide } from "./KycAiGuide";
-
 
 
 function formatAiFlag(flag: string) {
@@ -354,10 +352,6 @@ export function KycVerificationPanel() {
         <p className="text-xs text-muted-foreground mt-2">{t("kycPage.manualOnlyNote")}</p>
 
       </div>
-
-
-
-      <KycAiGuide compact />
 
 
 

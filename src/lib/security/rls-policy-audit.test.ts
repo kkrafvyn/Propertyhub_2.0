@@ -45,8 +45,6 @@ describe('tenant isolation fixture requirements', () => {
     const required = [
       'VITE_SUPABASE_TEST_URL',
       'VITE_SUPABASE_TEST_ANON_KEY',
-      'VITE_SUPABASE_TEST_TENANT_A_TOKEN',
-      'VITE_SUPABASE_TEST_TENANT_B_TOKEN',
       'VITE_SUPABASE_TEST_TENANT_A_ID',
       'VITE_SUPABASE_TEST_TENANT_B_ID',
     ];

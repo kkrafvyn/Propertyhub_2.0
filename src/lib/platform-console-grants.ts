@@ -52,7 +52,7 @@ export const PLATFORM_CONSOLE_GRANT_DESCRIPTIONS: Record<PlatformConsoleGrant, s
   trust: "Review KYC submissions and trust requests.",
   support: "Handle support lookups and escalations.",
   revenue: "Configure platform fees and revenue rules.",
-  settings: "Manage platform-wide settings and role grants.",
+  settings: "Manage platform-wide settings, backups, and role grants.",
 };
 
 export type PlatformRolePresetId =

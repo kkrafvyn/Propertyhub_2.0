@@ -30,6 +30,23 @@ export const businessRoutes: RouteObject[] = [
     },
   },
 
+  // ── Desktop Gateway (web login → business users) ───────────────
+  {
+    path: 'workspace/desktop',
+    lazy: async () => {
+      const { DesktopGateway } = await import('../pages/workspace/DesktopGateway');
+      return {
+        Component: function ProtectedDesktopGatewayRoute() {
+          return (
+            <ProtectedRoute requireVerifiedEmail>
+              <DesktopGateway />
+            </ProtectedRoute>
+          );
+        },
+      };
+    },
+  },
+
   // ── Workspace Invite ────────────────────────────────────────────
   {
     path: 'workspace/accept',

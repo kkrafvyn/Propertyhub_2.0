@@ -39,6 +39,7 @@ import { shouldUseAdminMobileShell } from "../../lib/admin-mobile-nav";
 import { AdminMobileShell } from "../../shells/AdminMobileShell";
 import { AdminTrustReview } from "./AdminTrustReview";
 import { AdminRevenueManagement } from "./revenue/AdminRevenueManagement";
+import { AdminBackupPanel } from "./AdminBackupPanel";
 
 function confirmAdminAction(message: string) {
   return window.confirm(message);
@@ -882,23 +883,27 @@ export function AdminLayout() {
   );
 
   const renderSettingsSection = () => (
-    <Card className="p-6">
-      <h2 className="text-xl font-semibold mb-2">Admin Settings</h2>
-      <p className="text-muted-foreground mb-4">
-        Platform roles are managed from the Users screen. <strong>Platform admins</strong> have every
-        console area. For everyone else, pick only the responsibilities they should handle — for
-        example moderation only, trust review only, or user support.
-      </p>
-      <div className="rounded-xl bg-secondary/30 p-4 text-sm text-muted-foreground space-y-2">
-        <p>
-          Signed in as {user?.email || user?.id} · {platformRoleLabel(profile)}
+    <div className="space-y-6">
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold mb-2">Admin Settings</h2>
+        <p className="text-muted-foreground mb-4">
+          Platform roles are managed from the Users screen. <strong>Platform admins</strong> have every
+          console area. For everyone else, pick only the responsibilities they should handle — for
+          example moderation only, trust review only, or user support.
         </p>
-        {!profile?.is_platform_admin && getPlatformGrants(profile).length > 0 ? (
-          <p>Your roles: {formatPlatformGrantSummary(getPlatformGrants(profile))}</p>
-        ) : null}
-        <p>Only platform admins can assign or change platform roles.</p>
-      </div>
-    </Card>
+        <div className="rounded-xl bg-secondary/30 p-4 text-sm text-muted-foreground space-y-2">
+          <p>
+            Signed in as {user?.email || user?.id} · {platformRoleLabel(profile)}
+          </p>
+          {!profile?.is_platform_admin && getPlatformGrants(profile).length > 0 ? (
+            <p>Your roles: {formatPlatformGrantSummary(getPlatformGrants(profile))}</p>
+          ) : null}
+          <p>Only platform admins can assign or change platform roles.</p>
+        </div>
+      </Card>
+
+      {canAccessAdminSection(profile, "settings") ? <AdminBackupPanel /> : null}
+    </div>
   );
 
   const renderOverviewContent = () => (

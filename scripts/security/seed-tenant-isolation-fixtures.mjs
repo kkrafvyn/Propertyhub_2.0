@@ -6,11 +6,9 @@
  *   npm run security:provision-tenant-fixtures
  *   npm run security:provision-tenant-fixtures -- --gh-secrets
  *
- * Required GitHub secrets (all six):
+ * Required GitHub secrets (four — tokens are minted at test time via fixture sign-in):
  *   VITE_SUPABASE_TEST_URL
  *   VITE_SUPABASE_TEST_ANON_KEY
- *   VITE_SUPABASE_TEST_TENANT_A_TOKEN
- *   VITE_SUPABASE_TEST_TENANT_B_TOKEN
  *   VITE_SUPABASE_TEST_TENANT_A_ID
  *   VITE_SUPABASE_TEST_TENANT_B_ID
  */
@@ -20,8 +18,6 @@ loadProjectEnv();
 const REQUIRED = [
   "VITE_SUPABASE_TEST_URL",
   "VITE_SUPABASE_TEST_ANON_KEY",
-  "VITE_SUPABASE_TEST_TENANT_A_TOKEN",
-  "VITE_SUPABASE_TEST_TENANT_B_TOKEN",
   "VITE_SUPABASE_TEST_TENANT_A_ID",
   "VITE_SUPABASE_TEST_TENANT_B_ID",
 ];

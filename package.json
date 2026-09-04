@@ -72,6 +72,13 @@
     "security:provision-tenant-fixtures": "node scripts/security/provision-tenant-isolation-fixtures.mjs",
     "security:grant-platform-admin": "node scripts/security/grant-platform-admin.mjs",
     "backup:restore-drill:fixture": "node scripts/backup/restore-drill.mjs -- --path scripts/backup/fixtures/minimal-backup",
+    "backup:offsite": "node scripts/backup/run-offsite-backup.mjs -- --auto-tier",
+    "backup:offsite:db": "node scripts/backup/run-offsite-backup.mjs -- --db-only --auto-tier",
+    "backup:pre-migration": "node scripts/backup/run-offsite-backup.mjs -- --label pre-migration --tier pre-migration --verify-db",
+    "backup:pre-migration:local": "node scripts/backup/run-offsite-backup.mjs -- --label pre-migration --tier pre-migration --skip-upload --verify-db",
+    "backup:upload": "node scripts/backup/upload-offsite.mjs",
+    "backup:retention:apply": "node scripts/backup/apply-retention.mjs",
+    "backup:restore-drill:verify": "node scripts/backup/restore-drill.mjs -- --verify-db --write-evidence",
     "vercel:env": "node scripts/sync-vercel-env.mjs",
     "contracts:install": "npm install --prefix blockchain",
     "contracts:build": "npm run build --prefix blockchain",
@@ -157,6 +164,7 @@
     "vaul": "1.1.2"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.1126.0",
     "@capacitor/cli": "^8.3.4",
     "@playwright/test": "^1.55.0",
     "@tailwindcss/vite": "4.1.12",

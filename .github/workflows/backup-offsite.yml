@@ -1,0 +1,55 @@
+name: Offsite Backup
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: "Backup tier (auto, daily, weekly, monthly, pre-migration)"
+        required: false
+        default: "auto"
+
+jobs:
+  offsite-backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run offsite backup pipeline
+        run: |
+          TIER="${{ github.event.inputs.tier }}"
+          if [ "$TIER" = "auto" ] || [ -z "$TIER" ]; then
+            node scripts/backup/run-offsite-backup.mjs -- --auto-tier --verify-db
+          else
+            node scripts/backup/run-offsite-backup.mjs -- --tier "$TIER" --verify-db
+          fi
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_REGION: ${{ secrets.SUPABASE_DB_REGION }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+          BACKUP_S3_PREFIX: ${{ secrets.BACKUP_S3_PREFIX }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          BACKUP_KMS_KEY_ID: ${{ secrets.BACKUP_KMS_KEY_ID }}
+
+      - name: Upload restore drill evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: restore-drill-evidence
+          path: scripts/backup/RESTORE_DRILL_EVIDENCE.json
+          if-no-files-found: ignore

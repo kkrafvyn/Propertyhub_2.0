@@ -13,6 +13,7 @@ import { loadProjectEnv } from "../load-project-env.mjs";
 import { getProjectRef } from "./lib/db-config.mjs";
 import { backupDatabase } from "./backup-database.mjs";
 import { backupStorage } from "./backup-storage.mjs";
+import { snapshotConfigInventory } from "./snapshot-config.mjs";
 import { createBackupDir, PROJECT_ROOT, writeJson } from "./lib/paths.mjs";
 
 function parseArgs(argv) {
@@ -44,24 +45,28 @@ async function main() {
     outputDir: path.relative(PROJECT_ROOT, outputDir),
     database: null,
     storage: null,
+    configuration: null,
   };
 
   if (!args.storageOnly) {
-    console.log("[1/2] Database");
+    console.log("[1/3] Database");
     summary.database = await backupDatabase(outputDir);
   }
 
   if (!args.dbOnly) {
-    console.log("\n[2/2] Storage");
+    console.log("\n[2/3] Storage");
     summary.storage = await backupStorage(outputDir);
   }
+
+  console.log("\n[3/3] Configuration inventory");
+  summary.configuration = snapshotConfigInventory(outputDir);
 
   await copyEnvTemplate(outputDir);
   writeJson(path.join(outputDir, "backup-manifest.json"), summary);
 
   console.log("\n✓ Backup complete");
   console.log(`  Location: ${outputDir}`);
-  console.log("  Restore guide: docs/setup/BACKUP_GUIDE.md\n");
+  console.log("  Recovery guide: docs/setup/BACKUP_AND_DISASTER_RECOVERY.md\n");
 }
 
 main().catch((error) => {

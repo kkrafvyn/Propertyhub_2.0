@@ -15,6 +15,8 @@ const DEFAULT_BUCKETS = [
   "receipts",
   "documents",
   "organization-assets",
+  "kyc-documents",
+  "maintenance-media",
 ];
 
 async function listAllObjects(supabase, bucket, prefix = "") {

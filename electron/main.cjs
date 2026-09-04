@@ -20,6 +20,13 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
+
+  win.webContents.on("did-finish-load", () => {
+    win.webContents.executeJavaScript(
+      "window.__BAYTMIFTAH_DESKTOP__ = true; window.__ELECTRON__ = true;",
+      true,
+    );
+  });
 }
 
 app.whenReady().then(createWindow);

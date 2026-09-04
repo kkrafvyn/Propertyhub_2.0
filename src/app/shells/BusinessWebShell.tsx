@@ -42,10 +42,10 @@ export function BusinessWebShell({
             </span>
           </div>
           <Link
-            to={`/workspace/${organizationSlug || "default"}/general-ledger`}
+            to="/workspace/desktop?force=1"
             className="text-primary-600 dark:text-primary-400 font-semibold hover:underline"
           >
-            Learn more →
+            Get Desktop →
           </Link>
         </div>
       )}

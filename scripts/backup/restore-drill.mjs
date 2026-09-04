@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 /**
- * Backup restore drill — validates the latest (or specified) backup without mutating production.
+ * Backup restore drill — validates backup integrity without mutating production.
  *
  * Usage:
  *   npm run backup:restore-drill
  *   npm run backup:restore-drill -- --path backups/2026-09-01-full
- *   npm run backup:restore-drill -- --verify-db   # row-count spot check (requires DB env)
+ *   npm run backup:restore-drill -- --verify-db
+ *   npm run backup:restore-drill -- --write-evidence
  */
 import fs from "node:fs";
 import path from "node:path";
 import { loadProjectEnv } from "../load-project-env.mjs";
-import { BACKUPS_ROOT, PROJECT_ROOT } from "./lib/paths.mjs";
+import { BACKUPS_ROOT, PROJECT_ROOT, writeJson } from "./lib/paths.mjs";
+import { CRITICAL_TABLES, RELATIONSHIP_CHECKS } from "./lib/critical-tables.mjs";
 
 function parseArgs(argv) {
   const equalsPath = argv.find((arg) => arg.startsWith("--path="))?.split("=")[1];
@@ -22,6 +24,7 @@ function parseArgs(argv) {
   return {
     backupPath: equalsPath || spacedPath ? path.resolve(PROJECT_ROOT, equalsPath || spacedPath) : null,
     verifyDb: argv.includes("--verify-db"),
+    writeEvidence: argv.includes("--write-evidence"),
   };
 }
 
@@ -63,6 +66,28 @@ async function verifyDatabaseCounts(manifestTables) {
   return mismatches;
 }
 
+async function verifyRelationships() {
+  const pg = (await import("pg")).default;
+  const { getDbConfig } = await import("./lib/db-config.mjs");
+  const client = new pg.Client(getDbConfig());
+  await client.connect();
+
+  const issues = [];
+  try {
+    for (const check of RELATIONSHIP_CHECKS) {
+      const { rows } = await client.query(check.sql);
+      const orphans = rows[0]?.orphans ?? 0;
+      if (orphans > 0) {
+        issues.push({ check: check.name, orphans });
+      }
+    }
+  } finally {
+    await client.end();
+  }
+
+  return issues;
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   loadProjectEnv();
@@ -84,16 +109,33 @@ async function main() {
   const dataDir = path.join(backupDir, "database", "data");
 
   const checks = {
+    verifiedAt: new Date().toISOString(),
     backupDir: path.relative(PROJECT_ROOT, backupDir),
     createdAt: manifest.createdAt,
     tablesValidated: 0,
     rowsValidated: 0,
+    criticalTablesMissing: [],
     jsonErrors: [],
     dbSpotCheck: null,
+    relationshipChecks: null,
+    passed: true,
   };
 
   if (!dbManifest?.tables?.length) {
     throw new Error("Backup is missing database/table manifest");
+  }
+
+  const exportedTables = new Set(dbManifest.tables.map((entry) => entry.table));
+  const isFixture = backupDir.includes(`${path.sep}fixtures${path.sep}`);
+
+  if (!isFixture) {
+    checks.criticalTablesMissing = CRITICAL_TABLES.filter((table) => !exportedTables.has(table));
+
+    if (checks.criticalTablesMissing.length > 0) {
+      console.error("\nRestore drill FAILED — critical tables missing from backup:");
+      for (const table of checks.criticalTablesMissing) console.error(`  - ${table}`);
+      process.exit(1);
+    }
   }
 
   for (const entry of dbManifest.tables) {
@@ -137,6 +179,20 @@ async function main() {
       }
       process.exit(1);
     }
+
+    const relationshipIssues = await verifyRelationships();
+    checks.relationshipChecks = {
+      checked: RELATIONSHIP_CHECKS.length,
+      issues: relationshipIssues,
+    };
+
+    if (relationshipIssues.length > 0) {
+      console.error("\nRestore drill FAILED — relationship integrity issues in live DB:");
+      for (const issue of relationshipIssues) {
+        console.error(`  - ${issue.check}: ${issue.orphans} orphan rows`);
+      }
+      process.exit(1);
+    }
   }
 
   console.log("\n✓ Backup restore drill passed");
@@ -144,12 +200,31 @@ async function main() {
   console.log(`  Created: ${checks.createdAt}`);
   console.log(`  Tables validated: ${checks.tablesValidated}`);
   console.log(`  Rows validated: ${checks.rowsValidated}`);
+  console.log(`  Critical tables: ${isFixture ? "skipped (fixture)" : `${CRITICAL_TABLES.length}/${CRITICAL_TABLES.length}`}`);
   if (args.verifyDb) {
     console.log(`  DB spot-check tables: ${checks.dbSpotCheck.checked}`);
+    console.log(`  Relationship checks: ${checks.relationshipChecks.checked}`);
   } else {
-    console.log("  Tip: add --verify-db to compare live DB row counts against backup manifest");
+    console.log("  Tip: add --verify-db to compare live DB counts and FK relationships");
   }
   console.log("");
+
+  if (args.writeEvidence) {
+    const evidencePath = path.join(PROJECT_ROOT, "scripts", "backup", "RESTORE_DRILL_EVIDENCE.json");
+    const existing = fs.existsSync(evidencePath) ? readJson(evidencePath) : {};
+    writeJson(evidencePath, {
+      ...existing,
+      lastVerifiedAt: checks.verifiedAt,
+      liveBackup: {
+        path: checks.backupDir,
+        tablesValidated: checks.tablesValidated,
+        rowsValidated: checks.rowsValidated,
+        criticalTables: CRITICAL_TABLES.length,
+        dbSpotCheck: Boolean(args.verifyDb),
+        relationshipChecks: Boolean(args.verifyDb),
+      },
+    });
+  }
 }
 
 main().catch((error) => {
