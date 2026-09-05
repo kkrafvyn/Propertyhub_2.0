@@ -47,6 +47,23 @@ export const businessRoutes: RouteObject[] = [
     },
   },
 
+  // ── Company enrollment status (standalone page) ─────────────────
+  {
+    path: 'enrollment',
+    lazy: async () => {
+      const { EnrollmentStatusPage } = await import('../pages/workspace/EnrollmentStatusPage');
+      return {
+        Component: function ProtectedEnrollmentStatusRoute() {
+          return (
+            <ProtectedRoute requireVerifiedEmail>
+              <EnrollmentStatusPage />
+            </ProtectedRoute>
+          );
+        },
+      };
+    },
+  },
+
   // ── Workspace Invite ────────────────────────────────────────────
   {
     path: 'workspace/accept',

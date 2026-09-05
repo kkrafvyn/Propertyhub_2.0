@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-desktop/
 coverage/
 
 # Local environment files
@@ -25,6 +26,13 @@ deployments/
 .tmp/
 test-results/
 playwright-report/
+security-results/
+.cache/security-tools/
+.github/zap/.auth-token
+dist-desktop/
+public/downloads/*.exe
+public/downloads/*.blockmap
+public/downloads/*.yml
 
 # Native build output
 android/.gradle/

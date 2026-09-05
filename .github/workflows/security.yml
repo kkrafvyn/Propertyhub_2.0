@@ -1,0 +1,258 @@
+name: Security
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-3.0-only, AGPL-3.0-only
+
+  security-sast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Semgrep SAST
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/typescript
+            p/react
+            p/javascript
+            .semgrep/baytmiftah.yml
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: Record SAST result
+        if: always()
+        run: node scripts/security/record-job-result.mjs sast-semgrep "${{ job.status == 'success' && 'PASS' || 'FAIL' }}" '{"tool":"semgrep"}'
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-sast
+          path: security-results/sast-semgrep.json
+
+  security-sca:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Dependency audit (high+)
+        run: npm run security:sca
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-sca
+          path: security-results/sca.json
+
+  security-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks secrets scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+      - name: Record secrets result
+        if: always()
+        run: node scripts/security/record-job-result.mjs secrets "${{ job.status == 'success' && 'PASS' || 'FAIL' }}" '{"tool":"gitleaks"}'
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-secrets
+          path: security-results/secrets.json
+
+  security-actions-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Audit GitHub Actions workflows
+        run: npm run security:actions-audit
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-actions-audit
+          path: security-results/actions-audit.json
+
+  security-unit:
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: https://test.supabase.co
+      VITE_SUPABASE_ANON_KEY: test-anon-key
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Security unit tests
+        run: npm run security:unit
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-unit
+          path: security-results/security-unit.json
+
+  security-tenant-isolation:
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Tenant isolation live tests
+        run: npm run security:tenant
+        env:
+          VITE_SUPABASE_TEST_URL: ${{ secrets.VITE_SUPABASE_TEST_URL }}
+          VITE_SUPABASE_TEST_ANON_KEY: ${{ secrets.VITE_SUPABASE_TEST_ANON_KEY }}
+          VITE_SUPABASE_TEST_TENANT_A_ID: ${{ secrets.VITE_SUPABASE_TEST_TENANT_A_ID }}
+          VITE_SUPABASE_TEST_TENANT_B_ID: ${{ secrets.VITE_SUPABASE_TEST_TENANT_B_ID }}
+          TENANT_FIXTURE_PASSWORD: ${{ secrets.TENANT_FIXTURE_PASSWORD }}
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-tenant-isolation
+          path: security-results/tenant-isolation.json
+
+  security-tenant-delegated:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Record tenant isolation delegation to CI
+        run: node scripts/security/record-job-result.mjs tenant-isolation DELEGATED '{"source":"ci.yml","step":"build-and-test / Tenant isolation integration tests"}'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-tenant-delegated
+          path: security-results/tenant-isolation.json
+
+  security-container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build web container image
+        run: docker build -t baytmiftah/web:ci .
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+          scanners: vuln,secret,misconfig
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: baytmiftah/web:ci
+          severity: CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+
+      - name: Record container/filesystem scan result
+        if: always()
+        run: node scripts/security/record-job-result.mjs container "${{ job.status == 'success' && 'PASS' || 'FAIL' }}" '{"tool":"trivy-fs+image","note":"Dockerfile web image and repository filesystem"}'
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-container
+          path: security-results/container.json
+
+  security-summary:
+    needs:
+      - security-sast
+      - security-sca
+      - security-secrets
+      - security-actions-audit
+      - security-unit
+      - security-container
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          path: security-artifacts
+
+      - name: Collect security results
+        run: |
+          mkdir -p security-results
+          if [ -d security-artifacts ]; then
+            find security-artifacts -name '*.json' -exec cp {} security-results/ \;
+          fi
+          if [ ! -f security-results/tenant-isolation.json ]; then
+            node scripts/security/record-job-result.mjs tenant-isolation DELEGATED '{"source":"ci.yml"}'
+          fi
+          if [ ! -f security-results/dast.json ]; then
+            node scripts/security/record-job-result.mjs dast UNVERIFIED '{"reason":"See security-dast workflow or CodeQL workflow for dynamic/static web analysis"}'
+          fi
+          if [ ! -f security-results/sast-codeql.json ]; then
+            node scripts/security/record-job-result.mjs sast-codeql DELEGATED '{"source":"codeql.yml"}'
+          fi
+          node scripts/security/security-summary.mjs security-results | tee security-results/summary.txt
+        shell: bash
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-summary
+          path: security-results/

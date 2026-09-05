@@ -15,6 +15,51 @@ export type AdminUserRow = {
   created_at: string | null;
 };
 
+export type AdminOrganizationRow = {
+  id: string;
+  name: string;
+  slug: string;
+  owner_id: string | null;
+  verified: boolean | null;
+  suspended: boolean | null;
+  company_setup_completed?: boolean | null;
+  business_types?: string[] | null;
+  enabled_capabilities?: string[] | null;
+  created_at: string | null;
+};
+
+export type AdminOrganizationProfile = {
+  organization: AdminOrganizationRow;
+  members: Array<{
+    user_id: string;
+    role: string | null;
+    scope_mode?: string | null;
+    joined_at?: string | null;
+    user?: { id: string; email: string | null; full_name: string | null } | null;
+  }>;
+  recentProperties: Array<{
+    id: string;
+    address: string;
+    city: string;
+    region: string;
+    created_at: string | null;
+  }>;
+  recentListings: Array<{
+    id: string;
+    status: string | null;
+    price: number | null;
+    currency: string | null;
+    created_at: string | null;
+    property?: { address?: string } | null;
+  }>;
+  stats: {
+    memberCount: number;
+    propertyCount: number;
+    listingCount: number;
+    openTaskCount: number;
+  };
+};
+
 export const adminService = {
   async getPlatformAccess(userId: string): Promise<PlatformAccessFlags> {
     const { data, error } = await supabase
@@ -124,12 +169,128 @@ export const adminService = {
   async listOrganizations(limit = 50) {
     const { data, error } = await supabase
       .from("organizations")
-      .select("id, name, slug, owner_id, verified, suspended, created_at")
+      .select(
+        "id, name, slug, owner_id, verified, suspended, created_at, business_types, enabled_capabilities, company_setup_completed",
+      )
       .order("created_at", { ascending: false })
       .limit(limit);
 
     if (error) throw error;
     return data || [];
+  },
+
+  async listOrganizationsWithStats(limit = 100) {
+    const organizations = await this.listOrganizations(limit);
+    if (!organizations.length) return [];
+
+    const orgIds = organizations.map((org) => org.id);
+    const { data: members, error: memberError } = await supabase
+      .from("organization_members")
+      .select("organization_id")
+      .in("organization_id", orgIds);
+
+    if (memberError) throw memberError;
+
+    const memberCounts = (members || []).reduce<Record<string, number>>((acc, row) => {
+      acc[row.organization_id] = (acc[row.organization_id] || 0) + 1;
+      return acc;
+    }, {});
+
+    return organizations.map((organization) => ({
+      ...organization,
+      member_count: memberCounts[organization.id] || 0,
+    }));
+  },
+
+  async getOrganizationProfile(organizationId: string): Promise<AdminOrganizationProfile> {
+    const [
+      organizationResult,
+      membersResult,
+      propertiesResult,
+      listingsResult,
+      propertyCountResult,
+      listingCountResult,
+      tasksResult,
+    ] = await Promise.all([
+      supabase.from("organizations").select("*").eq("id", organizationId).single(),
+      supabase
+        .from("organization_members")
+        .select("user_id, role, scope_mode, joined_at, user:users(id, email, full_name)")
+        .eq("organization_id", organizationId)
+        .order("joined_at", { ascending: true }),
+      supabase
+        .from("properties")
+        .select("id, address, city, region, created_at")
+        .eq("organization_id", organizationId)
+        .order("created_at", { ascending: false })
+        .limit(8),
+      supabase
+        .from("listings")
+        .select("id, status, price, currency, created_at, property:properties(address)")
+        .eq("organization_id", organizationId)
+        .order("created_at", { ascending: false })
+        .limit(8),
+      supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", organizationId),
+      supabase
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", organizationId),
+      supabase
+        .from("workspace_tasks")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", organizationId)
+        .in("status", ["open", "in_progress"]),
+    ]);
+
+    if (organizationResult.error) throw organizationResult.error;
+    if (membersResult.error) throw membersResult.error;
+    if (propertiesResult.error) throw propertiesResult.error;
+    if (listingsResult.error) throw listingsResult.error;
+
+    const members = (membersResult.data || []).map((row) => {
+      const user = Array.isArray(row.user) ? row.user[0] : row.user;
+      return {
+        user_id: row.user_id as string,
+        role: row.role as string | null,
+        scope_mode: row.scope_mode as string | null | undefined,
+        joined_at: row.joined_at as string | null | undefined,
+        user: user
+          ? {
+              id: user.id as string,
+              email: user.email as string | null,
+              full_name: user.full_name as string | null,
+            }
+          : null,
+      };
+    });
+
+    const recentListings = (listingsResult.data || []).map((row) => {
+      const property = Array.isArray(row.property) ? row.property[0] : row.property;
+      return {
+        id: row.id as string,
+        status: row.status as string | null,
+        price: row.price as number | null,
+        currency: row.currency as string | null,
+        created_at: row.created_at as string | null,
+        property: property ? { address: property.address as string | undefined } : null,
+      };
+    });
+
+    return {
+      organization: organizationResult.data as AdminOrganizationRow,
+      members,
+      recentProperties: (propertiesResult.data || []) as AdminOrganizationProfile["recentProperties"],
+      recentListings,
+      stats: {
+        memberCount: membersResult.data?.length || 0,
+        propertyCount: propertyCountResult.count || 0,
+        listingCount: listingCountResult.count || 0,
+        openTaskCount: tasksResult.count || 0,
+      },
+    };
   },
 
   async updateOrganization(

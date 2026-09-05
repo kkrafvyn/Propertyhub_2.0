@@ -1,6 +1,10 @@
 import type { MemberRole } from "../../lib/workspace";
 import { canWorkspace, type WorkspacePermission } from "../../lib/workspace-permissions";
 import { clientIntegrations } from "../../lib/integrations";
+import {
+  isSlugEnabledForCapabilities,
+  type CompanyCapability,
+} from "../../lib/company-model";
 
 /** Minimum permission to see a workspace sidebar page. */
 export const WORKSPACE_SLUG_PERMISSIONS: Record<string, WorkspacePermission | null> = {
@@ -88,6 +92,7 @@ export const WORKSPACE_SLUG_PERMISSIONS: Record<string, WorkspacePermission | nu
   "customer-health": "team:manage",
   productivity: "listings:read",
   "my-work": null,
+  "company-setup": null,
   "staff-time": "listings:read",
   "contractor-portal": "listings:read",
   "data-retention": "team:manage",
@@ -96,8 +101,14 @@ export const WORKSPACE_SLUG_PERMISSIONS: Record<string, WorkspacePermission | nu
 export function canAccessWorkspaceSlug(
   slug: string,
   role: MemberRole | null | undefined,
+  customPermissions?: string[] | null,
+  enabledCapabilities?: CompanyCapability[] | null,
 ): boolean {
   if (slug === "blockchain" && !clientIntegrations.blockchain.configured) {
+    return false;
+  }
+
+  if (enabledCapabilities?.length && !isSlugEnabledForCapabilities(slug, enabledCapabilities)) {
     return false;
   }
 
@@ -109,20 +120,26 @@ export function canAccessWorkspaceSlug(
     return true;
   }
 
-  return canWorkspace(role, permission);
+  return canWorkspace(role, permission, customPermissions);
 }
 
 export function filterWorkspaceNavItems<T extends { slug: string }>(
   items: T[],
   role: MemberRole | null | undefined,
+  customPermissions?: string[] | null,
+  enabledCapabilities?: CompanyCapability[] | null,
 ): T[] {
-  return items.filter((item) => canAccessWorkspaceSlug(item.slug, role));
+  return items.filter((item) =>
+    canAccessWorkspaceSlug(item.slug, role, customPermissions, enabledCapabilities),
+  );
 }
 
 /** All routable workspace page slugs (excludes dashboard). */
 export const WORKSPACE_PAGE_SLUGS = Object.keys(WORKSPACE_SLUG_PERMISSIONS).filter(
   (slug) => slug !== "",
 );
+
+export { getRoleHomeSlug } from "../../lib/company-model";
 
 export function getWorkspaceRoleDescription(role: MemberRole | null | undefined): string {
   switch (role) {
@@ -132,6 +149,8 @@ export function getWorkspaceRoleDescription(role: MemberRole | null | undefined)
       return "Executive leadership: portfolio revenue, yields, and strategic briefing.";
     case "head_property_management":
       return "Department head: entire portfolio SLAs, occupancy, and contractor budgets.";
+    case "organization_admin":
+      return "Organization admin: team, roles, settings, and integrations.";
     case "manager":
     case "property_manager":
       return "Property manager: leases, occupancies, work orders, and tenant follow-up.";

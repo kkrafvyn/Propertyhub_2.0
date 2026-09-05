@@ -181,14 +181,8 @@ export function getUrlSurfaceOverride(): SurfaceId | null {
   const surfaceParam = params.get('surface');
 
   const validSurfaces: SurfaceId[] = [
-    'consumer-web',
-    'consumer-mobile',
-    'business-web',
     'business-desktop',
-    'business-mobile',
-    'admin-web',
     'admin-desktop',
-    'admin-mobile',
   ];
 
   if (surfaceParam && validSurfaces.includes(surfaceParam as SurfaceId)) {

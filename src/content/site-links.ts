@@ -35,6 +35,7 @@ export const SITE_MAP_SECTIONS = [
       { label: "List your property", to: `${WORKSPACE_ENTRY_PATH}?next=new` },
       { label: "Host resources", to: "/host-resources" },
       { label: "Agency workspace", to: WORKSPACE_ENTRY_PATH },
+      { label: "Workspace enrollment", to: "/enrollment" },
       { label: "Refer a friend", to: "/referral" },
       { label: "Host terms", to: "/legal/host-terms" },
     ],
@@ -88,6 +89,7 @@ export const FOOTER_HOSTING_LINKS: Array<{
 }> = [
   { labelKey: "footer.listProperty", to: `${WORKSPACE_ENTRY_PATH}?next=new`, useListPropertyPath: true },
   { labelKey: "footer.hostResources", to: "/host-resources" },
+  { labelKey: "footer.workspaceEnrollment", to: "/enrollment" },
   { labelKey: "footer.referrals", to: "/referral" },
 ];
 

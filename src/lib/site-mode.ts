@@ -3,6 +3,8 @@
  * from the product application (app.baytmiftah.com).
  */
 
+import { isDesktopWorkspaceApp, isDesktopWorkspaceBuild } from "./desktop-app";
+
 export type SiteMode = "marketing" | "app";
 
 function normalizeHost(hostname: string): string {
@@ -73,6 +75,9 @@ export function resolveSiteMode(hostname?: string): SiteMode {
 }
 
 export function isMarketingSite(hostname?: string): boolean {
+  if (isDesktopWorkspaceBuild() || isDesktopWorkspaceApp()) {
+    return false;
+  }
   return resolveSiteMode(hostname) === "marketing";
 }
 

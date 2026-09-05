@@ -19,6 +19,7 @@ import { WORKSPACE_PAGE_SLUGS } from "../../lib/workspace-role-nav";
 import { LegalAcceptanceCheckbox } from "../../components/legal/LegalAcceptanceCheckbox";
 import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
 import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from "../../../lib/legal-config";
+import { enrollmentService, type OrganizationEnrollmentRequest } from "../../../lib/enrollment.service";
 import { BusinessMobileShell } from "../../shells/BusinessMobileShell";
 import { DesktopShell } from "../../components/baytmiftah/DesktopShell";
 import { shouldUseBusinessMobileShell } from "../../lib/business-mobile-nav";
@@ -54,6 +55,8 @@ export function WorkspaceEntry() {
   const [creating, setCreating] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [memberships, setMemberships] = useState<OrganizationMembership[]>([]);
+  const [pendingEnrollment, setPendingEnrollment] = useState<OrganizationEnrollmentRequest | null>(null);
+  const [enrollmentHistory, setEnrollmentHistory] = useState<OrganizationEnrollmentRequest[]>([]);
   const [slugEdited, setSlugEdited] = useState(false);
   const [agencyTermsAccepted, setAgencyTermsAccepted] = useState(false);
   const [form, setForm] = useState({
@@ -71,13 +74,28 @@ export function WorkspaceEntry() {
   );
 
   const loadMemberships = async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
       setLoadError(null);
       const rows = (await organizationService.getUserOrganizations(user.id)) as MembershipRow[];
       setMemberships(normalizeOrganizationMemberships(rows));
+
+      if (normalizeOrganizationMemberships(rows).length === 0) {
+        const [pending, history] = await Promise.all([
+          enrollmentService.getPendingRequest(user.id),
+          enrollmentService.getMyRequests(user.id),
+        ]);
+        setPendingEnrollment(pending);
+        setEnrollmentHistory(history);
+      } else {
+        setPendingEnrollment(null);
+        setEnrollmentHistory([]);
+      }
     } catch (error) {
       console.error("Failed to load workspace memberships:", error);
       setLoadError("We couldn't load your workspace organizations right now.");
@@ -141,14 +159,13 @@ export function WorkspaceEntry() {
 
     try {
       setCreating(true);
-      const organization = await organizationService.createOrganization({
-        name: form.name.trim(),
-        slug: nextSlug,
+      await enrollmentService.submitRequest(user.id, {
+        companyName: form.name.trim(),
+        desiredSlug: nextSlug,
         description: form.description.trim() || null,
-        email: form.email.trim() || null,
-        phone: form.phone.trim() || null,
+        contactEmail: form.email.trim() || null,
+        contactPhone: form.phone.trim() || null,
         website: form.website.trim() || null,
-        owner_id: user.id,
       });
 
       await legalAcceptanceService.recordAcceptance({
@@ -158,16 +175,16 @@ export function WorkspaceEntry() {
         policyVersion: LEGAL_POLICY_VERSION,
       });
 
-      toast.success("Workspace created. You can start listing properties now.");
-      navigate(getWorkspaceRoute(organization.slug, requestedPage || undefined), {
-        replace: true,
-      });
+      const pending = await enrollmentService.getPendingRequest(user.id);
+      setPendingEnrollment(pending);
+      setEnrollmentHistory(await enrollmentService.getMyRequests(user.id));
+      toast.success("Application submitted. Track status anytime at /enrollment.");
     } catch (error) {
-      console.error("Failed to create organization:", error);
+      console.error("Failed to submit enrollment request:", error);
       const message = getErrorMessage(error);
       const code = getErrorCode(error);
       if (code === "23505" || message.includes("duplicate") || message.includes("slug")) {
-        toast.error("That workspace slug is already taken. Try another one.");
+        toast.error("That workspace slug is already reserved. Try another one.");
       } else {
         toast.error(message);
       }
@@ -229,6 +246,12 @@ export function WorkspaceEntry() {
     );
   }
 
+  if (pendingEnrollment) {
+    return <Navigate to="/enrollment" replace />;
+  }
+
+  const latestRejected = enrollmentHistory.find((entry) => entry.status === "rejected");
+
   if (memberships.length > 1) {
     const orgPicker = (
       <div className="min-h-[50vh] px-4 py-8">
@@ -273,15 +296,23 @@ export function WorkspaceEntry() {
               <Building2 className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-primary font-medium">Workspace Setup</p>
-              <h1 className="text-3xl font-semibold">Create your organization</h1>
+              <p className="text-sm text-primary font-medium">Company enrollment</p>
+              <h1 className="text-3xl font-semibold">Apply for a workspace</h1>
             </div>
           </div>
 
-          <p className="text-ink-secondary mb-8">
-            Your account is ready, but you still need a workspace before you can publish
-            listings, manage leads, or invite teammates.
+          <p className="text-ink-secondary mb-4">
+            BaytMiftah reviews every company before granting workspace access. Submit your organization
+            profile and our team will approve your account.
           </p>
+
+          {latestRejected ? (
+            <div className="mb-6 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-ink-secondary">
+              Your previous application was not approved
+              {latestRejected.review_notes ? `: ${latestRejected.review_notes}` : "."} You may submit a
+              revised application below.
+            </div>
+          ) : null}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input
@@ -353,12 +384,17 @@ export function WorkspaceEntry() {
                 {creating ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Creating workspace...
+                    Submitting application...
                   </>
                 ) : (
-                  "Create Workspace"
+                  "Submit for review"
                 )}
               </Button>
+              <Link to="/enrollment">
+                <Button type="button" size="lg" variant="outline">
+                  Track application status
+                </Button>
+              </Link>
               <Link to="/">
                 <Button type="button" size="lg" variant="outline">
                   Back Home
@@ -376,17 +412,16 @@ export function WorkspaceEntry() {
 
           <div className="space-y-5">
             <div>
-              <h2 className="font-semibold mb-1">Publish listings quickly</h2>
+              <h2 className="font-semibold mb-1">Reviewed onboarding</h2>
               <p className="text-sm text-ink-secondary">
-                Create properties, manage pricing, and control public visibility from one
-                dashboard.
+                Every company is vetted by BaytMiftah before workspace access is granted.
               </p>
             </div>
             <div>
-              <h2 className="font-semibold mb-1">Manage leads as a team</h2>
+              <h2 className="font-semibold mb-1">Publish after approval</h2>
               <p className="text-sm text-ink-secondary">
-                Track deal cases, stay on top of conversations, and invite teammates when
-                you&apos;re ready.
+                Once approved, you can create properties, manage leads, and invite teammates from one
+                dashboard.
               </p>
             </div>
             <div>

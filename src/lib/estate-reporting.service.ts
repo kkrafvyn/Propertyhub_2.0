@@ -96,8 +96,33 @@ export const estateReportingService = {
     if (error) throw error;
     return Array.isArray(data) ? data[0] : data;
   },
-  async createOwnerStatement(input: { estateId: string; ownerUserId: string; periodStart: string; periodEnd: string }) {
-    const { data, error } = await db.rpc("create_owner_statement_run", { p_estate_id: input.estateId, p_owner_user_id: input.ownerUserId, p_period_start: input.periodStart, p_period_end: input.periodEnd });
+  async createOwnerStatement(input: {
+    estateId: string;
+    ownerUserId: string;
+    periodStart: string;
+    periodEnd: string;
+    organizationId?: string;
+  }) {
+    if (typeof navigator !== "undefined" && !navigator.onLine && input.organizationId) {
+      const { workspaceSyncService } = await import("./workspace-sync.service");
+      const entry = await workspaceSyncService.queueFinanceStatementDraft({
+        organizationId: input.organizationId,
+        payload: {
+          estateId: input.estateId,
+          ownerUserId: input.ownerUserId,
+          periodStart: input.periodStart,
+          periodEnd: input.periodEnd,
+        },
+      });
+      return { id: entry.id, offlineQueued: true, status: "draft" };
+    }
+
+    const { data, error } = await db.rpc("create_owner_statement_run", {
+      p_estate_id: input.estateId,
+      p_owner_user_id: input.ownerUserId,
+      p_period_start: input.periodStart,
+      p_period_end: input.periodEnd,
+    });
     if (error) throw error;
     return data;
   },
@@ -219,8 +244,27 @@ export const estateReportingService = {
     return data || [];
   },
 
-  async requestDistributionApproval(input: { statementRunId: string; amountMinor: number; requestedBy: string }) {
+  async requestDistributionApproval(input: {
+    statementRunId: string;
+    amountMinor: number;
+    requestedBy: string;
+    organizationId?: string;
+  }) {
     if (input.amountMinor < 0) throw new Error("Distribution amount cannot be negative");
+
+    if (typeof navigator !== "undefined" && !navigator.onLine && input.organizationId) {
+      const { workspaceSyncService } = await import("./workspace-sync.service");
+      const entry = await workspaceSyncService.queueFinanceDistributionRequest({
+        organizationId: input.organizationId,
+        payload: {
+          statementRunId: input.statementRunId,
+          amountMinor: input.amountMinor,
+          requestedBy: input.requestedBy,
+        },
+      });
+      return { id: entry.id, offlineQueued: true, status: "pending" };
+    }
+
     const { data, error } = await db.from("estate_distribution_approvals").insert({
       statement_run_id: input.statementRunId,
       requested_amount_minor: input.amountMinor,

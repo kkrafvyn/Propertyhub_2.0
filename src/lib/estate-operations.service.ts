@@ -9,6 +9,7 @@ const estateDb = supabase as any;
 export type ManagedEstate = {
   id: string;
   organization_id: string;
+  property_id?: string | null;
   name: string;
   address: string | null;
   city: string | null;
@@ -363,6 +364,7 @@ export const estateOperationsService = {
     address?: string;
     city?: string;
     region?: string;
+    propertyId?: string;
   }): Promise<ManagedEstate> {
     const { data, error } = await estateDb
       .from("managed_estates")
@@ -372,6 +374,7 @@ export const estateOperationsService = {
         address: input.address?.trim() || null,
         city: input.city?.trim() || null,
         region: input.region?.trim() || null,
+        property_id: input.propertyId || null,
       })
       .select("*")
       .single();

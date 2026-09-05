@@ -21,6 +21,7 @@ export type ExtendedCompanyRole =
   | "marketing_officer"
   | "customer_service_manager"
   | "customer_service_agent"
+  | "organization_admin"
   | "developer"
   | "enterprise_operator";
 
@@ -40,14 +41,23 @@ export type MemberRole = StandardMemberRole | ExtendedCompanyRole | PlatformRole
 export interface MembershipRow {
   organization: Organization | Organization[] | null;
   role: MemberRole;
+  permissions?: string[] | null;
+  department_id?: string | null;
 }
 
 export interface OrganizationMembership {
   organization: Organization;
   role: MemberRole;
+  permissions?: string[] | null;
+  department_id?: string | null;
 }
 
 export const WORKSPACE_ENTRY_PATH = "/workspace";
+
+function normalizeMemberPermissions(value: unknown): string[] | null {
+  if (Array.isArray(value)) return value as string[];
+  return null;
+}
 
 export function normalizeOrganizationMemberships(
   rows: MembershipRow[] | null | undefined
@@ -58,7 +68,12 @@ export function normalizeOrganizationMemberships(
       : row.organization;
 
     if (organization) {
-      acc.push({ organization, role: row.role });
+      acc.push({
+        organization,
+        role: row.role,
+        permissions: normalizeMemberPermissions(row.permissions),
+        department_id: row.department_id ?? null,
+      });
     }
 
     return acc;

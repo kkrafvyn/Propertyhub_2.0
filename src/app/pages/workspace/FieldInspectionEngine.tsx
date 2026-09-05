@@ -348,7 +348,7 @@ export function FieldInspectionEngine({
               </div>
               <h2 className="text-xl font-bold text-ink mt-1">{activeDraft.propertyName}</h2>
               <p className="text-sm text-ink-secondary mt-0.5">
-                Tenant: <strong>{activeDraft.tenantName || 'Pending Assignment'}</strong> · Phone: {activeDraft.tenantPhone || 'N/A'}
+                Tenant: <strong>{activeDraft.tenantName || 'Pending Assignment'}</strong> - Phone: {activeDraft.tenantPhone || 'N/A'}
               </p>
             </div>
 
@@ -630,7 +630,7 @@ export function FieldInspectionEngine({
                               handleUpdateItem(def.key, { estimatedRepairCostPesewas: Math.round(val * 100) });
                             }}
                             placeholder="0.00"
-                            className="w-full bg-input-background border border-border rounded px-2.5 py-1 text-xs text-ink outline-none mt-1 font-semibold text-red-500"
+                            className="w-full bg-input-background border border-border rounded px-2.5 py-1 text-xs outline-none mt-1 font-semibold text-red-600 dark:text-red-400"
                           />
                         </div>
                       </div>

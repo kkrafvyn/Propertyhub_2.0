@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import {
   AlertTriangle,
   BarChart3,
@@ -40,6 +40,8 @@ import { AdminMobileShell } from "../../shells/AdminMobileShell";
 import { AdminTrustReview } from "./AdminTrustReview";
 import { AdminRevenueManagement } from "./revenue/AdminRevenueManagement";
 import { AdminBackupPanel } from "./AdminBackupPanel";
+import { AdminOrganizationDetail } from "./AdminOrganizationDetail";
+import { AdminEnrollmentRequests } from "./AdminEnrollmentRequests";
 
 function confirmAdminAction(message: string) {
   return window.confirm(message);
@@ -121,8 +123,14 @@ function formatTimestamp(value?: string | null) {
   return new Date(value).toLocaleString();
 }
 
+function getOrganizationDetailId(pathname: string) {
+  const match = pathname.match(/^\/admin\/organizations\/([^/]+)/);
+  return match?.[1] || null;
+}
+
 export function AdminLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
   const canManageRoles = canManagePlatformRoles(profile);
   const visibleNavItems = useMemo(
@@ -130,6 +138,10 @@ export function AdminLayout() {
     [profile],
   );
   const currentSection = useMemo(() => getCurrentSection(location.pathname), [location.pathname]);
+  const organizationDetailId = useMemo(
+    () => getOrganizationDetailId(location.pathname),
+    [location.pathname],
+  );
 
   const [loading, setLoading] = useState(true);
   const [workingId, setWorkingId] = useState<string | null>(null);
@@ -174,7 +186,7 @@ export function AdminLayout() {
         canModeration ? fraudDetectionService.getReviewCases("active", 12) : Promise.resolve([]),
         canModeration ? fraudDetectionService.getPendingAlertsWithoutCase(8) : Promise.resolve([]),
         canUsers ? adminService.listUsers(50) : Promise.resolve([]),
-        canOrganizations ? adminService.listOrganizations(50) : Promise.resolve([]),
+        canOrganizations ? adminService.listOrganizationsWithStats(100) : Promise.resolve([]),
         canListings ? adminService.listListings(50) : Promise.resolve([]),
       ]);
 
@@ -635,16 +647,28 @@ export function AdminLayout() {
     </Card>
   );
 
-  const renderOrganizationsSection = () => (
+  const renderOrganizationsSection = () => {
+    if (organizationDetailId) {
+      return (
+        <AdminOrganizationDetail
+          organizationId={organizationDetailId}
+          onBack={() => navigate("/admin/organizations")}
+        />
+      );
+    }
+
+    return (
+    <>
+      <AdminEnrollmentRequests onApproved={() => void loadAdminState()} />
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-xl font-semibold">Organizations</h2>
+          <h2 className="text-xl font-semibold">Enrolled organizations</h2>
           <p className="text-sm text-muted-foreground">
-            Approve workspace teams or suspend access when needed.
+            Every workspace company on BaytMiftah — members, setup status, and full profile.
           </p>
         </div>
-        <Badge variant="outline">{organizations.length} shown</Badge>
+        <Badge variant="outline">{organizations.length} enrolled</Badge>
       </div>
 
       <div className="space-y-4">
@@ -660,12 +684,23 @@ export function AdminLayout() {
                   <p className="font-semibold">{organization.name}</p>
                   <p className="text-sm text-muted-foreground">/{organization.slug}</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Created {formatTimestamp(organization.created_at)}
+                    {organization.member_count ?? 0} members · Created {formatTimestamp(organization.created_at)}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {organization.verified ? <Badge>Verified</Badge> : <Badge variant="outline">Pending</Badge>}
                   {organization.suspended ? <Badge variant="destructive">Suspended</Badge> : null}
+                  {organization.company_setup_completed ? (
+                    <Badge variant="secondary">Profile configured</Badge>
+                  ) : (
+                    <Badge variant="outline">Setup pending</Badge>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={() => navigate(`/admin/organizations/${organization.id}`)}
+                  >
+                    View profile
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
@@ -708,7 +743,9 @@ export function AdminLayout() {
         )}
       </div>
     </Card>
-  );
+    </>
+    );
+  };
 
   const renderListingsSection = () => (
     <Card className="p-6">

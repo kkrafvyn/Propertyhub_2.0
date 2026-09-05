@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { Building2, ShieldCheck, Activity, Calendar, RefreshCw, Sliders } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
+import { MetricCard } from "../../components/ui/MetricCard";
+import { OrganizationUnitsPanel } from "../../components/workspace/OrganizationUnitsPanel";
 import type { Database } from "../../../lib/database.types";
 import { organizationService } from "../../../lib/organization.service";
 import { getWorkspaceRoute, toOrganizationSlug, type MemberRole } from "../../../lib/workspace";
@@ -21,7 +24,11 @@ export function WorkspaceSettings({
   currentRole,
 }: WorkspaceSettingsProps) {
   const navigate = useNavigate();
-  const canManageSettings = currentRole === "owner" || currentRole === "manager";
+  const canManageSettings =
+    currentRole === "owner" ||
+    currentRole === "manager" ||
+    currentRole === "organization_admin" ||
+    currentRole === "managing_director";
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: organization.name,
@@ -111,39 +118,80 @@ export function WorkspaceSettings({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold">Settings</h1>
-          <p className="text-muted-foreground mt-2">
-            Update the public profile and contact details for {organization.name}.
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-ink">
+            Organization Settings
+          </h1>
+          <p className="text-sm text-ink-secondary mt-1">
+            Configure public identity, brand presence, and regional settings for {organization.name}.
           </p>
         </div>
-        <Badge variant="outline" className="capitalize w-fit">
-          {currentRole || "member"}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="capitalize text-xs font-semibold px-2.5 py-1">
+            Role: {currentRole || "member"}
+          </Badge>
+        </div>
+      </div>
+
+      {/* KPI / Health status */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          title="Verification Tier"
+          value={organization.verified ? "Verified" : "Pending"}
+          icon={ShieldCheck}
+          iconColor={organization.verified ? "emerald" : "amber"}
+          subtitle="Regulatory identity compliance"
+        />
+        <MetricCard
+          title="Workspace Status"
+          value={organization.suspended ? "Suspended" : "Active"}
+          icon={Activity}
+          iconColor={organization.suspended ? "terracotta" : "emerald"}
+          subtitle="Real-time account standing"
+        />
+        <MetricCard
+          title="Provisioned"
+          value={new Date(organization.created_at).toLocaleDateString()}
+          icon={Calendar}
+          iconColor="primary"
+          subtitle="Initial organization onboarding"
+        />
+        <MetricCard
+          title="Last Synchronized"
+          value={new Date(organization.updated_at).toLocaleDateString()}
+          icon={RefreshCw}
+          iconColor="indigo"
+          subtitle="Recent profile update"
+        />
       </div>
 
       {!canManageSettings && (
-        <Card className="p-4 bg-secondary/40">
-          <p className="text-sm text-muted-foreground">
-            You can view this organization profile, but only owners and managers can edit it.
+        <Card className="p-4 border-amber-500/20 bg-amber-500/5 text-amber-800 dark:text-amber-200">
+          <p className="text-xs leading-relaxed">
+            You can view this organization profile in read-only mode. Only owners and managers can update operational settings.
           </p>
         </Card>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Organization Profile</h2>
+        <Card className="p-6 border-surface-border bg-surface shadow-card">
+          <div className="flex items-center gap-2 mb-4">
+            <Building2 className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold text-ink">Organization Profile</h2>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Organization Name"
+              label="Organization Legal Name"
               value={form.name}
               onChange={(event) => updateField("name", event.target.value)}
               disabled={!canManageSettings}
+              placeholder="e.g. BaytMiftah Real Estate"
               required
             />
             <Input
-              label="Slug"
+              label="Workspace URL Slug"
               value={form.slug}
               onChange={(event) => updateField("slug", event.target.value)}
               disabled={!canManageSettings}
@@ -151,14 +199,14 @@ export function WorkspaceSettings({
               required
             />
             <Input
-              label="Website"
+              label="Corporate Website"
               value={form.website}
               onChange={(event) => updateField("website", event.target.value)}
               disabled={!canManageSettings}
               placeholder="https://example.com"
             />
             <Input
-              label="Public Email"
+              label="Public Inquiries Email"
               type="email"
               value={form.email}
               onChange={(event) => updateField("email", event.target.value)}
@@ -166,14 +214,14 @@ export function WorkspaceSettings({
               placeholder="hello@example.com"
             />
             <Input
-              label="Phone"
+              label="Contact Phone"
               value={form.phone}
               onChange={(event) => updateField("phone", event.target.value)}
               disabled={!canManageSettings}
               placeholder="+233 24 000 0000"
             />
             <Input
-              label="Logo URL"
+              label="Brand Logo URL"
               value={form.logoUrl}
               onChange={(event) => updateField("logoUrl", event.target.value)}
               disabled={!canManageSettings}
@@ -181,7 +229,7 @@ export function WorkspaceSettings({
             />
             <div className="md:col-span-2">
               <Input
-                label="Banner URL"
+                label="Header Banner URL"
                 value={form.bannerUrl}
                 onChange={(event) => updateField("bannerUrl", event.target.value)}
                 disabled={!canManageSettings}
@@ -191,55 +239,26 @@ export function WorkspaceSettings({
           </div>
 
           <div className="mt-4">
-            <label className="block mb-2 text-sm text-foreground">Description</label>
+            <label className="block mb-2 text-xs font-medium text-ink-secondary">Brand Description</label>
             <textarea
-              className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground min-h-32"
+              className="w-full px-4 py-3 rounded-xl border border-surface-border bg-surface-subtle text-ink placeholder:text-ink-muted text-xs leading-relaxed min-h-28 focus:outline-none focus:ring-1 focus:ring-primary"
               value={form.description}
               onChange={(event) => updateField("description", event.target.value)}
               disabled={!canManageSettings}
-              placeholder="Tell clients what makes this organization different."
+              placeholder="Tell clients what makes this organization and its property portfolio distinct."
             />
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Workspace Status</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 rounded-lg bg-secondary/30">
-              <p className="text-sm text-muted-foreground">Verification</p>
-              <p className="font-semibold mt-1">
-                {organization.verified ? "Verified" : "Pending verification"}
-              </p>
-            </div>
-            <div className="p-4 rounded-lg bg-secondary/30">
-              <p className="text-sm text-muted-foreground">Workspace Access</p>
-              <p className="font-semibold mt-1">
-                {organization.suspended ? "Suspended" : "Active"}
-              </p>
-            </div>
-            <div className="p-4 rounded-lg bg-secondary/30">
-              <p className="text-sm text-muted-foreground">Created</p>
-              <p className="font-semibold mt-1">
-                {new Date(organization.created_at).toLocaleDateString()}
-              </p>
-            </div>
-            <div className="p-4 rounded-lg bg-secondary/30">
-              <p className="text-sm text-muted-foreground">Updated</p>
-              <p className="font-semibold mt-1">
-                {new Date(organization.updated_at).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-        </Card>
+        <OrganizationUnitsPanel organizationId={organization.id} canManage={canManageSettings} />
 
-        <div className="flex flex-wrap gap-3">
-          <Button type="submit" size="lg" disabled={!canManageSettings || submitting}>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="submit" disabled={!canManageSettings || submitting} className="shadow-xs">
             {submitting ? "Saving..." : "Save Settings"}
           </Button>
           <Button
             type="button"
             variant="outline"
-            size="lg"
             onClick={() => navigate(getWorkspaceRoute(organization.slug))}
           >
             Back to Dashboard

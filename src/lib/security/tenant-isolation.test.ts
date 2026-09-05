@@ -125,6 +125,50 @@ describe("tenant isolation integration contract", () => {
     expect(data || []).toEqual([]);
   });
 
+  testIfConfigured("prevents tenant A from reading tenant B organization members", async () => {
+    const client = userClient(tenantAToken);
+    const { data, error } = await client
+      .from("organization_members")
+      .select("organization_id, user_id")
+      .eq("organization_id", tenantBId);
+
+    expect(error).toBeNull();
+    expect(data || []).toEqual([]);
+  });
+
+  testIfConfigured("prevents tenant A from reading tenant B properties", async () => {
+    const client = userClient(tenantAToken);
+    const { data, error } = await client
+      .from("properties")
+      .select("id, organization_id")
+      .eq("organization_id", tenantBId);
+
+    expect(error).toBeNull();
+    expect(data || []).toEqual([]);
+  });
+
+  testIfConfigured("prevents tenant A from reading tenant B listings", async () => {
+    const client = userClient(tenantAToken);
+    const { data, error } = await client
+      .from("listings")
+      .select("id, organization_id")
+      .eq("organization_id", tenantBId);
+
+    expect(error).toBeNull();
+    expect(data || []).toEqual([]);
+  });
+
+  testIfConfigured("prevents tenant B from reading tenant A organization record by id", async () => {
+    const client = userClient(tenantBToken);
+    const { data, error } = await client
+      .from("organizations")
+      .select("id, slug")
+      .eq("id", tenantAId);
+
+    expect(error).toBeNull();
+    expect(data || []).toEqual([]);
+  });
+
   testIfConfigured("prevents cross-tenant visitor pass reads", async () => {
     const clientA = userClient(tenantAToken);
     const { data: tenantAPasses } = await clientA

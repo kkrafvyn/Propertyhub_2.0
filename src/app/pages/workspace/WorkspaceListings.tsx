@@ -1,16 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router";
-import { Eye, Copy, ImagePlus, RotateCcw, SquarePen, Star, Trash2 } from "lucide-react";
+import { Eye, Copy, ImagePlus, RotateCcw, SquarePen, Star, Trash2, Building2, CheckCircle2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
+import { MetricCard } from "../../components/ui/MetricCard";
+import { EmptyState } from "../../components/ux/EmptyState";
 import { PropertyMediaPicker } from "../../components/PropertyMediaPicker";
 import { ListingQualityPanel } from "../../components/ListingQualityPanel";
 import { GhanaRegionInput } from "../../components/GhanaRegionInput";
 import type { Database } from "../../../lib/database.types";
 import type { MemberRole } from "../../../lib/workspace";
+import type { MemberScopeMode } from "../../../lib/member-scope";
+import { filterByPropertyScope } from "../../../lib/member-scope";
 import { canWorkspace } from "../../../lib/workspace-permissions";
 import { ghanaMarketService } from "../../../lib/ghana-market.service";
 import { getPropertyCoverImage, getPropertyMediaItems } from "../../../lib/property-media";
@@ -34,6 +38,9 @@ interface WorkspaceListingsProps {
   workspaceBasePath: string;
   currentUserId: string;
   currentRole: MemberRole | null;
+  scopeMode?: MemberScopeMode | null;
+  scopedPropertyIds?: string[] | null;
+  bypassPropertyScope?: boolean;
 }
 
 type ListingDraft = {
@@ -195,6 +202,9 @@ export function WorkspaceListings({
   workspaceBasePath,
   currentUserId,
   currentRole,
+  scopeMode = "organization",
+  scopedPropertyIds = null,
+  bypassPropertyScope = false,
 }: WorkspaceListingsProps) {
   const canWrite = canWorkspace(currentRole, "listings:write");
   const location = useLocation();
@@ -237,9 +247,15 @@ export function WorkspaceListings({
     try {
       setLoading(true);
       const data = await listingService.getOrganizationListings(organization.id);
-      setListings(data || []);
+      const scoped = filterByPropertyScope(
+        data || [],
+        scopeMode,
+        scopedPropertyIds,
+        bypassPropertyScope,
+      );
+      setListings(scoped);
       setDrafts(
-        (data || []).reduce<Record<string, ListingDraft>>((acc, listing) => {
+        scoped.reduce<Record<string, ListingDraft>>((acc, listing) => {
           acc[listing.id] = createDraft(listing);
           return acc;
         }, {})
@@ -595,62 +611,83 @@ export function WorkspaceListings({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Total</p>
-          <p className="text-2xl font-semibold mt-1">{stats.total}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Listed</p>
-          <p className="text-2xl font-semibold mt-1">{stats.listed}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Drafts</p>
-          <p className="text-2xl font-semibold mt-1">{stats.draft}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Featured</p>
-          <p className="text-2xl font-semibold mt-1">{stats.featured}</p>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          title="Total Properties"
+          value={stats.total}
+          icon={Building2}
+          iconColor="primary"
+          subtitle="All inventory in workspace"
+        />
+        <MetricCard
+          title="Active Listed"
+          value={stats.listed}
+          icon={CheckCircle2}
+          iconColor="emerald"
+          subtitle="Public on marketplace"
+        />
+        <MetricCard
+          title="Drafts & Staging"
+          value={stats.draft}
+          icon={FileText}
+          iconColor="amber"
+          subtitle="Pending review or media"
+        />
+        <MetricCard
+          title="Featured Showcase"
+          value={stats.featured}
+          icon={Star}
+          iconColor="terracotta"
+          subtitle="Promoted placement"
+        />
       </div>
 
       {canWrite && selectedListingIds.length > 0 ? (
-        <Card className="p-4 flex flex-wrap items-center gap-3">
-          <p className="text-sm font-medium">{selectedListingIds.length} selected</p>
-          <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("publish")}>
-            Publish
-          </Button>
-          <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("archive")}>
-            Archive
-          </Button>
-          <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("feature")}>
-            Feature
-          </Button>
-          <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("unfeature")}>
-            Unfeature
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelectedListingIds([])}>
-            Clear
-          </Button>
+        <Card className="p-4 flex flex-wrap items-center justify-between gap-3 border-surface-border bg-surface/90 backdrop-blur-md shadow-card">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
+              {selectedListingIds.length}
+            </span>
+            <p className="text-sm font-semibold text-ink">Properties selected</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("publish")}>
+              Publish
+            </Button>
+            <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("archive")}>
+              Archive
+            </Button>
+            <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("feature")}>
+              Feature
+            </Button>
+            <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("unfeature")}>
+              Unfeature
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelectedListingIds([])}>
+              Clear
+            </Button>
+          </div>
         </Card>
       ) : null}
 
       {loading ? (
-        <Card className="p-8 text-center text-muted-foreground">Loading listings...</Card>
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-40 rounded-2xl bg-surface-subtle animate-pulse border border-surface-border" />
+          ))}
+        </div>
       ) : listings.length === 0 ? (
-        <Card className="p-8 text-center">
-          <h2 className="text-xl font-semibold mb-2">No listings yet</h2>
-          <p className="text-muted-foreground mb-5">
-            {canWrite
-              ? "Add your first listing to start publishing inventory from this workspace."
-              : "No listings are visible in this workspace yet."}
-          </p>
-          {canWrite ? (
-            <Link to={`${workspaceBasePath}/new`}>
-              <Button>Create New Listing</Button>
-            </Link>
-          ) : null}
-        </Card>
+        <EmptyState
+          icon={Building2}
+          title="No listings yet"
+          description={
+            canWrite
+              ? "Add your first listing to start publishing inventory to the marketplace from this workspace."
+              : "No listings are visible in this workspace yet."
+          }
+          actionLabel={canWrite ? "Create New Listing" : undefined}
+          actionHref={canWrite ? `${workspaceBasePath}/new` : undefined}
+        />
       ) : (
         <div className="space-y-4">
           {listings.map((listing) => {
@@ -692,7 +729,7 @@ export function WorkspaceListings({
                           {listing.property?.city}, {listing.property?.region}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {currencyFormatter.format(listing.price)} · Quality {qualityReport.score}
+                          {currencyFormatter.format(listing.price)} - Quality {qualityReport.score}
                         </p>
                       </div>
                     </div>

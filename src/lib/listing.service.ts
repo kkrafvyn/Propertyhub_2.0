@@ -2,6 +2,7 @@ import { supabase } from "./supabase";
 import type { Database } from "./database.types";
 import { normalizePropertyCategory } from "./property-category";
 import { propertyService } from "./property.service";
+import { ensureEstateForPropertyId } from "./estate-property-link.service";
 import { propertyMatchesGhanaRegion } from "./ghana-regions";
 
 type ListingInsert = Database["public"]["Tables"]["listings"]["Insert"];
@@ -233,7 +234,15 @@ export const listingService = {
     const { data, error } = await supabase.from("listings").insert(listing).select();
 
     if (error) throw error;
-    return data[0];
+    const created = data[0];
+    if (created?.property_id) {
+      try {
+        await ensureEstateForPropertyId(created.property_id);
+      } catch (linkError) {
+        console.error("Failed to auto-link listing property to managed estate:", linkError);
+      }
+    }
+    return created;
   },
 
   async updateListing(id: string, updates: ListingUpdate) {

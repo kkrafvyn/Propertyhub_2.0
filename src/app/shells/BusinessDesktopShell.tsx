@@ -57,7 +57,7 @@ export function BusinessDesktopShell({ children, organizationName }: BusinessDes
     <div className="business-desktop-shell flex flex-col h-screen overflow-hidden bg-background text-foreground select-none">
       <header className="h-10 bg-card border-b border-border flex items-center justify-between px-3 shrink-0 text-xs">
         <div className="flex items-center gap-3 min-w-0">
-          <Logo className="scale-90" variant="workspace" />
+          <Logo className="scale-90" variant="workspace" to={workspaceBase} showText />
           <span className="font-semibold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 shrink-0">
             REOS WORKSTATION v{version}
           </span>

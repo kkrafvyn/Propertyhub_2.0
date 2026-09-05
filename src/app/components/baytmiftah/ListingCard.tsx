@@ -38,30 +38,31 @@ export function ListingCard({
 
   return (
     <Link to={`/property/${listing.id}`} className={`group block ${widthClass}`}>
-      <div className="relative aspect-square overflow-hidden rounded-[var(--radius-listing)] bg-surface-subtle shadow-card transition-all duration-300 group-hover:shadow-card-hover">
+      <div className="relative aspect-square overflow-hidden rounded-[var(--radius-listing)] bg-surface-subtle shadow-card transition-all duration-300 group-hover:shadow-card-hover group-hover:-translate-y-0.5">
         {photos.map((src, i) => (
           <img
             key={`${src}-${i}`}
             src={src}
             alt={listing.title}
             loading={i === 0 ? "lazy" : undefined}
-            className={`absolute inset-0 h-full w-full object-cover transition-all duration-500 ease-out group-hover:scale-[1.04] ${
+            className={`absolute inset-0 h-full w-full object-cover transition-all duration-500 ease-out group-hover:scale-[1.05] ${
               i === photoIndex ? "opacity-100" : "opacity-0"
             }`}
           />
         ))}
 
-        {/* Ambient gradient vignette for contrast */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 opacity-60 transition-opacity duration-300 group-hover:opacity-75" />
+        {/* Ambient gradient vignette for contrast and specular sheen */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 opacity-60 transition-opacity duration-300 group-hover:opacity-75" />
+        <div className="pointer-events-none absolute inset-0 rounded-[var(--radius-listing)] ring-1 ring-inset ring-white/15 dark:ring-white/10" />
 
         {listing.featured && (
-          <span className="absolute left-3 top-3 rounded-full bg-surface/90 backdrop-blur-md px-3 py-1 text-xs font-semibold text-ink shadow-sm border border-surface-border/50">
+          <span className="absolute left-3 top-3 rounded-full bg-surface/90 dark:bg-surface/85 backdrop-blur-md px-3 py-1 text-xs font-semibold text-ink shadow-sm border border-surface-border/50">
             Guest favourite
           </span>
         )}
 
         {listing.marketLabel ? (
-          <span className="absolute left-3 bottom-14 max-w-[85%] truncate rounded-full bg-black/45 backdrop-blur-md px-2.5 py-1 text-[10px] font-medium text-white">
+          <span className="absolute left-3 bottom-14 max-w-[85%] truncate rounded-full bg-black/50 backdrop-blur-md px-2.5 py-1 text-[10px] font-medium text-white border border-white/10">
             {listing.marketLabel}
           </span>
         ) : null}
@@ -74,7 +75,7 @@ export function ListingCard({
               e.stopPropagation();
               onToggleSave(listing.id);
             }}
-            className="absolute right-3 top-3 rounded-full p-2 transition-all duration-200 hover:scale-110 active:scale-90 bg-black/30 hover:bg-black/50 backdrop-blur-md border border-white/20 shadow-sm"
+            className="absolute right-3 top-3 rounded-full p-2 transition-all duration-200 hover:scale-110 active:scale-95 bg-black/35 hover:bg-black/55 backdrop-blur-md border border-white/20 shadow-sm"
             aria-label={saved ? "Remove from saved" : "Save property"}
           >
             <Heart
@@ -86,7 +87,7 @@ export function ListingCard({
         )}
 
         {listingTypeLabel && (
-          <span className="absolute bottom-3 left-3 rounded-full bg-surface/90 backdrop-blur-md px-3 py-1 text-xs font-medium text-ink shadow-sm border border-surface-border/50">
+          <span className="absolute bottom-3 left-3 rounded-full bg-surface/90 dark:bg-surface/85 backdrop-blur-md px-3 py-1 text-xs font-medium text-ink shadow-sm border border-surface-border/50">
             {listingTypeLabel}
           </span>
         )}
@@ -164,7 +165,7 @@ export function ListingCard({
         <p className="truncate text-sm text-ink-secondary">{listing.title}</p>
         <p className="truncate text-xs sm:text-sm text-ink-muted">
           {listing.bedrooms ? `${listing.bedrooms} beds` : listing.type}
-          {listingTypeLabel ? ` · ${listingTypeLabel}` : ""}
+          {listingTypeLabel ? ` - ${listingTypeLabel}` : ""}
         </p>
         <p className="pt-0.5 text-[15px] text-ink">
           <span className="font-bold tracking-tight">{listing.priceLabel}</span>
@@ -179,7 +180,7 @@ export function ListingCardSkeleton({ compact = false }: { compact?: boolean }) 
     <div
       className={`animate-pulse ${compact ? "w-[min(100%,320px)] shrink-0 sm:w-[300px] lg:w-[320px]" : "w-full"}`}
     >
-      <div className="aspect-square rounded-[var(--radius-listing)] bg-surface-subtle" />
+      <div className="aspect-square rounded-[var(--radius-listing)] bg-surface-subtle border border-surface-border/50" />
       <div className="mt-3 space-y-2">
         <div className="h-4 w-3/4 rounded bg-surface-subtle" />
         <div className="h-3 w-1/2 rounded bg-surface-subtle" />

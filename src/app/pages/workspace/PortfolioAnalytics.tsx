@@ -14,11 +14,21 @@ import { Badge } from "../../components/ui/badge";
 import { estateOperationsService, type ManagedEstate } from "../../../lib/estate-operations.service";
 import { summarizeEstateLedger } from "../../../lib/estate-ledger";
 import { estateReportingService, type BudgetVariance } from "../../../lib/estate-reporting.service";
+import {
+  filterEstatesByPropertyScope,
+  type MemberScopeProps,
+  withMemberScopeDefaults,
+} from "../../../lib/member-scope";
 
 const money = (minor = 0, currency = "GHS") =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency, maximumFractionDigits: 0 }).format(minor / 100);
 
-export function PortfolioAnalytics({ organizationId }: { organizationId?: string }) {
+export function PortfolioAnalytics({
+  organizationId,
+  scopeMode = "organization",
+  scopedPropertyIds = null,
+  bypassPropertyScope = false,
+}: { organizationId?: string } & MemberScopeProps) {
   const [loading, setLoading] = useState(true);
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [unitCounts, setUnitCounts] = useState<Record<string, number>>({});
@@ -43,7 +53,13 @@ export function PortfolioAnalytics({ organizationId }: { organizationId?: string
     void (async () => {
       try {
         setLoading(true);
-        const estateRows = await estateOperationsService.getEstates(organizationId);
+        const scope = withMemberScopeDefaults({ scopeMode, scopedPropertyIds, bypassPropertyScope });
+        const estateRows = filterEstatesByPropertyScope(
+          await estateOperationsService.getEstates(organizationId),
+          scope.scopeMode,
+          scope.scopedPropertyIds,
+          scope.bypassPropertyScope,
+        );
         const units = await estateOperationsService.getUnits(estateRows.map((e) => e.id));
         const charges = await estateOperationsService.getCharges(units.map((u) => u.id));
 
@@ -75,7 +91,7 @@ export function PortfolioAnalytics({ organizationId }: { organizationId?: string
         setLoading(false);
       }
     })();
-  }, [organizationId, periodStart, periodEnd]);
+  }, [organizationId, periodStart, periodEnd, scopeMode, scopedPropertyIds, bypassPropertyScope]);
 
   const currency = estates[0]?.currency || "GHS";
   const totalUnits = Object.values(unitCounts).reduce((sum, n) => sum + n, 0);

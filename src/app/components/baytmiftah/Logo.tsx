@@ -1,10 +1,12 @@
 import { Link } from "react-router";
 import { useTheme } from "../../context/ThemeContext";
 import { isBusinessMobileApp } from "../../../lib/mobile-app";
+import { isDesktopWorkspaceApp } from "../../../lib/desktop-app";
 import { BRAND_NAME, SPLASH_WORDMARK } from "./splash/constants";
 
 const BRAND_GREEN = "#0F2922";
 const WORKSPACE_NAVY = "#0B2545";
+const DESKTOP_LOGO_SRC = `${import.meta.env.BASE_URL}brand/app-icon-workspace.svg`;
 
 export type LogoVariant = "default" | "workspace";
 
@@ -73,6 +75,7 @@ interface LogoProps {
   size?: "sm" | "md";
   inverted?: boolean;
   variant?: LogoVariant;
+  disableLink?: boolean;
 }
 
 export function Logo({
@@ -82,9 +85,11 @@ export function Logo({
   size = "md",
   inverted = false,
   variant,
+  disableLink = false,
 }: LogoProps) {
   const { resolvedTheme } = useTheme();
   const logoVariant = resolveLogoVariant(variant);
+  const useDesktopAsset = isDesktopWorkspaceApp();
   const textSize = size === "sm" ? "text-sm" : "text-lg";
   const markSize = size === "sm" ? "h-8 w-8" : "h-9 w-9";
   const textColor =
@@ -96,13 +101,18 @@ export function Logo({
         ? "text-white"
         : "text-brand-forest";
 
-  return (
-    <Link
-      to={to}
-      aria-label={BRAND_NAME}
-      className={`flex shrink-0 items-center gap-2.5 ${className}`}
-    >
-      <LogoMark className={markSize} inverted={inverted} variant={logoVariant} />
+  const content = (
+    <>
+      {useDesktopAsset ? (
+        <img
+          src={DESKTOP_LOGO_SRC}
+          alt=""
+          className={`${markSize} shrink-0 rounded-[10px] object-cover`}
+          aria-hidden="true"
+        />
+      ) : (
+        <LogoMark className={markSize} inverted={inverted} variant={logoVariant} />
+      )}
       {showText && (
         <span
           className={`${textSize} font-bold tracking-[0.08em] ${textColor}`}
@@ -111,6 +121,24 @@ export function Logo({
           {SPLASH_WORDMARK}
         </span>
       )}
+    </>
+  );
+
+  if (disableLink) {
+    return (
+      <div className={`flex shrink-0 items-center gap-2.5 ${className}`} aria-label={BRAND_NAME}>
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      to={to}
+      aria-label={BRAND_NAME}
+      className={`flex shrink-0 items-center gap-2.5 ${className}`}
+    >
+      {content}
     </Link>
   );
 }

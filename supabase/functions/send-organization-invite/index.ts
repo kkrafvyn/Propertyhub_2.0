@@ -2,7 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { getAllowedOrigins, isAllowedAppUrl } from "../_shared/security.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 
-type InviteRole = "manager" | "agent" | "analyst";
+type InviteRole = string;
 
 function jsonResponse(status: number, body: Record<string, unknown>, req: Request) {
   return new Response(JSON.stringify(body), {
@@ -19,7 +19,10 @@ function normalizeEmail(value: string) {
 }
 
 function isInviteRole(value: string): value is InviteRole {
-  return value === "manager" || value === "agent" || value === "analyst";
+  const role = value.trim();
+  if (!role) return false;
+  if (role === "owner") return false;
+  return /^[a-z0-9_]+$/.test(role);
 }
 
 function getAppUrl(req: Request, explicitAppUrl?: string) {
@@ -129,8 +132,8 @@ Deno.serve(async (req) => {
     return jsonResponse(500, { error: "Unable to verify organization membership" }, req);
   }
 
-  if (!membership || !["owner", "manager"].includes(membership.role)) {
-    return jsonResponse(403, { error: "Only owners and managers can send invites" }, req);
+  if (!membership || !["owner", "manager", "organization_admin", "managing_director"].includes(membership.role)) {
+    return jsonResponse(403, { error: "You don't have permission to send invites" }, req);
   }
 
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();

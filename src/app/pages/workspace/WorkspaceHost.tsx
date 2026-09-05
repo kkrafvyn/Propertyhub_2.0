@@ -14,6 +14,11 @@ import { messageService } from "../../../lib/message.service";
 import { organizationWalletService } from "../../../lib/organization-wallet.service";
 import { paymentService } from "../../../lib/payment.service";
 import { walletService } from "../../../lib/wallet.service";
+import {
+  filterByPropertyScope,
+  type MemberScopeProps,
+  withMemberScopeDefaults,
+} from "../../../lib/member-scope";
 
 function formatMoney(amountMinor?: number | null, currency = "GHS") {
   return walletService.formatWalletAmount(amountMinor, currency);
@@ -45,7 +50,12 @@ function buildMonthDays(monthOffset: number) {
   return { days, label: anchor.toLocaleDateString(undefined, { month: "long", year: "numeric" }) };
 }
 
-export function WorkspaceHost({ organizationId }: { organizationId: string }) {
+export function WorkspaceHost({
+  organizationId,
+  scopeMode = "organization",
+  scopedPropertyIds = null,
+  bypassPropertyScope = false,
+}: { organizationId: string } & MemberScopeProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [listings, setListings] = useState<any[]>([]);
@@ -137,12 +147,24 @@ export function WorkspaceHost({ organizationId }: { organizationId: string }) {
         organizationWalletService.getOrganizationPayoutRequests(organizationId),
         organizationWalletService.getOrganizationLedger(organizationId),
       ]);
-      setListings(listingRows || []);
-      setBookings(bookingRows || []);
-      setReviews(reviewRows || []);
+      const scope = withMemberScopeDefaults({
+        scopeMode,
+        scopedPropertyIds,
+        bypassPropertyScope,
+      });
+      const scopedListings = filterByPropertyScope(
+        listingRows || [],
+        scope.scopeMode,
+        scope.scopedPropertyIds,
+        scope.bypassPropertyScope,
+      );
+      const allowedListingIds = new Set(scopedListings.map((listing) => listing.id));
+      setListings(scopedListings);
+      setBookings((bookingRows || []).filter((booking) => allowedListingIds.has(booking.listing_id)));
+      setReviews((reviewRows || []).filter((review) => allowedListingIds.has(review.listing_id)));
       setPayoutRequests(payoutRows || []);
       setWalletLedger(ledgerRows || []);
-      const firstShortStay = (listingRows || []).find(
+      const firstShortStay = scopedListings.find(
         (listing) => listing.listing_type === "short_stay"
       );
       if (firstShortStay && !selectedListingId) {
@@ -158,7 +180,7 @@ export function WorkspaceHost({ organizationId }: { organizationId: string }) {
 
   useEffect(() => {
     void loadHostData();
-  }, [organizationId]);
+  }, [organizationId, scopeMode, scopedPropertyIds, bypassPropertyScope]);
 
   useEffect(() => {
     if (!selectedListingId) {

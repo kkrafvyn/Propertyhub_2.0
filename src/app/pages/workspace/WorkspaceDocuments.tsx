@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, FileSignature, Globe, History, PenSquare, Plus, Upload } from "lucide-react";
+import { Download, FileSignature, Globe, History, PenSquare, Plus, Upload, FileText, FileCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { MetricCard } from "../../components/ui/MetricCard";
+import { EmptyState } from "../../components/ux/EmptyState";
 import {
   Dialog,
   DialogContent,
@@ -356,22 +358,34 @@ export function WorkspaceDocuments({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Document Families</p>
-          <p className="text-2xl font-semibold mt-1">{metrics.total}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Signed Documents</p>
-          <p className="text-2xl font-semibold mt-1">{metrics.signed}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Public Trust Docs</p>
-          <p className="text-2xl font-semibold mt-1">{metrics.publicDocs}</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Contracts</p>
-          <p className="text-2xl font-semibold mt-1">{metrics.contracts}</p>
-        </Card>
+        <MetricCard
+          title="Document Families"
+          value={metrics.total}
+          subtitle="Active document clusters"
+          icon={<FileText className="w-5 h-5" />}
+          iconColor="primary"
+        />
+        <MetricCard
+          title="Signed Documents"
+          value={metrics.signed}
+          subtitle="Audited agreements"
+          icon={<FileCheck className="w-5 h-5" />}
+          iconColor="emerald"
+        />
+        <MetricCard
+          title="Public Trust Docs"
+          value={metrics.publicDocs}
+          subtitle="Shared external compliance"
+          icon={<Globe className="w-5 h-5" />}
+          iconColor="indigo"
+        />
+        <MetricCard
+          title="Contracts"
+          value={metrics.contracts}
+          subtitle="Binding deal forms"
+          icon={<FileSignature className="w-5 h-5" />}
+          iconColor="amber"
+        />
       </div>
 
       <Card className="p-6">
@@ -385,9 +399,18 @@ export function WorkspaceDocuments({
         {loading ? (
           <div className="py-10 text-center text-muted-foreground">Loading documents...</div>
         ) : groupedDocuments.length === 0 ? (
-          <div className="py-10 text-center text-muted-foreground">
-            No documents yet. Create your first agreement or offer letter to get started.
-          </div>
+          <EmptyState
+            icon={FileText}
+            title="No documents yet"
+            description="Create your first agreement, lease template, or offer letter to get started."
+            action={{
+              label: "Create Document",
+              onClick: () => {
+                resetDraft();
+                setDialogOpen(true);
+              },
+            }}
+          />
         ) : (
           <div className="space-y-4">
             {groupedDocuments.map((group) => {

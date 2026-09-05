@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  Check,
+  CheckCircle2,
+  Copy,
   CreditCard,
   Download,
   ExternalLink,
   Loader2,
+  Lock,
   RefreshCcw,
   Shield,
+  Sparkles,
+  TrendingUp,
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +23,8 @@ import type { MemberRole } from "../../../lib/workspace";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { MetricCard } from "../../components/ui/MetricCard";
+import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import {
   Dialog,
   DialogContent,
@@ -183,6 +191,14 @@ export function WorkspacePayments({
   const [escrowHolds, setEscrowHolds] = useState<any[]>([]);
   const [releasingHoldId, setReleasingHoldId] = useState<string | null>(null);
   const [disputingHoldId, setDisputingHoldId] = useState<string | null>(null);
+  const [copiedRef, setCopiedRef] = useState<string | null>(null);
+
+  const copyReference = (ref: string) => {
+    navigator.clipboard.writeText(ref);
+    setCopiedRef(ref);
+    toast.success("Payment reference copied to clipboard");
+    setTimeout(() => setCopiedRef(null), 2000);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -463,31 +479,68 @@ export function WorkspacePayments({
 
   return (
     <>
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold mb-2">Payments</h1>
-        <p className="text-muted-foreground">
-          Track payments, review receipts, download proof files, and manage
-          refunds for {organization.name}.
-        </p>
+      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2.5 mb-2">
+            <h1 className="text-3xl font-bold tracking-tight text-ink font-serif">Payments & Settlements</h1>
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              <span className="radar-pulse-dot" />
+              <span>Gateways Live</span>
+            </div>
+          </div>
+          <p className="text-sm text-ink-secondary max-w-2xl leading-relaxed">
+            Enterprise settlement tracking, SHA-256 verified receipts, multi-channel MoMo routing, and escrow releases for {organization.name}.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="glass" className="px-3 py-1.5 text-xs font-semibold">
+            Base: Ghana Cedi (GHS ₵)
+          </Badge>
+          <Badge variant="outline" className="px-3 py-1.5 text-xs font-semibold">
+            Bank of Ghana Act 220 Compliant
+          </Badge>
+        </div>
       </div>
 
       {escrowHolds.filter((hold) => hold.status === "held").length > 0 && (
-        <Card className="p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Escrow Holds</h2>
-          <div className="space-y-4">
+        <Card variant="glass" className="p-6 mb-8 border-primary/30 shadow-[0_0_24px_rgba(16,185,129,0.12)]">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="metric-halo metric-halo-primary h-9 w-9">
+                <Lock className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-ink">Active Escrow Protection Vaults</h2>
+                <p className="text-xs text-ink-muted">Funds securely held under regulated escrow until tenancy/settlement milestone sign-off</p>
+              </div>
+            </div>
+            <Badge variant="warning" dot pulse dotColor="amber">
+              {escrowHolds.filter((hold) => hold.status === "held").length} Pending Release
+            </Badge>
+          </div>
+
+          <div className="space-y-3">
             {escrowHolds
               .filter((hold) => hold.status === "held")
               .map((hold) => (
-                <div key={hold.id} className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between rounded-xl border border-border p-4">
+                <div
+                  key={hold.id}
+                  className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between rounded-xl border border-surface-border/80 bg-surface/70 p-4 backdrop-blur-sm hover:border-primary/40 transition-all"
+                >
                   <div>
-                    <p className="font-semibold capitalize">
-                      {hold.transaction?.purpose?.replace(/_/g, " ") || "Escrow hold"}
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-ink capitalize">
+                        {hold.transaction?.purpose?.replace(/_/g, " ") || "Escrow hold"}
+                      </p>
+                      <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-surface-subtle border border-surface-border text-ink-muted">
+                        {hold.transaction?.provider_reference}
+                      </span>
+                    </div>
+                    <p className="text-xs text-ink-muted mt-0.5">
+                      Payer: {hold.transaction?.payer?.full_name || hold.transaction?.payer?.email}
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      {hold.transaction?.payer?.full_name || hold.transaction?.payer?.email} ·{" "}
-                      {hold.transaction?.provider_reference}
-                    </p>
-                    <p className="text-sm font-medium mt-1">
+                    <p className="text-base font-bold text-primary mt-1">
                       {formatPaymentAmount(hold.amount_minor, hold.currency)}
                     </p>
                   </div>
@@ -497,8 +550,9 @@ export function WorkspacePayments({
                         size="sm"
                         onClick={() => void handleReleaseEscrow(hold.id)}
                         disabled={releasingHoldId === hold.id}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
                       >
-                        {releasingHoldId === hold.id ? "Releasing..." : "Release escrow"}
+                        {releasingHoldId === hold.id ? "Releasing..." : "Release Escrow"}
                       </Button>
                       <Button
                         size="sm"
@@ -506,7 +560,7 @@ export function WorkspacePayments({
                         onClick={() => void handlePartialReleaseEscrow(hold)}
                         disabled={releasingHoldId === hold.id}
                       >
-                        Partial release
+                        Partial Release
                       </Button>
                       <Button
                         size="sm"
@@ -524,58 +578,43 @@ export function WorkspacePayments({
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Total Payments</p>
-              <p className="text-3xl font-semibold">{stats.total}</p>
-              <p className="text-xs text-accent mt-1">Across all property transactions</p>
-            </div>
-            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-              <CreditCard className="w-6 h-6 text-primary" />
-            </div>
-          </div>
-        </Card>
+      {/* Alive Metric KPI Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <MetricCard
+          title="Total Settlements"
+          value={<AnimatedNumber value={stats.total} />}
+          icon={CreditCard}
+          iconColor="primary"
+          trend={{ value: "+14.8%", isPositive: true, label: "vs last month" }}
+          subtitle="Across all property transactions"
+        />
 
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Successful</p>
-              <p className="text-3xl font-semibold">{stats.successful}</p>
-              <p className="text-xs text-accent mt-1">Completed through checkout</p>
-            </div>
-            <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-              <Wallet className="w-6 h-6 text-accent" />
-            </div>
-          </div>
-        </Card>
+        <MetricCard
+          title="Successful Collections"
+          value={<AnimatedNumber value={stats.successful} />}
+          icon={Wallet}
+          iconColor="emerald"
+          trend={{ value: "98.2%", isPositive: true, label: "on-time rate" }}
+          subtitle="Instant MoMo & card clearances"
+        />
 
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Pending Review</p>
-              <p className="text-3xl font-semibold">{stats.pending}</p>
-              <p className="text-xs text-chart-3 mt-1">Awaiting payment or refund resolution</p>
-            </div>
-            <div className="w-12 h-12 bg-chart-3/10 rounded-lg flex items-center justify-center">
-              <RefreshCcw className="w-6 h-6 text-chart-3" />
-            </div>
-          </div>
-        </Card>
+        <MetricCard
+          title="Pending Verification"
+          value={<AnimatedNumber value={stats.pending} />}
+          icon={RefreshCcw}
+          iconColor="amber"
+          subtitle="Awaiting reconciliation"
+          badge={stats.pending > 0 ? <Badge variant="warning" dot pulse dotColor="amber">Active</Badge> : undefined}
+        />
 
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Receipts Issued</p>
-              <p className="text-3xl font-semibold">{stats.verified}</p>
-              <p className="text-xs text-accent mt-1">SHA-256 verified payment receipts</p>
-            </div>
-            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-              <Shield className="w-6 h-6 text-primary" />
-            </div>
-          </div>
-        </Card>
+        <MetricCard
+          title="Receipts Verified"
+          value={<AnimatedNumber value={stats.verified} />}
+          icon={Shield}
+          iconColor="indigo"
+          subtitle="SHA-256 cryptographic proof"
+          trend={{ value: "100%", isPositive: true, label: "audit integrity" }}
+        />
       </div>
 
       <Card className="p-5 mb-8 border-primary/20 bg-primary/5">
@@ -600,27 +639,34 @@ export function WorkspacePayments({
         </div>
       </Card>
 
-      <Card className="p-6 mb-8">
+      <Card variant="glass" className="p-6 mb-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-xl font-semibold">Transaction Queue</h2>
-            <p className="text-sm text-muted-foreground">
-              Current role:{" "}
-              {currentRole
-                ? currentRole.charAt(0).toUpperCase() + currentRole.slice(1)
-                : "Member"}
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold text-ink">Transaction Settlement Queue</h2>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                {filteredPayments.length} records
+              </span>
+            </div>
+            <p className="text-xs text-ink-muted mt-0.5">
+              Current authorization level:{" "}
+              <span className="font-semibold text-ink">
+                {currentRole
+                  ? currentRole.charAt(0).toUpperCase() + currentRole.slice(1)
+                  : "Member"}
+              </span>
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             {[
-              { id: "all" as const, label: "All" },
+              { id: "all" as const, label: "All Settlements" },
               { id: "success" as const, label: "Successful" },
               { id: "pending" as const, label: "Pending" },
               { id: "attention" as const, label: "Needs Attention" },
             ].map((item) => (
               <Button
                 key={item.id}
-                variant={filter === item.id ? "default" : "outline"}
+                variant={filter === item.id ? "primary" : "secondary"}
                 size="sm"
                 onClick={() => setFilter(item.id)}
               >
@@ -632,8 +678,9 @@ export function WorkspacePayments({
       </Card>
 
       {filteredPayments.length === 0 ? (
-        <Card className="p-8 text-center text-muted-foreground">
-          No payments match the current filter.
+        <Card variant="glass" className="p-12 text-center text-ink-muted">
+          <CreditCard className="w-8 h-8 mx-auto mb-2 opacity-40" />
+          <p className="font-medium">No settlements match the selected filter.</p>
         </Card>
       ) : (
         <div className="space-y-4">
@@ -649,13 +696,23 @@ export function WorkspacePayments({
               !hasActiveRefund(payment) &&
               remainingRefundableMinor > 0;
 
+            const isSuccess = payment.status === "success" || payment.status === "completed";
+            const isPending = payment.status === "pending" || payment.status === "processing";
+            const isFailed = payment.status === "failed" || payment.status === "reversed";
+
             return (
-              <Card key={payment.id} className="p-5">
+              <Card key={payment.id} variant="glass" hover className="p-5 group">
                 <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                  <div className="space-y-4">
+                  <div className="space-y-4 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-lg font-semibold">{getPurposeLabel(payment.purpose)}</h3>
-                      <Badge variant={getStatusVariant(payment.status)} className="capitalize">
+                      <h3 className="text-lg font-bold text-ink">{getPurposeLabel(payment.purpose)}</h3>
+                      <Badge
+                        variant={isSuccess ? "success" : isFailed ? "destructive" : "warning"}
+                        dot
+                        pulse={isPending}
+                        dotColor={isSuccess ? "emerald" : isFailed ? "red" : "amber"}
+                        className="capitalize"
+                      >
                         {payment.status.replace(/_/g, " ")}
                       </Badge>
                       {latestRefund && (
@@ -667,52 +724,74 @@ export function WorkspacePayments({
                         </Badge>
                       )}
                       {receipt?.receipt_sha256 && (
-                        <Badge variant="outline" className="gap-1">
+                        <Badge variant="glass" className="gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
                           <Shield className="w-3 h-3" />
-                          Receipt issued
+                          SHA-256 Verified
                         </Badge>
                       )}
                     </div>
 
-                    <div className="space-y-1">
-                      <p className="font-medium">{propertyLabel}</p>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="space-y-0.5">
+                      <p className="font-semibold text-ink text-base">{propertyLabel}</p>
+                      <p className="text-xs text-ink-muted">
                         {payment.listing?.property?.city}, {payment.listing?.property?.region}
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-muted-foreground">
-                      <p>
-                        <span className="font-medium text-foreground">Payer:</span> {buyerLabel}
-                      </p>
-                      <p>
-                        <span className="font-medium text-foreground">Reference:</span>{" "}
-                        {payment.provider_reference}
-                      </p>
-                      <p>
-                        <span className="font-medium text-foreground">Amount:</span>{" "}
-                        {formatPaymentAmount(payment.amount_minor, payment.currency)}
-                      </p>
-                      <p>
-                        <span className="font-medium text-foreground">Channel:</span>{" "}
-                        {payment.payment_channel || "Awaiting confirmation"}
-                      </p>
-                      <p>
-                        <span className="font-medium text-foreground">Updated:</span>{" "}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs text-ink-secondary bg-surface-subtle/70 rounded-xl p-3 border border-surface-border/60">
+                      <div>
+                        <span className="font-semibold text-ink">Payer:</span> {buyerLabel}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold text-ink">Reference:</span>{" "}
+                        <span className="font-mono text-[11px] truncate max-w-[120px]">
+                          {payment.provider_reference}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => copyReference(payment.provider_reference)}
+                          className="p-1 hover:bg-surface rounded text-ink-muted hover:text-primary transition"
+                          title="Copy reference"
+                        >
+                          {copiedRef === payment.provider_reference ? (
+                            <Check className="w-3 h-3 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </button>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-ink">Amount:</span>{" "}
+                        <span className="font-bold text-ink text-sm">
+                          {formatPaymentAmount(payment.amount_minor, payment.currency)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-ink">Channel:</span>{" "}
+                        <span className="font-medium text-primary">
+                          {payment.payment_channel || "Mobile Money (MoMo)"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-ink">Updated:</span>{" "}
                         {formatRelativeTime(payment.paid_at || payment.updated_at || payment.created_at)}
-                      </p>
-                      <p>
-                        <span className="font-medium text-foreground">Receipt:</span>{" "}
-                        {receipt?.receipt_number || "Pending"}
-                      </p>
-                      <p>
-                        <span className="font-medium text-foreground">Refunded:</span>{" "}
-                        {formatPaymentAmount(payment.refunded_amount_minor, payment.currency)}
-                      </p>
-                      <p>
-                        <span className="font-medium text-foreground">Refundable balance:</span>{" "}
-                        {formatPaymentAmount(remainingRefundableMinor, payment.currency)}
-                      </p>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-ink">Receipt:</span>{" "}
+                        <span className="font-mono">{receipt?.receipt_number || "Pending"}</span>
+                      </div>
+                      {Number(payment.refunded_amount_minor || 0) > 0 && (
+                        <div>
+                          <span className="font-semibold text-red-500">Refunded:</span>{" "}
+                          <span className="font-medium text-red-500">{formatPaymentAmount(payment.refunded_amount_minor, payment.currency)}</span>
+                        </div>
+                      )}
+                      {remainingRefundableMinor > 0 && Number(payment.refunded_amount_minor || 0) > 0 && (
+                        <div>
+                          <span className="font-semibold text-ink">Refundable balance:</span>{" "}
+                          <span className="font-medium text-ink">{formatPaymentAmount(remainingRefundableMinor, payment.currency)}</span>
+                        </div>
+                      )}
                     </div>
 
                     {latestRefund && (

@@ -20,10 +20,25 @@ import {
 import { allocateOldestFirst, summarizeEstateLedger } from "../../../lib/estate-ledger";
 import type { EstateChargeRow } from "../../../lib/estate-ledger";
 import { vendorService } from "../../../lib/vendor.service";
+import { propertyService } from "../../../lib/property.service";
+import {
+  filterEstatesByPropertyScope,
+  filterByPropertyScope,
+  type MemberScopeProps,
+  withMemberScopeDefaults,
+} from "../../../lib/member-scope";
+import {
+  canApproveAmount,
+  formatApprovalLimit,
+  getApprovalLimitMinor,
+  resolveWorkOrderApprovalAmountMinor,
+  type MemberApprovalProfile,
+} from "../../../lib/authorization.service";
 
-interface EstateOperationsProps {
+interface EstateOperationsProps extends MemberScopeProps {
   organizationId: string;
   currentUserId: string;
+  memberApprovalProfile?: MemberApprovalProfile | null;
 }
 
 const issueStatusLabel = (status: EstateIssue["status"]) => status.replace(/_/g, " ");
@@ -31,7 +46,14 @@ const workOrderStatusLabel = (status: EstateWorkOrder["status"]) => status.repla
 const formatMoneyIn = (amountMinor: number, currency: string) =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency }).format(amountMinor / 100);
 
-export function EstateOperations({ organizationId, currentUserId }: EstateOperationsProps) {
+export function EstateOperations({
+  organizationId,
+  currentUserId,
+  memberApprovalProfile = null,
+  scopeMode = "organization",
+  scopedPropertyIds = null,
+  bypassPropertyScope = false,
+}: EstateOperationsProps) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
@@ -45,6 +67,10 @@ export function EstateOperations({ organizationId, currentUserId }: EstateOperat
   const [selectedEstateId, setSelectedEstateId] = useState("");
   const [selectedWorkOrderId, setSelectedWorkOrderId] = useState("");
   const [estateName, setEstateName] = useState("");
+  const [selectedPropertyId, setSelectedPropertyId] = useState("");
+  const [orgProperties, setOrgProperties] = useState<
+    Array<{ id: string; address?: string | null; city?: string | null; region?: string | null }>
+  >([]);
   const [unitIdentifier, setUnitIdentifier] = useState("");
   const [issueTitle, setIssueTitle] = useState("");
   const [issueCategory, setIssueCategory] = useState("maintenance");
@@ -81,7 +107,13 @@ export function EstateOperations({ organizationId, currentUserId }: EstateOperat
   const refresh = async () => {
     try {
       setLoading(true);
-      const estateRows = await estateOperationsService.getEstates(organizationId);
+      const scope = withMemberScopeDefaults({ scopeMode, scopedPropertyIds, bypassPropertyScope });
+      const estateRows = filterEstatesByPropertyScope(
+        await estateOperationsService.getEstates(organizationId),
+        scope.scopeMode,
+        scope.scopedPropertyIds,
+        scope.bypassPropertyScope,
+      );
       const estateIds = estateRows.map((estate) => estate.id);
       const [unitRows, issueRows, vendorRows] = await Promise.all([
         estateOperationsService.getUnits(estateIds),
@@ -103,6 +135,20 @@ export function EstateOperations({ organizationId, currentUserId }: EstateOperat
       setWorkOrders(workOrderRows);
       setPlans(planRows);
       setVendors(vendorRows || []);
+      const propertyRows = filterByPropertyScope(
+        (await propertyService.getOrganizationProperties(organizationId)) || [],
+        scope.scopeMode,
+        scope.scopedPropertyIds,
+        scope.bypassPropertyScope,
+      );
+      setOrgProperties(
+        propertyRows.map((property) => ({
+          id: property.id,
+          address: property.address,
+          city: property.city,
+          region: property.region,
+        })),
+      );
       setSelectedEstateId((current) => current || estateRows[0]?.id || "");
       setSelectedWorkOrderId((current) => current || workOrderRows[0]?.id || "");
     } catch (error) {
@@ -148,13 +194,36 @@ export function EstateOperations({ organizationId, currentUserId }: EstateOperat
   const paymentUnitCharges = useMemo(() => charges.filter((charge) => charge.unit_id === paymentUnitId), [charges, paymentUnitId]);
   const selectedWorkOrderQuoteTotal = selectedWorkOrder?.quotes?.reduce((sum, quote) => sum + quote.amount_minor, 0) || 0;
 
+  const linkedPropertyIds = useMemo(
+    () => new Set(estates.map((estate) => estate.property_id).filter(Boolean) as string[]),
+    [estates],
+  );
+
+  const propertyLabel = (property: { id: string; address?: string | null; city?: string | null }) => {
+    const parts = [property.address, property.city].filter(Boolean);
+    return parts.length ? parts.join(", ") : `Property ${property.id.slice(0, 8)}`;
+  };
+
   const createEstate = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!estateName.trim()) return;
+    if (selectedPropertyId && linkedPropertyIds.has(selectedPropertyId)) {
+      toast.error("This property is already linked to an estate.");
+      return;
+    }
+    const selectedProperty = orgProperties.find((property) => property.id === selectedPropertyId);
     try {
       setSubmitting(true);
-      const estate = await estateOperationsService.createEstate({ organizationId, name: estateName });
+      const estate = await estateOperationsService.createEstate({
+        organizationId,
+        name: estateName,
+        propertyId: selectedPropertyId || undefined,
+        address: selectedProperty?.address || undefined,
+        city: selectedProperty?.city || undefined,
+        region: selectedProperty?.region || undefined,
+      });
       setEstateName("");
+      setSelectedPropertyId("");
       setSelectedEstateId(estate.id);
       toast.success("Estate added to BaytMiftah.");
       await refresh();
@@ -472,6 +541,26 @@ export function EstateOperations({ organizationId, currentUserId }: EstateOperat
   };
 
   const decideApproval = async (approval: EstateWorkOrderApproval, status: "approved" | "rejected") => {
+    if (!selectedWorkOrder) return;
+
+    const amountMinor = resolveWorkOrderApprovalAmountMinor({
+      approvalType: approval.approval_type,
+      estimatedCostMinor: selectedWorkOrder.estimated_cost_minor,
+      actualCostMinor: selectedWorkOrder.actual_cost_minor,
+      quoteTotalMinor: selectedWorkOrderQuoteTotal,
+    });
+
+    if (
+      status === "approved" &&
+      memberApprovalProfile &&
+      !canApproveAmount(memberApprovalProfile, "maintenance", amountMinor)
+    ) {
+      toast.error(
+        `Your maintenance approval limit is ${formatApprovalLimit(getApprovalLimitMinor(memberApprovalProfile, "maintenance"))}. This work order exceeds it.`,
+      );
+      return;
+    }
+
     try {
       setSubmitting(true);
       await estateOperationsService.decideWorkOrderApproval({
@@ -526,12 +615,42 @@ export function EstateOperations({ organizationId, currentUserId }: EstateOperat
           <p className="mt-2 text-sm text-muted-foreground">
             Start with an estate, then add its units before loading occupants, charges, issues, or maintenance history.
           </p>
-          <form className="mt-5 flex gap-3" onSubmit={createEstate}>
-            <Input value={estateName} onChange={(event) => setEstateName(event.target.value)} placeholder="Estate name" />
-            <Button type="submit" disabled={submitting}>
-              <Plus className="h-4 w-4" />
-              Add estate
-            </Button>
+          <form className="mt-5 space-y-3" onSubmit={createEstate}>
+            {orgProperties.length > 0 ? (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-ink-secondary" htmlFor="estate-property">
+                  Link to property (optional)
+                </label>
+                <select
+                  id="estate-property"
+                  className="w-full rounded-lg border border-border bg-input-background px-3 py-2 text-sm"
+                  value={selectedPropertyId}
+                  onChange={(event) => {
+                    const propertyId = event.target.value;
+                    setSelectedPropertyId(propertyId);
+                    const property = orgProperties.find((row) => row.id === propertyId);
+                    if (property && !estateName.trim()) {
+                      setEstateName(propertyLabel(property));
+                    }
+                  }}
+                >
+                  <option value="">No property link</option>
+                  {orgProperties.map((property) => (
+                    <option key={property.id} value={property.id} disabled={linkedPropertyIds.has(property.id)}>
+                      {propertyLabel(property)}
+                      {linkedPropertyIds.has(property.id) ? " (linked)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+            <div className="flex gap-3">
+              <Input value={estateName} onChange={(event) => setEstateName(event.target.value)} placeholder="Estate name" />
+              <Button type="submit" disabled={submitting}>
+                <Plus className="h-4 w-4" />
+                Add estate
+              </Button>
+            </div>
           </form>
         </Card>
       ) : (
@@ -916,7 +1035,18 @@ export function EstateOperations({ organizationId, currentUserId }: EstateOperat
                       {(selectedWorkOrder.approvals || []).length === 0 ? (
                         <p className="text-sm text-muted-foreground">No approvals yet.</p>
                       ) : (
-                        selectedWorkOrder.approvals?.map((approval) => (
+                        selectedWorkOrder.approvals?.map((approval) => {
+                          const amountMinor = resolveWorkOrderApprovalAmountMinor({
+                            approvalType: approval.approval_type,
+                            estimatedCostMinor: selectedWorkOrder.estimated_cost_minor,
+                            actualCostMinor: selectedWorkOrder.actual_cost_minor,
+                            quoteTotalMinor: selectedWorkOrderQuoteTotal,
+                          });
+                          const canApprove = memberApprovalProfile
+                            ? canApproveAmount(memberApprovalProfile, "maintenance", amountMinor)
+                            : true;
+
+                          return (
                           <div key={approval.id} className="flex flex-col gap-2 rounded-lg border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                               <p className="font-medium capitalize">{approval.approval_type.replace(/_/g, " ")}</p>
@@ -928,7 +1058,17 @@ export function EstateOperations({ organizationId, currentUserId }: EstateOperat
                               </Badge>
                               {approval.status === "pending" ? (
                                 <>
-                                  <Button size="sm" variant="outline" onClick={() => void decideApproval(approval, "approved")} disabled={submitting}>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => void decideApproval(approval, "approved")}
+                                    disabled={submitting || !canApprove}
+                                    title={
+                                      !canApprove
+                                        ? `Exceeds your limit (${formatApprovalLimit(memberApprovalProfile ? getApprovalLimitMinor(memberApprovalProfile, "maintenance") : 0)})`
+                                        : undefined
+                                    }
+                                  >
                                     Approve
                                   </Button>
                                   <Button size="sm" variant="outline" onClick={() => void decideApproval(approval, "rejected")} disabled={submitting}>
@@ -938,7 +1078,8 @@ export function EstateOperations({ organizationId, currentUserId }: EstateOperat
                               ) : null}
                             </div>
                           </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
                   </div>

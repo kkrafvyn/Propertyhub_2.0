@@ -1,0 +1,73 @@
+rules:
+  - id: baytmiftah-supabase-service-role-in-frontend
+    message: Supabase service role credentials must not be used in browser/client code.
+    severity: ERROR
+    languages: [javascript, typescript]
+    paths:
+      include:
+        - src/
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $KEY = "eyJ..."
+          - pattern: SUPABASE_SERVICE_ROLE_KEY
+    metadata:
+      category: security
+      cwe: "CWE-798: Use of Hard-coded Credentials"
+
+  - id: baytmiftah-dangerous-eval
+    message: Avoid eval-like execution paths in application code.
+    severity: ERROR
+    languages: [javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: eval(...)
+          - pattern: new Function(...)
+    paths:
+      exclude:
+        - "**/*.test.ts"
+        - "**/*.test.tsx"
+
+  - id: baytmiftah-unsafe-window-open
+    message: Review window.open targets for open redirect / tab-nabbing risks.
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern: window.open($URL, ...)
+    paths:
+      include:
+        - src/
+
+  - id: baytmiftah-hardcoded-jwt
+    message: Hard-coded JWT-like token detected. Use environment configuration and secret stores.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern-regex: eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}
+    paths:
+      exclude:
+        - "**/*.test.ts"
+        - "**/*.test.tsx"
+        - "**/tenant-isolation.test.ts"
+
+  - id: baytmiftah-resend-key
+    message: Possible Resend API key in source.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern-regex: re_[A-Za-z0-9]{16,}
+
+  - id: baytmiftah-aws-access-key
+    message: Possible AWS access key in source.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern-regex: AKIA[0-9A-Z]{16}
+
+  - id: baytmiftah-payangels-secret
+    message: Possible PayAngels credential in source.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern-regex: (?i)payangels.{0,24}(secret|api[_-]?key|token)\s*[:=]\s*['"][a-zA-Z0-9+/=_-]{20,}['"]
+
+  - id: baytmiftah-dangerous-innerhtml
+    message: Direct innerHTML assignment can introduce XSS. Prefer safe rendering.
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern: $EL.innerHTML = $HTML

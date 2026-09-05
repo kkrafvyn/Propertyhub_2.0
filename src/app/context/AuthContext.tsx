@@ -7,6 +7,12 @@ import { getUserRole } from '../lib/baytmiftah/roles'
 import { consumerContextService } from '../../lib/consumer-context.service'
 import { trackUserSession } from '../../lib/security/session-tracking'
 import type { Database } from '../../lib/database.types'
+import {
+  getDesktopAPI,
+  getDesktopOAuthRedirectUrl,
+  isDesktopOAuthRuntime,
+  subscribeDesktopOAuthCallback,
+} from '../../lib/desktop-oauth'
 
 type UserProfile = Database['public']['Tables']['users']['Row']
 
@@ -97,6 +103,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       authListener?.subscription?.unsubscribe()
     }
+  }, [])
+
+  useEffect(() => {
+    return subscribeDesktopOAuthCallback(async (payload) => {
+      try {
+        if ("code" in payload && payload.code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(payload.code)
+          if (error) throw error
+          return
+        }
+
+        const accessToken = payload.access_token
+        const refreshToken = payload.refresh_token
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
+          if (error) throw error
+        }
+      } catch (callbackError) {
+        console.error("Desktop OAuth callback failed:", callbackError)
+        setError(callbackError instanceof Error ? callbackError : new Error("Desktop OAuth failed"))
+      }
+    })
   }, [])
 
   useEffect(() => {
@@ -234,6 +265,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ) => {
     try {
       setError(null)
+
+      if (isDesktopOAuthRuntime()) {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: getDesktopOAuthRedirectUrl(),
+            skipBrowserRedirect: true,
+          },
+        })
+        if (error) throw error
+        if (data?.url) {
+          await getDesktopAPI()?.openExternal?.(data.url)
+        }
+        return
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: redirectTo ? { redirectTo } : undefined,

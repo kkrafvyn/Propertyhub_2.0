@@ -1,22 +1,28 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { MailCheck } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { AuthShell } from "../../components/baytmiftah/AuthShell";
+import { AppLoadingScreen } from "../../components/ux/AppLoadingScreen";
 import { supabase } from "../../../lib/supabase";
 import { toast } from "sonner";
 import { isEmailVerified } from "../../../lib/security/password-policy";
+import { resolvePostAuthRedirect } from "../../lib/auth-routing";
 
 export function VerifyEmailPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    if (user && isEmailVerified(user)) {
-      window.location.replace("/app");
-    }
-  }, [user]);
+    if (!user || !isEmailVerified(user)) return;
+    navigate(resolvePostAuthRedirect(user, profile), { replace: true });
+  }, [user, profile, navigate]);
+
+  if (user && isEmailVerified(user)) {
+    return <AppLoadingScreen label="Redirecting…" />;
+  }
 
   const resend = async () => {
     if (!user?.email) return;

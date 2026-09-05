@@ -1,0 +1,45 @@
+title = "BaytMiftah Gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Non-secret placeholders and test fixtures"
+paths = [
+  '''\.env\.example$''',
+  '''docs/''',
+  '''PLATFORM_PARTS_OVERVIEW\.md$''',
+  '''scripts/security/provision-tenant-isolation-fixtures\.mjs$''',
+  '''src/lib/security/tenant-isolation\.test\.ts$''',
+  '''src/lib/visitor-clearance\.service\.ts$''',
+  '''src/lib/inspection-checklist\.data\.ts$''',
+]
+regexes = [
+  '''^BM-GATE-[0-9]+$''',
+]
+
+[[rules]]
+id = "baytmiftah-supabase-service-role-browser"
+description = "Supabase service role key must not appear in browser/client code"
+regex = '''(?i)(service[_-]?role|supabase_service_role).{0,40}(eyJ[a-zA-Z0-9_-]{20,}\.[a-zA-Z0-9_-]{20,})'''
+paths = ['''^src/''', '''^public/''']
+
+[[rules]]
+id = "baytmiftah-payangels-secret"
+description = "PayAngels payment secret"
+regex = '''(?i)(payangels|PAYANGELS).{0,20}(secret|api[_-]?key|token)\s*[:=]\s*['"]?[A-Za-z0-9_\-]{16,}'''
+
+[[rules]]
+id = "baytmiftah-resend-api-key"
+description = "Resend API key"
+regex = '''re_[A-Za-z0-9]{16,}'''
+
+[[rules]]
+id = "baytmiftah-aws-access-key"
+description = "AWS access key id"
+regex = '''AKIA[0-9A-Z]{16}'''
+
+[[rules]]
+id = "baytmiftah-private-key-block"
+description = "PEM private key block"
+regex = '''-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----'''

@@ -7,8 +7,11 @@ import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import { resolvePostAuthRedirect } from "../../lib/auth-routing";
 import { AuthShell, AuthDivider, OAuthButtons, BiometricLoginButton } from "../../components/baytmiftah";
+import { AppLoadingScreen } from "../../components/ux/AppLoadingScreen";
 import { useTranslation } from "../../i18n/LocaleContext";
 import { nativePluginsService } from "../../../lib/native-plugins.service";
+import { isDesktopWorkspaceApp } from "../../../lib/desktop-app";
+import { getDesktopOAuthRedirectUrl } from "../../../lib/desktop-oauth";
 
 export function Login() {
   const { t } = useTranslation();
@@ -24,7 +27,7 @@ export function Login() {
   );
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signInWithOAuth, user, profile } = useAuth();
+  const { signIn, signInWithOAuth, user, profile, loading: authLoading } = useAuth();
 
   const stateRedirectTo =
     typeof location.state === "object" &&
@@ -37,11 +40,49 @@ export function Login() {
     const next = new URLSearchParams(location.search).get("next");
     return next || null;
   }, [location.search]);
-  const redirectTo = resolvePostAuthRedirect(
-    user,
-    profile,
-    stateRedirectTo || queryRedirectTo
+  const businessOnly = useMemo(
+    () => new URLSearchParams(location.search).get("reason") === "business-only",
+    [location.search],
   );
+  const isDesktopLogin = isDesktopWorkspaceApp();
+  const postAuthDestination = useMemo(
+    () =>
+      user
+        ? resolvePostAuthRedirect(user, profile, stateRedirectTo || queryRedirectTo)
+        : null,
+    [user, profile, stateRedirectTo, queryRedirectTo],
+  );
+  const isConsumerBlockedOnDesktop = Boolean(
+    isDesktopLogin &&
+      user &&
+      postAuthDestination?.startsWith("/login"),
+  );
+  const currentPath = `${location.pathname}${location.search}`;
+  const requestedDestination = stateRedirectTo || queryRedirectTo;
+  const redirectTo =
+    postAuthDestination ??
+    requestedDestination ??
+    (isDesktopLogin ? "/workspace" : "/app");
+
+  useEffect(() => {
+    if (!user || !postAuthDestination || isConsumerBlockedOnDesktop) return;
+    if (postAuthDestination === currentPath) return;
+    navigate(postAuthDestination, { replace: true });
+  }, [
+    navigate,
+    user,
+    postAuthDestination,
+    isConsumerBlockedOnDesktop,
+    currentPath,
+  ]);
+
+  const oauthRedirectUrl = useMemo(() => {
+    if (isDesktopLogin) {
+      return getDesktopOAuthRedirectUrl();
+    }
+    const next = encodeURIComponent(redirectTo);
+    return `${window.location.origin}/login?next=${next}`;
+  }, [redirectTo, isDesktopLogin]);
 
   useEffect(() => {
     if (localStorage.getItem("bm_remember_me") === "true") {
@@ -50,27 +91,24 @@ export function Login() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!user) return;
-    const destination = resolvePostAuthRedirect(
-      user,
-      profile,
-      stateRedirectTo || queryRedirectTo
-    );
-    navigate(destination, { replace: true });
-  }, [navigate, user, profile, stateRedirectTo, queryRedirectTo]);
+  if (authLoading) {
+    return <AppLoadingScreen label={t("auth.redirecting")} />;
+  }
 
-  const oauthRedirectUrl = useMemo(() => {
-    const next = encodeURIComponent(redirectTo);
-    return `${window.location.origin}/login?next=${next}`;
-  }, [redirectTo]);
+  if (
+    user &&
+    postAuthDestination &&
+    !isConsumerBlockedOnDesktop &&
+    postAuthDestination !== currentPath
+  ) {
+    return <AppLoadingScreen label={t("auth.redirecting")} />;
+  }
 
   const handleBiometricSuccess = async (creds: { username: string; password: string }) => {
     try {
       setLoading(true);
       await signIn(creds.username, creds.password);
       toast.success(t("auth.biometricConfirmed"));
-      navigate(redirectTo, { replace: true });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("auth.biometricFailed"));
     } finally {
@@ -94,7 +132,6 @@ export function Login() {
         void nativePluginsService.saveBiometricCredentials({ username: email, password });
       }
       toast.success(t("auth.welcomeBack"));
-      navigate(redirectTo, { replace: true });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("auth.invalidCredentials"));
     } finally {
@@ -115,7 +152,11 @@ export function Login() {
   return (
     <AuthShell
       title={t("auth.signInTitle")}
-      subtitle={t("auth.signInSubtitleConsumer")}
+      subtitle={
+        isDesktopLogin
+          ? "Sign in with your business workspace account."
+          : t("auth.signInSubtitleConsumer")
+      }
       footer={
         <p className="text-white/80 lg:text-muted-foreground text-xs">
           {t("auth.noAccount")}{" "}
@@ -128,6 +169,12 @@ export function Login() {
         </p>
       }
     >
+      {businessOnly ? (
+        <div className="mb-4 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100 lg:text-amber-900">
+          BaytMiftah Workspace is for property managers, agents, and landlords.
+          Consumer accounts should use the website or mobile app instead.
+        </div>
+      ) : null}
       <BiometricLoginButton
         onBiometricSuccess={handleBiometricSuccess}
         onBiometricFailed={(err) => toast.error(err)}

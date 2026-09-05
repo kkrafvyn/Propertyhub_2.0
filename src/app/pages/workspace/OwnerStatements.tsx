@@ -8,6 +8,12 @@ import { Badge } from "../../components/ui/badge";
 import { Input } from "../../components/ui/Input";
 import { estateOperationsService } from "../../../lib/estate-operations.service";
 import { estateReportingService } from "../../../lib/estate-reporting.service";
+import {
+  canApproveAmount,
+  formatApprovalLimit,
+  getApprovalLimitMinor,
+  type MemberApprovalProfile,
+} from "../../../lib/authorization.service";
 
 const minorToMoney = (value: number | null | undefined, currency = "GHS") =>
   new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 2 }).format((value || 0) / 100);
@@ -16,7 +22,13 @@ const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const firstOfMonth = isoDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 const today = isoDate(new Date());
 
-export function OwnerStatements({ organizationId }: { organizationId?: string }) {
+export function OwnerStatements({
+  organizationId,
+  memberApprovalProfile = null,
+}: {
+  organizationId?: string;
+  memberApprovalProfile?: MemberApprovalProfile | null;
+}) {
     const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [estates, setEstates] = useState<any[]>([]);
@@ -82,8 +94,18 @@ export function OwnerStatements({ organizationId }: { organizationId?: string })
     if (periodEnd < periodStart) { toast.error("The end date must be after the start date."); return; }
     try {
       setBusy(true);
-      await estateReportingService.createOwnerStatement({ estateId, ownerUserId: ownerId, periodStart, periodEnd });
-      toast.success("Owner statement calculated from recorded payments and paid bills.");
+      await estateReportingService.createOwnerStatement({
+        estateId,
+        ownerUserId: ownerId,
+        periodStart,
+        periodEnd,
+        organizationId,
+      });
+      toast.success(
+        typeof navigator !== "undefined" && !navigator.onLine
+          ? "Statement calculation queued offline — it will sync when you reconnect."
+          : "Owner statement calculated from recorded payments and paid bills.",
+      );
       await load();
     } catch (error) {
       console.error(error);
@@ -112,17 +134,36 @@ export function OwnerStatements({ organizationId }: { organizationId?: string })
           statementRunId: selectedRun.id,
           amountMinor: selectedRun.net_distributable_minor,
           requestedBy: user.id,
+          organizationId,
         });
       setApprovalRequested(true);
-      toast.success("Distribution approval requested.");
+      toast.success(
+        typeof navigator !== "undefined" && !navigator.onLine
+          ? "Payout approval queued offline — it will sync when you reconnect."
+          : "Distribution approval requested.",
+      );
     } catch (error) {
       console.error(error);
       toast.error("Unable to request distribution approval.");
     } finally { setBusy(false); }
   };
 
-  const reviewApproval = async (approvalId: string, decision: "approved" | "rejected") => {
+  const reviewApproval = async (
+    approvalId: string,
+    decision: "approved" | "rejected",
+    amountMinor: number,
+  ) => {
     if (!user?.id) return;
+    if (
+      decision === "approved" &&
+      memberApprovalProfile &&
+      !canApproveAmount(memberApprovalProfile, "finance", amountMinor)
+    ) {
+      toast.error(
+        `Your finance approval limit is ${formatApprovalLimit(getApprovalLimitMinor(memberApprovalProfile, "finance"))}. This payout exceeds it.`,
+      );
+      return;
+    }
     try {
       setBusy(true);
       await estateReportingService.reviewDistributionApproval(approvalId, decision, user.id);
@@ -200,6 +241,27 @@ export function OwnerStatements({ organizationId }: { organizationId?: string })
     </Card> : <Card className="p-8 text-center text-muted-foreground">Select an owner and period, then calculate a statement to review the actual totals.</Card>}
 
     {runs.length > 0 ? <Card className="p-5"><h2 className="font-semibold">Recent statements</h2><div className="mt-3 space-y-2">{runs.slice(0, 8).map((run) => <div key={run.id} className="flex items-center justify-between rounded-lg border border-border p-3"><span className="text-sm">{estates.find((estate) => estate.id === run.estate_id)?.name || "Property"} · {run.period_start} to {run.period_end}</span><span className="font-medium">{minorToMoney(run.net_distributable_minor, run.currency)}</span></div>)}</div></Card> : null}
-    {approvals.length > 0 ? <Card className="p-5"><h2 className="font-semibold">Pending distribution approvals</h2><div className="mt-3 space-y-2">{approvals.map((approval) => <div key={approval.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3"><span className="text-sm">{minorToMoney(approval.requested_amount_minor, approval.statement?.currency)} requested</span><div className="flex gap-2"><Button size="sm" onClick={() => void reviewApproval(approval.id, "approved")} disabled={busy}>Approve</Button><Button size="sm" variant="outline" onClick={() => void reviewApproval(approval.id, "rejected")} disabled={busy}>Reject</Button></div></div>)}</div></Card> : null}
+    {approvals.length > 0 ? <Card className="p-5"><h2 className="font-semibold">Pending distribution approvals</h2><div className="mt-3 space-y-2">{approvals.map((approval) => {
+      const amountMinor = approval.requested_amount_minor || 0;
+      const canApprove = memberApprovalProfile
+        ? canApproveAmount(memberApprovalProfile, "finance", amountMinor)
+        : true;
+      return (
+        <div key={approval.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
+          <span className="text-sm">{minorToMoney(amountMinor, approval.statement?.currency)} requested</span>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={() => void reviewApproval(approval.id, "approved", amountMinor)}
+              disabled={busy || !canApprove}
+              title={!canApprove ? `Exceeds your limit (${formatApprovalLimit(memberApprovalProfile ? getApprovalLimitMinor(memberApprovalProfile, "finance") : 0)})` : undefined}
+            >
+              Approve
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => void reviewApproval(approval.id, "rejected", amountMinor)} disabled={busy}>Reject</Button>
+          </div>
+        </div>
+      );
+    })}</div></Card> : null}
   </div>;
 }

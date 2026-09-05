@@ -3,10 +3,11 @@ import { getWorkspaceRoute, WORKSPACE_ENTRY_PATH } from "./workspace";
 import { getDesktopLastOrg } from "./desktop-navigation";
 import { getMetadataRole, isFullAdminRole, isWorkspaceRole } from "../app/lib/baytmiftah/roles";
 import { hasPlatformConsoleAccess } from "./platform-access";
+import { isBusinessWebUser } from "./desktop-gateway";
 
 type AuthProfile = { role?: string; is_platform_admin?: boolean; is_platform_manager?: boolean } | null;
 
-const DESKTOP_AUTH_PATHS = ["/login", "/signup", "/reset-password", "/auth", "/verify-email"];
+const DESKTOP_AUTH_PATHS = ["/login", "/signup", "/reset-password", "/auth", "/verify-email", "/enrollment"];
 
 /** Routes that belong to the consumer/marketing web app — not the desktop workstation. */
 export function isDesktopConsumerOnlyRoute(pathname: string): boolean {
@@ -19,6 +20,18 @@ export function isDesktopAuthRoute(pathname: string): boolean {
   return DESKTOP_AUTH_PATHS.some((p) => pathname.startsWith(p));
 }
 
+/** Accounts allowed to use the workspace-only desktop app (not consumer shoppers). */
+export function isDesktopAllowedUser(user: User | null, profile: AuthProfile): boolean {
+  if (!user) return false;
+
+  const metadataRole = getMetadataRole(user.user_metadata) || getMetadataRole(user.app_metadata);
+  if (hasPlatformConsoleAccess(profile) || isFullAdminRole(metadataRole)) {
+    return true;
+  }
+
+  return isBusinessWebUser(user, profile);
+}
+
 /**
  * Where Electron should send authenticated professional users.
  */
@@ -28,6 +41,13 @@ export function resolveDesktopProfessionalHome(
 ): string {
   if (!user) {
     return "/login";
+  }
+
+  if (!isDesktopAllowedUser(user, profile)) {
+    if (!profile) {
+      return WORKSPACE_ENTRY_PATH;
+    }
+    return "/login?reason=business-only";
   }
 
   const metadataRole = getMetadataRole(user.user_metadata) || getMetadataRole(user.app_metadata);

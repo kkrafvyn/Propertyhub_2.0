@@ -12,7 +12,7 @@ export type WorkspacePermission =
   | "contacts:write"
   | "tasks:write";
 
-const ALL_PERMISSIONS: WorkspacePermission[] = [
+export const ALL_WORKSPACE_PERMISSIONS: WorkspacePermission[] = [
   "listings:read",
   "listings:write",
   "leads:read",
@@ -27,13 +27,14 @@ const ALL_PERMISSIONS: WorkspacePermission[] = [
 
 const ROLE_DEFAULTS: Record<string, WorkspacePermission[]> = {
   // Executive
-  owner: ALL_PERMISSIONS,
-  managing_director: ALL_PERMISSIONS,
-  platform_admin: ALL_PERMISSIONS,
-  enterprise_operator: ALL_PERMISSIONS,
+  owner: ALL_WORKSPACE_PERMISSIONS,
+  managing_director: ALL_WORKSPACE_PERMISSIONS,
+  organization_admin: ALL_WORKSPACE_PERMISSIONS,
+  platform_admin: ALL_WORKSPACE_PERMISSIONS,
+  enterprise_operator: ALL_WORKSPACE_PERMISSIONS,
 
   // Property Management
-  head_property_management: ALL_PERMISSIONS,
+  head_property_management: ALL_WORKSPACE_PERMISSIONS,
   manager: [
     "listings:read",
     "listings:write",

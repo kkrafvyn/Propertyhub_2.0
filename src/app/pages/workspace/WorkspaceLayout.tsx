@@ -218,10 +218,18 @@ import {
 import {
   canAccessWorkspaceSlug,
   filterWorkspaceNavItems,
+  getRoleHomeSlug,
   getWorkspaceRoleDescription,
 } from "../../lib/workspace-role-nav";
-import { canWorkspace } from "../../../lib/workspace-permissions";
 import { canAccessOrganization } from "../../../lib/organization-access";
+import { canWorkspace } from "../../../lib/workspace-permissions";
+import type { MemberApprovalProfile } from "../../../lib/authorization.service";
+import { memberScopeService } from "../../../lib/member-scope.service";
+import type { MemberScopeMode } from "../../../lib/member-scope";
+import { CompanySetupWizard } from "./CompanySetupWizard";
+import { OfflineStatusBanner } from "../../components/workspace/OfflineStatusBanner";
+import { workspaceSyncService } from "../../../lib/workspace-sync.service";
+import { getRoleLabel, type CompanyCapability } from "../../../lib/company-model";
 
 interface NavItem {
   slug: string;
@@ -337,11 +345,6 @@ function getNavItemClasses(isActive: boolean) {
 
 void getNavItemClasses; // suppress unused-var lint
 
-function getRoleLabel(role: MemberRole | null) {
-  if (!role) return "Member";
-  return role.charAt(0).toUpperCase() + role.slice(1);
-}
-
 export function WorkspaceLayout() {
   const { user, profile, role } = useAuth();
   const navigate = useNavigate();
@@ -362,6 +365,15 @@ export function WorkspaceLayout() {
     }
   });
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [memberScopeMode, setMemberScopeMode] = useState<MemberScopeMode>("organization");
+  const [memberPropertyIds, setMemberPropertyIds] = useState<string[]>([]);
+  const [memberApprovalProfile, setMemberApprovalProfile] = useState<MemberApprovalProfile | null>(
+    null,
+  );
+  const [adminViewOrganization, setAdminViewOrganization] = useState<
+    OrganizationMembership["organization"] | null
+  >(null);
+  const [adminOrgLoading, setAdminOrgLoading] = useState(false);
   const [pendingCosigns, setPendingCosigns] = useState<
     Awaited<ReturnType<typeof eSignatureService.listPendingCosignForLandlord>>
   >([]);
@@ -428,6 +440,10 @@ export function WorkspaceLayout() {
     }
   }, [organizationSlug]);
 
+  useEffect(() => {
+    return workspaceSyncService.subscribe(() => undefined);
+  }, []);
+
   const currentMembership = useMemo(
     () => memberships.find((membership) => membership.organization.slug === organizationSlug) || null,
     [memberships, organizationSlug]
@@ -440,16 +456,63 @@ export function WorkspaceLayout() {
 
   const isPlatformStaff = hasPlatformConsoleAccess(profile) || role === "platform_admin";
   const isPlatformAdmin = Boolean(profile?.is_platform_admin) || role === "platform_admin";
+  const isPlatformAdminViewer = Boolean(profile?.is_platform_admin);
+
+  useEffect(() => {
+    if (!isPlatformAdminViewer || !organizationSlug || currentMembership) {
+      setAdminViewOrganization(null);
+      setAdminOrgLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setAdminOrgLoading(true);
+
+    void organizationService
+      .getOrganizationBySlug(organizationSlug)
+      .then((org) => {
+        if (!cancelled) {
+          setAdminViewOrganization(org as OrganizationMembership["organization"]);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load organization for platform admin view:", error);
+        if (!cancelled) {
+          setAdminViewOrganization(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setAdminOrgLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isPlatformAdminViewer, organizationSlug, currentMembership]);
+
   const isCurrentOrgAccessible = canAccessOrganization({
     userOrganizationIds,
-    targetOrganizationId: currentMembership?.organization.id ?? null,
+    targetOrganizationId:
+      currentMembership?.organization.id ?? adminViewOrganization?.id ?? null,
     isPlatformAdmin,
     isPlatformStaff,
   });
 
   const fallbackMembership = memberships[0] || null;
-  const organization = currentMembership?.organization || null;
-  const currentRole = currentMembership?.role || null;
+  const organization =
+    currentMembership?.organization || adminViewOrganization || null;
+  const currentRole =
+    currentMembership?.role || (isPlatformAdminViewer ? "owner" : null);
+  const currentPermissions = currentMembership?.permissions ?? null;
+  const enabledCapabilities = (
+    (organization as { enabled_capabilities?: string[] | null } | null)?.enabled_capabilities ||
+    []
+  ) as CompanyCapability[];
+  const companySetupCompleted = Boolean(
+    (organization as { company_setup_completed?: boolean | null } | null)?.company_setup_completed,
+  );
 
   useEffect(() => {
     if (organization?.id) {
@@ -476,25 +539,59 @@ export function WorkspaceLayout() {
     ? getWorkspaceRoute(organization.slug)
     : WORKSPACE_ENTRY_PATH;
 
+  useEffect(() => {
+    if (!organization?.id || !user?.id) return;
+
+    void memberScopeService
+      .getMemberScope(organization.id, user.id)
+      .then((scope) => {
+        setMemberScopeMode(scope.scopeMode);
+        setMemberPropertyIds(
+          scope.scopeMode === "properties" ? scope.scopedPropertyIds : scope.propertyIds,
+        );
+        setMemberApprovalProfile({
+          role: (scope.role || "analyst") as MemberApprovalProfile["role"],
+          permissions: scope.permissions,
+          financeApprovalLimitMinor: scope.financeApprovalLimitMinor,
+          maintenanceApprovalLimitMinor: scope.maintenanceApprovalLimitMinor,
+        });
+      })
+      .catch(() => {
+        setMemberScopeMode("organization");
+        setMemberPropertyIds([]);
+        setMemberApprovalProfile(null);
+      });
+  }, [organization?.id, user?.id]);
+
+  const navRole: MemberRole = isPlatformAdminViewer ? "owner" : effectiveRole;
+  const navPermissions = isPlatformAdminViewer ? null : currentPermissions;
+  const navCapabilities = isPlatformAdminViewer ? null : enabledCapabilities;
+  const bypassPropertyScope = isPlatformAdminViewer;
+  const memberScopeProps = {
+    scopeMode: memberScopeMode,
+    scopedPropertyIds: memberPropertyIds,
+    bypassPropertyScope,
+  };
+
   const visibleCoreNav = useMemo(
-    () => filterWorkspaceNavItems(CORE_NAV_ITEMS, effectiveRole),
-    [effectiveRole],
+    () => filterWorkspaceNavItems(CORE_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+    [navRole, navPermissions, navCapabilities],
   );
   const visibleToolsNav = useMemo(
-    () => filterWorkspaceNavItems(WORKSPACE_SECONDARY_NAV, effectiveRole),
-    [effectiveRole],
+    () => filterWorkspaceNavItems(WORKSPACE_SECONDARY_NAV, navRole, navPermissions, navCapabilities),
+    [navRole, navPermissions, navCapabilities],
   );
   const visibleMoreNav = useMemo(
-    () => filterWorkspaceNavItems(TIER_TWO_NAV_ITEMS, effectiveRole),
-    [effectiveRole],
+    () => filterWorkspaceNavItems(TIER_TWO_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+    [navRole, navPermissions, navCapabilities],
   );
   const visibleAiNav = useMemo(
-    () => filterWorkspaceNavItems(AI_NAV_ITEMS, effectiveRole),
-    [effectiveRole],
+    () => filterWorkspaceNavItems(AI_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+    [navRole, navPermissions, navCapabilities],
   );
   const visibleEnterpriseNav = useMemo(
-    () => filterWorkspaceNavItems(ENTERPRISE_NAV_ITEMS, effectiveRole),
-    [effectiveRole],
+    () => filterWorkspaceNavItems(ENTERPRISE_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+    [navRole, navPermissions, navCapabilities],
   );
 
   const filteredSearchResults = useMemo(() => {
@@ -530,9 +627,12 @@ export function WorkspaceLayout() {
     visibleEnterpriseNav,
   ]);
 
-  const canCreateListing = canWorkspace(effectiveRole, "listings:write");
+  const canCreateListing = canWorkspace(navRole, "listings:write", navPermissions);
+  const roleHomeSlug = isPlatformAdminViewer ? "" : getRoleHomeSlug(accessRole);
   const pageAllowed =
-    currentPage === "" || canAccessWorkspaceSlug(currentPage, accessRole);
+    currentPage === "company-setup" ||
+    currentPage === "" ||
+    canAccessWorkspaceSlug(currentPage, isPlatformAdminViewer ? "owner" : accessRole, navPermissions, navCapabilities);
 
   const handleOrganizationChange = (organizationId: string) => {
     const nextMembership = memberships.find(
@@ -551,6 +651,13 @@ export function WorkspaceLayout() {
     if (!organization || !user) return null;
 
     switch (currentPage) {
+      case "company-setup":
+        return (
+          <CompanySetupWizard
+            organization={organization}
+            onComplete={() => navigate(getWorkspaceRoute(organization.slug, "team"))}
+          />
+        );
       case "":
         if (isElectron()) {
           return (
@@ -566,6 +673,7 @@ export function WorkspaceLayout() {
             workspaceBasePath={workspaceBasePath}
             currentRole={effectiveRole}
             onRoleChange={(r) => setPreviewRole(r)}
+            {...memberScopeProps}
           />
         );
       case "new":
@@ -583,6 +691,9 @@ export function WorkspaceLayout() {
             workspaceBasePath={workspaceBasePath}
             currentUserId={user.id}
             currentRole={currentRole}
+            scopeMode={memberScopeMode}
+            scopedPropertyIds={memberPropertyIds}
+            bypassPropertyScope={bypassPropertyScope}
           />
         );
       case "leads":
@@ -614,6 +725,7 @@ export function WorkspaceLayout() {
             organization={organization}
             currentUserId={user.id}
             currentRole={currentRole}
+            currentPermissions={currentPermissions}
           />
         );
       case "payments":
@@ -711,22 +823,37 @@ export function WorkspaceLayout() {
       case "blockchain":
         return <BlockchainVerification organizationId={organization.id} />;
       case "host":
-        return <WorkspaceHost organizationId={organization.id} />;
+        return <WorkspaceHost organizationId={organization.id} {...memberScopeProps} />;
       case "leases":
-        return <WorkspaceLeases organizationId={organization.id} />;
+        return <WorkspaceLeases organizationId={organization.id} {...memberScopeProps} />;
       case "maintenance":
-        return <WorkspaceMaintenance organizationId={organization.id} />;
+        return (
+          <WorkspaceMaintenance
+            organizationId={organization.id}
+            scopeMode={memberScopeMode}
+            scopedPropertyIds={memberPropertyIds}
+            bypassPropertyScope={bypassPropertyScope}
+          />
+        );
       case "inspections":
         return (
           <WorkspaceInspections
             organizationId={organization.id}
             currentUserId={user.id}
+            {...memberScopeProps}
           />
         );
       case "smart-property":
         return <WorkspaceSmartProperty organizationId={organization.id} />;
       case "estate-operations":
-        return <EstateOperations organizationId={organization.id} currentUserId={user.id} />;
+        return (
+          <EstateOperations
+            organizationId={organization.id}
+            currentUserId={user.id}
+            memberApprovalProfile={memberApprovalProfile}
+            {...memberScopeProps}
+          />
+        );
       case "estate-finance":
         return <EstateFinance organizationId={organization.id} currentUserId={user.id} />;
       case "estate-communications":
@@ -742,7 +869,7 @@ export function WorkspaceLayout() {
       case "data-migration":
         return <DataMigration organizationId={organization.id} currentUserId={user.id} />;
       case "property-360":
-        return <Property360 organizationId={organization.id} />;
+        return <Property360 organizationId={organization.id} {...memberScopeProps} />;
       case "customer-360":
         return <Customer360 organizationId={organization.id} />;
       case "technician-jobs":
@@ -758,7 +885,12 @@ export function WorkspaceLayout() {
       case "estate-payables":
         return <EstatePayables organizationId={organization.id} currentUserId={user.id} />;
       case "owner-statements":
-        return <OwnerStatements organizationId={organization.id} />;
+        return (
+          <OwnerStatements
+            organizationId={organization.id}
+            memberApprovalProfile={memberApprovalProfile}
+          />
+        );
       case "service-desk":
         return <ServiceDesk organizationId={organization.id} />;
       case "unit-360":
@@ -811,7 +943,7 @@ export function WorkspaceLayout() {
       case "bank-reconciliation":
         return <BankReconciliation organizationId={organization.id} currentUserId={user.id} />;
       case "portfolio-analytics":
-        return <PortfolioAnalytics organizationId={organization.id} />;
+        return <PortfolioAnalytics organizationId={organization.id} {...memberScopeProps} />;
       case "ai-command-center":
         return <AICommandCenter organizationId={organization.id} />;
       case "automation-builder":
@@ -875,12 +1007,13 @@ export function WorkspaceLayout() {
             workspaceBasePath={workspaceBasePath}
             currentRole={effectiveRole}
             onRoleChange={(r) => setPreviewRole(r)}
+            {...memberScopeProps}
           />
         );
     }
   };
 
-  if (loading) {
+  if (loading || adminOrgLoading) {
     return (
       <div className="min-h-screen bg-background p-8 max-w-7xl mx-auto">
         <PageLoadingSkeleton />
@@ -900,8 +1033,10 @@ export function WorkspaceLayout() {
     );
   }
 
-  if (organizationSlug && memberships.length > 0 && !isCurrentOrgAccessible) {
-    return <Navigate to={WORKSPACE_ENTRY_PATH} replace />;
+  if (organizationSlug && !isCurrentOrgAccessible && !(isPlatformAdminViewer && adminViewOrganization)) {
+    if (memberships.length > 0) {
+      return <Navigate to={WORKSPACE_ENTRY_PATH} replace />;
+    }
   }
 
   if (!organization && fallbackMembership) {
@@ -913,6 +1048,28 @@ export function WorkspaceLayout() {
 
   if (!organization) {
     return <Navigate to={WORKSPACE_ENTRY_PATH} replace />;
+  }
+
+  if (
+    currentRole === "owner" &&
+    !companySetupCompleted &&
+    !isPlatformAdminViewer &&
+    currentPage !== "company-setup" &&
+    currentPage !== "team"
+  ) {
+    return <Navigate to={getWorkspaceRoute(organization.slug, "company-setup")} replace />;
+  }
+
+  if (
+    currentPage === "" &&
+    !previewRole &&
+    !isPlatformAdminViewer &&
+    roleHomeSlug &&
+    roleHomeSlug !== "" &&
+    canAccessWorkspaceSlug(roleHomeSlug, accessRole, currentPermissions, enabledCapabilities) &&
+    !isElectron()
+  ) {
+    return <Navigate to={getWorkspaceRoute(organization.slug, roleHomeSlug)} replace />;
   }
 
   const renderNavGroup = (
@@ -952,23 +1109,23 @@ export function WorkspaceLayout() {
                 to={href}
                 onClick={() => isMobile && setMobileDrawerOpen(false)}
                 title={isCollapsed && !isMobile ? `${item.label}` : undefined}
-                className={`workspace-nav-link group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all duration-150 ${
+                className={`workspace-nav-link group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all duration-200 ${
                   isActive
-                    ? "active bg-primary/10 font-semibold text-primary"
+                    ? "active bg-emerald-500/10 dark:bg-emerald-500/15 font-semibold text-emerald-800 dark:text-emerald-300 shadow-xs"
                     : "text-ink-secondary hover:bg-surface-hover hover:text-ink"
                 } ${isCollapsed && !isMobile ? "justify-center px-0 py-2.5" : ""}`}
               >
-                {/* Active accent bar */}
+                {/* Active glowing accent bar */}
                 {isActive && (
-                  <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-primary" />
+                  <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-gradient-to-b from-emerald-400 to-emerald-600 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                 )}
 
                 <Icon
-                  className={`shrink-0 transition-all duration-150 ${
+                  className={`shrink-0 transition-all duration-200 ${
                     isCollapsed && !isMobile ? "w-5 h-5" : "w-4 h-4"
                   } ${
                     isActive
-                      ? "text-primary"
+                      ? "text-emerald-600 dark:text-emerald-400 drop-shadow-xs"
                       : "text-ink-tertiary group-hover:text-ink"
                   }`}
                 />
@@ -1012,6 +1169,7 @@ export function WorkspaceLayout() {
 
   const workspacePageContent = (
     <>
+      <OfflineStatusBanner organizationId={organization.id} />
       {cosignBanner}
       {!pageAllowed && currentPage ? (
         <Card className="p-8">
@@ -1157,12 +1315,16 @@ export function WorkspaceLayout() {
 
                 {/* Org info – desktop only */}
                 <div className="hidden sm:flex flex-col justify-center ml-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-ink text-sm leading-tight truncate max-w-[12rem]">
                       {organization.name}
                     </span>
                     <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20 shrink-0">
                       {getRoleLabel(effectiveRole)}
+                    </span>
+                    <span className="hidden xl:inline-flex items-center gap-1.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full shrink-0">
+                      <span className="radar-pulse-dot" />
+                      Live Sync
                     </span>
                     {isPracticeMode && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20 shrink-0">
@@ -1203,9 +1365,9 @@ export function WorkspaceLayout() {
                     setIsPracticeMode(next);
                     practiceModeService.setPracticeMode(next);
                   }}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-bold uppercase tracking-wider transition-all ${
                     isPracticeMode
-                      ? "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                      ? "border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400 shadow-sm shadow-amber-500/10"
                       : "border-surface-border bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink"
                   }`}
                   title="Toggle Sandbox / Practice Mode"
@@ -1218,12 +1380,12 @@ export function WorkspaceLayout() {
                 <button
                   type="button"
                   onClick={() => setCommandOpen(true)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-surface-border bg-surface hover:bg-surface-hover text-xs text-ink-muted transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-surface-border/80 bg-surface/90 hover:bg-surface hover:border-emerald-500/40 text-xs text-ink-muted hover:text-ink transition-all shadow-xs group"
                   title="Universal Command (Cmd+K)"
                 >
-                  <Search className="w-3.5 h-3.5 text-primary" />
-                  <span className="hidden md:inline text-ink font-medium">Search...</span>
-                  <kbd className="hidden sm:inline text-[10px] font-mono bg-surface-subtle border border-surface-border px-1.5 py-0.5 rounded text-ink-muted">⌘K</kbd>
+                  <Search className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
+                  <span className="hidden md:inline text-ink font-medium text-xs">Search...</span>
+                  <kbd className="hidden sm:inline text-[10px] font-mono bg-surface-subtle border border-surface-border px-1.5 py-0.5 rounded text-ink-muted group-hover:border-emerald-500/30">⌘K</kbd>
                 </button>
 
                 {/* Show Me How */}

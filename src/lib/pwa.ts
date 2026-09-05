@@ -7,6 +7,10 @@ export function registerAppServiceWorker() {
     return;
   }
 
+  if (window.__ELECTRON__ || window.__BAYTMIFTAH_DESKTOP__) {
+    return;
+  }
+
   window.addEventListener("load", () => {
     void navigator.serviceWorker.register("/sw.js").catch((error) => {
       console.error("Failed to register the app service worker:", error);

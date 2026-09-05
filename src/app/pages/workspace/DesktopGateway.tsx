@@ -50,24 +50,24 @@ export function DesktopGateway() {
             <Laptop className="h-7 w-7" />
           </div>
           <p className="text-sm font-medium uppercase tracking-[0.2em] text-white/60">
-            Welcome to BaytMiftah Business
+            BaytMiftah Workspace
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Your workspace is ready on the web
+            Your professional desktop app is ready
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base text-white/70">
-            Run properties, team, finance, leasing, and operations from your desktop.
-            For deep operational work, BaytMiftah Desktop is the fastest way to run your business.
+            Manage properties, team, finance, leasing, and operations from a workspace built
+            for landlords, agents, and property managers — not consumer browsing.
           </p>
         </div>
 
         <Card className="border-white/10 bg-white/5 p-6 text-white shadow-2xl backdrop-blur sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className="text-xl font-semibold">BaytMiftah Desktop</h2>
+              <h2 className="text-xl font-semibold">BaytMiftah Workspace</h2>
               <p className="mt-2 max-w-xl text-sm text-white/70">
-                A faster workspace for managing your real-estate operation — same account,
-                same organizations, authenticated through Supabase.
+                The desktop app for your real-estate operation — same business account,
+                same organizations. Consumer marketplace features stay on web and mobile.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">

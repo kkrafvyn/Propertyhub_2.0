@@ -28,6 +28,7 @@ const EDGE_FUNCTIONS = [
   { name: "send-sms" },
   { name: "automation-dispatcher", noVerifyJwt: true },
   { name: "send-organization-invite" },
+  { name: "send-enrollment-notification" },
 ];
 
 function readFlag(name) {

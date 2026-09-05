@@ -16,9 +16,31 @@ function figmaAssetResolver() {
   }
 }
 
+/** Packaged Electron loads dist via file:// — crossorigin module tags fail silently. */
+function electronDesktopBuild() {
+  return {
+    name: 'electron-desktop-build',
+    apply: 'build' as const,
+    config() {
+      if (process.env.ELECTRON_BUILD !== 'true') return undefined
+      return {
+        build: {
+          modulePreload: false,
+        },
+      }
+    },
+    transformIndexHtml(html: string) {
+      if (process.env.ELECTRON_BUILD !== 'true') return html
+      return html.replace(/\s+crossorigin(?:="[^"]*")?/g, '')
+    },
+  }
+}
+
 export default defineConfig({
+  base: process.env.ELECTRON_BUILD === 'true' ? './' : '/',
   plugins: [
     figmaAssetResolver(),
+    electronDesktopBuild(),
     mobileBrandPlugin(),
     // The React and Tailwind plugins are both required for Make, even if
     // Tailwind is not being actively used - do not remove them.

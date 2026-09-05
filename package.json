@@ -2,6 +2,9 @@
   "name": "@figma/my-make-file",
   "private": true,
   "version": "0.0.1",
+  "description": "BaytMiftah property operations platform",
+  "author": "BaytMiftah",
+  "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
     "build": "vite build",
@@ -14,6 +17,19 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "security:dependency-audit": "npm audit --audit-level=high",
+    "security:sast": "node scripts/security/run-sast.mjs",
+    "security:sca": "node scripts/security/run-sca.mjs",
+    "security:secrets": "node scripts/security/run-secrets.mjs",
+    "security:actions-audit": "node scripts/security/audit-workflows.mjs",
+    "security:unit": "node scripts/security/run-security-unit.mjs",
+    "security:tenant": "node scripts/security/run-tenant-isolation.mjs",
+    "security:summary": "node scripts/security/security-summary.mjs",
+    "security:dast:validate-target": "node scripts/security/validate-dast-target.mjs",
+    "security:install-tools": "node scripts/security/install-security-tools.mjs",
+    "security:tools": "node scripts/security/check-security-tools.mjs",
+    "security:container": "node scripts/security/run-container-scan.mjs",
+    "security:branch-protection": "node scripts/security/apply-branch-protection.mjs",
+    "security:all": "node scripts/security/run-security-all.mjs",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
@@ -43,10 +59,19 @@
     "ios:build:sim": "cd ios/App && xcodebuild -project App.xcodeproj -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' build",
     "mobile:release": "node scripts/build-mobile-release.mjs",
     "desktop:start": "electron electron/main.cjs",
-    "desktop:dev": "concurrently -k \"npm run dev\" \"wait-on http://localhost:5173 && cross-env ELECTRON_START_URL=http://localhost:5173 electron electron/main.cjs\"",
-    "desktop:build": "npm run build && electron electron/main.cjs",
+    "desktop:dev": "concurrently -k \"cross-env VITE_DESKTOP_WORKSPACE_ONLY=true npm run dev\" \"wait-on http://localhost:5173 && cross-env ELECTRON_START_URL=http://localhost:5173 electron electron/main.cjs\"",
+    "desktop:build": "npm run build:desktop && electron electron/main.cjs",
+    "build:desktop": "cross-env ELECTRON_BUILD=true VITE_DESKTOP_WORKSPACE_ONLY=true vite build",
+    "desktop:icons": "node scripts/generate-desktop-icon.mjs",
+    "desktop:pack:win": "npm run desktop:icons && npm run build:desktop && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --dir --x64 && node scripts/patch-desktop-exe-icon.mjs && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64 --publish never --prepackaged dist-desktop/win-unpacked",
+    "desktop:publish": "node scripts/publish-desktop-installer.mjs",
+    "desktop:release": "npm run desktop:pack:win && npm run desktop:publish",
+    "docker:build": "docker build -t baytmiftah/web:local .",
+    "docker:up": "docker compose --profile staging up --build -d",
+    "docker:down": "docker compose --profile staging down",
     "supabase:login": "powershell -ExecutionPolicy Bypass -File scripts/supabase-login.ps1",
     "supabase:deploy:payments": "node scripts/deploySupabasePayments.cjs --skip-db",
+    "supabase:secrets:resend": "node scripts/configure-resend-secrets.cjs",
     "supabase:configure-auth": "node scripts/configure-supabase-auth.mjs",
     "db:status": "node scripts/supabase-db.mjs status",
     "db:query": "node scripts/supabase-db.mjs query",
@@ -180,10 +205,14 @@
     "concurrently": "^10.0.5",
     "cross-env": "^10.1.0",
     "electron": "^43.4.0",
+    "electron-builder": "^25.1.8",
     "google-translate-api-x": "^10.7.3",
     "happy-dom": "^20.11.0",
     "jsdom": "^26.1.0",
     "pg": "^8.22.0",
+    "png-to-ico": "^3.0.2",
+    "rcedit": "^4.0.1",
+    "sharp": "^0.35.4",
     "supabase": "^2.112.0",
     "tailwindcss": "4.1.12",
     "typescript": "^5.8.3",
@@ -191,6 +220,9 @@
     "vitest": "^3.2.7",
     "wait-on": "^9.1.0",
     "web-push": "^3.6.7"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^11.10.0"
   },
   "peerDependencies": {
     "react": "19.2.7",
@@ -216,5 +248,47 @@
     "diff": "^8.0.3",
     "adm-zip": "^0.6.0",
     "bn.js": "^5.2.2"
+  },
+  "build": {
+    "appId": "com.baytmiftah.desktop",
+    "productName": "BaytMiftah Workspace",
+    "directories": {
+      "output": "dist-desktop",
+      "buildResources": "electron/build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "**/node_modules/better-sqlite3/**"
+    ],
+    "icon": "electron/build/icon.png",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/build/icon.ico",
+      "artifactName": "baytmiftah-desktop-setup.${ext}",
+      "signAndEditExecutable": false,
+      "signDlls": false,
+      "verifyUpdateCodeSignature": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "installerIcon": "electron/build/icon.ico",
+      "uninstallerIcon": "electron/build/icon.ico"
+    }
   }
 }

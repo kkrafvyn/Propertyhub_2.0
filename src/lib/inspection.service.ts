@@ -26,7 +26,7 @@ export const inspectionService = {
       .from("property_inspections")
       .select(`
         *,
-        listing:listings(id, property:properties(address, city)),
+        listing:listings(id, property:properties(id, address, city)),
         tenant:users(full_name, email)
       `)
       .eq("organization_id", organizationId)

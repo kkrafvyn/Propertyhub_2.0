@@ -126,10 +126,75 @@ export const maintenanceService = {
     return data;
   },
 
-  async assignVendor(requestId: string, vendorId: string) {
+  async assignToUser(requestId: string, userId: string) {
     const { data, error } = await supabase
       .from("maintenance_requests")
-      .update({ vendor_id: vendorId, status: "in_progress" })
+      .update({
+        assigned_to_user_id: userId,
+        status: "in_progress",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", requestId)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async createContractorAccessLink(input: {
+    organizationId: string;
+    requestId: string;
+    recipientEmail?: string;
+    label?: string;
+  }) {
+    const { externalAccessService } = await import("./external-access.service");
+    const grant = await externalAccessService.createGrant({
+      organizationId: input.organizationId,
+      resourceType: "maintenance_request",
+      resourceId: input.requestId,
+      recipientEmail: input.recipientEmail,
+      label: input.label || "Maintenance assignment",
+    });
+    return externalAccessService.buildAccessUrl(grant.access_token);
+  },
+
+  async assignVendor(
+    requestId: string,
+    vendorId: string,
+    organizationId?: string,
+    baseUpdatedAt?: string | null,
+  ) {
+    let serverUpdatedAt = baseUpdatedAt ?? null;
+    if (typeof navigator !== "undefined" && navigator.onLine && serverUpdatedAt == null) {
+      const { data: existing } = await supabase
+        .from("maintenance_requests")
+        .select("updated_at")
+        .eq("id", requestId)
+        .maybeSingle();
+      serverUpdatedAt = existing?.updated_at ?? null;
+    }
+
+    const payload = {
+      vendor_id: vendorId,
+      status: "in_progress" as const,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (typeof navigator !== "undefined" && !navigator.onLine && organizationId) {
+      const { workspaceSyncService } = await import("./workspace-sync.service");
+      await workspaceSyncService.queueMaintenanceAssign({
+        organizationId,
+        requestId,
+        vendorId,
+        baseUpdatedAt: serverUpdatedAt,
+      });
+      return { id: requestId, ...payload, offlineQueued: true };
+    }
+
+    const { data, error } = await supabase
+      .from("maintenance_requests")
+      .update(payload)
       .eq("id", requestId)
       .select("*")
       .single();
@@ -145,15 +210,40 @@ export const maintenanceService = {
 
   async updateRequestStatus(
     requestId: string,
-    status: "open" | "in_progress" | "resolved" | "cancelled"
+    status: "open" | "in_progress" | "resolved" | "cancelled",
+    organizationId?: string,
+    baseUpdatedAt?: string | null,
   ) {
+    let serverUpdatedAt = baseUpdatedAt ?? null;
+    if (typeof navigator !== "undefined" && navigator.onLine && serverUpdatedAt == null) {
+      const { data: existing } = await supabase
+        .from("maintenance_requests")
+        .select("updated_at")
+        .eq("id", requestId)
+        .maybeSingle();
+      serverUpdatedAt = existing?.updated_at ?? null;
+    }
+
+    const payload = {
+      status,
+      resolved_at: status === "resolved" ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (typeof navigator !== "undefined" && !navigator.onLine && organizationId) {
+      const { workspaceSyncService } = await import("./workspace-sync.service");
+      await workspaceSyncService.queueMaintenanceUpdate({
+        organizationId,
+        requestId,
+        payload,
+        baseUpdatedAt: serverUpdatedAt,
+      });
+      return { id: requestId, ...payload, offlineQueued: true };
+    }
+
     const { data, error } = await supabase
       .from("maintenance_requests")
-      .update({
-        status,
-        resolved_at: status === "resolved" ? new Date().toISOString() : null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(payload)
       .eq("id", requestId)
       .select("*")
       .single();
@@ -175,7 +265,7 @@ export const maintenanceService = {
         tenant:users(full_name, email, phone),
         vendor:vendors(id, business_name, phone),
         lease:leases(
-          listing:listings(property:properties(address, city))
+          listing:listings(property:properties(id, address, city))
         )
       `)
       .eq("organization_id", organizationId)

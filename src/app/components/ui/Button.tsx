@@ -9,26 +9,42 @@ type ButtonVariant =
   | "ghost"
   | "outline"
   | "destructive"
-  | "link";
+  | "link"
+  | "glass"
+  | "gradient"
+  | "terracotta";
 
 type ButtonSize = "default" | "sm" | "md" | "lg" | "icon";
 
 const variantClasses: Record<ButtonVariant, string> = {
-  default: "bg-primary text-primary-foreground hover:opacity-90 shadow-sm",
-  primary: "bg-primary text-primary-foreground hover:opacity-90 shadow-sm",
-  secondary: "bg-secondary text-secondary-foreground hover:bg-muted",
-  ghost: "hover:bg-secondary text-foreground",
-  outline: "border-2 border-border hover:bg-secondary text-foreground",
-  destructive: "bg-destructive text-destructive-foreground hover:opacity-90",
-  link: "text-primary underline-offset-4 hover:underline",
+  default:
+    "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md active:scale-[0.98] border border-primary/20",
+  primary:
+    "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md active:scale-[0.98] border border-primary/20",
+  secondary:
+    "bg-surface text-ink hover:bg-surface-hover border border-surface-border shadow-xs hover:border-primary/30 active:scale-[0.98]",
+  ghost:
+    "hover:bg-surface-hover text-ink active:scale-[0.98]",
+  outline:
+    "border border-surface-border hover:bg-surface-hover hover:border-primary/40 text-ink shadow-xs active:scale-[0.98]",
+  destructive:
+    "bg-destructive text-destructive-foreground hover:opacity-90 shadow-xs hover:shadow-md active:scale-[0.98]",
+  link:
+    "text-primary underline-offset-4 hover:underline",
+  glass:
+    "bg-surface/80 dark:bg-card/70 backdrop-blur-md border border-surface-border/80 dark:border-white/15 text-ink hover:bg-surface-hover shadow-xs active:scale-[0.98]",
+  gradient:
+    "bg-gradient-to-r from-primary via-emerald-800 to-primary text-white hover:opacity-95 shadow-md hover:shadow-lg active:scale-[0.98]",
+  terracotta:
+    "bg-gradient-to-r from-brand-orange to-[#c45d44] text-white hover:shadow-md active:scale-[0.98] shadow-[0_4px_14px_rgba(224,122,95,0.35)]",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  default: "px-5 py-2.5",
-  sm: "px-3 py-1.5 text-sm",
-  md: "px-5 py-2.5",
-  lg: "px-6 py-3.5 text-lg",
-  icon: "h-10 w-10 p-0",
+  default: "px-4 py-2 text-sm font-medium rounded-xl",
+  sm: "px-3 py-1.5 text-xs font-semibold rounded-lg",
+  md: "px-4 py-2.5 text-sm font-semibold rounded-xl",
+  lg: "px-6 py-3.5 text-base font-semibold rounded-2xl",
+  icon: "h-9 w-9 p-0 rounded-xl",
 };
 
 export function buttonVariants({

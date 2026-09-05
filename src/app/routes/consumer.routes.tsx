@@ -217,6 +217,13 @@ export const consumerRoutes: RouteObject[] = [
     },
   },
   {
+    path: 'contractor/access/:token',
+    lazy: async () => {
+      const { PublicContractorAccess } = await import('../pages/public/PublicContractorAccess');
+      return { Component: PublicContractorAccess };
+    },
+  },
+  {
     path: 'referral',
     lazy: async () => {
       const { ReferralPage } = await import('../pages/user/ReferralPage');

@@ -6,6 +6,11 @@ const migrationsDir = path.resolve(process.cwd(), 'supabase/migrations');
 const migrationFiles = readdirSync(migrationsDir).filter((file) => file.endsWith('.sql'));
 
 const sensitiveTables = [
+  'users',
+  'organizations',
+  'organization_members',
+  'properties',
+  'listings',
   'organization_api_keys',
   'organization_webhook_subscriptions',
   'webhook_delivery_logs',

@@ -2,6 +2,7 @@ import type { User } from "@supabase/supabase-js";
 import { Capacitor } from "@capacitor/core";
 import { getMobileAppId } from "../../lib/mobile-app";
 import { isElectron } from "../../lib/surface-detection";
+import { isDesktopConsumerOnlyRoute, resolveDesktopProfessionalHome } from "../../lib/desktop-routing";
 import { getMetadataRole, isFullAdminRole, isWorkspaceRole } from "./baytmiftah/roles";
 import { hasPlatformConsoleAccess } from "../../lib/platform-access";
 
@@ -21,10 +22,16 @@ export function resolvePostAuthRedirect(
   explicitRedirect?: string | null,
 ): string {
   if (!user) {
+    if (typeof window !== "undefined" && isElectron()) {
+      return explicitRedirect || "/login";
+    }
     return explicitRedirect || "/app";
   }
 
   if (explicitRedirect && explicitRedirect !== "/app") {
+    if (typeof window !== "undefined" && isElectron() && isDesktopConsumerOnlyRoute(explicitRedirect)) {
+      return resolveDesktopProfessionalHome(user as User, profile);
+    }
     return explicitRedirect;
   }
 
@@ -42,10 +49,7 @@ export function resolvePostAuthRedirect(
   const metadataRole = getMetadataRole(user.user_metadata) || getMetadataRole(user.app_metadata);
 
   if (typeof window !== "undefined" && isElectron()) {
-    if (hasPlatformConsoleAccess(profile) || isFullAdminRole(metadataRole)) {
-      return "/admin";
-    }
-    return "/workspace";
+    return resolveDesktopProfessionalHome(user as User, profile);
   }
 
   if (hasPlatformConsoleAccess(profile) || isFullAdminRole(metadataRole)) {

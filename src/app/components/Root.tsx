@@ -22,6 +22,11 @@ import { ActiveCallBar } from "./communication/ActiveCallBar";
 import { PHONE_MEDIA, TABLET_MEDIA } from "../lib/viewports";
 import { isBusinessMobileApp } from "../../lib/mobile-app";
 import { isElectron } from "../../lib/surface-detection";
+import { isDesktopWorkspaceApp } from "../../lib/desktop-app";
+import {
+  isDesktopConsumerOnlyRoute,
+  resolveDesktopProfessionalHome,
+} from "../../lib/desktop-routing";
 import { AdminDesktopShell } from "../shells/AdminDesktopShell";
 import { DesktopNavigationBridge } from "./DesktopNavigationBridge";
 import { DesktopProfessionalGateway } from "./DesktopProfessionalGateway";
@@ -83,6 +88,7 @@ function shouldSkipOnboarding(pathname: string) {
     pathname.startsWith("/reset-password") ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/workspace") ||
+    pathname.startsWith("/enrollment") ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/privacy") ||
     pathname.startsWith("/terms") ||
@@ -94,6 +100,7 @@ function shouldSkipOnboarding(pathname: string) {
     pathname.startsWith("/careers") ||
     pathname.startsWith("/contact") ||
     pathname.startsWith("/complaint") ||
+    pathname.startsWith("/sitemap") ||
     pathname.startsWith("/checkout") ||
     pathname.startsWith("/search") ||
     pathname.startsWith("/property/") ||
@@ -110,17 +117,21 @@ export function Root() {
   useIdleSessionTimeout(Boolean(user));
 
   const showAdminDesktopShell = isElectron() && location.pathname.startsWith("/admin");
-  const isDesktopApp = isElectron();
+  const isDesktopApp = isDesktopWorkspaceApp();
 
-  if (isDesktopApp && isConsumerRoute(location.pathname)) {
-    return (
-      <>
-        <DesktopNavigationBridge />
-        <DesktopProfessionalGateway>
-          <Navigate to={user ? "/workspace" : "/login"} replace />
-        </DesktopProfessionalGateway>
-      </>
-    );
+  if (isDesktopApp && isDesktopConsumerOnlyRoute(location.pathname)) {
+    const target = user ? resolveDesktopProfessionalHome(user, profile) : "/login";
+    const current = `${location.pathname}${location.search}`;
+    if (target !== current) {
+      return (
+        <>
+          <DesktopNavigationBridge />
+          <DesktopProfessionalGateway>
+            <Navigate to={target} replace />
+          </DesktopProfessionalGateway>
+        </>
+      );
+    }
   }
 
   if (marketReady && !onboardingComplete && !shouldSkipOnboarding(location.pathname)) {

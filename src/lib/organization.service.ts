@@ -45,7 +45,7 @@ export const organizationService = {
   async getUserOrganizations(userId: string) {
     const { data, error } = await supabase
       .from('organization_members')
-      .select('organization:organizations(*), role')
+      .select('organization:organizations(*), role, permissions, department_id')
       .eq('user_id', userId)
 
     if (error) throw error
@@ -86,11 +86,94 @@ export const organizationService = {
   async getOrganizationMembers(organizationId: string) {
     const { data, error } = await supabase
       .from('organization_members')
-      .select('*, user:users(id, email, full_name, avatar_url)')
+      .select('*, user:users(id, email, full_name, avatar_url), department:organization_departments(id, department_key, name)')
       .eq('organization_id', organizationId)
 
     if (error) throw error
     return data
+  },
+
+  async getOrganizationDepartments(organizationId: string) {
+    const { data, error } = await supabase
+      .from('organization_departments')
+      .select('*, head:users(id, email, full_name)')
+      .eq('organization_id', organizationId)
+      .order('name')
+
+    if (error) throw error
+    return (data || []).map((row) => {
+      const head = Array.isArray(row.head) ? row.head[0] : row.head
+      return { ...row, head: head ?? null }
+    })
+  },
+
+  async setDepartmentHead(
+    organizationId: string,
+    departmentId: string,
+    headUserId: string | null,
+  ) {
+    const { data, error } = await supabase
+      .from('organization_departments')
+      .update({ head_user_id: headUserId })
+      .eq('id', departmentId)
+      .eq('organization_id', organizationId)
+      .select('*, head:users(id, email, full_name)')
+      .single()
+
+    if (error) throw error
+    const head = Array.isArray(data.head) ? data.head[0] : data.head
+    return { ...data, head: head ?? null }
+  },
+
+  async completeCompanySetup(params: {
+    organizationId: string
+    businessTypes: string[]
+    enabledCapabilities: string[]
+    departments: Array<{ department_key: string; name: string }>
+    setupMetadata?: Record<string, unknown>
+    initialUnits?: Array<{ name: string; unitType?: string; code?: string | null }>
+  }) {
+    const { data: departments, error: departmentError } = await supabase
+      .from('organization_departments')
+      .upsert(
+        params.departments.map((department) => ({
+          organization_id: params.organizationId,
+          department_key: department.department_key,
+          name: department.name,
+        })),
+        { onConflict: 'organization_id,department_key' },
+      )
+      .select()
+
+    if (departmentError) throw departmentError
+
+    const { data: organization, error: organizationError } = await supabase
+      .from('organizations')
+      .update({
+        business_types: params.businessTypes,
+        enabled_capabilities: params.enabledCapabilities,
+        company_setup_completed: true,
+        setup_metadata: params.setupMetadata ?? {},
+      })
+      .eq('id', params.organizationId)
+      .select()
+      .single()
+
+    if (organizationError) throw organizationError
+
+    if (params.initialUnits?.length) {
+      const { error: unitsError } = await supabase.from('organization_units').insert(
+        params.initialUnits.map((unit) => ({
+          organization_id: params.organizationId,
+          name: unit.name,
+          unit_type: unit.unitType || 'region',
+          code: unit.code || null,
+        })),
+      )
+      if (unitsError) throw unitsError
+    }
+
+    return { organization, departments }
   },
 
   async addMember(
@@ -124,11 +207,17 @@ export const organizationService = {
   async updateMemberRole(
     organizationId: string,
     userId: string,
-    role: string
+    role: string,
+    departmentId?: string | null,
   ) {
+    const payload: Record<string, unknown> = { role }
+    if (departmentId !== undefined) {
+      payload.department_id = departmentId
+    }
+
     const { data, error } = await supabase
       .from('organization_members')
-      .update({ role })
+      .update(payload)
       .eq('organization_id', organizationId)
       .eq('user_id', userId)
       .select()
@@ -240,5 +329,25 @@ export const organizationService = {
       organization_id: string
       organization_slug: string
     }
+  },
+
+  async updateMemberApprovalLimits(
+    organizationId: string,
+    userId: string,
+    limits: {
+      financeApprovalLimitMinor?: number | null;
+      maintenanceApprovalLimitMinor?: number | null;
+    },
+  ) {
+    const { error } = await supabase
+      .from('organization_members')
+      .update({
+        finance_approval_limit_minor: limits.financeApprovalLimitMinor ?? null,
+        maintenance_approval_limit_minor: limits.maintenanceApprovalLimitMinor ?? null,
+      })
+      .eq('organization_id', organizationId)
+      .eq('user_id', userId)
+
+    if (error) throw error
   },
 }

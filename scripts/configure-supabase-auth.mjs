@@ -32,6 +32,8 @@ const redirectUrlSet = new Set([
   "https://app.baytmiftah.com/**",
   "https://propertyhub-2-0-ecru.vercel.app/**",
   "https://*.vercel.app/**",
+  "baytmiftah://auth/callback",
+  "baytmiftah://auth/callback/**",
   ...extraRedirects.map((url) => `${url}/**`),
 ]);
 

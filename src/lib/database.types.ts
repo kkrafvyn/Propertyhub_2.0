@@ -2633,23 +2633,29 @@ export type Database = {
       }
       organization_members: {
         Row: {
+          department_id: string | null
           id: string
           joined_at: string | null
           organization_id: string
+          permissions: string[] | null
           role: string | null
           user_id: string
         }
         Insert: {
+          department_id?: string | null
           id?: string
           joined_at?: string | null
           organization_id: string
+          permissions?: string[] | null
           role?: string | null
           user_id: string
         }
         Update: {
+          department_id?: string | null
           id?: string
           joined_at?: string | null
           organization_id?: string
+          permissions?: string[] | null
           role?: string | null
           user_id?: string
         }
@@ -2729,9 +2735,12 @@ export type Database = {
       organizations: {
         Row: {
           banner_url: string | null
+          business_types: string[] | null
+          company_setup_completed: boolean | null
           created_at: string | null
           description: string | null
           email: string | null
+          enabled_capabilities: string[] | null
           ghana_business_registration_number: string | null
           ghana_tax_identification_number: string | null
           id: string
@@ -2751,9 +2760,12 @@ export type Database = {
         }
         Insert: {
           banner_url?: string | null
+          business_types?: string[] | null
+          company_setup_completed?: boolean | null
           created_at?: string | null
           description?: string | null
           email?: string | null
+          enabled_capabilities?: string[] | null
           ghana_business_registration_number?: string | null
           ghana_tax_identification_number?: string | null
           id?: string
@@ -2773,9 +2785,12 @@ export type Database = {
         }
         Update: {
           banner_url?: string | null
+          business_types?: string[] | null
+          company_setup_completed?: boolean | null
           created_at?: string | null
           description?: string | null
           email?: string | null
+          enabled_capabilities?: string[] | null
           ghana_business_registration_number?: string | null
           ghana_tax_identification_number?: string | null
           id?: string

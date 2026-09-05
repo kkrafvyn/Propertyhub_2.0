@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { ChevronDown, Sparkles, Building2, CheckCircle2 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
@@ -317,16 +318,24 @@ export function WorkspaceNewListing({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">Create a New Listing</h1>
-        <p className="text-muted-foreground mt-2">
-          Add a property and publish it into {organization.name}&apos;s workspace.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-ink">
+            Create a New Listing
+          </h1>
+          <p className="text-sm text-ink-secondary mt-1">
+            Add a property and publish it into {organization.name}&apos;s workspace inventory.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-surface-border bg-surface-subtle text-xs text-ink-secondary self-start sm:self-auto">
+          <Building2 className="w-4 h-4 text-primary" />
+          <span className="font-semibold text-ink">Inventory Publishing</span>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Property Details</h2>
+        <Card className="p-6 border-surface-border bg-surface shadow-card">
+          <h2 className="text-xl font-semibold mb-4 text-ink">Property Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Address"
@@ -383,17 +392,20 @@ export function WorkspaceNewListing({
             />
             <div>
               <label className="block mb-2 text-sm text-foreground">Category</label>
-              <select
-                className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
-                value={form.category}
-                onChange={(event) => updateField("category", event.target.value)}
-              >
-                {PROPERTY_CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  className="w-full appearance-none px-4 py-3 rounded-lg border border-border bg-input-background pr-10 text-ink text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+                  value={form.category}
+                  onChange={(event) => updateField("category", event.target.value)}
+                >
+                  {PROPERTY_CATEGORIES.map((category) => (
+                    <option key={category} value={category}>
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+              </div>
             </div>
             <Input
               label="Bedrooms"
@@ -446,6 +458,7 @@ export function WorkspaceNewListing({
                 size="sm"
                 variant="outline"
                 disabled={generatingDescription}
+                className="flex items-center gap-1.5"
                 onClick={async () => {
                   setGeneratingDescription(true);
                   try {
@@ -494,11 +507,12 @@ export function WorkspaceNewListing({
                   }
                 }}
               >
-                {generatingDescription ? "Generating..." : "Generate with AI"}
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                <span>{generatingDescription ? "Generating..." : "Generate with AI"}</span>
               </Button>
             </div>
             <textarea
-              className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground min-h-32"
+              className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground min-h-32 focus:outline-none focus:ring-1 focus:ring-primary"
               value={form.description}
               onChange={(event) => updateField("description", event.target.value)}
               placeholder="Describe the property, neighborhood, and unique selling points."
@@ -518,22 +532,25 @@ export function WorkspaceNewListing({
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Listing Details</h2>
+        <Card className="p-6 border-surface-border bg-surface shadow-card">
+          <h2 className="text-xl font-semibold mb-4 text-ink">Listing Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block mb-2 text-sm text-foreground">Listing Type</label>
-              <select
-                className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
-                value={form.listingType}
-                onChange={(event) => updateField("listingType", event.target.value)}
-              >
-                {LISTING_TYPES.map((listingType) => (
-                  <option key={listingType} value={listingType}>
-                    {listingType.charAt(0).toUpperCase() + listingType.slice(1)}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  className="w-full appearance-none px-4 py-3 rounded-lg border border-border bg-input-background pr-10 text-ink text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+                  value={form.listingType}
+                  onChange={(event) => updateField("listingType", event.target.value)}
+                >
+                  {LISTING_TYPES.map((listingType) => (
+                    <option key={listingType} value={listingType}>
+                      {listingType.charAt(0).toUpperCase() + listingType.slice(1)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+              </div>
             </div>
             <Input
               label="Price"
@@ -552,31 +569,37 @@ export function WorkspaceNewListing({
             />
             <div>
               <label className="block mb-2 text-sm text-foreground">Status</label>
-              <select
-                className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
-                value={form.status}
-                onChange={(event) => updateField("status", event.target.value)}
-              >
-                {LISTING_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {status.replaceAll("_", " ")}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  className="w-full appearance-none px-4 py-3 rounded-lg border border-border bg-input-background pr-10 text-ink text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+                  value={form.status}
+                  onChange={(event) => updateField("status", event.target.value)}
+                >
+                  {LISTING_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {status.replaceAll("_", " ")}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+              </div>
             </div>
             <div>
               <label className="block mb-2 text-sm text-foreground">Visibility</label>
-              <select
-                className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
-                value={form.visibility}
-                onChange={(event) => updateField("visibility", event.target.value)}
-              >
-                {VISIBILITY_OPTIONS.map((visibility) => (
-                  <option key={visibility} value={visibility}>
-                    {visibility.charAt(0).toUpperCase() + visibility.slice(1)}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  className="w-full appearance-none px-4 py-3 rounded-lg border border-border bg-input-background pr-10 text-ink text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+                  value={form.visibility}
+                  onChange={(event) => updateField("visibility", event.target.value)}
+                >
+                  {VISIBILITY_OPTIONS.map((visibility) => (
+                    <option key={visibility} value={visibility}>
+                      {visibility}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+              </div>
             </div>
           </div>
 
@@ -590,8 +613,8 @@ export function WorkspaceNewListing({
           </label>
         </Card>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Ghana Trust & Mobile Money</h2>
+        <Card className="p-6 border-surface-border bg-surface shadow-card">
+          <h2 className="text-xl font-semibold mb-4 text-ink">Ghana Trust & Mobile Money</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
               label="Inspection Fee (GHS)"
@@ -611,17 +634,20 @@ export function WorkspaceNewListing({
             />
             <div>
               <label className="block mb-2 text-sm text-foreground">Document Status</label>
-              <select
-                className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
-                value={form.titleDocumentStatus}
-                onChange={(event) => updateField("titleDocumentStatus", event.target.value)}
-              >
-                <option value="missing">Missing</option>
-                <option value="submitted">Submitted</option>
-                <option value="in_review">In review</option>
-                <option value="verified">Verified</option>
-                <option value="signed">Signed mandate</option>
-              </select>
+              <div className="relative">
+                <select
+                  className="w-full appearance-none px-4 py-3 rounded-lg border border-border bg-input-background pr-10 text-ink text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+                  value={form.titleDocumentStatus}
+                  onChange={(event) => updateField("titleDocumentStatus", event.target.value)}
+                >
+                  <option value="missing">Missing</option>
+                  <option value="submitted">Submitted</option>
+                  <option value="in_review">In review</option>
+                  <option value="verified">Verified</option>
+                  <option value="signed">Signed mandate</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+              </div>
             </div>
           </div>
           <label className="flex items-center gap-3 mt-4 cursor-pointer">
@@ -634,7 +660,7 @@ export function WorkspaceNewListing({
           </label>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 border-surface-border bg-surface shadow-card">
           <PropertyMediaPicker
             files={mediaFiles}
             onChange={setMediaFiles}

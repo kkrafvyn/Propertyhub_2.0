@@ -1,19 +1,40 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
+import {
+  ClipboardCheck,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  User,
+  MapPin,
+  Check,
+  RefreshCw,
+  ImageIcon,
+} from "lucide-react";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
-import { ClipboardCheck, Calendar, Sparkles } from "lucide-react";
+import { MetricCard } from "../../components/ui/MetricCard";
+import { EmptyState } from "../../components/ux/EmptyState";
 import { inspectionService } from "../../../lib/inspection.service";
 import { FieldInspectionEngine } from "./FieldInspectionEngine";
+import {
+  filterByNestedPropertyScope,
+  getNestedListingPropertyId,
+  type MemberScopeProps,
+  withMemberScopeDefaults,
+} from "../../../lib/member-scope";
 
 export function WorkspaceInspections({
   organizationId,
   currentUserId,
+  scopeMode = "organization",
+  scopedPropertyIds = null,
+  bypassPropertyScope = false,
 }: {
   organizationId: string;
   currentUserId: string;
-}) {
+} & MemberScopeProps) {
   const [activeTab, setActiveTab] = useState<"field_engine" | "scheduled">("field_engine");
   const [loading, setLoading] = useState(true);
   const [inspections, setInspections] = useState<any[]>([]);
@@ -23,7 +44,20 @@ export function WorkspaceInspections({
     try {
       setLoading(true);
       const rows = await inspectionService.getOrganizationInspections(organizationId);
-      setInspections(rows || []);
+      const scope = withMemberScopeDefaults({
+        scopeMode,
+        scopedPropertyIds,
+        bypassPropertyScope,
+      });
+      setInspections(
+        filterByNestedPropertyScope(
+          rows || [],
+          getNestedListingPropertyId,
+          scope.scopeMode,
+          scope.scopedPropertyIds,
+          scope.bypassPropertyScope,
+        ),
+      );
     } catch (error) {
       console.error(error);
     } finally {
@@ -33,7 +67,7 @@ export function WorkspaceInspections({
 
   useEffect(() => {
     void loadInspections();
-  }, [organizationId]);
+  }, [organizationId, scopeMode, scopedPropertyIds, bypassPropertyScope]);
 
   const toggleItem = async (inspectionId: string, itemKey: string, completed: boolean) => {
     try {
@@ -48,35 +82,45 @@ export function WorkspaceInspections({
     }
   };
 
+  const metrics = useMemo(() => {
+    const total = inspections.length;
+    const completed = inspections.filter((i) => i.status === "completed").length;
+    const pending = total - completed;
+    return { total, completed, pending };
+  }, [inspections]);
+
   return (
     <div className="space-y-6">
       {/* Tab Switcher */}
       <div className="flex items-center gap-2 border-b border-surface-border pb-3">
         <button
           onClick={() => setActiveTab("field_engine")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
             activeTab === "field_engine"
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-ink-secondary hover:text-ink hover:bg-surface-hover"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "text-ink-secondary hover:text-ink hover:bg-surface-subtle"
           }`}
         >
           <ClipboardCheck className="w-4 h-4" />
-          150-Point Field Inspection Engine
-          <span className="text-[10px] bg-white/20 dark:bg-black/30 px-1.5 py-0.5 rounded font-mono">
+          <span>150-Point Field Inspection Engine</span>
+          <span className="text-[10px] bg-white/20 dark:bg-black/30 px-2 py-0.5 rounded-full font-mono font-bold tracking-wider">
             OFFLINE
           </span>
         </button>
 
         <button
           onClick={() => setActiveTab("scheduled")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
             activeTab === "scheduled"
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-ink-secondary hover:text-ink hover:bg-surface-hover"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "text-ink-secondary hover:text-ink hover:bg-surface-subtle"
           }`}
         >
           <Calendar className="w-4 h-4" />
-          Scheduled Lease Inspections ({inspections.length})
+          <span>Scheduled Lease Inspections</span>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-surface-subtle text-ink font-mono">
+            {inspections.length}
+          </span>
         </button>
       </div>
 
@@ -86,102 +130,199 @@ export function WorkspaceInspections({
           currentUserId={currentUserId}
         />
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* Metrics Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <MetricCard
+              title="Total Scheduled"
+              value={metrics.total}
+              icon={Calendar}
+              iconColor="primary"
+              subtitle="Lease turnover and annual reviews"
+            />
+            <MetricCard
+              title="Pending Inspection"
+              value={metrics.pending}
+              icon={Clock}
+              iconColor="amber"
+              subtitle="Requires on-site walk-through"
+            />
+            <MetricCard
+              title="Completed & Signed"
+              value={metrics.completed}
+              icon={CheckCircle2}
+              iconColor="emerald"
+              subtitle="Digitally verified and filed"
+            />
+          </div>
+
           {loading ? (
-            <Card className="p-8 text-center text-ink-muted border-surface-border bg-surface">
-              Loading scheduled inspections...
-            </Card>
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-40 rounded-2xl bg-surface-subtle animate-pulse border border-surface-border" />
+              ))}
+            </div>
           ) : inspections.length === 0 ? (
-            <Card className="p-8 text-center text-ink-muted border-surface-border bg-surface">
-              No scheduled lease inspections. New inspections automatically sync from approved leases or field reports.
-            </Card>
+            <EmptyState
+              icon={ClipboardCheck}
+              title="No scheduled inspections"
+              description="No lease inspections currently scheduled. New inspections automatically generate when leases are approved or when annual property condition checks are due."
+            />
           ) : (
-            inspections.map((inspection) => {
-              const checklist = Array.isArray(inspection.checklist) ? inspection.checklist : [];
+            <div className="space-y-4">
+              {inspections.map((inspection) => {
+                const checklist = Array.isArray(inspection.checklist) ? inspection.checklist : [];
+                const completedItems = checklist.filter((item: any) => Boolean(item.completed)).length;
+                const totalItems = checklist.length;
+                const percentDone = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+                const isDone = inspection.status === "completed";
 
-              return (
-                <Card key={inspection.id} className="p-5 space-y-4 border-surface-border bg-surface">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="font-semibold text-ink capitalize">
-                        {inspection.inspection_type?.replace(/_/g, " ")}
-                      </h3>
-                      <p className="text-sm text-ink-secondary">
-                        {inspection.listing?.property?.address || "Property"}
-                        {inspection.scheduled_at
-                          ? ` · ${new Date(inspection.scheduled_at).toLocaleString()}`
-                          : ""}
-                      </p>
-                      {inspection.tenant ? (
-                        <p className="text-sm text-ink-secondary">
-                          Tenant: {inspection.tenant.full_name || inspection.tenant.email}
+                return (
+                  <Card
+                    key={inspection.id}
+                    className="p-5 sm:p-6 space-y-4 border-surface-border bg-surface shadow-card hover:shadow-card-hover transition-all"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-base font-semibold text-ink capitalize">
+                            {inspection.inspection_type ? inspection.inspection_type.replace(/_/g, " ") : "Move-in / Move-out Inspection"}
+                          </h3>
+                          <Badge
+                            variant={isDone ? "success" : "warning"}
+                            className="capitalize text-xs font-semibold px-2.5 py-0.5"
+                          >
+                            {inspection.status}
+                          </Badge>
+                        </div>
+
+                        <div className="flex items-center gap-3 text-xs text-ink-secondary flex-wrap pt-1">
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-ink-muted" />
+                            <span>{inspection.listing?.property?.address || "Property"}</span>
+                          </div>
+
+                          {inspection.scheduled_at && (
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5 text-ink-muted" />
+                              <span>{new Date(inspection.scheduled_at).toLocaleDateString()}</span>
+                            </div>
+                          )}
+
+                          {inspection.tenant && (
+                            <div className="flex items-center gap-1.5">
+                              <User className="w-3.5 h-3.5 text-ink-muted" />
+                              <span>Tenant: {inspection.tenant.full_name || inspection.tenant.email}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Progress meter */}
+                      {totalItems > 0 && (
+                        <div className="shrink-0 flex items-center gap-2 rounded-xl bg-surface-subtle px-3 py-1.5 border border-surface-border text-xs">
+                          <span className="font-semibold text-ink">{percentDone}% Complete</span>
+                          <span className="text-ink-muted">({completedItems}/{totalItems})</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Checklist */}
+                    {checklist.length > 0 ? (
+                      <div className="space-y-2 pt-2 border-t border-surface-border/60">
+                        <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
+                          Inspection Checklist
                         </p>
-                      ) : null}
-                    </div>
-                    <Badge variant="outline" className="capitalize border-surface-border text-ink">
-                      {inspection.status}
-                    </Badge>
-                  </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {checklist.map((item: any) => (
+                            <label
+                              key={item.key}
+                              className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all cursor-pointer ${
+                                item.completed
+                                  ? "bg-emerald-500/5 border-emerald-500/20 text-ink"
+                                  : "bg-surface-subtle/60 border-surface-border hover:border-primary/40 text-ink"
+                              }`}
+                            >
+                              <div
+                                className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors shrink-0 ${
+                                  item.completed
+                                    ? "bg-emerald-600 border-emerald-600 text-white"
+                                    : "border-surface-border bg-surface"
+                                }`}
+                              >
+                                {item.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                              </div>
+                              <input
+                                type="checkbox"
+                                checked={Boolean(item.completed)}
+                                disabled={updatingId === inspection.id || isDone}
+                                onChange={(event) =>
+                                  void toggleItem(inspection.id, item.key, event.target.checked)
+                                }
+                                className="sr-only"
+                              />
+                              <span
+                                className={`text-xs font-medium truncate ${
+                                  item.completed ? "line-through text-ink-muted" : "text-ink"
+                                }`}
+                              >
+                                {item.label}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
 
-                  {checklist.length > 0 ? (
-                    <div className="space-y-2">
-                      {checklist.map((item: any) => (
-                        <label key={item.key} className="flex items-center gap-3 text-sm text-ink cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(item.completed)}
-                            disabled={updatingId === inspection.id || inspection.status === "completed"}
-                            onChange={(event) =>
-                              void toggleItem(inspection.id, item.key, event.target.checked)
+                    {/* Photo evidence */}
+                    {Array.isArray(inspection.photo_urls) && inspection.photo_urls.length > 0 ? (
+                      <div className="space-y-2 pt-2 border-t border-surface-border/60">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-ink-muted">
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          <span>Inspection Photos ({inspection.photo_urls.length})</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {inspection.photo_urls.map((url: string, index: number) => (
+                            <img
+                              key={url}
+                              src={url}
+                              alt={`Inspection ${index + 1}`}
+                              className="h-20 w-20 rounded-xl border border-surface-border object-cover shadow-xs"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Action */}
+                    {!isDone ? (
+                      <div className="pt-2 flex justify-end">
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              await inspectionService.completeInspection(inspection.id);
+                              toast.success("Inspection completed and signed.");
+                              await loadInspections();
+                            } catch (error) {
+                              console.error(error);
+                              toast.error("Unable to complete inspection.");
                             }
-                            className="w-4 h-4 rounded border-border"
-                          />
-                          <span className={item.completed ? "line-through text-ink-muted" : "text-ink"}>
-                            {item.label}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  {Array.isArray(inspection.photo_urls) && inspection.photo_urls.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {inspection.photo_urls.map((url: string) => (
-                        <img
-                          key={url}
-                          src={url}
-                          alt="Inspection"
-                          className="h-20 w-20 rounded-lg border border-surface-border object-cover"
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-
-                  {inspection.status !== "completed" ? (
-                    <Button
-                      size="sm"
-                      onClick={async () => {
-                        try {
-                          await inspectionService.completeInspection(inspection.id);
-                          toast.success("Inspection completed.");
-                          await loadInspections();
-                        } catch (error) {
-                          console.error(error);
-                          toast.error("Unable to complete inspection.");
-                        }
-                      }}
-                      className="bg-primary text-primary-foreground hover:opacity-90"
-                    >
-                      Complete inspection
-                    </Button>
-                  ) : null}
-                </Card>
-              );
-            })
+                          }}
+                          className="flex items-center gap-1.5"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Complete Inspection</span>
+                        </Button>
+                      </div>
+                    ) : null}
+                  </Card>
+                );
+              })}
+            </div>
           )}
         </div>
       )}
     </div>
   );
 }
-

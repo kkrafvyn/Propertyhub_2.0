@@ -83,7 +83,17 @@
   --shadow-glow: 0 0 24px rgba(13, 40, 33, 0.12);
   --shadow-glow-terracotta: 0 0 24px rgba(224, 122, 95, 0.28);
   --shadow-glow-emerald: 0 0 24px rgba(16, 185, 129, 0.25);
-  --border-sheen: inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
+  --shadow-glow-amber: 0 0 24px rgba(212, 163, 66, 0.25);
+  --shadow-glass-card: 0 4px 20px -2px rgba(13, 40, 33, 0.05), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-glass-hover: 0 16px 32px -4px rgba(13, 40, 33, 0.1), 0 4px 8px -2px rgba(13, 40, 33, 0.04);
+  --border-sheen: inset 0 1px 0 0 rgba(255, 255, 255, 0.75);
+  --border-sheen-strong: inset 0 1.5px 0 0 rgba(255, 255, 255, 0.95);
+
+  /* Atmospheric Gradients */
+  --gradient-aurora: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(224, 122, 95, 0.06) 50%, rgba(212, 163, 66, 0.08) 100%);
+  --gradient-glow-emerald: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.12), transparent 70%);
+  --gradient-glow-sunset: radial-gradient(circle at 100% 0%, rgba(224, 122, 95, 0.12), transparent 60%);
+  --gradient-card-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%);
 
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   --font-serif: "Playfair Display", Georgia, Cambria, "Times New Roman", serif;
@@ -167,7 +177,17 @@
   --shadow-glow: 0 0 30px rgba(82, 183, 136, 0.25);
   --shadow-glow-terracotta: 0 0 28px rgba(224, 122, 95, 0.35);
   --shadow-glow-emerald: 0 0 28px rgba(82, 183, 136, 0.35);
-  --border-sheen: inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+  --shadow-glow-amber: 0 0 28px rgba(251, 191, 36, 0.3);
+  --shadow-glass-card: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-glass-hover: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 24px rgba(82, 183, 136, 0.18);
+  --border-sheen: inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+  --border-sheen-strong: inset 0 1.5px 0 0 rgba(255, 255, 255, 0.25);
+
+  /* Dark Atmospheric Gradients */
+  --gradient-aurora: linear-gradient(135deg, rgba(82, 183, 136, 0.1) 0%, rgba(224, 122, 95, 0.08) 50%, rgba(251, 191, 36, 0.08) 100%);
+  --gradient-glow-emerald: radial-gradient(circle at 50% 0%, rgba(82, 183, 136, 0.16), transparent 70%);
+  --gradient-glow-sunset: radial-gradient(circle at 100% 0%, rgba(224, 122, 95, 0.14), transparent 60%);
+  --gradient-card-sheen: linear-gradient(180deg, rgba(15, 40, 32, 0.85) 0%, rgba(12, 35, 28, 0.95) 100%);
 }
 
 @theme inline {
@@ -344,3 +364,64 @@
     color: var(--ink);
   }
 }
+
+/* ── Alive Micro-Animations & Keyframes ───────────────────────────── */
+@keyframes pulse-radar {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes pulse-radar-amber {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
+@keyframes shimmer-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+@keyframes float-subtle {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes glow-breathe {
+  0%, 100% {
+    opacity: 0.4;
+    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.3));
+  }
+  50% {
+    opacity: 0.85;
+    filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.6));
+  }
+}
+

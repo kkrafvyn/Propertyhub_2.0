@@ -44,6 +44,7 @@ export default {
     "hosting": "Hosting",
     "listProperty": "List your property",
     "hostResources": "Host resources",
+    "workspaceEnrollment": "Workspace enrollment",
     "referrals": "Referrals",
     "discover": "Discover",
     "searchHomes": "Search homes",

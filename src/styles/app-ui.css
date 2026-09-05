@@ -22,6 +22,81 @@
     @apply hover:border-primary/30 hover:shadow-card-hover hover:-translate-y-1;
   }
 
+  .glass-panel-elevated {
+    @apply rounded-2xl border border-surface-border/80 bg-surface/85 backdrop-blur-xl transition-all duration-300;
+    box-shadow: var(--shadow-glass-card), var(--border-sheen);
+  }
+
+  .glass-panel-elevated:hover {
+    @apply border-primary/30 -translate-y-0.5;
+    box-shadow: var(--shadow-glass-hover), var(--border-sheen-strong);
+  }
+
+  .metric-halo {
+    @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-all duration-300;
+  }
+
+  .metric-halo-emerald {
+    @apply bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-xs;
+  }
+
+  .metric-halo-amber {
+    @apply bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shadow-xs;
+  }
+
+  .metric-halo-terracotta {
+    @apply bg-brand-orange/10 text-brand-orange border border-brand-orange/20 shadow-xs;
+  }
+
+  .metric-halo-primary {
+    @apply bg-primary/10 text-primary border border-primary/20 shadow-xs;
+  }
+
+  .metric-halo-indigo {
+    @apply bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shadow-xs;
+  }
+
+  .radar-pulse-dot {
+    @apply relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500;
+    animation: pulse-radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .radar-pulse-dot-amber {
+    @apply relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500;
+    animation: pulse-radar-amber 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .shimmer-sweep {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer-sweep::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.25),
+      transparent
+    );
+    animation: shimmer-slide 2.5s infinite;
+  }
+
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary via-emerald-600 to-primary bg-clip-text text-transparent font-bold;
+  }
+
+  .text-gradient-gold {
+    @apply bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-700 dark:from-amber-400 dark:via-yellow-300 dark:to-amber-500 bg-clip-text text-transparent font-bold;
+  }
+
+  .text-gradient-sunset {
+    @apply bg-gradient-to-r from-brand-orange via-rose-500 to-amber-500 bg-clip-text text-transparent font-bold;
+  }
+
   .app-input {
     @apply w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ink-muted outline-none transition-all duration-200 focus:border-primary focus:ring-4 focus:ring-primary/10 shadow-xs;
   }
@@ -43,22 +118,24 @@
   .workspace-portal .workspace-main-panel {
     @apply relative;
     background:
-      radial-gradient(ellipse 70% 45% at 100% 0%, rgba(15, 41, 34, 0.04), transparent 55%),
-      transparent;
+      radial-gradient(ellipse 70% 45% at 100% 0%, rgba(15, 41, 34, 0.05), transparent 55%),
+      radial-gradient(ellipse 50% 35% at 0% 100%, rgba(224, 122, 95, 0.03), transparent 50%),
+      var(--background);
   }
 
   .dark .workspace-portal .workspace-main-panel {
     background:
-      radial-gradient(ellipse 70% 45% at 100% 0%, rgba(82, 183, 136, 0.06), transparent 55%),
-      transparent;
+      radial-gradient(ellipse 70% 45% at 100% 0%, rgba(82, 183, 136, 0.09), transparent 60%),
+      radial-gradient(ellipse 50% 35% at 0% 100%, rgba(224, 122, 95, 0.04), transparent 50%),
+      var(--background);
   }
 
   .workspace-portal .workspace-nav-link.active {
-    @apply bg-brand-forest/10 text-brand-forest font-semibold shadow-xs;
+    @apply bg-primary/10 text-primary font-semibold shadow-xs;
   }
 
   .dark .workspace-portal .workspace-nav-link.active {
-    @apply bg-primary/15 text-primary;
+    @apply bg-primary/20 text-primary;
   }
 
   .auth-form-panel {

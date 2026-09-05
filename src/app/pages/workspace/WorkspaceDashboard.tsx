@@ -33,6 +33,8 @@ import {
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/badge";
+import { MetricCard } from "../../components/ui/MetricCard";
+import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import { dealCaseService } from "../../../lib/dealcase.service";
 import type { Database } from "../../../lib/database.types";
 import { listingService } from "../../../lib/listing.service";
@@ -40,10 +42,17 @@ import { organizationService } from "../../../lib/organization.service";
 import { paymentService } from "../../../lib/payment.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
 import type { MemberRole } from "../../../lib/workspace";
+import {
+  filterByNestedPropertyScope,
+  filterByPropertyScope,
+  getNestedListingPropertyId,
+  type MemberScopeProps,
+  withMemberScopeDefaults,
+} from "../../../lib/member-scope";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 
-interface WorkspaceDashboardProps {
+interface WorkspaceDashboardProps extends MemberScopeProps {
   organization: Organization;
   workspaceBasePath: string;
   currentRole?: MemberRole | null;
@@ -80,6 +89,9 @@ export function WorkspaceDashboard({
   workspaceBasePath,
   currentRole = "owner",
   onRoleChange,
+  scopeMode = "organization",
+  scopedPropertyIds = null,
+  bypassPropertyScope = false,
 }: WorkspaceDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [membersCount, setMembersCount] = useState(0);
@@ -108,12 +120,56 @@ export function WorkspaceDashboard({
           propertyViewingService.getOrganizationViewings(organization.id),
         ]);
 
+        const scope = withMemberScopeDefaults({
+          scopeMode,
+          scopedPropertyIds,
+          bypassPropertyScope,
+        });
+
         if (!cancelled) {
-          setListings(organizationListings || []);
-          setDealCases(organizationDeals || []);
+          setListings(
+            filterByPropertyScope(
+              organizationListings || [],
+              scope.scopeMode,
+              scope.scopedPropertyIds,
+              scope.bypassPropertyScope,
+            ),
+          );
+          setDealCases(
+            filterByNestedPropertyScope(
+              organizationDeals || [],
+              (deal) => {
+                const property = deal.property;
+                if (Array.isArray(property)) return property[0]?.id;
+                return property?.id ?? deal.property_id;
+              },
+              scope.scopeMode,
+              scope.scopedPropertyIds,
+              scope.bypassPropertyScope,
+            ),
+          );
           setMembersCount((members || []).length);
-          setPropertyTransactions(payments || []);
-          setPropertyViewings(viewings || []);
+          setPropertyTransactions(
+            filterByNestedPropertyScope(
+              payments || [],
+              (payment) => {
+                const property = payment.property;
+                if (Array.isArray(property)) return property[0]?.id;
+                return property?.id ?? payment.property_id;
+              },
+              scope.scopeMode,
+              scope.scopedPropertyIds,
+              scope.bypassPropertyScope,
+            ),
+          );
+          setPropertyViewings(
+            filterByPropertyScope(
+              viewings || [],
+              scope.scopeMode,
+              scope.scopedPropertyIds,
+              scope.bypassPropertyScope,
+            ),
+          );
         }
       } catch (error) {
         console.error("Failed to load workspace dashboard:", error);
@@ -129,7 +185,7 @@ export function WorkspaceDashboard({
     return () => {
       cancelled = true;
     };
-  }, [organization.id]);
+  }, [organization.id, scopeMode, scopedPropertyIds, bypassPropertyScope]);
 
   const listedCount = useMemo(
     () => listings.filter((listing) => listing.status === "listed").length,
@@ -231,22 +287,26 @@ export function WorkspaceDashboard({
       </div>
 
       {/* Role-Specific Hero Header */}
-      <div className="bg-surface border border-surface-border p-6 rounded-2xl shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Badge className="bg-primary/10 text-primary border border-primary/20 capitalize text-xs">
+      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-emerald-500/10 via-amber-500/5 to-surface border border-emerald-500/20 shadow-lg backdrop-blur-sm">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-radial from-emerald-500/10 via-transparent to-transparent blur-3xl pointer-events-none" />
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <Badge variant="success" dot pulse className="capitalize text-xs font-semibold px-2.5 py-0.5">
                 {activeRole} Perspective
               </Badge>
-              <span className="text-xs text-ink-muted">· {organization.name}</span>
+              <span className="text-xs font-medium text-ink-muted">- {organization.name}</span>
+              <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full font-mono">
+                Live Telemetry
+              </span>
             </div>
-            <h1 className="text-2xl font-bold text-ink">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink">
               {activeRole === "owner" && "Executive Portfolio & Yield Command"}
               {activeRole === "manager" && "Estate Operations & Facility Command"}
               {activeRole === "agent" && "Leasing Deals & Pipeline Accelerator"}
               {activeRole === "analyst" && "Intelligence & Macro Risk Studio"}
             </h1>
-            <p className="text-sm text-ink-secondary mt-0.5">
+            <p className="text-xs sm:text-sm text-ink-secondary max-w-2xl leading-relaxed">
               {activeRole === "owner" && "Monitor gross rental yields, Bank of Ghana FX hedging, and enterprise revenue."}
               {activeRole === "manager" && "Oversee gate passes, 150-point offline inspections, and artisan work order dispatches."}
               {activeRole === "agent" && "Close tenancy deals, verify Act 220 lease compliance, and dispatch WhatsApp payment links."}
@@ -255,17 +315,17 @@ export function WorkspaceDashboard({
           </div>
 
           {/* Role-Specific Quick Launch Actions */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap shrink-0">
             {activeRole === "owner" && (
               <>
                 <Link to={`${workspaceBasePath}/ai-rent-yield`}>
-                  <Button size="sm" className="gap-1.5 bg-primary text-primary-foreground">
+                  <Button size="sm" variant="gradient" className="gap-1.5 shadow-sm shadow-emerald-500/20">
                     <TrendingUp className="w-3.5 h-3.5" />
                     AI Yield Predictor
                   </Button>
                 </Link>
                 <Link to={`${workspaceBasePath}/multi-currency-fx`}>
-                  <Button size="sm" variant="outline" className="gap-1.5 border-surface-border text-ink">
+                  <Button size="sm" variant="glass" className="gap-1.5 border-amber-500/30 text-ink">
                     <Coins className="w-3.5 h-3.5 text-amber-500" />
                     FX & Hedging Hub
                   </Button>
@@ -276,13 +336,13 @@ export function WorkspaceDashboard({
             {activeRole === "manager" && (
               <>
                 <Link to={`${workspaceBasePath}/inspections`}>
-                  <Button size="sm" className="gap-1.5 bg-primary text-primary-foreground">
+                  <Button size="sm" variant="gradient" className="gap-1.5 shadow-sm shadow-emerald-500/20">
                     <FileCheck className="w-3.5 h-3.5" />
                     150-Point Inspection
                   </Button>
                 </Link>
                 <Link to={`${workspaceBasePath}/whatsapp-hub`}>
-                  <Button size="sm" variant="outline" className="gap-1.5 border-surface-border text-ink">
+                  <Button size="sm" variant="glass" className="gap-1.5 border-emerald-500/30 text-ink">
                     <Send className="w-3.5 h-3.5 text-emerald-500" />
                     WhatsApp Gate Pass
                   </Button>
@@ -293,14 +353,14 @@ export function WorkspaceDashboard({
             {activeRole === "agent" && (
               <>
                 <Link to={`${workspaceBasePath}/whatsapp-hub`}>
-                  <Button size="sm" className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
+                  <Button size="sm" variant="gradient" className="gap-1.5 shadow-sm shadow-emerald-500/20">
                     <Send className="w-3.5 h-3.5" />
                     1-Click WhatsApp
                   </Button>
                 </Link>
                 <Link to={`${workspaceBasePath}/ai-lease-analyzer`}>
-                  <Button size="sm" variant="outline" className="gap-1.5 border-surface-border text-ink">
-                    <Scale className="w-3.5 h-3.5 text-indigo-500" />
+                  <Button size="sm" variant="glass" className="gap-1.5 border-purple-500/30 text-ink">
+                    <Scale className="w-3.5 h-3.5 text-purple-500" />
                     Act 220 Lease Audit
                   </Button>
                 </Link>
@@ -310,14 +370,14 @@ export function WorkspaceDashboard({
             {activeRole === "analyst" && (
               <>
                 <Link to={`${workspaceBasePath}/ai-rent-yield`}>
-                  <Button size="sm" className="gap-1.5 bg-primary text-primary-foreground">
+                  <Button size="sm" variant="gradient" className="gap-1.5 shadow-sm shadow-emerald-500/20">
                     <TrendingUp className="w-3.5 h-3.5" />
                     Run Cap Model
                   </Button>
                 </Link>
                 <Link to={`${workspaceBasePath}/market-intelligence`}>
-                  <Button size="sm" variant="outline" className="gap-1.5 border-surface-border text-ink">
-                    <LineChart className="w-3.5 h-3.5" />
+                  <Button size="sm" variant="glass" className="gap-1.5 border-blue-500/30 text-ink">
+                    <LineChart className="w-3.5 h-3.5 text-blue-500" />
                     Market Analytics
                   </Button>
                 </Link>
@@ -331,117 +391,138 @@ export function WorkspaceDashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {activeRole === "owner" && (
           <>
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Gross Rent Roll (Annualized)</p>
-              <p className="text-2xl font-black text-ink mt-1">₵3.25M</p>
-              <p className="text-[11px] text-emerald-500 font-medium mt-1">+12.4% vs last year</p>
-            </Card>
-
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Net Portfolio Yield</p>
-              <p className="text-2xl font-black text-primary mt-1">11.8%</p>
-              <p className="text-[11px] text-ink-muted mt-1">Airport Residential benchmark: 10.5%</p>
-            </Card>
-
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Total Collected (MoMo/Bank)</p>
-              <p className="text-2xl font-black text-ink mt-1">
-                {currencyFormatter.format(collectedRevenue || 1450000)}
-              </p>
-              <p className="text-[11px] text-emerald-500 font-medium mt-1">98.2% on-time collection</p>
-            </Card>
-
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">FX Hedging Collar Status</p>
-              <p className="text-2xl font-black text-amber-500 mt-1">Active (+/- 5%)</p>
-              <p className="text-[11px] text-ink-muted mt-1">BOG Reference: ₵15.85/USD</p>
-            </Card>
+            <MetricCard
+              title="Gross Rent Roll (Annualized)"
+              value="₵3.25M"
+              trend={{ value: "+12.4% vs last yr", isPositive: true, label: "YoY" }}
+              icon={TrendingUp}
+              iconColor="emerald"
+            />
+            <MetricCard
+              title="Net Portfolio Yield"
+              value="11.8%"
+              subtitle="Airport Res. target: 10.5%"
+              trend={{ value: "+1.3% spread", isPositive: true }}
+              icon={BarChart3}
+              iconColor="primary"
+            />
+            <MetricCard
+              title="Total Collected (MoMo/Bank)"
+              value={currencyFormatter.format(collectedRevenue || 1450000)}
+              trend={{ value: "98.2% on-time", isPositive: true }}
+              icon={CreditCard}
+              iconColor="emerald"
+            />
+            <MetricCard
+              title="FX Hedging Collar Status"
+              value="Active (+/- 5%)"
+              subtitle="BOG: ₵15.85/USD"
+              icon={Coins}
+              iconColor="amber"
+            />
           </>
         )}
 
         {activeRole === "manager" && (
           <>
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Occupancy Rate</p>
-              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">94.6%</p>
-              <p className="text-[11px] text-ink-muted mt-1">48 of 50 units occupied</p>
-            </Card>
-
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Pending Gate Clearances</p>
-              <p className="text-2xl font-black text-primary mt-1">8 Passes</p>
-              <p className="text-[11px] text-emerald-500 font-medium mt-1">Kiosk QR active</p>
-            </Card>
-
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Open Work Orders</p>
-              <p className="text-2xl font-black text-amber-500 mt-1">3 Active</p>
-              <p className="text-[11px] text-ink-muted mt-1">2 Artisans on-site</p>
-            </Card>
-
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Offline Inspection Drafts</p>
-              <p className="text-2xl font-black text-ink mt-1">2 Ready</p>
-              <p className="text-[11px] text-blue-500 font-medium mt-1">IndexedDB Synced</p>
-            </Card>
+            <MetricCard
+              title="Occupancy Rate"
+              value="94.6%"
+              subtitle="48 of 50 units occupied"
+              trend={{ value: "+2.1%", isPositive: true }}
+              icon={Building2}
+              iconColor="emerald"
+            />
+            <MetricCard
+              title="Pending Gate Clearances"
+              value="8 Passes"
+              trend={{ value: "Kiosk QR active", isPositive: true }}
+              icon={ShieldCheck}
+              iconColor="primary"
+            />
+            <MetricCard
+              title="Open Work Orders"
+              value="3 Active"
+              subtitle="2 Artisans on-site"
+              icon={Wrench}
+              iconColor="amber"
+            />
+            <MetricCard
+              title="Offline Inspection Drafts"
+              value="2 Ready"
+              subtitle="IndexedDB Synced"
+              trend={{ value: "Offline ready", isPositive: true }}
+              icon={FileCheck}
+              iconColor="purple"
+            />
           </>
         )}
 
         {activeRole === "agent" && (
           <>
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Active Inbound Leads</p>
-              <p className="text-2xl font-black text-primary mt-1">{activeLeadsCount || 14}</p>
-              <p className="text-[11px] text-emerald-500 font-medium mt-1">6 Hot WhatsApp leads</p>
-            </Card>
-
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Viewings Scheduled Today</p>
-              <p className="text-2xl font-black text-ink mt-1">{upcomingViewings.length || 4}</p>
-              <p className="text-[11px] text-ink-muted mt-1">Next: 2:00 PM at Cantonments</p>
-            </Card>
-
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Pending Leases (Ghana Card)</p>
-              <p className="text-2xl font-black text-indigo-500 mt-1">3 Drafts</p>
-              <p className="text-[11px] text-emerald-500 font-medium mt-1">Act 220 Compliant</p>
-            </Card>
-
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Commission Accrued (MoMo)</p>
-              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">₵28,500</p>
-              <p className="text-[11px] text-ink-muted mt-1">Auto-payout upon lease close</p>
-            </Card>
+            <MetricCard
+              title="Active Inbound Leads"
+              value={<AnimatedNumber value={activeLeadsCount || 14} />}
+              trend={{ value: "6 Hot WhatsApp", isPositive: true }}
+              icon={Users}
+              iconColor="primary"
+            />
+            <MetricCard
+              title="Viewings Scheduled Today"
+              value={<AnimatedNumber value={upcomingViewings.length || 4} />}
+              subtitle="Next: 2:00 PM Cantonments"
+              icon={CalendarDays}
+              iconColor="emerald"
+            />
+            <MetricCard
+              title="Pending Leases (Ghana Card)"
+              value="3 Drafts"
+              trend={{ value: "Act 220 Compliant", isPositive: true }}
+              icon={Scale}
+              iconColor="purple"
+            />
+            <MetricCard
+              title="Commission Accrued (MoMo)"
+              value="₵28,500"
+              subtitle="Auto-payout upon lease close"
+              trend={{ value: "+18.5%", isPositive: true }}
+              icon={Coins}
+              iconColor="emerald"
+            />
           </>
         )}
 
         {activeRole === "analyst" && (
           <>
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Sub-Market Demand Index</p>
-              <p className="text-2xl font-black text-primary mt-1">88.4 / 100</p>
-              <p className="text-[11px] text-emerald-500 font-medium mt-1">High expat rental surge</p>
-            </Card>
-
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Weighted Cap Rate</p>
-              <p className="text-2xl font-black text-ink mt-1">11.4%</p>
-              <p className="text-[11px] text-ink-muted mt-1">Spread vs Treasury: +2.1%</p>
-            </Card>
-
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Legal Compliance Score</p>
-              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">Grade A (96%)</p>
-              <p className="text-[11px] text-ink-muted mt-1">Ghana Rent Act 220</p>
-            </Card>
-
-            <Card className="p-5 border-surface-border bg-surface">
-              <p className="text-xs font-semibold text-ink-secondary">Revenue Pipeline</p>
-              <p className="text-2xl font-black text-ink mt-1">
-                {currencyFormatter.format(revenuePipeline || 850000)}
-              </p>
-              <p className="text-[11px] text-purple-500 font-medium mt-1">Forecast model active</p>
-            </Card>
+            <MetricCard
+              title="Sub-Market Demand Index"
+              value="88.4 / 100"
+              trend={{ value: "+4.2 pts", isPositive: true }}
+              icon={TrendingUp}
+              iconColor="primary"
+            />
+            <MetricCard
+              title="Weighted Cap Rate"
+              value="11.4%"
+              subtitle="Spread vs Treasury: +2.1%"
+              icon={LineChart}
+              iconColor="purple"
+            />
+            <MetricCard
+              title="Legal Compliance Score"
+              value="Grade A (96%)"
+              subtitle="Ghana Rent Act 220"
+              trend={{ value: "Audit Passed", isPositive: true }}
+              icon={ShieldCheck}
+              iconColor="emerald"
+            />
+            <MetricCard
+              title="Revenue Pipeline"
+              value={currencyFormatter.format(revenuePipeline || 850000)}
+              trend={{ value: "Forecast model active", isPositive: true }}
+              icon={CreditCard}
+              iconColor="amber"
+            />
           </>
         )}
       </div>
@@ -449,176 +530,195 @@ export function WorkspaceDashboard({
       {/* Main Content Split: Activity & Pipeline */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Active Inventory List */}
-        <Card className="p-6 border-surface-border bg-surface">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-base font-bold text-ink">Active Property Inventory</h2>
-              <p className="text-xs text-ink-secondary">Managed units & rental availability.</p>
+        <Card variant="glass" className="p-6 border-surface-border/80 hover:border-emerald-500/30 transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-base font-bold text-ink flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-emerald-500" />
+                  Active Inventory
+                </h2>
+                <p className="text-xs text-ink-secondary">Managed units & rental availability</p>
+              </div>
+              <Link to={`${workspaceBasePath}/listings`}>
+                <Button variant="glass" size="sm" className="text-xs text-ink">
+                  View All
+                </Button>
+              </Link>
             </div>
-            <Link to={`${workspaceBasePath}/listings`}>
-              <Button variant="outline" size="sm" className="text-xs border-surface-border text-ink">
-                View All
-              </Button>
-            </Link>
-          </div>
 
-          <div className="space-y-3">
-            {recentListings.length === 0 ? (
-              <div className="text-xs text-ink-muted py-6 text-center">No active listings available.</div>
-            ) : (
-              recentListings.map((listing) => (
-                <div
-                  key={listing.id}
-                  className="p-3.5 rounded-xl bg-surface-subtle border border-surface-border flex items-center justify-between gap-3"
-                >
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-ink truncate">
-                      {listing.property?.address || "Airport Residential Suite"}
-                    </p>
-                    <p className="text-[11px] text-ink-secondary truncate">
-                      {listing.property?.city || "Accra"}, {listing.property?.region || "Greater Accra"}
-                    </p>
-                    <p className="text-xs font-bold text-primary mt-1">
-                      {currencyFormatter.format(listing.price)} / mo
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="text-[10px] border-surface-border shrink-0 capitalize">
-                    {listing.status || "listed"}
-                  </Badge>
+            <div className="space-y-2.5">
+              {recentListings.length === 0 ? (
+                <div className="text-xs text-ink-muted py-8 text-center bg-surface-subtle/50 rounded-xl border border-surface-border">
+                  No active listings available.
                 </div>
-              ))
-            )}
+              ) : (
+                recentListings.map((listing) => (
+                  <div
+                    key={listing.id}
+                    className="p-3.5 rounded-xl bg-surface/80 border border-surface-border/80 hover:border-emerald-500/30 hover:bg-surface transition-all flex items-center justify-between gap-3 group"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-ink truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                        {listing.property?.address || "Airport Residential Suite"}
+                      </p>
+                      <p className="text-[11px] text-ink-secondary truncate">
+                        {listing.property?.city || "Accra"}, {listing.property?.region || "Greater Accra"}
+                      </p>
+                      <p className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
+                        {currencyFormatter.format(listing.price)} / mo
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] border-surface-border shrink-0 capitalize">
+                      {listing.status || "listed"}
+                    </Badge>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </Card>
 
         {/* Viewing Schedule & Tenant Requests */}
-        <Card className="p-6 border-surface-border bg-surface">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-base font-bold text-ink">Upcoming Viewings & Tours</h2>
-              <p className="text-xs text-ink-secondary">Confirmed calendar appointments.</p>
+        <Card variant="glass" className="p-6 border-surface-border/80 hover:border-blue-500/30 transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-base font-bold text-ink flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4 text-blue-500" />
+                  Upcoming Viewings
+                </h2>
+                <p className="text-xs text-ink-secondary">Confirmed calendar appointments</p>
+              </div>
+              <Link to={`${workspaceBasePath}/calendar`}>
+                <Button variant="glass" size="sm" className="text-xs text-ink">
+                  Calendar
+                </Button>
+              </Link>
             </div>
-            <Link to={`${workspaceBasePath}/calendar`}>
-              <Button variant="outline" size="sm" className="text-xs border-surface-border text-ink">
-                Calendar
-              </Button>
-            </Link>
-          </div>
 
-          <div className="space-y-3">
-            {upcomingViewings.length === 0 ? (
-              <div className="text-xs text-ink-muted py-6 text-center">No upcoming viewings scheduled.</div>
-            ) : (
-              upcomingViewings.map((viewing) => (
-                <div
-                  key={viewing.id}
-                  className="p-3.5 rounded-xl bg-surface-subtle border border-surface-border flex items-center justify-between gap-3"
-                >
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-ink truncate">
-                      {viewing.property?.address || "Cantonments Luxury Apartment"}
-                    </p>
-                    <p className="text-[11px] text-ink-secondary flex items-center gap-1 mt-0.5">
-                      <Clock className="w-3 h-3 text-primary" />
-                      {formatDateTime(viewing.confirmed_datetime || viewing.requested_datetime)}
-                    </p>
-                  </div>
-                  <Badge className="text-[10px] bg-primary/10 text-primary border border-primary/20 shrink-0">
-                    {viewing.status || "Scheduled"}
-                  </Badge>
+            <div className="space-y-2.5">
+              {upcomingViewings.length === 0 ? (
+                <div className="text-xs text-ink-muted py-8 text-center bg-surface-subtle/50 rounded-xl border border-surface-border">
+                  No upcoming viewings scheduled.
                 </div>
-              ))
-            )}
+              ) : (
+                upcomingViewings.map((viewing) => (
+                  <div
+                    key={viewing.id}
+                    className="p-3.5 rounded-xl bg-surface/80 border border-surface-border/80 hover:border-blue-500/30 hover:bg-surface transition-all flex items-center justify-between gap-3 group"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-ink truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {viewing.property?.address || "Cantonments Luxury Apartment"}
+                      </p>
+                      <p className="text-[11px] text-ink-secondary flex items-center gap-1.5 mt-0.5">
+                        <Clock className="w-3 h-3 text-blue-500 shrink-0" />
+                        {formatDateTime(viewing.confirmed_datetime || viewing.requested_datetime)}
+                      </p>
+                    </div>
+                    <Badge variant="info" className="text-[10px] shrink-0">
+                      {viewing.status || "Scheduled"}
+                    </Badge>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </Card>
 
         {/* Fast Action Shortcuts */}
-        <Card className="p-6 border-surface-border bg-surface">
-          <div className="mb-4">
-            <h2 className="text-base font-bold text-ink">Fast Action Launchpad</h2>
-            <p className="text-xs text-ink-secondary">Direct short-cuts for {activeRole} workflows.</p>
-          </div>
+        <Card variant="glass" className="p-6 border-surface-border/80 hover:border-amber-500/30 transition-all flex flex-col justify-between">
+          <div>
+            <div className="mb-4">
+              <h2 className="text-base font-bold text-ink flex items-center gap-2">
+                <Zap className="w-4 h-4 text-amber-500" />
+                Fast Action Launchpad
+              </h2>
+              <p className="text-xs text-ink-secondary">Direct shortcuts for {activeRole} workflows</p>
+            </div>
 
-          <div className="space-y-2.5">
-            <Link
-              to={`${workspaceBasePath}/whatsapp-hub`}
-              className="p-3 rounded-xl bg-surface-subtle border border-surface-border hover:bg-surface-hover hover:border-emerald-500/30 transition flex items-center justify-between group"
-            >
-              <div className="flex items-center gap-3">
-                <span className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                  <Send className="w-4 h-4" />
-                </span>
-                <div>
-                  <p className="text-xs font-bold text-ink">WhatsApp Business Hub</p>
-                  <p className="text-[11px] text-ink-secondary">Gate passes, rent links & bot</p>
+            <div className="space-y-2">
+              <Link
+                to={`${workspaceBasePath}/whatsapp-hub`}
+                className="p-3 rounded-xl bg-surface/70 border border-surface-border hover:bg-surface hover:border-emerald-500/40 hover:shadow-xs transition-all flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+                    <Send className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold text-ink group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">WhatsApp Business Hub</p>
+                    <p className="text-[11px] text-ink-secondary">Gate passes, rent links & bot</p>
+                  </div>
                 </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink transition" />
-            </Link>
+                <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink group-hover:translate-x-0.5 transition-all" />
+              </Link>
 
-            <Link
-              to={`${workspaceBasePath}/ai-rent-yield`}
-              className="p-3 rounded-xl bg-surface-subtle border border-surface-border hover:bg-surface-hover hover:border-primary/30 transition flex items-center justify-between group"
-            >
-              <div className="flex items-center gap-3">
-                <span className="p-2 rounded-lg bg-primary/10 text-primary">
-                  <TrendingUp className="w-4 h-4" />
-                </span>
-                <div>
-                  <p className="text-xs font-bold text-ink">AI Rent Yield Predictor</p>
-                  <p className="text-[11px] text-ink-secondary">Cap rate modeling for Ghana</p>
+              <Link
+                to={`${workspaceBasePath}/ai-rent-yield`}
+                className="p-3 rounded-xl bg-surface/70 border border-surface-border hover:bg-surface hover:border-primary/40 hover:shadow-xs transition-all flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="p-2 rounded-lg bg-primary/10 text-primary group-hover:scale-110 transition-transform">
+                    <TrendingUp className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold text-ink group-hover:text-primary transition-colors">AI Rent Yield Predictor</p>
+                    <p className="text-[11px] text-ink-secondary">Cap rate modeling for Ghana</p>
+                  </div>
                 </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink transition" />
-            </Link>
+                <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink group-hover:translate-x-0.5 transition-all" />
+              </Link>
 
-            <Link
-              to={`${workspaceBasePath}/multi-currency-fx`}
-              className="p-3 rounded-xl bg-surface-subtle border border-surface-border hover:bg-surface-hover hover:border-amber-500/30 transition flex items-center justify-between group"
-            >
-              <div className="flex items-center gap-3">
-                <span className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
-                  <Coins className="w-4 h-4" />
-                </span>
-                <div>
-                  <p className="text-xs font-bold text-ink">Multi-Currency FX & Hedging</p>
-                  <p className="text-[11px] text-ink-secondary">Bank of Ghana rate sync & collar</p>
+              <Link
+                to={`${workspaceBasePath}/multi-currency-fx`}
+                className="p-3 rounded-xl bg-surface/70 border border-surface-border hover:bg-surface hover:border-amber-500/40 hover:shadow-xs transition-all flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="p-2 rounded-lg bg-amber-500/10 text-amber-500 group-hover:scale-110 transition-transform">
+                    <Coins className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold text-ink group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Multi-Currency FX & Hedging</p>
+                    <p className="text-[11px] text-ink-secondary">Bank of Ghana rate sync & collar</p>
+                  </div>
                 </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink transition" />
-            </Link>
+                <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink group-hover:translate-x-0.5 transition-all" />
+              </Link>
 
-            <Link
-              to={`${workspaceBasePath}/ai-command-center`}
-              className="p-3 rounded-xl bg-surface-subtle border border-surface-border hover:bg-surface-hover hover:border-primary/30 transition flex items-center justify-between group"
-            >
-              <div className="flex items-center gap-3">
-                <span className="p-2 rounded-lg bg-primary/10 text-primary">
-                  <Cpu className="w-4 h-4" />
-                </span>
-                <div>
-                  <p className="text-xs font-bold text-ink">AI Command & Approval Center</p>
-                  <p className="text-[11px] text-ink-secondary">Night Watch audits & Level 2 approvals</p>
+              <Link
+                to={`${workspaceBasePath}/ai-command-center`}
+                className="p-3 rounded-xl bg-surface/70 border border-surface-border hover:bg-surface hover:border-purple-500/40 hover:shadow-xs transition-all flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="p-2 rounded-lg bg-purple-500/10 text-purple-500 group-hover:scale-110 transition-transform">
+                    <Cpu className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold text-ink group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">AI Command & Approval Center</p>
+                    <p className="text-[11px] text-ink-secondary">Night Watch audits & Level 2 approvals</p>
+                  </div>
                 </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink transition" />
-            </Link>
+                <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink group-hover:translate-x-0.5 transition-all" />
+              </Link>
 
-            <Link
-              to={`${workspaceBasePath}/procurement`}
-              className="p-3 rounded-xl bg-surface-subtle border border-surface-border hover:bg-surface-hover hover:border-emerald-500/30 transition flex items-center justify-between group"
-            >
-              <div className="flex items-center gap-3">
-                <span className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                  <ShoppingBag className="w-4 h-4" />
-                </span>
-                <div>
-                  <p className="text-xs font-bold text-ink">Procurement & Contractor RFQ</p>
-                  <p className="text-[11px] text-ink-secondary">Quote comparison & 3-way PO match</p>
+              <Link
+                to={`${workspaceBasePath}/procurement`}
+                className="p-3 rounded-xl bg-surface/70 border border-surface-border hover:bg-surface hover:border-emerald-500/40 hover:shadow-xs transition-all flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+                    <ShoppingBag className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold text-ink group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Procurement & Contractor RFQ</p>
+                    <p className="text-[11px] text-ink-secondary">Quote comparison & 3-way PO match</p>
+                  </div>
                 </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink transition" />
-            </Link>
+                <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink group-hover:translate-x-0.5 transition-all" />
+              </Link>
+            </div>
           </div>
         </Card>
       </div>
