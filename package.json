@@ -118,7 +118,7 @@
     "contracts:verify": "npm run verify --prefix blockchain"
   },
   "dependencies": {
-    "@capacitor/android": "^8.3.4",
+    "@capacitor/android": "^8.5.1",
     "@capacitor/camera": "^8.2.2",
     "@capacitor/core": "^8.3.4",
     "@capacitor/geolocation": "^8.2.2",
