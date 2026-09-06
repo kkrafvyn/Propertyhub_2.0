@@ -11,6 +11,7 @@ RUN npm run build:web
 
 FROM nginx:1.27-alpine AS runtime
 
+RUN apk upgrade --no-cache libcrypto3 libssl3 openssl || apk upgrade --no-cache
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
