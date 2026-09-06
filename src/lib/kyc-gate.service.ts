@@ -46,6 +46,19 @@ export function requiresConsumerKycForBooking(
   return getJurisdictionRules(jurisdictionId as JurisdictionId).amlKycRequired;
 }
 
+export async function requiresConsumerKycForBookingAsync(jurisdictionId: JurisdictionId | string) {
+  try {
+    const { platformKycService } = await import("./platform-kyc.service");
+    const policy = await platformKycService.getPolicy(String(jurisdictionId));
+    if (policy) {
+      return requiresConsumerKycForBooking(jurisdictionId, policy);
+    }
+  } catch {
+    // Fall back to static jurisdiction rules when platform policies are unavailable.
+  }
+  return requiresConsumerKycForBooking(jurisdictionId);
+}
+
 export function requiresWorkspaceKycForEnrollment(
   jurisdictionId: JurisdictionId | string,
   policy?: Pick<PlatformKycPolicy, "workspace_enrollment_required" | "enabled"> | null,

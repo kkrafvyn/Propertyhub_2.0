@@ -202,34 +202,31 @@ export const bookingService = {
   }) {
     await this.validateDatesAvailable(input.listingId, input.checkIn, input.checkOut);
 
-    const nights = countNights(input.checkIn, input.checkOut);
-    const totalMinor = input.nightlyRateMinor * nights;
-
-    const { data, error } = await supabase
-      .from("short_stay_bookings")
-      .insert({
-        listing_id: input.listingId,
-        organization_id: input.organizationId,
-        guest_user_id: input.guestUserId,
-        check_in: input.checkIn,
-        check_out: input.checkOut,
-        nights,
-        total_minor: totalMinor,
-        currency: input.currency || "GHS",
-        status: "pending",
-        guest_note: input.guestNote || null,
-        booking_mode: input.bookingMode || "instant",
-      })
-      .select("*")
-      .single();
+    const { data, error } = await supabase.rpc("create_short_stay_booking", {
+      p_listing_id: input.listingId,
+      p_check_in: input.checkIn,
+      p_check_out: input.checkOut,
+      p_guest_note: input.guestNote ?? null,
+      p_booking_mode: input.bookingMode ?? "instant",
+      p_currency: input.currency ?? "GHS",
+    });
 
     if (error) throw error;
 
-    void notificationService.notifyBookingEvent(data.id, "requested", {
+    const bookingId = data as string;
+    const { data: booking, error: readError } = await supabase
+      .from("short_stay_bookings")
+      .select("*")
+      .eq("id", bookingId)
+      .single();
+
+    if (readError) throw readError;
+
+    void notificationService.notifyBookingEvent(booking.id, "requested", {
       actorUserId: input.guestUserId,
     });
 
-    return data;
+    return booking;
   },
 
   async blockBookingDates(input: {

@@ -7,6 +7,7 @@ import { MarketProvider } from './context/MarketContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LocaleProvider } from './i18n/LocaleContext';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
+import { AppUpdateBanner } from './components/ux/AppUpdateBanner';
 import { validateClientEnv } from '../lib/env';
 
 validateClientEnv();
@@ -20,6 +21,7 @@ export default function App() {
             <AuthProvider>
               <MarketProvider>
                 <RouterProvider router={router} />
+                <AppUpdateBanner />
                 <Toaster richColors position="top-right" />
               </MarketProvider>
             </AuthProvider>

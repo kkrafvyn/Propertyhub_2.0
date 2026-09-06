@@ -41,6 +41,7 @@ import {
   FolderTree,
   Gauge,
   Globe,
+  GitBranch,
   Grid3X3,
   Hammer,
   Headphones,
@@ -63,6 +64,7 @@ import {
   Palette,
   PanelLeftClose,
   PanelLeftOpen,
+  Package,
   PieChart,
   Plug,
   Plus,
@@ -229,11 +231,15 @@ import { memberScopeService } from "../../../lib/member-scope.service";
 import type { MemberScopeMode } from "../../../lib/member-scope";
 import { CompanySetupWizard } from "./CompanySetupWizard";
 import { CustomizeWorkspace } from "./CustomizeWorkspace";
+import { WorkflowApprovalHub } from "./WorkflowApprovalHub";
+import { ModuleMarketplace } from "./ModuleMarketplace";
+import { whitelabelService } from "../../../lib/whitelabel.service";
 import { OfflineStatusBanner } from "../../components/workspace/OfflineStatusBanner";
 import {
   applyNavCustomization,
   parseWorkspaceCustomization,
 } from "../../../lib/workspace-customization.service";
+import { isNavSlugEnabledByModules } from "../../../lib/workspace-module-catalog";
 import { workspaceSyncService } from "../../../lib/workspace-sync.service";
 import { getRoleLabel, type CompanyCapability } from "../../../lib/company-model";
 
@@ -314,6 +320,7 @@ const WORKSPACE_SECONDARY_NAV: NavItem[] = [
   { slug: "compliance", label: "Compliance", icon: FileCheck2 },
   { slug: "international-rules", label: "International Markets", icon: Globe },
   { slug: "automation", label: "Automation", icon: Zap },
+  { slug: "module-marketplace", label: "Module Marketplace", icon: Package },
   { slug: "ai-assistant", label: "AI", icon: Bot },
   { slug: "customize-workspace", label: "Customize Workspace", icon: SlidersHorizontal },
   { slug: "settings", label: "Settings", icon: Settings },
@@ -342,6 +349,7 @@ const AI_NAV_ITEMS: NavItem[] = [
 
 const ENTERPRISE_NAV_ITEMS: NavItem[] = [
   { slug: "team-collaboration", label: "Team Hub", icon: Users2 },
+  { slug: "workflow-approval", label: "Approval Chains", icon: GitBranch },
   { slug: "workflows", label: "Workflows", icon: Workflow },
 ];
 
@@ -543,6 +551,11 @@ export function WorkspaceLayout() {
   }, [organization?.id]);
 
   useEffect(() => {
+    if (!organization?.id) return;
+    void whitelabelService.applyTheme(organization.id);
+  }, [organization?.id]);
+
+  useEffect(() => {
     if (!organization?.id || !user?.id) {
       setPendingCosigns([]);
       return;
@@ -595,45 +608,63 @@ export function WorkspaceLayout() {
     bypassPropertyScope,
   };
 
+  const enabledModules = (
+    (organization as { enabled_workspace_modules?: string[] | null } | null)
+      ?.enabled_workspace_modules || []
+  ) as string[];
+
+  const filterByEnabledModules = <T extends { slug: string }>(items: T[]) =>
+    items.filter((item) => isNavSlugEnabledByModules(item.slug, enabledModules));
+
   const visibleCoreNav = useMemo(
     () =>
       applyNavCustomization(
-        filterWorkspaceNavItems(CORE_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        filterByEnabledModules(
+          filterWorkspaceNavItems(CORE_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        ),
         navCustomization,
       ),
-    [navRole, navPermissions, navCapabilities, navCustomization],
+    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules],
   );
   const visibleToolsNav = useMemo(
     () =>
       applyNavCustomization(
-        filterWorkspaceNavItems(WORKSPACE_SECONDARY_NAV, navRole, navPermissions, navCapabilities),
+        filterByEnabledModules(
+          filterWorkspaceNavItems(WORKSPACE_SECONDARY_NAV, navRole, navPermissions, navCapabilities),
+        ),
         navCustomization,
       ),
-    [navRole, navPermissions, navCapabilities, navCustomization],
+    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules],
   );
   const visibleMoreNav = useMemo(
     () =>
       applyNavCustomization(
-        filterWorkspaceNavItems(TIER_TWO_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        filterByEnabledModules(
+          filterWorkspaceNavItems(TIER_TWO_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        ),
         navCustomization,
       ),
-    [navRole, navPermissions, navCapabilities, navCustomization],
+    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules],
   );
   const visibleAiNav = useMemo(
     () =>
       applyNavCustomization(
-        filterWorkspaceNavItems(AI_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        filterByEnabledModules(
+          filterWorkspaceNavItems(AI_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        ),
         navCustomization,
       ),
-    [navRole, navPermissions, navCapabilities, navCustomization],
+    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules],
   );
   const visibleEnterpriseNav = useMemo(
     () =>
       applyNavCustomization(
-        filterWorkspaceNavItems(ENTERPRISE_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        filterByEnabledModules(
+          filterWorkspaceNavItems(ENTERPRISE_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        ),
         navCustomization,
       ),
-    [navRole, navPermissions, navCapabilities, navCustomization],
+    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules],
   );
 
   const filteredSearchResults = useMemo(() => {
@@ -981,6 +1012,21 @@ export function WorkspaceLayout() {
       case "workflows":
         return (
           <CustomWorkflowsBuilder
+            organizationId={organization.id}
+            currentRole={currentRole}
+          />
+        );
+      case "workflow-approval":
+        return (
+          <WorkflowApprovalHub
+            organizationId={organization.id}
+            organizationSlug={organization.slug}
+            currentRole={currentRole}
+          />
+        );
+      case "module-marketplace":
+        return (
+          <ModuleMarketplace
             organizationId={organization.id}
             currentRole={currentRole}
           />

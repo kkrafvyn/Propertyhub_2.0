@@ -29,6 +29,7 @@ export const WORKSPACE_NAV_CATALOG: WorkspaceNavCatalogItem[] = [
   { slug: "compliance", label: "Compliance", group: "tools" },
   { slug: "international-rules", label: "International Markets", group: "tools" },
   { slug: "automation", label: "Automation", group: "tools" },
+  { slug: "module-marketplace", label: "Module Marketplace", group: "tools" },
   { slug: "ai-assistant", label: "AI", group: "tools" },
   { slug: "settings", label: "Settings", group: "tools" },
   { slug: "customize-workspace", label: "Customize Workspace", group: "tools" },
@@ -37,6 +38,7 @@ export const WORKSPACE_NAV_CATALOG: WorkspaceNavCatalogItem[] = [
   { slug: "notifications", label: "Notifications", group: "more" },
   { slug: "ai-rent-yield", label: "AI Yield Predictor", group: "ai" },
   { slug: "team-collaboration", label: "Team Hub", group: "enterprise" },
+  { slug: "workflow-approval", label: "Approval Chains", group: "enterprise" },
   { slug: "workflows", label: "Workflows", group: "enterprise" },
 ];
 

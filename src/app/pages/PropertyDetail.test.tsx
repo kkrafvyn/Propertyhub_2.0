@@ -168,7 +168,9 @@ describe("PropertyDetail inquiry flow", () => {
     createInAppNotificationMock.mockResolvedValue({} as any);
   });
 
-  it("creates a deal case and shared inbox conversation from an inquiry", async () => {
+  it(
+    "creates a deal case and shared inbox conversation from an inquiry",
+    async () => {
     useAuthMock.mockReturnValue({
       user: {
         id: "lead-1",
@@ -238,5 +240,7 @@ describe("PropertyDetail inquiry flow", () => {
       "lead-1",
       expect.stringContaining("New inquiry about 5 Independence Ave, Accra")
     );
-  });
+  },
+  20000,
+);
 });

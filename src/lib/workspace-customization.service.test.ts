@@ -21,8 +21,25 @@ describe("workspace-customization.service", () => {
   it("applies terminology overrides to nav labels", () => {
     const items = applyNavCustomization(
       [{ slug: "leases", label: "Leases" }],
-      { hiddenSlugs: [], terminology: { leases: "Tenancies" }, defaultHomeSlug: null },
+      {
+        hiddenSlugs: [],
+        terminology: { leases: "Tenancies" },
+        defaultHomeSlug: null,
+        dashboardWidgets: [],
+      },
     );
     expect(items[0]?.label).toBe("Tenancies");
+  });
+
+  it("parses dashboard widget selections from setup metadata", () => {
+    const config = parseWorkspaceCustomization({
+      workspace_kind: "company",
+      setup_metadata: {
+        workspace_customization: {
+          dashboardWidgets: ["listings", "viewings"],
+        },
+      },
+    });
+    expect(config.dashboardWidgets).toEqual(["listings", "viewings"]);
   });
 });

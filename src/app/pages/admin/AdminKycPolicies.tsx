@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
 import { platformKycService } from "../../../lib/platform-kyc.service";
+import { KYC_PROVIDER_ENGINES } from "../../../lib/kyc-provider-engines";
 import type { PlatformKycPolicy } from "../../../lib/kyc-gate.service";
 
 export function AdminKycPolicies() {
@@ -118,13 +119,19 @@ export function AdminKycPolicies() {
                   />
                 </td>
                 <td className="py-3 pr-4">
-                  <input
-                    className="app-input w-full min-w-[160px]"
+                  <select
+                    className="app-input w-full min-w-[180px]"
                     value={policy.provider_engine}
                     onChange={(event) =>
                       updatePolicy(policy.jurisdiction_id, { provider_engine: event.target.value })
                     }
-                  />
+                  >
+                    {KYC_PROVIDER_ENGINES.map((engine) => (
+                      <option key={engine.slug} value={engine.slug}>
+                        {engine.label}
+                      </option>
+                    ))}
+                  </select>
                 </td>
                 <td className="py-3 pr-4">
                   <Badge variant={policy.enabled ? "default" : "outline"}>

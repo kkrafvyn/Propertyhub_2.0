@@ -166,11 +166,15 @@ export const whitelabelService = {
   // Apply white-label theme
   async applyTheme(organizationId: string) {
     const css = await this.getThemeCSS(organizationId)
-    
-    // Inject CSS into page
-    const style = document.createElement('style')
+    const styleId = `theme-${organizationId}`
+    let style = document.getElementById(styleId) as HTMLStyleElement | null
+
+    if (!style) {
+      style = document.createElement('style')
+      style.id = styleId
+      document.head.appendChild(style)
+    }
+
     style.innerHTML = css
-    style.id = `theme-${organizationId}`
-    document.head.appendChild(style)
   }
 }

@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate, useSearchParams } from "react-router";
-import { Download, Laptop, MonitorSmartphone } from "lucide-react";
+import { Download, Laptop, Lock, MonitorSmartphone } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
@@ -12,6 +12,10 @@ import {
   markDesktopPromptSeen,
   openBaytMiftahDesktop,
 } from "../../../lib/desktop-gateway";
+import {
+  entitlementsService,
+  type DesktopEligibilityResult,
+} from "../../../lib/entitlements.service";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 
 export function DesktopGateway() {
@@ -20,6 +24,40 @@ export function DesktopGateway() {
   const [searchParams] = useSearchParams();
   const forceGateway = searchParams.get("force") === "1";
   const downloadUrl = useMemo(() => getDesktopDownloadUrl(), []);
+  const [eligibility, setEligibility] = useState<DesktopEligibilityResult | null>(null);
+  const [eligibilityLoading, setEligibilityLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setEligibility(null);
+      setEligibilityLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setEligibilityLoading(true);
+
+    void entitlementsService
+      .resolveUserDesktopEligibility(user.id)
+      .then((result) => {
+        if (!cancelled) setEligibility(result);
+      })
+      .catch((error) => {
+        console.error("Failed to resolve desktop eligibility:", error);
+        if (!cancelled) {
+          setEligibility({ eligible: true, reason: "no_organization" });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setEligibilityLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const desktopAllowed = forceGateway || eligibility?.eligible !== false;
 
   if (!user) {
     return <Navigate to="/login?next=/workspace/desktop" replace />;
@@ -39,8 +77,17 @@ export function DesktopGateway() {
   };
 
   const handleDownload = () => {
+    if (!desktopAllowed) return;
     window.open(downloadUrl, "_blank", "noopener,noreferrer");
   };
+
+  if (eligibilityLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white/70">
+        Checking plan eligibility for desktop…
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
@@ -53,13 +100,34 @@ export function DesktopGateway() {
             BaytMiftah Workspace
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Your professional desktop app is ready
+            {desktopAllowed
+              ? "Your professional desktop app is ready"
+              : "Desktop is available on Business plans"}
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base text-white/70">
-            Manage properties, team, finance, leasing, and operations from a workspace built
-            for landlords, agents, and property managers — not consumer browsing.
+            {desktopAllowed
+              ? "Manage properties, team, finance, leasing, and operations from a workspace built for landlords, agents, and property managers — not consumer browsing."
+              : eligibility?.planLabel
+                ? `Your ${eligibility.planLabel} workspace (${eligibility.organizationName || "current organization"}) includes web access only. Upgrade to Business or Enterprise to download BaytMiftah Desktop.`
+                : "Your current plan includes web access only. Upgrade to Business or Enterprise to download BaytMiftah Desktop."}
           </p>
         </div>
+
+        {!desktopAllowed ? (
+          <Card className="mb-8 border-amber-400/20 bg-amber-500/10 p-6 text-white">
+            <div className="flex items-start gap-3">
+              <Lock className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+              <div>
+                <h2 className="font-semibold">Desktop not included in your plan</h2>
+                <p className="mt-1 text-sm text-white/75">
+                  Personal Property Workspaces stay on web and mobile. You can still manage
+                  everything from any browser or the BaytMiftah mobile app — the same login,
+                  organizations, and data sync automatically.
+                </p>
+              </div>
+            </div>
+          </Card>
+        ) : null}
 
         <Card className="border-white/10 bg-white/5 p-6 text-white shadow-2xl backdrop-blur sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -73,8 +141,9 @@ export function DesktopGateway() {
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
               <Button
                 size="lg"
-                className="bg-white text-slate-950 hover:bg-slate-100"
+                className="bg-white text-slate-950 hover:bg-slate-100 disabled:opacity-50"
                 onClick={handleDownload}
+                disabled={!desktopAllowed}
               >
                 <Download className="mr-2 h-4 w-4" />
                 Download for Windows
@@ -82,8 +151,9 @@ export function DesktopGateway() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white/20 bg-transparent text-white hover:bg-white/10"
+                className="border-white/20 bg-transparent text-white hover:bg-white/10 disabled:opacity-50"
                 onClick={openBaytMiftahDesktop}
+                disabled={!desktopAllowed}
               >
                 Open BaytMiftah Desktop
               </Button>
@@ -108,7 +178,11 @@ export function DesktopGateway() {
 
         <div className="mt-8 flex flex-col items-center gap-3 text-center">
           <p className="text-sm text-white/60">
-            Prefer to stay in the browser? You can continue on web anytime.
+            Work from anywhere: web, mobile, and desktop (when included) share one account and
+            stay in sync.
+          </p>
+          <p className="text-sm text-white/60">
+            Prefer the browser? Continue on web — nothing is desktop-only except the installer.
           </p>
           <Button
             variant="ghost"

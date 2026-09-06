@@ -50,6 +50,7 @@ import { TRUST_LABELS } from "../../lib/legal-disclaimers";
 import { monitoring } from "../../lib/monitoring";
 import { useMyKyc } from "../hooks/useMyKyc";
 import { canSubmitOffer } from "../lib/baytmiftah/kyc";
+import { canBookStay } from "../../lib/kyc-gate.service";
 import KycBanner from "../components/baytmiftah/KycBanner";
 import { CONSUMER_ROUTES } from "../lib/consumer-routes";
 import { buildCheckoutPath } from "../lib/checkout-navigation";
@@ -471,6 +472,12 @@ export function PropertyDetail() {
 
     if (bookingForm.checkOut <= bookingForm.checkIn) {
       toast.error("Check-out must be after check-in.");
+      return;
+    }
+
+    if (!canBookStay(kyc, jurisdictionId)) {
+      toast.error("Identity verification is required to book in this market.");
+      navigate(`${CONSUMER_ROUTES.kyc}?context=consumer&jurisdiction=${jurisdictionId}`);
       return;
     }
 

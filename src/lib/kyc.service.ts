@@ -172,4 +172,24 @@ export const kycService = {
 
     return data as { ok: boolean; submission?: KycSubmission };
   },
+
+  async requestSmileVerification(submissionId: string) {
+    const { data, error } = await supabase.functions.invoke("kyc-smile-verify", {
+      body: { submissionId },
+    });
+
+    if (error) throw error;
+    if (data && typeof data === "object" && "error" in data && data.error) {
+      throw new Error(String(data.error));
+    }
+
+    return data as { ok: boolean; configured?: boolean; submission?: KycSubmission };
+  },
+
+  async runProviderVerification(submissionId: string, providerEngine: string) {
+    if (providerEngine === "smile-identity") {
+      return this.requestSmileVerification(submissionId);
+    }
+    return null;
+  },
 };

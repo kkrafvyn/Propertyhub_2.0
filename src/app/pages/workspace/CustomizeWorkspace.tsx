@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { LayoutGrid, Loader2, Palette, Puzzle, Save, Type } from "lucide-react";
+import { LayoutGrid, LayoutDashboard, Loader2, Palette, Puzzle, Save, Type } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
@@ -17,8 +17,14 @@ import {
   type WorkspaceNavGroup,
 } from "../../../lib/workspace-nav-catalog";
 import { workspaceCustomizationService } from "../../../lib/workspace-customization.service";
+import { whitelabelService } from "../../../lib/whitelabel.service";
+import {
+  DASHBOARD_WIDGET_CATALOG,
+  DEFAULT_DASHBOARD_WIDGETS,
+  type DashboardWidgetId,
+} from "../../../lib/workspace-module-catalog";
 
-type TabId = "navigation" | "modules" | "branding" | "terminology" | "home";
+type TabId = "navigation" | "modules" | "branding" | "terminology" | "home" | "dashboard";
 
 const GROUP_LABELS: Record<WorkspaceNavGroup, string> = {
   core: "Core workspace",
@@ -41,6 +47,7 @@ export function CustomizeWorkspace({ organizationId, currentRole }: CustomizeWor
   const [hiddenSlugs, setHiddenSlugs] = useState<string[]>([]);
   const [terminology, setTerminology] = useState<Record<string, string>>({});
   const [defaultHomeSlug, setDefaultHomeSlug] = useState<string>("");
+  const [dashboardWidgets, setDashboardWidgets] = useState<DashboardWidgetId[]>(DEFAULT_DASHBOARD_WIDGETS);
   const [capabilities, setCapabilities] = useState<CompanyCapability[]>([]);
   const [branding, setBranding] = useState({
     primary_color: "#3B82F6",
@@ -60,6 +67,7 @@ export function CustomizeWorkspace({ organizationId, currentRole }: CustomizeWor
       setHiddenSlugs(bundle.customization.hiddenSlugs);
       setTerminology(bundle.customization.terminology);
       setDefaultHomeSlug(bundle.customization.defaultHomeSlug ?? "");
+      setDashboardWidgets(bundle.customization.dashboardWidgets);
       setCapabilities(bundle.enabledCapabilities);
       setBranding({
         primary_color: bundle.branding?.primary_color || "#3B82F6",
@@ -118,10 +126,12 @@ export function CustomizeWorkspace({ organizationId, currentRole }: CustomizeWor
         hiddenSlugs,
         terminology,
         defaultHomeSlug: defaultHomeSlug || null,
+        dashboardWidgets,
         enabledCapabilities: capabilities,
         branding,
         existingSetupMetadata: setupMetadata,
       });
+      await whitelabelService.applyTheme(organizationId);
       toast.success("Workspace customization saved.");
       await load();
     } catch (error) {
@@ -146,6 +156,7 @@ export function CustomizeWorkspace({ organizationId, currentRole }: CustomizeWor
     { id: "branding", label: "Branding", icon: Palette },
     { id: "terminology", label: "Terminology", icon: Type },
     { id: "home", label: "Default home", icon: LayoutGrid },
+    { id: "dashboard", label: "Dashboard widgets", icon: LayoutDashboard },
   ];
 
   return (
@@ -343,6 +354,43 @@ export function CustomizeWorkspace({ organizationId, currentRole }: CustomizeWor
               </option>
             ))}
           </select>
+        </Card>
+      ) : null}
+
+      {tab === "dashboard" ? (
+        <Card className="p-6 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Choose which widgets appear on the workspace home dashboard for your organization.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {DASHBOARD_WIDGET_CATALOG.map((widget) => {
+              const enabled = dashboardWidgets.includes(widget.id);
+              return (
+                <label
+                  key={widget.id}
+                  className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={enabled}
+                    disabled={!canManage}
+                    onChange={() =>
+                      setDashboardWidgets((current) =>
+                        enabled
+                          ? current.filter((entry) => entry !== widget.id)
+                          : [...current, widget.id],
+                      )
+                    }
+                  />
+                  <div>
+                    <p className="font-medium">{widget.label}</p>
+                    <p className="text-xs text-muted-foreground">{widget.description}</p>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
         </Card>
       ) : null}
     </div>

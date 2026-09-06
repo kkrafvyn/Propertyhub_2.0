@@ -17,6 +17,7 @@ import { isKycPending, isKycVerified } from "../../lib/baytmiftah/kyc";
 import { submitKyc } from "../../lib/baytmiftah/trust-service";
 
 import { kycService } from "../../../lib/kyc.service";
+import { resolveKycProviderEngine } from "../../../lib/kyc-provider-engines";
 
 import { mobileCaptureProps } from "../../../lib/deep-link";
 
@@ -313,17 +314,13 @@ export function KycVerificationPanel() {
       const submissionId = result.kyc?.submission?.id as string | undefined;
 
       if (submissionId) {
-
         try {
-
+          const providerEngine = await resolveKycProviderEngine(jurisdictionId);
+          await kycService.runProviderVerification(submissionId, providerEngine);
           await kycService.requestAiScreening(submissionId);
-
         } catch (screeningError) {
-
-          console.warn("AI KYC screening failed; manual review will continue:", screeningError);
-
+          console.warn("KYC screening failed; manual review will continue:", screeningError);
         }
-
       }
 
 

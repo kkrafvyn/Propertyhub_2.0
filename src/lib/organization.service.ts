@@ -1,3 +1,7 @@
+import {
+  buildTemplateCustomization,
+  resolveTemplatePack,
+} from "./workspace-template-packs";
 import { supabase } from './supabase'
 import type { Database } from './database.types'
 
@@ -147,13 +151,33 @@ export const organizationService = {
 
     if (departmentError) throw departmentError
 
+    const { data: existingOrg, error: existingOrgError } = await supabase
+      .from("organizations")
+      .select("workspace_kind")
+      .eq("id", params.organizationId)
+      .single();
+
+    if (existingOrgError) throw existingOrgError;
+
+    const pack = resolveTemplatePack({
+      workspaceKind: existingOrg?.workspace_kind,
+      businessTypes: params.businessTypes,
+    });
+    const templateCustomization = buildTemplateCustomization(pack);
+    const mergedSetupMetadata = {
+      ...(params.setupMetadata ?? {}),
+      workspace_customization: templateCustomization,
+    };
+
     const { data: organization, error: organizationError } = await supabase
       .from('organizations')
       .update({
         business_types: params.businessTypes,
         enabled_capabilities: params.enabledCapabilities,
+        enabled_workspace_modules: pack.enabledModules,
+        default_home_slug: pack.defaultHomeSlug,
         company_setup_completed: true,
-        setup_metadata: params.setupMetadata ?? {},
+        setup_metadata: mergedSetupMetadata,
       })
       .eq('id', params.organizationId)
       .select()

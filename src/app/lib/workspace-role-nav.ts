@@ -48,6 +48,8 @@ export const WORKSPACE_SLUG_PERMISSIONS: Record<string, WorkspacePermission | nu
   trust: "listings:read",
   compliance: "finance:read",
   automation: "team:manage",
+  "module-marketplace": "team:manage",
+  "workflow-approval": "team:manage",
   "ai-assistant": "leads:read",
   settings: null,
   "fraud-alerts": "team:manage",

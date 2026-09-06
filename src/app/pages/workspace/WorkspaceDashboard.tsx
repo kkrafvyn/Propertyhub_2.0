@@ -42,10 +42,11 @@ import { organizationService } from "../../../lib/organization.service";
 import { paymentService } from "../../../lib/payment.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
 import type { MemberRole } from "../../../lib/workspace";
+import { parseWorkspaceCustomization } from "../../../lib/workspace-customization.service";
+import { isDashboardWidgetEnabled } from "../../../lib/workspace-module-catalog";
 import {
-  filterByNestedPropertyScope,
   filterByPropertyScope,
-  getNestedListingPropertyId,
+  filterByNestedPropertyScope,
   type MemberScopeProps,
   withMemberScopeDefaults,
 } from "../../../lib/member-scope";
@@ -236,6 +237,17 @@ export function WorkspaceDashboard({
     onRoleChange?.(newRole);
   };
 
+  const dashboardWidgets = useMemo(
+    () => parseWorkspaceCustomization(organization).dashboardWidgets,
+    [organization],
+  );
+  const showPipelineMetrics = isDashboardWidgetEnabled(dashboardWidgets, "pipeline");
+  const showRevenueMetrics = isDashboardWidgetEnabled(dashboardWidgets, "revenue");
+  const showKpiGrid = showPipelineMetrics || showRevenueMetrics;
+  const showListingsWidget = isDashboardWidgetEnabled(dashboardWidgets, "listings");
+  const showViewingsWidget = isDashboardWidgetEnabled(dashboardWidgets, "viewings");
+  const showQuickActions = isDashboardWidgetEnabled(dashboardWidgets, "quick_actions");
+
   if (loading) {
     return (
       <Card className="p-8 text-center text-ink-secondary bg-surface border-surface-border">
@@ -388,6 +400,7 @@ export function WorkspaceDashboard({
       </div>
 
       {/* Role-Tailored KPI Grid */}
+      {showKpiGrid ? (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {activeRole === "owner" && (
           <>
@@ -526,10 +539,13 @@ export function WorkspaceDashboard({
           </>
         )}
       </div>
+      ) : null}
 
       {/* Main Content Split: Activity & Pipeline */}
+      {(showListingsWidget || showViewingsWidget || showQuickActions) ? (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Active Inventory List */}
+        {showListingsWidget ? (
         <Card variant="glass" className="p-6 border-surface-border/80 hover:border-emerald-500/30 transition-all flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -578,8 +594,10 @@ export function WorkspaceDashboard({
             </div>
           </div>
         </Card>
+        ) : null}
 
         {/* Viewing Schedule & Tenant Requests */}
+        {showViewingsWidget ? (
         <Card variant="glass" className="p-6 border-surface-border/80 hover:border-blue-500/30 transition-all flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -626,8 +644,10 @@ export function WorkspaceDashboard({
             </div>
           </div>
         </Card>
+        ) : null}
 
         {/* Fast Action Shortcuts */}
+        {showQuickActions ? (
         <Card variant="glass" className="p-6 border-surface-border/80 hover:border-amber-500/30 transition-all flex flex-col justify-between">
           <div>
             <div className="mb-4">
@@ -721,7 +741,13 @@ export function WorkspaceDashboard({
             </div>
           </div>
         </Card>
+        ) : null}
       </div>
+      ) : (
+        <Card className="p-8 text-center text-ink-secondary bg-surface border-surface-border">
+          Dashboard widgets are hidden. Enable them in Customize Workspace.
+        </Card>
+      )}
     </div>
   );
 }

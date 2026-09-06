@@ -1,4 +1,5 @@
 import type { CompanyCapability } from "./company-model";
+import { DEFAULT_DASHBOARD_WIDGETS, type DashboardWidgetId } from "./workspace-module-catalog";
 import { PERSONAL_WORKSPACE_DEFAULT_HIDDEN } from "./workspace-nav-catalog";
 import { whitelabelService } from "./whitelabel.service";
 import { organizationService } from "./organization.service";
@@ -8,6 +9,7 @@ export type WorkspaceCustomizationConfig = {
   hiddenSlugs: string[];
   terminology: Record<string, string>;
   defaultHomeSlug: string | null;
+  dashboardWidgets: DashboardWidgetId[];
 };
 
 type OrganizationLike = {
@@ -52,6 +54,9 @@ export function parseWorkspaceCustomization(org: OrganizationLike | null | undef
     defaultHomeSlug:
       org?.default_home_slug ??
       (typeof stored.defaultHomeSlug === "string" ? stored.defaultHomeSlug : null),
+    dashboardWidgets: Array.isArray(stored.dashboardWidgets)
+      ? stored.dashboardWidgets.filter((entry): entry is DashboardWidgetId => typeof entry === "string")
+      : [...DEFAULT_DASHBOARD_WIDGETS],
   };
 }
 
@@ -93,6 +98,7 @@ export const workspaceCustomizationService = {
     hiddenSlugs: string[];
     terminology: Record<string, string>;
     defaultHomeSlug: string | null;
+    dashboardWidgets: DashboardWidgetId[];
     enabledCapabilities: CompanyCapability[];
     branding: {
       primary_color?: string;
@@ -113,6 +119,7 @@ export const workspaceCustomizationService = {
       hiddenSlugs: input.hiddenSlugs,
       terminology: input.terminology,
       defaultHomeSlug: input.defaultHomeSlug,
+      dashboardWidgets: input.dashboardWidgets,
       updated_at: new Date().toISOString(),
     };
 
