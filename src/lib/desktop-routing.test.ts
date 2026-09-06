@@ -46,11 +46,20 @@ describe("desktop routing", () => {
     ).toBe("/admin");
   });
 
-  it("rejects consumer accounts on desktop", () => {
+  it("defers consumer rejection until profile is loaded", () => {
     expect(
       resolveDesktopProfessionalHome(
         { user_metadata: { role: "consumer" } } as never,
         null,
+      ),
+    ).toBe("/workspace");
+  });
+
+  it("rejects consumer accounts on desktop once profile is known", () => {
+    expect(
+      resolveDesktopProfessionalHome(
+        { user_metadata: { role: "consumer" } } as never,
+        { role: "consumer" },
       ),
     ).toBe("/login?reason=business-only");
   });

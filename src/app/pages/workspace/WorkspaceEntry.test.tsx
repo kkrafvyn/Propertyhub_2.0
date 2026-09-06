@@ -4,10 +4,19 @@ import { describe, expect, it, vi } from "vitest";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { useAuth } from "../../context/AuthContext";
 import { organizationService } from "../../../lib/organization.service";
+import { enrollmentService } from "../../../lib/enrollment.service";
 import { LocaleProvider } from "../../i18n/LocaleContext";
 
 vi.mock("../../context/AuthContext", () => ({
   useAuth: vi.fn(),
+}));
+
+vi.mock("../../../lib/enrollment.service", () => ({
+  enrollmentService: {
+    getPendingRequest: vi.fn(),
+    getMyRequests: vi.fn(),
+    submitRequest: vi.fn(),
+  },
 }));
 
 vi.mock("../../../lib/organization.service", () => ({
@@ -19,6 +28,8 @@ vi.mock("../../../lib/organization.service", () => ({
 
 const useAuthMock = vi.mocked(useAuth);
 const getUserOrganizationsMock = vi.mocked(organizationService.getUserOrganizations);
+const getPendingRequestMock = vi.mocked(enrollmentService.getPendingRequest);
+const getMyRequestsMock = vi.mocked(enrollmentService.getMyRequests);
 
 function createAuthState() {
   return {
@@ -98,11 +109,13 @@ describe("WorkspaceEntry", () => {
   it("shows the onboarding form when the user has no workspace yet", async () => {
     useAuthMock.mockReturnValue(createAuthState() as any);
     getUserOrganizationsMock.mockResolvedValue([]);
+    getPendingRequestMock.mockResolvedValue(null);
+    getMyRequestsMock.mockResolvedValue([]);
 
     renderWorkspaceEntry();
 
     await waitFor(() => {
-      expect(screen.getByText("Create your organization")).toBeInTheDocument();
+      expect(screen.getByText("Apply for a workspace")).toBeInTheDocument();
     });
     expect(screen.getByLabelText("Organization Name")).toBeInTheDocument();
   });
