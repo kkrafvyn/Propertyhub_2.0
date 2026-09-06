@@ -1,0 +1,20 @@
+{
+  "label": "pre-pilot-recovery-point",
+  "frozenAt": "2026-09-06T15:06:54.998Z",
+  "purpose": "Freeze point before controlled web pilot (1–3 organizations)",
+  "backupPath": "backups/2026-09-06T15-06-01-720Z_pre-migration_pre-migration",
+  "tier": "pre-migration",
+  "tablesValidated": 277,
+  "rowsValidated": 192,
+  "criticalTables": 14,
+  "dbSpotCheck": true,
+  "relationshipChecks": true,
+  "storageIncluded": false,
+  "offsiteUploaded": false,
+  "restoreDrillEvidence": "scripts/backup/RESTORE_DRILL_EVIDENCE.json",
+  "nextSteps": [
+    "Upload offsite copy when BACKUP_S3_* secrets are configured",
+    "Include storage backup when SUPABASE_SERVICE_ROLE_KEY is set",
+    "Do not mutate production schema without a new pre-migration backup"
+  ]
+}

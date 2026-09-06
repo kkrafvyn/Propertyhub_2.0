@@ -82,4 +82,22 @@ const summary = {
 };
 
 console.log(JSON.stringify(summary, null, 2));
+
+const alertWebhook = process.env.OPS_ALERT_WEBHOOK_URL?.trim();
+if (!healthy && alertWebhook) {
+  try {
+    await fetch(alertWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: `BaytMiftah health check FAILED at ${summary.checkedAt}`,
+        healthy: false,
+        checks: checks.filter((c) => c.level === 'fail'),
+      }),
+    });
+  } catch (alertError) {
+    console.error('Alert webhook failed:', alertError);
+  }
+}
+
 process.exit(healthy ? 0 : 1);

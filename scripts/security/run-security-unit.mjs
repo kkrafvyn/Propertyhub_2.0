@@ -8,6 +8,8 @@ const SECURITY_TESTS = [
   "src/lib/security/api-authorization.test.ts",
   "src/lib/platform-access.test.ts",
   "src/lib/security/rls-policy-audit.test.ts",
+  "src/lib/security/storage-isolation.test.ts",
+  "src/lib/security/platform-admin-live.test.ts",
 ];
 
 function main() {

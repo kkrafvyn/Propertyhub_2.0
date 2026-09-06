@@ -84,6 +84,8 @@
     "jobs:communications": "node scripts/workers/process-communication-queue.mjs",
     "jobs:retention": "node scripts/workers/apply-data-retention.mjs",
     "ops:health": "node scripts/ops/health-check.mjs",
+    "load:pilot": "node scripts/load/pilot-flows.mjs",
+    "pilot:payangels-e2e": "node scripts/pilot/payangels-staging-e2e.mjs",
     "jobs:run-all": "node scripts/workers/run-all-jobs.mjs",
     "production:check": "node scripts/production-check.mjs",
     "db:types": "node scripts/generate-database-types.mjs",
