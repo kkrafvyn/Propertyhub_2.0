@@ -142,6 +142,10 @@ async function waitForPublicUserPg(client, userId, email) {
 async function ensureOrganizationPg(client, slug, name, ownerId) {
   const { rows } = await client.query(`SELECT id FROM public.organizations WHERE slug = $1 LIMIT 1`, [slug]);
   if (rows[0]?.id) {
+    await client.query(
+      `UPDATE public.organizations SET verified = FALSE WHERE id = $1`,
+      [rows[0].id],
+    );
     console.log(`  organization ${slug} exists (${rows[0].id})`);
     return rows[0].id;
   }
@@ -149,7 +153,7 @@ async function ensureOrganizationPg(client, slug, name, ownerId) {
   const { rows: inserted } = await client.query(
     `
     INSERT INTO public.organizations (name, slug, owner_id, email, verified)
-    VALUES ($1, $2, $3, $4, TRUE)
+    VALUES ($1, $2, $3, $4, FALSE)
     RETURNING id
     `,
     [name, slug, ownerId, `${slug}@baytmiftah-ci.test`],
@@ -236,6 +240,11 @@ async function ensureOrganizationAdmin(admin, slug, name, ownerId) {
     .maybeSingle();
   if (readError) throw readError;
   if (existing?.id) {
+    const { error: updateError } = await admin
+      .from("organizations")
+      .update({ verified: false })
+      .eq("id", existing.id);
+    if (updateError) throw updateError;
     console.log(`  organization ${slug} exists (${existing.id})`);
     return existing.id;
   }
@@ -247,7 +256,7 @@ async function ensureOrganizationAdmin(admin, slug, name, ownerId) {
       slug,
       owner_id: ownerId,
       email: `${slug}@baytmiftah-ci.test`,
-      verified: true,
+      verified: false,
     })
     .select("id")
     .single();
