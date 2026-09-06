@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import { Building2, CheckCircle2, Clock3, Loader2, XCircle } from "lucide-react";
+import { Building2, CheckCircle2, Clock3, Loader2, Shield, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   enrollmentService,
   type OrganizationEnrollmentRequest,
 } from "../../../lib/enrollment.service";
+import { kycService } from "../../../lib/kyc.service";
+import { describeKycEngine } from "../../../lib/kyc-gate.service";
+import { isKycVerified, isKycPending } from "../../lib/baytmiftah/kyc";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
@@ -25,6 +28,7 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
   const [workingId, setWorkingId] = useState<string | null>(null);
   const [pending, setPending] = useState<OrganizationEnrollmentRequest[]>([]);
   const [recent, setRecent] = useState<OrganizationEnrollmentRequest[]>([]);
+  const [kycByUser, setKycByUser] = useState<Record<string, Awaited<ReturnType<typeof kycService.getLatestSubmission>>>>({});
 
   const loadRequests = async () => {
     try {
@@ -35,6 +39,15 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
       ]);
       setPending(pendingRows);
       setRecent(allRows.filter((row) => row.status !== "pending").slice(0, 10));
+
+      const userIds = [...new Set(pendingRows.map((row) => row.requester_user_id))];
+      const kycEntries = await Promise.all(
+        userIds.map(async (userId) => {
+          const submission = await kycService.getLatestSubmission(userId).catch(() => null);
+          return [userId, submission] as const;
+        }),
+      );
+      setKycByUser(Object.fromEntries(kycEntries));
     } catch (error) {
       console.error(error);
       toast.error("Unable to load enrollment requests.");
@@ -94,9 +107,9 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
       <Card className="p-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl font-semibold">Company enrollment requests</h2>
+            <h2 className="text-xl font-semibold">Workspace enrollment requests</h2>
             <p className="text-sm text-muted-foreground">
-              Companies must be approved before they receive a workspace on BaytMiftah.
+              Personal owners and organizations must complete KYC before approval.
             </p>
           </div>
           <Badge variant="outline" className="gap-1">
@@ -111,14 +124,30 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
           </p>
         ) : (
           <div className="space-y-4">
-            {pending.map((request) => (
+            {pending.map((request) => {
+              const submission = kycByUser[request.requester_user_id];
+              const kycSnapshot = submission
+                ? { status: submission.status, submission }
+                : null;
+              const kycVerified = isKycVerified(kycSnapshot);
+              const kycPending = isKycPending(kycSnapshot);
+              const engine = describeKycEngine(kycSnapshot, request.operating_jurisdiction);
+
+              return (
               <div key={request.id} className="rounded-xl border border-border p-4">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Building2 className="h-4 w-4 text-primary" />
+                      {request.workspace_kind === "personal" ? (
+                        <Shield className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Building2 className="h-4 w-4 text-primary" />
+                      )}
                       <p className="font-semibold">{request.company_name}</p>
                       <Badge variant="warning">Pending review</Badge>
+                      <Badge variant="outline">
+                        {request.workspace_kind === "personal" ? "Personal" : "Organization"}
+                      </Badge>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">/{request.desired_slug}</p>
                     <p className="mt-2 text-sm">
@@ -130,6 +159,20 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
                         <dd>
                           {request.requester?.full_name || request.requester?.email || "Unknown"}
                         </dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-foreground">Operating country</dt>
+                        <dd>{request.operating_jurisdiction || "—"}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-foreground">KYC status</dt>
+                        <dd>
+                          {kycVerified ? "Verified" : kycPending ? "Under review" : "Not submitted"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-foreground">KYC engine</dt>
+                        <dd>{engine}</dd>
                       </div>
                       <div>
                         <dt className="font-medium text-foreground">Contact</dt>
@@ -148,7 +191,7 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
                   <div className="flex flex-wrap gap-2">
                     <Button
                       size="sm"
-                      disabled={workingId === request.id}
+                      disabled={workingId === request.id || !kycVerified}
                       onClick={() => void handleApprove(request)}
                     >
                       <CheckCircle2 className="mr-2 h-4 w-4" />
@@ -166,7 +209,7 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
       </Card>

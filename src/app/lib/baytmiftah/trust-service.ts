@@ -31,6 +31,8 @@ export async function fetchMyKyc() {
   };
 }
 
+import { resolveKycEngine } from "../../../lib/kyc-gate.service";
+
 export async function submitKyc(payload: Record<string, unknown>) {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id;
@@ -41,6 +43,19 @@ export async function submitKyc(payload: Record<string, unknown>) {
     (payload.documentType as string) ||
     "national_id";
 
+  const context =
+    (payload.context as "consumer" | "workspace" | undefined) ||
+    (payload.kycContext as "consumer" | "workspace" | undefined) ||
+    "consumer";
+  const jurisdictionId =
+    (payload.jurisdiction_id as string) ||
+    (payload.jurisdictionId as string) ||
+    undefined;
+  const providerEngine =
+    (payload.provider_engine as string) ||
+    (payload.providerEngine as string) ||
+    (jurisdictionId ? resolveKycEngine(jurisdictionId) : "internal-kyc");
+
   const submission = await kycService.submit({
     userId,
     documentType: documentType as any,
@@ -48,6 +63,9 @@ export async function submitKyc(payload: Record<string, unknown>) {
     fullName: (payload.full_name || payload.fullName || payload.name) as string | undefined,
     dateOfBirth: (payload.date_of_birth || payload.dateOfBirth) as string | undefined,
     storagePath: (payload.storage_path || payload.storagePath) as string | undefined,
+    context,
+    jurisdictionId,
+    providerEngine,
   });
 
   if (payload.phone || payload.full_name || payload.fullName) {

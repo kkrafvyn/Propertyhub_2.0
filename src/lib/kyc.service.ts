@@ -28,17 +28,25 @@ export type KycSubmission = {
   ai_summary?: string | null;
   ai_screened_at?: string | null;
   ai_source?: string | null;
+  context?: "consumer" | "workspace" | null;
+  jurisdiction_id?: string | null;
+  provider_engine?: string | null;
 };
 
 export const kycService = {
-  async getLatestSubmission(userId: string) {
-    const { data, error } = await supabase
+  async getLatestSubmission(userId: string, context?: "consumer" | "workspace") {
+    let query = supabase
       .from("kyc_submissions")
       .select("*")
       .eq("user_id", userId)
       .order("submitted_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+
+    if (context) {
+      query = query.eq("context", context);
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     if (error) throw error;
     return data;
@@ -51,6 +59,9 @@ export const kycService = {
     fullName?: string;
     dateOfBirth?: string;
     storagePath?: string;
+    context?: "consumer" | "workspace";
+    jurisdictionId?: string;
+    providerEngine?: string;
   }) {
     const { data, error } = await supabase
       .from("kyc_submissions")
@@ -61,6 +72,9 @@ export const kycService = {
         full_name: input.fullName || null,
         date_of_birth: input.dateOfBirth || null,
         storage_path: input.storagePath || null,
+        context: input.context || "consumer",
+        jurisdiction_id: input.jurisdictionId || null,
+        provider_engine: input.providerEngine || null,
         status: "submitted",
       })
       .select("*")

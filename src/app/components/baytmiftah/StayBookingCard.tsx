@@ -3,15 +3,19 @@ import { useNavigate } from 'react-router'
 import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { useCurrency } from '../../context/CurrencyContext'
+import { useMyKyc } from '../../hooks/useMyKyc'
 import { createReservation, fetchListingAvailability } from '../../lib/baytmiftah/reservation-service'
 import { CONSUMER_ROUTES } from '../../lib/consumer-routes'
 import { buildCheckoutPath } from '../../lib/checkout-navigation'
 import { LegalAcceptanceCheckbox } from '../legal/LegalAcceptanceCheckbox'
 import { legalAcceptanceService } from '../../../lib/legal-acceptance.service'
 import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from '../../../lib/legal-config'
+import { canBookStay } from '../../../lib/kyc-gate.service'
+import KycBanner from './KycBanner'
 
 export default function StayBookingCard({ listing }) {
   const { user } = useAuth()
+  const { kyc } = useMyKyc()
   const { t } = useTranslation()
   const { formatPrice } = useCurrency()
   const navigate = useNavigate()
@@ -62,6 +66,13 @@ export default function StayBookingCard({ listing }) {
 
     if (!bookingTermsAccepted) {
       setMessage('Please accept the booking and payment terms to continue.')
+      return
+    }
+
+    const jurisdictionId = listing.jurisdictionId || 'GLOBAL'
+    if (!canBookStay(kyc, jurisdictionId)) {
+      setMessage('Identity verification is required to book in this market.')
+      navigate(`${CONSUMER_ROUTES.kyc}?context=consumer&jurisdiction=${jurisdictionId}`)
       return
     }
 
@@ -159,6 +170,12 @@ export default function StayBookingCard({ listing }) {
         id="stay-booking-terms"
         className="mt-4"
       />
+
+      {listing.jurisdictionId && !canBookStay(kyc, listing.jurisdictionId) ? (
+        <div className="mt-4">
+          <KycBanner kyc={kyc} />
+        </div>
+      ) : null}
 
       {availability.length > 0 && (
         <p className="mt-2 text-xs text-ink-secondary">{availability.length} dates available this month</p>

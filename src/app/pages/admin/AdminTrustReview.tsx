@@ -5,6 +5,7 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { kycService } from "../../../lib/kyc.service";
+import { AdminKycPolicies } from "./AdminKycPolicies";
 import {
   trustVerificationService,
   type TrustRequestStatus,
@@ -23,6 +24,7 @@ function recommendationBadgeClass(recommendation?: string | null) {
 
 export function AdminTrustReview() {
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<"queue" | "policies">("queue");
   const [kycQueue, setKycQueue] = useState<any[]>([]);
   const [trustQueue, setTrustQueue] = useState<any[]>([]);
   const [workingId, setWorkingId] = useState<string | null>(null);
@@ -109,13 +111,31 @@ export function AdminTrustReview() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold">Trust & KYC Review</h2>
-        <p className="text-sm text-muted-foreground">
-          Approve identity verification and agency trust requests.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-semibold">Trust & KYC Review</h2>
+          <p className="text-sm text-muted-foreground">
+            Approve identity verification, review agency trust requests, and manage country KYC engines.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant={view === "queue" ? "default" : "outline"} onClick={() => setView("queue")}>
+            Review queue
+          </Button>
+          <Button
+            size="sm"
+            variant={view === "policies" ? "default" : "outline"}
+            onClick={() => setView("policies")}
+          >
+            Country KYC policies
+          </Button>
+        </div>
       </div>
 
+      {view === "policies" ? <AdminKycPolicies /> : null}
+
+      {view === "queue" ? (
+        <>
       <Card className="p-6 space-y-4">
         <div className="flex items-center gap-2">
           <UserCheck className="w-5 h-5 text-primary" />
@@ -138,7 +158,17 @@ export function AdminTrustReview() {
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Submitted {new Date(submission.submitted_at).toLocaleString()}
+                    {submission.context ? ` · ${formatLabel(submission.context)}` : ""}
+                    {submission.jurisdiction_id ? ` · ${submission.jurisdiction_id}` : ""}
                   </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {submission.provider_engine ? (
+                      <Badge variant="secondary">Engine: {submission.provider_engine}</Badge>
+                    ) : null}
+                    {submission.ai_source ? (
+                      <Badge variant="outline">AI: {submission.ai_source}</Badge>
+                    ) : null}
+                  </div>
                 </div>
                 <Badge variant="outline" className="capitalize">
                   {submission.status}
@@ -298,6 +328,8 @@ export function AdminTrustReview() {
           ))
         )}
       </Card>
+        </>
+      ) : null}
     </div>
   );
 }

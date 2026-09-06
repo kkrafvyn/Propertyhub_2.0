@@ -291,6 +291,7 @@ export default {
       "shortStayBooking": "I agree to the",
       "listingPublish": "I confirm compliance with the",
       "agencyOnboarding": "I agree to the",
+      "personalHostOnboarding": "I agree to the",
       "kycSubmission": "I consent to identity verification under the"
     },
     "cookies": {

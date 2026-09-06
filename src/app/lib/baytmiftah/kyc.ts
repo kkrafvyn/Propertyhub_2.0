@@ -14,3 +14,11 @@ export function canSubmitOffer(kyc?: { status?: string | null; verified?: boolea
   if (typeof kyc === "object" && kyc?.verified) return true;
   return isKycVerified(kyc);
 }
+
+export function hasSubmittedKyc(kyc?: {
+  status?: string | null;
+  submission?: { status?: string | null } | null;
+} | null) {
+  if (canSubmitOffer(kyc)) return true;
+  return isKycPending(kyc) || isKycPending(kyc?.submission ?? null);
+}

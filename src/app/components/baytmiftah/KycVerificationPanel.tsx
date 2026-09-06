@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 
 import { Button } from "../ui/Button";
@@ -140,6 +141,9 @@ function KycAiStatusCard({ submission }: { submission: Record<string, unknown> |
 export function KycVerificationPanel() {
 
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const kycContext = searchParams.get("context") === "workspace" ? "workspace" : "consumer";
+  const jurisdictionId = searchParams.get("jurisdiction") || undefined;
 
   const { user, profile } = useAuth();
 
@@ -283,6 +287,10 @@ export function KycVerificationPanel() {
         storage_path: storagePath,
 
         phone: user.phone,
+
+        context: kycContext,
+
+        jurisdictionId,
 
       });
 

@@ -69,6 +69,7 @@ export type LegalAcceptanceScope =
   | "short_stay_booking"
   | "listing_publish"
   | "agency_onboarding"
+  | "personal_host_onboarding"
   | "kyc_submission";
 
 export const ACCEPTANCE_SCOPES: Record<
@@ -98,6 +99,10 @@ export const ACCEPTANCE_SCOPES: Record<
   agency_onboarding: {
     policySlugs: ["agency-agent-terms", "data-processing", "trust-verification"],
     labelKey: "legal.acceptance.agencyOnboarding",
+  },
+  personal_host_onboarding: {
+    policySlugs: ["property-owner-terms", "kyc", "privacy", "data-processing"],
+    labelKey: "legal.acceptance.personalHostOnboarding",
   },
   kyc_submission: {
     policySlugs: ["kyc", "privacy"],

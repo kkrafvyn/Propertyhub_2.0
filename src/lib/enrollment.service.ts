@@ -1,10 +1,15 @@
 import { supabase } from "./supabase";
 
 export type EnrollmentRequestStatus = "pending" | "approved" | "rejected" | "withdrawn";
+export type WorkspaceKind = "personal" | "company";
+
 export type OrganizationEnrollmentRequest = {
   id: string;
   requester_user_id: string;
   status: EnrollmentRequestStatus;
+  workspace_kind?: WorkspaceKind;
+  operating_jurisdiction?: string;
+  kyc_submission_id?: string | null;
   company_name: string;
   desired_slug: string;
   description: string | null;
@@ -26,6 +31,8 @@ export type OrganizationEnrollmentRequest = {
 };
 
 export type SubmitEnrollmentInput = {
+  workspaceKind: WorkspaceKind;
+  operatingJurisdiction: string;
   companyName: string;
   desiredSlug: string;
   description?: string | null;
@@ -33,6 +40,7 @@ export type SubmitEnrollmentInput = {
   contactPhone?: string | null;
   website?: string | null;
   businessTypes?: string[];
+  kycSubmissionId?: string | null;
 };
 
 async function notifyEnrollmentStatus(
@@ -78,6 +86,9 @@ export const enrollmentService = {
       .from("organization_enrollment_requests")
       .insert({
         requester_user_id: userId,
+        workspace_kind: input.workspaceKind,
+        operating_jurisdiction: input.operatingJurisdiction,
+        kyc_submission_id: input.kycSubmissionId ?? null,
         company_name: input.companyName.trim(),
         desired_slug: input.desiredSlug.trim().toLowerCase(),
         description: input.description?.trim() || null,

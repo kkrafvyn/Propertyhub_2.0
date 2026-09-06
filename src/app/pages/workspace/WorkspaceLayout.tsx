@@ -71,6 +71,7 @@ import {
   Rocket,
   Scale,
   Search,
+  SlidersHorizontal,
   Settings,
   Shield,
   ShieldAlert,
@@ -227,7 +228,12 @@ import type { MemberApprovalProfile } from "../../../lib/authorization.service";
 import { memberScopeService } from "../../../lib/member-scope.service";
 import type { MemberScopeMode } from "../../../lib/member-scope";
 import { CompanySetupWizard } from "./CompanySetupWizard";
+import { CustomizeWorkspace } from "./CustomizeWorkspace";
 import { OfflineStatusBanner } from "../../components/workspace/OfflineStatusBanner";
+import {
+  applyNavCustomization,
+  parseWorkspaceCustomization,
+} from "../../../lib/workspace-customization.service";
 import { workspaceSyncService } from "../../../lib/workspace-sync.service";
 import { getRoleLabel, type CompanyCapability } from "../../../lib/company-model";
 
@@ -309,6 +315,7 @@ const WORKSPACE_SECONDARY_NAV: NavItem[] = [
   { slug: "international-rules", label: "International Markets", icon: Globe },
   { slug: "automation", label: "Automation", icon: Zap },
   { slug: "ai-assistant", label: "AI", icon: Bot },
+  { slug: "customize-workspace", label: "Customize Workspace", icon: SlidersHorizontal },
   { slug: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -513,6 +520,21 @@ export function WorkspaceLayout() {
   const companySetupCompleted = Boolean(
     (organization as { company_setup_completed?: boolean | null } | null)?.company_setup_completed,
   );
+  const workspaceKind =
+    (organization as { workspace_kind?: "personal" | "company" | null } | null)?.workspace_kind ??
+    "company";
+  const isPersonalWorkspace = workspaceKind === "personal";
+  const navCustomization = useMemo(
+    () =>
+      parseWorkspaceCustomization(
+        organization as {
+          workspace_kind?: string | null;
+          default_home_slug?: string | null;
+          setup_metadata?: unknown;
+        } | null,
+      ),
+    [organization],
+  );
 
   useEffect(() => {
     if (organization?.id) {
@@ -574,24 +596,44 @@ export function WorkspaceLayout() {
   };
 
   const visibleCoreNav = useMemo(
-    () => filterWorkspaceNavItems(CORE_NAV_ITEMS, navRole, navPermissions, navCapabilities),
-    [navRole, navPermissions, navCapabilities],
+    () =>
+      applyNavCustomization(
+        filterWorkspaceNavItems(CORE_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        navCustomization,
+      ),
+    [navRole, navPermissions, navCapabilities, navCustomization],
   );
   const visibleToolsNav = useMemo(
-    () => filterWorkspaceNavItems(WORKSPACE_SECONDARY_NAV, navRole, navPermissions, navCapabilities),
-    [navRole, navPermissions, navCapabilities],
+    () =>
+      applyNavCustomization(
+        filterWorkspaceNavItems(WORKSPACE_SECONDARY_NAV, navRole, navPermissions, navCapabilities),
+        navCustomization,
+      ),
+    [navRole, navPermissions, navCapabilities, navCustomization],
   );
   const visibleMoreNav = useMemo(
-    () => filterWorkspaceNavItems(TIER_TWO_NAV_ITEMS, navRole, navPermissions, navCapabilities),
-    [navRole, navPermissions, navCapabilities],
+    () =>
+      applyNavCustomization(
+        filterWorkspaceNavItems(TIER_TWO_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        navCustomization,
+      ),
+    [navRole, navPermissions, navCapabilities, navCustomization],
   );
   const visibleAiNav = useMemo(
-    () => filterWorkspaceNavItems(AI_NAV_ITEMS, navRole, navPermissions, navCapabilities),
-    [navRole, navPermissions, navCapabilities],
+    () =>
+      applyNavCustomization(
+        filterWorkspaceNavItems(AI_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        navCustomization,
+      ),
+    [navRole, navPermissions, navCapabilities, navCustomization],
   );
   const visibleEnterpriseNav = useMemo(
-    () => filterWorkspaceNavItems(ENTERPRISE_NAV_ITEMS, navRole, navPermissions, navCapabilities),
-    [navRole, navPermissions, navCapabilities],
+    () =>
+      applyNavCustomization(
+        filterWorkspaceNavItems(ENTERPRISE_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        navCustomization,
+      ),
+    [navRole, navPermissions, navCapabilities, navCustomization],
   );
 
   const filteredSearchResults = useMemo(() => {
@@ -629,6 +671,7 @@ export function WorkspaceLayout() {
 
   const canCreateListing = canWorkspace(navRole, "listings:write", navPermissions);
   const roleHomeSlug = isPlatformAdminViewer ? "" : getRoleHomeSlug(accessRole);
+  const orgHomeSlug = navCustomization.defaultHomeSlug || roleHomeSlug;
   const pageAllowed =
     currentPage === "company-setup" ||
     currentPage === "" ||
@@ -775,6 +818,13 @@ export function WorkspaceLayout() {
         return (
           <WorkspaceSettings
             organization={organization}
+            currentRole={currentRole}
+          />
+        );
+      case "customize-workspace":
+        return (
+          <CustomizeWorkspace
+            organizationId={organization.id}
             currentRole={currentRole}
           />
         );
@@ -1053,6 +1103,7 @@ export function WorkspaceLayout() {
   if (
     currentRole === "owner" &&
     !companySetupCompleted &&
+    !isPersonalWorkspace &&
     !isPlatformAdminViewer &&
     currentPage !== "company-setup" &&
     currentPage !== "team"
@@ -1064,12 +1115,12 @@ export function WorkspaceLayout() {
     currentPage === "" &&
     !previewRole &&
     !isPlatformAdminViewer &&
-    roleHomeSlug &&
-    roleHomeSlug !== "" &&
-    canAccessWorkspaceSlug(roleHomeSlug, accessRole, currentPermissions, enabledCapabilities) &&
+    orgHomeSlug &&
+    orgHomeSlug !== "" &&
+    canAccessWorkspaceSlug(orgHomeSlug, accessRole, currentPermissions, enabledCapabilities) &&
     !isElectron()
   ) {
-    return <Navigate to={getWorkspaceRoute(organization.slug, roleHomeSlug)} replace />;
+    return <Navigate to={getWorkspaceRoute(organization.slug, orgHomeSlug)} replace />;
   }
 
   const renderNavGroup = (

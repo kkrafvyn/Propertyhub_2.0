@@ -1030,6 +1030,7 @@ export function PropertyDetail() {
                     price: listing.price,
                     priceLabel: `${paymentCurrency} ${listing.price.toLocaleString()}`,
                     instantBook: true,
+                    jurisdictionId,
                   }}
                 />
               </div>

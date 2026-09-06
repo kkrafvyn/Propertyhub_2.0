@@ -5,10 +5,15 @@ import { WorkspaceEntry } from "./WorkspaceEntry";
 import { useAuth } from "../../context/AuthContext";
 import { organizationService } from "../../../lib/organization.service";
 import { enrollmentService } from "../../../lib/enrollment.service";
+import { useMyKyc } from "../../hooks/useMyKyc";
 import { LocaleProvider } from "../../i18n/LocaleContext";
 
 vi.mock("../../context/AuthContext", () => ({
   useAuth: vi.fn(),
+}));
+
+vi.mock("../../hooks/useMyKyc", () => ({
+  useMyKyc: vi.fn(),
 }));
 
 vi.mock("../../../lib/enrollment.service", () => ({
@@ -27,6 +32,7 @@ vi.mock("../../../lib/organization.service", () => ({
 }));
 
 const useAuthMock = vi.mocked(useAuth);
+const useMyKycMock = vi.mocked(useMyKyc);
 const getUserOrganizationsMock = vi.mocked(organizationService.getUserOrganizations);
 const getPendingRequestMock = vi.mocked(enrollmentService.getPendingRequest);
 const getMyRequestsMock = vi.mocked(enrollmentService.getMyRequests);
@@ -76,6 +82,14 @@ function renderWorkspaceEntry(initialPath = "/workspace?next=listings") {
 }
 
 describe("WorkspaceEntry", () => {
+  beforeEach(() => {
+    useMyKycMock.mockReturnValue({
+      kyc: { submission: { status: "submitted", id: "kyc-1" } },
+      loading: false,
+      verified: false,
+    } as any);
+  });
+
   it("redirects members into their workspace when an organization exists", async () => {
     useAuthMock.mockReturnValue(createAuthState() as any);
     getUserOrganizationsMock.mockResolvedValue([
@@ -117,6 +131,6 @@ describe("WorkspaceEntry", () => {
     await waitFor(() => {
       expect(screen.getByText("Apply for a workspace")).toBeInTheDocument();
     });
-    expect(screen.getByLabelText("Organization Name")).toBeInTheDocument();
+    expect(screen.getByLabelText("Display name")).toBeInTheDocument();
   });
 });
