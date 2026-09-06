@@ -29,7 +29,7 @@ for (const delivery of deliveries || []) {
     continue;
   }
 
-  const statement = delivery.statement as any;
+  const statement = delivery.statement;
   if (!statement?.owner_user_id) {
     await supabase
       .from('estate_owner_statement_deliveries')

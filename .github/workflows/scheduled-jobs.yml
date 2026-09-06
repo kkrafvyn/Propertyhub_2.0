@@ -31,8 +31,14 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Run background workers
-        run: npm run jobs:run-all
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ] || [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_DB_URL" ]; then
+            echo "Skipping background workers — Supabase secrets not fully configured."
+            exit 0
+          fi
+          npm run jobs:run-all
         env:
           SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           INTERNAL_AUTOMATIONS_KEY: ${{ secrets.INTERNAL_AUTOMATIONS_KEY }}
