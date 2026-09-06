@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Building2, CheckCircle2, CreditCard, Database, MapPin, Users } from "lucide-react";
+import { Building2, CheckCircle2, CreditCard, Database as DatabaseIcon, MapPin, Users } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "../../../lib/database.types";
 import { Button } from "../../components/ui/Button";
@@ -282,7 +282,7 @@ export function CompanySetupWizard({ organization, onComplete }: CompanySetupWiz
       {step === 5 ? (
         <Card className="space-y-4 p-6">
           <div className="flex items-center gap-2">
-            <Database className="h-5 w-5 text-primary" />
+            <DatabaseIcon className="h-5 w-5 text-primary" />
             <h2 className="text-lg font-semibold">Workflows & integrations</h2>
           </div>
           <div className="space-y-2">

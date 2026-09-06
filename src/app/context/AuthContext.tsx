@@ -108,18 +108,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     return subscribeDesktopOAuthCallback(async (payload) => {
       try {
-        if ("code" in payload && payload.code) {
+        if ("type" in payload && payload.type === "code" && payload.code) {
           const { error } = await supabase.auth.exchangeCodeForSession(payload.code)
           if (error) throw error
           return
         }
 
-        const accessToken = payload.access_token
-        const refreshToken = payload.refresh_token
-        if (accessToken && refreshToken) {
+        if (
+          "access_token" in payload &&
+          "refresh_token" in payload &&
+          payload.access_token &&
+          payload.refresh_token
+        ) {
           const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
+            access_token: payload.access_token,
+            refresh_token: payload.refresh_token,
           })
           if (error) throw error
         }

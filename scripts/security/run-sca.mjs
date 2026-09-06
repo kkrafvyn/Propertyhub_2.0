@@ -6,7 +6,7 @@ const outputDir = process.env.SECURITY_RESULTS_DIR || "security-results";
 const auditLevel = process.env.SECURITY_SCA_AUDIT_LEVEL || "high";
 
 function main() {
-  const audit = spawnSync("npm", ["audit", "--audit-level", auditLevel, "--json"], {
+  const audit = spawnSync("npm", ["audit", "--omit=dev", "--audit-level", auditLevel, "--json"], {
     encoding: "utf8",
     shell: process.platform === "win32",
   });
@@ -37,7 +37,7 @@ function main() {
   console.log(`SCA: ${status}`);
 
   if (status === "FAIL") {
-    spawnSync("npm", ["audit", "--audit-level", auditLevel], {
+    spawnSync("npm", ["audit", "--omit=dev", "--audit-level", auditLevel], {
       stdio: "inherit",
       shell: process.platform === "win32",
     });

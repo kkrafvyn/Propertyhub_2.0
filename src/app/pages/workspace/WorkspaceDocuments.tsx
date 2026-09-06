@@ -362,28 +362,28 @@ export function WorkspaceDocuments({
           title="Document Families"
           value={metrics.total}
           subtitle="Active document clusters"
-          icon={<FileText className="w-5 h-5" />}
+          icon={FileText}
           iconColor="primary"
         />
         <MetricCard
           title="Signed Documents"
           value={metrics.signed}
           subtitle="Audited agreements"
-          icon={<FileCheck className="w-5 h-5" />}
+          icon={FileCheck}
           iconColor="emerald"
         />
         <MetricCard
           title="Public Trust Docs"
           value={metrics.publicDocs}
           subtitle="Shared external compliance"
-          icon={<Globe className="w-5 h-5" />}
+          icon={Globe}
           iconColor="indigo"
         />
         <MetricCard
           title="Contracts"
           value={metrics.contracts}
           subtitle="Binding deal forms"
-          icon={<FileSignature className="w-5 h-5" />}
+          icon={FileSignature}
           iconColor="amber"
         />
       </div>
@@ -403,12 +403,10 @@ export function WorkspaceDocuments({
             icon={FileText}
             title="No documents yet"
             description="Create your first agreement, lease template, or offer letter to get started."
-            action={{
-              label: "Create Document",
-              onClick: () => {
-                resetDraft();
-                setDialogOpen(true);
-              },
+            actionLabel="Create Document"
+            onAction={() => {
+              resetDraft();
+              setDialogOpen(true);
             }}
           />
         ) : (

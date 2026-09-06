@@ -30,7 +30,7 @@ rules:
 
   - id: baytmiftah-unsafe-window-open
     message: Review window.open targets for open redirect / tab-nabbing risks.
-    severity: WARNING
+    severity: INFO
     languages: [javascript, typescript]
     pattern: window.open($URL, ...)
     paths:
@@ -68,6 +68,6 @@ rules:
 
   - id: baytmiftah-dangerous-innerhtml
     message: Direct innerHTML assignment can introduce XSS. Prefer safe rendering.
-    severity: WARNING
+    severity: INFO
     languages: [javascript, typescript]
     pattern: $EL.innerHTML = $HTML

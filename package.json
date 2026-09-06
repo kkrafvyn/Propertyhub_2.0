@@ -262,6 +262,8 @@
       "package.json"
     ],
     "asar": true,
+    "npmRebuild": false,
+    "buildDependenciesFromSource": false,
     "asarUnpack": [
       "**/node_modules/better-sqlite3/**"
     ],

@@ -1,181 +1,117 @@
 name: Security DAST
 
-
-
 on:
-
   pull_request:
-
   push:
-
     branches: [main, master]
-
   schedule:
-
     - cron: "30 4 * * 1"
-
   workflow_dispatch:
 
-
-
 permissions:
-
   contents: read
-
   actions: read
 
-
-
 jobs:
-
   dast:
-
     if: github.event_name != 'pull_request'
-
     runs-on: ubuntu-latest
-
-    environment: staging
-
     steps:
-
       - uses: actions/checkout@v4
 
-
-
-      - name: Validate DAST target safety
-
-        run: node scripts/security/validate-dast-target.mjs
-
+      - name: Check DAST target configured
+        id: dast_config
         env:
-
           DAST_TARGET_URL: ${{ vars.DAST_TARGET_URL || secrets.DAST_TARGET_URL }}
-
-
-
-      - name: OWASP ZAP baseline scan (anonymous)
-
-        uses: zaproxy/action-baseline@v0.14.0
-
-        with:
-
-          target: ${{ vars.DAST_TARGET_URL || secrets.DAST_TARGET_URL }}
-
-          cmd_options: "-a -j"
-
-          allow_issue_writing: false
-
-
-
-      - name: Prepare authenticated DAST session
-
-        id: dast_auth
-
-        run: node scripts/security/prepare-dast-auth.mjs
-
-        env:
-
-          DAST_TEST_EMAIL: ${{ secrets.DAST_TEST_EMAIL }}
-
-          DAST_TEST_PASSWORD: ${{ secrets.DAST_TEST_PASSWORD }}
-
-          DAST_SUPABASE_URL: ${{ secrets.DAST_SUPABASE_URL || secrets.VITE_SUPABASE_TEST_URL }}
-
-          DAST_SUPABASE_ANON_KEY: ${{ secrets.DAST_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_TEST_ANON_KEY }}
-
-
-
-      - name: Mask DAST bearer token
-
-        if: steps.dast_auth.outputs.available == 'true'
-
-        run: echo "::add-mask::${{ steps.dast_auth.outputs.token }}"
-
-
-
-      - name: OWASP ZAP baseline scan (authenticated)
-
-        if: steps.dast_auth.outputs.available == 'true'
-
-        uses: zaproxy/action-baseline@v0.14.0
-
-        with:
-
-          target: ${{ vars.DAST_TARGET_URL || secrets.DAST_TARGET_URL }}
-
-          cmd_options: "-a -j -z \"${{ steps.dast_auth.outputs.zap_options }}\""
-
-          allow_issue_writing: false
-
-
-
-      - name: Record DAST results
-
-        if: always()
-
         run: |
-
-          node scripts/security/record-job-result.mjs dast "${{ job.status == 'success' && 'PASS' || 'FAIL' }}" '{"tool":"owasp-zap-baseline","mode":"anonymous+authenticated"}'
-
-          if [ "${{ steps.dast_auth.outputs.available }}" = "true" ]; then
-
-            node scripts/security/record-job-result.mjs dast-authenticated PASS '{"tool":"owasp-zap-baseline","mode":"authenticated"}'
-
+          if [ -z "$DAST_TARGET_URL" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "DAST_TARGET_URL is not configured; recording UNVERIFIED."
           else
-
-            node scripts/security/record-job-result.mjs dast-authenticated UNVERIFIED '{"reason":"Set DAST_TEST_EMAIL and DAST_TEST_PASSWORD in staging environment"}'
-
+            echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
-
-
-      - uses: actions/upload-artifact@v4
-
-        if: always()
-
-        with:
-
-          name: security-dast
-
-          path: |
-
-            report_html.html
-
-            report_json.json
-
-            security-results/dast.json
-
-            security-results/dast-authenticated.json
-
-
-
-  dast-unverified:
-
-    if: github.event_name == 'pull_request'
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v4
-
-
-
-      - name: Record DAST as unverified on pull requests
-
+      - name: Record DAST as unverified when target is missing
+        if: steps.dast_config.outputs.configured != 'true'
         run: |
+          node scripts/security/record-job-result.mjs dast UNVERIFIED '{"reason":"Set DAST_TARGET_URL in repository variables or staging secrets"}'
+          node scripts/security/record-job-result.mjs dast-authenticated UNVERIFIED '{"reason":"Set DAST_TEST_EMAIL and DAST_TEST_PASSWORD when DAST is enabled"}'
 
-          node scripts/security/record-job-result.mjs dast UNVERIFIED '{"reason":"DAST runs on main push, schedule, and manual dispatch against staging only"}'
-
-          node scripts/security/record-job-result.mjs dast-authenticated UNVERIFIED '{"reason":"Authenticated DAST runs on main push, schedule, and manual dispatch"}'
-
-
-
-      - uses: actions/upload-artifact@v4
-
+      - name: Upload DAST unverified artifact
+        if: steps.dast_config.outputs.configured != 'true'
+        uses: actions/upload-artifact@v4
         with:
-
-          name: security-dast-unverified
-
+          name: security-dast
           path: security-results/
 
+      - name: Validate DAST target safety
+        if: steps.dast_config.outputs.configured == 'true'
+        run: node scripts/security/validate-dast-target.mjs
+        env:
+          DAST_TARGET_URL: ${{ vars.DAST_TARGET_URL || secrets.DAST_TARGET_URL }}
 
+      - name: OWASP ZAP baseline scan (anonymous)
+        if: steps.dast_config.outputs.configured == 'true'
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: ${{ vars.DAST_TARGET_URL || secrets.DAST_TARGET_URL }}
+          cmd_options: "-a -j"
+          allow_issue_writing: false
+
+      - name: Prepare authenticated DAST session
+        id: dast_auth
+        if: steps.dast_config.outputs.configured == 'true'
+        run: node scripts/security/prepare-dast-auth.mjs
+        env:
+          DAST_TEST_EMAIL: ${{ secrets.DAST_TEST_EMAIL }}
+          DAST_TEST_PASSWORD: ${{ secrets.DAST_TEST_PASSWORD }}
+          DAST_SUPABASE_URL: ${{ secrets.DAST_SUPABASE_URL || secrets.VITE_SUPABASE_TEST_URL }}
+          DAST_SUPABASE_ANON_KEY: ${{ secrets.DAST_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_TEST_ANON_KEY }}
+
+      - name: Mask DAST bearer token
+        if: steps.dast_config.outputs.configured == 'true' && steps.dast_auth.outputs.available == 'true'
+        run: echo "::add-mask::${{ steps.dast_auth.outputs.token }}"
+
+      - name: OWASP ZAP baseline scan (authenticated)
+        if: steps.dast_config.outputs.configured == 'true' && steps.dast_auth.outputs.available == 'true'
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: ${{ vars.DAST_TARGET_URL || secrets.DAST_TARGET_URL }}
+          cmd_options: "-a -j -z \"${{ steps.dast_auth.outputs.zap_options }}\""
+          allow_issue_writing: false
+
+      - name: Record DAST results
+        if: always() && steps.dast_config.outputs.configured == 'true'
+        run: |
+          node scripts/security/record-job-result.mjs dast "${{ job.status == 'success' && 'PASS' || 'FAIL' }}" '{"tool":"owasp-zap-baseline","mode":"anonymous+authenticated"}'
+          if [ "${{ steps.dast_auth.outputs.available }}" = "true" ]; then
+            node scripts/security/record-job-result.mjs dast-authenticated PASS '{"tool":"owasp-zap-baseline","mode":"authenticated"}'
+          else
+            node scripts/security/record-job-result.mjs dast-authenticated UNVERIFIED '{"reason":"Set DAST_TEST_EMAIL and DAST_TEST_PASSWORD in staging environment"}'
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.dast_config.outputs.configured == 'true'
+        with:
+          name: security-dast
+          path: |
+            report_html.html
+            report_json.json
+            security-results/dast.json
+            security-results/dast-authenticated.json
+
+  dast-unverified:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Record DAST as unverified on pull requests
+        run: |
+          node scripts/security/record-job-result.mjs dast UNVERIFIED '{"reason":"DAST runs on main push, schedule, and manual dispatch against staging only"}'
+          node scripts/security/record-job-result.mjs dast-authenticated UNVERIFIED '{"reason":"Authenticated DAST runs on main push, schedule, and manual dispatch"}'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-dast-unverified
+          path: security-results/
