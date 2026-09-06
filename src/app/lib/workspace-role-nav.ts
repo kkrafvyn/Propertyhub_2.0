@@ -55,6 +55,7 @@ export const WORKSPACE_SLUG_PERMISSIONS: Record<string, WorkspacePermission | nu
   "location-intelligence": "leads:read",
   "org-insights": "finance:read",
   notifications: null,
+  "customize-workspace": "team:manage",
   whitelabel: "team:manage",
   "mobile-settings": "team:manage",
   integrations: "team:manage",
