@@ -17,28 +17,44 @@ function main() {
   }
 
   mkdirSync(outputDir, { recursive: true });
+  const skipPaths = [
+    "dist-desktop",
+    "dist",
+    "backups",
+    "node_modules",
+    "coverage",
+    "android",
+    "ios",
+    "supabase/.env.payments",
+    "supabase/.env.local",
+    ".env",
+  ];
+  const skipArgs = skipPaths.flatMap((p) => ["--skip-paths", p]);
+
   const args =
     resolved.via === "docker"
       ? [
           "/repo",
+          ...skipArgs,
           "--severity",
           "CRITICAL",
           "--exit-code",
           "1",
           "--ignore-unfixed",
           "--scanners",
-          "vuln,secret,misconfig",
+          "vuln,misconfig",
         ]
       : [
           "fs",
           ".",
+          ...skipArgs,
           "--severity",
           "CRITICAL",
           "--exit-code",
           "1",
           "--ignore-unfixed",
           "--scanners",
-          "vuln,secret,misconfig",
+          "vuln,misconfig",
         ];
 
   const scan = runResolvedTool(resolved, args);

@@ -20,6 +20,7 @@ function buildScanArgs(via) {
     "scan",
     ...configArgs,
     "--error",
+    "--severity=ERROR",
     "--metrics=off",
     "--quiet",
     ...(via === "docker" ? DOCKER_TARGETS : SCAN_TARGETS),

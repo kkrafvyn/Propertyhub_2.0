@@ -16,6 +16,8 @@ const LABELS = {
   "security-unit": "API Authorization",
   "tenant-isolation": "Tenant Isolation",
   storage: "Storage Isolation",
+  "platform-admin-live": "Platform Admin Live",
+  "storage-isolation": "Storage Isolation Live",
   dast: "DAST",
   "dast-authenticated": "DAST (Authenticated)",
   container: "Container / FS Scan",
@@ -48,7 +50,7 @@ function main() {
     "",
     ...rows.map((row) => {
       const label = LABELS[row.job] || row.job;
-      const status = row.status.padEnd(12);
+      const status = String(row.status || "UNVERIFIED").padEnd(12);
       return `${label.padEnd(22)} ${status}`;
     }),
     "",

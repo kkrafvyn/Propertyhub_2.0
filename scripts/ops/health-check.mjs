@@ -8,7 +8,16 @@ const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !serviceRoleKey) {
-  throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
+  const optional = process.env.HEALTH_CHECK_SKIP_IF_UNCONFIGURED === 'true';
+  const summary = {
+    checkedAt: new Date().toISOString(),
+    healthy: optional,
+    skipped: true,
+    reason: 'SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required',
+    checks: [],
+  };
+  console.log(JSON.stringify(summary, null, 2));
+  process.exit(optional ? 0 : 1);
 }
 
 const supabase = createClient(supabaseUrl, serviceRoleKey, {

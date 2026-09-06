@@ -50,7 +50,7 @@ jobs:
           VITE_SUPABASE_TEST_TENANT_B_ID: ${{ secrets.VITE_SUPABASE_TEST_TENANT_B_ID }}
 
       - name: Tenant isolation integration tests
-        run: npm run test -- src/lib/security/tenant-isolation.test.ts
+        run: npm run test -- src/lib/security/tenant-isolation.test.ts src/lib/security/storage-isolation.test.ts src/lib/security/platform-admin-live.test.ts
         env:
           RUN_TENANT_ISOLATION_TESTS: true
           VITE_SUPABASE_TEST_URL: ${{ secrets.VITE_SUPABASE_TEST_URL }}
