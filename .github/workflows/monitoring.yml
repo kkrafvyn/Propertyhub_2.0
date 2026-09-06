@@ -20,8 +20,12 @@ jobs:
         run: npm ci
 
       - name: Operational health check
-        if: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY != '' && secrets.VITE_SUPABASE_URL != '' }}
-        run: npm run ops:health
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ] || [ -z "$SUPABASE_URL" ]; then
+            echo "Skipping health check — Supabase secrets not configured."
+            exit 0
+          fi
+          npm run ops:health
         env:
           SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
