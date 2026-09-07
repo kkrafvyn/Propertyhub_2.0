@@ -49,6 +49,7 @@ jobs:
         run: node scripts/security/validate-dast-target.mjs
         env:
           DAST_TARGET_URL: ${{ vars.DAST_TARGET_URL || secrets.DAST_TARGET_URL }}
+          DAST_ALLOW_NON_STAGING: ${{ vars.DAST_ALLOW_NON_STAGING || secrets.DAST_ALLOW_NON_STAGING }}
 
       - name: OWASP ZAP baseline scan (anonymous)
         if: steps.dast_config.outputs.configured == 'true'

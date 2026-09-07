@@ -84,6 +84,7 @@
     "jobs:communications": "node scripts/workers/process-communication-queue.mjs",
     "jobs:retention": "node scripts/workers/apply-data-retention.mjs",
     "ops:health": "node scripts/ops/health-check.mjs",
+  "ops:sync-github-secrets": "node scripts/ops/sync-github-secrets.mjs",
     "load:pilot": "node scripts/load/pilot-flows.mjs",
     "pilot:payangels-e2e": "node scripts/pilot/payangels-staging-e2e.mjs",
     "jobs:run-all": "node scripts/workers/run-all-jobs.mjs",
@@ -207,7 +208,7 @@
     "concurrently": "^10.0.5",
     "cross-env": "^10.1.0",
     "electron": "^43.4.0",
-    "electron-builder": "^25.1.8",
+    "electron-builder": "^26.15.3",
     "google-translate-api-x": "^10.7.3",
     "happy-dom": "^20.11.0",
     "jsdom": "^26.1.0",
@@ -249,7 +250,9 @@
     "uuid": "^11.1.1",
     "diff": "^8.0.3",
     "adm-zip": "^0.6.0",
-    "bn.js": "^5.2.2"
+    "bn.js": "^5.2.2",
+    "tar": "^7.5.22",
+    "@xmldom/xmldom": "^0.9.12"
   },
   "build": {
     "appId": "com.baytmiftah.desktop",
