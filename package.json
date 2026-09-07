@@ -277,16 +277,12 @@
       "target": [
         {
           "target": "nsis",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
         }
       ],
       "icon": "electron/build/icon.ico",
       "artifactName": "baytmiftah-desktop-setup.${ext}",
-      "signAndEditExecutable": false,
-      "signDlls": false,
-      "verifyUpdateCodeSignature": false
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,

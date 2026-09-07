@@ -88,6 +88,12 @@ try {
   fail('rls-policy-audit.test.ts', error instanceof Error ? error.message : String(error));
 }
 
+for (const orphan of ['verify-stripe-payment', 'initiate-momo-payment', 'momo-webhook']) {
+  const orphanPath = path.join(root, 'supabase/functions', orphan);
+  if (!existsSync(orphanPath)) pass(`orphan removed:${orphan}`, 'legacy payment rail removed');
+  else fail(`orphan removed:${orphan}`, `${orphan} should be deleted — PayAngels is the sole payment rail`);
+}
+
 const failed = checks.filter((c) => !c.ok);
 console.log(JSON.stringify({ checkedAt: new Date().toISOString(), passed: checks.length - failed.length, failed: failed.length, checks }, null, 2));
 process.exit(failed.length > 0 ? 1 : 0);

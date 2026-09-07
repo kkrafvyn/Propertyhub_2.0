@@ -7,6 +7,7 @@
  */
 
 import { supabase } from './supabase';
+import { isDemoSimulationAllowed } from './simulation-mode';
 
 export type UtilityType = 'electricity' | 'water' | 'generator_diesel' | 'solar_pv' | 'gas';
 
@@ -498,7 +499,7 @@ const MOCK_GEN_RUNS: GeneratorFuelRun[] = [
     chargePerUnitGhs: 194.25, // 3,108 GHS divided across 16 occupied units
   },
 ];
-const DEMO_DATA_ENABLED = import.meta.env.VITE_ENABLE_DEMO_DATA === 'true';
+const DEMO_DATA_ENABLED = isDemoSimulationAllowed();
 
 const STORAGE_METERS_KEY = 'bm_submeters_list';
 const STORAGE_READINGS_KEY = 'bm_meter_readings_list';

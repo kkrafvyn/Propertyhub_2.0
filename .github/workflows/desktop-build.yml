@@ -26,6 +26,8 @@ jobs:
 
       - name: Build Windows desktop installer
         run: npm run desktop:pack:win
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
 
       - name: Publish installer artifact
         run: npm run desktop:publish

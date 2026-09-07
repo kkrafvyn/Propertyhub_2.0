@@ -19,7 +19,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -46,14 +46,19 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Deploy Supabase edge functions
-        run: npm run supabase:deploy:payments -- --skip-db
+      - name: Deploy Supabase backend
+        run: |
+          if [ "${{ inputs.skip_db }}" = "true" ]; then
+            npm run supabase:deploy:payments -- --skip-db
+          else
+            npm run supabase:deploy:payments -- --with-db
+          fi
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}

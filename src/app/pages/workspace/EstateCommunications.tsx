@@ -52,6 +52,7 @@ import {
   buildWhatsAppCallUrl,
   type CallSession,
 } from '../../../lib/call.service';
+import { isDemoSimulationAllowed } from '../../../lib/simulation-mode';
 
 interface CommunicationStats {
   totalNotices: number;
@@ -244,15 +245,17 @@ export function EstateCommunications({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSimulateInboundCall}
-            className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-          >
-            <PhoneIncoming className="mr-1.5 h-3.5 w-3.5" />
-            Test Inbound Call
-          </Button>
+          {isDemoSimulationAllowed() ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSimulateInboundCall}
+              className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+            >
+              <PhoneIncoming className="mr-1.5 h-3.5 w-3.5" />
+              Test Inbound Call
+            </Button>
+          ) : null}
 
           <Button
             size="sm"

@@ -6,6 +6,7 @@
  */
 
 import { supabase } from "./supabase";
+import { isDemoSimulationAllowed } from "./simulation-mode";
 
 const aiDb = supabase as any;
 
@@ -120,7 +121,7 @@ class AgenticAIOrchestratorService {
   private nightWatchReports: NightWatchReport[] = [];
 
   constructor() {
-    if (import.meta.env.VITE_ENABLE_DEMO_DATA === "true" || import.meta.env.MODE === "test") {
+    if (isDemoSimulationAllowed()) {
       this.seedInitialLedger();
     }
   }
@@ -435,7 +436,7 @@ class AgenticAIOrchestratorService {
   }
 
   private isDemoOrTest(): boolean {
-    return import.meta.env.VITE_ENABLE_DEMO_DATA === "true" || import.meta.env.MODE === "test";
+    return isDemoSimulationAllowed();
   }
 
   private looksLikeUuid(value: string): boolean {
@@ -635,7 +636,7 @@ class AgenticAIOrchestratorService {
     location: string = "Accra",
     maxResults: number = 3
   ): ContractorMatchResult[] {
-    if (import.meta.env.VITE_ENABLE_DEMO_DATA !== "true" && import.meta.env.MODE !== "test") return [];
+    if (!isDemoSimulationAllowed()) return [];
 
     const mockContractors: ContractorMatchResult[] = [
       {

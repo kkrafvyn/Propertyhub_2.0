@@ -679,7 +679,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
               <div>
                 <p className="font-medium">Live bank feed sync</p>
                 <p className="text-sm text-muted-foreground">
-                  Connect GTBank, Fidelity, Monzo, or other feeds. Demo transactions import automatically when provider keys are not configured.
+                  Connect GTBank, Fidelity, Monzo, or other feeds via the sync-bank-feed edge function. Provider credentials are required for live imports.
                 </p>
               </div>
               <Badge variant="outline">Code-complete</Badge>
