@@ -1,6 +1,8 @@
 import { getCorsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import { enforceRateLimit, rateLimitKey } from "../_shared/rate-limit.ts";
-import { requireAuthenticatedUser } from "../_shared/supabase.ts";
+import { createAdminClient, requireAuthenticatedUser } from "../_shared/supabase.ts";
+
+const CACHE_TTL_MS = 60 * 60 * 1000;
 
 async function fetchRate(from: string, to: string) {
   const apiKey = Deno.env.get("EXCHANGE_RATE_API_KEY");
@@ -30,6 +32,46 @@ async function fetchRate(from: string, to: string) {
     throw new HttpError(404, "Exchange rate not found");
   }
   return rate;
+}
+
+async function readCachedRate(from: string, to: string) {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("currency_rates")
+    .select("rate, timestamp")
+    .eq("from", from)
+    .eq("to", to)
+    .limit(1);
+
+  if (error) {
+    console.warn("currency_rates cache read failed:", error.message);
+    return null;
+  }
+
+  const row = data?.[0];
+  if (!row) return null;
+
+  const timestamp = Number(row.timestamp || 0);
+  const rate = Number(row.rate);
+  if (!Number.isFinite(rate) || rate <= 0) return null;
+  if (Date.now() - timestamp >= CACHE_TTL_MS) return null;
+
+  return { rate, timestamp };
+}
+
+async function writeCachedRate(from: string, to: string, rate: number) {
+  const admin = createAdminClient();
+  const timestamp = Date.now();
+  const { error } = await admin.from("currency_rates").upsert(
+    { from, to, rate, timestamp },
+    { onConflict: "from,to" },
+  );
+
+  if (error) {
+    console.warn("currency_rates cache write failed:", error.message);
+  }
+
+  return timestamp;
 }
 
 async function resolveRateLimitBucket(req: Request, authHeader: string | null) {
@@ -78,11 +120,22 @@ Deno.serve(async (req) => {
     }
 
     if (from === to) {
-      return jsonResponse(200, { from, to, rate: 1 }, req);
+      return jsonResponse(200, { from, to, rate: 1, timestamp: Date.now(), cached: true }, req);
+    }
+
+    const cached = await readCachedRate(from, to);
+    if (cached) {
+      return jsonResponse(
+        200,
+        { from, to, rate: cached.rate, timestamp: cached.timestamp, cached: true },
+        req,
+      );
     }
 
     const rate = await fetchRate(from, to);
-    return jsonResponse(200, { from, to, rate, timestamp: Date.now() }, req);
+    const timestamp = await writeCachedRate(from, to, rate);
+
+    return jsonResponse(200, { from, to, rate, timestamp, cached: false }, req);
   } catch (error) {
     if (error instanceof HttpError) {
       return jsonResponse(error.status, { error: error.message }, req);

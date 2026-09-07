@@ -17,7 +17,6 @@ import {
 import { listingService } from "../../../lib/listing.service";
 import {
   resolvePaymentContextFromListing,
-  shouldUsePaystackCheckout,
 } from "../../../lib/payment-routing.service";
 import { paymentService } from "../../../lib/payment.service";
 import { openPaystackInline } from "../../../lib/payangels-inline";
@@ -112,8 +111,7 @@ export function InAppCheckoutPage() {
     [listing?.property?.city, listing?.property?.region].filter(Boolean).join(", ") ||
     "Property";
 
-  const payangelsReady = clientIntegrations.payangels.checkoutReady;
-  const usePayangels = paymentContext ? shouldUsePaystackCheckout(paymentContext) : payangelsReady;
+  const usePayangels = clientIntegrations.payangels.checkoutReady;
 
   useEffect(() => {
     if (!checkoutParams || amount <= 0) {
@@ -423,7 +421,7 @@ export function InAppCheckoutPage() {
             <Button
               size="lg"
               className="w-full"
-              disabled={loadingListing || phase === "processing" || !paymentTermsAccepted || !payangelsReady || !pricing}
+              disabled={loadingListing || phase === "processing" || !paymentTermsAccepted || !usePayangels || !pricing}
               onClick={() => void handlePay()}
             >
               {phase === "processing" ? (

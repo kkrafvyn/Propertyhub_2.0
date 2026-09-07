@@ -42,13 +42,14 @@ Deno.serve(async (req) => {
     let isOrgMember = false;
 
     if (!isPayer) {
+      const financeRoles = ["owner", "manager", "finance_manager", "finance_officer", "finance"];
       const { data: membership } = await admin
         .from("organization_members")
-        .select("id")
+        .select("id, role")
         .eq("organization_id", propertyTransaction.organization_id)
         .eq("user_id", user.id)
         .maybeSingle();
-      isOrgMember = Boolean(membership);
+      isOrgMember = Boolean(membership && financeRoles.includes(String(membership.role || "")));
     }
 
     if (!isPayer && !isOrgMember) {

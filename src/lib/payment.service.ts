@@ -67,23 +67,6 @@ export const paymentService = {
     };
   },
 
-  async initializeStripePayment(input: InitializePropertyPaymentInput) {
-    const { data, error } = await supabase.functions.invoke("initialize-payangels-payment", {
-      body: input,
-    });
-
-    if (error) throw error;
-    return data as {
-      transaction: any;
-      authorizationUrl: string | null;
-      accessCode?: string;
-      sessionId?: string;
-      reference: string;
-      callbackUrl?: string;
-      simulated?: boolean;
-    };
-  },
-
   async verifyPropertyPayment(reference: string) {
     const { data, error } = await supabase.functions.invoke("verify-payangels-payment", {
       body: { reference },
@@ -99,40 +82,17 @@ export const paymentService = {
     };
   },
 
-  async verifyStripePayment(sessionId?: string, reference?: string) {
-    const { data, error } = await supabase.functions.invoke("verify-payangels-payment", {
-      body: { sessionId, reference },
-    });
-
-    if (error) throw error;
-    return data as {
-      status: string;
-      transaction: any;
-      alreadyProcessed: boolean;
-    };
-  },
-
   async verifyCheckoutReturn(input: {
     reference?: string | null;
     sessionId?: string | null;
   }) {
-    const reference = input.reference?.trim() || null;
-    const sessionId = input.sessionId?.trim() || null;
+    const reference = input.reference?.trim() || input.sessionId?.trim() || null;
 
-    if (sessionId || reference?.startsWith("bm_stripe_")) {
-      const result = await this.verifyStripePayment(sessionId || undefined, reference || undefined);
-      return {
-        ...result,
-        receipt: null,
-        blockchainRecord: null,
-      };
+    if (!reference) {
+      throw new Error("Missing payment reference.");
     }
 
-    if (reference) {
-      return this.verifyPropertyPayment(reference);
-    }
-
-    throw new Error("Missing payment reference.");
+    return this.verifyPropertyPayment(reference);
   },
 
   async initiatePropertyRefund(input: InitiatePropertyRefundInput) {

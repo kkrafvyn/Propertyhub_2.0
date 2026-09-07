@@ -166,12 +166,7 @@ async function payangelsFetch<T>(path: string, init: RequestInit = {}) {
 
 export async function initializePayangelsTransaction(input: PaystackInitializeInput) {
   if (!isPayangelsConfigured()) {
-    return {
-      authorization_url: null as string | null,
-      access_code: `sim_${input.reference}`,
-      reference: input.reference,
-      simulated: true,
-    };
+    throw new HttpError(503, "Checkout is not configured");
   }
   return payangelsFetch<{
     authorization_url: string;
@@ -184,17 +179,8 @@ export async function initializePayangelsTransaction(input: PaystackInitializeIn
 }
 
 export async function verifyPayangelsTransaction(reference: string) {
-  if (!isPayangelsConfigured() && reference.startsWith("ph_pay_")) {
-    return {
-      status: "success",
-      reference,
-      amount: 0,
-      currency: "GHS",
-      channel: "simulated",
-      gateway_response: "Simulated checkout (no payment provider keys configured)",
-      paid_at: new Date().toISOString(),
-      metadata: { simulated: true },
-    } as PaystackTransactionData;
+  if (!isPayangelsConfigured()) {
+    throw new HttpError(503, "Payment verification is not configured");
   }
   return payangelsFetch<PaystackTransactionData>(
     `/transaction/verify/${encodeURIComponent(reference)}`,

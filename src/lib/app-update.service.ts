@@ -39,6 +39,31 @@ function parseVersion(version: string) {
   return major * 10000 + minor * 100 + patch;
 }
 
+function envBasedUpdateInfo(surface: AppUpdateSurface, current: string): AppUpdateInfo {
+  const latest =
+    import.meta.env.VITE_APP_LATEST_VERSION ||
+    import.meta.env.VITE_APP_VERSION ||
+    current;
+  const minimum =
+    import.meta.env.VITE_APP_MINIMUM_VERSION ||
+    import.meta.env.VITE_APP_MIN_VERSION ||
+    current;
+
+  return {
+    update_available: parseVersion(latest) > parseVersion(current),
+    force_update: import.meta.env.VITE_APP_FORCE_UPDATE === "true",
+    current_version: current,
+    latest_version: latest,
+    minimum_version: minimum,
+    download_url:
+      surface === "desktop"
+        ? import.meta.env.VITE_DESKTOP_DOWNLOAD_URL ||
+          "/downloads/baytmiftah-desktop-setup.exe"
+        : import.meta.env.VITE_PUBLIC_APP_URL || null,
+    changelog: import.meta.env.VITE_APP_CHANGELOG || null,
+  };
+}
+
 export const appUpdateService = {
   currentVersion: currentAppVersion,
 
@@ -54,6 +79,15 @@ export const appUpdateService = {
 
   async checkForUpdates(surface = resolveSurface()): Promise<AppUpdateInfo> {
     const current = currentAppVersion();
+    const preferLocal =
+      import.meta.env.VITE_APP_UPDATE_SOURCE === "local" ||
+      (import.meta.env.PROD &&
+        import.meta.env.VITE_APP_LATEST_VERSION &&
+        import.meta.env.VITE_APP_UPDATE_REMOTE !== "true");
+
+    if (preferLocal) {
+      return envBasedUpdateInfo(surface, current);
+    }
 
     try {
       const { data, error } = await supabase.functions.invoke("app-version", {
@@ -77,30 +111,9 @@ export const appUpdateService = {
         };
       }
     } catch {
-      // Fall through to env-based check.
+      // Fall through to env-based check when edge function is unavailable.
     }
 
-    const latest =
-      import.meta.env.VITE_APP_LATEST_VERSION ||
-      import.meta.env.VITE_APP_VERSION ||
-      current;
-    const minimum =
-      import.meta.env.VITE_APP_MINIMUM_VERSION ||
-      import.meta.env.VITE_APP_MIN_VERSION ||
-      current;
-
-    return {
-      update_available: parseVersion(latest) > parseVersion(current),
-      force_update: import.meta.env.VITE_APP_FORCE_UPDATE === "true",
-      current_version: current,
-      latest_version: latest,
-      minimum_version: minimum,
-      download_url:
-        surface === "desktop"
-          ? import.meta.env.VITE_DESKTOP_DOWNLOAD_URL ||
-            "/downloads/baytmiftah-desktop-setup.exe"
-          : import.meta.env.VITE_PUBLIC_APP_URL || null,
-      changelog: import.meta.env.VITE_APP_CHANGELOG || null,
-    };
+    return envBasedUpdateInfo(surface, current);
   },
 };

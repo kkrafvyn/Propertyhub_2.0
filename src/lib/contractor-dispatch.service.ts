@@ -159,8 +159,6 @@ const MOCK_WORK_ORDERS: WorkOrder[] = [
   },
 ];
 
-const STORAGE_WORK_ORDERS_KEY = 'bm_work_orders_list';
-const DEMO_DATA_ENABLED = import.meta.env.VITE_ENABLE_DEMO_DATA === 'true';
 
 export const contractorDispatchService = {
   async getLiveArtisans(estateIds: string[]): Promise<VettedArtisan[]> {
@@ -246,12 +244,19 @@ export const contractorDispatchService = {
     return data;
   },
 
-  async releaseLivePayout(input: { workOrderId: string; artisanId: string; amountGhs: number; momoNumber: string; momoProvider: 'mtn' | 'telecel' | 'airteltigo'; initiatedBy: string }) {
+  async releaseLivePayout(input: { workOrderId: string; organizationId: string; artisanId: string; amountGhs: number; momoNumber: string; momoProvider: 'mtn' | 'telecel' | 'airteltigo'; initiatedBy: string }) {
+    if (!input.organizationId?.trim()) throw new Error('organizationId is required for PayAngels payouts');
     if (input.amountGhs <= 0) throw new Error('Payout amount must be greater than zero');
     const { data: release, error: releaseError } = await supabase.from('estate_momo_escrow_releases').insert({ work_order_id: input.workOrderId, artisan_id: input.artisanId, amount_pesewas: Math.round(input.amountGhs * 100), momo_number: input.momoNumber, momo_provider: input.momoProvider, initiated_by: input.initiatedBy, momo_status: 'pending' }).select('*').single();
     if (releaseError) throw releaseError;
     try {
-      const result = await requestMomoPayment({ type: 'disbursement', amount: input.amountGhs, phone: input.momoNumber, workOrderId: input.workOrderId });
+      const result = await requestMomoPayment({
+        type: 'disbursement',
+        amount: input.amountGhs,
+        phone: input.momoNumber,
+        workOrderId: input.workOrderId,
+        organizationId: input.organizationId.trim(),
+      });
       const status = result.status === 'SUCCESSFUL' ? 'successful' : result.status === 'FAILED' ? 'failed' : 'submitted';
       await supabase.from('estate_momo_escrow_releases').update({ momo_status: status, provider_reference: result.referenceId, released_at: status === 'successful' ? new Date().toISOString() : null }).eq('id', release.id);
       if (status === 'successful') await supabase.from('estate_contractor_work_orders').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', input.workOrderId);
@@ -263,20 +268,14 @@ export const contractorDispatchService = {
   },
 
   getArtisans(): VettedArtisan[] {
-    return DEMO_DATA_ENABLED ? MOCK_ARTISANS : [];
+    throw new Error('Use getLiveArtisans(estateIds) for production artisan roster.');
   },
 
   getWorkOrders(): WorkOrder[] {
-    if (!DEMO_DATA_ENABLED || typeof window === 'undefined') return [];
-    try {
-      const data = localStorage.getItem(STORAGE_WORK_ORDERS_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
+    throw new Error('Use getLiveWorkOrders(estateIds) for production work orders.');
   },
 
-  createWorkOrder(input: {
+  createWorkOrder(_input: {
     title: string;
     description: string;
     trade: ArtisanTrade;
@@ -285,51 +284,10 @@ export const contractorDispatchService = {
     estimatedCostGhs: number;
     artisanId?: string;
   }): WorkOrder {
-    if (!DEMO_DATA_ENABLED) throw new Error('Use the live estate contractor workflow for production dispatch.');
-    const artisan = MOCK_ARTISANS.find((a) => a.id === input.artisanId);
-
-    const newOrder: WorkOrder = {
-      id: `wo_${Date.now()}`,
-      title: input.title,
-      description: input.description,
-      trade: input.trade,
-      estateName: 'East Legon Hills Luxury Enclave',
-      unitIdentifier: input.unitIdentifier,
-      reportedBy: 'Estate Manager',
-      artisanId: artisan?.id,
-      artisanName: artisan?.fullName,
-      artisanPhone: artisan?.phone,
-      artisanMomoNumber: artisan?.momoNumber,
-      status: artisan ? 'dispatched' : 'new_ticket',
-      priority: input.priority,
-      estimatedCostGhs: input.estimatedCostGhs,
-      reportedAt: new Date().toISOString(),
-    };
-
-    const existing = this.getWorkOrders();
-    const updated = [newOrder, ...existing];
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_WORK_ORDERS_KEY, JSON.stringify(updated));
-    }
-    return newOrder;
+    throw new Error('Use createLiveWorkOrder for production dispatch.');
   },
 
-  approveAndReleaseMoMo(orderId: string): WorkOrder {
-    if (!DEMO_DATA_ENABLED) throw new Error('Use the live estate payment workflow for production payouts.');
-    const list = this.getWorkOrders();
-    const order = list.find((o) => o.id === orderId);
-    if (!order) throw new Error('Work order not found');
-
-    const updated: WorkOrder = {
-      ...order,
-      status: 'paid_via_momo',
-      payoutReference: `MOMO-REL-${Date.now()}`,
-    };
-
-    const updatedList = list.map((o) => (o.id === order.id ? updated : o));
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_WORK_ORDERS_KEY, JSON.stringify(updatedList));
-    }
-    return updated;
+  approveAndReleaseMoMo(_orderId: string): WorkOrder {
+    throw new Error('Use releaseLivePayout for production MoMo payouts.');
   },
 };

@@ -7,7 +7,6 @@ import { paymentService } from '@/lib/payment.service'
 import { listingService } from '@/lib/listing.service'
 import {
   resolvePaymentContextFromListing,
-  shouldUsePaystackCheckout,
   type PaymentContext,
 } from '@/lib/payment-routing.service'
 import { clientIntegrations } from '@/lib/integrations'
@@ -230,83 +229,41 @@ export function PaymentCheckout({
         policyVersion: LEGAL_POLICY_VERSION,
       })
 
-      if (shouldUsePaystackCheckout(paymentContext)) {
-        if (!clientIntegrations.payangels.checkoutReady) {
-          throw new Error("Checkout is not configured for this property market.");
-        }
-
-        const checkout = await paymentService.initializePropertyPayment({
-          listingId,
-          amount: paymentState.totalAmount,
-          purpose: "other",
-        });
-
-        if (checkout.simulated || String(checkout.accessCode || "").startsWith("sim_")) {
-          const result = await paymentService.verifyCheckoutReturn({ reference: checkout.reference });
-          if (result.status !== "success" && result.status !== "completed") {
-            throw new Error("Simulated payment verification failed.");
-          }
-          setCompletedTransactionId(result.transaction?.id || checkout.reference);
-          setStep(4);
-          onSuccess(result.transaction?.id || checkout.reference);
-          setLoading(false);
-          return;
-        }
-
-        let paid = false;
-        await openPaystackInline({
-          email: user.email!,
-          amountMinor: Math.round(paymentState.totalAmount * 100),
-          currency: paymentContext.currency,
-          reference: checkout.reference,
-          accessCode: checkout.accessCode,
-          onClose: () => {
-            if (!paid) setLoading(false);
-          },
-          onSuccess: async (reference) => {
-            paid = true;
-            const result = await paymentService.verifyCheckoutReturn({ reference });
-            if (result.status !== "success" && result.status !== "completed") {
-              throw new Error("Payment verification failed.");
-            }
-            setCompletedTransactionId(result.transaction?.id || reference);
-            setStep(4);
-            onSuccess(result.transaction?.id || reference);
-          },
-        });
-        return;
+      if (!clientIntegrations.payangels.checkoutReady) {
+        throw new Error(`Checkout is not configured for properties in ${paymentContext.propertyLabel}.`);
       }
 
-      if (!clientIntegrations.payangels.configured) {
-        throw new Error(
-          `Checkout is not configured for properties in ${paymentContext.propertyLabel}.`
-        );
-      }
-
-      const checkout = await paymentService.initializeStripePayment({
+      const checkout = await paymentService.initializePropertyPayment({
         listingId,
         amount: paymentState.totalAmount,
         purpose: "other",
       });
 
-      if (checkout.simulated || !checkout.authorizationUrl) {
-        const result = await paymentService.verifyCheckoutReturn({ reference: checkout.reference });
-        if (result.status !== "success" && result.status !== "completed") {
-          throw new Error("Simulated payment verification failed.");
-        }
-        setCompletedTransactionId(result.transaction?.id || checkout.reference);
-        setStep(4);
-        onSuccess(result.transaction?.id || checkout.reference);
-        setLoading(false);
-        return;
+      if (checkout.simulated || String(checkout.accessCode || "").startsWith("sim_")) {
+        throw new Error("Checkout is not configured for live payments.");
       }
 
-      if (checkout.authorizationUrl) {
-        window.location.href = checkout.authorizationUrl;
-        return;
-      }
-
-      throw new Error("Checkout URL was not returned.");
+      let paid = false;
+      await openPaystackInline({
+        email: user.email!,
+        amountMinor: Math.round(paymentState.totalAmount * 100),
+        currency: paymentContext.currency,
+        reference: checkout.reference,
+        accessCode: checkout.accessCode,
+        onClose: () => {
+          if (!paid) setLoading(false);
+        },
+        onSuccess: async (reference) => {
+          paid = true;
+          const result = await paymentService.verifyCheckoutReturn({ reference });
+          if (result.status !== "success" && result.status !== "completed") {
+            throw new Error("Payment verification failed.");
+          }
+          setCompletedTransactionId(result.transaction?.id || reference);
+          setStep(4);
+          onSuccess(result.transaction?.id || reference);
+        },
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment processing failed')
       setLoading(false)

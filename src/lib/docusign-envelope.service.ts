@@ -73,26 +73,14 @@ export const docuSignEnvelopeService = {
   }): Promise<DocuSignSubmitResult | null> {
     if (!isDocuSignConfigured()) return null;
 
-    try {
-      const { data, error } = await supabase.functions.invoke("create-docusign-envelope", {
-        body: {
-          esignatureRequestId: input.esignatureRequestId,
-          envelope: input.envelope,
-        },
-      });
+    const { data, error } = await supabase.functions.invoke("create-docusign-envelope", {
+      body: {
+        esignatureRequestId: input.esignatureRequestId,
+        envelope: input.envelope,
+      },
+    });
 
-      if (error) throw error;
-      return data as DocuSignSubmitResult;
-    } catch (err) {
-      const isTestOrDemo =
-        typeof import.meta !== "undefined" &&
-        ((import.meta as any).env?.MODE === "test" || (import.meta as any).env?.VITE_ENABLE_DEMO_DATA === "true");
-      if (!isTestOrDemo) throw err;
-      return {
-        envelopeId: `ds_sim_${input.esignatureRequestId.slice(0, 8)}`,
-        status: "sent",
-        simulated: true,
-      };
-    }
+    if (error) throw error;
+    return data as DocuSignSubmitResult;
   },
 };

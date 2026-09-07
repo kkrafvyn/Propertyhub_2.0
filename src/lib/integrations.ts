@@ -45,7 +45,7 @@ export const clientIntegrations = {
       return clientIntegrations.payangels.checkoutReady;
     },
     label: "Payments",
-    hint: "PayAngels/Stripe keys optional — server simulates checkout when secrets are absent",
+    hint: "Configure PayAngels keys in Supabase secrets for live checkout",
   },
 
   webPush: {

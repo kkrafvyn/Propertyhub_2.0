@@ -31,66 +31,60 @@ Deno.serve(async (req) => {
     const baseUrl = (Deno.env.get("DOCUSIGN_BASE_URL") || "https://demo.docusign.net").replace(/\/+$/, "");
     const accessToken = Deno.env.get("DOCUSIGN_ACCESS_TOKEN");
 
-    let envelopeId: string;
-    let status = "sent";
-    let simulated = false;
-    let signingUrl: string | null = null;
+    if (!accountId || !accessToken) {
+      throw new HttpError(503, "DocuSign is not configured");
+    }
 
-    if (accountId && accessToken) {
-      const doc = envelope.documents?.[0];
-      const signer = envelope.signers?.[0];
-      if (!doc || !signer) {
-        throw new HttpError(400, "Envelope requires at least one document and signer");
-      }
+    const doc = envelope.documents?.[0];
+    const signer = envelope.signers?.[0];
+    if (!doc || !signer) {
+      throw new HttpError(400, "Envelope requires at least one document and signer");
+    }
 
-      const payload = {
-        emailSubject: envelope.emailSubject,
-        status: "sent",
-        documents: [
+    const payload = {
+      emailSubject: envelope.emailSubject,
+      status: "sent",
+      documents: [
+        {
+          documentBase64: doc.documentBase64,
+          name: doc.name,
+          fileExtension: doc.fileExtension || "txt",
+          documentId: "1",
+        },
+      ],
+      recipients: {
+        signers: [
           {
-            documentBase64: doc.documentBase64,
-            name: doc.name,
-            fileExtension: doc.fileExtension || "txt",
-            documentId: "1",
+            email: signer.email,
+            name: signer.name,
+            recipientId: signer.recipientId || "1",
+            routingOrder: signer.routingOrder || "1",
+            tabs: {
+              signHereTabs: [{ documentId: "1", pageNumber: "1", xPosition: "100", yPosition: "700" }],
+            },
           },
         ],
-        recipients: {
-          signers: [
-            {
-              email: signer.email,
-              name: signer.name,
-              recipientId: signer.recipientId || "1",
-              routingOrder: signer.routingOrder || "1",
-              tabs: {
-                signHereTabs: [{ documentId: "1", pageNumber: "1", xPosition: "100", yPosition: "700" }],
-              },
-            },
-          ],
-        },
-      };
+      },
+    };
 
-      const response = await fetch(`${baseUrl}/restapi/v2.1/accounts/${accountId}/envelopes`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+    const response = await fetch(`${baseUrl}/restapi/v2.1/accounts/${accountId}/envelopes`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
 
-      if (!response.ok) {
-        const detail = await response.text();
-        throw new HttpError(502, `DocuSign API error: ${detail.slice(0, 200)}`);
-      }
-
-      const result = await response.json();
-      envelopeId = String(result.envelopeId);
-      status = String(result.status || "sent");
-      signingUrl = result.uri ? `${baseUrl}${result.uri}` : null;
-    } else {
-      envelopeId = `ds_sim_${crypto.randomUUID().slice(0, 8)}`;
-      simulated = true;
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new HttpError(502, `DocuSign API error: ${detail.slice(0, 200)}`);
     }
+
+    const result = await response.json();
+    const envelopeId = String(result.envelopeId);
+    const status = String(result.status || "sent");
+    const signingUrl = result.uri ? `${baseUrl}${result.uri}` : null;
 
     const admin = createAdminClient();
     await admin
@@ -102,7 +96,7 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString(),
         metadata: {
           docusignEnvelopeId: envelopeId,
-          docusignSimulated: simulated,
+          docusignSimulated: false,
           docusignSigningUrl: signingUrl,
         },
       })
@@ -110,7 +104,7 @@ Deno.serve(async (req) => {
 
     return jsonResponse(
       200,
-      { envelopeId, status, simulated, signingUrl },
+      { envelopeId, status, simulated: false, signingUrl },
       req,
     );
   } catch (error) {

@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { mlsIntegrationService } from "./mls-integration.service";
 import { propertyTokenService } from "./property-token.service";
 
-describe("gap closure fallbacks", () => {
-  it("builds demo MLS listings for each provider", () => {
+describe("integration readiness", () => {
+  it("builds preview MLS listings for integration hub docs", () => {
     for (const provider of ["mls", "zillow", "realtor"] as const) {
       const listings = mlsIntegrationService.buildDemoListings(provider);
       expect(listings.length).toBeGreaterThanOrEqual(3);
@@ -12,9 +12,9 @@ describe("gap closure fallbacks", () => {
     }
   });
 
-  it("returns simulated token info for sim contract addresses", async () => {
-    const info = await propertyTokenService.getTokenInfo("sim:BMFT-demo", "0xabc");
-    expect(info.symbol).toBe("BMFT");
-    expect(info.balance).toBe("100");
+  it("rejects unconfigured token contract addresses", async () => {
+    await expect(
+      propertyTokenService.getTokenInfo("sim:BMFT-demo", "0xabc"),
+    ).rejects.toThrow(/not configured/i);
   });
 });

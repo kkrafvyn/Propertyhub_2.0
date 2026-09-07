@@ -42,6 +42,7 @@ import { AdminRevenueManagement } from "./revenue/AdminRevenueManagement";
 import { AdminBackupPanel } from "./AdminBackupPanel";
 import { AdminOrganizationDetail } from "./AdminOrganizationDetail";
 import { AdminEnrollmentRequests } from "./AdminEnrollmentRequests";
+import FraudDashboard from "./FraudDashboard";
 
 function confirmAdminAction(message: string) {
   return window.confirm(message);
@@ -64,6 +65,7 @@ type AdminSection =
   | "organizations"
   | "listings"
   | "moderation"
+  | "fraud"
   | "trust"
   | "support"
   | "settings"
@@ -80,6 +82,7 @@ const navItems: Array<{
   { key: "organizations", label: "Organizations", href: "/admin/organizations", icon: Building2 },
   { key: "listings", label: "Listings", href: "/admin/listings", icon: FileText },
   { key: "moderation", label: "Moderation", href: "/admin/moderation", icon: AlertTriangle },
+  { key: "fraud", label: "Fraud Radar", href: "/admin/fraud", icon: ShieldAlert },
   { key: "trust", label: "Trust & KYC", href: "/admin/trust", icon: UserCheck },
   { key: "revenue", label: "Revenue", href: "/admin/revenue", icon: Wallet },
   { key: "support", label: "Support", href: "/admin/support", icon: LifeBuoy },
@@ -1044,6 +1047,10 @@ export function AdminLayout() {
       );
     }
 
+    if (currentSection === "fraud") {
+      return <FraudDashboard />;
+    }
+
     if (currentSection === "overview") {
       return renderOverviewContent();
     }
@@ -1095,7 +1102,9 @@ export function AdminLayout() {
       ? "Platform Overview"
       : currentSection === "moderation"
         ? "Moderation & Trust"
-        : currentSection === "trust"
+        : currentSection === "fraud"
+          ? "Fraud Radar"
+          : currentSection === "trust"
           ? "Trust & KYC Review"
           : currentSection === "revenue"
             ? "Revenue Management"
@@ -1104,6 +1113,8 @@ export function AdminLayout() {
   const sectionDescription =
     currentSection === "moderation"
       ? "Triage fraud alerts, assign investigators, escalate cases, and keep a clean audit trail."
+      : currentSection === "fraud"
+        ? "Review pending fraud alerts and approve or reject automated detections."
         : currentSection === "trust"
           ? "Review consumer identity documents and agency trust verification requests."
           : currentSection === "revenue"

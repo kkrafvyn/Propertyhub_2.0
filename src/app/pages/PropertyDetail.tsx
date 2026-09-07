@@ -54,9 +54,9 @@ import { canBookStay } from "../../lib/kyc-gate.service";
 import KycBanner from "../components/baytmiftah/KycBanner";
 import { CONSUMER_ROUTES } from "../lib/consumer-routes";
 import { buildCheckoutPath } from "../lib/checkout-navigation";
+import { clientIntegrations } from "../../lib/integrations";
 import {
   resolvePaymentContextFromListing,
-  shouldUsePaystackCheckout,
 } from "../../lib/payment-routing.service";
 import { geointelligenceService } from "../../lib/geointelligence.service";
 import { trackRecentlyViewed } from "../../lib/recently-viewed";
@@ -483,7 +483,7 @@ export function PropertyDetail() {
 
     try {
       setBookingSubmitting(true);
-      if (hostBookingMode !== "request" && paymentContext && !shouldUsePaystackCheckout(paymentContext)) {
+      if (hostBookingMode !== "request" && paymentContext && !clientIntegrations.payangels.checkoutReady) {
         toast.error(
           `Checkout for properties in ${paymentContext.propertyLabel} is not available yet.`
         );
@@ -545,7 +545,7 @@ export function PropertyDetail() {
       return;
     }
 
-    if (!paymentContext || !shouldUsePaystackCheckout(paymentContext)) {
+    if (!paymentContext || !clientIntegrations.payangels.checkoutReady) {
       toast.error(
         `Checkout for properties in ${paymentContext?.propertyLabel || "this market"} is not available yet.`
       );

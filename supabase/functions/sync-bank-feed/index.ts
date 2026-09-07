@@ -62,39 +62,11 @@ async function fetchProviderTransactions(input: {
 }) {
   const config = getBankFeedProviderConfig(input.provider);
   if (!config || !config.baseUrl || !config.apiKey) {
-    const today = new Date().toISOString().slice(0, 10);
-    const transactions = [
-      {
-        providerTransactionId: `sim_${input.provider}_rent_${today}`,
-        transactionDate: today,
-        description: "Tenant rent collection (simulated feed)",
-        amountMinor: 650000,
-        transactionType: "CREDIT" as const,
-        bankReference: `SIM-RENT-${today.replace(/-/g, "")}`,
-      },
-      {
-        providerTransactionId: `sim_${input.provider}_fee_${today}`,
-        transactionDate: today,
-        description: "Bank service charge (simulated feed)",
-        amountMinor: 2500,
-        transactionType: "DEBIT" as const,
-        bankReference: `SIM-FEE-${today.replace(/-/g, "")}`,
-      },
-      {
-        providerTransactionId: `sim_${input.provider}_momo_${today}`,
-        transactionDate: today,
-        description: "MoMo settlement batch (simulated feed)",
-        amountMinor: 125000,
-        transactionType: "CREDIT" as const,
-        bankReference: `SIM-MOMO-${today.replace(/-/g, "")}`,
-      },
-    ];
     return {
-      transactions,
+      transactions: [],
       nextCursor: input.cursor ?? null,
-      status: "synced",
-      simulated: true,
-      message: `${config?.label ?? input.provider} demo feed — ${transactions.length} transactions (configure feed env vars for live sync).`,
+      status: "not-configured",
+      message: `${config?.label ?? input.provider} feed is not configured. Set provider feed env vars in Supabase secrets.`,
     };
   }
 

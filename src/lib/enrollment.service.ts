@@ -123,7 +123,7 @@ export const enrollmentService = {
   async listRequests(status?: EnrollmentRequestStatus, limit = 100) {
     let query = supabase
       .from("organization_enrollment_requests")
-      .select("*, requester:users(id, email, full_name)")
+      .select("*, requester:users!organization_enrollment_requests_requester_user_id_fkey(id, email, full_name)")
       .order("created_at", { ascending: false })
       .limit(limit);
 

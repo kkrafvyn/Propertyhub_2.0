@@ -192,8 +192,6 @@ const MOCK_STATEMENTS: OwnerStatementRecord[] = [
   },
 ];
 
-const STORAGE_STATEMENTS_KEY = 'bm_owner_statements_list';
-const DEMO_DATA_ENABLED = import.meta.env.VITE_ENABLE_DEMO_DATA === 'true';
 
 export function mapOwnerStatementRun(row: any, ownerName = 'Owner'): OwnerStatementRecord {
   const gross = Number(row.gross_collections_minor || 0) / 100;
@@ -326,36 +324,14 @@ export const ownerDisbursementService = {
   },
 
   getOwners(): OwnerProfile[] {
-    return DEMO_DATA_ENABLED ? MOCK_OWNERS : [];
+    throw new Error('Use getLiveOwners(organizationId) for production owner data.');
   },
 
   getStatements(): OwnerStatementRecord[] {
-    if (!DEMO_DATA_ENABLED || typeof window === 'undefined') return [];
-    try {
-      const data = localStorage.getItem(STORAGE_STATEMENTS_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
+    throw new Error('Use getLiveMappedStatements(organizationId) for production statements.');
   },
 
-  executeDisbursement(statementId: string): OwnerStatementRecord {
-    if (!DEMO_DATA_ENABLED) throw new Error('Use executeLiveDisbursement for production owner payouts.');
-    const list = this.getStatements();
-    const stmt = list.find((s) => s.id === statementId);
-    if (!stmt) throw new Error('Statement not found');
-
-    const updated: OwnerStatementRecord = {
-      ...stmt,
-      payoutStatus: 'disbursed_momo',
-      payoutReference: `MOMO-DISB-${Date.now()}`,
-      disbursedAt: new Date().toISOString(),
-    };
-
-    const updatedList = list.map((s) => (s.id === stmt.id ? updated : s));
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_STATEMENTS_KEY, JSON.stringify(updatedList));
-    }
-    return updated;
+  executeDisbursement(_statementId: string): OwnerStatementRecord {
+    throw new Error('Use executeLiveDisbursement for production owner payouts.');
   },
 };

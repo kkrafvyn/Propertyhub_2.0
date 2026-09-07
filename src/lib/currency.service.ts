@@ -92,19 +92,8 @@ class CurrencyService {
         return cachedRate.rate;
       }
 
-      // Fetch from external API (example: exchangerate-api.com or fixer.io)
+      // Fetch from edge function (server-side cache + external provider)
       const rate = await this.fetchFromExternalAPI(from, to);
-
-      // Cache in Supabase
-      await supabase.from('currency_rates').upsert(
-        {
-          from,
-          to,
-          rate,
-          timestamp: Date.now(),
-        },
-        { onConflict: 'from,to' }
-      );
 
       rateCache.set(cacheKey, {
         rate: { from, to, rate, timestamp: Date.now() },

@@ -18,8 +18,6 @@ const EDGE_FUNCTIONS = [
   { name: "initiate-payangels-refund" },
   { name: "initiate-payangels-disbursement" },
   { name: "payangels-webhook", noVerifyJwt: true },
-  { name: "initiate-momo-payment" },
-  { name: "momo-webhook", noVerifyJwt: true },
   { name: "sync-bank-feed" },
   { name: "parse-search-query" },
   { name: "ai-assistant" },
@@ -29,6 +27,13 @@ const EDGE_FUNCTIONS = [
   { name: "automation-dispatcher", noVerifyJwt: true },
   { name: "send-organization-invite" },
   { name: "send-enrollment-notification" },
+  { name: "platform-backup" },
+  { name: "send-whatsapp" },
+  { name: "whatsapp-webhook", noVerifyJwt: true },
+  { name: "kyc-smile-verify" },
+  { name: "kyc-smile-webhook", noVerifyJwt: true },
+  { name: "create-docusign-envelope" },
+  { name: "app-version", noVerifyJwt: true },
 ];
 
 function readFlag(name) {

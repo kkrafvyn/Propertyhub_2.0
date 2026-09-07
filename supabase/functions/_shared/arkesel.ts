@@ -9,6 +9,8 @@
  *   ARKESEL_SENDER_ID  — Approved sender ID e.g. "BAYTMIFTAH"
  */
 
+import { HttpError } from "./http.ts";
+
 const ARKESEL_BASE = "https://sms.arkesel.com";
 const SENDER_ID    = Deno.env.get("ARKESEL_SENDER_ID") ?? "BAYTMIFTAH";
 
@@ -55,13 +57,7 @@ export async function sendSms(params: SendSmsParams): Promise<SendSmsResult> {
   const recipientList = recipients.split(",");
 
   if (!apiKey) {
-    return {
-      sent: true,
-      reference: `sms_sim_${crypto.randomUUID().slice(0, 8)}`,
-      status: "simulated",
-      recipients: recipientList.length,
-      simulated: true,
-    };
+    throw new HttpError(503, "SMS gateway is not configured");
   }
 
   const payload = {
@@ -118,10 +114,7 @@ export interface SendOtpResult {
 export async function sendOtp(params: SendOtpParams): Promise<SendOtpResult> {
   const apiKey = Deno.env.get("ARKESEL_API_KEY");
   if (!apiKey) {
-    return {
-      sent: true,
-      reference: `otp_sim_${crypto.randomUUID().slice(0, 8)}`,
-    };
+    throw new HttpError(503, "SMS OTP gateway is not configured");
   }
 
   const payload = {
@@ -175,11 +168,7 @@ export interface VerifyOtpResult {
 export async function verifyOtp(params: VerifyOtpParams): Promise<VerifyOtpResult> {
   const apiKey = Deno.env.get("ARKESEL_API_KEY");
   if (!apiKey) {
-    const code = String(params.code || "").trim();
-    return {
-      valid: /^\d{4,8}$/.test(code),
-      message: code ? "Simulated OTP accepted" : "OTP code required",
-    };
+    throw new HttpError(503, "SMS OTP gateway is not configured");
   }
 
   const payload = {

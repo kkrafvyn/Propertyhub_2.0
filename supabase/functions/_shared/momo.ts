@@ -15,6 +15,27 @@
  *   MTN_MOMO_CALLBACK_SECRET              — HMAC secret required by verifyMomoWebhook
  */
 
+import { HttpError } from "./http.ts";
+
+export function isMomoConfigured(product: "collection" | "disbursement" = "collection"): boolean {
+  const subscriptionKey =
+    product === "collection"
+      ? Deno.env.get("MTN_MOMO_SUBSCRIPTION_KEY_COLLECTION")
+      : Deno.env.get("MTN_MOMO_SUBSCRIPTION_KEY_DISBURSEMENT");
+  return Boolean(
+    subscriptionKey?.trim() &&
+      Deno.env.get("MTN_MOMO_API_USER_ID")?.trim() &&
+      Deno.env.get("MTN_MOMO_API_KEY")?.trim(),
+  );
+}
+
+// verify/status helpers require live credentials
+function requireMomoConfigured(product: "collection" | "disbursement") {
+  if (!isMomoConfigured(product)) {
+    throw new HttpError(503, "MTN MoMo is not configured");
+  }
+}
+
 const MOMO_BASE_URL =
   Deno.env.get("MTN_MOMO_ENVIRONMENT") === "sandbox"
     ? "https://sandbox.momodeveloper.mtn.com"
@@ -79,6 +100,10 @@ export interface MomoCollectionParams {
 }
 
 export async function initiateMomoCollection(params: MomoCollectionParams): Promise<{ referenceId: string }> {
+  if (!isMomoConfigured("collection")) {
+    throw new HttpError(503, "MTN MoMo collections are not configured");
+  }
+
   const subscriptionKey = Deno.env.get("MTN_MOMO_SUBSCRIPTION_KEY_COLLECTION")!;
   const callbackUrl     = Deno.env.get("MTN_MOMO_CALLBACK_URL");
   const token           = await getMomoAccessToken("collection");
@@ -122,6 +147,7 @@ export async function verifyMomoCollection(referenceId: string): Promise<{
   status: "PENDING" | "SUCCESSFUL" | "FAILED";
   reason?: string;
 }> {
+  requireMomoConfigured("collection");
   const subscriptionKey = Deno.env.get("MTN_MOMO_SUBSCRIPTION_KEY_COLLECTION")!;
   const token           = await getMomoAccessToken("collection");
 
@@ -162,6 +188,10 @@ export interface MomoDisbursementParams {
 }
 
 export async function initiateMomoDisbursement(params: MomoDisbursementParams): Promise<{ referenceId: string }> {
+  if (!isMomoConfigured("disbursement")) {
+    throw new HttpError(503, "MTN MoMo disbursements are not configured");
+  }
+
   const subscriptionKey = Deno.env.get("MTN_MOMO_SUBSCRIPTION_KEY_DISBURSEMENT")!;
   const callbackUrl     = Deno.env.get("MTN_MOMO_CALLBACK_URL");
   const token           = await getMomoAccessToken("disbursement");
@@ -205,6 +235,7 @@ export async function verifyMomoDisbursement(referenceId: string): Promise<{
   status: "PENDING" | "SUCCESSFUL" | "FAILED";
   reason?: string;
 }> {
+  requireMomoConfigured("disbursement");
   const subscriptionKey = Deno.env.get("MTN_MOMO_SUBSCRIPTION_KEY_DISBURSEMENT")!;
   const token           = await getMomoAccessToken("disbursement");
 

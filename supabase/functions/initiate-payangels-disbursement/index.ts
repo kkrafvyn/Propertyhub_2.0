@@ -10,6 +10,8 @@ function getDisbursementUrl() {
   return url;
 }
 
+const WORK_ORDER_PAYOUT_STATUSES = new Set(["inspection_review", "completed"]);
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: getCorsHeaders(req) });
   if (req.method !== "POST") return jsonResponse(405, { error: "Method not allowed" }, req);
@@ -23,49 +25,100 @@ Deno.serve(async (req) => {
     const phone = typeof body?.phone === "string" ? body.phone.trim() : "";
     const organizationId = typeof body?.organizationId === "string" ? body.organizationId.trim() : "";
     const approvalId = typeof body?.approvalId === "string" ? body.approvalId.trim() : "";
+    const workOrderId = typeof body?.workOrderId === "string" ? body.workOrderId.trim() : "";
 
     if (!organizationId) throw new HttpError(400, "organizationId is required");
-    if (!approvalId) throw new HttpError(400, "approvalId is required");
+    if (!approvalId && !workOrderId) throw new HttpError(400, "approvalId or workOrderId is required");
+    if (approvalId && workOrderId) throw new HttpError(400, "Provide either approvalId or workOrderId, not both");
     if (!Number.isFinite(amount) || amount <= 0) throw new HttpError(400, "Valid amount is required");
     if (!phone) throw new HttpError(400, "Recipient phone is required");
 
     const admin = createAdminClient();
     await requireFinanceMembership(admin, user.id, organizationId);
 
-    const { data: approval, error: approvalError } = await admin
-      .from("estate_distribution_approvals")
-      .select(`
-        id,
-        status,
-        requested_amount_minor,
-        statement:estate_owner_statement_runs(
+    let auditEntityType = "estate_distribution_approval";
+    let auditEntityId = approvalId;
+    let metadata: Record<string, unknown> = {
+      organizationId,
+      requestedBy: user.id,
+      ...(body?.metadata && typeof body.metadata === "object" ? body.metadata : {}),
+    };
+
+    if (workOrderId) {
+      auditEntityType = "estate_contractor_work_order";
+      auditEntityId = workOrderId;
+      metadata = { ...metadata, workOrderId };
+
+      const { data: order, error: orderError } = await admin
+        .from("estate_contractor_work_orders")
+        .select(`
           id,
-          estate_id,
+          status,
+          final_cost_pesewas,
+          estimate_pesewas,
           estate:managed_estates(organization_id)
-        )
-      `)
-      .eq("id", approvalId)
-      .maybeSingle();
+        `)
+        .eq("id", workOrderId)
+        .maybeSingle();
 
-    if (approvalError) throw new HttpError(500, approvalError.message);
-    if (!approval) throw new HttpError(404, "Distribution approval not found");
+      if (orderError) throw new HttpError(500, orderError.message);
+      if (!order) throw new HttpError(404, "Work order not found");
 
-    const statementOrgId = (
-      approval.statement as { estate?: { organization_id?: string } | null } | null
-    )?.estate?.organization_id;
+      const orderOrgId = (
+        order.estate as { organization_id?: string } | null
+      )?.organization_id;
 
-    if (statementOrgId !== organizationId) {
-      throw new HttpError(403, "Distribution approval does not belong to this organization");
-    }
+      if (orderOrgId !== organizationId) {
+        throw new HttpError(403, "Work order does not belong to this organization");
+      }
 
-    if (!["approved", "processing"].includes(String(approval.status))) {
-      throw new HttpError(409, "Only approved distributions can be disbursed");
-    }
+      if (!WORK_ORDER_PAYOUT_STATUSES.has(String(order.status))) {
+        throw new HttpError(409, "Work order is not ready for payout");
+      }
 
-    const expectedMinor = Number(approval.requested_amount_minor || 0);
-    const requestedMinor = Math.round(amount * 100);
-    if (expectedMinor > 0 && requestedMinor !== expectedMinor) {
-      throw new HttpError(400, "Disbursement amount does not match the approved distribution");
+      const expectedMinor = Number(order.final_cost_pesewas || order.estimate_pesewas || 0);
+      const requestedMinor = Math.round(amount * 100);
+      if (expectedMinor > 0 && requestedMinor !== expectedMinor) {
+        throw new HttpError(400, "Disbursement amount does not match the work order total");
+      }
+    } else {
+      metadata = { ...metadata, approvalId };
+
+      const { data: approval, error: approvalError } = await admin
+        .from("estate_distribution_approvals")
+        .select(`
+          id,
+          status,
+          requested_amount_minor,
+          statement:estate_owner_statement_runs(
+            id,
+            estate_id,
+            estate:managed_estates(organization_id)
+          )
+        `)
+        .eq("id", approvalId)
+        .maybeSingle();
+
+      if (approvalError) throw new HttpError(500, approvalError.message);
+      if (!approval) throw new HttpError(404, "Distribution approval not found");
+
+      const statementOrgId = (
+        approval.statement as { estate?: { organization_id?: string } | null } | null
+      )?.estate?.organization_id;
+
+      if (statementOrgId !== organizationId) {
+        throw new HttpError(403, "Distribution approval does not belong to this organization");
+      }
+
+      if (!["approved", "processing"].includes(String(approval.status))) {
+        throw new HttpError(409, "Only approved distributions can be disbursed");
+      }
+
+      const expectedMinor = Number(approval.requested_amount_minor || 0);
+      const requestedMinor = Math.round(amount * 100);
+      if (expectedMinor > 0 && requestedMinor !== expectedMinor) {
+        throw new HttpError(400, "Disbursement amount does not match the approved distribution");
+      }
     }
 
     const secret = Deno.env.get("PAYANGELS_SECRET_KEY")?.trim();
@@ -79,12 +132,7 @@ Deno.serve(async (req) => {
         currency: "GHS",
         recipient: phone,
         note: body?.note || "BaytMiftah disbursement",
-        metadata: {
-          organizationId,
-          approvalId,
-          requestedBy: user.id,
-          ...(body?.metadata && typeof body.metadata === "object" ? body.metadata : {}),
-        },
+        metadata,
       }),
     });
 
@@ -104,14 +152,15 @@ Deno.serve(async (req) => {
     await writeServerAuditLog({
       actorUserId: user.id,
       action: "payangels_disbursement_initiated",
-      entityType: "estate_distribution_approval",
-      entityId: approvalId,
+      entityType: auditEntityType,
+      entityId: auditEntityId,
       details: {
         organizationId,
         amountGhs: amount.toFixed(2),
         recipient: phone,
         referenceId,
         providerStatus: payload?.status || "PENDING",
+        ...(workOrderId ? { workOrderId } : { approvalId }),
       },
     });
 

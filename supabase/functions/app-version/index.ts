@@ -1,4 +1,4 @@
-import { corsHeaders, jsonResponse } from "../_shared/http.ts";
+import { getCorsHeaders, jsonResponse } from "../_shared/http.ts";
 
 type Surface = "web" | "desktop" | "ios" | "android";
 
@@ -8,7 +8,7 @@ function readVersion(key: string, fallback: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   let surface: Surface = "web";
@@ -61,5 +61,5 @@ Deno.serve(async (req) => {
     download_url: downloadUrl,
     changelog,
     checked_at: new Date().toISOString(),
-  });
+  }, req);
 });

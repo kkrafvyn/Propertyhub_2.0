@@ -1,35 +1,51 @@
 /**
- * MTN MoMo Ghana Client Service
- * Bridges client actions with the PayAngels disbursement Edge Function.
+ * PayAngels disbursement client — collections and payouts (MoMo, bank) via PayAngels only.
  */
 
 import { supabase } from './supabase';
 
-export interface MomoInitiateParams {
-  type?: 'collection' | 'disbursement';
+export interface PayAngelsDisbursementParams {
   amount: number;
   phone: string;
+  organizationId: string;
+  approvalId?: string;
+  workOrderId?: string;
   note?: string;
   message?: string;
-  organizationId?: string;
-  approvalId?: string;
-  invoiceId?: string;
-  workOrderId?: string;
-  estateId?: string;
-  unitId?: string;
 }
 
-export interface MomoInitiateResponse {
+export interface PayAngelsDisbursementResponse {
   success: boolean;
-  type: 'collection' | 'disbursement';
+  type: 'disbursement';
   referenceId: string;
   externalId: string;
   amount: string;
   recipient?: string;
-  payer?: string;
   status: 'PENDING' | 'SUCCESSFUL' | 'FAILED';
   message?: string;
 }
+
+/** @deprecated Use PayAngelsDisbursementParams */
+export type MomoInitiateParams =
+  | {
+      type: 'collection';
+      amount: number;
+      phone: string;
+      invoiceId?: string;
+      estateId?: string;
+      unitId?: string;
+    }
+  | (PayAngelsDisbursementParams & {
+      type?: 'disbursement';
+      invoiceId?: string;
+      estateId?: string;
+      unitId?: string;
+    });
+
+/** @deprecated Use PayAngelsDisbursementResponse */
+export type MomoInitiateResponse = PayAngelsDisbursementResponse & {
+  payer?: string;
+};
 
 export function normaliseGhanaPhone(phone: string): string {
   const digits = phone.replace(/\D/g, '');
@@ -38,74 +54,65 @@ export function normaliseGhanaPhone(phone: string): string {
   return digits;
 }
 
-export async function requestMomoPayment(
-  params: MomoInitiateParams
-): Promise<MomoInitiateResponse> {
-  try {
-    if ((params.type || 'collection') !== 'disbursement') {
-      throw new Error('Collections must use paymentService.initializePropertyPayment with a listing context');
-    }
-
-    if (!params.organizationId || !params.approvalId) {
-      throw new Error('Disbursements require organizationId and an approved distribution approvalId');
-    }
-
-    const invocation = supabase.functions.invoke('initiate-payangels-disbursement', {
-      body: {
-        type: params.type || 'collection',
-        amount: params.amount,
-        phone: normaliseGhanaPhone(params.phone),
-        organizationId: params.organizationId,
-        approvalId: params.approvalId,
-        note: params.note || 'BaytMiftah REOS Payment',
-        message: params.message || 'BaytMiftah Transaction Prompt',
-        invoiceId: params.invoiceId,
-        workOrderId: params.workOrderId,
-        estateId: params.estateId,
-        unitId: params.unitId,
-      },
-    });
-    const timeout = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('MoMo initiation timed out')), 5000);
-    });
-    const { data, error } = await Promise.race([invocation, timeout]);
-
-    if (error) {
-      throw new Error(error.message || 'MoMo initiation failed');
-    }
-
-    return data as MomoInitiateResponse;
-  } catch (err: unknown) {
-    const isTestOrDemo = import.meta.env.MODE === 'test' || import.meta.env.VITE_ENABLE_DEMO_DATA === 'true';
-    if (!isTestOrDemo) throw err;
-
-    // Keep offline test/demo runs deterministic without claiming production success.
-    console.warn('Falling back to local MoMo client simulation:', err);
-    const ref = `momo_sim_${Date.now()}`;
-    return {
-      success: true,
-      type: params.type || 'collection',
-      referenceId: crypto.randomUUID(),
-      externalId: ref,
-      amount: Number(params.amount).toFixed(2),
-      payer: normaliseGhanaPhone(params.phone),
-      status: 'PENDING',
-      message: 'Simulated prompt dispatched to subscriber mobile device',
-    };
+export async function requestPayAngelsDisbursement(
+  params: PayAngelsDisbursementParams,
+): Promise<PayAngelsDisbursementResponse> {
+  if (!params.organizationId?.trim()) {
+    throw new Error('organizationId is required for PayAngels disbursements');
   }
+  if (!params.approvalId && !params.workOrderId) {
+    throw new Error('approvalId or workOrderId is required for PayAngels disbursements');
+  }
+  if (!Number.isFinite(params.amount) || params.amount <= 0) {
+    throw new Error('Disbursement amount must be greater than zero');
+  }
+
+  const invocation = supabase.functions.invoke('initiate-payangels-disbursement', {
+    body: {
+      amount: params.amount,
+      phone: normaliseGhanaPhone(params.phone),
+      organizationId: params.organizationId.trim(),
+      approvalId: params.approvalId,
+      workOrderId: params.workOrderId,
+      note: params.note || 'BaytMiftah disbursement',
+      message: params.message || 'BaytMiftah payout',
+    },
+  });
+  const timeout = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error('PayAngels disbursement timed out')), 15000);
+  });
+  const { data, error } = await Promise.race([invocation, timeout]);
+
+  if (error) {
+    throw new Error(error.message || 'PayAngels disbursement failed');
+  }
+
+  return data as PayAngelsDisbursementResponse;
 }
 
-export async function releaseArtisanEscrowMomo(
-  workOrderId: string,
-  artisanPhone: string,
-  amountGhs: number
-): Promise<MomoInitiateResponse> {
-  return requestMomoPayment({
-    type: 'disbursement',
-    amount: amountGhs,
-    phone: artisanPhone,
-    note: `Work Order Escrow Release #${workOrderId.slice(0, 8)}`,
-    message: 'BaytMiftah Artisan Payout',
-    workOrderId,
+/** @deprecated Use requestPayAngelsDisbursement */
+export async function requestMomoPayment(params: MomoInitiateParams): Promise<MomoInitiateResponse> {
+  if (params.type === 'collection') {
+    throw new Error('Collections must use paymentService.initializePropertyPayment (PayAngels checkout)');
+  }
+  return requestPayAngelsDisbursement(params as PayAngelsDisbursementParams);
+}
+
+export async function releaseArtisanEscrowPayAngels(input: {
+  organizationId: string;
+  workOrderId: string;
+  artisanPhone: string;
+  amountGhs: number;
+}): Promise<PayAngelsDisbursementResponse> {
+  return requestPayAngelsDisbursement({
+    organizationId: input.organizationId,
+    workOrderId: input.workOrderId,
+    amount: input.amountGhs,
+    phone: input.artisanPhone,
+    note: `Work order escrow release #${input.workOrderId.slice(0, 8)}`,
+    message: 'BaytMiftah artisan payout',
   });
 }
+
+/** @deprecated Use releaseArtisanEscrowPayAngels */
+export const releaseArtisanEscrowMomo = releaseArtisanEscrowPayAngels;

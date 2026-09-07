@@ -64,7 +64,7 @@ export const propertyTokenService = {
    */
   async getTokenInfo(contractAddress: string, userAddress?: string): Promise<TokenInfo> {
     if (isSimulatedTokenAddress(contractAddress)) {
-      return buildSimulatedTokenInfo(contractAddress, userAddress);
+      throw new Error('Property token contract is not configured');
     }
     try {
       const contract = this.getContract(contractAddress, false);
@@ -101,7 +101,7 @@ export const propertyTokenService = {
    */
   async getBalance(contractAddress: string, userAddress: string): Promise<string> {
     if (isSimulatedTokenAddress(contractAddress)) {
-      return "100";
+      throw new Error('Property token contract is not configured');
     }
     try {
       const contract = this.getContract(contractAddress, false);

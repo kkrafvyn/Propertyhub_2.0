@@ -214,25 +214,15 @@ class MLSIntegrationService {
     try {
       const credentials = await this.getMLSCredentials(organizationId, provider);
       let listings: ExternalListing[] = [];
-      let simulated = false;
-
       if (!credentials.length) {
-        listings = this.buildDemoListings(provider);
-        simulated = true;
-      } else {
-        const cred = credentials[0];
-        try {
-          listings = await this.fetchProviderListings(provider, cred);
-        } catch (fetchError) {
-          console.warn(`MLS ${provider} live fetch failed, using demo feed:`, fetchError);
-          listings = this.buildDemoListings(provider);
-          simulated = true;
-        }
+        throw new Error(`${provider.toUpperCase()} syndication is not configured. Connect credentials in Integration Hub.`);
       }
 
+      const cred = credentials[0];
+      listings = await this.fetchProviderListings(provider, cred);
+
       if (!listings.length) {
-        listings = this.buildDemoListings(provider);
-        simulated = true;
+        throw new Error(`${provider.toUpperCase()} syndication returned no listings`);
       }
 
       const syncResult = await this.syncListingsToDatabase(organizationId, listings);
@@ -244,11 +234,11 @@ class MLSIntegrationService {
           listings_sync: syncResult.successful,
           listings_failed: syncResult.failed,
           completed_at: new Date().toISOString(),
-          error_message: simulated ? 'Demo syndication feed (configure API key or feed URL for live sync)' : null,
+          error_message: null,
         })
         .eq('id', jobId);
 
-      if (credentials[0]?.id && !simulated) {
+      if (credentials[0]?.id) {
         await supabase
           .from('mls_credentials')
           .update({ last_sync_at: new Date().toISOString() })
@@ -261,7 +251,6 @@ class MLSIntegrationService {
         listingsSync: syncResult.successful,
         listingsFailed: syncResult.failed,
         completedAt: new Date().toISOString(),
-        errorMessage: simulated ? 'Demo syndication feed' : undefined,
       };
     } catch (error) {
       console.error(`Failed to sync ${provider} listings:`, error);

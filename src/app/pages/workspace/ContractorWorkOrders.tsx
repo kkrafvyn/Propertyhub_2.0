@@ -132,8 +132,10 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
       const order = liveOrders.find((item) => item.id === orderId);
       const artisan = artisans.find((item) => item.id === order?.artisan_id);
       if (!order || !artisan || !currentUserId) throw new Error('A live assigned artisan and authenticated user are required.');
+      if (!organizationId) throw new Error('Organization context is required for PayAngels payouts.');
       const updated = await contractorDispatchService.releaseLivePayout({
         workOrderId: order.id,
+        organizationId,
         artisanId: artisan.id,
         amountGhs: Number(order.final_cost_pesewas || order.estimate_pesewas || 0) / 100,
         momoNumber: artisan.momoNumber,

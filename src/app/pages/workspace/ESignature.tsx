@@ -338,17 +338,6 @@ export function ESignature({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleMarkSigned(r.id)}
-                            className="text-emerald-600 hover:bg-emerald-50"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                            Simulate Sign
-                          </Button>
-                        )}
-                        {r.status === "sent" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
                             onClick={() => handleVoid(r.id)}
                             className="text-rose-600 hover:bg-rose-50"
                           >

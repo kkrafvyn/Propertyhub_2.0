@@ -209,10 +209,13 @@ export const blockchainService = {
    */
   async tokenizeProperty(tokenization: TokenizationRequest) {
     try {
-      const contractAddress =
-        tokenization.contractAddress?.trim() ||
-        `sim:BMFT-${tokenization.propertyId.slice(0, 8)}-${Date.now().toString(36)}`;
-      const simulated = isSimulatedTokenAddress(tokenization.contractAddress);
+      const requestedAddress = tokenization.contractAddress?.trim() || "";
+      if (!requestedAddress) {
+        throw new Error('Token contract address is required for production tokenization');
+      }
+
+      const contractAddress = requestedAddress;
+      const simulated = isSimulatedTokenAddress(contractAddress);
 
       const { data, error } = await supabase
         .from('tokenized_assets')

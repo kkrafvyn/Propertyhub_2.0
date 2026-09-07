@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { appUpdateService } from './app-update.service'
 
 export const mobileAppService = {
   // Register device
@@ -127,8 +128,20 @@ export const mobileAppService = {
     return data
   },
 
-  // Get app version info
+  // Get app version info (remote edge function with env fallback)
   async getAppVersion(deviceType: 'ios' | 'android') {
+    const remote = await appUpdateService.checkForUpdates(deviceType).catch(() => null);
+    if (remote) {
+      return {
+        current_version: remote.current_version,
+        minimum_version: remote.minimum_version,
+        latest_version: remote.latest_version,
+        force_update: remote.force_update,
+        update_url: remote.download_url || '',
+        changelog: remote.changelog,
+      };
+    }
+
     const appVersion =
       import.meta.env.VITE_APP_VERSION ||
       import.meta.env.VITE_APP_BUILD_NUMBER ||

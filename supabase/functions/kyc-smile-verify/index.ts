@@ -1,4 +1,4 @@
-import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
+import { getCorsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import { createAdminClient, requireAuthenticatedUser } from "../_shared/supabase.ts";
 import {
   isSmileConfigured,
@@ -16,11 +16,11 @@ function splitName(fullName?: string | null) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   if (req.method !== "POST") {
-    return jsonResponse(405, { error: "Method not allowed" });
+    return jsonResponse(405, { error: "Method not allowed" }, req);
   }
 
   try {
@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
       return jsonResponse(503, {
         error: "Smile Identity is not configured",
         configured: false,
-      });
+      }, req);
     }
 
     const authHeader = req.headers.get("Authorization");
@@ -114,12 +114,12 @@ Deno.serve(async (req) => {
       throw new HttpError(500, updateError.message);
     }
 
-    return jsonResponse(200, { ok: true, submission: updated, providerResponse });
+    return jsonResponse(200, { ok: true, submission: updated, providerResponse }, req);
   } catch (error) {
     if (error instanceof HttpError) {
-      return jsonResponse(error.status, { error: error.message });
+      return jsonResponse(error.status, { error: error.message }, req);
     }
     console.error("kyc-smile-verify error:", error);
-    return jsonResponse(500, { error: "Unable to submit Smile Identity verification" });
+    return jsonResponse(500, { error: "Unable to submit Smile Identity verification" }, req);
   }
 });

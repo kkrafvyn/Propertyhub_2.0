@@ -19,6 +19,7 @@ export type AdminConsoleSection =
   | "organizations"
   | "listings"
   | "moderation"
+  | "fraud"
   | "trust"
   | "support"
   | "settings"
@@ -29,6 +30,7 @@ const SECTION_GRANT_MAP: Record<Exclude<AdminConsoleSection, "overview">, Platfo
   organizations: PLATFORM_CONSOLE_GRANTS.organizations,
   listings: PLATFORM_CONSOLE_GRANTS.listings,
   moderation: PLATFORM_CONSOLE_GRANTS.moderation,
+  fraud: PLATFORM_CONSOLE_GRANTS.moderation,
   trust: PLATFORM_CONSOLE_GRANTS.trust,
   support: PLATFORM_CONSOLE_GRANTS.support,
   revenue: PLATFORM_CONSOLE_GRANTS.revenue,

@@ -209,21 +209,13 @@ const MOCK_PASSES: VisitorPass[] = [
   },
 ];
 
-const STORAGE_PASSES_KEY = 'bm_visitor_passes_list';
-const DEMO_DATA_ENABLED = import.meta.env.VITE_ENABLE_DEMO_DATA === 'true';
 
 export const visitorClearanceService = {
   getPasses(): VisitorPass[] {
-    if (!DEMO_DATA_ENABLED || typeof window === 'undefined') return [];
-    try {
-      const data = localStorage.getItem(STORAGE_PASSES_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
+    throw new Error('Use liveVisitorClearanceService.listPasses for production gate passes.');
   },
 
-  createPass(input: {
+  createPass(_input: {
     estateName?: string;
     hostResidentName: string;
     hostUnitNumber: string;
@@ -234,82 +226,14 @@ export const visitorClearanceService = {
     vehiclePlate?: string;
     validHours?: number;
   }): VisitorPass {
-    if (!DEMO_DATA_ENABLED) throw new Error('Use liveVisitorClearanceService.createPass for production gate passes.');
-    const pin = Math.floor(100000 + Math.random() * 900000).toString();
-    const token = `BM-GATE-${pin}`;
-    const now = new Date();
-    const expiry = new Date(now.getTime() + (input.validHours || 4) * 60 * 60 * 1000);
-
-    const newPass: VisitorPass = {
-      id: `pass_${Date.now()}`,
-      estateId: 'est_01',
-      estateName: input.estateName || 'East Legon Hills Luxury Enclave',
-      hostResidentName: input.hostResidentName,
-      hostUnitNumber: input.hostUnitNumber,
-      hostPhone: input.hostPhone,
-      visitorName: input.visitorName,
-      visitorPhone: input.visitorPhone,
-      passType: input.passType,
-      qrCodeToken: token,
-      entryPin: pin,
-      vehiclePlate: input.vehiclePlate,
-      validFrom: now.toISOString(),
-      validUntil: expiry.toISOString(),
-      status: 'valid',
-      entryGate: 'Main West Gate',
-    };
-
-    const existing = this.getPasses();
-    const updated = [newPass, ...existing];
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_PASSES_KEY, JSON.stringify(updated));
-    }
-    return newPass;
+    throw new Error('Use liveVisitorClearanceService.createPass for production gate passes.');
   },
 
-  verifyAndCheckIn(tokenOrPin: string, guardName = 'Officer Mensah'): {
+  verifyAndCheckIn(_tokenOrPin: string, _guardName = 'Officer Mensah'): {
     success: boolean;
     pass?: VisitorPass;
     message: string;
   } {
-    if (!DEMO_DATA_ENABLED) throw new Error('Use liveVisitorClearanceService.verifyAndCheckIn for production gate checks.');
-    const cleaned = tokenOrPin.trim().toUpperCase();
-    const passes = this.getPasses();
-
-    const pass = passes.find(
-      (p) => p.qrCodeToken.toUpperCase() === cleaned || p.entryPin === cleaned
-    );
-
-    if (!pass) {
-      return { success: false, message: 'Invalid QR code or Entry PIN. Access denied.' };
-    }
-
-    const now = new Date();
-    if (now > new Date(pass.validUntil)) {
-      return { success: false, pass, message: 'Visitor pass has expired. Resident authorization required.' };
-    }
-
-    if (pass.status === 'revoked') {
-      return { success: false, pass, message: 'Pass has been revoked by estate management.' };
-    }
-
-    // Mark as used / checked in
-    const updatedPass: VisitorPass = {
-      ...pass,
-      status: 'used',
-      checkInTime: now.toISOString(),
-      securityGuardName: guardName,
-    };
-
-    const updatedList = passes.map((p) => (p.id === pass.id ? updatedPass : p));
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_PASSES_KEY, JSON.stringify(updatedList));
-    }
-
-    return {
-      success: true,
-      pass: updatedPass,
-      message: `Access Granted for ${pass.visitorName} to ${pass.hostUnitNumber} (${pass.hostResidentName})`,
-    };
+    throw new Error('Use liveVisitorClearanceService.verifyAndCheckIn for production gate checks.');
   },
 };

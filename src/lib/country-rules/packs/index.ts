@@ -20,8 +20,8 @@ export const GH_PACK: CountryRulePack = {
     { id: "stamp_duty", label: "Stamp duty", rateBasisPoints: 50, appliesTo: ["sale"], authority: "GRA" },
   ],
   paymentRails: withPayAngelsPrimary("GHS", [
-    { id: "momo_mtn", label: "MTN MoMo", currencies: ["GHS"], purposes: ["rent", "disbursement"], integrationSlug: "momo-mtn", envRequired: ["MTN_MOMO_SUBSCRIPTION_KEY"] },
-    { id: "bank_transfer", label: "Bank / GhIPSS", currencies: ["GHS"], purposes: ["rent", "disbursement"] },
+    { id: "momo_mtn", label: "Mobile money (via PayAngels)", currencies: ["GHS"], purposes: ["rent", "disbursement"], integrationSlug: "payangels" },
+    { id: "bank_transfer", label: "Bank / GhIPSS (via PayAngels)", currencies: ["GHS"], purposes: ["rent", "disbursement"], integrationSlug: "payangels" },
   ]),
   leaseRules: {
     ...baseLease(
@@ -90,8 +90,8 @@ export const KE_PACK: CountryRulePack = {
     { id: "withholding_rent", label: "Residential rent WHT", rateBasisPoints: 750, appliesTo: ["rent"], authority: "KRA" },
   ],
   paymentRails: withPayAngelsPrimary("KES", [
-    { id: "mpesa", label: "M-Pesa", currencies: ["KES"], purposes: ["rent", "disbursement"], integrationSlug: "momo-mtn" },
-    { id: "bank_transfer", label: "Bank transfer", currencies: ["KES"], purposes: ["rent", "disbursement"] },
+    { id: "mpesa", label: "M-Pesa (via PayAngels)", currencies: ["KES"], purposes: ["rent", "disbursement"], integrationSlug: "payangels" },
+    { id: "bank_transfer", label: "Bank transfer (via PayAngels)", currencies: ["KES"], purposes: ["rent", "disbursement"], integrationSlug: "payangels" },
   ]),
   leaseRules: baseLease(
     ["Landlord and Tenant (Shops, Hotels and Catering Establishments) Act", "Distress for Rent Act"],

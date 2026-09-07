@@ -45,8 +45,8 @@ export const transUnionAdapter: ScreeningProviderAdapter = {
       return {
         provider: this.slug,
         providerReference: ref,
-        recommendation: input.checkType === 'credit' ? 'review' : 'clear',
-        resultSummary: `[Sandbox] ${input.checkType} check simulated for ${input.applicantName}. Connect TransUnion in Integration Hub for live results.`,
+        recommendation: 'review',
+        resultSummary: `[Sandbox] ${input.checkType} check requires TransUnion credentials for ${input.applicantName}. Manual review recommended until connected.`,
         resultPayload: { mode: 'sandbox', checkType: input.checkType, score: input.checkType === 'credit' ? 680 : null },
       };
     }
@@ -61,19 +61,29 @@ export const transUnionAdapter: ScreeningProviderAdapter = {
   },
 };
 
-/** Internal KYC adapter for identity/income verification. */
+/** Internal KYC adapter — routes to manual trust review until Smile KYC is wired. */
 export const internalKycAdapter: ScreeningProviderAdapter = {
   slug: 'ghana-trust',
   name: 'Ghana Trust Center',
   supportedChecks: ['identity', 'income'],
-  isConfigured: () => true,
+  isConfigured: () => envConfigured('SMILE_IDENTITY_API_KEY', 'VITE_SMILE_PARTNER_ID'),
   async submitCheck(input) {
+    const ref = `kyc_${crypto.randomUUID().slice(0, 8)}`;
+    if (!this.isConfigured()) {
+      return {
+        provider: this.slug,
+        providerReference: ref,
+        recommendation: 'review',
+        resultSummary: `Manual trust review required for ${input.applicantName}. Connect Smile Identity for automated Ghana checks.`,
+        resultPayload: { mode: 'unverified', checkType: input.checkType },
+      };
+    }
     return {
       provider: this.slug,
-      providerReference: `kyc_${crypto.randomUUID().slice(0, 8)}`,
-      recommendation: 'clear',
-      resultSummary: `Identity and income verification initiated for ${input.applicantName}.`,
-      resultPayload: { mode: 'internal', checkType: input.checkType },
+      providerReference: ref,
+      recommendation: 'review',
+      resultSummary: `Identity and income verification queued for ${input.applicantName}.`,
+      resultPayload: { mode: 'queued', checkType: input.checkType },
     };
   },
 };

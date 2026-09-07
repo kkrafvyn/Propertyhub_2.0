@@ -97,7 +97,7 @@ export async function verifyWhatsAppWebhookSignature(
   signatureHeader: string | null,
   appSecret: string | undefined
 ): Promise<boolean> {
-  if (!appSecret) return true;
+  if (!appSecret) return false;
   if (!signatureHeader?.startsWith("sha256=")) return false;
 
   const expected = await hmacSha256Hex(appSecret, rawBody);
@@ -116,7 +116,7 @@ export async function sendWhatsAppTextMessage(input: {
   const phoneNumberId = input.phoneNumberId || Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 
   if (!token || !phoneNumberId) {
-    return { success: true, messageId: `wa_sim_${crypto.randomUUID().slice(0, 8)}`, simulated: true };
+    throw new Error("WhatsApp Cloud API is not configured");
   }
 
   const baseUrl = (Deno.env.get("WHATSAPP_GRAPH_URL") || "https://graph.facebook.com/v21.0").replace(/\/+$/, "");

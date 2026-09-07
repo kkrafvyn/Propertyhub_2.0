@@ -343,13 +343,7 @@ export function WorkspacePayments({
   const handleVerify = async (payment: any) => {
     try {
       setVerifyingPaymentId(payment.id);
-      const result =
-        payment.provider === "payangels"
-          ? await paymentService.verifyStripePayment(
-              payment.access_code || undefined,
-              payment.provider_reference
-            )
-          : await paymentService.verifyPropertyPayment(payment.provider_reference);
+      const result = await paymentService.verifyPropertyPayment(payment.provider_reference);
 
       const receipt = "receipt" in result ? result.receipt : null;
 
