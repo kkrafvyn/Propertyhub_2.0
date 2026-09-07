@@ -89,7 +89,7 @@ export const pushNotificationService = {
       return null;
     }
 
-    const registration = await navigator.serviceWorker.register("/sw.js");
+    const registration = await navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" });
     const existingSubscription = await registration.pushManager.getSubscription();
 
     const subscription =

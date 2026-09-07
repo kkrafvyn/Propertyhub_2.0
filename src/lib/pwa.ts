@@ -12,8 +12,26 @@ export function registerAppServiceWorker() {
   }
 
   window.addEventListener("load", () => {
-    void navigator.serviceWorker.register("/sw.js").catch((error) => {
-      console.error("Failed to register the app service worker:", error);
-    });
+    void navigator.serviceWorker
+      .register("/sw.js", { updateViaCache: "none" })
+      .then((registration) => {
+        registration.addEventListener("updatefound", () => {
+          const nextWorker = registration.installing;
+          if (!nextWorker) return;
+
+          nextWorker.addEventListener("statechange", () => {
+            if (nextWorker.state !== "activated" || !navigator.serviceWorker.controller) {
+              return;
+            }
+
+            window.location.reload();
+          });
+        });
+
+        void registration.update();
+      })
+      .catch((error) => {
+        console.error("Failed to register the app service worker:", error);
+      });
   });
 }

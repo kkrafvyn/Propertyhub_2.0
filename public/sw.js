@@ -1,4 +1,6 @@
-const CACHE_NAME = "baytmiftah-v2";
+const CACHE_NAME = "baytmiftah-v3";
+
+/** Static shell only — never cache Vite hashed bundles under /assets/. */
 const APP_SHELL = [
   "/manifest.webmanifest",
   "/icons/icon-192.png",
@@ -17,28 +19,42 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) =>
-        Promise.all(
-          keys.map((key) => {
-            if (key !== CACHE_NAME) {
-              return caches.delete(key);
-            }
-            return Promise.resolve(false);
-          }),
-        ),
-      )
+      .then((keys) => Promise.all(keys.map((key) => (key !== CACHE_NAME ? caches.delete(key) : Promise.resolve(false)))))
       .then(() => self.clients.claim()),
   );
 });
 
-function isAppAsset(url) {
-  return (
-    url.pathname.startsWith("/assets/") ||
-    url.pathname.startsWith("/icons/") ||
-    url.pathname.endsWith(".js") ||
-    url.pathname.endsWith(".css") ||
-    url.pathname.endsWith(".woff2")
-  );
+function isHashedBuildAsset(pathname) {
+  return pathname.startsWith("/assets/");
+}
+
+function isOfflineShellAsset(pathname) {
+  return pathname.startsWith("/icons/");
+}
+
+function hasExpectedAssetContentType(request, response) {
+  const type = (response.headers.get("content-type") || "").toLowerCase();
+  if (type.includes("text/html")) {
+    return false;
+  }
+
+  if (request.destination === "script" || pathnameEndsWith(request.url, ".js")) {
+    return type.includes("javascript") || type.includes("ecmascript");
+  }
+
+  if (request.destination === "style" || pathnameEndsWith(request.url, ".css")) {
+    return type.includes("css");
+  }
+
+  return true;
+}
+
+function pathnameEndsWith(url, suffix) {
+  try {
+    return new URL(url).pathname.endsWith(suffix);
+  } catch {
+    return false;
+  }
 }
 
 self.addEventListener("fetch", (event) => {
@@ -51,27 +67,29 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Hashed Vite chunks must always use the network — SW must not intercept deploy-sensitive assets.
+  if (isHashedBuildAsset(url.pathname)) {
+    return;
+  }
+
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request)
-        .then((response) => response)
-        .catch(async () => {
-          const cachedShell = await caches.match("/index.html");
-          return cachedShell || caches.match("/");
-        }),
+      fetch(event.request, { cache: "no-store" }).catch(async () => {
+        const cachedShell = await caches.match("/index.html");
+        return cachedShell || caches.match("/");
+      }),
     );
     return;
   }
 
-  if (!isAppAsset(url)) {
+  if (!isOfflineShellAsset(url.pathname)) {
     return;
   }
 
-  // Network-first for hashed build assets so deploys never serve stale JS as HTML.
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        if (response.ok) {
+        if (response.ok && hasExpectedAssetContentType(event.request, response)) {
           const responseClone = response.clone();
           void caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
         }
@@ -82,7 +100,10 @@ self.addEventListener("fetch", (event) => {
         if (cachedResponse) {
           return cachedResponse;
         }
-        throw new Error(`Offline and asset not cached: ${url.pathname}`);
+        return new Response("", {
+          status: 504,
+          statusText: "Offline",
+        });
       }),
   );
 });
@@ -91,7 +112,7 @@ self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
   const title = data.title || "BaytMiftah";
   const body = data.body || "You have a new update.";
-  const url = data.url || "/";
+  const targetUrl = data.url || "/";
 
   event.waitUntil(
     self.registration.showNotification(title, {
@@ -99,7 +120,7 @@ self.addEventListener("push", (event) => {
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
       data: {
-        url,
+        url: targetUrl,
       },
     }),
   );
