@@ -6,6 +6,7 @@ import {
   type OrganizationEnrollmentRequest,
 } from "../../../lib/enrollment.service";
 import { kycService } from "../../../lib/kyc.service";
+import { adminService } from "../../../lib/admin.service";
 import { describeKycEngine } from "../../../lib/kyc-gate.service";
 import { isKycVerified, isKycPending } from "../../lib/baytmiftah/kyc";
 import { Button } from "../../components/ui/Button";
@@ -62,6 +63,8 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
 
   const handleApprove = async (request: OrganizationEnrollmentRequest) => {
     const notes = window.prompt("Optional approval note for the applicant:") ?? undefined;
+    if (notes === null) return;
+
     try {
       setWorkingId(request.id);
       const orgId = await enrollmentService.approveRequest(request.id, notes || undefined);
@@ -69,9 +72,35 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
       await loadRequests();
       onApproved?.();
       void orgId;
+    } catch (error: unknown) {
+      console.error(error);
+      const message =
+        error && typeof error === "object" && "message" in error
+          ? String((error as { message?: string }).message)
+          : "Unable to approve this enrollment request.";
+      toast.error(message);
+    } finally {
+      setWorkingId(null);
+    }
+  };
+
+  const handleVerifyApplicant = async (request: OrganizationEnrollmentRequest) => {
+    if (
+      !window.confirm(
+        `Mark ${request.requester?.full_name || request.requester?.email || "this applicant"} as identity-verified? This unlocks workspace approval.`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setWorkingId(`verify:${request.requester_user_id}`);
+      await adminService.updateUser(request.requester_user_id, { verified: true });
+      toast.success("Applicant marked as verified. You can now approve the workspace.");
+      await loadRequests();
     } catch (error) {
       console.error(error);
-      toast.error("Unable to approve this enrollment request.");
+      toast.error("Unable to verify this applicant.");
     } finally {
       setWorkingId(null);
     }
@@ -131,6 +160,7 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
                 : null;
               const kycVerified = isKycVerified(kycSnapshot);
               const kycPending = isKycPending(kycSnapshot);
+              const identityVerified = kycVerified || Boolean(request.requester?.verified);
               const engine = describeKycEngine(kycSnapshot, request.operating_jurisdiction);
 
               return (
@@ -167,7 +197,11 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
                       <div>
                         <dt className="font-medium text-foreground">KYC status</dt>
                         <dd>
-                          {kycVerified ? "Verified" : kycPending ? "Under review" : "Not submitted"}
+                          {identityVerified
+                            ? "Verified"
+                            : kycPending
+                              ? "Under review"
+                              : "Not submitted"}
                         </dd>
                       </div>
                       <div>
@@ -188,10 +222,39 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
                       </div>
                     </dl>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-col gap-2">
+                    {!identityVerified ? (
+                      <p className="max-w-xs text-xs text-amber-700 dark:text-amber-300">
+                        Verify the applicant&apos;s identity before creating their workspace.
+                      </p>
+                    ) : null}
+                    <div className="flex flex-wrap gap-2">
+                    {!identityVerified ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={workingId === `verify:${request.requester_user_id}`}
+                          onClick={() => void handleVerifyApplicant(request)}
+                        >
+                          <Shield className="mr-2 h-4 w-4" />
+                          Verify identity
+                        </Button>
+                        <Link to="/admin/trust">
+                          <Button size="sm" variant="outline">
+                            Open Trust review
+                          </Button>
+                        </Link>
+                      </>
+                    ) : null}
                     <Button
                       size="sm"
-                      disabled={workingId === request.id || !kycVerified}
+                      disabled={workingId === request.id || !identityVerified}
+                      title={
+                        identityVerified
+                          ? undefined
+                          : "Verify the applicant's identity first"
+                      }
                       onClick={() => void handleApprove(request)}
                     >
                       <CheckCircle2 className="mr-2 h-4 w-4" />
@@ -206,6 +269,7 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
                       <XCircle className="mr-2 h-4 w-4" />
                       Reject
                     </Button>
+                    </div>
                   </div>
                 </div>
               </div>

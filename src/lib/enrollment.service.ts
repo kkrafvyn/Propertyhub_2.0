@@ -27,6 +27,7 @@ export type OrganizationEnrollmentRequest = {
     id: string;
     email: string | null;
     full_name: string | null;
+    verified?: boolean | null;
   } | null;
 };
 
@@ -145,7 +146,7 @@ export const enrollmentService = {
       });
 
     const withRequester = await buildQuery(
-      "*, requester:users!organization_enrollment_requests_requester_user_id_fkey(id, email, full_name)",
+      "*, requester:users!organization_enrollment_requests_requester_user_id_fkey(id, email, full_name, verified)",
     );
 
     if (!withRequester.error) {
