@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { PlatformAccessFlags } from "./platform-access";
+import { hasPlatformConsoleAccess } from "./platform-access";
 import type { PlatformConsoleGrant } from "./platform-console-grants";
 
 export type AdminUserRow = {
@@ -85,10 +86,10 @@ export const adminService = {
 
   async hasConsoleAccess(userId: string) {
     const access = await this.getPlatformAccess(userId);
-    return Boolean(access.is_platform_admin || access.is_platform_manager);
+    return hasPlatformConsoleAccess(access);
   },
 
-  async listUsers(limit = 50): Promise<AdminUserRow[]> {
+  async listUsers(limit = 200): Promise<AdminUserRow[]> {
     const { data, error } = await supabase
       .from("users")
       .select(

@@ -185,7 +185,7 @@ export function AdminLayout() {
         canModeration ? fraudDetectionService.getModerationOverview() : Promise.resolve(overview),
         canModeration ? fraudDetectionService.getReviewCases("active", 12) : Promise.resolve([]),
         canModeration ? fraudDetectionService.getPendingAlertsWithoutCase(8) : Promise.resolve([]),
-        canUsers ? adminService.listUsers(50) : Promise.resolve([]),
+        canUsers ? adminService.listUsers(200) : Promise.resolve([]),
         canOrganizations ? adminService.listOrganizationsWithStats(100) : Promise.resolve([]),
         canListings ? adminService.listListings(50) : Promise.resolve([]),
       ]);

@@ -91,12 +91,35 @@ export function AdminOrganizationDetail({ organizationId, onBack }: AdminOrganiz
             )}
           </div>
         </div>
-        <Link to={getWorkspaceRoute(organization.slug)} target="_blank" rel="noreferrer">
-          <Button variant="outline">
-            <ExternalLink className="mr-2 h-4 w-4" />
-            Open workspace
+        <div className="flex flex-wrap gap-2">
+          <Link to={getWorkspaceRoute(organization.slug)} target="_blank" rel="noreferrer">
+            <Button variant="outline">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Open workspace
+            </Button>
+          </Link>
+          <Button
+            variant="outline"
+            onClick={() =>
+              void (async () => {
+                try {
+                  await adminService.updateOrganization(organization.id, {
+                    verified: !organization.verified,
+                  });
+                  toast.success(
+                    organization.verified ? "Organization unverified." : "Organization verified.",
+                  );
+                  await loadProfile();
+                } catch (error) {
+                  console.error(error);
+                  toast.error("Could not update organization verification.");
+                }
+              })()
+            }
+          >
+            {organization.verified ? "Revoke verify" : "Verify organization"}
           </Button>
-        </Link>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
