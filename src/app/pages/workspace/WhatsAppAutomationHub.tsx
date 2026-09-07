@@ -45,6 +45,7 @@ import {
   type WhatsAppGroupChannel,
   type WhatsAppInboundMessage,
 } from '../../../lib/whatsapp-group-bot.service';
+import { isDemoSimulationAllowed } from '../../../lib/simulation-mode';
 
 interface ChatMessage {
   id: string;
@@ -55,6 +56,7 @@ interface ChatMessage {
 }
 
 export function WhatsAppAutomationHub({ organizationId }: { organizationId?: string }) {
+  const allowSimulator = isDemoSimulationAllowed();
   const [activeTab, setActiveTab] = useState<'dispatcher' | 'simulator' | 'broadcast' | 'groups'>('dispatcher');
   const [activeDispatcher, setActiveDispatcher] = useState<'gate_pass' | 'rent_invoice' | 'maintenance'>('gate_pass');
 
@@ -287,6 +289,7 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-ink-secondary hover:bg-surface-hover hover:text-ink'
           }`}
+          style={allowSimulator ? undefined : { display: 'none' }}
         >
           <Bot className="w-4 h-4" />
           Tenant Bot Simulator
@@ -566,7 +569,7 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
       )}
 
       {/* Tab 2: Tenant Bot Simulator */}
-      {activeTab === 'simulator' && (
+      {allowSimulator && activeTab === 'simulator' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-5 space-y-4">
             <Card className="p-5 border-surface-border bg-surface">
@@ -840,6 +843,7 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
               )}
             </Card>
 
+            {allowSimulator ? (
             <Card className="p-5 border-surface-border bg-surface">
               <h3 className="text-sm font-bold flex items-center gap-2 mb-3">
                 <Bot className="w-4 h-4" />
@@ -879,6 +883,7 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
                 <Button size="sm" onClick={handleGroupSimSend}>Send</Button>
               </div>
             </Card>
+            ) : null}
           </div>
         </div>
       )}

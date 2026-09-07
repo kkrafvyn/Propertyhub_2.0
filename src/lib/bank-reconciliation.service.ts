@@ -214,7 +214,14 @@ export class BankReconciliationService {
       body: { connectionId, cursor: options?.cursor, dryRun: options?.dryRun ?? false },
     });
     if (error) throw error;
-    return data as { imported: number; skipped: number; cursor?: string; lastSyncedAt: string };
+    return data as {
+      imported: number;
+      skipped: number;
+      cursor?: string;
+      lastSyncedAt: string;
+      status?: 'ok' | 'paused' | 'dry-run' | 'not-configured';
+      providerMessage?: string;
+    };
   }
 
   /**

@@ -10,7 +10,7 @@ import {
   type PaymentContext,
 } from '@/lib/payment-routing.service'
 import { clientIntegrations } from '@/lib/integrations'
-import { openPaystackInline } from '@/lib/payangels-inline'
+import { openPayAngelsInline } from '@/lib/payangels-inline'
 import { realEstateComplianceService } from '@/lib/real-estate-compliance.service'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { LegalAcceptanceCheckbox } from '../../components/legal/LegalAcceptanceCheckbox'
@@ -244,7 +244,7 @@ export function PaymentCheckout({
       }
 
       let paid = false;
-      await openPaystackInline({
+      await openPayAngelsInline({
         email: user.email!,
         amountMinor: Math.round(paymentState.totalAmount * 100),
         currency: paymentContext.currency,

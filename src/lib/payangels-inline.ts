@@ -4,7 +4,20 @@ const PAYANGELS_SCRIPT_SRC = "https://js.payangels.co/v1/inline.js";
 
 let scriptPromise: Promise<NonNullable<Window["PaystackPop"]>> | null = null;
 
-export function loadPaystackInline(): Promise<NonNullable<Window["PaystackPop"]>> {
+export type OpenPayAngelsInlineInput = {
+  email: string;
+  amountMinor: number;
+  currency?: string;
+  reference: string;
+  accessCode: string;
+  onSuccess: (reference: string) => void | Promise<void>;
+  onClose?: () => void;
+};
+
+/** @deprecated Use OpenPayAngelsInlineInput */
+export type OpenPaystackInlineInput = OpenPayAngelsInlineInput;
+
+export function loadPayAngelsInline(): Promise<NonNullable<Window["PaystackPop"]>> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Checkout is only available in the browser."));
   }
@@ -42,28 +55,21 @@ export function loadPaystackInline(): Promise<NonNullable<Window["PaystackPop"]>
   return scriptPromise;
 }
 
-export type OpenPaystackInlineInput = {
-  email: string;
-  amountMinor: number;
-  currency?: string;
-  reference: string;
-  accessCode: string;
-  onSuccess: (reference: string) => void | Promise<void>;
-  onClose?: () => void;
-};
+/** @deprecated Use loadPayAngelsInline */
+export const loadPaystackInline = loadPayAngelsInline;
 
-export async function openPaystackInline(input: OpenPaystackInlineInput) {
+export async function openPayAngelsInline(input: OpenPayAngelsInlineInput) {
   const publicKey = getPayangelsPublicKey();
   if (!publicKey) {
     throw new Error("Checkout is not configured.");
   }
 
-  const PaystackPop = await loadPaystackInline();
+  const PayAngelsPop = await loadPayAngelsInline();
 
   return new Promise<void>((resolve, reject) => {
     let settled = false;
 
-    const handler = PaystackPop.setup({
+    const handler = PayAngelsPop.setup({
       key: publicKey,
       email: input.email,
       amount: input.amountMinor,
@@ -90,3 +96,6 @@ export async function openPaystackInline(input: OpenPaystackInlineInput) {
     handler.openIframe();
   });
 }
+
+/** @deprecated Use openPayAngelsInline */
+export const openPaystackInline = openPayAngelsInline;

@@ -135,63 +135,8 @@ class MLSIntegrationService {
   }
 
   /**
-   * Sync listings from MLS provider
+   * Sync listings from MLS provider (live credentials required).
    */
-  buildDemoListings(provider: ExternalListing["provider"]): ExternalListing[] {
-    const samples = [
-      {
-        externalId: `demo-${provider}-accra-1`,
-        title: "3-Bed Apartment — East Legon",
-        description: "Demo syndication listing for Integration Hub preview.",
-        price: 850000,
-        currency: "GHS",
-        city: "Accra",
-        country: "Ghana",
-        bedrooms: 3,
-        bathrooms: 2,
-      },
-      {
-        externalId: `demo-${provider}-lagos-1`,
-        title: "Commercial Office — Victoria Island",
-        description: "Demo syndication listing (simulated feed).",
-        price: 12500000,
-        currency: "NGN",
-        city: "Lagos",
-        country: "Nigeria",
-        bedrooms: 0,
-        bathrooms: 2,
-      },
-      {
-        externalId: `demo-${provider}-nairobi-1`,
-        title: "Townhouse — Karen",
-        description: "Demo syndication listing (simulated feed).",
-        price: 45000000,
-        currency: "KES",
-        city: "Nairobi",
-        country: "Kenya",
-        bedrooms: 4,
-        bathrooms: 3,
-      },
-    ];
-    return samples.map((item, index) =>
-      this.mapFeedItem(
-        {
-          externalId: item.externalId,
-          title: item.title,
-          description: item.description,
-          price: item.price,
-          currency: item.currency,
-          city: item.city,
-          country: item.country,
-          bedrooms: item.bedrooms,
-          bathrooms: item.bathrooms,
-        },
-        provider,
-        index
-      )
-    );
-  }
-
   async syncListingsFromProvider(
     organizationId: string,
     provider: 'mls' | 'zillow' | 'realtor'

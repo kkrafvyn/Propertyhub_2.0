@@ -748,9 +748,11 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
                           try {
                             setSyncingFeedId(connection.id);
                             const result = await bankReconciliationService.syncBankFeed(connection.id);
-                            toast.success(
-                              `Synced ${result.imported ?? 0} transaction(s)${(result as { simulated?: boolean }).simulated ? " (demo feed)" : ""}.`
-                            );
+                            if (result.status === "paused" || result.status === "not-configured") {
+                              toast.warning(result.providerMessage || "Bank feed provider is not configured.");
+                            } else {
+                              toast.success(`Synced ${result.imported ?? 0} transaction(s).`);
+                            }
                             await load();
                           } catch (failure: any) {
                             toast.error(failure?.message || "Bank feed sync failed.");

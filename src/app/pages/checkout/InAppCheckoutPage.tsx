@@ -19,7 +19,7 @@ import {
   resolvePaymentContextFromListing,
 } from "../../../lib/payment-routing.service";
 import { paymentService } from "../../../lib/payment.service";
-import { openPaystackInline } from "../../../lib/payangels-inline";
+import { openPayAngelsInline } from "../../../lib/payangels-inline";
 import { clientIntegrations } from "../../../lib/integrations";
 import { realEstateComplianceService } from "../../../lib/real-estate-compliance.service";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
@@ -233,7 +233,7 @@ export function InAppCheckoutPage() {
 
       let paid = false;
 
-      await openPaystackInline({
+      await openPayAngelsInline({
         email: user.email,
         amountMinor: Math.round(payableAmount * 100),
         currency,

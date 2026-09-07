@@ -245,7 +245,6 @@ Deno.serve(async (req) => {
       cursor: syncResult.nextCursor,
       lastSyncedAt: new Date().toISOString(),
       providerMessage: syncResult.message,
-      simulated: Boolean((syncResult as { simulated?: boolean }).simulated),
     });
   } catch (error) {
     if (error instanceof HttpError) {

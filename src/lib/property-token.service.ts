@@ -40,17 +40,6 @@ function isSimulatedTokenAddress(contractAddress?: string | null): boolean {
   return !value || value.startsWith("sim:") || value === "0x0" || value === "0x0000000000000000000000000000000000000000";
 }
 
-function buildSimulatedTokenInfo(contractAddress: string, userAddress?: string): TokenInfo {
-  return {
-    address: contractAddress || "sim:BMFT",
-    name: "BaytMiftah Property Token",
-    symbol: "BMFT",
-    decimals: 18,
-    totalSupply: "1000000",
-    balance: userAddress ? "100" : "0",
-  };
-}
-
 export const propertyTokenService = {
   /**
    * Get token contract instance

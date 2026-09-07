@@ -59,7 +59,6 @@ export function buildDocuSignEnvelope(input: {
 export type DocuSignSubmitResult = {
   envelopeId: string;
   status: string;
-  simulated?: boolean;
   signingUrl?: string | null;
 };
 
@@ -70,8 +69,10 @@ export const docuSignEnvelopeService = {
   async submitEnvelope(input: {
     esignatureRequestId: string;
     envelope: DocuSignEnvelopeDraft;
-  }): Promise<DocuSignSubmitResult | null> {
-    if (!isDocuSignConfigured()) return null;
+  }): Promise<DocuSignSubmitResult> {
+    if (!isDocuSignConfigured()) {
+      throw new Error("DocuSign is not configured. Set DOCUSIGN_* secrets in Supabase.");
+    }
 
     const { data, error } = await supabase.functions.invoke("create-docusign-envelope", {
       body: {
