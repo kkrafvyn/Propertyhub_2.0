@@ -610,6 +610,7 @@ export default {
     "badge": "Admin triage",
     "liveTriage": "Live triage",
     "alerts": "Alerts",
+    "organizations": "Enrollments",
     "kycQueue": "KYC queue",
     "moderation": "Moderation",
     "disputes": "Disputes"

@@ -121,26 +121,43 @@ export const enrollmentService = {
   },
 
   async listRequests(status?: EnrollmentRequestStatus, limit = 100) {
-    let query = supabase
-      .from("organization_enrollment_requests")
-      .select("*, requester:users!organization_enrollment_requests_requester_user_id_fkey(id, email, full_name)")
-      .order("created_at", { ascending: false })
-      .limit(limit);
+    const buildQuery = (select: string) => {
+      let query = supabase
+        .from("organization_enrollment_requests")
+        .select(select)
+        .order("created_at", { ascending: false })
+        .limit(limit);
 
-    if (status) {
-      query = query.eq("status", status);
+      if (status) {
+        query = query.eq("status", status);
+      }
+
+      return query;
+    };
+
+    const mapRows = (rows: Array<Record<string, unknown>>) =>
+      rows.map((row) => {
+        const requester = Array.isArray(row.requester) ? row.requester[0] : row.requester;
+        return {
+          ...row,
+          requester: requester ?? null,
+        } as OrganizationEnrollmentRequest;
+      });
+
+    const withRequester = await buildQuery(
+      "*, requester:users!organization_enrollment_requests_requester_user_id_fkey(id, email, full_name)",
+    );
+
+    if (!withRequester.error) {
+      return mapRows((withRequester.data || []) as unknown as Array<Record<string, unknown>>);
     }
 
-    const { data, error } = await query;
-    if (error) throw error;
+    console.warn("Enrollment requester join failed; falling back to base rows.", withRequester.error);
 
-    return (data || []).map((row) => {
-      const requester = Array.isArray(row.requester) ? row.requester[0] : row.requester;
-      return {
-        ...row,
-        requester: requester ?? null,
-      } as OrganizationEnrollmentRequest;
-    });
+    const base = await buildQuery("*");
+    if (base.error) throw base.error;
+
+    return mapRows((base.data || []) as unknown as Array<Record<string, unknown>>);
   },
 
   async approveRequest(requestId: string, reviewNotes?: string) {

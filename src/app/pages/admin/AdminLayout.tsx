@@ -1052,7 +1052,14 @@ export function AdminLayout() {
     }
 
     if (currentSection === "overview") {
-      return renderOverviewContent();
+      return (
+        <div className="space-y-6">
+          {canAccessAdminSection(profile, "organizations") ? (
+            <AdminEnrollmentRequests onApproved={() => void loadAdminState()} />
+          ) : null}
+          {renderOverviewContent()}
+        </div>
+      );
     }
 
     if (currentSection === "users") {
