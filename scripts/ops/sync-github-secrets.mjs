@@ -82,7 +82,13 @@ const SECRET_MAP = [
 ];
 
 const VARIABLE_MAP = [
-  ["DAST_TARGET_URL", () => "https://app.baytmiftah.com"],
+  [
+    "DAST_TARGET_URL",
+    (env) =>
+      env.VERCEL_PUBLIC_APP_URL?.trim() ||
+      env.VITE_PUBLIC_APP_URL?.trim() ||
+      "https://propertyhub-2-0-ecru.vercel.app",
+  ],
   ["DAST_ALLOW_NON_STAGING", () => "true"],
 ];
 

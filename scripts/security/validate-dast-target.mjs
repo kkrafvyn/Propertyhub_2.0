@@ -34,16 +34,20 @@ function main() {
     process.exit(1);
   }
 
-  for (const pattern of PRODUCTION_PATTERNS) {
-    if (pattern.test(target)) {
-      console.error("DAST blocked: target matches a production URL pattern.");
-      console.error("Use an explicit staging or preview environment only.");
-      process.exit(1);
+  const allowNonStaging = process.env.DAST_ALLOW_NON_STAGING === "true";
+
+  if (!allowNonStaging) {
+    for (const pattern of PRODUCTION_PATTERNS) {
+      if (pattern.test(target)) {
+        console.error("DAST blocked: target matches a production URL pattern.");
+        console.error("Use an explicit staging or preview environment only.");
+        process.exit(1);
+      }
     }
   }
 
   const looksStaging = STAGING_HINTS.some((hint) => hint.test(target));
-  if (!looksStaging && process.env.DAST_ALLOW_NON_STAGING !== "true") {
+  if (!looksStaging && !allowNonStaging) {
     console.error("DAST blocked: target does not look like staging/preview/localhost.");
     console.error("Set DAST_ALLOW_NON_STAGING=true only for approved isolated test hosts.");
     process.exit(1);

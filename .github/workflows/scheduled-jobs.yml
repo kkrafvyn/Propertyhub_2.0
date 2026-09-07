@@ -27,6 +27,7 @@ jobs:
           fi
           npm run ops:health
         env:
+          NODE_OPTIONS: --import ./scripts/lib/ensure-node-websocket.mjs
           SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
@@ -38,6 +39,7 @@ jobs:
           fi
           npm run jobs:run-all
         env:
+          NODE_OPTIONS: --import ./scripts/lib/ensure-node-websocket.mjs
           SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}

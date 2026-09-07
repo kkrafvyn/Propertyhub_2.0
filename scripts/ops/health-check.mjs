@@ -2,6 +2,7 @@
 // Operational health check — verifies the live Supabase project is reachable
 // and reports queue backlogs so a scheduler/monitor can alert on regressions.
 // Exit code 1 = unhealthy (unreachable or a queue is stuck).
+import "../lib/ensure-node-websocket.mjs";
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
