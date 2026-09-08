@@ -419,4 +419,4 @@ npm run supabase:deploy:payments -- --skip-db
 
 ---
 
-*Generated from git history (97 commits on `main`) and production hardening session notes.*
+*Generated from git history and production hardening sessions. See [VULNERABILITY_STATUS.md](./VULNERABILITY_STATUS.md) for current open items.*

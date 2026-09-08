@@ -1,6 +1,6 @@
 import { getCorsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import { enforceRateLimit, rateLimitKey } from "../_shared/rate-limit.ts";
-import { assertOrgAiEnabled, requireOrgMembership } from "../_shared/org-auth.ts";
+import { requireOrgAiAccess } from "../_shared/org-auth.ts";
 import { createAdminClient, requireAuthenticatedUser } from "../_shared/supabase.ts";
 import {
   type AiSource,
@@ -134,12 +134,17 @@ Deno.serve(async (req) => {
       }
 
       const admin = createAdminClient();
-      await requireOrgMembership(admin, user.id, organizationId);
-      await assertOrgAiEnabled(admin, organizationId);
+      await requireOrgAiAccess(admin, user.id, organizationId, action);
+    } else if (action === "summarize_document") {
+      if (!organizationId) {
+        throw new HttpError(400, "organizationId is required to summarize workspace documents");
+      }
+
+      const admin = createAdminClient();
+      await requireOrgAiAccess(admin, user.id, organizationId, action);
     } else if (organizationId && WORKSPACE_CONTEXTS.has(context || "")) {
       const admin = createAdminClient();
-      await requireOrgMembership(admin, user.id, organizationId);
-      await assertOrgAiEnabled(admin, organizationId);
+      await requireOrgAiAccess(admin, user.id, organizationId, action);
     }
 
     let answer: string | null = null;

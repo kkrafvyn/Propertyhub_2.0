@@ -84,6 +84,40 @@ export async function assertOrgAiEnabled(admin: SupabaseClient, organizationId: 
   }
 }
 
+export async function assertAiToolAllowed(
+  admin: SupabaseClient,
+  organizationId: string,
+  toolName: string,
+) {
+  const { data, error } = await admin
+    .from("ai_tool_allowlist")
+    .select("enabled")
+    .eq("organization_id", organizationId)
+    .eq("tool_name", toolName)
+    .maybeSingle();
+
+  if (error) {
+    throw new HttpError(500, error.message);
+  }
+
+  if (data && data.enabled === false) {
+    throw new HttpError(403, `AI tool "${toolName}" is disabled for this organization`);
+  }
+}
+
+export async function requireOrgAiAccess(
+  admin: SupabaseClient,
+  userId: string,
+  organizationId: string,
+  toolName?: string,
+) {
+  await requireOrgMembership(admin, userId, organizationId);
+  await assertOrgAiEnabled(admin, organizationId);
+  if (toolName) {
+    await assertAiToolAllowed(admin, organizationId, toolName);
+  }
+}
+
 export async function requireVisitorPassInOrg(
   admin: SupabaseClient,
   passId: string,

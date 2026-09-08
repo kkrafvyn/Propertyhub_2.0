@@ -4,6 +4,7 @@ import {
   recordInitiatedPropertyRefund,
 } from "../_shared/refund-reconciliation.ts";
 import { createPayangelsRefund } from "../_shared/payangels.ts";
+import { requireFinanceMembership } from "../_shared/org-auth.ts";
 import { createAdminClient, requireAuthenticatedUser } from "../_shared/supabase.ts";
 
 function parseRefundAmountToMinorUnits(amount: unknown) {
@@ -72,18 +73,17 @@ Deno.serve(async (req) => {
       throw new HttpError(404, "Property transaction not found");
     }
 
-    const { data: membership, error: membershipError } = await admin
-      .from("organization_members")
-      .select("role")
-      .eq("organization_id", transaction.organization_id)
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (membershipError) {
-      throw new HttpError(500, membershipError.message);
+    let financeAuthorized = false;
+    try {
+      await requireFinanceMembership(admin, user.id, transaction.organization_id);
+      financeAuthorized = true;
+    } catch (membershipError) {
+      if (!(membershipError instanceof HttpError) || membershipError.status !== 403) {
+        throw membershipError;
+      }
     }
 
-    if (!membership || !["owner", "manager"].includes(membership.role)) {
+    if (!financeAuthorized) {
       const { data: payerRow } = await admin
         .from("property_transactions")
         .select("payer_user_id, purpose")
@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
         payerRow?.payer_user_id === user.id && payerRow?.purpose === "booking_fee";
 
       if (!isGuestBookingRefund) {
-        throw new HttpError(403, "Only workspace owners and managers can issue refunds");
+        throw new HttpError(403, "Only finance-capable workspace roles can issue refunds");
       }
     }
 

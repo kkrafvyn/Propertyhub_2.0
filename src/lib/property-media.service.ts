@@ -51,15 +51,17 @@ export const propertyMediaService = {
 
       if (uploadError) throw uploadError;
 
-      const { data: publicUrlData } = supabase.storage
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from(PROPERTY_MEDIA_BUCKET)
-        .getPublicUrl(storagePath);
+        .createSignedUrl(storagePath, 60 * 60 * 24 * 7);
+
+      if (signedUrlError) throw signedUrlError;
 
       const insertPayload: PropertyMediaInsert = {
         property_id: params.propertyId,
         organization_id: params.organizationId,
         storage_path: storagePath,
-        public_url: publicUrlData.publicUrl,
+        public_url: signedUrlData?.signedUrl || null,
         alt_text: params.altText || null,
         sort_order: existingMedia.length + index,
         is_primary: existingMedia.length === 0 && index === 0,

@@ -1,6 +1,7 @@
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import { reconcilePaystackPayment } from "../_shared/payment-reconciliation.ts";
 import { verifyPayangelsTransaction } from "../_shared/payangels.ts";
+import { FINANCE_MEMBER_ROLES } from "../_shared/org-auth.ts";
 import { requireAuthenticatedUser, createAdminClient } from "../_shared/supabase.ts";
 
 Deno.serve(async (req) => {
@@ -42,14 +43,15 @@ Deno.serve(async (req) => {
     let isOrgMember = false;
 
     if (!isPayer) {
-      const financeRoles = ["owner", "manager", "finance_manager", "finance_officer", "finance"];
       const { data: membership } = await admin
         .from("organization_members")
         .select("id, role")
         .eq("organization_id", propertyTransaction.organization_id)
         .eq("user_id", user.id)
         .maybeSingle();
-      isOrgMember = Boolean(membership && financeRoles.includes(String(membership.role || "")));
+      isOrgMember = Boolean(
+        membership && FINANCE_MEMBER_ROLES.includes(String(membership.role || "") as typeof FINANCE_MEMBER_ROLES[number]),
+      );
     }
 
     if (!isPayer && !isOrgMember) {

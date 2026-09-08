@@ -95,10 +95,7 @@ export interface PaystackRefundWebhookData {
 }
 
 function getPayangelsSecretKey() {
-  const secretKey =
-    Deno.env.get("PAYANGELS_SECRET_KEY")?.trim() ||
-    Deno.env.get("PAYSTACK_SECRET_KEY")?.trim() ||
-    Deno.env.get("STRIPE_SECRET_KEY")?.trim();
+  const secretKey = Deno.env.get("PAYANGELS_SECRET_KEY")?.trim();
   if (!secretKey) {
     throw new HttpError(503, "Checkout is not configured");
   }
@@ -107,22 +104,31 @@ function getPayangelsSecretKey() {
 }
 
 export function isPayangelsConfigured() {
-  return Boolean(
-    Deno.env.get("PAYANGELS_SECRET_KEY")?.trim() ||
-      Deno.env.get("PAYSTACK_SECRET_KEY")?.trim() ||
-      Deno.env.get("STRIPE_SECRET_KEY")?.trim()
-  );
+  return Boolean(Deno.env.get("PAYANGELS_SECRET_KEY")?.trim());
+}
+
+function timingSafeEqualHex(a: string, b: string) {
+  const left = a.trim().toLowerCase();
+  const right = b.trim().toLowerCase();
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  let mismatch = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    mismatch |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  }
+
+  return mismatch === 0;
 }
 
 export function verifyPayangelsWebhookSignature(body: string, signature: string | null) {
-  if (!signature) return false;
+  if (!signature) return Promise.resolve(false);
 
   const secret =
-    Deno.env.get("PAYANGELS_WEBHOOK_SECRET") ||
-    Deno.env.get("PAYANGELS_SECRET_KEY") ||
-    Deno.env.get("PAYSTACK_WEBHOOK_SECRET") ||
-    Deno.env.get("PAYSTACK_SECRET_KEY");
-  if (!secret) return false;
+    Deno.env.get("PAYANGELS_WEBHOOK_SECRET")?.trim() ||
+    Deno.env.get("PAYANGELS_SECRET_KEY")?.trim();
+  if (!secret) return Promise.resolve(false);
 
   const data = new TextEncoder().encode(body);
   const keyData = new TextEncoder().encode(secret);
@@ -135,7 +141,7 @@ export function verifyPayangelsWebhookSignature(body: string, signature: string 
         .map((byte) => byte.toString(16).padStart(2, "0"))
         .join("");
 
-      return computed === signature;
+      return timingSafeEqualHex(computed, signature);
     });
 }
 
