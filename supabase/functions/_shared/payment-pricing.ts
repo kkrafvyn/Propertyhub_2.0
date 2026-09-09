@@ -40,12 +40,35 @@ export function resolvePaymentAmountMinor(input: {
   return expectedMinor;
 }
 
+/** Paystack/PayAngels verify API returns amount in minor units (subunits). */
+export function normalizePaystackAmountMinor(rawAmount: number, expectedMinor: number) {
+  const value = Math.round(Number(rawAmount || 0));
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new HttpError(400, "Payment amount is missing from provider response");
+  }
+
+  if (value === expectedMinor) {
+    return value;
+  }
+
+  const asMajorMinor = Math.round(value * 100);
+  if (asMajorMinor === expectedMinor) {
+    return asMajorMinor;
+  }
+
+  if (expectedMinor > 0 && value <= Math.max(1, Math.floor(expectedMinor / 50))) {
+    return asMajorMinor;
+  }
+
+  return value;
+}
+
 export function assertPaystackAmountMatch(input: {
   expectedMinor: number;
   paystackAmountMajor: number;
   currency: string;
 }) {
-  const paystackMinor = Math.round(Number(input.paystackAmountMajor) * 100);
+  const paystackMinor = normalizePaystackAmountMinor(input.paystackAmountMajor, input.expectedMinor);
   if (paystackMinor !== input.expectedMinor) {
     throw new HttpError(400, "Payment amount does not match transaction record");
   }

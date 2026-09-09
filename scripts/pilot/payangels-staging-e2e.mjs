@@ -28,8 +28,8 @@ function ok(message) {
   console.log(`✓ ${message}`);
 }
 
-function hmacSha256(secret, payload) {
-  return crypto.createHmac("sha256", secret).update(payload, "utf8").digest("hex");
+function hmacSha512(secret, payload) {
+  return crypto.createHmac("sha512", secret).update(payload, "utf8").digest("hex");
 }
 
 async function signIn(env) {
@@ -121,7 +121,7 @@ async function main() {
       },
     };
     const payload = JSON.stringify(webhook);
-    const signature = `sha256=${hmacSha256(webhookSecret, payload)}`;
+    const signature = hmacSha512(webhookSecret, payload);
     const res = await fetch(`${env.VITE_SUPABASE_URL}/functions/v1/payangels-webhook`, {
       method: "POST",
       headers: {

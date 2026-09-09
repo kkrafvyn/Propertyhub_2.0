@@ -100,7 +100,8 @@ export function InAppCheckoutPage() {
 
   const currency = pricing?.currency || listing?.currency || paymentContext?.currency || "GHS";
   const amount = checkoutParams?.amount ?? 0;
-  const payableAmount = pricing ? pricing.totalWithTaxMinor / 100 : amount;
+  const serverSubtotalMajor = pricing ? pricing.totalMinor / 100 : amount;
+  const taxEstimateMajor = pricing ? pricing.taxMinor / 100 : 0;
   const purposeLabel = checkoutParams
     ? PURPOSE_LABELS[checkoutParams.purpose] || "Payment"
     : "Payment";
@@ -222,7 +223,6 @@ export function InAppCheckoutPage() {
 
       const checkout = await paymentService.initializePropertyPayment({
         listingId: checkoutParams.listingId,
-        amount: payableAmount,
         purpose: checkoutParams.purpose,
         bookingId: checkoutParams.bookingId,
         dealCaseId: checkoutParams.dealCaseId,
@@ -231,11 +231,20 @@ export function InAppCheckoutPage() {
         promoCode: appliedPromo || undefined,
       });
 
+      if (checkout.simulated || String(checkout.accessCode || "").startsWith("sim_")) {
+        throw new Error("Checkout is not configured for live payments.");
+      }
+
+      const chargeMinor =
+        Number(checkout.transaction?.amount_minor) ||
+        Number(checkout.pricing?.totalMinor) ||
+        Math.round(serverSubtotalMajor * 100);
+
       let paid = false;
 
       await openPayAngelsInline({
         email: user.email,
-        amountMinor: Math.round(payableAmount * 100),
+        amountMinor: chargeMinor,
         currency,
         reference: checkout.reference,
         accessCode: checkout.accessCode,
@@ -307,7 +316,7 @@ export function InAppCheckoutPage() {
           </div>
           <h1 className="mt-6 text-2xl font-semibold text-ink">Payment successful</h1>
           <p className="mt-2 text-ink-secondary">
-            {formatMoney(payableAmount, currency)} for {purposeLabel.toLowerCase()} has been received.
+            {formatMoney(serverSubtotalMajor, currency)} for {purposeLabel.toLowerCase()} has been received.
           </p>
           {completedReference ? (
             <p className="mt-2 text-sm text-ink-secondary">
@@ -430,7 +439,7 @@ export function InAppCheckoutPage() {
                   Opening secure payment…
                 </>
               ) : (
-                <>Pay {formatMoney(payableAmount, currency)}</>
+                <>Pay {formatMoney(serverSubtotalMajor, currency)}</>
               )}
             </Button>
 
@@ -485,7 +494,7 @@ export function InAppCheckoutPage() {
                   ) : null}
                   {pricing?.taxLines.map((line) => (
                     <div key={line.id} className="flex items-center justify-between">
-                      <span className="text-ink-secondary">{line.label}</span>
+                      <span className="text-ink-secondary">{line.label} (est.)</span>
                       <span className="font-medium text-ink">
                         {formatMoney(line.amountMinor / 100, currency)}
                       </span>
@@ -497,11 +506,16 @@ export function InAppCheckoutPage() {
                     </p>
                   ) : null}
                   <div className="flex items-center justify-between border-t border-surface-border pt-3">
-                    <span className="text-ink-secondary">Total</span>
+                    <span className="text-ink-secondary">Amount due</span>
                     <span className="text-xl font-semibold text-ink">
-                      {formatMoney(payableAmount, currency)}
+                      {formatMoney(serverSubtotalMajor, currency)}
                     </span>
                   </div>
+                  {taxEstimateMajor > 0 ? (
+                    <p className="text-xs text-ink-secondary">
+                      Tax shown as estimate ({formatMoney(taxEstimateMajor, currency)}) — not included in charge.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             )}

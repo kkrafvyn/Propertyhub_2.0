@@ -122,27 +122,44 @@ function timingSafeEqualHex(a: string, b: string) {
   return mismatch === 0;
 }
 
+function normalizeWebhookSignature(signature: string) {
+  const trimmed = signature.trim();
+  const lower = trimmed.toLowerCase();
+  if (lower.startsWith("sha512=")) return trimmed.slice(7).trim();
+  if (lower.startsWith("sha256=")) return trimmed.slice(7).trim();
+  return trimmed;
+}
+
+async function hmacHex(body: string, secret: string, algorithm: "SHA-512" | "SHA-256") {
+  const data = new TextEncoder().encode(body);
+  const keyData = new TextEncoder().encode(secret);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: algorithm },
+    false,
+    ["sign"],
+  );
+  const signatureBuffer = await crypto.subtle.sign("HMAC", key, data);
+  return Array.from(new Uint8Array(signatureBuffer))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 export function verifyPayangelsWebhookSignature(body: string, signature: string | null) {
   if (!signature) return Promise.resolve(false);
 
-  const secret =
-    Deno.env.get("PAYANGELS_WEBHOOK_SECRET")?.trim() ||
-    Deno.env.get("PAYANGELS_SECRET_KEY")?.trim();
+  const secret = Deno.env.get("PAYANGELS_WEBHOOK_SECRET")?.trim();
   if (!secret) return Promise.resolve(false);
 
-  const data = new TextEncoder().encode(body);
-  const keyData = new TextEncoder().encode(secret);
+  const normalized = normalizeWebhookSignature(signature);
 
-  return crypto.subtle
-    .importKey("raw", keyData, { name: "HMAC", hash: "SHA-512" }, false, ["sign"])
-    .then((key) => crypto.subtle.sign("HMAC", key, data))
-    .then((signatureBuffer) => {
-      const computed = Array.from(new Uint8Array(signatureBuffer))
-        .map((byte) => byte.toString(16).padStart(2, "0"))
-        .join("");
-
-      return timingSafeEqualHex(computed, signature);
-    });
+  return Promise.all([
+    hmacHex(body, secret, "SHA-512"),
+    hmacHex(body, secret, "SHA-256"),
+  ]).then(([sha512, sha256]) =>
+    timingSafeEqualHex(sha512, normalized) || timingSafeEqualHex(sha256, normalized)
+  );
 }
 
 async function payangelsFetch<T>(path: string, init: RequestInit = {}) {

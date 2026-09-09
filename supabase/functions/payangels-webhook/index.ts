@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
 
   try {
     const rawBody = await req.text();
-    const signature = req.headers.get("x-payangels-signature") || req.headers.get("x-payangels-signature");
+    const signature = req.headers.get("x-payangels-signature");
     const isValidSignature = await verifyPayangelsWebhookSignature(rawBody, signature);
 
     if (!isValidSignature) {
@@ -30,11 +30,23 @@ Deno.serve(async (req) => {
       };
     };
 
-    const eventId = String(event.data?.id || `${event.event}:${event.data?.reference || rawBody.slice(0, 64)}`);
+    const referenceHint =
+      event.data?.reference?.trim() || event.data?.transaction_reference?.trim() || null;
+    const eventId =
+      event.data?.id != null
+        ? String(event.data.id)
+        : referenceHint && event.event
+          ? `${event.event}:${referenceHint}`
+          : null;
+
+    if (!eventId) {
+      throw new HttpError(400, "Webhook payload is missing an event identifier");
+    }
+
     const replay = await recordWebhookEvent({
       provider: "payangels",
       eventId,
-      reference: event.data?.reference || null,
+      reference: referenceHint,
       payload: event as Record<string, unknown>,
     });
 

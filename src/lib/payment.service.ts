@@ -26,7 +26,7 @@ const PROPERTY_TRANSACTION_SELECT = `
 
 export interface InitializePropertyPaymentInput {
   listingId: string;
-  amount: number | string;
+  amount?: number | string;
   purpose?:
     | "deposit"
     | "rent"
@@ -58,12 +58,19 @@ export const paymentService = {
 
     if (error) throw error;
     return data as {
-      transaction: any;
+      transaction: { id?: string; amount_minor?: number } & Record<string, unknown>;
       authorizationUrl: string | null;
       accessCode?: string;
       reference: string;
       callbackUrl?: string;
       simulated?: boolean;
+      pricing?: {
+        baseMinor?: number;
+        platformFeeMinor?: number;
+        discountMinor?: number;
+        totalMinor?: number;
+        promoCode?: string | null;
+      };
     };
   },
 

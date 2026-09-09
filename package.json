@@ -86,6 +86,7 @@
     "ops:health": "node scripts/ops/health-check.mjs",
     "ops:smoke-live": "node scripts/ops/smoke-live.mjs",
     "ops:smoke-production": "node scripts/ops/smoke-production.mjs",
+    "ops:ensure-public-catalog": "node scripts/ops/ensure-public-catalog.mjs",
     "ops:sync-github-secrets": "node scripts/ops/sync-github-secrets.mjs",
     "load:pilot": "node scripts/load/pilot-flows.mjs",
     "pilot:payangels-e2e": "node scripts/pilot/payangels-staging-e2e.mjs",

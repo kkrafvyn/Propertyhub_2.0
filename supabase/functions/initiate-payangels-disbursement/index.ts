@@ -36,11 +36,16 @@ Deno.serve(async (req) => {
     const admin = createAdminClient();
     await requireFinanceMembership(admin, user.id, organizationId);
 
+    const externalId = workOrderId
+      ? `payangels_disb_wo_${workOrderId}`
+      : `payangels_disb_${approvalId}`;
+
     let auditEntityType = "estate_distribution_approval";
     let auditEntityId = approvalId;
     let metadata: Record<string, unknown> = {
       organizationId,
       requestedBy: user.id,
+      externalId,
       ...(body?.metadata && typeof body.metadata === "object" ? body.metadata : {}),
     };
 
@@ -56,6 +61,7 @@ Deno.serve(async (req) => {
           status,
           final_cost_pesewas,
           estimate_pesewas,
+          provider_disbursement_id,
           estate:managed_estates(organization_id)
         `)
         .eq("id", workOrderId)
@@ -63,6 +69,10 @@ Deno.serve(async (req) => {
 
       if (orderError) throw new HttpError(500, orderError.message);
       if (!order) throw new HttpError(404, "Work order not found");
+
+      if (order.provider_disbursement_id) {
+        throw new HttpError(409, "Disbursement already initiated for this work order");
+      }
 
       const orderOrgId = (
         order.estate as { organization_id?: string } | null
@@ -81,6 +91,20 @@ Deno.serve(async (req) => {
       if (expectedMinor > 0 && requestedMinor !== expectedMinor) {
         throw new HttpError(400, "Disbursement amount does not match the work order total");
       }
+
+      const { data: claimed, error: claimError } = await admin
+        .from("estate_contractor_work_orders")
+        .update({ provider_disbursement_id: externalId })
+        .eq("id", workOrderId)
+        .is("provider_disbursement_id", null)
+        .in("status", Array.from(WORK_ORDER_PAYOUT_STATUSES))
+        .select("id")
+        .maybeSingle();
+
+      if (claimError) throw new HttpError(500, claimError.message);
+      if (!claimed) {
+        throw new HttpError(409, "Disbursement already initiated for this work order");
+      }
     } else {
       metadata = { ...metadata, approvalId };
 
@@ -90,6 +114,7 @@ Deno.serve(async (req) => {
           id,
           status,
           requested_amount_minor,
+          payout_reference,
           statement:estate_owner_statement_runs(
             id,
             estate_id,
@@ -101,6 +126,10 @@ Deno.serve(async (req) => {
 
       if (approvalError) throw new HttpError(500, approvalError.message);
       if (!approval) throw new HttpError(404, "Distribution approval not found");
+
+      if (approval.payout_reference) {
+        throw new HttpError(409, "Disbursement already initiated for this approval");
+      }
 
       const statementOrgId = (
         approval.statement as { estate?: { organization_id?: string } | null } | null
@@ -119,6 +148,20 @@ Deno.serve(async (req) => {
       if (expectedMinor > 0 && requestedMinor !== expectedMinor) {
         throw new HttpError(400, "Disbursement amount does not match the approved distribution");
       }
+
+      const { data: claimed, error: claimError } = await admin
+        .from("estate_distribution_approvals")
+        .update({ status: "processing", payout_reference: externalId })
+        .eq("id", approvalId)
+        .in("status", ["approved", "processing"])
+        .is("payout_reference", null)
+        .select("id")
+        .maybeSingle();
+
+      if (claimError) throw new HttpError(500, claimError.message);
+      if (!claimed) {
+        throw new HttpError(409, "Disbursement already initiated for this approval");
+      }
     }
 
     const secret = Deno.env.get("PAYANGELS_SECRET_KEY")?.trim();
@@ -132,6 +175,7 @@ Deno.serve(async (req) => {
         currency: "GHS",
         recipient: phone,
         note: body?.note || "BaytMiftah disbursement",
+        externalId,
         metadata,
       }),
     });
@@ -147,7 +191,7 @@ Deno.serve(async (req) => {
       throw new HttpError(response.status || 502, payload?.message || "PayAngels disbursement failed");
     }
 
-    const referenceId = payload?.referenceId || payload?.reference || crypto.randomUUID();
+    const referenceId = payload?.referenceId || payload?.reference || externalId;
 
     await writeServerAuditLog({
       actorUserId: user.id,
@@ -159,6 +203,7 @@ Deno.serve(async (req) => {
         amountGhs: amount.toFixed(2),
         recipient: phone,
         referenceId,
+        externalId,
         providerStatus: payload?.status || "PENDING",
         ...(workOrderId ? { workOrderId } : { approvalId }),
       },
@@ -170,7 +215,7 @@ Deno.serve(async (req) => {
         success: true,
         type: "disbursement",
         referenceId,
-        externalId: `payangels_disb_${Date.now()}`,
+        externalId,
         amount: amount.toFixed(2),
         recipient: phone,
         status: payload?.status || "PENDING",

@@ -1,3 +1,4 @@
+import { HttpError } from "./http.ts";
 import { createAdminClient } from "./supabase.ts";
 
 export async function writeServerAuditLog(input: {
@@ -42,6 +43,7 @@ export async function recordWebhookEvent(input: {
 
   if (error) {
     console.error("webhook event record failed:", error.message);
+    throw new HttpError(503, "Unable to record webhook event");
   }
 
   return { duplicate: false };

@@ -19,6 +19,7 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { currencyService } from '@/lib/currency.service'
 import { internationalPaymentService } from '@/lib/international-payment.service'
+import { revenueManagementService } from '@/lib/revenue-management.service'
 import { paymentService } from '@/lib/payment.service'
 import { listingService } from '@/lib/listing.service'
 import {
@@ -58,9 +59,21 @@ interface PaymentState {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function getFeeSummary(amount: number, providerId?: string) {
-  if (!providerId) return { subtotal: amount, fee: 0, total: amount }
-  return internationalPaymentService.calculateFees(amount, providerId)
+async function getFeeSummary(amount: number, purpose = 'other') {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { subtotal: amount, fee: 0, total: amount }
+  }
+  try {
+    const preview = await revenueManagementService.previewCheckoutPricing({
+      baseAmountMajor: amount,
+      purpose,
+    })
+    const feeMajor = preview.platformFeeMinor / 100
+    const totalMajor = preview.totalMinor / 100
+    return { subtotal: amount, fee: feeMajor, total: totalMajor }
+  } catch {
+    return { subtotal: amount, fee: 0, total: amount }
+  }
 }
 
 function getPaymentIcon(provider: string, size = 'w-5 h-5') {
@@ -237,7 +250,7 @@ export function PaymentCheckout({
       setPaymentMethods(methods)
       if (methods.length > 0) {
         const def = methods.find((m) => m.id === config.defaultMethod) || methods[0]
-        const fs = getFeeSummary(paymentState.amount, def.provider)
+        const fs = await getFeeSummary(paymentState.amount)
         setPaymentState((prev) => ({ ...prev, paymentMethod: def.id, selectedPaymentInfo: def, feesCalculated: fs.fee, totalAmount: fs.total }))
       }
       if (user?.id) {
@@ -249,10 +262,10 @@ export function PaymentCheckout({
     }
   }
 
-  function handleMethodSelect(methodId: string) {
+  async function handleMethodSelect(methodId: string) {
     const selected = paymentMethods.find((m) => m.id === methodId)
     if (!selected) return
-    const fs = getFeeSummary(paymentState.amount, selected.provider)
+    const fs = await getFeeSummary(paymentState.amount)
     setPaymentState((prev) => ({ ...prev, paymentMethod: methodId, selectedPaymentInfo: selected, feesCalculated: fs.fee, totalAmount: fs.total }))
   }
 
@@ -275,15 +288,20 @@ export function PaymentCheckout({
         throw new Error(`Checkout is not configured for properties in ${paymentContext.propertyLabel}.`)
       }
 
-      const checkout = await paymentService.initializePropertyPayment({ listingId, amount: paymentState.totalAmount, purpose: 'other' })
+      const checkout = await paymentService.initializePropertyPayment({ listingId, purpose: 'other' })
       if (checkout.simulated || String(checkout.accessCode || '').startsWith('sim_')) {
         throw new Error('Checkout is not configured for live payments.')
       }
 
+      const chargeMinor =
+        Number(checkout.transaction?.amount_minor) ||
+        Number(checkout.pricing?.totalMinor) ||
+        Math.round(paymentState.totalAmount * 100)
+
       let paid = false
       await openPayAngelsInline({
         email: user.email!,
-        amountMinor: Math.round(paymentState.totalAmount * 100),
+        amountMinor: chargeMinor,
         currency: paymentContext.currency,
         reference: checkout.reference,
         accessCode: checkout.accessCode,
@@ -362,8 +380,9 @@ export function PaymentCheckout({
                       value={paymentState.amount}
                       onChange={(e) => {
                         const next = Number.parseFloat(e.target.value) || 0
-                        const fs = getFeeSummary(next, paymentState.selectedPaymentInfo?.provider)
-                        setPaymentState((prev) => ({ ...prev, amount: next, feesCalculated: fs.fee, totalAmount: fs.total }))
+                        void getFeeSummary(next).then((fs) => {
+                          setPaymentState((prev) => ({ ...prev, amount: next, feesCalculated: fs.fee, totalAmount: fs.total }))
+                        })
                       }}
                       className="w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary/30 outline-none bg-background text-foreground text-lg font-bold"
                       placeholder="0.00"

@@ -382,7 +382,7 @@ function DesktopHero({
     { label: t("home.heroForRent"), to: "/search?listingType=rental", icon: Key },
     { label: t("home.heroForSale"), to: "/search?listingType=sale", icon: HomeIcon },
     { label: t("home.heroShortStays"), to: "/search?listingType=short_stay", icon: Compass },
-    { label: t("home.heroVerified"), to: "/search?verified=true", icon: ShieldCheck },
+    { label: t("home.heroVerified"), to: "/search?verified=1", icon: ShieldCheck },
   ];
 
   return (

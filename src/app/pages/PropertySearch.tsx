@@ -63,7 +63,7 @@ function buildFiltersFromSearchParams(searchParams: URLSearchParams): SearchFilt
     agency: searchParams.get("agency") || "",
     region: searchParams.get("region") || "all",
     sort: searchParams.get("sort") || "newest",
-    verifiedOnly: searchParams.get("verified") === "1",
+    verifiedOnly: ["1", "true"].includes(searchParams.get("verified") || ""),
     featuredOnly: searchParams.get("featured") === "1",
   };
 }
@@ -119,7 +119,13 @@ export function PropertySearch() {
         ]);
         if (!cancelled) {
           setUserAlerts(alerts);
-          setSavedListingIds(new Set((savedRows || []).map((row: any) => row.listing_id)));
+          setSavedListingIds(
+            new Set(
+              (savedRows || [])
+                .map((row: any) => row.listing?.id || row.listing_id)
+                .filter(Boolean)
+            )
+          );
         }
       } catch (error) {
         console.error("Failed to load saved search data:", error);
@@ -519,14 +525,24 @@ export function PropertySearch() {
 
   const handleCategoryChange = (id: string) => {
     const nextParams = new URLSearchParams(searchParams);
-    if (id === "all") nextParams.delete("propertyType");
-    else nextParams.set("propertyType", id);
+    nextParams.delete("verified");
+    if (id === "all") {
+      nextParams.delete("propertyType");
+    } else if (id === "verified") {
+      nextParams.delete("propertyType");
+      nextParams.set("verified", "1");
+    } else {
+      nextParams.set("propertyType", id);
+    }
     nextParams.set("page", "1");
     setSearchParams(nextParams);
   };
 
-  const categoryActive =
-    filters.propertyType && filters.propertyType !== "all" ? filters.propertyType : "all";
+  const categoryActive = filters.verifiedOnly
+    ? "verified"
+    : filters.propertyType && filters.propertyType !== "all"
+      ? filters.propertyType
+      : "all";
 
   const handleHeaderSearch = () => {
     const nextParams = new URLSearchParams(searchParams);

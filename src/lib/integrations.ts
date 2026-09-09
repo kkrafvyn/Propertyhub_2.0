@@ -39,7 +39,7 @@ export const clientIntegrations = {
       return !!firstEnv("VITE_PAYANGELS_PUBLIC_KEY");
     },
     get checkoutReady() {
-      return clientIntegrations.supabase.configured;
+      return clientIntegrations.supabase.configured && clientIntegrations.payangels.clientConfigured;
     },
     get configured() {
       return clientIntegrations.payangels.checkoutReady;
