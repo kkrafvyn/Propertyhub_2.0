@@ -250,76 +250,126 @@ export function WorkspaceDashboard({
 
   if (loading) {
     return (
-      <Card className="p-8 text-center text-ink-secondary bg-surface border-surface-border">
-        Loading tailored workspace view...
-      </Card>
+      <div className="space-y-6 animate-pulse">
+        <div className="h-14 rounded-2xl bg-surface-subtle border border-surface-border" />
+        <div className="h-36 rounded-3xl bg-gradient-to-br from-emerald-500/8 via-amber-500/4 to-surface border border-emerald-500/15" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-28 rounded-2xl bg-surface-subtle border border-surface-border" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-64 rounded-2xl bg-surface-subtle border border-surface-border" />
+          ))}
+        </div>
+      </div>
     );
   }
+
+  const roleConfig = [
+    {
+      role: "owner" as MemberRole,
+      label: "Owner / Exec",
+      icon: Crown,
+      color: "text-amber-500",
+      ring: "ring-amber-500/30",
+      bg: "bg-amber-500/10",
+      gradient: "from-amber-500/15 via-amber-500/5",
+    },
+    {
+      role: "manager" as MemberRole,
+      label: "Estate Manager",
+      icon: Briefcase,
+      color: "text-emerald-500",
+      ring: "ring-emerald-500/30",
+      bg: "bg-emerald-500/10",
+      gradient: "from-emerald-500/15 via-emerald-500/5",
+    },
+    {
+      role: "agent" as MemberRole,
+      label: "Leasing Agent",
+      icon: Users,
+      color: "text-blue-500",
+      ring: "ring-blue-500/30",
+      bg: "bg-blue-500/10",
+      gradient: "from-blue-500/15 via-blue-500/5",
+    },
+    {
+      role: "analyst" as MemberRole,
+      label: "Data Analyst",
+      icon: LineChart,
+      color: "text-purple-500",
+      ring: "ring-purple-500/30",
+      bg: "bg-purple-500/10",
+      gradient: "from-purple-500/15 via-purple-500/5",
+    },
+  ] as const;
+
+  const activeRoleConfig = roleConfig.find((r) => r.role === activeRole) || roleConfig[0];
 
   return (
     <div className="space-y-8">
       {/* Role Switcher Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-surface-subtle border border-surface-border">
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-bold text-ink-secondary uppercase tracking-wider">
-            Viewing Workspace As:
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 sm:p-4 rounded-2xl bg-surface-subtle/80 border border-surface-border backdrop-blur-sm">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-[10px] font-black text-ink-muted uppercase tracking-[0.15em] whitespace-nowrap">
+            Viewing As:
           </span>
           <div className="flex flex-wrap gap-1.5">
-            {(
-              [
-                { role: "owner" as MemberRole, label: "Owner / Exec", icon: Crown, color: "text-amber-500" },
-                { role: "manager" as MemberRole, label: "Estate Manager", icon: Briefcase, color: "text-emerald-500" },
-                { role: "agent" as MemberRole, label: "Leasing Agent", icon: Users, color: "text-blue-500" },
-                { role: "analyst" as MemberRole, label: "Data Analyst", icon: LineChart, color: "text-purple-500" },
-              ] as const
-            ).map((r) => {
+            {roleConfig.map((r) => {
               const Icon = r.icon;
               const isActive = activeRole === r.role;
               return (
                 <button
                   key={r.role}
                   onClick={() => handleRoleSwitch(r.role)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition ${
+                  className={`relative px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
                     isActive
-                      ? "bg-surface text-ink border border-surface-border shadow-sm ring-2 ring-primary/20"
-                      : "text-ink-secondary hover:text-ink hover:bg-surface-hover"
+                      ? `bg-surface text-ink border border-surface-border/80 shadow-sm ring-2 ${r.ring}`
+                      : "text-ink-secondary hover:text-ink hover:bg-surface-hover border border-transparent"
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${r.color}`} />
-                  {r.label}
+                  {isActive && (
+                    <span className={`absolute inset-0 rounded-xl ${r.bg} opacity-50 pointer-events-none`} />
+                  )}
+                  <Icon className={`w-3.5 h-3.5 relative ${r.color}`} />
+                  <span className="relative">{r.label}</span>
                 </button>
               );
             })}
           </div>
         </div>
-
-        <Badge variant="outline" className="text-xs border-surface-border text-ink self-start sm:self-auto">
-          Role-Adaptive Workspace v2.0
-        </Badge>
+        <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full self-start sm:self-auto shrink-0">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          Live Telemetry
+        </span>
       </div>
 
       {/* Role-Specific Hero Header */}
-      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-emerald-500/10 via-amber-500/5 to-surface border border-emerald-500/20 shadow-lg backdrop-blur-sm">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-radial from-emerald-500/10 via-transparent to-transparent blur-3xl pointer-events-none" />
+      <div className={`relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br ${activeRoleConfig.gradient} to-surface border border-surface-border/80 shadow-xl backdrop-blur-sm transition-all duration-500`}>
+        {/* Atmospheric orb */}
+        <div className="absolute -top-16 -right-16 w-80 h-80 rounded-full bg-radial from-emerald-500/12 via-emerald-500/4 to-transparent blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-64 h-32 bg-gradient-to-t from-amber-500/6 to-transparent blur-2xl pointer-events-none" />
+
         <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <Badge variant="success" dot pulse className="capitalize text-xs font-semibold px-2.5 py-0.5">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="success" dot pulse className="capitalize text-xs font-bold px-2.5 py-0.5">
                 {activeRole} Perspective
               </Badge>
-              <span className="text-xs font-medium text-ink-muted">- {organization.name}</span>
-              <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full font-mono">
-                Live Telemetry
-              </span>
+              <span className="text-xs text-ink-muted font-medium">{organization.name}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink">
+
+            <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-ink leading-tight">
               {activeRole === "owner" && "Executive Portfolio & Yield Command"}
               {activeRole === "manager" && "Estate Operations & Facility Command"}
               {activeRole === "agent" && "Leasing Deals & Pipeline Accelerator"}
               {activeRole === "analyst" && "Intelligence & Macro Risk Studio"}
             </h1>
-            <p className="text-xs sm:text-sm text-ink-secondary max-w-2xl leading-relaxed">
-              {activeRole === "owner" && "Monitor gross rental yields, Bank of Ghana FX hedging, and enterprise revenue."}
+
+            <p className="text-xs sm:text-sm text-ink-secondary max-w-xl leading-relaxed">
+              {activeRole === "owner" && "Monitor gross rental yields, Bank of Ghana FX hedging, and enterprise revenue in real-time."}
               {activeRole === "manager" && "Oversee gate passes, 150-point offline inspections, and artisan work order dispatches."}
               {activeRole === "agent" && "Close tenancy deals, verify Act 220 lease compliance, and dispatch WhatsApp payment links."}
               {activeRole === "analyst" && "Evaluate micro-market cap rates, rental inflation forecasting, and portfolio valuations."}
@@ -331,24 +381,23 @@ export function WorkspaceDashboard({
             {activeRole === "owner" && (
               <>
                 <Link to={`${workspaceBasePath}/ai-rent-yield`}>
-                  <Button size="sm" variant="gradient" className="gap-1.5 shadow-sm shadow-emerald-500/20">
+                  <Button size="sm" variant="gradient" className="gap-1.5 shadow-md shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-shadow">
                     <TrendingUp className="w-3.5 h-3.5" />
                     AI Yield Predictor
                   </Button>
                 </Link>
                 <Link to={`${workspaceBasePath}/multi-currency-fx`}>
-                  <Button size="sm" variant="glass" className="gap-1.5 border-amber-500/30 text-ink">
+                  <Button size="sm" variant="glass" className="gap-1.5 border-amber-500/30 text-ink hover:border-amber-500/50 transition-colors">
                     <Coins className="w-3.5 h-3.5 text-amber-500" />
                     FX & Hedging Hub
                   </Button>
                 </Link>
               </>
             )}
-
             {activeRole === "manager" && (
               <>
                 <Link to={`${workspaceBasePath}/inspections`}>
-                  <Button size="sm" variant="gradient" className="gap-1.5 shadow-sm shadow-emerald-500/20">
+                  <Button size="sm" variant="gradient" className="gap-1.5 shadow-md shadow-emerald-500/25">
                     <FileCheck className="w-3.5 h-3.5" />
                     150-Point Inspection
                   </Button>
@@ -361,11 +410,10 @@ export function WorkspaceDashboard({
                 </Link>
               </>
             )}
-
             {activeRole === "agent" && (
               <>
                 <Link to={`${workspaceBasePath}/whatsapp-hub`}>
-                  <Button size="sm" variant="gradient" className="gap-1.5 shadow-sm shadow-emerald-500/20">
+                  <Button size="sm" variant="gradient" className="gap-1.5 shadow-md shadow-emerald-500/25">
                     <Send className="w-3.5 h-3.5" />
                     1-Click WhatsApp
                   </Button>
@@ -378,11 +426,10 @@ export function WorkspaceDashboard({
                 </Link>
               </>
             )}
-
             {activeRole === "analyst" && (
               <>
                 <Link to={`${workspaceBasePath}/ai-rent-yield`}>
-                  <Button size="sm" variant="gradient" className="gap-1.5 shadow-sm shadow-emerald-500/20">
+                  <Button size="sm" variant="gradient" className="gap-1.5 shadow-md shadow-emerald-500/25">
                     <TrendingUp className="w-3.5 h-3.5" />
                     Run Cap Model
                   </Button>
@@ -401,7 +448,7 @@ export function WorkspaceDashboard({
 
       {/* Role-Tailored KPI Grid */}
       {showKpiGrid ? (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" style={{ '--stagger': '80ms' } as React.CSSProperties}>
         {activeRole === "owner" && (
           <>
             <MetricCard
@@ -410,6 +457,7 @@ export function WorkspaceDashboard({
               trend={{ value: "+12.4% vs last yr", isPositive: true, label: "YoY" }}
               icon={TrendingUp}
               iconColor="emerald"
+              glow
             />
             <MetricCard
               title="Net Portfolio Yield"
@@ -418,6 +466,7 @@ export function WorkspaceDashboard({
               trend={{ value: "+1.3% spread", isPositive: true }}
               icon={BarChart3}
               iconColor="primary"
+              glow
             />
             <MetricCard
               title="Total Collected (MoMo/Bank)"
@@ -445,6 +494,7 @@ export function WorkspaceDashboard({
               trend={{ value: "+2.1%", isPositive: true }}
               icon={Building2}
               iconColor="emerald"
+              glow
             />
             <MetricCard
               title="Pending Gate Clearances"
@@ -470,7 +520,6 @@ export function WorkspaceDashboard({
             />
           </>
         )}
-
         {activeRole === "agent" && (
           <>
             <MetricCard
@@ -479,6 +528,7 @@ export function WorkspaceDashboard({
               trend={{ value: "6 Hot WhatsApp", isPositive: true }}
               icon={Users}
               iconColor="primary"
+              glow
             />
             <MetricCard
               title="Viewings Scheduled Today"
@@ -513,6 +563,7 @@ export function WorkspaceDashboard({
               trend={{ value: "+4.2 pts", isPositive: true }}
               icon={TrendingUp}
               iconColor="primary"
+              glow
             />
             <MetricCard
               title="Weighted Cap Rate"
@@ -546,19 +597,21 @@ export function WorkspaceDashboard({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Active Inventory List */}
         {showListingsWidget ? (
-        <Card variant="glass" className="p-6 border-surface-border/80 hover:border-emerald-500/30 transition-all flex flex-col justify-between">
+        <Card variant="glass" className="p-6 border-surface-border/60 hover:border-emerald-500/40 hover:shadow-lg transition-all duration-300">
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-base font-bold text-ink flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-emerald-500" />
+                <h2 className="text-sm font-black text-ink flex items-center gap-2 uppercase tracking-wide">
+                  <span className="p-1.5 rounded-lg bg-emerald-500/10">
+                    <Building2 className="w-3.5 h-3.5 text-emerald-500" />
+                  </span>
                   Active Inventory
                 </h2>
-                <p className="text-xs text-ink-secondary">Managed units & rental availability</p>
+                <p className="text-[11px] text-ink-muted mt-0.5 ml-0.5">Managed units & rental availability</p>
               </div>
               <Link to={`${workspaceBasePath}/listings`}>
-                <Button variant="glass" size="sm" className="text-xs text-ink">
-                  View All
+                <Button variant="glass" size="sm" className="text-xs text-ink gap-1">
+                  View All <ChevronRight className="w-3 h-3" />
                 </Button>
               </Link>
             </div>
@@ -598,19 +651,21 @@ export function WorkspaceDashboard({
 
         {/* Viewing Schedule & Tenant Requests */}
         {showViewingsWidget ? (
-        <Card variant="glass" className="p-6 border-surface-border/80 hover:border-blue-500/30 transition-all flex flex-col justify-between">
+        <Card variant="glass" className="p-6 border-surface-border/60 hover:border-blue-500/40 hover:shadow-lg transition-all duration-300">
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-base font-bold text-ink flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-blue-500" />
+                <h2 className="text-sm font-black text-ink flex items-center gap-2 uppercase tracking-wide">
+                  <span className="p-1.5 rounded-lg bg-blue-500/10">
+                    <CalendarDays className="w-3.5 h-3.5 text-blue-500" />
+                  </span>
                   Upcoming Viewings
                 </h2>
-                <p className="text-xs text-ink-secondary">Confirmed calendar appointments</p>
+                <p className="text-[11px] text-ink-muted mt-0.5 ml-0.5">Confirmed calendar appointments</p>
               </div>
               <Link to={`${workspaceBasePath}/calendar`}>
-                <Button variant="glass" size="sm" className="text-xs text-ink">
-                  Calendar
+                <Button variant="glass" size="sm" className="text-xs text-ink gap-1">
+                  Calendar <ChevronRight className="w-3 h-3" />
                 </Button>
               </Link>
             </div>
@@ -648,14 +703,16 @@ export function WorkspaceDashboard({
 
         {/* Fast Action Shortcuts */}
         {showQuickActions ? (
-        <Card variant="glass" className="p-6 border-surface-border/80 hover:border-amber-500/30 transition-all flex flex-col justify-between">
+        <Card variant="glass" className="p-6 border-surface-border/60 hover:border-amber-500/40 hover:shadow-lg transition-all duration-300">
           <div>
-            <div className="mb-4">
-              <h2 className="text-base font-bold text-ink flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-500" />
+            <div className="mb-5">
+              <h2 className="text-sm font-black text-ink flex items-center gap-2 uppercase tracking-wide">
+                <span className="p-1.5 rounded-lg bg-amber-500/10">
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                </span>
                 Fast Action Launchpad
               </h2>
-              <p className="text-xs text-ink-secondary">Direct shortcuts for {activeRole} workflows</p>
+              <p className="text-[11px] text-ink-muted mt-0.5 ml-0.5">Direct shortcuts for {activeRole} workflows</p>
             </div>
 
             <div className="space-y-2">
@@ -744,9 +801,11 @@ export function WorkspaceDashboard({
         ) : null}
       </div>
       ) : (
-        <Card className="p-8 text-center text-ink-secondary bg-surface border-surface-border">
-          Dashboard widgets are hidden. Enable them in Customize Workspace.
-        </Card>
+        <div className="p-8 rounded-2xl text-center border border-dashed border-surface-border bg-surface-subtle/50">
+          <Layers className="w-8 h-8 text-ink-muted mx-auto mb-3" />
+          <p className="text-sm font-semibold text-ink-secondary">Dashboard widgets are hidden.</p>
+          <p className="text-xs text-ink-muted mt-1">Enable them in Customize Workspace settings.</p>
+        </div>
       )}
     </div>
   );

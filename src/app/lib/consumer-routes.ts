@@ -30,7 +30,7 @@ export const CONSUMER_ROUTES = {
   vendors: "/app/vendors",
   login: "/login",
   workspace: "/workspace",
-  kyc: "/app/settings#kyc",
+  kyc: "/app/kyc",
   checkout: "/checkout",
 } as const;
 

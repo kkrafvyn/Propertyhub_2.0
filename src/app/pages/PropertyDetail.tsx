@@ -15,9 +15,15 @@ import {
   CreditCard,
   Loader2,
   Shield,
+  ShieldCheck,
   FileText,
   Clock3,
   HandCoins,
+  ChevronLeft,
+  ChevronRight,
+  Images,
+  Maximize2,
+  X,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
@@ -68,6 +74,7 @@ export function PropertyDetail() {
   const { kyc } = useMyKyc();
   const { startCall } = useCall();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showAllPhotos, setShowAllPhotos] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
   const [listing, setListing] = useState<any | null>(null);
   const [relatedListings, setRelatedListings] = useState<any[]>([]);
@@ -247,6 +254,17 @@ export function PropertyDetail() {
   );
   const paymentCurrency = paymentContext?.currency || listing?.currency || "USD";
   const images = getPropertyImageGallery(property);
+
+  useEffect(() => {
+    if (!showAllPhotos) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowAllPhotos(false);
+      if (e.key === "ArrowLeft") setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+      if (e.key === "ArrowRight") setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showAllPhotos, images.length]);
   const locationQuery = property
     ? [property.address, property.city, property.region, property.country].filter(Boolean).join(", ")
     : "";
@@ -662,33 +680,112 @@ export function PropertyDetail() {
   return (
     <DesktopShell minimal>
       <div className="pb-12">
+        {/* Architectural Bento Photo Gallery */}
         <div className="mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[500px]">
-            <div className="md:col-span-3 h-full relative overflow-hidden rounded-xl">
-              <img src={images[currentImageIndex]} alt={pageTitle} className="w-full h-full object-cover" />
-              <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white px-4 py-2 rounded-lg">
+          {images.length >= 5 ? (
+            <div className="hidden lg:grid grid-cols-4 grid-rows-2 gap-3 h-[480px] xl:h-[530px] rounded-3xl overflow-hidden relative">
+              {/* Focal Hero Photo */}
+              <div
+                onClick={() => { setCurrentImageIndex(0); setShowAllPhotos(true); }}
+                className="col-span-2 row-span-2 relative group overflow-hidden cursor-pointer bg-surface-subtle"
+              >
+                <img
+                  src={images[0]}
+                  alt={pageTitle}
+                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                />
+                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
+                <div className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md px-3 py-1 text-xs font-medium text-white border border-white/20">
+                  <Maximize2 className="w-3 h-3" />
+                  <span>Click to expand</span>
+                </div>
+              </div>
+
+              {/* Photos 1, 2, 3, 4 in 2x2 grid on right */}
+              {images.slice(1, 5).map((image, index) => {
+                const photoIdx = index + 1;
+                const isLast = index === 3;
+                return (
+                  <div
+                    key={image}
+                    onClick={() => { setCurrentImageIndex(photoIdx); setShowAllPhotos(true); }}
+                    className="col-span-1 row-span-1 relative group overflow-hidden cursor-pointer bg-surface-subtle"
+                  >
+                    <img
+                      src={image}
+                      alt={`${pageTitle} ${photoIdx + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
+                    />
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
+                    {isLast && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setShowAllPhotos(true); }}
+                        className="absolute bottom-3 right-3 inline-flex items-center gap-2 rounded-xl border border-white/30 bg-black/65 hover:bg-black/80 backdrop-blur-md px-3.5 py-2 text-xs font-semibold text-white shadow-lg transition-all active:scale-95 cursor-pointer"
+                      >
+                        <Images className="w-3.5 h-3.5" />
+                        <span>All {images.length} photos</span>
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="relative overflow-hidden rounded-3xl h-[380px] sm:h-[460px] bg-surface-subtle">
+              <img
+                src={images[currentImageIndex] || images[0]}
+                alt={pageTitle}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-4 right-4 rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white border border-white/15">
                 {currentImageIndex + 1} / {images.length}
               </div>
             </div>
-            <div className="hidden md:flex flex-col gap-4 h-full">
-              {images.slice(1, 5).map((image, index) => (
-                <button
-                  key={image}
-                  onClick={() => setCurrentImageIndex(index + 1)}
-                  className="relative h-full overflow-hidden rounded-xl hover:opacity-80 transition-opacity"
-                >
-                  <img src={image} alt={`${pageTitle} ${index + 2}`} className="w-full h-full object-cover" />
-                </button>
-              ))}
+          )}
+
+          {/* Mobile / Tablet Gallery Carousel */}
+          <div className="lg:hidden relative overflow-hidden rounded-2xl aspect-[4/3] sm:aspect-[16/9] bg-surface-subtle mt-2">
+            <img
+              src={images[currentImageIndex]}
+              alt={pageTitle}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute bottom-3 right-3 rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white border border-white/15">
+              {currentImageIndex + 1} / {images.length}
             </div>
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/20"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/20"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </>
+            )}
           </div>
-          <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+
+          {/* Thumbnail Strip */}
+          <div className="flex gap-2.5 mt-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {images.map((image, index) => (
               <button
                 key={image}
                 onClick={() => setCurrentImageIndex(index)}
-                className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                  currentImageIndex === index ? "border-primary" : "border-transparent"
+                className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
+                  currentImageIndex === index
+                    ? "border-primary shadow-xs scale-105"
+                    : "border-transparent opacity-70 hover:opacity-100"
                 }`}
               >
                 <img src={image} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
@@ -697,13 +794,89 @@ export function PropertyDetail() {
           </div>
         </div>
 
+        {/* Fullscreen Photo Modal */}
+        {showAllPhotos && (
+          <div
+            className="fixed inset-0 z-[100] flex flex-col bg-black/95 text-white animate-in fade-in duration-200"
+            role="dialog"
+            aria-modal="true"
+          >
+            {/* Top Bar */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold">
+                  {currentImageIndex + 1} / {images.length}
+                </span>
+                <span className="text-xs text-white/60 truncate max-w-md hidden sm:inline">
+                  {pageTitle}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAllPhotos(false)}
+                className="flex items-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-semibold text-white transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+                <span>Close</span>
+              </button>
+            </div>
+
+            {/* Main Photo Center */}
+            <div className="relative flex-1 flex items-center justify-center p-4">
+              <img
+                src={images[currentImageIndex]}
+                alt={`${pageTitle} ${currentImageIndex + 1}`}
+                className="max-h-[78vh] max-w-[90vw] object-contain rounded-xl shadow-2xl"
+              />
+              {images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
+                    className="absolute left-6 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 hover:bg-white/25 text-white transition backdrop-blur-md cursor-pointer"
+                    aria-label="Previous photo"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
+                    className="absolute right-6 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 hover:bg-white/25 text-white transition backdrop-blur-md cursor-pointer"
+                    aria-label="Next photo"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Bottom Thumbnails */}
+            <div className="flex items-center justify-center gap-2 px-4 py-3 overflow-x-auto border-t border-white/10 max-h-24">
+              {images.map((img, idx) => (
+                <button
+                  key={img}
+                  onClick={() => setCurrentImageIndex(idx)}
+                  className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition cursor-pointer ${
+                    currentImageIndex === idx ? "border-primary scale-105" : "border-transparent opacity-50 hover:opacity-90"
+                  }`}
+                >
+                  <img src={img} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             <div>
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2 flex-wrap">
-                    <h1 className="text-3xl font-semibold">{pageTitle}</h1>
+                  <div className="flex items-center gap-2.5 mb-3 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                      {listing.listing_type === "rental" ? "Rental Property" : listing.listing_type === "lease" ? "Commercial Lease" : listing.listing_type === "short_stay" ? "Short Stay & Vacation" : "Property For Sale"}
+                    </span>
                     {organization?.verified && (
                       <TrustBadge
                         label={TRUST_LABELS.platform_reviewed_agency.short}
@@ -713,12 +886,15 @@ export function PropertyDetail() {
                     )}
                     {listingQualityScore !== null && listingQualityScore >= 75 && (
                       <TrustBadge
-                        label={`${TRUST_LABELS.listing_quality_score.short}: ${listingQualityScore}`}
+                        label={`${TRUST_LABELS.listing_quality_score.short}: ${listingQualityScore}/100`}
                         disclaimer={TRUST_LABELS.listing_quality_score.disclaimer}
                         className="shrink-0"
                       />
                     )}
                   </div>
+                  <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-foreground leading-[1.15] mb-3">
+                    {pageTitle}
+                  </h1>
                   {property ? (
                     <div className="mb-3">
                       <PropertyJurisdictionBadge
@@ -733,64 +909,94 @@ export function PropertyDetail() {
                     </div>
                   ) : null}
                   <div className="flex items-center gap-2 text-muted-foreground mb-4">
-                    <MapPin className="w-5 h-5" />
-                    <span>
+                    <MapPin className="w-4 h-4 text-primary shrink-0" />
+                    <span className="text-sm font-medium text-foreground">
                       {property.address}, {property.city}, {property.region}, {property.country}
                     </span>
+                    {property.ghana_post_gps && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono bg-surface-subtle border border-surface-border text-foreground">
+                        {property.ghana_post_gps}
+                      </span>
+                    )}
                   </div>
                   {locationMeta.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
                       {locationMeta.map((item) => (
                         <span
                           key={item}
-                          className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary"
+                          className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary"
                         >
                           {item}
                         </span>
                       ))}
                     </div>
                   )}
-                  <div className="text-4xl font-semibold text-primary">
-                    {paymentCurrency} {listing.price.toLocaleString()}
-                    <span className="text-lg text-muted-foreground ml-2">
-                      {listing.listing_type === "rental" ? "/month" : listing.listing_type === "lease" ? "/lease" : ""}
+                  <div className="flex items-baseline gap-2 pt-2">
+                    <span className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-primary">
+                      <span className="text-2xl sm:text-3xl font-normal text-muted-foreground mr-1">{paymentCurrency}</span>
+                      {listing.price.toLocaleString()}
+                    </span>
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {listing.listing_type === "rental" ? "/ month" : listing.listing_type === "lease" ? "/ lease term" : listing.listing_type === "short_stay" ? "/ night" : "total price"}
                     </span>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <ShareListingButton listing={mapListingToCard(listing)} variant="icon" />
-                  <Button variant="outline" size="sm" onClick={toggleSave}>
-                    <Heart className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : ""}`} />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleSave}
+                    className={`rounded-2xl transition-all duration-300 ${
+                      isSaved
+                        ? "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400 scale-105"
+                        : "hover:border-primary/40 hover:scale-105"
+                    }`}
+                    aria-label={isSaved ? "Remove from saved" : "Save property"}
+                  >
+                    <Heart className={`w-4 h-4 ${isSaved ? "fill-rose-500 text-rose-500" : ""}`} />
                   </Button>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-8 py-6 border-y border-border">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Bed className="w-6 h-6 text-primary" />
+              {/* Luxury Spec Tiles */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 py-6 border-y border-surface-border my-6">
+                <div className="flex items-center gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-surface-subtle/70 border border-surface-border/80 shadow-xs hover:border-primary/30 transition-colors">
+                  <div className="metric-halo metric-halo-primary">
+                    <Bed className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <div className="text-2xl font-semibold">{property.bedrooms ?? "N/A"}</div>
-                    <div className="text-sm text-muted-foreground">Bedrooms</div>
+                    <div className="text-xl sm:text-2xl font-bold text-foreground">{property.bedrooms ?? "N/A"}</div>
+                    <div className="text-xs font-medium text-muted-foreground">Bedrooms</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                    <Bath className="w-6 h-6 text-accent" />
+                <div className="flex items-center gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-surface-subtle/70 border border-surface-border/80 shadow-xs hover:border-emerald-500/30 transition-colors">
+                  <div className="metric-halo metric-halo-emerald">
+                    <Bath className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
-                    <div className="text-2xl font-semibold">{property.bathrooms ?? "N/A"}</div>
-                    <div className="text-sm text-muted-foreground">Bathrooms</div>
+                    <div className="text-xl sm:text-2xl font-bold text-foreground">{property.bathrooms ?? "N/A"}</div>
+                    <div className="text-xs font-medium text-muted-foreground">Bathrooms</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-chart-3/10 rounded-lg flex items-center justify-center">
-                    <Square className="w-6 h-6 text-chart-3" />
+                <div className="flex items-center gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-surface-subtle/70 border border-surface-border/80 shadow-xs hover:border-amber-500/30 transition-colors">
+                  <div className="metric-halo metric-halo-amber">
+                    <Square className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div>
-                    <div className="text-2xl font-semibold">{property.square_meters ? `${property.square_meters}m²` : "N/A"}</div>
-                    <div className="text-sm text-muted-foreground">Size</div>
+                    <div className="text-xl sm:text-2xl font-bold text-foreground">{property.square_meters ? `${property.square_meters}m²` : "N/A"}</div>
+                    <div className="text-xs font-medium text-muted-foreground">Property Size</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-surface-subtle/70 border border-surface-border/80 shadow-xs hover:border-terracotta/30 transition-colors">
+                  <div className="metric-halo metric-halo-terracotta">
+                    <ShieldCheck className="w-5 h-5 text-terracotta" />
+                  </div>
+                  <div>
+                    <div className="text-xl sm:text-2xl font-bold text-foreground capitalize truncate">
+                      {listing.listing_type || "Verified"}
+                    </div>
+                    <div className="text-xs font-medium text-muted-foreground">Contract Type</div>
                   </div>
                 </div>
               </div>
@@ -1042,49 +1248,110 @@ export function PropertyDetail() {
                 />
               </div>
             )}
-            <Card className="p-6 sticky top-24">
-              <div className="mb-6 space-y-4 border-b border-border pb-6">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Quick actions
-                </p>
-                <div className="grid grid-cols-1 gap-2">
-                  {listing.listing_type === "short_stay" ? (
-                    <Button className="w-full" onClick={() => setShowBookingForm(true)}>
-                      Book stay
-                    </Button>
-                  ) : (
-                    <>
-                      <Button className="w-full" onClick={() => setShowViewingForm(true)}>
-                        <MapPin className="w-4 h-4" />
-                        Book viewing
-                      </Button>
-                      {listing.listing_type === "sale" ? (
-                        <Button variant="outline" className="w-full" onClick={() => setShowOfferForm(true)}>
-                          <HandCoins className="w-4 h-4" />
-                          Make offer
-                        </Button>
-                      ) : (
-                        <Button variant="outline" className="w-full" onClick={() => setShowContactForm(true)}>
-                          <FileText className="w-4 h-4" />
-                          Apply
-                        </Button>
-                      )}
-                    </>
-                  )}
-                  <Button
-                    variant={isSaved ? "secondary" : "outline"}
-                    className="w-full"
-                    onClick={toggleSave}
-                  >
-                    <Heart className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : ""}`} />
-                    {isSaved ? "Saved" : "Save property"}
-                  </Button>
+            <Card variant="glass" className="p-6 lg:p-7 sticky top-24 rounded-3xl border border-surface-border/80 shadow-glass-card bg-surface/90 backdrop-blur-md">
+              {/* Price & Escrow Guarantee Header */}
+              <div className="flex items-center justify-between gap-3 mb-5 pb-5 border-b border-surface-border/60">
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+                    {listing.listing_type === "rental" ? "Monthly Rent" : listing.listing_type === "lease" ? "Lease Value" : listing.listing_type === "short_stay" ? "Nightly Rate" : "Asking Price"}
+                  </span>
+                  <div className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-primary">
+                    <span className="text-xl font-normal text-muted-foreground mr-1">{paymentCurrency}</span>
+                    {listing.price.toLocaleString()}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 shadow-xs">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Escrow Protected</span>
+                </div>
+              </div>
+
+              {/* Primary Call-to-Actions */}
+              <div className="space-y-3 mb-6">
+                {listing.listing_type === "short_stay" ? (
+                  <Button
+                    className="w-full font-semibold rounded-2xl bg-gradient-to-r from-primary to-primary-hover text-primary-foreground shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.98] transition-all py-3.5"
+                    onClick={() => setShowBookingForm(true)}
+                  >
+                    Reserve Short Stay
+                  </Button>
+                ) : (
+                  <>
+                    {listing.listing_type === "sale" ? (
+                      <Button
+                        className="w-full font-semibold rounded-2xl bg-gradient-to-r from-primary to-primary-hover text-primary-foreground shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.98] transition-all py-3.5 flex items-center justify-center gap-2"
+                        onClick={() => setShowOfferForm(true)}
+                      >
+                        <HandCoins className="w-4 h-4" />
+                        Make an Offer
+                      </Button>
+                    ) : (
+                      <Button
+                        className="w-full font-semibold rounded-2xl bg-gradient-to-r from-primary to-primary-hover text-primary-foreground shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.98] transition-all py-3.5 flex items-center justify-center gap-2"
+                        onClick={() => setShowContactForm(true)}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Apply for Lease
+                      </Button>
+                    )}
+
+                    <Button
+                      variant="outline"
+                      className="w-full font-semibold rounded-2xl hover:border-primary/40 hover:bg-surface-subtle transition-all py-3 flex items-center justify-center gap-2"
+                      onClick={() => setShowViewingForm(true)}
+                    >
+                      <MapPin className="w-4 h-4 text-primary" />
+                      Schedule Viewing
+                    </Button>
+                  </>
+                )}
+
+                {/* Secure Checkout Option */}
+                <Button
+                  variant="outline"
+                  className="w-full rounded-2xl text-xs font-semibold hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all flex items-center justify-center gap-2 text-foreground"
+                  onClick={() => setShowPaymentForm(true)}
+                >
+                  <CreditCard className="w-3.5 h-3.5 text-emerald-500" />
+                  Pay Deposit via PayAngels Escrow
+                </Button>
+              </div>
+
+              {/* Host & Agency Details */}
+              <div className="p-4 rounded-2xl bg-surface-subtle/70 border border-surface-border/70 mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-lg shrink-0 shadow-xs">
+                    {(organization?.name || "P").charAt(0)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h3 className="font-semibold text-sm text-foreground truncate">
+                        {organization?.name || "Property Team"}
+                      </h3>
+                      {organization?.verified && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
+                          <Check className="w-3 h-3" />
+                          Verified
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {listing.listing_type === "sale" ? "Licensed Sales Brokerage" : "Official Leasing Representative"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Direct Communication Grid (Voice, Video, In-App Chat, Email) */}
+              <div className="space-y-2 mb-6">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Connect Directly
+                </p>
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                    className="rounded-xl border-surface-border hover:border-emerald-500/40 hover:bg-emerald-500/5 text-foreground flex items-center justify-center gap-1.5 text-xs font-medium"
                     onClick={() => {
                       void startCall(
                         {
@@ -1099,13 +1366,13 @@ export function PropertyDetail() {
                       );
                     }}
                   >
-                    <Phone className="w-4 h-4 text-emerald-500" />
+                    <Phone className="w-3.5 h-3.5 text-emerald-500" />
                     Voice Call
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-teal-500/30 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/40"
+                    className="rounded-xl border-surface-border hover:border-teal-500/40 hover:bg-teal-500/5 text-foreground flex items-center justify-center gap-1.5 text-xs font-medium"
                     onClick={() => {
                       void startCall(
                         {
@@ -1120,118 +1387,42 @@ export function PropertyDetail() {
                       );
                     }}
                   >
-                    <VideoIcon className="w-4 h-4 text-teal-500" />
-                    Live Video Tour
+                    <VideoIcon className="w-3.5 h-3.5 text-teal-500" />
+                    Live Tour
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => void handleShare()}>
-                    <Share2 className="w-4 h-4" />
-                    Share
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    aria-label="Start inquiry"
+                    className="rounded-xl border-surface-border hover:border-primary/40 hover:bg-primary/5 text-foreground flex items-center justify-center gap-1.5 text-xs font-medium"
+                    onClick={() => setShowContactForm(true)}
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 text-primary" />
+                    Start inquiry
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setShowContactForm(true)}>
-                    <MessageCircle className="w-4 h-4" />
-                    Contact
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl border-surface-border hover:border-surface-border/80 text-foreground flex items-center justify-center gap-1.5 text-xs font-medium"
+                    onClick={() => organization?.email && window.open(`mailto:${organization.email}`)}
+                  >
+                    <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+                    Email
                   </Button>
-                  {listing.listing_type === "sale" ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate("/app/mortgage")}
-                    >
-                      <Shield className="w-4 h-4" />
-                      Mortgage
-                    </Button>
-                  ) : null}
                 </div>
+
+                {listing.listing_type === "sale" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs text-muted-foreground hover:text-primary mt-1"
+                    onClick={() => navigate("/app/mortgage")}
+                  >
+                    <Shield className="w-3.5 h-3.5 mr-1 text-primary" />
+                    Estimate Monthly Mortgage Payment
+                  </Button>
+                )}
               </div>
-
-              <div className="mb-6 mt-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                    <span className="text-2xl font-semibold text-primary">
-                      {(organization?.name || "P").charAt(0)}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">{organization?.name || "Property Team"}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {listing.listing_type === "sale" ? "Sales" : "Leasing"} team
-                    </p>
-                    {organization?.verified && (
-                      <div className="flex items-center gap-1 text-accent text-xs mt-1">
-                        <Check className="w-3 h-3" />
-                        Verified Organization
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3 mb-6">
-                <Button
-                  size="lg"
-                  className="w-full"
-                  onClick={() => organization?.phone && window.open(`tel:${organization.phone}`)}
-                >
-                  <Phone className="w-5 h-5" />
-                  Call Team
-                </Button>
-                <Button variant="outline" size="lg" className="w-full" onClick={() => setShowContactForm(true)}>
-                  <MessageCircle className="w-5 h-5" />
-                  Send Message
-                </Button>
-                <MessageHostButton
-                  listing={{
-                    id: listing.id,
-                    title: pageTitle,
-                    host: organization?.name || "Property Team",
-                    hostUserId: organization?.owner_id,
-                  }}
-                  className="w-full"
-                />
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => organization?.email && window.open(`mailto:${organization.email}`)}
-                >
-                  <Mail className="w-5 h-5" />
-                  Email
-                </Button>
-              </div>
-
-              {!showContactForm && (
-                <Button variant="secondary" className="w-full" onClick={() => setShowContactForm(true)}>
-                  Start Inquiry
-                </Button>
-              )}
-
-              {listing.listing_type === "short_stay" && !showBookingForm && (
-                <Button className="w-full mt-3" onClick={() => setShowBookingForm(true)}>
-                  Book Short Stay
-                </Button>
-              )}
-
-              {listing.listing_type !== "short_stay" && !showViewingForm && (
-                <Button
-                  variant="outline"
-                  className="w-full mt-3"
-                  onClick={() => setShowViewingForm(true)}
-                >
-                  <MapPin className="w-4 h-4" />
-                  Book Viewing
-                </Button>
-              )}
-
-              {listing.listing_type !== "short_stay" && !showPaymentForm && (
-                <Button
-                  variant="outline"
-                  className="w-full mt-3"
-                  onClick={() => setShowPaymentForm(true)}
-                >
-                  <CreditCard className="w-4 h-4" />
-                  Pay securely
-                </Button>
-              )}
 
               {showViewingForm && (
                 <motion.div

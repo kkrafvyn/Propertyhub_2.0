@@ -43,7 +43,9 @@ export function BusinessMobileShell({
   const logoTo = organizationSlug ? `/workspace/${organizationSlug}` : "/workspace";
 
   return (
-    <div className="business-mobile-shell flex min-h-screen min-h-[100dvh] flex-col bg-background pb-20 text-foreground">
+    <div className="business-mobile-shell flex min-h-[100dvh] flex-col bg-background text-foreground"
+      style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))" }}
+    >
       <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-card/95 px-4 py-3 backdrop-blur pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="flex min-w-0 items-center gap-2">
           {onMenuPress ? (

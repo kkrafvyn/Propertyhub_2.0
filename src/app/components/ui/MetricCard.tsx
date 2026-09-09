@@ -21,7 +21,7 @@ export interface MetricCardProps {
   action?: ReactNode;
   onClick?: () => void;
   className?: string;
-  glow?: boolean;
+  glow?: boolean | "emerald" | "amber" | "terracotta" | "indigo" | "purple" | "primary";
 }
 
 const haloClasses: Record<string, string> = {
@@ -55,6 +55,8 @@ export function MetricCard({
   className = "",
   glow = false,
 }: MetricCardProps) {
+  const effectiveGlowColor = typeof glow === "string" ? glow : iconColor;
+
   return (
     <Card
       variant="glass"
@@ -62,9 +64,9 @@ export function MetricCard({
       onClick={onClick}
       className={cn(
         "p-5 transition-all duration-300 relative group",
-        glow && [
+        Boolean(glow) && [
           "border-primary/30",
-          glowClasses[iconColor] || glowClasses.primary,
+          glowClasses[effectiveGlowColor] || glowClasses.primary,
         ],
         className
       )}

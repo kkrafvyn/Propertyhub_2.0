@@ -22,9 +22,9 @@ function SearchSegment({
 }) {
   return (
     <div className={`search-segment search-segment-icon group ${className}`}>
-      <Icon className="search-segment-icon-svg h-5 w-5 shrink-0" aria-hidden="true" />
+      <Icon className="search-segment-icon-svg h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-110" aria-hidden="true" />
       <div className="min-w-0 flex-1">
-        <label htmlFor={htmlFor} className="search-segment-label cursor-pointer">
+        <label htmlFor={htmlFor} className="search-segment-label cursor-pointer select-none">
           {label}
         </label>
         {children}
@@ -36,7 +36,7 @@ function SearchSegment({
             e.stopPropagation();
             onClear();
           }}
-          className="relative z-10 hidden rounded-full p-1 text-ink-muted hover:bg-surface hover:text-ink group-hover:inline-flex"
+          className="relative z-10 hidden rounded-full p-1 text-ink-muted hover:bg-surface-hover hover:text-ink group-hover:inline-flex transition-colors"
           aria-label="Clear input"
         >
           <X className="h-3.5 w-3.5" />
@@ -138,11 +138,11 @@ export function SearchPill({
 
       <button
         type="button"
-        className="search-orb shrink-0"
+        className="search-orb shrink-0 group"
         aria-label={t("search.search")}
         onClick={onSearch}
       >
-        <Search className="h-4.5 w-4.5" />
+        <Search className="h-4.5 w-4.5 transition-transform duration-300 group-hover:scale-110 group-active:scale-90" />
       </button>
     </div>
   );

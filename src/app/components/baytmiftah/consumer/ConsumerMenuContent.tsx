@@ -195,7 +195,10 @@ export default function ConsumerMenuContent({
   )
 
   return (
-    <div className="px-4 pb-8 pt-4">
+    <div
+      className="px-4 pt-4"
+      style={{ paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))" }}
+    >
       {showIntro && (
         <div className="mb-5">
           <h1 className="text-xl font-bold text-ink">{t('consumer.dashboard.title')}</h1>

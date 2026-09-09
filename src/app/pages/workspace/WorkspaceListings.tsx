@@ -597,26 +597,46 @@ export function WorkspaceListings({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">Listings</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage pricing, publication status, property details, and listing photos for {organization.name}.
-          </p>
+      {/* Workstation Header */}
+      <div className="relative overflow-hidden rounded-3xl p-6 md:p-8 bg-surface-subtle/80 border border-surface-border/80 backdrop-blur-md shadow-card">
+        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+        <div className="absolute right-32 -bottom-16 w-48 h-48 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
+
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                Inventory Management
+              </span>
+              <span className="text-xs text-muted-foreground">• {organization.name}</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-display font-semibold tracking-tight text-foreground">
+              Properties & Listings
+            </h1>
+            <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
+              Control pricing, publication lifecycles, Ghanaian market compliance, and high-fidelity media galleries across your portfolio.
+            </p>
+          </div>
+          {canWrite ? (
+            <Link to={`${workspaceBasePath}/new`} className="flex-shrink-0">
+              <Button className="shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all">
+                <Building2 className="w-4 h-4 mr-2" />
+                Create New Listing
+              </Button>
+            </Link>
+          ) : null}
         </div>
-        {canWrite ? (
-          <Link to={`${workspaceBasePath}/new`}>
-            <Button>Create New Listing</Button>
-          </Link>
-        ) : null}
       </div>
 
+      {/* KPI Metric Cards with Ambient Glow */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Total Properties"
           value={stats.total}
           icon={Building2}
           iconColor="primary"
+          glow="primary"
           subtitle="All inventory in workspace"
         />
         <MetricCard
@@ -624,6 +644,7 @@ export function WorkspaceListings({
           value={stats.listed}
           icon={CheckCircle2}
           iconColor="emerald"
+          glow="emerald"
           subtitle="Public on marketplace"
         />
         <MetricCard
@@ -631,6 +652,7 @@ export function WorkspaceListings({
           value={stats.draft}
           icon={FileText}
           iconColor="amber"
+          glow="amber"
           subtitle="Pending review or media"
         />
         <MetricCard
@@ -638,33 +660,42 @@ export function WorkspaceListings({
           value={stats.featured}
           icon={Star}
           iconColor="terracotta"
+          glow="terracotta"
           subtitle="Promoted placement"
         />
       </div>
 
+      {/* Floating Glass Bulk Action Toolbar */}
       {canWrite && selectedListingIds.length > 0 ? (
-        <Card className="p-4 flex flex-wrap items-center justify-between gap-3 border-surface-border bg-surface/90 backdrop-blur-md shadow-card">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
+        <Card className="p-4 flex flex-wrap items-center justify-between gap-3 border-primary/30 bg-primary/5 dark:bg-primary/10 backdrop-blur-md shadow-glass-card rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-sm">
               {selectedListingIds.length}
             </span>
-            <p className="text-sm font-semibold text-ink">Properties selected</p>
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                {selectedListingIds.length} {selectedListingIds.length === 1 ? "property" : "properties"} selected
+              </p>
+              <p className="text-xs text-muted-foreground">Apply batch operations across active inventory</p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("publish")}>
+            <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("publish")} className="bg-surface/80 hover:bg-surface">
+              <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-emerald-500" />
               Publish
             </Button>
-            <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("archive")}>
+            <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("archive")} className="bg-surface/80 hover:bg-surface">
               Archive
             </Button>
-            <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("feature")}>
+            <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("feature")} className="bg-surface/80 hover:bg-surface">
+              <Star className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
               Feature
             </Button>
-            <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("unfeature")}>
+            <Button size="sm" variant="outline" disabled={bulkWorking} onClick={() => void runBulkAction("unfeature")} className="bg-surface/80 hover:bg-surface">
               Unfeature
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setSelectedListingIds([])}>
-              Clear
+            <Button size="sm" variant="ghost" onClick={() => setSelectedListingIds([])} className="text-xs text-muted-foreground hover:text-foreground">
+              Clear selection
             </Button>
           </div>
         </Card>
@@ -704,38 +735,42 @@ export function WorkspaceListings({
             );
 
             return (
-              <Card key={listing.id} className="p-6">
+              <Card key={listing.id} className="p-5 sm:p-6 rounded-2xl border-surface-border/80 hover:border-surface-border hover:shadow-card transition-all duration-300 group">
                 {!canWrite ? (
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex gap-4">
-                      <div className="w-32 h-28 rounded-xl overflow-hidden border border-border flex-shrink-0 bg-secondary/20">
+                      <div className="relative w-36 h-28 sm:w-40 sm:h-32 rounded-2xl overflow-hidden border border-surface-border flex-shrink-0 bg-surface-subtle group/img">
                         <img
                           src={coverImage}
                           alt={listing.property?.address || "Property"}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover/img:scale-105"
                         />
+                        <span className="absolute bottom-2 right-2 rounded-full bg-surface/85 backdrop-blur-md px-2 py-0.5 text-[11px] font-medium border border-surface-border/60 text-foreground flex items-center gap-1 shadow-sm">
+                          <ImagePlus className="w-3 h-3 text-muted-foreground" />
+                          {mediaItems.length}
+                        </span>
                       </div>
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="text-xl font-semibold">
+                          <h2 className="text-xl font-display font-semibold text-foreground">
                             {listing.property?.address || "Untitled property"}
                           </h2>
-                          <Badge variant="outline" className="capitalize">
+                          <Badge variant="outline" className="capitalize text-xs">
                             {listing.listing_type}
                           </Badge>
-                          <Badge className="capitalize">{listing.status.replaceAll("_", " ")}</Badge>
+                          <Badge className="capitalize text-xs">{listing.status.replaceAll("_", " ")}</Badge>
                         </div>
-                        <p className="text-muted-foreground">
+                        <p className="text-muted-foreground text-sm">
                           {listing.property?.city}, {listing.property?.region}
                         </p>
-                        <p className="text-sm text-muted-foreground">
-                          {currencyFormatter.format(listing.price)} - Quality {qualityReport.score}
+                        <p className="text-sm font-medium text-foreground">
+                          {currencyFormatter.format(listing.price)} • <span className="text-muted-foreground font-normal">Trust Score: {qualityReport.score}/100</span>
                         </p>
                       </div>
                     </div>
                     <Link to={`/property/${listing.id}`}>
-                      <Button variant="outline">
-                        <Eye className="w-4 h-4" />
+                      <Button variant="outline" className="rounded-xl">
+                        <Eye className="w-4 h-4 mr-2" />
                         Preview
                       </Button>
                     </Link>
@@ -744,51 +779,83 @@ export function WorkspaceListings({
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex gap-4">
-                      <div className="w-32 h-28 rounded-xl overflow-hidden border border-border flex-shrink-0 bg-secondary/20">
+                      <div className="relative w-36 h-28 sm:w-44 sm:h-32 rounded-2xl overflow-hidden border border-surface-border flex-shrink-0 bg-surface-subtle group/img shadow-sm">
                         <img
                           src={coverImage}
                           alt={listing.property?.address || "Property"}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover/img:scale-105"
                         />
+                        <span className="absolute bottom-2 right-2 rounded-full bg-surface/85 backdrop-blur-md px-2 py-0.5 text-[11px] font-medium border border-surface-border/60 text-foreground flex items-center gap-1 shadow-sm">
+                          <ImagePlus className="w-3 h-3 text-muted-foreground" />
+                          {mediaItems.length}
+                        </span>
                       </div>
                       <div className="space-y-3">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <input
-                            type="checkbox"
-                            checked={selectedListingIds.includes(listing.id)}
-                            onChange={() => toggleListingSelection(listing.id)}
-                            aria-label={`Select ${listing.property?.address || "listing"}`}
-                          />
-                          <h2 className="text-xl font-semibold">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <label className="relative flex items-center justify-center cursor-pointer select-none mr-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedListingIds.includes(listing.id)}
+                              onChange={() => toggleListingSelection(listing.id)}
+                              aria-label={`Select ${listing.property?.address || "listing"}`}
+                              className="w-4 h-4 rounded text-primary focus:ring-primary/20 border-surface-border accent-primary cursor-pointer"
+                            />
+                          </label>
+                          <h2 className="text-xl font-display font-semibold tracking-tight text-foreground">
                             {listing.property?.address || "Untitled property"}
                           </h2>
-                          <Badge variant="outline" className="capitalize">
+                          <Badge variant="outline" className="capitalize text-xs font-medium">
                             {listing.listing_type}
                           </Badge>
-                          <Badge className="capitalize">{listing.status.replaceAll("_", " ")}</Badge>
-                          {listing.featured && <Badge variant="secondary">Featured</Badge>}
-                          <Badge variant={qualityReport.score >= 75 ? "default" : "secondary"}>
+                          <Badge
+                            className={`capitalize text-xs font-medium ${
+                              listing.status === "listed"
+                                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                                : listing.status === "draft" || listing.status === "pending_review"
+                                ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                                : "bg-surface-subtle text-muted-foreground border-surface-border"
+                            }`}
+                          >
+                            {listing.status.replaceAll("_", " ")}
+                          </Badge>
+                          {listing.featured && (
+                            <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 flex items-center gap-1">
+                              <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                              Featured
+                            </Badge>
+                          )}
+                          <Badge
+                            className={
+                              qualityReport.score >= 75
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                : qualityReport.score >= 50
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                            }
+                          >
                             Quality {qualityReport.score}
                           </Badge>
                           {listing.verification_status === "verified" && (
-                            <Badge variant="default">Platform reviewed</Badge>
+                            <Badge className="bg-primary/10 text-primary border-primary/20 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              Platform reviewed
+                            </Badge>
                           )}
-                          <Badge variant="outline">
-                            <ImagePlus className="w-3 h-3" />
-                            {mediaItems.length} photo{mediaItems.length === 1 ? "" : "s"}
-                          </Badge>
                         </div>
-                        <p className="text-muted-foreground">
-                          {listing.property?.city}, {listing.property?.region} - {listing.property?.category || "property"}
+                        <p className="text-sm text-muted-foreground">
+                          {listing.property?.city}, {listing.property?.region} <span className="opacity-60">•</span> {listing.property?.category || "property"}
                         </p>
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                          <span>
+                        <div className="flex flex-wrap gap-4 text-xs font-medium text-muted-foreground">
+                          <span className="flex items-center gap-1">
                             {listing.property?.bedrooms ?? 0} beds / {listing.property?.bathrooms ?? 0} baths
                           </span>
+                          <span>•</span>
                           <span>
                             {listing.property?.square_meters ? `${listing.property.square_meters} sqm` : "Size not set"}
                           </span>
-                          <span>Live price: {currencyFormatter.format(listing.price)}</span>
+                          <span>•</span>
+                          <span className="text-foreground font-semibold">Live price: {currencyFormatter.format(listing.price)}</span>
+                          <span>•</span>
                           <span>
                             GPS: {listing.property?.ghana_post_gps || "not set"}
                           </span>
@@ -796,7 +863,7 @@ export function WorkspaceListings({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 lg:min-w-[760px]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 lg:min-w-[760px] p-3.5 rounded-2xl bg-surface-subtle/50 border border-surface-border/60">
                       <Input
                         label="Price"
                         type="number"
@@ -805,17 +872,17 @@ export function WorkspaceListings({
                         onChange={(event) => updateDraft(listing.id, "price", event.target.value)}
                       />
                       <div>
-                        <label className="block mb-2 text-sm text-foreground">Currency</label>
+                        <label className="block mb-1.5 text-xs font-medium text-muted-foreground">Currency</label>
                         <input
-                          className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-surface-border bg-surface text-foreground text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                           value={draft?.currency || ""}
                           onChange={(event) => updateDraft(listing.id, "currency", event.target.value)}
                         />
                       </div>
                       <div>
-                        <label className="block mb-2 text-sm text-foreground">Listing Type</label>
+                        <label className="block mb-1.5 text-xs font-medium text-muted-foreground">Listing Type</label>
                         <select
-                          className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-surface-border bg-surface text-foreground text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                           value={draft?.listingType || listing.listing_type}
                           onChange={(event) => updateDraft(listing.id, "listingType", event.target.value)}
                         >
@@ -827,9 +894,9 @@ export function WorkspaceListings({
                         </select>
                       </div>
                       <div>
-                        <label className="block mb-2 text-sm text-foreground">Status</label>
+                        <label className="block mb-1.5 text-xs font-medium text-muted-foreground">Status</label>
                         <select
-                          className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-surface-border bg-surface text-foreground text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                           value={draft?.status || listing.status}
                           onChange={(event) => updateDraft(listing.id, "status", event.target.value)}
                         >
@@ -841,9 +908,9 @@ export function WorkspaceListings({
                         </select>
                       </div>
                       <div>
-                        <label className="block mb-2 text-sm text-foreground">Visibility</label>
+                        <label className="block mb-1.5 text-xs font-medium text-muted-foreground">Visibility</label>
                         <select
-                          className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-surface-border bg-surface text-foreground text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                           value={draft?.visibility || listing.visibility}
                           onChange={(event) => updateDraft(listing.id, "visibility", event.target.value)}
                         >
@@ -858,25 +925,35 @@ export function WorkspaceListings({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={draft?.featured || false}
-                        onChange={(event) => updateDraft(listing.id, "featured", event.target.checked)}
-                      />
+                    <button
+                      type="button"
+                      onClick={() => updateDraft(listing.id, "featured", !(draft?.featured || false))}
+                      className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                        draft?.featured
+                          ? "bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-300 shadow-sm"
+                          : "bg-surface-subtle border-surface-border text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Star className={`w-3.5 h-3.5 ${draft?.featured ? "fill-amber-500 text-amber-500" : ""}`} />
                       Featured placement
-                    </label>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={draft?.whatsappEnabled ?? true}
-                        onChange={(event) =>
-                          updateDraft(listing.id, "whatsappEnabled", event.target.checked)
-                        }
-                      />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateDraft(listing.id, "whatsappEnabled", !(draft?.whatsappEnabled ?? true))}
+                      className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-medium transition-all ${
+                        draft?.whatsappEnabled ?? true
+                          ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300 shadow-sm"
+                          : "bg-surface-subtle border-surface-border text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${draft?.whatsappEnabled ?? true ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground"}`} />
                       WhatsApp follow-up
-                    </label>
-                    {isDirty && <span className="text-sm text-primary">You have unsaved changes.</span>}
+                    </button>
+                    {isDirty && (
+                      <span className="text-xs font-semibold text-primary flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 animate-pulse">
+                        ● Unsaved modifications
+                      </span>
+                    )}
                   </div>
 
                   {isExpanded && (
@@ -1114,46 +1191,63 @@ export function WorkspaceListings({
                     </div>
                   )}
 
-                  <div className="flex flex-wrap gap-3">
-                    <Button onClick={() => void handleSave(listing)} disabled={savingId === listing.id || !isDirty}>
-                      Save Changes
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-surface-border/60">
+                    <Button
+                      onClick={() => void handleSave(listing)}
+                      disabled={savingId === listing.id || !isDirty}
+                      className={`rounded-xl transition-all ${
+                        isDirty
+                          ? "shadow-md shadow-primary/25 bg-primary hover:bg-primary/90 animate-pulse"
+                          : ""
+                      }`}
+                    >
+                      {savingId === listing.id ? "Saving..." : "Save Changes"}
                     </Button>
                     <Button
                       variant="outline"
+                      className="rounded-xl bg-surface/80 hover:bg-surface"
                       onClick={() =>
                         setExpandedListingId((current) => (current === listing.id ? null : listing.id))
                       }
                     >
-                      <SquarePen className="w-4 h-4" />
+                      <SquarePen className="w-3.5 h-3.5 mr-1.5" />
                       {isExpanded ? "Hide Details" : "Edit Details"}
                     </Button>
-                    <Button variant="outline" onClick={() => resetDraft(listing)} disabled={!isDirty}>
-                      <RotateCcw className="w-4 h-4" />
+                    <Button
+                      variant="outline"
+                      className="rounded-xl bg-surface/80 hover:bg-surface"
+                      onClick={() => resetDraft(listing)}
+                      disabled={!isDirty}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                       Reset
                     </Button>
                     <Link to={`/property/${listing.id}`}>
-                      <Button variant="outline">
-                        <Eye className="w-4 h-4" />
+                      <Button variant="outline" className="rounded-xl bg-surface/80 hover:bg-surface">
+                        <Eye className="w-3.5 h-3.5 mr-1.5" />
                         Preview
                       </Button>
                     </Link>
                     <Button
                       variant="outline"
+                      className="rounded-xl bg-surface/80 hover:bg-surface"
                       onClick={() => updateDraft(listing.id, "featured", !(draft?.featured || false))}
                     >
-                      <Star className="w-4 h-4" />
+                      <Star className={`w-3.5 h-3.5 mr-1.5 ${(draft?.featured || false) ? "fill-amber-500 text-amber-500" : ""}`} />
                       {(draft?.featured || false) ? "Unfeature" : "Feature"}
                     </Button>
                     <Button
                       variant="outline"
+                      className="rounded-xl bg-surface/80 hover:bg-surface"
                       onClick={() => void handleDuplicate(listing.id)}
                       disabled={savingId === listing.id}
                     >
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3.5 h-3.5 mr-1.5" />
                       Duplicate
                     </Button>
                     <Button
                       variant="outline"
+                      className="rounded-xl bg-surface/80 hover:bg-surface"
                       onClick={() => void handleArchive(listing)}
                       disabled={savingId === listing.id || listing.status === "archived"}
                     >
@@ -1161,10 +1255,11 @@ export function WorkspaceListings({
                     </Button>
                     <Button
                       variant="outline"
+                      className="rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/30 ml-auto"
                       onClick={() => void handleDelete(listing.id)}
                       disabled={savingId === listing.id}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
                       Delete
                     </Button>
                   </div>

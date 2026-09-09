@@ -35,7 +35,12 @@ export function PageLayout({
     if (!shouldShowShell) {
       return (
         <div className="consumer-portal min-h-screen">
-          <div className={`pb-12 px-4 mx-auto ${maxWidthClassName}`}>{content}</div>
+          <div
+            className={`px-4 mx-auto ${maxWidthClassName}`}
+            style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))" }}
+          >
+            {content}
+          </div>
         </div>
       );
     }
@@ -50,7 +55,12 @@ export function PageLayout({
   if (!shouldShowShell) {
     return (
       <div className="min-h-screen bg-background">
-        <div className={`pb-12 px-4 mx-auto ${maxWidthClassName}`}>{content}</div>
+        <div
+          className={`px-4 mx-auto ${maxWidthClassName}`}
+          style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))" }}
+        >
+          {content}
+        </div>
       </div>
     );
   }

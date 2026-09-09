@@ -8,10 +8,10 @@ export function AdminMobileTabBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card shadow-xl"
+      className="fixed inset-x-0 bottom-0 z-[60] border-t border-border bg-card shadow-xl"
       aria-label={t("adminMobile.primaryNav")}
     >
-      <div className="flex items-stretch justify-around px-2 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <div className="flex items-stretch justify-around px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {ADMIN_MOBILE_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive =

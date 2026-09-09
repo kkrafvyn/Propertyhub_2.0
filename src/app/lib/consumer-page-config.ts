@@ -30,7 +30,8 @@ export type ConsumerSection =
   | "mortgage"
   | "insurance"
   | "vendors"
-  | "settings";
+  | "settings"
+  | "kyc";
 
 export type PageConfig = {
   title: string;
@@ -218,6 +219,11 @@ export const CONSUMER_PAGE_CONFIG: Record<ConsumerSection, PageConfig> = {
     title: "Profile & Settings",
     description: "Manage your account and session preferences.",
     breadcrumb: [{ label: "My BaytMiftah", href: "/app" }, { label: "Profile" }],
+  },
+  kyc: {
+    title: "Identity & Trust Verification",
+    description: "Government-issued ID verification, biometric liveness check, and anti-money laundering (AML) compliance.",
+    breadcrumb: [{ label: "My BaytMiftah", href: "/app" }, { label: "Identity Verification (KYC)" }],
   },
 };
 

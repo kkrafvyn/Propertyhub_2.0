@@ -5,6 +5,8 @@
   min-height: 100dvh;
   background: var(--bolt-bg);
   color: var(--ink);
+  /* Prevent double-scroll: the shell itself is the scroll container */
+  overflow-x: hidden;
 }
 
 .mobile-app-shell.has-context-nav {
@@ -14,6 +16,7 @@
 .mobile-content {
   width: min(100%, 520px);
   margin: 0 auto;
+  /* use var so that has-context-nav variant overrides bottom correctly */
   padding: max(env(safe-area-inset-top), 14px) 16px var(--mobile-content-bottom);
 }
 
@@ -27,6 +30,13 @@
 
 .has-mobile-tab-bar {
   --mobile-tab-bar-offset: calc(92px + env(safe-area-inset-bottom));
+  /* Lift cookie banner above the floating tab pill */
+  --cookie-banner-bottom: calc(92px + env(safe-area-inset-bottom));
+}
+
+/* Ensure mobile-bolt root containers clear the floating tab bar */
+.has-mobile-tab-bar.mobile-bolt {
+  padding-bottom: calc(92px + env(safe-area-inset-bottom));
 }
 
 .has-mobile-tab-bar .bm-ai-chat,
@@ -753,7 +763,9 @@
 }
 
 .has-mobile-tab-bar.has-workspace-dock {
-  padding-bottom: calc(var(--mobile-tab-bar-offset, 92px) + 72px + env(safe-area-inset-bottom));
+  /* Extra padding-bottom to clear both tab bar AND workspace dock */
+  padding-bottom: calc(92px + 72px + env(safe-area-inset-bottom)) !important;
+  --cookie-banner-bottom: calc(92px + 72px + env(safe-area-inset-bottom));
 }
 
 .mobile-workspace-dock-title {

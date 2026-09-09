@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
-import { ArrowRight, Bath, BedDouble, MapPin, Ruler, ShieldCheck, Building2, Eye, Lock } from "lucide-react";
+import { ArrowRight, Bath, BedDouble, MapPin, Ruler, ShieldCheck, Building2, Eye, Lock, Sparkles, CheckCircle2 } from "lucide-react";
 import { listingService } from "../../lib/listing.service";
 import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { Badge } from "../components/ui/badge";
 import { AppLoadingScreen } from "../components/ux/AppLoadingScreen";
 import { StandalonePageShell } from "../components/ux/StandalonePageShell";
 
@@ -63,97 +65,75 @@ export function PublicPropertyExplorer() {
   return (
     <StandalonePageShell maxWidthClassName="max-w-4xl">
       <div className="py-8 space-y-8">
-        {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-surface-border bg-surface/80 px-3.5 py-1 text-xs font-semibold uppercase tracking-widest text-ink-secondary backdrop-blur-sm shadow-sm">
-              <Building2 className="h-3.5 w-3.5 text-ink-secondary" />
-              BaytMiftah Property Explorer
+        {/* ── Editorial Header with Ambient Glowing Orbs ── */}
+        <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-emerald-500/10 via-primary/5 to-surface/80 border border-emerald-500/20 shadow-lg backdrop-blur-md">
+          <div className="absolute -top-12 -right-12 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 backdrop-blur-sm shadow-xs">
+                <Building2 className="h-3.5 w-3.5" />
+                BaytMiftah Property Explorer
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-serif font-bold tracking-tight text-ink font-display">
+                Public Property Preview
+              </h1>
+              <p className="mt-1.5 text-sm text-ink-secondary max-w-lg leading-relaxed">
+                Verified listing telemetry — resident &amp; ownership identities remain cryptographically protected.
+              </p>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-              Public Property Preview
-            </h1>
-            <p className="mt-1 text-sm text-ink-secondary">
-              Verified listing data — occupant &amp; owner identities are never shown.
-            </p>
+            <span className="self-start sm:self-auto inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Public Authenticated Mode
+            </span>
           </div>
-          <span
-            className="self-start sm:self-auto inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold"
-            style={{
-              background: "rgba(16,185,129,0.1)",
-              border: "1px solid rgba(16,185,129,0.25)",
-              color: "#059669",
-            }}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Public profile mode
-          </span>
         </div>
 
-        {/* Main Card */}
-        <div
-          className="overflow-hidden rounded-3xl border border-surface-border shadow-xl"
-          style={{ background: "var(--surface)" }}
+        {/* ── Main Showcase Card ── */}
+        <Card
+          variant="glass"
+          className="overflow-hidden rounded-3xl border border-surface-border/80 shadow-xl backdrop-blur-md"
         >
-          <div className="grid md:grid-cols-[1.5fr_0.65fr]">
+          <div className="grid md:grid-cols-[1.5fr_0.75fr]">
             {/* Left — Property details */}
-            <div className="p-7 md:p-9">
+            <div className="p-7 md:p-9 space-y-6">
               {/* Badges */}
-              <div className="mb-5 flex flex-wrap items-center gap-2">
-                <span
-                  className="rounded-full px-3 py-1 text-xs font-bold tracking-wider"
-                  style={{
-                    background: "rgba(14,165,233,0.1)",
-                    border: "1px solid rgba(14,165,233,0.2)",
-                    color: "#0284c7",
-                  }}
-                >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full px-3 py-1 text-xs font-bold tracking-wider bg-primary/10 border border-primary/20 text-primary">
                   Unit: {publicUnitId}
                 </span>
                 {isVerified ? (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
-                    style={{
-                      background: "rgba(16,185,129,0.1)",
-                      border: "1px solid rgba(16,185,129,0.25)",
-                      color: "#059669",
-                    }}
-                  >
+                  <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400">
                     <ShieldCheck className="h-3.5 w-3.5" />
                     Verified identity
                   </span>
                 ) : (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
-                    style={{
-                      background: "rgba(245,158,11,0.1)",
-                      border: "1px solid rgba(245,158,11,0.25)",
-                      color: "#d97706",
-                    }}
-                  >
+                  <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400">
                     Verification pending
                   </span>
                 )}
               </div>
 
-              <h2 className="text-2xl font-bold tracking-tight text-ink">
-                Property: {propertyName}
-              </h2>
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-ink font-display">
+                  Property: {propertyName}
+                </h2>
 
-              <div className="mt-3 flex items-center gap-2 text-sm text-ink-secondary">
-                <MapPin className="h-4 w-4 shrink-0" />
-                <span>
-                  {property.address || "5 Independence Ave"}, {property.city || "Accra"}
-                </span>
+                <div className="mt-2.5 flex items-center gap-2 text-sm text-ink-secondary">
+                  <MapPin className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>
+                    {property.address || "5 Independence Avenue"}, {property.city || "Accra, Greater Accra"}
+                  </span>
+                </div>
               </div>
 
-              <p className="mt-5 max-w-xl text-sm leading-7 text-ink-secondary">
+              <p className="max-w-xl text-sm leading-relaxed text-ink-secondary">
                 {property.description ||
-                  "Bright and modern apartment with secure access, flexible viewing windows, and a verified ownership trail."}
+                  "Architecturally refined apartment featuring smart access controls, verified utility submetering, and escrow-protected lease agreements under Act 220 compliance."}
               </p>
 
               {/* Stat tiles */}
-              <div className="mt-7 grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-3 pt-2">
                 {[
                   { icon: BedDouble, label: "Bedrooms", value: property.bedrooms ?? 3 },
                   { icon: Bath, label: "Bathrooms", value: property.bathrooms ?? 2 },
@@ -161,52 +141,50 @@ export function PublicPropertyExplorer() {
                 ].map(({ icon: Icon, label, value }) => (
                   <div
                     key={label}
-                    className="rounded-2xl border border-surface-border p-4 transition-all hover:shadow-md"
-                    style={{ background: "var(--surface-subtle)" }}
+                    className="rounded-2xl border border-surface-border/80 bg-surface-subtle/60 p-4 transition-all hover:border-emerald-500/30 hover:shadow-sm"
                   >
                     <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-ink-secondary">
-                      <Icon className="h-4 w-4" />
+                      <Icon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                       {label}
                     </div>
-                    <div className="mt-2.5 text-2xl font-bold text-ink">{value}</div>
+                    <div className="mt-2 text-xl sm:text-2xl font-bold text-ink font-display">{value}</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Right — Trust panel */}
-            <div
-              className="flex flex-col justify-between p-7 md:p-9 border-t md:border-t-0 md:border-l border-surface-border"
-              style={{ background: "var(--surface-subtle)" }}
-            >
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-ink-secondary mb-1">
-                  Buyer Public ID:
-                </p>
-                <div className="mt-2 rounded-xl border border-surface-border bg-surface px-4 py-3 font-mono text-base font-semibold text-ink shadow-sm">
-                  {buyerPublicId}
+            {/* Right — Trust & Access Panel */}
+            <div className="flex flex-col justify-between p-7 md:p-9 border-t md:border-t-0 md:border-l border-surface-border/80 bg-surface-subtle/40 backdrop-blur-xs">
+              <div className="space-y-6">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-ink-secondary mb-2">
+                    Buyer Public ID:
+                  </p>
+                  <div className="rounded-xl border border-surface-border/80 bg-surface px-4 py-3 font-mono text-sm font-semibold text-ink shadow-xs">
+                    {buyerPublicId}
+                  </div>
                 </div>
 
-                <div className="mt-6 space-y-3">
+                <div className="space-y-2.5">
                   {[
                     {
                       icon: ShieldCheck,
                       label: "Identity status",
                       value: isVerified ? "Verified" : "Pending",
-                      valueColor: isVerified ? "#059669" : "#d97706",
+                      valueCls: isVerified ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400",
                     },
-                    { icon: Eye, label: "Public visibility", value: "Limited", valueColor: "var(--ink)" },
-                    { icon: Lock, label: "Owner privacy", value: "Protected", valueColor: "var(--ink)" },
-                  ].map(({ icon: Icon, label, value, valueColor }) => (
+                    { icon: Eye, label: "Public visibility", value: "Limited Privacy", valueCls: "text-ink" },
+                    { icon: Lock, label: "Owner data", value: "Escrow Protected", valueCls: "text-ink" },
+                  ].map(({ icon: Icon, label, value, valueCls }) => (
                     <div
                       key={label}
-                      className="flex items-center justify-between rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm shadow-sm"
+                      className="flex items-center justify-between rounded-xl border border-surface-border/80 bg-surface/90 px-4 py-3 text-sm shadow-xs"
                     >
-                      <span className="flex items-center gap-2 text-ink-secondary">
-                        <Icon className="h-3.5 w-3.5" />
+                      <span className="flex items-center gap-2 text-ink-secondary text-xs font-medium">
+                        <Icon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                         {label}
                       </span>
-                      <span className="font-semibold" style={{ color: valueColor }}>
+                      <span className={`font-semibold text-xs ${valueCls}`}>
                         {value}
                       </span>
                     </div>
@@ -214,28 +192,27 @@ export function PublicPropertyExplorer() {
                 </div>
               </div>
 
-              <Button
-                className="mt-8 w-full h-11 rounded-xl font-semibold"
-                variant="default"
-                style={{
-                  background: "linear-gradient(135deg, #e07a5f, #c45d44)",
-                  border: "none",
-                  color: "#fff",
-                  boxShadow: "0 4px 16px rgba(224,122,95,0.3)",
-                }}
-              >
-                Request private access
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <div className="pt-8">
+                <Button
+                  className="w-full h-12 rounded-xl font-semibold shadow-md shadow-emerald-500/15"
+                >
+                  <span>Request Private Viewing Access</span>
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <p className="text-[11px] text-center text-ink-muted mt-2.5">
+                  Requires certified BaytMiftah tenant credentials
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </Card>
 
         <p className="text-center text-xs text-ink-secondary">
-          This page is publicly accessible. No personal data is shown.{" "}
-          <span className="font-semibold text-ink">BaytMiftah</span> · Verified Property Network
+          This record is publicly accessible and verified. No private consumer data is displayed.{" "}
+          <span className="font-semibold text-ink font-display">BaytMiftah REOS</span> · Verified Property Network
         </p>
       </div>
     </StandalonePageShell>
   );
 }
+

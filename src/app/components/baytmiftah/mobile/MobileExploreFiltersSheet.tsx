@@ -137,7 +137,7 @@ export default function MobileExploreFiltersSheet({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45"
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/45"
       role="dialog"
       aria-modal="true"
       onClick={onClose}

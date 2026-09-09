@@ -146,6 +146,7 @@ function getSection(pathname: string) {
   if (pathname.startsWith("/app/mortgage")) return "mortgage";
   if (pathname.startsWith("/app/insurance")) return "insurance";
   if (pathname.startsWith("/app/vendors")) return "vendors";
+  if (pathname.startsWith("/app/kyc")) return "kyc";
   if (pathname.startsWith("/app/settings")) return "settings";
   return "overview";
 }
@@ -1370,13 +1371,9 @@ export function UserDashboard() {
         </div>
       </Card>
 
-      <Card id="kyc" className="p-6 lg:col-span-3 scroll-mt-24">
-        <ProfileKycCard variant="desktop" />
-      </Card>
-
-      <Card className="p-6 lg:col-span-3">
+      <div id="kyc" className="lg:col-span-3 scroll-mt-24">
         <KycVerificationPanel />
-      </Card>
+      </div>
 
       <Card className="p-6 lg:col-span-3">
         <ConsumerNotificationPreferences userId={user!.id} />
@@ -1918,6 +1915,12 @@ export function UserDashboard() {
                 <FinancialServicesNav />
                 <VendorMarketplaceSection />
               </>,
+            )
+          ) : section === "kyc" ? (
+            renderSectionShell(
+              <div className="space-y-6">
+                <KycVerificationPanel />
+              </div>
             )
           ) : section === "settings" ? (
             renderSectionShell(renderSettings())

@@ -215,7 +215,7 @@ export function MobileCarouselSection({
           </Link>
         )}
       </div>
-      <div className="flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-3 overflow-x-auto px-4 pb-1 [scroll-snap-type:x_mandatory] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {children}
       </div>
     </section>
@@ -241,7 +241,7 @@ export function MobileHomeListingCard({
     (listing.verified ? { label: t("mobile.appShell.verified"), tone: "green" } : undefined);
 
   return (
-    <div className="relative w-[min(260px,78vw)] shrink-0">
+    <div className="relative w-[min(260px,78vw)] shrink-0 snap-start">
       <Link
         to={to}
         className="block overflow-hidden rounded-2xl bg-bolt-card shadow-[0_2px_12px_rgba(0,0,0,0.08)]"
@@ -301,7 +301,7 @@ export function MobilePromoCard({
   return (
     <Link
       to={to}
-      className="relative flex h-[168px] w-[148px] shrink-0 flex-col justify-end overflow-hidden rounded-2xl p-3 text-white shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
+      className="relative flex h-[168px] w-[148px] shrink-0 snap-start flex-col justify-end overflow-hidden rounded-2xl p-3 text-white shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
     >
       <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />

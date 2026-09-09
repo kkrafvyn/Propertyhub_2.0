@@ -11,7 +11,10 @@ export function AdminMobileShell({ children }: AdminMobileShellProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="admin-mobile-shell flex min-h-screen min-h-[100dvh] flex-col bg-background pb-20 text-foreground">
+    <div
+      className="admin-mobile-shell flex min-h-[100dvh] flex-col bg-background text-foreground"
+      style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))" }}
+    >
       <header className="sticky top-0 z-40 flex items-center justify-between border-b border-rose-900 bg-rose-950/80 px-4 py-3 backdrop-blur pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="flex items-center gap-2">
           <Logo className="scale-90" showText={false} inverted />

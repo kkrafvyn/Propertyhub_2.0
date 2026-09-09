@@ -595,80 +595,115 @@ export function PropertySearch() {
           </section>
         ) : null}
 
-        <div className="desktop-search-toolbar">
-          <div>
-            <h1>{resultsTitle}</h1>
-            <p>{resultSummary}</p>
-          </div>
-          <div className="desktop-search-toolbar-actions">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void handleSaveAlert()}
-              disabled={savingAlert}
-            >
-              <Bell className="w-4 h-4" />
-              {savingAlert ? t("searchPage.savingAlert") : t("searchPage.saveAlert")}
-            </Button>
-            <div className="desktop-view-toggle" role="group" aria-label={t("searchPage.viewMode")}>
-              <button
-                type="button"
-                className={viewMode === "grid" ? "is-active" : ""}
-                onClick={() => setViewMode("grid")}
-                aria-pressed={viewMode === "grid"}
-              >
-                <Grid3x3 className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                className={viewMode === "list" ? "is-active" : ""}
-                onClick={() => setViewMode("list")}
-                aria-pressed={viewMode === "list"}
-              >
-                <List className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                className={viewMode === "map" ? "is-active" : ""}
-                onClick={() => setViewMode("map")}
-                aria-pressed={viewMode === "map"}
-              >
-                <Map className="w-4 h-4" />
-              </button>
+        {/* Luxury Search Results Toolbar */}
+        <div className="flex flex-col gap-3 mb-6 p-4 sm:p-5 rounded-2xl bg-surface-subtle/70 border border-surface-border/70 backdrop-blur-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="font-display text-xl sm:text-2xl font-bold text-ink tracking-tight truncate">{resultsTitle}</h1>
+              <p className="text-xs text-ink-muted mt-0.5">{resultSummary}</p>
             </div>
-            {!isDesktop ? (
-              <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
-                <SlidersHorizontal className="w-4 h-4" />
-                {t("searchPage.filters")}
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void handleSaveAlert()}
+                disabled={savingAlert}
+                className="gap-1.5 text-xs"
+              >
+                <Bell className="w-3.5 h-3.5" />
+                {savingAlert ? t("searchPage.savingAlert") : t("searchPage.saveAlert")}
               </Button>
-            ) : null}
+              {/* View-mode segment control */}
+              <div
+                className="flex items-center rounded-xl bg-surface border border-surface-border p-0.5 gap-0.5"
+                role="group"
+                aria-label={t("searchPage.viewMode")}
+              >
+                {[
+                  { mode: "grid" as const, Icon: Grid3x3 },
+                  { mode: "list" as const, Icon: List },
+                  { mode: "map" as const, Icon: Map },
+                ].map(({ mode, Icon }) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setViewMode(mode)}
+                    aria-pressed={viewMode === mode}
+                    className={`p-1.5 rounded-lg transition-all duration-150 ${
+                      viewMode === mode
+                        ? "bg-primary text-white shadow-sm"
+                        : "text-ink-secondary hover:text-ink hover:bg-surface-hover"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                  </button>
+                ))}
+              </div>
+              {!isDesktop ? (
+                <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className="gap-1.5 text-xs">
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  {t("searchPage.filters")}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Listing type quick-segment (inline) */}
+          <div className="flex gap-1.5 flex-wrap">
+            {([
+              ["rental", "Rent"],
+              ["sale", "Buy"],
+              ["lease", "Lease"],
+              ["short_stay", "Short Stay"],
+            ] as const).map(([value, label]) => {
+              const isActive = filters.listingType === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    const nextParams = new URLSearchParams(searchParams);
+                    nextParams.set("listingType", value);
+                    nextParams.set("page", "1");
+                    setSearchParams(nextParams);
+                  }}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-150 ${
+                    isActive
+                      ? "bg-primary text-white shadow-sm"
+                      : "bg-surface border border-surface-border text-ink-secondary hover:text-ink hover:border-primary/30"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Active Filter Tags */}
         {activeFilters.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 mb-5">
-            <span className="text-xs font-semibold text-ink-muted">{t("searchPage.activeFilters")}:</span>
+          <div className="flex flex-wrap items-center gap-1.5 mb-5">
+            <span className="text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.activeFilters")}:</span>
             {activeFilters.map((badge, idx) => (
               <span
                 key={idx}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 transition-all hover:bg-primary/15"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/25 transition-all hover:bg-primary/15 hover:border-primary/40"
               >
                 <span>{badge.label}</span>
                 <button
                   type="button"
                   onClick={badge.onRemove}
-                  className="hover:text-destructive transition-colors p-0.5 rounded-full cursor-pointer"
+                  className="hover:text-destructive transition-colors p-0.5 rounded-full cursor-pointer ml-0.5"
                   aria-label={t("searchPage.removeFilter", { label: badge.label })}
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-2.5 h-2.5" />
                 </button>
               </span>
             ))}
             <button
               type="button"
               onClick={clearFilters}
-              className="text-xs text-ink-muted hover:text-ink font-semibold underline underline-offset-2 ml-1 cursor-pointer"
+              className="text-[10px] text-ink-muted hover:text-ink font-bold uppercase tracking-wide underline underline-offset-2 ml-1 cursor-pointer"
             >
               {t("searchPage.clearAll")}
             </button>
@@ -676,23 +711,21 @@ export function PropertySearch() {
         )}
 
         {user && userAlerts.length > 0 && (
-          <Card className="p-4 mb-6 bg-primary/5 border-primary/20">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="font-semibold">{t("searchPage.savedSearchAlerts")}</p>
-                <p className="text-sm text-muted-foreground">
-                  {t("searchPage.savedSearchAlertsDesc", {
-                    count: userAlerts.filter((alert) => alert.is_active).length,
-                  })}
-                </p>
-              </div>
-              <Link to="/app/alerts">
-                <Button variant="outline" size="sm">
-                  {t("searchPage.manageAlerts")}
-                </Button>
-              </Link>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 mb-6 rounded-xl bg-primary/8 border border-primary/20 backdrop-blur-sm">
+            <div>
+              <p className="text-sm font-bold text-ink">{t("searchPage.savedSearchAlerts")}</p>
+              <p className="text-xs text-ink-secondary">
+                {t("searchPage.savedSearchAlertsDesc", {
+                  count: userAlerts.filter((alert) => alert.is_active).length,
+                })}
+              </p>
             </div>
-          </Card>
+            <Link to="/app/alerts">
+              <Button variant="outline" size="sm" className="text-xs">
+                {t("searchPage.manageAlerts")}
+              </Button>
+            </Link>
+          </div>
         )}
 
         <div className="flex gap-8">
@@ -909,13 +942,14 @@ export function PropertySearch() {
             {/* Pagination */}
             {totalResults > PAGE_SIZE && (
               <div className="mt-12 flex flex-col items-center gap-4">
-                <p className="text-sm text-muted-foreground">{resultSummary}</p>
-                <div className="flex items-center justify-center gap-2 flex-wrap">
+                <p className="text-xs text-ink-muted">{resultSummary}</p>
+                <div className="flex items-center justify-center gap-1.5 flex-wrap">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
+                    className="text-xs px-3"
                   >
                     {t("searchPage.previous")}
                   </Button>
@@ -925,6 +959,7 @@ export function PropertySearch() {
                       variant={page === currentPage ? "primary" : "outline"}
                       size="sm"
                       onClick={() => handlePageChange(page)}
+                      className="text-xs w-8 h-8 p-0"
                     >
                       {page}
                     </Button>
@@ -934,6 +969,7 @@ export function PropertySearch() {
                     size="sm"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
+                    className="text-xs px-3"
                   >
                     {t("searchPage.next")}
                   </Button>
@@ -971,25 +1007,28 @@ function SearchFiltersPanel({
   const { t } = useTranslation();
 
   return (
-    <Card className="desktop-filters-panel sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-ink">{t("searchPage.filters")}</h3>
+    <Card className="desktop-filters-panel sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto p-0 border-surface-border/80 shadow-lg">
+      {/* Filter panel header */}
+      <div className="sticky top-0 z-10 flex items-center justify-between p-5 border-b border-surface-border bg-surface/90 backdrop-blur-md rounded-t-2xl">
+        <div>
+          <h3 className="text-sm font-black text-ink uppercase tracking-wide">{t("searchPage.filters")}</h3>
+          <p className="text-[10px] text-ink-muted mt-0.5">Refine your property search</p>
+        </div>
         {onClose ? (
           <button
             onClick={onClose}
-            className="rounded-lg p-1 transition-colors hover:bg-surface-subtle"
+            className="rounded-xl p-2 transition-colors hover:bg-surface-hover border border-transparent hover:border-surface-border"
             type="button"
             aria-label={t("searchPage.closeFilters")}
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         ) : null}
       </div>
-
-      <div className="space-y-6">
+      <div className="p-5 space-y-5">
         <div>
-          <label className="mb-3 block font-semibold text-ink">{t("searchPage.listingType")}</label>
-          <div className="grid grid-cols-2 gap-2">
+          <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.listingType")}</label>
+          <div className="grid grid-cols-2 gap-1.5">
             {(
               [
                 ["rental", "rent"],
@@ -1002,7 +1041,11 @@ function SearchFiltersPanel({
                 key={value}
                 type="button"
                 onClick={() => setFilters({ ...filters, listingType: value })}
-                className={filterChipClass(filters.listingType === value)}
+                className={`rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
+                  filters.listingType === value
+                    ? "bg-primary text-white shadow-sm"
+                    : "bg-surface-subtle text-ink-secondary hover:bg-surface-hover hover:text-ink border border-transparent hover:border-surface-border"
+                }`}
               >
                 {t(`searchPage.${labelKey}`)}
               </button>
@@ -1010,15 +1053,15 @@ function SearchFiltersPanel({
           </div>
         </div>
 
-        <div>
-          <label className="mb-3 block font-semibold text-ink" htmlFor="region-filter">
+        <div className="border-t border-surface-border pt-5">
+          <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]" htmlFor="region-filter">
             {t("searchPage.region")}
           </label>
           <select
             id="region-filter"
             value={filters.region || "all"}
             onChange={(e) => setFilters({ ...filters, region: e.target.value })}
-            className="w-full rounded-lg border border-surface-border bg-surface px-4 py-3 text-ink"
+            className="w-full rounded-xl border border-surface-border bg-surface-subtle px-3 py-2.5 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition"
           >
             <option value="all">{t("searchPage.allRegions")}</option>
             {GHANA_REGIONS.map((region) => (
@@ -1030,14 +1073,14 @@ function SearchFiltersPanel({
         </div>
 
         <div>
-          <label className="mb-3 block font-semibold text-ink" htmlFor="sort-filter">
+          <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]" htmlFor="sort-filter">
             {t("searchPage.sortBy")}
           </label>
           <select
             id="sort-filter"
             value={filters.sort || "newest"}
             onChange={(e) => setFilters({ ...filters, sort: e.target.value })}
-            className="w-full rounded-lg border border-surface-border bg-surface px-4 py-3 text-ink"
+            className="w-full rounded-xl border border-surface-border bg-surface-subtle px-3 py-2.5 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition"
           >
             <option value="newest">{t("searchPage.newest")}</option>
             <option value="price_asc">{t("searchPage.priceAsc")}</option>
@@ -1046,54 +1089,71 @@ function SearchFiltersPanel({
           </select>
         </div>
 
-        <div className="space-y-3">
-          <label className="flex items-center gap-3 text-sm text-ink">
+        <div className="border-t border-surface-border pt-5 space-y-2.5">
+          <label className="block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em] mb-2">Quick Filters</label>
+          <label className="flex items-center gap-3 text-xs text-ink cursor-pointer group">
+            <div className={`w-8 h-4.5 rounded-full border-2 transition-all flex items-center px-0.5 ${
+              filters.verifiedOnly ? "bg-emerald-500 border-emerald-500" : "border-surface-border bg-surface-subtle"
+            }`}>
+              <div className={`w-3 h-3 rounded-full bg-white shadow transition-all ${
+                filters.verifiedOnly ? "translate-x-3.5" : "translate-x-0"
+              }`} />
+            </div>
             <input
               type="checkbox"
               checked={filters.verifiedOnly}
               onChange={(event) => setFilters({ ...filters, verifiedOnly: event.target.checked })}
-              className="h-4 w-4 rounded border-surface-border"
+              className="sr-only"
             />
-            {t("searchPage.verifiedOnly")}
+            <span className="group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{t("searchPage.verifiedOnly")}</span>
           </label>
-          <label className="flex items-center gap-3 text-sm text-ink">
+          <label className="flex items-center gap-3 text-xs text-ink cursor-pointer group">
+            <div className={`w-8 h-4.5 rounded-full border-2 transition-all flex items-center px-0.5 ${
+              filters.featuredOnly ? "bg-amber-500 border-amber-500" : "border-surface-border bg-surface-subtle"
+            }`}>
+              <div className={`w-3 h-3 rounded-full bg-white shadow transition-all ${
+                filters.featuredOnly ? "translate-x-3.5" : "translate-x-0"
+              }`} />
+            </div>
             <input
               type="checkbox"
               checked={filters.featuredOnly}
               onChange={(event) => setFilters({ ...filters, featuredOnly: event.target.checked })}
-              className="h-4 w-4 rounded border-surface-border"
+              className="sr-only"
             />
-            {t("searchPage.featuredOnly")}
+            <span className="group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">{t("searchPage.featuredOnly")}</span>
           </label>
         </div>
 
-        <div>
-          <label className="mb-3 block font-semibold text-ink">{t("searchPage.priceRange")}</label>
+        <div className="border-t border-surface-border pt-5">
+          <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.priceRange")}</label>
           <div className="flex gap-2">
             <Input
               type="number"
               placeholder={t("searchPage.min")}
               value={filters.priceMin}
               onChange={(e) => setFilters({ ...filters, priceMin: e.target.value })}
+              className="text-xs"
             />
             <Input
               type="number"
               placeholder={t("searchPage.max")}
               value={filters.priceMax}
               onChange={(e) => setFilters({ ...filters, priceMax: e.target.value })}
+              className="text-xs"
             />
           </div>
         </div>
 
-        <div>
-          <label className="mb-3 block font-semibold text-ink" htmlFor="property-type-filter">
+        <div className="border-t border-surface-border pt-5">
+          <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]" htmlFor="property-type-filter">
             {t("searchPage.propertyType")}
           </label>
           <select
             id="property-type-filter"
             value={filters.propertyType}
             onChange={(e) => setFilters({ ...filters, propertyType: e.target.value })}
-            className="w-full rounded-lg border border-surface-border bg-surface px-4 py-3 text-ink"
+            className="w-full rounded-xl border border-surface-border bg-surface-subtle px-3 py-2.5 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition"
           >
             <option value="all">{t("searchPage.allTypes")}</option>
             <option value="apartment">{t("searchPage.propertyTypes.apartment")}</option>
@@ -1104,15 +1164,19 @@ function SearchFiltersPanel({
           </select>
         </div>
 
-        <div>
-          <label className="mb-3 block font-semibold text-ink">{t("searchPage.bedrooms")}</label>
-          <div className="grid grid-cols-5 gap-2">
+        <div className="border-t border-surface-border pt-5">
+          <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.bedrooms")}</label>
+          <div className="grid grid-cols-5 gap-1.5">
             {["Any", "1", "2", "3", "4+"].map((bed) => (
               <button
                 key={bed}
                 type="button"
                 onClick={() => setFilters({ ...filters, bedrooms: bed === "Any" ? "" : bed })}
-                className={filterChipClass((filters.bedrooms || "Any") === bed)}
+                className={`rounded-xl px-2 py-2 text-xs font-semibold transition-all ${
+                  (filters.bedrooms || "Any") === bed
+                    ? "bg-primary text-white shadow-sm"
+                    : "bg-surface-subtle text-ink-secondary hover:bg-surface-hover hover:text-ink border border-transparent hover:border-surface-border"
+                }`}
               >
                 {bed === "Any" ? t("filters.any") : bed}
               </button>
@@ -1120,15 +1184,19 @@ function SearchFiltersPanel({
           </div>
         </div>
 
-        <div>
-          <label className="mb-3 block font-semibold text-ink">{t("searchPage.bathrooms")}</label>
-          <div className="grid grid-cols-5 gap-2">
+        <div className="border-t border-surface-border pt-5">
+          <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.bathrooms")}</label>
+          <div className="grid grid-cols-5 gap-1.5">
             {["Any", "1", "2", "3", "4+"].map((bath) => (
               <button
                 key={bath}
                 type="button"
                 onClick={() => setFilters({ ...filters, bathrooms: bath === "Any" ? "" : bath })}
-                className={filterChipClass((filters.bathrooms || "Any") === bath)}
+                className={`rounded-xl px-2 py-2 text-xs font-semibold transition-all ${
+                  (filters.bathrooms || "Any") === bath
+                    ? "bg-primary text-white shadow-sm"
+                    : "bg-surface-subtle text-ink-secondary hover:bg-surface-hover hover:text-ink border border-transparent hover:border-surface-border"
+                }`}
               >
                 {bath === "Any" ? t("filters.any") : bath}
               </button>
@@ -1136,12 +1204,14 @@ function SearchFiltersPanel({
           </div>
         </div>
 
-        <Button className="w-full" size="lg" onClick={onApply}>
-          {t("searchPage.applyFilters")}
-        </Button>
-        <Button variant="outline" className="w-full" onClick={onClear}>
-          {t("searchPage.clearFilters")}
-        </Button>
+        <div className="border-t border-surface-border pt-5 space-y-2">
+          <Button className="w-full text-xs" size="lg" onClick={onApply}>
+            {t("searchPage.applyFilters")}
+          </Button>
+          <Button variant="outline" className="w-full text-xs" size="sm" onClick={onClear}>
+            {t("searchPage.clearFilters")}
+          </Button>
+        </div>
       </div>
     </Card>
   );

@@ -131,24 +131,38 @@ export function WorkspaceContacts({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-ink">
-            Contacts CRM
-          </h1>
-          <p className="text-sm text-ink-secondary mt-1">
-            Standalone contact records for prospects, landlords, and buyers outside active deal cases.
-          </p>
+      {/* Workstation Header */}
+      <div className="relative overflow-hidden rounded-3xl p-6 md:p-8 bg-surface-subtle/80 border border-surface-border/80 backdrop-blur-md shadow-card">
+        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+        <div className="absolute right-32 -bottom-16 w-48 h-48 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
+
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                <UserRound className="w-3.5 h-3.5" />
+                CRM & Client Relations
+              </span>
+              <span className="text-xs text-muted-foreground">• {organization.name}</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-display font-semibold tracking-tight text-foreground">
+              Contacts Directory
+            </h1>
+            <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
+              Standalone contact records, client inquiries, landlords, and institutional investors managed across your agency roster.
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* KPI Overview */}
+      {/* KPI Overview with Ambient Glow */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <MetricCard
           title="Active Directory"
           value={activeContacts.length}
           icon={UserRound}
           iconColor="primary"
+          glow
           subtitle="Total customer and lead records"
         />
         <MetricCard
@@ -156,6 +170,7 @@ export function WorkspaceContacts({
           value={assignedCount}
           icon={CheckCircle2}
           iconColor="emerald"
+          glow
           subtitle="Allocated to account reps"
         />
         <MetricCard
@@ -163,15 +178,21 @@ export function WorkspaceContacts({
           value={unassignedCount}
           icon={UserPlus}
           iconColor="amber"
+          glow
           subtitle="Pending staff assignment"
         />
       </div>
 
       {canWrite ? (
-        <Card className="p-6 border-surface-border bg-surface shadow-card">
-          <div className="flex items-center gap-2 mb-4">
-            <Plus className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold text-ink">Add New Contact</h2>
+        <Card className="p-6 rounded-3xl border-surface-border/80 bg-surface/90 backdrop-blur-sm shadow-card">
+          <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-surface-border/60">
+            <span className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
+              <Plus className="w-4 h-4" />
+            </span>
+            <div>
+              <h2 className="text-base font-semibold text-foreground">Add New Contact Record</h2>
+              <p className="text-xs text-muted-foreground">Register an individual or organizational buyer profile</p>
+            </div>
           </div>
           <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleCreate}>
             <Input label="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Akua Mensah" required />
@@ -185,31 +206,33 @@ export function WorkspaceContacts({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Prefers phone communication, interested in Cantonments apartments."
             />
-            <div className="md:col-span-2 flex justify-end">
-              <Button type="submit" disabled={saving} size="sm" className="flex items-center gap-1.5 shadow-xs">
+            <div className="md:col-span-2 flex justify-end pt-2">
+              <Button type="submit" disabled={saving} size="sm" className="rounded-xl shadow-md shadow-primary/20 flex items-center gap-2">
                 <Plus className="w-4 h-4" />
-                <span>{saving ? "Saving..." : "Add Contact"}</span>
+                <span>{saving ? "Saving..." : "Save Contact"}</span>
               </Button>
             </div>
           </form>
         </Card>
       ) : null}
 
-      <Card className="p-6 border-surface-border bg-surface shadow-card">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-ink">All Contacts</h2>
-            <Badge variant="outline">{filteredContacts.length}</Badge>
+      <Card className="p-6 rounded-3xl border-surface-border/80 bg-surface/90 backdrop-blur-sm shadow-card">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-surface-border/60">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-lg font-display font-semibold text-foreground">All Contacts</h2>
+            <Badge variant="outline" className="rounded-full text-xs font-semibold px-2.5 bg-surface-subtle">
+              {filteredContacts.length}
+            </Badge>
           </div>
 
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search contacts..."
+              placeholder="Search by name, email, phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-surface-border bg-surface-subtle text-ink placeholder:text-ink-muted focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-surface-border bg-surface-subtle text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
         </div>
@@ -217,7 +240,7 @@ export function WorkspaceContacts({
         {loading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-20 rounded-xl bg-surface-subtle animate-pulse border border-surface-border" />
+              <div key={i} className="h-20 rounded-2xl bg-surface-subtle/80 animate-pulse border border-surface-border" />
             ))}
           </div>
         ) : filteredContacts.length === 0 ? (
@@ -237,44 +260,48 @@ export function WorkspaceContacts({
             {filteredContacts.map((contact) => (
               <div
                 key={contact.id}
-                className="p-4 bg-surface-subtle border border-surface-border rounded-xl flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+                className="p-4 bg-surface-subtle/60 hover:bg-surface-subtle border border-surface-border/70 rounded-2xl flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between transition-all duration-200 group"
               >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 text-primary font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 text-primary font-bold text-xs flex items-center justify-center shrink-0 shadow-sm mt-0.5 group-hover:scale-105 transition-transform">
                     {contact.full_name?.charAt(0).toUpperCase() || "C"}
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-sm text-ink">{contact.full_name}</p>
-                      <Badge variant="outline" className="capitalize text-[10px]">
+                      <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
+                        {contact.full_name}
+                      </p>
+                      <Badge variant="outline" className="capitalize text-[10px] rounded-full">
                         {contact.status}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-ink-secondary mt-1 flex-wrap">
+                    <div className="flex items-center gap-3.5 text-xs text-muted-foreground mt-1.5 flex-wrap">
                       {contact.email && (
-                        <div className="flex items-center gap-1">
-                          <Mail className="w-3.5 h-3.5 text-ink-muted" />
+                        <div className="flex items-center gap-1.5">
+                          <Mail className="w-3.5 h-3.5 text-primary/70" />
                           <span>{contact.email}</span>
                         </div>
                       )}
                       {contact.phone && (
-                        <div className="flex items-center gap-1">
-                          <Phone className="w-3.5 h-3.5 text-ink-muted" />
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-emerald-500/80" />
                           <span>{contact.phone}</span>
                         </div>
                       )}
                       {contact.company && (
-                        <div className="flex items-center gap-1">
-                          <Building2 className="w-3.5 h-3.5 text-ink-muted" />
+                        <div className="flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-amber-500/80" />
                           <span>{contact.company}</span>
                         </div>
                       )}
                       {!contact.email && !contact.phone && !contact.company && (
-                        <span className="text-ink-muted">No details provided</span>
+                        <span className="text-muted-foreground italic">No contact details registered</span>
                       )}
                     </div>
                     {contact.notes ? (
-                      <p className="text-xs text-ink-muted mt-1.5 leading-relaxed">{contact.notes}</p>
+                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed bg-surface/50 p-2 rounded-xl border border-surface-border/40">
+                        {contact.notes}
+                      </p>
                     ) : null}
                   </div>
                 </div>
@@ -284,7 +311,7 @@ export function WorkspaceContacts({
                     <>
                       <div className="relative">
                         <select
-                          className="appearance-none px-3 py-1.5 rounded-lg border border-surface-border bg-surface text-xs font-medium text-ink pr-8 focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="appearance-none px-3 py-1.5 rounded-xl border border-surface-border bg-surface text-xs font-medium text-foreground pr-8 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
                           value={contact.assigned_to || ""}
                           onChange={(event) => void assignContact(contact.id, event.target.value)}
                         >
@@ -295,18 +322,19 @@ export function WorkspaceContacts({
                             </option>
                           ))}
                         </select>
-                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-muted" />
+                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                       </div>
                       <Button
                         size="sm"
                         variant="outline"
+                        className="rounded-xl bg-surface hover:bg-surface-subtle"
                         onClick={() => void contactsCrmService.archiveContact(contact.id).then(loadData)}
                       >
                         Archive
                       </Button>
                     </>
                   ) : contact.assigned_to ? (
-                    <span className="text-xs text-ink-secondary">
+                    <span className="text-xs text-muted-foreground">
                       Assigned to{" "}
                       {members.find((member) => member.user_id === contact.assigned_to)?.user?.full_name ||
                         "team member"}

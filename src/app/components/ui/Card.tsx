@@ -53,7 +53,12 @@ export function Card({
       className={`${baseClasses} ${variantStyles[variant] || variantStyles.default} ${hoverClasses} ${className}`}
       onClick={onClick}
       style={{
-        boxShadow: variant === "glass" ? "var(--shadow-glass-card), var(--border-sheen)" : undefined,
+        boxShadow:
+          variant === "glass"
+            ? "var(--shadow-glass-card), var(--border-sheen)"
+            : variant === "metric" || variant === "gradient"
+            ? "var(--shadow-card), var(--border-sheen)"
+            : undefined,
         ...style,
       }}
       {...props}

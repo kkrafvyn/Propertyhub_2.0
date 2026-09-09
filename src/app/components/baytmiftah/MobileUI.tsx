@@ -185,7 +185,7 @@ export function MobileShell({
 
   return (
     <div
-      className={`mobile-bolt min-h-screen min-h-[100dvh] w-full overflow-x-clip bg-bolt-bg ${bottomPad} pt-[env(safe-area-inset-top,0px)] text-ink`}
+      className={`mobile-bolt min-h-[100dvh] w-full overflow-x-clip bg-bolt-bg ${bottomPad} pt-[env(safe-area-inset-top,0px)] text-ink`}
     >
       <div className="mx-auto w-full min-w-0 max-w-lg sm:max-w-xl lg:max-w-2xl">{children}</div>
     </div>

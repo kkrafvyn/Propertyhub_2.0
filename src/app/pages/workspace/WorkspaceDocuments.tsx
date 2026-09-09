@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, FileSignature, Globe, History, PenSquare, Plus, Upload, FileText, FileCheck } from "lucide-react";
+import { Download, FileSignature, Globe, History, PenSquare, Plus, Upload, FileText, FileCheck, ShieldCheck, Sparkles, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
@@ -338,32 +338,55 @@ export function WorkspaceDocuments({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">Document Center</h1>
-          <p className="text-muted-foreground mt-2">
-            Keep agreements, offer letters, signed copies, and version history tied to live deal flow.
-          </p>
+    <div className="space-y-8">
+      {/* ── Editorial Header ── */}
+      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-indigo-500/10 via-primary/5 to-surface/80 border border-indigo-500/20 shadow-lg backdrop-blur-md">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-radial from-indigo-500/15 via-primary/10 to-transparent blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-radial from-emerald-500/10 via-transparent to-transparent blur-2xl pointer-events-none" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="info" dot pulse className="text-xs font-semibold px-2.5 py-1">
+                Legal & Contract Center
+              </Badge>
+              <span className="text-xs text-ink-muted flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-indigo-500" />
+                Immutable Version Auditing & Digital Signatures
+              </span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-display font-medium tracking-tight text-ink">
+              Document Center
+            </h1>
+            <p className="text-sm text-ink-secondary max-w-xl leading-relaxed">
+              Keep tenancy agreements, offer letters, deeds, signed copies, and versioned deal documents organized and verified.
+            </p>
+          </div>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Button
+              variant="gradient"
+              size="sm"
+              onClick={() => {
+                resetDraft();
+                setDialogOpen(true);
+              }}
+              className="gap-2 shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              New Document
+            </Button>
+          </div>
         </div>
-        <Button
-          onClick={() => {
-            resetDraft();
-            setDialogOpen(true);
-          }}
-        >
-          <Plus className="w-4 h-4" />
-          New Document
-        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      {/* ── KPI Overview with Halo Illumination ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Document Families"
           value={metrics.total}
           subtitle="Active document clusters"
           icon={FileText}
           iconColor="primary"
+          glow="primary"
         />
         <MetricCard
           title="Signed Documents"
@@ -371,6 +394,7 @@ export function WorkspaceDocuments({
           subtitle="Audited agreements"
           icon={FileCheck}
           iconColor="emerald"
+          glow="emerald"
         />
         <MetricCard
           title="Public Trust Docs"
@@ -378,6 +402,7 @@ export function WorkspaceDocuments({
           subtitle="Shared external compliance"
           icon={Globe}
           iconColor="indigo"
+          glow="indigo"
         />
         <MetricCard
           title="Contracts"
@@ -385,15 +410,21 @@ export function WorkspaceDocuments({
           subtitle="Binding deal forms"
           icon={FileSignature}
           iconColor="amber"
+          glow="amber"
         />
       </div>
 
-      <Card className="p-6">
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold">Versioned Deal Documents</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Every update creates a new version so agreements stay auditable.
-          </p>
+      <Card variant="glass" className="p-6 border border-surface-border/80 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-2.5 mb-6">
+          <span className="p-2 rounded-xl bg-primary/10 text-primary shrink-0">
+            <FileText className="w-4 h-4" />
+          </span>
+          <div>
+            <h2 className="text-base font-bold text-ink">Versioned Deal Documents</h2>
+            <p className="text-xs text-ink-secondary mt-0.5">
+              Every update creates a new immutable version so agreements remain fully auditable.
+            </p>
+          </div>
         </div>
 
         {loading ? (
@@ -414,32 +445,34 @@ export function WorkspaceDocuments({
             {groupedDocuments.map((group) => {
               const latest = group.versions[0];
               return (
-                <div key={group.familyId} className="rounded-xl border border-border p-4">
+                <div key={group.familyId} className="rounded-2xl border border-surface-border/80 bg-surface/70 hover:border-primary/40 transition-all p-5 shadow-xs group">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold">{latest.title}</h3>
-                        <Badge>{formatLabel(latest.document_type)}</Badge>
+                        <h3 className="font-display font-medium text-base text-ink group-hover:text-primary transition-colors">{latest.title}</h3>
+                        <Badge variant="info">{formatLabel(latest.document_type)}</Badge>
                         <Badge variant="outline">v{latest.version_number}</Badge>
                         {latest.public_visibility && (
-                          <Badge variant="secondary">
-                            <Globe className="w-3 h-3 mr-1" />
+                          <Badge variant="success" className="gap-1">
+                            <Globe className="w-3 h-3" />
                             Public trust
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs text-ink-secondary">
                         {latest.deal_case?.listing?.property?.address ||
                           latest.transaction?.listing?.property?.address ||
                           "Linked deal document"}
                       </p>
-                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                        <span>Status: {formatLabel(latest.status)}</span>
+                      <div className="flex flex-wrap gap-2 text-[11px] text-ink-muted">
+                        <span>Status: <strong className="text-ink">{formatLabel(latest.status)}</strong></span>
+                        <span>&bull;</span>
                         <span>Updated {formatRelative(latest.updated_at)}</span>
+                        <span>&bull;</span>
                         <span>{group.versions.length} version{group.versions.length === 1 ? "" : "s"}</span>
                       </div>
                       {latest.public_summary && (
-                        <p className="rounded-lg bg-secondary/20 px-3 py-2 text-sm">
+                        <p className="rounded-xl bg-surface-subtle/70 border border-surface-border/60 px-3.5 py-2 text-xs text-ink-secondary">
                           {latest.public_summary}
                         </p>
                       )}
@@ -448,21 +481,23 @@ export function WorkspaceDocuments({
                     <div className="flex flex-wrap gap-2 lg:justify-end">
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="glass"
                         onClick={() => setPreviewDocument(latest)}
+                        className="text-xs"
                       >
                         View
                       </Button>
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="glass"
                         onClick={() => documentCenterService.triggerMarkdownDownload(latest)}
+                        className="text-xs gap-1.5"
                       >
-                        <Download className="w-4 h-4" />
+                        <Download className="w-3.5 h-3.5" />
                         Download
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => void handleShowVersions(latest)}>
-                        <History className="w-4 h-4" />
+                      <Button size="sm" variant="glass" onClick={() => void handleShowVersions(latest)} className="text-xs gap-1.5">
+                        <History className="w-3.5 h-3.5" />
                         Versions
                       </Button>
                       <label className="inline-flex cursor-pointer">
@@ -480,29 +515,31 @@ export function WorkspaceDocuments({
                         />
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="glass"
                           type="button"
                           disabled={uploadingDocId === latest.id}
                           onClick={() => window.document.getElementById(`upload-${latest.id}`)?.click()}
+                          className="text-xs gap-1.5"
                         >
-                          <Upload className="w-4 h-4" />
+                          <Upload className="w-3.5 h-3.5" />
                           {uploadingDocId === latest.id ? "Uploading..." : "Upload copy"}
                         </Button>
                       </label>
-                      <Button size="sm" variant="outline" onClick={() => handleOpenVersionDialog(latest)}>
-                        <PenSquare className="w-4 h-4" />
+                      <Button size="sm" variant="glass" onClick={() => handleOpenVersionDialog(latest)} className="text-xs gap-1.5">
+                        <PenSquare className="w-3.5 h-3.5" />
                         New Version
                       </Button>
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="glass"
                         onClick={() => handleTogglePublic(latest)}
+                        className="text-xs gap-1.5"
                       >
-                        <Globe className="w-4 h-4" />
-                        {latest.public_visibility ? "Hide Public Copy" : "Show Public Copy"}
+                        <Globe className="w-3.5 h-3.5" />
+                        {latest.public_visibility ? "Hide Public" : "Show Public"}
                       </Button>
-                      <Button size="sm" onClick={() => setSignDialogDocument(latest)}>
-                        <PenSquare className="w-4 h-4" />
+                      <Button size="sm" variant="gradient" onClick={() => setSignDialogDocument(latest)} className="text-xs gap-1.5">
+                        <PenSquare className="w-3.5 h-3.5" />
                         Sign
                       </Button>
                     </div>

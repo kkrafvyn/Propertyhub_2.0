@@ -58,7 +58,7 @@ export function BusinessDesktopShell({ children, organizationName }: BusinessDes
       <header className="h-10 bg-card border-b border-border flex items-center justify-between px-3 shrink-0 text-xs">
         <div className="flex items-center gap-3 min-w-0">
           <Logo className="scale-90" variant="workspace" to={workspaceBase} showText />
-          <span className="font-semibold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 shrink-0">
+          <span className="font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/20 dark:border-emerald-800/60 shrink-0 text-[10px] tracking-wide">
             REOS WORKSTATION v{version}
           </span>
           <span className="text-muted-foreground font-mono text-[11px] truncate">
@@ -69,11 +69,11 @@ export function BusinessDesktopShell({ children, organizationName }: BusinessDes
         <button
           type="button"
           onClick={() => navigate(getWorkspaceRoute(organizationSlug, "ai-assistant"))}
-          className="flex items-center gap-2 px-3 py-1 bg-secondary hover:bg-secondary/70 text-foreground rounded text-xs border border-border transition"
+          className="flex items-center gap-2 px-3 py-1 bg-surface-subtle hover:bg-surface-hover text-ink rounded-lg text-xs border border-surface-border transition-all shadow-xs cursor-pointer group"
         >
-          <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-          <span>Command</span>
-          <kbd className="px-1.5 py-0.5 bg-background text-muted-foreground text-[10px] rounded border border-border">
+          <Sparkles className="h-3.5 w-3.5 text-amber-500 group-hover:rotate-12 transition-transform" />
+          <span className="font-medium">Command</span>
+          <kbd className="px-1.5 py-0.5 bg-surface text-ink-muted text-[10px] rounded border border-surface-border font-mono">
             Ctrl+K
           </kbd>
         </button>
@@ -101,9 +101,9 @@ export function BusinessDesktopShell({ children, organizationName }: BusinessDes
                   <button
                     type="button"
                     onClick={() => toggleWorkspace(workspace.id)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                       isActive
-                        ? "bg-emerald-600/90 text-white"
+                        ? "bg-primary text-primary-foreground shadow-xs"
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     }`}
                   >

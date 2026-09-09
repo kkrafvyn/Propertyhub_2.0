@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 import {
   Check,
@@ -17,6 +17,11 @@ import {
   ArrowUpDown,
   Bell,
   Inbox,
+  Search,
+  SlidersHorizontal,
+  X,
+  Sparkles,
+  Building2,
 } from "lucide-react";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
@@ -213,6 +218,24 @@ export function WorkspaceLeases({
   const renewalsPending = leases.filter((l) => l.renewal_status === "requested").length;
   const readyForSigning = leases.filter((l) => l.status === "approved" && l.signed_at == null).length;
 
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "renewal" | "unsigned" | "inactive">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredLeases = useMemo(() => {
+    return leases.filter((lease) => {
+      if (statusFilter === "active" && lease.status !== "active") return false;
+      if (statusFilter === "renewal" && lease.renewal_status !== "requested") return false;
+      if (statusFilter === "unsigned" && (lease.status !== "approved" || lease.signed_at != null)) return false;
+      if (statusFilter === "inactive" && !["expired", "terminated"].includes(lease.status)) return false;
+
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      const address = lease.listing?.property?.address?.toLowerCase() || "";
+      const tenantName = (lease.tenant?.full_name || lease.tenant?.email || "").toLowerCase();
+      return address.includes(q) || tenantName.includes(q);
+    });
+  }, [leases, statusFilter, searchQuery]);
+
   const respondRenewal = async (leaseId: string, status: "approved" | "declined") => {
     try {
       setBusyId(`${leaseId}-${status}`);
@@ -395,31 +418,37 @@ export function WorkspaceLeases({
   return (
     <div className="space-y-8">
       {/* ── Page Header ── */}
-      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-emerald-500/10 via-blue-500/5 to-surface border border-emerald-500/20 shadow-lg backdrop-blur-sm">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-radial from-emerald-500/10 via-transparent to-transparent blur-3xl pointer-events-none" />
+      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-emerald-500/10 via-primary/5 to-surface/80 border border-emerald-500/20 shadow-lg backdrop-blur-md">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-radial from-emerald-500/15 via-primary/10 to-transparent blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-radial from-blue-500/10 via-transparent to-transparent blur-2xl pointer-events-none" />
         <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <Badge variant="success" dot pulse className="text-xs font-semibold">
-                Tenancy Manager
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="success" dot pulse className="text-xs font-semibold px-2.5 py-1">
+                Tenancy & Lease Governance
               </Badge>
-              <span className="text-xs text-ink-muted">Act 220 Compliant</span>
+              <span className="text-xs text-ink-muted flex items-center gap-1">
+                <Shield className="w-3 h-3 text-emerald-500" />
+                Act 220 & Ghana Rent Cap Compliant
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink">
+            <h1 className="text-3xl sm:text-4xl font-display font-medium tracking-tight text-ink">
               Lease & Tenancy Hub
             </h1>
             <p className="text-sm text-ink-secondary max-w-xl leading-relaxed">
-              Active tenancies, renewals, rent schedules, Ghana Card screening, and tenant notices — all in one place.
+              Automate lease agreements, digital signatures, escrow security deposits, rent reviews, and Ghana Card tenant screening.
             </p>
           </div>
-          <Button variant="gradient" size="sm" className="gap-2 shrink-0" onClick={() => void loadLeases()}>
-            <RefreshCw className="w-3.5 h-3.5" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Button variant="gradient" size="sm" className="gap-2 shadow-sm" onClick={() => void loadLeases()}>
+              <RefreshCw className="w-3.5 h-3.5" />
+              Refresh Tenancies
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* ── KPI Strip ── */}
+      {/* ── KPI Strip with Halo Illumination ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Applications"
@@ -427,6 +456,7 @@ export function WorkspaceLeases({
           subtitle="Rental & lease apps"
           icon={ClipboardList}
           iconColor="primary"
+          glow="primary"
           trend={applications.length > 0 ? { value: `${applications.length} pending`, isPositive: true } : undefined}
         />
         <MetricCard
@@ -435,6 +465,7 @@ export function WorkspaceLeases({
           subtitle={`${screeningCompleted} completed`}
           icon={UserCheck}
           iconColor="emerald"
+          glow="emerald"
           trend={screeningSubmitted > 0 ? { value: "In review", isPositive: true } : undefined}
         />
         <MetricCard
@@ -443,16 +474,72 @@ export function WorkspaceLeases({
           subtitle="Approved, unsigned"
           icon={FileSignature}
           iconColor="purple"
+          glow="purple"
           trend={readyForSigning > 0 ? { value: "Action needed", isPositive: false } : undefined}
         />
         <MetricCard
           title="Renewals Pending"
           value={String(renewalsPending)}
-          subtitle="Awaiting landlord decision"
+          subtitle="Awaiting decision"
           icon={RefreshCw}
           iconColor="amber"
+          glow="amber"
           trend={renewalsPending > 0 ? { value: "Review required", isPositive: false } : undefined}
         />
+      </div>
+
+      {/* ── Filter & Search Toolbar ── */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-2 bg-surface/60 backdrop-blur-md rounded-2xl border border-surface-border/80">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+          {[
+            { id: "all", label: "All Leases", count: leases.length },
+            { id: "active", label: "Active", count: leases.filter((l) => l.status === "active").length },
+            { id: "renewal", label: "Renewal Requests", count: renewalsPending },
+            { id: "unsigned", label: "Needs Signature", count: readyForSigning },
+            { id: "inactive", label: "Concluded", count: leases.filter((l) => ["expired", "terminated"].includes(l.status)).length },
+          ].map((tab) => {
+            const isActive = statusFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setStatusFilter(tab.id as any)}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+                  isActive
+                    ? "bg-primary text-white shadow-sm shadow-primary/25"
+                    : "text-ink-secondary hover:text-ink hover:bg-surface-hover/80"
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                    isActive ? "bg-white/20 text-white" : "bg-surface-subtle text-ink-tertiary"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="relative min-w-[240px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search address or tenant..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-8 py-2 rounded-xl text-xs bg-surface/90 border border-surface-border text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink p-0.5 rounded-full"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Active Leases ── */}
@@ -462,13 +549,32 @@ export function WorkspaceLeases({
             <KeyRound className="w-8 h-8 text-emerald-500" />
           </span>
           <div>
-            <p className="font-bold text-ink">No leases yet</p>
-            <p className="text-sm text-ink-secondary mt-1">Active tenancy leases will appear here once created.</p>
+            <p className="font-bold text-ink text-base">No tenancy agreements found</p>
+            <p className="text-xs text-ink-secondary mt-1">Active tenancy agreements will appear here once executed or approved.</p>
           </div>
+        </Card>
+      ) : filteredLeases.length === 0 ? (
+        <Card variant="glass" className="p-10 flex flex-col items-center justify-center text-center gap-3">
+          <SlidersHorizontal className="w-8 h-8 text-ink-muted" />
+          <div>
+            <p className="font-semibold text-ink text-sm">No leases match your active filters</p>
+            <p className="text-xs text-ink-secondary mt-0.5">Try changing the status tab or clearing your search term.</p>
+          </div>
+          <Button
+            size="sm"
+            variant="glass"
+            onClick={() => {
+              setStatusFilter("all");
+              setSearchQuery("");
+            }}
+            className="text-xs mt-1"
+          >
+            Reset Filters
+          </Button>
         </Card>
       ) : (
         <div className="space-y-4">
-          {leases.map((lease) => {
+          {filteredLeases.map((lease) => {
             const activeEsign = pendingEsignByLease[lease.id];
             const landlordUserId = String(activeEsign?.metadata?.landlordSignerUserId || "");
             const landlordSigner = activeEsign?.signers?.find((s: any) => s.role === "landlord");
@@ -485,23 +591,23 @@ export function WorkspaceLeases({
             };
 
             return (
-              <Card key={lease.id} variant="glass" className="overflow-visible border-surface-border/80 hover:border-emerald-500/30 transition-all">
+              <Card key={lease.id} variant="glass" className="overflow-visible border border-surface-border/80 hover:border-emerald-500/40 bg-surface/80 backdrop-blur-md rounded-2xl transition-all duration-300 shadow-sm hover:shadow-md group">
                 {/* Lease Header */}
                 <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <span className="p-2 rounded-xl bg-emerald-500/10 shrink-0 mt-0.5">
-                      <KeyRound className="w-4 h-4 text-emerald-500" />
+                  <div className="flex items-start gap-3.5">
+                    <span className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 border border-emerald-500/20 group-hover:bg-emerald-500/15 transition-colors">
+                      <KeyRound className="w-4 h-4" />
                     </span>
                     <div className="min-w-0">
-                      <p className="font-bold text-ink text-sm leading-tight">
+                      <p className="font-display font-medium text-ink text-base leading-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                         {lease.listing?.property?.address || "Lease property"}
                       </p>
-                      <p className="text-xs text-ink-secondary mt-0.5 flex items-center gap-1.5 flex-wrap">
-                        <span>{lease.tenant?.full_name || lease.tenant?.email || "-"}</span>
-                        <span className="text-ink-muted text-[10px]">|</span>
-                        <span className="flex items-center gap-1">
-                          <CalendarRange className="w-3 h-3 text-ink-muted" />
-                          Started {lease.start_date ?? "-"}
+                      <p className="text-xs text-ink-secondary mt-1 flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-ink">{lease.tenant?.full_name || lease.tenant?.email || "Tenant"}</span>
+                        <span className="text-ink-muted text-[10px]">&bull;</span>
+                        <span className="flex items-center gap-1 text-ink-muted">
+                          <CalendarRange className="w-3 h-3" />
+                          Commenced {lease.start_date ?? "-"}
                         </span>
                       </p>
                     </div>

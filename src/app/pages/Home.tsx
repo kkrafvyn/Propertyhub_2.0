@@ -236,15 +236,15 @@ export function Home() {
       )}
 
       {!loading && (
-        <section className="mb-8 overflow-x-auto" aria-label={t("searchPage.region")}>
+        <section className="mb-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label={t("searchPage.region")}>
           <div className="flex min-w-max gap-2 pb-1">
             <button
               type="button"
               onClick={() => setGhanaRegion("all")}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 cursor-pointer ${
                 ghanaRegion === "all"
-                  ? "bg-brand-forest text-white"
-                  : "bg-surface-subtle text-ink hover:bg-surface-hover"
+                  ? "bg-primary text-primary-foreground shadow-xs scale-105"
+                  : "border border-surface-border bg-surface text-ink-secondary hover:bg-surface-hover hover:text-ink hover:-translate-y-0.5"
               }`}
             >
               {t("searchPage.allRegions")}
@@ -254,10 +254,10 @@ export function Home() {
                 key={region.code}
                 type="button"
                 onClick={() => setGhanaRegion(region.code)}
-                className={`rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition ${
+                className={`rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   ghanaRegion === region.code
-                    ? "bg-brand-forest text-white"
-                    : "bg-surface-subtle text-ink hover:bg-surface-hover"
+                    ? "bg-primary text-primary-foreground shadow-xs scale-105"
+                    : "border border-surface-border bg-surface text-ink-secondary hover:bg-surface-hover hover:text-ink hover:-translate-y-0.5"
                 }`}
               >
                 {region.label}
@@ -416,8 +416,8 @@ function DesktopHero({
         </div>
 
         {listingCount > 0 && (
-          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-surface-border bg-surface/85 px-3.5 py-1 text-xs font-medium text-ink-secondary backdrop-blur-md shadow-xs">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="mt-6 inline-flex items-center gap-2.5 rounded-full border border-surface-border bg-surface/90 px-4 py-1.5 text-xs font-semibold text-ink backdrop-blur-md shadow-xs">
+            <span className="radar-pulse-dot" />
             <span>{t("home.heroListingsLive", { count: listingCount })}</span>
           </div>
         )}

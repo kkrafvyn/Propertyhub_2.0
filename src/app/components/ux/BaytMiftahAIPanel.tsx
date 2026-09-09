@@ -125,6 +125,19 @@ export function BaytMiftahAIPanel({
         : "Smart AI";
 
   // Draggable Bubble State
+  // On mobile we push the bubble above the floating tab bar (~92px) and safe-area.
+  const MOBILE_BOTTOM_CLEARANCE = 160; // tab bar height + breathing room
+  const isMobileViewport = () =>
+    typeof window !== "undefined" && window.innerWidth < 768;
+  const getDefaultBubblePos = () => {
+    if (typeof window === "undefined") return { x: 20, y: 20 };
+    const bottomClearance = isMobileViewport() ? MOBILE_BOTTOM_CLEARANCE : 88;
+    return {
+      x: Math.max(10, window.innerWidth - 76),
+      y: Math.max(10, window.innerHeight - bottomClearance),
+    };
+  };
+
   const [bubblePos, setBubblePos] = useState<{ x: number; y: number }>(() => {
     if (typeof window === "undefined") return { x: 20, y: 20 };
     const saved = localStorage.getItem("bm_ai_bubble_pos");
@@ -132,19 +145,17 @@ export function BaytMiftahAIPanel({
       try {
         const parsed = JSON.parse(saved);
         if (typeof parsed.x === "number" && typeof parsed.y === "number") {
+          const bottomClearance = isMobileViewport() ? MOBILE_BOTTOM_CLEARANCE : 88;
           return {
             x: Math.max(10, Math.min(window.innerWidth - 70, parsed.x)),
-            y: Math.max(10, Math.min(window.innerHeight - 80, parsed.y)),
+            y: Math.max(10, Math.min(window.innerHeight - bottomClearance, parsed.y)),
           };
         }
       } catch {
         // ignore
       }
     }
-    return {
-      x: Math.max(10, window.innerWidth - 76),
-      y: Math.max(10, window.innerHeight - 88),
-    };
+    return getDefaultBubblePos();
   });
 
   const [isDragging, setIsDragging] = useState(false);
@@ -217,10 +228,7 @@ export function BaytMiftahAIPanel({
 
   const handleResetPosition = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const defaultPos = {
-      x: Math.max(10, window.innerWidth - 76),
-      y: Math.max(10, window.innerHeight - 88),
-    };
+    const defaultPos = getDefaultBubblePos();
     setBubblePos(defaultPos);
     localStorage.setItem("bm_ai_bubble_pos", JSON.stringify(defaultPos));
   };

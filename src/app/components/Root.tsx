@@ -167,7 +167,7 @@ export function Root() {
       <SurfaceProvider>
         <CallProvider>
           <MobileBiometricGate>
-            <div className="mobile-bolt min-h-screen min-h-[100dvh] bg-bolt-bg has-mobile-tab-bar">
+            <div className="mobile-bolt min-h-[100dvh] bg-bolt-bg has-mobile-tab-bar">
               {isElectron() ? <DesktopNavigationBridge /> : null}
               <RouteMonitoring />
               <PolicyUpdateBanner />
@@ -190,7 +190,7 @@ export function Root() {
   const showWorkspaceDock = showBottomNav && Boolean(user) && isWorkspaceRole(role);
 
   const shellClass = [
-    "mobile-bolt min-h-screen min-h-[100dvh] bg-bolt-bg",
+    "mobile-bolt min-h-[100dvh] bg-bolt-bg",
     showBottomNav ? "has-mobile-tab-bar" : "",
     showWorkspaceDock ? "has-workspace-dock" : "",
   ]

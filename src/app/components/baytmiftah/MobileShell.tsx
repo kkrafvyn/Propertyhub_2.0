@@ -22,12 +22,12 @@ export default function MobileShell({ children, hideNav = false }) {
   const bottomPad = 'pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))]'
 
   return (
-    <div className={`mobile-bolt min-h-screen min-h-[100dvh] w-full overflow-x-clip bg-bolt-bg ${bottomPad} pt-[env(safe-area-inset-top,0px)] text-ink`}>
+    <div className={`mobile-bolt min-h-[100dvh] w-full overflow-x-clip bg-bolt-bg ${bottomPad} pt-[env(safe-area-inset-top,0px)] text-ink`}>
       <div className="mx-auto w-full min-w-0 max-w-lg sm:max-w-xl lg:max-w-2xl">{children}</div>
 
       {!hideNav && (
-        <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-surface-border bg-surface shadow-bolt-nav">
-          <div className="mx-auto flex w-full min-w-0 max-w-lg items-stretch justify-around px-0.5 pt-1 sm:max-w-xl sm:px-1 lg:max-w-2xl pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+        <nav className="fixed inset-x-0 bottom-0 z-[60] border-t border-surface-border bg-surface/95 shadow-bolt-nav backdrop-blur-xl">
+          <div className="mx-auto flex w-full min-w-0 max-w-lg items-stretch justify-around px-0.5 pt-1 sm:max-w-xl sm:px-1 lg:max-w-2xl pb-[max(0.375rem,env(safe-area-inset-bottom))]">
             {CONSUMER_BOTTOM_TABS.map(({ to, labelKey, icon, end, authRequired }) => {
               const needsAuth = authRequired && !user
               const dest = needsAuth ? '/login' : to
