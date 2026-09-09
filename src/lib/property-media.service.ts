@@ -3,16 +3,99 @@ import type { Database } from "./database.types";
 
 type PropertyMediaInsert = Database["public"]["Tables"]["property_media"]["Insert"];
 type PropertyMediaUpdate = Database["public"]["Tables"]["property_media"]["Update"];
+type PropertyMediaRow = Database["public"]["Tables"]["property_media"]["Row"];
 
 const PROPERTY_MEDIA_BUCKET = import.meta.env.VITE_PROPERTY_MEDIA_BUCKET || "property-media";
+
+/** Fresh signed URLs for gallery display (re-signed on each page load when stale). */
+const DISPLAY_SIGNED_URL_TTL_SEC = 60 * 60;
+/** Re-sign before JWT expiry to avoid broken images mid-session. */
+const RESIGN_BUFFER_SEC = 60 * 5;
+
+export type PropertyMediaResolvable = Pick<PropertyMediaRow, "storage_path" | "public_url"> &
+  Partial<PropertyMediaRow>;
 
 function buildStoragePath(organizationId: string, propertyId: string, file: File) {
   const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
   return `${organizationId}/${propertyId}/${crypto.randomUUID()}.${extension}`;
 }
 
+export function parseSignedUrlExpirySec(publicUrl: string): number | null {
+  try {
+    const token = new URL(publicUrl).searchParams.get("token");
+    if (!token) return null;
+
+    const payloadSegment = token.split(".")[1];
+    if (!payloadSegment) return null;
+
+    const payload = JSON.parse(atob(payloadSegment.replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof payload.exp === "number" ? payload.exp : null;
+  } catch {
+    return null;
+  }
+}
+
+export function isPropertyMediaUrlStale(publicUrl?: string | null): boolean {
+  if (!publicUrl?.trim()) return true;
+
+  const expirySec = parseSignedUrlExpirySec(publicUrl);
+  if (expirySec === null) return false;
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  return expirySec <= nowSec + RESIGN_BUFFER_SEC;
+}
+
 export const propertyMediaService = {
   bucketName: PROPERTY_MEDIA_BUCKET,
+
+  async resolvePropertyMediaUrl(
+    media: PropertyMediaResolvable
+  ): Promise<string | null> {
+    const storagePath = media.storage_path?.trim();
+    if (storagePath && isPropertyMediaUrlStale(media.public_url)) {
+      const { data, error } = await supabase.storage
+        .from(PROPERTY_MEDIA_BUCKET)
+        .createSignedUrl(storagePath, DISPLAY_SIGNED_URL_TTL_SEC);
+
+      if (!error && data?.signedUrl) {
+        return data.signedUrl;
+      }
+    }
+
+    return media.public_url?.trim() || null;
+  },
+
+  async resolvePropertyMediaItems<T extends PropertyMediaResolvable>(
+    items: T[]
+  ): Promise<T[]> {
+    if (items.length === 0) return items;
+
+    const cache = new Map<string, Promise<string | null>>();
+
+    const resolveCached = (item: PropertyMediaResolvable) => {
+      const storagePath = item.storage_path?.trim();
+      if (!storagePath || !isPropertyMediaUrlStale(item.public_url)) {
+        return Promise.resolve(item.public_url?.trim() || null);
+      }
+
+      const cached = cache.get(storagePath);
+      if (cached) return cached;
+
+      const pending = this.resolvePropertyMediaUrl(item);
+      cache.set(storagePath, pending);
+      return pending;
+    };
+
+    return Promise.all(
+      items.map(async (item) => {
+        const resolvedUrl = await resolveCached(item);
+        if (!resolvedUrl || resolvedUrl === item.public_url) {
+          return item;
+        }
+        return { ...item, public_url: resolvedUrl };
+      })
+    );
+  },
 
   async getPropertyMedia(propertyId: string) {
     const { data, error } = await supabase
@@ -24,7 +107,7 @@ export const propertyMediaService = {
       .order("created_at", { ascending: true });
 
     if (error) throw error;
-    return data || [];
+    return this.resolvePropertyMediaItems(data || []);
   },
 
   async uploadPropertyMedia(params: {

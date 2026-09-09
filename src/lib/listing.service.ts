@@ -4,6 +4,32 @@ import { normalizePropertyCategory } from "./property-category";
 import { propertyService } from "./property.service";
 import { ensureEstateForPropertyId } from "./estate-property-link.service";
 import { propertyMatchesGhanaRegion } from "./ghana-regions";
+import { propertyMediaService } from "./property-media.service";
+
+type ListingProperty = {
+  media?: Database["public"]["Tables"]["property_media"]["Row"][] | null;
+};
+
+type ListingWithProperty = {
+  property?: ListingProperty | ListingProperty[] | null;
+};
+
+async function resolveListingPropertyMedia<T extends ListingWithProperty>(listing: T): Promise<T> {
+  const property = Array.isArray(listing.property) ? listing.property[0] : listing.property;
+  if (!property?.media?.length) return listing;
+
+  const resolvedMedia = await propertyMediaService.resolvePropertyMediaItems(property.media);
+  if (Array.isArray(listing.property)) {
+    return { ...listing, property: [{ ...property, media: resolvedMedia }] };
+  }
+  return { ...listing, property: { ...property, media: resolvedMedia } };
+}
+
+async function resolveListingsPropertyMedia<T extends ListingWithProperty>(
+  listings: T[]
+): Promise<T[]> {
+  return Promise.all(listings.map((listing) => resolveListingPropertyMedia(listing)));
+}
 
 type ListingInsert = Database["public"]["Tables"]["listings"]["Insert"];
 type ListingUpdate = Database["public"]["Tables"]["listings"]["Update"];
@@ -28,7 +54,7 @@ export const listingService = {
       .range(offset, offset + limit - 1);
 
     if (error) throw error;
-    return data || [];
+    return resolveListingsPropertyMedia(data || []);
   },
 
   async searchListings(
@@ -135,8 +161,9 @@ export const listingService = {
       );
     }
 
+    const page = filtered.slice(offset, offset + limit);
     return {
-      results: filtered.slice(offset, offset + limit),
+      results: await resolveListingsPropertyMedia(page),
       total: filtered.length,
     };
   },
@@ -182,7 +209,7 @@ export const listingService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return resolveListingPropertyMedia(data);
   },
 
   async getListingForPayment(id: string) {
@@ -227,7 +254,7 @@ export const listingService = {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data;
+    return resolveListingsPropertyMedia(data || []);
   },
 
   async createListing(listing: ListingInsert) {

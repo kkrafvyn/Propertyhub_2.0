@@ -79,7 +79,15 @@ const SECRET_MAP = [
   ["VITE_SUPABASE_URL", (env) => env.VITE_SUPABASE_URL?.trim()],
   ["SUPABASE_SERVICE_ROLE_KEY", async (env) => resolveServiceRoleKey(env)],
   ["INTERNAL_AUTOMATIONS_KEY", (env) => env.INTERNAL_AUTOMATIONS_KEY?.trim()],
-  ["TENANT_FIXTURE_PASSWORD", (env) => env.TENANT_FIXTURE_PASSWORD?.trim()],
+  [
+    "TENANT_FIXTURE_PASSWORD",
+    (env) =>
+      env.TENANT_FIXTURE_PASSWORD?.trim() || "BaytMiftah-TenantIsolation-CI-2026!",
+  ],
+  ["VITE_SUPABASE_TEST_URL", (env) => env.VITE_SUPABASE_TEST_URL?.trim()],
+  ["VITE_SUPABASE_TEST_ANON_KEY", (env) => env.VITE_SUPABASE_TEST_ANON_KEY?.trim()],
+  ["VITE_SUPABASE_TEST_TENANT_A_ID", (env) => env.VITE_SUPABASE_TEST_TENANT_A_ID?.trim()],
+  ["VITE_SUPABASE_TEST_TENANT_B_ID", (env) => env.VITE_SUPABASE_TEST_TENANT_B_ID?.trim()],
   ["OPS_ALERT_WEBHOOK_URL", (env) => env.OPS_ALERT_WEBHOOK_URL?.trim()],
 ];
 
