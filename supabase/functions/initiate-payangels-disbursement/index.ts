@@ -12,6 +12,39 @@ function getDisbursementUrl() {
 
 const WORK_ORDER_PAYOUT_STATUSES = new Set(["inspection_review", "completed"]);
 
+async function revertDisbursementClaim(
+  admin: ReturnType<typeof createAdminClient>,
+  input: {
+    workOrderId?: string;
+    approvalId?: string;
+    externalId: string;
+    reason: string;
+  },
+) {
+  const failureReason = input.reason.slice(0, 500);
+
+  if (input.workOrderId) {
+    await admin
+      .from("estate_contractor_work_orders")
+      .update({ provider_disbursement_id: null, failure_reason: failureReason })
+      .eq("id", input.workOrderId)
+      .eq("provider_disbursement_id", input.externalId);
+    return;
+  }
+
+  if (input.approvalId) {
+    await admin
+      .from("estate_distribution_approvals")
+      .update({
+        status: "approved",
+        payout_reference: null,
+        failure_reason: failureReason,
+      })
+      .eq("id", input.approvalId)
+      .eq("payout_reference", input.externalId);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: getCorsHeaders(req) });
   if (req.method !== "POST") return jsonResponse(405, { error: "Method not allowed" }, req);
@@ -167,18 +200,36 @@ Deno.serve(async (req) => {
     const secret = Deno.env.get("PAYANGELS_SECRET_KEY")?.trim();
     if (!secret) throw new HttpError(503, "PayAngels is not configured");
 
-    const response = await fetch(getDisbursementUrl(), {
-      method: "POST",
-      headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        amount: amount.toFixed(2),
-        currency: "GHS",
-        recipient: phone,
-        note: body?.note || "BaytMiftah disbursement",
+    let revertOnFailure: ((reason: string) => Promise<void>) | null = async (reason) => {
+      await revertDisbursementClaim(admin, {
+        workOrderId: workOrderId || undefined,
+        approvalId: approvalId || undefined,
         externalId,
-        metadata,
-      }),
-    });
+        reason,
+      });
+    };
+
+    let response: Response;
+    try {
+      response = await fetch(getDisbursementUrl(), {
+        method: "POST",
+        headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: amount.toFixed(2),
+          currency: "GHS",
+          recipient: phone,
+          note: body?.note || "BaytMiftah disbursement",
+          externalId,
+          metadata,
+        }),
+      });
+    } catch (providerError) {
+      const reason = safeErrorMessage(providerError, "PayAngels disbursement request failed");
+      await revertOnFailure(reason).catch((rollbackError) => {
+        console.error("initiate-payangels-disbursement rollback error:", rollbackError);
+      });
+      throw new HttpError(502, reason);
+    }
 
     const payload = await response.json().catch(() => null) as {
       referenceId?: string;
@@ -188,8 +239,14 @@ Deno.serve(async (req) => {
     } | null;
 
     if (!response.ok) {
-      throw new HttpError(response.status || 502, payload?.message || "PayAngels disbursement failed");
+      const reason = payload?.message || "PayAngels disbursement failed";
+      await revertOnFailure(reason).catch((rollbackError) => {
+        console.error("initiate-payangels-disbursement rollback error:", rollbackError);
+      });
+      throw new HttpError(response.status || 502, reason);
     }
+
+    revertOnFailure = null;
 
     const referenceId = payload?.referenceId || payload?.reference || externalId;
 

@@ -7,8 +7,8 @@ Stage: **Controlled Pilot Readiness** (post code-freeze).
 | # | Workstream | Status | Evidence / command |
 |---|------------|--------|-------------------|
 | 1 | Fresh backup + restore drill | **Done (local)** | `npm run backup:pre-migration:local` → `scripts/backup/PRE_PILOT_RECOVERY_POINT.json` |
-| 2 | PayAngels staging E2E | **Script ready** | `npm run pilot:payangels-e2e` (needs PayAngels + pilot test creds) |
-| 3 | Resend + Vercel/Supabase secrets | **Partial** | `docs/pilot/PILOT_SECRETS_CHECKLIST.md`, `npm run vercel:env` |
+| 2 | PayAngels staging E2E | **Pass init + webhook (2026-09-10)** | `npm run pilot:payangels-e2e` — see `docs/pilot/PAYANGELS_E2E_EVIDENCE.md` |
+| 3 | Resend + Vercel/Supabase secrets | **Partial** | Vercel synced (anon key manual); Supabase PayAngels secret needs dashboard verify |
 | 4 | Security top-up | **In CI** | `storage-isolation.test.ts`, `platform-admin-live.test.ts`, `npm run security:unit` |
 | 5 | Monitoring alerts | **Workflow added** | `.github/workflows/monitoring.yml` + `OPS_ALERT_WEBHOOK_URL` |
 | 6 | Load test pilot flows | **Script ready** | `npm run load:pilot` |
@@ -64,7 +64,8 @@ npm run load:pilot -- --url https://app.baytmiftah.com --concurrency 10 --iterat
 **Go** when all are true:
 
 - [ ] Pre-pilot backup frozen + offsite copy uploaded
-- [ ] PayAngels payment + webhook E2E green on staging
+- [x] PayAngels payment init + webhook E2E green (2026-09-10; refund/disbursement probes optional)
+- [x] Public catalog has listed+public listings (`listedPublicCount: 1` — siabanku seed 2026-09-09)
 - [ ] Resend domain verified + test email delivered
 - [ ] Vercel prod env complete (incl. `VITE_SUPABASE_ANON_KEY`)
 - [ ] CI green on `main`

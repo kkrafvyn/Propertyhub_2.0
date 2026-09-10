@@ -1,6 +1,8 @@
 import { HttpError } from "./http.ts";
 
-const PAYANGELS_API_BASE = "https://api.payangels.com";
+function getPayangelsApiBase() {
+  return Deno.env.get("PAYANGELS_API_BASE")?.trim() || "https://api.paystack.co";
+}
 
 export interface PaystackInitializeInput {
   amount: string;
@@ -163,7 +165,7 @@ export function verifyPayangelsWebhookSignature(body: string, signature: string 
 }
 
 async function payangelsFetch<T>(path: string, init: RequestInit = {}) {
-  const response = await fetch(`${PAYANGELS_API_BASE}${path}`, {
+  const response = await fetch(`${getPayangelsApiBase()}${path}`, {
     ...init,
     headers: {
       Authorization: `Bearer ${getPayangelsSecretKey()}`,

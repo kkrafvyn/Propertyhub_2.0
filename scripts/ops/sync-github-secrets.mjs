@@ -89,6 +89,11 @@ const SECRET_MAP = [
   ["VITE_SUPABASE_TEST_TENANT_A_ID", (env) => env.VITE_SUPABASE_TEST_TENANT_A_ID?.trim()],
   ["VITE_SUPABASE_TEST_TENANT_B_ID", (env) => env.VITE_SUPABASE_TEST_TENANT_B_ID?.trim()],
   ["OPS_ALERT_WEBHOOK_URL", (env) => env.OPS_ALERT_WEBHOOK_URL?.trim()],
+  ["BACKUP_S3_BUCKET", (env) => env.BACKUP_S3_BUCKET?.trim()],
+  ["BACKUP_S3_PREFIX", (env) => env.BACKUP_S3_PREFIX?.trim()],
+  ["AWS_ACCESS_KEY_ID", (env) => env.AWS_ACCESS_KEY_ID?.trim()],
+  ["AWS_SECRET_ACCESS_KEY", (env) => env.AWS_SECRET_ACCESS_KEY?.trim()],
+  ["AWS_REGION", (env) => env.AWS_REGION?.trim()],
 ];
 
 const VARIABLE_MAP = [

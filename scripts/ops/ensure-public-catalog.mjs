@@ -6,10 +6,14 @@
  * Usage:
  *   npm run ops:ensure-public-catalog
  *   npm run ops:ensure-public-catalog -- --fix
+ *   npm run ops:ensure-public-catalog -- --seed [--org-slug siabanku] [--write-env]
  */
-import { loadProjectEnv } from "../load-project-env.mjs";
+import { loadProjectEnv, upsertRootEnv } from "../load-project-env.mjs";
 
 const fix = process.argv.includes("--fix");
+const seed = process.argv.includes("--seed");
+const writeEnv = process.argv.includes("--write-env");
+const orgSlugArg = process.argv.find((arg) => arg.startsWith("--org-slug="))?.split("=")[1]?.trim();
 
 function fail(message) {
   console.error(`✗ ${message}`);
@@ -87,25 +91,109 @@ async function main() {
     }),
   }, null, 2));
 
-  if (!fix || blocked.length === 0) {
-    if (blocked.length > 0) {
-      console.log("\nRun with --fix to set verified=true on orgs with listed public listings.");
+  if (fix && blocked.length > 0) {
+    const orgIds = [...new Set(blocked.map((row) => row.organization_id).filter(Boolean))];
+    for (const orgId of orgIds) {
+      const patchRes = await fetch(`${baseUrl}/rest/v1/organizations?id=eq.${orgId}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ verified: true, suspended: false }),
+      });
+      if (!patchRes.ok) {
+        const body = await patchRes.text();
+        fail(`Failed to verify org ${orgId}: ${patchRes.status} ${body.slice(0, 200)}`);
+      }
+      console.log(`✓ Verified organization ${orgId}`);
     }
+  } else if (blocked.length > 0) {
+    console.log("\nRun with --fix to set verified=true on orgs with listed public listings.");
+  }
+
+  if (!seed || rows.length > 0) {
     return;
   }
 
-  const orgIds = [...new Set(blocked.map((row) => row.organization_id).filter(Boolean))];
-  for (const orgId of orgIds) {
-    const patchRes = await fetch(`${baseUrl}/rest/v1/organizations?id=eq.${orgId}`, {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify({ verified: true, suspended: false }),
+  const preferredSlug = orgSlugArg || process.env.PILOT_ORG_SLUG?.trim() || "siabanku";
+  const orgRes = await fetch(
+    `${baseUrl}/rest/v1/organizations?select=id,name,slug,verified,suspended&slug=eq.${encodeURIComponent(preferredSlug)}&limit=1`,
+    { headers },
+  );
+  const orgRows = await orgRes.json();
+  if (!orgRes.ok) {
+    fail(`Organization lookup failed: ${orgRes.status} ${JSON.stringify(orgRows)}`);
+  }
+
+  let org = Array.isArray(orgRows) ? orgRows[0] : null;
+  if (!org) {
+    const fallbackRes = await fetch(
+      `${baseUrl}/rest/v1/organizations?select=id,name,slug,verified,suspended&verified=eq.true&suspended=eq.false&order=created_at.desc&limit=1`,
+      { headers },
+    );
+    const fallbackRows = await fallbackRes.json();
+    org = Array.isArray(fallbackRows) ? fallbackRows[0] : null;
+  }
+  if (!org?.id) {
+    fail("No verified organization found — create a pilot org first");
+  }
+
+  const propertyRes = await fetch(`${baseUrl}/rest/v1/properties`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      organization_id: org.id,
+      address: "Pilot Showcase Apartment",
+      city: "Accra",
+      region: "Greater Accra",
+      country: "Ghana",
+      category: "apartment",
+      bedrooms: 2,
+      bathrooms: 1,
+      description: "Pilot catalog seed listing for BaytMiftah controlled rollout.",
+    }),
+  });
+  const property = await propertyRes.json();
+  if (!propertyRes.ok) {
+    fail(`Property seed failed: ${propertyRes.status} ${JSON.stringify(property)}`);
+  }
+  const propertyId = Array.isArray(property) ? property[0]?.id : property?.id;
+  if (!propertyId) fail("Property seed returned no id");
+
+  const listingRes = await fetch(`${baseUrl}/rest/v1/listings`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      property_id: propertyId,
+      organization_id: org.id,
+      listing_type: "rental",
+      price: 2500,
+      currency: "GHS",
+      status: "listed",
+      visibility: "public",
+      published_at: new Date().toISOString(),
+    }),
+  });
+  const listing = await listingRes.json();
+  if (!listingRes.ok) {
+    fail(`Listing seed failed: ${listingRes.status} ${JSON.stringify(listing)}`);
+  }
+  const listingId = Array.isArray(listing) ? listing[0]?.id : listing?.id;
+  if (!listingId) fail("Listing seed returned no id");
+
+  console.log(JSON.stringify({
+    seeded: true,
+    organizationId: org.id,
+    organizationSlug: org.slug,
+    propertyId,
+    listingId,
+  }, null, 2));
+
+  if (writeEnv) {
+    upsertRootEnv({
+      PILOT_TEST_LISTING_ID: listingId,
+      PILOT_TEST_ORG_ID: org.id,
+      PILOT_ORG_SLUG: org.slug,
     });
-    if (!patchRes.ok) {
-      const body = await patchRes.text();
-      fail(`Failed to verify org ${orgId}: ${patchRes.status} ${body.slice(0, 200)}`);
-    }
-    console.log(`✓ Verified organization ${orgId}`);
+    console.log("✓ Wrote PILOT_TEST_LISTING_ID, PILOT_TEST_ORG_ID, PILOT_ORG_SLUG to .env");
   }
 }
 

@@ -14,6 +14,7 @@ import { loadProjectEnv, upsertRootEnv } from "../load-project-env.mjs";
 
 const USER_A_EMAIL = "tenant-a-isolation@mailinator.com";
 const USER_B_EMAIL = "tenant-b-isolation@mailinator.com";
+const USER_A_ANALYST_EMAIL = "tenant-a-analyst@mailinator.com";
 const ORG_A_SLUG = "ci-tenant-isolation-a";
 const ORG_B_SLUG = "ci-tenant-isolation-b";
 const FIXTURE_PASSWORD =
@@ -312,6 +313,62 @@ async function ensureBankFeedSeedAdmin(admin, organizationId, userId, label) {
   if (feedError) throw feedError;
 }
 
+async function ensureDealCaseFixtureAdmin(admin, organizationId, applicantUserId, label) {
+  const slug = `ci-deal-${label}-${organizationId.slice(0, 8)}`;
+
+  const { data: existingDeal } = await admin
+    .from("deal_cases")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("message", "CI tenant isolation fixture")
+    .maybeSingle();
+  if (existingDeal?.id) return existingDeal.id;
+
+  const { data: property, error: propertyError } = await admin
+    .from("properties")
+    .insert({
+      organization_id: organizationId,
+      address: `${slug} Street`,
+      city: "Accra",
+      region: "Greater Accra",
+      category: "apartment",
+    })
+    .select("id")
+    .single();
+  if (propertyError) throw propertyError;
+
+  const { data: listing, error: listingError } = await admin
+    .from("listings")
+    .insert({
+      property_id: property.id,
+      organization_id: organizationId,
+      listing_type: "rental",
+      price: 1000,
+      status: "draft",
+      visibility: "private",
+    })
+    .select("id")
+    .single();
+  if (listingError) throw listingError;
+
+  const { data: dealCase, error: dealError } = await admin
+    .from("deal_cases")
+    .insert({
+      listing_id: listing.id,
+      user_id: applicantUserId,
+      organization_id: organizationId,
+      case_type: "rental_application",
+      status: "pending",
+      message: "CI tenant isolation fixture",
+    })
+    .select("id")
+    .single();
+  if (dealError) throw dealError;
+
+  console.log(`  seeded deal case fixture for tenant ${label} (${dealCase.id})`);
+  return dealCase.id;
+}
+
 async function signInToken(url, anonKey, email) {
   const client = createClient(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -337,16 +394,58 @@ function setGhSecret(name, value) {
   }
 }
 
+async function ensureDealCaseFixturePg(client, organizationId, applicantUserId, label) {
+  const { rows: existing } = await client.query(
+    `SELECT id FROM public.deal_cases WHERE organization_id = $1 AND message = 'CI tenant isolation fixture' LIMIT 1`,
+    [organizationId],
+  );
+  if (existing[0]?.id) return existing[0].id;
+
+  const { rows: propertyRows } = await client.query(
+    `
+    INSERT INTO public.properties (organization_id, address, city, region, category)
+    VALUES ($1, $2, 'Accra', 'Greater Accra', 'apartment')
+    RETURNING id
+    `,
+    [organizationId, `CI deal fixture ${label}`],
+  );
+  const propertyId = propertyRows[0].id;
+
+  const { rows: listingRows } = await client.query(
+    `
+    INSERT INTO public.listings (property_id, organization_id, listing_type, price, status, visibility)
+    VALUES ($1, $2, 'rental', 1000, 'draft', 'private')
+    RETURNING id
+    `,
+    [propertyId, organizationId],
+  );
+  const listingId = listingRows[0].id;
+
+  const { rows: dealRows } = await client.query(
+    `
+    INSERT INTO public.deal_cases (listing_id, user_id, organization_id, case_type, status, message)
+    VALUES ($1, $2, $3, 'rental_application', 'pending', 'CI tenant isolation fixture')
+    RETURNING id
+    `,
+    [listingId, applicantUserId, organizationId],
+  );
+  console.log(`  seeded deal case fixture for tenant ${label} (${dealRows[0].id})`);
+  return dealRows[0].id;
+}
+
 async function provisionWithPg(env, url, anonKey) {
   const userA = await signUpOrRefreshUser(url, anonKey, USER_A_EMAIL);
   await new Promise((resolve) => setTimeout(resolve, 1500));
   const userB = await signUpOrRefreshUser(url, anonKey, USER_B_EMAIL);
+  const userAnalyst = await signUpOrRefreshUser(url, anonKey, USER_A_ANALYST_EMAIL);
 
   const ids = await withPg(env, async (client) => {
     const userAId = userA.userId || (await resolveUserIdPg(client, USER_A_EMAIL));
     const userBId = userB.userId || (await resolveUserIdPg(client, USER_B_EMAIL));
+    const analystUserId = userAnalyst.userId || (await resolveUserIdPg(client, USER_A_ANALYST_EMAIL));
     await confirmAuthUserPg(client, USER_A_EMAIL);
     await confirmAuthUserPg(client, USER_B_EMAIL);
+    await confirmAuthUserPg(client, USER_A_ANALYST_EMAIL);
     await client.query(
       `UPDATE auth.users SET encrypted_password = crypt($2, gen_salt('bf')) WHERE email = $1`,
       [USER_A_EMAIL, FIXTURE_PASSWORD],
@@ -355,15 +454,22 @@ async function provisionWithPg(env, url, anonKey) {
       `UPDATE auth.users SET encrypted_password = crypt($2, gen_salt('bf')) WHERE email = $1`,
       [USER_B_EMAIL, FIXTURE_PASSWORD],
     );
+    await client.query(
+      `UPDATE auth.users SET encrypted_password = crypt($2, gen_salt('bf')) WHERE email = $1`,
+      [USER_A_ANALYST_EMAIL, FIXTURE_PASSWORD],
+    );
     await waitForPublicUserPg(client, userAId, USER_A_EMAIL);
     await waitForPublicUserPg(client, userBId, USER_B_EMAIL);
+    await waitForPublicUserPg(client, analystUserId, USER_A_ANALYST_EMAIL);
 
     const orgAId = await ensureOrganizationPg(client, ORG_A_SLUG, "CI Tenant Isolation A", userAId);
     const orgBId = await ensureOrganizationPg(client, ORG_B_SLUG, "CI Tenant Isolation B", userBId);
     await ensureMemberPg(client, orgAId, userAId, "owner");
+    await ensureMemberPg(client, orgAId, analystUserId, "analyst");
     await ensureMemberPg(client, orgBId, userBId, "owner");
     await ensureBankFeedSeedPg(client, orgAId, userAId, "a");
     await ensureBankFeedSeedPg(client, orgBId, userBId, "b");
+    await ensureDealCaseFixturePg(client, orgAId, userAId, "a");
     return { orgAId, orgBId, userAId, userBId };
   });
 
@@ -380,12 +486,15 @@ async function provisionWithServiceRole(env, serviceRoleKey, url, anonKey) {
 
   const userAId = await ensureAuthUserAdmin(admin, USER_A_EMAIL, "CI Tenant A");
   const userBId = await ensureAuthUserAdmin(admin, USER_B_EMAIL, "CI Tenant B");
+  const analystUserId = await ensureAuthUserAdmin(admin, USER_A_ANALYST_EMAIL, "CI Tenant A Analyst");
   const orgAId = await ensureOrganizationAdmin(admin, ORG_A_SLUG, "CI Tenant Isolation A", userAId);
   const orgBId = await ensureOrganizationAdmin(admin, ORG_B_SLUG, "CI Tenant Isolation B", userBId);
   await ensureMemberAdmin(admin, orgAId, userAId, "owner");
+  await ensureMemberAdmin(admin, orgAId, analystUserId, "analyst");
   await ensureMemberAdmin(admin, orgBId, userBId, "owner");
   await ensureBankFeedSeedAdmin(admin, orgAId, userAId, "a");
   await ensureBankFeedSeedAdmin(admin, orgBId, userBId, "b");
+  await ensureDealCaseFixtureAdmin(admin, orgAId, userAId, "a");
 
   const tenantAToken = await signInToken(url, anonKey, USER_A_EMAIL);
   const tenantBToken = await signInToken(url, anonKey, USER_B_EMAIL);

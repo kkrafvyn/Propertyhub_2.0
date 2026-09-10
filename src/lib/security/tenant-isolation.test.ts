@@ -9,6 +9,7 @@ const fixturePassword =
   import.meta.env.TENANT_FIXTURE_PASSWORD || "BaytMiftah-TenantIsolation-CI-2026!";
 const tenantAEmail = "tenant-a-isolation@mailinator.com";
 const tenantBEmail = "tenant-b-isolation@mailinator.com";
+const tenantAAnalystEmail = "tenant-a-analyst@mailinator.com";
 
 const hasFixtures = Boolean(supabaseUrl && testAnonKey && tenantAId && tenantBId);
 const testIfConfigured = hasFixtures ? it : it.skip;
@@ -173,6 +174,29 @@ describe("tenant isolation integration contract", () => {
       return;
     }
     expect(rows).toEqual([]);
+  });
+
+  testIfConfigured("prevents analyst from updating tenant A deal cases", async () => {
+    const ownerClient = userClient(tenantAToken);
+    const { data: deals, error: readError } = await ownerClient
+      .from("deal_cases")
+      .select("id")
+      .eq("organization_id", tenantAId)
+      .limit(1);
+
+    expect(readError).toBeNull();
+    expect((deals || []).length).toBeGreaterThan(0);
+
+    const analystToken = await signInFixtureToken(tenantAAnalystEmail);
+    const analystClient = userClient(analystToken);
+    const { data: updated, error: updateError } = await analystClient
+      .from("deal_cases")
+      .update({ status: "closed" })
+      .eq("id", deals![0].id)
+      .select("id");
+
+    expect(updateError).toBeNull();
+    expect(updated || []).toEqual([]);
   });
 
   testIfConfigured("prevents cross-tenant visitor pass reads", async () => {

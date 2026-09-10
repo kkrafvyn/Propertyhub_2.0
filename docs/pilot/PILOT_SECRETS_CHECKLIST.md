@@ -16,8 +16,9 @@ Set these before controlled pilot. Server secrets → **Supabase Edge Function s
 
 | Variable | Required | Notes |
 |----------|----------|-------|
-| `PAYANGELS_SECRET_KEY` | Yes | |
+| `PAYANGELS_SECRET_KEY` | Yes | Paystack-compatible secret from merchant dashboard |
 | `PAYANGELS_WEBHOOK_SECRET` | Yes | Register webhook URL in PayAngels dashboard |
+| `PAYANGELS_API_BASE` | Yes | Default `https://api.paystack.co` (do not use `api.payangels.com`) |
 | `PAYANGELS_DISBURSEMENT_URL` | If disbursements | |
 | `RESEND_API_KEY` | Yes | |
 | `PUBLIC_APP_URL` | Yes | `https://app.baytmiftah.com` |

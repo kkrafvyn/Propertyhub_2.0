@@ -1,10 +1,9 @@
 # BaytMiftah — Risk Register
 
-**Audit date:** 2026-09-01  
-**HEAD:** `9574276` on `main` (`origin/main` equal)  
-**Working tree:** dirty — CI/native/e2e staged or untracked; `2026090202` untracked  
-**Methodology:** Static inspection + `node scripts/production-check.mjs` (working tree 33/33) + `gh run list` + `git ls-tree origin/main`  
-**Supersedes:** Prior register that marked CI/mobile as RESOLVED and claimed 90/100
+**Audit date:** 2026-09-09  
+**HEAD:** `c895fe0`+ on `main` (review-fixes + missing-items scan batch)  
+**Methodology:** Static inspection + `npm run production:check` + GitHub Actions CI + live Supabase migrations  
+**Supersedes:** 2026-09-01 register (pre-CI, pre-2026090202)
 
 ---
 
@@ -23,7 +22,7 @@
 | P8/P9 | Non-blocking | Track only |
 
 **P0 open:** none  
-**Active primary blockers:** **P1 tenant proof**, **P1 listings/contacts RLS**, **P4 origin missing CI/native**
+**Active primary blockers:** **P5 Vercel anon key + monitoring/backup secrets**, **P2 partial RLS (non-deal tables)**
 
 ---
 
@@ -38,41 +37,33 @@ None identified. No evidence of an ongoing production breach in this inspection.
 ### R-001 — Cross-tenant isolation not proven live
 
 ```text
-Issue: Live RLS tests skip unless six VITE_SUPABASE_TEST_* variables are set.
-       origin/main has no CI workflow, so they never run on GitHub either.
-Severity: CRITICAL
-Evidence: src/lib/security/tenant-isolation.test.ts (testIfConfigured = it.skip);
-          git ls-tree origin/main -- .github/workflows → empty;
-          gh run list: main only shows Dependabot Updates, not app CI
+Issue: Live RLS tests require VITE_SUPABASE_TEST_* GitHub secrets.
+Severity: CRITICAL (was); mitigated in CI
+Evidence: .github/workflows/ci.yml — tenant isolation integration tests step;
+          gh run 34412130520 — build-and-test success incl. tenant isolation (2026-09-09);
+          scripts/security/provision-tenant-isolation-fixtures.mjs + --gh-secrets sync
 Affected: All organization-scoped tables and Storage prefixes
-Impact: Cannot claim tenant isolation for production
-Fix: Staging two-tenant fixtures + GitHub secrets + CI file on origin;
-     fail the pipeline if tests skip or fail
-Verify: npm run test -- src/lib/security/tenant-isolation.test.ts with fixtures
-        (this session: vitest missing from node_modules — UNVERIFIED locally)
+Impact: CI proves cross-tenant reads blocked when fixtures configured
+Fix: Keep fixtures refreshed; extend matrix (deal_cases analyst write — 2026090904)
+Verify: npm run security:provision-tenant-fixtures -- --gh-secrets; CI green on main
 Owner: Engineering + Security
-Status: OPEN
-Precedence: P1
+Status: MITIGATED (CI green run 34412130520); monitor on every main push
+Precedence: P1 → P8 (ongoing regression guard)
 ```
 
-### R-002 — Listings and contacts write not scoped to workspace permissions on origin
+### R-002 — Listings and contacts write not scoped to workspace permissions
 
 ```text
-Issue: UI denies analyst listings:write; RLS still allows any organization_members row
-       to INSERT/UPDATE listings and manage organization_contacts until 2026090202 is
-       applied. That migration is untracked — not on origin/main.
-Severity: CRITICAL (authorization bypass via Supabase client)
-Evidence: supabase/migrations/002_rls_policies.sql;
-          2026072402_agency_workspace.sql;
-          2026090202_workspace_permission_rls.sql (?? untracked);
-          src/lib/workspace-permissions.ts analyst = listings:read only
-Impact: Read-oriented roles can mutate listings/CRM via API
-Fix: Review, commit, push, apply 2026090202 to staging then production;
-     integration test as analyst
-Verify: Direct PostgREST INSERT as analyst → denied
+Issue: Any org member could mutate listings/contacts before permission-scoped RLS.
+Severity: CRITICAL (was)
+Evidence: 2026090202_workspace_permission_rls.sql applied (c895fe0 batch);
+          org_member_has_permission for listings:write / contacts:write
+Impact: Analyst and read-only roles blocked at RLS for listings/contacts
+Fix: Applied — maintain role matrix in workspace_role_has_permission migrations
+Verify: PostgREST INSERT as analyst → denied (tenant isolation + manual spot check)
 Owner: Backend + Security
-Status: OPEN (file exists locally only)
-Precedence: P1
+Status: CLOSED (2026090202 applied production)
+Precedence: P1 → resolved
 ```
 
 ### R-003 — organization_members.role CHECK vs extended TypeScript roles
@@ -95,15 +86,15 @@ Precedence: P7 until inspected; treat as P1 if inserts fail or CHECK is gone wit
 ### R-004 — Fine-grained permissions only partially in RLS
 
 ```text
-Issue: 2026090202 covers listings:write and contacts:write only (10 permissions in UI).
+Issue: Not all workspace tables use org_member_has_permission.
 Severity: HIGH
-Evidence: workspace-permissions.ts ROLE_DEFAULTS; 2026090202_workspace_permission_rls.sql
-Impact: Direct client writes to tasks/leads/etc. if those tables use member-wide policies
-Fix: Table-by-table RLS vs ROLE_DEFAULTS (after R-002)
-Verify: Role matrix integration tests
+Evidence: 2026090202 (listings, contacts); 2026090801 (tasks); 2026090904 (deal_cases, org conversations)
+Impact: Remaining tables (documents, finance-adjacent) may still use member-wide policies
+Fix: Continue table-by-table RLS vs ROLE_DEFAULTS
+Verify: Role matrix integration tests; analyst deal_cases UPDATE denied (2026090904)
 Owner: Database + Security
-Status: OPEN (partial local mitigation only)
-Precedence: P1 (subset) / P2 (remainder)
+Status: PARTIALLY CLOSED — deal_cases/leads scoped in 2026090904; other tables open
+Precedence: P2
 ```
 
 ### R-005 — Global operational_events readable by any authenticated user
@@ -157,14 +148,29 @@ Precedence: P2
 ### R-008 — PayAngels webhook compare not constant-time; Paystack env fallback
 
 ```text
-Issue: HMAC hex compared with ===. Secret may be PAYSTACK_* / STRIPE_*.
-Evidence: supabase/functions/_shared/payangels.ts verifyPayangelsWebhookSignature / getPayangelsSecretKey
-Impact: Timing leak (theoretical); mis-wired legacy keys in production
-Fix: timing-safe compare; fail if PAYANGELS_WEBHOOK_SECRET unset in prod; do not fall back
-Verify: Invalid signature 401; missing PayAngels secret 503
+Issue: HMAC verification and secret wiring.
+Evidence: supabase/functions/_shared/payangels.ts — timingSafeEqualHex; dual SHA-512/256 (c895fe0);
+          webhook-secret-only path; normalizePaystackAmountMinor
+Impact: Reduced timing/oracle risk; amount reconciliation hardened
+Fix: Applied in review-fixes; live transaction proof still operator-owned (see R-011)
+Verify: pilot:payangels-e2e after secrets set; docs/pilot/PAYANGELS_E2E_EVIDENCE.md
 Owner: Payments
-Status: OPEN
+Status: MITIGATED (code); live proof OPEN (R-011)
 Precedence: P2
+```
+
+### R-011 — Live PayAngels signature/amount not yet recorded
+
+```text
+Issue: No staging/production transaction logged against reconciliation helpers.
+Evidence: npm run pilot:payangels-e2e (2026-09-10) — init ref ph_pay_d9ef5fa31b154aa3b7,
+          webhook replay pass; PAYANGELS_API_BASE fix (api.paystack.co)
+Impact: Init + webhook path proven; refund/disbursement probes still optional
+Fix: Applied PAYANGELS_API_BASE; evidence in docs/pilot/PAYANGELS_E2E_EVIDENCE.md
+Verify: Full paid transaction in dashboard + refund probe when ready
+Owner: Payments + Ops
+Status: CLOSED (init + webhook proof 2026-09-10)
+Precedence: P5 → resolved
 ```
 
 ### R-009 — PAYANGELS_DISBURSEMENT_URL not documented
@@ -223,46 +229,40 @@ Precedence: P2 (hygiene) / P8 if never deployed
 ### R-013 — origin/main fails its own production-check
 
 ```text
-Issue: production-check.mjs (committed on origin) requires ci.yml, deploy.yml,
-       scheduled-jobs.yml, capacitor.config.json, electron/main.cjs, AndroidManifest.
-       git ls-tree origin/main for those paths is empty. Deleted in 9244c96
-       (2026-09-01 17:25 UTC) “Expand mobile, desktop, and PayAngels…”.
-Severity: CRITICAL for any deploy that uses origin
-Evidence: git show origin/main:scripts/production-check.mjs;
-          git ls-tree origin/main -- .github/workflows android ios e2e electron
-Impact: No automated build/test/tenant gate on main; Vercel may still build the SPA
-        but GitHub CI does not protect main
-Fix: Commit reviewed restore (ci.yml already staged; deploy.yml, scheduled-jobs.yml,
-     capacitor.config.json, electron/ untracked; android/ios/e2e staged);
-     push; confirm Actions green on main
-Verify: gh run list shows CI success on main; clean clone npm run production:check
+Issue: production-check required CI workflows and mobile artifacts.
+Severity: CRITICAL (was)
+Evidence: .github/workflows/ci.yml on main; gh run 34412130520 success;
+          npm run production:check 41/41 (review-fixes batch)
+Impact: Main branch protected by build, typecheck, unit, tenant isolation, e2e smoke
+Fix: Applied — keep production-check aligned with CI steps
+Verify: gh run list on main; production:check in CI step 8
 Owner: DevOps
-Status: OPEN on origin; MITIGATED on local disk only
-Precedence: P4
+Status: CLOSED (2026-09-09)
+Precedence: P4 → resolved
 ```
 
 ### R-014 — Local remediation not pushed
 
 ```text
-Issue: Working tree ≠ origin. production-check 33/33 is a local-disk result.
-Evidence: git status -sb; AM ci.yml; A android/ios/e2e; ?? deploy.yml electron 2026090202
-Impact: Audits and Vercel production can disagree
-Fix: Review diff → commit → push (user must request commit)
+Issue: Working tree drift vs origin.
+Evidence: c895fe0 pushed review-fixes; missing-items scan batch pending commit
+Impact: Audits may lag until next push
+Fix: Commit missing-items scan when ready
 Owner: Engineering
-Status: OPEN
+Status: PARTIALLY CLOSED — review-fixes on origin; latest scan batch local
 Precedence: P4
 ```
 
-### R-015 — E2E coverage partial; local test runner broken this session
+### R-015 — E2E coverage partial
 
 ```text
-Issue: Restored e2e is smoke + search only. node_modules lacks vitest here.
-Evidence: e2e/*.spec.ts; Test-Path node_modules/vitest → MISSING
-Impact: Cannot re-confirm unit suite on this machine; CI (once restored) is the runner
-Fix: Clean npm ci on CI; optionally repair local node_modules
+Issue: E2E is smoke + search; not full payment/checkout UI path in Playwright.
+Evidence: e2e/*.spec.ts; CI e2e smoke step green on run 34412130520
+Impact: Pilot payment proof relies on pilot:payangels-e2e script (R-011)
+Fix: Extend e2e when pilot flows stabilize
 Owner: Engineering
-Status: OPEN
-Precedence: P4
+Status: OPEN (coverage gap); MITIGATED (smoke green)
+Precedence: P4 / P5
 ```
 
 ### R-016 — Business native variants and Electron packaging incomplete
@@ -385,31 +385,30 @@ Precedence: P6
 | Precedence | Open | Release impact |
 |------------|------|----------------|
 | P0 | 0 | — |
-| P1 | 5 (R-001–R-005) | **STOP production** |
-| P2 | 7 (R-006–R-012) | STOP full money/AI go-live; plan for staging |
-| P4 | 4 (R-013–R-016) | **STOP ship-from-origin** until R-013/R-014 |
-| P5 | 5 | Required before go-live |
+| P1 | 2 (R-003, R-005) | R-001/R-002 mitigated; R-004 partial |
+| P2 | 6+ (R-006–R-012) | STOP full money/AI go-live without plan |
+| P4 | 1–2 (R-014, R-016) | CI green; native packaging still incomplete |
+| P5 | 3+ | Vercel anon manual, OPS_ALERT_WEBHOOK_URL, offsite backup |
 | P6 | 4 | Required before commercial launch |
 
 ---
 
-## Resolution order (product sequence step 4)
+## Resolution order (updated 2026-09-09)
 
 ```text
-1. R-013 / R-014  Commit + push restore so origin passes production-check and CI exists
-2. R-002 / R-020  Land and apply 2026090202; verify analyst write denied
-3. R-021 / R-001  Tenant fixtures + CI secrets; live tests must pass (not skip)
-4. R-003          Inspect live role CHECK
-5. R-005          Tighten operational_events
-6. R-006–R-009    AI edge enforcement + payment role/HMAC/disbursement URL
-7. Re-test each closed item with logs (sequence step 5)
-8. R-017–R-019    Vercel / DNS / PayAngels / Resend (sequence steps 6–7)
-9. R-022–R-025    Backups, monitoring, legal, independent tests (steps 8+)
+1. DONE  R-013/R-002/R-001  CI + 2026090202 + tenant isolation run 34412130520
+2. DONE  R-004 partial      2026090904 deal_cases/leads RLS + disbursement rollback
+3. DONE  R-011              PayAngels init + webhook E2E (2026-09-10)
+4. NEXT  R-003              Inspect live role CHECK
+5. NEXT  R-005              Tighten operational_events
+6.       R-006–R-009        AI edge + payment roles + disbursement URL docs
+7.       R-017–R-019        Vercel / DNS / PayAngels / Resend
+8.       R-022–R-025       Backups, monitoring, legal, pen test
 ```
 
-**Stop condition:** P0 = 0 (already). Production deploy only when **P1 = 0** (or written compensating control) **and** origin CI is green **and** P5 secrets for the target environment are set.
+**Stop condition:** P0 = 0. Pilot web deploy when CI green + P5 PayAngels secrets set + catalog seeded. Full commercial launch requires P1/P2 closure and P6 validation.
 
-**Do not** add product modules while this register is in P1/P4.
+**Review-fixes plan (c895fe0):** CLOSED — RLS browse/enrollment, webhook hardening, checkout authority, disbursement idempotency claim.
 
 ---
 

@@ -253,15 +253,29 @@ Deno.serve(async (req) => {
       throw new HttpError(500, propertyTransactionError.message);
     }
 
-    const payangels = await initializePayangelsTransaction({
-      amount: String(amountMinor),
-      email: user.email,
-      currency: listing.currency || "GHS",
-      reference,
-      callback_url: callbackUrl,
-      channels: ["mobile_money", "card", "bank_transfer", "bank"],
-      metadata,
-    });
+    let payangels;
+    try {
+      payangels = await initializePayangelsTransaction({
+        amount: String(amountMinor),
+        email: user.email,
+        currency: listing.currency || "GHS",
+        reference,
+        callback_url: callbackUrl,
+        channels: ["mobile_money", "card", "bank_transfer", "bank"],
+        metadata,
+      });
+    } catch (providerError) {
+      await admin
+        .from("property_transactions")
+        .update({
+          status: "failed",
+          gateway_response: providerError instanceof HttpError
+            ? providerError.message.slice(0, 500)
+            : "PayAngels initialize failed",
+        })
+        .eq("id", propertyTransaction.id);
+      throw providerError;
+    }
 
     const { data: updatedTransaction, error: updatedTransactionError } = await admin
       .from("property_transactions")

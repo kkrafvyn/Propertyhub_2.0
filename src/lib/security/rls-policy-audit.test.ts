@@ -29,6 +29,7 @@ const sensitiveTables = [
   'estate_artisans',
   'estate_utility_meters',
   'estate_owner_statement_runs',
+  'deal_cases',
 ];
 
 describe('RLS policy audit (static migration contract)', () => {
@@ -42,6 +43,17 @@ describe('RLS policy audit (static migration contract)', () => {
       .join('\n');
 
     expect(combined).toMatch(new RegExp(`ALTER TABLE public\\.${tableName}\\s+ENABLE ROW LEVEL SECURITY`, 'i'));
+  });
+});
+
+describe('workspace permission RLS contract', () => {
+  it('scopes deal_cases mutations to leads:write permission', () => {
+    const combined = migrationFiles
+      .map((file) => readFileSync(path.join(migrationsDir, file), 'utf8'))
+      .join('\n');
+
+    expect(combined).toMatch(/deal_cases FOR UPDATE[\s\S]*org_member_has_permission\(organization_id, 'leads:write'\)/i);
+    expect(combined).toMatch(/deal_cases FOR SELECT[\s\S]*org_member_has_permission\(organization_id, 'leads:read'\)/i);
   });
 });
 

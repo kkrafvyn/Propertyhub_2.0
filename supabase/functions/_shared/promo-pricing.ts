@@ -128,6 +128,7 @@ export async function redeemPromoCode(admin: SupabaseClient, code: string) {
   return !updateError;
 }
 
+/** Pilot scope: tax is display-only in the client; server charges base + platform fees − promo only. */
 export async function resolveCheckoutAmountMinor(
   admin: SupabaseClient,
   input: {
