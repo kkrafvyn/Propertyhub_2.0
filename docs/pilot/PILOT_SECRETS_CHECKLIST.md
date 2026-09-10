@@ -21,6 +21,7 @@ Set these before controlled pilot. Server secrets → **Supabase Edge Function s
 | `PAYANGELS_API_BASE` | Yes | Default `https://api.paystack.co` (do not use `api.payangels.com`) |
 | `PAYANGELS_DISBURSEMENT_URL` | If disbursements | |
 | `RESEND_API_KEY` | Yes | |
+| `EMAIL_LOGO_URL` | Optional | Defaults to `{PUBLIC_APP_URL}/brand/email-logo.svg` |
 | `PUBLIC_APP_URL` | Yes | `https://app.baytmiftah.com` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Already in project |
 | `INTERNAL_AUTOMATIONS_KEY` | Yes | Cron/workers |

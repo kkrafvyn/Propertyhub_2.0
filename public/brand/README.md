@@ -12,8 +12,13 @@ Forest green: `#0F2922` · Symbol: dot (person) + arc (horizon)
 | `logo-inverted.svg` | White on green panel — **source for native splash** |
 | `app-icon.svg` | PWA / App Store (512 rounded square) — **source for app icon** |
 | `social-icon.svg` | Profile avatar (circle) |
-| `email-logo.svg` | Email header (560×120) |
-| `email-template.html` | Starter HTML email with logo slot |
+| `email-logo.svg` | Email header lockup (560×120) — used by all Resend mail |
+| `email-template.html` | Local preview (transactional + marketing layouts) |
+
+All production email HTML is built by `supabase/functions/_shared/email-template.ts`:
+
+- **`transactional`** (default) — logo, title band, body, CTA, footer. Used by enrollment, notifications, automation.
+- **`marketing`** — hero image, featured listing, insights blocks. Pass `variant: "marketing"` or featured/insights props.
 | `splash.svg` | Full-screen splash (`#0F2922` + inverted lockup) |
 | `favicon-alt-dot.svg` | Alternate favicon (solid dot) |
 
