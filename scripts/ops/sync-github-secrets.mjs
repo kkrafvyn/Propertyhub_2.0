@@ -76,6 +76,7 @@ const SECRET_MAP = [
   ["SUPABASE_ACCESS_TOKEN", (env) => env.SUPABASE_ACCESS_TOKEN?.trim()],
   ["SUPABASE_PROJECT_REF", (env) => getProjectRef(env)],
   ["SUPABASE_DB_URL", (env) => buildDbUrl(env)],
+  ["SUPABASE_DB_PASSWORD", (env) => env.SUPABASE_DB_PASSWORD?.trim()],
   ["VITE_SUPABASE_URL", (env) => env.VITE_SUPABASE_URL?.trim()],
   ["SUPABASE_SERVICE_ROLE_KEY", async (env) => resolveServiceRoleKey(env)],
   ["INTERNAL_AUTOMATIONS_KEY", (env) => env.INTERNAL_AUTOMATIONS_KEY?.trim()],

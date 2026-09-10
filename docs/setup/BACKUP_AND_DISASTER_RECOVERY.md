@@ -75,7 +75,9 @@ Offsite copies: **encrypted AWS S3** in a dedicated bucket (not Supabase storage
 ## Environment variables
 
 ```env
-# Database (existing)
+# Database (existing) — CI prefers SUPABASE_DB_URL (synced by ops:sync-github-secrets)
+SUPABASE_DB_URL=postgresql://...
+# or:
 SUPABASE_DB_PASSWORD=...
 SUPABASE_SERVICE_ROLE_KEY=...
 
@@ -90,6 +92,7 @@ AWS_SECRET_ACCESS_KEY=...
 ```
 
 Add the same values as **GitHub repository secrets** for scheduled offsite backups.
+The Offsite Backup workflow uses `SUPABASE_DB_URL` when present; without `BACKUP_S3_*` / `AWS_*` it skips cleanly instead of failing.
 
 ---
 

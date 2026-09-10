@@ -38,9 +38,10 @@ npm run supabase:deploy:payments
 | Secret | Used by |
 |--------|---------|
 | `VITE_SUPABASE_URL` | CI, monitoring, scheduled jobs |
+| `SUPABASE_DB_URL` (or `SUPABASE_DB_PASSWORD`) | Scheduled jobs, offsite backup DB dump |
 | `SUPABASE_SERVICE_ROLE_KEY` | Monitoring, scheduled jobs, offsite backup |
 | `VITE_SUPABASE_TEST_*` + `TENANT_FIXTURE_PASSWORD` | Tenant isolation CI |
-| `BACKUP_S3_BUCKET`, `AWS_*` | Offsite backup |
+| `BACKUP_S3_BUCKET`, `AWS_*` | Offsite backup (required or the job skips) |
 | `OPS_ALERT_WEBHOOK_URL` | Monitoring workflow |
 | `DAST_TARGET_URL` | Security DAST (staging only) |
 | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` | Deploy workflow |
