@@ -61,27 +61,35 @@ export async function resolveOrganizationCreditMinor(
     metadata: Record<string, unknown> | null | undefined;
   },
 ) {
+  const providerFeeMeta = Number(input.metadata?.providerPlatformFeeMinor);
+  const providerFee =
+    Number.isFinite(providerFeeMeta) && providerFeeMeta > 0 ? providerFeeMeta : 0;
+
   const baseFromMeta = resolveBaseAmountMinorFromMetadata(input.metadata, input.amountMinor);
   if (baseFromMeta != null) {
-    return baseFromMeta;
+    // Seller/landlord-charged BaytMiftah fee is withheld from provider proceeds.
+    return Math.max(0, baseFromMeta - providerFee);
   }
 
   const feeFromMeta = resolvePlatformFeeMinorFromMetadata(input.metadata, input.amountMinor);
   if (feeFromMeta != null) {
-    return Math.max(0, input.amountMinor - feeFromMeta);
+    return Math.max(0, input.amountMinor - feeFromMeta - providerFee);
   }
 
   const feePercent = await loadTransactionFeePercent(admin);
-  if (feePercent <= 0) {
+  if (feePercent <= 0 && providerFee <= 0) {
     return input.amountMinor;
   }
 
   const estimatedBase = Math.round(input.amountMinor / (1 + feePercent / 100));
   const { loadCheckoutFees } = await import("./promo-pricing.ts");
-  const { platformFeeMinor } = await loadCheckoutFees(admin, {
+  const fees = await loadCheckoutFees(admin, {
     purpose: input.purpose,
     baseMinor: estimatedBase,
   });
 
-  return Math.max(0, input.amountMinor - platformFeeMinor);
+  return Math.max(
+    0,
+    input.amountMinor - fees.platformFeeMinor - (fees.providerPlatformFeeMinor || 0),
+  );
 }

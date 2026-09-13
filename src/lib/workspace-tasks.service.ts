@@ -19,11 +19,11 @@ export const workspaceTasksService = {
     return data || [];
   },
 
-  async getFollowUpInbox(organizationId: string, userId?: string) {
+  async getFollowUpInbox(organizationId: string, userId?: string, options?: { orgWide?: boolean }) {
     const tasks = await this.getOrganizationTasks(organizationId);
     const openTasks = tasks.filter((task) => ["open", "in_progress"].includes(task.status));
 
-    if (!userId) return openTasks;
+    if (options?.orgWide || !userId) return openTasks;
     return openTasks.filter((task) => !task.assigned_to || task.assigned_to === userId);
   },
 

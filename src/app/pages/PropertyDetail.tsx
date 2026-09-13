@@ -1303,6 +1303,15 @@ export function PropertyDetail() {
                       <MapPin className="w-4 h-4 text-primary" />
                       Schedule Viewing
                     </Button>
+
+                    <Link to={`/app/workspace-access?claimListing=${listing.id}`}>
+                      <Button
+                        variant="outline"
+                        className="w-full font-semibold rounded-2xl hover:border-amber-500/40 hover:bg-amber-500/5 transition-all py-3"
+                      >
+                        Claim this property
+                      </Button>
+                    </Link>
                   </>
                 )}
 

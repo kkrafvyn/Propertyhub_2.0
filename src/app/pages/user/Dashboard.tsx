@@ -96,6 +96,8 @@ import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
 import { SignatureActionBanner } from "../../components/ux/SignatureActionBanner";
 import { buildCheckoutPath } from "../../lib/checkout-navigation";
+import { organizationService } from "../../../lib/organization.service";
+import { ownerOversightService } from "../../../lib/owner-oversight.service";
 
 function formatRelativeTime(dateString?: string | null) {
   if (!dateString) return "Recently";
@@ -276,6 +278,7 @@ export function UserDashboard() {
   const [savedPaymentMethods, setSavedPaymentMethods] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [ownerOversightPath, setOwnerOversightPath] = useState<string | null>(null);
 
   const section = getSection(location.pathname);
   useFinancialAccessGuard();
@@ -287,6 +290,57 @@ export function UserDashboard() {
       });
     }
   }, [section, location.hash]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setOwnerOversightPath(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const orgSlug = (row: any) => {
+          const org = Array.isArray(row?.organization) ? row.organization[0] : row?.organization;
+          return org?.slug ? String(org.slug) : null;
+        };
+        const orgId = (row: any) => {
+          const org = Array.isArray(row?.organization) ? row.organization[0] : row?.organization;
+          return org?.id ? String(org.id) : null;
+        };
+        const [memberships, agreements] = await Promise.all([
+          organizationService.getUserOrganizations(user.id),
+          ownerOversightService.listMyAgreements(user.id).catch(() => []),
+        ]);
+        if (cancelled) return;
+        const ownerMembership = (memberships || []).find(
+          (row: any) =>
+            row.role === "property_owner" ||
+            agreements.some((a) => a.managing_organization_id === orgId(row)),
+        );
+        const slug = ownerMembership ? orgSlug(ownerMembership) : null;
+        if (slug) {
+          setOwnerOversightPath(`/workspace/${slug}/owner-oversight`);
+          return;
+        }
+        if (agreements[0]?.managing_organization_id) {
+          const match = (memberships || []).find(
+            (row: any) => orgId(row) === agreements[0].managing_organization_id,
+          );
+          const matchedSlug = match ? orgSlug(match) : null;
+          if (matchedSlug) {
+            setOwnerOversightPath(`/workspace/${matchedSlug}/owner-oversight`);
+            return;
+          }
+        }
+        setOwnerOversightPath(null);
+      } catch {
+        if (!cancelled) setOwnerOversightPath(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) {
@@ -1408,6 +1462,47 @@ export function UserDashboard() {
                 <Button variant="outline">List property</Button>
               </Link>
             </div>
+          </div>
+        </Card>
+      ) : (
+        <Card className="p-6 border-amber-500/20 bg-amber-500/[0.04]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">I own property</h2>
+              <p className="text-sm text-muted-foreground">
+                Claim a listing, create a landlord workspace, or request access to a company that manages your assets.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/app/workspace-access">
+                <Button>
+                  Request workspace access
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+              <Link to={WORKSPACE_ENTRY_PATH}>
+                <Button variant="outline">Create workspace</Button>
+              </Link>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {ownerOversightPath ? (
+        <Card className="p-6 border-emerald-500/20 bg-emerald-500/[0.04]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Owner Oversight</h2>
+              <p className="text-sm text-muted-foreground">
+                Review KPIs, activity, financials, maintenance, and approvals for company-managed properties.
+              </p>
+            </div>
+            <Link to={ownerOversightPath}>
+              <Button>
+                Open Owner Oversight
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
           </div>
         </Card>
       ) : null}

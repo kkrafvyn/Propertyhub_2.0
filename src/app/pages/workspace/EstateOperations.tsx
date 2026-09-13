@@ -34,6 +34,7 @@ import {
   resolveWorkOrderApprovalAmountMinor,
   type MemberApprovalProfile,
 } from "../../../lib/authorization.service";
+import { ownerOperatorService } from "../../../lib/owner-operator.service";
 
 interface EstateOperationsProps extends MemberScopeProps {
   organizationId: string;
@@ -103,6 +104,7 @@ export function EstateOperations({
   const [workOrderAssignedTo, setWorkOrderAssignedTo] = useState("");
   const [approvalType, setApprovalType] = useState<EstateWorkOrderApproval["approval_type"]>("quote");
   const [approvalNote, setApprovalNote] = useState("");
+  const [managementModes, setManagementModes] = useState<Record<string, string>>({});
 
   const refresh = async () => {
     try {
@@ -149,6 +151,12 @@ export function EstateOperations({
           region: property.region,
         })),
       );
+      const modes = await ownerOperatorService.getModes(estateIds).catch(() => []);
+      const modeMap: Record<string, string> = {};
+      for (const mode of modes || []) {
+        modeMap[mode.estate_id] = mode.management_mode;
+      }
+      setManagementModes(modeMap);
       setSelectedEstateId((current) => current || estateRows[0]?.id || "");
       setSelectedWorkOrderId((current) => current || workOrderRows[0]?.id || "");
     } catch (error) {
@@ -596,6 +604,11 @@ export function EstateOperations({
           <p className="mt-2 text-muted-foreground">
             Manage estates as connected operating records: people, issues, bills, payments, work orders, and preventive maintenance stay linked.
           </p>
+          {selectedEstateId && managementModes[selectedEstateId] ? (
+            <Badge variant="outline" className="mt-2 capitalize">
+              {String(managementModes[selectedEstateId]).replace(/_/g, " ")}
+            </Badge>
+          ) : null}
         </div>
         {estates.length > 0 ? (
           <select className="rounded-lg border border-border bg-input-background px-3 py-2" value={selectedEstateId} onChange={(event) => setSelectedEstateId(event.target.value)}>

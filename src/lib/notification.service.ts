@@ -27,6 +27,7 @@ export interface NotifyUserInput {
   actionUrl?: string | null;
   actorUserId?: string;
   conversationId?: string;
+  organizationId?: string | null;
   metadata?: Record<string, unknown> | null;
   respectPreferences?: boolean;
   showBrowserAlert?: boolean;
@@ -94,6 +95,7 @@ export const notificationService = {
       userId: input.userId,
       actorUserId: input.actorUserId,
       conversationId: input.conversationId,
+      organizationId: input.organizationId,
       notificationType: input.notificationType,
       subject: input.subject,
       content: input.content,

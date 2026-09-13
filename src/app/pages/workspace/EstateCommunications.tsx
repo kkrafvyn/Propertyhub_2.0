@@ -279,9 +279,9 @@ export function EstateCommunications({
             <span className="text-xs font-medium text-muted-foreground">Total Broadcasts</span>
             <Megaphone className="h-4 w-4 text-emerald-500" />
           </div>
-          <p className="mt-2 text-xl font-bold text-ink">{notices.length + 18}</p>
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-            99.6% Delivery Rate
+          <p className="mt-2 text-xl font-bold text-ink">{notices.length}</p>
+          <span className="text-[10px] text-muted-foreground font-medium">
+            Estate notices sent
           </span>
         </Card>
 
@@ -290,8 +290,8 @@ export function EstateCommunications({
             <span className="text-xs font-medium text-muted-foreground">Active Video Rooms</span>
             <Video className="h-4 w-4 text-teal-500" />
           </div>
-          <p className="mt-2 text-xl font-bold text-ink">3 Live</p>
-          <span className="text-[10px] text-muted-foreground">E2EE 256-bit Encrypted</span>
+          <p className="mt-2 text-xl font-bold text-ink">0</p>
+          <span className="text-[10px] text-muted-foreground">Start a room to go live</span>
         </Card>
 
         <Card className="p-4 bg-surface border-surface-border">
@@ -299,9 +299,9 @@ export function EstateCommunications({
             <span className="text-xs font-medium text-muted-foreground">Ghana SMS Balance</span>
             <Smartphone className="h-4 w-4 text-amber-500" />
           </div>
-          <p className="mt-2 text-xl font-bold text-ink">14,850</p>
-          <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-            Hubtel / Arkesel Ready
+          <p className="mt-2 text-xl font-bold text-ink">—</p>
+          <span className="text-[10px] text-muted-foreground font-medium">
+            Connect Hubtel / Arkesel to show credits
           </span>
         </Card>
 
@@ -310,9 +310,9 @@ export function EstateCommunications({
             <span className="text-xs font-medium text-muted-foreground">WhatsApp Channel</span>
             <MessageSquare className="h-4 w-4 text-emerald-500" />
           </div>
-          <p className="mt-2 text-xl font-bold text-ink">Connected</p>
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-            Meta Cloud Verified
+          <p className="mt-2 text-xl font-bold text-ink">Setup</p>
+          <span className="text-[10px] text-muted-foreground font-medium">
+            Configure Meta Cloud in workspace settings
           </span>
         </Card>
       </div>
@@ -566,81 +566,25 @@ export function EstateCommunications({
       {/* ── TAB 2: Live Video & Audio Rooms ───────────────────────────── */}
       {activeTab === 'rooms' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {[
-              {
-                id: 'room_1',
-                title: 'East Legon Hills Estate — Resident Townhall',
-                type: 'Townhall & HOA',
-                participants: 18,
-                status: 'Live Now',
-                host: 'Estate Management Team',
-                topic: '2026 Security Upgrades & Solar Gate Project',
-              },
-              {
-                id: 'room_2',
-                title: 'Cantonments Luxury Residence — Unit 401 Tour',
-                type: 'Live Property Walkthrough',
-                participants: 2,
-                status: 'Live Now',
-                host: 'Kwame Osei (Listing Agent)',
-                topic: 'HD Virtual Showing with Buyer from UK',
-              },
-              {
-                id: 'room_3',
-                title: 'Airport Residential HOA — Executive Board Review',
-                type: 'Board Executive Session',
-                participants: 6,
-                status: 'Scheduled 16:00',
-                host: 'Dr. Mensah (HOA Chair)',
-                topic: 'Q3 Financial Audit & Vendor Contracting',
-              },
-            ].map((room) => (
-              <Card
-                key={room.id}
-                className="flex flex-col justify-between p-5 bg-surface border-surface-border shadow-sm hover:border-emerald-500/40 transition"
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-500 flex items-center gap-1">
-                      <Radio className="h-2.5 w-2.5 animate-pulse" />
-                      {room.status}
-                    </span>
-                    <span className="text-xs text-muted-foreground font-mono">
-                      {room.participants} connected
-                    </span>
-                  </div>
-
-                  <h3 className="mt-3 font-bold text-sm text-ink">{room.title}</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">{room.topic}</p>
-
-                  <div className="mt-4 space-y-1 text-xs text-muted-foreground">
-                    <p>
-                      <strong className="text-ink">Host:</strong> {room.host}
-                    </p>
-                    <p>
-                      <strong className="text-ink">Format:</strong> {room.type}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-5 pt-3 border-t border-border flex items-center justify-between">
-                  <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400">
-                    <ShieldCheck className="h-3 w-3" /> E2EE WebRTC
-                  </span>
-
-                  <Button
-                    size="sm"
-                    onClick={() => handleStartInstantVideoRoom(room.title)}
-                    className="bg-emerald-600 text-white hover:bg-emerald-700"
-                  >
-                    <Video className="mr-1.5 h-3.5 w-3.5" />
-                    Join Room
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <Card className="p-8 bg-surface border-surface-border text-center space-y-3">
+            <Video className="h-8 w-8 mx-auto text-muted-foreground" />
+            <h3 className="font-semibold text-ink">No live video rooms</h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Start a townhall or property walkthrough from the header to open an encrypted video room for this estate.
+            </p>
+            <Button
+              size="sm"
+              onClick={() =>
+                handleStartInstantVideoRoom(
+                  `${selectedEstate?.name || 'Estate'} Townhall & Board Session`
+                )
+              }
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              <Video className="mr-1.5 h-4 w-4" />
+              Start Video Room
+            </Button>
+          </Card>
         </div>
       )}
 
@@ -771,9 +715,7 @@ export function EstateCommunications({
               </div>
               <div className="flex justify-between py-1 border-b border-border/50">
                 <span className="text-muted-foreground">Remaining SMS Credits:</span>
-                <span className="font-bold font-mono text-emerald-600 dark:text-emerald-400">
-                  14,850 SMS
-                </span>
+                <span className="font-bold font-mono text-ink">—</span>
               </div>
               <div className="flex justify-between py-1 border-b border-border/50">
                 <span className="text-muted-foreground">Target Networks:</span>
@@ -781,7 +723,7 @@ export function EstateCommunications({
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-muted-foreground">Delivery Webhook Status:</span>
-                <span className="text-emerald-500 font-semibold">200 OK (Latency 48ms)</span>
+                <span className="text-muted-foreground font-semibold">Not connected</span>
               </div>
             </div>
           </Card>

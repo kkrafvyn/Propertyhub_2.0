@@ -61,7 +61,7 @@ interface PaymentState {
 
 async function getFeeSummary(amount: number, purpose = 'other') {
   if (!Number.isFinite(amount) || amount <= 0) {
-    return { subtotal: amount, fee: 0, total: amount }
+    return { subtotal: amount, fee: 0, providerFee: 0, feeLabel: 'BaytMiftah platform fee', total: amount }
   }
   try {
     const preview = await revenueManagementService.previewCheckoutPricing({
@@ -69,10 +69,18 @@ async function getFeeSummary(amount: number, purpose = 'other') {
       purpose,
     })
     const feeMajor = preview.platformFeeMinor / 100
+    const providerFee = preview.providerPlatformFeeMinor / 100
     const totalMajor = preview.totalMinor / 100
-    return { subtotal: amount, fee: feeMajor, total: totalMajor }
+    return {
+      subtotal: amount,
+      fee: feeMajor,
+      providerFee,
+      feeLabel: preview.feeDisplayName || 'BaytMiftah platform fee',
+      total: totalMajor,
+      feeBreakdown: preview.feeBreakdown,
+    }
   } catch {
-    return { subtotal: amount, fee: 0, total: amount }
+    return { subtotal: amount, fee: 0, providerFee: 0, feeLabel: 'BaytMiftah platform fee', total: amount }
   }
 }
 
@@ -497,13 +505,17 @@ export function PaymentCheckout({
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Processing Fee</span>
+                    <span className="text-muted-foreground">BaytMiftah platform fee</span>
                     <span className="font-medium">{fmt(paymentState.feesCalculated)}</span>
                   </div>
                   <div className="border-t border-border pt-2 flex justify-between text-base font-bold">
                     <span>Total</span>
                     <span className="text-primary">{fmt(paymentState.totalAmount)}</span>
                   </div>
+                  <p className="text-xs text-muted-foreground pt-1">
+                    Payment processing (PayAngels) is separate from the BaytMiftah marketplace fee.
+                    Seller/landlord-charged fees are withheld from provider proceeds when configured.
+                  </p>
                 </div>
 
                 {/* Method */}

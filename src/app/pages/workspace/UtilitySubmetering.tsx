@@ -666,7 +666,7 @@ export function UtilitySubmetering({ organizationId }: { organizationId?: string
                     onChange={(e) => setIncludeGenSplit(e.target.checked)}
                     className="rounded border-border"
                   />
-                  <span>Include Central Generator Diesel Split contribution (+₵194.25)</span>
+                  <span>Include central generator diesel split contribution</span>
                 </label>
               )}
 

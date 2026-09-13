@@ -1,5 +1,11 @@
 import { supabase } from "./supabase";
 import { buildPropertyComplianceSnapshot } from "./property-country-context.service";
+import {
+  calculateProcessingFeeMinor,
+  emptyPlatformFees,
+  resolveFeeAndTaxEnabled,
+  resolvePlatformFees,
+} from "./platform-fee-schedule";
 
 export type FeeType = "fixed" | "percentage" | "tiered" | "custom";
 
@@ -79,10 +85,24 @@ export type PromoValidationResult = {
 
 export type CheckoutPricingPreview = {
   baseMinor: number;
+  /** Buyer-charged platform fee included in checkout total. */
   platformFeeMinor: number;
+  buyerPlatformFeeMinor: number;
+  /** Seller/landlord-charged platform fee withheld from provider proceeds. */
+  providerPlatformFeeMinor: number;
+  processingFeeMinor: number;
   discountMinor: number;
   totalMinor: number;
   promoCode: string | null;
+  feeDisplayName: string;
+  feeBreakdown: Array<{
+    rule_key: string;
+    amount_minor: number;
+    charged_to: string;
+  }>;
+  matchedRuleKeys: string[];
+  feesEnabled: boolean;
+  taxesEnabled: boolean;
 };
 
 export type RevenueDashboardMetrics = {
@@ -337,27 +357,53 @@ export const revenueManagementService = {
     purpose: string;
     promoCode?: string | null;
     jurisdictionId?: string | null;
+    includeProcessingFee?: boolean;
+    gatewayKey?: string | null;
+    organizationId?: string | null;
+    orgCollectPlatformFees?: boolean | null;
+    orgCollectCheckoutTaxes?: boolean | null;
   }): Promise<CheckoutPricingPreview> {
     const baseMinor = Math.round(input.baseAmountMajor * 100);
-    const jurisdictionId = input.jurisdictionId?.trim().toUpperCase() || null;
-    let platformFeeMinor = 0;
+    const settings = await this.getSettings().catch(() => ({} as Record<string, unknown>));
+    const activeTier = String(settings.active_pricing_tier || "founding").replace(/"/g, "");
+    const feeDisplayName = String(settings.platform_fee_display_name || "BaytMiftah platform fee").replace(
+      /^"|"$/g,
+      "",
+    );
 
-    const transactionRule = jurisdictionId
-      ? await this.getRuleForJurisdiction("transaction_fee", jurisdictionId)
-      : await this.getRule("transaction_fee");
-    if (transactionRule && isRuleEffective(transactionRule)) {
-      platformFeeMinor += this.calculateFeeMinor(transactionRule, baseMinor);
-    }
-
-    if (input.purpose === "booking_fee") {
-      const guestRule = jurisdictionId
-        ? await this.getRuleForJurisdiction("booking_guest_fee", jurisdictionId)
-        : await this.getRule("booking_guest_fee");
-      if (guestRule && isRuleEffective(guestRule)) {
-        platformFeeMinor += this.calculateFeeMinor(guestRule, baseMinor);
+    let orgFees = input.orgCollectPlatformFees;
+    let orgTaxes = input.orgCollectCheckoutTaxes;
+    if (input.organizationId && (orgFees === undefined || orgTaxes === undefined)) {
+      try {
+        const { countryRulesService } = await import("./country-rules.service");
+        const orgSettings = await countryRulesService.getOrganizationSettings(input.organizationId);
+        if (orgFees === undefined) orgFees = orgSettings?.collect_platform_fees ?? true;
+        if (orgTaxes === undefined) orgTaxes = orgSettings?.collect_checkout_taxes ?? true;
+      } catch {
+        /* inherit platform defaults */
       }
     }
 
+    const gates = resolveFeeAndTaxEnabled({
+      platformFeesEnabled: settings.platform_fees_enabled,
+      checkoutTaxesEnabled: settings.checkout_taxes_enabled,
+      vatEnabled: settings.vat_enabled,
+      orgCollectPlatformFees: orgFees,
+      orgCollectCheckoutTaxes: orgTaxes,
+    });
+
+    const rules = gates.feesEnabled ? await this.listRules() : [];
+    const resolved = gates.feesEnabled
+      ? resolvePlatformFees({
+          rules,
+          purpose: input.purpose,
+          baseMinor,
+          activeTier,
+          feeDisplayName,
+        })
+      : emptyPlatformFees(feeDisplayName);
+
+    const platformFeeMinor = resolved.platformFeeMinor;
     const subtotalMinor = baseMinor + platformFeeMinor;
     let discountMinor = 0;
     let promoCode: string | null = null;
@@ -375,12 +421,35 @@ export const revenueManagementService = {
       promoCode = promo.code || input.promoCode.trim().toUpperCase();
     }
 
+    let processingFeeMinor = 0;
+    if (input.includeProcessingFee) {
+      const gateways = await this.listPaymentGateways().catch(() => []);
+      const gateway =
+        gateways.find((g) => g.gateway_key === (input.gatewayKey || "payangels") && g.enabled) ||
+        gateways.find((g) => g.enabled);
+      if (gateway) {
+        processingFeeMinor = calculateProcessingFeeMinor({
+          gatewayFeeType: gateway.fee_type,
+          gatewayFeeValue: gateway.fee_value,
+          chargeBaseMinor: Math.max(0, subtotalMinor - discountMinor),
+        });
+      }
+    }
+
     return {
       baseMinor,
       platformFeeMinor,
+      buyerPlatformFeeMinor: resolved.buyerPlatformFeeMinor,
+      providerPlatformFeeMinor: resolved.providerPlatformFeeMinor,
+      processingFeeMinor,
       discountMinor,
-      totalMinor: Math.max(0, subtotalMinor - discountMinor),
+      totalMinor: Math.max(0, subtotalMinor - discountMinor + processingFeeMinor),
       promoCode,
+      feeDisplayName: resolved.feeDisplayName,
+      feeBreakdown: resolved.feeBreakdown,
+      matchedRuleKeys: resolved.matchedRuleKeys,
+      feesEnabled: gates.feesEnabled,
+      taxesEnabled: gates.taxesEnabled,
     };
   },
 

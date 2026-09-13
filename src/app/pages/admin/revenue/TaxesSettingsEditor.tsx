@@ -13,6 +13,7 @@ export function TaxesSettingsEditor() {
     default_country: "GH",
     vat_rate: "15",
     vat_enabled: true,
+    checkout_taxes_enabled: true,
     nhil_rate: "2.5",
     getfund_rate: "2.5",
     tax_inclusive_pricing: false,
@@ -27,6 +28,10 @@ export function TaxesSettingsEditor() {
           default_country: String(rows.default_country || "GH").replace(/"/g, ""),
           vat_rate: String(rows.vat_rate ?? "15"),
           vat_enabled: rows.vat_enabled === true || rows.vat_enabled === "true",
+          checkout_taxes_enabled: !(
+            rows.checkout_taxes_enabled === false ||
+            rows.checkout_taxes_enabled === "false"
+          ),
           nhil_rate: String(rows.nhil_rate ?? "2.5"),
           getfund_rate: String(rows.getfund_rate ?? "2.5"),
           tax_inclusive_pricing:
@@ -44,6 +49,11 @@ export function TaxesSettingsEditor() {
         revenueManagementService.setSetting("default_country", settings.default_country, "Default country code"),
         revenueManagementService.setSetting("vat_rate", Number(settings.vat_rate), "VAT percentage"),
         revenueManagementService.setSetting("vat_enabled", settings.vat_enabled, "Whether VAT is applied"),
+        revenueManagementService.setSetting(
+          "checkout_taxes_enabled",
+          settings.checkout_taxes_enabled,
+          "Master switch: when false, checkout does not add/show statutory tax estimates",
+        ),
         revenueManagementService.setSetting("nhil_rate", Number(settings.nhil_rate), "NHIL levy percentage"),
         revenueManagementService.setSetting("getfund_rate", Number(settings.getfund_rate), "GETFund levy percentage"),
         revenueManagementService.setSetting(
@@ -70,7 +80,10 @@ export function TaxesSettingsEditor() {
       <div>
         <h2 className="text-2xl font-semibold">Taxes & VAT</h2>
         <p className="text-muted-foreground mt-1">
-          Configure default country, currency, and Ghana tax levies.
+          Statutory VAT/NHIL/GETFund estimates apply to BaytMiftah&apos;s platform/service fee (your
+          taxable supply), not to the underlying property sale or rent price. Property owners remain
+          responsible for their own tax obligations on the asset transaction. Configure marketplace
+          take-rates under Platform Pricing.
         </p>
       </div>
 
@@ -106,13 +119,37 @@ export function TaxesSettingsEditor() {
           />
         </div>
 
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
+          <div>
+            <p className="font-medium text-sm">Checkout taxes master switch</p>
+            <p className="text-xs text-muted-foreground">
+              Off = no tax lines on checkout (for markets/operators not allowed to add tax to payments).
+            </p>
+          </div>
           <input
             type="checkbox"
+            className="h-5 w-9 accent-emerald-600"
+            role="switch"
+            checked={settings.checkout_taxes_enabled}
+            onChange={(event) =>
+              setSettings({ ...settings, checkout_taxes_enabled: event.target.checked })
+            }
+          />
+        </label>
+        <label className="flex items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
+          <div>
+            <p className="font-medium text-sm">VAT component</p>
+            <p className="text-xs text-muted-foreground">
+              Only applies when checkout taxes are on. NHIL/GETFund rates below still need the master on.
+            </p>
+          </div>
+          <input
+            type="checkbox"
+            className="h-5 w-9 accent-emerald-600"
+            role="switch"
             checked={settings.vat_enabled}
             onChange={(event) => setSettings({ ...settings, vat_enabled: event.target.checked })}
           />
-          VAT enabled on platform fees
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input

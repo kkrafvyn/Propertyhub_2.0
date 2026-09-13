@@ -1,10 +1,77 @@
 import { supabase } from "./supabase";
 import type { EstateChargeRow } from "./estate-ledger";
+import { ownerOversightService } from "./owner-oversight.service";
 
 // Database types are regenerated during deployment after the estate-operations
 // migration is applied. Keeping this boundary isolated prevents the generated
 // marketplace types from leaking into this new domain module.
 const estateDb = supabase as any;
+
+async function maybeNotifyCriticalIssue(issue: {
+  estate_id: string;
+  title: string;
+  priority?: string | null;
+}) {
+  const priority = String(issue.priority || "").toLowerCase();
+  if (priority !== "critical" && priority !== "urgent") return;
+  try {
+    const agreement = await ownerOversightService.findAgreementForEstate(issue.estate_id);
+    if (!agreement) return;
+    const { data: estate } = await estateDb
+      .from("managed_estates")
+      .select("organization_id, organization:organizations(slug)")
+      .eq("id", issue.estate_id)
+      .maybeSingle();
+    if (!estate?.organization_id) return;
+    await ownerOversightService.notifyOwnerCritical({
+      ownerUserId: agreement.owner_user_id,
+      organizationId: estate.organization_id,
+      organizationSlug: estate.organization?.slug || null,
+      kind: "critical_maintenance",
+      subject: "Critical maintenance reported",
+      content: issue.title,
+      tab: "maintenance",
+    });
+  } catch (error) {
+    console.error("Owner critical maintenance notify failed:", error);
+  }
+}
+
+async function maybeRequestOwnerSpendApproval(input: {
+  estateId: string;
+  amountMinor: number | null | undefined;
+  requestedBy: string;
+  title: string;
+  workOrderId?: string;
+  issueId?: string;
+  currency?: string;
+}) {
+  const amount = Number(input.amountMinor || 0);
+  if (!amount) return;
+  try {
+    const agreement = await ownerOversightService.findAgreementForEstate(input.estateId);
+    if (!agreement) return;
+    const { data: estate } = await estateDb
+      .from("managed_estates")
+      .select("organization_id, currency, organization:organizations(slug)")
+      .eq("id", input.estateId)
+      .maybeSingle();
+    if (!estate?.organization_id) return;
+    await ownerOversightService.maybeRequestOwnerApproval({
+      agreement,
+      organizationId: estate.organization_id,
+      requestedBy: input.requestedBy,
+      title: input.title,
+      amountMinor: amount,
+      workOrderId: input.workOrderId,
+      issueId: input.issueId,
+      currency: input.currency || estate.currency || "GHS",
+      organizationSlug: estate.organization?.slug || null,
+    });
+  } catch (error) {
+    console.error("Owner spend approval request failed:", error);
+  }
+}
 
 export type ManagedEstate = {
   id: string;
@@ -427,6 +494,7 @@ export const estateOperationsService = {
       actor_user_id: input.reportedByUserId,
     });
     if (eventError) throw eventError;
+    void maybeNotifyCriticalIssue(data as EstateIssue);
     return data as EstateIssue;
   },
 
@@ -492,6 +560,14 @@ export const estateOperationsService = {
       notes: input.notes?.trim() || null,
     }).select("*").single();
     if (error) throw error;
+    void maybeRequestOwnerSpendApproval({
+      estateId: input.estateId,
+      amountMinor: input.estimatedCostMinor,
+      requestedBy: input.createdBy,
+      title: "Work order estimated cost",
+      workOrderId: data.id,
+      issueId: input.issueId,
+    });
     return data as EstateWorkOrder;
   },
 
@@ -518,6 +594,17 @@ export const estateOperationsService = {
       .select("*")
       .single();
     if (error) throw error;
+    const amount = patch.actual_cost_minor ?? patch.estimated_cost_minor;
+    if (amount != null && data.created_by) {
+      void maybeRequestOwnerSpendApproval({
+        estateId: data.estate_id,
+        amountMinor: amount,
+        requestedBy: data.created_by,
+        title: "Work order cost update",
+        workOrderId: data.id,
+        issueId: data.issue_id,
+      });
+    }
     return data as EstateWorkOrder;
   },
 
@@ -587,6 +674,24 @@ export const estateOperationsService = {
       .select("*")
       .single();
     if (error) throw error;
+
+    const { data: workOrder } = await estateDb
+      .from("estate_work_orders")
+      .select("id, estate_id, issue_id, created_by")
+      .eq("id", input.workOrderId)
+      .maybeSingle();
+    if (workOrder) {
+      void maybeRequestOwnerSpendApproval({
+        estateId: workOrder.estate_id,
+        amountMinor: input.amountMinor,
+        requestedBy: input.approvedBy || workOrder.created_by,
+        title: "Work order quote",
+        workOrderId: workOrder.id,
+        issueId: workOrder.issue_id,
+        currency: input.currency,
+      });
+    }
+
     return data as EstateWorkOrderQuote;
   },
 

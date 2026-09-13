@@ -19,7 +19,19 @@ export interface WorkItem {
 
 export const workQueueService = {
   async getMyWork(organizationId: string, userId?: string): Promise<WorkItem[]> {
+    return this.getWorkQueue(organizationId, { userId, scope: "mine" });
+  },
+
+  async getOrgWork(organizationId: string): Promise<WorkItem[]> {
+    return this.getWorkQueue(organizationId, { scope: "org" });
+  },
+
+  async getWorkQueue(
+    organizationId: string,
+    options: { userId?: string; scope?: "mine" | "org" } = {},
+  ): Promise<WorkItem[]> {
     const items: WorkItem[] = [];
+    const scope = options.scope || "mine";
 
     const [approvals, exceptions] = await Promise.all([
       approvalCenterService.getPendingApprovals(organizationId).catch(() => [] as PendingApprovalItem[]),
@@ -67,26 +79,29 @@ export const workQueueService = {
       /* ledger optional */
     }
 
-    if (userId) {
-      const { data: tasks } = await db
-        .from("workspace_tasks")
-        .select("id, title, status, due_at, created_at")
-        .eq("organization_id", organizationId)
-        .eq("assigned_to", userId)
-        .not("status", "in", '("done","cancelled","completed")')
-        .order("created_at", { ascending: false })
-        .limit(20);
-      for (const t of (tasks || []) as any[]) {
-        items.push({
-          id: `task-${t.id}`,
-          kind: "task",
-          title: t.title || "Open task",
-          subtitle: t.due_at ? `Due ${new Date(t.due_at).toLocaleDateString()}` : t.status,
-          urgency: "medium",
-          href: "tasks",
-          createdAt: t.created_at,
-        });
-      }
+    let taskQuery = db
+      .from("workspace_tasks")
+      .select("id, title, status, due_at, created_at, assigned_to")
+      .eq("organization_id", organizationId)
+      .not("status", "in", '("done","cancelled","completed")')
+      .order("created_at", { ascending: false })
+      .limit(40);
+
+    if (scope === "mine" && options.userId) {
+      taskQuery = taskQuery.eq("assigned_to", options.userId);
+    }
+
+    const { data: tasks } = await taskQuery;
+    for (const t of (tasks || []) as any[]) {
+      items.push({
+        id: `task-${t.id}`,
+        kind: "task",
+        title: t.title || "Open task",
+        subtitle: t.due_at ? `Due ${new Date(t.due_at).toLocaleDateString()}` : t.status,
+        urgency: "medium",
+        href: "tasks",
+        createdAt: t.created_at,
+      });
     }
 
     items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());

@@ -7,11 +7,14 @@ import { SubscriptionPlansEditor } from "./SubscriptionPlansEditor";
 import { PromoCodesEditor } from "./PromoCodesEditor";
 import { PaymentGatewaysEditor } from "./PaymentGatewaysEditor";
 import { TaxesSettingsEditor } from "./TaxesSettingsEditor";
+import { PlatformPricingEditor } from "./PlatformPricingEditor";
 
 function renderSection(section: ReturnType<typeof resolveRevenueSection>) {
   switch (section) {
     case "dashboard":
       return <RevenueDashboard />;
+    case "platform-pricing":
+      return <PlatformPricingEditor />;
     case "listing-fees":
       return (
         <RevenueRuleEditor
@@ -27,8 +30,8 @@ function renderSection(section: ReturnType<typeof resolveRevenueSection>) {
       return (
         <RevenueRuleEditor
           category="transaction_fees"
-          title="Transaction Fees"
-          description="Platform fees on property transactions."
+          title="Legacy Transaction Fees"
+          description="Fallback catch-all only when no purpose-specific Platform Pricing rule matches. Prefer Platform Pricing for sale, land, and rent fees."
         />
       );
     case "booking-fees":

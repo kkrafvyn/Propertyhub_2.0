@@ -42,6 +42,7 @@ export type SubmitEnrollmentInput = {
   website?: string | null;
   businessTypes?: string[];
   kycSubmissionId?: string | null;
+  propertyListingClaimId?: string | null;
 };
 
 async function notifyEnrollmentStatus(
@@ -97,6 +98,7 @@ export const enrollmentService = {
         contact_phone: input.contactPhone?.trim() || null,
         website: input.website?.trim() || null,
         business_types: input.businessTypes || [],
+        property_listing_claim_id: input.propertyListingClaimId ?? null,
         status: "pending",
       })
       .select("*")

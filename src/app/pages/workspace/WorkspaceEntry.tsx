@@ -204,6 +204,7 @@ export function WorkspaceEntry() {
         contactPhone: form.phone.trim() || null,
         website: isPersonal ? null : form.website.trim() || null,
         kycSubmissionId: submissionId,
+        propertyListingClaimId: searchParams.get("claimId")?.trim() || null,
       });
 
       await legalAcceptanceService.recordAcceptance({

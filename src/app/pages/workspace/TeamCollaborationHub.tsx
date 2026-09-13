@@ -11,6 +11,17 @@ import { messageService } from "../../../lib/message.service";
 import { organizationService } from "../../../lib/organization.service";
 import { whitelabelService } from "../../../lib/whitelabel.service";
 
+import { propertyListingClaimService } from "../../../lib/property-listing-claim.service";
+import { membershipRequestService } from "../../../lib/membership-request.service";
+import { canWorkspace } from "../../../lib/workspace-permissions";
+import type { MemberRole as ExtendedMemberRole } from "../../../lib/workspace";
+import { estateOperationsService } from "../../../lib/estate-operations.service";
+import {
+  ownerOversightService,
+  type PropertyManagementAgreement,
+} from "../../../lib/owner-oversight.service";
+import type { ManagementMode } from "../../../lib/owner-operator.service";
+
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 type MemberRole = Database["public"]["Tables"]["organization_members"]["Row"]["role"];
 type InvitationRole = Database["public"]["Tables"]["organization_invitations"]["Row"]["role"];
@@ -18,7 +29,7 @@ type InvitationRole = Database["public"]["Tables"]["organization_invitations"]["
 interface TeamCollaborationHubProps {
   organization: Organization;
   currentUserId: string;
-  currentRole: MemberRole | null;
+  currentRole: MemberRole | ExtendedMemberRole | null;
 }
 
 const INVITATION_ROLE_OPTIONS: InvitationRole[] = ["manager", "agent", "analyst"];
@@ -54,7 +65,10 @@ export default function TeamCollaborationHub({
   currentUserId,
   currentRole,
 }: TeamCollaborationHubProps) {
-  const canManageTeam = currentRole === "owner" || currentRole === "manager";
+  const canManageTeam =
+    currentRole === "owner" ||
+    currentRole === "manager" ||
+    canWorkspace((currentRole || "agent") as ExtendedMemberRole, "team:manage");
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -62,6 +76,16 @@ export default function TeamCollaborationHub({
   const [invitations, setInvitations] = useState<any[]>([]);
   const [sharedConversations, setSharedConversations] = useState<any[]>([]);
   const [workflows, setWorkflows] = useState<any[]>([]);
+  const [propertyClaims, setPropertyClaims] = useState<any[]>([]);
+  const [membershipRequests, setMembershipRequests] = useState<any[]>([]);
+  const [agreements, setAgreements] = useState<PropertyManagementAgreement[]>([]);
+  const [estates, setEstates] = useState<any[]>([]);
+  const [mgmtForm, setMgmtForm] = useState({
+    estateId: "",
+    ownerUserId: "",
+    mode: "company_managed" as ManagementMode,
+  });
+  const [savingAgreement, setSavingAgreement] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<InvitationRole>("agent");
   const [submittingInvite, setSubmittingInvite] = useState(false);
@@ -75,23 +99,34 @@ export default function TeamCollaborationHub({
   const loadData = async () => {
     try {
       setLoading(true);
-      const [memberData, invitationData, inboxData, workflowData, settingsData] =
+      const [memberData, invitationData, inboxData, workflowData, settingsData, claimData, membershipData, agreementData, estateData] =
         await Promise.all([
           organizationService.getOrganizationMembers(organization.id),
           organizationService.getOrganizationInvitations(organization.id),
           messageService.getOrganizationInbox(organization.id),
           automationEngineService.getWorkflows(organization.id),
           whitelabelService.getSettings(organization.id),
+          propertyListingClaimService.getOrganizationClaims(organization.id).catch(() => []),
+          membershipRequestService.getOrganizationRequests(organization.id).catch(() => []),
+          ownerOversightService.listOrganizationAgreements(organization.id).catch(() => []),
+          estateOperationsService.getEstates(organization.id).catch(() => []),
         ]);
 
       setMembers(memberData || []);
       setInvitations(invitationData || []);
       setSharedConversations(inboxData || []);
       setWorkflows(workflowData || []);
+      setPropertyClaims(claimData || []);
+      setMembershipRequests(membershipData || []);
+      setAgreements(agreementData || []);
+      setEstates(estateData || []);
       setSettings((current) => ({
         ...current,
         ...settingsData,
       }));
+      if (!mgmtForm.estateId && estateData?.[0]?.id) {
+        setMgmtForm((current) => ({ ...current, estateId: estateData[0].id }));
+      }
     } catch (error) {
       console.error("Failed to load collaboration hub:", error);
       toast.error("We couldn't load the collaboration hub right now.");
@@ -170,6 +205,43 @@ export default function TeamCollaborationHub({
     }
   };
 
+  const handleCreateManagementAgreement = async () => {
+    if (!canManageTeam) {
+      toast.error("Only owners and managers can set management agreements.");
+      return;
+    }
+    const estate = estates.find((row) => row.id === mgmtForm.estateId);
+    if (!estate?.property_id) {
+      toast.error("Select an estate linked to a property.");
+      return;
+    }
+    if (!mgmtForm.ownerUserId) {
+      toast.error("Select the property owner member.");
+      return;
+    }
+    setSavingAgreement(true);
+    try {
+      await ownerOversightService.upsertAgreement({
+        propertyId: estate.property_id,
+        ownerUserId: mgmtForm.ownerUserId,
+        managingOrganizationId: organization.id,
+        estateId: estate.id,
+        mode: mgmtForm.mode,
+      });
+      await ownerOversightService.ensureOwnerScopedMembership({
+        organizationId: organization.id,
+        userId: mgmtForm.ownerUserId,
+        propertyId: estate.property_id,
+      });
+      toast.success("Management agreement saved. Owner Oversight is now active for that property.");
+      await loadData();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to save management agreement");
+    } finally {
+      setSavingAgreement(false);
+    }
+  };
+
   const handleRoleChange = async (userId: string, role: MemberRole) => {
     try {
       await organizationService.updateMemberRole(organization.id, userId, role);
@@ -240,6 +312,8 @@ export default function TeamCollaborationHub({
         {[
           { key: "overview", label: "Overview" },
           { key: "members", label: "Members" },
+          { key: "requests", label: "Claims & Requests" },
+          { key: "management", label: "Management" },
           { key: "permissions", label: "Permissions" },
           { key: "settings", label: "Settings" },
         ].map((tab) => (
@@ -307,6 +381,119 @@ export default function TeamCollaborationHub({
                   </div>
                 ))}
               </div>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {!loading && activeTab === "requests" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="p-6 space-y-3">
+            <h2 className="text-lg font-semibold">Property listing claims</h2>
+            {propertyClaims.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No claims on your listings yet.</p>
+            ) : (
+              propertyClaims.map((claim) => (
+                <div key={claim.id} className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium capitalize">{claim.status}</span>
+                    <span className="text-[11px] font-mono text-muted-foreground">{claim.listing_id}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{claim.claimant_note || "No claimant note"}</p>
+                  {canManageTeam && ["pending", "needs_info"].includes(claim.status) ? (
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          void propertyListingClaimService
+                            .reviewClaim({ claimId: claim.id, status: "approved" })
+                            .then(() => loadData())
+                            .then(() => toast.success("Claim approved"))
+                            .catch((error) => toast.error(error.message || "Review failed"))
+                        }
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          void propertyListingClaimService
+                            .reviewClaim({ claimId: claim.id, status: "needs_info" })
+                            .then(() => loadData())
+                            .then(() => toast.success("Requested more info"))
+                            .catch((error) => toast.error(error.message || "Review failed"))
+                        }
+                      >
+                        Needs info
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          void propertyListingClaimService
+                            .reviewClaim({ claimId: claim.id, status: "rejected" })
+                            .then(() => loadData())
+                            .then(() => toast.success("Claim rejected"))
+                            .catch((error) => toast.error(error.message || "Review failed"))
+                        }
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              ))
+            )}
+          </Card>
+
+          <Card className="p-6 space-y-3">
+            <h2 className="text-lg font-semibold">Membership requests</h2>
+            {membershipRequests.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No join requests yet.</p>
+            ) : (
+              membershipRequests.map((request) => (
+                <div key={request.id} className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium capitalize">{request.status}</span>
+                    <span className="text-[11px] text-muted-foreground">{request.requested_role}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{request.message || "No message"}</p>
+                  {canManageTeam && request.status === "pending" ? (
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          void membershipRequestService
+                            .reviewRequest({
+                              requestId: request.id,
+                              status: "approved",
+                              role: request.requested_role || "property_owner",
+                            })
+                            .then(() => loadData())
+                            .then(() => toast.success("Membership approved"))
+                            .catch((error) => toast.error(error.message || "Review failed"))
+                        }
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          void membershipRequestService
+                            .reviewRequest({ requestId: request.id, status: "rejected" })
+                            .then(() => loadData())
+                            .then(() => toast.success("Membership rejected"))
+                            .catch((error) => toast.error(error.message || "Review failed"))
+                        }
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              ))
             )}
           </Card>
         </div>
@@ -401,6 +588,99 @@ export default function TeamCollaborationHub({
               );
             })}
           </div>
+        </div>
+      )}
+
+      {!loading && activeTab === "management" && (
+        <div className="space-y-6">
+          <Card className="p-6 space-y-4">
+            <h2 className="text-lg font-semibold">Company-managed properties</h2>
+            <p className="text-sm text-muted-foreground">
+              Link an owner member to an estate property, set management mode, and unlock Owner Oversight
+              transparency for that asset.
+            </p>
+            <div className="grid gap-3 md:grid-cols-3">
+              <div>
+                <label className="block mb-2 text-sm">Estate / property</label>
+                <select
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-input-background"
+                  value={mgmtForm.estateId}
+                  onChange={(e) => setMgmtForm((c) => ({ ...c, estateId: e.target.value }))}
+                  disabled={!canManageTeam}
+                >
+                  <option value="">Select estate</option>
+                  {estates.map((estate) => (
+                    <option key={estate.id} value={estate.id}>
+                      {estate.name}
+                      {!estate.property_id ? " (no property link)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block mb-2 text-sm">Owner member</label>
+                <select
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-input-background"
+                  value={mgmtForm.ownerUserId}
+                  onChange={(e) => setMgmtForm((c) => ({ ...c, ownerUserId: e.target.value }))}
+                  disabled={!canManageTeam}
+                >
+                  <option value="">Select owner</option>
+                  {members.map((member) => (
+                    <option key={member.user_id} value={member.user_id}>
+                      {getDisplayName(member.profile || member.user)} ({member.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block mb-2 text-sm">Management mode</label>
+                <select
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-input-background"
+                  value={mgmtForm.mode}
+                  onChange={(e) =>
+                    setMgmtForm((c) => ({ ...c, mode: e.target.value as ManagementMode }))
+                  }
+                  disabled={!canManageTeam}
+                >
+                  <option value="company_managed">Company managed</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="self_managed">Self managed</option>
+                </select>
+              </div>
+            </div>
+            <Button onClick={() => void handleCreateManagementAgreement()} disabled={!canManageTeam || savingAgreement}>
+              {savingAgreement ? "Saving…" : "Save management agreement"}
+            </Button>
+          </Card>
+
+          <Card className="p-6 space-y-3">
+            <h3 className="font-semibold">Active agreements</h3>
+            {agreements.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No management agreements yet.</p>
+            ) : (
+              agreements.map((agreement) => (
+                <div
+                  key={agreement.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3 text-sm"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {agreement.property?.address || agreement.property_id}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Owner {agreement.owner_user_id.slice(0, 8)}… · Auto-approve below{" "}
+                      {(agreement.auto_approve_below_minor / 100).toLocaleString()} · Owner gate{" "}
+                      {(agreement.owner_approve_below_minor / 100).toLocaleString()}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="capitalize">
+                    {agreement.status}
+                  </Badge>
+                </div>
+              ))
+            )}
+          </Card>
         </div>
       )}
 

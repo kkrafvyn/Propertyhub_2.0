@@ -34,6 +34,7 @@ export function ApprovalCenter({
 }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [items, setItems] = useState<PendingApprovalItem[]>([]);
   const [selectedDomain, setSelectedDomain] = useState<string>("ALL");
 
@@ -54,14 +55,39 @@ export function ApprovalCenter({
     loadApprovals();
   }, [organizationId]);
 
-  const handleApprove = (id: string, domain: ApprovalDomain) => {
-    toast.success(`Action approved successfully (${domain})`);
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const handleApprove = async (id: string, domain: ApprovalDomain) => {
+    try {
+      setBusyId(id);
+      await approvalCenterService.resolveApproval({
+        id,
+        domain,
+        decision: "approved",
+        note: user?.id ? `Approved by ${user.id}` : undefined,
+      });
+      toast.success(`Approved (${domain})`);
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    } catch (err: any) {
+      toast.error(err.message || "Approve failed");
+    } finally {
+      setBusyId(null);
+    }
   };
 
-  const handleReject = (id: string, domain: ApprovalDomain) => {
-    toast.info(`Action rejected (${domain})`);
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const handleReject = async (id: string, domain: ApprovalDomain) => {
+    try {
+      setBusyId(id);
+      await approvalCenterService.resolveApproval({
+        id,
+        domain,
+        decision: "rejected",
+      });
+      toast.info(`Rejected (${domain})`);
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    } catch (err: any) {
+      toast.error(err.message || "Reject failed");
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const filtered = items.filter((item) => {
@@ -77,113 +103,101 @@ export function ApprovalCenter({
       case "lease_application":
         return <Building className="w-4 h-4 text-emerald-600" />;
       case "owner_disbursement":
+      case "owner_expense":
         return <CreditCard className="w-4 h-4 text-blue-600" />;
       case "journal_entry":
         return <FileText className="w-4 h-4 text-amber-600" />;
       default:
-        return <CheckSquare className="w-4 h-4 text-primary" />;
+        return <Layers className="w-4 h-4" />;
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
-            Executive Approval Center
-          </h1>
-          <p className="text-sm text-ink-muted">
-            Consolidated governance queue for procurement, leases, owner payouts, and GL postings.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {["ALL", "procurement_request", "lease_application", "journal_entry"].map(
-            (d) => (
-              <Button
-                key={d}
-                variant={selectedDomain === d ? "primary" : "ghost"}
-                size="sm"
-                onClick={() => setSelectedDomain(d)}
-                className="text-xs"
-              >
-                {d.replace("_", " ").toUpperCase()}
-              </Button>
-            )
-          )}
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <CheckSquare className="h-6 w-6 text-emerald-600" />
+          Approval Center
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Multi-domain governance queue including owner spend thresholds and disbursements.
+        </p>
       </div>
 
-      <Card className="p-6 space-y-4">
-        {loading ? (
-          <div className="py-12 text-center text-ink-muted">
-            Gathering pending authorizations...
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="py-12 text-center space-y-3">
-            <ShieldCheck className="w-12 h-12 mx-auto text-emerald-500 opacity-60" />
-            <p className="text-ink-muted font-medium">
-              Zero pending items! All organizational workflows are authorized and up to date.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filtered.map((item) => (
-              <div
-                key={item.id}
-                className="p-4 rounded-xl border border-surface-border bg-surface hover:bg-surface-hover/30 transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 rounded-xl bg-surface-subtle border border-surface-border">
-                    {getDomainIcon(item.domain)}
-                  </div>
+      <div className="flex flex-wrap gap-2">
+        {["ALL", "owner_expense", "owner_disbursement", "procurement_request", "lease_application", "journal_entry"].map(
+          (domain) => (
+            <Button
+              key={domain}
+              size="sm"
+              variant={selectedDomain === domain ? "default" : "outline"}
+              onClick={() => setSelectedDomain(domain)}
+            >
+              {domain === "ALL" ? "All" : domain.replace(/_/g, " ")}
+            </Button>
+          ),
+        )}
+      </div>
+
+      {loading ? (
+        <Card className="p-8 text-center text-muted-foreground">Loading approvals…</Card>
+      ) : filtered.length === 0 ? (
+        <Card className="p-10 text-center text-sm text-muted-foreground">
+          <ShieldCheck className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          No pending approvals in this filter.
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((item) => (
+            <Card key={`${item.domain}-${item.id}`} className="p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex gap-3">
+                  <div className="mt-1">{getDomainIcon(item.domain)}</div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-ink text-sm">
-                        {item.title}
-                      </span>
-                      <Badge variant="outline" className="text-[10px] uppercase font-mono">
-                        {item.domain.replace("_", " ")}
+                    <p className="font-semibold text-sm">{item.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{item.subtitle}</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <Badge variant="outline" className="capitalize">
+                        {item.domain.replace(/_/g, " ")}
                       </Badge>
+                      <Badge variant="outline" className="capitalize">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {item.urgency}
+                      </Badge>
+                      {typeof item.amountMinor === "number" ? (
+                        <Badge variant="outline">{money(item.amountMinor, item.currency)}</Badge>
+                      ) : null}
                     </div>
-                    <p className="text-xs text-ink-muted mt-0.5">
-                      {item.subtitle}
-                    </p>
-                    <span className="text-[10px] text-ink-muted font-mono mt-1 block">
-                      Submitted {item.createdAt?.slice(0, 10)}
-                    </span>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-                  {item.amountMinor ? (
-                    <div className="text-right font-mono font-bold text-ink mr-2">
-                      {money(item.amountMinor, item.currency)}
-                    </div>
-                  ) : null}
+                <div className="flex gap-2">
                   <Button
-                    variant="outline"
                     size="sm"
-                    className="text-xs text-rose-600 hover:bg-rose-50"
-                    onClick={() => handleReject(item.id, item.domain)}
+                    disabled={busyId === item.id}
+                    onClick={() => void handleApprove(item.id, item.domain)}
                   >
-                    <XCircle className="w-3.5 h-3.5 mr-1" />
-                    Reject
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                    Approve
                   </Button>
                   <Button
-                    variant="primary"
                     size="sm"
-                    className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-                    onClick={() => handleApprove(item.id, item.domain)}
+                    variant="outline"
+                    disabled={busyId === item.id}
+                    onClick={() => void handleReject(item.id, item.domain)}
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                    Authorize
+                    <XCircle className="h-3.5 w-3.5 mr-1" />
+                    Reject
                   </Button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </Card>
+              <p className="text-[11px] text-muted-foreground mt-2 flex items-center gap-1">
+                <ArrowRight className="h-3 w-3" />
+                Requested {new Date(item.createdAt).toLocaleString()}
+              </p>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

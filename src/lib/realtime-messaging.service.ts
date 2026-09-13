@@ -11,7 +11,7 @@
 import { supabase } from "./supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
-export type ConversationType = "direct" | "group" | "support" | "organization_shared";
+export type ConversationType = "direct" | "group" | "support" | "organization_shared" | "channel";
 export type ParticipantRole =
   | "buyer"
   | "tenant"

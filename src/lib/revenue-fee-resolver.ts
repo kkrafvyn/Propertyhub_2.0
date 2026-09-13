@@ -77,7 +77,9 @@ export async function getPremiumListingPrice(currency = "GHS") {
 }
 
 export async function getTransactionFeePercent() {
-  const rule = await revenueManagementService.getRule("transaction_fee");
+  const rule =
+    (await revenueManagementService.getRule("platform_fee_sale")) ||
+    (await revenueManagementService.getRule("transaction_fee"));
   if (!rule?.enabled) return 0;
   return Number(rule.fee_value || 0);
 }

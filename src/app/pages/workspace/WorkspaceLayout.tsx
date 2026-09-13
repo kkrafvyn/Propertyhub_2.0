@@ -194,6 +194,8 @@ import { CustomerHealthCenter } from "./CustomerHealthCenter";
 import { ProductivityWorkspace } from "./ProductivityWorkspace";
 import { MyWorkQueue } from "./MyWorkQueue";
 import { DesktopMyWorkHome } from "./DesktopMyWorkHome";
+import { OwnerOversight } from "./OwnerOversight";
+import { WorkspaceTeamChat } from "./WorkspaceTeamChat";
 import { StaffTimeTracking } from "./StaffTimeTracking";
 import { DataRetentionCenter } from "./DataRetentionCenter";
 import { ContractorPortal } from "./ContractorPortal";
@@ -251,6 +253,7 @@ interface NavItem {
 
 const CORE_NAV_ITEMS: NavItem[] = [
   { slug: "", label: "Dashboard", icon: Home },
+  { slug: "owner-oversight", label: "Owner Oversight", icon: ShieldCheck },
   { slug: "listings", label: "Listings", icon: Building2 },
   { slug: "leads", label: "Leads", icon: UserPlus },
   { slug: "contacts", label: "Contacts", icon: Contact },
@@ -348,6 +351,7 @@ const AI_NAV_ITEMS: NavItem[] = [
 ];
 
 const ENTERPRISE_NAV_ITEMS: NavItem[] = [
+  { slug: "team-chat", label: "Team Chat", icon: MessageSquare },
   { slug: "team-collaboration", label: "Team Hub", icon: Users2 },
   { slug: "workflow-approval", label: "Approval Chains", icon: GitBranch },
   { slug: "workflows", label: "Workflows", icon: Workflow },
@@ -738,6 +742,7 @@ export function WorkspaceLayout() {
             <DesktopMyWorkHome
               organization={organization}
               workspaceBasePath={workspaceBasePath}
+              currentRole={effectiveRole}
             />
           );
         }
@@ -1001,6 +1006,21 @@ export function WorkspaceLayout() {
         return <MultiCurrencyHedgingHub />;
       case "recommendations":
         return <RecommendationEngine />;
+      case "owner-oversight":
+        return (
+          <OwnerOversight
+            organization={organization}
+            workspaceBasePath={workspaceBasePath}
+          />
+        );
+      case "team-chat":
+        return (
+          <WorkspaceTeamChat
+            organizationId={organization.id}
+            currentUserId={user.id}
+            currentRole={currentRole}
+          />
+        );
       case "team-collaboration":
         return (
           <TeamCollaborationHub
@@ -1081,7 +1101,7 @@ export function WorkspaceLayout() {
       case "exception-center":
         return <ExceptionCenter organizationId={organization.id} />;
       case "my-work":
-        return <MyWorkQueue organizationId={organization.id} />;
+        return <MyWorkQueue organizationId={organization.id} currentRole={effectiveRole} />;
       case "staff-time":
         return <StaffTimeTracking organizationId={organization.id} />;
       case "contractor-portal":

@@ -15,6 +15,7 @@ import {
 
 export type RevenueSection =
   | "dashboard"
+  | "platform-pricing"
   | "listing-fees"
   | "agency-plans"
   | "transaction-fees"
@@ -36,9 +37,22 @@ export const REVENUE_NAV: Array<{
   category?: string;
 }> = [
   { id: "dashboard", label: "Dashboard", href: "/admin/revenue", icon: LayoutDashboard },
+  {
+    id: "platform-pricing",
+    label: "Platform Pricing",
+    href: "/admin/revenue/platform-pricing",
+    icon: Percent,
+    category: "platform_fees",
+  },
   { id: "listing-fees", label: "Listing Fees", href: "/admin/revenue/listing-fees", icon: Receipt, category: "listing_fees" },
-  { id: "agency-plans", label: "Agency Plans", href: "/admin/revenue/agency-plans", icon: Building2 },
-  { id: "transaction-fees", label: "Transaction Fees", href: "/admin/revenue/transaction-fees", icon: Percent, category: "transaction_fees" },
+  { id: "agency-plans", label: "Agency & Developer Plans", href: "/admin/revenue/agency-plans", icon: Building2 },
+  {
+    id: "transaction-fees",
+    label: "Legacy Transaction Fees",
+    href: "/admin/revenue/transaction-fees",
+    icon: Percent,
+    category: "transaction_fees",
+  },
   { id: "booking-fees", label: "Booking Fees", href: "/admin/revenue/booking-fees", icon: Ticket, category: "booking_fees" },
   { id: "escrow-fees", label: "Escrow Fees", href: "/admin/revenue/escrow-fees", icon: Landmark, category: "escrow_fees" },
   { id: "wallet-fees", label: "Wallet Fees", href: "/admin/revenue/wallet-fees", icon: Wallet, category: "wallet_fees" },

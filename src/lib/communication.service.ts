@@ -32,6 +32,7 @@ interface SendNotificationOptions {
   conversationId?: string;
   actionUrl?: string | null;
   metadata?: Record<string, unknown> | null;
+  organizationId?: string | null;
 }
 
 interface CreateInAppNotificationOptions extends SendNotificationOptions {
@@ -130,10 +131,17 @@ function shouldAttemptChannel(
 function buildNotificationInsert(
   params: CreateInAppNotificationOptions
 ): NotificationLogInsert {
+  const organizationId =
+    params.organizationId ||
+    (typeof params.metadata?.organization_id === "string"
+      ? params.metadata.organization_id
+      : null);
+
   return {
     user_id: params.userId,
     actor_user_id: params.actorUserId || null,
     conversation_id: params.conversationId || null,
+    organization_id: organizationId,
     notification_type: params.notificationType,
     notification_category: params.notificationCategory || null,
     channel: "in_app",

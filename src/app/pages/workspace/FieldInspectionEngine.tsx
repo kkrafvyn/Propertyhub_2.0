@@ -113,11 +113,11 @@ export function FieldInspectionEngine({
   const handleCreateNew = (type: FieldInspectionDraft['inspectionType'], propertyName: string, depositGHS: number) => {
     const newDraft = inspectionSyncService.createBlankInspection({
       organizationId,
-      propertyName: propertyName.trim() || 'Cantonments Luxury Suites - Unit 4B',
+      propertyName: propertyName.trim() || 'Untitled property',
       inspectorId: currentUserId,
-      inspectorName: 'Certified Inspector (Field Agent)',
-      tenantName: 'Kwame Mensah',
-      tenantPhone: '+233 24 412 3456',
+      inspectorName: 'Field inspector',
+      tenantName: '',
+      tenantPhone: '',
       inspectionType: type,
       initialSecurityDepositPesewas: Math.round(depositGHS * 100),
     });

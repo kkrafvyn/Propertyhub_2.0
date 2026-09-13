@@ -13,14 +13,17 @@ import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/badge";
 import { workQueueService, type WorkItem } from "../../../lib/work-queue.service";
+import { orgActivityService } from "../../../lib/org-activity.service";
 import { useAuth } from "../../context/AuthContext";
 import type { Database } from "../../../lib/database.types";
+import type { MemberRole } from "../../../lib/workspace";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 
 interface DesktopMyWorkHomeProps {
   organization: Organization;
   workspaceBasePath: string;
+  currentRole?: MemberRole | null;
 }
 
 function urgencyBucket(urgency: WorkItem["urgency"]) {
@@ -30,16 +33,23 @@ function urgencyBucket(urgency: WorkItem["urgency"]) {
   return "scheduled";
 }
 
-export function DesktopMyWorkHome({ organization, workspaceBasePath }: DesktopMyWorkHomeProps) {
+export function DesktopMyWorkHome({
+  organization,
+  workspaceBasePath,
+  currentRole,
+}: DesktopMyWorkHomeProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isExecutive = orgActivityService.isExecutiveRole(currentRole);
   const [items, setItems] = useState<WorkItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    void workQueueService
-      .getMyWork(organization.id, user?.id)
+    const load = isExecutive
+      ? workQueueService.getOrgWork(organization.id)
+      : workQueueService.getMyWork(organization.id, user?.id);
+    void load
       .then((rows) => {
         if (active) setItems(rows);
       })
@@ -49,7 +59,7 @@ export function DesktopMyWorkHome({ organization, workspaceBasePath }: DesktopMy
     return () => {
       active = false;
     };
-  }, [organization.id, user?.id]);
+  }, [organization.id, user?.id, isExecutive]);
 
   const counts = useMemo(() => {
     const buckets = { urgent: 0, attention: 0, pending: 0, scheduled: 0 };

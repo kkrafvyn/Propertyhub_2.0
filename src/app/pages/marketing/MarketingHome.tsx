@@ -163,11 +163,12 @@ function HeroOpsPreview() {
 function HeroFinancePreview() {
   return (
     <div className="mk-hero-preview-body">
+      <p className="text-xs text-muted-foreground mb-2 px-1">Product preview — illustrative only</p>
       <div className="mk-hpb-stat-row">
         {[
-          { label: "Collected (Oct)", value: "GHS 186k", delta: "94.2% of due", up: true },
-          { label: "Overdue", value: "GHS 11k", delta: "3 accounts", up: false },
-          { label: "Owner Payouts", value: "GHS 142k", delta: "Disbursed", up: true },
+          { label: "Collected", value: "Live MoMo & bank", delta: "Workspace ledger", up: true },
+          { label: "Overdue", value: "Aging views", delta: "Collections queue", up: false },
+          { label: "Owner payouts", value: "Disbursements", delta: "PayAngels-ready", up: true },
         ].map((s) => (
           <div key={s.label} className="mk-hpb-stat">
             <span className="mk-hpb-stat-label">{s.label}</span>
@@ -179,9 +180,9 @@ function HeroFinancePreview() {
         ))}
       </div>
       <div className="mk-hpb-sparkline-row">
-        <span className="mk-hpb-sparkline-label">Collection rate — last 6 months</span>
+        <span className="mk-hpb-sparkline-label">Collections trend — illustrative</span>
         <div className="mk-hpb-sparkline" aria-hidden="true">
-          {[82, 88, 91, 89, 93, 94].map((v, i) => (
+          {[62, 70, 68, 78, 84, 88].map((v, i) => (
             <div key={i} className="mk-hpb-bar" style={{ height: `${v}%` }} />
           ))}
         </div>
@@ -287,7 +288,7 @@ function HeroSection() {
           {/* Floating accent cards (safely positioned outside tab area) */}
           <div className="mk-hero-float-card mk-hero-float-card--top-right">
             <BadgeCheck size={15} className="mk-hfc-icon mk-hfc-icon--green" />
-            <span>Rent collected · <strong>GHS 186k</strong></span>
+            <span>Rent collected · <strong>Workspace ledger</strong></span>
           </div>
           <div className="mk-hero-float-card mk-hero-float-card--bottom-left">
             <Bot size={15} className="mk-hfc-icon mk-hfc-icon--accent" />
@@ -334,16 +335,16 @@ function HeroSection() {
 // ── Stats bar ────────────────────────────────────────────────────────────────
 function StatsBar() {
   const stats = [
-    { value: "14,000+", label: "Units managed" },
-    { value: "99.2%", label: "On-time collection rate" },
-    { value: "$120M+", label: "Transaction volume governed" },
-    { value: "8", label: "Markets live" },
-    { value: "< 2min", label: "Avg. maintenance triage time" },
-    { value: "100%", label: "Multi-currency support" },
+    { value: "Ghana-first", label: "Built for local estates & agencies" },
+    { value: "MoMo + bank", label: "Collections & disbursements" },
+    { value: "Multi-tenant", label: "Workspace isolation by design" },
+    { value: "KYC-ready", label: "Identity gates for high-trust flows" },
+    { value: "Realtime", label: "Ops inbox & field sync" },
+    { value: "Desktop + web", label: "Same workspace everywhere" },
   ];
 
   return (
-    <section className="mk-stats-bar" aria-label="Platform statistics">
+    <section className="mk-stats-bar" aria-label="Platform capabilities">
       <Reveal stagger>
         <div className="mk-stats-inner">
           {stats.map((s) => (
@@ -964,9 +965,9 @@ const ROLES = [
     title: "Run estates from one operational workspace.",
     copy: "Manage properties, units, leases, occupancies, inspections, and daily tasks without switching between spreadsheets, chats, and separate maintenance tools.",
     metrics: [
-      { label: "Active leases", value: "248" },
-      { label: "Inspections due", value: "7" },
-      { label: "Pending approvals", value: "4" },
+      { label: "Active leases", value: "Live roster" },
+      { label: "Inspections due", value: "Field queue" },
+      { label: "Pending approvals", value: "Workflow" },
     ],
   },
   {
@@ -976,9 +977,9 @@ const ROLES = [
     title: "Know where the money stands.",
     copy: "Track receivables, journal entries, bank reconciliation, owner statements, and collections workflows in the operational layer around your finances.",
     metrics: [
-      { label: "Receivables", value: "GHS 186k" },
-      { label: "Overdue", value: "GHS 11k" },
-      { label: "Reconciled", value: "99.1%" },
+      { label: "Receivables", value: "Ledger" },
+      { label: "Overdue", value: "Aging" },
+      { label: "Reconciled", value: "Bank match" },
     ],
   },
   {
@@ -988,9 +989,9 @@ const ROLES = [
     title: "Turn property interest into organized business.",
     copy: "Manage leads, viewings, applications, offers, and leasing pipelines from one system — with the same property and contact records the rest of the operation uses.",
     metrics: [
-      { label: "Active leads", value: "34" },
-      { label: "Viewings this week", value: "12" },
-      { label: "Applications open", value: "6" },
+      { label: "Active leads", value: "CRM" },
+      { label: "Viewings", value: "Calendar" },
+      { label: "Applications", value: "Pipeline" },
     ],
   },
   {

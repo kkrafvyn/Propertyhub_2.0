@@ -280,6 +280,21 @@ export const consumerRoutes: RouteObject[] = [
     },
   },
   {
+    path: 'app/workspace-access',
+    lazy: async () => {
+      const { ConsumerWorkspaceAccessPage } = await import('../pages/user/ConsumerWorkspaceAccessPage');
+      return {
+        Component: function ProtectedWorkspaceAccessRoute() {
+          return (
+            <ProtectedRoute>
+              <ConsumerWorkspaceAccessPage />
+            </ProtectedRoute>
+          );
+        },
+      };
+    },
+  },
+  {
     path: 'app/applications',
     lazy: async () => {
       const { UserDashboard } = await import('../pages/user/Dashboard');

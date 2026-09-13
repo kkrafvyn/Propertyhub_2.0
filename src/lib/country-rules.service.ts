@@ -16,6 +16,8 @@ export type OrganizationCountrySettings = {
   default_subdivision: string | null;
   default_currency: string | null;
   enabled_jurisdictions: CountryCode[];
+  collect_platform_fees?: boolean;
+  collect_checkout_taxes?: boolean;
   updated_at: string;
 };
 
@@ -55,18 +57,27 @@ export const countryRulesService = {
     defaultSubdivision?: string;
     defaultCurrency?: string;
     enabledJurisdictions?: CountryCode[];
+    collectPlatformFees?: boolean;
+    collectCheckoutTaxes?: boolean;
   }) {
     const pack = getCountryPack(input.defaultJurisdiction);
+    const payload: Record<string, unknown> = {
+      organization_id: input.organizationId,
+      default_jurisdiction: input.defaultJurisdiction,
+      default_subdivision: input.defaultSubdivision?.trim().toUpperCase() || null,
+      default_currency: input.defaultCurrency?.trim().toUpperCase() || pack.currency,
+      enabled_jurisdictions: input.enabledJurisdictions || [input.defaultJurisdiction],
+      updated_at: new Date().toISOString(),
+    };
+    if (input.collectPlatformFees !== undefined) {
+      payload.collect_platform_fees = input.collectPlatformFees;
+    }
+    if (input.collectCheckoutTaxes !== undefined) {
+      payload.collect_checkout_taxes = input.collectCheckoutTaxes;
+    }
     const { data, error } = await db
       .from("organization_country_settings")
-      .upsert({
-        organization_id: input.organizationId,
-        default_jurisdiction: input.defaultJurisdiction,
-        default_subdivision: input.defaultSubdivision?.trim().toUpperCase() || null,
-        default_currency: input.defaultCurrency?.trim().toUpperCase() || pack.currency,
-        enabled_jurisdictions: input.enabledJurisdictions || [input.defaultJurisdiction],
-        updated_at: new Date().toISOString(),
-      })
+      .upsert(payload)
       .select("*")
       .single();
     if (error) throw error;

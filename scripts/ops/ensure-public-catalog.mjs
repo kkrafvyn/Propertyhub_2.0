@@ -113,6 +113,22 @@ async function main() {
     return;
   }
 
+  const projectRef =
+    env.SUPABASE_PROJECT_REF?.trim() ||
+    (env.VITE_SUPABASE_URL ? new URL(env.VITE_SUPABASE_URL).hostname.split(".")[0] : "");
+  const forceSeed = process.argv.includes("--force");
+  const productionRefs = new Set(
+    String(env.PRODUCTION_SUPABASE_PROJECT_REFS || "ixmbfnfwpjwbfahqaftc")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean),
+  );
+  if (projectRef && productionRefs.has(projectRef) && !forceSeed) {
+    fail(
+      `Refusing --seed against production project ${projectRef}. Use a non-prod project, or pass --force if you intentionally need a pilot showcase listing.`,
+    );
+  }
+
   const preferredSlug = orgSlugArg || process.env.PILOT_ORG_SLUG?.trim() || "siabanku";
   const orgRes = await fetch(
     `${baseUrl}/rest/v1/organizations?select=id,name,slug,verified,suspended&slug=eq.${encodeURIComponent(preferredSlug)}&limit=1`,

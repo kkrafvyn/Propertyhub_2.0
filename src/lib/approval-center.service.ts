@@ -6,10 +6,12 @@
  *  - 3-Way Match Invoice Variances
  *  - Public Lease Applications
  *  - Owner Rental Disbursement Runs
+ *  - Owner expense approvals (management spend thresholds)
  *  - Draft Journal Entries
  */
 
 import { supabase } from "./supabase";
+import { ownerOversightService } from "./owner-oversight.service";
 
 const db = supabase as any;
 
@@ -18,6 +20,7 @@ export type ApprovalDomain =
   | "invoice_variance"
   | "lease_application"
   | "owner_disbursement"
+  | "owner_expense"
   | "journal_entry";
 
 export interface PendingApprovalItem {
@@ -37,7 +40,6 @@ export const approvalCenterService = {
   async getPendingApprovals(organizationId: string): Promise<PendingApprovalItem[]> {
     const items: PendingApprovalItem[] = [];
 
-    // 1. Fetch pending lease applications
     try {
       const { data: apps } = await db
         .from("public_lease_applications")
@@ -59,7 +61,6 @@ export const approvalCenterService = {
       }
     } catch {}
 
-    // 2. Fetch pending procurement requests
     try {
       const { data: estates } = await db
         .from("managed_estates")
@@ -88,10 +89,51 @@ export const approvalCenterService = {
             metadata: req,
           });
         }
+
+        const { data: distributions } = await db
+          .from("estate_distribution_approvals")
+          .select("*, statement:estate_owner_statement_runs(estate_id, currency, net_distributable_minor)")
+          .eq("status", "pending")
+          .limit(20);
+
+        for (const row of (distributions || []) as any[]) {
+          const estateId = row.statement?.estate_id;
+          if (estateId && !estateIds.includes(estateId)) continue;
+          items.push({
+            id: row.id,
+            domain: "owner_disbursement",
+            title: "Owner disbursement approval",
+            subtitle: row.payout_reference || "Pending owner payout",
+            amountMinor: row.requested_amount_minor || row.statement?.net_distributable_minor || 0,
+            currency: row.currency || row.statement?.currency || "GHS",
+            urgency: "high",
+            createdAt: row.requested_at || row.created_at || new Date().toISOString(),
+            metadata: row,
+          });
+        }
       }
     } catch {}
 
-    // 3. Fetch draft journal entries
+    try {
+      const ownerExpenses = await ownerOversightService.listOrgExpenseApprovals(
+        organizationId,
+        "pending",
+      );
+      for (const row of ownerExpenses) {
+        items.push({
+          id: row.id,
+          domain: "owner_expense",
+          title: row.title,
+          subtitle: row.description || "Owner spend threshold approval",
+          amountMinor: row.amount_minor,
+          currency: row.currency || "GHS",
+          urgency: row.amount_minor > 500000 ? "critical" : "high",
+          createdAt: row.created_at,
+          metadata: row,
+        });
+      }
+    } catch {}
+
     try {
       const { data: jes } = await db
         .from("journal_entries")
@@ -115,5 +157,75 @@ export const approvalCenterService = {
     } catch {}
 
     return items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  },
+
+  async resolveApproval(input: {
+    id: string;
+    domain: ApprovalDomain;
+    decision: "approved" | "rejected";
+    note?: string;
+  }) {
+    if (input.domain === "owner_expense") {
+      return ownerOversightService.reviewExpenseApproval({
+        approvalId: input.id,
+        status: input.decision,
+        reviewNote: input.note,
+      });
+    }
+
+    if (input.domain === "owner_disbursement") {
+      const { data, error } = await db
+        .from("estate_distribution_approvals")
+        .update({
+          status: input.decision === "approved" ? "approved" : "rejected",
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", input.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    if (input.domain === "lease_application") {
+      const { data, error } = await db
+        .from("public_lease_applications")
+        .update({
+          status: input.decision === "approved" ? "APPROVED" : "REJECTED",
+        })
+        .eq("id", input.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    if (input.domain === "procurement_request") {
+      const { data, error } = await db
+        .from("estate_procurement_requests")
+        .update({
+          status: input.decision === "approved" ? "approved" : "rejected",
+        })
+        .eq("id", input.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    if (input.domain === "journal_entry") {
+      const { data, error } = await db
+        .from("journal_entries")
+        .update({
+          status: input.decision === "approved" ? "POSTED" : "VOID",
+        })
+        .eq("id", input.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    throw new Error(`Unsupported approval domain: ${input.domain}`);
   },
 };

@@ -35,6 +35,8 @@ export function InternationalRulesHub({ organizationId }: { organizationId: stri
   const [counselFirm, setCounselFirm] = useState("");
   const [counselNotes, setCounselNotes] = useState("");
   const [recordingCounsel, setRecordingCounsel] = useState(false);
+  const [collectPlatformFees, setCollectPlatformFees] = useState(true);
+  const [collectCheckoutTaxes, setCollectCheckoutTaxes] = useState(true);
 
   const context = useMemo(
     () => countryRulesService.resolveContext({
@@ -72,6 +74,12 @@ export function InternationalRulesHub({ organizationId }: { organizationId: stri
   useEffect(() => {
     if (orgSettings?.default_jurisdiction) setSelected(orgSettings.default_jurisdiction);
     if (orgSettings?.default_subdivision) setSubdivision(orgSettings.default_subdivision);
+    if (typeof orgSettings?.collect_platform_fees === "boolean") {
+      setCollectPlatformFees(orgSettings.collect_platform_fees);
+    }
+    if (typeof orgSettings?.collect_checkout_taxes === "boolean") {
+      setCollectCheckoutTaxes(orgSettings.collect_checkout_taxes);
+    }
   }, [orgSettings]);
 
   const activeCounselSignoff = counselSignoffs.find(
@@ -115,7 +123,10 @@ export function InternationalRulesHub({ organizationId }: { organizationId: stri
         defaultSubdivision: subdivision || undefined,
         defaultCurrency: context.currency,
         enabledJurisdictions: [selected],
+        collectPlatformFees,
+        collectCheckoutTaxes,
       });
+      setOrgSettings(await countryRulesService.getOrganizationSettings(organizationId));
       toast.success(`Operating market set to ${context.pack.label}`);
     } catch (err: any) {
       toast.error(err.message);
@@ -184,6 +195,50 @@ export function InternationalRulesHub({ organizationId }: { organizationId: stri
         )}
         <Button onClick={handleSave} disabled={saving}>
           <Save className="h-4 w-4 mr-1" /> Save as organization default
+        </Button>
+      </Card>
+
+      <Card className="p-6 space-y-4">
+        <h2 className="font-semibold flex items-center gap-2">
+          <Receipt className="h-4 w-4" /> Fees &amp; taxes on payments
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Use these if your company or individual landlord workspace is not authorized to add
+          BaytMiftah fees or statutory tax lines to checkout. Platform admin can also disable these
+          globally.
+        </p>
+        <label className="flex items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
+          <div>
+            <p className="font-medium text-sm">Collect BaytMiftah platform fees</p>
+            <p className="text-xs text-muted-foreground">
+              Off = no marketplace fee on this workspace&apos;s checkouts or withholdings.
+            </p>
+          </div>
+          <input
+            type="checkbox"
+            className="h-5 w-9 accent-emerald-600"
+            role="switch"
+            checked={collectPlatformFees}
+            onChange={(event) => setCollectPlatformFees(event.target.checked)}
+          />
+        </label>
+        <label className="flex items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
+          <div>
+            <p className="font-medium text-sm">Show / collect checkout taxes</p>
+            <p className="text-xs text-muted-foreground">
+              Off = do not add VAT/levy estimates to payment flows for this organization.
+            </p>
+          </div>
+          <input
+            type="checkbox"
+            className="h-5 w-9 accent-emerald-600"
+            role="switch"
+            checked={collectCheckoutTaxes}
+            onChange={(event) => setCollectCheckoutTaxes(event.target.checked)}
+          />
+        </label>
+        <Button onClick={handleSave} disabled={saving} variant="outline">
+          Save fee &amp; tax preferences
         </Button>
       </Card>
 

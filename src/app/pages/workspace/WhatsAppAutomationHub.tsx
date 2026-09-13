@@ -62,38 +62,38 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
 
   // Gate Pass Form State
   const [gatePassForm, setGatePassForm] = useState<WhatsAppGatePassParams>({
-    recipientPhone: '0244123456',
-    recipientName: 'Kofi Mensah',
-    visitorName: 'Kwesi Appiah',
-    pinCode: '892104',
-    validUntil: 'Today, 8:00 PM',
-    estateName: 'Cantonments Luxury Suites',
-    unitNumber: '4B',
-    qrCodeUrl: 'https://baytmiftah.com/pass/892104',
+    recipientPhone: '',
+    recipientName: '',
+    visitorName: '',
+    pinCode: '',
+    validUntil: '',
+    estateName: '',
+    unitNumber: '',
+    qrCodeUrl: '',
   });
 
   // Rent Invoice Form State
   const [rentInvoiceForm, setRentInvoiceForm] = useState<WhatsAppRentInvoiceParams>({
-    recipientPhone: '0244987654',
-    tenantName: 'Ama Ampomah',
-    unitName: 'Penthouse Suite 12',
-    amountGHS: 6500,
-    dueDate: '31st August 2026',
-    momoPaymentUrl: 'https://baytmiftah.com/pay/inv-8819',
-    ussdShortcode: '*711*892#',
-    estateName: 'Airport Residential Courts',
+    recipientPhone: '',
+    tenantName: '',
+    unitName: '',
+    amountGHS: 0,
+    dueDate: '',
+    momoPaymentUrl: '',
+    ussdShortcode: '',
+    estateName: '',
   });
 
   // Maintenance Dispatch Form State
   const [maintenanceForm, setMaintenanceForm] = useState<WhatsAppMaintenanceDispatchParams>({
-    recipientPhone: '0208112233',
-    tenantName: 'David Osei',
-    ticketId: 'WO-9941',
-    category: 'HVAC / Air Conditioning Repair',
-    artisanName: 'Master Kwabena (Certified Tech)',
-    artisanPhone: '+233 24 555 9012',
-    scheduledTime: 'Tomorrow at 10:30 AM',
-    estateName: 'East Legon Hills Villas',
+    recipientPhone: '',
+    tenantName: '',
+    ticketId: '',
+    category: '',
+    artisanName: '',
+    artisanPhone: '',
+    scheduledTime: '',
+    estateName: '',
   });
 
   // Bot Simulator State

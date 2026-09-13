@@ -41,6 +41,9 @@ import { listingService } from "../../../lib/listing.service";
 import { organizationService } from "../../../lib/organization.service";
 import { paymentService } from "../../../lib/payment.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
+import { ActivityFeed, type TimelineActivity } from "../../components/ux/ActivityTimeline";
+import { orgActivityService } from "../../../lib/org-activity.service";
+import { useAuth } from "../../context/AuthContext";
 import type { MemberRole } from "../../../lib/workspace";
 import { parseWorkspaceCustomization } from "../../../lib/workspace-customization.service";
 import { isDashboardWidgetEnabled } from "../../../lib/workspace-module-catalog";
@@ -94,12 +97,14 @@ export function WorkspaceDashboard({
   scopedPropertyIds = null,
   bypassPropertyScope = false,
 }: WorkspaceDashboardProps) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [membersCount, setMembersCount] = useState(0);
   const [listings, setListings] = useState<any[]>([]);
   const [dealCases, setDealCases] = useState<any[]>([]);
   const [propertyTransactions, setPropertyTransactions] = useState<any[]>([]);
   const [propertyViewings, setPropertyViewings] = useState<any[]>([]);
+  const [activityItems, setActivityItems] = useState<TimelineActivity[]>([]);
   const [activeRole, setActiveRole] = useState<MemberRole>(currentRole || "owner");
 
   useEffect(() => {
@@ -113,12 +118,19 @@ export function WorkspaceDashboard({
       try {
         if (!cancelled) setLoading(true);
 
-        const [organizationListings, organizationDeals, members, payments, viewings] = await Promise.all([
+        const [organizationListings, organizationDeals, members, payments, viewings, activity] = await Promise.all([
           listingService.getOrganizationListings(organization.id),
           dealCaseService.getDealCasesByOrganization(organization.id),
           organizationService.getOrganizationMembers(organization.id),
           paymentService.getOrganizationPropertyTransactions(organization.id),
           propertyViewingService.getOrganizationViewings(organization.id),
+          orgActivityService.getRecentActivity({
+            organizationId: organization.id,
+            userId: user?.id,
+            role: currentRole || activeRole,
+            workspaceBasePath,
+            limit: 20,
+          }).catch(() => [] as TimelineActivity[]),
         ]);
 
         const scope = withMemberScopeDefaults({
@@ -171,6 +183,7 @@ export function WorkspaceDashboard({
               scope.bypassPropertyScope,
             ),
           );
+          setActivityItems(activity || []);
         }
       } catch (error) {
         console.error("Failed to load workspace dashboard:", error);
@@ -186,7 +199,7 @@ export function WorkspaceDashboard({
     return () => {
       cancelled = true;
     };
-  }, [organization.id, scopeMode, scopedPropertyIds, bypassPropertyScope]);
+  }, [organization.id, scopeMode, scopedPropertyIds, bypassPropertyScope, user?.id, currentRole, workspaceBasePath]);
 
   const listedCount = useMemo(
     () => listings.filter((listing) => listing.status === "listed").length,
@@ -247,6 +260,7 @@ export function WorkspaceDashboard({
   const showListingsWidget = isDashboardWidgetEnabled(dashboardWidgets, "listings");
   const showViewingsWidget = isDashboardWidgetEnabled(dashboardWidgets, "viewings");
   const showQuickActions = isDashboardWidgetEnabled(dashboardWidgets, "quick_actions");
+  const showRecentActivity = isDashboardWidgetEnabled(dashboardWidgets, "recent_activity");
 
   if (loading) {
     return (
@@ -452,33 +466,32 @@ export function WorkspaceDashboard({
         {activeRole === "owner" && (
           <>
             <MetricCard
-              title="Gross Rent Roll (Annualized)"
-              value="₵3.25M"
-              trend={{ value: "+12.4% vs last yr", isPositive: true, label: "YoY" }}
-              icon={TrendingUp}
+              title="Listed units"
+              value={<AnimatedNumber value={listedCount} />}
+              subtitle={`${listings.length} total listings`}
+              icon={Building2}
               iconColor="emerald"
               glow
             />
             <MetricCard
-              title="Net Portfolio Yield"
-              value="11.8%"
-              subtitle="Airport Res. target: 10.5%"
-              trend={{ value: "+1.3% spread", isPositive: true }}
-              icon={BarChart3}
+              title="Active leads"
+              value={<AnimatedNumber value={activeLeadsCount} />}
+              subtitle="Open deal cases"
+              icon={Users}
               iconColor="primary"
               glow
             />
             <MetricCard
-              title="Total Collected (MoMo/Bank)"
-              value={currencyFormatter.format(collectedRevenue || 1450000)}
-              trend={{ value: "98.2% on-time", isPositive: true }}
+              title="Total collected"
+              value={currencyFormatter.format(collectedRevenue)}
+              subtitle={`${successfulPayments.length} successful payments`}
               icon={CreditCard}
               iconColor="emerald"
             />
             <MetricCard
-              title="FX Hedging Collar Status"
-              value="Active (+/- 5%)"
-              subtitle="BOG: ₵15.85/USD"
+              title="Pipeline value"
+              value={currencyFormatter.format(revenuePipeline)}
+              subtitle="Sum of open deal listing prices"
               icon={Coins}
               iconColor="amber"
             />
@@ -488,34 +501,32 @@ export function WorkspaceDashboard({
         {activeRole === "manager" && (
           <>
             <MetricCard
-              title="Occupancy Rate"
-              value="94.6%"
-              subtitle="48 of 50 units occupied"
-              trend={{ value: "+2.1%", isPositive: true }}
+              title="Listed units"
+              value={<AnimatedNumber value={listedCount} />}
+              subtitle={`${listings.length} in portfolio`}
               icon={Building2}
               iconColor="emerald"
               glow
             />
             <MetricCard
-              title="Pending Gate Clearances"
-              value="8 Passes"
-              trend={{ value: "Kiosk QR active", isPositive: true }}
-              icon={ShieldCheck}
+              title="Team members"
+              value={<AnimatedNumber value={membersCount} />}
+              subtitle="Organization roster"
+              icon={Users}
               iconColor="primary"
             />
             <MetricCard
-              title="Open Work Orders"
-              value="3 Active"
-              subtitle="2 Artisans on-site"
-              icon={Wrench}
+              title="Upcoming viewings"
+              value={<AnimatedNumber value={upcomingViewings.length} />}
+              subtitle="Scheduled viewings"
+              icon={CalendarDays}
               iconColor="amber"
             />
             <MetricCard
-              title="Offline Inspection Drafts"
-              value="2 Ready"
-              subtitle="IndexedDB Synced"
-              trend={{ value: "Offline ready", isPositive: true }}
-              icon={FileCheck}
+              title="Active leads"
+              value={<AnimatedNumber value={activeLeadsCount} />}
+              subtitle="Open deal cases"
+              icon={Wrench}
               iconColor="purple"
             />
           </>
@@ -523,32 +534,31 @@ export function WorkspaceDashboard({
         {activeRole === "agent" && (
           <>
             <MetricCard
-              title="Active Inbound Leads"
-              value={<AnimatedNumber value={activeLeadsCount || 14} />}
-              trend={{ value: "6 Hot WhatsApp", isPositive: true }}
+              title="Active inbound leads"
+              value={<AnimatedNumber value={activeLeadsCount} />}
+              subtitle="Open deal cases"
               icon={Users}
               iconColor="primary"
               glow
             />
             <MetricCard
-              title="Viewings Scheduled Today"
-              value={<AnimatedNumber value={upcomingViewings.length || 4} />}
-              subtitle="Next: 2:00 PM Cantonments"
+              title="Viewings scheduled"
+              value={<AnimatedNumber value={upcomingViewings.length} />}
+              subtitle="Upcoming appointments"
               icon={CalendarDays}
               iconColor="emerald"
             />
             <MetricCard
-              title="Pending Leases (Ghana Card)"
-              value="3 Drafts"
-              trend={{ value: "Act 220 Compliant", isPositive: true }}
-              icon={Scale}
+              title="Listed inventory"
+              value={<AnimatedNumber value={listedCount} />}
+              subtitle="Active public listings"
+              icon={Building2}
               iconColor="purple"
             />
             <MetricCard
-              title="Commission Accrued (MoMo)"
-              value="₵28,500"
-              subtitle="Auto-payout upon lease close"
-              trend={{ value: "+18.5%", isPositive: true }}
+              title="Pipeline value"
+              value={currencyFormatter.format(revenuePipeline)}
+              subtitle="Open deal listing prices"
               icon={Coins}
               iconColor="emerald"
             />
@@ -558,32 +568,31 @@ export function WorkspaceDashboard({
         {activeRole === "analyst" && (
           <>
             <MetricCard
-              title="Sub-Market Demand Index"
-              value="88.4 / 100"
-              trend={{ value: "+4.2 pts", isPositive: true }}
-              icon={TrendingUp}
+              title="Listed units"
+              value={<AnimatedNumber value={listedCount} />}
+              subtitle={`${listings.length} total listings`}
+              icon={Building2}
               iconColor="primary"
               glow
             />
             <MetricCard
-              title="Weighted Cap Rate"
-              value="11.4%"
-              subtitle="Spread vs Treasury: +2.1%"
+              title="Active leads"
+              value={<AnimatedNumber value={activeLeadsCount} />}
+              subtitle="Open deal cases"
               icon={LineChart}
               iconColor="purple"
             />
             <MetricCard
-              title="Legal Compliance Score"
-              value="Grade A (96%)"
-              subtitle="Ghana Rent Act 220"
-              trend={{ value: "Audit Passed", isPositive: true }}
+              title="Successful payments"
+              value={<AnimatedNumber value={successfulPayments.length} />}
+              subtitle="Collected transactions"
               icon={ShieldCheck}
               iconColor="emerald"
             />
             <MetricCard
-              title="Revenue Pipeline"
-              value={currencyFormatter.format(revenuePipeline || 850000)}
-              trend={{ value: "Forecast model active", isPositive: true }}
+              title="Revenue pipeline"
+              value={currencyFormatter.format(revenuePipeline)}
+              subtitle="Open deal listing prices"
               icon={CreditCard}
               iconColor="amber"
             />
@@ -629,10 +638,10 @@ export function WorkspaceDashboard({
                   >
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-ink truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                        {listing.property?.address || "Airport Residential Suite"}
+                        {listing.property?.address || "Untitled property"}
                       </p>
                       <p className="text-[11px] text-ink-secondary truncate">
-                        {listing.property?.city || "Accra"}, {listing.property?.region || "Greater Accra"}
+                        {[listing.property?.city, listing.property?.region].filter(Boolean).join(", ") || "Location TBD"}
                       </p>
                       <p className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
                         {currencyFormatter.format(listing.price)} / mo
@@ -683,7 +692,7 @@ export function WorkspaceDashboard({
                   >
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-ink truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        {viewing.property?.address || "Cantonments Luxury Apartment"}
+                        {viewing.property?.address || "Untitled property"}
                       </p>
                       <p className="text-[11px] text-ink-secondary flex items-center gap-1.5 mt-0.5">
                         <Clock className="w-3 h-3 text-blue-500 shrink-0" />
@@ -807,6 +816,26 @@ export function WorkspaceDashboard({
           <p className="text-xs text-ink-muted mt-1">Enable them in Customize Workspace settings.</p>
         </div>
       )}
+
+      {showRecentActivity ? (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-black text-ink uppercase tracking-wide">Recent activity</h2>
+            <p className="text-[11px] text-ink-muted mt-0.5">
+              {orgActivityService.isExecutiveRole(activeRole)
+                ? "Organization-wide tasks, deals, inbox, and field updates"
+                : "Your assigned tasks, deals, and related updates"}
+            </p>
+          </div>
+          {activityItems.length === 0 ? (
+            <Card className="p-8 text-center text-sm text-ink-muted border-dashed">
+              No recent activity yet.
+            </Card>
+          ) : (
+            <ActivityFeed items={activityItems} />
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

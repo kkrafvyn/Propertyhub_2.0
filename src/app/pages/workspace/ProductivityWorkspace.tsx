@@ -29,11 +29,11 @@ export function ProductivityWorkspace({
     templates[0]
   );
   const [variables, setVariables] = useState<Record<string, string>>({
-    tenant_name: "Ama Serwaa Mensah",
-    unit_code: "ELH-A02",
-    estate_name: "East Legon Hills Prime Sanctuary",
-    arrears_amount_ghs: "8,500",
-    remedy_deadline: "14 September 2026",
+    tenant_name: "",
+    unit_code: "",
+    estate_name: "",
+    arrears_amount_ghs: "",
+    remedy_deadline: "",
     current_date: new Date().toLocaleDateString("en-GB"),
   });
 

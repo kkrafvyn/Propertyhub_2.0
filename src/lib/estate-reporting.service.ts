@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { requestMomoPayment } from "./momo-payment.service";
+import { ownerOversightService } from "./owner-oversight.service";
 
 const db = supabase as any;
 
@@ -176,7 +177,7 @@ export const estateReportingService = {
   async processInAppStatementDelivery(deliveryId: string) {
     const { data: delivery, error } = await db
       .from("estate_owner_statement_deliveries")
-      .select("*, statement:estate_owner_statement_runs(*, estate:managed_estates(name))")
+      .select("*, statement:estate_owner_statement_runs(*, estate:managed_estates(name, organization_id, organization:organizations(slug)))")
       .eq("id", deliveryId)
       .single();
     if (error) throw error;
@@ -188,6 +189,12 @@ export const estateReportingService = {
     if (!statement?.owner_user_id) throw new Error("Owner not found for statement");
 
     const estateName = statement.estate?.name || "Property";
+    const orgSlug =
+      statement.estate?.organization?.slug ||
+      (Array.isArray(statement.estate?.organization)
+        ? statement.estate.organization[0]?.slug
+        : null) ||
+      "app";
     const amount = ((Number(statement.net_distributable_minor) || 0) / 100).toFixed(2);
     const { communicationService } = await import("./communication.service");
 
@@ -196,7 +203,7 @@ export const estateReportingService = {
       notificationType: "owner_statement",
       subject: `Owner statement ready — ${estateName}`,
       content: `Your statement for ${statement.period_start} to ${statement.period_end} is ready. Net distributable: ${statement.currency || "GHS"} ${amount}.`,
-      actionUrl: "/app/documents",
+      actionUrl: `/workspace/${orgSlug}/owner-oversight?tab=financials`,
       metadata: { statementRunId: statement.id, deliveryId },
       respectPreferences: false,
     });
@@ -312,20 +319,40 @@ export const estateReportingService = {
         status,
         requested_amount_minor,
         statement:estate_owner_statement_runs(
-          estate:managed_estates(organization_id)
+          owner_user_id,
+          estate:managed_estates(organization_id, organization:organizations(slug))
         )
       `)
       .eq("id", input.approvalId)
       .eq("status", "approved")
       .single();
     if (approvalError) throw approvalError;
-    const organizationId = (
-      approval.statement as { estate?: { organization_id?: string } | null } | null
-    )?.estate?.organization_id;
+    const statement = approval.statement as {
+      owner_user_id?: string;
+      estate?: { organization_id?: string; organization?: { slug?: string } | null } | null;
+    } | null;
+    const organizationId = statement?.estate?.organization_id;
     if (!organizationId) throw new Error("Distribution approval is missing organization context");
     const { data: reserved, error: reserveError } = await db.from("estate_distribution_approvals").update({ status: "processing" }).eq("id", approval.id).eq("status", "approved").select("id").maybeSingle();
     if (reserveError) throw reserveError;
     if (!reserved) throw new Error("Distribution is already being processed");
+
+    const notifyOwnerPaymentFailure = async (reason: string) => {
+      if (!statement?.owner_user_id) return;
+      try {
+        await ownerOversightService.notifyOwnerCritical({
+          ownerUserId: statement.owner_user_id,
+          organizationId,
+          organizationSlug: statement.estate?.organization?.slug || null,
+          kind: "payment_failure",
+          subject: "Owner disbursement failed",
+          content: reason,
+          tab: "financials",
+        });
+      } catch (error) {
+        console.error("Owner payment failure notify failed:", error);
+      }
+    };
 
     let providerResult;
     try {
@@ -339,6 +366,7 @@ export const estateReportingService = {
       });
     } catch (error) {
       await db.from("estate_distribution_approvals").update({ status: "failed", failure_reason: error instanceof Error ? error.message : "Provider request failed" }).eq("id", input.approvalId).eq("status", "processing");
+      await notifyOwnerPaymentFailure(error instanceof Error ? error.message : "Provider request failed");
       throw error;
     }
     const nextStatus = mapPayoutProviderStatus(providerResult.status);
@@ -351,6 +379,9 @@ export const estateReportingService = {
       failure_reason: nextStatus === "failed" ? providerResult.message || "Provider rejected the disbursement" : null,
     }).eq("id", input.approvalId).eq("status", "processing").select("*").single();
     if (error) throw error;
+    if (nextStatus === "failed") {
+      await notifyOwnerPaymentFailure(providerResult.message || "Provider rejected the disbursement");
+    }
     return data;
   },
 

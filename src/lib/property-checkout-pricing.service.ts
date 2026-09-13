@@ -110,15 +110,25 @@ export async function previewPropertyCheckoutPricing(input: {
     purpose: input.purpose,
     promoCode: input.promoCode,
     jurisdictionId: context.jurisdictionId,
+    organizationId: input.organizationId,
+    orgCollectPlatformFees: orgSettings?.collect_platform_fees,
+    orgCollectCheckoutTaxes: orgSettings?.collect_checkout_taxes,
   });
 
-  const { snapshot, taxMinor, taxLines } = computePropertyTaxes(
-    input.property,
-    input.purpose,
-    basePreview.baseMinor,
-    basePreview.platformFeeMinor,
-    orgSettings ?? undefined
-  );
+  const taxFeeBase = basePreview.buyerPlatformFeeMinor + basePreview.providerPlatformFeeMinor;
+  const { snapshot, taxMinor, taxLines } = basePreview.taxesEnabled
+    ? computePropertyTaxes(
+        input.property,
+        input.purpose,
+        basePreview.baseMinor,
+        taxFeeBase,
+        orgSettings ?? undefined,
+      )
+    : {
+        snapshot: buildPropertyComplianceSnapshot(input.property ?? {}, orgSettings ?? undefined),
+        taxMinor: 0,
+        taxLines: [] as Array<{ id: string; label: string; amountMinor: number }>,
+      };
 
   return {
     ...basePreview,

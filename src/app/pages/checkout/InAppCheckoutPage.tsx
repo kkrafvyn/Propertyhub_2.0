@@ -478,9 +478,27 @@ export function InAppCheckoutPage() {
                   </div>
                   {pricing && pricing.platformFeeMinor > 0 ? (
                     <div className="flex items-center justify-between">
-                      <span className="text-ink-secondary">Platform fee</span>
+                      <span className="text-ink-secondary">
+                        {pricing.feeDisplayName || "BaytMiftah platform fee"}
+                      </span>
                       <span className="font-medium text-ink">
                         {formatMoney(pricing.platformFeeMinor / 100, currency)}
+                      </span>
+                    </div>
+                  ) : pricing && pricing.feesEnabled === false ? (
+                    <p className="text-xs text-ink-secondary">Platform fees are turned off for this checkout.</p>
+                  ) : null}
+                  {pricing && pricing.providerPlatformFeeMinor > 0 ? (
+                    <p className="text-xs text-ink-secondary">
+                      Provider platform fee {formatMoney(pricing.providerPlatformFeeMinor / 100, currency)}{" "}
+                      is withheld from the seller/landlord proceeds (not added to your charge).
+                    </p>
+                  ) : null}
+                  {pricing && pricing.processingFeeMinor > 0 ? (
+                    <div className="flex items-center justify-between">
+                      <span className="text-ink-secondary">Payment processing</span>
+                      <span className="font-medium text-ink">
+                        {formatMoney(pricing.processingFeeMinor / 100, currency)}
                       </span>
                     </div>
                   ) : null}
@@ -492,15 +510,21 @@ export function InAppCheckoutPage() {
                       </span>
                     </div>
                   ) : null}
-                  {pricing?.taxLines.map((line) => (
-                    <div key={line.id} className="flex items-center justify-between">
-                      <span className="text-ink-secondary">{line.label} (est.)</span>
-                      <span className="font-medium text-ink">
-                        {formatMoney(line.amountMinor / 100, currency)}
-                      </span>
-                    </div>
-                  ))}
-                  {pricing?.subdivisionLabel ? (
+                  {pricing?.taxesEnabled !== false
+                    ? pricing?.taxLines.map((line) => (
+                        <div key={line.id} className="flex items-center justify-between">
+                          <span className="text-ink-secondary">{line.label} (est.)</span>
+                          <span className="font-medium text-ink">
+                            {formatMoney(line.amountMinor / 100, currency)}
+                          </span>
+                        </div>
+                      ))
+                    : (
+                      <p className="text-xs text-ink-secondary">
+                        Checkout taxes are turned off for this seller/organization.
+                      </p>
+                    )}
+                  {pricing?.taxesEnabled !== false && pricing?.subdivisionLabel ? (
                     <p className="text-xs text-ink-secondary pt-1">
                       Tax rules: {pricing.subdivisionLabel} ({pricing.jurisdictionId})
                     </p>
@@ -511,9 +535,11 @@ export function InAppCheckoutPage() {
                       {formatMoney(serverSubtotalMajor, currency)}
                     </span>
                   </div>
-                  {taxEstimateMajor > 0 ? (
+                  {taxEstimateMajor > 0 && pricing?.taxesEnabled !== false ? (
                     <p className="text-xs text-ink-secondary">
-                      Tax shown as estimate ({formatMoney(taxEstimateMajor, currency)}) — not included in charge.
+                      VAT/levy estimate on BaytMiftah platform fee (
+                      {formatMoney(taxEstimateMajor, currency)}) — shown for transparency, not
+                      included in charge in this pilot.
                     </p>
                   ) : null}
                 </div>

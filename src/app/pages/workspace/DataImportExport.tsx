@@ -25,7 +25,7 @@ export function DataImportExport() {
         setImportStatus(`Successfully parsed ${res.filePath}`);
       }
     } else {
-      setImportStatus("Importing sample dataset (24 units, 18 active tenancies)...");
+      setImportStatus("Desktop import is only available in the BaytMiftah desktop app. Use a CSV template upload when available.");
     }
   };
 

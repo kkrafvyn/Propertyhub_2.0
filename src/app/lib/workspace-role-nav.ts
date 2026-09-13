@@ -25,6 +25,8 @@ export const WORKSPACE_SLUG_PERMISSIONS: Record<string, WorkspacePermission | nu
   "estate-finance": "finance:read",
   "estate-communications": "leads:read",
   "contextual-inbox": "leads:read",
+  "team-chat": "tasks:write",
+  "owner-oversight": "finance:read",
   "stakeholder-portals": "listings:read",
   "enterprise-operations": "listings:read",
   "command-center": "finance:read",

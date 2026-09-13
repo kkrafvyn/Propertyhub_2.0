@@ -226,8 +226,11 @@ Deno.serve(async (req) => {
       promoId: pricing.promo?.promo_id || null,
       baseAmountMinor: pricing.baseMinor,
       platformFeeMinor: pricing.platformFeeMinor,
+      buyerPlatformFeeMinor: pricing.buyerPlatformFeeMinor,
+      providerPlatformFeeMinor: pricing.providerPlatformFeeMinor,
       discountMinor: pricing.discountMinor,
       feeBreakdown: pricing.feeBreakdown,
+      feeDisplayName: pricing.feeDisplayName,
     };
 
     const { data: propertyTransaction, error: propertyTransactionError } = await admin
@@ -302,8 +305,11 @@ Deno.serve(async (req) => {
       pricing: {
         baseMinor: pricing.baseMinor,
         platformFeeMinor: pricing.platformFeeMinor,
+        buyerPlatformFeeMinor: pricing.buyerPlatformFeeMinor,
+        providerPlatformFeeMinor: pricing.providerPlatformFeeMinor,
         discountMinor: pricing.discountMinor,
         totalMinor: pricing.totalMinor,
+        feeDisplayName: pricing.feeDisplayName,
         promoCode: pricing.promo?.code || null,
       },
     }, req);

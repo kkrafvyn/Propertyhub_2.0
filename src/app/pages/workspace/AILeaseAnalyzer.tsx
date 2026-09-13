@@ -57,37 +57,16 @@ function runAnalysis(text: string, property: PropertyLocationInput, title = 'Ten
 export function AILeaseAnalyzer() {
   const [marketId, setMarketId] = useState(MARKET_PRESETS[0].id);
   const market = MARKET_PRESETS.find((preset) => preset.id === marketId) || MARKET_PRESETS[0];
-  const [agreementText, setAgreementText] = useState(() => aiLeaseAnalyzerService.getSampleAgreement());
-  const [analysis, setAnalysis] = useState<JurisdictionLeaseAnalysis | null>(() =>
-    runAnalysis(aiLeaseAnalyzerService.getSampleAgreement(), market.property)
-  );
+  const [agreementText, setAgreementText] = useState('');
+  const [analysis, setAnalysis] = useState<JurisdictionLeaseAnalysis | null>(null);
   const [activeTab, setActiveTab] = useState<'audit' | 'redline' | 'signing'>('audit');
   const [isAuditing, setIsAuditing] = useState(false);
   const [isOcrScanning, setIsOcrScanning] = useState(false);
 
   // E-Signatures state
-  const [signers, setSigners] = useState<GhanaCardSigner[]>([
-    {
-      id: 'sign_1',
-      role: 'landlord',
-      fullName: 'Kofi Owusu',
-      ghanaCardNumber: 'GHA-710492810-3',
-      phone: '+233 24 411 9022',
-      status: 'verified_signed',
-      signedAt: '2026-08-17T14:30:00Z',
-      signatureHash: 'SHA256:8f9a4c11b0e934a78c...',
-    },
-    {
-      id: 'sign_2',
-      role: 'tenant',
-      fullName: 'Ama Ampomah',
-      ghanaCardNumber: 'GHA-882019481-9',
-      phone: '+233 50 199 4410',
-      status: 'pending',
-    },
-  ]);
+  const [signers, setSigners] = useState<GhanaCardSigner[]>([]);
 
-  const [tenantGhanaCard, setTenantGhanaCard] = useState('GHA-882019481-9');
+  const [tenantGhanaCard, setTenantGhanaCard] = useState('');
 
   const handleRunAudit = () => {
     setIsAuditing(true);
@@ -209,7 +188,7 @@ export function AILeaseAnalyzer() {
             className="border-surface-border text-ink"
           >
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-            Reset Sample Draft
+            Load Sample Draft
           </Button>
 
           <Button
