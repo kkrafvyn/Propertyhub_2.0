@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canAssignRole,
+  canRemoveMember,
   canManageDepartments,
   canManageTeamMembers,
   getAssignableRoles,
@@ -8,6 +9,16 @@ import {
 } from "./role-assignment";
 
 describe("role assignment", () => {
+  it("limits removal to the head's department and protects self and owners", () => {
+    expect(canRemoveMember({ assignerRole: "finance_manager" }, "sales_agent", false)).toBe(false);
+    expect(canRemoveMember({ assignerRole: "finance_manager" }, "finance_officer", false)).toBe(true);
+    expect(canRemoveMember({ assignerRole: "owner" }, "owner", false)).toBe(false);
+    expect(canRemoveMember({ assignerRole: "owner" }, "agent", true)).toBe(false);
+  });
+  it("supports explicitly appointed department heads", () => {
+    expect(canAssignRole({ assignerRole: "analyst", headDepartmentKeys: ["finance"] }, "finance_officer")).toBe(true);
+    expect(canAssignRole({ assignerRole: "analyst", headDepartmentKeys: ["finance"] }, "sales_agent")).toBe(false);
+  });
   it("allows owners to assign any non-owner role and owner role", () => {
     expect(canAssignRole({ assignerRole: "owner" }, "property_manager")).toBe(true);
     expect(canAssignRole({ assignerRole: "owner" }, "owner")).toBe(true);

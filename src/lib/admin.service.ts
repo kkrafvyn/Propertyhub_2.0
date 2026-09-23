@@ -14,6 +14,8 @@ export type AdminUserRow = {
   is_platform_manager: boolean;
   platform_console_grants: string[];
   created_at: string | null;
+  account_deletion_requested_at?: string | null;
+  account_deleted_at?: string | null;
 };
 
 export type AdminOrganizationRow = {
@@ -62,6 +64,47 @@ export type AdminOrganizationProfile = {
 };
 
 export const adminService = {
+  async transferOrganizationOwnership(organizationId: string, newOwnerId: string) {
+    const { error } = await supabase.rpc("admin_transfer_organization_ownership", { p_org: organizationId, p_new_owner: newOwnerId });
+    if (error) throw error;
+  },
+  async deleteAccount(userId: string) {
+    const { data, error } = await supabase.functions.invoke("admin-delete-account", {
+      body: { userId, confirmation: userId },
+    });
+    if (error) {
+      const response = (error as { context?: Response }).context;
+      const detail = response && typeof response.json === "function"
+        ? await response.json().catch(() => null) : null;
+      throw new Error(detail?.error || error.message || "Unable to delete account.");
+    }
+    if (!data?.deleted) throw new Error(data?.error || "Account deletion was not confirmed.");
+  },
+  async createUserOrganization(input: { userId: string; name: string; slug: string; businessType: string }) {
+    const { data, error } = await supabase.rpc("admin_create_user_organization", {
+      p_user_id: input.userId, p_name: input.name.trim(),
+      p_slug: input.slug.trim().toLowerCase(), p_business_type: input.businessType,
+    });
+    if (error) throw error;
+    return data as string;
+  },
+
+  async assignOrganizationMember(input: { userId: string; organizationId: string; role: string }) {
+    const { error } = await supabase.rpc("admin_assign_organization_member", {
+      p_user_id: input.userId, p_organization_id: input.organizationId, p_role: input.role,
+    });
+    if (error) throw error;
+  },
+
+  async findOrganizations(search: string) {
+    const term = search.trim().replace(/[%_\\]/g, "");
+    const { data, error } = await supabase.from("organizations")
+      .select("id, name, slug, suspended").ilike("name", `%${term}%`)
+      .order("name").limit(30);
+    if (error) throw error;
+    return data || [];
+  },
+
   async getPlatformAccess(userId: string): Promise<PlatformAccessFlags> {
     const { data, error } = await supabase
       .from("users")
@@ -93,7 +136,7 @@ export const adminService = {
     const { data, error } = await supabase
       .from("users")
       .select(
-        "id, email, full_name, phone, verified, banned, is_platform_admin, is_platform_manager, platform_console_grants, created_at",
+        "id, email, full_name, phone, verified, banned, is_platform_admin, is_platform_manager, platform_console_grants, created_at, account_deletion_requested_at, account_deleted_at",
       )
       .order("created_at", { ascending: false })
       .limit(limit);

@@ -28,6 +28,8 @@ const EDGE_FUNCTIONS = [
   { name: "send-organization-invite" },
   { name: "send-enrollment-notification" },
   { name: "platform-backup" },
+  { name: "admin-delete-account" },
+  { name: "platform-health" },
   { name: "send-whatsapp" },
   { name: "whatsapp-webhook", noVerifyJwt: true },
   { name: "kyc-smile-verify" },

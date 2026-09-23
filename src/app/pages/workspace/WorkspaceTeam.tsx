@@ -56,6 +56,7 @@ import {
   DepartmentHeadScopeBanner,
 } from "../../components/workspace/DepartmentHeadPanel";
 import { getWorkspaceRoleDescription } from "../../lib/workspace-role-nav";
+import { SectionOperationsPanel } from "../../components/workspace/SectionOperationsPanel";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"] & {
   enabled_capabilities?: string[] | null;
@@ -83,15 +84,17 @@ export function WorkspaceTeam({
   currentRole,
   currentPermissions,
 }: WorkspaceTeamProps) {
+  const [departments, setDepartments] = useState<any[]>([]);
   const assignerContext: RoleAssignerContext = {
     assignerRole: currentRole,
     assignerPermissions: currentPermissions,
+    headDepartmentKeys: departments.filter((entry) => entry.head_user_id === currentUserId).map((entry) => entry.department_key),
   };
   const canManageTeam = canManageTeamMembers(assignerContext);
   const canManageDepartmentHeads = canManageDepartments(assignerContext);
   const assignerDepartment = getAssignerDepartment(assignerContext);
   const isDeptHead = isDepartmentHeadAssigner(assignerContext);
-  const assignableRoles = useMemo(() => getAssignableRoles(assignerContext), [currentRole, currentPermissions]);
+  const assignableRoles = useMemo(() => getAssignableRoles(assignerContext), [currentRole, currentPermissions, departments, currentUserId]);
   const assignableRoleSet = useMemo(() => new Set(assignableRoles), [assignableRoles]);
   const groupedAssignableRoles = useMemo(() => {
     const grouped = groupRolesByDepartment();
@@ -107,7 +110,6 @@ export function WorkspaceTeam({
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
-  const [departments, setDepartments] = useState<any[]>([]);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<MemberRole>("property_manager");
   const [submitting, setSubmitting] = useState(false);
@@ -441,6 +443,8 @@ export function WorkspaceTeam({
         <DepartmentHeadScopeBanner departmentKey={assignerDepartment} />
       ) : null}
 
+      <SectionOperationsPanel organizationId={organization.id} />
+
       {canManageDepartmentHeads ? (
         <DepartmentHeadPanel
           organizationId={organization.id}
@@ -696,7 +700,7 @@ export function WorkspaceTeam({
                         <span className="font-medium text-ink-secondary">Interface access:</span> {access.permissions.slice(0, 4).map((p) => WORKSPACE_PERMISSION_LABELS[p]).join(", ")}
                         {access.permissions.length > 4 ? ` +${access.permissions.length - 4} more` : ""}
                       </p>
-                      {canManageTeam && member.role !== "owner" ? (
+                      {canManageDepartmentHeads && member.role !== "owner" ? (
                         <div className="mt-3 flex flex-wrap items-center gap-2">
                           <Button
                             size="sm"
@@ -713,7 +717,7 @@ export function WorkspaceTeam({
                           </Button>
                         </div>
                       ) : null}
-                      {expandedMemberId === member.user_id && canManageTeam ? (
+                      {expandedMemberId === member.user_id && canManageDepartmentHeads ? (
                         <div className="mt-4 space-y-4 border-t border-surface-border/80 pt-4 bg-surface-subtle/30 -mx-4 -mb-4 p-4 rounded-b-2xl">
                           <PermissionMatrixEditor
                             role={member.role}

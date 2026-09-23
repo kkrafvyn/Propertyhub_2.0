@@ -34,15 +34,11 @@ const ROLE_DEFAULTS: Record<string, WorkspacePermission[]> = {
   enterprise_operator: ALL_WORKSPACE_PERMISSIONS,
 
   // Property Management
-  head_property_management: ALL_WORKSPACE_PERMISSIONS,
+  head_property_management: ["listings:read", "listings:write", "leads:read", "documents:write", "contacts:write", "tasks:write"],
   manager: [
     "listings:read",
     "listings:write",
     "leads:read",
-    "leads:write",
-    "finance:read",
-    "finance:write",
-    "team:manage",
     "documents:write",
     "contacts:write",
     "tasks:write",
@@ -174,7 +170,7 @@ export function getMemberPermissions(
   role: MemberRole | null | undefined,
   customPermissions?: string[] | null
 ): WorkspacePermission[] {
-  const defaults = role ? ROLE_DEFAULTS[role] || ROLE_DEFAULTS["manager"] || [] : [];
+  const defaults = role ? ROLE_DEFAULTS[role] || [] : [];
   if (!customPermissions || customPermissions.length === 0) return defaults;
   return Array.from(new Set([...defaults, ...(customPermissions as WorkspacePermission[])]));
 }

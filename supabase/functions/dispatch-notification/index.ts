@@ -287,6 +287,8 @@ Deno.serve(async (req) => {
   if (userError || !user) {
     return jsonResponse(401, { error: "You must be signed in to dispatch notifications" });
   }
+  const { error: accessError } = await userClient.rpc("enforce_account_access");
+  if (accessError) return jsonResponse(403, { error: "Account access has been revoked or could not be verified" });
 
   const requestBody = await req.json().catch(() => null);
   const notificationId = getRequestBodyValue(requestBody, "notificationId");

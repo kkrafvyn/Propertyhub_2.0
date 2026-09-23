@@ -98,6 +98,8 @@ Deno.serve(async (req) => {
   if (userError || !user) {
     return jsonResponse(401, { error: "You must be signed in to send invites" }, req);
   }
+  const { error: accessError } = await userClient.rpc("enforce_account_access");
+  if (accessError) return jsonResponse(403, { error: "Account access has been revoked or could not be verified" }, req);
 
   const requestBody = await req.json().catch(() => null);
   const organizationId =
@@ -132,7 +134,8 @@ Deno.serve(async (req) => {
     return jsonResponse(500, { error: "Unable to verify organization membership" }, req);
   }
 
-  if (!membership || !["owner", "manager", "organization_admin", "managing_director"].includes(membership.role)) {
+  const { data: canInvite, error: permissionError } = await userClient.rpc("can_invite_organization_role", { p_org: organizationId, p_role: role });
+  if (permissionError || !canInvite) {
     return jsonResponse(403, { error: "You don't have permission to send invites" }, req);
   }
 

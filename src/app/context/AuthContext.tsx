@@ -56,6 +56,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 
   useEffect(() => {
+    if (!user?.id) return;
+    let active = true;
+    const checkAccess = async () => {
+      if (document.visibilityState === 'hidden') return;
+      try {
+      const { error: accessError } = await supabase.rpc('enforce_account_access');
+      if (active && accessError?.code === '42501' && /Account access has been revoked/i.test(accessError.message)) {
+        setUser(null); setProfile(null); setCapabilities([]);
+        await supabase.auth.signOut({ scope: 'local' });
+      }
+      } catch { /* Retry on focus or the next interval after a network failure. */ }
+    };
+    void checkAccess();
+    const timer = window.setInterval(() => void checkAccess(), 30_000);
+    window.addEventListener('focus', checkAccess);
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', checkAccess); };
+  }, [user?.id]);
+
+  useEffect(() => {
     const ensureProfile = async (currentUser: User | null) => {
       if (!currentUser?.email && !currentUser?.phone) {
         setProfile(null)

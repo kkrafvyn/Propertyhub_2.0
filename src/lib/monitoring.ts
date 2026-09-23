@@ -51,6 +51,14 @@ export const monitoring = {
   captureError(error: unknown, context?: string) {
     const message = error instanceof Error ? error.message : String(error);
     const stack = error instanceof Error ? error.stack : undefined;
+    // Built-in app health: record safe categories for signed-in sessions. Raw
+    // error messages/stacks may contain user data and stay out of this feed.
+    const category = context === "window.error" || context === "window.unhandledrejection"
+      ? context : context?.includes("\n") || context === "react-boundary" ? "react-boundary" : "application";
+    void import("./supabase").then(async ({ supabase }) => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) await supabase.rpc("record_client_error", { p_context: category });
+    }).catch(() => undefined);
 
     this.trackEvent("app_error", {
       context: context || "unknown",

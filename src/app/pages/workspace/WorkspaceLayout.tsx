@@ -523,7 +523,7 @@ export function WorkspaceLayout() {
   const organization =
     currentMembership?.organization || adminViewOrganization || null;
   const currentRole =
-    currentMembership?.role || (isPlatformAdminViewer ? "owner" : null);
+    isPlatformAdminViewer ? "platform_admin" : currentMembership?.role || null;
   const currentPermissions = currentMembership?.permissions ?? null;
   const enabledCapabilities = (
     (organization as { enabled_capabilities?: string[] | null } | null)?.enabled_capabilities ||

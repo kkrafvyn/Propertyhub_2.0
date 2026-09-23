@@ -62,7 +62,7 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
   }, []);
 
   const handleApprove = async (request: OrganizationEnrollmentRequest) => {
-    const notes = window.prompt("Optional approval note for the applicant:") ?? undefined;
+    const notes = window.prompt("Optional approval note for the applicant:");
     if (notes === null) return;
 
     try {
@@ -107,7 +107,7 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
   };
 
   const handleReject = async (request: OrganizationEnrollmentRequest) => {
-    const notes = window.prompt("Reason for rejection (shared internally):") ?? undefined;
+    const notes = window.prompt("Reason for rejection (shared internally):");
     if (notes === null) return;
 
     try {

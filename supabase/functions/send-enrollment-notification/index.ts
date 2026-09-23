@@ -184,6 +184,8 @@ Deno.serve(async (req) => {
   if (userError || !user) {
     return jsonResponse(401, { error: "You must be signed in" }, req);
   }
+  const { error: accessError } = await userClient.rpc("enforce_account_access");
+  if (accessError) return jsonResponse(403, { error: "Account access has been revoked or could not be verified" }, req);
 
   const body = await req.json().catch(() => null);
   const requestId = typeof body?.requestId === "string" ? body.requestId : "";

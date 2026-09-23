@@ -5,7 +5,7 @@ import {
   type DepartmentKey,
 } from "./company-model";
 
-const EXECUTIVE_ROLES = new Set<MemberRole>(["owner", "managing_director", "organization_admin"]);
+const EXECUTIVE_ROLES = new Set<MemberRole>(["owner", "managing_director", "organization_admin", "platform_admin"]);
 const TEAM_MANAGER_ROLES = new Set<MemberRole>([
   "owner",
   "managing_director",
@@ -22,12 +22,14 @@ const TEAM_MANAGER_ROLES = new Set<MemberRole>([
 export type RoleAssignerContext = {
   assignerRole: MemberRole | null | undefined;
   assignerPermissions?: string[] | null;
+  headDepartmentKeys?: DepartmentKey[];
 };
 
 export function canManageTeamMembers(context: RoleAssignerContext): boolean {
   const role = context.assignerRole;
   if (!role) return false;
   if (EXECUTIVE_ROLES.has(role)) return true;
+  if (context.headDepartmentKeys?.length) return true;
   if (TEAM_MANAGER_ROLES.has(role)) return true;
   return (context.assignerPermissions || []).includes("team:manage");
 }
@@ -42,7 +44,7 @@ export function canAssignRole(
   if (!assignerRole) return false;
 
   if (targetRole === "owner") {
-    return assignerRole === "owner";
+    return assignerRole === "owner" || assignerRole === "platform_admin";
   }
 
   if (EXECUTIVE_ROLES.has(assignerRole)) {
@@ -55,6 +57,7 @@ export function canAssignRole(
   if (EXECUTIVE_ROLES.has(targetRole)) {
     return false;
   }
+  if (context.headDepartmentKeys?.includes(targetEntry.department)) return true;
 
   const assignerEntry = getRoleCatalogEntry(assignerRole);
   if (!assignerEntry) return false;
@@ -88,9 +91,9 @@ export function canChangeMemberRole(
   nextRole: MemberRole,
 ): boolean {
   if (currentMemberRole === "owner" && nextRole !== "owner") {
-    return context.assignerRole === "owner";
+    return false;
   }
-  return canAssignRole(context, nextRole);
+  return canAssignRole(context, currentMemberRole) && canAssignRole(context, nextRole);
 }
 
 export function canRemoveMember(
@@ -100,7 +103,7 @@ export function canRemoveMember(
 ): boolean {
   if (isSelf) return false;
   if (targetRole === "owner") return false;
-  return canManageTeamMembers(context);
+  return canAssignRole(context, targetRole);
 }
 
 export function getAssignmentPolicySummary(context: RoleAssignerContext): string {
@@ -147,6 +150,7 @@ export function getAssignerDepartment(
 ): DepartmentKey | null {
   const role = context.assignerRole;
   if (!role) return null;
+  if (context.headDepartmentKeys?.length) return context.headDepartmentKeys[0];
   return getRoleCatalogEntry(role)?.department ?? null;
 }
 
@@ -158,6 +162,7 @@ export function isExecutiveAssigner(context: RoleAssignerContext): boolean {
 export function isDepartmentHeadAssigner(context: RoleAssignerContext): boolean {
   const role = context.assignerRole;
   if (!role || EXECUTIVE_ROLES.has(role)) return false;
+  if (context.headDepartmentKeys?.length) return true;
   return DEPARTMENT_HEAD_ROLES.has(role);
 }
 

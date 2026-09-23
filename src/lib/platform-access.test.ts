@@ -10,6 +10,10 @@ import {
 import { PLATFORM_CONSOLE_GRANTS } from "./platform-console-grants";
 
 describe("platform-access", () => {
+  it("reserves global operations telemetry for platform admins", () => {
+    expect(canAccessAdminSection({ is_platform_admin: true }, "operations")).toBe(true);
+    expect(canAccessAdminSection({ platform_console_grants: Object.values(PLATFORM_CONSOLE_GRANTS) }, "operations")).toBe(false);
+  });
   it("resolves admin over explicit grants", () => {
     expect(
       resolvePlatformConsoleRole({

@@ -4,11 +4,11 @@ import { HttpError } from "./http.ts";
 /** Organization roles permitted to initiate finance operations (matches RLS alignment migration). */
 export const FINANCE_MEMBER_ROLES = [
   "owner",
-  "manager",
+  "organization_admin",
+  "managing_director",
   "finance_manager",
   "finance_officer",
   "collections_officer",
-  "head_property_management",
 ] as const;
 
 /** Roles permitted to send estate operational SMS (gate passes, utility alerts). */
@@ -29,6 +29,12 @@ export async function requireOrgMembership(
   if (!organizationId?.trim()) {
     throw new HttpError(400, "organizationId is required");
   }
+  const { data: actor, error: actorError } = await admin.from("users")
+    .select("is_platform_admin, banned, account_deletion_requested_at").eq("id",userId).maybeSingle();
+  if (actorError || !actor || actor.banned || actor.account_deletion_requested_at) {
+    throw new HttpError(403,"Account access has been revoked or could not be verified");
+  }
+  if (actor.is_platform_admin) return { role: "platform_admin" };
 
   const { data: membership, error } = await admin
     .from("organization_members")
@@ -45,7 +51,7 @@ export async function requireOrgMembership(
     throw new HttpError(403, "You are not a member of this organization");
   }
 
-  if (allowedRoles && !allowedRoles.includes(String(membership.role))) {
+  if (allowedRoles && !["owner", "organization_admin", "managing_director"].includes(String(membership.role)) && !allowedRoles.includes(String(membership.role))) {
     throw new HttpError(403, "Insufficient organization permissions");
   }
 

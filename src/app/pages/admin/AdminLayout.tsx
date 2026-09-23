@@ -34,6 +34,8 @@ import {
 } from "../../../lib/platform-access";
 import { formatPlatformGrantSummary, PLATFORM_CONSOLE_GRANT_LABELS } from "../../../lib/platform-console-grants";
 import { PlatformRoleAssignmentDialog } from "../../components/admin/PlatformRoleAssignmentDialog";
+import { AdminOrganizationAccessDialog } from "../../components/admin/AdminOrganizationAccessDialog";
+import { AdminDeleteAccountDialog } from "../../components/admin/AdminDeleteAccountDialog";
 import { isElectron } from "../../../lib/surface-detection";
 import { shouldUseAdminMobileShell } from "../../lib/admin-mobile-nav";
 import { AdminMobileShell } from "../../shells/AdminMobileShell";
@@ -43,6 +45,7 @@ import { AdminBackupPanel } from "./AdminBackupPanel";
 import { AdminOrganizationDetail } from "./AdminOrganizationDetail";
 import { AdminEnrollmentRequests } from "./AdminEnrollmentRequests";
 import FraudDashboard from "./FraudDashboard";
+import { AdminOperations } from "./AdminOperations";
 
 function confirmAdminAction(message: string) {
   return window.confirm(message);
@@ -60,6 +63,7 @@ function renderAccessDenied(sectionLabel: string) {
 }
 
 type AdminSection =
+  | "operations"
   | "overview"
   | "users"
   | "organizations"
@@ -78,6 +82,7 @@ const navItems: Array<{
   icon: typeof BarChart3;
 }> = [
   { key: "overview", label: "Overview", href: "/admin", icon: BarChart3 },
+  { key: "operations", label: "App & API health", href: "/admin/operations", icon: BarChart3 },
   { key: "users", label: "Users", href: "/admin/users", icon: Users },
   { key: "organizations", label: "Organizations", href: "/admin/organizations", icon: Building2 },
   { key: "listings", label: "Listings", href: "/admin/listings", icon: FileText },
@@ -166,6 +171,8 @@ export function AdminLayout() {
   const [supportQuery, setSupportQuery] = useState("");
   const [roleDialogUser, setRoleDialogUser] = useState<any | null>(null);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [organizationAccessUser, setOrganizationAccessUser] = useState(null);
+  const [deleteAccountUser, setDeleteAccountUser] = useState(null);
 
   const queueCount = triageAlerts.length + reviewCases.length;
 
@@ -218,7 +225,8 @@ export function AdminLayout() {
       await loadAdminState();
     } catch (error) {
       console.error("Admin action failed:", error);
-      toast.error("That admin action could not be completed.");
+      toast.error(error && typeof error === "object" && "message" in error
+        ? String(error.message) : "That admin action could not be completed.");
     } finally {
       setWorkingId(null);
     }
@@ -589,6 +597,8 @@ export function AdminLayout() {
                 <div className="flex flex-wrap gap-2">
                   {entry.verified ? <Badge>Verified</Badge> : <Badge variant="outline">Unverified</Badge>}
                   {entry.banned ? <Badge variant="destructive">Banned</Badge> : null}
+                  {entry.account_deleted_at ? <Badge variant="destructive">Sign-in deleted</Badge>
+                    : entry.account_deletion_requested_at ? <Badge variant="destructive">Deletion pending</Badge> : null}
                   {entry.is_platform_admin ? <Badge variant="secondary">Platform Admin</Badge> : null}
                   {!entry.is_platform_admin
                     ? getPlatformGrants(entry).map((grant) => (
@@ -597,7 +607,7 @@ export function AdminLayout() {
                         </Badge>
                       ))
                     : null}
-                  {hasConsoleGrant(profile, "users") ? (
+                  {hasConsoleGrant(profile, "users") && !entry.account_deletion_requested_at ? (
                     <>
                   <Button
                     size="sm"
@@ -616,20 +626,20 @@ export function AdminLayout() {
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={workingId === `user:${entry.id}:ban`}
+                    disabled={!canManageRoles || entry.id === user?.id || entry.is_platform_admin || workingId === `user:${entry.id}:ban`}
                     onClick={() => {
-                      if (!confirmAdminAction(entry.banned ? "Unban this user?" : "Ban this user? They will lose access immediately.")) return;
+                      if (!confirmAdminAction(entry.banned ? "Restore account access? Previously revoked keys and share links stay revoked." : "Block this account? Sign-in, sessions, API keys created by this user, and their external-access links will be revoked.")) return;
                       void runAction(`user:${entry.id}:ban`, async () => {
                         await adminService.updateUser(entry.id, { banned: !entry.banned });
                         toast.success(entry.banned ? "User unbanned." : "User banned.");
                       });
                     }}
                   >
-                    {entry.banned ? "Unban" : "Ban"}
+                    {entry.banned ? "Unblock account" : "Block account"}
                   </Button>
                     </>
                   ) : null}
-                  {canManageRoles && entry.id !== user?.id ? (
+                  {canManageRoles && entry.id !== user?.id && !entry.account_deletion_requested_at ? (
                     <Button
                       size="sm"
                       variant="outline"
@@ -638,7 +648,19 @@ export function AdminLayout() {
                         setRoleDialogOpen(true);
                       }}
                     >
-                      Assign roles
+                      Platform roles
+                    </Button>
+                  ) : null}
+                  {canManageRoles ? (
+                    <Button size="sm" variant="outline" disabled={entry.banned || Boolean(workingId)}
+                      onClick={() => setOrganizationAccessUser(entry)}>
+                      Organization access
+                    </Button>
+                  ) : null}
+                  {canManageRoles && entry.id !== user?.id && !entry.is_platform_admin && !entry.account_deleted_at ? (
+                    <Button size="sm" variant="destructive" disabled={Boolean(workingId)}
+                      onClick={() => setDeleteAccountUser(entry)}>
+                      {entry.account_deletion_requested_at ? "Retry deletion" : "Delete account"}
                     </Button>
                   ) : null}
                 </div>
@@ -1054,6 +1076,7 @@ export function AdminLayout() {
     if (currentSection === "overview") {
       return (
         <div className="space-y-6">
+          {profile?.is_platform_admin && <Link to="/admin/operations" className="block rounded-xl border p-4 font-semibold hover:bg-muted">App &amp; API health and platform activity →</Link>}
           {canAccessAdminSection(profile, "organizations") ? (
             <AdminEnrollmentRequests onApproved={() => void loadAdminState()} />
           ) : null}
@@ -1065,6 +1088,7 @@ export function AdminLayout() {
     if (currentSection === "users") {
       return renderUsersSection();
     }
+    if (currentSection === "operations") return <AdminOperations />;
 
     if (currentSection === "organizations") {
       return renderOrganizationsSection();
@@ -1131,6 +1155,11 @@ export function AdminLayout() {
             : "Monitor operational health, trust signals, and moderation volume across BaytMiftah.";
 
   const roleAssignmentDialog = (
+    <>
+    <AdminDeleteAccountDialog user={deleteAccountUser} onClose={() => setDeleteAccountUser(null)} onChanged={loadAdminState} />
+    <AdminOrganizationAccessDialog user={organizationAccessUser}
+      onClose={() => setOrganizationAccessUser(null)}
+      onSaved={async () => { toast.success("Organization access updated."); await loadAdminState(); }} />
     <PlatformRoleAssignmentDialog
       open={roleDialogOpen}
       onOpenChange={setRoleDialogOpen}
@@ -1152,6 +1181,7 @@ export function AdminLayout() {
         });
       }}
     />
+    </>
   );
 
   if (isElectron()) {

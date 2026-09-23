@@ -77,5 +77,13 @@ export async function requireAuthenticatedUser(authHeader: string | null) {
     throw new HttpError(401, "You must be signed in to perform this action");
   }
 
+  // Query with the caller token: the database pre-request guard rejects revoked
+  // JWTs, and this explicit check also works while older deployments roll forward.
+  const { data: profile, error: accessError } = await userClient.from("users")
+    .select("banned, account_deletion_requested_at").eq("id", user.id).maybeSingle();
+  if (accessError || !profile || profile.banned || profile.account_deletion_requested_at) {
+    throw new HttpError(403, "Account access has been revoked or could not be verified");
+  }
+
   return { user, userClient };
 }

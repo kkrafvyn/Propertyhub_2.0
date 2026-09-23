@@ -65,10 +65,9 @@ export default function TeamCollaborationHub({
   currentUserId,
   currentRole,
 }: TeamCollaborationHubProps) {
-  const canManageTeam =
-    currentRole === "owner" ||
-    currentRole === "manager" ||
-    canWorkspace((currentRole || "agent") as ExtendedMemberRole, "team:manage");
+  // Organization-wide claims, agreements and workflow settings belong to
+  // organization administrators. Department management lives in WorkspaceTeam.
+  const canManageTeam = ["owner", "organization_admin", "managing_director", "platform_admin"].includes(currentRole || "");
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [savingSettings, setSavingSettings] = useState(false);
