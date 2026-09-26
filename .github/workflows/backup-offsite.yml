@@ -15,11 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -27,23 +27,17 @@ jobs:
 
       - name: Run offsite backup pipeline
         run: |
-          if [ -z "$SUPABASE_DB_URL" ] && [ -z "$SUPABASE_DB_PASSWORD" ]; then
-            echo "Skipping offsite backup — set SUPABASE_DB_URL (or SUPABASE_DB_PASSWORD) as a GitHub secret."
-            exit 0
-          fi
-          if [ -z "$BACKUP_S3_BUCKET" ] || [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
-            echo "Skipping offsite backup — BACKUP_S3_BUCKET / AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY secrets are not configured."
-            echo "Add them to root .env, run npm run ops:sync-github-secrets, then re-run this workflow."
-            exit 0
-          fi
+          node scripts/backup/check-evidence.mjs --preflight
 
-          TIER="${{ github.event.inputs.tier }}"
+          TIER="$REQUESTED_TIER"
           if [ "$TIER" = "auto" ] || [ -z "$TIER" ]; then
             node scripts/backup/run-offsite-backup.mjs -- --auto-tier --verify-db
           else
             node scripts/backup/run-offsite-backup.mjs -- --tier "$TIER" --verify-db
           fi
         env:
+          REQUESTED_TIER: ${{ inputs.tier }}
+          BACKUP_ENABLED: ${{ vars.BACKUP_ENABLED }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
@@ -59,8 +53,21 @@ jobs:
 
       - name: Upload restore drill evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: restore-drill-evidence
-          path: scripts/backup/RESTORE_DRILL_EVIDENCE.json
-          if-no-files-found: ignore
+          path: |
+            backups/latest-run.json
+            scripts/backup/RESTORE_DRILL_EVIDENCE.json
+          if-no-files-found: error
+
+      - name: Require fresh full offsite backup evidence
+        if: success()
+        run: node scripts/backup/check-evidence.mjs --integrity-only
+
+      - name: Record backup result for monitoring
+        if: always()
+        run: node scripts/backup/record-result.mjs
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

@@ -6,6 +6,8 @@
  * and manages Ghana Card cryptographic e-signatures.
  */
 
+import { extractLeaseDocument, type ExtractionProgress } from './lease-document-extraction';
+
 export interface LeaseClauseRule {
   id: string;
   category: 'advance_rent' | 'eviction_notice' | 'security_deposit' | 'maintenance_repairs' | 'rent_escalation' | 'quiet_enjoyment';
@@ -59,6 +61,7 @@ export const aiLeaseAnalyzerService = {
   },
 
   analyzeLease(text: string, title = 'Tenancy Agreement Draft'): LeaseAnalysisResult {
+    if (!text.trim()) throw new Error('Enter or extract the agreement text before analyzing.');
     const rules: LeaseClauseRule[] = [];
     let violations = 0;
     let scoreDeduction = 0;
@@ -85,8 +88,8 @@ export const aiLeaseAnalyzerService = {
         ghanaLawCitation: 'Ghana Rent Act 1963 (Act 220) Section 25(5) & Rent Revision Bill',
         severity: 'critical_violation',
         description: `Demanding ${advanceMonths} months advance rent is explicitly prohibited under Ghanaian law. Maximum legal advance rent is 6 months.`,
-        detectedText: advanceMatch ? advanceMatch[0] : '2 years advance rent',
-        suggestedRedline: 'The Tenant shall pay rent for a period not exceeding 6 months advance (GHS 30,000), payable bi-annually or monthly thereafter.',
+        detectedText: advanceYearsMatch?.[0] || advanceMonthsMatch?.[0] || advanceMatch?.[0],
+        suggestedRedline: 'Review the advance-rent period against the applicable limit. Preserve the agreed rent amount and payment terms unless the parties approve changes.',
         isCompliant: false,
       });
     } else {
@@ -103,7 +106,8 @@ export const aiLeaseAnalyzerService = {
     }
 
     // 2. Unlawful Eviction & Lockout Rule
-    if (/lock|48\s*hours|without\s*court|instant\s*eviction/i.test(text)) {
+    const evictionMatch = text.match(/[^\n.!?]*(?:lock|48\s*hours|without\s*court|instant\s*eviction)[^\n.!?]*/i);
+    if (evictionMatch) {
       violations++;
       scoreDeduction += 30;
       rules.push({
@@ -113,7 +117,7 @@ export const aiLeaseAnalyzerService = {
         ghanaLawCitation: 'Rent Control Court Precedent & Act 220 Section 17',
         severity: 'critical_violation',
         description: 'Landlords cannot forcefully lock premises or evict without a formal hearing and order from the Rent Magistrate Court.',
-        detectedText: 'evict the Tenant within 48 hours without court proceedings',
+        detectedText: evictionMatch[0].trim(),
         suggestedRedline: 'In the event of default, the Landlord shall give 30 days written notice to remedy. If uncured, recovery of possession shall proceed in accordance with the statutory process before the Rent Magistrate.',
         isCompliant: false,
       });
@@ -131,7 +135,8 @@ export const aiLeaseAnalyzerService = {
     }
 
     // 3. Security Deposit Return SLA
-    if (/sole\s*discretion|retained|non-refundable\s*deposit/i.test(text)) {
+    const depositMatch = text.match(/[^\n.!?]*(?:sole\s*discretion|retained|non-refundable\s*deposit)[^\n.!?]*/i);
+    if (depositMatch) {
       violations++;
       scoreDeduction += 20;
       rules.push({
@@ -141,14 +146,15 @@ export const aiLeaseAnalyzerService = {
         ghanaLawCitation: 'Standard REOS Fair Tenancy Guidelines & Common Law',
         severity: 'high_risk',
         description: 'Security deposits are held in fiduciary trust and must be refunded within 30 days after inspection minus documented damages.',
-        detectedText: 'retained by the Landlord at sole discretion upon expiration',
+        detectedText: depositMatch[0].trim(),
         suggestedRedline: 'The Security Deposit shall be held in escrow and fully refunded within 21 days following move-out inspection, less any mutually verified deductions for tenant-caused damage beyond reasonable wear and tear.',
         isCompliant: false,
       });
     }
 
     // 4. Structural Repairs Responsibility
-    if (/tenant.*(?:responsible|liable).*(?:structural|roof|borehole|wiring)/i.test(text)) {
+    const repairsMatch = text.match(/tenant.*(?:responsible|liable).*(?:structural|roof|borehole|wiring)/i);
+    if (repairsMatch) {
       violations++;
       scoreDeduction += 15;
       rules.push({
@@ -158,7 +164,7 @@ export const aiLeaseAnalyzerService = {
         ghanaLawCitation: 'Ghana Rent Act Section 20 (Landlord Structural Warranty)',
         severity: 'high_risk',
         description: 'Roofing, foundation, exterior walls, and major utility infrastructures are statutory landlord liabilities.',
-        detectedText: 'Tenant is strictly responsible for all structural defects, roof leaks',
+        detectedText: repairsMatch[0],
         suggestedRedline: 'The Landlord shall maintain the structural integrity, roof, main electrical wiring, and exterior plumbing. The Tenant shall be responsible for routine minor interior upkeep and lightbulb/fixture maintenance.',
         isCompliant: false,
       });
@@ -171,22 +177,16 @@ export const aiLeaseAnalyzerService = {
     else if (finalScore < 75) grade = 'C (High Risk)';
     else if (finalScore < 90) grade = 'B (Minor Warnings)';
 
-    // Generate Clean Compliant Redline
-    const redlinedText = `RESIDENTIAL TENANCY AGREEMENT (GHANA RENT ACT COMPLIANT)
-
-1. PREMISES: 3-Bedroom Villa, House No. 42, East Legon Hills, Greater Accra.
-2. ADVANCE RENT: The Tenant agrees to pay six (6) months advance rent of GHS 30,000, payable bi-annually in advance in full compliance with Ghana Rent Act (Act 220) Section 25.
-3. RECOVERY OF POSSESSION: In the event of rent default exceeding 30 days, the Landlord shall issue written notice of remedy. Eviction shall strictly follow statutory due process before the Rent Magistrate.
-4. SECURITY DEPOSIT: A deposit of GHS 5,000 shall be held in escrow and refunded within 21 days of move-out inspection less verified repair items.
-5. MAINTENANCE OBLIGATIONS: The Landlord maintains the roof, structural walls, and utility supply lines. The Tenant maintains minor interior fittings.
-6. RENT REVIEW: Rent escalation shall not exceed 10% per annum or the Bank of Ghana prevailing CPI rate upon lease renewal.`;
+    // Keep the user's document intact. Heuristic suggestions require human review;
+    // they must never replace parties, amounts or property details with a canned lease.
+    const redlinedText = text;
 
     return {
       id: `lease_audit_${Date.now()}`,
       documentTitle: title,
       overallScore: finalScore,
       complianceGrade: grade,
-      clausesAnalyzed: 6,
+      clausesAnalyzed: rules.length,
       violationsCount: violations,
       rules,
       originalText: text,
@@ -196,24 +196,10 @@ export const aiLeaseAnalyzerService = {
   },
 
   /**
-   * Simulate AI Vision / OCR Document Ingestion from scanned physical leases (PDF / Images)
+   * Extract the selected file locally. Image OCR is not supported by this extractor.
    */
-  async ocrExtractFromDocument(fileName: string, rawText?: string): Promise<{ extractedText: string; title: string }> {
-    // Artificial delay for OCR text parsing
-    await new Promise((r) => setTimeout(r, 600));
-
-    if (rawText && rawText.trim().length > 50) {
-      return {
-        extractedText: rawText.trim(),
-        title: fileName.replace(/\.[^/.]+$/, ''),
-      };
-    }
-
-    // Default parsed sample based on file name
-    return {
-      extractedText: DEFAULT_SAMPLE_AGREEMENT,
-      title: fileName || 'Scanned Physical Tenancy Agreement',
-    };
+  async ocrExtractFromDocument(file: File, onProgress?: (progress: ExtractionProgress) => void) {
+    return extractLeaseDocument(file, onProgress);
   },
 
   /**

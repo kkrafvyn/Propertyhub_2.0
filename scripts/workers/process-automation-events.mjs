@@ -8,7 +8,7 @@ if (!process.env.SUPABASE_DB_URL) {
 
 const client = new pg.Client({
   connectionString: process.env.SUPABASE_DB_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: { rejectUnauthorized: process.env.DB_ALLOW_INSECURE_TLS !== "1" },
 });
 
 await client.connect();

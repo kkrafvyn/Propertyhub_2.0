@@ -5,6 +5,7 @@ import { writeSecurityResult } from "./lib/security-result.mjs";
 
 const workflowsDir = path.resolve(process.cwd(), ".github/workflows");
 const outputDir = process.env.SECURITY_RESULTS_DIR || "security-results";
+const requirePinnedActions = process.env.REQUIRE_PINNED_ACTIONS === "1";
 
 const findings = [];
 
@@ -31,8 +32,17 @@ function scanWorkflow(filePath, content) {
     addFinding("HIGH", rel, "Untrusted GitHub event body interpolated into a step.");
   }
 
-  if (/uses:\s*[^@\n]+\n(?![\s\S]*@v\d+|@sha256:)/m.test(content)) {
-    // informational only — repo already uses @v4 tags broadly
+  for (const line of content.split("\n")) {
+    const action = line.trim().match(/^-?\s*uses:\s*([^\s#]+)$/);
+    if (!action) continue;
+    const reference = action[1];
+    if (!/@(?:sha256:[a-f0-9]{64}|[0-9a-f]{40})$/i.test(reference)) {
+      addFinding(
+        requirePinnedActions ? "HIGH" : "MEDIUM",
+        rel,
+        `Action is not pinned to an immutable commit: ${reference}`,
+      );
+    }
   }
 
   for (const line of content.split("\n")) {

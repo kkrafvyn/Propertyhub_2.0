@@ -46,6 +46,7 @@ import { AdminOrganizationDetail } from "./AdminOrganizationDetail";
 import { AdminEnrollmentRequests } from "./AdminEnrollmentRequests";
 import FraudDashboard from "./FraudDashboard";
 import { AdminOperations } from "./AdminOperations";
+import { platformOperationsService, type HealthSnapshot } from "../../../lib/platform-operations.service";
 
 function confirmAdminAction(message: string) {
   return window.confirm(message);
@@ -168,6 +169,8 @@ export function AdminLayout() {
   const [users, setUsers] = useState<any[]>([]);
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [listings, setListings] = useState<any[]>([]);
+  const [operationsHealth, setOperationsHealth] = useState<HealthSnapshot | null>(null);
+  const [operationsEvents, setOperationsEvents] = useState<any[]>([]);
   const [supportQuery, setSupportQuery] = useState("");
   const [roleDialogUser, setRoleDialogUser] = useState<any | null>(null);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
@@ -970,6 +973,70 @@ export function AdminLayout() {
 
   const renderOverviewContent = () => (
     <div className="space-y-6">
+      {(operationsHealth || operationsEvents.length > 0) && (
+        <Card className="p-6">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">Live operations overview</h2>
+              <p className="text-sm text-muted-foreground">
+                Current health checks and the most recent platform events.
+              </p>
+            </div>
+            {operationsHealth ? (
+              <Badge variant={operationsHealth.checks.some((check) => check.status === "failed") ? "destructive" : "secondary"}>
+                {operationsHealth.checks.some((check) => check.status === "failed") ? "Attention required" : "Healthy"}
+              </Badge>
+            ) : null}
+          </div>
+
+          {operationsHealth ? (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="space-y-3">
+                {operationsHealth.checks.slice(0, 4).map((check) => (
+                  <div key={check.name} className="rounded-xl border border-border p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium text-sm">{check.name}</p>
+                      <Badge variant={check.status === "failed" ? "destructive" : "secondary"}>
+                        {check.status}
+                      </Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {check.detail}
+                      {check.latencyMs !== undefined ? ` · ${check.latencyMs} ms` : ""}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                {operationsEvents.length > 0 ? (
+                  operationsEvents.map((event) => (
+                    <div key={event.id} className="rounded-xl border border-border p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium text-sm">{event.service}</p>
+                        <Badge variant={event.severity === "critical" ? "destructive" : "secondary"}>
+                          {event.severity}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">{event.message}</p>
+                      <p className="mt-2 text-[11px] text-muted-foreground">
+                        {new Date(event.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+                    No recent platform events have been recorded.
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Health checks are not available for this session yet.</p>
+          )}
+        </Card>
+      )}
+
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4">Platform Analytics</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -321,6 +321,11 @@ export function WorkspaceDashboard({
   ] as const;
 
   const activeRoleConfig = roleConfig.find((r) => r.role === activeRole) || roleConfig[0];
+  const dashboardRole = activeRole === "property_owner"
+    ? "owner"
+    : activeRole === "property_manager"
+      ? "manager"
+      : activeRole;
 
   return (
     <div className="space-y-8">
@@ -333,7 +338,7 @@ export function WorkspaceDashboard({
           <div className="flex flex-wrap gap-1.5">
             {roleConfig.map((r) => {
               const Icon = r.icon;
-              const isActive = activeRole === r.role;
+              const isActive = dashboardRole === r.role;
               return (
                 <button
                   key={r.role}
@@ -376,23 +381,23 @@ export function WorkspaceDashboard({
             </div>
 
             <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-ink leading-tight">
-              {activeRole === "owner" && "Executive Portfolio & Yield Command"}
-              {activeRole === "manager" && "Estate Operations & Facility Command"}
-              {activeRole === "agent" && "Leasing Deals & Pipeline Accelerator"}
-              {activeRole === "analyst" && "Intelligence & Macro Risk Studio"}
+              {dashboardRole === "owner" && "Executive Portfolio & Yield Command"}
+              {dashboardRole === "manager" && "Estate Operations & Facility Command"}
+              {dashboardRole === "agent" && "Leasing Deals & Pipeline Accelerator"}
+              {dashboardRole === "analyst" && "Intelligence & Macro Risk Studio"}
             </h1>
 
             <p className="text-xs sm:text-sm text-ink-secondary max-w-xl leading-relaxed">
-              {activeRole === "owner" && "Monitor gross rental yields, Bank of Ghana FX hedging, and enterprise revenue in real-time."}
-              {activeRole === "manager" && "Oversee gate passes, 150-point offline inspections, and artisan work order dispatches."}
-              {activeRole === "agent" && "Close tenancy deals, verify Act 220 lease compliance, and dispatch WhatsApp payment links."}
-              {activeRole === "analyst" && "Evaluate micro-market cap rates, rental inflation forecasting, and portfolio valuations."}
+              {dashboardRole === "owner" && "Monitor gross rental yields, Bank of Ghana FX hedging, and enterprise revenue in real-time."}
+              {dashboardRole === "manager" && "Oversee gate passes, 150-point offline inspections, and artisan work order dispatches."}
+              {dashboardRole === "agent" && "Close tenancy deals, verify Act 220 lease compliance, and dispatch WhatsApp payment links."}
+              {dashboardRole === "analyst" && "Evaluate micro-market cap rates, rental inflation forecasting, and portfolio valuations."}
             </p>
           </div>
 
           {/* Role-Specific Quick Launch Actions */}
           <div className="flex items-center gap-2.5 flex-wrap shrink-0">
-            {activeRole === "owner" && (
+            {dashboardRole === "owner" && (
               <>
                 <Link to={`${workspaceBasePath}/ai-rent-yield`}>
                   <Button size="sm" variant="gradient" className="gap-1.5 shadow-md shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-shadow">
@@ -408,7 +413,7 @@ export function WorkspaceDashboard({
                 </Link>
               </>
             )}
-            {activeRole === "manager" && (
+            {dashboardRole === "manager" && (
               <>
                 <Link to={`${workspaceBasePath}/inspections`}>
                   <Button size="sm" variant="gradient" className="gap-1.5 shadow-md shadow-emerald-500/25">
@@ -424,7 +429,7 @@ export function WorkspaceDashboard({
                 </Link>
               </>
             )}
-            {activeRole === "agent" && (
+            {dashboardRole === "agent" && (
               <>
                 <Link to={`${workspaceBasePath}/whatsapp-hub`}>
                   <Button size="sm" variant="gradient" className="gap-1.5 shadow-md shadow-emerald-500/25">
@@ -440,7 +445,7 @@ export function WorkspaceDashboard({
                 </Link>
               </>
             )}
-            {activeRole === "analyst" && (
+            {dashboardRole === "analyst" && (
               <>
                 <Link to={`${workspaceBasePath}/ai-rent-yield`}>
                   <Button size="sm" variant="gradient" className="gap-1.5 shadow-md shadow-emerald-500/25">
@@ -463,7 +468,7 @@ export function WorkspaceDashboard({
       {/* Role-Tailored KPI Grid */}
       {showKpiGrid ? (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" style={{ '--stagger': '80ms' } as React.CSSProperties}>
-        {activeRole === "owner" && (
+        {dashboardRole === "owner" && (
           <>
             <MetricCard
               title="Listed units"
@@ -498,7 +503,7 @@ export function WorkspaceDashboard({
           </>
         )}
 
-        {activeRole === "manager" && (
+        {dashboardRole === "manager" && (
           <>
             <MetricCard
               title="Listed units"
@@ -531,7 +536,7 @@ export function WorkspaceDashboard({
             />
           </>
         )}
-        {activeRole === "agent" && (
+        {dashboardRole === "agent" && (
           <>
             <MetricCard
               title="Active inbound leads"
@@ -565,7 +570,7 @@ export function WorkspaceDashboard({
           </>
         )}
 
-        {activeRole === "analyst" && (
+        {dashboardRole === "analyst" && (
           <>
             <MetricCard
               title="Listed units"

@@ -763,6 +763,9 @@ export function GeneralLedger({ organizationId }: { organizationId?: string }) {
             </div>
           </Card>
 
+          {report && <Card className="p-4 text-sm space-y-2"><p>Generated {report.generatedAt ? new Date(report.generatedAt).toLocaleString() : 'just now'} ? {report.lines.length} source ledger lines. CSV includes journal and line IDs for reconciliation.</p>
+            {!!report.unbalancedEntryIds?.length && <p role="alert" className="text-destructive">{report.unbalancedEntryIds.length} posted journals do not balance. Resolve these exceptions before using the totals.</p>}
+          </Card>}
           {report ? (
             <div className="grid gap-4 md:grid-cols-3">
               {[

@@ -9,7 +9,29 @@ const DESKTOP_ENTRY_HASH = "/login";
 const AUTH_CALLBACK_PROTOCOL = "baytmiftah";
 const AUTH_CALLBACK_HOST = "auth";
 
+// Only these schemes may ever be handed to the OS. Blocks javascript:, file:,
+// and third-party custom protocol handlers reaching shell.openExternal.
+const SAFE_EXTERNAL_PROTOCOLS = new Set(["https:", "mailto:"]);
+
 let mainWindow = null;
+
+function isSafeExternalUrl(url) {
+  if (!url || typeof url !== "string") return false;
+  try {
+    return SAFE_EXTERNAL_PROTOCOLS.has(new URL(url).protocol);
+  } catch {
+    return false;
+  }
+}
+
+// URLs that are allowed to load inside the app window itself. Anything else is
+// either rejected or pushed out to the external browser.
+function isTrustedAppUrl(url) {
+  if (!url || typeof url !== "string") return false;
+  if (url.startsWith("file://")) return true;
+  if (isDev) return url.startsWith(String(startUrl).replace(/\/+$/, ""));
+  return false;
+}
 
 function resolveIndexHtml() {
   if (app.isPackaged) {
@@ -69,16 +91,9 @@ function parseAuthCallback(url) {
       return { type: "code", code };
     }
 
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
-
-    if (!accessToken || !refreshToken) return null;
-
-    return {
-      type: "session",
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    };
+    // Implicit-flow bearer tokens are deliberately rejected. Desktop OAuth
+    // must complete through an authorization code and PKCE.
+    return null;
   } catch {
     return null;
   }
@@ -121,7 +136,33 @@ function registerOfflineIpc() {
     return true;
   });
   ipcMain.handle("app:getVersion", () => app.getVersion());
-  ipcMain.handle("shell:openExternal", (_event, url) => shell.openExternal(url));
+  ipcMain.handle("shell:openExternal", (_event, url) => {
+    if (!isSafeExternalUrl(url)) {
+      console.warn("[desktop] blocked openExternal for untrusted URL");
+      return false;
+    }
+    shell.openExternal(url);
+    return true;
+  });
+}
+
+function attachSecurityGuards(win) {
+  // Never let renderer content spawn an in-app window on a remote origin;
+  // safe links go to the user's real browser instead.
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (isSafeExternalUrl(url)) shell.openExternal(url);
+    return { action: "deny" };
+  });
+
+  // Block navigations away from the bundled app (phishing / bridge capture).
+  win.webContents.on("will-navigate", (event, url) => {
+    if (isTrustedAppUrl(url)) return;
+    event.preventDefault();
+    if (isSafeExternalUrl(url)) shell.openExternal(url);
+  });
+
+  // The app has no use for <webview>; deny ambient privilege escalation.
+  win.webContents.on("will-attach-webview", (event) => event.preventDefault());
 }
 
 function attachWindowDiagnostics(win) {
@@ -150,11 +191,13 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
       preload: resolvePreloadPath(),
     },
   });
 
   mainWindow = win;
+  attachSecurityGuards(win);
   attachWindowDiagnostics(win);
 
   if (isDev) {

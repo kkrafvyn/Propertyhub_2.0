@@ -59,7 +59,9 @@ export const approvalCenterService = {
           metadata: a,
         });
       }
-    } catch {}
+    } catch (error) {
+      console.warn("Approval Center could not load lease applications", error);
+    }
 
     try {
       const { data: estates } = await db
@@ -112,7 +114,9 @@ export const approvalCenterService = {
           });
         }
       }
-    } catch {}
+    } catch (error) {
+      console.warn("Approval Center could not load procurement or disbursement approvals", error);
+    }
 
     try {
       const ownerExpenses = await ownerOversightService.listOrgExpenseApprovals(
@@ -132,7 +136,9 @@ export const approvalCenterService = {
           metadata: row,
         });
       }
-    } catch {}
+    } catch (error) {
+      console.warn("Approval Center could not load owner expense approvals", error);
+    }
 
     try {
       const { data: jes } = await db
@@ -154,7 +160,9 @@ export const approvalCenterService = {
           metadata: je,
         });
       }
-    } catch {}
+    } catch (error) {
+      console.warn("Approval Center could not load draft journal entries", error);
+    }
 
     return items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },

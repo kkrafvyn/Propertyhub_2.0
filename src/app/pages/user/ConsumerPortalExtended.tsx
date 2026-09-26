@@ -1,3 +1,5 @@
+import { MaintenanceRequestForm } from "../../components/maintenance/MaintenanceRequestForm";
+import { MaintenancePhotoThumb } from "../../components/maintenance/MaintenancePhotoThumb";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import {
@@ -32,44 +34,7 @@ import { buildPurchaseTimeline, buildMaintenanceTimeline, buildEscrowTimeline } 
 import { purchaseWorkflowService } from "../../../lib/purchase-workflow.service";
 import { workflowOrchestratorService } from "../../../lib/workflow-orchestrator.service";
 import { CONSUMER_ROUTES, messageThreadPath } from "../../lib/consumer-routes";
-import { resolveDeepLinkPath, mobileCaptureProps } from "../../../lib/deep-link";
-
-function MaintenancePhotoThumb({ path }: { path: string }) {
-  const [url, setUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    void maintenanceService
-      .getPhotoSignedUrl(path)
-      .then((signed) => {
-        if (active) setUrl(signed);
-      })
-      .catch(() => {
-        if (active) setUrl(null);
-      });
-    return () => {
-      active = false;
-    };
-  }, [path]);
-
-  if (!url) {
-    return (
-      <div className="h-20 w-20 rounded-lg border border-border bg-muted flex items-center justify-center text-[10px] text-muted-foreground">
-        Photo
-      </div>
-    );
-  }
-
-  return (
-    <a href={url} target="_blank" rel="noreferrer">
-      <img
-        src={url}
-        alt="Maintenance evidence"
-        className="h-20 w-20 rounded-lg border border-border object-cover"
-      />
-    </a>
-  );
-}
+import { resolveDeepLinkPath } from "../../../lib/deep-link";
 
 function formatMoney(amountMinor?: number | null, currency = "GHS") {
   return walletService.formatWalletAmount(amountMinor, currency);
@@ -984,11 +949,6 @@ export function MaintenanceWithVendorsSection({
   requests: any[];
   onCreated: () => Promise<void>;
 }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [leaseId, setLeaseId] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [ratingRequestId, setRatingRequestId] = useState<string | null>(null);
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [ratingComments, setRatingComments] = useState<Record<string, string>>({});
@@ -997,10 +957,7 @@ export function MaintenanceWithVendorsSection({
   const [assigning, setAssigning] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  const activeLeases = useMemo(
-    () => leases.filter((lease) => lease.status === "active"),
-    [leases]
-  );
+
 
   useEffect(() => {
     void vendorService
@@ -1010,46 +967,7 @@ export function MaintenanceWithVendorsSection({
       .finally(() => setLoadingVendors(false));
   }, []);
 
-  const handleSubmit = async () => {
-    const lease = activeLeases.find((entry) => entry.id === leaseId) || activeLeases[0];
-    if (!lease) {
-      toast.error("You need an active lease before submitting maintenance.");
-      return;
-    }
-    if (!title.trim() || !description.trim()) {
-      toast.error("Add a title and description.");
-      return;
-    }
 
-    try {
-      setSubmitting(true);
-      const created = await maintenanceService.createRequest({
-        tenantUserId: userId,
-        organizationId: lease.organization_id,
-        leaseId: lease.id,
-        listingId: lease.listing_id,
-        title: title.trim(),
-        description: description.trim(),
-      });
-      if (photoFiles.length > 0) {
-        await maintenanceService.uploadRequestPhotos({
-          organizationId: lease.organization_id,
-          requestId: created.id,
-          files: photoFiles,
-        });
-      }
-      toast.success("Maintenance request submitted.");
-      setTitle("");
-      setDescription("");
-      setPhotoFiles([]);
-      await onCreated();
-    } catch (error) {
-      console.error(error);
-      toast.error("Unable to submit maintenance request.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const hireVendor = async (requestId: string, vendorId: string) => {
     try {
@@ -1081,42 +999,7 @@ export function MaintenanceWithVendorsSection({
 
   return (
     <section className="space-y-6">
-      <Card className="p-6 space-y-4">
-        <h3 className="font-semibold">New request</h3>
-        {activeLeases.length > 1 && (
-          <select
-            className="w-full rounded-lg border border-border px-3 py-2"
-            value={leaseId || activeLeases[0]?.id || ""}
-            onChange={(event) => setLeaseId(event.target.value)}
-          >
-            {activeLeases.map((lease) => (
-              <option key={lease.id} value={lease.id}>
-                {lease.listing?.property?.address || lease.id}
-              </option>
-            ))}
-          </select>
-        )}
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Issue title" />
-        <textarea
-          className="w-full min-h-28 rounded-lg border border-border px-3 py-2"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Describe the issue"
-        />
-        <div>
-          <label className="text-sm text-muted-foreground block mb-2">Photos (optional)</label>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={(event) => setPhotoFiles(Array.from(event.target.files || []))}
-            {...mobileCaptureProps()}
-          />
-        </div>
-        <Button onClick={() => void handleSubmit()} disabled={submitting || activeLeases.length === 0}>
-          {submitting ? "Submitting..." : "Submit request"}
-        </Button>
-      </Card>
+      <MaintenanceRequestForm key={userId} userId={userId} leases={leases} onCreated={onCreated} />
 
       <Card className="p-6">
         <div className="flex items-center gap-2 mb-4">

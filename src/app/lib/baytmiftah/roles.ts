@@ -48,9 +48,32 @@ export function isFullAdminRole(role?: string | null) {
 }
 
 export function isWorkspaceRole(role?: string | null) {
-  return ["host", "agent", "manager", "owner"].includes(role || "");
+  return [
+    "host",
+    "agent",
+    "manager",
+    "owner",
+    "property_owner",
+    "property_manager",
+    "independent_agent",
+    "agency_agent",
+    "agency_manager",
+    "agency_owner",
+  ].includes(role || "");
 }
 
 export function isProfessionalRole(role?: string | null) {
-  return ["host", "agent", "admin", "platform_admin", "agency"].includes(role || "");
+  return [
+    "host",
+    "agent",
+    "admin",
+    "platform_admin",
+    "agency",
+    "property_owner",
+    "property_manager",
+    "independent_agent",
+    "agency_agent",
+    "agency_manager",
+    "agency_owner",
+  ].includes(role || "");
 }

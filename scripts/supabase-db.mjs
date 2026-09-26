@@ -57,7 +57,7 @@ function getDbConfig() {
     user: `postgres.${ref}`,
     password,
     database: "postgres",
-    ssl: { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized: process.env.DB_ALLOW_INSECURE_TLS !== "1" },
   };
 }
 
@@ -196,6 +196,16 @@ try {
       process.exit(command ? 1 : 0);
   }
 } catch (error) {
-  console.error(error instanceof Error ? error.message : error);
+  if (error && typeof error === "object") {
+    console.error(JSON.stringify({
+      message: error.message,
+      position: error.position,
+      detail: error.detail,
+      hint: error.hint,
+      routine: error.routine,
+    }, null, 2));
+  } else {
+    console.error(error);
+  }
   process.exit(1);
 }

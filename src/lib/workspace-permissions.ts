@@ -39,6 +39,7 @@ const ROLE_DEFAULTS: Record<string, WorkspacePermission[]> = {
     "listings:read",
     "listings:write",
     "leads:read",
+    "finance:read",
     "documents:write",
     "contacts:write",
     "tasks:write",

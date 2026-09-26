@@ -92,6 +92,14 @@ import { ConsumerPortalNav, type ConsumerNavItem } from "../../components/baytmi
 import { ConsumerStatCard } from "../../components/baytmiftah/consumer/ConsumerStatCard";
 import { ConsumerWelcomeHero } from "../../components/baytmiftah/consumer/ConsumerWelcomeHero";
 import { isWorkspaceRole } from "../../lib/baytmiftah/roles";
+import {
+  getAgencyDashboardConfig,
+  getConsumerDashboardConfig,
+  getPropertyOperationsDashboardConfig,
+  normalizeAgencyDashboardRole,
+  normalizeConsumerDashboardRole,
+  normalizePropertyOperationsDashboardRole,
+} from "../../lib/role-dashboard";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
 import { SignatureActionBanner } from "../../components/ux/SignatureActionBanner";
@@ -624,6 +632,34 @@ export function UserDashboard() {
     if (!user) return "there";
     return user.user_metadata?.full_name || user.email?.split("@")[0] || "there";
   }, [user]);
+
+  const consumerRole = useMemo(
+    () => normalizeConsumerDashboardRole(role || user?.user_metadata?.role || user?.app_metadata?.role),
+    [role, user?.app_metadata?.role, user?.user_metadata?.role],
+  );
+
+  const agencyRole = useMemo(
+    () => normalizeAgencyDashboardRole(role || user?.user_metadata?.role || user?.app_metadata?.role),
+    [role, user?.app_metadata?.role, user?.user_metadata?.role],
+  );
+
+  const propertyOperationsRole = useMemo(
+    () => normalizePropertyOperationsDashboardRole(role || user?.user_metadata?.role || user?.app_metadata?.role),
+    [role, user?.app_metadata?.role, user?.user_metadata?.role],
+  );
+
+  const dashboardConfig = useMemo(() => {
+    const normalizedRole = role || user?.user_metadata?.role || user?.app_metadata?.role;
+    if (["independent_agent", "agency_agent", "agency_manager", "agency_owner"].includes(normalizedRole || "")) {
+      return getAgencyDashboardConfig(agencyRole);
+    }
+
+    if (["property_owner", "property_manager"].includes(normalizedRole || "")) {
+      return getPropertyOperationsDashboardConfig(propertyOperationsRole);
+    }
+
+    return getConsumerDashboardConfig(consumerRole);
+  }, [agencyRole, consumerRole, propertyOperationsRole, role, user?.app_metadata?.role, user?.user_metadata?.role]);
 
   const unreadMessages = useMemo(
     () =>
@@ -1831,7 +1867,11 @@ export function UserDashboard() {
           {section === "overview" ? (
             <ConsumerWelcomeHero
               displayName={displayName}
-              description={pageConfig.description}
+              kicker={dashboardConfig.kicker}
+              heading={dashboardConfig.heading}
+              description={dashboardConfig.description}
+              primaryActionLabel={dashboardConfig.primaryActionLabel}
+              primaryActionHref={dashboardConfig.primaryActionHref}
               unreadMessages={unreadMessages}
             />
           ) : null}
@@ -1858,48 +1898,48 @@ export function UserDashboard() {
 
           {section === "overview" && !loading && !isWorkspaceRole(role) ? (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-              <ConsumerStatCard
-                label="Saved Properties"
-                value={savedProperties.length}
-                icon={Heart}
-                tone="primary"
-                href="/app/saved"
-              />
-              <ConsumerStatCard
-                label="Payments"
-                value={propertyTransactions.length}
-                icon={CreditCard}
-                tone="primary"
-                href="/app/payments"
-              />
-              <ConsumerStatCard
-                label="Applications"
-                value={dealCases.length}
-                icon={FileText}
-                tone="accent"
-                href="/app/applications"
-              />
-              <ConsumerStatCard
-                label="Viewings"
-                value={propertyViewings.length}
-                icon={CalendarDays}
-                tone="accent"
-                href="/app/viewings"
-              />
-              <ConsumerStatCard
-                label="Conversations"
-                value={conversations.length}
-                icon={MessageCircle}
-                tone="info"
-                href="/app/messages"
-              />
-              <ConsumerStatCard
-                label="Alerts"
-                value={savedAlerts.filter((alert) => alert.is_active).length}
-                icon={Bell}
-                tone="warm"
-                href="/app/alerts"
-              />
+              {dashboardConfig.summaryCards.map((card, index) => {
+                const iconMap = {
+                  saved: Heart,
+                  offers: FileText,
+                  payments: CreditCard,
+                  viewings: CalendarDays,
+                  messages: MessageCircle,
+                  leases: FileText,
+                  maintenance: Wrench,
+                } as const;
+
+                const toneMap = ["primary", "primary", "accent", "info"] as const;
+
+                return (
+                  <ConsumerStatCard
+                    key={`${card.label}-${index}`}
+                    label={card.label}
+                    value={
+                      card.href === "/app/saved"
+                        ? savedProperties.length
+                        : card.href === "/app/payments"
+                          ? propertyTransactions.length
+                          : card.href === "/app/applications"
+                            ? dealCases.length
+                            : card.href === "/app/viewings"
+                              ? propertyViewings.length
+                              : card.href === "/app/messages"
+                                ? conversations.length
+                                : card.href === "/app/alerts"
+                                  ? savedAlerts.filter((alert) => alert.is_active).length
+                                  : card.href === "/app/leases"
+                                    ? leases.length
+                                    : card.href === "/app/maintenance"
+                                      ? maintenanceRequests.filter((request) => !["resolved", "cancelled"].includes(request.status)).length
+                                      : 0
+                    }
+                    icon={iconMap[card.icon] || Heart}
+                    tone={toneMap[index % toneMap.length]}
+                    href={card.href}
+                  />
+                );
+              })}
             </div>
           ) : null}
 

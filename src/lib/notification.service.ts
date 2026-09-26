@@ -386,9 +386,15 @@ export const notificationService = {
     organizationId?: string;
   }) {
     const signPath = buildSigningActionPath(input.signingUrl, "/app/leases");
+    const delivery: Record<string, "sent" | "failed" | "not_attempted"> = {
+      inApp: "not_attempted",
+      email: "not_attempted",
+      sms: "not_attempted",
+      whatsapp: "not_attempted",
+    };
 
     if (input.tenantUserId) {
-      await safeNotify({
+      const notification = await safeNotify({
         userId: input.tenantUserId,
         actorUserId: input.actorUserId,
         notificationType: "lease_signature_requested",
@@ -402,6 +408,7 @@ export const notificationService = {
           jurisdictionLabel: input.jurisdictionLabel,
         },
       });
+      delivery.inApp = notification ? "sent" : "failed";
     }
 
     const { data: leaseRow } = await supabase
@@ -411,35 +418,50 @@ export const notificationService = {
       .maybeSingle();
 
     if (leaseRow?.organization_id) {
-      await communicationService
-        .sendOutboundEmail({
+      try {
+        await communicationService.sendOutboundEmail({
           organizationId: leaseRow.organization_id,
           to: input.tenantEmail,
           subject: `Sign your lease — ${input.documentName}`,
           content: `Your tenancy agreement is ready for electronic signature.\n\nOpen: ${input.signingUrl || signPath}\n\nJurisdiction: ${input.jurisdictionLabel || "local market rules"}`,
-        })
-        .catch(() => undefined);
+        });
+        delivery.email = "sent";
+      } catch (error) {
+        delivery.email = "failed";
+        console.error("Lease signature email delivery failed", error);
+      }
     }
 
     if (input.tenantPhone && input.signingUrl) {
-      void sendLeaseSigningSms(
-        input.tenantPhone,
-        input.documentName,
-        input.signingUrl,
-        input.organizationId || leaseRow?.organization_id
-      ).catch(() => undefined);
-
-      void whatsappNotifyService
-        .sendLeaseSigningMessage({
+      try {
+        await sendLeaseSigningSms(
+          input.tenantPhone,
+          input.documentName,
+          input.signingUrl,
+          input.organizationId || leaseRow?.organization_id,
+        );
+        delivery.sms = "sent";
+      } catch (error) {
+        delivery.sms = "failed";
+        console.error("Lease signature SMS delivery failed", error);
+      }
+      try {
+        await whatsappNotifyService.sendLeaseSigningMessage({
           to: input.tenantPhone,
           recipientName: input.tenantEmail.split("@")[0] || "Tenant",
           documentName: input.documentName,
           signingUrl: input.signingUrl,
           jurisdictionLabel: input.jurisdictionLabel,
           organizationId: input.organizationId || leaseRow?.organization_id,
-        })
-        .catch(() => undefined);
+        });
+        delivery.whatsapp = "sent";
+      } catch (error) {
+        delivery.whatsapp = "failed";
+        console.error("Lease signature WhatsApp delivery failed", error);
+      }
     }
+
+    return delivery;
   },
 
   async notifyLeaseCosignRequested(input: {
@@ -454,8 +476,14 @@ export const notificationService = {
     actorUserId?: string;
   }) {
     const signPath = buildSigningActionPath(input.signingUrl, "/sign");
+    const delivery: Record<string, "sent" | "failed" | "not_attempted"> = {
+      inApp: "not_attempted",
+      email: "not_attempted",
+      sms: "not_attempted",
+      whatsapp: "not_attempted",
+    };
 
-    await safeNotify({
+    const notification = await safeNotify({
       userId: input.landlordUserId,
       actorUserId: input.actorUserId,
       notificationType: "lease_cosign_requested",
@@ -465,37 +493,53 @@ export const notificationService = {
       actionUrl: signPath,
       metadata: { leaseId: input.leaseId, signingUrl: input.signingUrl },
     });
+    delivery.inApp = notification ? "sent" : "failed";
 
     if (input.organizationId) {
-      await communicationService
-        .sendOutboundEmail({
+      try {
+        await communicationService.sendOutboundEmail({
           organizationId: input.organizationId,
           to: input.landlordEmail,
           subject: `Countersign lease — ${input.documentName}`,
           content: `The tenant has signed ${input.documentName}.\n\nCountersign here: ${input.signingUrl || signPath}`,
-        })
-        .catch(() => undefined);
+        });
+        delivery.email = "sent";
+      } catch (error) {
+        delivery.email = "failed";
+        console.error("Lease countersign email delivery failed", error);
+      }
     }
 
     if (input.landlordPhone && input.signingUrl) {
-      void sendLeaseSigningSms(
-        input.landlordPhone,
-        input.documentName,
-        input.signingUrl,
-        input.organizationId
-      ).catch(() => undefined);
-
-      void whatsappNotifyService
-        .sendLeaseSigningMessage({
+      try {
+        await sendLeaseSigningSms(
+          input.landlordPhone,
+          input.documentName,
+          input.signingUrl,
+          input.organizationId,
+        );
+        delivery.sms = "sent";
+      } catch (error) {
+        delivery.sms = "failed";
+        console.error("Lease countersign SMS delivery failed", error);
+      }
+      try {
+        await whatsappNotifyService.sendLeaseSigningMessage({
           to: input.landlordPhone,
           recipientName: input.landlordEmail.split("@")[0] || "Landlord",
           documentName: input.documentName,
           signingUrl: input.signingUrl,
           isCosignReminder: true,
           organizationId: input.organizationId,
-        })
-        .catch(() => undefined);
+        });
+        delivery.whatsapp = "sent";
+      } catch (error) {
+        delivery.whatsapp = "failed";
+        console.error("Lease countersign WhatsApp delivery failed", error);
+      }
     }
+
+    return delivery;
   },
 
   async notifyCounterOfferEvent(

@@ -1,0 +1,13 @@
+-- Close the last table without row level security.
+--
+-- private.account_guard_config is created in 2026092303_account_access_enforcement.sql
+-- and has never had RLS enabled. It is not reachable today: `private` is not an
+-- exposed PostgREST schema, no table-level SELECT is granted to anon or
+-- authenticated, and its only reader (public.enforce_account_access) is
+-- SECURITY DEFINER and therefore bypasses RLS as the owner anyway.
+--
+-- Enabling RLS costs nothing and removes the dependency on those three facts
+-- staying true -- a future blanket grant such as
+-- `GRANT ALL ON ALL TABLES IN SCHEMA private TO anon` would otherwise expose it.
+-- With RLS enabled and no policies, access is denied to every non-owner role.
+ALTER TABLE private.account_guard_config ENABLE ROW LEVEL SECURITY;

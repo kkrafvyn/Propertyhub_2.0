@@ -18,6 +18,21 @@ export type WorkspaceChannel = {
   updated_at: string;
 };
 
+export type WorkspaceChatMessage = {
+  id: string;
+  conversation_id: string;
+  sender_id: string | null;
+  content: string;
+  created_at: string;
+  message_type: string;
+};
+
+export type MessageCursor = { createdAt: string; id: string };
+export type WorkspaceMessagePage = {
+  messages: WorkspaceChatMessage[];
+  olderCursor: MessageCursor | null;
+};
+
 export const workspaceChatService = {
   async ensureDefaults(organizationId: string) {
     const { error } = await db.rpc("ensure_default_workspace_channels", {
@@ -27,7 +42,7 @@ export const workspaceChatService = {
   },
 
   async listChannels(organizationId: string) {
-    await this.ensureDefaults(organizationId).catch(() => undefined);
+    await this.ensureDefaults(organizationId);
     const { data, error } = await db
       .from("workspace_channels")
       .select("*")
@@ -46,65 +61,29 @@ export const workspaceChatService = {
     isPrivate?: boolean;
   }) {
     const slug = input.slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-");
-    const { data: conversation, error: convError } = await db
-      .from("conversations")
-      .insert({
-        conversation_type: "channel",
-        organization_id: input.organizationId,
-      })
-      .select("id")
-      .single();
-    if (convError) throw convError;
-
-    const { data: members } = await db
-      .from("organization_members")
-      .select("user_id")
-      .eq("organization_id", input.organizationId);
-
-    if (!input.isPrivate) {
-      const rows = (members || []).map((m: { user_id: string }) => ({
-        conversation_id: conversation.id,
-        user_id: m.user_id,
-        participant_role: "member",
-      }));
-      if (rows.length) {
-        await db.from("conversation_participants").insert(rows);
-      }
-    } else {
-      await db.from("conversation_participants").insert({
-        conversation_id: conversation.id,
-        user_id: input.createdBy,
-        participant_role: "admin",
-      });
-    }
-
-    const { data, error } = await db
-      .from("workspace_channels")
-      .insert({
-        organization_id: input.organizationId,
-        conversation_id: conversation.id,
-        slug,
-        name: input.name.trim(),
-        description: input.description || null,
-        is_private: Boolean(input.isPrivate),
-        created_by: input.createdBy,
-      })
-      .select("*")
-      .single();
+    const { data, error } = await db.rpc("create_workspace_channel", {
+      p_organization_id: input.organizationId,
+      p_slug: slug,
+      p_name: input.name.trim(),
+      p_description: input.description || null,
+      p_is_private: Boolean(input.isPrivate),
+    });
     if (error) throw error;
     return data as WorkspaceChannel;
   },
 
   async listMemberDirectThreads(organizationId: string, userId: string) {
-    const { data: members } = await db
+    const { data: members, error: memberError } = await db
       .from("organization_members")
       .select("user_id, users:users(id, full_name, email)")
       .eq("organization_id", organizationId);
+    if (memberError) throw memberError;
 
-    const { data: participations } = await db
+    const { data: participations, error: participationError } = await db
       .from("conversation_participants")
       .select("conversation_id, conversations:conversations(id, conversation_type, organization_id, updated_at)")
       .eq("user_id", userId);
+    if (participationError) throw participationError;
 
     const direct = (participations || [])
       .map((row: any) => row.conversations)
@@ -112,7 +91,7 @@ export const workspaceChatService = {
         (c: any) =>
           c &&
           c.conversation_type === "direct" &&
-          (!c.organization_id || c.organization_id === organizationId),
+          c.organization_id === organizationId,
       );
 
     return {
@@ -126,55 +105,38 @@ export const workspaceChatService = {
     currentUserId: string;
     otherUserId: string;
   }) {
-    const { data: existingMine } = await db
-      .from("conversation_participants")
-      .select("conversation_id")
-      .eq("user_id", input.currentUserId);
-
-    const mineIds = (existingMine || []).map((r: any) => r.conversation_id);
-    if (mineIds.length) {
-      const { data: shared } = await db
-        .from("conversation_participants")
-        .select("conversation_id, conversations:conversations(id, conversation_type, organization_id)")
-        .eq("user_id", input.otherUserId)
-        .in("conversation_id", mineIds);
-
-      const hit = (shared || []).find(
-        (row: any) =>
-          row.conversations?.conversation_type === "direct" &&
-          (!row.conversations.organization_id ||
-            row.conversations.organization_id === input.organizationId),
-      );
-      if (hit?.conversation_id) return hit.conversation_id as string;
-    }
-
-    const { data: conversation, error } = await db
-      .from("conversations")
-      .insert({
-        conversation_type: "direct",
-        organization_id: input.organizationId,
-      })
-      .select("id")
-      .single();
+    const { data, error } = await db.rpc("open_workspace_direct_message", {
+      p_organization_id: input.organizationId,
+      p_other_user_id: input.otherUserId,
+    });
     if (error) throw error;
-
-    await db.from("conversation_participants").insert([
-      { conversation_id: conversation.id, user_id: input.currentUserId, participant_role: "member" },
-      { conversation_id: conversation.id, user_id: input.otherUserId, participant_role: "member" },
-    ]);
-
-    return conversation.id as string;
+    return data as string;
   },
 
   async listMessages(conversationId: string, limit = 80) {
-    const { data, error } = await db
-      .from("messages")
-      .select("id, conversation_id, sender_id, content, created_at, message_type")
-      .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: true })
-      .limit(limit);
+    return (await this.listMessagePage(conversationId, { limit })).messages;
+  },
+
+  async listMessagePage(
+    conversationId: string,
+    options: { before?: MessageCursor | null; limit?: number } = {},
+  ): Promise<WorkspaceMessagePage> {
+    const limit = Math.max(1, Math.min(100, Math.floor(options.limit || 80)));
+    const { data, error } = await db.rpc("list_workspace_messages", {
+      p_conversation_id: conversationId,
+      p_before_created_at: options.before?.createdAt ?? null,
+      p_before_id: options.before?.id ?? null,
+      p_limit: limit + 1,
+    });
     if (error) throw error;
-    return data || [];
+    const rows = (data || []) as WorkspaceChatMessage[];
+    const page = rows.slice(0, limit).reverse();
+    return {
+      messages: page,
+      olderCursor: rows.length > limit && page[0]
+        ? { createdAt: page[0].created_at, id: page[0].id }
+        : null,
+    };
   },
 
   async sendMessage(input: {

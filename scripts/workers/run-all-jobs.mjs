@@ -11,6 +11,7 @@ const jobs = [
   'scripts/workers/estate-operations-worker.mjs',
   'scripts/workers/night-watch-audit.mjs',
   'scripts/workers/process-owner-statement-deliveries.mjs',
+  'scripts/workers/process-owner-digests.mjs',
   'scripts/workers/process-communication-queue.mjs',
   'scripts/workers/apply-data-retention.mjs',
 ];

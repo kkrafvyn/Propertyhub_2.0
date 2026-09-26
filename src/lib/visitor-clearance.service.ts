@@ -74,7 +74,9 @@ export function mapDbVisitorPass(row: any, estateName = '', unitIdentifier?: str
 }
 
 function generateGatePin() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  const random = new Uint32Array(1);
+  crypto.getRandomValues(random);
+  return String(100000 + (random[0] % 900000));
 }
 
 export const liveVisitorClearanceService = {

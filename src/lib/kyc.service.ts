@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { validateClientUpload } from "./security/upload-validation";
+import { getSafeUploadExtension, validateClientUpload, validateFileSignature, validateStoragePath } from "./security/upload-validation";
 
 const KYC_MEDIA_BUCKET = "kyc-documents";
 
@@ -86,8 +86,9 @@ export const kycService = {
 
   async uploadDocument(input: { userId: string; file: File }) {
     validateClientUpload({ file: input.file, maxBytes: 5 * 1024 * 1024, allowPdf: true });
+    await validateFileSignature(input.file);
 
-    const extension = input.file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const extension = getSafeUploadExtension(input.file, true);
     const path = `${input.userId}/${crypto.randomUUID()}.${extension}`;
     const { error: uploadError } = await supabase.storage
       .from(KYC_MEDIA_BUCKET)
@@ -117,9 +118,10 @@ export const kycService = {
   },
 
   async getDocumentSignedUrl(storagePath: string, expiresIn = 300) {
+    const safeStoragePath = validateStoragePath(storagePath);
     const { data, error } = await supabase.storage
       .from(KYC_MEDIA_BUCKET)
-      .createSignedUrl(storagePath, expiresIn);
+      .createSignedUrl(safeStoragePath, expiresIn);
 
     if (error) throw error;
     return data?.signedUrl || null;

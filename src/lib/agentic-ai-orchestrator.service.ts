@@ -7,6 +7,7 @@
 
 import { supabase } from "./supabase";
 import { isDemoSimulationAllowed } from "./simulation-mode";
+import { secureId } from "./secure-id";
 
 const aiDb = supabase as any;
 
@@ -233,7 +234,7 @@ class AgenticAIOrchestratorService {
   public recordAction(entry: Omit<AIActionLedgerEntry, "id" | "createdAt">): AIActionLedgerEntry {
     const newEntry: AIActionLedgerEntry = {
       ...entry,
-      id: `act_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      id: secureId("act"),
       createdAt: new Date().toISOString(),
       approvalStatus:
         entry.riskLevel === "LEVEL_0" || entry.riskLevel === "LEVEL_1"

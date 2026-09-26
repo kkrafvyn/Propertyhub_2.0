@@ -9,7 +9,7 @@ const client = new pg.Client({
   user: `postgres.${ref}`,
   password: env.SUPABASE_DB_PASSWORD,
   database: "postgres",
-  ssl: { rejectUnauthorized: false },
+  ssl: { rejectUnauthorized: process.env.DB_ALLOW_INSECURE_TLS !== "1" },
 });
 
 await client.connect();

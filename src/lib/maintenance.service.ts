@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
+import { validateStoragePath } from "./security/upload-validation";
 import { notificationService } from "./notification.service";
-import { validateClientUpload } from "./security/upload-validation";
+import { validateClientUpload, validateFileSignature } from "./security/upload-validation";
 
 const MAINTENANCE_MEDIA_BUCKET = "maintenance-media";
 
@@ -60,45 +61,53 @@ export const maintenanceService = {
     organizationId: string;
     requestId: string;
     files: File[];
+    onProgress?: (completed: number, total: number) => void;
   }) {
-    const uploadedUrls: string[] = [];
-
+    if (input.files.length > 10) throw new Error('Upload at most ten photos at once');
     for (const file of input.files) {
       validateClientUpload({ file, maxBytes: 10 * 1024 * 1024 });
-      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `${input.organizationId}/${input.requestId}/${crypto.randomUUID()}.${extension}`;
-      const { error: uploadError } = await supabase.storage
-        .from(MAINTENANCE_MEDIA_BUCKET)
-        .upload(path, file, { cacheControl: "3600", contentType: file.type, upsert: false });
-
-      if (uploadError) throw uploadError;
-      uploadedUrls.push(path);
+      await validateFileSignature(file);
     }
-
-    if (uploadedUrls.length === 0) return [];
-
-    const { data: existing } = await supabase
-      .from("maintenance_requests")
-      .select("photo_urls")
-      .eq("id", input.requestId)
-      .single();
-
-    const nextUrls = [...(existing?.photo_urls || []), ...uploadedUrls];
-    const { data, error } = await supabase
-      .from("maintenance_requests")
-      .update({ photo_urls: nextUrls, updated_at: new Date().toISOString() })
-      .eq("id", input.requestId)
-      .select("*")
-      .single();
-
-    if (error) throw error;
-    return data;
+    const paths: string[] = [];
+    const newlyUploaded: string[] = [];
+    const bucket = supabase.storage.from(MAINTENANCE_MEDIA_BUCKET);
+    try {
+      for (const file of input.files) {
+        const hash = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+        const digest = Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2,'0')).join('');
+        const mimeType = file.type.toLowerCase();
+        const extension = ({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'} as Record<string,string>)[mimeType];
+        const path = `${input.organizationId}/${input.requestId}/${digest}.${extension}`;
+        const { error } = await bucket.upload(path, file, { contentType: mimeType, upsert: false });
+        // Storage versions expose conflicts as either 409 or the Duplicate code.
+        // The append RPC verifies that the exact object exists and is authorized.
+        if (error && String(error.statusCode) !== '409' && error.name !== 'Duplicate') throw error;
+        if (!error) newlyUploaded.push(path);
+        paths.push(path); input.onProgress?.(paths.length, input.files.length);
+      }
+      if (!paths.length) return [];
+      const {data,error}=await supabase.rpc('append_maintenance_photos',{p_request_id:input.requestId,p_paths:paths});
+      if(error)throw error;
+      return data;
+    } catch (error) {
+      // Server policy protects linked files if an append succeeded but its response was lost.
+      if (newlyUploaded.length) {
+        let cleanupFailed = false;
+        try { cleanupFailed = Boolean((await bucket.remove(newlyUploaded)).error); }
+        catch { cleanupFailed = true; }
+        if (cleanupFailed) {
+          throw new Error('Photos could not be attached and temporary files could not be removed. Retry the upload to reuse those files.', { cause: error });
+        }
+      }
+      throw error;
+    }
   },
 
   async getPhotoSignedUrl(path: string, expiresIn = 300) {
+    const safePath = validateStoragePath(path);
     const { data, error } = await supabase.storage
       .from(MAINTENANCE_MEDIA_BUCKET)
-      .createSignedUrl(path, expiresIn);
+      .createSignedUrl(safePath, expiresIn);
     if (error) throw error;
     return data?.signedUrl || null;
   },

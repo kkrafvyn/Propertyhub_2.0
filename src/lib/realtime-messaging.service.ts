@@ -10,6 +10,7 @@
 
 import { supabase } from "./supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { secureId } from "./secure-id";
 
 export type ConversationType = "direct" | "group" | "support" | "organization_shared" | "channel";
 export type ParticipantRole =
@@ -284,7 +285,7 @@ export class RealtimeMessagingService {
       return created as Conversation;
     } catch {
       // Local fallback for offline/test environments
-      const convId = `conv_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      const convId = secureId("conv");
       const fallbackConv: Conversation = {
         id: convId,
         conversation_type: participants.length > 2 ? "group" : "direct",
@@ -404,7 +405,7 @@ export class RealtimeMessagingService {
       if (error || !data) throw error || new Error("Failed to save message");
       resultMessage = { ...data, sender_name: input.senderName };
     } catch {
-      const msgId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      const msgId = secureId("msg");
       resultMessage = {
         id: msgId,
         conversation_id: input.conversationId,

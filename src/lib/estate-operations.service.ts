@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { validateStoragePath } from "./security/upload-validation";
 import type { EstateChargeRow } from "./estate-ledger";
 import { ownerOversightService } from "./owner-oversight.service";
 
@@ -706,7 +707,7 @@ export const estateOperationsService = {
       .from("estate_work_order_evidence")
       .insert({
         work_order_id: input.workOrderId,
-        storage_path: input.storagePath.trim(),
+        storage_path: validateStoragePath(input.storagePath),
         media_type: input.mediaType,
         caption: input.caption?.trim() || null,
         uploaded_by: input.uploadedBy || null,
@@ -731,7 +732,7 @@ export const estateOperationsService = {
       quantity: input.quantity,
       unit_cost_minor: input.unitCostMinor,
       currency: input.currency,
-      receipt_storage_path: input.receiptStoragePath?.trim() || null,
+      receipt_storage_path: input.receiptStoragePath ? validateStoragePath(input.receiptStoragePath) : null,
       added_by: input.addedBy,
     }).select("*").single();
     if (error) throw error;

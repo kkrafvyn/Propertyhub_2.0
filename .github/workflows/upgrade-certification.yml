@@ -1,0 +1,113 @@
+name: Upgrade Certification
+
+on:
+  workflow_dispatch:
+    inputs:
+      certify_payments:
+        description: Run the complete PayAngels sandbox certification
+        required: true
+        type: boolean
+        default: false
+      run_authenticated_e2e:
+        description: Run authenticated browser journeys against the configured target
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  repository-regressions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run test:sql:upgrades
+      - run: npx vitest run scripts/backup/backup-evidence.test.mjs scripts/pilot/payment-certification.test.mjs
+      - run: npm run production:check
+      - run: npm run backup:restore-drill:fixture
+
+  payment-certification:
+    if: ${{ inputs.certify_payments }}
+    needs: repository-regressions
+    runs-on: ubuntu-latest
+    environment: payment-certification
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Require complete sandbox fixtures
+        shell: bash
+        env:
+          PILOT_ENVIRONMENT: ${{ vars.PILOT_ENVIRONMENT }}
+          PILOT_TEST_USER_EMAIL: ${{ secrets.PILOT_TEST_USER_EMAIL }}
+          PILOT_TEST_USER_PASSWORD: ${{ secrets.PILOT_TEST_USER_PASSWORD }}
+          PILOT_TEST_LISTING_ID: ${{ secrets.PILOT_TEST_LISTING_ID }}
+          PAYANGELS_SANDBOX_TEST_REFERENCE: ${{ secrets.PAYANGELS_SANDBOX_TEST_REFERENCE }}
+          PILOT_TEST_TRANSACTION_ID: ${{ secrets.PILOT_TEST_TRANSACTION_ID }}
+          PILOT_TEST_ORG_ID: ${{ secrets.PILOT_TEST_ORG_ID }}
+          PILOT_TEST_APPROVAL_ID: ${{ secrets.PILOT_TEST_APPROVAL_ID }}
+          PILOT_TEST_DISBURSE_PHONE: ${{ secrets.PILOT_TEST_DISBURSE_PHONE }}
+          PAYANGELS_SANDBOX_AMOUNT_MINOR: ${{ vars.PAYANGELS_SANDBOX_AMOUNT_MINOR }}
+        run: |
+          node --input-type=module <<'NODE'
+          const keys = ['PILOT_ENVIRONMENT','PILOT_TEST_USER_EMAIL','PILOT_TEST_USER_PASSWORD','PILOT_TEST_LISTING_ID','PAYANGELS_SANDBOX_TEST_REFERENCE','PILOT_TEST_TRANSACTION_ID','PILOT_TEST_ORG_ID','PILOT_TEST_APPROVAL_ID','PILOT_TEST_DISBURSE_PHONE','PAYANGELS_SANDBOX_AMOUNT_MINOR'];
+          const missing = keys.filter((key) => !process.env[key]?.trim());
+          if (missing.length || process.env.PILOT_ENVIRONMENT !== 'sandbox') {
+            throw new Error(`Complete sandbox certification requires PILOT_ENVIRONMENT=sandbox and all fixtures. Missing: ${missing.join(', ')}`);
+          }
+          NODE
+      - name: Run complete payment certification
+        env:
+          PILOT_ENVIRONMENT: ${{ vars.PILOT_ENVIRONMENT }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          PAYANGELS_SECRET_KEY: ${{ secrets.PAYANGELS_SECRET_KEY }}
+          PAYANGELS_WEBHOOK_SECRET: ${{ secrets.PAYANGELS_WEBHOOK_SECRET }}
+          PILOT_TEST_USER_EMAIL: ${{ secrets.PILOT_TEST_USER_EMAIL }}
+          PILOT_TEST_USER_PASSWORD: ${{ secrets.PILOT_TEST_USER_PASSWORD }}
+          PILOT_TEST_LISTING_ID: ${{ secrets.PILOT_TEST_LISTING_ID }}
+          PAYANGELS_SANDBOX_TEST_REFERENCE: ${{ secrets.PAYANGELS_SANDBOX_TEST_REFERENCE }}
+          PAYANGELS_SANDBOX_AMOUNT_MINOR: ${{ vars.PAYANGELS_SANDBOX_AMOUNT_MINOR }}
+          PILOT_TEST_TRANSACTION_ID: ${{ secrets.PILOT_TEST_TRANSACTION_ID }}
+          PILOT_TEST_ORG_ID: ${{ secrets.PILOT_TEST_ORG_ID }}
+          PILOT_TEST_APPROVAL_ID: ${{ secrets.PILOT_TEST_APPROVAL_ID }}
+          PILOT_TEST_DISBURSE_PHONE: ${{ secrets.PILOT_TEST_DISBURSE_PHONE }}
+        run: npm run pilot:payangels-e2e -- --certify
+
+  authenticated-e2e:
+    if: ${{ inputs.run_authenticated_e2e }}
+    needs: repository-regressions
+    runs-on: ubuntu-latest
+    environment: authenticated-e2e
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Require authenticated target configuration
+        shell: bash
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ vars.PLAYWRIGHT_BASE_URL }}
+          E2E_TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
+          E2E_TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
+        run: |
+          test -n "$PLAYWRIGHT_BASE_URL" || { echo 'PLAYWRIGHT_BASE_URL is required'; exit 1; }
+          test -n "$E2E_TEST_USER_EMAIL" || { echo 'E2E_TEST_USER_EMAIL is required'; exit 1; }
+          test -n "$E2E_TEST_USER_PASSWORD" || { echo 'E2E_TEST_USER_PASSWORD is required'; exit 1; }
+      - name: Run authenticated journeys
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ vars.PLAYWRIGHT_BASE_URL }}
+          E2E_TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
+          E2E_TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
+        run: npm run test:e2e -- e2e/authenticated-upgrade.spec.ts

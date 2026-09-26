@@ -68,3 +68,118 @@ describe('tenant isolation fixture requirements', () => {
     expect(required.every((key) => typeof key === 'string')).toBe(true);
   });
 });
+
+const allMigrationSql = migrationFiles
+  .map((file) => readFileSync(path.join(migrationsDir, file), 'utf8'))
+  .join('\n');
+
+// Every table must enable RLS, so a new migration that forgets it fails here
+// instead of shipping a table that is reachable by default. Tables listed below
+// are deliberate exceptions and each needs a reason.
+//
+// - Direct declaratively-partitioned children do not carry their own policies;
+//   the parent's policies apply when queried through the parent.
+// - Anything created by an extension is owned and governed by that extension.
+const RLS_EXEMPT_TABLES = new Set<string>([]);
+
+// These tables are intentionally deny-all until their owning workflow receives
+// an explicit policy. Keeping the list explicit prevents new silent deny-all
+// tables from appearing unnoticed.
+const INTENTIONAL_ZERO_POLICY_TABLES = new Set([
+  'public.fraud_reports',
+  'public.image_hashes',
+  'public.listing_sync_jobs',
+  'public.nearby_services',
+  'public.property_inspections',
+  'public.rate_limit_buckets',
+  'public.recommendation_logs',
+  'public.reconciliation_adjustments',
+  'public.vendor_assignments',
+  'public.vendor_ratings',
+  'public.vendor_services',
+  'public.vendors',
+  'private.account_guard_config',
+]);
+
+function createdTables(sql: string): Set<string> {
+  const names = new Set<string>();
+  for (const match of sql.matchAll(/CREATE TABLE(?: IF NOT EXISTS)?\s+(?:(\w+)\.)?"?(\w+)"?/gi)) {
+    const schema = match[1] ?? 'public';
+    if (/^(temp|temporary|unlogged)$/i.test(schema)) continue;
+    names.add(`${schema}.${match[2]}`);
+  }
+  return names;
+}
+
+function rlsEnabledTables(sql: string): Set<string> {
+  const names = new Set<string>();
+  for (const match of sql.matchAll(
+    /ALTER TABLE(?: IF EXISTS)?\s+(?:(\w+)\.)?"?(\w+)"?\s+ENABLE ROW LEVEL SECURITY/gi,
+  )) {
+    names.add(`${match[1] ?? 'public'}.${match[2]}`);
+  }
+  return names;
+}
+
+function policyTables(sql: string): Set<string> {
+  const names = new Set<string>();
+  for (const match of sql.matchAll(
+    /CREATE POLICY\s+(?:"[^"]+"|\S+)\s+ON\s+(?:(\w+)\.)?"?(\w+)"?/gi,
+  )) {
+    names.add(`${match[1] ?? 'public'}.${match[2]}`);
+  }
+  return names;
+}
+
+function broadGrants(sql: string): string[] {
+  return [...sql.matchAll(
+    /GRANT\s+ALL\s+ON\s+(?:(SCHEMA)\s+)?([^\s;]+)\s+TO\s+(public|anon)\b/gi,
+  )].map((match) => match[0].trim());
+}
+
+function securityDefinerHeaders(sql: string): string[] {
+  const headers: string[] = [];
+  for (const match of sql.matchAll(
+    /CREATE(?:\s+OR\s+REPLACE)?\s+FUNCTION\s+[^;]+?SECURITY\s+DEFINER[\s\S]*?(?=\bAS\s+\$\$|\bAS\s+'|\bAS\s+E')/gi,
+  )) {
+    headers.push(match[0]);
+  }
+  return headers;
+}
+
+describe('RLS coverage contract (all tables, static migration scan)', () => {
+  const created = createdTables(allMigrationSql);
+  const enabled = rlsEnabledTables(allMigrationSql);
+  const unprotected = [...created]
+    .filter((table) => !enabled.has(table) && !RLS_EXEMPT_TABLES.has(table))
+    .sort();
+
+  it('finds tables in the migrations', () => {
+    expect(created.size).toBeGreaterThan(200);
+  });
+
+  it('has every created table enable row level security', () => {
+    expect(unprotected).toEqual([]);
+  });
+
+  it('tracks every RLS-enabled zero-policy table explicitly', () => {
+    const policies = policyTables(allMigrationSql);
+    const zeroPolicyTables = [...enabled]
+      .filter((table) => !policies.has(table) && !RLS_EXEMPT_TABLES.has(table))
+      .sort();
+
+    expect(zeroPolicyTables).toEqual([...INTENTIONAL_ZERO_POLICY_TABLES].sort());
+  });
+
+  it('does not grant ALL to public or anon in migrations', () => {
+    expect(broadGrants(allMigrationSql)).toEqual([]);
+  });
+
+  it('hardens every SECURITY DEFINER function with an explicit search_path', () => {
+    const unsafe = securityDefinerHeaders(allMigrationSql).filter(
+      (header) => !/SET\s+search_path\s*=/i.test(header),
+    );
+
+    expect(unsafe).toEqual([]);
+  });
+});

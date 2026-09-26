@@ -15,9 +15,11 @@
  */
 import crypto from "node:crypto";
 import { loadProjectEnv } from "../load-project-env.mjs";
+import { requireCertificationConfig,requireAccepted,assertStableLedger } from './payment-certification.mjs';
 
 const args = new Set(process.argv.slice(2));
 const dryRun = args.has("--dry-run");
+const certify = args.has('--certify');
 
 function fail(message) {
   console.error(`✗ ${message}`);
@@ -80,6 +82,7 @@ function resolveWebhookSecret(env) {
 
 async function main() {
   const env = loadProjectEnv();
+  if(certify)requireCertificationConfig(env,dryRun);
   const required = ["VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY"];
   for (const key of required) {
     if (!env[key]?.trim()) fail(`Missing ${key}`);
@@ -96,6 +99,16 @@ async function main() {
   }
 
   const token = await signIn(env);
+  async function readRows(resource) {
+    const response=await fetch(`${env.VITE_SUPABASE_URL}/rest/v1/${resource}`,{headers:{apikey:env.VITE_SUPABASE_ANON_KEY,Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(10000)});
+    if(!response.ok)throw new Error('Certification ledger query failed');
+    return response.json();
+  }
+  async function verifiedLedger() {
+    const rows=await readRows(`property_transactions?provider_reference=eq.${encodeURIComponent(env.PAYANGELS_SANDBOX_TEST_REFERENCE)}&select=id,status,organization_id`);
+    if(rows.length!==1 || rows[0].status!=='success' || rows[0].organization_id!==env.PILOT_TEST_ORG_ID)throw new Error('Expected one successful sandbox payment in the fixture organization');
+    return readRows(`organization_wallet_ledger?reference_type=eq.property_transaction&reference_id=eq.${rows[0].id}&select=id,amount_minor,reference_id&order=id`);
+  }
   ok("Authenticated pilot test user");
 
   const listingId = env.PILOT_TEST_LISTING_ID?.trim();
@@ -104,6 +117,7 @@ async function main() {
       listingId,
       purpose: "other",
     });
+    if(certify)requireAccepted('Payment initialization',init.status);
     if (init.status === 200 || init.status === 201) {
       ok(`Payment init: reference=${init.json?.reference || init.json?.data?.reference || "ok"}`);
     } else if (init.status === 503) {
@@ -141,6 +155,13 @@ async function main() {
       },
       body: payload,
     });
+    if(certify){
+      requireAccepted('Webhook reconciliation',res.status);
+      const before=await verifiedLedger();
+      const replay=await fetch(`${env.VITE_SUPABASE_URL}/functions/v1/payangels-webhook`,{method:'POST',headers:{'Content-Type':'application/json','x-payangels-signature':signature},body:payload});
+      requireAccepted('Duplicate webhook',replay.status);assertStableLedger(before,await verifiedLedger());
+      ok('Duplicate webhook preserves one payment ledger credit');
+    }
     if (res.status === 200) {
       ok("Webhook reconciliation accepted");
     } else {
@@ -157,6 +178,11 @@ async function main() {
       transactionId: txId,
       reason: "pilot_e2e_probe",
     });
+    if(certify){
+      requireAccepted('Refund',refund.status);
+      const rows=await readRows(`property_refunds?transaction_id=eq.${txId}&select=id,status,amount_minor`);
+      if(rows.length!==1||rows[0].status!=='processed')throw new Error('Refund has not completed; verify provider callback and rerun with fresh fixtures');
+    }
     if (refund.status === 200 || refund.status === 201) {
       ok("Refund initiation accepted");
     } else if (refund.status === 503 || refund.status === 404) {
@@ -177,6 +203,11 @@ async function main() {
       amount: 1,
       phone: env.PILOT_TEST_DISBURSE_PHONE || "233200000000",
     });
+    if(certify){
+      requireAccepted('Disbursement',disb.status);
+      const rows=await readRows(`estate_distribution_approvals?id=eq.${approvalId}&select=id,status`);
+      if(rows.length!==1||rows[0].status!=='paid')throw new Error('Disbursement has not settled; verify provider callback before certification');
+    }
     if (disb.status === 200 || disb.status === 201) {
       ok("Disbursement initiation accepted");
     } else if (disb.status === 503) {
@@ -188,7 +219,7 @@ async function main() {
     console.warn("⚠ Skipping disbursement — set PILOT_TEST_ORG_ID and PILOT_TEST_APPROVAL_ID");
   }
 
-  console.log("\nPayAngels staging E2E complete (see warnings for optional probes).");
+  console.log(certify?'\nPayment certification steps passed. Retain the sandbox run output as evidence.':"\nPayAngels staging E2E complete (see warnings for optional probes).");
 }
 
 main().catch((err) => {

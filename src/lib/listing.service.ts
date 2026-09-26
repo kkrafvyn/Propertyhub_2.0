@@ -5,6 +5,8 @@ import { propertyService } from "./property.service";
 import { ensureEstateForPropertyId } from "./estate-property-link.service";
 import { propertyMatchesGhanaRegion } from "./ghana-regions";
 import { propertyMediaService } from "./property-media.service";
+import { listingQualityService, type ListingQualityReport } from "./listing-quality.service";
+import { validatePropertyLocationForPublish } from "./property-jurisdiction-validation";
 
 type ListingProperty = {
   media?: Database["public"]["Tables"]["property_media"]["Row"][] | null;
@@ -42,6 +44,36 @@ const LISTING_SELECT = `
   ),
   organization:organizations(name, logo_url, verified, slug)
 `;
+
+export function assertListingReadyForPublication(input: {
+  listing: Record<string, any>;
+  property: Record<string, any>;
+  mediaCount: number;
+}) : ListingQualityReport {
+  const location = validatePropertyLocationForPublish({
+    country: input.property.country,
+    region: input.property.region,
+    city: input.property.city,
+    subdivision_code: input.property.subdivision_code,
+    address: input.property.address,
+    ghana_post_gps: input.property.ghana_post_gps,
+  });
+  if (!location.valid) throw new Error(`Listing cannot be published: ${location.errors.join(" ")}`);
+
+  const report = listingQualityService.evaluateListing({
+    ...input.listing,
+    quality_breakdown: {
+      ...(input.listing.quality_breakdown || {}),
+      titleDocumentStatus: input.listing.title_document_status,
+    },
+    property: { ...input.property, media: Array.from({ length: input.mediaCount }, () => ({})) },
+  });
+  const blocking = report.checks.filter((check) => check.status === "failed");
+  if (blocking.length) {
+    throw new Error(`Listing cannot be published: ${blocking.map((check) => check.label).join(", ")}`);
+  }
+  return report;
+}
 
 export const listingService = {
   async getPublicListings(limit = 20, offset = 0) {
@@ -281,6 +313,35 @@ export const listingService = {
 
     if (error) throw error;
     return data[0];
+  },
+
+  async publishListing(id: string) {
+    const { data, error } = await supabase
+      .from("listings")
+      .select("*, property:properties(*, media:property_media(*))")
+      .eq("id", id)
+      .single();
+    if (error) throw error;
+    const property = Array.isArray(data.property) ? data.property[0] : data.property;
+    if (!property) throw new Error("Listing cannot be published without a property");
+    const mediaCount = Array.isArray(property.media) ? property.media.length : 0;
+    const report = assertListingReadyForPublication({ listing: data, property, mediaCount });
+    const { data: published, error: publishError } = await supabase
+      .from("listings")
+      .update({
+        status: "listed",
+        visibility: "public",
+        published_at: new Date().toISOString(),
+        quality_score: report.score,
+        quality_breakdown: { checks: report.checks, evaluatedAt: new Date().toISOString() },
+        last_quality_checked_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select()
+      .single();
+    if (publishError) throw publishError;
+    return published;
   },
 
   async deleteListing(id: string) {

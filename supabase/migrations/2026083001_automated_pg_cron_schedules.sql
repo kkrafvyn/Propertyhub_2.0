@@ -14,6 +14,7 @@ CREATE OR REPLACE FUNCTION cron_run_all_due_recurring_charges()
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, private
 AS $$
 DECLARE
     v_estate RECORD;
@@ -37,6 +38,7 @@ CREATE OR REPLACE FUNCTION cron_verify_and_breach_promises()
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, private
 AS $$
 DECLARE
     v_promise RECORD;
@@ -77,6 +79,7 @@ CREATE OR REPLACE FUNCTION cron_process_pending_automation_events()
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, private
 AS $$
 BEGIN
     UPDATE estate_automation_events
@@ -92,6 +95,7 @@ CREATE OR REPLACE FUNCTION cron_scan_operational_slas()
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, private
 AS $$
 DECLARE
     v_order RECORD;

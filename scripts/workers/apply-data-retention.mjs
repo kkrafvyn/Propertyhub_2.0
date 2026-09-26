@@ -18,17 +18,20 @@ const TABLE_MAP = {
   notification_logs: { table: 'notification_logs', dateColumn: 'created_at', orgColumn: null },
   estate_automation_events: { table: 'estate_automation_events', dateColumn: 'created_at', orgColumn: 'organization_id' },
   estate_ai_action_logs: { table: 'estate_ai_action_logs', dateColumn: 'created_at', orgColumn: 'organization_id' },
+  platform_activity: { table: 'platform_activity', dateColumn: 'created_at', orgColumn: 'organization_id' },
 };
 
 const { data: policies, error } = await supabase.from('data_retention_policies').select('*');
 if (error) throw error;
 
-const { data: holds } = await supabase.from('legal_holds').select('*').is('released_at', null);
+const { data: holds, error: holdsError } = await supabase.from('legal_holds').select('*').is('released_at', null);
+if (holdsError) throw new Error('Retention stopped because legal holds could not be verified');
 const held = new Set((holds || []).map((h) => `${h.organization_id}:${h.entity}`));
 
 const results = [];
 
 for (const policy of policies || []) {
+  if (!Number.isInteger(policy.retention_days) || policy.retention_days < 1) throw new Error('Invalid retention period');
   const mapping = TABLE_MAP[policy.entity];
   if (!mapping) {
     results.push({ entity: policy.entity, status: 'skipped', reason: 'no purge mapping' });

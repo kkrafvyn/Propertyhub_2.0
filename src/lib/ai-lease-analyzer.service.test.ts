@@ -57,10 +57,8 @@ describe('aiLeaseAnalyzerService', () => {
   });
 
   describe('ocrExtractFromDocument', () => {
-    it('extracts OCR text from simulated document upload', async () => {
-      const res = await aiLeaseAnalyzerService.ocrExtractFromDocument('Airport_Residential_Lease_2026.pdf');
-      expect(res.title).toBe('Airport_Residential_Lease_2026.pdf');
-      expect(res.extractedText).toContain('TENANCY AGREEMENT');
+    it('rejects a filename without the actual file rather than returning sample text', async () => {
+      await expect(aiLeaseAnalyzerService.ocrExtractFromDocument('lease.pdf' as unknown as File)).rejects.toThrow('actual lease file');
     });
   });
 });

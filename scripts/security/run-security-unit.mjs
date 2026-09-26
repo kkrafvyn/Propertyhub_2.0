@@ -10,6 +10,7 @@ const SECURITY_TESTS = [
   "src/lib/security/rls-policy-audit.test.ts",
   "src/lib/security/storage-isolation.test.ts",
   "src/lib/security/platform-admin-live.test.ts",
+  "src/lib/security/upload-validation.test.ts",
 ];
 
 function main() {

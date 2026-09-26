@@ -1,8 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" fill="none" role="img" aria-label="BaytMiftah">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" fill="none" role="img" aria-label="BaytMiftah inverted logo">
   <rect width="640" height="160" fill="#0F2922"/>
-  <g transform="translate(48 56)">
-    <circle cx="24" cy="15" r="5.5" fill="#FFFFFF"/>
-    <path d="M9 33.5Q24 24.5 39 33.5" stroke="#FFFFFF" stroke-width="2.25" stroke-linecap="round"/>
+  <g transform="translate(38 28)">
+    <rect width="64" height="64" rx="18" fill="#FFFFFF"/>
+    <circle cx="32" cy="21" r="7" fill="#0F2922"/>
+    <path d="M12 42C20 34 28 31 32 31C36 31 44 34 52 42" stroke="#0F2922" stroke-width="3.2" stroke-linecap="round"/>
   </g>
-  <text x="128" y="96" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="700" letter-spacing="0.08em">BAYTMIFTAH</text>
+  <text x="138" y="94" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="0.1em">BAYTMIFTAH</text>
 </svg>

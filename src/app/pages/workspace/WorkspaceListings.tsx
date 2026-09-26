@@ -359,11 +359,12 @@ export function WorkspaceListings({
         amenities: normalizeAmenities(draft.amenities),
       });
 
+      const publishing = draft.status === "listed" && listing.status !== "listed";
       await listingService.updateListing(listing.id, {
         listing_type: draft.listingType,
         price: Number(draft.price),
         currency: draft.currency.trim() || "GHS",
-        status: draft.status,
+        status: publishing ? "draft" : draft.status,
         visibility: draft.visibility,
         featured: draft.featured,
         whatsapp_enabled: draft.whatsappEnabled,
@@ -382,6 +383,8 @@ export function WorkspaceListings({
         last_quality_checked_at: new Date().toISOString(),
         published_at: draft.status === "listed" ? listing.published_at || new Date().toISOString() : null,
       });
+
+      if (publishing) await listingService.publishListing(listing.id);
 
       await listingQualityService.syncListingQuality(
         {
@@ -504,10 +507,7 @@ export function WorkspaceListings({
         });
       }
       if (action === "publish") {
-        await listingService.bulkUpdateListings(selectedListingIds, {
-          status: "listed",
-          published_at: new Date().toISOString(),
-        });
+        await Promise.all(selectedListingIds.map((listingId) => listingService.publishListing(listingId)));
       }
       if (action === "feature") {
         await listingService.bulkUpdateListings(selectedListingIds, { featured: true });

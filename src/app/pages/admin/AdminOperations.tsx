@@ -8,6 +8,8 @@ export function AdminOperations() {
   const [health,setHealth]=useState<HealthSnapshot|null>(null); const [events,setEvents]=useState<any[]>([]);
   const [healthError,setHealthError]=useState(""); const [eventsError,setEventsError]=useState("");
   const [busy,setBusy]=useState(false); const inFlight=useRef(false);
+  const [now,setNow]=useState(Date.now());
+  useEffect(()=>{const timer=window.setInterval(()=>setNow(Date.now()),30000);return ()=>window.clearInterval(timer);},[]);
   async function refresh() {
     if(inFlight.current)return; inFlight.current=true; setBusy(true); setHealthError("");setEventsError("");
     const [h,e]=await Promise.allSettled([platformOperationsService.checkHealth(),platformOperationsService.events()]);
@@ -23,6 +25,7 @@ export function AdminOperations() {
       {healthError&&<p role="alert" className="text-destructive">{healthError}. Previous results, if shown, are stale.</p>}
       {health&&<>
         <p className="text-xs text-muted-foreground">Last checked {new Date(health.checkedAt).toLocaleString()}{!health.recorded?" · Snapshot could not be saved":""}. These checks do not certify every user journey.</p>
+        {now-Date.parse(health.checkedAt)>5*60*1000 && <p role="status" className="text-amber-700">This snapshot is over five minutes old. Run checks for current status.</p>}
         <div className="divide-y">{health.checks.map(check=><div key={check.name} className="grid gap-1 py-3 sm:grid-cols-[1fr_auto]">
           <strong className="text-sm">{check.name}</strong><span className={check.status==="failed"?"text-destructive":"text-muted-foreground"}>{check.status}{check.latencyMs!==undefined?` · ${check.latencyMs} ms`:""}</span>
           <p className="text-sm text-muted-foreground sm:col-span-2">{check.detail}</p>

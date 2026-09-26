@@ -51,6 +51,20 @@ describe("resolvePostAuthRedirect", () => {
         null,
       ),
     ).toBe("/workspace");
+
+    expect(
+      resolvePostAuthRedirect(
+        { user_metadata: { role: "agency_manager" } },
+        null,
+      ),
+    ).toBe("/workspace");
+
+    expect(
+      resolvePostAuthRedirect(
+        { user_metadata: { role: "independent_agent" } },
+        null,
+      ),
+    ).toBe("/workspace");
   });
 
   it("defaults consumers to /app", () => {

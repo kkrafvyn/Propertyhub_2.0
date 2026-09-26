@@ -30,6 +30,16 @@ export type RevenueRule = {
   jurisdiction_id?: string | null;
 };
 
+export type RevenueRuleHistory = {
+  id: string;
+  revenue_rule_id: string;
+  rule_key: string;
+  operation: "insert" | "update" | "delete";
+  snapshot: Record<string, unknown>;
+  changed_by: string | null;
+  changed_at: string;
+};
+
 export type SubscriptionPlan = {
   id: string;
   plan_key: string;
@@ -172,6 +182,18 @@ export const revenueManagementService = {
       .maybeSingle();
     if (error) throw error;
     return data ? mapRule(data) : null;
+  },
+
+  async listRuleHistory(ruleKey: string, limit = 50) {
+    const safeLimit = Math.max(1, Math.min(200, Math.floor(limit)));
+    const { data, error } = await (supabase as any)
+      .from("revenue_rule_history")
+      .select("*")
+      .eq("rule_key", ruleKey)
+      .order("changed_at", { ascending: false })
+      .limit(safeLimit);
+    if (error) throw error;
+    return (data || []) as RevenueRuleHistory[];
   },
 
   async getRuleForJurisdiction(ruleKey: string, jurisdictionId: string) {

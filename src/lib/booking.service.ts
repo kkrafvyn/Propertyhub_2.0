@@ -10,11 +10,46 @@ function countNights(checkIn: string, checkOut: string) {
   return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)));
 }
 
+export type BookingProgress = {
+  payment: "not_required" | "pending" | "paid";
+  stay: "requested" | "confirmed" | "cancelled" | "checked_in" | "checked_out";
+  cancellable: boolean;
+};
+
+export function getBookingProgress(booking: {
+  status?: string | null;
+  transaction_id?: string | null;
+  checked_in_at?: string | null;
+  checked_out_at?: string | null;
+  check_in?: string | null;
+}): BookingProgress {
+  const status = String(booking.status || "pending");
+  const stay = booking.checked_out_at
+    ? "checked_out"
+    : booking.checked_in_at
+      ? "checked_in"
+      : status === "cancelled"
+        ? "cancelled"
+        : status === "confirmed"
+          ? "confirmed"
+          : "requested";
+  return {
+    payment: status === "cancelled" ? "not_required" : booking.transaction_id ? "paid" : "pending",
+    stay,
+    cancellable: !["cancelled", "checked_in", "checked_out"].includes(stay),
+  };
+}
+
 export const bookingService = {
   countNights,
 
   async getGuestBookings(userId: string) {
-    const { data, error } = await supabase
+    return (await this.getGuestBookingPage(userId)).bookings;
+  },
+
+  async getGuestBookingPage(userId: string, options: { limit?: number; before?: { date: string; id: string } } = {}) {
+    const limit = Math.min(100, Math.max(1, Math.floor(options.limit || 50)));
+    let query = supabase
       .from("short_stay_bookings")
       .select(`
         *,
@@ -27,10 +62,25 @@ export const bookingService = {
         organization:organizations(name, slug)
       `)
       .eq("guest_user_id", userId)
-      .order("check_in", { ascending: false });
+      .order("check_in", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(limit + 1);
 
+    if (options.before) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(options.before.date) || !/^[0-9a-f-]{36}$/i.test(options.before.id)) {
+        throw new Error("Invalid booking cursor");
+      }
+      query = query.or(`check_in.lt.${options.before.date},and(check_in.eq.${options.before.date},id.lt.${options.before.id})`);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
-    return data || [];
+    const bookings = (data || []).slice(0, limit);
+    const last = bookings.at(-1);
+    return {
+      bookings,
+      olderCursor: (data || []).length > limit && last ? { date: last.check_in, id: last.id } : null,
+    };
   },
 
   async getActiveGuestBookings(userId: string) {
@@ -43,7 +93,12 @@ export const bookingService = {
   },
 
   async getOrganizationBookings(organizationId: string, limit = 50) {
-    const { data, error } = await supabase
+    return (await this.getOrganizationBookingPage(organizationId,{limit})).bookings;
+  },
+
+  async getOrganizationBookingPage(organizationId:string,options:{limit?:number;before?:{date:string;id:string}}={}) {
+    const limit=Math.min(100,Math.max(1,options.limit||50));
+    let query = supabase
       .from("short_stay_bookings")
       .select(`
         *,
@@ -55,10 +110,16 @@ export const bookingService = {
       `)
       .eq("organization_id", organizationId)
       .order("check_in", { ascending: false })
-      .limit(limit);
-
+      .order("id", { ascending:false }).limit(limit+1);
+    if(options.before){
+      const {date,id}=options.before;
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||! /^[0-9a-f-]{36}$/i.test(id))throw new Error('Invalid booking cursor');
+      query=query.or(`check_in.lt.${date},and(check_in.eq.${date},id.lt.${id})`);
+    }
+    const {data,error}=await query;
     if (error) throw error;
-    return data || [];
+    const bookings=(data||[]).slice(0,limit),last=bookings.at(-1);
+    return {bookings,olderCursor:(data?.length||0)>limit&&last?{date:last.check_in,id:last.id}:null};
   },
 
   async validateDatesAvailable(listingId: string, checkIn: string, checkOut: string) {

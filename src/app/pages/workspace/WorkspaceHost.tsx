@@ -60,6 +60,8 @@ export function WorkspaceHost({
   const [loading, setLoading] = useState(true);
   const [listings, setListings] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
+  const [bookingCursor,setBookingCursor]=useState<{date:string;id:string}|null>(null);
+  const [loadingMoreBookings,setLoadingMoreBookings]=useState(false);
   const [reviews, setReviews] = useState<any[]>([]);
   const [payoutRequests, setPayoutRequests] = useState<any[]>([]);
   const [walletLedger, setWalletLedger] = useState<any[]>([]);
@@ -142,7 +144,7 @@ export function WorkspaceHost({
       setLoading(true);
       const [listingRows, bookingRows, reviewRows, payoutRows, ledgerRows] = await Promise.all([
         listingService.getOrganizationListings(organizationId),
-        bookingService.getOrganizationBookings(organizationId),
+        bookingService.getOrganizationBookingPage(organizationId),
         bookingService.getOrganizationBookingReviews(organizationId),
         organizationWalletService.getOrganizationPayoutRequests(organizationId),
         organizationWalletService.getOrganizationLedger(organizationId),
@@ -160,7 +162,8 @@ export function WorkspaceHost({
       );
       const allowedListingIds = new Set(scopedListings.map((listing) => listing.id));
       setListings(scopedListings);
-      setBookings((bookingRows || []).filter((booking) => allowedListingIds.has(booking.listing_id)));
+      setBookings(bookingRows.bookings.filter((booking) => allowedListingIds.has(booking.listing_id)));
+      setBookingCursor(bookingRows.olderCursor);
       setReviews((reviewRows || []).filter((review) => allowedListingIds.has(review.listing_id)));
       setPayoutRequests(payoutRows || []);
       setWalletLedger(ledgerRows || []);
@@ -181,6 +184,18 @@ export function WorkspaceHost({
   useEffect(() => {
     void loadHostData();
   }, [organizationId, scopeMode, scopedPropertyIds, bypassPropertyScope]);
+
+  const loadMoreBookings=async()=>{
+    if(!bookingCursor||loadingMoreBookings)return;
+    setLoadingMoreBookings(true);
+    try{
+      const page=await bookingService.getOrganizationBookingPage(organizationId,{before:bookingCursor});
+      const allowed=new Set(listings.map(row=>row.id));
+      setBookings(current=>[...current,...page.bookings.filter(row=>allowed.has(row.listing_id)&&!current.some(existing=>existing.id===row.id))]);
+      setBookingCursor(page.olderCursor);
+    }catch(error){toast.error(error instanceof Error?error.message:'Booking history could not be loaded');}
+    finally{setLoadingMoreBookings(false);}
+  };
 
   useEffect(() => {
     if (!selectedListingId) {
@@ -526,6 +541,7 @@ export function WorkspaceHost({
                 <h2 className="text-xl font-semibold">Reservations</h2>
               </div>
               <div className="space-y-4">
+                {bookingCursor && <div className="p-3 text-sm"><p>Showing loaded reservations. Load more history for a complete calendar.</p><Button variant="outline" disabled={loadingMoreBookings} onClick={()=>void loadMoreBookings()}>{loadingMoreBookings?'Loading…':'Load more reservations'}</Button></div>}
                 {listingBookings.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No reservations yet.</p>
                 ) : (

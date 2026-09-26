@@ -4,7 +4,12 @@ function randomSignerToken() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID().replace(/-/g, "");
   }
-  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    const bytes = new Uint8Array(24);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
+  }
+  throw new Error("Secure randomness is required to create a signer token");
 }
 
 export function withSignerTokens(signers: EsigSigner[]): EsigSigner[] {

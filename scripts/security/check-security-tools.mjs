@@ -13,6 +13,7 @@ function check(name, resolved, versionArgs = ["--version"]) {
     console.log(`${name.padEnd(10)} MISSING  run: npm run security:install-tools`);
     return false;
   }
+  // nosemgrep: detect-child-process - resolved commands come only from the scanner resolver.
   const result = spawnSync(resolved.command, [...resolved.prefixArgs, ...versionArgs], {
     encoding: "utf8",
     cwd: ROOT,

@@ -206,7 +206,7 @@ export default function TeamCollaborationHub({
 
   const handleCreateManagementAgreement = async () => {
     if (!canManageTeam) {
-      toast.error("Only owners and managers can set management agreements.");
+      toast.error("Only organization administrators can set management agreements.");
       return;
     }
     const estate = estates.find((row) => row.id === mgmtForm.estateId);
@@ -220,17 +220,12 @@ export default function TeamCollaborationHub({
     }
     setSavingAgreement(true);
     try {
-      await ownerOversightService.upsertAgreement({
-        propertyId: estate.property_id,
-        ownerUserId: mgmtForm.ownerUserId,
-        managingOrganizationId: organization.id,
-        estateId: estate.id,
-        mode: mgmtForm.mode,
-      });
       await ownerOversightService.ensureOwnerScopedMembership({
         organizationId: organization.id,
         userId: mgmtForm.ownerUserId,
         propertyId: estate.property_id,
+        estateId: estate.id,
+        mode: mgmtForm.mode,
       });
       toast.success("Management agreement saved. Owner Oversight is now active for that property.");
       await loadData();
@@ -399,6 +394,7 @@ export default function TeamCollaborationHub({
                     <span className="text-[11px] font-mono text-muted-foreground">{claim.listing_id}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">{claim.claimant_note || "No claimant note"}</p>
+                  <div className="flex gap-2">{(claim.evidence_storage_paths||[]).map((path:string,index:number)=><Button key={path} size="sm" variant="outline" onClick={()=>void propertyListingClaimService.evidenceUrl(path).then(url=>window.open(url,'_blank','noopener,noreferrer')).catch(error=>toast.error(error.message))}>Evidence {index+1}</Button>)}</div>
                   {canManageTeam && ["pending", "needs_info"].includes(claim.status) ? (
                     <div className="flex flex-wrap gap-2">
                       <Button
@@ -416,13 +412,15 @@ export default function TeamCollaborationHub({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() =>
+                        onClick={() => {
+                          const note=window.prompt('What information does the claimant need to provide?');
+                          if(!note?.trim())return;
                           void propertyListingClaimService
-                            .reviewClaim({ claimId: claim.id, status: "needs_info" })
+                            .reviewClaim({ claimId: claim.id, status: "needs_info", reviewerNote:note })
                             .then(() => loadData())
                             .then(() => toast.success("Requested more info"))
-                            .catch((error) => toast.error(error.message || "Review failed"))
-                        }
+                            .catch((error) => toast.error(error.message || "Review failed"));
+                        }}
                       >
                         Needs info
                       </Button>

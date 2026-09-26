@@ -18,8 +18,10 @@
     "test": "vitest run",
     "security:dependency-audit": "npm audit --audit-level=high",
     "security:sast": "node scripts/security/run-sast.mjs",
+    "security:sast:strict": "node scripts/security/run-sast.mjs --strict",
     "security:sca": "node scripts/security/run-sca.mjs",
     "security:secrets": "node scripts/security/run-secrets.mjs",
+    "security:secrets:strict": "node scripts/security/run-secrets.mjs --strict",
     "security:actions-audit": "node scripts/security/audit-workflows.mjs",
     "security:unit": "node scripts/security/run-security-unit.mjs",
     "security:tenant": "node scripts/security/run-tenant-isolation.mjs",
@@ -123,15 +125,17 @@
     "contracts:deploy-lease": "npm run build --prefix blockchain && npm exec --prefix blockchain -- hardhat run ../scripts/deployPropertyLease.cjs --network polygonAmoy",
     "contracts:deploy-verification-registry": "npm run build --prefix blockchain && npm exec --prefix blockchain -- hardhat run ../scripts/deployVerificationRegistry.cjs --network polygonAmoy",
     "contracts:test": "npm run test --prefix blockchain",
-    "contracts:verify": "npm run verify --prefix blockchain"
+    "contracts:verify": "npm run verify --prefix blockchain",
+    "desktop:pack:win:signed": "npm run desktop:icons && npm run build:desktop && electron-builder --win --x64 --publish never --config.win.signAndEditExecutable=true --config.forceCodeSigning=true",
+    "test:sql:upgrades": "node scripts/security/test-owner-access.mjs && node scripts/security/test-workspace-chat.mjs && node scripts/security/test-owner-digests.mjs"
   },
   "dependencies": {
-    "@capacitor/android": "^8.3.4",
-    "@capacitor/camera": "^8.2.2",
-    "@capacitor/core": "^8.3.4",
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/camera": "^8.2.4",
+    "@capacitor/core": "^8.5.2",
     "@capacitor/geolocation": "^8.2.2",
     "@capacitor/haptics": "^8.0.2",
-    "@capacitor/ios": "^8.3.4",
+    "@capacitor/ios": "^8.5.2",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@mui/icons-material": "7.3.5",
@@ -164,7 +168,7 @@
     "@radix-ui/react-toggle": "1.1.2",
     "@radix-ui/react-toggle-group": "1.1.2",
     "@radix-ui/react-tooltip": "1.1.8",
-    "@supabase/supabase-js": "^2.110.8",
+    "@supabase/supabase-js": "^2.117.2",
     "canvas-confetti": "1.9.4",
     "capacitor-native-biometric": "^4.2.2",
     "class-variance-authority": "0.7.1",
@@ -178,6 +182,7 @@
     "lucide-react": "0.487.0",
     "motion": "12.23.24",
     "next-themes": "0.4.6",
+    "pdfjs-dist": "6.3.289",
     "react": "19.2.7",
     "react-day-picker": "8.10.1",
     "react-dnd": "16.0.1",
@@ -198,7 +203,8 @@
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.1126.0",
-    "@capacitor/cli": "^8.3.4",
+    "@capacitor/cli": "^8.5.2",
+    "@electric-sql/pglite": "0.5.8",
     "@playwright/test": "^1.55.0",
     "@tailwindcss/vite": "4.1.12",
     "@testing-library/dom": "^10.4.1",
@@ -225,7 +231,7 @@
     "tailwindcss": "4.1.12",
     "typescript": "^5.8.3",
     "vite": "6.4.3",
-    "vitest": "^3.2.7",
+    "vitest": "^5.0.2",
     "wait-on": "^9.1.0",
     "web-push": "^3.6.7"
   },
@@ -282,7 +288,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "electron/build/icon.ico",

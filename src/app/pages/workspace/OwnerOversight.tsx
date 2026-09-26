@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import {
   Activity,
@@ -23,6 +23,7 @@ import {
   type OwnerOversightPrefs,
   type OwnerPropertyOverview,
   type PropertyManagementAgreement,
+  type OwnerActivityCursor,
 } from "../../../lib/owner-oversight.service";
 import type { TimelineActivity } from "../../components/ux/ActivityTimeline";
 
@@ -53,6 +54,12 @@ export function OwnerOversight({
   const [approvals, setApprovals] = useState<OwnerExpenseApproval[]>([]);
   const [prefs, setPrefs] = useState<OwnerOversightPrefs | null>(null);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [activityPropertyId, setActivityPropertyId] = useState("");
+  const [activityCursor, setActivityCursor] = useState<OwnerActivityCursor | null>(null);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const loadVersion = useRef(0);
 
   const setTab = (next: Tab) => {
     const params = new URLSearchParams(searchParams);
@@ -62,37 +69,65 @@ export function OwnerOversight({
 
   const load = async () => {
     if (!user?.id) return;
+    const version = ++loadVersion.current;
     setLoading(true);
+    setLoadingOlder(false);
     try {
       const [ags, ovs, acts, stmts, expenses, maint, apps, notificationPrefs] = await Promise.all([
         ownerOversightService.listMyAgreements(user.id),
         ownerOversightService.getPropertyOverviews(user.id),
-        ownerOversightService.getActivity({ ownerUserId: user.id, limit: 40 }),
+        ownerOversightService.getActivityPage({ ownerUserId: user.id, propertyId: activityPropertyId || undefined, limit: 40 }),
         ownerOversightService.listStatements(user.id),
         ownerOversightService.listExpenseLines(user.id),
         ownerOversightService.listMaintenance(user.id),
         ownerOversightService.listExpenseApprovals(user.id),
         ownerOversightService.getNotificationPrefs(user.id),
       ]);
+      if (version !== loadVersion.current) return;
       setAgreements(ags);
       setOverviews(ovs);
-      setActivity(ownerOversightService.toTimelineItems(acts, workspaceBasePath));
+      setActivity(ownerOversightService.toTimelineItems(acts.rows, workspaceBasePath));
+      setActivityCursor(acts.nextCursor);
       setStatements(stmts);
       setExpenseLines(expenses);
       setIssues(maint);
       setApprovals(apps);
       setPrefs(notificationPrefs);
+      setLastRefreshedAt(new Date().toISOString());
+      setLoadError(null);
       if (!selectedPropertyId && ovs[0]) setSelectedPropertyId(ovs[0].propertyId);
     } catch (error: any) {
+      if (version !== loadVersion.current) return;
+      setLoadError(error.message || "Failed to load owner oversight");
       toast.error(error.message || "Failed to load owner oversight");
     } finally {
-      setLoading(false);
+      if (version === loadVersion.current) setLoading(false);
     }
   };
 
   useEffect(() => {
     void load();
-  }, [user?.id, workspaceBasePath]);
+    return () => { loadVersion.current++; };
+  }, [user?.id, workspaceBasePath, activityPropertyId]);
+
+  const loadOlderActivity = async () => {
+    if (!user?.id || !activityCursor || loadingOlder) return;
+    const version = loadVersion.current;
+    setLoadingOlder(true);
+    try {
+      const page = await ownerOversightService.getActivityPage({
+        ownerUserId: user.id, propertyId: activityPropertyId || undefined, limit: 40, before: activityCursor,
+      });
+      if (version !== loadVersion.current) return;
+      const items = ownerOversightService.toTimelineItems(page.rows, workspaceBasePath);
+      setActivity(current => [...current, ...items.filter(item => !current.some(existing => existing.id === item.id))]);
+      setActivityCursor(page.nextCursor);
+    } catch (error: any) {
+      if (version === loadVersion.current) toast.error(error.message || "Failed to load older activity");
+    } finally {
+      if (version === loadVersion.current) setLoadingOlder(false);
+    }
+  };
 
   const selected = useMemo(
     () => overviews.find((o) => o.propertyId === selectedPropertyId) || overviews[0] || null,
@@ -100,6 +135,11 @@ export function OwnerOversight({
   );
 
   const pendingApprovals = approvals.filter((a) => a.status === "pending");
+  const orderedApprovals = [...approvals].sort((a, b) => {
+    if (a.status === "pending" && b.status !== "pending") return -1;
+    if (b.status === "pending" && a.status !== "pending") return 1;
+    return a.status === "pending" ? a.created_at.localeCompare(b.created_at) : b.created_at.localeCompare(a.created_at);
+  });
 
   const priorityTone = (priority?: string) => {
     if (priority === "urgent" || priority === "critical") return "text-red-600";
@@ -115,7 +155,7 @@ export function OwnerOversight({
     );
   }
 
-  if (!agreements.length && !overviews.length) {
+  if (!agreements.length && !overviews.length && !loadError) {
     return (
       <Card className="p-10 text-center space-y-3">
         <Shield className="h-8 w-8 mx-auto text-muted-foreground" />
@@ -152,6 +192,12 @@ export function OwnerOversight({
           </select>
         ) : null}
       </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+        <span>{lastRefreshedAt ? `Last refreshed ${new Date(lastRefreshedAt).toLocaleString()}` : "Data has not loaded yet."} Refresh to see new activity and approval decisions.</span>
+        <Button size="sm" variant="outline" onClick={() => void load()}>Refresh</Button>
+      </div>
+      {loadError ? <Card className="p-4 text-sm text-red-600" role="alert">{loadError}. {lastRefreshedAt ? "Previously loaded data may be out of date." : "Please retry loading."}</Card> : null}
 
       <div className="flex flex-wrap gap-2 border-b border-border pb-2">
         {(
@@ -214,11 +260,16 @@ export function OwnerOversight({
       ) : null}
 
       {tab === "activity" ? (
-        activity.length ? (
-          <ActivityFeed items={activity} />
-        ) : (
-          <Card className="p-8 text-center text-sm text-muted-foreground">No activity recorded yet.</Card>
-        )
+        <div className="space-y-3">
+          <label className="block text-sm">Activity for property
+            <select className="ml-2 rounded border bg-background p-2" value={activityPropertyId} onChange={event => setActivityPropertyId(event.target.value)}>
+              <option value="">All properties</option>
+              {overviews.map(property => <option key={property.propertyId} value={property.propertyId}>{property.address}</option>)}
+            </select>
+          </label>
+          {activity.length ? <ActivityFeed items={activity} /> : <Card className="p-8 text-center text-sm text-muted-foreground">No activity recorded yet.</Card>}
+          {activityCursor ? <Button variant="outline" disabled={loadingOlder} onClick={() => void loadOlderActivity()}>{loadingOlder ? "Loading older activity…" : "Load older activity"}</Button> : null}
+        </div>
       ) : null}
 
       {tab === "financials" ? (
@@ -370,7 +421,7 @@ export function OwnerOversight({
               No expense approvals. Large spend items from your management company appear here.
             </Card>
           ) : (
-            approvals.map((item) => (
+            orderedApprovals.map((item) => (
               <Card key={item.id} className="p-4 space-y-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
@@ -382,6 +433,7 @@ export function OwnerOversight({
                   </Badge>
                 </div>
                 <p className="text-sm font-semibold">{money(item.amount_minor, item.currency)}</p>
+                <p className="text-xs text-muted-foreground">Requested {new Date(item.created_at).toLocaleString()}{item.status === "pending" ? ` · Waiting ${Math.max(0, Math.floor((Date.now() - new Date(item.created_at).getTime()) / 86400000))} days` : ""}</p>
                 {item.status === "pending" ? (
                   <div className="flex gap-2">
                     <Button
@@ -454,6 +506,10 @@ export function OwnerOversight({
           >
             Save preferences
           </Button>
+          <label className="block text-sm">Digest time zone (IANA name)
+            <input className="block rounded border p-2" value={prefs.digest_timezone||'UTC'} onChange={event=>setPrefs({...prefs,digest_timezone:event.target.value})} placeholder="Africa/Accra" />
+          </label>
+          <p className="text-xs text-muted-foreground">Digests appear in your in-app notifications for the previous complete local day or Monday-to-Monday week. Each agreement follows the daily or weekly schedule selected by your management company. Global notification opt-outs also apply. Save preferences to enable delivery.</p>
         </Card>
       ) : null}
     </div>

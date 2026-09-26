@@ -7,7 +7,11 @@ const fixturePassword =
   import.meta.env.TENANT_FIXTURE_PASSWORD || "BaytMiftah-TenantIsolation-CI-2026!";
 const workspaceEmail = "tenant-a-isolation@mailinator.com";
 
-const hasFixtures = Boolean(supabaseUrl && testAnonKey);
+const hasFixtures = Boolean(
+  supabaseUrl &&
+    testAnonKey &&
+    import.meta.env.RUN_TENANT_ISOLATION_TESTS === "true",
+);
 const testIfConfigured = hasFixtures ? it : it.skip;
 
 let workspaceToken = "";
@@ -44,7 +48,7 @@ describe("platform admin live denial", () => {
     });
 
     expect(error).toBeTruthy();
-  });
+  }, 30_000);
 
   testIfConfigured("workspace user cannot read platform_backup_jobs", async () => {
     const client = userClient(workspaceToken);
@@ -52,7 +56,7 @@ describe("platform admin live denial", () => {
 
     expect(error).toBeNull();
     expect(data || []).toEqual([]);
-  });
+  }, 30_000);
 
   testIfConfigured("workspace user cannot mutate platform_kyc_policies", async () => {
     const client = userClient(workspaceToken);
@@ -62,7 +66,7 @@ describe("platform admin live denial", () => {
       .eq("country_code", "GH");
 
     expect(error).toBeTruthy();
-  });
+  }, 30_000);
 
   testIfConfigured("workspace user cannot read organization_api_keys outside their org", async () => {
     const tenantBId = import.meta.env.VITE_SUPABASE_TEST_TENANT_B_ID;
@@ -76,7 +80,7 @@ describe("platform admin live denial", () => {
 
     expect(error).toBeNull();
     expect(data || []).toEqual([]);
-  });
+  }, 30_000);
 });
 
 if (!hasFixtures) {

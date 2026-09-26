@@ -5,6 +5,7 @@ import { ownerOversightService } from "./owner-oversight.service";
 const db = supabase as any;
 
 export type PortfolioLedgerLine = {
+  entryId?: string; entryDate?: string; referenceNumber?: string; lineId?: string; allocationId?: string; chargeId?: string;
   accountCode: string;
   accountName: string;
   accountType: "ASSET" | "LIABILITY" | "EQUITY" | "REVENUE" | "EXPENSE";
@@ -13,6 +14,8 @@ export type PortfolioLedgerLine = {
 };
 
 export type PortfolioFinancialReport = {
+  generatedAt?: string; periodStart?: string; periodEnd?: string; unbalancedEntryIds?: string[];
+  missingAccountCount?: number;
   revenueMinor: number;
   expenseMinor: number;
   netIncomeMinor: number;
@@ -33,6 +36,9 @@ export type BudgetVariance = {
 };
 
 export function aggregatePortfolioLedger(lines: PortfolioLedgerLine[]): PortfolioFinancialReport {
+  for (const line of lines) {
+    if (!Number.isSafeInteger(line.debitMinor) || !Number.isSafeInteger(line.creditMinor)) throw new Error("Ledger amounts exceed supported precision or contain invalid values");
+  }
   const revenueMinor = lines
     .filter((line) => line.accountType === "REVENUE")
     .reduce((total, line) => total + line.creditMinor - line.debitMinor, 0);
@@ -45,6 +51,7 @@ export function aggregatePortfolioLedger(lines: PortfolioLedgerLine[]): Portfoli
   const cashOutflowsMinor = cashLines
     .reduce((total, line) => total + line.creditMinor, 0);
 
+  if (![revenueMinor,expenseMinor,cashInflowsMinor,cashOutflowsMinor,revenueMinor-expenseMinor,cashInflowsMinor-cashOutflowsMinor].every(Number.isSafeInteger)) throw new Error('Report totals exceed supported precision');
   return {
     revenueMinor,
     expenseMinor,
@@ -398,30 +405,16 @@ export const estateReportingService = {
   },
 
   async portfolioFinancialReport(organizationId: string, startDate: string, endDate: string) {
-    const { data, error } = await db
-      .from("journal_entries")
-      .select("entry_date, je_lines(debit_amount_minor, credit_amount_minor, coa_accounts(account_code, account_name, account_type))")
-      .eq("organization_id", organizationId)
-      .eq("status", "POSTED")
-      .gte("entry_date", startDate)
-      .lte("entry_date", endDate)
-      .order("entry_date", { ascending: true });
-    if (error) throw error;
-
-    const lines: PortfolioLedgerLine[] = (data || []).flatMap((entry: any) =>
-      (entry.je_lines || []).flatMap((line: any) => {
-        const account = line.coa_accounts;
-        if (!account || !["ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE"].includes(account.account_type)) return [];
-        return [{
-          accountCode: account.account_code,
-          accountName: account.account_name,
-          accountType: account.account_type,
-          debitMinor: Number(line.debit_amount_minor) || 0,
-          creditMinor: Number(line.credit_amount_minor) || 0,
-        }];
-      })
-    );
-    return aggregatePortfolioLedger(lines);
+    const {data,error}=await db.rpc('portfolio_ledger_source',{p_org:organizationId,p_start:startDate,p_end:endDate});
+    if(error)throw error;
+    return {
+      ...aggregatePortfolioLedger(data.lines),
+      generatedAt: data.generatedAt,
+      periodStart: data.periodStart,
+      periodEnd: data.periodEnd,
+      unbalancedEntryIds: data.unbalancedEntryIds,
+      missingAccountCount: Number(data.missingAccounts || 0),
+    };
   },
 
   async budgetVariance(estateIds: string[], period?: string) {
@@ -445,8 +438,8 @@ export const estateReportingService = {
   async exportPortfolioAuditPack(organizationId: string, startDate: string, endDate: string) {
     const report = await this.portfolioFinancialReport(organizationId, startDate, endDate);
     const rows = [
-      ["Account code", "Account name", "Account type", "Debit (minor)", "Credit (minor)"],
-      ...report.lines.map((line) => [line.accountCode, line.accountName, line.accountType, line.debitMinor, line.creditMinor]),
+      ["Journal ID", "Entry date", "Reference", "Line ID", "Allocation ID", "Charge ID", "Account code", "Account name", "Account type", "Debit (minor)", "Credit (minor)"],
+      ...report.lines.map((line) => [line.entryId, line.entryDate, line.referenceNumber, line.lineId, line.allocationId, line.chargeId, line.accountCode, line.accountName, line.accountType, line.debitMinor, line.creditMinor]),
     ];
     return rows.map((row) => row.map((value) => csvCell(value)).join(",")).join("\n");
   },

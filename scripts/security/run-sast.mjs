@@ -3,8 +3,15 @@ import { resolveSecurityTool, runResolvedTool } from "./lib/resolve-tool.mjs";
 import { writeSecurityResult } from "./lib/security-result.mjs";
 
 const outputDir = process.env.SECURITY_RESULTS_DIR || "security-results";
+const strict = process.argv.includes("--strict") || process.env.SECURITY_STRICT === "1";
 
+// p/security-audit and p/owasp-top-ten are Semgrep's canonical security
+// rulesets. The language packs alone (p/javascript, p/typescript, p/react)
+// mostly encode correctness/best-practice rules and miss injection,
+// deserialization, SSRF, and crypto misuse classes.
 const CONFIGS = [
+  "p/security-audit",
+  "p/owasp-top-ten",
   "p/typescript",
   "p/react",
   "p/javascript",
@@ -20,7 +27,11 @@ function buildScanArgs(via) {
     "scan",
     ...configArgs,
     "--error",
+    // ERROR + WARNING captures the real security-audit rules (most of which are
+    // WARNING), while INFO stays excluded so the rules the repo deliberately
+    // demoted to INFO + `disabled: true` in .semgrep/baytmiftah.yml stay quiet.
     "--severity=ERROR",
+    "--severity=WARNING",
     "--metrics=off",
     "--quiet",
     ...(via === "docker" ? DOCKER_TARGETS : SCAN_TARGETS),
@@ -34,7 +45,7 @@ function main() {
       reason: "Run npm run security:install-tools, py -m pip install semgrep, or install Docker",
     });
     console.log("Semgrep: UNVERIFIED — run npm run security:install-tools");
-    process.exit(0);
+    process.exit(strict ? 1 : 0);
   }
 
   const result = runResolvedTool(resolved, buildScanArgs(resolved.via));
@@ -51,7 +62,7 @@ function main() {
   if (result.stderr) console.error(result.stderr);
   console.log(`Semgrep SAST: ${status}`);
   if (status === "FAIL") process.exit(1);
-  if (status === "UNVERIFIED") process.exit(0);
+  if (status === "UNVERIFIED") process.exit(strict ? 1 : 0);
 }
 
 main();

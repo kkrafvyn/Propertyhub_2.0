@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { Database } from "./database.types";
+import { getSafeUploadExtension, validateClientUpload, validateFileSignature } from "./security/upload-validation";
 
 type PropertyMediaInsert = Database["public"]["Tables"]["property_media"]["Insert"];
 type PropertyMediaUpdate = Database["public"]["Tables"]["property_media"]["Update"];
@@ -16,7 +17,7 @@ export type PropertyMediaResolvable = Pick<PropertyMediaRow, "storage_path" | "p
   Partial<PropertyMediaRow>;
 
 function buildStoragePath(organizationId: string, propertyId: string, file: File) {
-  const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const extension = getSafeUploadExtension(file);
   return `${organizationId}/${propertyId}/${crypto.randomUUID()}.${extension}`;
 }
 
@@ -123,6 +124,8 @@ export const propertyMediaService = {
     const uploadedRows = [];
 
     for (const [index, file] of params.files.entries()) {
+      validateClientUpload({ file, maxBytes: 10 * 1024 * 1024 });
+      await validateFileSignature(file);
       const storagePath = buildStoragePath(params.organizationId, params.propertyId, file);
       const { error: uploadError } = await supabase.storage
         .from(PROPERTY_MEDIA_BUCKET)

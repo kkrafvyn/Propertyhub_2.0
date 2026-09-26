@@ -71,6 +71,9 @@ async function main() {
   const env = loadProjectEnv();
   const tier = args.tier || (args.autoTier ? resolveAutoTier() : "daily");
   const outputDir = createBackupDir(`${args.label}_${tier}`);
+  const evidencePath = path.join(PROJECT_ROOT, 'backups', 'latest-run.json');
+  const evidence = { status: 'running', startedAt: new Date().toISOString(), database: false, storage: false, offsite: false, integrityVerified: false, databaseRestored: false };
+  writeJson(evidencePath, evidence);
 
   console.log(`\nBaytMiftah offsite backup`);
   console.log(`  Local dir: ${path.relative(PROJECT_ROOT, outputDir)}`);
@@ -138,9 +141,16 @@ async function main() {
     console.log(`  S3: s3://${summary.offsite.bucket}/${summary.offsite.prefix}`);
   }
   console.log("");
+  writeJson(evidencePath, { ...evidence,
+    status: args.skipUpload || args.skipDrill || args.storageOnly || args.dbOnly ? 'partial' : 'completed',
+    completedAt: new Date().toISOString(), database: Boolean(summary.database), storage: Boolean(summary.storage),
+    offsite: Boolean(summary.offsite), integrityVerified: !args.skipDrill,
+    backupDir: path.relative(PROJECT_ROOT, outputDir),
+  });
 }
 
 main().catch((error) => {
+  writeJson(path.join(PROJECT_ROOT, 'backups', 'latest-run.json'), { status: 'failed', checkedAt: new Date().toISOString(), reason: 'Backup pipeline failed; inspect protected runner logs' });
   console.error("\nOffsite backup failed:", error.message || error);
   process.exit(1);
 });

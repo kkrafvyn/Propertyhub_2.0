@@ -1,3 +1,5 @@
+import { secureId } from './secure-id';
+
 /**
  * BaytMiftah Real Estate Operating System (REOS) Query Engine
  * Translates natural language inputs and operational prompts into multi-dialect structured Query Languages:
@@ -116,7 +118,7 @@ export function parseNaturalLanguageToParams(input: string) {
 export function generateReosQueryBundle(prompt: string, context: string = 'search'): ReosQueryBundle {
   const p = parseNaturalLanguageToParams(prompt);
   const lower = prompt.toLowerCase();
-  const id = `reos-q-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+  const id = secureId('reos-q');
 
   // 1. Finance & Arrears / Ledger Queries
   if (lower.includes('arrear') || lower.includes('overdue') || lower.includes('ledger') || lower.includes('balance') || context === 'payments') {

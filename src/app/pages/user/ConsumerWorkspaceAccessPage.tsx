@@ -28,6 +28,8 @@ export function ConsumerWorkspaceAccessPage() {
   const [claims, setClaims] = useState<PropertyListingClaim[]>([]);
   const [requests, setRequests] = useState<OrganizationMembershipRequest[]>([]);
   const [claimNote, setClaimNote] = useState("");
+  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
+  const [resubmitting, setResubmitting] = useState<PropertyListingClaim | null>(null);
   const [orgSlug, setOrgSlug] = useState("");
   const [joinMessage, setJoinMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -69,20 +71,38 @@ export function ConsumerWorkspaceAccessPage() {
   }, [user?.id]);
 
   const submitClaim = async () => {
-    if (!claimListingId) {
-      toast.error("Open a listing and use Claim this property, or pass ?claimListing=");
+    if (submitting) return;
+    const listingId = resubmitting?.listing_id || claimListingId;
+    if (!listingId) {
+      toast.error("Open a listing and select Claim this property");
       return;
     }
     setSubmitting(true);
+    let uploaded: string[] = [];
     try {
-      await propertyListingClaimService.submitClaim({
-        listingId: claimListingId,
+      if ((resubmitting?.evidence_storage_paths.length || 0) + evidenceFiles.length > 5) {
+        throw new Error('At most five evidence files per claim');
+      }
+      if (resubmitting && !claimNote.trim()) throw new Error('Add a response to the reviewer');
+      uploaded = await propertyListingClaimService.uploadEvidence(listingId, evidenceFiles);
+      if (resubmitting) await propertyListingClaimService.resubmitClaim(resubmitting.id, claimNote, [...resubmitting.evidence_storage_paths, ...uploaded]);
+      else await propertyListingClaimService.submitClaim({
+        listingId,
         claimantNote: claimNote,
+        evidenceStoragePaths: uploaded,
       });
+      uploaded = [];
       toast.success("Claim submitted for review");
       setClaimNote("");
-      await reload();
+      setEvidenceFiles([]);
+      setResubmitting(null);
+      await reload().catch(() => toast.error('Your claim was submitted, but the list could not refresh. Reload this page.'));
     } catch (error: any) {
+      try {
+        await propertyListingClaimService.removeUnsubmittedEvidence(uploaded);
+      } catch {
+        toast.error('Some uploaded files could not be cleaned up. Contact support if this persists.');
+      }
       toast.error(error.message || "Failed to submit claim");
     } finally {
       setSubmitting(false);
@@ -96,7 +116,7 @@ export function ConsumerWorkspaceAccessPage() {
       const org = await membershipRequestService.findOrganizationBySlug(orgSlug);
       if (!org) throw new Error("Organization not found for that slug");
       if (org.suspended) throw new Error("That organization is suspended");
-      const approvedClaim = claims.find((claim) => claim.status === "approved");
+      const approvedClaim = claims.find((claim) => claim.status === "approved" && claim.organization_id === org.id);
       await membershipRequestService.submitRequest({
         organizationId: org.id,
         userId: user.id,
@@ -157,8 +177,8 @@ export function ConsumerWorkspaceAccessPage() {
             {TRUST_LABELS.listing_quality_score.disclaimer} Claim review unlocks access
             workflows; it does not transfer legal title.
           </p>
-          {claimListingId ? (
-            <p className="text-xs font-mono text-muted-foreground">Listing: {claimListingId}</p>
+          {resubmitting?.listing_id || claimListingId ? (
+            <p className="text-xs font-mono text-muted-foreground">Listing: {resubmitting?.listing_id || claimListingId}</p>
           ) : (
             <p className="text-xs text-muted-foreground">
               Tip: open a property page and tap <strong>Claim this property</strong>.
@@ -166,12 +186,20 @@ export function ConsumerWorkspaceAccessPage() {
           )}
           <Input
             value={claimNote}
+            disabled={submitting}
+            maxLength={10000}
             onChange={(e) => setClaimNote(e.target.value)}
             placeholder="Optional note / evidence summary"
           />
-          <Button onClick={() => void submitClaim()} disabled={submitting || !claimListingId}>
-            <Send className="h-4 w-4 mr-1" /> Submit claim
+          {resubmitting && <p className="text-sm">Responding to: {resubmitting.reviewer_note}. Previously submitted evidence ({resubmitting.evidence_storage_paths.length} files) will be retained.</p>}
+          <label className="block text-sm">Evidence (PDF or images, up to five files, 10 MB each)
+            <input type="file" multiple accept="application/pdf,image/jpeg,image/png,image/webp" disabled={submitting} onChange={event=>{setEvidenceFiles(Array.from(event.target.files||[]));event.target.value='';}} />
+          </label>
+          <p className="text-xs text-muted-foreground">{evidenceFiles.map(file=>file.name).join(', ')}</p>
+          <Button onClick={() => void submitClaim()} disabled={submitting || !(claimListingId||resubmitting)}>
+            <Send className="h-4 w-4 mr-1" /> {submitting?'Submitting…':resubmitting?'Resubmit claim':'Submit claim'}
           </Button>
+          {resubmitting && <Button variant="outline" disabled={submitting} onClick={() => { setResubmitting(null); setClaimNote(''); setEvidenceFiles([]); }}>Cancel response</Button>}
         </Card>
 
         <Card className="p-5 space-y-3">
@@ -219,6 +247,8 @@ export function ConsumerWorkspaceAccessPage() {
               <div key={claim.id} className="text-xs border border-border rounded-lg p-2">
                 <div className="font-medium capitalize">{claim.status}</div>
                 <div className="text-muted-foreground font-mono">{claim.listing_id}</div>
+                {claim.reviewer_note && <p className="mt-2">Reviewer: {claim.reviewer_note}</p>}
+                {claim.status==='needs_info' && <Button size="sm" variant="outline" onClick={()=>{setResubmitting(claim);setClaimNote('');setEvidenceFiles([]);window.scrollTo({top:0,behavior:'smooth'});}}>Respond with more information</Button>}
               </div>
             ))
           )}

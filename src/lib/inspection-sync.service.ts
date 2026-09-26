@@ -6,6 +6,7 @@ import {
   INSPECTION_CATEGORIES,
   type InspectionCategoryKey,
 } from './inspection-checklist.data';
+import { secureId } from './secure-id';
 
 export type InspectionCondition =
   | 'excellent'
@@ -111,8 +112,8 @@ export const inspectionSyncService = {
     leaseId?: string;
     initialSecurityDepositPesewas?: number;
   }): FieldInspectionDraft {
-    const id = `insp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    const offlineClientId = `device_${Date.now()}`;
+    const id = secureId('insp');
+    const offlineClientId = secureId('device');
     const now = new Date().toISOString();
 
     const items: Record<string, FieldInspectionItemState> = {};

@@ -5,6 +5,7 @@ import { resolveSecurityTool, runResolvedTool } from "./lib/resolve-tool.mjs";
 import { writeSecurityResult } from "./lib/security-result.mjs";
 
 const outputDir = process.env.SECURITY_RESULTS_DIR || "security-results";
+const strict = process.argv.includes("--strict") || process.env.SECURITY_STRICT === "1";
 
 function main() {
   const resolved = resolveSecurityTool("gitleaks");
@@ -13,7 +14,7 @@ function main() {
       reason: "Run npm run security:install-tools or install Docker",
     });
     console.log("Secrets scan: UNVERIFIED — run npm run security:install-tools");
-    process.exit(0);
+    process.exit(strict ? 1 : 0);
   }
 
   mkdirSync(outputDir, { recursive: true });

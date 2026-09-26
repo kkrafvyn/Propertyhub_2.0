@@ -4,16 +4,25 @@ import { Button } from "../../ui/Button";
 
 type ConsumerWelcomeHeroProps = {
   displayName: string;
+  kicker?: string;
+  heading?: string;
   description: string;
+  primaryActionLabel?: string;
+  primaryActionHref?: string;
   unreadMessages?: number;
 };
 
 export function ConsumerWelcomeHero({
   displayName,
+  kicker = "My BaytMiftah",
+  heading,
   description,
+  primaryActionLabel = "Explore properties",
+  primaryActionHref = "/search",
   unreadMessages = 0,
 }: ConsumerWelcomeHeroProps) {
   const firstName = displayName.split(" ")[0] || displayName;
+  const resolvedHeading = heading || `Welcome back, ${firstName}`;
 
   return (
     <section className="consumer-welcome-hero">
@@ -22,17 +31,17 @@ export function ConsumerWelcomeHero({
         <div className="space-y-3 max-w-2xl">
           <p className="consumer-welcome-kicker">
             <Sparkles className="w-3.5 h-3.5" />
-            My BaytMiftah
+            {kicker}
           </p>
-          <h1 className="consumer-welcome-title">Welcome back, {firstName}</h1>
+          <h1 className="consumer-welcome-title">{resolvedHeading}</h1>
           <p className="consumer-welcome-description">{description}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 shrink-0">
-          <Link to="/search">
+          <Link to={primaryActionHref}>
             <Button className="consumer-welcome-cta gap-2">
               <Search className="w-4 h-4" />
-              Explore properties
+              {primaryActionLabel}
             </Button>
           </Link>
           <Link to="/app/messages">

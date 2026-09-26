@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { sanitizeWhitelabelCss } from './security/upload-validation'
+import { sanitizeCssColor, sanitizeWhitelabelCss } from './security/upload-validation'
 
 export const whitelabelService = {
   // Get organization branding
@@ -155,9 +155,9 @@ export const whitelabelService = {
     
     return `
       :root {
-        --primary-color: ${branding.primary_color};
-        --secondary-color: ${branding.secondary_color};
-        --accent-color: ${branding.accent_color};
+        --primary-color: ${sanitizeCssColor(branding.primary_color, "#0f2922")};
+        --secondary-color: ${sanitizeCssColor(branding.secondary_color, "#d7b56d")};
+        --accent-color: ${sanitizeCssColor(branding.accent_color, "#c9794a")};
       }
       ${"custom_css" in branding ? sanitizeWhitelabelCss(branding.custom_css || "") : ""}
     `

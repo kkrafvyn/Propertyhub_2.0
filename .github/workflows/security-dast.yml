@@ -17,7 +17,7 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Check DAST target configured
         id: dast_config
@@ -39,7 +39,7 @@ jobs:
 
       - name: Upload DAST unverified artifact
         if: steps.dast_config.outputs.configured != 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: security-dast
           path: security-results/
@@ -91,7 +91,7 @@ jobs:
             node scripts/security/record-job-result.mjs dast-authenticated UNVERIFIED '{"reason":"Set DAST_TEST_EMAIL and DAST_TEST_PASSWORD in staging environment"}'
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always() && steps.dast_config.outputs.configured == 'true'
         with:
           name: security-dast
@@ -105,14 +105,14 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Record DAST as unverified on pull requests
         run: |
           node scripts/security/record-job-result.mjs dast UNVERIFIED '{"reason":"DAST runs on main push, schedule, and manual dispatch against staging only"}'
           node scripts/security/record-job-result.mjs dast-authenticated UNVERIFIED '{"reason":"Authenticated DAST runs on main push, schedule, and manual dispatch"}'
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: security-dast-unverified
           path: security-results/

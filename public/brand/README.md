@@ -8,10 +8,8 @@ Forest green: `#0F2922` · Symbol: dot (person) + arc (horizon)
 | `symbol-white.svg` | Mark on dark backgrounds |
 | `logo-primary.svg` | Symbol + wordmark |
 | `logo-stacked.svg` | Centered stacked lockup |
-| `logo-tagline.svg` | With “Unlocking property opportunities” |
 | `logo-inverted.svg` | White on green panel — **source for native splash** |
 | `app-icon.svg` | PWA / App Store (512 rounded square) — **source for app icon** |
-| `social-icon.svg` | Profile avatar (circle) |
 | `email-logo.svg` | Email header lockup (560×120) — used by all Resend mail |
 | `email-template.html` | Local preview (transactional + marketing layouts) |
 

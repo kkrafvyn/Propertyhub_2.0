@@ -6,13 +6,9 @@ function isDevOrigin(origin: string): boolean {
   return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
 }
 
-function isVercelAppOrigin(origin: string): boolean {
-  try {
-    const { hostname } = new URL(origin);
-    return hostname.endsWith(".vercel.app");
-  } catch {
-    return false;
-  }
+function isProductionEnvironment(): boolean {
+  const environment = (Deno.env.get("DENO_ENV") || Deno.env.get("ENVIRONMENT") || "production").toLowerCase();
+  return ["production", "prod"].includes(environment);
 }
 
 function isBaytMiftahOrigin(origin: string): boolean {
@@ -28,8 +24,7 @@ export function isOriginAllowed(origin: string, allowed: string[]): boolean {
   if (!origin) return false;
   const normalized = normalizeOrigin(origin);
   if (allowed.includes(normalized)) return true;
-  if (isDevOrigin(normalized)) return true;
-  if (isVercelAppOrigin(normalized)) return true;
+  if (!isProductionEnvironment() && isDevOrigin(normalized)) return true;
   if (isBaytMiftahOrigin(normalized)) return true;
   return false;
 }
@@ -57,7 +52,7 @@ export function getAllowedOrigins(): string[] {
     return [...DEFAULT_ALLOWED_ORIGINS];
   }
 
-  return [...new Set([...origins, ...DEFAULT_ALLOWED_ORIGINS])];
+  return [...new Set(origins)];
 }
 
 export function buildCorsHeaders(req: Request) {

@@ -3,6 +3,7 @@ import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { mobileBrandPlugin } from './scripts/vite-mobile-brand.mjs'
+import { releaseInfoPlugin } from './scripts/vite-release-info.mjs'
 
 function figmaAssetResolver() {
   return {
@@ -42,6 +43,7 @@ export default defineConfig({
     figmaAssetResolver(),
     electronDesktopBuild(),
     mobileBrandPlugin(),
+    releaseInfoPlugin(),
     // The React and Tailwind plugins are both required for Make, even if
     // Tailwind is not being actively used - do not remove them.
     react(),

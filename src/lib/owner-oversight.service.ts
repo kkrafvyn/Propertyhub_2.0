@@ -1,6 +1,5 @@
 import { supabase } from "./supabase";
 import { ownerOperatorService, type ManagementMode } from "./owner-operator.service";
-import { memberScopeService } from "./member-scope.service";
 import { notificationService } from "./notification.service";
 import type { TimelineActivity } from "../app/components/ux/ActivityTimeline";
 
@@ -78,6 +77,14 @@ export type OwnerOversightPrefs = {
   immediate_lease_termination: boolean;
   daily_digest: boolean;
   weekly_digest: boolean;
+  digest_timezone?: string;
+};
+
+export type OwnerActivityCursor = { createdAt: string; id: string };
+export type OwnerActivityRow = {
+  id: string; event_type: string; title: string; detail: string;
+  amount_minor: number | null; currency: string | null; property_id: string | null;
+  created_at: string; href_hint: string | null;
 };
 
 export type OwnerPropertyOverview = {
@@ -141,7 +148,7 @@ export const ownerOversightService = {
     estateId?: string | null;
     mode?: ManagementMode;
   }) {
-    const { data, error } = await db.rpc("upsert_property_management_agreement", {
+    const { data, error } = await db.rpc("add_owner_property_access", {
       p_property_id: input.propertyId,
       p_owner_user_id: input.ownerUserId,
       p_managing_organization_id: input.managingOrganizationId,
@@ -182,24 +189,23 @@ export const ownerOversightService = {
     return ownerOperatorService.setMode(input);
   },
 
-  async getActivity(input?: { ownerUserId?: string; propertyId?: string; limit?: number }) {
-    const { data, error } = await db.rpc("get_owner_property_activity", {
+  async getActivityPage(input?: { ownerUserId?: string; propertyId?: string; limit?: number; before?: OwnerActivityCursor }) {
+    const limit = Math.min(100, Math.max(1, Math.floor(input?.limit || 40)));
+    const { data, error } = await db.rpc("get_owner_property_activity_page", {
       p_owner_user_id: input?.ownerUserId || null,
       p_property_id: input?.propertyId || null,
-      p_limit: input?.limit ?? 40,
+      p_limit: limit + 1,
+      p_before_at: input?.before?.createdAt || null,
+      p_before_id: input?.before?.id || null,
     });
     if (error) throw error;
-    return (data || []) as Array<{
-      id: string;
-      event_type: string;
-      title: string;
-      detail: string;
-      amount_minor: number | null;
-      currency: string | null;
-      property_id: string | null;
-      created_at: string;
-      href_hint: string | null;
-    }>;
+    const rows = ((data || []) as OwnerActivityRow[]).slice(0, limit);
+    const last = rows.at(-1);
+    return { rows, nextCursor: data?.length > limit && last ? { createdAt: last.created_at, id: last.id } : null };
+  },
+
+  async getActivity(input?: { ownerUserId?: string; propertyId?: string; limit?: number }) {
+    return (await this.getActivityPage(input)).rows;
   },
 
   toTimelineItems(
@@ -609,6 +615,7 @@ export const ownerOversightService = {
       immediate_lease_termination: true,
       daily_digest: true,
       weekly_digest: false,
+      digest_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
     };
   },
 
@@ -622,39 +629,19 @@ export const ownerOversightService = {
     return data as OwnerOversightPrefs;
   },
 
-  /** Daily digest generator stub — prefs gate ready; worker can call this later. */
-  async buildDailyDigestStub(ownerUserId: string) {
-    const prefs = await this.getNotificationPrefs(ownerUserId);
-    if (!prefs.daily_digest) return null;
-    const [activity, approvals] = await Promise.all([
-      this.getActivity({ ownerUserId, limit: 10 }),
-      this.listExpenseApprovals(ownerUserId, "pending"),
-    ]);
-    return {
-      ownerUserId,
-      activityCount: activity.length,
-      pendingApprovals: approvals.length,
-      summary: `${activity.length} activity items, ${approvals.length} pending approvals`,
-    };
-  },
-
   async ensureOwnerScopedMembership(input: {
     organizationId: string;
     userId: string;
     propertyId: string;
+    estateId?: string | null;
+    mode?: ManagementMode;
   }) {
-    await memberScopeService.updateMemberScope(
-      input.organizationId,
-      input.userId,
-      "properties",
-      [input.propertyId],
-      [],
-    );
     return this.upsertAgreement({
       propertyId: input.propertyId,
       ownerUserId: input.userId,
       managingOrganizationId: input.organizationId,
-      mode: "company_managed",
+      estateId: input.estateId,
+      mode: input.mode,
     });
   },
 };

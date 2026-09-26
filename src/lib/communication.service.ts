@@ -1,6 +1,8 @@
 import { supabase } from "./supabase";
 import type { Database } from "./database.types";
 
+const db = supabase as any;
+
 type NotificationPreferencesRow =
   Database["public"]["Tables"]["notification_preferences"]["Row"];
 type NotificationPreferencesInsert =
@@ -167,6 +169,36 @@ async function getUserContactInfo(userId: string) {
 }
 
 export const communicationService = {
+  async recordDeliveryOutcome(notificationId: string, delivered: boolean, errorMessage?: string) {
+    const { data: current, error: readError } = await db
+      .from("notification_logs")
+      .select("metadata")
+      .eq("id", notificationId)
+      .maybeSingle();
+    if (readError) throw readError;
+
+    const metadata = current?.metadata && typeof current.metadata === "object"
+      ? { ...current.metadata }
+      : {};
+    const attempts = Number(metadata.delivery_attempts || 0) + 1;
+    const nextMetadata = {
+      ...metadata,
+      delivery_status: delivered ? "delivered" : "failed",
+      delivery_attempts: attempts,
+      last_delivery_attempt_at: new Date().toISOString(),
+      ...(errorMessage ? { delivery_error: errorMessage } : {}),
+    };
+    const { error } = await db
+      .from("notification_logs")
+      .update({
+        metadata: nextMetadata,
+        delivered,
+        delivered_at: delivered ? new Date().toISOString() : null,
+      })
+      .eq("id", notificationId);
+    if (error) throw error;
+  },
+
   async dispatchExternalNotification(notificationId: string) {
     const { data, error } = await supabase.functions.invoke("dispatch-notification", {
       body: {
@@ -371,15 +403,11 @@ export const communicationService = {
 
       const sent = await this.sendViaChannel(channel, data.id, userId, subject, content);
 
-      if (sent) {
-        await supabase
-          .from("notification_logs")
-          .update({
-            delivered: true,
-            delivered_at: new Date().toISOString(),
-          })
-          .eq("id", data.id);
-      }
+      await this.recordDeliveryOutcome(
+        data.id,
+        sent,
+        sent ? undefined : `The ${channel} provider did not accept the notification`,
+      );
 
       results.push({
         channel,

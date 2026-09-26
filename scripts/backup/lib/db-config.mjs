@@ -29,6 +29,6 @@ export function getDbConfig(env = loadProjectEnv()) {
     user: `postgres.${ref}`,
     password,
     database: "postgres",
-    ssl: { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized: process.env.DB_ALLOW_INSECURE_TLS !== "1" },
   };
 }

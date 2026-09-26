@@ -23,6 +23,7 @@ import {
   getStoredCallHistory,
   saveCallHistory,
 } from '../../lib/call.service';
+import { secureId } from '../../lib/secure-id';
 import { useAuth } from './AuthContext';
 
 interface StartCallOptions {
@@ -185,7 +186,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       };
 
       const session: CallSession = {
-        id: `call_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        id: secureId('call'),
         type,
         status: 'calling',
         direction: 'outgoing',

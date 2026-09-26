@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Hash, Loader2, MessageSquare, Plus, Send, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
-import { workspaceChatService, type WorkspaceChannel } from "../../../lib/workspace-chat.service";
+import { workspaceChatService, type WorkspaceChannel, type MessageCursor } from "../../../lib/workspace-chat.service";
 import { organizationService } from "../../../lib/organization.service";
 import { canWorkspace } from "../../../lib/workspace-permissions";
 import type { MemberRole } from "../../../lib/workspace";
@@ -37,6 +37,14 @@ export function WorkspaceTeamChat({
   const [assignUserId, setAssignUserId] = useState("");
   const [newChannelName, setNewChannelName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [olderCursor, setOlderCursor] = useState<MessageCursor | null>(null);
+  const [historyError, setHistoryError] = useState("");
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [sending, setSending] = useState(false);
+  const activeId = useRef(activeConversationId);
+  activeId.current = activeConversationId;
+  const sendLock = useRef(false);
+  const historyLock = useRef<string | null>(null);
 
   const memberNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -62,9 +70,21 @@ export function WorkspaceTeamChat({
     }
   };
 
-  const loadMessages = async (conversationId: string) => {
-    const rows = await workspaceChatService.listMessages(conversationId);
-    setMessages(rows as ChatMessage[]);
+  const loadMessages = async (conversationId: string, before?: MessageCursor | null) => {
+    const page = await workspaceChatService.listMessagePage(conversationId, { before });
+    if (activeId.current !== conversationId) return;
+    setMessages(previous => before ? [...page.messages, ...previous].filter((message,index,all)=>all.findIndex(m=>m.id===message.id)===index) as ChatMessage[] : page.messages as ChatMessage[]);
+    setOlderCursor(page.olderCursor);
+    setHistoryError("");
+  };
+
+  const loadOlder = async () => {
+    if (!activeConversationId || !olderCursor || historyLock.current === activeConversationId) return;
+    const id = activeConversationId;
+    historyLock.current = id; setLoadingHistory(true);
+    try { await loadMessages(id, olderCursor); }
+    catch { if (activeId.current === id) setHistoryError('History could not be loaded. Retry to keep your current messages.'); }
+    finally { if (historyLock.current === id) { historyLock.current = null; setLoadingHistory(false); } }
   };
 
   useEffect(() => {
@@ -82,21 +102,29 @@ export function WorkspaceTeamChat({
 
   useEffect(() => {
     if (!activeConversationId) return;
-    void loadMessages(activeConversationId).catch(() => setMessages([]));
+    setMessages([]); setOlderCursor(null); setHistoryError(""); setLoadingHistory(false);
+    const id = activeConversationId;
+    void loadMessages(id).catch(() => { if (activeId.current === id) setHistoryError('Messages could not be loaded. Retry.'); });
   }, [activeConversationId]);
 
   const send = async () => {
-    if (!activeConversationId || !draft.trim()) return;
+    if (!activeConversationId || !draft.trim() || sendLock.current) return;
+    const id = activeConversationId, content = draft;
+    sendLock.current = true; setSending(true);
     try {
-      await workspaceChatService.sendMessage({
-        conversationId: activeConversationId,
+      const message = await workspaceChatService.sendMessage({
+        conversationId: id,
         senderId: currentUserId,
-        content: draft,
+        content,
       });
-      setDraft("");
-      await loadMessages(activeConversationId);
+      if (activeId.current === id) {
+        setDraft(current => current === content ? '' : current);
+        setMessages(current => current.some(m=>m.id===message.id) ? current : [...current,message]);
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to send");
+    } finally {
+      sendLock.current = false; setSending(false);
     }
   };
 
@@ -258,6 +286,8 @@ export function WorkspaceTeamChat({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {historyError && <p role="alert" className="text-destructive text-sm">{historyError} <button className="underline" onClick={() => olderCursor ? void loadOlder() : activeConversationId && void loadMessages(activeConversationId).catch(()=>{})}>Retry</button></p>}
+          {olderCursor && <Button variant="outline" disabled={loadingHistory} onClick={()=>void loadOlder()}>{loadingHistory ? 'Loading history…' : 'Load older messages'}</Button>}
           {messages.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-12">
               No messages yet. Start the conversation.
@@ -294,7 +324,7 @@ export function WorkspaceTeamChat({
               }
             }}
           />
-          <Button onClick={() => void send()}>
+          <Button disabled={sending || !draft.trim() || !activeConversationId} onClick={() => void send()}>
             <Send className="h-4 w-4" />
           </Button>
         </div>
