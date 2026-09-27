@@ -51,9 +51,11 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
+        continue-on-error: true
         with:
           name: security-sast
           path: security-results/sast-semgrep.json
+          retention-days: 1
 
   security-sca:
     runs-on: ubuntu-latest
@@ -73,9 +75,11 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
+        continue-on-error: true
         with:
           name: security-sca
           path: security-results/sca.json
+          retention-days: 1
 
   security-secrets:
     runs-on: ubuntu-latest
@@ -89,6 +93,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
 
       - name: Record secrets result
         if: always()
@@ -96,9 +101,11 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
+        continue-on-error: true
         with:
           name: security-secrets
           path: security-results/secrets.json
+          retention-days: 1
 
   security-actions-audit:
     runs-on: ubuntu-latest
@@ -110,9 +117,11 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
+        continue-on-error: true
         with:
           name: security-actions-audit
           path: security-results/actions-audit.json
+          retention-days: 1
 
   security-unit:
     runs-on: ubuntu-latest
@@ -135,9 +144,11 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
+        continue-on-error: true
         with:
           name: security-unit
           path: security-results/security-unit.json
+          retention-days: 1
 
   security-tenant-isolation:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
@@ -164,9 +175,11 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
+        continue-on-error: true
         with:
           name: security-tenant-isolation
           path: security-results/tenant-isolation.json
+          retention-days: 1
 
   security-tenant-delegated:
     if: github.event_name == 'push' || github.event_name == 'pull_request'
@@ -178,9 +191,11 @@ jobs:
         run: node scripts/security/record-job-result.mjs tenant-isolation DELEGATED '{"source":"ci.yml","step":"build-and-test / Tenant isolation integration tests"}'
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        continue-on-error: true
         with:
           name: security-tenant-delegated
           path: security-results/tenant-isolation.json
+          retention-days: 1
 
   security-container:
     runs-on: ubuntu-latest
@@ -214,9 +229,11 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
+        continue-on-error: true
         with:
           name: security-container
           path: security-results/container.json
+          retention-days: 1
 
   security-summary:
     needs:
@@ -255,6 +272,8 @@ jobs:
         shell: bash
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        continue-on-error: true
         with:
           name: security-summary
           path: security-results/
+          retention-days: 1

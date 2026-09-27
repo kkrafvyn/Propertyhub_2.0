@@ -39,10 +39,12 @@ jobs:
 
       - name: Upload DAST unverified artifact
         if: steps.dast_config.outputs.configured != 'true'
+        continue-on-error: true
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: security-dast
           path: security-results/
+          retention-days: 1
 
       - name: Validate DAST target safety
         if: steps.dast_config.outputs.configured == 'true'
@@ -53,11 +55,18 @@ jobs:
 
       - name: OWASP ZAP baseline scan (anonymous)
         if: steps.dast_config.outputs.configured == 'true'
+        id: zap_anonymous
+        continue-on-error: true
         uses: zaproxy/action-baseline@v0.14.0
         with:
           target: ${{ vars.DAST_TARGET_URL || secrets.DAST_TARGET_URL }}
           cmd_options: "-a -j"
           allow_issue_writing: false
+          artifact_name: zap-anonymous
+
+      - name: Verify anonymous DAST report
+        if: steps.dast_config.outputs.configured == 'true'
+        run: test -s report_json.json
 
       - name: Prepare authenticated DAST session
         id: dast_auth
@@ -73,13 +82,24 @@ jobs:
         if: steps.dast_config.outputs.configured == 'true' && steps.dast_auth.outputs.available == 'true'
         run: echo "::add-mask::${{ steps.dast_auth.outputs.token }}"
 
+      - name: Clear previous DAST report
+        if: steps.dast_config.outputs.configured == 'true' && steps.dast_auth.outputs.available == 'true'
+        run: rm -f report_json.json
+
       - name: OWASP ZAP baseline scan (authenticated)
         if: steps.dast_config.outputs.configured == 'true' && steps.dast_auth.outputs.available == 'true'
+        id: zap_authenticated
+        continue-on-error: true
         uses: zaproxy/action-baseline@v0.14.0
         with:
           target: ${{ vars.DAST_TARGET_URL || secrets.DAST_TARGET_URL }}
           cmd_options: "-a -j -z \"${{ steps.dast_auth.outputs.zap_options }}\""
           allow_issue_writing: false
+          artifact_name: zap-authenticated
+
+      - name: Verify authenticated DAST report
+        if: steps.dast_config.outputs.configured == 'true' && steps.dast_auth.outputs.available == 'true'
+        run: test -s report_json.json
 
       - name: Record DAST results
         if: always() && steps.dast_config.outputs.configured == 'true'
@@ -93,6 +113,7 @@ jobs:
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always() && steps.dast_config.outputs.configured == 'true'
+        continue-on-error: true
         with:
           name: security-dast
           path: |
@@ -100,6 +121,7 @@ jobs:
             report_json.json
             security-results/dast.json
             security-results/dast-authenticated.json
+          retention-days: 1
 
   dast-unverified:
     if: github.event_name == 'pull_request'
@@ -113,6 +135,8 @@ jobs:
           node scripts/security/record-job-result.mjs dast-authenticated UNVERIFIED '{"reason":"Authenticated DAST runs on main push, schedule, and manual dispatch"}'
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        continue-on-error: true
         with:
           name: security-dast-unverified
           path: security-results/
+          retention-days: 1
