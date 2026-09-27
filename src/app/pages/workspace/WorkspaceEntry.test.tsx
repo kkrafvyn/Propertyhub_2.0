@@ -133,4 +133,17 @@ describe("WorkspaceEntry", () => {
     });
     expect(screen.getByLabelText("Display name")).toBeInTheDocument();
   });
+
+  it("preselects organization enrollment for the admin-provided setup link", async () => {
+    useAuthMock.mockReturnValue(createAuthState() as any);
+    getUserOrganizationsMock.mockResolvedValue([]);
+    getPendingRequestMock.mockResolvedValue(null);
+    getMyRequestsMock.mockResolvedValue([]);
+
+    renderWorkspaceEntry("/workspace?kind=company");
+
+    expect(await screen.findByLabelText("Organization Name")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Display name")).not.toBeInTheDocument();
+    expect(screen.getByText(/Complete KYC, then submit your organization profile/i)).toBeInTheDocument();
+  });
 });

@@ -61,7 +61,9 @@ export function WorkspaceEntry() {
   const [searchParams] = useSearchParams();
   const { kyc, loading: kycLoading } = useMyKyc();
   const countryOptions = useMemo(() => listCountryPacks(), []);
-  const [workspaceKind, setWorkspaceKind] = useState<WorkspaceKind>("personal");
+  const [workspaceKind, setWorkspaceKind] = useState<WorkspaceKind>(() =>
+    searchParams.get("kind") === "company" ? "company" : "personal",
+  );
   const [operatingJurisdiction, setOperatingJurisdiction] = useState("GH");
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);

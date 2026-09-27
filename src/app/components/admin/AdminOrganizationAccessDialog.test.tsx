@@ -66,6 +66,22 @@ describe("admin organization access", () => {
     expect(adminService.createUserOrganization).not.toHaveBeenCalled();
   });
 
+  it("provides a self-service company setup link without granting access", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+    const { onClose, onSaved } = show();
+    fireEvent.change(screen.getByLabelText("Organization action"), { target: { value: "self_setup" } });
+    expect(screen.getByLabelText("Organization setup link")).toHaveValue(`${window.location.origin}/workspace?kind=company`);
+    expect(screen.getByText(/identity verification.*admin approval/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Copy setup link" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Link copied" })).toBeInTheDocument());
+    expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/workspace?kind=company`);
+    expect(adminService.createUserOrganization).not.toHaveBeenCalled();
+    expect(adminService.assignOrganizationMember).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
   it("cancel does not mutate accounts", () => {
     const { onClose } = show();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));

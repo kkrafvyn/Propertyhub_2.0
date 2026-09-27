@@ -20,10 +20,11 @@ export function AdminOrganizationAccessDialog({ user, onClose, onSaved }: {
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
   const [searchError, setSearchError] = useState("");
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     setMode("create"); setName(""); setSlug(""); setBusinessType("property_management");
-    setSearch(""); setOrganizations([]); setOrganizationId(""); setRole("agent"); setError("");
+    setSearch(""); setOrganizations([]); setOrganizationId(""); setRole("agent"); setError(""); setLinkCopied(false);
   }, [user?.id]);
 
   useEffect(() => {
@@ -60,7 +61,19 @@ export function AdminOrganizationAccessDialog({ user, onClose, onSaved }: {
     try { await onSaved(); } finally { setSaving(false); }
   }
 
+  async function copySetupLink() {
+    const setupUrl = `${window.location.origin}/workspace?kind=company`;
+    try {
+      await navigator.clipboard.writeText(setupUrl);
+      setLinkCopied(true);
+      setError("");
+    } catch {
+      setError("Unable to copy the link. Select and copy it from the field above.");
+    }
+  }
+
   const selectClass = "w-full rounded-lg border border-border bg-background p-3 text-sm";
+  const setupUrl = `${window.location.origin}/workspace?kind=company`;
   return <Dialog open={Boolean(user)} onOpenChange={(open) => { if (!open && !saving) onClose(); }}>
     <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
@@ -72,10 +85,20 @@ export function AdminOrganizationAccessDialog({ user, onClose, onSaved }: {
           <label className="block text-sm">Action
             <select aria-label="Organization action" className={selectClass} value={mode} onChange={(e) => { setMode(e.target.value); setError(""); }}>
               <option value="create">Create organization for this user</option>
+              <option value="self_setup">Let the user set up their organization</option>
               <option value="assign">Assign membership / change role</option>
             </select>
           </label>
-          {mode === "create" ? <>
+          {mode === "self_setup" ? <>
+            <p className="text-sm text-muted-foreground">
+              Send this link to the user so they can submit their own organization workspace application. They must complete identity verification, accept the terms, and receive admin approval before workspace access is granted. This does not create an organization or membership.
+            </p>
+            <Input label="Organization setup link" readOnly value={setupUrl} onFocus={(event) => event.currentTarget.select()} />
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>Close</Button>
+              <Button type="button" onClick={() => void copySetupLink()}>{linkCopied ? "Link copied" : "Copy setup link"}</Button>
+            </div>
+          </> : mode === "create" ? <>
             <p className="text-sm text-muted-foreground">The user becomes the organization owner. Identity verification is required. Existing pending enrollments must be reviewed from Enrollment Requests.</p>
             <Input label="Organization name" required minLength={2} maxLength={120} value={name} onChange={(e) => setName(e.target.value)} />
             <Input label="Workspace slug" required minLength={3} maxLength={63} pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="example-properties" value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase())} />
@@ -102,10 +125,10 @@ export function AdminOrganizationAccessDialog({ user, onClose, onSaved }: {
             <p className="text-sm text-muted-foreground">This adds membership or changes the existing role. Existing property scopes and custom permissions are retained. Ownership transfers are separate.</p>
           </>}
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-          <div className="flex justify-end gap-2">
+          {mode !== "self_setup" && <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
             <Button type="submit" disabled={mode === "assign" && (!organizationId || searching)}>{saving ? "Saving…" : mode === "create" ? "Create organization" : "Save membership"}</Button>
-          </div>
+          </div>}
         </fieldset>
       </form>
     </DialogContent>
