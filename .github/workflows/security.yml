@@ -22,7 +22,7 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: actions/dependency-review-action@v4
+      - uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48
         with:
           fail-on-severity: high
           deny-licenses: GPL-3.0-only, AGPL-3.0-only
@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Semgrep SAST
-        uses: semgrep/semgrep-action@v1
+        uses: semgrep/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d
         with:
           config: >-
             p/security-audit
@@ -50,7 +50,7 @@ jobs:
         run: node scripts/security/record-job-result.mjs sast-semgrep "${{ job.status == 'success' && 'PASS' || 'FAIL' }}" '{"tool":"semgrep"}'
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
+        if: always() && (failure() || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         continue-on-error: true
         with:
           name: security-sast
@@ -74,7 +74,7 @@ jobs:
         run: npm run security:sca
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
+        if: always() && (failure() || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         continue-on-error: true
         with:
           name: security-sca
@@ -89,7 +89,7 @@ jobs:
           fetch-depth: 0
 
       - name: Gitleaks secrets scan
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
@@ -100,7 +100,7 @@ jobs:
         run: node scripts/security/record-job-result.mjs secrets "${{ job.status == 'success' && 'PASS' || 'FAIL' }}" '{"tool":"gitleaks"}'
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
+        if: always() && (failure() || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         continue-on-error: true
         with:
           name: security-secrets
@@ -114,9 +114,11 @@ jobs:
 
       - name: Audit GitHub Actions workflows
         run: npm run security:actions-audit
+        env:
+          REQUIRE_PINNED_ACTIONS: "1"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
+        if: always() && (failure() || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         continue-on-error: true
         with:
           name: security-actions-audit
@@ -143,7 +145,7 @@ jobs:
         run: npm run security:unit
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
+        if: always() && (failure() || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         continue-on-error: true
         with:
           name: security-unit
@@ -174,7 +176,7 @@ jobs:
           TENANT_FIXTURE_PASSWORD: ${{ secrets.TENANT_FIXTURE_PASSWORD }}
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
+        if: always() && (failure() || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         continue-on-error: true
         with:
           name: security-tenant-isolation
@@ -191,6 +193,7 @@ jobs:
         run: node scripts/security/record-job-result.mjs tenant-isolation DELEGATED '{"source":"ci.yml","step":"build-and-test / Tenant isolation integration tests"}'
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: github.event_name != 'pull_request'
         continue-on-error: true
         with:
           name: security-tenant-delegated
@@ -206,7 +209,7 @@ jobs:
         run: docker build -t baytmiftah/web:ci .
 
       - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           scan-type: fs
           scan-ref: .
@@ -216,7 +219,7 @@ jobs:
           scanners: vuln,secret,misconfig
 
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@v0.35.0
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           image-ref: baytmiftah/web:ci
           severity: CRITICAL
@@ -228,7 +231,7 @@ jobs:
         run: node scripts/security/record-job-result.mjs container "${{ job.status == 'success' && 'PASS' || 'FAIL' }}" '{"tool":"trivy-fs+image","note":"Dockerfile web image and repository filesystem"}'
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
+        if: always() && (failure() || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         continue-on-error: true
         with:
           name: security-container
@@ -272,6 +275,7 @@ jobs:
         shell: bash
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         continue-on-error: true
         with:
           name: security-summary

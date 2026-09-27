@@ -57,7 +57,7 @@ jobs:
         if: steps.dast_config.outputs.configured == 'true'
         id: zap_anonymous
         continue-on-error: true
-        uses: zaproxy/action-baseline@v0.14.0
+        uses: zaproxy/action-baseline@7c4deb10e6261301961c86d65d54a516394f9aed
         with:
           target: ${{ vars.DAST_TARGET_URL || secrets.DAST_TARGET_URL }}
           cmd_options: "-a -j"
@@ -90,7 +90,7 @@ jobs:
         if: steps.dast_config.outputs.configured == 'true' && steps.dast_auth.outputs.available == 'true'
         id: zap_authenticated
         continue-on-error: true
-        uses: zaproxy/action-baseline@v0.14.0
+        uses: zaproxy/action-baseline@7c4deb10e6261301961c86d65d54a516394f9aed
         with:
           target: ${{ vars.DAST_TARGET_URL || secrets.DAST_TARGET_URL }}
           cmd_options: "-a -j -z \"${{ steps.dast_auth.outputs.zap_options }}\""
@@ -112,7 +112,7 @@ jobs:
           fi
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always() && steps.dast_config.outputs.configured == 'true'
+        if: always() && steps.dast_config.outputs.configured == 'true' && (failure() || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         continue-on-error: true
         with:
           name: security-dast
@@ -134,9 +134,3 @@ jobs:
           node scripts/security/record-job-result.mjs dast UNVERIFIED '{"reason":"DAST runs on main push, schedule, and manual dispatch against staging only"}'
           node scripts/security/record-job-result.mjs dast-authenticated UNVERIFIED '{"reason":"Authenticated DAST runs on main push, schedule, and manual dispatch"}'
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        continue-on-error: true
-        with:
-          name: security-dast-unverified
-          path: security-results/
-          retention-days: 1
