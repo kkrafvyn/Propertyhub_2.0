@@ -74,8 +74,10 @@ export function validateClientUpload(input: {
 }
 
 export async function validateFileSignature(file: File) {
-  const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
   const mimeType = file.type.trim().toLowerCase();
+  const payload = typeof file.slice === "function" ? file.slice(0, 12) : file;
+  const buffer = await (payload as Blob).arrayBuffer();
+  const bytes = new Uint8Array(buffer.slice(0, 12));
   const matches = (expected: number[], offset = 0) => expected.every((byte, index) => bytes[index + offset] === byte);
   const valid =
     (mimeType === "image/jpeg" && matches([0xff, 0xd8, 0xff])) ||

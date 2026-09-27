@@ -11,7 +11,8 @@ const userId = '00000000-0000-0000-0000-000000000001';
 const listingId = '00000000-0000-0000-0000-000000000002';
 const claimId = '00000000-0000-0000-0000-000000000003';
 const evidence = `${userId}/${listingId}/00000000-0000-0000-0000-000000000004.pdf`;
-const file = () => new File(['evidence content'], 'ownership.pdf', { type: 'application/pdf' });
+const pdfHeader = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
+const file = () => new File([new Uint8Array([...pdfHeader, ...new TextEncoder().encode('evidence content')]).buffer], 'ownership.pdf', { type: 'application/pdf' });
 
 describe('private claim evidence', () => {
   beforeEach(() => {

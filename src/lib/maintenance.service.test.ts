@@ -4,11 +4,31 @@ const { upload, remove, rpc } = vi.hoisted(() => ({ upload: vi.fn(), remove: vi.
 vi.mock('./supabase', () => ({ supabase: { storage: { from: () => ({ upload, remove }) }, rpc } }));
 vi.mock('./notification.service', () => ({ notificationService: {} }));
 import { maintenanceService } from './maintenance.service';
-const file = (content = 'photo', type = 'image/jpeg') => ({
-  name: 'photo.jpg', size: content.length, type,
-  arrayBuffer: async () => new TextEncoder().encode(content).buffer,
-}) as File;
-const input = (files = [file()]) => ({ organizationId: 'organization', requestId: 'request', files });
+const pngHeader = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const jpegHeader = new Uint8Array([0xff, 0xd8, 0xff]);
+const pdfHeader = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
+const file = (content = 'photo', type = 'image/jpeg', name = 'photo.jpg') => {
+  const payload =
+    type === 'image/png' ? new Uint8Array([...pngHeader, ...new TextEncoder().encode(content)]) :
+    type === 'application/pdf' ? new Uint8Array([...pdfHeader, ...new TextEncoder().encode(content)]) :
+    new Uint8Array([...jpegHeader, ...new TextEncoder().encode(content)]);
+  return {
+    name,
+    size: payload.byteLength,
+    type,
+    arrayBuffer: async () => payload.buffer,
+    slice: (start?: number, end?: number) => {
+      const view = payload.slice(start ?? 0, end ?? payload.length);
+      return new Blob([view], { type });
+    },
+  } as File;
+};
+
+const input = (files = [file()]) => ({
+  organizationId: 'organization',
+  requestId: 'request',
+  files,
+});
 
 describe('maintenance photo upload recovery', () => {
   beforeEach(() => {
