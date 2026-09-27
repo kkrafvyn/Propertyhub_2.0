@@ -47,6 +47,7 @@ import { AdminEnrollmentRequests } from "./AdminEnrollmentRequests";
 import FraudDashboard from "./FraudDashboard";
 import { AdminOperations } from "./AdminOperations";
 import { platformOperationsService, type HealthSnapshot } from "../../../lib/platform-operations.service";
+import { getPlatformStaffDashboardConfig } from "../../lib/role-dashboard";
 
 function confirmAdminAction(message: string) {
   return window.confirm(message);
@@ -140,7 +141,7 @@ function getOrganizationDetailId(pathname: string) {
 export function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, role } = useAuth();
   const canManageRoles = canManagePlatformRoles(profile);
   const visibleNavItems = useMemo(
     () => navItems.filter((item) => canAccessAdminSection(profile, item.key)),
@@ -176,6 +177,7 @@ export function AdminLayout() {
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [organizationAccessUser, setOrganizationAccessUser] = useState(null);
   const [deleteAccountUser, setDeleteAccountUser] = useState(null);
+  const staffDashboard = useMemo(() => getPlatformStaffDashboardConfig(role), [role]);
 
   const queueCount = triageAlerts.length + reviewCases.length;
 
@@ -1143,6 +1145,32 @@ export function AdminLayout() {
     if (currentSection === "overview") {
       return (
         <div className="space-y-6">
+          <Card className="border-primary/20 bg-primary/5 p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+                  {staffDashboard.kicker}
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight">{staffDashboard.heading}</h2>
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{staffDashboard.description}</p>
+              </div>
+              <Link to={staffDashboard.primaryActionHref}>
+                <Button size="sm">{staffDashboard.primaryActionLabel}</Button>
+              </Link>
+            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {staffDashboard.summaryCards.map((card) => (
+                <Link
+                  key={card.label}
+                  to={card.href}
+                  className="rounded-xl border border-primary/15 bg-background/70 p-3 transition-colors hover:border-primary/40 hover:bg-background"
+                >
+                  <p className="text-sm font-semibold">{card.label}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Open workspace</p>
+                </Link>
+              ))}
+            </div>
+          </Card>
           {profile?.is_platform_admin && <Link to="/admin/operations" className="block rounded-xl border p-4 font-semibold hover:bg-muted">App &amp; API health and platform activity →</Link>}
           {canAccessAdminSection(profile, "organizations") ? (
             <AdminEnrollmentRequests onApproved={() => void loadAdminState()} />

@@ -11,22 +11,39 @@ function isProductionEnvironment(): boolean {
   return ["production", "prod"].includes(environment);
 }
 
-function isBaytMiftahOrigin(origin: string): boolean {
-  try {
-    const { hostname } = new URL(origin);
-    return hostname === "baytmiftah.com" || hostname.endsWith(".baytmiftah.com");
-  } catch {
-    return false;
+function isExplicitlyAllowedHostname(hostname: string): boolean {
+  const hostnames = new Set([
+    "app.baytmiftah.com",
+    "baytmiftah.com",
+    "www.baytmiftah.com",
+    "propertyhub-2-0-ecru.vercel.app",
+  ]);
+
+  if (hostnames.has(hostname)) return true;
+  if (!isProductionEnvironment() && (hostname === "localhost" || hostname === "127.0.0.1")) {
+    return true;
   }
+  return false;
 }
 
 export function isOriginAllowed(origin: string, allowed: string[]): boolean {
   if (!origin) return false;
   const normalized = normalizeOrigin(origin);
+
   if (allowed.includes(normalized)) return true;
-  if (!isProductionEnvironment() && isDevOrigin(normalized)) return true;
-  if (isBaytMiftahOrigin(normalized)) return true;
-  return false;
+  try {
+    const { hostname } = new URL(normalized);
+    if (!isExplicitlyAllowedHostname(hostname)) return false;
+    return allowed.some((allowedOrigin) => {
+      try {
+        return new URL(allowedOrigin).hostname === hostname;
+      } catch {
+        return false;
+      }
+    });
+  } catch {
+    return false;
+  }
 }
 
 const DEFAULT_ALLOWED_ORIGINS = [
@@ -49,7 +66,13 @@ export function getAllowedOrigins(): string[] {
     .filter(Boolean);
 
   if (origins.length === 0) {
-    return [...DEFAULT_ALLOWED_ORIGINS];
+    return isProductionEnvironment()
+      ? [...DEFAULT_ALLOWED_ORIGINS]
+      : [
+          ...DEFAULT_ALLOWED_ORIGINS,
+          "http://localhost:5173",
+          "http://127.0.0.1:5173",
+        ];
   }
 
   return [...new Set(origins)];

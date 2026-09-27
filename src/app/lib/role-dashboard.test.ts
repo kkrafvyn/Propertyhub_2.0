@@ -6,6 +6,8 @@ import {
   normalizeAgencyDashboardRole,
   normalizeConsumerDashboardRole,
   normalizePropertyOperationsDashboardRole,
+  getPlatformStaffDashboardConfig,
+  normalizePlatformStaffDashboardRole,
 } from "./role-dashboard";
 
 describe("consumer dashboard role config", () => {
@@ -60,5 +62,18 @@ describe("property operations dashboard role config", () => {
   it("returns owner and manager-specific dashboard metadata", () => {
     expect(getPropertyOperationsDashboardConfig("property_owner").summaryCards[0].label).toBe("Portfolio");
     expect(getPropertyOperationsDashboardConfig("property_manager").summaryCards[0].label).toBe("Properties");
+  });
+});
+
+describe("platform staff dashboard role config", () => {
+  it("normalizes platform staff roles", () => {
+    expect(normalizePlatformStaffDashboardRole("platform_moderator")).toBe("platform_moderator");
+    expect(normalizePlatformStaffDashboardRole("platform_manager")).toBe("platform_manager");
+    expect(normalizePlatformStaffDashboardRole("developer")).toBe("developer");
+  });
+
+  it("prioritizes trust for moderators and operations for admins", () => {
+    expect(getPlatformStaffDashboardConfig("platform_moderator").summaryCards[0].label).toBe("Moderation");
+    expect(getPlatformStaffDashboardConfig("platform_admin").summaryCards[0].label).toBe("Operations");
   });
 });

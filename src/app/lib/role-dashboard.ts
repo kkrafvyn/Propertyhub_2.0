@@ -1,11 +1,17 @@
 export type ConsumerDashboardRole = "consumer" | "buyer" | "renter";
 export type AgencyDashboardRole = "independent_agent" | "agency_agent" | "agency_manager" | "agency_owner";
 export type PropertyOperationsDashboardRole = "property_owner" | "property_manager";
+export type PlatformStaffDashboardRole =
+  | "developer"
+  | "enterprise_operator"
+  | "platform_moderator"
+  | "platform_manager"
+  | "platform_admin";
 
 export type DashboardSummaryCard = {
   label: string;
   href: string;
-  icon: "saved" | "offers" | "payments" | "viewings" | "messages" | "leases" | "maintenance" | "pipeline" | "listings" | "team" | "performance";
+  icon: "saved" | "offers" | "payments" | "viewings" | "messages" | "leases" | "maintenance" | "pipeline" | "listings" | "team" | "performance" | "operations" | "trust" | "support" | "revenue" | "moderation";
 };
 
 export type ConsumerDashboardConfig = {
@@ -33,6 +39,14 @@ export function normalizeAgencyDashboardRole(role?: string | null): AgencyDashbo
 
 export function normalizePropertyOperationsDashboardRole(role?: string | null): PropertyOperationsDashboardRole {
   return role === "property_owner" ? "property_owner" : "property_manager";
+}
+
+export function normalizePlatformStaffDashboardRole(role?: string | null): PlatformStaffDashboardRole {
+  if (role === "developer") return "developer";
+  if (role === "enterprise_operator") return "enterprise_operator";
+  if (role === "platform_moderator") return "platform_moderator";
+  if (role === "platform_manager") return "platform_manager";
+  return "platform_admin";
 }
 
 export function getConsumerDashboardConfig(role?: string | null): ConsumerDashboardConfig {
@@ -235,4 +249,98 @@ export function getPropertyOperationsDashboardConfig(role?: string | null): Cons
       { label: "Viewings", href: "/workspace", icon: "viewings" },
     ],
   };
+}
+
+export function getPlatformStaffDashboardConfig(role?: string | null): ConsumerDashboardConfig {
+  const normalized = normalizePlatformStaffDashboardRole(role);
+
+  const configs: Record<PlatformStaffDashboardRole, ConsumerDashboardConfig> = {
+    developer: {
+      kicker: "Platform developer dashboard",
+      heading: "Keep the platform healthy",
+      description: "Monitor application health, release signals, integrations, and the engineering work that keeps BaytMiftah reliable.",
+      primaryActionLabel: "Open operations",
+      primaryActionHref: "/admin/operations",
+      summaryCards: [
+        { label: "App health", href: "/admin/operations", icon: "operations" },
+        { label: "Organizations", href: "/admin/organizations", icon: "listings" },
+        { label: "Integrations", href: "/workspace", icon: "operations" },
+        { label: "Support signals", href: "/admin/support", icon: "support" },
+      ],
+      quickActions: [
+        { label: "App health", href: "/admin/operations", icon: "operations" },
+        { label: "Support", href: "/admin/support", icon: "support" },
+      ],
+    },
+    enterprise_operator: {
+      kicker: "Enterprise operations dashboard",
+      heading: "See the platform at operating scale",
+      description: "Coordinate organizations, portfolios, service health, and cross-company operational performance.",
+      primaryActionLabel: "Open organizations",
+      primaryActionHref: "/admin/organizations",
+      summaryCards: [
+        { label: "Organizations", href: "/admin/organizations", icon: "listings" },
+        { label: "App health", href: "/admin/operations", icon: "operations" },
+        { label: "Revenue", href: "/admin/revenue", icon: "revenue" },
+        { label: "Support", href: "/admin/support", icon: "support" },
+      ],
+      quickActions: [
+        { label: "Organizations", href: "/admin/organizations", icon: "listings" },
+        { label: "Revenue", href: "/admin/revenue", icon: "revenue" },
+      ],
+    },
+    platform_moderator: {
+      kicker: "Trust and moderation dashboard",
+      heading: "Resolve platform risk with context",
+      description: "Triage fraud, review trust cases, investigate escalations, and preserve a defensible moderation trail.",
+      primaryActionLabel: "Open moderation",
+      primaryActionHref: "/admin/moderation",
+      summaryCards: [
+        { label: "Moderation", href: "/admin/moderation", icon: "moderation" },
+        { label: "Fraud radar", href: "/admin/fraud", icon: "trust" },
+        { label: "Trust & KYC", href: "/admin/trust", icon: "trust" },
+        { label: "Support cases", href: "/admin/support", icon: "support" },
+      ],
+      quickActions: [
+        { label: "Moderation", href: "/admin/moderation", icon: "moderation" },
+        { label: "Trust & KYC", href: "/admin/trust", icon: "trust" },
+      ],
+    },
+    platform_manager: {
+      kicker: "Platform management dashboard",
+      heading: "Run the marketplace with control",
+      description: "Balance trust, support, organizations, revenue, and operational performance across the platform.",
+      primaryActionLabel: "Open platform overview",
+      primaryActionHref: "/admin",
+      summaryCards: [
+        { label: "Operations", href: "/admin/operations", icon: "operations" },
+        { label: "Organizations", href: "/admin/organizations", icon: "listings" },
+        { label: "Trust", href: "/admin/trust", icon: "trust" },
+        { label: "Revenue", href: "/admin/revenue", icon: "revenue" },
+      ],
+      quickActions: [
+        { label: "Operations", href: "/admin/operations", icon: "operations" },
+        { label: "Revenue", href: "/admin/revenue", icon: "revenue" },
+      ],
+    },
+    platform_admin: {
+      kicker: "Platform admin dashboard",
+      heading: "Command the full BaytMiftah platform",
+      description: "Manage platform health, roles, organizations, trust, revenue, and policy from one operational command surface.",
+      primaryActionLabel: "Open operations",
+      primaryActionHref: "/admin/operations",
+      summaryCards: [
+        { label: "Operations", href: "/admin/operations", icon: "operations" },
+        { label: "Moderation", href: "/admin/moderation", icon: "moderation" },
+        { label: "Trust & KYC", href: "/admin/trust", icon: "trust" },
+        { label: "Revenue", href: "/admin/revenue", icon: "revenue" },
+      ],
+      quickActions: [
+        { label: "Operations", href: "/admin/operations", icon: "operations" },
+        { label: "Assign platform roles", href: "/admin/users", icon: "team" },
+      ],
+    },
+  };
+
+  return configs[normalized];
 }
