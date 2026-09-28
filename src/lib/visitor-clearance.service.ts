@@ -82,32 +82,28 @@ function generateGatePin() {
 export const liveVisitorClearanceService = {
   async listPasses(estateIds: string[]) {
     if (!estateIds.length) return [];
-    const { data, error } = await supabase.from('estate_visitor_passes').select('*').in('estate_id', estateIds).order('valid_until', { ascending: false });
+    const { data, error } = await (supabase as any).from('estate_visitor_passes_safe').select('*').in('estate_id', estateIds).order('valid_until', { ascending: false });
     if (error) throw error;
     return data || [];
   },
 
   async createPass(input: {
     estateId: string;
-    hostName: string;
-    hostUnitId?: string;
-    hostUserId?: string;
+    hostUnitId: string;
     visitorName: string;
     visitorPhone?: string;
     passType: PassType;
     vehiclePlate?: string;
     validHours?: number;
-    createdBy?: string;
   }) {
-    const { data, error } = await (supabase as any).rpc('create_estate_visitor_pass', {
+    const { data, error } = await (supabase as any).rpc('create_staff_visitor_pass', {
       p_estate_id: input.estateId,
-      p_host_user_id: input.hostUserId || null,
-      p_host_name: input.hostName.trim(),
+      p_host_unit_id: input.hostUnitId,
       p_visitor_name: input.visitorName.trim(),
       p_visitor_phone: input.visitorPhone?.trim() || null,
       p_pass_type: mapPassTypeToDb(input.passType),
       p_vehicle_plate: input.vehiclePlate?.trim() || null,
-      p_valid_hours: Math.max(1, input.validHours || 4),
+      p_valid_hours: input.validHours ?? null,
       p_max_uses: 1,
     });
     if (error) throw error;
@@ -120,8 +116,6 @@ export const liveVisitorClearanceService = {
     const { data, error } = await (supabase as any).rpc('verify_estate_visitor_pass', {
       p_estate_id: input.estateId,
       p_token_or_pin: cleaned,
-      p_guard_user_id: input.guardUserId || null,
-      p_guard_name: input.guardName || null,
     });
     if (error) throw error;
     return data ?? { success: false, message: 'Invalid or already-used visitor pass.' };

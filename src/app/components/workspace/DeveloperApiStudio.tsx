@@ -6,7 +6,6 @@ import {
   Trash2,
   Copy,
   Check,
-  Send,
   RefreshCw,
   Code2,
   ExternalLink,
@@ -20,7 +19,6 @@ import {
   developerApiService,
   type ApiKeyRecord,
   type WebhookSubscription,
-  type WebhookDeliveryLog,
   type ApiKeyScope,
   type WebhookEventType,
 } from "../../../lib/developer-api.service";
@@ -34,8 +32,7 @@ export function DeveloperApiStudio({ organizationId }: { organizationId: string 
   const [copiedKey, setCopiedKey] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState("");
   const [webhookDesc, setWebhookDesc] = useState("");
-  const [testingWebhookId, setTestingWebhookId] = useState<string | null>(null);
-  const [testLog, setTestLog] = useState<WebhookDeliveryLog | null>(null);
+  const [generatedWebhookSecret, setGeneratedWebhookSecret] = useState<string | null>(null);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
 
   const loadData = async () => {
@@ -91,13 +88,14 @@ export function DeveloperApiStudio({ organizationId }: { organizationId: string 
       "lease.expiring",
     ];
 
-    await developerApiService.registerWebhook(
+    const created = await developerApiService.registerWebhook(
       webhookUrl,
       webhookDesc || "Custom Webhook Endpoint",
       events,
       organizationId
     );
 
+    setGeneratedWebhookSecret(created.secret);
     setWebhookUrl("");
     setWebhookDesc("");
     await loadData();
@@ -113,19 +111,11 @@ export function DeveloperApiStudio({ organizationId }: { organizationId: string 
     setTimeout(() => setActionSuccessMsg(null), 3000);
   };
 
-  const handleTestWebhook = async (whId: string) => {
-    setTestingWebhookId(whId);
-    try {
-      const log = await developerApiService.triggerWebhookTest(whId, "payment.received");
-      setTestLog(log);
-      await loadData();
-      setActionSuccessMsg("Test webhook event delivered successfully (Status: 200 OK).");
-      setTimeout(() => setActionSuccessMsg(null), 4000);
-    } catch (e: any) {
-      alert(e.message);
-    } finally {
-      setTestingWebhookId(null);
-    }
+  const handleRotateWebhookSecret = async (whId: string) => {
+    if (!confirm("Rotate this webhook secret? The previous secret will stop working immediately.")) return;
+    const secret = await developerApiService.rotateWebhookSecret(whId);
+    setGeneratedWebhookSecret(secret);
+    await loadData();
   };
 
   const copyToClipboard = (text: string) => {
@@ -292,6 +282,13 @@ export function DeveloperApiStudio({ organizationId }: { organizationId: string 
         {/* 2. Webhooks Tab */}
         {activeTab === "webhooks" && (
           <div className="space-y-6">
+            {generatedWebhookSecret && (
+              <div className="p-4 rounded-lg border border-amber-500/40 bg-amber-500/10 space-y-2">
+                <p className="text-xs font-semibold text-ink">Webhook secret, shown once</p>
+                <code className="block break-all text-xs text-ink">{generatedWebhookSecret}</code>
+                <Button size="sm" variant="outline" onClick={() => setGeneratedWebhookSecret(null)}>Dismiss</Button>
+              </div>
+            )}
             <form onSubmit={handleRegisterWebhook} className="space-y-3 p-4 rounded-xl bg-surface-subtle border border-surface-border">
               <p className="text-xs font-bold text-ink">Register Webhook Endpoint</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -329,19 +326,18 @@ export function DeveloperApiStudio({ organizationId }: { organizationId: string 
                       </Badge>
                     </div>
                     <p className="text-[11px] text-ink-secondary mt-1">{wh.description}</p>
-                    <p className="text-[10px] font-mono text-ink-muted mt-0.5">Secret: {wh.secret}</p>
+                    <p className="text-[10px] font-mono text-ink-muted mt-0.5">Secret: {wh.secretMaskedPrefix || "whsec_••••••"}•••••••• (rotate to replace)</p>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleTestWebhook(wh.id)}
-                      disabled={testingWebhookId === wh.id}
+                      onClick={() => void handleRotateWebhookSecret(wh.id)}
                       className="h-7 text-xs border-surface-border text-ink"
                     >
-                      {testingWebhookId === wh.id ? <RefreshCw className="w-3.5 h-3.5 animate-spin mr-1" /> : <Send className="w-3.5 h-3.5 mr-1" />}
-                      Test Event
+                      <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                      Rotate secret
                     </Button>
                     <Button
                       size="sm"

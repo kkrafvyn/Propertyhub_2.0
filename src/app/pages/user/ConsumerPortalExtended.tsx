@@ -82,7 +82,7 @@ export function ResidentHomeSection({ profile }: { profile: any | null }) {
           <DoorOpen className="w-5 h-5 text-primary mb-2" />
           <p className="text-sm text-muted-foreground">Door access</p>
           <p className="text-xl font-semibold">
-            {doorLock?.access_code || profile.door_access_code || "Assigned at move-in"}
+            {doorLock ? "Managed securely" : "Assigned at move-in"}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
             {doorLock ? `${doorLock.label} · ${doorLock.status}` : `Visitor pass ${profile.visitor_pass_enabled ? "enabled" : "disabled"}`}

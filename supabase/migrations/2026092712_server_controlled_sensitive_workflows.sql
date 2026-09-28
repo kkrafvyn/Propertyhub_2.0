@@ -222,8 +222,8 @@ GRANT SELECT ON public.smart_devices, public.smart_device_events TO authenticate
 
 CREATE OR REPLACE FUNCTION public.register_smart_device(
   p_organization_id UUID,
-  p_listing_id UUID DEFAULT NULL,
-  p_lease_id UUID DEFAULT NULL,
+  p_listing_id UUID,
+  p_lease_id UUID,
   p_device_type TEXT,
   p_label TEXT,
   p_room TEXT DEFAULT NULL,
@@ -358,7 +358,7 @@ REVOKE ALL ON FUNCTION public.record_legal_acceptance(UUID, TEXT, TEXT, TEXT[], 
 GRANT EXECUTE ON FUNCTION public.record_legal_acceptance(UUID, TEXT, TEXT, TEXT[], TEXT) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.submit_support_complaint(
-  p_user_id UUID DEFAULT NULL,
+  p_user_id UUID,
   p_category TEXT,
   p_subject TEXT,
   p_description TEXT,

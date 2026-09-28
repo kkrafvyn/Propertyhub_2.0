@@ -47,6 +47,7 @@ export interface WebhookSubscription {
   description: string;
   eventTypes: WebhookEventType[];
   secret: string;
+  secretMaskedPrefix?: string;
   status: 'active' | 'paused' | 'failing';
   createdAt: string;
   lastDeliveredAt?: string;
@@ -177,8 +178,8 @@ class DeveloperApiService {
     }
 
     const { data, error } = await db
-      .from('organization_webhook_subscriptions')
-      .select('id, organization_id, url, description, event_types, status, created_at, last_delivered_at, delivery_success_count, delivery_failure_count')
+      .from('organization_webhook_subscriptions_safe')
+      .select('id, organization_id, url, description, event_types, status, created_at, last_delivered_at, delivery_success_count, delivery_failure_count, secret_masked_prefix')
       .eq('organization_id', organizationId)
       .order('created_at', { ascending: false });
 
@@ -192,9 +193,8 @@ class DeveloperApiService {
     eventTypes: WebhookEventType[],
     organizationId: string
   ): Promise<WebhookSubscription> {
-    const secret = generateWebhookSecret();
-
     if (USE_MEMORY) {
+      const secret = generateWebhookSecret();
       const subscription: WebhookSubscription = {
         id: `wh_${Date.now()}`,
         organizationId,
@@ -230,35 +230,34 @@ class DeveloperApiService {
       return true;
     }
 
-    const { error } = await db
-      .from('organization_webhook_subscriptions')
-      .delete()
-      .eq('id', webhookId);
-
+    const { error } = await db.rpc('delete_organization_webhook', { p_subscription_id: webhookId });
     if (error) throw error;
     return true;
+  }
+
+  async rotateWebhookSecret(webhookId: string): Promise<string> {
+    if (USE_MEMORY) {
+      const webhook = this.memory.webhooks.find((item) => item.id === webhookId);
+      if (!webhook) throw new Error('Webhook subscription not found.');
+      webhook.secret = generateWebhookSecret();
+      webhook.secretMaskedPrefix = webhook.secret.slice(0, 12);
+      return webhook.secret;
+    }
+
+    const { data, error } = await db.rpc('rotate_organization_webhook_secret', {
+      p_subscription_id: webhookId,
+    });
+    if (error) throw error;
+    return data.secret as string;
   }
 
   async triggerWebhookTest(
     webhookId: string,
     eventType: WebhookEventType = 'payment.received'
   ): Promise<WebhookDeliveryLog> {
-    let webhook: WebhookSubscription | undefined;
-
-    if (USE_MEMORY) {
-      webhook = this.memory.webhooks.find((w) => w.id === webhookId);
-    } else {
-      const { data, error } = await db
-        .from('organization_webhook_subscriptions')
-        .select('id, organization_id, url, description, event_types, status, created_at, last_delivered_at, delivery_success_count, delivery_failure_count')
-        .eq('id', webhookId)
-        .single();
-      if (error) throw error;
-      webhook = mapWebhookRow(data);
-    }
-
-    if (!webhook) throw new Error('Webhook subscription not found.');
     if (!USE_MEMORY) throw new Error('Webhook test delivery must run in trusted server execution.');
+    const webhook = this.memory.webhooks.find((w) => w.id === webhookId);
+    if (!webhook) throw new Error('Webhook subscription not found.');
 
     const testPayload = {
       event: eventType,
@@ -317,34 +316,10 @@ class DeveloperApiService {
       timestamp: new Date().toISOString(),
     };
 
-    if (USE_MEMORY) {
-      webhook.deliverySuccessCount += deliveryStatus === 'success' ? 1 : 0;
-      webhook.deliveryFailureCount += deliveryStatus === 'failed' ? 1 : 0;
-      if (deliveryStatus === 'success') webhook.lastDeliveredAt = log.timestamp;
-      this.memory.deliveryLogs.unshift(log);
-      return log;
-    }
-
-    await db.from('webhook_delivery_logs').insert({
-      subscription_id: webhookId,
-      event_type: eventType,
-      payload: testPayload,
-      status_code: statusCode,
-      response_body: responseBody,
-      duration_ms: log.durationMs,
-      status: deliveryStatus,
-    });
-
-    await db
-      .from('organization_webhook_subscriptions')
-      .update({
-        delivery_success_count: webhook.deliverySuccessCount + (deliveryStatus === 'success' ? 1 : 0),
-        delivery_failure_count: webhook.deliveryFailureCount + (deliveryStatus === 'failed' ? 1 : 0),
-        last_delivered_at: deliveryStatus === 'success' ? log.timestamp : webhook.lastDeliveredAt || null,
-        status: deliveryStatus === 'failed' ? 'failing' : webhook.status,
-      })
-      .eq('id', webhookId);
-
+    webhook.deliverySuccessCount += deliveryStatus === 'success' ? 1 : 0;
+    webhook.deliveryFailureCount += deliveryStatus === 'failed' ? 1 : 0;
+    if (deliveryStatus === 'success') webhook.lastDeliveredAt = log.timestamp;
+    this.memory.deliveryLogs.unshift(log);
     return log;
   }
 
@@ -392,6 +367,7 @@ function mapWebhookRow(row: any): WebhookSubscription {
     description: row.description || '',
     eventTypes: row.event_types || [],
     secret: row.secret || '',
+    secretMaskedPrefix: row.secret_masked_prefix || undefined,
     status: row.status,
     createdAt: row.created_at,
     lastDeliveredAt: row.last_delivered_at || undefined,

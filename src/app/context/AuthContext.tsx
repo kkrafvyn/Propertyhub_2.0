@@ -11,6 +11,7 @@ import {
   getDesktopAPI,
   getDesktopOAuthRedirectUrl,
   isDesktopOAuthRuntime,
+  consumeDesktopOAuthState,
   parseDesktopOAuthCallback,
   subscribeDesktopOAuthCallback,
 } from '../../lib/desktop-oauth'
@@ -29,7 +30,6 @@ interface AuthContextType {
     password: string,
     fullName: string,
     accountType?: "user" | "landlord",
-    legal?: { policyVersion: string; policySlugs: string[]; scope: string },
   ) => Promise<{ user: User | null }>
   signIn: (email: string, password: string) => Promise<void>
   signInWithPhoneOtp: (phone: string) => Promise<void>
@@ -130,6 +130,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const callback = parseDesktopOAuthCallback(payload)
       if (!callback) return
       try {
+        if (!consumeDesktopOAuthState(callback.state)) {
+          throw new Error("Desktop OAuth state is missing, expired, mismatched, or already used")
+        }
         const { error } = await supabase.auth.exchangeCodeForSession(callback.code)
         if (error) throw error
       } catch (callbackError) {
@@ -181,7 +184,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     fullName: string,
     accountType: "user" | "landlord" = "user",
-    legal?: { policyVersion: string; policySlugs: string[]; scope: string },
   ) => {
     try {
       setError(null)
@@ -194,14 +196,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             full_name: fullName,
             role: appRole,
             account_type: accountType,
-            ...(legal
-              ? {
-                  legal_policy_version: legal.policyVersion,
-                  legal_accepted_at: new Date().toISOString(),
-                  legal_accepted_policies: legal.policySlugs,
-                  legal_accepted_scope: legal.scope,
-                }
-              : {}),
           },
         },
       })
@@ -279,7 +273,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider,
           options: {
-            redirectTo: getDesktopOAuthRedirectUrl(),
+            redirectTo: redirectTo || getDesktopOAuthRedirectUrl(),
             skipBrowserRedirect: true,
           },
         })

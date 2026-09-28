@@ -6,23 +6,21 @@ import { LEGAL_POLICY_VERSION, LEGAL_VERSION_KEY } from "../../../lib/legal-conf
 import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
 
 export function PolicyUpdateBanner() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [dismissing, setDismissing] = useState(false);
 
   useEffect(() => {
     if (!user) return;
-
-    const localVersion = localStorage.getItem(LEGAL_VERSION_KEY);
-    const metaVersion = user.user_metadata?.legal_policy_version as string | undefined;
-
-    if (
-      legalAcceptanceService.needsReacceptance(metaVersion || localVersion, LEGAL_POLICY_VERSION)
-    ) {
-      setVisible(true);
-    }
-  }, [user]);
+    let active = true;
+    void legalAcceptanceService.getLatestAcceptance(user.id).then((acceptance) => {
+      if (active) {
+        setVisible(legalAcceptanceService.needsReacceptance(acceptance?.policy_version, LEGAL_POLICY_VERSION));
+      }
+    });
+    return () => { active = false; };
+  }, [user?.id]);
 
   if (!visible || !user) return null;
 
@@ -31,7 +29,7 @@ export function PolicyUpdateBanner() {
     try {
       await legalAcceptanceService.recordAcceptance({
         userId: user.id,
-        scope: "signup_consumer",
+        scope: user.user_metadata?.account_type === "landlord" || role === "host" ? "signup_host" : "signup_consumer",
         policySlugs: ["terms", "privacy", "marketplace-rules"],
         policyVersion: LEGAL_POLICY_VERSION,
       });

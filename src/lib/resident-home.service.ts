@@ -6,7 +6,19 @@ export const residentHomeService = {
     const { data, error } = await supabase
       .from("resident_home_profiles")
       .select(`
-        *,
+        id,
+        lease_id,
+        tenant_user_id,
+        smart_access_enabled,
+        smart_access_granted_at,
+        smart_access_granted_by,
+        smart_access_revoked_at,
+        visitor_pass_enabled,
+        energy_kwh,
+        water_m3,
+        announcements,
+        emergency_contact,
+        updated_at,
         lease:leases(
           id,
           status,
@@ -24,13 +36,14 @@ export const residentHomeService = {
       .maybeSingle();
 
     if (error) throw error;
-    if (!data?.lease?.id) return data;
+    const profile = data as any;
+    if (!profile?.lease?.id) return profile;
 
-    const devices = data.smart_access_enabled
-      ? await smartDeviceService.getLeaseDevices(data.lease.id).catch(() => [])
+    const devices = profile.smart_access_enabled
+      ? await smartDeviceService.getLeaseDevices(profile.lease.id).catch(() => [])
       : [];
 
-    return { ...data, devices };
+    return { ...profile, devices };
   },
 
   async getActiveTenantProfile(userId: string) {

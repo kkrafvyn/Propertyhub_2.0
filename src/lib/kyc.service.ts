@@ -63,25 +63,18 @@ export const kycService = {
     jurisdictionId?: string;
     providerEngine?: string;
   }) {
-    const { data, error } = await supabase
-      .from("kyc_submissions")
-      .insert({
-        user_id: input.userId,
-        document_type: input.documentType,
-        document_number: input.documentNumber || null,
-        full_name: input.fullName || null,
-        date_of_birth: input.dateOfBirth || null,
-        storage_path: input.storagePath || null,
-        context: input.context || "consumer",
-        jurisdiction_id: input.jurisdictionId || null,
-        provider_engine: input.providerEngine || null,
-        status: "submitted",
-      })
-      .select("*")
-      .single();
+    const { data, error } = await (supabase as any).rpc("submit_kyc_submission", {
+      p_document_type: input.documentType,
+      p_document_number: input.documentNumber || null,
+      p_full_name: input.fullName || null,
+      p_date_of_birth: input.dateOfBirth || null,
+      p_storage_path: input.storagePath || null,
+      p_context: input.context || "consumer",
+      p_jurisdiction_id: input.jurisdictionId || null,
+    });
 
     if (error) throw error;
-    return data;
+    return data as KycSubmission;
   },
 
   async uploadDocument(input: { userId: string; file: File }) {

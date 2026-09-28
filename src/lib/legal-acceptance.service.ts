@@ -9,34 +9,12 @@ export type RecordAcceptanceInput = {
 };
 
 export const legalAcceptanceService = {
-  async recordAcceptance({
-    userId,
-    scope,
-    policySlugs,
-    policyVersion = LEGAL_POLICY_VERSION,
-  }: RecordAcceptanceInput) {
-    const { error } = await supabase.rpc("record_legal_acceptance", {
-      p_user_id: userId,
+  async recordAcceptance({ scope }: RecordAcceptanceInput) {
+    const { error } = await (supabase as any).rpc("record_legal_acceptance", {
       p_scope: scope,
-      p_policy_version: policyVersion,
-      p_policies: policySlugs,
-      p_user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+      p_jurisdiction: null,
     });
-    if (error) {
-      console.warn("[legal] acceptance insert failed:", error.message);
-    }
-
-    const { error: metaError } = await supabase.auth.updateUser({
-      data: {
-        legal_policy_version: policyVersion,
-        legal_accepted_at: new Date().toISOString(),
-        legal_accepted_policies: policySlugs,
-        legal_accepted_scope: scope,
-      },
-    });
-    if (metaError) {
-      console.warn("[legal] metadata update failed:", metaError.message);
-    }
+    if (error) throw error;
   },
 
   async getLatestAcceptance(userId: string) {
@@ -71,8 +49,7 @@ export const legalAcceptanceService = {
     listingId?: string | null;
     contactEmail?: string | null;
   }) {
-    const { data, error } = await supabase.rpc("submit_support_complaint", {
-      p_user_id: input.userId ?? null,
+    const { data, error } = await (supabase as any).rpc("submit_support_complaint", {
       p_category: input.category,
       p_subject: input.subject,
       p_description: input.description,

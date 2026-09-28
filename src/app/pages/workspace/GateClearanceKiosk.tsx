@@ -66,12 +66,18 @@ export function GateClearanceKiosk({
   const [vehiclePlate, setVehiclePlate] = useState('');
   const [passType, setPassType] = useState<PassType>('guest_visit');
   const [hostUnitId, setHostUnitId] = useState('');
-  const [hostName, setHostName] = useState('');
   const [validHours, setValidHours] = useState('4');
   const [generatedPass, setGeneratedPass] = useState<VisitorPass | null>(null);
 
   const estateNameById = Object.fromEntries(estates.map((estate) => [estate.id, estate.name]));
   const unitById = Object.fromEntries(units.map((unit) => [unit.id, unit]));
+  const validityOptions = passType === 'delivery'
+    ? [2, 4]
+    : passType === 'contractor'
+      ? [4, 8, 24]
+      : passType === 'resident_vehicle'
+        ? [24, 48, 168]
+        : [2, 4, 8, 12];
 
   const reloadPasses = async (ids: string[], estateNameMap: Record<string, string>, unitMap: Record<string, EstateUnit>) => {
     const rows = await liveVisitorClearanceService.listPasses(ids);
@@ -140,23 +146,20 @@ export function GateClearanceKiosk({
 
   const handleCreatePass = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!visitorName.trim() || !hostName.trim() || !estateId) {
-      toast.error('Visitor name, host resident, and estate are required.');
+    if (!visitorName.trim() || !hostUnitId || !estateId) {
+      toast.error('Visitor name, host unit, and estate are required.');
       return;
     }
 
     try {
       const row = await liveVisitorClearanceService.createPass({
         estateId,
-        hostName,
-        hostUnitId: hostUnitId || undefined,
-        hostUserId: currentUserId,
+        hostUnitId,
         visitorName,
         visitorPhone,
         passType,
         vehiclePlate: vehiclePlate || undefined,
         validHours: parseInt(validHours, 10) || 4,
-        createdBy: currentUserId,
       });
       const pass = mapDbVisitorPass(row, estateNameById[estateId] || 'Estate', unitById[hostUnitId]?.identifier);
       setGeneratedPass(pass);
@@ -486,7 +489,11 @@ export function GateClearanceKiosk({
                     <select
                       className="mt-1 w-full rounded-xl border border-border bg-input-background p-2 text-xs"
                       value={passType}
-                      onChange={(e) => setPassType(e.target.value as PassType)}
+                      onChange={(e) => {
+                        const nextType = e.target.value as PassType;
+                        setPassType(nextType);
+                        setValidHours(nextType === 'delivery' ? '2' : nextType === 'resident_vehicle' ? '24' : '4');
+                      }}
                     >
                       <option value="guest_visit">Guest / Friend Visit</option>
                       <option value="delivery">Delivery (Bolt/Yango/Courier)</option>
@@ -512,32 +519,23 @@ export function GateClearanceKiosk({
                       value={validHours}
                       onChange={(e) => setValidHours(e.target.value)}
                     >
-                      <option value="2">2 Hours (Quick Delivery)</option>
-                      <option value="4">4 Hours (Standard Visit)</option>
-                      <option value="8">8 Hours (Day Contractor)</option>
-                      <option value="24">24 Hours (Overnight Guest)</option>
+                      {validityOptions.map((hours) => (
+                        <option key={hours} value={hours}>{hours} Hours</option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 pt-2 border-t border-border">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Host Resident</label>
-                    <Input
-                      value={hostName}
-                      onChange={(e) => setHostName(e.target.value)}
-                      className="mt-1 text-xs"
-                      placeholder="Resident name"
-                    />
-                  </div>
+                <div className="grid grid-cols-1 gap-3 pt-2 border-t border-border">
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">Host Unit</label>
                     <select
                       className="mt-1 w-full rounded-xl border border-border bg-input-background p-2 text-xs"
                       value={hostUnitId}
                       onChange={(e) => setHostUnitId(e.target.value)}
+                      required
                     >
-                      <option value="">Common area / estate gate</option>
+                      <option value="">Select host unit</option>
                       {units
                         .filter((unit) => !estateId || unit.estate_id === estateId)
                         .map((unit) => (

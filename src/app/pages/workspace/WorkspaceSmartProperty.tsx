@@ -30,7 +30,6 @@ export function WorkspaceSmartProperty({ organizationId }: { organizationId: str
     deviceType: "door_lock" as SmartDeviceType,
     label: "",
     room: "",
-    accessCode: "",
   });
 
   const activeLeases = useMemo(
@@ -112,14 +111,12 @@ export function WorkspaceSmartProperty({ organizationId }: { organizationId: str
         deviceType: deviceForm.deviceType,
         label: deviceForm.label.trim(),
         room: deviceForm.room.trim() || undefined,
-        accessCode: deviceForm.accessCode.trim() || undefined,
       });
       toast.success("Device registered.");
       setDeviceForm((current) => ({
         ...current,
         label: "",
         room: "",
-        accessCode: "",
       }));
       await loadState();
     } catch (error) {
@@ -251,13 +248,6 @@ export function WorkspaceSmartProperty({ organizationId }: { organizationId: str
             value={deviceForm.room}
             onChange={(event) => setDeviceForm((current) => ({ ...current, room: event.target.value }))}
             placeholder="Room (optional)"
-          />
-          <Input
-            value={deviceForm.accessCode}
-            onChange={(event) =>
-              setDeviceForm((current) => ({ ...current, accessCode: event.target.value }))
-            }
-            placeholder="Access code (optional)"
           />
         </div>
         <Button onClick={() => void registerDevice()} disabled={busyId === "register-device"}>

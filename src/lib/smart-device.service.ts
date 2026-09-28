@@ -28,7 +28,7 @@ export type ResidentHomeProfile = {
 async function getResidentProfileByLease(leaseId: string) {
   const { data, error } = await supabase
     .from("resident_home_profiles")
-    .select("*")
+    .select("id, lease_id, tenant_user_id, smart_access_enabled, smart_access_granted_at, smart_access_granted_by, smart_access_revoked_at, visitor_pass_enabled, energy_kwh, water_m3, announcements, emergency_contact")
     .eq("lease_id", leaseId)
     .maybeSingle();
 
@@ -38,13 +38,9 @@ async function getResidentProfileByLease(leaseId: string) {
 
 export const smartDeviceService = {
   async getOrganizationDevices(organizationId: string) {
-    const { data, error } = await supabase
-      .from("smart_devices")
-      .select(`
-        *,
-        listing:listings(id, property:properties(address, city)),
-        lease:leases(id, tenant:users(full_name, email))
-      `)
+    const { data, error } = await (supabase as any)
+      .from("smart_devices_safe")
+      .select("id, organization_id, listing_id, lease_id, device_type, label, room, status, last_reading, created_at, updated_at")
       .eq("organization_id", organizationId)
       .order("label");
 
@@ -53,9 +49,9 @@ export const smartDeviceService = {
   },
 
   async getListingDevices(listingId: string) {
-    const { data, error } = await supabase
-      .from("smart_devices")
-      .select("*")
+    const { data, error } = await (supabase as any)
+      .from("smart_devices_safe")
+      .select("id, organization_id, listing_id, lease_id, device_type, label, room, status, last_reading, created_at, updated_at")
       .eq("listing_id", listingId)
       .order("label");
 
@@ -83,9 +79,9 @@ export const smartDeviceService = {
       filters.push(`listing_id.eq.${lease.listing_id}`);
     }
 
-    const { data, error } = await supabase
-      .from("smart_devices")
-      .select("*")
+    const { data, error } = await (supabase as any)
+      .from("smart_devices_safe")
+      .select("id, organization_id, listing_id, lease_id, device_type, label, room, status, last_reading, created_at, updated_at")
       .or(filters.join(","))
       .order("label");
 
@@ -103,23 +99,7 @@ export const smartDeviceService = {
     tenantUserId: string;
     organizationId: string;
   }) {
-    const now = new Date().toISOString();
-    const { data, error } = await supabase
-      .from("resident_home_profiles")
-      .upsert(
-        {
-          lease_id: input.leaseId,
-          tenant_user_id: input.tenantUserId,
-          smart_access_enabled: true,
-          smart_access_granted_at: now,
-          smart_access_granted_by: input.grantedBy,
-          smart_access_revoked_at: null,
-          updated_at: now,
-        },
-        { onConflict: "lease_id" }
-      )
-      .select("*")
-      .single();
+    const { data, error } = await (supabase as any).rpc("grant_lease_smart_access", { p_lease_id: input.leaseId });
 
     if (error) throw error;
 
@@ -140,18 +120,7 @@ export const smartDeviceService = {
   },
 
   async revokeTenantAccess(input: { leaseId: string; revokedBy: string; tenantUserId: string }) {
-    const now = new Date().toISOString();
-    const { data, error } = await supabase
-      .from("resident_home_profiles")
-      .update({
-        smart_access_enabled: false,
-        smart_access_revoked_at: now,
-        smart_access_granted_by: input.revokedBy,
-        updated_at: now,
-      })
-      .eq("lease_id", input.leaseId)
-      .select("*")
-      .single();
+    const { data, error } = await (supabase as any).rpc("revoke_lease_smart_access", { p_lease_id: input.leaseId });
 
     if (error) throw error;
 
@@ -177,16 +146,15 @@ export const smartDeviceService = {
     deviceType: SmartDeviceType;
     label: string;
     room?: string;
-    accessCode?: string;
   }) {
-    const { data, error } = await supabase.rpc("register_smart_device", {
-      p_organization_id: input.organizationId || null,
-      p_listing_id: input.listingId || null,
-      p_lease_id: input.leaseId || null,
+    if (!input.organizationId) throw new Error("An organization is required to register a device.");
+    const { data, error } = await (supabase as any).rpc("register_smart_device", {
+      p_organization_id: input.organizationId,
       p_device_type: input.deviceType,
       p_label: input.label,
+      p_listing_id: input.listingId || null,
+      p_lease_id: input.leaseId || null,
       p_room: input.room || null,
-      p_access_code: input.accessCode || null,
     });
 
     if (error) throw error;
@@ -194,15 +162,14 @@ export const smartDeviceService = {
   },
 
   async removeDevice(deviceId: string) {
-    const { error } = await supabase.from("smart_devices").delete().eq("id", deviceId);
+    const { error } = await (supabase as any).rpc("remove_smart_device", { p_device_id: deviceId });
     if (error) throw error;
   },
 
   async updateReading(deviceId: string, reading: Record<string, unknown>, status?: string) {
-    const { data, error } = await supabase.rpc("append_smart_device_event", {
+    const { data, error } = await (supabase as any).rpc("append_smart_device_manual_note", {
       p_device_id: deviceId,
-      p_event_type: status ? `reading_update:${status}` : "reading_update",
-      p_payload: reading,
+      p_note: `Admin-reported reading (not trusted telemetry): ${JSON.stringify({ reading, status })}`,
     });
 
     if (error) throw error;
@@ -210,8 +177,8 @@ export const smartDeviceService = {
   },
 
   async getRecentEvents(deviceId: string, limit = 20) {
-    const { data, error } = await supabase
-      .from("smart_device_events")
+    const { data, error } = await (supabase as any)
+      .from("smart_device_events_safe")
       .select("*")
       .eq("device_id", deviceId)
       .order("created_at", { ascending: false })

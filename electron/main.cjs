@@ -2,12 +2,12 @@ const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const offlineStore = require("./offline-store.cjs");
+const parseAuthCallback = require("./auth-callback.cjs");
 
 const startUrl = process.env.ELECTRON_START_URL;
 const isDev = Boolean(startUrl);
 const DESKTOP_ENTRY_HASH = "/login";
 const AUTH_CALLBACK_PROTOCOL = "baytmiftah";
-const AUTH_CALLBACK_HOST = "auth";
 
 // Only these schemes may ever be handed to the OS. Blocks javascript:, file:,
 // and third-party custom protocol handlers reaching shell.openExternal.
@@ -69,33 +69,6 @@ function registerProtocolClient() {
     }
   } else {
     app.setAsDefaultProtocolClient(AUTH_CALLBACK_PROTOCOL);
-  }
-}
-
-function parseAuthCallback(url) {
-  if (!url || typeof url !== "string") return null;
-  if (!url.startsWith(`${AUTH_CALLBACK_PROTOCOL}://`)) return null;
-
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname !== AUTH_CALLBACK_HOST) return null;
-
-    const params = new URLSearchParams(parsed.search.replace(/^\?/, ""));
-    const hashParams = new URLSearchParams(parsed.hash.replace(/^#/, ""));
-    for (const [key, value] of hashParams.entries()) {
-      params.set(key, value);
-    }
-
-    const code = params.get("code");
-    if (code) {
-      return { type: "code", code };
-    }
-
-    // Implicit-flow bearer tokens are deliberately rejected. Desktop OAuth
-    // must complete through an authorization code and PKCE.
-    return null;
-  } catch {
-    return null;
   }
 }
 

@@ -10,6 +10,7 @@ import { LegalAcceptanceCheckbox } from "../../components/legal/LegalAcceptanceC
 import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION, LEGAL_VERSION_KEY, type LegalAcceptanceScope } from "../../../lib/legal-config";
 import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
 import { validatePassword } from "../../../lib/security/password-policy";
+import { supabase } from "../../../lib/supabase";
 
 export function Signup() {
   const [formData, setFormData] = useState({
@@ -87,17 +88,19 @@ export function Signup() {
         formData.email,
         formData.password,
         formData.fullName,
-        formData.accountType === "user" ? "user" : "landlord",
-        { policyVersion: LEGAL_POLICY_VERSION, policySlugs, scope }
+        formData.accountType === "user" ? "user" : "landlord"
       );
       if (user?.id) {
-        await legalAcceptanceService.recordAcceptance({
-          userId: user.id,
-          scope,
-          policySlugs,
-          policyVersion: LEGAL_POLICY_VERSION,
-        });
-        localStorage.setItem(LEGAL_VERSION_KEY, LEGAL_POLICY_VERSION);
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user.id === user.id) {
+          await legalAcceptanceService.recordAcceptance({
+            userId: user.id,
+            scope,
+            policySlugs,
+            policyVersion: LEGAL_POLICY_VERSION,
+          });
+          localStorage.setItem(LEGAL_VERSION_KEY, LEGAL_POLICY_VERSION);
+        }
       }
       toast.success("Account created successfully. Check your email to verify.");
       navigate("/login", {
