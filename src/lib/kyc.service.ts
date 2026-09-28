@@ -132,34 +132,15 @@ export const kycService = {
     status: "verified" | "rejected",
     reviewerNotes?: string,
   ) {
-    const { data, error } = await supabase
-      .from("kyc_submissions")
-      .update({
-        status,
-        reviewer_notes: reviewerNotes || null,
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq("id", submissionId)
-      .select("*")
-      .single();
+    const { data, error } = await supabase.rpc("review_kyc_submission", {
+      p_submission_id: submissionId,
+      p_status: status,
+      p_reviewer_notes: reviewerNotes || null,
+    });
 
     if (error) throw error;
 
-    if (status === "verified" && data?.user_id) {
-      await supabase
-        .from("users")
-        .update({ verified: true, updated_at: new Date().toISOString() })
-        .eq("id", data.user_id);
-    }
-
-    if (status === "rejected" && data?.user_id) {
-      await supabase
-        .from("users")
-        .update({ verified: false, updated_at: new Date().toISOString() })
-        .eq("id", data.user_id);
-    }
-
-    return data;
+    return data as KycSubmission | null;
   },
 
   async requestAiScreening(submissionId: string) {

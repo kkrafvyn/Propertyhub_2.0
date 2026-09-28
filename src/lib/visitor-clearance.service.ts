@@ -99,29 +99,17 @@ export const liveVisitorClearanceService = {
     validHours?: number;
     createdBy?: string;
   }) {
-    const pin = generateGatePin();
-    const token = `BM-GATE-${pin}`;
-    const now = new Date();
-    const validUntil = new Date(now.getTime() + Math.max(1, input.validHours || 4) * 60 * 60 * 1000);
-    const { data, error } = await (supabase as any)
-      .from('estate_visitor_passes')
-      .insert({
-        estate_id: input.estateId,
-        host_unit_id: input.hostUnitId || null,
-        host_user_id: input.hostUserId || null,
-        host_name: input.hostName.trim(),
-        visitor_name: input.visitorName.trim(),
-        visitor_phone: input.visitorPhone?.trim() || null,
-        vehicle_plate: input.vehiclePlate?.trim() || null,
-        pass_type: mapPassTypeToDb(input.passType),
-        pin_code: pin,
-        qr_payload: token,
-        valid_from: now.toISOString(),
-        valid_until: validUntil.toISOString(),
-        created_by: input.createdBy || null,
-      })
-      .select('*')
-      .single();
+    const { data, error } = await (supabase as any).rpc('create_estate_visitor_pass', {
+      p_estate_id: input.estateId,
+      p_host_user_id: input.hostUserId || null,
+      p_host_name: input.hostName.trim(),
+      p_visitor_name: input.visitorName.trim(),
+      p_visitor_phone: input.visitorPhone?.trim() || null,
+      p_pass_type: mapPassTypeToDb(input.passType),
+      p_vehicle_plate: input.vehiclePlate?.trim() || null,
+      p_valid_hours: Math.max(1, input.validHours || 4),
+      p_max_uses: 1,
+    });
     if (error) throw error;
     return data;
   },
@@ -129,26 +117,14 @@ export const liveVisitorClearanceService = {
   async verifyAndCheckIn(input: { estateId: string; tokenOrPin: string; guardUserId?: string; guardName?: string; method?: 'qr' | 'pin' }) {
     const cleaned = input.tokenOrPin.trim();
     if (!cleaned) throw new Error('QR token or PIN is required');
-    const inferredMethod: 'qr' | 'pin' = input.method || (cleaned.toUpperCase().startsWith('BM-GATE') || cleaned.length > 6 ? 'qr' : 'pin');
-    const column = inferredMethod === 'qr' ? 'qr_payload' : 'pin_code';
-    const lookup = (supabase as any).from('estate_visitor_passes').select('*').eq('estate_id', input.estateId).eq('status', 'active');
-    let { data: pass, error } = await lookup.eq(column, inferredMethod === 'qr' ? cleaned.toUpperCase() : cleaned).maybeSingle();
+    const { data, error } = await (supabase as any).rpc('verify_estate_visitor_pass', {
+      p_estate_id: input.estateId,
+      p_token_or_pin: cleaned,
+      p_guard_user_id: input.guardUserId || null,
+      p_guard_name: input.guardName || null,
+    });
     if (error) throw error;
-    if (!pass) {
-      const fallbackColumn = inferredMethod === 'qr' ? 'pin_code' : 'qr_payload';
-      const retry = await (supabase as any).from('estate_visitor_passes').select('*').eq('estate_id', input.estateId).eq('status', 'active').eq(fallbackColumn, cleaned).maybeSingle();
-      if (retry.error) throw retry.error;
-      pass = retry.data;
-    }
-    if (!pass) return { success: false, message: 'Invalid or already-used visitor pass.' };
-    const now = new Date();
-    if (now < new Date(pass.valid_from) || now > new Date(pass.valid_until) || pass.use_count >= pass.max_uses) return { success: false, message: 'Visitor pass is outside its valid window.' };
-    const nextUses = pass.use_count + 1;
-    const { error: updateError } = await (supabase as any).from('estate_visitor_passes').update({ use_count: nextUses, status: nextUses >= pass.max_uses ? 'used' : 'active', updated_at: now.toISOString() }).eq('id', pass.id).eq('status', 'active');
-    if (updateError) throw updateError;
-    const { error: logError } = await (supabase as any).from('estate_gate_log').insert({ estate_id: input.estateId, pass_id: pass.id, direction: 'entry', visitor_name: pass.visitor_name, vehicle_plate: pass.vehicle_plate, pass_type: pass.pass_type, guard_user_id: input.guardUserId || null, guard_name: input.guardName || null, verification_method: inferredMethod, access_granted: true });
-    if (logError) throw logError;
-    return { success: true, pass, message: `Access granted for ${pass.visitor_name}` };
+    return data ?? { success: false, message: 'Invalid or already-used visitor pass.' };
   },
 };
 

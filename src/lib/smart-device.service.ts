@@ -179,23 +179,18 @@ export const smartDeviceService = {
     room?: string;
     accessCode?: string;
   }) {
-    const { data, error } = await supabase
-      .from("smart_devices")
-      .insert({
-        organization_id: input.organizationId || null,
-        listing_id: input.listingId || null,
-        lease_id: input.leaseId || null,
-        device_type: input.deviceType,
-        label: input.label,
-        room: input.room || null,
-        access_code: input.accessCode || null,
-        status: "online",
-      })
-      .select("*")
-      .single();
+    const { data, error } = await supabase.rpc("register_smart_device", {
+      p_organization_id: input.organizationId || null,
+      p_listing_id: input.listingId || null,
+      p_lease_id: input.leaseId || null,
+      p_device_type: input.deviceType,
+      p_label: input.label,
+      p_room: input.room || null,
+      p_access_code: input.accessCode || null,
+    });
 
     if (error) throw error;
-    return data;
+    return data as any;
   },
 
   async removeDevice(deviceId: string) {
@@ -204,26 +199,14 @@ export const smartDeviceService = {
   },
 
   async updateReading(deviceId: string, reading: Record<string, unknown>, status?: string) {
-    const { data, error } = await supabase
-      .from("smart_devices")
-      .update({
-        last_reading: reading,
-        status: status || "online",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", deviceId)
-      .select("*")
-      .single();
-
-    if (error) throw error;
-
-    await supabase.from("smart_device_events").insert({
-      device_id: deviceId,
-      event_type: "reading_update",
-      payload: reading,
+    const { data, error } = await supabase.rpc("append_smart_device_event", {
+      p_device_id: deviceId,
+      p_event_type: status ? `reading_update:${status}` : "reading_update",
+      p_payload: reading,
     });
 
-    return data;
+    if (error) throw error;
+    return data as any;
   },
 
   async getRecentEvents(deviceId: string, limit = 20) {

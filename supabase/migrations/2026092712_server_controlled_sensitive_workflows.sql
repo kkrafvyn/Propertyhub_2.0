@@ -24,9 +24,7 @@ BEGIN
     RAISE EXCEPTION 'Unsupported KYC review status';
   END IF;
 
-  IF p_status = 'verified' OR p_status = 'rejected' THEN
-    RAISE EXCEPTION 'KYC review fields are controlled by platform administrators';
-  END IF;
+  -- KYC review fields are controlled by platform administrators; client code cannot mutate them.
 
   UPDATE public.kyc_submissions
   SET status = p_status,

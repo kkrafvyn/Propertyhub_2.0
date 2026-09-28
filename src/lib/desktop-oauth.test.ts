@@ -13,6 +13,18 @@ describe("desktop OAuth callback validation", () => {
     expect(parseDesktopOAuthCallback({ access_token: "access", refresh_token: "refresh" })).toBeNull();
     expect(parseDesktopOAuthCallback({ type: "session", access_token: "access", refresh_token: "refresh" })).toBeNull();
     expect(parseDesktopOAuthCallback({ type: "code", code: "  " })).toBeNull();
+    expect(parseDesktopOAuthCallback({ type: "code", code: "short", state: "   " })).toBeNull();
     expect(parseDesktopOAuthCallback(null)).toBeNull();
+  });
+
+  it("accepts signed code callbacks with non-empty state and rejects malformed state", () => {
+    expect(parseDesktopOAuthCallback({ type: "code", code: "1234567890abcdef", state: "nonce-123" })).toEqual({
+      type: "code",
+      code: "1234567890abcdef",
+      state: "nonce-123",
+    });
+
+    expect(parseDesktopOAuthCallback({ type: "code", code: "1234567890abcdef", state: "" })).toBeNull();
+    expect(parseDesktopOAuthCallback({ type: "code", code: "1234567890abcdef", state: "   " })).toBeNull();
   });
 });

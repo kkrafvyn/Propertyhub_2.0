@@ -15,15 +15,13 @@ export const legalAcceptanceService = {
     policySlugs,
     policyVersion = LEGAL_POLICY_VERSION,
   }: RecordAcceptanceInput) {
-    const payload = {
-      user_id: userId,
-      scope,
-      policy_version: policyVersion,
-      policies: policySlugs,
-      user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
-    };
-
-    const { error } = await supabase.from("legal_acceptances").insert(payload);
+    const { error } = await supabase.rpc("record_legal_acceptance", {
+      p_user_id: userId,
+      p_scope: scope,
+      p_policy_version: policyVersion,
+      p_policies: policySlugs,
+      p_user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+    });
     if (error) {
       console.warn("[legal] acceptance insert failed:", error.message);
     }
@@ -73,19 +71,14 @@ export const legalAcceptanceService = {
     listingId?: string | null;
     contactEmail?: string | null;
   }) {
-    const { data, error } = await supabase
-      .from("support_complaints")
-      .insert({
-        user_id: input.userId ?? null,
-        category: input.category,
-        subject: input.subject,
-        description: input.description,
-        listing_id: input.listingId ?? null,
-        contact_email: input.contactEmail ?? null,
-        status: "open",
-      })
-      .select("id")
-      .single();
+    const { data, error } = await supabase.rpc("submit_support_complaint", {
+      p_user_id: input.userId ?? null,
+      p_category: input.category,
+      p_subject: input.subject,
+      p_description: input.description,
+      p_listing_id: input.listingId ?? null,
+      p_contact_email: input.contactEmail ?? null,
+    });
 
     if (error) throw new Error(error.message);
     return data;
