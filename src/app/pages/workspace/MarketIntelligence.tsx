@@ -96,7 +96,7 @@ export default function MarketIntelligenceDashboard({
       cards.push({
         title: "Your live market feed is connected",
         detail:
-          "As more listings and trend snapshots land in Supabase, this page will keep sharpening its recommendations automatically.",
+          "As more listings and market activity are recorded, this page will sharpen its recommendations automatically.",
         cta: "Refresh insights",
       });
     }

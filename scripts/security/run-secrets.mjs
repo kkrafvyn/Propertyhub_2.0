@@ -53,6 +53,7 @@ function main() {
     console.error("Secret detected. Rotate affected credentials and remove values from git history.");
     process.exit(1);
   }
+  if (status === "UNVERIFIED") process.exit(strict ? 1 : 0);
 }
 
 main();

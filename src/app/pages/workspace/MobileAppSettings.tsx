@@ -190,7 +190,7 @@ export default function MobileAppSettings({
               <Download className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-semibold">Mobile app release channels</h3>
+              <h3 className="font-semibold">Mobile App Versions</h3>
               <p className="text-sm text-muted-foreground">
                 {iosVersion?.latest_version
                   ? `iOS ${iosVersion.latest_version}`
@@ -199,7 +199,7 @@ export default function MobileAppSettings({
                 {androidVersion?.latest_version
                   ? `Android ${androidVersion.latest_version}`
                   : "Android version not configured"}{" "}
-                are the latest known builds.
+                are currently supported.
               </p>
             </div>
           </div>
@@ -217,10 +217,9 @@ export default function MobileAppSettings({
       <Card className="p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Browser Push</h2>
+            <h2 className="text-lg font-semibold">Browser Push Notifications</h2>
             <p className="text-sm text-muted-foreground mt-2">
-              Connect this browser so the new push delivery pipeline can send message, lead, and
-              workspace alerts in real time.
+              Enable notifications in this browser to receive immediate alerts for new messages, leads, and workspace updates.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

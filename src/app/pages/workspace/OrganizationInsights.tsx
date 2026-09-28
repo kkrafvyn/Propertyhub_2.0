@@ -113,7 +113,7 @@ export default function OrganizationInsights({
     return (
       <Card variant="glass" className="p-12 text-center text-ink-muted">
         <Activity className="w-8 h-8 animate-pulse text-primary mx-auto mb-3" />
-        <p className="font-medium">Aggregating real-time operational telemetry...</p>
+        <p className="font-medium">Loading your performance data...</p>
       </Card>
     );
   }
@@ -145,14 +145,14 @@ export default function OrganizationInsights({
         <div>
           <div className="flex items-center gap-2.5 mb-1.5">
             <h1 className="text-3xl font-bold tracking-tight text-ink font-serif">
-              Organization Insights & Performance
+              Organization Insights
             </h1>
             <Badge variant="success" dot pulse dotColor="emerald">
-              Telemetry Live
+              Live
             </Badge>
           </div>
           <p className="text-sm text-ink-secondary max-w-2xl leading-relaxed">
-            Real-time portfolio metrics, inquiry response velocity, tenant satisfaction index, and automated growth opportunities.
+            Portfolio performance, response times, tenant satisfaction, and growth opportunities at a glance.
           </p>
         </div>
 
@@ -178,14 +178,14 @@ export default function OrganizationInsights({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-ink">Operational Health Index</h2>
+                <h2 className="text-xl font-bold text-ink">Portfolio Health Score</h2>
                 <Badge variant="success" className="text-xs">
                   <Flame className="w-3.5 h-3.5 mr-1" />
-                  Top 8% Velocity
+                  Top 8%
                 </Badge>
               </div>
               <p className="text-xs text-ink-secondary mt-1 max-w-xl leading-relaxed">
-                Calculated across inquiry responsiveness, verified tenant satisfaction, and listing conversion rate. Your estate management team is performing with exceptional velocity.
+                Based on response time, tenant satisfaction, and listing conversion rate. Your team is performing in the top tier.
               </p>
             </div>
           </div>

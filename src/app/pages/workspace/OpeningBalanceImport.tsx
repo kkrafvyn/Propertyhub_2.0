@@ -1,2 +1,143 @@
-import { useState } from "react";import { CheckCircle2,FileUp,Loader2 } from "lucide-react";import { toast } from "sonner";import { Button } from "../../components/ui/Button";import { Card } from "../../components/ui/Card";import { Badge } from "../../components/ui/badge";import { openingChargeImportService } from "../../../lib/opening-charge-import.service";import type { OpeningChargeImportRow } from "../../../lib/estate-import.service";
-export function OpeningBalanceImport({organizationId,currentUserId}:{organizationId:string;currentUserId:string}){const[rows,setRows]=useState<OpeningChargeImportRow[]>([]),[fileName,setFileName]=useState(""),[busy,setBusy]=useState(false);const choose=async(e:React.ChangeEvent<HTMLInputElement>)=>{const file=e.target.files?.[0];if(!file)return;setFileName(file.name);setRows(openingChargeImportService.parse(await file.text()))};const importRows=async()=>{try{setBusy(true);const job=await openingChargeImportService.createJob({organizationId,userId:currentUserId,fileName:fileName||"opening-charges.csv",rows});const count=await openingChargeImportService.execute({jobId:job.id,organizationId,userId:currentUserId});toast.success(`${count} opening charge(s) imported to the immutable ledger.`);setRows([])}catch(error){console.error(error);toast.error("Unable to import opening charges.")}finally{setBusy(false)}};const valid=rows.filter(x=>!x.errors.length).length;return <div className="space-y-6"><div><h1 className="text-3xl font-semibold">Opening Balances Import</h1><p className="mt-2 text-muted-foreground">Bring existing arrears into BaytMiftah as dated, immutable opening charges—ready for statements and collections.</p></div><Card className="p-6"><label className="flex cursor-pointer flex-col items-center rounded-xl border border-dashed border-border p-8 text-center"><FileUp className="h-7 w-7 text-primary"/><p className="mt-3 font-medium">Upload opening charges CSV</p><p className="mt-1 text-sm text-muted-foreground">Columns: estate_name, unit_identifier, amount, due_date, charge_type, description</p><input className="sr-only" type="file" accept=".csv,text/csv" onChange={choose}/></label>{rows.length>0&&<><div className="mt-4 flex gap-2"><Badge variant="outline">{rows.length} rows</Badge><Badge variant="outline">{valid} valid</Badge><Badge variant={valid===rows.length?"outline":"destructive"}>{rows.length-valid} errors</Badge></div><div className="mt-4 max-h-80 space-y-2 overflow-auto">{rows.map(row=><div key={row.rowNumber} className="flex justify-between rounded-lg border border-border p-3 text-sm"><span>#{row.rowNumber} · {row.estateName} · {row.unitIdentifier} · {row.amount}</span>{row.errors.length?<span className="text-destructive">{row.errors.join(", ")}</span>:<CheckCircle2 className="h-4 w-4 text-green-600"/>}</div>)}</div><Button className="mt-4" disabled={busy||valid!==rows.length} onClick={()=>void importRows()}>{busy?<Loader2 className="h-4 w-4 animate-spin"/>:"Approve & import to ledger"}</Button></>}</Card></div>}
+import { useState } from "react";
+import { AlertCircle, CheckCircle2, FileSpreadsheet, FileUp, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/Card";
+import { Badge } from "../../components/ui/badge";
+import { openingChargeImportService } from "../../../lib/opening-charge-import.service";
+import type { OpeningChargeImportRow } from "../../../lib/estate-import.service";
+
+interface OpeningBalanceImportProps {
+  organizationId: string;
+  currentUserId: string;
+}
+
+export function OpeningBalanceImport({
+  organizationId,
+  currentUserId,
+}: OpeningBalanceImportProps) {
+  const [rows, setRows] = useState<OpeningChargeImportRow[]>([]);
+  const [fileName, setFileName] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const choose = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileName(file.name);
+    try {
+      const text = await file.text();
+      setRows(openingChargeImportService.parse(text));
+      toast.success(`Loaded ${file.name}`);
+    } catch {
+      toast.error("Failed to read CSV file.");
+    }
+  };
+
+  const importRows = async () => {
+    try {
+      setBusy(true);
+      const job = await openingChargeImportService.createJob({
+        organizationId,
+        userId: currentUserId,
+        fileName: fileName || "opening-charges.csv",
+        rows,
+      });
+      const count = await openingChargeImportService.execute({
+        jobId: job.id,
+        organizationId,
+        userId: currentUserId,
+      });
+      toast.success(`${count} opening charge(s) imported.`);
+      setRows([]);
+      setFileName("");
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to import opening charges.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const valid = rows.filter((x) => !x.errors.length).length;
+  const invalid = rows.length - valid;
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Opening Balances Import</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Import pre-existing tenant arrears into the ledger to begin generating accurate statements.
+        </p>
+      </div>
+
+      <Card className="p-6 space-y-5">
+        {/* Upload dropzone */}
+        <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border p-8 text-center hover:border-primary/50 transition-colors bg-muted/20">
+          <div className="p-3 rounded-full bg-primary/10 text-primary mb-3">
+            <FileSpreadsheet className="h-6 w-6" />
+          </div>
+          <p className="text-sm font-semibold text-foreground">
+            {fileName ? `Selected: ${fileName}` : "Upload opening charges CSV"}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Required columns:{" "}
+            <span className="font-mono">estate_name, unit_identifier, amount, due_date, charge_type, description</span>
+          </p>
+          <input className="sr-only" type="file" accept=".csv,text/csv" onChange={choose} />
+        </label>
+
+        {/* Validation and List */}
+        {rows.length > 0 && (
+          <div className="space-y-4 pt-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">{rows.length} rows</Badge>
+                <Badge variant="default" className="bg-emerald-600">
+                  {valid} valid
+                </Badge>
+                {invalid > 0 && <Badge variant="destructive">{invalid} errors</Badge>}
+              </div>
+
+              <Button
+                disabled={busy || valid !== rows.length}
+                onClick={() => void importRows()}
+                size="sm"
+                className="gap-1.5"
+              >
+                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Approve & Import {valid} Charges
+              </Button>
+            </div>
+
+            <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
+              {rows.map((row) => (
+                <div
+                  key={row.rowNumber}
+                  className="flex items-center justify-between rounded-lg border border-border p-2.5 text-xs bg-background"
+                >
+                  <div className="space-y-0.5 truncate">
+                    <span className="font-medium text-foreground">
+                      #{row.rowNumber} · {row.estateName} · {row.unitIdentifier}
+                    </span>
+                    <p className="text-[11px] text-muted-foreground">
+                      Amount: {row.amount} · Type: {row.chargeType || "General"}
+                    </p>
+                  </div>
+
+                  {row.errors.length ? (
+                    <span className="text-destructive font-medium truncate max-w-xs text-right">
+                      {row.errors.join(", ")}
+                    </span>
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}

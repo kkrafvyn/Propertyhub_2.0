@@ -282,14 +282,14 @@ export function WorkspaceMaintenance({
               </Badge>
               <span className="text-xs text-ink-muted flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3 text-amber-500" />
-                Verified Vendor SLA & Work Order Tracking
+                Contractor & Repair Tracking
               </span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-display font-medium tracking-tight text-ink">
               Maintenance Operations
             </h1>
             <p className="text-sm text-ink-secondary max-w-xl leading-relaxed">
-              Dispatch verified contractors, track emergency repairs, review tenant proof evidence, and monitor work order SLA resolutions.
+              Assign contractors, track repairs in progress, review tenant photos, and make sure every job gets completed on time.
             </p>
           </div>
           <div className="flex items-center gap-2.5 shrink-0">

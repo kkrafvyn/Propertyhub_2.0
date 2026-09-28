@@ -219,10 +219,11 @@ export const estateReportingService = {
       providerReference: `in_app:${deliveryId.slice(0, 8)}`,
     });
 
-    await db
-      .from("estate_owner_statement_runs")
-      .update({ status: "delivered" })
-      .eq("id", statement.id);
+    const { error: transitionError } = await db.rpc("transition_owner_statement_status", {
+      p_statement_id: statement.id,
+      p_next_status: "delivered",
+    });
+    if (transitionError) throw transitionError;
 
     return delivery;
   },
@@ -279,11 +280,9 @@ export const estateReportingService = {
       return { id: entry.id, offlineQueued: true, status: "pending" };
     }
 
-    const { data, error } = await db.from("estate_distribution_approvals").insert({
-      statement_run_id: input.statementRunId,
-      requested_amount_minor: input.amountMinor,
-      requested_by: input.requestedBy,
-    }).select("*").single();
+    const { data, error } = await db.rpc("request_distribution_approval", {
+      p_statement_run_id: input.statementRunId,
+    });
     if (error) throw error;
     return data;
   },
@@ -301,12 +300,11 @@ export const estateReportingService = {
   },
 
   async reviewDistributionApproval(approvalId: string, decision: "approved" | "rejected", reviewedBy: string, note?: string) {
-    const { data, error } = await db.from("estate_distribution_approvals").update({
-      status: decision,
-      reviewed_by: reviewedBy,
-      review_note: note?.trim() || null,
-      reviewed_at: new Date().toISOString(),
-    }).eq("id", approvalId).eq("status", "pending").select("*").single();
+    const { data, error } = await db.rpc("review_distribution_approval", {
+      p_approval_id: approvalId,
+      p_decision: decision,
+      p_note: note?.trim() || null,
+    });
     if (error) throw error;
     return data;
   },
@@ -317,8 +315,6 @@ export const estateReportingService = {
     destinationPhone: string;
     note?: string;
   }) {
-    const amountError = validateOwnerPayoutAmount(input.amountGhs);
-    if (amountError) throw new Error(amountError);
     const { data: approval, error: approvalError } = await db
       .from("estate_distribution_approvals")
       .select(`
@@ -327,6 +323,8 @@ export const estateReportingService = {
         requested_amount_minor,
         statement:estate_owner_statement_runs(
           owner_user_id,
+          currency,
+          net_distributable_minor,
           estate:managed_estates(organization_id, organization:organizations(slug))
         )
       `)
@@ -336,10 +334,31 @@ export const estateReportingService = {
     if (approvalError) throw approvalError;
     const statement = approval.statement as {
       owner_user_id?: string;
+      currency?: string;
+      net_distributable_minor?: number;
       estate?: { organization_id?: string; organization?: { slug?: string } | null } | null;
     } | null;
     const organizationId = statement?.estate?.organization_id;
     if (!organizationId) throw new Error("Distribution approval is missing organization context");
+    if (Number(approval.requested_amount_minor) !== Number(statement?.net_distributable_minor)) {
+      throw new Error("Approved payout amount no longer matches the trusted statement.");
+    }
+    const { data: payoutMethod, error: payoutMethodError } = await db
+      .from("owner_payout_methods")
+      .select("method_type, currency, destination, status")
+      .eq("owner_user_id", statement.owner_user_id)
+      .eq("organization_id", organizationId)
+      .eq("status", "verified")
+      .eq("is_default", true)
+      .maybeSingle();
+    if (payoutMethodError) throw payoutMethodError;
+    if (!payoutMethod || payoutMethod.method_type !== "mobile_money") {
+      throw new Error("A verified mobile-money payout method is required for this provider.");
+    }
+    if (String(payoutMethod.currency).toUpperCase() !== String(statement.currency).toUpperCase()) {
+      throw new Error("Payout currency does not match the statement currency.");
+    }
+    const trustedAmountGhs = Number(approval.requested_amount_minor) / 100;
     const { data: reserved, error: reserveError } = await db.from("estate_distribution_approvals").update({ status: "processing" }).eq("id", approval.id).eq("status", "approved").select("id").maybeSingle();
     if (reserveError) throw reserveError;
     if (!reserved) throw new Error("Distribution is already being processed");
@@ -365,8 +384,8 @@ export const estateReportingService = {
     try {
       providerResult = await requestMomoPayment({
         type: "disbursement",
-        amount: input.amountGhs,
-        phone: input.destinationPhone,
+        amount: trustedAmountGhs,
+        phone: payoutMethod.destination,
         organizationId,
         approvalId: input.approvalId,
         note: input.note || `Owner distribution ${input.approvalId.slice(0, 8)}`,

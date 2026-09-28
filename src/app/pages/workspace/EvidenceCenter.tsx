@@ -57,14 +57,14 @@ export function EvidenceCenter({ organizationId }: { organizationId?: string }) 
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">Evidence Center & Litigation Dossier</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-ink">Evidence & Activity History</h1>
           <p className="text-sm text-ink-muted">
-            Read-only chronology assembled from immutable ledgers for a unit in this organization.
+            View the full read-only activity record for any unit in your organisation.
           </p>
         </div>
         <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 flex items-center gap-1">
           <Lock className="w-3.5 h-3.5" />
-          Immutable Audit Trail
+          Protected Record
         </Badge>
       </div>
 
@@ -81,7 +81,7 @@ export function EvidenceCenter({ organizationId }: { organizationId?: string }) 
             />
           </div>
           <Button type="submit" variant="primary" disabled={loading}>
-            {loading ? "Assembling…" : "Generate Dossier"}
+            {loading ? "Loading…" : "View History"}
           </Button>
         </form>
       </Card>
@@ -100,7 +100,7 @@ export function EvidenceCenter({ organizationId }: { organizationId?: string }) 
             </Button>
           </div>
           {dossier.events.length === 0 ? (
-            <p className="text-sm text-ink-muted">No ledger events recorded for this unit yet.</p>
+            <p className="text-sm text-ink-muted">No activity recorded for this unit yet.</p>
           ) : (
             dossier.events.map((ev) => (
               <Card key={ev.id} className="p-5 space-y-2">

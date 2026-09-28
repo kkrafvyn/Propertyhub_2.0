@@ -11,6 +11,7 @@ import {
   getDesktopAPI,
   getDesktopOAuthRedirectUrl,
   isDesktopOAuthRuntime,
+  parseDesktopOAuthCallback,
   subscribeDesktopOAuthCallback,
 } from '../../lib/desktop-oauth'
 
@@ -126,25 +127,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     return subscribeDesktopOAuthCallback(async (payload) => {
+      const callback = parseDesktopOAuthCallback(payload)
+      if (!callback) return
       try {
-        if ("type" in payload && payload.type === "code" && payload.code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(payload.code)
-          if (error) throw error
-          return
-        }
-
-        if (
-          "access_token" in payload &&
-          "refresh_token" in payload &&
-          payload.access_token &&
-          payload.refresh_token
-        ) {
-          const { error } = await supabase.auth.setSession({
-            access_token: payload.access_token,
-            refresh_token: payload.refresh_token,
-          })
-          if (error) throw error
-        }
+        const { error } = await supabase.auth.exchangeCodeForSession(callback.code)
+        if (error) throw error
       } catch (callbackError) {
         console.error("Desktop OAuth callback failed:", callbackError)
         setError(callbackError instanceof Error ? callbackError : new Error("Desktop OAuth failed"))

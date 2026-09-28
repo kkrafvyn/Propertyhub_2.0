@@ -1,4 +1,5 @@
 import { loadProjectEnv } from "../../load-project-env.mjs";
+import { verifiedDatabaseUrl } from "../../secure-db-url.mjs";
 
 export function getProjectRef(env = loadProjectEnv()) {
   if (env.SUPABASE_PROJECT_REF) return env.SUPABASE_PROJECT_REF;
@@ -10,7 +11,7 @@ export function getProjectRef(env = loadProjectEnv()) {
 
 export function getDbConfig(env = loadProjectEnv()) {
   if (env.SUPABASE_DB_URL) {
-    return { connectionString: env.SUPABASE_DB_URL };
+    return { connectionString: verifiedDatabaseUrl(env.SUPABASE_DB_URL), ssl: { rejectUnauthorized: true } };
   }
 
   const password = env.SUPABASE_DB_PASSWORD;
@@ -29,6 +30,6 @@ export function getDbConfig(env = loadProjectEnv()) {
     user: `postgres.${ref}`,
     password,
     database: "postgres",
-    ssl: { rejectUnauthorized: process.env.DB_ALLOW_INSECURE_TLS !== "1" },
+    ssl: { rejectUnauthorized: true },
   };
 }

@@ -20,7 +20,7 @@ export function CustomerHealthCenter({ organizationId }: { organizationId?: stri
       })
       .catch((error) => {
         console.error(error);
-        toast.error("Unable to load customer health telemetry.");
+        toast.error("Unable to load organization performance metrics.");
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -39,9 +39,9 @@ export function CustomerHealthCenter({ organizationId }: { organizationId?: stri
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Customer Health & SaaS Telemetry</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Customer & Estate Health Overview</h1>
         <p className="text-sm text-ink-muted">
-          Live scores from collection rate, open issue load, and AI utilization — not demo data.
+          Live operational scores computed from payment collection rates, maintenance resolution speed, and tenant engagement.
         </p>
       </div>
 

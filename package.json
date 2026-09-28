@@ -30,6 +30,8 @@
     "security:install-tools": "node scripts/security/install-security-tools.mjs",
     "security:tools": "node scripts/security/check-security-tools.mjs",
     "security:container": "node scripts/security/run-container-scan.mjs",
+    "security:container:strict": "node scripts/security/run-container-scan.mjs --strict",
+    "security:tenant:strict": "node scripts/security/run-tenant-isolation.mjs --strict",
     "security:branch-protection": "node scripts/security/apply-branch-protection.mjs",
     "security:all": "node scripts/security/run-security-all.mjs",
     "test:watch": "vitest",

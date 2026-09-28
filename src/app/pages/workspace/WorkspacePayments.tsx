@@ -193,6 +193,14 @@ export function WorkspacePayments({
   const [disputingHoldId, setDisputingHoldId] = useState<string | null>(null);
   const [copiedRef, setCopiedRef] = useState<string | null>(null);
 
+  const [partialReleaseHold, setPartialReleaseHold] = useState<any | null>(null);
+  const [partialReleaseAmount, setPartialReleaseAmount] = useState("");
+  const [submittingPartialRelease, setSubmittingPartialRelease] = useState(false);
+
+  const [disputeHold, setDisputeHold] = useState<any | null>(null);
+  const [disputeNote, setDisputeNote] = useState("");
+  const [submittingDispute, setSubmittingDispute] = useState(false);
+
   const copyReference = (ref: string) => {
     navigator.clipboard.writeText(ref);
     setCopiedRef(ref);
@@ -249,47 +257,53 @@ export function WorkspacePayments({
     }
   };
 
-  const handlePartialReleaseEscrow = async (hold: any) => {
-    const amountInput = window.prompt(
-      `Release partial amount (max ${formatPaymentAmount(hold.amount_minor, hold.currency)}):`
-    );
-    if (!amountInput?.trim()) return;
-
-    const amountMinor = Math.round(Number(amountInput) * 100);
+  const handleConfirmPartialRelease = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!partialReleaseHold) return;
+    const amountMinor = Math.round(Number(partialReleaseAmount) * 100);
     if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
-      toast.error("Enter a valid amount.");
+      toast.error("Please enter a valid release amount.");
       return;
     }
-
+    if (amountMinor > Number(partialReleaseHold.amount_minor)) {
+      toast.error(`Amount cannot exceed ${formatPaymentAmount(partialReleaseHold.amount_minor, partialReleaseHold.currency)}.`);
+      return;
+    }
+    setSubmittingPartialRelease(true);
     try {
-      setReleasingHoldId(hold.id);
-      await escrowService.releasePartialEscrowHold(hold.id, amountMinor);
-      toast.success("Partial escrow released.");
+      await escrowService.releasePartialEscrowHold(partialReleaseHold.id, amountMinor);
+      toast.success("Partial escrow released successfully.");
+      setPartialReleaseHold(null);
+      setPartialReleaseAmount("");
       const holds = await escrowService.getOrganizationEscrowHolds(organization.id);
       setEscrowHolds(holds || []);
     } catch (error) {
       console.error(error);
       toast.error("Unable to release partial escrow.");
     } finally {
-      setReleasingHoldId(null);
+      setSubmittingPartialRelease(false);
     }
   };
 
-  const handleDisputeEscrow = async (holdId: string) => {
-    const note = window.prompt("Describe the escrow dispute:");
-    if (!note?.trim()) return;
-
+  const handleConfirmDispute = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!disputeHold || !disputeNote.trim()) {
+      toast.error("Please provide a description of the escrow dispute.");
+      return;
+    }
+    setSubmittingDispute(true);
     try {
-      setDisputingHoldId(holdId);
-      await escrowService.disputeEscrowHold(holdId, note.trim());
+      await escrowService.disputeEscrowHold(disputeHold.id, disputeNote.trim());
       toast.success("Escrow marked as disputed.");
+      setDisputeHold(null);
+      setDisputeNote("");
       const holds = await escrowService.getOrganizationEscrowHolds(organization.id);
       setEscrowHolds(holds || []);
     } catch (error) {
       console.error(error);
       toast.error("Unable to dispute escrow.");
     } finally {
-      setDisputingHoldId(null);
+      setSubmittingDispute(false);
     }
   };
 
@@ -551,7 +565,10 @@ export function WorkspacePayments({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => void handlePartialReleaseEscrow(hold)}
+                        onClick={() => {
+                          setPartialReleaseHold(hold);
+                          setPartialReleaseAmount("");
+                        }}
                         disabled={releasingHoldId === hold.id}
                       >
                         Partial Release
@@ -559,10 +576,13 @@ export function WorkspacePayments({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => void handleDisputeEscrow(hold.id)}
+                        onClick={() => {
+                          setDisputeHold(hold);
+                          setDisputeNote("");
+                        }}
                         disabled={disputingHoldId === hold.id}
                       >
-                        {disputingHoldId === hold.id ? "Updating..." : "Dispute"}
+                        Dispute
                       </Button>
                     </div>
                   )}
@@ -944,6 +964,124 @@ export function WorkspacePayments({
               {refundingPaymentId ? "Submitting..." : "Request Refund"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Partial Escrow Release Dialog */}
+      <Dialog open={Boolean(partialReleaseHold)} onOpenChange={(open) => !open && setPartialReleaseHold(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Partial Escrow Release</DialogTitle>
+            <DialogDescription>
+              Release a portion of the escrow hold to the recipient.
+            </DialogDescription>
+          </DialogHeader>
+          {partialReleaseHold && (
+            <form onSubmit={handleConfirmPartialRelease} className="space-y-4 pt-2">
+              <div className="rounded-lg border border-border bg-secondary/20 p-3.5 text-xs space-y-1">
+                <p className="font-semibold text-foreground">
+                  Escrow Hold #{partialReleaseHold.id.slice(0, 8)}
+                </p>
+                <p className="text-muted-foreground">
+                  Total hold amount:{" "}
+                  <span className="font-semibold text-foreground">
+                    {formatPaymentAmount(partialReleaseHold.amount_minor, partialReleaseHold.currency)}
+                  </span>
+                </p>
+              </div>
+
+              <div>
+                <Input
+                  label="Amount to Release (GHS)"
+                  type="number"
+                  inputMode="decimal"
+                  min="0.01"
+                  step="0.01"
+                  max={(partialReleaseHold.amount_minor / 100).toFixed(2)}
+                  value={partialReleaseAmount}
+                  onChange={(e) => setPartialReleaseAmount(e.target.value)}
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPartialReleaseHold(null)}
+                  disabled={submittingPartialRelease}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" size="sm" disabled={submittingPartialRelease || !partialReleaseAmount}>
+                  {submittingPartialRelease ? "Releasing..." : "Release Partial Amount"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Escrow Dispute Dialog */}
+      <Dialog open={Boolean(disputeHold)} onOpenChange={(open) => !open && setDisputeHold(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Dispute Escrow Hold</DialogTitle>
+            <DialogDescription>
+              Mark this escrow hold as disputed and explain the dispute reason for administrative review.
+            </DialogDescription>
+          </DialogHeader>
+          {disputeHold && (
+            <form onSubmit={handleConfirmDispute} className="space-y-4 pt-2">
+              <div className="rounded-lg border border-border bg-secondary/20 p-3.5 text-xs space-y-1">
+                <p className="font-semibold text-foreground">
+                  Escrow Hold #{disputeHold.id.slice(0, 8)}
+                </p>
+                <p className="text-muted-foreground">
+                  Held balance:{" "}
+                  <span className="font-semibold text-foreground">
+                    {formatPaymentAmount(disputeHold.amount_minor, disputeHold.currency)}
+                  </span>
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="dispute-explanation" className="block text-xs font-semibold text-foreground">
+                  Dispute Details & Justification
+                </label>
+                <Textarea
+                  id="dispute-explanation"
+                  rows={3}
+                  value={disputeNote}
+                  onChange={(e) => setDisputeNote(e.target.value)}
+                  placeholder="Describe why this transaction or release is disputed (e.g. key handover delayed, defect unresolved)..."
+                  required
+                />
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setDisputeHold(null)}
+                  disabled={submittingDispute}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  variant="destructive"
+                  disabled={submittingDispute || !disputeNote.trim()}
+                >
+                  {submittingDispute ? "Submitting..." : "Flag as Disputed"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </>

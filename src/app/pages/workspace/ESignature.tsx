@@ -28,6 +28,14 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
+import {
   eSignatureService,
   type EsigRequest,
   type DocumentType,
@@ -442,6 +450,9 @@ export function ESignature({ organizationId }: { organizationId?: string }) {
   const [showSendModal, setShowSendModal] = useState(false);
   const [remindingId, setRemindingId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<"all" | string>("all");
+  const [voidingEnvelopeId, setVoidingEnvelopeId] = useState<string | null>(null);
+  const [voidReason, setVoidReason] = useState("");
+  const [isVoiding, setIsVoiding] = useState(false);
 
   const loadRequests = async () => {
     if (!organizationId) return;
@@ -475,15 +486,28 @@ export function ESignature({ organizationId }: { organizationId?: string }) {
     }
   };
 
-  const handleVoid = async (id: string) => {
-    const reason = window.prompt("Reason for voiding this envelope:");
-    if (!reason) return;
+  const handleVoid = (id: string) => {
+    setVoidingEnvelopeId(id);
+    setVoidReason("");
+  };
+
+  const handleConfirmVoid = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!voidingEnvelopeId || !voidReason.trim()) {
+      toast.error("Please provide a reason for voiding this envelope.");
+      return;
+    }
+    setIsVoiding(true);
     try {
-      await eSignatureService.voidRequest(id, reason);
-      toast.success("Envelope voided");
+      await eSignatureService.voidRequest(voidingEnvelopeId, voidReason.trim());
+      toast.success("Envelope voided successfully");
+      setVoidingEnvelopeId(null);
+      setVoidReason("");
       await loadRequests();
     } catch (err: any) {
       toast.error(err.message || "Failed to void envelope");
+    } finally {
+      setIsVoiding(false);
     }
   };
 
@@ -591,6 +615,48 @@ export function ESignature({ organizationId }: { organizationId?: string }) {
           ))
         )}
       </div>
+
+      {/* Void Envelope Dialog */}
+      <Dialog open={Boolean(voidingEnvelopeId)} onOpenChange={(open) => !open && setVoidingEnvelopeId(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Void E-Signature Envelope</DialogTitle>
+            <DialogDescription>
+              Voiding this envelope will permanently cancel all pending signature requests and notify participants.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleConfirmVoid} className="space-y-4 pt-2">
+            <div>
+              <label htmlFor="void-reason" className="block text-xs font-semibold text-foreground mb-1.5">
+                Reason for Voiding
+              </label>
+              <textarea
+                id="void-reason"
+                rows={3}
+                value={voidReason}
+                onChange={(e) => setVoidReason(e.target.value)}
+                placeholder="e.g. Terms modified by tenant, renegotiated rent advance, or signed offline..."
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                required
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setVoidingEnvelopeId(null)}
+                disabled={isVoiding}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" variant="destructive" disabled={isVoiding || !voidReason.trim()}>
+                {isVoiding ? "Voiding Envelope..." : "Confirm Void"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

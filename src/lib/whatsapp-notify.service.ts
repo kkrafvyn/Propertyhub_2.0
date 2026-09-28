@@ -9,7 +9,7 @@ export const whatsappNotifyService = {
     signingUrl: string;
     jurisdictionLabel?: string;
     isCosignReminder?: boolean;
-    organizationId?: string;
+    organizationId: string;
   }) {
     const message = whatsappBusinessBotService.formatLeaseSigningMessage({
       recipientName: input.recipientName,
@@ -25,7 +25,7 @@ export const whatsappNotifyService = {
     });
   },
 
-  async sendPlainMessage(input: { to: string; message: string; organizationId?: string }) {
+  async sendPlainMessage(input: { to: string; message: string; organizationId: string }) {
     return whatsappOutboundService.sendMessage(input);
   },
 };

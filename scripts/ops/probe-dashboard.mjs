@@ -5,11 +5,12 @@
  */
 import pg from "pg";
 import { loadProjectEnv } from "../load-project-env.mjs";
+import { verifiedDatabaseUrl } from "../secure-db-url.mjs";
 
 const email = (process.argv[2] || "kkrafvyn@gmail.com").trim().toLowerCase();
 
 function getDbConfig(env) {
-  if (env.SUPABASE_DB_URL) return { connectionString: env.SUPABASE_DB_URL };
+  if (env.SUPABASE_DB_URL) return { connectionString: verifiedDatabaseUrl(env.SUPABASE_DB_URL), ssl: { rejectUnauthorized: true } };
   const password = env.SUPABASE_DB_PASSWORD;
   if (!password) throw new Error("Set SUPABASE_DB_URL or SUPABASE_DB_PASSWORD in root .env");
   const ref = env.SUPABASE_PROJECT_REF || new URL(env.VITE_SUPABASE_URL).hostname.split(".")[0];
@@ -20,7 +21,7 @@ function getDbConfig(env) {
     user: `postgres.${ref}`,
     password,
     database: "postgres",
-    ssl: { rejectUnauthorized: process.env.DB_ALLOW_INSECURE_TLS !== "1" },
+    ssl: { rejectUnauthorized: true },
   };
 }
 

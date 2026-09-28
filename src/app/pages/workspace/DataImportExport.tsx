@@ -31,7 +31,7 @@ export function DataImportExport() {
 
   const importTypes = [
     { title: "Estate, Building & Unit Inventory", format: "Excel / CSV", desc: "Upload property portfolios, unit layouts, sqm, and amenities." },
-    { title: "Active Leases & Tenant Roster", format: "CSV Template", desc: "Ingest current active tenants, contact phones, rent amounts, and deposit balances." },
+    { title: "Active Leases & Tenant Roster", format: "CSV Template", desc: "Import current active tenants, contact phones, rent amounts, and deposit balances." },
     { title: "Historical Ledger & Opening Balances", format: "Accounting CSV", desc: "Set opening balances, past tenant arrears, and security deposit escrow totals." },
     { title: "Vendor & Contractor Directory", format: "CSV Template", desc: "Import pre-approved technicians, bank accounts, and negotiated rate cards." },
   ];
@@ -50,14 +50,14 @@ export function DataImportExport() {
           <div className="flex items-center gap-2">
             <Database className="h-6 w-6 text-emerald-500 dark:text-emerald-400" />
             <h1 className="text-xl font-bold text-foreground tracking-tight">
-              Data Migration, Ingestion & Export Engine
+              Data Import & Export
             </h1>
-            <span className="bg-emerald-950 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded border border-emerald-800">
-              Bulk ETL Core
+            <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium px-2 py-0.5 rounded-full border border-emerald-500/20">
+              Files & Reports
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Seamlessly migrate legacy property portfolios or export financial books into QuickBooks, Sage, or custom formats.
+            Easily import property portfolios and tenant rosters or export financial records into Excel, QuickBooks, and Sage.
           </p>
         </div>
       </div>
@@ -73,7 +73,7 @@ export function DataImportExport() {
       <div className="space-y-3">
         <div className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
           <Upload className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
-          <span>Bulk Ingestion &amp; Migration Templates</span>
+          <span>Import Templates & Data Uploads</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {importTypes.map((imp) => (

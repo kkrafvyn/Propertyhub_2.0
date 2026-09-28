@@ -30,6 +30,7 @@ import {
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/badge";
+import { toast } from "sonner";
 import {
   agenticAIOrchestratorService,
   type AgentType,
@@ -114,10 +115,11 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
         "Approved via AI Command Center"
       );
       void loadState();
+      toast.success("Action successfully approved and dispatched to workers.");
       setActionSuccessMsg("Action successfully approved and dispatched to workers.");
       setTimeout(() => setActionSuccessMsg(null), 4000);
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e?.message || "Failed to approve action.");
     }
   };
 
@@ -130,10 +132,11 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
         "Rejected by operator discretion"
       );
       void loadState();
+      toast.success("Action declined and removed from execution queue.");
       setActionSuccessMsg("Action declined and removed from execution queue.");
       setTimeout(() => setActionSuccessMsg(null), 4000);
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e?.message || "Failed to decline action.");
     }
   };
 
@@ -343,8 +346,10 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
         </div>
 
         {pendingApprovals.length === 0 ? (
-          <div className="p-6 text-center rounded-xl bg-surface-subtle border border-surface-border text-xs text-ink-muted">
-            All autonomous high-value actions have been reviewed and approved. Zero pending items.
+          <div className="p-8 text-center rounded-xl bg-surface-subtle border border-surface-border text-xs text-ink-muted flex flex-col items-center justify-center gap-2">
+            <CheckCircle2 className="w-8 h-8 text-emerald-500/60" />
+            <p className="font-semibold text-ink">All Clear</p>
+            <p>All autonomous high-value actions have been reviewed and approved. Zero pending items.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -485,7 +490,16 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
-              {filteredLedger.map((entry) => (
+              {filteredLedger.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-ink-muted">
+                    <Bot className="w-8 h-8 mx-auto mb-2 text-ink-muted/40" />
+                    <p className="font-semibold text-xs text-ink">No actions recorded for this filter</p>
+                    <p className="text-[11px] mt-0.5">Switch filter tier or dispatch an agent goal above.</p>
+                  </td>
+                </tr>
+              ) : (
+                filteredLedger.map((entry) => (
                 <tr key={entry.id} className="hover:bg-surface-hover transition">
                   <td className="p-3 font-semibold text-ink">
                     <div className="flex items-center gap-1.5">
@@ -535,7 +549,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
                     {new Date(entry.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

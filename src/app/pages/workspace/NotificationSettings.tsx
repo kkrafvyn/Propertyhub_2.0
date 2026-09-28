@@ -202,8 +202,8 @@ export default function NotificationSettings() {
       name: "Email notifications",
       icon: Mail,
       description: externalProviders.email
-        ? "Email delivery via Resend once server secrets are deployed to Supabase."
-        : "Requires Supabase backend configuration.",
+        ? "Delivers updates directly to team member email inboxes."
+        : "Connect email service in Workspace Settings to enable.",
       key: "email_enabled" as const,
       alwaysAvailable: false,
     },
@@ -212,8 +212,8 @@ export default function NotificationSettings() {
       name: "SMS notifications",
       icon: MessageSquare,
       description: externalProviders.sms
-        ? "SMS delivery via Twilio once TWILIO_* secrets are deployed."
-        : "Requires Supabase backend configuration.",
+        ? "Delivers urgent alerts and reminders to mobile phones."
+        : "Connect an SMS gateway in Workspace Settings to enable.",
       key: "sms_enabled" as const,
       alwaysAvailable: false,
     },
@@ -222,8 +222,8 @@ export default function NotificationSettings() {
       name: "Push notifications",
       icon: Bell,
       description: externalProviders.webPush
-        ? "Browser push via configured VAPID keys."
-        : "Use browser alerts below until web push keys are configured.",
+        ? "Instant desktop and browser alerts for real-time activity."
+        : "Enable browser alerts below to receive instant updates.",
       key: "push_enabled" as const,
       alwaysAvailable: false,
     },
@@ -231,7 +231,7 @@ export default function NotificationSettings() {
       id: "whatsapp",
       name: "WhatsApp messages",
       icon: Smartphone,
-      description: "Saved for later. WhatsApp delivery activates once provider keys are added.",
+      description: "Delivers critical updates directly to client and team WhatsApp chats.",
       key: "whatsapp_enabled" as const,
       alwaysAvailable: false,
     },
@@ -243,9 +243,7 @@ export default function NotificationSettings() {
         <div>
           <h1 className="text-3xl font-semibold">Notifications</h1>
           <p className="text-muted-foreground mt-2">
-            In-app notifications are fully live without any external API keys. Email, SMS, WhatsApp,
-            and web push preferences are saved now and will activate automatically once providers
-            are configured.
+            Manage how you and your team receive alerts for bookings, maintenance, leases, and tenant messages.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">

@@ -46,51 +46,63 @@ export function DataRetentionCenter({ organizationId }: { organizationId?: strin
     try {
       await retentionService.placeHold({ organizationId, entity, reason, createdBy: user?.id });
       setReason("");
-      toast.success("Legal hold placed. Retention worker will skip this entity.");
+      toast.success("Legal hold placed. Records in this category are protected from scheduled cleanup.");
       await load();
     } catch (error: any) {
       toast.error(error?.message || "Unable to place hold.");
     }
   };
 
+  const formatEntityName = (name: string) => {
+    return name
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Data Retention & Legal Hold</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Data Retention & Compliance Holds</h1>
         <p className="text-sm text-muted-foreground">
-          Policies are enforced by the retention worker. Active legal holds block purge for that entity.
+          Configure how long historical records and activity logs are preserved. Active compliance holds protect records from scheduled cleanup.
         </p>
       </div>
       <Card className="p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Policies</h2>
-          <Button size="sm" variant="outline" onClick={() => void seed()}>Seed defaults</Button>
+          <h2 className="font-semibold">Retention Schedules</h2>
+          <Button size="sm" variant="outline" onClick={() => void seed()}>
+            Apply Recommended Policies
+          </Button>
         </div>
         {policies.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No policies yet. Seed defaults (minimum 30 days).</p>
+          <p className="text-sm text-muted-foreground">
+            No custom policies active yet. Click Apply Recommended Policies to configure standard document retention periods.
+          </p>
         ) : (
           policies.map((p) => (
-            <div key={`${p.organization_id}-${p.entity}`} className="flex justify-between text-sm border border-border rounded-lg p-3">
-              <span className="font-mono">{p.entity}</span>
-              <span>{p.retention_days} days</span>
+            <div key={`${p.organization_id}-${p.entity}`} className="flex justify-between items-center text-sm border border-border rounded-lg p-3">
+              <span className="font-medium text-foreground">{formatEntityName(p.entity)}</span>
+              <span className="text-xs text-muted-foreground font-mono bg-muted/50 px-2 py-1 rounded">
+                {p.retention_days} days
+              </span>
             </div>
           ))
         )}
       </Card>
       <Card className="p-5 space-y-3">
-        <h2 className="font-semibold flex items-center gap-2"><ShieldAlert className="h-4 w-4" /> Legal holds</h2>
+        <h2 className="font-semibold flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-amber-500" /> Compliance & Legal Holds</h2>
         <form className="grid gap-2 sm:grid-cols-[1fr_2fr_auto]" onSubmit={placeHold}>
           <select className="rounded-lg border border-border bg-background px-3 py-2 text-sm" value={entity} onChange={(e) => setEntity(e.target.value)}>
             {DEFAULT_RETENTION_ENTITIES.map((row) => (
-              <option key={row.entity} value={row.entity}>{row.entity}</option>
+              <option key={row.entity} value={row.entity}>{formatEntityName(row.entity)}</option>
             ))}
           </select>
-          <Input required placeholder="Reason (litigation, regulator request…)" value={reason} onChange={(e) => setReason(e.target.value)} />
-          <Button>Place hold</Button>
+          <Input required placeholder="Reason for hold (e.g., audit review, disputed claim…)" value={reason} onChange={(e) => setReason(e.target.value)} />
+          <Button>Place Hold</Button>
         </form>
         {holds.map((h) => (
-          <div key={h.id} className="flex justify-between text-sm border border-border rounded-lg p-3">
-            <span>{h.entity}: {h.reason}</span>
+          <div key={h.id} className="flex justify-between items-center text-sm border border-border rounded-lg p-3">
+            <span><strong>{formatEntityName(h.entity)}:</strong> {h.reason}</span>
             <Button size="sm" variant="outline" onClick={() => void retentionService.releaseHold(h.id).then(load)}>Release</Button>
           </div>
         ))}

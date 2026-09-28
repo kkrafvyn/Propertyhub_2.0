@@ -271,7 +271,7 @@ const CORE_NAV_ITEMS: NavItem[] = [
   { slug: "contextual-inbox", label: "Realtime Inbox", icon: MessagesSquare },
   { slug: "estate-communications", label: "Client Communications", icon: Megaphone },
   { slug: "stakeholder-portals", label: "Stakeholder Portals", icon: UserRound },
-  { slug: "enterprise-operations", label: "Enterprise Operations", icon: Briefcase },
+
   { slug: "command-center", label: "Command Center", icon: LayoutDashboard },
   { slug: "data-migration", label: "Data Migration", icon: Database },
   { slug: "property-360", label: "Property 360", icon: Compass },
@@ -351,6 +351,7 @@ const AI_NAV_ITEMS: NavItem[] = [
 ];
 
 const ENTERPRISE_NAV_ITEMS: NavItem[] = [
+  { slug: "enterprise-operations", label: "Enterprise Operations", icon: Briefcase },
   { slug: "team-chat", label: "Team Chat", icon: MessageSquare },
   { slug: "team-collaboration", label: "Team Hub", icon: Users2 },
   { slug: "workflow-approval", label: "Approval Chains", icon: GitBranch },

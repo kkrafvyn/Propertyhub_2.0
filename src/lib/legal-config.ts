@@ -1,5 +1,5 @@
 /** Current policy bundle version — bump when material legal changes require re-acceptance. */
-export const LEGAL_POLICY_VERSION = "2026-08-14";
+export const LEGAL_POLICY_VERSION = "2026-09-28-material-coverage";
 
 function envValue(...keys: string[]) {
   for (const key of keys) {
@@ -70,7 +70,18 @@ export type LegalAcceptanceScope =
   | "listing_publish"
   | "agency_onboarding"
   | "personal_host_onboarding"
-  | "kyc_submission";
+  | "kyc_submission"
+  | "account_signup"
+  | "marketplace_use"
+  | "lease_application"
+  | "lease_signature"
+  | "tenant_screening"
+  | "marketing"
+  | "smart_access"
+  | "developer_api"
+  | "business_workspace"
+  | "vendor_onboarding"
+  | "owner_onboarding";
 
 export const ACCEPTANCE_SCOPES: Record<
   LegalAcceptanceScope,
@@ -107,6 +118,50 @@ export const ACCEPTANCE_SCOPES: Record<
   kyc_submission: {
     policySlugs: ["kyc", "privacy"],
     labelKey: "legal.acceptance.kycSubmission",
+  },
+  account_signup: {
+    policySlugs: ["terms", "privacy", "cookies", "age-minor-protection"],
+    labelKey: "legal.acceptance.accountSignup",
+  },
+  marketplace_use: {
+    policySlugs: ["terms", "marketplace-rules", "privacy-rights"],
+    labelKey: "legal.acceptance.marketplaceUse",
+  },
+  lease_application: {
+    policySlugs: ["terms", "tenant-guest-rules", "tenant-screening"],
+    labelKey: "legal.acceptance.leaseApplication",
+  },
+  lease_signature: {
+    policySlugs: ["e-signatures", "terms", "privacy"],
+    labelKey: "legal.acceptance.leaseSignature",
+  },
+  tenant_screening: {
+    policySlugs: ["tenant-screening", "privacy-rights", "terms"],
+    labelKey: "legal.acceptance.tenantScreening",
+  },
+  marketing: {
+    policySlugs: ["communications-marketing", "privacy-rights", "cookies"],
+    labelKey: "legal.acceptance.marketing",
+  },
+  smart_access: {
+    policySlugs: ["smart-access-security", "privacy", "location-data"],
+    labelKey: "legal.acceptance.smartAccess",
+  },
+  developer_api: {
+    policySlugs: ["developer-api-terms", "privacy", "terms"],
+    labelKey: "legal.acceptance.developerApi",
+  },
+  business_workspace: {
+    policySlugs: ["business-saas-terms", "data-processing", "privacy-rights"],
+    labelKey: "legal.acceptance.businessWorkspace",
+  },
+  vendor_onboarding: {
+    policySlugs: ["vendor-terms", "professional-credentials", "privacy"],
+    labelKey: "legal.acceptance.vendorOnboarding",
+  },
+  owner_onboarding: {
+    policySlugs: ["property-owner-terms", "professional-credentials", "terms"],
+    labelKey: "legal.acceptance.ownerOnboarding",
   },
 };
 

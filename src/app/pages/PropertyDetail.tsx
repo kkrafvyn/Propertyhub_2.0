@@ -908,13 +908,13 @@ export function PropertyDetail() {
                       />
                     </div>
                   ) : null}
-                  <div className="flex items-center gap-2 text-muted-foreground mb-4">
+                  <div className="flex items-center gap-2 text-muted-foreground mb-4 flex-wrap">
                     <MapPin className="w-4 h-4 text-primary shrink-0" />
-                    <span className="text-sm font-medium text-foreground">
+                    <span className="text-sm font-medium text-foreground break-words">
                       {property.address}, {property.city}, {property.region}, {property.country}
                     </span>
                     {property.ghana_post_gps && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono bg-surface-subtle border border-surface-border text-foreground">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono bg-surface-subtle border border-surface-border text-foreground shrink-0">
                         {property.ghana_post_gps}
                       </span>
                     )}

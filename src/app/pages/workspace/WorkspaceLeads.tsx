@@ -803,7 +803,7 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-1 gap-1">
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
           <TabsTrigger value="viewings">Viewings</TabsTrigger>
           <TabsTrigger value="inspections">Inspections</TabsTrigger>

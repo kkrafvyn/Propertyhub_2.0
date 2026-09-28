@@ -119,8 +119,8 @@ function InboxContent() {
                 <MessageSquare className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-foreground">Operational Inbox</h2>
-                <p className="text-[11px] text-muted-foreground">Contextual Realtime Threads</p>
+                <h2 className="text-sm font-bold text-foreground">Inbox</h2>
+                <p className="text-[11px] text-muted-foreground">Live conversations</p>
               </div>
             </div>
 
@@ -132,7 +132,7 @@ function InboxContent() {
                   ? "bg-violet-500/10 border-violet-500/30 text-violet-600 dark:text-violet-400"
                   : "bg-muted border-border text-muted-foreground"
               }`}
-              title="Toggle Autonomous AI Intent & Ticket Engine"
+              title="Toggle AI Assistant"
             >
               <Brain className="w-3.5 h-3.5" />
               <span className="text-[10px] hidden sm:inline">{enableAiAgent ? "AI On" : "AI Off"}</span>
@@ -349,9 +349,9 @@ function InboxContent() {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-muted-foreground">
             <MessageSquare className="w-10 h-10 mb-3 text-muted-foreground/50" />
-            <h3 className="text-sm font-semibold text-foreground">No Conversation Selected</h3>
-            <p className="text-xs max-w-sm mt-1">
-              Select a conversation thread from the left or create a new contextual chat linked to a property or tenant.
+            <h3 className="text-sm font-semibold text-foreground">No conversation selected</h3>
+            <p className="text-xs max-w-sm mt-1 text-muted-foreground">
+              Select a conversation from the left to start messaging.
             </p>
           </div>
         )}

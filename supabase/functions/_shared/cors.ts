@@ -2,48 +2,28 @@ function normalizeOrigin(origin: string): string {
   return origin.trim().replace(/\/+$/, "");
 }
 
-function isDevOrigin(origin: string): boolean {
-  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
-}
-
 function isProductionEnvironment(): boolean {
   const environment = (Deno.env.get("DENO_ENV") || Deno.env.get("ENVIRONMENT") || "production").toLowerCase();
   return ["production", "prod"].includes(environment);
 }
 
-function isExplicitlyAllowedHostname(hostname: string): boolean {
-  const hostnames = new Set([
-    "app.baytmiftah.com",
-    "baytmiftah.com",
-    "www.baytmiftah.com",
-    "propertyhub-2-0-ecru.vercel.app",
-  ]);
-
-  if (hostnames.has(hostname)) return true;
-  if (!isProductionEnvironment() && (hostname === "localhost" || hostname === "127.0.0.1")) {
-    return true;
+function parseOrigin(value: string): string | null {
+  try {
+    const parsed = new URL(normalizeOrigin(value));
+    if (!['https:', 'http:'].includes(parsed.protocol) || parsed.username || parsed.password) return null;
+    if (parsed.pathname !== '/' || parsed.search || parsed.hash) return null;
+    if (isProductionEnvironment() && (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1')) return null;
+    return parsed.origin;
+  } catch {
+    return null;
   }
-  return false;
 }
 
 export function isOriginAllowed(origin: string, allowed: string[]): boolean {
   if (!origin) return false;
-  const normalized = normalizeOrigin(origin);
-
-  if (allowed.includes(normalized)) return true;
-  try {
-    const { hostname } = new URL(normalized);
-    if (!isExplicitlyAllowedHostname(hostname)) return false;
-    return allowed.some((allowedOrigin) => {
-      try {
-        return new URL(allowedOrigin).hostname === hostname;
-      } catch {
-        return false;
-      }
-    });
-  } catch {
-    return false;
-  }
+  const normalized = parseOrigin(origin);
+  if (!normalized) return false;
+  return allowed.some((allowedOrigin) => parseOrigin(allowedOrigin) === normalized);
 }
 
 const DEFAULT_ALLOWED_ORIGINS = [
@@ -62,7 +42,8 @@ export function getAllowedOrigins(): string[] {
 
   const origins = configured
     .split(",")
-    .map((value) => value.trim().replace(/\/+$/, ""))
+    .map((value) => parseOrigin(value))
+    .filter((value): value is string => Boolean(value))
     .filter(Boolean);
 
   if (origins.length === 0) {
@@ -81,10 +62,9 @@ export function getAllowedOrigins(): string[] {
 export function buildCorsHeaders(req: Request) {
   const origin = normalizeOrigin(req.headers.get("Origin") || "");
   const allowed = getAllowedOrigins();
-  const allowOrigin =
-    origin && isOriginAllowed(origin, allowed)
-      ? origin
-      : allowed[0] || "https://app.baytmiftah.com";
+  const allowOrigin = origin && isOriginAllowed(origin, allowed)
+    ? parseOrigin(origin)!
+    : allowed[0] || "https://app.baytmiftah.com";
 
   return {
     "Access-Control-Allow-Origin": allowOrigin,

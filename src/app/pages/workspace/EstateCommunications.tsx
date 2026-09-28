@@ -226,7 +226,7 @@ export function EstateCommunications({
 
   return (
     <div className="space-y-6">
-      {/* ── Header ────────────────────────────────────────────────────── */}
+      {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center gap-2.5">
@@ -235,10 +235,10 @@ export function EstateCommunications({
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-ink">
-                Omnichannel Communications & Calling Center
+                Client Communications
               </h1>
               <p className="text-xs text-muted-foreground">
-                Unified WebRTC HD Voice/Video Calls, Ghana SMS, WhatsApp Business & Multi-Estate Broadcasts.
+                Send notices, start video rooms, and manage client messages.
               </p>
             </div>
           </div>
@@ -296,33 +296,33 @@ export function EstateCommunications({
 
         <Card className="p-4 bg-surface border-surface-border">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Ghana SMS Balance</span>
+            <span className="text-xs font-medium text-muted-foreground">SMS Balance</span>
             <Smartphone className="h-4 w-4 text-amber-500" />
           </div>
           <p className="mt-2 text-xl font-bold text-ink">—</p>
           <span className="text-[10px] text-muted-foreground font-medium">
-            Connect Hubtel / Arkesel to show credits
+            Connect gateway to send SMS
           </span>
         </Card>
 
         <Card className="p-4 bg-surface border-surface-border">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">WhatsApp Channel</span>
+            <span className="text-xs font-medium text-muted-foreground">WhatsApp</span>
             <MessageSquare className="h-4 w-4 text-emerald-500" />
           </div>
           <p className="mt-2 text-xl font-bold text-ink">Setup</p>
           <span className="text-[10px] text-muted-foreground font-medium">
-            Configure Meta Cloud in workspace settings
+            Connect in workspace settings
           </span>
         </Card>
       </div>
 
       {/* ── Navigation Tabs ───────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 border-b border-border pb-2">
+      <div className="flex items-center gap-2 border-b border-border pb-2 overflow-x-auto min-w-0 scrollbar-none">
         <button
           type="button"
           onClick={() => setActiveTab('broadcasts')}
-          className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+          className={`shrink-0 flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
             activeTab === 'broadcasts'
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:bg-surface-subtle hover:text-ink'
@@ -335,7 +335,7 @@ export function EstateCommunications({
         <button
           type="button"
           onClick={() => setActiveTab('rooms')}
-          className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+          className={`shrink-0 flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
             activeTab === 'rooms'
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:bg-surface-subtle hover:text-ink'
@@ -348,7 +348,7 @@ export function EstateCommunications({
         <button
           type="button"
           onClick={() => setActiveTab('call_logs')}
-          className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+          className={`shrink-0 flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
             activeTab === 'call_logs'
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:bg-surface-subtle hover:text-ink'
@@ -361,7 +361,7 @@ export function EstateCommunications({
         <button
           type="button"
           onClick={() => setActiveTab('gateways')}
-          className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+          className={`shrink-0 flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
             activeTab === 'gateways'
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:bg-surface-subtle hover:text-ink'

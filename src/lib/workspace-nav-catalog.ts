@@ -37,6 +37,7 @@ export const WORKSPACE_NAV_CATALOG: WorkspaceNavCatalogItem[] = [
   { slug: "integrations", label: "Integrations", group: "more" },
   { slug: "notifications", label: "Notifications", group: "more" },
   { slug: "ai-rent-yield", label: "AI Yield Predictor", group: "ai" },
+  { slug: "enterprise-operations", label: "Enterprise Operations", group: "enterprise" },
   { slug: "team-collaboration", label: "Team Hub", group: "enterprise" },
   { slug: "workflow-approval", label: "Approval Chains", group: "enterprise" },
   { slug: "workflows", label: "Workflows", group: "enterprise" },

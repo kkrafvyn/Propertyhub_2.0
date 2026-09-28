@@ -249,40 +249,48 @@ export function UtilitySubmetering({ organizationId }: { organizationId?: string
 
       {/* Metrics Row */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Card className="p-4 bg-surface border-surface-border">
-          <div className="flex items-center justify-between">
+        <Card className="p-4 bg-surface border-surface-border flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 shrink-0">
+            <Gauge className="h-5 w-5" />
+          </div>
+          <div>
             <span className="text-xs font-medium text-muted-foreground">Active Sub-Meters</span>
-            <Gauge className="h-4 w-4 text-emerald-500" />
+            <p className="text-2xl font-bold text-emerald-600 tabular-nums">{meters.length}</p>
+            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">100% Calibrated</span>
           </div>
-          <p className="mt-2 text-xl font-bold text-ink">{meters.length} Units</p>
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">100% Calibrated</span>
         </Card>
 
-        <Card className="p-4 bg-surface border-surface-border">
-          <div className="flex items-center justify-between">
+        <Card className="p-4 bg-surface border-surface-border flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 shrink-0">
+            <Zap className="h-5 w-5" />
+          </div>
+          <div>
             <span className="text-xs font-medium text-muted-foreground">Month's Power</span>
-            <Zap className="h-4 w-4 text-amber-500" />
+            <p className="text-2xl font-bold text-amber-600 tabular-nums">{totalKwh.toLocaleString()}</p>
+            <span className="text-[10px] text-muted-foreground">kWh · PURC band</span>
           </div>
-          <p className="mt-2 text-xl font-bold text-ink">{totalKwh.toLocaleString()} kWh</p>
-          <span className="text-[10px] text-muted-foreground">₵1.82 - ₵2.35 PURC band</span>
         </Card>
 
-        <Card className="p-4 bg-surface border-surface-border">
-          <div className="flex items-center justify-between">
+        <Card className="p-4 bg-surface border-surface-border flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-600 shrink-0">
+            <Droplets className="h-5 w-5" />
+          </div>
+          <div>
             <span className="text-xs font-medium text-muted-foreground">Month's Water</span>
-            <Droplets className="h-4 w-4 text-sky-500" />
+            <p className="text-2xl font-bold text-sky-600 tabular-nums">{totalWaterM3.toLocaleString()}</p>
+            <span className="text-[10px] text-sky-600 dark:text-sky-400 font-medium">m³ · GWCL</span>
           </div>
-          <p className="mt-2 text-xl font-bold text-ink">{totalWaterM3.toLocaleString()} m³</p>
-          <span className="text-[10px] text-sky-600 dark:text-sky-400 font-medium">GWCL Metered</span>
         </Card>
 
-        <Card className="p-4 bg-surface border-surface-border">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Gen Fuel Total</span>
-            <Fuel className="h-4 w-4 text-rose-500" />
+        <Card className="p-4 bg-surface border-surface-border flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-600 shrink-0">
+            <Fuel className="h-5 w-5" />
           </div>
-          <p className="mt-2 text-xl font-bold text-ink">₵{totalGenCost.toLocaleString()}</p>
-          <span className="text-[10px] text-rose-600 dark:text-rose-400 font-medium">Split across {occupiedUnits} occupied units</span>
+          <div>
+            <span className="text-xs font-medium text-muted-foreground">Gen Fuel Total</span>
+            <p className="text-2xl font-bold text-rose-600 tabular-nums">₵{totalGenCost.toLocaleString()}</p>
+            <span className="text-[10px] text-rose-600 dark:text-rose-400 font-medium">{occupiedUnits} units split</span>
+          </div>
         </Card>
       </div>
 

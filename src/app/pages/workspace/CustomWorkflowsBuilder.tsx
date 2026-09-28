@@ -234,7 +234,7 @@ export default function CustomWorkflowsBuilder({
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-amber-500/20 flex items-center justify-center animate-pulse">
           <Zap className="w-7 h-7 text-emerald-500" />
         </div>
-        <p className="text-sm text-ink-muted font-medium">Initialising automation engine…</p>
+        <p className="text-sm text-ink-muted font-medium">Loading your automations…</p>
       </div>
     );
   }
@@ -262,10 +262,10 @@ export default function CustomWorkflowsBuilder({
                 >
                   Custom Workflows
                 </h1>
-                <Badge variant="success" dot pulse>Engine Active</Badge>
+                <Badge variant="success" dot pulse>Active</Badge>
               </div>
               <p className="text-sm text-ink-muted mt-1.5 max-w-lg">
-                Autonomous event-driven automation pipelines — zero-code orchestration for leads, deals, and notifications
+                Build automatic actions triggered by events in your workspace — no code required.
               </p>
             </div>
           </div>
@@ -277,7 +277,7 @@ export default function CustomWorkflowsBuilder({
             className="flex items-center gap-2 shrink-0 shadow-lg shadow-emerald-500/15"
           >
             {showBuilder ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            {showBuilder ? 'Close Builder' : 'Create Pipeline'}
+            {showBuilder ? 'Close Builder' : 'New Workflow'}
           </Button>
         </div>
       </section>
@@ -287,25 +287,25 @@ export default function CustomWorkflowsBuilder({
        ═══════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          title="Active Pipelines"
+          title="Active Workflows"
           value={activePipelines}
           icon={Activity}
           glow="emerald"
         />
         <MetricCard
-          title="Total Executions"
+          title="Total Runs"
           value={totalExecutions.toLocaleString()}
           icon={Sparkles}
           glow="primary"
         />
         <MetricCard
-          title="Avg Success Rate"
+          title="Success Rate"
           value={`${avgSuccessRate}%`}
           icon={TrendingUp}
           glow="amber"
         />
         <MetricCard
-          title="Event Triggers"
+          title="Trigger Events"
           value={webhookTriggers}
           icon={Webhook}
           glow="purple"
@@ -331,9 +331,9 @@ export default function CustomWorkflowsBuilder({
                   className="text-xl font-bold text-ink"
                   style={{ fontFamily: "'Playfair Display', serif" }}
                 >
-                  Design New Automation Pipeline
+                  Create New Workflow
                 </h3>
-                <p className="text-xs text-ink-muted mt-0.5">Configure your event trigger and pipeline logic</p>
+                <p className="text-xs text-ink-muted mt-0.5">Choose a trigger event to start your automation</p>
               </div>
             </div>
 
@@ -341,7 +341,7 @@ export default function CustomWorkflowsBuilder({
               {/* Pipeline name */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-ink-muted mb-2.5">
-                  Pipeline Name
+                  Workflow Name
                 </label>
                 <Input
                   placeholder="e.g. VIP Lead Auto-Nurture & SMS Alert"
@@ -354,7 +354,7 @@ export default function CustomWorkflowsBuilder({
               {/* Trigger selector */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-ink-muted mb-3">
-                  Select Ingestion Trigger
+                  What triggers this workflow?
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {availableTriggers.map((trigger) => {
@@ -814,10 +814,10 @@ export default function CustomWorkflowsBuilder({
           </h3>
           <ul className="text-xs text-ink-muted grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
             {[
-              { title: 'Event-Driven', desc: 'Workflows trigger in real time based on system webhooks and events.' },
-              { title: 'Fine-Grained Filters', desc: 'Add conditional branch logic to filter high-value leads and deals.' },
-              { title: 'Parallel Dispatch', desc: 'Multiple notifications, SMS, and tasks dispatch concurrently.' },
-              { title: 'Sandbox Testing', desc: 'Run dry executions to verify delivery payloads before production rollout.' },
+              { title: 'Event-Driven', desc: 'Workflows trigger in real time based on property and tenant activity.' },
+              { title: 'Smart Filtering', desc: 'Add conditional branch logic to filter high-value leads and deals.' },
+              { title: 'Instant Dispatch', desc: 'Multiple notifications, SMS, and tasks dispatch concurrently.' },
+              { title: 'Safe Testing', desc: 'Test automations safely before applying them to live operations.' },
             ].map(tip => (
               <li key={tip.title} className="flex items-start gap-3 p-3 rounded-xl bg-surface/40 border border-surface-border/50">
                 <div className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">

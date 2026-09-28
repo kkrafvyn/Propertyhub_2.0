@@ -185,11 +185,10 @@ export const documentCenterService = {
 
     if (error) throw error;
 
-    await supabase.from("document_activity_logs").insert({
-      document_id: data.id,
-      actor_user_id: input.createdBy,
-      action: "document_created",
-      details: {
+    await supabase.rpc("record_document_activity", {
+      p_document_id: data.id,
+      p_action: "document_created",
+      p_details: {
         documentType: input.documentType,
         publicVisibility: input.publicVisibility ?? false,
       },
@@ -243,15 +242,14 @@ export const documentCenterService = {
 
     if (error) throw error;
 
-    await supabase.from("document_activity_logs").insert({
-      document_id: data.id,
-      actor_user_id: input.createdBy,
-      action: "document_version_created",
-      details: {
-        previousVersionId: sourceDocument.id,
-        versionNumber: nextVersion,
-      },
-    });
+      await supabase.rpc("record_document_activity", {
+        p_document_id: data.id,
+        p_action: "document_version_created",
+        p_details: {
+          previousVersionId: sourceDocument.id,
+          versionNumber: nextVersion,
+        },
+      });
 
     return data;
   },
@@ -268,58 +266,26 @@ export const documentCenterService = {
     const signatureType = input.signatureType || "typed";
     const signerRole = input.signerRole || "client";
 
-    const { data: signature, error: signatureError } = await supabase
-      .from("document_signatures")
-      .insert({
-        document_id: input.documentId,
-        signer_user_id: input.signerUserId || null,
-        signer_name: input.signerName,
-        signer_email: input.signerEmail || null,
-        signer_role: signerRole,
-        signature_type: signatureType,
-        signature_value: input.signatureValue || input.signerName,
-      })
-      .select("*")
-      .single();
-
-    if (signatureError) throw signatureError;
-
-    const { data: updatedDocument, error: documentError } = await supabase
-      .from("organization_documents")
-      .update({
-        status: "signed",
-        signed_at: signature.signed_at,
-        signed_by_user_id: input.signerUserId || null,
-        signed_by_name: input.signerName,
-        signature_method: signatureType,
-      })
-      .eq("id", input.documentId)
-      .select("*")
-      .single();
-
-    if (documentError) throw documentError;
-
-    await supabase.from("document_activity_logs").insert({
-      document_id: input.documentId,
-      actor_user_id: input.signerUserId || null,
-      action: "document_signed",
-      details: {
-        signerName: input.signerName,
-        signerRole,
-        signatureType,
-      },
+    const { data, error } = await supabase.rpc("record_document_signature", {
+      p_document_id: input.documentId,
+      p_signer_user_id: input.signerUserId || null,
+      p_signer_name: input.signerName,
+      p_signer_email: input.signerEmail || null,
+      p_signer_role: signerRole,
+      p_signature_type: signatureType,
+      p_signature_value: input.signatureValue || input.signerName,
     });
 
-    return updatedDocument;
+    if (error) throw error;
+
+    return data as any;
   },
 
   async updateDocumentVisibility(documentId: string, publicVisibility: boolean) {
-    const { data, error } = await supabase
-      .from("organization_documents")
-      .update({ public_visibility: publicVisibility })
-      .eq("id", documentId)
-      .select("*")
-      .single();
+    const { data, error } = await supabase.rpc("set_document_public_visibility", {
+      p_document_id: documentId,
+      p_public_visibility: publicVisibility,
+    });
 
     if (error) throw error;
     return data;
@@ -393,12 +359,11 @@ export const documentCenterService = {
 
     if (error) throw error;
 
-    await supabase.from("document_activity_logs").insert({
-      document_id: input.documentId,
-      actor_user_id: input.uploadedBy,
-      action: "signed_copy_uploaded",
-      details: { path },
-    });
+      await supabase.rpc("record_document_activity", {
+        p_document_id: input.documentId,
+        p_action: "signed_copy_uploaded",
+        p_details: { path },
+      });
 
     return data;
   },

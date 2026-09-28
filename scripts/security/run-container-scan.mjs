@@ -5,6 +5,7 @@ import { resolveSecurityTool, runResolvedTool } from "./lib/resolve-tool.mjs";
 import { writeSecurityResult } from "./lib/security-result.mjs";
 
 const outputDir = process.env.SECURITY_RESULTS_DIR || "security-results";
+const strict = process.argv.includes("--strict") || process.env.SECURITY_STRICT === "1";
 
 function main() {
   const resolved = resolveSecurityTool("trivy");
@@ -13,7 +14,7 @@ function main() {
       reason: "Install Docker or Trivy CLI, then re-run npm run security:container",
     });
     console.log("Container/filesystem scan: UNVERIFIED (trivy/docker not available)");
-    process.exit(0);
+    process.exit(strict ? 1 : 0);
   }
 
   mkdirSync(outputDir, { recursive: true });
@@ -71,6 +72,7 @@ function main() {
   if (scan.stderr) console.error(scan.stderr);
   console.log(`Container/filesystem scan: ${status}`);
   if (status === "FAIL") process.exit(1);
+  if (status === "UNVERIFIED") process.exit(strict ? 1 : 0);
 }
 
 main();

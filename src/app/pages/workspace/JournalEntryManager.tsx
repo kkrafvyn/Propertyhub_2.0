@@ -23,6 +23,14 @@ import {
   chartOfAccountsService,
   type CoaAccount,
 } from "../../../lib/chart-of-accounts.service";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
 import { useAuth } from "../../context/AuthContext";
 
 type LineDraft = {
@@ -44,6 +52,9 @@ export function JournalEntryManager({
   const [accounts, setAccounts] = useState<CoaAccount[]>([]);
   const [journals, setJournals] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [reversalTargetId, setReversalTargetId] = useState<string | null>(null);
+  const [reversalReason, setReversalReason] = useState("");
+  const [reversing, setReversing] = useState(false);
 
   // Create Form
   const [entryDate, setEntryDate] = useState(
@@ -192,15 +203,23 @@ export function JournalEntryManager({
     }
   };
 
-  const handleReverse = async (id: string) => {
-    const reason = window.prompt("Reason for journal reversal:");
-    if (!reason) return;
+  const handleConfirmReverse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reversalTargetId || !reversalReason.trim()) {
+      toast.error("Please provide a reason for the journal reversal.");
+      return;
+    }
+    setReversing(true);
     try {
-      await generalLedgerService.reverseJournalEntry(id, user?.id || "");
+      await generalLedgerService.reverseJournalEntry(reversalTargetId, user?.id || "");
       toast.success("Offset reversal entry posted successfully");
+      setReversalTargetId(null);
+      setReversalReason("");
       loadData();
     } catch (err: any) {
       toast.error(err.message || "Failed to reverse entry");
+    } finally {
+      setReversing(false);
     }
   };
 
@@ -331,7 +350,10 @@ export function JournalEntryManager({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleReverse(j.id)}
+                            onClick={() => {
+                              setReversalTargetId(j.id);
+                              setReversalReason("");
+                            }}
                             className="text-amber-600 hover:bg-amber-50"
                           >
                             <RotateCcw className="w-3.5 h-3.5 mr-1" />
@@ -540,6 +562,48 @@ export function JournalEntryManager({
           </div>
         </Card>
       )}
+
+      {/* Journal Reversal Dialog */}
+      <Dialog open={Boolean(reversalTargetId)} onOpenChange={(open) => !open && setReversalTargetId(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reverse Journal Entry</DialogTitle>
+            <DialogDescription>
+              Create an offsetting debit/credit entry to reverse this posted transaction in the general ledger.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleConfirmReverse} className="space-y-4 pt-2">
+            <div>
+              <label htmlFor="reversal-reason" className="block text-xs font-semibold text-ink mb-1.5">
+                Reason for Reversal
+              </label>
+              <textarea
+                id="reversal-reason"
+                rows={3}
+                value={reversalReason}
+                onChange={(e) => setReversalReason(e.target.value)}
+                placeholder="e.g. Inadvertent duplicate entry, incorrect account allocation..."
+                className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-ink placeholder:text-ink-muted focus:outline-hidden focus:ring-1 focus:ring-primary"
+                required
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setReversalTargetId(null)}
+                disabled={reversing}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" variant="destructive" disabled={reversing || !reversalReason.trim()}>
+                {reversing ? "Posting Reversal..." : "Reverse Entry"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

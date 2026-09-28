@@ -200,7 +200,7 @@ export function CollectionsCases({
             Collections & Arrears Cases
           </h1>
           <p className="text-sm text-ink-muted">
-            Durable lifecycle tracking, Promise-to-Pay enforcement, and collector event logs.
+            Track overdue accounts, log contact attempts, and manage payment agreements from one place.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -330,7 +330,7 @@ export function CollectionsCases({
           <div>
             <h2 className="text-lg font-bold text-ink">Active Promises-to-Pay</h2>
             <p className="text-xs text-ink-muted mt-1">
-              Overdue promises are verified nightly by the collection promise worker.
+              Overdue payment promises are automatically flagged and updated each night.
             </p>
           </div>
           {overduePtps.length > 0 ? (

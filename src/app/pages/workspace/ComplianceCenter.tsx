@@ -214,9 +214,7 @@ export function ComplianceCenter({
 
         <p className="mt-1 text-ink-secondary">
 
-          {t("compliance.center.subtitle")}{" "}
-
-          {t("compliance.center.organization", { id: organizationId })}
+          {t("compliance.center.subtitle")}
 
         </p>
 

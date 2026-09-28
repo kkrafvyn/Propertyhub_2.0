@@ -109,7 +109,7 @@ export function BulkOperations({ organizationId: organizationIdProp }: { organiz
         payload: { message: broadcast.trim(), requested_at: new Date().toISOString() },
       });
       if (error) throw error;
-      toast.success("Broadcast queued. Delivery worker will fan out to residents.");
+      toast.success("Broadcast queued. Messages will be delivered to residents.");
       setBroadcast("");
       setShowBroadcast(false);
     } catch (error) {
@@ -127,14 +127,14 @@ export function BulkOperations({ organizationId: organizationIdProp }: { organiz
           <div className="flex items-center gap-2">
             <Layers className="h-6 w-6 text-emerald-500 dark:text-emerald-400" />
             <h1 className="text-xl font-bold text-foreground tracking-tight">
-              Bulk Operations & Mass Billing Engine
+              Bulk Operations & Recurring Billing
             </h1>
-            <span className="bg-emerald-950 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded border border-emerald-800">
-              High-Throughput Batch
+            <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium px-2 py-0.5 rounded-full border border-emerald-500/20">
+              Batch Actions
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Perform mass operations across hundreds of units, tenants, and ledger accounts in one click.
+            Perform mass operations across all units, tenants, and ledger accounts in one click.
           </p>
         </div>
       </div>
@@ -148,8 +148,8 @@ export function BulkOperations({ organizationId: organizationIdProp }: { organiz
             </h3>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Run all due recurring charge schedules across every estate. The database function is vacancy-aware and
-            idempotent, so charges are never duplicated for the same period.
+            Run all due recurring charge schedules across every estate. Automatically checks vacant units
+            so charges are never duplicated for the same period.
           </p>
           <div className="pt-2 border-t border-border flex justify-end">
             <button
@@ -158,7 +158,7 @@ export function BulkOperations({ organizationId: organizationIdProp }: { organiz
               className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition shadow disabled:opacity-50"
             >
               {runningOp === "rent-roll" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 fill-current" />}
-              <span>Execute Rent Roll</span>
+              <span>Generate Rent Charges</span>
             </button>
           </div>
         </div>
@@ -199,8 +199,8 @@ export function BulkOperations({ organizationId: organizationIdProp }: { organiz
             </h3>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Queue a broadcast (planned maintenance, generator servicing, water treatment) to all estate residents.
-            Delivery is handled by the notification worker across in-app, SMS, and WhatsApp channels.
+            Send an important announcement (planned maintenance, repairs, or updates) to all estate residents.
+            Messages are delivered via in-app notifications, SMS, and WhatsApp.
           </p>
           {showBroadcast ? (
             <div className="space-y-2">

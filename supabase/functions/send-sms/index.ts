@@ -51,9 +51,25 @@ Deno.serve(async (req) => {
       if (!to || typeof to !== "string") {
         throw new HttpError(400, "Phone number is required for OTP");
       }
-
-      if (organizationId) {
-        await requireEstateMessagingMembership(admin, user.id, organizationId);
+      if (!organizationId) throw new HttpError(400, "organizationId is required for OTP");
+      await enforceRateLimit({
+        bucket: rateLimitKey("sms-otp", user.id),
+        maxHits: 5,
+        windowSeconds: 3600,
+      });
+      await enforceRateLimit({
+        bucket: rateLimitKey("sms-otp-target", to.replace(/\D/g, "")),
+        maxHits: 3,
+        windowSeconds: 3600,
+      });
+      await requireEstateMessagingMembership(admin, user.id, organizationId);
+      const { data: accountPhone, error: phoneError } = await admin
+        .from("users")
+        .select("phone")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (phoneError || !accountPhone?.phone || String(accountPhone.phone).replace(/\D/g, "") !== to.replace(/\D/g, "")) {
+        throw new HttpError(403, "OTP can only be sent to the phone number registered to your account");
       }
 
       const result = await sendOtp({
@@ -66,6 +82,11 @@ Deno.serve(async (req) => {
     }
 
     if (action === "verify_otp") {
+      await enforceRateLimit({
+        bucket: rateLimitKey("sms-otp-verify", user.id),
+        maxHits: 10,
+        windowSeconds: 900,
+      });
       if (!to || !code) {
         throw new HttpError(400, "Phone and code are required to verify OTP");
       }
@@ -79,9 +100,18 @@ Deno.serve(async (req) => {
     }
 
     await requireEstateMessagingMembership(admin, user.id, organizationId);
+    await enforceRateLimit({
+      bucket: rateLimitKey("sms-send-org", organizationId),
+      maxHits: 100,
+      windowSeconds: 60,
+    });
 
     if (!to) {
       throw new HttpError(400, "Recipient phone number(s) required");
+    }
+    const recipientCount = Array.isArray(to) ? to.length : 1;
+    if (recipientCount < 1 || recipientCount > 10) {
+      throw new HttpError(400, "Send to between one and ten recipients per request");
     }
     if (!message || typeof message !== "string") {
       throw new HttpError(400, "Message body is required");

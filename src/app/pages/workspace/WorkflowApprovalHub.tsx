@@ -118,16 +118,12 @@ export function WorkflowApprovalHub({
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Workflows & approval chains</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Configure how requests move through your organization. Pair with automation workflows for
-            end-to-end operations.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Approval Chains</h1>
         </div>
         <Link to={getWorkspaceRoute(organizationSlug, "workflows")}>
           <Button variant="outline">
             <Workflow className="mr-2 h-4 w-4" />
-            Open automation builder
+            Open Workflow Builder
           </Button>
         </Link>
       </div>

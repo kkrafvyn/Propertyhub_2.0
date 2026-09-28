@@ -234,6 +234,24 @@ export function GateClearanceKiosk({
         </div>
       </div>
 
+      {/* Live Pass Stats Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: 'Active Passes', value: passes.filter(p => p.status === 'valid').length, color: 'text-emerald-600', bg: 'bg-emerald-500/10', icon: <CheckCircle2 className="w-4 h-4" /> },
+          { label: 'Used Today', value: passes.filter(p => p.status === 'used').length, color: 'text-blue-600', bg: 'bg-blue-500/10', icon: <UserCheck className="w-4 h-4" /> },
+          { label: 'Expired', value: passes.filter(p => p.status === 'expired').length, color: 'text-red-600', bg: 'bg-red-500/10', icon: <XCircle className="w-4 h-4" /> },
+          { label: 'All Time Passes', value: passes.length, color: 'text-purple-600', bg: 'bg-purple-500/10', icon: <KeyRound className="w-4 h-4" /> },
+        ].map((kpi, i) => (
+          <Card key={i} className="p-4 flex items-center gap-3">
+            <div className={`p-2.5 rounded-xl ${kpi.bg} ${kpi.color} flex-shrink-0`}>{kpi.icon}</div>
+            <div>
+              <p className="text-xs text-muted-foreground">{kpi.label}</p>
+              <p className={`text-2xl font-bold tabular-nums ${kpi.color}`}>{kpi.value}</p>
+            </div>
+          </Card>
+        ))}
+      </div>
+
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-border pb-2">
         <button
@@ -290,7 +308,7 @@ export function GateClearanceKiosk({
               <form onSubmit={handleVerifyCode} className="space-y-4">
                 <div>
                   <label className="text-xs font-semibold text-ink">
-                    Scan Barcode / Enter 6-Digit Gate PIN or Token:
+                    Scan Barcode or Enter 6-Digit Pass Code:
                   </label>
                   <div className="mt-1.5 flex gap-2">
                     <Input
@@ -307,7 +325,7 @@ export function GateClearanceKiosk({
                 </div>
 
                 <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  {loading ? <span>Loading live passes…</span> : <span>Enter the 6-digit PIN or BM-GATE token from the issued pass.</span>}
+                  {loading ? <span>Loading live passes…</span> : <span>Enter the 6-digit PIN or pass code from the visitor pass.</span>}
                 </div>
               </form>
             </Card>

@@ -1,4 +1,6 @@
 import { getCorsHeaders, HttpError, jsonResponse, safeErrorMessage } from "../_shared/http.ts";
+import { requireEstateMessagingMembership } from "../_shared/org-auth.ts";
+import { enforceRateLimit, rateLimitKey } from "../_shared/rate-limit.ts";
 import { requireAuthenticatedUser, createAdminClient } from "../_shared/supabase.ts";
 import { sendWhatsAppTextMessage } from "../_shared/whatsapp-cloud.ts";
 
@@ -13,27 +15,30 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    await requireAuthenticatedUser(authHeader);
+    const { user } = await requireAuthenticatedUser(authHeader);
+    await enforceRateLimit({
+      bucket: rateLimitKey("whatsapp-send", user.id),
+      maxHits: 20,
+      windowSeconds: 60,
+    });
 
     const body = await req.json().catch(() => null);
     const to = String(body?.to || "").trim();
     const message = String(body?.message || "").trim();
-    const organizationId = body?.organizationId ? String(body.organizationId) : undefined;
+    const organizationId = typeof body?.organizationId === "string" ? body.organizationId.trim() : "";
 
-    if (!to || !message) {
-      throw new HttpError(400, "to and message are required");
+    if (!to || !message || !organizationId) {
+      throw new HttpError(400, "organizationId, to and message are required");
     }
+    if (message.length > 4000) throw new HttpError(400, "Message is too long");
 
-    if (organizationId) {
-      const admin = createAdminClient();
-      const { data: member } = await admin
-        .from("organization_members")
-        .select("id")
-        .eq("organization_id", organizationId)
-        .limit(1)
-        .maybeSingle();
-      if (!member) throw new HttpError(403, "Invalid organization");
-    }
+    await requireEstateMessagingMembership(createAdminClient(), user.id, organizationId);
+    await enforceRateLimit({
+      bucket: rateLimitKey("whatsapp-send-org", organizationId),
+      maxHits: 100,
+      windowSeconds: 60,
+    });
+    if (to.length > 80) throw new HttpError(400, "Recipient is invalid");
 
     const result = await sendWhatsAppTextMessage({ to, text: message });
     return jsonResponse(200, result, req);

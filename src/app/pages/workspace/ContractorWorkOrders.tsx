@@ -175,7 +175,7 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-ink">
-              Contractor MoMo Dispatch & Work Orders
+              Contractor MoMo Dispatch &amp; Work Orders
             </h1>
             <p className="text-xs text-muted-foreground">
               Vetted artisan directory, GPS job dispatch, before/after photo inspection verification, and Mobile Money escrow releases.
@@ -193,6 +193,24 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
             Dispatch Work Order
           </Button>
         </div>
+      </div>
+
+      {/* KPI Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: 'New Tickets', value: orders.filter(o => o.status === 'new_ticket').length, color: 'text-rose-600', bg: 'bg-rose-500/10', icon: <AlertCircle className="w-4 h-4" /> },
+          { label: 'In Progress', value: orders.filter(o => o.status === 'in_progress' || o.status === 'dispatched').length, color: 'text-amber-600', bg: 'bg-amber-500/10', icon: <Clock className="w-4 h-4" /> },
+          { label: 'Pending Review', value: orders.filter(o => o.status === 'completed_pending_review').length, color: 'text-blue-600', bg: 'bg-blue-500/10', icon: <Camera className="w-4 h-4" /> },
+          { label: 'Paid via MoMo', value: orders.filter(o => o.status === 'paid_via_momo').length, color: 'text-emerald-600', bg: 'bg-emerald-500/10', icon: <CheckCircle2 className="w-4 h-4" /> },
+        ].map((kpi, i) => (
+          <Card key={i} className="p-4 flex items-center gap-3">
+            <div className={`p-2.5 rounded-xl ${kpi.bg} ${kpi.color}`}>{kpi.icon}</div>
+            <div>
+              <p className="text-xs text-muted-foreground">{kpi.label}</p>
+              <p className={`text-2xl font-bold tabular-nums ${kpi.color}`}>{kpi.value}</p>
+            </div>
+          </Card>
+        ))}
       </div>
 
       {/* Tabs */}

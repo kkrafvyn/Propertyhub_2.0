@@ -151,37 +151,12 @@ export const eSignatureService = {
       .single();
 
     if (error) throw error;
+  if (resolveProvider() === 'docusign') return data as EsigRequest;
     return this.sendForSigning(data.id);
   },
 
   async sendForSigning(requestId: string): Promise<EsigRequest> {
-    const { data: row, error: fetchError } = await db
-      .from('esignature_requests')
-      .select('*')
-      .eq('id', requestId)
-      .single();
-    if (fetchError) throw fetchError;
-
-    const signers: EsigSigner[] = withSignerTokens(
-      Array.isArray(row.signers) ? row.signers : [],
-    );
-    const signingUrl = this.getSigningUrl(row.public_sign_token, signers[0]?.signer_token);
-    const provider = resolveProvider();
-    const envelopeId = provider === 'docusign' ? `ds_${requestId.slice(0, 8)}` : `native_${requestId.slice(0, 8)}`;
-
-    const { data, error } = await db
-      .from('esignature_requests')
-      .update({
-        status: 'sent',
-        provider,
-        provider_request_id: envelopeId,
-        signing_url: signingUrl,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', requestId)
-      .select('*')
-      .single();
-
+    const { data, error } = await db.rpc('send_esignature_request', { p_request_id: requestId });
     if (error) throw error;
     return data as EsigRequest;
   },

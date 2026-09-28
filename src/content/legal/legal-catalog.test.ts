@@ -4,6 +4,7 @@ import {
   LEGAL_LAUNCH_CHECKLIST,
   LEGAL_OPERATOR,
   LEGAL_PLATFORM_POSITION,
+  LEGAL_POLICY_VERSION,
 } from "../../lib/legal-config";
 import {
   FOOTER_LEGAL_LINKS,
@@ -45,6 +46,46 @@ const REQUIRED_ROUTES = [
   "accessibility",
   "whitelabel",
   "complaints",
+  "age-minor-protection",
+  "biometric-identity-data",
+  "tenant-screening",
+  "ai-automated-decisions",
+  "communications-marketing",
+  "privacy-rights",
+  "data-retention",
+  "international-data-transfers",
+  "subprocessors",
+  "developer-api-terms",
+  "smart-access-security",
+  "location-data",
+  "valuation-disclaimer",
+  "tax-accounting-disclaimer",
+  "professional-credentials",
+  "account-enforcement-appeals",
+  "content-moderation",
+  "reasonable-accommodation",
+  "protected-contact-safety",
+  "business-saas-terms",
+  "service-support",
+  "debt-collection",
+  "short-stay-terms",
+  "subscription-billing",
+  "payment-disputes",
+  "beneficial-ownership",
+  "business-verification",
+  "anti-bribery-corruption",
+  "conflicts-of-interest",
+  "referrals",
+  "insurance-mortgage-disclosures",
+  "hazard-disclosures",
+  "government-request-handling",
+  "legal-hold",
+  "records-management",
+  "mobile-electron-terms",
+  "third-party-notices",
+  "security-reporting",
+  "inspection-disclaimer",
+  "review-audit-evidence",
 ];
 
 describe("legal catalog", () => {
@@ -78,6 +119,59 @@ describe("legal catalog", () => {
     expect(getLegalDocument("non-discrimination")?.title).toBe(
       "Non-Discrimination & Community Standards",
     );
+  });
+
+  it("includes the required expanded policy set and jurisdiction-aware statements", () => {
+    for (const slug of [
+      "age-minor-protection",
+      "biometric-identity-data",
+      "tenant-screening",
+      "ai-automated-decisions",
+      "communications-marketing",
+      "privacy-rights",
+      "data-retention",
+      "international-data-transfers",
+      "subprocessors",
+      "developer-api-terms",
+      "smart-access-security",
+      "location-data",
+      "valuation-disclaimer",
+      "tax-accounting-disclaimer",
+      "professional-credentials",
+      "account-enforcement-appeals",
+      "content-moderation",
+      "reasonable-accommodation",
+      "protected-contact-safety",
+      "business-saas-terms",
+      "service-support",
+      "debt-collection",
+      "short-stay-terms",
+      "subscription-billing",
+      "payment-disputes",
+      "beneficial-ownership",
+      "business-verification",
+      "anti-bribery-corruption",
+      "conflicts-of-interest",
+      "referrals",
+      "insurance-mortgage-disclosures",
+      "hazard-disclosures",
+      "government-request-handling",
+      "legal-hold",
+      "records-management",
+      "mobile-electron-terms",
+      "third-party-notices",
+      "security-reporting",
+      "inspection-disclaimer",
+      "review-audit-evidence",
+    ]) {
+      const doc = getLegalDocument(slug);
+      expect(doc).toBeTruthy();
+      expect(doc?.slug).toBe(slug);
+      expect(doc?.sections.length).toBeGreaterThan(0);
+      expect(JSON.stringify(doc)).not.toContain("guaranteed compliance");
+      expect(JSON.stringify(doc)).not.toContain("guaranteed identity match");
+      expect(JSON.stringify(doc)).not.toContain("100% safe");
+    }
   });
 
   it("does not name a payment provider and does not claim fund custody", () => {
@@ -133,5 +227,13 @@ describe("legal catalog", () => {
     expect(LEGAL_PLATFORM_POSITION.summary).toContain("BaytMiftah");
     expect(LEGAL_PLATFORM_POSITION.doesNotAutomaticallyActAs.length).toBeGreaterThan(0);
     expect(LEGAL_LAUNCH_CHECKLIST.length).toBeGreaterThan(0);
+  });
+
+  it("marks the legal bundle as materially updated and not globally production-certified", () => {
+    expect(LEGAL_POLICY_VERSION).toMatch(/2026/);
+    expect(LEGAL_POLICY_VERSION).not.toBe("2026-08-14");
+    const text = JSON.stringify(LEGAL_DOCUMENTS);
+    expect(text).not.toContain("legally compliant worldwide");
+    expect(text).not.toContain("ISO 27001 compliant");
   });
 });

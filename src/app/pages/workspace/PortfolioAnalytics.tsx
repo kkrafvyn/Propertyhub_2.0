@@ -155,7 +155,7 @@ export function PortfolioAnalytics({
             <Badge variant="outline">Live ledger</Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Aggregated from posted journal entries and estate charge ledgers ({periodStart} → {periodEnd}).
+            Financial summary across all managed properties · {periodStart} to {periodEnd}.
           </p>
         </div>
       </div>

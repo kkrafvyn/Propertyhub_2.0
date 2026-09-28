@@ -267,16 +267,14 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
     }
     try {
       setExecuting(statementId);
-      const res = await ownerDisbursementService.executeLiveDisbursement({
-        organizationId,
+      const statement = statements.find((item) => item.id === statementId);
+      if (!statement) throw new Error("Statement not found");
+      await ownerDisbursementService.requestLiveDistribution(
         statementId,
-        requestedBy: user.id,
-      });
-      toast.success(
-        res.payoutReference
-          ? `Disbursement submitted. Ref: ${res.payoutReference}`
-          : "Payout approved. Add an owner phone number to send Mobile Money."
+        Math.round(statement.netDisbursableGhs * 100),
+        user.id,
       );
+      toast.success("Payout approval requested. A separate finance approver must review it before execution.");
       setConfirmStatement(null);
       await loadData();
     } catch (err: any) {

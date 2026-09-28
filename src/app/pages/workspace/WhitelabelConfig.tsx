@@ -96,8 +96,8 @@ export default function WhitelabelConfiguration({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">White-Label Configuration</h1>
-        <p className="text-muted-foreground mt-2">Customize your platform branding and domain</p>
+        <h1 className="text-3xl font-bold">Branding & Custom Domain</h1>
+        <p className="text-muted-foreground mt-2">Customize your platform logo, brand colors, and custom web address.</p>
       </div>
 
       {/* Color Customization */}
@@ -209,7 +209,7 @@ export default function WhitelabelConfiguration({
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Your platform will be accessible at this domain after DNS configuration
+            Your platform will be accessible at this address once your domain points to PropertyHub.
           </p>
         </div>
       </Card>

@@ -91,10 +91,10 @@ export function AdminBackupPanel() {
       <Card className="p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h2 className="text-xl font-semibold">Backup & recovery</h2>
+            <h2 className="text-xl font-semibold">Backup & Recovery</h2>
             <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
-              Supabase stays your primary database. These backups give you recoverable copies
-              before any future infrastructure work. AWS S3 is planned later — not required now.
+              Create complete snapshots of your property records, tenant leases, and financial ledgers.
+              Regular backups safeguard your data and provide instant rollbacks whenever needed.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -124,16 +124,16 @@ export function AdminBackupPanel() {
         <div className="mt-6 grid gap-3 md:grid-cols-3">
           {[
             {
-              title: "Layer 1 — Immediate",
-              body: "Database + storage + config via operator scripts (`npm run backup`) or this admin action.",
+              title: "Layer 1 — Complete Snapshot",
+              body: "Full capture of all properties, tenants, leases, and system configurations directly from this panel.",
             },
             {
-              title: "Layer 2 — Offsite copy",
-              body: "Encrypted JSON exports stored in the private `platform-backups` bucket (separate from live app data).",
+              title: "Layer 2 — Encrypted Archive",
+              body: "Encrypted data exports stored securely in isolated archive storage apart from active operational records.",
             },
             {
-              title: "Layer 3 — Restore proof",
-              body: "Each backup records table counts and critical-table checks. Run `npm run backup:restore-drill:verify` on operators' machines periodically.",
+              title: "Layer 3 — Integrity Verification",
+              body: "Automated checks confirm that critical records, account balances, and table structures remain valid.",
             },
           ].map((layer) => (
             <div key={layer.title} className="rounded-xl border border-border p-4 bg-secondary/20">

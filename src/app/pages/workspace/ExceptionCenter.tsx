@@ -72,28 +72,28 @@ export function ExceptionCenter({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-ink">
-            Exception & Incident Command Center
+            Issues & Alerts
           </h1>
           <p className="text-sm text-ink-muted">
-            Real-time monitoring of broken promises, SLA breaches, failed automations, and risk signals.
+            Real-time view of missed deadlines, overdue tasks, and actions that need your attention.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={loadExceptions}>
           <Clock className="w-4 h-4 mr-1.5" />
-          Refresh Incident Log
+          Refresh
         </Button>
       </div>
 
       <Card className="p-6 space-y-4">
         {loading ? (
           <div className="py-12 text-center text-ink-muted">
-            Scanning portfolio for operational exceptions...
+          Checking for issues across your properties...
           </div>
         ) : exceptions.length === 0 ? (
           <div className="py-12 text-center space-y-3">
             <ShieldCheck className="w-12 h-12 mx-auto text-emerald-500 opacity-60" />
             <p className="text-ink-muted font-medium">
-              Zero SLA exceptions or broken commitments detected across your estates.
+              No outstanding issues or overdue tasks found across your properties.
             </p>
           </div>
         ) : (

@@ -282,32 +282,49 @@ export const ownerDisbursementService = {
     return rows.map((row: any) => mapOwnerStatementRun(row, nameById[row.owner_user_id] || 'Owner'));
   },
 
-  async executeLiveDisbursement(input: { organizationId: string; statementId: string; requestedBy: string }) {
+  async executeLiveDisbursement(input: { organizationId: string; statementId: string; approvalId: string; requestedBy: string }) {
     const { stepUpAuthService } = await import('./step-up-auth.service');
-    await stepUpAuthService.confirm({
-      organizationId: input.organizationId,
-      userId: input.requestedBy,
-      purpose: 'owner_payout',
-      reason: `Approve owner disbursement ${input.statementId.slice(0, 8)}`,
-    });
+    await stepUpAuthService.assertConfirmed(input.organizationId, input.requestedBy, 'owner_payout');
+
     const { data: run, error } = await supabase.from('estate_owner_statement_runs').select('*').eq('id', input.statementId).single();
     if (error || !run) throw error || new Error('Statement not found');
-    const amountMinor = Number(run.net_distributable_minor || 0);
-    if (amountMinor <= 0) throw new Error('Nothing to disburse for this statement.');
-    const approval = await estateReportingService.requestDistributionApproval({
-      statementRunId: input.statementId,
-      amountMinor,
-      requestedBy: input.requestedBy,
-    });
-    await estateReportingService.reviewDistributionApproval(approval.id, 'approved', input.requestedBy, 'Approved from owner disbursements');
-    const { data: owner } = await supabase.from('users').select('phone, full_name').eq('id', run.owner_user_id).maybeSingle();
-    if (!owner?.phone) {
-      return mapOwnerStatementRun({ ...run, status: 'queued' }, owner?.full_name || 'Owner');
+    const { data: approval, error: approvalError } = await supabase
+      .from('estate_distribution_approvals')
+      .select('id, requested_amount_minor, requested_by, reviewed_by, status, statement_run_id')
+      .eq('id', input.approvalId)
+      .eq('statement_run_id', input.statementId)
+      .eq('status', 'approved')
+      .single();
+    if (approvalError || !approval) throw approvalError || new Error('An approved distribution is required.');
+    if (approval.requested_by === input.requestedBy || approval.reviewed_by === input.requestedBy) {
+      throw new Error('Payout requester and approver must be different identities.');
     }
+
+    const amountMinor = Number(run.net_distributable_minor || 0);
+    if (Number(approval.requested_amount_minor) !== amountMinor) {
+      throw new Error('Approved payout amount no longer matches the trusted statement.');
+    }
+    if (amountMinor <= 0) throw new Error('Nothing to disburse for this statement.');
+
+    const { data: owner } = await supabase.from('users').select('full_name').eq('id', run.owner_user_id).maybeSingle();
+    const { data: payoutMethod, error: payoutMethodError } = await supabase
+      .from('owner_payout_methods')
+      .select('method_type, currency, destination, status')
+      .eq('owner_user_id', run.owner_user_id)
+      .eq('organization_id', input.organizationId)
+      .eq('status', 'verified')
+      .eq('is_default', true)
+      .maybeSingle();
+    if (payoutMethodError) throw payoutMethodError;
+    if (!payoutMethod) throw new Error('Owner payout requires a verified owner-bound payout method.');
+    if (String(payoutMethod.currency).toUpperCase() !== String(run.currency).toUpperCase()) {
+      throw new Error('Payout currency does not match the statement currency.');
+    }
+
     const paid = await estateReportingService.executeDistributionPayout({
-      approvalId: approval.id,
+      approvalId: input.approvalId,
       amountGhs: amountMinor / 100,
-      destinationPhone: owner.phone,
+      destinationPhone: payoutMethod.destination,
     });
     return mapOwnerStatementRun(
       { ...run, status: paid.status === 'paid' ? 'delivered' : 'queued', payout_reference: paid.payout_reference },

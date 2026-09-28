@@ -23,6 +23,7 @@ import {
   Wrench,
   ShieldCheck,
   CheckCheck,
+  ChevronLeft,
   MessageCircle,
   HelpCircle,
 } from "lucide-react";
@@ -121,7 +122,7 @@ function ResidentInboxContent() {
 
       <div className="h-[650px] flex rounded-3xl border border-surface-border/80 bg-surface/85 shadow-lg backdrop-blur-md overflow-hidden">
         {/* ── Left list: Threads ────────────────────────────────────────────────── */}
-        <div className="w-72 sm:w-80 border-r border-surface-border/80 flex flex-col bg-surface-subtle/60 backdrop-blur-xs">
+        <div className={`w-full sm:w-80 border-r border-surface-border/80 flex-col bg-surface-subtle/60 backdrop-blur-xs ${activeConversation ? "hidden sm:flex" : "flex"}`}>
           <div className="p-4 border-b border-surface-border/80 font-semibold text-xs text-ink flex items-center justify-between">
             <span className="flex items-center gap-1.5">
               <MessageCircle className="w-4 h-4 text-primary" />
@@ -177,9 +178,21 @@ function ResidentInboxContent() {
         </div>
 
         {/* ── Right: Live Feed ───────────────────────────────────────────────── */}
-        <div className="flex-1 flex flex-col min-w-0 bg-surface/40">
+        <div className={`flex-1 flex-col min-w-0 bg-surface/40 ${activeConversation ? "flex" : "hidden sm:flex"}`}>
           {activeConversation ? (
             <>
+              {/* Mobile Back Button */}
+              <div className="sm:hidden px-4 pt-3 pb-1 border-b border-surface-border/50 bg-surface/90">
+                <button
+                  type="button"
+                  onClick={() => setActiveConversationId("")}
+                  className="inline-flex items-center gap-1.5 text-xs text-ink-secondary hover:text-ink font-medium px-2.5 py-1 rounded-lg bg-surface border border-surface-border shadow-2xs"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Back to conversations</span>
+                </button>
+              </div>
+
               <ContextHeaderBanner conversation={activeConversation} />
 
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">

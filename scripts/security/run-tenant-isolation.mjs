@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import { writeSecurityResult } from "./lib/security-result.mjs";
 
 const outputDir = process.env.SECURITY_RESULTS_DIR || "security-results";
+const strict = process.argv.includes("--strict") || process.env.SECURITY_STRICT === "1";
 
 function main() {
   spawnSync("node", ["scripts/security/seed-tenant-isolation-fixtures.mjs"], {
@@ -44,7 +45,7 @@ function main() {
 
   console.log(`Tenant isolation: ${status}`);
   if (status === "FAIL") process.exit(1);
-  if (status === "UNVERIFIED") process.exit(0);
+  if (status === "UNVERIFIED") process.exit(strict ? 1 : 0);
 }
 
 main();

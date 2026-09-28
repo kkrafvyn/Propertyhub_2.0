@@ -23,6 +23,7 @@ export {
 } from "./types";
 export { LEGAL_POLICIES } from "./policies";
 export { COMPANY_PAGES, SUPPORT_PAGES } from "./support-pages";
+export { LEGAL_JURISDICTIONS, LEGAL_COVERAGE_MATRIX } from "./jurisdictions";
 export { LEGAL_CONTACT };
 
 function withCookieRegister(doc: LegalDocument): LegalDocument {

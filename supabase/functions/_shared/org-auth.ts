@@ -94,10 +94,11 @@ export async function assertAiToolAllowed(
   admin: SupabaseClient,
   organizationId: string,
   toolName: string,
+  userId?: string,
 ) {
   const { data, error } = await admin
     .from("ai_tool_allowlist")
-    .select("enabled")
+    .select("enabled, required_permission")
     .eq("organization_id", organizationId)
     .eq("tool_name", toolName)
     .maybeSingle();
@@ -106,8 +107,34 @@ export async function assertAiToolAllowed(
     throw new HttpError(500, error.message);
   }
 
-  if (data && data.enabled === false) {
+  if (!data || data.enabled !== true) {
     throw new HttpError(403, `AI tool "${toolName}" is disabled for this organization`);
+  }
+
+  if (data.required_permission) {
+    await assertOrgCapability(admin, organizationId, data.required_permission, userId);
+  }
+}
+
+export async function assertOrgCapability(
+  admin: SupabaseClient,
+  organizationId: string,
+  capability: string,
+  userId?: string,
+) {
+  const actorId = userId || (await admin.auth.getUser()).data.user?.id;
+  const { data, error } = await admin
+    .from("organization_members")
+    .select("role, permissions")
+    .eq("organization_id", organizationId)
+    .eq("user_id", actorId || "")
+    .maybeSingle();
+
+  if (error) throw new HttpError(500, error.message);
+  const elevatedRoles = new Set(["owner", "organization_admin", "managing_director"]);
+  const permissions = Array.isArray(data?.permissions) ? data.permissions : [];
+  if (!data || (!elevatedRoles.has(String(data.role)) && !permissions.includes(capability))) {
+    throw new HttpError(403, `Missing required capability: ${capability}`);
   }
 }
 
@@ -120,7 +147,7 @@ export async function requireOrgAiAccess(
   await requireOrgMembership(admin, userId, organizationId);
   await assertOrgAiEnabled(admin, organizationId);
   if (toolName) {
-    await assertAiToolAllowed(admin, organizationId, toolName);
+    await assertAiToolAllowed(admin, organizationId, toolName, userId);
   }
 }
 

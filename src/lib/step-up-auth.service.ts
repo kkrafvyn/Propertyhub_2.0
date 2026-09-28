@@ -36,21 +36,27 @@ export const stepUpAuthService = {
     purpose: HighRiskPurpose;
     reason?: string;
     ttlMinutes?: number;
+    targetResourceId?: string;
+    targetAction?: string;
   }) {
-    const expiresAt = new Date(
-      Date.now() + (input.ttlMinutes || DEFAULT_TTL_MINUTES) * 60 * 1000
-    ).toISOString();
-    const { data, error } = await db
-      .from("privileged_step_up")
-      .insert({
-        organization_id: input.organizationId,
-        user_id: input.userId,
-        purpose: input.purpose,
-        reason: input.reason || null,
-        expires_at: expiresAt,
-      })
-      .select("*")
-      .single();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user || userData.user.id !== input.userId) {
+      throw new Error("Step-up confirmation requires an authenticated matching user session.");
+    }
+
+    const { data: assurance, error: assuranceError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assuranceError || assurance?.currentLevel !== "aal2") {
+      throw new Error("Step-up confirmation requires a real MFA challenge and AAL2 assurance.");
+    }
+
+    const { data, error } = await db.rpc("create_privileged_step_up", {
+      p_organization_id: input.organizationId,
+      p_purpose: input.purpose,
+      p_reason: input.reason || null,
+      p_ttl_minutes: Math.min(Math.max(input.ttlMinutes || DEFAULT_TTL_MINUTES, 1), DEFAULT_TTL_MINUTES),
+      p_target_resource_id: input.targetResourceId || null,
+      p_target_action: input.targetAction || null,
+    });
     if (error) throw error;
     return data;
   },
@@ -58,16 +64,13 @@ export const stepUpAuthService = {
   async assertConfirmed(organizationId: string, userId: string, purpose: HighRiskPurpose) {
     const session = await this.getActiveSession(organizationId, userId, purpose);
     if (!session) {
-      throw new Error(`Step-up confirmation required for ${purpose.replace(/_/g, " ")}.`);
+      throw new Error(`Step-up confirmation is required for ${purpose.replace(/_/g, " ")}.`);
     }
     return session;
   },
 
   async revoke(id: string) {
-    const { error } = await db
-      .from("privileged_step_up")
-      .update({ revoked_at: new Date().toISOString() })
-      .eq("id", id);
+    const { error } = await db.rpc("revoke_privileged_step_up", { p_step_up_id: id });
     if (error) throw error;
   },
 };

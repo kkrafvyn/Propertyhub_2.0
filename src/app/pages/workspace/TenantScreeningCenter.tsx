@@ -301,6 +301,51 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
         ))}
       </div>
 
+      {/* ── Risk Distribution Bar ── */}
+      {checks.length > 0 && (
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-foreground">Screening Outcome Distribution</span>
+            <span className="text-xs text-muted-foreground">{checks.length} total screenings</span>
+          </div>
+          <div className="flex h-4 w-full rounded-full overflow-hidden gap-px">
+            {totalClear > 0 && (
+              <div
+                className="bg-emerald-500 transition-all duration-700 ease-out flex items-center justify-center"
+                style={{ width: `${(totalClear / checks.length) * 100}%` }}
+                title={`Clear: ${totalClear}`}
+              />
+            )}
+            {totalConsider > 0 && (
+              <div
+                className="bg-amber-500 transition-all duration-700 ease-out"
+                style={{ width: `${(totalConsider / checks.length) * 100}%` }}
+                title={`Consider: ${totalConsider}`}
+              />
+            )}
+            {totalDecline > 0 && (
+              <div
+                className="bg-red-500 transition-all duration-700 ease-out"
+                style={{ width: `${(totalDecline / checks.length) * 100}%` }}
+                title={`Decline: ${totalDecline}`}
+              />
+            )}
+            {(checks.length - totalClear - totalConsider - totalDecline) > 0 && (
+              <div
+                className="bg-indigo-400 transition-all duration-700 ease-out"
+                style={{ width: `${((checks.length - totalClear - totalConsider - totalDecline) / checks.length) * 100}%` }}
+                title={`Pending`}
+              />
+            )}
+          </div>
+          <div className="flex items-center gap-4 mt-2 text-xs">
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />Clear ({Math.round((totalClear / checks.length) * 100)}%)</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />Consider ({Math.round((totalConsider / checks.length) * 100)}%)</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />Decline ({Math.round((totalDecline / checks.length) * 100)}%)</span>
+          </div>
+        </div>
+      )}
+
       {/* ── Wizard Modal ── */}
       {showWizard && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
@@ -501,7 +546,16 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 rounded-xl border border-border bg-muted/30 animate-pulse" />
+              <div key={i} className="h-20 rounded-xl border border-border bg-surface overflow-hidden">
+                <div className="h-full p-4 flex items-center gap-4 animate-pulse">
+                  <div className="w-10 h-10 rounded-lg bg-muted/60 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 bg-muted/60 rounded-full w-1/3" />
+                    <div className="h-2.5 bg-muted/40 rounded-full w-2/3" />
+                  </div>
+                  <div className="w-20 h-6 bg-muted/60 rounded-full shrink-0" />
+                </div>
+              </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (

@@ -738,10 +738,10 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
             <Card className="p-5 border-surface-border bg-surface space-y-4">
               <h3 className="text-base font-bold text-ink flex items-center gap-2">
                 <Link2 className="w-5 h-5 text-emerald-500" />
-                Webhook & setup
+                Connection & setup
               </h3>
               <p className="text-xs text-ink-secondary leading-relaxed">
-                Add your BaytMiftah WhatsApp Business number to any resident or estate group. In Meta Developer Console, set the webhook URL below and subscribe to <strong>messages</strong>.
+                Add your BaytMiftah WhatsApp Business number to any resident or estate group. In your WhatsApp setup, enter the connection URL below and enable <strong>messages</strong>.
               </p>
               <div className="rounded-lg bg-surface-subtle border border-surface-border p-3 text-xs font-mono break-all">
                 {webhookUrl}
@@ -751,10 +751,10 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
                 variant="outline"
                 onClick={() => {
                   void navigator.clipboard.writeText(webhookUrl);
-                  toast.success('Webhook URL copied.');
+                  toast.success('Connection URL copied.');
                 }}
               >
-                <Copy className="w-4 h-4 mr-1" /> Copy webhook URL
+                <Copy className="w-4 h-4 mr-1" /> Copy connection URL
               </Button>
               <ol className="text-xs text-muted-foreground list-decimal pl-4 space-y-1">
                 <li>Add the business number to your WhatsApp group as a participant.</li>
@@ -796,7 +796,7 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
             <Card className="p-5 border-surface-border bg-surface">
               <h3 className="text-sm font-bold mb-3">Linked groups ({linkedGroups.length})</h3>
               {linkedGroups.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No groups linked yet. Messages from new groups auto-register on first webhook.</p>
+                <p className="text-xs text-muted-foreground">No groups linked yet. Messages from new groups connect automatically on first message.</p>
               ) : (
                 <div className="space-y-2">
                   {linkedGroups.map((group) => (

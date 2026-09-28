@@ -1,8 +1,268 @@
-import { useEffect,useState } from "react";
-import { CheckCircle2, FileUp, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertCircle, CheckCircle2, FileSpreadsheet, FileUp, History, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
-import { estateImportService,parseEstateUnitsCsv,parseOccupanciesCsv,type ImportRow,type OccupancyImportRow } from "../../../lib/estate-import.service";
-export function DataMigration({organizationId,currentUserId}:{organizationId:string;currentUserId:string}){const[rows,setRows]=useState<Array<ImportRow|OccupancyImportRow>>([]),[type,setType]=useState<"estates_units"|"occupancies">("estates_units"),[name,setName]=useState(""),[jobs,setJobs]=useState<any[]>([]),[busy,setBusy]=useState(false);const load=async()=>{try{setJobs(await estateImportService.getJobs(organizationId))}catch{toast.error("Unable to load import history.")}};useEffect(()=>{void load()},[organizationId]);const choose=async(e:React.ChangeEvent<HTMLInputElement>)=>{const file=e.target.files?.[0];if(!file)return;setName(file.name);const content=await file.text();setRows(type==="estates_units"?parseEstateUnitsCsv(content):parseOccupanciesCsv(content))};const run=async(id:string)=>{try{setBusy(true);const count=await estateImportService.importJob({jobId:id,organizationId,userId:currentUserId});toast.success(`${count} row(s) imported.`);await load()}catch{toast.error("Import could not be completed.")}finally{setBusy(false)}};const save=async()=>{if(!rows.length)return;try{setBusy(true);const job=await estateImportService.createJob({organizationId,fileName:name||"estate-import.csv",rows,userId:currentUserId,importType:type});await load();setRows([]);if(rows.every(x=>!x.errors.length))await run(job.id)}catch{toast.error("Unable to save import.")}finally{setBusy(false)}};const valid=rows.filter(x=>!x.errors.length).length;const columns=type==="estates_units"?"estate_name, unit_identifier, block, floor":"estate_name, unit_identifier, user_email, role, start_date";return <div className="space-y-6"><div><h1 className="text-3xl font-semibold">Data Migration</h1><p className="mt-2 text-muted-foreground">Validate, approve and import estates, units and occupancy history with an audit trail.</p></div><Card className="p-6"><select className="mb-4 rounded-lg border border-border bg-input-background px-3 py-2" value={type} onChange={e=>{setType(e.target.value as typeof type);setRows([])}}><option value="estates_units">Estates and units</option><option value="occupancies">Occupancy history</option></select><label className="flex cursor-pointer flex-col items-center rounded-xl border border-dashed border-border p-8 text-center"><FileUp className="h-7 w-7 text-primary"/><p className="mt-3 font-medium">Upload CSV</p><p className="mt-1 text-sm text-muted-foreground">Columns: {columns}</p><input className="sr-only" type="file" accept=".csv,text/csv" onChange={choose}/></label>{rows.length>0&&<><div className="mt-4 flex gap-3"><Badge variant="outline">{rows.length} rows</Badge><Badge variant="outline">{valid} valid</Badge></div><div className="mt-4 max-h-72 space-y-2 overflow-auto">{rows.slice(0,50).map(row=><div key={row.rowNumber} className="flex justify-between rounded-lg border border-border p-3 text-sm"><span>#{row.rowNumber} · {row.estateName} · {row.unitIdentifier}</span>{row.errors.length?<span className="text-destructive">{row.errors.join(", ")}</span>:<CheckCircle2 className="h-4 w-4 text-green-600"/>}</div>)}</div><Button className="mt-4" disabled={busy||valid!==rows.length} onClick={()=>void save()}>{busy?<Loader2 className="h-4 w-4 animate-spin"/>:"Approve & import"}</Button></>}</Card><Card className="p-6"><h2 className="font-semibold">Import audit trail</h2><div className="mt-4 space-y-2">{jobs.map(job=><div key={job.id} className="flex justify-between rounded-lg border border-border p-3"><span>{job.file_name} · {job.imported_rows}/{job.total_rows}</span><div className="flex gap-2"><Badge variant="outline">{job.import_type}</Badge><Badge variant="outline">{job.status}</Badge>{job.status!=="imported"&&job.valid_rows===job.total_rows?<Button size="sm" variant="outline" disabled={busy} onClick={()=>void run(job.id)}>Import</Button>:null}</div></div>)}</div></Card></div>}
+import {
+  estateImportService,
+  parseEstateUnitsCsv,
+  parseOccupanciesCsv,
+  type ImportRow,
+  type OccupancyImportRow,
+} from "../../../lib/estate-import.service";
+
+interface DataMigrationProps {
+  organizationId: string;
+  currentUserId: string;
+}
+
+export function DataMigration({ organizationId, currentUserId }: DataMigrationProps) {
+  const [rows, setRows] = useState<Array<ImportRow | OccupancyImportRow>>([]);
+  const [type, setType] = useState<"estates_units" | "occupancies">("estates_units");
+  const [name, setName] = useState("");
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    try {
+      setJobs(await estateImportService.getJobs(organizationId));
+    } catch {
+      toast.error("Unable to load import history.");
+    }
+  };
+
+  useEffect(() => {
+    void load();
+  }, [organizationId]);
+
+  const choose = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setName(file.name);
+    try {
+      const content = await file.text();
+      setRows(
+        type === "estates_units" ? parseEstateUnitsCsv(content) : parseOccupanciesCsv(content),
+      );
+      toast.success(`Loaded ${file.name}`);
+    } catch {
+      toast.error("Failed to read CSV file.");
+    }
+  };
+
+  const run = async (id: string) => {
+    try {
+      setBusy(true);
+      const count = await estateImportService.importJob({
+        jobId: id,
+        organizationId,
+        userId: currentUserId,
+      });
+      toast.success(`${count} row(s) imported.`);
+      await load();
+    } catch {
+      toast.error("Import could not be completed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const save = async () => {
+    if (!rows.length) return;
+    try {
+      setBusy(true);
+      const job = await estateImportService.createJob({
+        organizationId,
+        fileName: name || "estate-import.csv",
+        rows,
+        userId: currentUserId,
+        importType: type,
+      });
+      await load();
+      setRows([]);
+      if (rows.every((x) => !x.errors.length)) {
+        await run(job.id);
+      } else {
+        toast.info("Import saved to history. Correct invalid rows and re-import.");
+      }
+    } catch {
+      toast.error("Unable to save import.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const valid = rows.filter((x) => !x.errors.length).length;
+  const invalid = rows.length - valid;
+  const columns =
+    type === "estates_units"
+      ? "estate_name, unit_identifier, block, floor"
+      : "estate_name, unit_identifier, user_email, role, start_date";
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Data Migration & Import</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Import estates, units, and tenant occupancy records from CSV files with automatic validation.
+        </p>
+      </div>
+
+      {/* Main Upload Card */}
+      <Card className="p-6 space-y-5">
+        {/* Type toggle */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setType("estates_units");
+              setRows([]);
+            }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              type === "estates_units"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Estates & Units
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setType("occupancies");
+              setRows([]);
+            }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              type === "occupancies"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Occupancy History
+          </button>
+        </div>
+
+        {/* Dropzone */}
+        <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border p-8 text-center hover:border-primary/50 transition-colors bg-muted/20">
+          <div className="p-3 rounded-full bg-primary/10 text-primary mb-3">
+            <FileUp className="h-6 w-6" />
+          </div>
+          <p className="text-sm font-semibold text-foreground">
+            {name ? `Selected: ${name}` : "Click or drag CSV file to upload"}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Expected header columns: <span className="font-mono">{columns}</span>
+          </p>
+          <input className="sr-only" type="file" accept=".csv,text/csv" onChange={choose} />
+        </label>
+
+        {/* Validation and Preview */}
+        {rows.length > 0 && (
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">{rows.length} total rows</Badge>
+                <Badge variant="default" className="bg-emerald-600">
+                  {valid} valid
+                </Badge>
+                {invalid > 0 && <Badge variant="destructive">{invalid} errors</Badge>}
+              </div>
+
+              <Button
+                disabled={busy || valid === 0}
+                onClick={() => void save()}
+                size="sm"
+                className="gap-1.5"
+              >
+                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Approve & Import {valid} Records
+              </Button>
+            </div>
+
+            {/* Row List */}
+            <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+              {rows.slice(0, 50).map((row) => (
+                <div
+                  key={row.rowNumber}
+                  className="flex items-center justify-between rounded-lg border border-border p-2.5 text-xs bg-background"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <span className="text-muted-foreground font-mono">#{row.rowNumber}</span>
+                    <span className="font-medium text-foreground truncate">
+                      {row.estateName} · {row.unitIdentifier}
+                    </span>
+                  </div>
+
+                  {row.errors.length ? (
+                    <span className="text-destructive font-medium truncate max-w-xs text-right">
+                      {row.errors.join(", ")}
+                    </span>
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Audit History */}
+      <Card className="p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <History className="h-4 w-4 text-primary" />
+          <h2 className="text-sm font-semibold text-foreground">Import History & Audit Log</h2>
+        </div>
+
+        {jobs.length === 0 ? (
+          <p className="text-xs text-muted-foreground py-6 text-center">
+            No previous imports found for this workspace.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {jobs.map((job) => (
+              <div
+                key={job.id}
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 rounded-lg border border-border text-xs gap-2"
+              >
+                <div className="space-y-0.5">
+                  <p className="font-medium text-foreground">{job.file_name}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {job.imported_rows}/{job.total_rows} rows imported ·{" "}
+                    {new Date(job.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge variant="outline" className="capitalize text-[10px]">
+                    {job.import_type?.replace(/_/g, " ")}
+                  </Badge>
+                  <Badge
+                    variant={job.status === "imported" ? "default" : "outline"}
+                    className="capitalize text-[10px]"
+                  >
+                    {job.status}
+                  </Badge>
+
+                  {job.status !== "imported" && job.valid_rows === job.total_rows && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => void run(job.id)}
+                      className="h-7 text-xs"
+                    >
+                      Import Now
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}

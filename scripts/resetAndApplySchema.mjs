@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import pg from "pg";
+import { verifiedDatabaseUrl } from "./secure-db-url.mjs";
 
 const projectRoot = path.resolve(import.meta.dirname, "..");
 
@@ -34,18 +35,43 @@ function getDbConfig() {
     ...process.env,
   };
 
+  const ref = env.SUPABASE_PROJECT_REF ||
+    (env.VITE_SUPABASE_URL ? new URL(env.VITE_SUPABASE_URL).hostname.split(".")[0] : "");
+  const allowedRef = String(env.SUPABASE_RESET_ALLOWED_PROJECT_REF || "").trim();
+  const productionRef = String(env.SUPABASE_PRODUCTION_PROJECT_REF || "").trim();
+  if (env.SUPABASE_RESET_ENV !== "development") {
+    throw new Error("Refusing schema reset: set SUPABASE_RESET_ENV=development for a non-production project");
+  }
+  if (!productionRef) {
+    throw new Error("Refusing schema reset: set SUPABASE_PRODUCTION_PROJECT_REF so the production target can be denied");
+  }
+  if (!ref || !allowedRef || ref !== allowedRef || ref === productionRef) {
+    throw new Error("Refusing schema reset: project ref must exactly match SUPABASE_RESET_ALLOWED_PROJECT_REF and differ from the production project");
+  }
+
   if (env.SUPABASE_DB_URL) {
-    return { connectionString: env.SUPABASE_DB_URL };
+    const target = new URL(env.SUPABASE_DB_URL);
+    if (["localhost", "127.0.0.1", "::1"].includes(target.hostname)) {
+      if (ref !== "local" || allowedRef !== "local") {
+        throw new Error("Local database resets require SUPABASE_PROJECT_REF=local and SUPABASE_RESET_ALLOWED_PROJECT_REF=local");
+      }
+    } else if (!target.hostname.endsWith(".supabase.co") && !target.hostname.includes("pooler.supabase.com")) {
+      throw new Error("Refusing schema reset: database URL host is not a recognized Supabase endpoint");
+    } else {
+      const directRef = target.hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/i)?.[1];
+      const userRef = decodeURIComponent(target.username).match(/^postgres\.([a-z0-9]+)$/i)?.[1];
+      const urlRef = directRef || userRef;
+      if (!urlRef || urlRef !== ref) {
+        throw new Error("Refusing schema reset: database URL project does not match SUPABASE_PROJECT_REF");
+      }
+    }
+    return { connectionString: verifiedDatabaseUrl(env.SUPABASE_DB_URL), ssl: { rejectUnauthorized: true } };
   }
 
   const password = env.SUPABASE_DB_PASSWORD;
   if (!password) {
     throw new Error("Set SUPABASE_DB_PASSWORD in root .env");
   }
-
-  const ref =
-    env.SUPABASE_PROJECT_REF ||
-    (env.VITE_SUPABASE_URL ? new URL(env.VITE_SUPABASE_URL).hostname.split(".")[0] : "");
 
   const region = env.SUPABASE_DB_REGION || "eu-west-1";
   const port = Number(env.SUPABASE_DB_PORT || 5432);
@@ -57,7 +83,7 @@ function getDbConfig() {
     user: `postgres.${ref}`,
     password,
     database: "postgres",
-    ssl: { rejectUnauthorized: process.env.DB_ALLOW_INSECURE_TLS !== "1" },
+    ssl: { rejectUnauthorized: true },
   };
 }
 
@@ -65,14 +91,7 @@ const RESET_SQL = `
 DROP SCHEMA IF EXISTS public CASCADE;
 CREATE SCHEMA public;
 GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA public TO public;
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
-GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
 DELETE FROM supabase_migrations.schema_migrations;
 `;
 

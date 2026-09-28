@@ -5,13 +5,11 @@ export const trustCenterService = {
   async getListingTrustSnapshot(listingId: string, organizationId: string) {
     const [documentsResult, organizationsResult] = await Promise.allSettled([
       supabase
-        .from("organization_documents")
-        .select("id, title, document_type, signed_at, status", { count: "exact" })
-        .eq("listing_id", listingId)
-        .eq("public_visibility", true)
-        .in("status", ["sent", "partially_signed", "signed"])
-        .order("updated_at", { ascending: false })
-        .limit(4),
+        .rpc("get_public_listing_documents", { p_listing_id: listingId, p_limit: 4 })
+        .then(async (result) => ({
+          ...result,
+          count: result.error ? null : (result.data || []).length,
+        })),
       supabase
         .from("organizations")
         .select("verified, name")
@@ -25,7 +23,7 @@ export const trustCenterService = {
       documentsResult.status === "fulfilled" ? documentsResult.value.count || 0 : 0;
     const organization =
       organizationsResult.status === "fulfilled" ? organizationsResult.value.data : null;
-    const signedDocumentCount = documents.filter((document) => document.signed_at).length;
+    const signedDocumentCount = documents.filter((document) => document.status === "signed").length;
     const trustHighlights = [
       organization?.verified
         ? TRUST_LABELS.platform_reviewed_agency.short

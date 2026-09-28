@@ -499,9 +499,7 @@ export default function PredictiveAnalytics({
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 mt-0.5 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              This screen is live now, but it depends on `market_analytics` and `location_trends`
-              data existing in Supabase. As those tables fill up, the forecasts and insights get
-              stronger automatically.
+              Market forecasts and predictive analytics update automatically as more transactions and property trends are recorded across your portfolio.
             </p>
           </div>
         </Card>

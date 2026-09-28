@@ -76,24 +76,26 @@ type MemoryState = {
 const db = supabase as any;
 const USE_MEMORY = import.meta.env.MODE === 'test';
 
-async function hashKey(raw: string): Promise<string> {
-  const data = new TextEncoder().encode(raw);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
 function maskSecret(prefix: string, raw: string): string {
   return `${prefix}...${raw.slice(-4)}`;
 }
 
 function generateRawKey(): string {
-  return `bm_live_${Math.random().toString(36).slice(2, 15)}${Math.random().toString(36).slice(2, 15)}`;
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return `bm_live_${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
 }
 
 function generateWebhookSecret(): string {
-  return `whsec_${Math.random().toString(36).slice(2, 15)}${Math.random().toString(36).slice(2, 15)}`;
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return `whsec_${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
+}
+
+async function hmacSha256Hex(secret: string, body: string) {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body));
+  return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 class DeveloperApiService {
@@ -111,7 +113,7 @@ class DeveloperApiService {
 
     const { data, error } = await db
       .from('organization_api_keys')
-      .select('*')
+      .select('id, name, key_prefix, scopes, status, created_at, last_used_at, organization_id')
       .eq('organization_id', organizationId)
       .order('created_at', { ascending: false });
 
@@ -126,7 +128,6 @@ class DeveloperApiService {
   ): Promise<{ record: ApiKeyRecord; fullSecretKey: string }> {
     const fullSecretKey = generateRawKey();
     const keyPrefix = fullSecretKey.slice(0, 10);
-    const keyHash = await hashKey(fullSecretKey);
 
     if (USE_MEMORY) {
       const record: ApiKeyRecord = {
@@ -144,21 +145,14 @@ class DeveloperApiService {
       return { record, fullSecretKey };
     }
 
-    const { data, error } = await db
-      .from('organization_api_keys')
-      .insert({
-        organization_id: organizationId,
-        name,
-        key_prefix: keyPrefix,
-        key_hash: keyHash,
-        scopes,
-        status: 'active',
-      })
-      .select('*')
-      .single();
+    const { data, error } = await db.rpc('create_organization_api_key', {
+      p_organization_id: organizationId,
+      p_name: name,
+      p_scopes: scopes,
+    });
 
     if (error) throw error;
-    return { record: mapApiKeyRow(data), fullSecretKey };
+    return { record: mapApiKeyRow(data), fullSecretKey: data.secret };
   }
 
   async revokeApiKey(keyId: string): Promise<boolean> {
@@ -169,13 +163,7 @@ class DeveloperApiService {
       return true;
     }
 
-    const { data, error } = await db
-      .from('organization_api_keys')
-      .update({ status: 'revoked' })
-      .eq('id', keyId)
-      .eq('status', 'active')
-      .select('id')
-      .maybeSingle();
+    const { data, error } = await db.rpc('revoke_organization_api_key', { p_key_id: keyId });
 
     if (error) throw error;
     return Boolean(data);
@@ -183,12 +171,14 @@ class DeveloperApiService {
 
   async listWebhooks(organizationId: string): Promise<WebhookSubscription[]> {
     if (USE_MEMORY) {
-      return this.memory.webhooks.filter((w) => w.organizationId === organizationId);
+      return this.memory.webhooks
+        .filter((w) => w.organizationId === organizationId)
+        .map((w) => ({ ...w, secret: '' }));
     }
 
     const { data, error } = await db
       .from('organization_webhook_subscriptions')
-      .select('*')
+      .select('id, organization_id, url, description, event_types, status, created_at, last_delivered_at, delivery_success_count, delivery_failure_count')
       .eq('organization_id', organizationId)
       .order('created_at', { ascending: false });
 
@@ -221,21 +211,15 @@ class DeveloperApiService {
       return subscription;
     }
 
-    const { data, error } = await db
-      .from('organization_webhook_subscriptions')
-      .insert({
-        organization_id: organizationId,
-        url,
-        description,
-        event_types: eventTypes,
-        secret,
-        status: 'active',
-      })
-      .select('*')
-      .single();
+    const { data, error } = await db.rpc('create_organization_webhook', {
+      p_organization_id: organizationId,
+      p_url: url,
+      p_description: description,
+      p_event_types: eventTypes,
+    });
 
     if (error) throw error;
-    return mapWebhookRow(data);
+    return { ...mapWebhookRow(data), secret: data.secret };
   }
 
   async deleteWebhook(webhookId: string): Promise<boolean> {
@@ -266,7 +250,7 @@ class DeveloperApiService {
     } else {
       const { data, error } = await db
         .from('organization_webhook_subscriptions')
-        .select('*')
+        .select('id, organization_id, url, description, event_types, status, created_at, last_delivered_at, delivery_success_count, delivery_failure_count')
         .eq('id', webhookId)
         .single();
       if (error) throw error;
@@ -274,6 +258,7 @@ class DeveloperApiService {
     }
 
     if (!webhook) throw new Error('Webhook subscription not found.');
+    if (!USE_MEMORY) throw new Error('Webhook test delivery must run in trusted server execution.');
 
     const testPayload = {
       event: eventType,
@@ -295,14 +280,19 @@ class DeveloperApiService {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 8000);
+      const rawBody = JSON.stringify(testPayload);
+      const signature = await hmacSha256Hex(webhook.secret, rawBody);
       const response = await fetch(webhook.url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-BaytMiftah-Signature': webhook.secret,
+          'X-BaytMiftah-Signature': `sha256=${signature}`,
           'X-BaytMiftah-Event': eventType,
+          'X-BaytMiftah-Event-Id': testPayload.eventId,
+          'X-BaytMiftah-Timestamp': testPayload.timestamp,
+          'X-BaytMiftah-Signature-Version': '1',
         },
-        body: JSON.stringify(testPayload),
+        body: rawBody,
         signal: controller.signal,
       });
       clearTimeout(timeout);
@@ -401,7 +391,7 @@ function mapWebhookRow(row: any): WebhookSubscription {
     url: row.url,
     description: row.description || '',
     eventTypes: row.event_types || [],
-    secret: row.secret,
+    secret: row.secret || '',
     status: row.status,
     createdAt: row.created_at,
     lastDeliveredAt: row.last_delivered_at || undefined,

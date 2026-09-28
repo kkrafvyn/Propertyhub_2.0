@@ -144,16 +144,7 @@ export const leaseWorkflowService = {
   },
 
   async markLeaseSigned(leaseId: string) {
-    const { data, error } = await supabase
-      .from("leases")
-      .update({
-        signing_status: "signed",
-        signed_at: new Date().toISOString(),
-      })
-      .eq("id", leaseId)
-      .select("*")
-      .single();
-
+    const { data, error } = await supabase.rpc("mark_lease_signed", { p_lease_id: leaseId });
     if (error) throw error;
 
     void notificationService.notifyLeaseEvent(leaseId, "signed");
@@ -177,10 +168,8 @@ export const leaseWorkflowService = {
   },
 
   async updateESignatureStatus(requestId: string, status: "sent" | "viewed" | "partially_signed" | "completed" | "declined" | "expired" | "failed", providerRequestId?: string, signingUrl?: string) {
-    const { data, error } = await supabase.from("esignature_requests").update({ status, provider_request_id: providerRequestId || null, signing_url: signingUrl || null, updated_at: new Date().toISOString() }).eq("id", requestId).select("*").single();
-    if (error) throw error;
-    if (status === "completed") await this.markLeaseSigned(data.lease_id);
-    return data;
+    void requestId; void status; void providerRequestId; void signingUrl;
+    throw new Error("Signature status is controlled by the provider webhook or signer-token workflow.");
   },
 
   async respondToRenewal(leaseId: string, status: "approved" | "declined") {

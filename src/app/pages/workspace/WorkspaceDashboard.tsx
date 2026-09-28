@@ -361,7 +361,7 @@ export function WorkspaceDashboard({
         </div>
         <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full self-start sm:self-auto shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          Live Telemetry
+          Live Updates
         </span>
       </div>
 
@@ -375,23 +375,23 @@ export function WorkspaceDashboard({
           <div className="space-y-3">
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="success" dot pulse className="capitalize text-xs font-bold px-2.5 py-0.5">
-                {activeRole} Perspective
+                {activeRole} View
               </Badge>
               <span className="text-xs text-ink-muted font-medium">{organization.name}</span>
             </div>
 
             <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-ink leading-tight">
-              {dashboardRole === "owner" && "Executive Portfolio & Yield Command"}
-              {dashboardRole === "manager" && "Estate Operations & Facility Command"}
-              {dashboardRole === "agent" && "Leasing Deals & Pipeline Accelerator"}
-              {dashboardRole === "analyst" && "Intelligence & Macro Risk Studio"}
+              {dashboardRole === "owner" && "Portfolio & Performance Overview"}
+              {dashboardRole === "manager" && "Operations & Property Management"}
+              {dashboardRole === "agent" && "Leasing Deals & Pipeline"}
+              {dashboardRole === "analyst" && "Market Intelligence & Insights"}
             </h1>
 
             <p className="text-xs sm:text-sm text-ink-secondary max-w-xl leading-relaxed">
-              {dashboardRole === "owner" && "Monitor gross rental yields, Bank of Ghana FX hedging, and enterprise revenue in real-time."}
-              {dashboardRole === "manager" && "Oversee gate passes, 150-point offline inspections, and artisan work order dispatches."}
-              {dashboardRole === "agent" && "Close tenancy deals, verify Act 220 lease compliance, and dispatch WhatsApp payment links."}
-              {dashboardRole === "analyst" && "Evaluate micro-market cap rates, rental inflation forecasting, and portfolio valuations."}
+              {dashboardRole === "owner" && "Monitor income, payments, and company performance in real time."}
+              {dashboardRole === "manager" && "Oversee gate clearance, property inspections, and contractor work orders."}
+              {dashboardRole === "agent" && "Manage tenant leads, track lease agreements, and dispatch payment links."}
+              {dashboardRole === "analyst" && "Track rental trends, occupancy, and portfolio financial performance."}
             </p>
           </div>
 
@@ -402,13 +402,13 @@ export function WorkspaceDashboard({
                 <Link to={`${workspaceBasePath}/ai-rent-yield`}>
                   <Button size="sm" variant="gradient" className="gap-1.5 shadow-md shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-shadow">
                     <TrendingUp className="w-3.5 h-3.5" />
-                    AI Yield Predictor
+                    Yield Predictor
                   </Button>
                 </Link>
                 <Link to={`${workspaceBasePath}/multi-currency-fx`}>
                   <Button size="sm" variant="glass" className="gap-1.5 border-amber-500/30 text-ink hover:border-amber-500/50 transition-colors">
                     <Coins className="w-3.5 h-3.5 text-amber-500" />
-                    FX & Hedging Hub
+                    FX & Currency
                   </Button>
                 </Link>
               </>
@@ -418,13 +418,13 @@ export function WorkspaceDashboard({
                 <Link to={`${workspaceBasePath}/inspections`}>
                   <Button size="sm" variant="gradient" className="gap-1.5 shadow-md shadow-emerald-500/25">
                     <FileCheck className="w-3.5 h-3.5" />
-                    150-Point Inspection
+                    Inspections
                   </Button>
                 </Link>
                 <Link to={`${workspaceBasePath}/whatsapp-hub`}>
                   <Button size="sm" variant="glass" className="gap-1.5 border-emerald-500/30 text-ink">
                     <Send className="w-3.5 h-3.5 text-emerald-500" />
-                    WhatsApp Gate Pass
+                    WhatsApp Hub
                   </Button>
                 </Link>
               </>
@@ -434,13 +434,13 @@ export function WorkspaceDashboard({
                 <Link to={`${workspaceBasePath}/whatsapp-hub`}>
                   <Button size="sm" variant="gradient" className="gap-1.5 shadow-md shadow-emerald-500/25">
                     <Send className="w-3.5 h-3.5" />
-                    1-Click WhatsApp
+                    WhatsApp Messages
                   </Button>
                 </Link>
                 <Link to={`${workspaceBasePath}/ai-lease-analyzer`}>
                   <Button size="sm" variant="glass" className="gap-1.5 border-purple-500/30 text-ink">
                     <Scale className="w-3.5 h-3.5 text-purple-500" />
-                    Act 220 Lease Audit
+                    Lease Compliance
                   </Button>
                 </Link>
               </>
@@ -450,7 +450,7 @@ export function WorkspaceDashboard({
                 <Link to={`${workspaceBasePath}/ai-rent-yield`}>
                   <Button size="sm" variant="gradient" className="gap-1.5 shadow-md shadow-emerald-500/25">
                     <TrendingUp className="w-3.5 h-3.5" />
-                    Run Cap Model
+                    Yield Predictor
                   </Button>
                 </Link>
                 <Link to={`${workspaceBasePath}/market-intelligence`}>

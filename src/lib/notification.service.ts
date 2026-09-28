@@ -416,11 +416,12 @@ export const notificationService = {
       .select("organization_id")
       .eq("id", input.leaseId)
       .maybeSingle();
+    const organizationId = input.organizationId || leaseRow?.organization_id;
 
-    if (leaseRow?.organization_id) {
+    if (organizationId) {
       try {
         await communicationService.sendOutboundEmail({
-          organizationId: leaseRow.organization_id,
+          organizationId,
           to: input.tenantEmail,
           subject: `Sign your lease — ${input.documentName}`,
           content: `Your tenancy agreement is ready for electronic signature.\n\nOpen: ${input.signingUrl || signPath}\n\nJurisdiction: ${input.jurisdictionLabel || "local market rules"}`,
@@ -432,13 +433,13 @@ export const notificationService = {
       }
     }
 
-    if (input.tenantPhone && input.signingUrl) {
+    if (input.tenantPhone && input.signingUrl && organizationId) {
       try {
         await sendLeaseSigningSms(
           input.tenantPhone,
           input.documentName,
           input.signingUrl,
-          input.organizationId || leaseRow?.organization_id,
+          organizationId,
         );
         delivery.sms = "sent";
       } catch (error) {
@@ -452,7 +453,7 @@ export const notificationService = {
           documentName: input.documentName,
           signingUrl: input.signingUrl,
           jurisdictionLabel: input.jurisdictionLabel,
-          organizationId: input.organizationId || leaseRow?.organization_id,
+          organizationId,
         });
         delivery.whatsapp = "sent";
       } catch (error) {

@@ -10,6 +10,7 @@
  *   - SUPABASE_DB_URL / SUPABASE_DB_PASSWORD (+ VITE_SUPABASE_URL)
  */
 import pg from "pg";
+import { verifiedDatabaseUrl } from "../secure-db-url.mjs";
 import { createClient } from "@supabase/supabase-js";
 import { loadProjectEnv } from "../load-project-env.mjs";
 
@@ -21,7 +22,7 @@ if (!emailArg) {
 
 function getDbConfig(env) {
   if (env.SUPABASE_DB_URL) {
-    return { connectionString: env.SUPABASE_DB_URL };
+    return { connectionString: verifiedDatabaseUrl(env.SUPABASE_DB_URL), ssl: { rejectUnauthorized: true } };
   }
   const password = env.SUPABASE_DB_PASSWORD;
   if (!password) {
@@ -37,7 +38,7 @@ function getDbConfig(env) {
     user: `postgres.${ref}`,
     password,
     database: "postgres",
-    ssl: { rejectUnauthorized: process.env.DB_ALLOW_INSECURE_TLS !== "1" },
+    ssl: { rejectUnauthorized: true },
   };
 }
 

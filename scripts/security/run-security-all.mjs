@@ -5,9 +5,9 @@ const steps = [
   ["security:actions-audit", "Actions audit"],
   ["security:sca", "SCA"],
   ["security:unit", "Security unit tests"],
-  ["security:secrets", "Secrets scan"],
-  ["security:sast", "SAST"],
-  ["security:container", "Filesystem scan"],
+  ["security:secrets:strict", "Secrets scan"],
+  ["security:sast:strict", "SAST"],
+  ["security:container:strict", "Filesystem scan"],
 ];
 
 let hadFailure = false;
@@ -19,9 +19,7 @@ for (const [script, label] of steps) {
     shell: process.platform === "win32",
     env: process.env,
   });
-  if (result.status !== 0 && script !== "security:secrets" && script !== "security:sast") {
-    hadFailure = true;
-  }
+  if (result.status !== 0) hadFailure = true;
 }
 
 console.log("\n=== Summary ===");

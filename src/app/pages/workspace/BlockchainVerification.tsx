@@ -98,10 +98,10 @@ export default function BlockchainVerification({ organizationId }: BlockchainVer
       <div className="mb-8">
         <h1 className="text-3xl font-semibold mb-2 flex items-center gap-2">
           <Shield className="w-8 h-8 text-primary" />
-          Blockchain Verification
+          Digital Property Verification
         </h1>
         <p className="text-muted-foreground">
-          Manage property verification on Polygon blockchain, track ownership, and verify documents
+          Verify property titles, ownership records, and tamper-proof digital certificates
         </p>
       </div>
 
@@ -151,9 +151,9 @@ export default function BlockchainVerification({ organizationId }: BlockchainVer
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Chain ID</p>
-              <p className="text-3xl font-semibold">137</p>
-              <p className="text-xs text-accent mt-1">Polygon mainnet</p>
+              <p className="text-sm text-muted-foreground mb-1">Network Status</p>
+              <p className="text-3xl font-semibold">Active</p>
+              <p className="text-xs text-accent mt-1">Tamper-proof protection</p>
             </div>
             <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-indigo-600" />
@@ -219,11 +219,11 @@ export default function BlockchainVerification({ organizationId }: BlockchainVer
                   <div className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-green-600" />
                     <div>
-                      <p className="font-medium">Polygon Connected</p>
-                      <p className="text-sm text-muted-foreground">Chain ID 137 - Mainnet</p>
+                      <p className="font-medium">Verification Network</p>
+                      <p className="text-sm text-muted-foreground">Secure Decentralised Registry</p>
                     </div>
                   </div>
-                  <Badge className="bg-green-100 text-green-800">Active</Badge>
+                  <Badge className="bg-green-100 text-green-800">Connected</Badge>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
@@ -234,8 +234,8 @@ export default function BlockchainVerification({ organizationId }: BlockchainVer
                       <AlertCircle className="w-5 h-5 text-yellow-600" />
                     )}
                     <div>
-                      <p className="font-medium">Wallets Connected</p>
-                      <p className="text-sm text-muted-foreground">{wallets.length} wallet(s) registered</p>
+                      <p className="font-medium">Authorised Keys</p>
+                      <p className="text-sm text-muted-foreground">{wallets.length} key(s) registered</p>
                     </div>
                   </div>
                   <Badge className={wallets.length > 0 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
@@ -247,19 +247,19 @@ export default function BlockchainVerification({ organizationId }: BlockchainVer
                   <div className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-green-600" />
                     <div>
-                      <p className="font-medium">Document Verification</p>
-                      <p className="text-sm text-muted-foreground">SHA-256 hashing enabled</p>
+                      <p className="font-medium">Document Authenticity</p>
+                      <p className="text-sm text-muted-foreground">Digital fingerprinting & tamper detection active</p>
                     </div>
                   </div>
-                  <Badge className="bg-green-100 text-green-800">Enabled</Badge>
+                  <Badge className="bg-green-100 text-green-800">Protected</Badge>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
                   <div className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-green-600" />
                     <div>
-                      <p className="font-medium">Smart Contracts</p>
-                      <p className="text-sm text-muted-foreground">Escrow, Ownership, Lease contracts available</p>
+                      <p className="font-medium">Automated Agreements</p>
+                      <p className="text-sm text-muted-foreground">Digital escrow, title, and lease verification ready</p>
                     </div>
                   </div>
                   <Badge className="bg-green-100 text-green-800">Ready</Badge>

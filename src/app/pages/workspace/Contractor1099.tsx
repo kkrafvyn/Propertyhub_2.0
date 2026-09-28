@@ -5,6 +5,14 @@ import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
 import { contractor1099Service, type Contractor1099Profile, type Contractor1099Filing } from "../../../lib/contractor-1099.service";
 
 const money = (minor = 0, currency = "USD") =>
@@ -16,6 +24,8 @@ export function Contractor1099({ organizationId }: { organizationId: string }) {
   const [taxYear, setTaxYear] = useState(new Date().getFullYear() - 1);
   const [form, setForm] = useState({ legalName: "", taxId: "", taxIdType: "ein", totalPaid: "" });
   const [loading, setLoading] = useState(true);
+  const [filingToMark, setFilingToMark] = useState<{ id: string; ref: string } | null>(null);
+  const [markingFiled, setMarkingFiled] = useState(false);
 
   const load = async () => {
     try {
@@ -71,14 +81,19 @@ export function Contractor1099({ organizationId }: { organizationId: string }) {
     URL.revokeObjectURL(url);
   };
 
-  const handleMarkFiled = async (filingId: string) => {
-    const ref = window.prompt("IRS reference (optional):") || undefined;
+  const handleConfirmMarkFiled = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!filingToMark) return;
+    setMarkingFiled(true);
     try {
-      await contractor1099Service.markFiled(filingId, ref);
-      toast.success("Marked as filed");
+      await contractor1099Service.markFiled(filingToMark.id, filingToMark.ref.trim() || undefined);
+      toast.success("1099 filing marked as filed");
+      setFilingToMark(null);
       load();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || "Failed to mark as filed");
+    } finally {
+      setMarkingFiled(false);
     }
   };
 
@@ -111,7 +126,15 @@ export function Contractor1099({ organizationId }: { organizationId: string }) {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{f.status}</Badge>
-                  {f.status === "ready" && <Button size="sm" variant="outline" onClick={() => handleMarkFiled(f.id)}>Mark filed</Button>}
+                  {f.status === "ready" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setFilingToMark({ id: f.id, ref: "" })}
+                    >
+                      Mark filed
+                    </Button>
+                  )}
                 </div>
               </div>
             );
@@ -123,7 +146,7 @@ export function Contractor1099({ organizationId }: { organizationId: string }) {
           <form onSubmit={handleAddProfile} className="space-y-3">
             <Input placeholder="Legal name" value={form.legalName} onChange={(e) => setForm({ ...form, legalName: e.target.value })} required />
             <Input placeholder="Tax ID (EIN/SSN)" value={form.taxId} onChange={(e) => setForm({ ...form, taxId: e.target.value })} required />
-            <select className="w-full rounded-lg border px-3 py-2" value={form.taxIdType} onChange={(e) => setForm({ ...form, taxIdType: e.target.value })}>
+            <select className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm" value={form.taxIdType} onChange={(e) => setForm({ ...form, taxIdType: e.target.value })}>
               <option value="ein">EIN</option>
               <option value="ssn">SSN</option>
               <option value="tin">TIN</option>
@@ -133,6 +156,47 @@ export function Contractor1099({ organizationId }: { organizationId: string }) {
           </form>
         </Card>
       </div>
+
+      {/* Mark Filed Dialog */}
+      <Dialog open={Boolean(filingToMark)} onOpenChange={(open) => !open && setFilingToMark(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Mark 1099 as Filed</DialogTitle>
+            <DialogDescription>
+              Record the submission of this contractor's 1099-NEC filing with the IRS or relevant tax authority.
+            </DialogDescription>
+          </DialogHeader>
+          {filingToMark && (
+            <form onSubmit={handleConfirmMarkFiled} className="space-y-4 pt-2">
+              <div>
+                <label htmlFor="filing-ref" className="block text-xs font-semibold text-foreground mb-1.5">
+                  IRS Submission Reference / Receipt Number (Optional)
+                </label>
+                <Input
+                  id="filing-ref"
+                  value={filingToMark.ref}
+                  onChange={(e) => setFilingToMark({ ...filingToMark, ref: e.target.value })}
+                  placeholder="e.g. IRS-2025-NEC-889102"
+                />
+              </div>
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFilingToMark(null)}
+                  disabled={markingFiled}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" size="sm" disabled={markingFiled}>
+                  {markingFiled ? "Confirming..." : "Confirm Filed"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

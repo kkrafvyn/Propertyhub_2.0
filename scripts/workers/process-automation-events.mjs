@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 // Claims queued automation events and marks them completed after dispatch metadata is recorded.
 import pg from 'pg';
+import { verifiedDatabaseUrl } from '../secure-db-url.mjs';
 
 if (!process.env.SUPABASE_DB_URL) {
   throw new Error('SUPABASE_DB_URL is required to process automation events.');
 }
 
 const client = new pg.Client({
-  connectionString: process.env.SUPABASE_DB_URL,
-  ssl: { rejectUnauthorized: process.env.DB_ALLOW_INSECURE_TLS !== "1" },
+  connectionString: verifiedDatabaseUrl(process.env.SUPABASE_DB_URL),
+  ssl: { rejectUnauthorized: true },
 });
 
 await client.connect();

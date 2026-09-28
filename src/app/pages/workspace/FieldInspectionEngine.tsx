@@ -317,6 +317,49 @@ export function FieldInspectionEngine({
         </div>
       </div>
 
+      {/* Overall Progress Bar */}
+      {activeDraft && summary && (
+        <div className="rounded-xl border border-surface-border bg-surface p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <ClipboardCheck className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold text-ink">Overall Checklist Progress</span>
+            </div>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="flex items-center gap-1 text-green-600">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                {summary.passedCount} Passed
+              </span>
+              {summary.damagedCount > 0 && (
+                <span className="flex items-center gap-1 text-red-500">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  {summary.damagedCount} Defects
+                </span>
+              )}
+              <span className="text-ink-muted">{TOTAL_INSPECTION_POINTS} Total Points</span>
+            </div>
+          </div>
+          <div className="h-3 w-full rounded-full bg-surface-subtle overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-700 ease-out"
+              style={{
+                width: `${(summary.passedCount / TOTAL_INSPECTION_POINTS) * 100}%`,
+                background: summary.overallScore >= 80
+                  ? 'linear-gradient(90deg, #10b981, #059669)'
+                  : summary.overallScore >= 50
+                  ? 'linear-gradient(90deg, #f59e0b, #d97706)'
+                  : 'linear-gradient(90deg, #ef4444, #dc2626)',
+              }}
+            />
+          </div>
+          <div className="flex justify-between mt-1.5 text-[11px] text-ink-muted">
+            <span>0 pts</span>
+            <span className="font-semibold text-ink">{Math.round((summary.passedCount / TOTAL_INSPECTION_POINTS) * 100)}% complete</span>
+            <span>{TOTAL_INSPECTION_POINTS} pts</span>
+          </div>
+        </div>
+      )}
+
       {/* Inspection Header Card & Score Summary */}
       {activeDraft && summary && (
         <Card className="p-6 border-surface-border bg-surface shadow-sm">
@@ -354,7 +397,13 @@ export function FieldInspectionEngine({
 
             {/* Condition Score */}
             <div className="p-4 rounded-xl bg-surface-subtle border border-surface-border flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl border-4 border-primary text-primary">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg border-4 ${
+                summary.overallScore >= 80
+                  ? 'border-green-500 text-green-600 dark:text-green-400'
+                  : summary.overallScore >= 50
+                  ? 'border-amber-500 text-amber-600 dark:text-amber-400'
+                  : 'border-red-500 text-red-600 dark:text-red-400'
+              } ${summary.overallScore === 100 ? 'animate-pulse' : ''}`}>
                 {summary.overallScore}%
               </div>
               <div>
@@ -362,11 +411,17 @@ export function FieldInspectionEngine({
                 <p className="text-sm font-medium text-ink">
                   {summary.passedCount}/{summary.totalItems} Points Passed
                 </p>
-                {summary.damagedCount > 0 && (
-                  <p className="text-xs text-red-500 font-medium">
+                {summary.damagedCount > 0 ? (
+                  <p className="text-xs text-red-500 font-medium flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" />
                     {summary.damagedCount} Defect(s) flagged
                   </p>
-                )}
+                ) : summary.passedCount > 0 ? (
+                  <p className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    All clear
+                  </p>
+                ) : null}
               </div>
             </div>
 
@@ -472,28 +527,50 @@ export function FieldInspectionEngine({
                 {INSPECTION_CATEGORIES.map((cat) => {
                   const isActive = cat.key === activeCategoryKey;
                   const catItems = cat.items.map((i) => activeDraft.items[i.key]);
-                  const completedCount = catItems.filter((i) => i && i.condition !== 'good').length;
+                  const reviewedCount = catItems.filter((i) => i && i.condition).length;
+                  const defectCount = catItems.filter((i) => i && (i.condition === 'damaged' || i.condition === 'poor' || i.condition === 'missing')).length;
+                  const pct = cat.items.length > 0 ? Math.round((reviewedCount / cat.items.length) * 100) : 0;
 
                   return (
                     <button
                       key={cat.key}
                       onClick={() => setActiveCategoryKey(cat.key)}
-                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-between ${
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition ${
                         isActive
                           ? 'bg-primary text-primary-foreground shadow-sm'
                           : 'text-ink hover:bg-surface-hover border border-transparent'
                       }`}
                     >
-                      <span className="truncate">{cat.title}</span>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          isActive
-                            ? 'bg-white/20 text-white'
-                            : 'bg-surface-subtle text-ink-muted border border-surface-border'
-                        }`}
-                      >
-                        {cat.items.length}
-                      </span>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="truncate text-xs">{cat.title}</span>
+                        <div className="flex items-center gap-1">
+                          {defectCount > 0 && (
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                              isActive ? 'bg-red-400/30 text-red-100' : 'bg-red-500/10 text-red-600'
+                            }`}>
+                              {defectCount}!
+                            </span>
+                          )}
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                            isActive ? 'bg-white/20 text-white' : 'bg-surface-subtle text-ink-muted border border-surface-border'
+                          }`}>
+                            {reviewedCount}/{cat.items.length}
+                          </span>
+                        </div>
+                      </div>
+                      {/* Mini progress bar */}
+                      <div className={`h-1 w-full rounded-full overflow-hidden ${
+                        isActive ? 'bg-white/20' : 'bg-surface-subtle'
+                      }`}>
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            isActive
+                              ? 'bg-white/70'
+                              : defectCount > 0 ? 'bg-amber-500' : 'bg-primary/60'
+                          }`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
                     </button>
                   );
                 })}

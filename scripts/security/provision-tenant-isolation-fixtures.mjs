@@ -9,6 +9,7 @@
  */
 import { spawnSync } from "node:child_process";
 import pg from "pg";
+import { verifiedDatabaseUrl } from "../secure-db-url.mjs";
 import { createClient } from "@supabase/supabase-js";
 import { loadProjectEnv, upsertRootEnv } from "../load-project-env.mjs";
 
@@ -28,7 +29,7 @@ function requireEnv(env, key) {
 
 function getDbConfig(env) {
   if (env.SUPABASE_DB_URL) {
-    return { connectionString: env.SUPABASE_DB_URL };
+    return { connectionString: verifiedDatabaseUrl(env.SUPABASE_DB_URL), ssl: { rejectUnauthorized: true } };
   }
   const password = env.SUPABASE_DB_PASSWORD;
   if (!password) {
@@ -44,7 +45,7 @@ function getDbConfig(env) {
     user: `postgres.${ref}`,
     password,
     database: "postgres",
-    ssl: { rejectUnauthorized: process.env.DB_ALLOW_INSECURE_TLS !== "1" },
+    ssl: { rejectUnauthorized: true },
   };
 }
 

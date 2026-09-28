@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Scale,
   X,
@@ -335,8 +335,8 @@ export function Compare() {
                 {/* Categorized Comparison Rows */}
                 <tbody>
                   {comparisonSections.map((section) => (
-                    <>
-                      <tr key={section.category} className="bg-surface-subtle/50 border-b border-surface-border">
+                    <Fragment key={section.category}>
+                      <tr className="bg-surface-subtle/50 border-b border-surface-border">
                         <td
                           colSpan={listings.length + 1}
                           className="px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-primary"
@@ -359,7 +359,7 @@ export function Compare() {
                           ))}
                         </tr>
                       ))}
-                    </>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

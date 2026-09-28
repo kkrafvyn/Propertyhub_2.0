@@ -501,9 +501,31 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
 
   if (loading || resolvingOrg) {
     return (
-      <div className="flex justify-center py-20 text-muted-foreground">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Loading bank reconciliation...
+      <div className="space-y-6 animate-pulse">
+        <div className="rounded-2xl border border-border bg-surface p-6">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-2xl bg-muted" />
+            <div className="space-y-2 flex-1">
+              <div className="h-5 w-48 bg-muted rounded-full" />
+              <div className="h-3 w-72 bg-muted/60 rounded-full" />
+            </div>
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="rounded-xl border border-border bg-surface p-5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-muted shrink-0" />
+              <div className="space-y-2 flex-1">
+                <div className="h-3 w-20 bg-muted rounded-full" />
+                <div className="h-6 w-12 bg-muted rounded-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="grid gap-6 xl:grid-cols-2">
+          <div className="rounded-xl border border-border bg-surface p-6 h-64" />
+          <div className="rounded-xl border border-border bg-surface p-6 h-64" />
+        </div>
       </div>
     );
   }
@@ -530,7 +552,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
               <div>
                 <h1 className="text-2xl font-semibold tracking-tight">Bank Reconciliation</h1>
                 <p className="text-sm text-muted-foreground">
-                  Load bank accounts, upload a statement, match transactions, and close it when finance is clean.
+                  Connect bank accounts, upload statements, match transactions to payments, and review variances.
                 </p>
               </div>
             </div>
@@ -551,23 +573,78 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
       {error && <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="p-5">
-          <p className="text-sm text-muted-foreground">Accounts</p>
-          <p className="mt-2 text-2xl font-semibold">{bankAccounts.length}</p>
+        <Card className="p-5 flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 shrink-0">
+            <Landmark className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Bank Accounts</p>
+            <p className="text-2xl font-bold tabular-nums text-blue-600">{bankAccounts.length}</p>
+          </div>
         </Card>
-        <Card className="p-5">
-          <p className="text-sm text-muted-foreground">Statements</p>
-          <p className="mt-2 text-2xl font-semibold">{statements.length}</p>
+        <Card className="p-5 flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 shrink-0">
+            <Plus className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Statements</p>
+            <p className="text-2xl font-bold tabular-nums text-indigo-600">{statements.length}</p>
+          </div>
         </Card>
-        <Card className="p-5">
-          <p className="text-sm text-muted-foreground">Matched lines</p>
-          <p className="mt-2 text-2xl font-semibold">{completedCount}</p>
+        <Card className="p-5 flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 shrink-0">
+            <BadgeCheck className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Matched Lines</p>
+            <p className="text-2xl font-bold tabular-nums text-emerald-600">{completedCount}</p>
+          </div>
         </Card>
-        <Card className="p-5">
-          <p className="text-sm text-muted-foreground">Open variances</p>
-          <p className="mt-2 text-2xl font-semibold">{unresolvedVariances.length}</p>
+        <Card className={`p-5 flex items-center gap-3 ${unresolvedVariances.length > 0 ? 'border-amber-500/30 bg-amber-500/5' : ''}`}>
+          <div className={`p-2.5 rounded-xl shrink-0 ${unresolvedVariances.length > 0 ? 'bg-amber-500/10 text-amber-600' : 'bg-muted/50 text-muted-foreground'}`}>
+            <ShieldAlert className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Open Variances</p>
+            <p className={`text-2xl font-bold tabular-nums ${unresolvedVariances.length > 0 ? 'text-amber-600' : 'text-muted-foreground'}`}>{unresolvedVariances.length}</p>
+          </div>
         </Card>
       </div>
+
+      {/* Reconciliation Match Rate Progress */}
+      {selectedStatement && selectedTransactions.length > 0 && (
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <BadgeCheck className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">Statement Reconciliation Progress</span>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span>{completedCount} of {selectedTransactions.length} matched</span>
+              <Badge variant="outline" className="font-mono">{matchRate}</Badge>
+            </div>
+          </div>
+          <div className="h-3 w-full rounded-full bg-surface-subtle overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-700 ease-out"
+              style={{
+                width: `${selectedTransactions.length > 0 ? (completedCount / selectedTransactions.length) * 100 : 0}%`,
+                background: completedCount === selectedTransactions.length
+                  ? 'linear-gradient(90deg, #10b981, #059669)'
+                  : completedCount / selectedTransactions.length > 0.5
+                  ? 'linear-gradient(90deg, #3b82f6, #2563eb)'
+                  : 'linear-gradient(90deg, #f59e0b, #d97706)',
+              }}
+            />
+          </div>
+          {unresolvedVariances.length > 0 && (
+            <p className="mt-1.5 text-xs text-amber-600 flex items-center gap-1">
+              <ShieldAlert className="w-3 h-3" />
+              {unresolvedVariances.length} unresolved variance(s) require attention before closing this statement.
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Card className="p-6">
@@ -606,7 +683,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
               />
             </div>
             <Input
-              placeholder="Linked GL account ID"
+              placeholder="Linked General Ledger account (optional)"
               value={accountForm.glAccountId}
               onChange={(event) => setAccountForm({ ...accountForm, glAccountId: event.target.value })}
             />
@@ -658,7 +735,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
             <h2 className="font-semibold">Upload statement</h2>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            Enter the bank statement manually for now. No provider keys are required.
+            Import your bank statement via CSV export or connect a live bank feed.
           </p>
           <div className="mt-4 rounded-lg border border-dashed border-border bg-surface-subtle p-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -679,10 +756,10 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
               <div>
                 <p className="font-medium">Live bank feed sync</p>
                 <p className="text-sm text-muted-foreground">
-                  Connect GTBank, Fidelity, Monzo, or other feeds via the sync-bank-feed edge function. Provider credentials are required for live imports.
+                  Connect supported financial institutions to automatically sync statement transactions.
                 </p>
               </div>
-              <Badge variant="outline">Code-complete</Badge>
+              <Badge variant="outline">Live Feed</Badge>
             </div>
             <div className="grid gap-3 md:grid-cols-3">
               <select

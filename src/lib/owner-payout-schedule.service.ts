@@ -42,25 +42,13 @@ export const ownerPayoutScheduleService = {
     ownerUserId: string;
     periodStart: string;
     periodEnd: string;
-    grossRentMinor: number;
-    withholdingTaxMinor: number;
-    netPaidMinor: number;
-    currency?: string;
   }) {
-    const { data, error } = await db
-      .from("owner_tax_statements")
-      .upsert({
-        organization_id: input.organizationId,
-        owner_user_id: input.ownerUserId,
-        period_start: input.periodStart,
-        period_end: input.periodEnd,
-        gross_rent_minor: input.grossRentMinor,
-        withholding_tax_minor: input.withholdingTaxMinor,
-        net_paid_minor: input.netPaidMinor,
-        currency: input.currency || "GHS",
-      })
-      .select("*")
-      .single();
+    const { data, error } = await db.rpc("generate_owner_tax_statement", {
+      p_organization_id: input.organizationId,
+      p_owner_user_id: input.ownerUserId,
+      p_period_start: input.periodStart,
+      p_period_end: input.periodEnd,
+    });
     if (error) throw error;
     return data;
   },

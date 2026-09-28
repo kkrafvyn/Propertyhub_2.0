@@ -64,6 +64,62 @@ export async function confirmSmileSignature(
   return expected.signature === signature;
 }
 
+export function getSmileWebhookSignatureHeaders(headers: Headers) {
+  return {
+    timestamp: headers.get("Response-Timestamp")?.trim() || "",
+    signature: headers.get("Response-Signature")?.trim() || "",
+  };
+}
+
+export function mapSmileResult(payload: Record<string, unknown>) {
+  const resultCode =
+    payload.ResultCode ??
+    payload.result_code ??
+    payload.resultCode ??
+    payload.code;
+  const resultText = String(
+    payload.ResultText ?? payload.result_text ?? payload.resultText ?? "",
+  ).toLowerCase();
+
+  const rejected =
+    resultCode === "1013" ||
+    resultCode === 1013 ||
+    resultText.includes("not verified") ||
+    resultText.includes("no match") ||
+    resultText.includes("failed");
+  const approved = !rejected && (
+    resultCode === "1012" ||
+    resultCode === 1012 ||
+    resultText.includes("verified") ||
+    resultText.includes("exact match")
+  );
+
+  if (approved) {
+    return {
+      provider_status: "verified",
+      ai_recommendation: "approve" as const,
+      ai_screening_status: "completed" as const,
+      ai_summary: "Smile Identity returned a verified match. Human review still recommended before final approval.",
+    };
+  }
+
+  if (rejected) {
+    return {
+      provider_status: "rejected",
+      ai_recommendation: "reject" as const,
+      ai_screening_status: "completed" as const,
+      ai_summary: "Smile Identity could not verify the submitted identity document.",
+    };
+  }
+
+  return {
+    provider_status: "review",
+    ai_recommendation: "review" as const,
+    ai_screening_status: "completed" as const,
+    ai_summary: "Smile Identity returned an inconclusive result. Manual review required.",
+  };
+}
+
 export function mapDocumentTypeToSmileIdType(
   documentType: string | null | undefined,
   jurisdictionId: string | null | undefined,

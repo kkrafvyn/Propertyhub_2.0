@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import pg from "pg";
+import { verifiedDatabaseUrl } from "./secure-db-url.mjs";
 
 const projectRoot = path.resolve(import.meta.dirname, "..");
 
@@ -35,8 +36,15 @@ function getDbConfig() {
     ...process.env,
   };
 
+  const sslRootCert = env.SUPABASE_DB_SSL_ROOT_CERT
+    ? fs.readFileSync(path.resolve(projectRoot, env.SUPABASE_DB_SSL_ROOT_CERT), "utf8")
+    : undefined;
+  const ssl = sslRootCert
+    ? { ca: sslRootCert, rejectUnauthorized: true }
+    : { rejectUnauthorized: true };
+
   if (env.SUPABASE_DB_URL) {
-    return { connectionString: env.SUPABASE_DB_URL };
+    return { connectionString: verifiedDatabaseUrl(env.SUPABASE_DB_URL), ssl };
   }
 
   const password = env.SUPABASE_DB_PASSWORD;
@@ -57,7 +65,7 @@ function getDbConfig() {
     user: `postgres.${ref}`,
     password,
     database: "postgres",
-    ssl: { rejectUnauthorized: process.env.DB_ALLOW_INSECURE_TLS !== "1" },
+    ssl,
   };
 }
 
