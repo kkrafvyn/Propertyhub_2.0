@@ -81,6 +81,7 @@ describe("2026092813 sensitive workflow follow-up", () => {
     expect(migration).toMatch(/input_hash/i);
     expect(migration).toMatch(/correction_of UUID REFERENCES/i);
     expect(migration).toMatch(/CREATE TABLE IF NOT EXISTS public\.organization_webhook_secrets/i);
+    expect(migration).toMatch(/'whsec_'\|\|encode\(gen_random_bytes\(32\),'hex'\)[\s\S]*secret_masked_prefix='ROTATE_REQUIRED'[\s\S]*status=CASE WHEN status='active' THEN 'paused'/i);
     expect(migration).toMatch(/organization_webhook_subscriptions_safe/i);
     expect(migration).toMatch(/rotate_organization_webhook_secret/i);
     expect(migration).toMatch(/get_organization_webhook_secret[\s\S]*auth\.role\(\)<>'service_role'/i);

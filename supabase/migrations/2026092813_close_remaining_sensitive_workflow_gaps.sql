@@ -473,10 +473,12 @@ GRANT EXECUTE ON FUNCTION public.record_property_valuation_audit(UUID,UUID,TEXT,
 CREATE TABLE IF NOT EXISTS public.organization_webhook_secrets(subscription_id UUID PRIMARY KEY REFERENCES public.organization_webhook_subscriptions(id) ON DELETE CASCADE,
  secret_value TEXT NOT NULL,rotated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),created_by UUID REFERENCES public.users(id) ON DELETE SET NULL);
 ALTER TABLE public.organization_webhook_subscriptions ADD COLUMN IF NOT EXISTS secret_ref UUID,ADD COLUMN IF NOT EXISTS secret_masked_prefix TEXT,ADD COLUMN IF NOT EXISTS secret_rotated_at TIMESTAMPTZ;
-INSERT INTO public.organization_webhook_secrets(subscription_id,secret_value,created_at) SELECT id,secret,created_at FROM public.organization_webhook_subscriptions
+INSERT INTO public.organization_webhook_secrets(subscription_id,secret_value,created_at)
+SELECT id,'whsec_'||encode(gen_random_bytes(32),'hex'),created_at FROM public.organization_webhook_subscriptions
  WHERE secret IS NOT NULL AND secret<>'' ON CONFLICT(subscription_id) DO NOTHING;
-UPDATE public.organization_webhook_subscriptions SET secret_ref=id,secret_masked_prefix=left(secret,12),secret_rotated_at=NOW(),secret='moved-to-server-secret-store'
- WHERE secret<>'moved-to-server-secret-store';
+UPDATE public.organization_webhook_subscriptions SET secret_ref=id,secret_masked_prefix='ROTATE_REQUIRED',secret_rotated_at=NULL,
+  secret='moved-to-server-secret-store',status=CASE WHEN status='active' THEN 'paused' ELSE status END
+WHERE secret<>'moved-to-server-secret-store';
 ALTER TABLE public.organization_webhook_secrets ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.organization_webhook_secrets FROM PUBLIC,anon,authenticated;
 GRANT SELECT,INSERT,UPDATE,DELETE ON public.organization_webhook_secrets TO service_role;
@@ -507,7 +509,7 @@ BEGIN SELECT organization_id INTO v_org FROM public.organization_webhook_subscri
  v_secret:='whsec_'||encode(gen_random_bytes(32),'hex');
  UPDATE public.organization_webhook_secrets SET secret_value=v_secret,rotated_at=NOW(),created_by=auth.uid() WHERE subscription_id=p_subscription_id;
  IF NOT FOUND THEN RAISE EXCEPTION 'Webhook secret record missing'; END IF;
- UPDATE public.organization_webhook_subscriptions SET secret_masked_prefix=left(v_secret,12),secret_rotated_at=NOW() WHERE id=p_subscription_id;
+ UPDATE public.organization_webhook_subscriptions SET secret_masked_prefix=left(v_secret,12),secret_rotated_at=NOW(),status='active' WHERE id=p_subscription_id;
  RETURN jsonb_build_object('subscription_id',p_subscription_id,'secret',v_secret,'rotated_at',NOW()); END; $$;
 CREATE FUNCTION public.delete_organization_webhook(p_subscription_id UUID) RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,private AS $$
 DECLARE v_org UUID; BEGIN SELECT organization_id INTO v_org FROM public.organization_webhook_subscriptions WHERE id=p_subscription_id;
