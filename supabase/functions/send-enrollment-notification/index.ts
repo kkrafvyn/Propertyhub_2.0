@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { buildTransactionalEmail } from "../_shared/email-template.ts";
-import { getCorsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/http.ts";
 import { getEnrollmentReviewStaffEmails } from "../_shared/platform-staff.ts";
 
 type EnrollmentEvent = "submitted" | "approved" | "rejected" | "withdrawn";

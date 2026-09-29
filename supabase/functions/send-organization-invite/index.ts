@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { getAllowedOrigins, isAllowedAppUrl } from "../_shared/security.ts";
-import { getCorsHeaders } from "../_shared/cors.ts";
+import { getAllowedOrigins } from "../_shared/cors.ts";
+import { isAllowedAppUrl } from "../_shared/security.ts";
+import { getCorsHeaders } from "../_shared/http.ts";
 
 type InviteRole = string;
 
