@@ -91,6 +91,12 @@ export function Login() {
     }
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      setOauthLoadingProvider(null);
+    }
+  }, [user]);
+
   if (authLoading) {
     return <AppLoadingScreen label={t("auth.redirecting")} />;
   }

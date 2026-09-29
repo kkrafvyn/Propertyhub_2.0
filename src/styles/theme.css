@@ -99,6 +99,67 @@
   --font-serif: "Playfair Display", Georgia, Cambria, "Times New Roman", serif;
 }
 
+/* Workspace is a distinct navy product.  Scope its palette to the Workspace
+   build so the consumer app keeps its forest-green identity. */
+:root[data-mobile-app="business"] {
+  --background: #f6f8fc;
+  --foreground: #0b2545;
+  --card: #ffffff;
+  --card-foreground: #0b2545;
+  --popover: #ffffff;
+  --popover-foreground: #0b2545;
+  --primary: #0b2545;
+  --primary-foreground: #ffffff;
+  --secondary: #eaf0f8;
+  --secondary-foreground: #0b2545;
+  --muted: #edf2f8;
+  --muted-foreground: #526477;
+  --accent: #123a67;
+  --accent-foreground: #ffffff;
+  --border: #d9e2ef;
+  --input: #d9e2ef;
+  --input-background: #ffffff;
+  --switch-background: #b9c7d8;
+  --ring: #2563eb;
+  --chart-1: #0b2545;
+  --chart-2: #2563eb;
+  --chart-3: #38bdf8;
+  --chart-4: #1d4ed8;
+  --chart-5: #60a5fa;
+  --sidebar: #f7f9fc;
+  --sidebar-foreground: #0b2545;
+  --sidebar-primary: #0b2545;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eaf0f8;
+  --sidebar-accent-foreground: #0b2545;
+  --sidebar-border: #d9e2ef;
+  --sidebar-ring: #2563eb;
+  --surface: #ffffff;
+  --surface-subtle: #f1f5fa;
+  --surface-border: #d9e2ef;
+  --surface-hover: #eaf0f8;
+  --ink: #0b2545;
+  --ink-secondary: #4e6175;
+  --ink-muted: #7c8da0;
+  --brand-forest: #0b2545;
+  --brand-marketplace: #071a33;
+  --brand-accent: #2563eb;
+  --brand-orange: #2563eb;
+  --brand-gold: #38bdf8;
+  --mobile-forest: #0b2545;
+  --bolt-green: #2563eb;
+  --bolt-green-dark: #1d4ed8;
+  --bolt-bg: #f6f8fc;
+  --bolt-card: #ffffff;
+  --shadow-search: 0 4px 20px -2px rgba(11, 37, 69, 0.08), 0 16px 36px -4px rgba(11, 37, 69, 0.06);
+  --shadow-search-hover: 0 8px 30px -2px rgba(11, 37, 69, 0.15), 0 24px 54px -6px rgba(11, 37, 69, 0.1);
+  --shadow-card: 0 2px 8px -2px rgba(11, 37, 69, 0.06), 0 8px 24px -4px rgba(11, 37, 69, 0.05);
+  --shadow-card-hover: 0 16px 40px -6px rgba(11, 37, 69, 0.15), 0 6px 16px -2px rgba(11, 37, 69, 0.08);
+  --shadow-glow: 0 0 28px rgba(37, 99, 235, 0.18);
+  --gradient-aurora: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(56, 189, 248, 0.08) 50%, rgba(11, 37, 69, 0.08) 100%);
+  --gradient-glow-emerald: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.14), transparent 70%);
+}
+
 .dark,
 [data-theme="dark"] {
   color-scheme: dark;
@@ -188,6 +249,66 @@
   --gradient-glow-emerald: radial-gradient(circle at 50% 0%, rgba(82, 183, 136, 0.16), transparent 70%);
   --gradient-glow-sunset: radial-gradient(circle at 100% 0%, rgba(224, 122, 95, 0.14), transparent 60%);
   --gradient-card-sheen: linear-gradient(180deg, rgba(15, 40, 32, 0.85) 0%, rgba(12, 35, 28, 0.95) 100%);
+}
+
+:root[data-mobile-app="business"].dark,
+:root[data-mobile-app="business"][data-theme="dark"] {
+  --background: #071528;
+  --foreground: #f7faff;
+  --card: #0c2039;
+  --card-foreground: #f7faff;
+  --popover: #102944;
+  --popover-foreground: #f7faff;
+  --primary: #93c5fd;
+  --primary-foreground: #071528;
+  --secondary: #102b49;
+  --secondary-foreground: #f7faff;
+  --muted: #102b49;
+  --muted-foreground: #aec0d5;
+  --accent: #1b3d61;
+  --accent-foreground: #ffffff;
+  --border: #1d4168;
+  --input: #1d4168;
+  --input-background: #0c2039;
+  --switch-background: #1d4168;
+  --ring: #93c5fd;
+  --chart-1: #93c5fd;
+  --chart-2: #60a5fa;
+  --chart-3: #38bdf8;
+  --chart-4: #2563eb;
+  --chart-5: #7dd3fc;
+  --sidebar: #0c2039;
+  --sidebar-foreground: #f7faff;
+  --sidebar-primary: #93c5fd;
+  --sidebar-primary-foreground: #071528;
+  --sidebar-accent: #102b49;
+  --sidebar-accent-foreground: #f7faff;
+  --sidebar-border: #1d4168;
+  --sidebar-ring: #93c5fd;
+  --surface: #0c2039;
+  --surface-subtle: #102944;
+  --surface-border: #1d4168;
+  --surface-hover: #143555;
+  --ink: #f7faff;
+  --ink-secondary: #d1dfed;
+  --ink-muted: #8fa8c2;
+  --brand-forest: #93c5fd;
+  --brand-marketplace: #06111f;
+  --brand-accent: #60a5fa;
+  --brand-orange: #60a5fa;
+  --brand-gold: #7dd3fc;
+  --mobile-forest: #93c5fd;
+  --bolt-green: #60a5fa;
+  --bolt-green-dark: #3b82f6;
+  --bolt-bg: #071528;
+  --bolt-card: #0c2039;
+  --shadow-search: 0 4px 20px rgba(0, 0, 0, 0.55);
+  --shadow-search-hover: 0 8px 32px rgba(0, 0, 0, 0.72), 0 0 24px rgba(96, 165, 250, 0.22);
+  --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.48);
+  --shadow-card-hover: 0 12px 36px rgba(0, 0, 0, 0.68), 0 0 20px rgba(96, 165, 250, 0.2);
+  --shadow-glow: 0 0 30px rgba(96, 165, 250, 0.3);
+  --gradient-aurora: linear-gradient(135deg, rgba(96, 165, 250, 0.13) 0%, rgba(56, 189, 248, 0.1) 50%, rgba(11, 37, 69, 0.22) 100%);
+  --gradient-glow-emerald: radial-gradient(circle at 50% 0%, rgba(96, 165, 250, 0.2), transparent 70%);
 }
 
 @theme inline {
@@ -424,4 +545,3 @@
     filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.6));
   }
 }
-

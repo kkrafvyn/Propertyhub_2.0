@@ -15,6 +15,15 @@ import {
   parseDesktopOAuthCallback,
   subscribeDesktopOAuthCallback,
 } from '../../lib/desktop-oauth'
+import {
+  closeNativeOAuthBrowser,
+  consumeNativeOAuthState,
+  getNativeOAuthRedirectUrl,
+  isNativeOAuthRuntime,
+  openNativeOAuthUrl,
+  subscribeNativeOAuthCallback,
+  type NativeOAuthCallbackPayload,
+} from '../../lib/native-oauth'
 
 type UserProfile = Database['public']['Tables']['users']['Row']
 
@@ -101,12 +110,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Check current user on mount
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      setUser(user)
-      await ensureProfile(user)
-      setLoading(false)
-    })
+    // Restore the current session on mount. Never leave protected native routes
+    // in a permanent loading state when secure storage is unavailable or stalls.
+    const bootstrapAuth = async () => {
+      try {
+        const sessionResult = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<never>((_, reject) => {
+            window.setTimeout(() => reject(new Error('Timed out restoring the authentication session')), 8_000)
+          }),
+        ])
+        const { data: { session }, error: authError } = sessionResult
+        if (authError) {
+          setUser(null)
+          setProfile(null)
+          setCapabilities([])
+          return
+        }
+        const currentUser = session?.user ?? null
+        setUser(currentUser)
+        await ensureProfile(currentUser)
+      } catch (authError) {
+        console.warn('Unable to restore the current authentication session:', authError)
+        setUser(null)
+        setProfile(null)
+        setCapabilities([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void bootstrapAuth()
 
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -126,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
-    return subscribeDesktopOAuthCallback(async (payload) => {
+    const unsubDesktop = subscribeDesktopOAuthCallback(async (payload) => {
       const callback = parseDesktopOAuthCallback(payload)
       if (!callback) return
       try {
@@ -140,6 +174,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setError(callbackError instanceof Error ? callbackError : new Error("Desktop OAuth failed"))
       }
     })
+
+    const unsubNative = subscribeNativeOAuthCallback(async (payload: NativeOAuthCallbackPayload) => {
+      try {
+        if (!consumeNativeOAuthState(payload.state)) {
+          throw new Error("Native OAuth state is missing, expired, mismatched, or already used")
+        }
+        const { error } = await supabase.auth.exchangeCodeForSession(payload.code)
+        if (error) throw error
+        await closeNativeOAuthBrowser()
+      } catch (callbackError) {
+        console.error("Native OAuth callback failed:", callbackError)
+        setError(
+          callbackError instanceof Error
+            ? callbackError
+            : new Error("Native OAuth failed"),
+        )
+      }
+    })
+
+    return () => {
+      unsubDesktop()
+      unsubNative()
+    }
   }, [])
 
   useEffect(() => {
@@ -284,6 +341,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
+      if (isNativeOAuthRuntime()) {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: getNativeOAuthRedirectUrl(),
+            skipBrowserRedirect: true,
+          },
+        })
+        if (error) throw error
+        if (data?.url) {
+          await openNativeOAuthUrl(data.url)
+        }
+        return
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: redirectTo ? { redirectTo } : undefined,
@@ -367,4 +439,3 @@ export function useAuth(): AuthContextType {
 }
 
 export const useOptionalAuth = useAuth
-

@@ -466,8 +466,8 @@ BEGIN
  p_predicted_min,p_predicted_optimal,p_predicted_max,p_gross_yield,p_net_cap_rate,p_vacancy_weeks,CASE WHEN p_confidence_calibrated THEN p_confidence_score ELSE NULL END,
  COALESCE(p_input_snapshot,'{}'::JSONB),NULL,NOW(),p_model_id,p_model_version,private.sha256_hex(COALESCE(p_input_snapshot,'{}'::JSONB)::TEXT),COALESCE(p_confidence_calibrated,FALSE),p_correction_of)
  RETURNING * INTO v_row; RETURN v_row; END; $$;
-REVOKE ALL ON FUNCTION public.record_property_valuation_audit(UUID,UUID,TEXT,TEXT,TEXT,INTEGER,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,TEXT,TEXT,JSONB,NUMERIC,BOOLEAN,UUID) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.record_property_valuation_audit(UUID,UUID,TEXT,TEXT,TEXT,INTEGER,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,TEXT,TEXT,JSONB,NUMERIC,BOOLEAN,UUID) TO service_role;
+REVOKE ALL ON FUNCTION public.record_property_valuation_audit(UUID,UUID,TEXT,TEXT,TEXT,INTEGER,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,TEXT,TEXT,JSONB,NUMERIC,BOOLEAN,UUID) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.record_property_valuation_audit(UUID,UUID,TEXT,TEXT,TEXT,INTEGER,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,NUMERIC,TEXT,TEXT,JSONB,NUMERIC,BOOLEAN,UUID) TO service_role;
 
 -- Webhook secrets live in a service-only table; authenticated access is via safe subscription metadata.
 CREATE TABLE IF NOT EXISTS public.organization_webhook_secrets(subscription_id UUID PRIMARY KEY REFERENCES public.organization_webhook_subscriptions(id) ON DELETE CASCADE,

@@ -8,6 +8,12 @@ const config: CapacitorConfig = {
   backgroundColor: "#ffffff",
   ios: {
     contentInset: "automatic",
+    preferredContentMode: "mobile",
+    scheme: "BaytMiftah",
+    allowsLinkPreview: false,
+  },
+  android: {
+    allowMixedContent: false,
   },
   server: {
     androidScheme: "https",

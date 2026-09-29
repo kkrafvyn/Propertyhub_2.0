@@ -50,7 +50,49 @@ if (fs.existsSync(androidManifestPath)) {
   }
 }
 
-// 3. Build Web Bundle
+// 3. Check iOS Info.plist privacy + store keys
+const iosInfoPath = path.join(ROOT_DIR, 'ios/App/App/Info.plist');
+if (fs.existsSync(iosInfoPath)) {
+  const plist = fs.readFileSync(iosInfoPath, 'utf8');
+  const requiredKeys = [
+    'NSCameraUsageDescription',
+    'NSPhotoLibraryUsageDescription',
+    'NSLocationWhenInUseUsageDescription',
+    'NSMicrophoneUsageDescription',
+    'NSFaceIDUsageDescription',
+    'ITSAppUsesNonExemptEncryption',
+    'CFBundleURLTypes',
+  ];
+  console.log('\n🔍 Validating iOS Info.plist:');
+  for (const key of requiredKeys) {
+    if (plist.includes(`<key>${key}</key>`)) {
+      console.log(`  ✅ ${key}`);
+    } else {
+      console.warn(`  ⚠️ Missing recommended key: ${key}`);
+    }
+  }
+
+  const privacyManifest = path.join(ROOT_DIR, 'ios/App/App/PrivacyInfo.xcprivacy');
+  if (fs.existsSync(privacyManifest)) {
+    console.log('  ✅ PrivacyInfo.xcprivacy');
+  } else {
+    console.warn('  ⚠️ Missing PrivacyInfo.xcprivacy');
+  }
+
+  const iconPath = path.join(
+    ROOT_DIR,
+    'ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png'
+  );
+  if (fs.existsSync(iconPath)) {
+    console.log('  ✅ App Store icon asset');
+  } else {
+    console.warn('  ⚠️ Missing AppIcon-512@2x.png');
+  }
+} else {
+  console.warn('\n⚠️ ios/App/App/Info.plist not found — run npm run ios:sync after adding iOS.');
+}
+
+// 4. Build Web Bundle
 console.log('\n⚙️ Building production web bundle...');
 try {
   execSync('npm run build:web', { stdio: 'inherit', cwd: ROOT_DIR });
@@ -60,7 +102,7 @@ try {
   process.exit(1);
 }
 
-// 4. Sync with Capacitor
+// 5. Sync with Capacitor
 console.log('\n📲 Syncing with Capacitor Android & iOS targets...');
 try {
   execSync('npx cap sync', { stdio: 'inherit', cwd: ROOT_DIR });
@@ -77,3 +119,5 @@ console.log('To open in Android Studio:');
 console.log('  npm run android:open\n');
 console.log('To open in Xcode for iOS App Store Archive:');
 console.log('  npm run ios:open\n');
+console.log('Simulator CLI build (requires full Xcode):');
+console.log('  npm run ios:build:sim\n');

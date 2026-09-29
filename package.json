@@ -60,14 +60,18 @@
     "ios:add": "npx cap add ios",
     "ios:sync": "node scripts/mobile-sync.mjs consumer",
     "ios:open": "node scripts/mobile-sync.mjs consumer && npx cap open ios",
-    "ios:build:sim": "cd ios/App && xcodebuild -project App.xcodeproj -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' build",
+    "ios:build:sim": "cd ios/App && xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' build",
+    "ios:business:open": "node scripts/mobile-sync.mjs business && npx cap open ios",
+    "ios:business:build:sim": "cd ios-business/App && xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' build",
     "mobile:release": "node scripts/build-mobile-release.mjs",
     "desktop:start": "electron electron/main.cjs",
     "desktop:dev": "concurrently -k \"cross-env VITE_DESKTOP_WORKSPACE_ONLY=true npm run dev\" \"wait-on http://localhost:5173 && cross-env ELECTRON_START_URL=http://localhost:5173 electron electron/main.cjs\"",
     "desktop:build": "npm run build:desktop && electron electron/main.cjs",
     "build:desktop": "cross-env ELECTRON_BUILD=true VITE_DESKTOP_WORKSPACE_ONLY=true vite build",
     "desktop:icons": "node scripts/generate-desktop-icon.mjs",
-    "desktop:pack:win": "npm run desktop:icons && npm run build:desktop && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --dir --x64 && node scripts/patch-desktop-exe-icon.mjs && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64 --publish never --prepackaged dist-desktop/win-unpacked",
+    "desktop:pack:mac": "npm run desktop:icons && npm run build:desktop && npm run desktop:prepare-builder && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --publish never",
+    "desktop:prepare-builder": "node scripts/prepare-electron-builder.mjs",
+    "desktop:pack:win": "npm run desktop:icons && npm run build:desktop && npm run desktop:prepare-builder && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --dir --x64 && node scripts/patch-desktop-exe-icon.mjs && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64 --publish never --prepackaged dist-desktop/win-unpacked",
     "desktop:publish": "node scripts/publish-desktop-installer.mjs",
     "desktop:release": "npm run desktop:pack:win && npm run desktop:publish",
     "docker:build": "docker build -t baytmiftah/web:local .",
@@ -77,6 +81,8 @@
     "supabase:deploy:payments": "node scripts/deploySupabasePayments.cjs --skip-db",
     "supabase:secrets:resend": "node scripts/configure-resend-secrets.cjs",
     "supabase:configure-auth": "node scripts/configure-supabase-auth.mjs",
+    "apple:client-secret": "node scripts/generate-apple-client-secret.mjs",
+    "apple:configure-auth": "node scripts/configure-apple-auth.mjs",
     "db:status": "node scripts/supabase-db.mjs status",
     "db:query": "node scripts/supabase-db.mjs query",
     "db:push": "node scripts/supabase-db.mjs push",
@@ -133,6 +139,8 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/browser": "^8.0.4",
     "@capacitor/camera": "^8.2.4",
     "@capacitor/core": "^8.5.2",
     "@capacitor/geolocation": "^8.2.2",
@@ -286,6 +294,22 @@
       "**/node_modules/better-sqlite3/**"
     ],
     "icon": "electron/build/icon.png",
+    "protocols": [
+      {
+        "name": "BaytMiftah Auth",
+        "schemes": [
+          "baytmiftah"
+        ]
+      }
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.business",
+      "artifactName": "baytmiftah-desktop-${version}-${arch}.${ext}"
+    },
     "win": {
       "target": [
         {

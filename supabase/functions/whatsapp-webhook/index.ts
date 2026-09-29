@@ -63,7 +63,10 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
-  const verifyToken = Deno.env.get("WHATSAPP_VERIFY_TOKEN") || "baytmiftah_whatsapp_verify";
+  const verifyToken = Deno.env.get("WHATSAPP_VERIFY_TOKEN")?.trim();
+  if (!verifyToken) {
+    return jsonResponse(503, { error: "WhatsApp webhook verification is not configured" }, req);
+  }
 
   if (req.method === "GET") {
     const url = new URL(req.url);

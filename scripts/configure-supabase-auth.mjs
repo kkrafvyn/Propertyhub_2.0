@@ -34,6 +34,10 @@ const redirectUrlSet = new Set([
   "https://*.vercel.app/**",
   "baytmiftah://auth/callback",
   "baytmiftah://auth/callback/**",
+  "com.baymiftah.app://auth/callback",
+  "com.baymiftah.app://auth/callback/**",
+  "com.baymiftah.workspace://auth/callback",
+  "com.baymiftah.workspace://auth/callback/**",
   ...extraRedirects.map((url) => `${url}/**`),
 ]);
 
@@ -70,3 +74,6 @@ console.log(`  uri_allow_list: ${payload.uri_allow_list}`);
 console.log("  mailer_autoconfirm: false");
 console.log("  mfa_totp_enroll_enabled: true");
 console.log("  mfa_totp_verify_enabled: true");
+console.log("");
+console.log("Note: Enable the Apple provider in Supabase Dashboard and paste");
+console.log("Apple Services ID / key credentials. See docs/deployment/APPLE_SIGN_IN.md");

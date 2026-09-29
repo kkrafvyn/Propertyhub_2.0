@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router";
 import { Loader2, Eye, EyeOff, Check } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import { AuthShell, AuthDivider, OAuthButtons } from "../../components/baytmiftah";
@@ -18,7 +18,6 @@ export function Signup() {
     email: "",
     password: "",
     confirmPassword: "",
-    accountType: "user" as "user" | "landlord" | "agency",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -28,15 +27,18 @@ export function Signup() {
     null
   );
   const navigate = useNavigate();
-  const { signUp, signInWithOAuth } = useAuth();
+  const { signUp, signInWithOAuth, user } = useAuth();
 
-  const oauthRedirectUrl = useMemo(() => {
-    const next =
-      formData.accountType === "landlord" || formData.accountType === "agency"
-        ? "/workspace?next=new"
-        : "/app";
-    return `${window.location.origin}/login?next=${encodeURIComponent(next)}`;
-  }, [formData.accountType]);
+  const oauthRedirectUrl = useMemo(
+    () => `${window.location.origin}/login?next=${encodeURIComponent("/app")}`,
+    []
+  );
+
+  useEffect(() => {
+    if (user) {
+      setOauthLoadingProvider(null);
+    }
+  }, [user]);
 
   const passwordCriteria = useMemo(() => {
     const p = formData.password;
@@ -79,16 +81,13 @@ export function Signup() {
 
     try {
       setLoading(true);
-      const scope: LegalAcceptanceScope =
-        formData.accountType === "landlord" || formData.accountType === "agency"
-          ? "signup_host"
-          : "signup_consumer";
+      const scope: LegalAcceptanceScope = "signup_consumer";
       const policySlugs = ACCEPTANCE_SCOPES[scope].policySlugs;
       const { user } = await signUp(
         formData.email,
         formData.password,
         formData.fullName,
-        formData.accountType === "user" ? "user" : "landlord"
+        "user"
       );
       if (user?.id) {
         const { data: sessionData } = await supabase.auth.getSession();
@@ -105,10 +104,7 @@ export function Signup() {
       toast.success("Account created successfully. Check your email to verify.");
       navigate("/login", {
         state: {
-          from:
-            formData.accountType === "landlord" || formData.accountType === "agency"
-              ? "/workspace?next=new"
-              : "/app",
+          from: "/app",
         },
       });
     } catch (error) {
@@ -142,48 +138,6 @@ export function Signup() {
       />
 
       <AuthDivider label="Or register with email" />
-
-      {/* Segmented Account Type Control */}
-      <div className="space-y-1.5">
-        <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
-          Account type
-        </label>
-        <div className="p-1 rounded-xl bg-white/10 lg:bg-muted/60 border border-white/20 lg:border-border/60 grid grid-cols-3 gap-1">
-          <button
-            type="button"
-            onClick={() => setFormData({ ...formData, accountType: "user" })}
-            className={`py-2 rounded-lg text-xs font-medium transition-all ${
-              formData.accountType === "user"
-                ? "bg-white text-neutral-950 lg:bg-background lg:text-foreground shadow-xs font-bold"
-                : "text-white/80 lg:text-muted-foreground hover:text-white lg:hover:text-foreground"
-            }`}
-          >
-            Resident
-          </button>
-          <button
-            type="button"
-            onClick={() => setFormData({ ...formData, accountType: "landlord" })}
-            className={`py-2 rounded-lg text-xs font-medium transition-all ${
-              formData.accountType === "landlord"
-                ? "bg-white text-neutral-950 lg:bg-background lg:text-foreground shadow-xs font-bold"
-                : "text-white/80 lg:text-muted-foreground hover:text-white lg:hover:text-foreground"
-            }`}
-          >
-            Owner
-          </button>
-          <button
-            type="button"
-            onClick={() => setFormData({ ...formData, accountType: "agency" })}
-            className={`py-2 rounded-lg text-xs font-medium transition-all ${
-              formData.accountType === "agency"
-                ? "bg-white text-neutral-950 lg:bg-background lg:text-foreground shadow-xs font-bold"
-                : "text-white/80 lg:text-muted-foreground hover:text-white lg:hover:text-foreground"
-            }`}
-          >
-            Enterprise
-          </button>
-        </div>
-      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
@@ -292,11 +246,7 @@ export function Signup() {
 
         <div className="pt-1 text-white/90 lg:text-foreground">
           <LegalAcceptanceCheckbox
-            scope={
-              formData.accountType === "landlord" || formData.accountType === "agency"
-                ? "signup_host"
-                : "signup_consumer"
-            }
+            scope="signup_consumer"
             checked={termsAccepted}
             onChange={setTermsAccepted}
           />

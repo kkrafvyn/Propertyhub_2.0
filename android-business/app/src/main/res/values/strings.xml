@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BaytMiftah Workspace</string>
+    <string name="title_activity_main">BaytMiftah Workspace</string>
+    <string name="package_name">com.baymiftah.workspace</string>
+    <string name="custom_url_scheme">com.baymiftah.workspace</string>
+</resources>

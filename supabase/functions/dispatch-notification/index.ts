@@ -1,21 +1,35 @@
 import { createClient } from "supabase";
 import webpush from "web-push";
 import { buildTransactionalEmail } from "../_shared/email-template.ts";
+import { writeServerAuditLog } from "../_shared/audit-log.ts";
+import { getCorsHeaders } from "../_shared/http.ts";
+import { enforceRateLimit, rateLimitKey } from "../_shared/rate-limit.ts";
 import { getTwilioSmsFrom, getTwilioWhatsAppFrom } from "../_shared/twilio.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
 
 type NotificationChannel = "email" | "sms" | "push" | "in_app" | "whatsapp";
 
-function jsonResponse(status: number, body: Record<string, unknown>) {
+const OUTBOUND_EMAIL_ROLES = new Set([
+  "owner",
+  "organization_admin",
+  "managing_director",
+  "enterprise_operator",
+]);
+
+function canSendOutboundEmail(membership: { role?: unknown; permissions?: unknown } | null) {
+  if (!membership) return false;
+  if (OUTBOUND_EMAIL_ROLES.has(String(membership.role || ""))) return true;
+  return Array.isArray(membership.permissions) && membership.permissions.includes("communications:broadcast");
+}
+
+function validEmailAddress(value: string) {
+  return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function jsonResponse(status: number, body: Record<string, unknown>, req?: Request) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
-      ...corsHeaders,
+      ...getCorsHeaders(req),
       "Content-Type": "application/json",
     },
   });
@@ -239,7 +253,7 @@ async function sendPushNotifications(params: {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   if (req.method !== "POST") {
@@ -300,14 +314,29 @@ Deno.serve(async (req) => {
   if (outboundTo && outboundSubject && outboundContent && organizationId && !notificationId) {
     const { data: membership, error: membershipError } = await adminClient
       .from("organization_members")
-      .select("id")
+      .select("role, permissions")
       .eq("organization_id", organizationId)
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (membershipError || !membership) {
+    if (membershipError || !canSendOutboundEmail(membership)) {
       return jsonResponse(403, { error: "You are not allowed to send this message" });
     }
+
+    if (!validEmailAddress(outboundTo) || outboundSubject.length > 180 || outboundContent.length > 10_000) {
+      return jsonResponse(400, { error: "Outbound email fields are invalid or exceed allowed limits" });
+    }
+
+    await enforceRateLimit({
+      bucket: rateLimitKey("outbound-email-user", user.id),
+      maxHits: 20,
+      windowSeconds: 3_600,
+    });
+    await enforceRateLimit({
+      bucket: rateLimitKey("outbound-email-org", organizationId),
+      maxHits: 200,
+      windowSeconds: 3_600,
+    });
 
     const emailContent = buildTransactionalEmail({
       title: outboundSubject,
@@ -321,12 +350,26 @@ Deno.serve(async (req) => {
     });
 
     if (!deliveryResult.success) {
+      await writeServerAuditLog({
+        actorUserId: user.id,
+        action: "outbound_email_failed",
+        entityType: "organization",
+        entityId: organizationId,
+        details: { recipient_domain: outboundTo.split("@")[1]?.toLowerCase() || null },
+      });
       return jsonResponse(200, {
         success: false,
         error: deliveryResult.error || "Delivery failed",
       });
     }
 
+    await writeServerAuditLog({
+      actorUserId: user.id,
+      action: "outbound_email_sent",
+      entityType: "organization",
+      entityId: organizationId,
+      details: { recipient_domain: outboundTo.split("@")[1]?.toLowerCase() || null },
+    });
     return jsonResponse(200, { success: true });
   }
 

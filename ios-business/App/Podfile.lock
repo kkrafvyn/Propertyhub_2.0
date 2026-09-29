@@ -1,0 +1,71 @@
+PODS:
+  - Capacitor (8.5.2):
+    - CapacitorCordova
+  - CapacitorApp (8.1.1):
+    - Capacitor
+  - CapacitorBrowser (8.0.4):
+    - Capacitor
+  - CapacitorCamera (8.2.2):
+    - Capacitor
+    - IONCameraLib (~> 1.0.5)
+  - CapacitorCordova (8.5.2)
+  - CapacitorGeolocation (8.2.2):
+    - Capacitor
+    - IONGeolocationLib (= 2.1.0)
+  - CapacitorHaptics (8.0.2):
+    - Capacitor
+  - CapacitorNativeBiometric (0.0.1):
+    - Capacitor
+  - IONCameraLib (1.0.5)
+  - IONGeolocationLib (2.1.0)
+
+DEPENDENCIES:
+  - "Capacitor (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
+  - "CapacitorBrowser (from `../../node_modules/@capacitor/browser`)"
+  - "CapacitorCamera (from `../../node_modules/@capacitor/camera`)"
+  - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorGeolocation (from `../../node_modules/@capacitor/geolocation`)"
+  - "CapacitorHaptics (from `../../node_modules/@capacitor/haptics`)"
+  - CapacitorNativeBiometric (from `../../node_modules/capacitor-native-biometric`)
+  - IONGeolocationLib (from `../../ios/App/Vendor/IONGeolocationLib`)
+
+SPEC REPOS:
+  trunk:
+    - IONCameraLib
+
+EXTERNAL SOURCES:
+  Capacitor:
+    :path: "../../node_modules/@capacitor/ios"
+  CapacitorApp:
+    :path: "../../node_modules/@capacitor/app"
+  CapacitorBrowser:
+    :path: "../../node_modules/@capacitor/browser"
+  CapacitorCamera:
+    :path: "../../node_modules/@capacitor/camera"
+  CapacitorCordova:
+    :path: "../../node_modules/@capacitor/ios"
+  CapacitorGeolocation:
+    :path: "../../node_modules/@capacitor/geolocation"
+  CapacitorHaptics:
+    :path: "../../node_modules/@capacitor/haptics"
+  CapacitorNativeBiometric:
+    :path: "../../node_modules/capacitor-native-biometric"
+  IONGeolocationLib:
+    :path: "../../ios/App/Vendor/IONGeolocationLib"
+
+SPEC CHECKSUMS:
+  Capacitor: 59aea4e8bd98b24b798919b4c55ae90c6ded1b0d
+  CapacitorApp: 9fd99482b6536ddf1a54721ce678145fc7fa3418
+  CapacitorBrowser: 553fcb154526484a5d12efc38093d3f781cb6a82
+  CapacitorCamera: bf2f2528dc2429c658f25e804fd771b95ea07333
+  CapacitorCordova: 5bec5648cbd09a176ce34ce5e7b6cdabb2c8a327
+  CapacitorGeolocation: cb788b96802c17b055cbbbdda7c871b2a813b5bc
+  CapacitorHaptics: 4e1e84c2b74fb5918e403fb8f0e73a07d05937df
+  CapacitorNativeBiometric: b47637a8cd349bdac014424bb4ddcae9ee5d4919
+  IONCameraLib: ecbd8ef0077d481df429cee267bbeb1a7b9bddd0
+  IONGeolocationLib: 574003a5b5935048b8cb7ceb9d72264cd84d7721
+
+PODFILE CHECKSUM: c988b1837b60a0aa787c5f5a5466e21d90ef3b47
+
+COCOAPODS: 1.15.2

@@ -40,9 +40,17 @@ android/local.properties
 android/app/build/
 ios/App/build/
 ios/DerivedData/
+ios/App/Pods/
+ios-business/App/build/
+ios-business/DerivedData/
+ios-business/App/Pods/
 
 # Local backups (never commit — may contain user data)
 backups/
+
+# Apple Sign in with Apple private keys (never commit)
+secrets/
+*.p8
 
 supabase/.temp/
 supabase/.env.payments

@@ -19,23 +19,29 @@ type StoredTutorial = {
   checklist: boolean[];
 };
 
-const ROLE_OPTIONS: TutorialRole[] = [
-  "consumer",
-  "property_owner",
-  "organization_owner",
-  "executive",
-  "head_property_management",
-  "property_manager",
-  "estate_officer",
-  "maintenance_manager",
-  "technician",
-  "finance",
-  "collections",
-  "sales",
-  "marketing",
-  "customer_service",
-  "platform_admin",
-  "devops",
+const ONBOARDING_PATHS: Array<{
+  role: TutorialRole;
+  label: string;
+  description: string;
+  workspaceKind?: "personal" | "company";
+}> = [
+  {
+    role: "consumer",
+    label: "Resident",
+    description: "Search for homes, save listings, book viewings, and manage your property journey.",
+  },
+  {
+    role: "property_owner",
+    label: "Owner",
+    description: "Set up a personal workspace to manage your own properties and residents.",
+    workspaceKind: "personal",
+  },
+  {
+    role: "organization_owner",
+    label: "Enterprise",
+    description: "Apply to set up a company workspace for an agency, developer, or property team.",
+    workspaceKind: "company",
+  },
 ];
 
 function readStoredTutorial(userId: string): StoredTutorial | null {
@@ -112,6 +118,22 @@ export function NewUserTutorial() {
     setStatus("intro");
   };
 
+  const chooseOnboardingPath = (path: (typeof ONBOARDING_PATHS)[number]) => {
+    if (!path.workspaceKind) {
+      chooseRole(path.role);
+      return;
+    }
+
+    // Workspace access is granted only through its enrollment and verification flow.
+    // This selection simply sends the person to the appropriate onboarding form.
+    writeStoredTutorial(user.id, {
+      status: "skipped",
+      role: path.role,
+      checklist: Array(getTutorialDefinition(path.role).checklist.length).fill(false),
+    });
+    navigate(`/workspace?kind=${path.workspaceKind}`);
+  };
+
   const completeTutorial = () => {
     if (!selectedRole || !definition) return;
     writeStoredTutorial(user.id, { status: "complete", role: selectedRole, checklist });
@@ -139,14 +161,13 @@ export function NewUserTutorial() {
             <div>
               <p className="mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-primary">First login</p>
               <h1 className="text-3xl font-bold text-ink">Welcome to BaytMiftah</h1>
-              <p className="mt-2 text-ink-secondary">What best describes how you use BaytMiftah?</p>
+              <p className="mt-2 text-ink-secondary">Choose where you want to start. You can add workspace access later.</p>
             </div>
             <button type="button" onClick={closeTutorial} className="rounded-full p-2 text-ink-secondary hover:bg-surface-hover" aria-label="Close tutorial"><X className="h-5 w-5" /></button>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {ROLE_OPTIONS.map((option) => {
-              const optionDefinition = getTutorialDefinition(option);
-              return <button key={option} type="button" onClick={() => chooseRole(option)} className="rounded-xl border border-surface-border bg-surface-subtle p-4 text-left transition hover:border-primary hover:bg-primary/5"><span className="font-semibold text-ink">{optionDefinition.label}</span><span className="mt-1 block text-sm text-ink-secondary">{optionDefinition.intro}</span></button>;
+          <div className="grid gap-3 sm:grid-cols-3">
+            {ONBOARDING_PATHS.map((path) => {
+              return <button key={path.role} type="button" onClick={() => chooseOnboardingPath(path)} className="rounded-xl border border-surface-border bg-surface-subtle p-4 text-left transition hover:border-primary hover:bg-primary/5"><span className="font-semibold text-ink">{path.label}</span><span className="mt-1 block text-sm text-ink-secondary">{path.description}</span></button>;
             })}
           </div>
           <div className="mt-6 flex justify-end"><Button variant="outline" onClick={() => setStatus(null)}>Skip for now</Button></div>

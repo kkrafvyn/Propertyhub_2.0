@@ -11,6 +11,7 @@ import {
   isMarketingThemeLocked,
   MARKETING_THEME_LOCK_EVENT,
 } from "../../lib/marketing-theme-lock";
+import { isBusinessMobileApp } from "../../lib/mobile-app";
 
 export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
@@ -46,7 +47,17 @@ function syncThemeMeta(resolved: ResolvedTheme) {
   if (typeof document === "undefined") return;
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) {
-    meta.setAttribute("content", resolved === "dark" ? "#081713" : "#fcfbf9");
+    const isWorkspace = isBusinessMobileApp();
+    meta.setAttribute(
+      "content",
+      isWorkspace
+        ? resolved === "dark"
+          ? "#071528"
+          : "#0B2545"
+        : resolved === "dark"
+          ? "#081713"
+          : "#fcfbf9",
+    );
   }
 }
 

@@ -2,12 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CAPACITOR_DEBUG</key>
+	<key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Property Hub</string>
+	<string>BaytMiftah</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -22,14 +22,33 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.baymiftah.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+			<string>com.baymiftah.app</string>
+			</array>
+		</dict>
+	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>BaytMiftah needs camera access to capture property photos, identity documents, and verification selfies.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>BaytMiftah uses Face ID to securely unlock the app and protect your private account data.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>BaytMiftah needs your location for nearby properties and to tag maintenance visits.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>BaytMiftah needs your location to show nearby properties, map routes, and location-aware property workflows.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>BaytMiftah uses the microphone for voice and video calls with property managers and tenants.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>BaytMiftah saves property and document photos to your library only when you choose to export them.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>BaytMiftah needs photo library access so you can upload property media and identification documents.</string>
 	<key>UILaunchStoryboardName</key>
@@ -38,7 +57,7 @@
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>

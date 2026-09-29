@@ -6,10 +6,14 @@
   "backgroundColor": "#0f172a",
   "ios": {
     "contentInset": "automatic",
+    "preferredContentMode": "mobile",
+    "scheme": "BaytMiftahWorkspace",
+    "allowsLinkPreview": false,
     "path": "ios-business"
   },
   "android": {
-    "path": "android-business"
+    "path": "android-business",
+    "allowMixedContent": false
   },
   "server": {
     "androidScheme": "https",

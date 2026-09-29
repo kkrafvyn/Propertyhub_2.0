@@ -59,30 +59,29 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-## Mobile App Testing (Android Studio)
+## Mobile Apps (Capacitor)
 
-BaytMiftah uses Capacitor to build native Android and iOS mobile packages from web assets.
+BaytMiftah uses Capacitor 8 for native **Android** and **iOS** packages (`com.baymiftah.app`).
 
-1. **Build the web bundle & sync with Android:**
-   ```bash
-   npm run android:sync
-   ```
+Full steps: [docs/deployment/MOBILE_SETUP.md](./docs/deployment/MOBILE_SETUP.md).
 
-2. **Open the project in Android Studio:**
-   ```bash
-   npm run android:open
-   ```
-   *This automatically launches Android Studio with the `android/` project loaded.*
+### Android
 
-3. **Run on an Android Virtual Device (AVD) or physical device:**
-   - In Android Studio, select your target device/emulator from the device dropdown.
-   - Click the green **Run (▶)** button (or press `Shift + F10`).
+```bash
+npm run android:sync
+npm run android:open
+# optional APK: npm run android:build
+```
 
-4. **Build Debug APK via CLI (optional):**
-   ```bash
-   npm run android:build
-   ```
-   *The generated APK will be located at `android/app/build/outputs/apk/debug/app-debug.apk`.*
+### iOS (Mac + Xcode)
+
+```bash
+npm run ios:sync
+npm run ios:open
+# optional simulator: npm run ios:build:sim
+```
+
+Requires a full Xcode install (not Command Line Tools only). Set your Apple Team under Signing & Capabilities before device/TestFlight builds.
 
 ## Desktop App (Electron)
 
@@ -98,10 +97,17 @@ BaytMiftah includes an Electron desktop runtime with native windowing, system tr
    npm run desktop:start
    ```
 
-3. **Build & Package Desktop Executable:**
+3. **Build the Desktop App:**
    ```bash
    npm run desktop:build
    ```
+
+4. **Package macOS installers:**
+   ```bash
+   npm run desktop:pack:mac
+   ```
+   This writes an unsigned DMG and ZIP to `dist-desktop/`. Set up Apple signing
+   and notarization credentials before distributing outside your development team.
 
 Regenerate Supabase types when the database schema changes (requires `SUPABASE_DB_URL` or credentials in root `.env`):
 
