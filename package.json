@@ -308,7 +308,17 @@
         "zip"
       ],
       "category": "public.app-category.business",
+      "minimumSystemVersion": "12.0",
+      "extendInfo": {
+        "NSCameraUsageDescription": "BaytMiftah uses your camera when you choose to capture property or verification documents.",
+        "NSLocationUsageDescription": "BaytMiftah uses your location when you choose location-based property services."
+      },
       "artifactName": "baytmiftah-desktop-${version}-${arch}.${ext}"
+    },
+    "mas": {
+      "entitlements": "electron/build/entitlements.mas.plist",
+      "entitlementsInherit": "electron/build/entitlements.mas.inherit.plist",
+      "entitlementsLoginHelper": "electron/build/entitlements.mas.plist"
     },
     "win": {
       "target": [
