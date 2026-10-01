@@ -36,6 +36,7 @@ const EDGE_FUNCTIONS = [
   { name: "kyc-smile-webhook", noVerifyJwt: true },
   { name: "create-docusign-envelope" },
   { name: "app-version", noVerifyJwt: true },
+  { name: "listing-syndication" },
 ];
 
 function readFlag(name) {

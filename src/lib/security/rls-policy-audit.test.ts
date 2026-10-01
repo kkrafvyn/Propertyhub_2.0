@@ -272,7 +272,6 @@ const INTENTIONAL_ZERO_POLICY_TABLES = new Set([
   'public.image_hashes',
   'public.kyc_provider_webhook_events',
   'public.legal_policy_bundles',
-  'public.listing_sync_jobs',
   'public.nearby_services',
   'public.organization_webhook_secrets',
   'public.property_inspections',

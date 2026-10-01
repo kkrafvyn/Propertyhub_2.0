@@ -1,9 +1,9 @@
 {
-  "lastVerifiedAt": "2026-09-30T21:19:56.922Z",
+  "lastVerifiedAt": "2026-10-01T05:40:20.577Z",
   "liveBackup": {
-    "path": "backups\\2026-09-30T21-19-10-949Z_pre-migration_pre-migration",
-    "tablesValidated": 293,
-    "rowsValidated": 420,
+    "path": "backups\\2026-10-01T05-39-36-182Z_pre-migration_pre-migration",
+    "tablesValidated": 295,
+    "rowsValidated": 425,
     "criticalTables": 14,
     "dbSpotCheck": true,
     "relationshipChecks": true

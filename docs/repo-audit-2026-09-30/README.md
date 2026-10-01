@@ -6,6 +6,8 @@ Scope: first-party web, Supabase Edge Functions, Electron, mobile wrappers, scri
 
 Remediation status: the correctness and security findings have been fixed in the working tree. See [05-remediation-results.md](05-remediation-results.md) for verified results and controlled deployment follow-up.
 
+Follow-up: [08-full-app-stub-and-mls-audit.md](08-full-app-stub-and-mls-audit.md) records the full runtime stub scan and the secure key-only MLS syndication replacement.
+
 ## Executive result
 
 The repository builds and type-checks after installing the dependencies added by the latest pull, but it is not release-clean.

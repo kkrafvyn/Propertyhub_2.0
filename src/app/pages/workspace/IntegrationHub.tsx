@@ -1,19 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import {
-  Plus,
-  Trash2,
-  RefreshCw,
-  CheckCircle2,
-  AlertCircle,
-  Settings,
-  TrendingUp,
-  Zap,
-  Lock,
-  Building2,
-  Search,
-  Globe,
-  Home,
-} from 'lucide-react';
+import { RefreshCw, CheckCircle2, TrendingUp, Zap, Lock, Building2, Search, Globe } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/badge';
@@ -25,11 +11,8 @@ import { LeadManagement } from './LeadManagement';
 import { toast } from 'sonner';
 
 interface MLSIntegration {
-  id: string;
   provider: 'mls' | 'zillow' | 'realtor';
-  isActive: boolean;
-  syncFrequency: 'hourly' | 'daily' | 'weekly';
-  lastSyncAt?: string;
+  configured: boolean;
   listingCount: number;
 }
 
@@ -58,8 +41,6 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
   const [leadMetrics, setLeadMetrics] = useState<LeadMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
-  const [showAddIntegration, setShowAddIntegration] = useState(false);
-  const [selectedProvider, setSelectedProvider] = useState<'mls' | 'zillow' | 'realtor' | null>(null);
 
   useEffect(() => {
     loadIntegrations();
@@ -70,18 +51,14 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
       setLoading(true);
       
       // Fetch integrations and sync history
-      const creds = await mlsIntegrationService.getMLSCredentials(organizationId);
+      const statuses = await mlsIntegrationService.getProviderStatuses(organizationId);
       const history = await mlsIntegrationService.getSyncHistory(organizationId);
       const listingCounts = await mlsIntegrationService.getExternalListingCounts(organizationId);
       
-      // Transform credentials to integrations
-      const integrationsList: MLSIntegration[] = creds.map((c: any) => ({
-        id: c.id,
-        provider: c.provider,
-        isActive: c.is_active,
-        syncFrequency: c.sync_frequency,
-        lastSyncAt: c.last_sync_at,
-        listingCount: listingCounts[c.provider] || 0,
+      const integrationsList: MLSIntegration[] = statuses.map((status) => ({
+        provider: status.provider,
+        configured: status.configured,
+        listingCount: listingCounts[status.provider] || 0,
       }));
 
       setIntegrations(integrationsList);
@@ -124,44 +101,6 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
     }
   };
 
-  const handleAddIntegration = async (apiKey: string, apiSecret?: string, feedUrl?: string) => {
-    if (!selectedProvider) return;
-
-    try {
-      await mlsIntegrationService.saveMLSCredentials(
-        organizationId,
-        selectedProvider,
-        {
-          apiKey,
-          apiSecret,
-          accountId: feedUrl,
-          syncFrequency: 'daily',
-        }
-      );
-
-      setShowAddIntegration(false);
-      setSelectedProvider(null);
-      await loadIntegrations();
-      toast.success("Integration connected.");
-    } catch (error) {
-      console.error('Failed to add integration:', error);
-      toast.error(error instanceof Error ? error.message : "Unable to save this integration.");
-    }
-  };
-
-  const handleDeleteIntegration = async (id: string, provider: string) => {
-    if (!confirm(`Remove ${provider} integration?`)) return;
-
-    try {
-      await mlsIntegrationService.deleteMLSCredentials(organizationId, provider);
-      toast.success("Integration removed.");
-      await loadIntegrations();
-    } catch (error) {
-      console.error('Failed to delete integration:', error);
-      toast.error("Unable to remove this integration.");
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -173,20 +112,16 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-start gap-4">
         <div>
           <h1 className="text-3xl font-bold text-ink">Integration Hub</h1>
           <p className="text-ink-secondary mt-1">
             Connect to MLS, Zillow, and Realtor.com to sync listings and aggregate leads
           </p>
+          <p className="mt-2 text-sm text-ink-muted">
+            Provider keys are managed securely on the server and are never entered or returned in the browser.
+          </p>
         </div>
-        <Button
-          onClick={() => setShowAddIntegration(true)}
-          className="gap-2"
-        >
-          <Plus size={20} />
-          Add Integration
-        </Button>
       </div>
 
       <PlatformIntegrationsPanel />
@@ -245,17 +180,9 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
           provider="mls"
           name="MLS Network"
           description="Connect to your local MLS network to sync active listings"
-          isActive={integrations.some(i => i.provider === 'mls' && i.isActive)}
-          lastSync={integrations.find(i => i.provider === 'mls')?.lastSyncAt}
+          isActive={integrations.some(i => i.provider === 'mls' && i.configured)}
+          listingCount={integrations.find(i => i.provider === 'mls')?.listingCount || 0}
           onSync={() => handleSync('mls')}
-          onRemove={() => {
-            const mls = integrations.find(i => i.provider === 'mls');
-            if (mls) handleDeleteIntegration(mls.id, 'mls');
-          }}
-          onAdd={() => {
-            setSelectedProvider('mls');
-            setShowAddIntegration(true);
-          }}
           isSyncing={syncing === 'mls'}
           logo={
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -269,17 +196,9 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
           provider="zillow"
           name="Zillow"
           description="Aggregate listings from Zillow database"
-          isActive={integrations.some(i => i.provider === 'zillow' && i.isActive)}
-          lastSync={integrations.find(i => i.provider === 'zillow')?.lastSyncAt}
+          isActive={integrations.some(i => i.provider === 'zillow' && i.configured)}
+          listingCount={integrations.find(i => i.provider === 'zillow')?.listingCount || 0}
           onSync={() => handleSync('zillow')}
-          onRemove={() => {
-            const zillow = integrations.find(i => i.provider === 'zillow');
-            if (zillow) handleDeleteIntegration(zillow.id, 'zillow');
-          }}
-          onAdd={() => {
-            setSelectedProvider('zillow');
-            setShowAddIntegration(true);
-          }}
           isSyncing={syncing === 'zillow'}
           logo={
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
@@ -293,17 +212,9 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
           provider="realtor"
           name="Realtor.com"
           description="Sync listings from Realtor.com marketplace"
-          isActive={integrations.some(i => i.provider === 'realtor' && i.isActive)}
-          lastSync={integrations.find(i => i.provider === 'realtor')?.lastSyncAt}
+          isActive={integrations.some(i => i.provider === 'realtor' && i.configured)}
+          listingCount={integrations.find(i => i.provider === 'realtor')?.listingCount || 0}
           onSync={() => handleSync('realtor')}
-          onRemove={() => {
-            const realtor = integrations.find(i => i.provider === 'realtor');
-            if (realtor) handleDeleteIntegration(realtor.id, 'realtor');
-          }}
-          onAdd={() => {
-            setSelectedProvider('realtor');
-            setShowAddIntegration(true);
-          }}
           isSyncing={syncing === 'realtor'}
           logo={
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
@@ -360,17 +271,6 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
 
       <LeadManagement organizationId={organizationId} />
 
-      {/* Add Integration Modal */}
-      {showAddIntegration && (
-        <AddIntegrationModal
-          provider={selectedProvider}
-          onClose={() => {
-            setShowAddIntegration(false);
-            setSelectedProvider(null);
-          }}
-          onSubmit={handleAddIntegration}
-        />
-      )}
     </div>
   );
 }
@@ -383,10 +283,8 @@ function IntegrationCard({
   name,
   description,
   isActive,
-  lastSync,
+  listingCount,
   onSync,
-  onRemove,
-  onAdd,
   isSyncing,
   logo,
 }: {
@@ -394,10 +292,8 @@ function IntegrationCard({
   name: string;
   description: string;
   isActive: boolean;
-  lastSync?: string;
+  listingCount: number;
   onSync: () => void;
-  onRemove: () => void;
-  onAdd: () => void;
   isSyncing: boolean;
   logo: ReactNode;
 }) {
@@ -417,9 +313,7 @@ function IntegrationCard({
         {isActive && (
           <div className="mb-4 p-3 bg-surface-subtle border border-surface-border rounded text-sm">
             <p className="text-ink-secondary">
-              Last sync: <span className="font-medium text-ink">
-                {lastSync ? new Date(lastSync).toLocaleString() : 'Never'}
-              </span>
+              Synced listings: <span className="font-medium text-ink">{listingCount}</span>
             </p>
           </div>
         )}
@@ -438,145 +332,13 @@ function IntegrationCard({
               <RefreshCw size={16} className={isSyncing ? 'animate-spin' : ''} />
               {isSyncing ? 'Syncing...' : 'Sync Now'}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRemove}
-              className="text-red-600 dark:text-red-400 gap-2"
-            >
-              <Trash2 size={16} />
-            </Button>
           </>
         ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onAdd}
-            className="gap-2 w-full"
-          >
-            <Plus size={16} />
-            Connect
-          </Button>
+          <div className="w-full rounded-md border border-amber-300/60 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-200">
+            Configure the provider API key and feed URL in the server environment.
+          </div>
         )}
       </div>
     </Card>
-  );
-}
-
-/**
- * Add Integration Modal
- */
-function AddIntegrationModal({
-  provider,
-  onClose,
-  onSubmit,
-}: {
-  provider: 'mls' | 'zillow' | 'realtor' | null;
-  onClose: () => void;
-  onSubmit: (apiKey: string, apiSecret?: string, feedUrl?: string) => void;
-}) {
-  const [apiKey, setApiKey] = useState('');
-  const [apiSecret, setApiSecret] = useState('');
-  const [feedUrl, setFeedUrl] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await onSubmit(apiKey, apiSecret, feedUrl.trim() || undefined);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!provider) return null;
-
-  const providerInfo: Record<string, { name: string; docs: string; requiresSecret: boolean }> = {
-    mls: {
-      name: 'MLS Network',
-      docs: 'https://mlsglobal.com/docs',
-      requiresSecret: true,
-    },
-    zillow: {
-      name: 'Zillow API',
-      docs: 'https://www.zillow.com/api/docs',
-      requiresSecret: false,
-    },
-    realtor: {
-      name: 'Realtor.com API',
-      docs: 'https://api.realtor.com/docs',
-      requiresSecret: false,
-    },
-  };
-
-  const info = providerInfo[provider];
-
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md p-6 border-surface-border bg-surface">
-        <h2 className="text-2xl font-bold text-ink mb-4">Add {info.name} Integration</h2>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-ink-secondary mb-2">
-              API Key
-            </label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Your API key"
-              required
-              className="w-full px-4 py-2 border border-border bg-input-background text-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          {info.requiresSecret && (
-            <div>
-              <label className="block text-sm font-medium text-ink-secondary mb-2">
-                API Secret
-              </label>
-              <input
-                type="password"
-                value={apiSecret}
-                onChange={(e) => setApiSecret(e.target.value)}
-                placeholder="Your API secret"
-                required
-                className="w-full px-4 py-2 border border-border bg-input-background text-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-ink-secondary mb-2">
-              JSON feed URL (recommended)
-            </label>
-            <input
-              type="url"
-              value={feedUrl}
-              onChange={(e) => setFeedUrl(e.target.value)}
-              placeholder="https://your-idx-feed.example/listings.json"
-              className="w-full px-4 py-2 border border-border bg-input-background text-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <p className="text-sm text-ink-secondary">
-            Don't have an API key? <a href={info.docs} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-              Get it here
-            </a>
-          </p>
-
-          <div className="flex gap-2 pt-4">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading} className="flex-1">
-              {loading ? 'Connecting...' : 'Connect'}
-            </Button>
-          </div>
-        </form>
-      </Card>
-    </div>
   );
 }

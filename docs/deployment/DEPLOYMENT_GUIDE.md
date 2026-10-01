@@ -43,7 +43,9 @@ FLUTTERWAVE_SECRET_KEY=FLWSECK_...
 
 # ===== MLS INTEGRATIONS =====
 MLS_API_KEY=your_mls_key
-MLS_API_SECRET=your_mls_secret
+MLS_FEED_URL=https://provider.example/reso/odata/Property
+MLS_AUTH_MODE=x-api-key
+MLS_API_KEY_HEADER=X-API-Key
 ZILLOW_API_KEY=your_zillow_key
 REALTOR_API_KEY=your_realtor_key
 
@@ -69,7 +71,7 @@ EOF
 - ⏱️ **Time**: 1-2 hours
 - **URL**: Contact your local MLS board
 - **What you'll get**: API Key + Secret
-- **Setup**: Add to MLS_API_KEY & MLS_API_SECRET
+- **Setup**: Add the provider-issued key to `MLS_API_KEY` and its HTTPS collection endpoint to `MLS_FEED_URL`. An API secret is not required. Set `MLS_AUTH_MODE` to `x-api-key`, `bearer`, or `query` to match the provider documentation.
 
 **Zillow:**
 - ⏱️ **Time**: 30 minutes to 2 hours

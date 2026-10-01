@@ -114,7 +114,11 @@ function main() {
         rootEnv.VITE_PROPERTY_ESCROW_ADDRESS ||
         rootEnv.VITE_VERIFICATION_REGISTRY_ADDRESS,
     ),
-    mls: Boolean(payments.MLS_API_KEY || payments.ZILLOW_API_KEY || payments.REALTOR_API_KEY),
+    mls: Boolean(
+      (payments.MLS_API_KEY && payments.MLS_FEED_URL) ||
+      (payments.ZILLOW_API_KEY && payments.ZILLOW_FEED_URL) ||
+      (payments.REALTOR_API_KEY && payments.REALTOR_FEED_URL),
+    ),
   };
 
   console.log("\nIntegration status:");
@@ -132,7 +136,7 @@ function main() {
   }
   // PayAngels is no longer required in this deployment.
   if (!configured.blockchain) missing.push("Deploy contracts + VITE_PROPERTY_*_ADDRESS");
-  if (!configured.mls) missing.push("MLS/Zillow/Realtor keys (optional)");
+  if (!configured.mls) missing.push("MLS/Zillow/Realtor API key + HTTPS feed URL (optional)");
 
   if (missing.length) {
     console.log("\nStill needs API keys in .env (then re-run this script):");
