@@ -1,5 +1,13 @@
+import fs from "node:fs";
+import path from "node:path";
 import { loadProjectEnv } from "../../load-project-env.mjs";
 import { verifiedDatabaseUrl } from "../../secure-db-url.mjs";
+
+function resolveSsl(env) {
+  if (!env.SUPABASE_DB_SSL_ROOT_CERT) return { rejectUnauthorized: true };
+  const certificatePath = path.resolve(process.cwd(), env.SUPABASE_DB_SSL_ROOT_CERT);
+  return { ca: fs.readFileSync(certificatePath, "utf8"), rejectUnauthorized: true };
+}
 
 export function getProjectRef(env = loadProjectEnv()) {
   if (env.SUPABASE_PROJECT_REF) return env.SUPABASE_PROJECT_REF;
@@ -11,7 +19,7 @@ export function getProjectRef(env = loadProjectEnv()) {
 
 export function getDbConfig(env = loadProjectEnv()) {
   if (env.SUPABASE_DB_URL) {
-    return { connectionString: verifiedDatabaseUrl(env.SUPABASE_DB_URL), ssl: { rejectUnauthorized: true } };
+    return { connectionString: verifiedDatabaseUrl(env.SUPABASE_DB_URL), ssl: resolveSsl(env) };
   }
 
   const password = env.SUPABASE_DB_PASSWORD;
@@ -30,6 +38,6 @@ export function getDbConfig(env = loadProjectEnv()) {
     user: `postgres.${ref}`,
     password,
     database: "postgres",
-    ssl: { rejectUnauthorized: true },
+    ssl: resolveSsl(env),
   };
 }

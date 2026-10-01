@@ -11,6 +11,7 @@
 import { supabase } from "./supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { secureId } from "./secure-id";
+import { isDemoSimulationAllowed } from "./simulation-mode";
 
 export type ConversationType = "direct" | "group" | "support" | "organization_shared" | "channel";
 export type ParticipantRole =
@@ -354,10 +355,12 @@ export class RealtimeMessagingService {
 
       const { data, error } = await query;
       if (error) throw error;
-      if (data && data.length > 0) return data as Conversation[];
-      throw new Error("Empty DB, use local store");
-    } catch {
-      // Return local conversations
+      if (data?.length || !isDemoSimulationAllowed()) return (data || []) as Conversation[];
+      return Array.from(localConversations.values()).sort(
+        (a, b) => new Date(b.last_message_at || b.created_at).getTime() - new Date(a.last_message_at || a.created_at).getTime()
+      );
+    } catch (error) {
+      if (!isDemoSimulationAllowed()) throw error;
       return Array.from(localConversations.values()).sort(
         (a, b) => new Date(b.last_message_at || b.created_at).getTime() - new Date(a.last_message_at || a.created_at).getTime()
       );
@@ -404,7 +407,8 @@ export class RealtimeMessagingService {
 
       if (error || !data) throw error || new Error("Failed to save message");
       resultMessage = { ...data, sender_name: input.senderName };
-    } catch {
+    } catch (error) {
+      if (!isDemoSimulationAllowed()) throw error;
       const msgId = secureId("msg");
       resultMessage = {
         id: msgId,
@@ -461,9 +465,10 @@ export class RealtimeMessagingService {
         .limit(limit);
 
       if (error) throw error;
-      if (data && data.length > 0) return data as Message[];
-      throw new Error("Empty DB, fallback to local store");
-    } catch {
+      if (data?.length || !isDemoSimulationAllowed()) return (data || []) as Message[];
+      return localMessages.get(conversationId) || [];
+    } catch (error) {
+      if (!isDemoSimulationAllowed()) throw error;
       return localMessages.get(conversationId) || [];
     }
   }

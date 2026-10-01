@@ -5,6 +5,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadProjectEnv } from './load-project-env.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const checks = [];
@@ -15,6 +16,10 @@ function pass(name, detail) {
 
 function fail(name, detail) {
   checks.push({ name, ok: false, detail });
+}
+
+function warn(name, detail) {
+  checks.push({ name, ok: true, warning: true, detail });
 }
 
 function requireFile(relativePath, name = relativePath) {
@@ -94,6 +99,24 @@ for (const orphan of ['verify-stripe-payment', 'initiate-momo-payment', 'momo-we
   else fail(`orphan removed:${orphan}`, `${orphan} should be deleted — PayAngels is the sole payment rail`);
 }
 
+const runtimeEnv = loadProjectEnv();
+for (const [area, keys] of Object.entries({
+  'Prembly live KYC': [
+    'PREMBLY_API_KEY', 'PREMBLY_PUBLIC_KEY', 'PREMBLY_ORGANISATION_ID',
+    'VITE_PREMBLY_WIDGET_KEY', 'VITE_PREMBLY_WIDGET_ID',
+  ],
+  'offsite backups': [
+    'BACKUP_S3_BUCKET', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY',
+  ],
+  'scheduled operations': ['SUPABASE_SERVICE_ROLE_KEY'],
+  'incident alerts': ['OPS_ALERT_WEBHOOK_URL'],
+})) {
+  const missing = keys.filter((key) => !runtimeEnv[key]?.trim());
+  if (missing.length === 0) pass(`runtime config:${area}`, 'configured');
+  else warn(`runtime config:${area}`, `not live: ${missing.join(', ')}`);
+}
+
 const failed = checks.filter((c) => !c.ok);
-console.log(JSON.stringify({ checkedAt: new Date().toISOString(), passed: checks.length - failed.length, failed: failed.length, checks }, null, 2));
+const warnings = checks.filter((c) => c.warning);
+console.log(JSON.stringify({ checkedAt: new Date().toISOString(), passed: checks.length - failed.length - warnings.length, warnings: warnings.length, failed: failed.length, ready: failed.length === 0 && warnings.length === 0, checks }, null, 2));
 process.exit(failed.length > 0 ? 1 : 0);

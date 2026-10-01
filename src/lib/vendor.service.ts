@@ -175,38 +175,21 @@ export const vendorService = {
     rating: number,
     reviewText: string
   ) {
-    if (rating < 1 || rating > 5) {
-      throw new Error('Rating must be between 1 and 5')
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      throw new Error('Rating must be an integer between 1 and 5')
     }
-    
-    const { data, error } = await supabase
-      .from('vendor_ratings')
-      .insert({
-        vendor_id: vendorId,
-        rater_id: raterId,
-        assignment_id: assignmentId,
-        rating,
-        review_text: reviewText
-      })
-      .select()
-      .single()
-    
+    if (reviewText.trim().length > 2000) throw new Error('Review must be 2,000 characters or fewer')
+    const { data: session, error: sessionError } = await supabase.auth.getUser()
+    if (sessionError || !session.user || session.user.id !== raterId) {
+      throw new Error('Rating identity does not match the signed-in user')
+    }
+    const { data, error } = await supabase.rpc('submit_vendor_rating', {
+      p_vendor_id: vendorId,
+      p_assignment_id: assignmentId,
+      p_rating: rating,
+      p_review_text: reviewText.trim() || null,
+    })
     if (error) throw error
-    
-    // Update vendor average rating
-    const { data: ratings } = await supabase
-      .from('vendor_ratings')
-      .select('rating')
-      .eq('vendor_id', vendorId)
-    
-    if (ratings) {
-      const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
-      await supabase
-        .from('vendors')
-        .update({ rating_avg: Math.round(avgRating * 100) / 100 })
-        .eq('id', vendorId)
-    }
-    
     return data
   },
 

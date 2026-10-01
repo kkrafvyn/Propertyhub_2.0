@@ -286,7 +286,7 @@ export class CallMediaManager {
       this.setupAudioAnalyser(this.localStream);
       return this.localStream;
     } catch (err) {
-      console.warn('Could not acquire user media, falling back to mock stream:', err);
+      console.warn('Could not acquire user media:', err);
       return null;
     }
   }

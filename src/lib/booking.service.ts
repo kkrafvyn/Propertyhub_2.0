@@ -466,17 +466,22 @@ export const bookingService = {
     rating: number;
     comment?: string;
   }) {
-    const { data, error } = await supabase
-      .from("booking_reviews")
-      .insert({
-        booking_id: input.bookingId,
-        reviewer_user_id: input.reviewerUserId,
-        reviewer_role: input.reviewerRole,
-        rating: input.rating,
-        comment: input.comment || null,
-      })
-      .select("*")
-      .single();
+    if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) {
+      throw new Error("Rating must be an integer between 1 and 5");
+    }
+    if (input.comment && input.comment.trim().length > 2000) {
+      throw new Error("Review must be 2,000 characters or fewer");
+    }
+    const { data: session, error: sessionError } = await supabase.auth.getUser();
+    if (sessionError || !session.user || session.user.id !== input.reviewerUserId) {
+      throw new Error("Review identity does not match the signed-in user");
+    }
+    const { data, error } = await supabase.rpc("submit_booking_review", {
+      p_booking_id: input.bookingId,
+      p_reviewer_role: input.reviewerRole,
+      p_rating: input.rating,
+      p_comment: input.comment?.trim() || null,
+    });
 
     if (error) throw error;
 

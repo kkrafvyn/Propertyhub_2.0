@@ -27,7 +27,13 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
-import { DesktopShell, ShareListingButton, SimilarListings, mapListingToCard, MessageHostButton, StayBookingCard, ListingReviews } from "../components/baytmiftah";
+import { DesktopShell } from "../components/baytmiftah/DesktopShell";
+import { ShareListingButton } from "../components/baytmiftah/ShareListingButton";
+import { SimilarListings } from "../components/baytmiftah/SimilarListings";
+import { mapListingToCard } from "../components/baytmiftah/listing-mappers";
+import MessageHostButton from "../components/baytmiftah/chat/MessageHostButton";
+import StayBookingCard from "../components/baytmiftah/StayBookingCard";
+import ListingReviews from "../components/baytmiftah/ListingReviews";
 import { GhanaRoutePlanner } from "../components/GhanaRoutePlanner";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";

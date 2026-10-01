@@ -2,7 +2,7 @@ import { Capacitor } from "@capacitor/core";
 import { useAuth } from "../context/AuthContext";
 import { isWorkspaceRole } from "../lib/baytmiftah/roles";
 import { useIdleSessionTimeout } from "../hooks/useIdleSessionTimeout";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 import { RouteMonitoring } from "./RouteMonitoring";
 import { MobileAppShell } from "../mobile/MobileAppShell";
@@ -33,7 +33,8 @@ import { DesktopProfessionalGateway } from "./DesktopProfessionalGateway";
 import { GettingStartedChecklist, NewUserTutorial } from "./onboarding/NewUserTutorial";
 import { isMarketingSite, isMarketingPublicPath } from "../../lib/site-mode";
 import { MarketingSiteFrame } from "../components/marketing/MarketingSiteFrame";
-import { MarketingHome } from "../pages/marketing/MarketingHome";
+
+const MarketingHome = lazy(() => import("../pages/marketing/MarketingHome").then((module) => ({ default: module.MarketingHome })));
 
 function useViewportFlags() {
   const [flags, setFlags] = useState(() => {
@@ -155,7 +156,7 @@ export function Root() {
       <MarketingSiteFrame
         home={
           location.pathname === "/" || location.pathname === "/marketing" ? (
-            <MarketingHome />
+            <Suspense fallback={null}><MarketingHome /></Suspense>
           ) : undefined
         }
       />

@@ -10,7 +10,7 @@ export interface MarketplaceListingCard {
   priceLabel: string;
   listingType: "rent" | "sale" | "lease" | "stay";
   bedrooms?: number;
-  rating: string;
+  rating: string | null;
   photos: string[];
   featured?: boolean;
   verified?: boolean;
@@ -93,7 +93,9 @@ export function mapListingToCard(listing: any): MarketplaceListingCard {
     marketLabel: compliance.subdivisionLabel || compliance.context.pack.label,
     currency: listing.currency || compliance.context.currency,
     bedrooms: property.bedrooms ?? undefined,
-    rating: listing.quality_score ? (listing.quality_score / 20).toFixed(1) : "4.8",
+    rating: Number.isFinite(Number(listing.rating_avg)) && Number(listing.rating_count) > 0
+      ? Number(listing.rating_avg).toFixed(1)
+      : null,
     photos: getPropertyImageGallery(property),
     featured: (listing.quality_score || 0) >= 75,
     verified: listing.organization?.verified,

@@ -118,18 +118,21 @@ export const maintenanceService = {
     rating: number,
     comment?: string
   ) {
-    const { data, error } = await supabase
-      .from("maintenance_requests")
-      .update({
-        tenant_rating: rating,
-        tenant_rating_comment: comment || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", requestId)
-      .eq("tenant_user_id", userId)
-      .eq("status", "resolved")
-      .select("*")
-      .single();
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      throw new Error("Rating must be an integer between 1 and 5");
+    }
+    if (comment && comment.trim().length > 2000) {
+      throw new Error("Rating comment must be 2,000 characters or fewer");
+    }
+    const { data: session, error: sessionError } = await supabase.auth.getUser();
+    if (sessionError || !session.user || session.user.id !== userId) {
+      throw new Error("Sign in as the tenant who submitted this request");
+    }
+    const { data, error } = await supabase.rpc("submit_maintenance_rating", {
+      p_request_id: requestId,
+      p_rating: rating,
+      p_comment: comment?.trim() || null,
+    });
 
     if (error) throw error;
     return data;

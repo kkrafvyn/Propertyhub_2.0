@@ -27,6 +27,10 @@ vi.mock("../components/Navbar", () => ({
   Navbar: () => <div>Navbar</div>,
 }));
 
+vi.mock("../components/baytmiftah/ListingReviews", () => ({
+  default: () => <div>Listing reviews</div>,
+}));
+
 vi.mock("../../lib/listing.service", () => ({
   listingService: {
     getListingById: vi.fn(),

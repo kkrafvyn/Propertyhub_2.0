@@ -12,3 +12,6 @@ verify_jwt = false
 
 [functions.kyc-smile-webhook]
 verify_jwt = false
+
+[functions.kyc-prembly-webhook]
+verify_jwt = false

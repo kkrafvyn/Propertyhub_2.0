@@ -108,6 +108,24 @@ await countRows(
   (q) => q.eq('status', 'active').lt('promised_for', new Date().toISOString().slice(0, 10)),
   { warnAt: 5, failAt: 100 }
 );
+await countRows(
+  'KYC: stale provider processing (>24h)',
+  'kyc_submissions',
+  (q) => q.in('provider_status', ['submitted', 'processing']).lt('submitted_at', oneDayAgo),
+  { warnAt: 1, failAt: 25 }
+);
+await countRows(
+  'KYC: provider rejected or inconclusive',
+  'kyc_submissions',
+  (q) => q.in('provider_status', ['rejected', 'review']),
+  { warnAt: 5, failAt: 100 }
+);
+await countRows(
+  'customer health: recent calculation failures',
+  'operational_events',
+  (q) => q.eq('service', 'customer-health').eq('severity', 'error').gte('created_at', oneDayAgo),
+  { warnAt: 1, failAt: 10 }
+);
 
 const summary = {
   checkedAt: new Date().toISOString(),

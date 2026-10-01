@@ -24,6 +24,7 @@ import {
   saveCallHistory,
 } from '../../lib/call.service';
 import { secureId } from '../../lib/secure-id';
+import { isDemoSimulationAllowed } from '../../lib/simulation-mode';
 import { useAuth } from './AuthContext';
 
 interface StartCallOptions {
@@ -159,6 +160,9 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       options?: StartCallOptions
     ) => {
       cleanupCall();
+      if (!isDemoSimulationAllowed()) {
+        throw new Error('Live voice and video calling is unavailable until a signaling provider is configured.');
+      }
 
       const myName = profile?.full_name || user?.user_metadata?.full_name || 'You';
       const myId = user?.id || 'local_user';
@@ -223,7 +227,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       // Play ringing sound
       audioSynth.startOutgoingRingtone();
 
-      // Simulate remote auto-answering after 3.2s for interactive demonstration
+      // Test-only interactive call simulation.
       connectTimerRef.current = window.setTimeout(() => {
         audioSynth.stopRingtone();
         audioSynth.playConnectedSound();

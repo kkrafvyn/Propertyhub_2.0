@@ -162,7 +162,32 @@ export const kycService = {
     return data as { ok: boolean; configured?: boolean; submission?: KycSubmission };
   },
 
+  async requestPremblyVerification(submissionId: string) {
+    const { data, error } = await supabase.functions.invoke("kyc-prembly-verify", {
+      body: { submissionId },
+    });
+    if (error) throw error;
+    if (data && typeof data === "object" && "error" in data && data.error) {
+      throw new Error(String(data.error));
+    }
+    return data as { ok: boolean; configured?: boolean; submission?: KycSubmission };
+  },
+
+  async retrievePremblySession(submissionId: string, sessionId: string) {
+    const { data, error } = await supabase.functions.invoke("kyc-prembly-session", {
+      body: { submissionId, sessionId },
+    });
+    if (error) throw error;
+    if (data && typeof data === "object" && "error" in data && data.error) {
+      throw new Error(String(data.error));
+    }
+    return data as { ok: boolean; submission?: KycSubmission };
+  },
+
   async runProviderVerification(submissionId: string, providerEngine: string) {
+    if (providerEngine === "prembly") {
+      return this.requestPremblyVerification(submissionId);
+    }
     if (providerEngine === "smile-identity") {
       return this.requestSmileVerification(submissionId);
     }

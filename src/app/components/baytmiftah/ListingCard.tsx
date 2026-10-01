@@ -158,10 +158,12 @@ export function ListingCard({
           <h3 className="truncate text-base font-semibold text-ink group-hover:text-primary transition-colors">
             {listing.location || listing.title}
           </h3>
-          <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-ink">
-            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
-            {listing.rating}
-          </span>
+          {listing.rating ? (
+            <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-ink">
+              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
+              {listing.rating}
+            </span>
+          ) : null}
         </div>
         <p className="truncate text-sm text-ink-secondary">{listing.title}</p>
         <p className="truncate text-xs sm:text-sm text-ink-muted">

@@ -41,6 +41,11 @@ type EstateIssue = {
   status?: string | null;
 };
 
+type WorkOrderCost = {
+  estimated_cost_minor?: number | null;
+  actual_cost_minor?: number | null;
+};
+
 const db = supabase.from as any;
 
 export class VendorSLAService {
@@ -195,7 +200,7 @@ export class VendorSLAService {
       const monthEnd = new Date(periodMonth.getFullYear(), periodMonth.getMonth() + 1, 0);
 
       const { data: workOrders, error } = await db('estate_issues')
-        .select('*, work_order_evidence(*)')
+        .select('*, work_order_evidence(*), estate_work_orders(estimated_cost_minor, actual_cost_minor)')
         .eq('vendor_id', vendorId)
         .eq('organization_id', orgId)
         .gte('created_at', monthStart.toISOString())
@@ -237,13 +242,14 @@ export class VendorSLAService {
     }
   }
 
-  private calculateVendorMetrics(workOrders: any[]) {
+  calculateVendorMetrics(workOrders: Array<EstateIssue & { estate_work_orders?: WorkOrderCost[] }>) {
     let completedOnTime = 0;
     let completedLate = 0;
     let incomplete = 0;
     let totalResponseTime = 0;
     let totalResolutionTime = 0;
     let completedCount = 0;
+    const costPerformanceSamples: number[] = [];
 
     for (const wo of workOrders) {
       if (wo.resolved_at) {
@@ -271,6 +277,15 @@ export class VendorSLAService {
         const responseMs = new Date(wo.acknowledged_at).getTime() - new Date(wo.created_at).getTime();
         totalResponseTime += responseMs;
       }
+
+      for (const order of wo.estate_work_orders || []) {
+        const estimated = Number(order.estimated_cost_minor);
+        const actual = Number(order.actual_cost_minor);
+        if (Number.isFinite(estimated) && estimated > 0 && Number.isFinite(actual) && actual > 0) {
+          // 100 means on budget; >100 means under budget and <100 means over budget.
+          costPerformanceSamples.push(Math.min(999.99, (estimated / actual) * 100));
+        }
+      }
     }
 
     return {
@@ -281,7 +296,9 @@ export class VendorSLAService {
       avgResponseHours: completedCount > 0 ? (totalResponseTime / completedCount) / 3600000 : 0,
       avgResolutionHours: completedCount > 0 ? (totalResolutionTime / completedCount) / 3600000 : 0,
       qualityRating: completedCount > 0 ? (completedOnTime / completedCount) * 5 : 0,
-      costPerformance: 1.0 // Placeholder; would compare to market rates
+      costPerformance: costPerformanceSamples.length
+        ? Math.round((costPerformanceSamples.reduce((sum, value) => sum + value, 0) / costPerformanceSamples.length) * 100) / 100
+        : null
     };
   }
 

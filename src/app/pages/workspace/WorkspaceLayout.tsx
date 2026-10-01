@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ComponentType } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ComponentType } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import {
   Activity,
@@ -97,32 +97,6 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import type { Database as DatabaseTypes } from "../../../lib/database.types";
 import { organizationService } from "../../../lib/organization.service";
-import MarketIntelligenceDashboard from "./MarketIntelligence";
-import AutomationWorkflows from "./AutomationWorkflows";
-import WhitelabelConfiguration from "./WhitelabelConfig";
-import VendorManagement from "./VendorManagement";
-import { AIAssistant } from "./AIAssistant";
-import NotificationSettings from "./NotificationSettings";
-import LocationIntelligence from "./LocationIntelligence";
-import OrganizationInsights from "./OrganizationInsights";
-import MobileAppSettings from "./MobileAppSettings";
-import { UtilitySubmetering } from "./UtilitySubmetering";
-import { AILeaseAnalyzer } from "./AILeaseAnalyzer";
-import { GateClearanceKiosk } from "./GateClearanceKiosk";
-import { ContractorWorkOrders } from "./ContractorWorkOrders";
-import AdvancedSearch from "./AdvancedSearch";
-import PredictiveAnalytics from "./PredictiveAnalytics";
-import RecommendationEngine from "./RecommendationEngine";
-import TeamCollaborationHub from "./TeamCollaborationHub";
-import CustomWorkflowsBuilder from "./CustomWorkflowsBuilder";
-import { IntegrationHub } from "./IntegrationHub";
-import { AIRentYieldPredictor } from "./AIRentYieldPredictor";
-import { WhatsAppAutomationHub } from "./WhatsAppAutomationHub";
-import { MultiCurrencyHedgingHub } from "./MultiCurrencyHedgingHub";
-import { WorkspaceHost } from "./WorkspaceHost";
-import { WorkspaceMaintenance } from "./WorkspaceMaintenance";
-import { WorkspaceInspections } from "./WorkspaceInspections";
-import { WorkspaceLeases } from "./WorkspaceLeases";
 import { ErrorState, PageLoadingSkeleton } from "../../components/ux";
 import { SignatureActionBanner } from "../../components/ux/SignatureActionBanner";
 import { hasPlatformConsoleAccess } from "../../../lib/platform-access";
@@ -130,26 +104,20 @@ import { eSignatureService } from "../../../lib/esignature.service";
 import { FraudAlerts } from "./FraudAlerts";
 import ComplianceCenter from "./ComplianceCenter";
 import BlockchainVerification from "./BlockchainVerification";
-import { WorkspaceDashboard } from "./WorkspaceDashboard";
 import { CalendarOperations } from "./CalendarOperations";
 import { WorkspaceDocuments } from "./WorkspaceDocuments";
 import { WorkspaceFinance } from "./WorkspaceFinance";
 import { GhanaTrustCenter } from "./GhanaTrustCenter";
-import { WorkspaceLeads } from "./WorkspaceLeads";
-import { WorkspaceListings } from "./WorkspaceListings";
 import { WorkspaceNewListing } from "./WorkspaceNewListing";
-import { WorkspacePayments } from "./WorkspacePayments";
 import { WorkspaceSettings } from "./WorkspaceSettings";
 import { WorkspaceTeam } from "./WorkspaceTeam";
 import { WorkspaceContacts } from "./WorkspaceContacts";
 import { WorkspaceTasks } from "./WorkspaceTasks";
 import { WorkspaceSmartProperty } from "./WorkspaceSmartProperty";
-import { EstateOperations } from "./EstateOperations";
 import { EstateFinance } from "./EstateFinance";
 import { EstateCommunications } from "./EstateCommunications";
 import { ContextualInboxHub } from "./ContextualInboxHub";
 import { StakeholderPortals } from "./StakeholderPortals";
-import { EnterpriseOperations } from "./EnterpriseOperations";
 import { CommandCenter } from "./CommandCenter";
 import { DataMigration } from "./DataMigration";
 import { Property360 } from "./Property360";
@@ -165,7 +133,6 @@ import { ServiceDesk } from "./ServiceDesk";
 import { Unit360 } from "./Unit360";
 import { GeneralLedger } from "./GeneralLedger";
 import { ProcurementCenter } from "./ProcurementCenter";
-import { BankReconciliation } from "./BankReconciliation";
 import { PortfolioAnalytics } from "./PortfolioAnalytics";
 import { AICommandCenter } from "./AICommandCenter";
 import { AutomationBuilder } from "./AutomationBuilder";
@@ -190,7 +157,6 @@ import { ApprovalCenter } from "./ApprovalCenter";
 import { ExceptionCenter } from "./ExceptionCenter";
 import { CompanyKnowledgeHub } from "./CompanyKnowledgeHub";
 import { EvidenceCenter } from "./EvidenceCenter";
-import { CustomerHealthCenter } from "./CustomerHealthCenter";
 import { ProductivityWorkspace } from "./ProductivityWorkspace";
 import { MyWorkQueue } from "./MyWorkQueue";
 import { DesktopMyWorkHome } from "./DesktopMyWorkHome";
@@ -244,6 +210,41 @@ import {
 import { isNavSlugEnabledByModules } from "../../../lib/workspace-module-catalog";
 import { workspaceSyncService } from "../../../lib/workspace-sync.service";
 import { getRoleLabel, type CompanyCapability } from "../../../lib/company-model";
+
+const WorkspaceDashboard = lazy(() => import("./WorkspaceDashboard").then((module) => ({ default: module.WorkspaceDashboard })));
+const WorkspaceLeads = lazy(() => import("./WorkspaceLeads").then((module) => ({ default: module.WorkspaceLeads })));
+const WorkspaceListings = lazy(() => import("./WorkspaceListings").then((module) => ({ default: module.WorkspaceListings })));
+const WorkspaceLeases = lazy(() => import("./WorkspaceLeases").then((module) => ({ default: module.WorkspaceLeases })));
+const WorkspacePayments = lazy(() => import("./WorkspacePayments").then((module) => ({ default: module.WorkspacePayments })));
+const WorkspaceMaintenance = lazy(() => import("./WorkspaceMaintenance").then((module) => ({ default: module.WorkspaceMaintenance })));
+const EstateOperations = lazy(() => import("./EstateOperations").then((module) => ({ default: module.EstateOperations })));
+const EnterpriseOperations = lazy(() => import("./EnterpriseOperations").then((module) => ({ default: module.EnterpriseOperations })));
+const BankReconciliation = lazy(() => import("./BankReconciliation").then((module) => ({ default: module.BankReconciliation })));
+const WhatsAppAutomationHub = lazy(() => import("./WhatsAppAutomationHub").then((module) => ({ default: module.WhatsAppAutomationHub })));
+const TeamCollaborationHub = lazy(() => import("./TeamCollaborationHub"));
+const CustomWorkflowsBuilder = lazy(() => import("./CustomWorkflowsBuilder"));
+const CustomerHealthCenter = lazy(() => import("./CustomerHealthCenter").then((module) => ({ default: module.CustomerHealthCenter })));
+const MarketIntelligenceDashboard = lazy(() => import("./MarketIntelligence"));
+const AutomationWorkflows = lazy(() => import("./AutomationWorkflows"));
+const WhitelabelConfiguration = lazy(() => import("./WhitelabelConfig"));
+const VendorManagement = lazy(() => import("./VendorManagement"));
+const AIAssistant = lazy(() => import("./AIAssistant").then((module) => ({ default: module.AIAssistant })));
+const NotificationSettings = lazy(() => import("./NotificationSettings"));
+const LocationIntelligence = lazy(() => import("./LocationIntelligence"));
+const OrganizationInsights = lazy(() => import("./OrganizationInsights"));
+const MobileAppSettings = lazy(() => import("./MobileAppSettings"));
+const UtilitySubmetering = lazy(() => import("./UtilitySubmetering").then((module) => ({ default: module.UtilitySubmetering })));
+const AILeaseAnalyzer = lazy(() => import("./AILeaseAnalyzer").then((module) => ({ default: module.AILeaseAnalyzer })));
+const GateClearanceKiosk = lazy(() => import("./GateClearanceKiosk").then((module) => ({ default: module.GateClearanceKiosk })));
+const ContractorWorkOrders = lazy(() => import("./ContractorWorkOrders").then((module) => ({ default: module.ContractorWorkOrders })));
+const AdvancedSearch = lazy(() => import("./AdvancedSearch"));
+const PredictiveAnalytics = lazy(() => import("./PredictiveAnalytics"));
+const RecommendationEngine = lazy(() => import("./RecommendationEngine"));
+const IntegrationHub = lazy(() => import("./IntegrationHub").then((module) => ({ default: module.IntegrationHub })));
+const AIRentYieldPredictor = lazy(() => import("./AIRentYieldPredictor").then((module) => ({ default: module.AIRentYieldPredictor })));
+const MultiCurrencyHedgingHub = lazy(() => import("./MultiCurrencyHedgingHub").then((module) => ({ default: module.MultiCurrencyHedgingHub })));
+const WorkspaceHost = lazy(() => import("./WorkspaceHost").then((module) => ({ default: module.WorkspaceHost })));
+const WorkspaceInspections = lazy(() => import("./WorkspaceInspections").then((module) => ({ default: module.WorkspaceInspections })));
 
 interface NavItem {
   slug: string;
@@ -1301,7 +1302,9 @@ export function WorkspaceLayout() {
           </Link>
         </Card>
       ) : (
-        renderPage()
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          {renderPage()}
+        </Suspense>
       )}
     </>
   );

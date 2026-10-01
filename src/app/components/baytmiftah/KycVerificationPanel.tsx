@@ -8,7 +8,6 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  Camera,
   Upload,
   Eye,
   Trash2,
@@ -32,7 +31,6 @@ import { useMyKyc } from "../../hooks/useMyKyc";
 import { isKycPending, isKycVerified } from "../../lib/baytmiftah/kyc";
 import { submitKyc } from "../../lib/baytmiftah/trust-service";
 import { kycService } from "../../../lib/kyc.service";
-import { resolveKycProviderEngine } from "../../../lib/kyc-provider-engines";
 import { mobileCaptureProps } from "../../../lib/deep-link";
 import { useAuth } from "../../context/AuthContext";
 import { LegalAcceptanceCheckbox } from "../legal/LegalAcceptanceCheckbox";
@@ -210,12 +208,6 @@ export function KycVerificationPanel() {
   const [backFile, setBackFile] = useState<File | null>(null);
   const [backPreview, setBackPreview] = useState<string | null>(null);
 
-  // Biometric selfie state
-  const [selfieFile, setSelfieFile] = useState<File | null>(null);
-  const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
-  const [selfieVerifiedMock, setSelfieVerifiedMock] = useState(false);
-  const [selfieScanning, setSelfieScanning] = useState(false);
-
   // Submission progress state
   const [submitting, setSubmitting] = useState(false);
   const [submitPhase, setSubmitPhase] = useState<string>("");
@@ -230,7 +222,7 @@ export function KycVerificationPanel() {
   }, [profile?.full_name, user?.user_metadata?.full_name, fullName]);
 
   // Handle image previews
-  const handleFileChange = (file: File, side: "front" | "back" | "selfie") => {
+  const handleFileChange = (file: File, side: "front" | "back") => {
     const url = URL.createObjectURL(file);
     if (side === "front") {
       setFrontFile(file);
@@ -238,36 +230,17 @@ export function KycVerificationPanel() {
     } else if (side === "back") {
       setBackFile(file);
       setBackPreview(url);
-    } else if (side === "selfie") {
-      setSelfieFile(file);
-      setSelfiePreview(url);
-      setSelfieVerifiedMock(true);
     }
   };
 
-  const removeFile = (side: "front" | "back" | "selfie") => {
+  const removeFile = (side: "front" | "back") => {
     if (side === "front") {
       setFrontFile(null);
       setFrontPreview(null);
     } else if (side === "back") {
       setBackFile(null);
       setBackPreview(null);
-    } else if (side === "selfie") {
-      setSelfieFile(null);
-      setSelfiePreview(null);
-      setSelfieVerifiedMock(false);
     }
-  };
-
-  // Mock interactive selfie simulation
-  const handleCaptureLiveSelfie = () => {
-    setSelfieScanning(true);
-    setTimeout(() => {
-      // Create a mock selfie representation or prompt camera
-      setSelfieScanning(false);
-      setSelfieVerifiedMock(true);
-      toast.success("Biometric facial liveness confirmed (99.4% confidence match).");
-    }, 1500);
   };
 
   const isVerified = verified || isKycVerified(kyc);
@@ -524,10 +497,6 @@ export function KycVerificationPanel() {
       }
       setStep(3);
     } else if (step === 3) {
-      if (!selfieFile && !selfieVerifiedMock) {
-        toast.error("Please complete the selfie biometric verification check.");
-        return;
-      }
       setStep(4);
     }
   };
@@ -580,11 +549,16 @@ export function KycVerificationPanel() {
       if (submissionId) {
         setSubmitPhase("Dispatching to Smile ID & AI screening engines…");
         try {
-          const providerEngine = await resolveKycProviderEngine(selectedJurisdiction);
+          // Provider routing is server-owned; do not trust the jurisdiction selected in the browser.
+          const providerEngine = result.kyc.submission.provider_engine || "internal-kyc";
           await kycService.runProviderVerification(submissionId, providerEngine);
+        } catch (screeningError) {
+          console.warn("KYC provider verification failed; manual review will continue:", screeningError);
+        }
+        try {
           await kycService.requestAiScreening(submissionId);
         } catch (screeningError) {
-          console.warn("KYC screening failed; manual review will continue:", screeningError);
+          console.warn("KYC pre-screening failed; manual review will continue:", screeningError);
         }
       }
 
@@ -929,72 +903,22 @@ export function KycVerificationPanel() {
           </div>
         )}
 
-        {/* ── STEP 3: BIOMETRIC LIVENESS & SELFIE ── */}
+        {/* ── STEP 3: VERIFICATION METHOD ── */}
         {step === 3 && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-sm font-semibold text-foreground">Biometric Liveness & Facial Match</h3>
+              <h3 className="text-sm font-semibold text-foreground">Identity Verification Method</h3>
               <p className="text-xs text-muted-foreground mt-1">
-                Our AI verification engine compares your selfie against the photograph extracted from your ID card to ensure authentic presence.
+                Your identity details and document are checked by the configured verification provider. A compliance officer makes the final decision when automated checks are unavailable or inconclusive.
               </p>
             </div>
 
-            <div className="rounded-3xl border border-border/80 bg-background p-6 flex flex-col items-center text-center space-y-4">
-              {/* Camera Frame Oval */}
-              <div className="relative w-48 h-56 rounded-[48%] border-4 border-dashed border-primary/40 flex items-center justify-center overflow-hidden bg-primary/5 ring-4 ring-primary/10">
-                {selfiePreview ? (
-                  <img src={selfiePreview} alt="Selfie Preview" className="w-full h-full object-cover" />
-                ) : selfieScanning ? (
-                  <div className="space-y-2">
-                    <RefreshCw className="w-8 h-8 mx-auto animate-spin text-primary" />
-                    <p className="text-[11px] font-semibold text-primary">Scanning Face…</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 p-4">
-                    <Camera className="w-8 h-8 mx-auto text-muted-foreground" />
-                    <p className="text-[11px] text-muted-foreground font-medium">Position your face inside the oval</p>
-                  </div>
-                )}
-
-                {selfieVerifiedMock && (
-                  <div className="absolute inset-0 bg-emerald-950/70 backdrop-blur-xs flex flex-col items-center justify-center text-white p-3 space-y-1">
-                    <ShieldCheck className="w-8 h-8 text-emerald-400" />
-                    <p className="text-xs font-bold">Biometrics Matched</p>
-                    <p className="text-[10px] text-emerald-200">99.4% Neural Match</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="max-w-md space-y-2">
-                <div className="flex flex-wrap items-center justify-center gap-3">
-                  <Button
-                    onClick={handleCaptureLiveSelfie}
-                    disabled={selfieScanning}
-                    className="gap-2 text-xs font-semibold"
-                  >
-                    <Camera className="w-4 h-4" />
-                    {selfieScanning ? "Checking Liveness…" : "Take Live Selfie"}
-                  </Button>
-
-                  <label className="inline-flex items-center justify-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl border border-border bg-background hover:bg-surface-hover/80 transition-colors cursor-pointer text-foreground shadow-xs">
-                    <Upload className="w-4 h-4" />
-                    Upload Selfie Photo
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleFileChange(file, "selfie");
-                      }}
-                      {...mobileCaptureProps()}
-                    />
-                  </label>
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Ensure you are in a brightly lit environment without sunglasses or hats.
-                </p>
-              </div>
+            <div className="rounded-3xl border border-border/80 bg-background p-6 text-center space-y-3">
+              <ShieldCheck className="w-10 h-10 mx-auto text-primary" />
+              <p className="text-sm font-semibold text-foreground">Provider check starts after submission</p>
+              <p className="mx-auto max-w-lg text-xs leading-relaxed text-muted-foreground">
+                This form does not claim that a biometric or liveness match has occurred. If the selected provider requires a selfie or liveness challenge, you will be prompted through that provider's secure capture flow.
+              </p>
             </div>
 
             <div className="flex items-center justify-between pt-4 border-t border-border/60">
@@ -1004,7 +928,6 @@ export function KycVerificationPanel() {
               </Button>
               <Button
                 onClick={handleProceedStep}
-                disabled={!selfieFile && !selfieVerifiedMock}
                 className="gap-2 font-semibold"
               >
                 Continue to Review
