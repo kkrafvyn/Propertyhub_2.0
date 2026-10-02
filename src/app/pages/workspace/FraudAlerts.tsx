@@ -49,10 +49,10 @@ interface FraudAlert {
 
 function severityConfig(s: FraudAlert['severity']) {
   switch (s) {
-    case 'critical': return { bg: 'bg-red-500/10', text: 'text-red-700 dark:text-red-300', border: 'border-red-300 dark:border-red-800', stripe: 'bg-red-500', dot: 'bg-red-500' }
-    case 'high':     return { bg: 'bg-orange-500/10', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-300 dark:border-orange-800', stripe: 'bg-orange-500', dot: 'bg-orange-500' }
-    case 'medium':   return { bg: 'bg-amber-500/10', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-300 dark:border-amber-800', stripe: 'bg-amber-400', dot: 'bg-amber-400' }
-    default:         return { bg: 'bg-blue-500/10', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-900', stripe: 'bg-blue-400', dot: 'bg-blue-400' }
+    case 'critical': return { bg: 'bg-red-500/10', text: 'text-red-700 dark:text-red-300', border: 'border-red-300 dark:border-red-800', accentBar: 'bg-red-500', dot: 'bg-red-500' }
+    case 'high':     return { bg: 'bg-orange-500/10', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-300 dark:border-orange-800', accentBar: 'bg-orange-500', dot: 'bg-orange-500' }
+    case 'medium':   return { bg: 'bg-amber-500/10', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-300 dark:border-amber-800', accentBar: 'bg-amber-400', dot: 'bg-amber-400' }
+    default:         return { bg: 'bg-blue-500/10', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-900', accentBar: 'bg-blue-400', dot: 'bg-blue-400' }
   }
 }
 
@@ -143,9 +143,9 @@ function AlertCard({
 
   return (
     <div className={`rounded-xl border ${sev.border} overflow-hidden transition-all hover:shadow-md`}>
-      {/* Left severity stripe */}
+      {/* Left severity accent bar */}
       <div className="flex">
-        <div className={`w-1 flex-shrink-0 ${sev.stripe}`} />
+        <div className={`w-1 flex-shrink-0 ${sev.accentBar}`} />
         <div className="flex-1">
           {/* Header */}
           <button

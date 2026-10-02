@@ -33,7 +33,11 @@ export const integrationMarketplaceService = {
   async getCatalog(): Promise<IntegrationCatalogItem[]> {
     const { data, error } = await db.from('integration_catalog').select('*').eq('is_active', true).order('sort_order');
     if (error) throw error;
-    return data || [];
+    return (data || []).filter(
+      (item) =>
+        item.slug !== "stripe-ach" &&
+        !String(item.name || "").toLowerCase().includes("stripe"),
+    );
   },
 
   async getOrganizationIntegrations(organizationId: string): Promise<OrganizationIntegration[]> {

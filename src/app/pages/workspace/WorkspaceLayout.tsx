@@ -204,7 +204,6 @@ const CamBilling = lazyNamed(() => import("./CamBilling"), "CamBilling");
 const Contractor1099 = lazyNamed(() => import("./Contractor1099"), "Contractor1099");
 const TrustAccounting = lazyNamed(() => import("./TrustAccounting"), "TrustAccounting");
 const TenantScreeningCenter = lazyNamed(() => import("./TenantScreeningCenter"), "TenantScreeningCenter");
-const IntegrationMarketplace = lazyNamed(() => import("./IntegrationMarketplace"), "IntegrationMarketplace");
 const CommercialLeaseEscalations = lazyNamed(() => import("./CommercialLeaseEscalations"), "CommercialLeaseEscalations");
 const InternationalRulesHub = lazyNamed(() => import("./InternationalRulesHub"), "InternationalRulesHub");
 const OwnerDisbursements = lazyNamed(() => import("./OwnerDisbursements"), "OwnerDisbursements");
@@ -317,7 +316,6 @@ const CORE_NAV_ITEMS: NavItem[] = [
   { slug: "contractor-1099", label: "1099 Reporting", icon: FileSpreadsheet },
   { slug: "trust-accounting", label: "Trust Accounting", icon: Landmark },
   { slug: "commercial-escalations", label: "Lease Escalations", icon: TrendingUp },
-  { slug: "integration-marketplace", label: "Integration Marketplace", icon: Plug },
   { slug: "esignature", label: "eSignature Hub", icon: FileSignature },
   { slug: "owner-disbursements", label: "Owner Payouts", icon: Landmark },
   { slug: "approval-center", label: "Approval Center", icon: BadgeCheck },
@@ -1126,7 +1124,7 @@ export function WorkspaceLayout() {
       case "commercial-escalations":
         return <CommercialLeaseEscalations organizationId={organization.id} />;
       case "integration-marketplace":
-        return <IntegrationMarketplace organizationId={organization.id} />;
+        return <Navigate to={getWorkspaceRoute(organization.slug, "finance")} replace />;
       case "esignature":
         return <ESignature organizationId={organization.id} />;
       case "owner-disbursements":

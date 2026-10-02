@@ -490,7 +490,7 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Results will appear in the screening history below. Connect TransUnion SmartMove in Integration Marketplace for live bureau data.
+                    Results will appear in the screening history below. Add your TransUnion SmartMove API key in workspace Settings when your admin enables live bureau screening.
                   </p>
                   <div className="flex justify-between pt-2">
                     <Button variant="outline" onClick={() => setWizardStep(1)}>Back</Button>

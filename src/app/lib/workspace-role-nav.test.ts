@@ -13,7 +13,6 @@ const ROUTED_WORKSPACE_SLUGS = [
   "contractor-1099",
   "trust-accounting",
   "commercial-escalations",
-  "integration-marketplace",
   "international-rules",
 ] as const;
 

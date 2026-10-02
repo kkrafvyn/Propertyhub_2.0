@@ -88,7 +88,6 @@ export const NAV_SLUG_MODULE_MAP: Record<string, string> = {
   workflows: "ai",
   "workflow-approval": "ai",
   integrations: "integrations",
-  "integration-marketplace": "integrations",
   "module-marketplace": "integrations",
   procurement: "procurement",
   "general-ledger": "accounting",

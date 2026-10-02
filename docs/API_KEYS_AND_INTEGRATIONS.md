@@ -57,16 +57,14 @@ Env placeholders when integrated: `SUMSUB_APP_TOKEN`, `SUMSUB_SECRET_KEY`, `SUMS
 |---|---|---|
 | `TRANSUNION_API_KEY` | TransUnion SmartMove | [mysmartmove.com](https://www.mysmartmove.com) partner onboarding |
 
-## Payments
+## Payments (PayAngels — sole checkout rail)
 
 | Variable | Purpose | Get it |
 |---|---|---|
-| `VITE_PAYSTACK_PUBLIC_KEY` | Client checkout | [Paystack Developer](https://dashboard.paystack.com/#/settings/developer) |
-| `PAYSTACK_SECRET_KEY` | Server verification | Same |
-| `PAYSTACK_WEBHOOK_SECRET` | Webhook HMAC | Paystack webhook settings |
-| `VITE_PAYANGELS_PUBLIC_KEY` | PayAngels client | PayAngels merchant portal |
-| `PAYANGELS_SECRET_KEY` | PayAngels server | Same |
+| `VITE_PAYANGELS_PUBLIC_KEY` | Client inline checkout | PayAngels merchant portal |
+| `PAYANGELS_SECRET_KEY` | Server init / verify | Same |
 | `PAYANGELS_WEBHOOK_SECRET` | Webhook verification | Same |
+| `PAYANGELS_API_BASE` | API host (operator-set) | PayAngels onboarding docs — not Stripe |
 
 ## Communications
 

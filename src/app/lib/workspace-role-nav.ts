@@ -106,7 +106,8 @@ export const WORKSPACE_SLUG_PERMISSIONS: Record<string, WorkspacePermission | nu
   "contractor-1099": "finance:read",
   "trust-accounting": "finance:read",
   "commercial-escalations": "listings:read",
-  "integration-marketplace": "team:manage",
+  /** Legacy slug — no nav; WorkspaceLayout redirects to finance (payout details). */
+  "integration-marketplace": "finance:read",
   "international-rules": "listings:read",
 };
 

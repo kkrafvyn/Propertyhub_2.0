@@ -35,11 +35,11 @@ supabase db push
 # 1. Update .env with new variables
 cat >> .env << 'EOF'
 
-# ===== CURRENCY & PAYMENTS =====
-VITE_STRIPE_PUBLIC_KEY=pk_test_...
-STRIPE_SECRET_KEY=sk_test_...
-VITE_FLUTTERWAVE_PUBLIC_KEY=FLWPUBK_...
-FLUTTERWAVE_SECRET_KEY=FLWSECK_...
+# ===== CURRENCY & PAYMENTS (PayAngels — MoMo, bank, card worldwide) =====
+VITE_PAYANGELS_PUBLIC_KEY=pk_live_...
+PAYANGELS_SECRET_KEY=sk_live_...
+PAYANGELS_WEBHOOK_SECRET=...
+PAYANGELS_API_BASE=https://api.paystack.co
 
 # ===== MLS INTEGRATIONS =====
 MLS_API_KEY=your_mls_key
@@ -92,23 +92,10 @@ EOF
   3. Get API key from dashboard
 - **Setup**: Add to REALTOR_API_KEY
 
-**Stripe (Card Payments):**
-- ⏱️ **Time**: 5 minutes
-- **URL**: https://dashboard.stripe.com/
-- **Process**:
-  1. Sign in or create account
-  2. Get Publishable Key & Secret Key
-  3. Test mode keys for development
-- **Setup**: Add to VITE_STRIPE_PUBLIC_KEY & STRIPE_SECRET_KEY
-
-**Flutterwave (Mobile Money - Africa):**
-- ⏱️ **Time**: 30 minutes
-- **URL**: https://dashboard.flutterwave.com/
-- **Process**:
-  1. Sign up account
-  2. Create Live Keys
-  3. Copy Public Key & Secret Key
-- **Setup**: Add to VITE_FLUTTERWAVE_PUBLIC_KEY & FLUTTERWAVE_SECRET_KEY
+**PayAngels (MoMo, bank, card — worldwide):**
+- ⏱️ **Time**: varies by merchant onboarding
+- **Process**: Obtain public/secret keys and webhook secret from PayAngels
+- **Setup**: `VITE_PAYANGELS_PUBLIC_KEY` on Vercel; `PAYANGELS_*` secrets on Supabase (`npm run supabase:deploy:payments`)
 
 ### **Hour 4-5: Update Routes & Navigation**
 

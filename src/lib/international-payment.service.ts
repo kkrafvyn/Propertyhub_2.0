@@ -124,16 +124,16 @@ const PAYMENT_PROVIDERS: Record<string, PaymentProvider> = {
     documentation: 'https://googlepay.com/docs',
   },
 
-  // Crypto
-  stripe_crypto: {
-    id: 'stripe_crypto',
+  // Crypto (inactive — PayAngels is the sole live checkout rail)
+  payangels_crypto: {
+    id: 'payangels_crypto',
     name: 'Crypto',
     type: 'crypto',
     supportedCurrencies: ['USD', 'EUR'],
     supportedRegions: ['GLOBAL'],
     isActive: false,
     commissionPercentage: 3.5,
-    documentation: 'https://payangels.com/crypto',
+    documentation: 'https://payangels.com/docs',
   },
 
   // Buy Now Pay Later
@@ -191,9 +191,7 @@ class InternationalPaymentService {
     region: string
   ): InternationalPaymentConfig {
     const availableMethods = this.getPaymentMethods(currency, region);
-    const regionUpper = region.toUpperCase();
 
-    const paystackRegions = ['GH', 'NG', 'KE', 'ZA'];
     let defaultMethod = 'payangels';
     if (!this.getProvider(defaultMethod)?.isActive) {
       defaultMethod = availableMethods[0]?.id || defaultMethod;

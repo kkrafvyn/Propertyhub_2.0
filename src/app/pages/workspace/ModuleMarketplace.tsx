@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Package, Plug } from "lucide-react";
+import { Loader2, Package } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -10,7 +10,6 @@ import {
   type WorkspaceModuleCatalogItem,
   type WorkspaceModuleCategory,
 } from "../../../lib/workspace-module-catalog";
-import { IntegrationMarketplace } from "./IntegrationMarketplace";
 import type { MemberRole } from "../../../lib/workspace";
 
 interface ModuleMarketplaceProps {
@@ -196,17 +195,6 @@ export function ModuleMarketplace({ organizationId, currentRole }: ModuleMarketp
           })}
         </div>
       )}
-
-      {/* Integration Partners */}
-      <div className="pt-2">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600">
-            <Plug className="h-4 w-4" />
-          </div>
-          <h2 className="text-lg font-semibold">Integration Partners</h2>
-        </div>
-        <IntegrationMarketplace organizationId={organizationId} />
-      </div>
     </div>
   );
 }

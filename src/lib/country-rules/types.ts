@@ -7,8 +7,8 @@ export type PaymentRailId =
   | "momo_mtn"
   | "momo_telecel"
   | "mpesa"
-  | "stripe_card"
-  | "stripe_ach"
+  | "payangels_card"
+  | "payangels_bank"
   | "open_banking"
   | "bank_transfer"
   | "wallet";
