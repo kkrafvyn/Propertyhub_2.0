@@ -33,31 +33,16 @@ function envConfigured(...keys: string[]) {
   });
 }
 
-/** TransUnion SmartMove adapter — uses sandbox simulation until API keys are set. */
+/** TransUnion SmartMove adapter. Screening must run server-side once a provider
+ * account and an approved API workflow are available. Never fabricate reports. */
 export const transUnionAdapter: ScreeningProviderAdapter = {
   slug: 'transunion-smartmove',
   name: 'TransUnion SmartMove',
   supportedChecks: ['credit', 'criminal', 'eviction'],
-  isConfigured: () => envConfigured('VITE_TRANSUNION_API_KEY', 'TRANSUNION_API_KEY'),
+  isConfigured: () => false,
   async submitCheck(input) {
-    const ref = `tu_${crypto.randomUUID().slice(0, 8)}`;
-    if (!this.isConfigured()) {
-      return {
-        provider: this.slug,
-        providerReference: ref,
-        recommendation: 'review',
-        resultSummary: `[Sandbox] ${input.checkType} check requires TransUnion credentials for ${input.applicantName}. Manual review recommended until connected.`,
-        resultPayload: { mode: 'sandbox', checkType: input.checkType, score: input.checkType === 'credit' ? 680 : null },
-      };
-    }
-    // Live integration point — replace with TransUnion REST call when credentials exist
-    return {
-      provider: this.slug,
-      providerReference: ref,
-      recommendation: 'review',
-      resultSummary: `TransUnion ${input.checkType} check submitted for ${input.applicantEmail}.`,
-      resultPayload: { mode: 'live', checkType: input.checkType },
-    };
+    void input;
+    throw new Error('TransUnion tenant screening is not connected. Configure an approved server-side SmartMove integration before running this check.');
   },
 };
 
@@ -66,7 +51,7 @@ export const internalKycAdapter: ScreeningProviderAdapter = {
   slug: 'ghana-trust',
   name: 'Ghana Trust Center',
   supportedChecks: ['identity', 'income'],
-  isConfigured: () => envConfigured('SMILE_IDENTITY_API_KEY', 'VITE_SMILE_PARTNER_ID'),
+  isConfigured: () => envConfigured('VITE_SMILE_PARTNER_ID'),
   async submitCheck(input) {
     const ref = `kyc_${crypto.randomUUID().slice(0, 8)}`;
     if (!this.isConfigured()) {
@@ -75,7 +60,7 @@ export const internalKycAdapter: ScreeningProviderAdapter = {
         providerReference: ref,
         recommendation: 'review',
         resultSummary: `Manual trust review required for ${input.applicantName}. Connect Smile Identity for automated Ghana checks.`,
-        resultPayload: { mode: 'unverified', checkType: input.checkType },
+        resultPayload: { mode: 'manual_review', checkType: input.checkType },
       };
     }
     return {
@@ -83,7 +68,7 @@ export const internalKycAdapter: ScreeningProviderAdapter = {
       providerReference: ref,
       recommendation: 'review',
       resultSummary: `Identity and income verification queued for ${input.applicantName}.`,
-      resultPayload: { mode: 'queued', checkType: input.checkType },
+      resultPayload: { mode: 'manual_review', checkType: input.checkType },
     };
   },
 };

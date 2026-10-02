@@ -11,7 +11,7 @@ async function main() {
   const token = await PropertyToken.deploy(
     "Property Hub Token",
     "PROP",
-    ethers.parseEther("1000000"),
+    1000000n,
     18,
     "PROP-001",
     ethers.parseEther("500000"),

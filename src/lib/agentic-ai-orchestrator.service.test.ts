@@ -35,7 +35,7 @@ describe("Agentic AI Orchestrator Service", () => {
     expect(resolved).not.toBeNull();
     expect(resolved?.approvalStatus).toBe("approved");
     expect(resolved?.approvedBy).toBe("Executive Manager");
-    expect(resolved?.executionResult).toContain("Approved by Executive Manager");
+    expect(resolved?.executionResult).toContain("Recommendation approved by Executive Manager");
   });
 
   it("rejects approval when decision is reject", () => {

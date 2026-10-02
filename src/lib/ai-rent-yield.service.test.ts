@@ -38,7 +38,7 @@ describe('AI Rent Yield Predictor & Market Valuation Engine', () => {
     expect(prediction.featureImpacts.length).toBe(3);
 
     // Confidence and comps
-    expect(prediction.confidenceScorePct).toBeGreaterThanOrEqual(90);
+    expect(prediction.confidenceScorePct).toBeNull();
     expect(prediction.comparableComps.length).toBe(3);
   });
 

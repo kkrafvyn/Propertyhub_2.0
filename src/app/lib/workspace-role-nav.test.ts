@@ -18,8 +18,8 @@ describe("workspace-role-nav", () => {
     expect(canAccessWorkspaceSlug("team", "agent")).toBe(false);
   });
 
-  it("hides blockchain when contracts are not configured", () => {
-    expect(canAccessWorkspaceSlug("blockchain", "owner")).toBe(false);
+  it("shows blockchain setup and transactions to authorized owners before deployment", () => {
+    expect(canAccessWorkspaceSlug("blockchain", "owner")).toBe(true);
   });
 
   it("filters nav items for analyst role", () => {

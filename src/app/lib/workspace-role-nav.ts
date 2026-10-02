@@ -1,6 +1,5 @@
 import type { MemberRole } from "../../lib/workspace";
 import { canWorkspace, type WorkspacePermission } from "../../lib/workspace-permissions";
-import { clientIntegrations } from "../../lib/integrations";
 import {
   isSlugEnabledForCapabilities,
   type CompanyCapability,
@@ -109,10 +108,6 @@ export function canAccessWorkspaceSlug(
   customPermissions?: string[] | null,
   enabledCapabilities?: CompanyCapability[] | null,
 ): boolean {
-  if (slug === "blockchain" && !clientIntegrations.blockchain.configured) {
-    return false;
-  }
-
   if (enabledCapabilities?.length && !isSlugEnabledForCapabilities(slug, enabledCapabilities)) {
     return false;
   }

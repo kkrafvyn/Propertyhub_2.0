@@ -35,6 +35,7 @@ export const WORKSPACE_NAV_CATALOG: WorkspaceNavCatalogItem[] = [
   { slug: "customize-workspace", label: "Customize Workspace", group: "tools" },
   { slug: "whitelabel", label: "White-Label", group: "more" },
   { slug: "integrations", label: "Integrations", group: "more" },
+  { slug: "blockchain", label: "Blockchain Transactions", group: "more" },
   { slug: "notifications", label: "Notifications", group: "more" },
   { slug: "ai-rent-yield", label: "AI Yield Predictor", group: "ai" },
   { slug: "enterprise-operations", label: "Enterprise Operations", group: "enterprise" },

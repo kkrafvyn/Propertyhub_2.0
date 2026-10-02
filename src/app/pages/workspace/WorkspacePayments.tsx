@@ -599,7 +599,6 @@ export function WorkspacePayments({
           value={<AnimatedNumber value={stats.total} />}
           icon={CreditCard}
           iconColor="primary"
-          trend={{ value: "+14.8%", isPositive: true, label: "vs last month" }}
           subtitle="Across all property transactions"
         />
 
@@ -608,7 +607,6 @@ export function WorkspacePayments({
           value={<AnimatedNumber value={stats.successful} />}
           icon={Wallet}
           iconColor="emerald"
-          trend={{ value: "98.2%", isPositive: true, label: "on-time rate" }}
           subtitle="Instant MoMo & card clearances"
         />
 
@@ -627,7 +625,6 @@ export function WorkspacePayments({
           icon={Shield}
           iconColor="indigo"
           subtitle="SHA-256 cryptographic proof"
-          trend={{ value: "100%", isPositive: true, label: "audit integrity" }}
         />
       </div>
 

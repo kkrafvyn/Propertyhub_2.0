@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useSearchParams } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { Capacitor } from "@capacitor/core";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
@@ -89,6 +89,8 @@ export function SecuritySettingsPage() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const mfaRequired = searchParams.get("mfa") === "required";
   const workspaceMfaRequired = searchParams.get("mfa") === "workspace-required";
 
@@ -99,6 +101,9 @@ export function SecuritySettingsPage() {
   const [enrolling, setEnrolling] = useState(false);
   const [copiedSecret, setCopiedSecret] = useState(false);
   const [verifiedFactors, setVerifiedFactors] = useState<any[]>([]);
+  const [currentAal, setCurrentAal] = useState<string | null>(null);
+  const [stepUpCode, setStepUpCode] = useState("");
+  const [steppingUp, setSteppingUp] = useState(false);
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
 
   const [biometricAvailable, setBiometricAvailable] = useState(false);
@@ -119,12 +124,47 @@ export function SecuritySettingsPage() {
 
   const loadEnrolledFactors = async () => {
     try {
-      const { data, error } = await supabase.auth.mfa.listFactors();
+      const [{ data, error }, { data: assurance }] = await Promise.all([
+        supabase.auth.mfa.listFactors(),
+        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+      ]);
       if (error) throw error;
       const active = (data?.totp || []).filter((f: any) => f.status === "verified");
       setVerifiedFactors(active);
+      setCurrentAal(assurance?.currentLevel || null);
     } catch {
       // ignore silently if mfa table not populated
+    }
+  };
+
+  const stepUpMfaSession = async () => {
+    const factor = verifiedFactors[0];
+    if (!factor || !/^\d{6}$/.test(stepUpCode.trim())) return;
+    try {
+      setSteppingUp(true);
+      const challenge = await supabase.auth.mfa.challenge({ factorId: factor.id });
+      if (challenge.error) throw challenge.error;
+      const verification = await supabase.auth.mfa.verify({
+        factorId: factor.id,
+        challengeId: challenge.data.id,
+        code: stepUpCode.trim(),
+      });
+      if (verification.error) throw verification.error;
+      const { data: assurance, error: assuranceError } =
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (assuranceError) throw assuranceError;
+      if (assurance?.currentLevel !== "aal2") {
+        throw new Error("The session was not elevated. Please enter a fresh authenticator code.");
+      }
+      setCurrentAal("aal2");
+      setStepUpCode("");
+      toast.success("Administrative session verified.");
+      const returnTo = (location.state as { from?: string } | null)?.from;
+      navigate(returnTo?.startsWith("/admin") ? returnTo : "/admin", { replace: true });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to verify the authenticator code.");
+    } finally {
+      setSteppingUp(false);
     }
   };
 
@@ -389,6 +429,36 @@ export function SecuritySettingsPage() {
                   </Button>
                 ))}
               </div>
+              {mfaRequired && currentAal !== "aal2" ? (
+                <div className="space-y-2 border-t border-emerald-500/20 pt-3">
+                  <p className="text-xs text-ink-secondary">
+                    Enter the current code from your authenticator to unlock platform administration for this session.
+                  </p>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:max-w-md">
+                    <Input
+                      aria-label="Authenticator code"
+                      value={stepUpCode}
+                      onChange={(event) => setStepUpCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") void stepUpMfaSession();
+                      }}
+                      placeholder="000000"
+                      maxLength={6}
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      className="font-mono text-center tracking-widest"
+                    />
+                    <Button
+                      variant="gradient"
+                      onClick={() => void stepUpMfaSession()}
+                      disabled={steppingUp || stepUpCode.length !== 6}
+                      className="shrink-0"
+                    >
+                      {steppingUp ? "Verifying…" : "Unlock admin console"}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : !qrCode ? (
             /* Not enrolled - Start setup */

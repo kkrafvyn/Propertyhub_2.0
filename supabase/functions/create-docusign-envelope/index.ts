@@ -104,7 +104,9 @@ Deno.serve(async (req) => {
       })),
     };
     const accountId = Deno.env.get("DOCUSIGN_ACCOUNT_ID");
-    const baseUrl = (Deno.env.get("DOCUSIGN_BASE_URL") || "https://demo.docusign.net").replace(/\/+$/, "");
+    const configuredBaseUrl = Deno.env.get("DOCUSIGN_BASE_URL");
+    if (!configuredBaseUrl) throw new HttpError(503, "DocuSign base URL is not configured");
+    const baseUrl = configuredBaseUrl.replace(/\/+$/, "");
     let parsedBaseUrl: URL;
     try { parsedBaseUrl = new URL(baseUrl); } catch { throw new HttpError(503, "DocuSign endpoint is invalid"); }
     if (parsedBaseUrl.protocol !== "https:" || !/(^|\.)docusign\.(net|com)$/i.test(parsedBaseUrl.hostname)) {

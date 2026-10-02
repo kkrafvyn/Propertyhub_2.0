@@ -1,0 +1,21 @@
+{
+  "name": "@baytmiftah/blockchain",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "hardhat build",
+    "test": "hardhat test",
+    "clean": "hardhat clean",
+    "verify": "hardhat verify"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.7",
+    "@openzeppelin/contracts": "^5.6.1",
+    "dotenv": "^17.2.3",
+    "hardhat": "^3.12.0"
+  },
+  "overrides": {
+    "diff": "^8.0.3",
+    "serialize-javascript": "^7.0.7"
+  }
+}

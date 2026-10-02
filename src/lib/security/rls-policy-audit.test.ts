@@ -249,6 +249,31 @@ describe('tenant isolation fixture requirements', () => {
   });
 });
 
+describe('platform administrator full-control contract', () => {
+  const migration = readFileSync(
+    path.join(migrationsDir, '2026100201_platform_admin_full_control.sql'),
+    'utf8',
+  );
+
+  it('routes user roles, account state, and organization state through AAL2 admin RPCs', () => {
+    expect(migration).toMatch(/admin_set_user_platform_access/i);
+    expect(migration).toMatch(/admin_set_user_account_state/i);
+    expect(migration).toMatch(/admin_set_organization_state/i);
+    expect(migration.match(/private\.require_account_admin\(\)/gi)).toHaveLength(3);
+  });
+
+  it('audits every privileged state mutation and blocks self-lockout', () => {
+    expect(migration.match(/INSERT INTO public\.audit_logs/gi)).toHaveLength(3);
+    expect(migration).toMatch(/cannot change their own platform access/i);
+    expect(migration).toMatch(/cannot ban their own account/i);
+  });
+
+  it('only exposes the admin RPCs to authenticated users', () => {
+    expect(migration).toMatch(/REVOKE ALL ON FUNCTION public\.admin_set_user_platform_access.*FROM PUBLIC, anon/i);
+    expect(migration).toMatch(/GRANT EXECUTE ON FUNCTION public\.admin_set_organization_state.*TO authenticated/i);
+  });
+});
+
 const allMigrationSql = migrationFiles
   .map((file) => readFileSync(path.join(migrationsDir, file), 'utf8'))
   .join('\n');

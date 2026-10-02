@@ -1,9 +1,20 @@
-import { describe, it, expect } from 'vitest';
-import { multiCurrencyFxService } from './multi-currency-fx.service';
+import { beforeAll, describe, it, expect } from 'vitest';
+import { multiCurrencyFxService, type FXRate } from './multi-currency-fx.service';
 
 describe('multiCurrencyFxService', () => {
+  beforeAll(() => {
+    const updatedAt = '2026-01-01T00:00:00.000Z';
+    const rates: FXRate[] = [
+      { pair: 'USD/GHS', baseCurrency: 'USD', quoteCurrency: 'GHS', interbankRate: 15.85, marketRate: 15.85, change24h: 0, updatedAt, source: 'Exchange-rate provider' },
+      { pair: 'EUR/GHS', baseCurrency: 'EUR', quoteCurrency: 'GHS', interbankRate: 18.25, marketRate: 18.25, change24h: 0, updatedAt, source: 'Exchange-rate provider' },
+      { pair: 'GBP/GHS', baseCurrency: 'GBP', quoteCurrency: 'GHS', interbankRate: 21.1, marketRate: 21.1, change24h: 0, updatedAt, source: 'Exchange-rate provider' },
+      { pair: 'NGN/GHS', baseCurrency: 'NGN', quoteCurrency: 'GHS', interbankRate: 0.011, marketRate: 0.011, change24h: 0, updatedAt, source: 'Exchange-rate provider' },
+    ];
+    multiCurrencyFxService.loadVerifiedRateSnapshot(rates);
+  });
+
   describe('getLiveRates & getRate', () => {
-    it('returns Bank of Ghana benchmark rates for major pairs', () => {
+    it('returns a verified provider snapshot for major pairs', () => {
       const rates = multiCurrencyFxService.getLiveRates();
       expect(rates.length).toBeGreaterThanOrEqual(4);
 
@@ -11,7 +22,7 @@ describe('multiCurrencyFxService', () => {
       expect(usdGhs.baseCurrency).toBe('USD');
       expect(usdGhs.quoteCurrency).toBe('GHS');
       expect(usdGhs.interbankRate).toBeGreaterThan(10);
-      expect(usdGhs.source).toContain('Bank of Ghana');
+      expect(usdGhs.source).toBe('Exchange-rate provider');
     });
   });
 

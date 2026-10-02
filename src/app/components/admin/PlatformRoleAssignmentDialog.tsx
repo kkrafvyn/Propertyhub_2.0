@@ -174,7 +174,7 @@ export function PlatformRoleAssignmentDialog({
           </Button>
           <Button
             onClick={() => void handleSave()}
-            disabled={saving || (!isPlatformAdmin && selectedGrants.length === 0)}
+            disabled={saving}
           >
             {saving ? (
               <>

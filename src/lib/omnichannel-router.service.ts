@@ -108,8 +108,8 @@ export class OmnichannelRouterService {
 
       if (pushResult.delivered > 0) {
         channelsSucceeded.push("push");
-      } else {
-        // Not active on push, but not a fatal error
+      } else if (pushResult.failed > 0) {
+        channelsFailed.push("push");
       }
     } catch {
       channelsFailed.push("push");

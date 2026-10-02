@@ -115,8 +115,8 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
         "Approved via AI Command Center"
       );
       void loadState();
-      toast.success("Action successfully approved and dispatched to workers.");
-      setActionSuccessMsg("Action successfully approved and dispatched to workers.");
+      toast.success("Recommendation approved and recorded.");
+      setActionSuccessMsg("Recommendation approved and recorded. No worker action was dispatched.");
       setTimeout(() => setActionSuccessMsg(null), 4000);
     } catch (e: any) {
       toast.error(e?.message || "Failed to approve action.");
@@ -169,7 +169,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
       );
       setGoalPrompt("");
       void loadState();
-      setActionSuccessMsg(`Agent ${selectedAgent} completed task analysis and logged action.`);
+      setActionSuccessMsg(`Agent ${selectedAgent} completed a live analysis. No operational action was executed.`);
       setTimeout(() => setActionSuccessMsg(null), 4000);
     } finally {
       setExecutingGoal(false);
@@ -402,7 +402,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
       <Card className="p-6 border-surface-border bg-surface shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-base font-bold text-ink">Specialized Fleet Dispatcher</h2>
+            <h2 className="text-base font-bold text-ink">Specialized Agent Analysis</h2>
             <p className="text-xs text-ink-secondary">Select a specialized agent to execute targeted operational goals.</p>
           </div>
         </div>
@@ -448,7 +448,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
             className="text-xs gap-1.5 bg-primary text-primary-foreground"
           >
             {executingGoal ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-            Dispatch Goal
+            Analyze Goal
           </Button>
         </form>
       </Card>

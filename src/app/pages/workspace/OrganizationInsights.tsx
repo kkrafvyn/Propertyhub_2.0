@@ -5,7 +5,6 @@ import {
   Award,
   CheckCircle2,
   Clock,
-  Flame,
   Lightbulb,
   Sparkles,
   Target,
@@ -19,6 +18,7 @@ import { MetricCard } from "@/app/components/ui/MetricCard";
 import { ProgressMeter } from "@/app/components/ui/ProgressMeter";
 import { AnimatedNumber } from "@/app/components/ui/AnimatedNumber";
 import { marketIntelligenceService } from "@/lib/market-intelligence.service";
+import { customerHealthService, type OrgHealthRecord } from "@/lib/customer-health.service";
 
 interface OrganizationInsightsProps {
   organizationId: string;
@@ -38,6 +38,7 @@ export default function OrganizationInsights({
 }: OrganizationInsightsProps) {
   const [insights, setInsights] = useState<any>(null);
   const [bestPerformers, setBestPerformers] = useState<any[]>([]);
+  const [customerHealth, setCustomerHealth] = useState<OrgHealthRecord | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,14 +46,16 @@ export default function OrganizationInsights({
 
     const loadInsights = async () => {
       try {
-        const [insightsData, performersData] = await Promise.all([
+        const [insightsData, performersData, healthData] = await Promise.all([
           marketIntelligenceService.getOrganizationInsights(organizationId),
           marketIntelligenceService.getBestPerformingListings(organizationId, 5),
+          customerHealthService.getOrganizationHealth(organizationId),
         ]);
 
         if (!cancelled) {
           setInsights(insightsData);
           setBestPerformers(performersData || []);
+          setCustomerHealth(healthData[0] || null);
         }
       } catch (error) {
         console.error("Failed to load insights:", error);
@@ -119,9 +122,10 @@ export default function OrganizationInsights({
   }
 
   const leadQualityProgress = Math.min(100, Math.round(((insights?.avg_lead_quality || 0) / 5) * 100));
+  const satisfactionScore = customerHealth?.satisfactionScore ?? null;
   const satisfactionProgress = Math.min(
     100,
-    Math.round(((insights?.customer_satisfaction_score || 0) / 5) * 100)
+    Math.round(((satisfactionScore || 0) / 5) * 100)
   );
   const activeInventoryProgress =
     insights?.total_listings && insights.total_listings > 0
@@ -134,7 +138,7 @@ export default function OrganizationInsights({
     Math.round(
       (leadQualityProgress * 0.35) +
       (satisfactionProgress * 0.35) +
-      (Math.min(100, (insights?.conversion_rate || 12) * 5) * 0.3)
+      (Math.min(100, (insights?.conversion_rate || 0) * 5) * 0.3)
     )
   );
 
@@ -179,13 +183,9 @@ export default function OrganizationInsights({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-ink">Portfolio Health Score</h2>
-                <Badge variant="success" className="text-xs">
-                  <Flame className="w-3.5 h-3.5 mr-1" />
-                  Top 8%
-                </Badge>
               </div>
               <p className="text-xs text-ink-secondary mt-1 max-w-xl leading-relaxed">
-                Based on response time, tenant satisfaction, and listing conversion rate. Your team is performing in the top tier.
+                Based on available response, tenant-rating, and listing-conversion data. Missing signals contribute zero until measured.
               </p>
             </div>
           </div>
@@ -200,7 +200,7 @@ export default function OrganizationInsights({
             <div className="rounded-xl border border-surface-border bg-surface/80 px-4 py-2.5 backdrop-blur-sm">
               <p className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Satisfaction</p>
               <p className="text-lg font-bold text-primary">
-                {insights?.customer_satisfaction_score || 4.8}/5.0
+                {satisfactionScore === null ? "No ratings" : `${satisfactionScore}/5.0`}
               </p>
             </div>
           </div>
@@ -228,11 +228,6 @@ export default function OrganizationInsights({
             value={`${insights.conversion_rate || 0}%`}
             icon={TrendingUp}
             iconColor="emerald"
-            trend={{
-              value: "+3.2%",
-              isPositive: (insights.conversion_rate || 0) > 10,
-              label: "above regional average",
-            }}
             subtitle="From inquiry to contract sign"
           />
 
@@ -242,7 +237,6 @@ export default function OrganizationInsights({
             icon={Users}
             iconColor="indigo"
             subtitle="Verified identity & phone score"
-            trend={{ value: "4.2/5", isPositive: true, label: "quality standard" }}
           />
 
           <MetricCard
@@ -251,11 +245,6 @@ export default function OrganizationInsights({
             icon={Clock}
             iconColor="amber"
             subtitle="Median first agent reply"
-            trend={{
-              value: "-1.5h",
-              isPositive: true,
-              label: "faster than benchmark",
-            }}
           />
         </div>
       )}
@@ -287,7 +276,7 @@ export default function OrganizationInsights({
             <ProgressMeter
               label="Customer Satisfaction Index"
               value={satisfactionProgress}
-              valueDisplay={`${insights?.customer_satisfaction_score || 0}/5`}
+              valueDisplay={satisfactionScore === null ? "No ratings" : `${satisfactionScore}/5`}
               color="emerald"
               size="md"
               shimmer

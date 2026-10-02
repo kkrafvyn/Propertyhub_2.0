@@ -155,32 +155,41 @@ export const adminService = {
       platform_console_grants?: string[];
     },
   ) {
-    const { data, error } = await supabase
-      .from("users")
-      .update(updates)
-      .eq("id", userId)
-      .select(
-        "id, email, full_name, verified, banned, is_platform_admin, is_platform_manager, platform_console_grants",
-      )
-      .single();
+    const platformAccessChanged = updates.is_platform_admin !== undefined
+      || updates.is_platform_manager !== undefined
+      || updates.platform_console_grants !== undefined;
+    if (platformAccessChanged) {
+      const { data, error } = await supabase.rpc("admin_set_user_platform_access", {
+        p_user_id: userId,
+        p_is_platform_admin: Boolean(updates.is_platform_admin),
+        p_grants: updates.platform_console_grants || [],
+      });
+      if (error) throw error;
+      return data;
+    }
+
+    const { data, error } = await supabase.rpc("admin_set_user_account_state", {
+      p_user_id: userId,
+      p_verified: updates.verified ?? null,
+      p_banned: updates.banned ?? null,
+    });
 
     if (error) throw error;
     return data;
   },
 
   async setPlatformAdmin(userId: string, enabled: boolean) {
-    return this.updateUser(userId, {
-      is_platform_admin: enabled,
-      ...(enabled
-        ? { is_platform_manager: false, platform_console_grants: [] }
-        : {}),
+    const current = await this.getPlatformAccess(userId);
+    return this.setPlatformAccess(userId, {
+      isPlatformAdmin: enabled,
+      grants: enabled ? [] : (current.platform_console_grants as PlatformConsoleGrant[]),
     });
   },
 
   async setPlatformGrants(userId: string, grants: PlatformConsoleGrant[]) {
-    return this.updateUser(userId, {
-      is_platform_admin: false,
-      platform_console_grants: grants,
+    return this.setPlatformAccess(userId, {
+      isPlatformAdmin: false,
+      grants,
     });
   },
 
@@ -188,25 +197,19 @@ export const adminService = {
     userId: string,
     input: { isPlatformAdmin: boolean; grants: PlatformConsoleGrant[] },
   ) {
-    if (input.isPlatformAdmin) {
-      return this.setPlatformAdmin(userId, true);
-    }
-
-    if (input.grants.length === 0) {
-      return this.updateUser(userId, {
-        is_platform_admin: false,
-        is_platform_manager: false,
-        platform_console_grants: [],
-      });
-    }
-
-    return this.setPlatformGrants(userId, input.grants);
+    const { data, error } = await supabase.rpc("admin_set_user_platform_access", {
+      p_user_id: userId,
+      p_is_platform_admin: input.isPlatformAdmin,
+      p_grants: input.grants,
+    });
+    if (error) throw error;
+    return data;
   },
 
   async setPlatformManager(userId: string, enabled: boolean) {
-    return this.updateUser(userId, {
-      is_platform_manager: enabled,
-      ...(enabled ? { is_platform_admin: false } : { platform_console_grants: [] }),
+    return this.setPlatformAccess(userId, {
+      isPlatformAdmin: false,
+      grants: enabled ? ["users", "organizations", "listings", "moderation", "trust", "support"] : [],
     });
   },
 
@@ -344,12 +347,11 @@ export const adminService = {
       suspended?: boolean;
     },
   ) {
-    const { data, error } = await supabase
-      .from("organizations")
-      .update(updates)
-      .eq("id", organizationId)
-      .select("id, name, slug, verified, suspended")
-      .single();
+    const { data, error } = await supabase.rpc("admin_set_organization_state", {
+      p_organization_id: organizationId,
+      p_verified: updates.verified ?? null,
+      p_suspended: updates.suspended ?? null,
+    });
 
     if (error) throw error;
     return data;

@@ -367,11 +367,9 @@ export function AIRentYieldPredictor({
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <h4 className="font-bold text-ink text-base">
-                    AI Investment Verdict: {prediction.investmentVerdict.replace(/_/g, ' ')}
+                    Scenario Assessment: {prediction.investmentVerdict.replace(/_/g, ' ')}
                   </h4>
-                  <Badge className="bg-primary text-primary-foreground text-xs font-bold">
-                    {prediction.confidenceScorePct}% Confidence
-                  </Badge>
+                  <Badge variant="outline" className="text-xs font-bold">Rules-based estimate</Badge>
                 </div>
                 <p className="text-sm text-ink-secondary mt-1 leading-relaxed">
                   {prediction.verdictRationale}
@@ -434,13 +432,13 @@ export function AIRentYieldPredictor({
             </div>
           </Card>
 
-          {/* Real-time Comparable Market Comps */}
+            {/* Modeled scenarios derived from the same estimator inputs. */}
           <Card className="p-6 border-surface-border bg-surface shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-ink">Neighborhood Rental Comparables</h3>
+                <h3 className="text-base font-bold text-ink">Modeled Rent Scenarios</h3>
                 <p className="text-xs text-ink-secondary">
-                  Active verified market transactions in {neighborhood} corridor.
+                  Rule-based low, base, and upper scenarios for {neighborhood}; these are not verified transactions.
                 </p>
               </div>
             </div>

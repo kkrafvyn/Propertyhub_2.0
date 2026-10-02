@@ -1,10 +1,12 @@
 /**
  * BaytMiftah REOS — Multi-Currency FX Engine & Dual-Currency Rent Indexing
  * 
- * Provides Bank of Ghana (BOG) reference FX rate synchronization,
+ * Provides live exchange-rate synchronization,
  * dual-currency rent indexing (USD/GHS/EUR/GBP), FX collar/hedging calculators,
  * and multi-currency estate ledger conversions.
  */
+
+import { currencyService } from './currency.service';
 
 export interface FXRate {
   pair: string; // e.g. 'USD/GHS'
@@ -14,7 +16,7 @@ export interface FXRate {
   marketRate: number; // typical forex bureau / commercial bank rate
   change24h: number; // percentage change
   updatedAt: string;
-  source: 'Bank of Ghana (BOG)' | 'Interbank Live Feed';
+  source: 'Exchange-rate provider';
 }
 
 export interface DualCurrencyLeaseCalculation {
@@ -44,112 +46,75 @@ export interface FXHedgingScenario {
   currencyRiskLevel: 'Low' | 'Moderate' | 'High' | 'Severe';
 }
 
-// Current Bank of Ghana baseline interbank rates — updated by syncRatesFromProvider()
-const BOG_RATES: Record<string, FXRate> = {
-  'USD/GHS': {
-    pair: 'USD/GHS',
-    baseCurrency: 'USD',
-    quoteCurrency: 'GHS',
-    interbankRate: 15.85,
-    marketRate: 16.10,
-    change24h: 0.12,
-    updatedAt: new Date().toISOString(),
-    source: 'Bank of Ghana (BOG)',
-  },
-  'EUR/GHS': {
-    pair: 'EUR/GHS',
-    baseCurrency: 'EUR',
-    quoteCurrency: 'GHS',
-    interbankRate: 17.20,
-    marketRate: 17.45,
-    change24h: -0.05,
-    updatedAt: new Date().toISOString(),
-    source: 'Bank of Ghana (BOG)',
-  },
-  'GBP/GHS': {
-    pair: 'GBP/GHS',
-    baseCurrency: 'GBP',
-    quoteCurrency: 'GHS',
-    interbankRate: 20.15,
-    marketRate: 20.40,
-    change24h: 0.25,
-    updatedAt: new Date().toISOString(),
-    source: 'Bank of Ghana (BOG)',
-  },
-  'NGN/GHS': {
-    pair: 'NGN/GHS',
-    baseCurrency: 'NGN',
-    quoteCurrency: 'GHS',
-    interbankRate: 0.0105,
-    marketRate: 0.011,
-    change24h: -0.8,
-    updatedAt: new Date().toISOString(),
-    source: 'Bank of Ghana (BOG)',
-  },
-};
+const LIVE_RATES: Record<string, FXRate> = {};
 
 export const multiCurrencyFxService = {
+  /**
+   * Hydrate a trusted rate snapshot (for example, from a server-side cache).
+   * Invalid or unsupported pairs are rejected instead of silently becoming rates.
+   */
+  loadVerifiedRateSnapshot(rates: FXRate[]): FXRate[] {
+    for (const rate of rates) {
+      const expectedPair = `${rate.baseCurrency}/${rate.quoteCurrency}`;
+      if (
+        rate.pair !== expectedPair ||
+        rate.quoteCurrency !== 'GHS' ||
+        rate.baseCurrency === 'GHS' ||
+        !Number.isFinite(rate.interbankRate) ||
+        rate.interbankRate <= 0 ||
+        !Number.isFinite(rate.marketRate) ||
+        rate.marketRate <= 0
+      ) {
+        throw new Error(`Invalid verified exchange-rate snapshot entry: ${rate.pair}`);
+      }
+      LIVE_RATES[rate.pair] = { ...rate };
+    }
+    return this.getLiveRates();
+  },
+
   /**
    * Refresh rates from the exchange-rates edge function when available.
    */
   async syncRatesFromProvider(): Promise<FXRate[]> {
-    try {
-      const response = await fetch('https://open.er-api.com/v6/latest/USD');
-      if (!response.ok) return this.getLiveRates();
-      const payload = await response.json();
-      const rates = payload?.rates || {};
-
-      const pairs: Array<[string, 'USD' | 'EUR' | 'GBP' | 'NGN']> = [
-        ['USD/GHS', 'USD'],
-        ['EUR/GHS', 'EUR'],
-        ['GBP/GHS', 'GBP'],
-        ['NGN/GHS', 'NGN'],
-      ];
-
-      for (const [pair, base] of pairs) {
-        const ghsRate = Number(rates.GHS) / Number(rates[base] || 1);
-        if (!Number.isFinite(ghsRate) || ghsRate <= 0) continue;
-        BOG_RATES[pair] = {
-          ...BOG_RATES[pair],
-          pair,
-          baseCurrency: base,
-          quoteCurrency: 'GHS',
-          interbankRate: ghsRate,
-          marketRate: ghsRate * 1.015,
-          updatedAt: new Date().toISOString(),
-          source: 'Interbank Live Feed',
-        };
-      }
-
-      return this.getLiveRates();
-    } catch {
-      return this.getLiveRates();
+    const bases: Array<'USD' | 'EUR' | 'GBP' | 'NGN'> = ['USD', 'EUR', 'GBP', 'NGN'];
+    const results = await Promise.allSettled(
+      bases.map(async (base) => ({ base, rate: await currencyService.getExchangeRate(base, 'GHS') })),
+    );
+    for (const result of results) {
+      if (result.status !== 'fulfilled') continue;
+      const { base, rate } = result.value;
+      if (!Number.isFinite(rate) || rate <= 0) continue;
+      const pair = `${base}/GHS`;
+      LIVE_RATES[pair] = {
+        pair,
+        baseCurrency: base,
+        quoteCurrency: 'GHS',
+        interbankRate: rate,
+        marketRate: rate,
+        change24h: 0,
+        updatedAt: new Date().toISOString(),
+        source: 'Exchange-rate provider',
+      };
     }
+    const rates = this.getLiveRates();
+    if (!rates.length) throw new Error('No live exchange rates are available');
+    return rates;
   },
 
   /**
-   * Get all active Bank of Ghana reference rates
+   * Get all currently loaded provider rates.
    */
   getLiveRates(): FXRate[] {
-    return Object.values(BOG_RATES);
+    return Object.values(LIVE_RATES);
   },
 
   /**
    * Get current exchange rate for a specific pair
    */
   getRate(pair: string = 'USD/GHS'): FXRate {
-    return (
-      BOG_RATES[pair.toUpperCase()] || {
-        pair,
-        baseCurrency: 'USD',
-        quoteCurrency: 'GHS',
-        interbankRate: 15.85,
-        marketRate: 16.10,
-        change24h: 0,
-        updatedAt: new Date().toISOString(),
-        source: 'Bank of Ghana (BOG)',
-      }
-    );
+    const rate = LIVE_RATES[pair.toUpperCase()];
+    if (!rate) throw new Error(`No verified exchange rate is loaded for ${pair}`);
+    return rate;
   },
 
   /**

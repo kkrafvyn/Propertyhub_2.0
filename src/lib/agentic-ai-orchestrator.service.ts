@@ -344,7 +344,7 @@ class AgenticAIOrchestratorService {
     item.approvedAt = new Date().toISOString();
     item.executionResult =
       decision === "approve"
-        ? `Approved by ${resolvedBy}: Action successfully dispatched to production workers. ${notes || ""}`
+        ? `Recommendation approved by ${resolvedBy}. No worker action was dispatched. ${notes || ""}`
         : `Rejected by ${resolvedBy}: Action cancelled. Reason: ${notes || "Manager discretion"}`;
 
     return { ...item };
@@ -576,7 +576,7 @@ class AgenticAIOrchestratorService {
           risk_level: item.severity === "critical" ? "high" : "medium",
           trigger_type: "night_watch",
           recommendation: `${item.title}. ${item.recommendation}`,
-          action_status: item.riskLevel === "LEVEL_0" || item.riskLevel === "LEVEL_1" ? "executed" : "recommended",
+          action_status: "recommended",
         })
         .then(() => undefined)
         .catch(() => undefined);
@@ -753,6 +753,20 @@ class AgenticAIOrchestratorService {
     if (this.looksLikeUuid(organizationId) && !this.isDemoOrTest()) {
       const { aiToolAllowlistService } = await import("./ai-tool-allowlist.service");
       await aiToolAllowlistService.assertToolAllowed(organizationId, `${agent.toLowerCase()}_goal`, agent);
+
+      if (agent !== "ExecutiveAgent") {
+        throw new Error(`${agent} execution is not connected to a production worker. Use the live operational module for this task.`);
+      }
+
+      const report = await this.runNightWatchAuditLive(organizationId);
+      return {
+        agent,
+        summary: `Scanned ${report.leasesScanned} units, ${report.receivablesScanned} receivable rows, and ${report.maintenanceScanned} open maintenance items.`,
+        actionTaken: "Analysis completed. No operational action was executed.",
+        riskLevel: report.criticalAlertsCount > 0 ? "LEVEL_2" : report.pendingApprovalsCount > 0 ? "LEVEL_1" : "LEVEL_0",
+        requiresApproval: false,
+        data: report,
+      };
     }
 
     let summary = "";

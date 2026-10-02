@@ -86,6 +86,8 @@ export const leaseScreeningService = {
       checkType: input.checkType,
     });
 
+    const providerMode = String(result.resultPayload?.mode || "");
+    const status = providerMode === "live" ? "completed" : "manual_review";
     const { data, error } = await db.from("tenant_screening_checks").insert({
       organization_id: input.organizationId,
       screening_id: input.screeningId || null,
@@ -93,12 +95,12 @@ export const leaseScreeningService = {
       check_type: input.checkType,
       provider: result.provider,
       provider_reference: result.providerReference,
-      status: "completed",
+      status,
       recommendation: result.recommendation,
       result_summary: result.resultSummary,
       result_payload: result.resultPayload,
       reviewed_by: input.reviewedBy || null,
-      reviewed_at: new Date().toISOString(),
+      reviewed_at: status === "completed" ? new Date().toISOString() : null,
     }).select("*").single();
     if (error) throw error;
     return data;

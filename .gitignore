@@ -17,7 +17,7 @@ cache/
 blockchain/node_modules/
 blockchain/cache/
 blockchain/artifacts/
-blockchain/contracts
+blockchain/types/
 deployments/
 
 # Local tooling output

@@ -792,7 +792,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
                         providerAccountId: feedProviderAccountId.trim(),
                         createdBy: actorId,
                       });
-                      toast.success("Bank feed connected.");
+                      toast.success("Bank feed details saved. Run a successful sync to activate the connection.");
                       await load();
                     } catch (failure: any) {
                       toast.error(failure?.message || "Unable to connect bank feed.");

@@ -1,4 +1,4 @@
-// AI Rent Yield Predictor & Market Valuation Service for Ghana Real Estate
+// Rule-based rent scenario estimator for Ghana real estate.
 
 export interface NeighborhoodBenchmark {
   name: string;
@@ -180,7 +180,7 @@ export interface YieldPredictionResult {
   estimatedAnnualNetIncomeGHS: number;
   projectedDaysOnMarket: number;
   occupancyForecastPct: number;
-  confidenceScorePct: number;
+  confidenceScorePct: number | null;
   investmentVerdict: 'EXCELLENT_YIELD' | 'ABOVE_AVERAGE' | 'MODERATE' | 'BELOW_BENCHMARK';
   verdictRationale: string;
   featureImpacts: FeatureImpactBreakdown[];
@@ -195,7 +195,7 @@ export interface YieldPredictionResult {
 
 export const aiRentYieldService = {
   /**
-   * Run ML-weighted predictive rent yield analysis
+   * Run a transparent rules-based rent scenario. This is not an ML valuation.
    */
   predictRentalYield(input: YieldPredictionInput): YieldPredictionResult {
     const benchmark =
@@ -324,21 +324,21 @@ export const aiRentYieldService = {
 
     const comparableComps = [
       {
-        title: `${input.bedrooms}-Bed Executive Unit`,
+        title: `${input.bedrooms}-Bed Conservative Scenario`,
         neighborhood: benchmark.name,
         bedrooms: input.bedrooms,
         monthlyRentGHS: Math.round(optimalRent * 0.98),
         yieldPct: parseFloat((grossAnnualYieldPct * 0.98).toFixed(1)),
       },
       {
-        title: `${input.bedrooms}-Bed Luxury Apartment`,
+        title: `${input.bedrooms}-Bed Base Scenario`,
         neighborhood: benchmark.name,
         bedrooms: input.bedrooms,
         monthlyRentGHS: Math.round(optimalRent * 1.04),
         yieldPct: parseFloat((grossAnnualYieldPct * 1.04).toFixed(1)),
       },
       {
-        title: `${input.bedrooms}-Bed Serviced Residence`,
+        title: `${input.bedrooms}-Bed Upper Scenario`,
         neighborhood: benchmark.name,
         bedrooms: input.bedrooms,
         monthlyRentGHS: Math.round(optimalRent * 1.09),
@@ -358,7 +358,7 @@ export const aiRentYieldService = {
       estimatedAnnualNetIncomeGHS: Math.round(netAnnualIncomeGHS),
       projectedDaysOnMarket: daysOnMarket,
       occupancyForecastPct: benchmark.occupancyRatePct,
-      confidenceScorePct: 94.5,
+      confidenceScorePct: null,
       investmentVerdict,
       verdictRationale,
       featureImpacts,

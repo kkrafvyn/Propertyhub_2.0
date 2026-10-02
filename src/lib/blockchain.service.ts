@@ -1,6 +1,8 @@
 import { supabase } from './supabase';
 import type { Database } from './database.types';
 import { sha256Hex } from './browser-crypto';
+import { ethers } from 'ethers';
+import { web3Service } from './web3.service';
 
 function isSimulatedTokenAddress(contractAddress?: string | null): boolean {
   const value = String(contractAddress || "").trim();
@@ -76,7 +78,47 @@ interface WalletRegistration {
   verificationSignature?: string;
 }
 
+export interface LivePolygonTransaction {
+  hash: string;
+  blockNumber: number;
+  timestamp: number;
+  from: string;
+  to: string;
+  valueWei: string;
+  gasUsed: string;
+  gasPriceWei: string;
+  status: 'confirmed' | 'failed';
+  confirmations: number;
+}
+
 export const blockchainService = {
+  async getLivePolygonTransactions(
+    organizationId: string,
+    addresses: string[],
+    network: 'amoy' | 'mainnet' = 'amoy',
+  ): Promise<LivePolygonTransaction[]> {
+    if (!addresses.length) return [];
+    const { data, error } = await supabase.functions.invoke('polygon-transactions', {
+      body: { organizationId, addresses, network },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(String(data.error));
+    return Array.isArray(data?.transactions) ? data.transactions : [];
+  },
+
+  /** Get the organization's persisted on-chain transaction records. */
+  async getOrganizationBlockchainRecords(organizationId: string, limit = 100) {
+    const { data, error } = await supabase
+      .from('blockchain_records')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  },
+
   /**
    * Calculate SHA-256 hash of document content
    */
@@ -215,7 +257,15 @@ export const blockchainService = {
       }
 
       const contractAddress = requestedAddress;
-      const simulated = isSimulatedTokenAddress(contractAddress);
+      if (isSimulatedTokenAddress(contractAddress) || !ethers.isAddress(contractAddress)) {
+        throw new Error('A valid deployed token contract address is required');
+      }
+      const provider = web3Service.getProvider();
+      if (!provider) throw new Error('Connect a supported blockchain network before registering a tokenized asset');
+      const deployedCode = await provider.getCode(contractAddress);
+      if (!deployedCode || deployedCode === '0x') {
+        throw new Error('No token contract is deployed at the supplied address');
+      }
 
       const { data, error } = await supabase
         .from('tokenized_assets')
@@ -226,7 +276,7 @@ export const blockchainService = {
           token_symbol: tokenization.tokenSymbol,
           token_name: tokenization.tokenName,
           total_supply: tokenization.totalSupply,
-          chain_id: simulated ? 0 : 137,
+          chain_id: Number((await provider.getNetwork()).chainId),
           status: 'pending',
           metadata_uri: tokenization.metadata?.metadataUri || '',
         })

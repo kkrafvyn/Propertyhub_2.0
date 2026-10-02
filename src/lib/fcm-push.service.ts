@@ -64,7 +64,7 @@ export class FCMPushService {
         { onConflict: "token" }
       );
     } catch {
-      // offline / mock fallback
+      // Retain the device token locally until server persistence is available.
     }
   }
 
@@ -120,23 +120,11 @@ export class FCMPushService {
       return { delivered: 0, failed: 0 };
     }
 
-    // In a production backend, this would call admin.messaging().sendEachForMulticast()
-    // For client/PWA environment, trigger web notification API if permitted
-    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-      try {
-        new Notification(payload.title, {
-          body: payload.body,
-          icon: "/icon-192.png",
-          data: {
-            url: payload.deepLinkUrl || `/app/messages/${payload.conversationId}`,
-          },
-        });
-      } catch {
-        // notification suppressed
-      }
-    }
-
-    return { delivered: tokens.length, failed: 0 };
+    // FCM tokens cannot be delivered safely from a browser client. The active
+    // production path is dispatch-notification, which sends Web Push server-side.
+    // Report these tokens as failed instead of claiming delivery that never occurred.
+    void payload;
+    return { delivered: 0, failed: tokens.length };
   }
 }
 

@@ -202,7 +202,7 @@ export class BankReconciliationService {
       bank_account_id: input.bankAccountId,
       provider: providerKey,
       provider_account_id: input.providerAccountId.trim(),
-      status: 'active',
+      status: 'paused',
       created_by: input.createdBy,
     }, { onConflict: 'bank_account_id' }).select('*').single();
     if (error) throw error;

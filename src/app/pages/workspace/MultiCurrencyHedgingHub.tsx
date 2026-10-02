@@ -7,7 +7,7 @@
  * - Portfolio currency risk & FX collar hedging simulator
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Coins,
   TrendingUp,
@@ -40,6 +40,7 @@ import {
 export function MultiCurrencyHedgingHub() {
   const [rates, setRates] = useState<FXRate[]>(() => multiCurrencyFxService.getLiveRates());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [rateError, setRateError] = useState<string | null>(null);
 
   // Dual-Currency Calculator State
   const [baseAmountUSD, setBaseAmountUSD] = useState<number>(2500);
@@ -53,36 +54,45 @@ export function MultiCurrencyHedgingHub() {
   const [portfolioMonthlyUSD, setPortfolioMonthlyUSD] = useState<number>(12500);
   const [projectedDepreciation, setProjectedDepreciation] = useState<number>(15);
 
-  const activeRate = multiCurrencyFxService.getRate(`${selectedCurrency}/GHS`);
+  const activeRate = rates.find((rate) => rate.pair === `${selectedCurrency}/GHS`);
 
-  const dualCalc: DualCurrencyLeaseCalculation = multiCurrencyFxService.calculateDualCurrencyRent({
+  const dualCalc: DualCurrencyLeaseCalculation | null = activeRate ? multiCurrencyFxService.calculateDualCurrencyRent({
     baseAmount: baseAmountUSD,
     baseCurrency: selectedCurrency,
     collarPct: enableCollar ? collarPct : undefined,
-  });
+  }) : null;
 
-  const hedgingScenario: FXHedgingScenario = multiCurrencyFxService.evaluateHedgingScenario(
+  const hedgingScenario: FXHedgingScenario | null = rates.some((rate) => rate.pair === 'USD/GHS') ? multiCurrencyFxService.evaluateHedgingScenario(
     portfolioMonthlyUSD,
     12,
     projectedDepreciation
-  );
+  ) : null;
 
-  const handleRefreshRates = () => {
+  const handleRefreshRates = async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setRates(multiCurrencyFxService.getLiveRates());
+    setRateError(null);
+    try {
+      setRates(await multiCurrencyFxService.syncRatesFromProvider());
+      toast.success('Exchange rates synchronized successfully.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Exchange rates are unavailable.';
+      setRateError(message);
+      toast.error(message);
+    } finally {
       setIsRefreshing(false);
-      toast.success('Synced Bank of Ghana reference rates successfully.');
-    }, 500);
+    }
   };
 
+  useEffect(() => { void handleRefreshRates(); }, []);
+
   const handleCopyInvoiceDetails = () => {
+    if (!dualCalc) return;
     const text = [
       `🏢 BAYTMIFTAH DUAL-CURRENCY RENT INVOICE`,
       `Tenant: ${tenantName}`,
       `Property: ${propertyName}`,
       `Base Denominated Rent: ${selectedCurrency} ${baseAmountUSD.toLocaleString()}`,
-      `Bank of Ghana Rate: ${dualCalc.effectiveRate.toFixed(4)} GHS/${selectedCurrency}`,
+      `Provider Rate: ${dualCalc.effectiveRate.toFixed(4)} GHS/${selectedCurrency}`,
       `GHS Payable Total: GHS ${dualCalc.ghsPayable.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
       `Payment Rails: MTN MoMo / Telecel Cash / Bank Interbank Transfer`,
     ].join('\n');
@@ -90,6 +100,19 @@ export function MultiCurrencyHedgingHub() {
     navigator.clipboard.writeText(text);
     toast.success('Dual-currency invoice details copied!');
   };
+
+  if (!dualCalc || !hedgingScenario) {
+    return (
+      <Card className="p-8 text-center">
+        <RefreshCw className={`mx-auto mb-3 h-6 w-6 ${isRefreshing ? 'animate-spin' : ''}`} />
+        <p className="font-semibold">Live exchange rates are required</p>
+        <p className="mt-2 text-sm text-ink-secondary">
+          {rateError || 'Loading verified provider rates…'}
+        </p>
+        {!isRefreshing && <Button className="mt-4" onClick={() => void handleRefreshRates()}>Retry rate sync</Button>}
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -1,7 +1,7 @@
 /** Shared Hardhat 3 connection helper for deploy scripts. */
 async function connectHardhat() {
   const { network } = require("hardhat");
-  const connection = await network.connect();
+  const connection = await network.getOrCreate();
   const networkName =
     process.env.HARDHAT_NETWORK ||
     connection.networkName ||

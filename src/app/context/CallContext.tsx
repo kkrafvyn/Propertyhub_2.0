@@ -161,7 +161,14 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     ) => {
       cleanupCall();
       if (!isDemoSimulationAllowed()) {
-        throw new Error('Live voice and video calling is unavailable until a signaling provider is configured.');
+        if (type === 'voice' && participant.phone && typeof window !== 'undefined') {
+          window.location.assign(`tel:${participant.phone.replace(/[^+\d]/g, '')}`);
+          return;
+        }
+        if (typeof window !== 'undefined') {
+          window.alert('In-app voice and video calling is not configured. Use the contact phone number or messaging instead.');
+        }
+        return;
       }
 
       const myName = profile?.full_name || user?.user_metadata?.full_name || 'You';

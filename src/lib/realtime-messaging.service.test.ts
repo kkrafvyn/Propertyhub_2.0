@@ -278,7 +278,8 @@ describe("BaytMiftah Realtime Contextual Messaging System", () => {
       expect(report.channelsAttempted).toContain("push");
       expect(report.channelsAttempted).toContain("sms");
       expect(report.channelsSucceeded).toContain("in_app");
-      expect(report.channelsSucceeded).toContain("push");
+      expect(report.channelsSucceeded).not.toContain("push");
+      expect(report.channelsFailed).toContain("push");
     });
   });
 });

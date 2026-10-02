@@ -118,7 +118,13 @@ export function ProtectedAdminRoute({ children }: { children: React.ReactNode })
   }
 
   if (!mfaReady) {
-    return <Navigate to="/app/security?mfa=required" replace />;
+    return (
+      <Navigate
+        to="/app/security?mfa=required"
+        replace
+        state={{ from: `${location.pathname}${location.search}` }}
+      />
+    );
   }
 
   return <>{children}</>;

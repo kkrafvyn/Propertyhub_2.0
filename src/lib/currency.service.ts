@@ -198,15 +198,6 @@ class CurrencyService {
       return 1 / reverseRate.rate
     }
 
-    const staticRates: Record<string, number> = {
-      GHS_USD: 1 / 15.5,
-      USD_GHS: 15.5,
-    };
-    const staticKey = `${from}_${to}`;
-    if (staticRates[staticKey]) {
-      return staticRates[staticKey];
-    }
-
     throw new Error(`No exchange rate available for ${from} to ${to}`)
   }
 }

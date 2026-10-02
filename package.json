@@ -124,6 +124,7 @@
     "backup:restore-drill:verify": "node scripts/backup/restore-drill.mjs -- --verify-db --write-evidence",
     "vercel:env": "node scripts/sync-vercel-env.mjs",
     "contracts:install": "npm install --prefix blockchain",
+    "contracts:wallet": "node scripts/setup-hardhat-wallet.mjs",
     "contracts:build": "npm run build --prefix blockchain",
     "contracts:deploy-all": "npm run build --prefix blockchain && npm exec --prefix blockchain -- hardhat run ../scripts/deployAll.cjs --network polygonAmoy",
     "contracts:deploy-all-mainnet": "npm run build --prefix blockchain && npm exec --prefix blockchain -- hardhat run ../scripts/deployAll.cjs --network polygonMainnet",
