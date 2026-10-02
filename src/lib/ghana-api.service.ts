@@ -43,6 +43,17 @@ export const FALLBACK_GHANA_REGIONS: GhanaRegion[] = [
 
 let regionsPromise: Promise<GhanaRegion[]> | null = null;
 
+function describeGhanaApiFailure(error: unknown, endpoint: string): string {
+  const target = `${GHANA_API_BASE_URL}${endpoint}`;
+  if (error instanceof TypeError) {
+    return `Ghana API request failed (${target}); likely network or CSP connect-src — using bundled regions.`;
+  }
+  if (error instanceof Error) {
+    return `Ghana API request failed (${target}): ${error.message} — using bundled regions.`;
+  }
+  return `Ghana API request failed (${target}) — using bundled regions.`;
+}
+
 function normalizeCoordinate(value: number, label: string) {
   if (!Number.isFinite(value)) {
     throw new Error(`${label} must be a valid coordinate.`);
@@ -64,7 +75,7 @@ export const ghanaApiService = {
           return payload.value?.length ? payload.value : FALLBACK_GHANA_REGIONS;
         })
         .catch((error) => {
-          console.warn("Falling back to bundled Ghana regions:", error);
+          console.warn(describeGhanaApiFailure(error, "/locations/regions"), error);
           return FALLBACK_GHANA_REGIONS;
         });
     }

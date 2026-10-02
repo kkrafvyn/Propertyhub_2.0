@@ -54,6 +54,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+let lastAccountAccessWarnAt = 0
+
+function isTransientAccountAccessError(error: unknown): boolean {
+  if (error instanceof TypeError) return true
+  if (error instanceof Error) {
+    return /failed to fetch|networkerror|load failed|cors/i.test(error.message)
+  }
+  return false
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -77,8 +87,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (active && accessError?.code === '42501' && /Account access has been revoked/i.test(accessError.message)) {
         setUser(null); setProfile(null); setCapabilities([]);
         await supabase.auth.signOut({ scope: 'local' });
+        return
       }
-      } catch { /* Retry on focus or the next interval after a network failure. */ }
+      if (active && accessError && !isTransientAccountAccessError(accessError)) {
+        const now = Date.now()
+        if (now - lastAccountAccessWarnAt > 60_000) {
+          lastAccountAccessWarnAt = now
+          console.warn('Account access check returned an unexpected error:', accessError)
+        }
+      }
+      } catch (accessCheckError) {
+        if (!active || !isTransientAccountAccessError(accessCheckError)) {
+          const now = Date.now()
+          if (now - lastAccountAccessWarnAt > 60_000) {
+            lastAccountAccessWarnAt = now
+            console.warn('Account access check skipped after a request failure:', accessCheckError)
+          }
+        }
+      }
     };
     void checkAccess();
     const timer = window.setInterval(() => void checkAccess(), 30_000);
