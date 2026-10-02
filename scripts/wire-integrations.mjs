@@ -21,6 +21,10 @@ import {
 
 const PAYMENTS_PATH = path.join(PROJECT_ROOT, "supabase", ".env.payments");
 
+function truthyFlag(value) {
+  return /^(1|true|yes)$/i.test(String(value || "").trim());
+}
+
 function randomKey(bytes = 32) {
   const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let out = "";
@@ -103,7 +107,14 @@ function main() {
 
   const configured = {
     payangels: Boolean(payments.PAYANGELS_SECRET_KEY && rootEnv.VITE_PAYANGELS_PUBLIC_KEY),
-    resend: Boolean(payments.RESEND_API_KEY),
+    resend: Boolean(payments.RESEND_API_KEY && payments.NOTIFICATION_EMAIL_FROM),
+    prembly: Boolean(
+      payments.PREMBLY_API_KEY &&
+        payments.PREMBLY_PUBLIC_KEY &&
+        payments.PREMBLY_ORGANISATION_ID &&
+        rootEnv.VITE_PREMBLY_WIDGET_KEY &&
+        rootEnv.VITE_PREMBLY_WIDGET_ID,
+    ),
     webPush: Boolean(payments.WEB_PUSH_PUBLIC_KEY && payments.WEB_PUSH_PRIVATE_KEY),
     openAi: aiEnabled,
     ai: aiEnabled,
@@ -130,7 +141,14 @@ function main() {
   if (!configured.payangels) {
     missing.push("PayAngels: VITE_PAYANGELS_PUBLIC_KEY + PAYANGELS_SECRET_KEY in .env");
   }
-  if (!configured.resend) missing.push("Resend: RESEND_API_KEY in .env");
+  if (!configured.resend) {
+    missing.push("Resend: RESEND_API_KEY + NOTIFICATION_EMAIL_FROM in .env");
+  }
+  if (!configured.prembly && !truthyFlag(rootEnv.PREMBLY_LIVE_KYC_OPTIONAL)) {
+    missing.push(
+      "Prembly: PREMBLY_* + VITE_PREMBLY_WIDGET_* in .env (or PREMBLY_LIVE_KYC_OPTIONAL=true)",
+    );
+  }
   if (!configured.ai) {
     missing.push("AI: set AI_PROVIDER=openai + OPENAI_API_KEY, or AI_PROVIDER=qwen + QWEN_API_KEY");
   }

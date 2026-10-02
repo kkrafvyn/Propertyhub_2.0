@@ -11,6 +11,7 @@ export { PageHeader } from "./PageHeader";
 export { PageLayout } from "./PageLayout";
 export { AppLoadingScreen } from "./AppLoadingScreen";
 export { StandalonePageShell } from "./StandalonePageShell";
+export { WorkspacePageShell } from "./WorkspacePageShell";
 export { ActivityFeed, ActivityTimeline } from "./ActivityTimeline";
 export type { TimelineActivity, TimelineStep } from "./ActivityTimeline";
 export { BaytMiftahAIPanel } from "./BaytMiftahAIPanel";

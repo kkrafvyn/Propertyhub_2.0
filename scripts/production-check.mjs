@@ -78,7 +78,13 @@ requireFile('scripts/backup/fixtures/minimal-backup/backup-manifest.json', 'back
 requireFile('docs/deployment/PRODUCTION_SCORE.md', 'production score rubric');
 requireFile('scripts/supabase/edge-function-audit.mjs', 'edge function audit script', 'edge');
 requireFile('supabase/functions/payangels-webhook/index.ts', 'payangels-webhook edge', 'edge');
+requireFile('supabase/functions/initialize-payangels-payment/index.ts', 'initialize-payangels-payment edge', 'edge');
+requireFile('supabase/functions/dispatch-notification/index.ts', 'dispatch-notification edge', 'integrations');
+requireFile('supabase/functions/kyc-prembly-verify/index.ts', 'kyc-prembly-verify edge', 'integrations');
+requireFile('supabase/functions/kyc-prembly-webhook/index.ts', 'kyc-prembly-webhook edge', 'integrations');
 requireFile('supabase/functions/polygon-transactions/index.ts', 'polygon-transactions edge', 'edge');
+requireFile('.github/workflows/monitoring.yml', 'monitoring workflow', 'integrations');
+requireFile('.github/workflows/backup-offsite.yml', 'offsite backup workflow', 'integrations');
 
 const migrationsDir = path.join(root, 'supabase/migrations');
 if (existsSync(migrationsDir)) {
@@ -107,7 +113,19 @@ try {
     if (envExample.includes(key)) pass(`env.example:${key}`, 'documented');
     else fail(`env.example:${key}`, 'not documented');
   }
-  for (const key of ['PAYANGELS_WEBHOOK_SECRET', 'PAYANGELS_SECRET_KEY', 'VITE_PAYANGELS_PUBLIC_KEY', 'RESEND_API_KEY']) {
+  for (const key of [
+    'PAYANGELS_WEBHOOK_SECRET',
+    'PAYANGELS_SECRET_KEY',
+    'VITE_PAYANGELS_PUBLIC_KEY',
+    'RESEND_API_KEY',
+    'NOTIFICATION_EMAIL_FROM',
+    'OPS_ALERT_WEBHOOK_URL',
+    'BACKUP_S3_BUCKET',
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'PREMBLY_API_KEY',
+    'VITE_PREMBLY_WIDGET_KEY',
+    'PREMBLY_LIVE_KYC_OPTIONAL',
+  ]) {
     if (envExample.includes(key)) pass(`env.example:${key}`, 'documented', 'integrations');
     else fail(`env.example:${key}`, 'not documented', 'integrations');
   }
@@ -126,6 +144,16 @@ try {
   else warn('env.example:legal deferred flag', 'add LEGAL_LAUNCH_DEFERRED', 'legal', { blocking: false });
 } catch (error) {
   fail('.env.example', error instanceof Error ? error.message : String(error));
+}
+
+try {
+  const deployScript = readFileSync(path.join(root, 'scripts/deploySupabasePayments.cjs'), 'utf8');
+  for (const slug of ['payangels-webhook', 'kyc-prembly-verify', 'kyc-prembly-webhook', 'dispatch-notification']) {
+    if (deployScript.includes(slug)) pass(`deploy script:${slug}`, 'listed for edge deploy', 'integrations');
+    else fail(`deploy script:${slug}`, 'missing from scripts/deploySupabasePayments.cjs', 'integrations');
+  }
+} catch (error) {
+  fail('deploySupabasePayments.cjs', error instanceof Error ? error.message : String(error), 'integrations');
 }
 
 try {

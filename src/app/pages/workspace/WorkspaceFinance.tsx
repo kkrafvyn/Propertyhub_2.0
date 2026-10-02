@@ -29,6 +29,13 @@ import { organizationWalletService } from "../../../lib/organization-wallet.serv
 import { paymentService } from "../../../lib/payment.service";
 import { useAuth } from "../../context/AuthContext";
 import type { MemberRole } from "../../../lib/workspace";
+import {
+  DashboardStatsSkeleton,
+  EmptyState,
+  ErrorState,
+  ListSkeleton,
+  WorkspacePageShell,
+} from "../../components/ux";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 
@@ -56,6 +63,7 @@ export function WorkspaceFinance({
 }: WorkspaceFinanceProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [orgWallet, setOrgWallet] = useState<any>(null);
   const [orgLedger, setOrgLedger] = useState<any[]>([]);
@@ -68,6 +76,7 @@ export function WorkspaceFinance({
   const loadData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [rows, wallet, ledger, payouts, commissionRows] = await Promise.all([
         paymentService.getOrganizationPropertyTransactions(organization.id),
         organizationWalletService.getOrganizationWallet(organization.id),
@@ -82,7 +91,9 @@ export function WorkspaceFinance({
       setCommissions(commissionRows || []);
     } catch (error) {
       console.error("Failed to load finance workspace:", error);
-      toast.error("We couldn't load finance reporting right now.");
+      const message = "We couldn't load finance reporting right now.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -157,52 +168,90 @@ export function WorkspaceFinance({
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* ── Editorial Header ── */}
-      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-emerald-500/10 via-primary/5 to-surface/80 border border-emerald-500/20 shadow-lg backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-radial from-emerald-500/15 via-primary/10 to-transparent blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-radial from-amber-500/10 via-transparent to-transparent blur-2xl pointer-events-none" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="success" dot pulse className="text-xs font-semibold px-2.5 py-1">
-                Trust Accounting & Treasury
-              </Badge>
-              <span className="text-xs text-ink-muted flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-emerald-500" />
-                Multi-Currency Escrow & PayAngels Clearing
-              </span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-display font-medium tracking-tight text-ink">
-              Financial Operations & Treasury
-            </h1>
-            <p className="text-sm text-ink-secondary max-w-xl leading-relaxed">
-              Trust reconciliation, owner payout disbursement queues, broker commission reporting, and export-ready ledger statements.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <Button variant="glass" size="sm" className="gap-1.5 text-xs shadow-sm" onClick={() => financeReportService.exportPaymentsCsv(payments)}>
-              <Download className="w-3.5 h-3.5" />
-              Export CSV
-            </Button>
-            <Button
-              variant="glass"
-              size="sm"
-              className="gap-1.5 text-xs shadow-sm"
-              onClick={() => financeReportService.openPrintableReport(summary, payments)}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              Print / PDF
-            </Button>
-            <Button variant="gradient" size="sm" className="gap-1.5 text-xs shadow-sm" onClick={() => void loadData()}>
-              <RefreshCw className="w-3.5 h-3.5" />
-              Sync Ledger
-            </Button>
-          </div>
-        </div>
-      </div>
+  const headerActions = (
+    <>
+      <Button
+        variant="glass"
+        size="sm"
+        className="gap-1.5 text-xs shadow-sm"
+        onClick={() => financeReportService.exportPaymentsCsv(payments)}
+        disabled={loading || payments.length === 0}
+      >
+        <Download className="w-3.5 h-3.5" />
+        Export CSV
+      </Button>
+      <Button
+        variant="glass"
+        size="sm"
+        className="gap-1.5 text-xs shadow-sm"
+        onClick={() => financeReportService.openPrintableReport(summary, payments)}
+        disabled={loading || payments.length === 0}
+      >
+        <FileText className="w-3.5 h-3.5" />
+        Print / PDF
+      </Button>
+      <Button variant="gradient" size="sm" className="gap-1.5 text-xs shadow-sm" onClick={() => void loadData()} disabled={loading}>
+        <RefreshCw className={`w-3.5 h-3.5 ${loading ? "motion-safe:animate-spin" : ""}`} />
+        Sync Ledger
+      </Button>
+    </>
+  );
 
+  if (!loading && loadError && payments.length === 0 && !orgWallet) {
+    return (
+      <WorkspacePageShell
+        tone="finance"
+        title="Financial Operations & Treasury"
+        description="Trust reconciliation, owner payout disbursement queues, broker commission reporting, and export-ready ledger statements."
+        badge={
+          <Badge variant="success" dot pulse className="text-xs font-semibold px-2.5 py-1">
+            Trust Accounting & Treasury
+          </Badge>
+        }
+        meta={
+          <span className="text-xs text-ink-muted flex items-center gap-1">
+            <ShieldCheck className="w-3 h-3 text-emerald-500" aria-hidden="true" />
+            Multi-Currency Escrow & PayAngels Clearing
+          </span>
+        }
+        actions={headerActions}
+      >
+        <ErrorState message={loadError} onRetry={() => void loadData()} />
+      </WorkspacePageShell>
+    );
+  }
+
+  return (
+    <WorkspacePageShell
+      tone="finance"
+      title="Financial Operations & Treasury"
+      description="Trust reconciliation, owner payout disbursement queues, broker commission reporting, and export-ready ledger statements."
+      badge={
+        <Badge variant="success" dot pulse className="text-xs font-semibold px-2.5 py-1">
+          Trust Accounting & Treasury
+        </Badge>
+      }
+      meta={
+        <span className="text-xs text-ink-muted flex items-center gap-1">
+          <ShieldCheck className="w-3 h-3 text-emerald-500" aria-hidden="true" />
+          Multi-Currency Escrow & PayAngels Clearing
+        </span>
+      }
+      actions={headerActions}
+    >
+      {loadError && !loading ? (
+        <div role="status" className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-ink-secondary">
+          {loadError}
+        </div>
+      ) : null}
+
+      {loading && payments.length === 0 ? (
+        <>
+          <DashboardStatsSkeleton />
+          <ListSkeleton rows={4} />
+        </>
+      ) : (
+        <>
       {/* ── KPI Strip with Halo Illumination ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
@@ -282,9 +331,12 @@ export function WorkspaceFinance({
             </div>
           </div>
           {commissions.length === 0 ? (
-            <div className="py-6 text-center text-xs text-ink-secondary bg-surface-subtle/40 rounded-xl border border-surface-border">
-              No commission disbursements recorded yet.
-            </div>
+            <EmptyState
+              icon={LineChart}
+              title="No commissions yet"
+              description="Agent broker commissions will appear here after lease or sale completions."
+              className="py-8"
+            />
           ) : (
             <div className="space-y-2.5">
               {commissions.slice(0, 8).map((commission) => (
@@ -539,11 +591,13 @@ export function WorkspaceFinance({
         </div>
 
         {loading ? (
-          <div className="py-10 text-center text-xs text-ink-secondary">Loading financial activity...</div>
+          <ListSkeleton rows={3} />
         ) : payments.length === 0 ? (
-          <div className="py-10 text-center text-xs text-ink-secondary bg-surface-subtle/40 rounded-xl border border-surface-border">
-            No payment activity recorded yet. Transactions will appear here as soon as orders or leases are initiated.
-          </div>
+          <EmptyState
+            icon={Wallet}
+            title="No payment activity yet"
+            description="Transactions will appear here as soon as orders or leases are initiated through PayAngels checkout."
+          />
         ) : (
           <div className="space-y-3">
             {payments.slice(0, 10).map((payment) => {
@@ -589,6 +643,8 @@ export function WorkspaceFinance({
           </div>
         )}
       </Card>
-    </div>
+        </>
+      )}
+    </WorkspacePageShell>
   );
 }

@@ -30,6 +30,12 @@ import {
   type OwnerStatementRecord,
 } from "../../../lib/owner-disbursement.service";
 import { useAuth } from "../../context/AuthContext";
+import {
+  EmptyState,
+  ErrorState,
+  ListSkeleton,
+  WorkspacePageShell,
+} from "../../components/ux";
 
 // ── Formatters ──────────────────────────────────────────────────────────────
 
@@ -235,6 +241,7 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
   const { user } = useAuth();
   const [tab, setTab] = useState<"pending" | "history" | "owners">("pending");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [executing, setExecuting] = useState<string | null>(null);
   const [confirmStatement, setConfirmStatement] = useState<OwnerStatementRecord | null>(null);
   const [owners, setOwners] = useState<OwnerProfile[]>([]);
@@ -245,14 +252,17 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
     if (!organizationId) return;
     try {
       setLoading(true);
+      setLoadError(null);
       const [ownerList, statementList] = await Promise.all([
         ownerDisbursementService.getLiveOwners(organizationId),
         ownerDisbursementService.getLiveMappedStatements(organizationId),
       ]);
       setOwners(ownerList);
       setStatements(statementList);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to load owner disbursements");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to load owner disbursements";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -304,8 +314,45 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
     { key: "owners" as const, label: "Owner Profiles", icon: <Building className="w-4 h-4" />, count: owners.length },
   ];
 
+  const refreshAction = (
+    <Button variant="outline" size="sm" onClick={() => void loadData()} disabled={loading}>
+      <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? "motion-safe:animate-spin" : ""}`} />
+      Refresh
+    </Button>
+  );
+
+  if (!loading && loadError && owners.length === 0 && statements.length === 0) {
+    return (
+      <WorkspacePageShell
+        tone="finance"
+        title="Owner Payouts & Rent Waterfall"
+        description="Execute net rental income payouts via Bank Wire or Mobile Money."
+        badge={
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+            <Banknote className="h-3.5 w-3.5" aria-hidden="true" />
+            Owner disbursements
+          </span>
+        }
+        actions={refreshAction}
+      >
+        <ErrorState message={loadError} onRetry={() => void loadData()} />
+      </WorkspacePageShell>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <WorkspacePageShell
+      tone="finance"
+      title="Owner Payouts & Rent Waterfall"
+      description="Execute net rental income payouts via Bank Wire or Mobile Money."
+      badge={
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+          <Banknote className="h-3.5 w-3.5" aria-hidden="true" />
+          Owner disbursements
+        </span>
+      }
+      actions={refreshAction}
+    >
       {/* Confirm overlay */}
       {confirmStatement && (
         <ConfirmDisburse
@@ -316,43 +363,30 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
         />
       )}
 
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-emerald-500/10">
-              <Banknote className="h-5 w-5 text-emerald-600" />
-            </span>
-            Owner Payouts &amp; Rent Waterfall
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Execute net rental income payouts via Bank Wire or Mobile Money.
-          </p>
+      {loadError && !loading ? (
+        <div role="status" className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-ink-secondary">
+          {loadError}
         </div>
-        <Button variant="outline" size="sm" onClick={loadData} disabled={loading}>
-          <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
-      </div>
+      ) : null}
 
       {/* ── KPI strip ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card className="p-4 space-y-1">
+        <Card className="app-surface-card p-4 space-y-1">
           <p className="text-xs text-muted-foreground">Pending Waterfall</p>
           <p className="text-2xl font-bold font-mono text-amber-600">{money(totalPendingPayout)}</p>
           <p className="text-xs text-muted-foreground">{pending.length} statement{pending.length !== 1 ? "s" : ""} queued</p>
         </Card>
-        <Card className="p-4 space-y-1">
+        <Card className="app-surface-card p-4 space-y-1">
           <p className="text-xs text-muted-foreground">Total Disbursed</p>
           <p className="text-2xl font-bold font-mono text-emerald-600">{money(totalDisbursed)}</p>
           <p className="text-xs text-muted-foreground">{history.length} completed</p>
         </Card>
-        <Card className="p-4 space-y-1">
+        <Card className="app-surface-card p-4 space-y-1">
           <p className="text-xs text-muted-foreground">GRA Rent Withholding</p>
           <p className="text-2xl font-bold font-mono">8.0%</p>
           <p className="text-xs text-muted-foreground">Standard statutory rate</p>
         </Card>
-        <Card className="p-4 space-y-1">
+        <Card className="app-surface-card p-4 space-y-1">
           <p className="text-xs text-muted-foreground">Active Channels</p>
           <div className="flex flex-col gap-1 mt-1">
             <span className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
@@ -366,12 +400,15 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
       </div>
 
       {/* ── Tabs ── */}
-      <div className="flex gap-1 p-1 bg-muted/50 rounded-xl w-fit">
+      <div className="flex gap-1 p-1 bg-muted/50 rounded-xl w-fit" role="tablist" aria-label="Disbursement views">
         {TABS.map((t) => (
           <button
             key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.key}
             onClick={() => setTab(t.key)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
               ${tab === t.key ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
           >
             {t.icon} {t.label}
@@ -395,13 +432,13 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
       {tab === "pending" && (
         <div className="space-y-3">
           {loading ? (
-            [1, 2].map((i) => <div key={i} className="h-32 rounded-xl border border-border bg-muted/30 animate-pulse" />)
+            <ListSkeleton rows={2} />
           ) : filteredPending.length === 0 ? (
-            <Card className="p-12 text-center space-y-3">
-              <ShieldCheck className="w-12 h-12 mx-auto text-muted-foreground/40" />
-              <p className="font-semibold text-muted-foreground">No pending distributions</p>
-              <p className="text-sm text-muted-foreground">All owner payouts are up to date.</p>
-            </Card>
+            <EmptyState
+              icon={ShieldCheck}
+              title="No pending distributions"
+              description="All owner payouts are up to date. New statements appear here after rent collection closes."
+            />
           ) : (
             filteredPending.map((s) => (
               <Card key={s.id} className="p-5 space-y-4 hover:shadow-md transition-shadow">
@@ -464,12 +501,13 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
       {tab === "history" && (
         <div className="space-y-2">
           {loading ? (
-            [1, 2, 3].map((i) => <div key={i} className="h-16 rounded-xl border border-border bg-muted/30 animate-pulse" />)
+            <ListSkeleton rows={3} />
           ) : filteredHistory.length === 0 ? (
-            <Card className="p-12 text-center space-y-2">
-              <TrendingUp className="w-12 h-12 mx-auto text-muted-foreground/40" />
-              <p className="font-semibold text-muted-foreground">No disbursement history yet</p>
-            </Card>
+            <EmptyState
+              icon={TrendingUp}
+              title="No disbursement history yet"
+              description="Completed owner payouts and references will be listed here after approval."
+            />
           ) : (
             <div className="rounded-xl border border-border overflow-x-auto" role="region" aria-label="Owner disbursements" tabIndex={0}>
               <table className="w-full text-sm">
@@ -513,18 +551,18 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
       {tab === "owners" && (
         <div className="space-y-3">
           {loading ? (
-            [1, 2].map((i) => <div key={i} className="h-20 rounded-xl border border-border bg-muted/30 animate-pulse" />)
+            <ListSkeleton rows={2} />
           ) : owners.length === 0 ? (
-            <Card className="p-12 text-center space-y-2">
-              <User className="w-12 h-12 mx-auto text-muted-foreground/40" />
-              <p className="font-semibold text-muted-foreground">No owner profiles found</p>
-              <p className="text-sm text-muted-foreground">Add property owners to enable payouts.</p>
-            </Card>
+            <EmptyState
+              icon={User}
+              title="No owner profiles found"
+              description="Add property owners and payout destinations to enable rent waterfall disbursements."
+            />
           ) : (
             owners.map((o) => <OwnerCard key={o.id} owner={o} />)
           )}
         </div>
       )}
-    </div>
+    </WorkspacePageShell>
   );
 }

@@ -111,6 +111,27 @@ Build: `npm run desktop:release`
 
 See [AWS_MIGRATION_PREP.md](./AWS_MIGRATION_PREP.md).
 
+## Production launch — set these keys only
+
+After `cp .env.example .env`, wire integrations and deploy Edge secrets:
+
+```bash
+npm run integrations:wire
+npm run supabase:deploy:payments -- --skip-db
+npm run ops:sync-github-secrets   # optional: push CI secrets from .env
+npm run production:check
+```
+
+| Group | Variables | Where |
+|-------|-----------|--------|
+| **PayAngels** | `VITE_PAYANGELS_PUBLIC_KEY`, `PAYANGELS_SECRET_KEY`, `PAYANGELS_WEBHOOK_SECRET` | Vercel (public) + Supabase secrets |
+| **Resend email** | `RESEND_API_KEY`, `NOTIFICATION_EMAIL_FROM`, `NOTIFICATION_EMAIL_REPLY_TO` | Supabase secrets (via `integrations:wire`) |
+| **Scheduled jobs** | `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`, `INTERNAL_AUTOMATIONS_KEY` | GitHub Actions secrets (`ops:sync-github-secrets`) |
+| **Incident alerts** | `OPS_ALERT_WEBHOOK_URL` | GitHub secret → `.github/workflows/monitoring.yml` |
+| **Offsite backups** | `BACKUP_S3_BUCKET`, `BACKUP_S3_PREFIX`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` | GitHub secrets → `.github/workflows/backup-offsite.yml` |
+| **Prembly KYC** | `PREMBLY_API_KEY`, `PREMBLY_PUBLIC_KEY`, `PREMBLY_ORGANISATION_ID`, `VITE_PREMBLY_WIDGET_KEY`, `VITE_PREMBLY_WIDGET_ID` (+ optional `PREMBLY_VERIFICATION_PATH`) | Supabase secrets + Vercel widget keys — or `PREMBLY_LIVE_KYC_OPTIONAL=true` |
+| **Legal sign-off** | `LEGAL_LAUNCH_SIGNED_OFF=true` | Production env after completing `LEGAL_LAUNCH_CHECKLIST` in `src/lib/legal-config.ts` |
+
 ## Deploy checklist after adding keys
 
 ```bash

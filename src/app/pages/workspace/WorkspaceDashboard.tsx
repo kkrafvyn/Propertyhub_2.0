@@ -42,6 +42,11 @@ import { organizationService } from "../../../lib/organization.service";
 import { paymentService } from "../../../lib/payment.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
 import { ActivityFeed, type TimelineActivity } from "../../components/ux/ActivityTimeline";
+import {
+  CardGridSkeleton,
+  DashboardStatsSkeleton,
+  ErrorState,
+} from "../../components/ux";
 import { orgActivityService } from "../../../lib/org-activity.service";
 import { useAuth } from "../../context/AuthContext";
 import type { MemberRole } from "../../../lib/workspace";
@@ -145,6 +150,7 @@ export function WorkspaceDashboard({
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState(0);
   const [membersCount, setMembersCount] = useState(0);
   const [listings, setListings] = useState<any[]>([]);
   const [dealCases, setDealCases] = useState<any[]>([]);
@@ -274,7 +280,16 @@ export function WorkspaceDashboard({
     return () => {
       cancelled = true;
     };
-  }, [organization.id, scopeMode, scopedPropertyIds, bypassPropertyScope, user?.id, currentRole, workspaceBasePath]);
+  }, [
+    organization.id,
+    scopeMode,
+    scopedPropertyIds,
+    bypassPropertyScope,
+    user?.id,
+    currentRole,
+    workspaceBasePath,
+    refreshToken,
+  ]);
 
   const listedCount = useMemo(
     () => listings.filter((listing) => listing.status === "listed").length,
@@ -397,8 +412,9 @@ export function WorkspaceDashboard({
               return (
                 <button
                   key={r.role}
+                  type="button"
                   onClick={() => handleRoleSwitch(r.role)}
-                  className={`relative px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
+                  className={`relative px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                     isActive
                       ? `bg-surface text-ink border border-surface-border/80 shadow-sm ring-2 ${r.ring}`
                       : "text-ink-secondary hover:text-ink hover:bg-surface-hover border border-transparent"
@@ -415,18 +431,21 @@ export function WorkspaceDashboard({
           </div>
         </div>
         <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full self-start sm:self-auto shrink-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="radar-pulse-dot" aria-hidden="true" />
           Live Updates
         </span>
       </div>
 
       {loadError ? (
-        <div
-          role="status"
-          className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-ink-secondary"
-        >
-          {loadError}
-        </div>
+        <ErrorState
+          title="Partial dashboard load"
+          message={loadError}
+          onRetry={() => {
+            setLoadError(null);
+            setRefreshToken((value) => value + 1);
+          }}
+          retryLabel="Reload dashboard"
+        />
       ) : null}
 
       {/* Role-Specific Hero Header */}
@@ -444,11 +463,11 @@ export function WorkspaceDashboard({
               <span className="text-xs text-ink-muted font-medium">{organization.name}</span>
             </div>
 
-            <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-ink leading-tight">
+            <h1 className="app-page-title text-2xl sm:text-3xl lg:text-4xl leading-tight">
               {heroCopy.title}
             </h1>
 
-            <p className="text-xs sm:text-sm text-ink-secondary max-w-xl leading-relaxed">
+            <p className="app-page-description text-xs sm:text-sm">
               {heroCopy.description}
             </p>
           </div>
@@ -525,11 +544,7 @@ export function WorkspaceDashboard({
 
       {/* Role-Tailored KPI Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-28 rounded-2xl bg-surface-subtle border border-surface-border" />
-          ))}
-        </div>
+        <DashboardStatsSkeleton />
       ) : showCoreMetrics ? (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" style={{ '--stagger': '80ms' } as React.CSSProperties}>
         {dashboardRole === "owner" && (
@@ -676,11 +691,7 @@ export function WorkspaceDashboard({
 
       {/* Main Content Split: Activity & Pipeline */}
       {loading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-pulse">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-64 rounded-2xl bg-surface-subtle border border-surface-border" />
-          ))}
-        </div>
+        <CardGridSkeleton count={3} />
       ) : (showListingsWidget || showViewingsWidget || showQuickActions) ? (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Active Inventory List */}

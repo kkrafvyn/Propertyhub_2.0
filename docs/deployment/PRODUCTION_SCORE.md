@@ -38,10 +38,12 @@ Deductions: each **failed** check removes its category share proportionally. **W
 
 ### Raises score (requires your environment)
 
-1. **Supabase secrets** (Dashboard → Edge Functions → Secrets): `PAYANGELS_SECRET_KEY`, `PAYANGELS_WEBHOOK_SECRET`, `RESEND_API_KEY`, `NOTIFICATION_EMAIL_FROM`.
-2. **Vercel**: `VITE_PAYANGELS_PUBLIC_KEY`, `VITE_ENABLE_DEMO_DATA=false`.
-3. **Local/server ops**: `SUPABASE_SERVICE_ROLE_KEY`, `BACKUP_S3_*` + AWS keys, `OPS_ALERT_WEBHOOK_URL`.
-4. **Legal**: Complete every item in `LEGAL_LAUNCH_CHECKLIST`, then set `LEGAL_LAUNCH_SIGNED_OFF=true` in production env (Vercel + operator `.env`).
+Repo wiring for PayAngels webhooks, Resend dispatch, Prembly edge functions, monitoring, and offsite backup workflows is in-tree — **`npm run production:check` warnings should reduce to missing secret values** once you fill `.env` and run `npm run integrations:wire` + `npm run supabase:deploy:payments -- --skip-db`.
+
+1. **Supabase secrets** (via deploy helper): `PAYANGELS_SECRET_KEY`, `PAYANGELS_WEBHOOK_SECRET`, `RESEND_API_KEY`, `NOTIFICATION_EMAIL_FROM`, Prembly server keys when live KYC is enabled.
+2. **Vercel**: `VITE_PAYANGELS_PUBLIC_KEY`, `VITE_ENABLE_DEMO_DATA=false`, Prembly widget keys when required.
+3. **GitHub Actions** (`npm run ops:sync-github-secrets`): `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`, `INTERNAL_AUTOMATIONS_KEY`, `OPS_ALERT_WEBHOOK_URL`, `BACKUP_S3_*`, AWS keys.
+4. **Legal**: Complete every item in `LEGAL_LAUNCH_CHECKLIST`, then set `LEGAL_LAUNCH_SIGNED_OFF=true` in production env (Vercel + operator `.env`) — no code path fakes sign-off.
 5. **Edge cleanup**: Run `npm run supabase:audit:edge`, deploy missing functions, delete legacy remote-only functions (see script output).
 6. **Deploy polygon-transactions**:
    ```powershell
@@ -75,6 +77,10 @@ npm run typecheck
 npm run test
 npm run build
 ```
+
+## Workspace UI pattern (flagship pages)
+
+High-traffic workspace routes use `WorkspacePageShell` + shared `EmptyState` / `LoadingSkeleton` / `ErrorState` (`src/styles/app-ui.css` tokens: `app-page-title`, `app-surface-card`). Extend the same pattern when touching other workspace modules.
 
 ## Manual steps (not automatable in repo)
 
