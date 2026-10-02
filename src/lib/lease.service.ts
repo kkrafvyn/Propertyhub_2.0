@@ -33,7 +33,7 @@ export const leaseService = {
       .from("leases")
       .select(`
         *,
-        tenant:users(full_name, email, phone),
+        tenant:users!leases_tenant_user_id_fkey(full_name, email, phone),
         listing:listings(
           id,
           property:properties(id, address, city, region, country, subdivision_code, ghana_post_gps)

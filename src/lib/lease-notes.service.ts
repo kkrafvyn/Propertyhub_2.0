@@ -23,7 +23,7 @@ export const leaseNotesService = {
   async listForLease(leaseId: string) {
     const { data, error } = await supabase
       .from("lease_notes")
-      .select("*, author:users(full_name, email)")
+      .select("*, author:users!lease_notes_author_user_id_fkey(full_name, email)")
       .eq("lease_id", leaseId)
       .order("created_at", { ascending: false });
 
@@ -68,7 +68,7 @@ export const leaseNotesService = {
     const { data, error } = await supabase
       .from("lease_notes")
       .insert(payload)
-      .select("*, author:users(full_name, email)")
+      .select("*, author:users!lease_notes_author_user_id_fkey(full_name, email)")
       .single();
 
     if (error) throw error;

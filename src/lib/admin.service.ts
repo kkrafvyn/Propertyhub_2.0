@@ -262,7 +262,7 @@ export const adminService = {
       supabase.from("organizations").select("*").eq("id", organizationId).single(),
       supabase
         .from("organization_members")
-        .select("user_id, role, scope_mode, joined_at, user:users(id, email, full_name)")
+        .select("user_id, role, scope_mode, joined_at, user:users!organization_members_user_id_fkey(id, email, full_name)")
         .eq("organization_id", organizationId)
         .order("joined_at", { ascending: true }),
       supabase

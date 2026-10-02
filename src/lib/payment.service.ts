@@ -10,7 +10,7 @@ const PROPERTY_TRANSACTION_SELECT = `
     property:properties(address, city, region)
   ),
   organization:organizations(name),
-  payer:users(id, full_name, email, phone),
+  payer:users!property_transactions_payer_user_id_fkey(id, full_name, email, phone),
   receipt:transaction_receipts(
     *,
     blockchain_record:blockchain_records(

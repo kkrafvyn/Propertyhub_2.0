@@ -13,7 +13,7 @@ export const leaseCosignService = {
   async resolveLandlordSigner(organizationId: string): Promise<LandlordCosigner | null> {
     const { data, error } = await supabase
       .from("organization_members")
-      .select("role, user:users(id, full_name, email, phone)")
+      .select("role, user:users!organization_members_user_id_fkey(id, full_name, email, phone)")
       .eq("organization_id", organizationId)
       .in("role", ["owner", "manager"])
       .order("role", { ascending: true })

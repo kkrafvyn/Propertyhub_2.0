@@ -39,7 +39,7 @@ export const escrowService = {
           amount_minor,
           currency,
           paid_at,
-          payer:users(full_name, email)
+          payer:users!property_transactions_payer_user_id_fkey(full_name, email)
         )
       `)
       .eq("organization_id", organizationId)

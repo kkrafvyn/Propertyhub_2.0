@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { tenantNoticeService } from "./tenant-notice.service";
 import { documentCenterService } from "./document-center.service";
 import { maintenanceService } from "./maintenance.service";
+import { bookingService } from "./booking.service";
+import { leaseService } from "./lease.service";
+import { organizationService } from "./organization.service";
 
 const fromMock = vi.fn();
 
@@ -22,11 +25,14 @@ function mockSelectChain(table: string, selectFn: (selectArg: string) => void) {
     return {
       select: vi.fn().mockImplementation((selectArg: string) => {
         selectFn(selectArg);
-        return {
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({ data: [], error: null }),
-          }),
-        };
+        const result = { data: [], error: null };
+        const builder: Record<string, unknown> = {};
+        for (const method of ["eq", "order", "limit", "or"]) {
+          builder[method] = vi.fn().mockImplementation(() => builder);
+        }
+        builder.then = (onFulfilled: (value: typeof result) => unknown) =>
+          Promise.resolve(result).then(onFulfilled);
+        return builder;
       }),
     };
   });
@@ -68,5 +74,38 @@ describe("PostgREST users embed disambiguation", () => {
     await documentCenterService.getOrganizationDocuments("org-1");
 
     expect(selectArg).toContain("users!deal_cases_user_id_fkey");
+  });
+
+  it("short_stay_bookings uses guest_user_id foreign key hint", async () => {
+    let selectArg = "";
+    mockSelectChain("short_stay_bookings", (arg) => {
+      selectArg = arg;
+    });
+
+    await bookingService.getOrganizationBookings("org-1");
+
+    expect(selectArg).toContain("users!short_stay_bookings_guest_user_id_fkey");
+  });
+
+  it("leases uses tenant_user_id foreign key hint", async () => {
+    let selectArg = "";
+    mockSelectChain("leases", (arg) => {
+      selectArg = arg;
+    });
+
+    await leaseService.getOrganizationLeases("org-1");
+
+    expect(selectArg).toContain("users!leases_tenant_user_id_fkey");
+  });
+
+  it("organization_members uses user_id foreign key hint", async () => {
+    let selectArg = "";
+    mockSelectChain("organization_members", (arg) => {
+      selectArg = arg;
+    });
+
+    await organizationService.getOrganizationMembers("org-1");
+
+    expect(selectArg).toContain("users!organization_members_user_id_fkey");
   });
 });

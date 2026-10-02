@@ -75,7 +75,7 @@ export const workspaceChatService = {
   async listMemberDirectThreads(organizationId: string, userId: string) {
     const { data: members, error: memberError } = await db
       .from("organization_members")
-      .select("user_id, users:users(id, full_name, email)")
+      .select("user_id, users:users!organization_members_user_id_fkey(id, full_name, email)")
       .eq("organization_id", organizationId);
     if (memberError) throw memberError;
 

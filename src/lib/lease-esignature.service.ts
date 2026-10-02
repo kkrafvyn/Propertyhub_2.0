@@ -256,7 +256,7 @@ export async function getLeaseForSigning(leaseId: string): Promise<LeaseForSigni
       currency,
       start_date,
       end_date,
-      tenant:users(full_name, email, phone),
+      tenant:users!leases_tenant_user_id_fkey(full_name, email, phone),
       listing:listings(
         id,
         property:properties(address, city, region, country, subdivision_code, ghana_post_gps)

@@ -43,7 +43,7 @@ export const leaseEsignReminderService = {
         expires_at,
         reminder_count,
         signers,
-        lease:leases(tenant_user_id, tenant:users(full_name, email, phone))
+        lease:leases(tenant_user_id, tenant:users!leases_tenant_user_id_fkey(full_name, email, phone))
       `)
       .eq("id", requestId)
       .single();

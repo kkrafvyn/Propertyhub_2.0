@@ -100,7 +100,7 @@ export const kycService = {
       .from("kyc_submissions")
       .select(`
         *,
-        user:users(id, email, full_name, phone, verified)
+        user:users!kyc_submissions_user_id_fkey(id, email, full_name, phone, verified)
       `)
       .in("status", ["submitted", "in_review"])
       .order("submitted_at", { ascending: false })

@@ -12,22 +12,16 @@ type ReviewCasePriority = "low" | "medium" | "high" | "critical";
 
 const ACTIVE_CASE_STATUSES: ReviewCaseStatus[] = ["open", "investigating", "escalated"];
 
+/** Audit rows are service-role only; fraud actions are traced via case updates + console in dev. */
 async function writeAuditLog(
-  adminId: string,
+  _adminId: string,
   action: string,
   targetType: string,
   targetId: string,
   details: Record<string, unknown> = {}
 ) {
-  const { error } = await supabase.rpc("write_audit_log", {
-    p_action: action,
-    p_entity_type: targetType,
-    p_entity_id: targetId,
-    p_details: details,
-  });
-
-  if (error) {
-    console.error("Failed to write audit log:", error);
+  if (import.meta.env.DEV) {
+    console.info("[fraud-audit]", { action, targetType, targetId, details });
   }
 }
 

@@ -2,7 +2,20 @@ import { describe, expect, it } from "vitest";
 import {
   canAccessWorkspaceSlug,
   filterWorkspaceNavItems,
+  WORKSPACE_SLUG_PERMISSIONS,
 } from "./workspace-role-nav";
+
+/** Nav slugs that must be routable (see WorkspaceLayout CORE_NAV_ITEMS). */
+const ROUTED_WORKSPACE_SLUGS = [
+  "tenant-screening",
+  "hoa-management",
+  "cam-billing",
+  "contractor-1099",
+  "trust-accounting",
+  "commercial-escalations",
+  "integration-marketplace",
+  "international-rules",
+] as const;
 
 describe("workspace-role-nav", () => {
   it("allows analysts to read listings and finance but not team tools", () => {
@@ -35,5 +48,11 @@ describe("workspace-role-nav", () => {
     );
 
     expect(items.map((item) => item.slug)).toEqual(["listings", "payments", "contacts", "tasks"]);
+  });
+
+  it("includes permissions for all enterprise nav slugs", () => {
+    for (const slug of ROUTED_WORKSPACE_SLUGS) {
+      expect(WORKSPACE_SLUG_PERMISSIONS[slug], slug).toBeDefined();
+    }
   });
 });

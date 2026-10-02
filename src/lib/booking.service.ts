@@ -102,7 +102,7 @@ export const bookingService = {
       .from("short_stay_bookings")
       .select(`
         *,
-        guest:users(full_name, email, phone),
+        guest:users!short_stay_bookings_guest_user_id_fkey(full_name, email, phone),
         listing:listings(
           id,
           property:properties(address, city)
@@ -515,7 +515,7 @@ export const bookingService = {
           id,
           check_in,
           check_out,
-          guest:users(full_name, email),
+          guest:users!short_stay_bookings_guest_user_id_fkey(full_name, email),
           listing:listings(property:properties(address))
         )
       `)

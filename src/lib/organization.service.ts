@@ -90,7 +90,7 @@ export const organizationService = {
   async getOrganizationMembers(organizationId: string) {
     const { data, error } = await supabase
       .from('organization_members')
-      .select('*, user:users(id, email, full_name, avatar_url), department:organization_departments(id, department_key, name)')
+      .select('*, user:users!organization_members_user_id_fkey(id, email, full_name, avatar_url), department:organization_departments(id, department_key, name)')
       .eq('organization_id', organizationId)
 
     if (error) throw error
@@ -100,7 +100,7 @@ export const organizationService = {
   async getOrganizationDepartments(organizationId: string) {
     const { data, error } = await supabase
       .from('organization_departments')
-      .select('*, head:users(id, email, full_name)')
+      .select('*, head:users!organization_departments_head_user_id_fkey(id, email, full_name)')
       .eq('organization_id', organizationId)
       .order('name')
 
@@ -121,7 +121,7 @@ export const organizationService = {
       .update({ head_user_id: headUserId })
       .eq('id', departmentId)
       .eq('organization_id', organizationId)
-      .select('*, head:users(id, email, full_name)')
+      .select('*, head:users!organization_departments_head_user_id_fkey(id, email, full_name)')
       .single()
 
     if (error) throw error
