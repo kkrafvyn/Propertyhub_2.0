@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import type { Database } from './database.types'
+import { accountTypeToAppRole } from '../app/lib/auth-routing'
 
 type User = Database['public']['Tables']['users']['Row']
 type UserUpdate = Database['public']['Tables']['users']['Update']
@@ -73,5 +74,49 @@ export const userService = {
     }
 
     return this.createUserProfile(id, email, fullName, phone)
+  },
+
+  async hasOrganizationMembership(userId: string) {
+    const { count, error } = await supabase
+      .from('organization_members')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+
+    if (error) throw error
+    return (count ?? 0) > 0
+  },
+
+  /**
+   * Upgrade stale consumer JWT metadata when the user already belongs to a workspace org.
+   * Never downgrades host/agent metadata for users without membership.
+   */
+  async syncAppRoleWithOrgMembership(userId: string) {
+    const hasMembership = await this.hasOrganizationMembership(userId)
+    if (!hasMembership) return false
+
+    const { data: sessionData } = await supabase.auth.getSession()
+    const sessionUser = sessionData.session?.user
+    if (!sessionUser || sessionUser.id !== userId) return false
+
+    const metadataRole =
+      typeof sessionUser.user_metadata?.role === 'string'
+        ? sessionUser.user_metadata.role
+        : 'consumer'
+
+    if (metadataRole !== 'consumer') return false
+
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        role: accountTypeToAppRole('landlord'),
+        account_type: 'landlord',
+      },
+    })
+
+    if (error) {
+      console.warn('Unable to sync app role with organization membership:', error.message)
+      return false
+    }
+
+    return true
   },
 }

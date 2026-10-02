@@ -16,6 +16,44 @@ function page(
 
 export const SUPPORT_PAGES: LegalDocument[] = [
   page({
+    slug: "workspace-roles",
+    title: "Workspace roles glossary",
+    category: "support",
+    description:
+      "How BaytMiftah separates app account types, organization job roles, and resident or host marketplace metadata.",
+    sections: [
+      {
+        heading: "App account type (sign-in metadata)",
+        bullets: [
+          "Consumer — default buyer/renter account; uses /app for saved homes, messages, leases, and wallet.",
+          "Host — landlord or professional signup metadata; unlocks workspace entry paths after verification or invite.",
+          "These labels live in auth user metadata and can lag behind organization membership until you accept an invite or enrollment is approved.",
+        ],
+      },
+      {
+        heading: "Organization owner vs property_owner",
+        bullets: [
+          "Owner / Founder (role: owner) — created the organization record; full workspace permissions and billing authority.",
+          "Property owner (role: property_owner) — external owner linked to managed assets; read-focused access (listings, finance read) without team administration.",
+          "Do not confuse organization owner with a resident who merely owns their home on the consumer app.",
+        ],
+      },
+      {
+        heading: "Residents, tenants, and hosts on listings",
+        bullets: [
+          "Resident / tenant — consumer-side occupancy; uses leases, payments, and maintenance in /app, not workspace team tools.",
+          "Listing host metadata — who published or manages a public listing; may differ from the organization member operating the asset.",
+        ],
+      },
+      {
+        heading: "Inviting teammates",
+        content:
+          "Workspace → Team assigns job roles (agent, finance officer, property manager, etc.) with optional custom permissions. See your role home page after sign-in for the modules enabled for your department.",
+      },
+    ],
+    relatedPolicies: ["help", "host-resources", "trust-verification"],
+  }),
+  page({
     slug: "help",
     title: "Help Centre",
     category: "support",

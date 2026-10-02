@@ -15,6 +15,7 @@ export const whatsappLeaseSignService = {
     return buildPublicSigningUrl(publicSignToken, signerToken);
   },
 
+  /** Server-only (service_role). Browser clients cannot call the RPC after security hardening. */
   async getPendingForPhone(organizationId: string, phone: string): Promise<PendingLeaseSignLink | null> {
     const { data, error } = await supabase.rpc("get_pending_lease_sign_for_phone", {
       p_organization_id: organizationId,

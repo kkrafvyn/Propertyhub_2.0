@@ -9,6 +9,7 @@ import { AppLoadingScreen } from "../../components/ux/AppLoadingScreen";
 import { StandalonePageShell } from "../../components/ux/StandalonePageShell";
 import { communicationService } from "../../../lib/communication.service";
 import { organizationService } from "../../../lib/organization.service";
+import { userService } from "../../../lib/user.service";
 import { getWorkspaceRoute } from "../../../lib/workspace";
 
 function getErrorMessage(error: unknown) {
@@ -76,6 +77,10 @@ export function WorkspaceInviteAccept() {
     try {
       setAccepting(true);
       const result = await organizationService.acceptInvitation(invitationId);
+
+      if (user?.id) {
+        await userService.syncAppRoleWithOrgMembership(user.id);
+      }
 
       if (user) {
         try {

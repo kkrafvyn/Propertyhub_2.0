@@ -107,6 +107,7 @@ import { UniversalCommandBar } from "../../components/navigation/UniversalComman
 import { ShowMeHowOverlay } from "../../components/ux/ShowMeHowOverlay";
 import { practiceModeService } from "../../../lib/practice-mode-fixtures";
 import { Logo, ThemeToggle } from "../../components/baytmiftah";
+import { useTranslation } from "../../i18n/LocaleContext";
 import { WorkspaceMfaGate } from "../../components/security/WorkspaceMfaGate";
 import { BusinessMobileShell } from "../../shells/BusinessMobileShell";
 import { BusinessDesktopShell } from "../../shells/BusinessDesktopShell";
@@ -381,6 +382,7 @@ void getNavItemClasses; // suppress unused-var lint
 
 export function WorkspaceLayout() {
   const { user, profile, role } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { organizationSlug = "", page } = useParams();
@@ -731,13 +733,15 @@ export function WorkspaceLayout() {
   useEffect(() => {
     const state = location.state as { restrictedAccess?: boolean; attemptedPage?: string } | null;
     if (!state?.restrictedAccess) return;
-    toast.message("Access restricted", {
+    toast.message(t("access.restricted"), {
       description: state.attemptedPage
-        ? `Your role does not include ${state.attemptedPage.replace(/-/g, " ")}.`
-        : "Your role does not include this section.",
+        ? t("access.restrictedSection", {
+            section: state.attemptedPage.replace(/-/g, " "),
+          })
+        : t("access.restrictedGeneric"),
     });
     navigate(location.pathname + location.search, { replace: true, state: null });
-  }, [location.pathname, location.search, location.state, navigate]);
+  }, [location.pathname, location.search, location.state, navigate, t]);
 
   const handleOrganizationChange = (organizationId: string) => {
     const nextMembership = memberships.find(

@@ -404,9 +404,9 @@ export const blockchainService = {
         .eq('property_id', propertyId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (recordsError && recordsError.code !== 'PGRST116') throw recordsError;
+      if (recordsError) throw recordsError;
 
       // Get verification hashes
       const { data: hashes, error: hashesError } = await supabase
@@ -422,9 +422,9 @@ export const blockchainService = {
         .select('*')
         .eq('organization_id', organizationId)
         .eq('property_id', propertyId)
-        .single();
+        .maybeSingle();
 
-      if (assetError && assetError.code !== 'PGRST116') throw assetError;
+      if (assetError) throw assetError;
 
       return {
         latestRecord: records || null,

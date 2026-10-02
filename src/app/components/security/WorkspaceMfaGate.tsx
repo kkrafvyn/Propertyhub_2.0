@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router";
+import { Navigate, useLocation } from "react-router";
+import { PageLoadingSkeleton } from "../ux";
 import { hasMfaAssurance, workspaceRoleRequiresMfa } from "../../../lib/security/mfa";
 
 export function WorkspaceMfaGate({
   role,
+  permissions,
   children,
 }: {
   role?: string | null;
+  permissions?: string[] | null;
   children: React.ReactNode;
 }) {
+  const location = useLocation();
   const [ready, setReady] = useState(false);
   const [allowed, setAllowed] = useState(true);
 
@@ -16,7 +20,7 @@ export function WorkspaceMfaGate({
     let cancelled = false;
 
     const verify = async () => {
-      if (!workspaceRoleRequiresMfa(role)) {
+      if (!workspaceRoleRequiresMfa(role, permissions)) {
         if (!cancelled) {
           setAllowed(true);
           setReady(true);
@@ -36,18 +40,20 @@ export function WorkspaceMfaGate({
     return () => {
       cancelled = true;
     };
-  }, [role]);
+  }, [role, permissions]);
 
   if (!ready) {
-    return (
-      <div className="min-h-[40vh] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
-      </div>
-    );
+    return <PageLoadingSkeleton />;
   }
 
   if (!allowed) {
-    return <Navigate to="/app/security?mfa=workspace-required" replace />;
+    return (
+      <Navigate
+        to="/app/security?mfa=workspace-required"
+        replace
+        state={{ from: `${location.pathname}${location.search}` }}
+      />
+    );
   }
 
   return <>{children}</>;

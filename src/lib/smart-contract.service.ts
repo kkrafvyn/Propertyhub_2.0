@@ -441,9 +441,12 @@ export const smartContractService = {
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (contractError) throw contractError;
+      if (!contract) {
+        return { verified: false, contract: null };
+      }
 
       // Create verification log
       const { error: logError } = await supabase

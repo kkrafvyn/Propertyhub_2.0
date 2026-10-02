@@ -54,9 +54,9 @@ export const geointelligenceService = {
       .select('*')
       .eq('city', city)
       .eq('region', region)
-      .single()
-    
-    if (error && error.code !== 'PGRST116') throw error
+      .maybeSingle()
+
+    if (error) throw error
     
     if (data) return data
 
@@ -193,7 +193,7 @@ export const geointelligenceService = {
         .eq('location', city)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
     ])
     
     return {

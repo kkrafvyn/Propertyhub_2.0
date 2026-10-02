@@ -100,7 +100,8 @@ import {
   normalizeConsumerDashboardRole,
   normalizePropertyOperationsDashboardRole,
 } from "../../lib/role-dashboard";
-import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
+import { getWorkspaceRoute, WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
+import { getRoleLabel } from "../../../lib/company-model";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
 import { SignatureActionBanner } from "../../components/ux/SignatureActionBanner";
 import { buildCheckoutPath } from "../../lib/checkout-navigation";
@@ -287,6 +288,9 @@ export function UserDashboard() {
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [ownerOversightPath, setOwnerOversightPath] = useState<string | null>(null);
+  const [workspaceMemberships, setWorkspaceMemberships] = useState<
+    Array<{ slug: string; name: string; role: string }>
+  >([]);
 
   const section = getSection(location.pathname);
   useFinancialAccessGuard();
@@ -320,6 +324,19 @@ export function UserDashboard() {
           ownerOversightService.listMyAgreements(user.id).catch(() => []),
         ]);
         if (cancelled) return;
+        const mappedMemberships = (memberships || [])
+          .map((row: any) => {
+            const org = Array.isArray(row?.organization) ? row.organization[0] : row?.organization;
+            if (!org?.slug) return null;
+            return {
+              slug: String(org.slug),
+              name: String(org.name || org.slug),
+              role: String(row.role || "member"),
+            };
+          })
+          .filter(Boolean) as Array<{ slug: string; name: string; role: string }>;
+        setWorkspaceMemberships(mappedMemberships);
+
         const ownerMembership = (memberships || []).find(
           (row: any) =>
             row.role === "property_owner" ||
@@ -1478,51 +1495,62 @@ export function UserDashboard() {
   const renderOverview = () => (
     <div className="space-y-8">
       {!kycVerified ? <KycBanner kyc={kyc} /> : null}
-      {isWorkspaceRole(role) ? (
-        <Card className="p-6 border-brand-forest/15 bg-brand-forest/[0.04]">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="p-6 border-brand-forest/15 bg-brand-forest/[0.04]">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-foreground">Professional workspace</h2>
+              <h2 className="text-lg font-semibold text-foreground">Your workspaces</h2>
               <p className="text-sm text-muted-foreground">
-                Manage listings, leads, calendar, and payouts from your workspace dashboard.
+                Open an organization you belong to, or request access to manage property through a company workspace.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Link to={WORKSPACE_ENTRY_PATH}>
-                <Button>
-                  Open workspace
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
-              <Link to={`${WORKSPACE_ENTRY_PATH}?next=new`}>
-                <Button variant="outline">List property</Button>
-              </Link>
-            </div>
-          </div>
-        </Card>
-      ) : (
-        <Card className="p-6 border-amber-500/20 bg-amber-500/[0.04]">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">I own property</h2>
-              <p className="text-sm text-muted-foreground">
-                Claim a listing, create a landlord workspace, or request access to a company that manages your assets.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 shrink-0">
+              {workspaceMemberships[0] ? (
+                <Link to={getWorkspaceRoute(workspaceMemberships[0].slug)}>
+                  <Button>
+                    Open workspace
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              ) : (
+                <Link to={WORKSPACE_ENTRY_PATH}>
+                  <Button>
+                    Create workspace
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              )}
               <Link to="/app/workspace-access">
-                <Button>
-                  Request workspace access
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
-              <Link to={WORKSPACE_ENTRY_PATH}>
-                <Button variant="outline">Create workspace</Button>
+                <Button variant="outline">Claims & join requests</Button>
               </Link>
             </div>
           </div>
-        </Card>
-      )}
+          {workspaceMemberships.length > 0 ? (
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {workspaceMemberships.map((membership) => (
+                <li
+                  key={membership.slug}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-background/60 px-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground truncate">{membership.name}</p>
+                    <p className="text-xs text-muted-foreground">{getRoleLabel(membership.role)}</p>
+                  </div>
+                  <Link to={getWorkspaceRoute(membership.slug)}>
+                    <Button size="sm" variant="outline">
+                      Open
+                    </Button>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No organization memberships yet. Use claims & join requests to link a listing or company, or start enrollment from create workspace.
+            </p>
+          )}
+        </div>
+      </Card>
 
       {ownerOversightPath ? (
         <Card className="p-6 border-emerald-500/20 bg-emerald-500/[0.04]">

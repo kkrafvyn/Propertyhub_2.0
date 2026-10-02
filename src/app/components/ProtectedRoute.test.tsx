@@ -15,6 +15,7 @@ function createAuthState(overrides: Partial<ReturnType<typeof useAuth>> = {}) {
     user: null,
     profile: null,
     role: null,
+    hasWorkspaceMembership: false,
     capabilities: [],
     loading: false,
     error: null,

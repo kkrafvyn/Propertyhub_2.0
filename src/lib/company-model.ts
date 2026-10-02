@@ -163,6 +163,9 @@ export const ROLE_CATALOG: RoleCatalogEntry[] = [
   { role: "customer_service_agent", label: "Support Agent", department: "support", description: "Resident inquiries and ticket routing.", invitable: true },
   { role: "analyst", label: "Operations Analyst", department: "analytics", description: "Dashboards, KPIs, and read-heavy reporting.", invitable: true },
   { role: "contractor", label: "Contractor / Vendor", department: "maintenance", description: "External work orders only.", invitable: true },
+  { role: "vendor", label: "Vendor / Supplier", department: "maintenance", description: "Procurement and assigned vendor tasks.", invitable: true },
+  { role: "property_owner", label: "Property Owner (external)", department: "executive", description: "Portfolio owner linked to managed assets; read-focused oversight.", invitable: true },
+  { role: "enterprise_operator", label: "Enterprise Operator", department: "administration", description: "Cross-org enterprise operations and integrations.", invitable: true },
   { role: "developer", label: "Development Manager", department: "property", description: "Project handover and unit transition.", invitable: true },
 ];
 

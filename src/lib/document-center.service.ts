@@ -121,7 +121,7 @@ export const documentCenterService = {
           case_type,
           status,
           pipeline_stage,
-          user:users(full_name, email),
+          user:users!deal_cases_user_id_fkey(full_name, email),
           listing:listings(
             id,
             price,

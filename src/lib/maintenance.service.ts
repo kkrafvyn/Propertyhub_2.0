@@ -274,7 +274,7 @@ export const maintenanceService = {
       .from("maintenance_requests")
       .select(`
         *,
-        tenant:users(full_name, email, phone),
+        tenant:users!maintenance_requests_tenant_user_id_fkey(full_name, email, phone),
         vendor:vendors(id, business_name, phone),
         lease:leases(
           listing:listings(property:properties(id, address, city))

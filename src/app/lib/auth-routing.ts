@@ -15,24 +15,57 @@ type AuthProfile = {
   platform_console_grants?: string[];
 } | null;
 
+export type PostAuthRedirectContext = {
+  /** When true, route to workspace even if JWT metadata still says consumer. */
+  hasOrgMembership?: boolean;
+};
+
+/** Allow only same-origin relative in-app paths (blocks open redirects). */
+export function sanitizePostAuthRedirectPath(path: string | null | undefined): string | null {
+  if (!path || typeof path !== "string") return null;
+  const trimmed = path.trim();
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//") || trimmed.includes("\\")) {
+    return null;
+  }
+  if (/^https?:/i.test(trimmed) || trimmed.includes("@")) {
+    return null;
+  }
+  try {
+    const decoded = decodeURIComponent(trimmed);
+    if (decoded.startsWith("//") || /^https?:/i.test(decoded)) {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+  const pathOnly = trimmed.split("?")[0] ?? trimmed;
+  if (!/^\/[\w./%-]*$/.test(pathOnly)) {
+    return null;
+  }
+  return trimmed;
+}
+
 /** Resolve the dashboard for the shared web app after login. */
 export function resolvePostAuthRedirect(
   user: AuthUser,
   profile: AuthProfile,
   explicitRedirect?: string | null,
+  context?: PostAuthRedirectContext,
 ): string {
+  const safeExplicit = sanitizePostAuthRedirectPath(explicitRedirect);
+
   if (!user) {
     if (typeof window !== "undefined" && isElectron()) {
-      return explicitRedirect || "/login";
+      return safeExplicit || "/login";
     }
-    return explicitRedirect || "/app";
+    return safeExplicit || "/app";
   }
 
-  if (explicitRedirect && explicitRedirect !== "/app") {
-    if (typeof window !== "undefined" && isElectron() && isDesktopConsumerOnlyRoute(explicitRedirect)) {
+  if (safeExplicit && safeExplicit !== "/app") {
+    if (typeof window !== "undefined" && isElectron() && isDesktopConsumerOnlyRoute(safeExplicit)) {
       return resolveDesktopProfessionalHome(user as User, profile);
     }
-    return explicitRedirect;
+    return safeExplicit;
   }
 
   const mobileApp = typeof window !== "undefined" ? getMobileAppId() : "consumer";
@@ -54,6 +87,10 @@ export function resolvePostAuthRedirect(
 
   if (hasPlatformConsoleAccess(profile) || isFullAdminRole(metadataRole)) {
     return "/admin";
+  }
+
+  if (context?.hasOrgMembership) {
+    return "/workspace";
   }
 
   const role = metadataRole || profile?.role;

@@ -8,6 +8,7 @@ import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/badge";
 import { supabase } from "../../../lib/supabase";
 import { nativePluginsService } from "../../../lib/native-plugins.service";
+import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 import {
   isBiometricAppLockEnabled,
   setBiometricAppLockEnabled,
@@ -120,11 +121,32 @@ export function SecuritySettingsPage() {
   const [actionPending, setActionPending] = useState(false);
 
   const isMfaActive = verifiedFactors.length > 0;
+  const needsWorkspaceStepUp =
+    workspaceMfaRequired && isMfaActive && currentAal !== "aal2";
+  const needsAdminStepUp = mfaRequired && isMfaActive && currentAal !== "aal2";
+  const needsSessionStepUp = needsWorkspaceStepUp || needsAdminStepUp;
+
+  const resolvePostStepUpPath = () => {
+    const returnTo = (location.state as { from?: string } | null)?.from;
+    if (workspaceMfaRequired) {
+      if (returnTo?.startsWith("/workspace")) return returnTo;
+      return WORKSPACE_ENTRY_PATH;
+    }
+    if (returnTo?.startsWith("/admin")) return returnTo;
+    return "/admin";
+  };
 
   useEffect(() => {
     void loadSessions();
     void loadEnrolledFactors();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!workspaceMfaRequired || !isMfaActive || currentAal !== "aal2") return;
+    const returnTo = (location.state as { from?: string } | null)?.from;
+    const target = returnTo?.startsWith("/workspace") ? returnTo : WORKSPACE_ENTRY_PATH;
+    navigate(target, { replace: true });
+  }, [workspaceMfaRequired, isMfaActive, currentAal, location.state, navigate]);
 
   useEffect(() => {
     void nativePluginsService.isBiometricAvailable().then(setBiometricAvailable);
@@ -166,9 +188,12 @@ export function SecuritySettingsPage() {
       }
       setCurrentAal("aal2");
       setStepUpCode("");
-      toast.success("Administrative session verified.");
-      const returnTo = (location.state as { from?: string } | null)?.from;
-      navigate(returnTo?.startsWith("/admin") ? returnTo : "/admin", { replace: true });
+      toast.success(
+        workspaceMfaRequired
+          ? t("securityPage.workspaceStepUpSuccess")
+          : t("securityPage.adminStepUpSuccess"),
+      );
+      navigate(resolvePostStepUpPath(), { replace: true });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to verify the authenticator code.");
     } finally {
@@ -307,12 +332,27 @@ export function SecuritySettingsPage() {
         ) : null}
 
         {workspaceMfaRequired ? (
-          <Card className="p-4 border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200 flex items-center gap-3">
+          <Card className="p-4 border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-            <div>
-              <p className="font-semibold text-sm">Workspace Policy Enforcement</p>
-              <p className="text-xs">{t("securityPage.workspaceMfaRequired")}</p>
+            <div className="flex-1 space-y-1">
+              <p className="font-semibold text-sm">{t("securityPage.workspaceMfaBannerTitle")}</p>
+              <p className="text-xs">
+                {needsWorkspaceStepUp
+                  ? t("securityPage.workspaceMfaStepUp")
+                  : t("securityPage.workspaceMfaRequired")}
+              </p>
             </div>
+            {!isMfaActive ? (
+              <Button
+                variant="gradient"
+                size="sm"
+                onClick={() => void startMfaEnrollment()}
+                disabled={enrolling}
+                className="shrink-0"
+              >
+                {enrolling ? t("securityPage.startingMfa") : t("securityPage.workspaceMfaEnrollCta")}
+              </Button>
+            ) : null}
           </Card>
         ) : null}
 
@@ -447,10 +487,12 @@ export function SecuritySettingsPage() {
                   </Button>
                 ))}
               </div>
-              {mfaRequired && currentAal !== "aal2" ? (
+              {needsSessionStepUp ? (
                 <div className="space-y-2 border-t border-emerald-500/20 pt-3">
                   <p className="text-xs text-ink-secondary">
-                    Enter the current code from your authenticator to unlock platform administration for this session.
+                    {needsWorkspaceStepUp
+                      ? t("securityPage.workspaceStepUpHint")
+                      : t("securityPage.adminStepUpHint")}
                   </p>
                   <div className="flex flex-col gap-2 sm:flex-row sm:max-w-md">
                     <Input
@@ -472,7 +514,11 @@ export function SecuritySettingsPage() {
                       disabled={steppingUp || stepUpCode.length !== 6}
                       className="shrink-0"
                     >
-                      {steppingUp ? "Verifying…" : "Unlock admin console"}
+                      {steppingUp
+                        ? t("securityPage.verifyingStepUp")
+                        : needsWorkspaceStepUp
+                          ? t("securityPage.workspaceStepUpButton")
+                          : t("securityPage.adminStepUpButton")}
                     </Button>
                   </div>
                 </div>

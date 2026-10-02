@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { accountTypeToAppRole, resolvePostAuthRedirect } from "./auth-routing";
+import {
+  accountTypeToAppRole,
+  resolvePostAuthRedirect,
+  sanitizePostAuthRedirectPath,
+} from "./auth-routing";
 
 describe("resolvePostAuthRedirect", () => {
   it("honours an explicit non-default redirect", () => {
@@ -74,6 +78,30 @@ describe("resolvePostAuthRedirect", () => {
         null,
       ),
     ).toBe("/app");
+  });
+
+  it("prefers organization membership over stale consumer metadata", () => {
+    expect(
+      resolvePostAuthRedirect(
+        { user_metadata: { role: "consumer" } },
+        null,
+        null,
+        { hasOrgMembership: true },
+      ),
+    ).toBe("/workspace");
+  });
+});
+
+describe("sanitizePostAuthRedirectPath", () => {
+  it("allows in-app relative paths", () => {
+    expect(sanitizePostAuthRedirectPath("/app/saved")).toBe("/app/saved");
+    expect(sanitizePostAuthRedirectPath("/workspace/acme?tab=team")).toBe("/workspace/acme?tab=team");
+  });
+
+  it("blocks open redirects", () => {
+    expect(sanitizePostAuthRedirectPath("https://evil.test")).toBeNull();
+    expect(sanitizePostAuthRedirectPath("//evil.test/path")).toBeNull();
+    expect(sanitizePostAuthRedirectPath("/\\evil")).toBeNull();
   });
 });
 

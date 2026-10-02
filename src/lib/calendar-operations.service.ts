@@ -28,7 +28,7 @@ export const calendarOperationsService = {
   async getAvailabilityRules(organizationId: string) {
     const { data, error } = await supabase
       .from("agent_availability_rules")
-      .select("*, user:users(id, full_name, email)")
+      .select("*, user:users!agent_availability_rules_user_id_fkey(id, full_name, email)")
       .eq("organization_id", organizationId)
       .order("day_of_week", { ascending: true })
       .order("start_time", { ascending: true });

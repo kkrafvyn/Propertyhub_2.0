@@ -4,7 +4,7 @@ import {
   recordInitiatedPropertyRefund,
 } from "../_shared/refund-reconciliation.ts";
 import { createPayangelsRefund } from "../_shared/payangels.ts";
-import { requireFinanceMembership } from "../_shared/org-auth.ts";
+import { requireOrgWorkspacePermission } from "../_shared/workspace-role-permissions.ts";
 import { createAdminClient, requireAuthenticatedUser } from "../_shared/supabase.ts";
 
 function parseRefundAmountToMinorUnits(amount: unknown) {
@@ -75,7 +75,12 @@ Deno.serve(async (req) => {
 
     let financeAuthorized = false;
     try {
-      await requireFinanceMembership(admin, user.id, transaction.organization_id);
+      await requireOrgWorkspacePermission(
+        admin,
+        user.id,
+        transaction.organization_id,
+        "finance:write",
+      );
       financeAuthorized = true;
     } catch (membershipError) {
       if (!(membershipError instanceof HttpError) || membershipError.status !== 403) {

@@ -27,7 +27,7 @@ export const inspectionService = {
       .select(`
         *,
         listing:listings(id, property:properties(id, address, city)),
-        tenant:users(full_name, email)
+        tenant:users!property_inspections_tenant_user_id_fkey(full_name, email)
       `)
       .eq("organization_id", organizationId)
       .order("scheduled_at", { ascending: true });

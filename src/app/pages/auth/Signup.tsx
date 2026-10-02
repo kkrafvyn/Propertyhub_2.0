@@ -1,18 +1,24 @@
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { Loader2, Eye, EyeOff, Check } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
-import { AuthShell, AuthDivider, OAuthButtons } from "../../components/baytmiftah";
+import { AuthShell, AuthDivider, OAuthButtons, PageMeta } from "../../components/baytmiftah";
 import { LegalAcceptanceCheckbox } from "../../components/legal/LegalAcceptanceCheckbox";
 import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION, LEGAL_VERSION_KEY, type LegalAcceptanceScope } from "../../../lib/legal-config";
 import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
 import { validatePassword } from "../../../lib/security/password-policy";
 import { supabase } from "../../../lib/supabase";
 
+type SignupAccountType = "user" | "landlord";
+
 export function Signup() {
+  const [searchParams] = useSearchParams();
+  const initialAccountType: SignupAccountType =
+    searchParams.get("type") === "landlord" ? "landlord" : "user";
+  const [accountType, setAccountType] = useState<SignupAccountType>(initialAccountType);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -29,10 +35,13 @@ export function Signup() {
   const navigate = useNavigate();
   const { signUp, signInWithOAuth, user } = useAuth();
 
-  const oauthRedirectUrl = useMemo(
-    () => `${window.location.origin}/login?next=${encodeURIComponent("/app")}`,
-    []
-  );
+  const oauthRedirectUrl = useMemo(() => {
+    const next = accountType === "landlord" ? "/workspace" : "/app";
+    return `${window.location.origin}/login?next=${encodeURIComponent(next)}`;
+  }, [accountType]);
+
+  const legalScope: LegalAcceptanceScope =
+    accountType === "landlord" ? "signup_host" : "signup_consumer";
 
   useEffect(() => {
     if (user) {
@@ -81,20 +90,19 @@ export function Signup() {
 
     try {
       setLoading(true);
-      const scope: LegalAcceptanceScope = "signup_consumer";
-      const policySlugs = ACCEPTANCE_SCOPES[scope].policySlugs;
+      const policySlugs = ACCEPTANCE_SCOPES[legalScope].policySlugs;
       const { user } = await signUp(
         formData.email,
         formData.password,
         formData.fullName,
-        "user"
+        accountType,
       );
       if (user?.id) {
         const { data: sessionData } = await supabase.auth.getSession();
         if (sessionData.session?.user.id === user.id) {
           await legalAcceptanceService.recordAcceptance({
             userId: user.id,
-            scope,
+            scope: legalScope,
             policySlugs,
             policyVersion: LEGAL_POLICY_VERSION,
           });
@@ -104,7 +112,7 @@ export function Signup() {
       toast.success("Account created successfully. Check your email to verify.");
       navigate("/login", {
         state: {
-          from: "/app",
+          from: accountType === "landlord" ? "/workspace" : "/app",
         },
       });
     } catch (error) {
@@ -115,6 +123,8 @@ export function Signup() {
   };
 
   return (
+    <>
+    <PageMeta title="Create your account" canonicalPath="/signup" />
     <AuthShell
       title="Create your account"
       subtitle="Join the modern real estate operating system."
@@ -138,6 +148,31 @@ export function Signup() {
       />
 
       <AuthDivider label="Or register with email" />
+
+      <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-white/10 lg:bg-muted/40 border border-white/15 lg:border-border/60">
+        <button
+          type="button"
+          onClick={() => setAccountType("user")}
+          className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+            accountType === "user"
+              ? "bg-white text-neutral-900 lg:bg-background shadow-sm"
+              : "text-white/80 lg:text-muted-foreground"
+          }`}
+        >
+          Buyer / renter
+        </button>
+        <button
+          type="button"
+          onClick={() => setAccountType("landlord")}
+          className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+            accountType === "landlord"
+              ? "bg-white text-neutral-900 lg:bg-background shadow-sm"
+              : "text-white/80 lg:text-muted-foreground"
+          }`}
+        >
+          Landlord / pro
+        </button>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
@@ -246,7 +281,7 @@ export function Signup() {
 
         <div className="pt-1 text-white/90 lg:text-foreground">
           <LegalAcceptanceCheckbox
-            scope="signup_consumer"
+            scope={legalScope}
             checked={termsAccepted}
             onChange={setTermsAccepted}
           />
@@ -269,5 +304,6 @@ export function Signup() {
         </Button>
       </form>
     </AuthShell>
+    </>
   );
 }

@@ -202,7 +202,7 @@ export const consumerRoutes: RouteObject[] = [
     path: 'safety',
     element: <Navigate to="/legal/safety" replace />,
   },
-  ...['help', 'cancellation', 'host-resources', 'about', 'careers', 'contact'].map((slug) => ({
+  ...['help', 'cancellation', 'host-resources', 'workspace-roles', 'about', 'careers', 'contact'].map((slug) => ({
     path: slug,
     lazy: async () => {
       const { StaticContentPage } = await import('../pages/legal/StaticContentPage');

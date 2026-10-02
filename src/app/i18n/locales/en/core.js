@@ -92,6 +92,8 @@ export default {
   },
   "access": {
     "restricted": "Access restricted",
+    "restrictedSection": "Your role does not include {{section}}.",
+    "restrictedGeneric": "Your role does not include this section.",
     "requires": "This area requires {{roles}} permissions. Your role: {{role}}.",
     "goToWorkspace": "Go to your workspace"
   },

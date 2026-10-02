@@ -48,7 +48,7 @@ export const dealCaseService = {
           property:properties(*),
           organization:organizations(name, logo_url, verified)
         ),
-        user:users(full_name, email, phone)
+        user:users!deal_cases_user_id_fkey(full_name, email, phone)
       `
       )
       .eq('organization_id', organizationId)
@@ -70,7 +70,7 @@ export const dealCaseService = {
           organization:organizations(*)
         ),
         organization:organizations(*),
-        user:users(*)
+        user:users!deal_cases_user_id_fkey(*)
       `
       )
       .eq('id', id)

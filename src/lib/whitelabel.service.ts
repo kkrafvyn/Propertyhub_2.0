@@ -8,10 +8,10 @@ export const whitelabelService = {
       .from('organization_branding')
       .select('*')
       .eq('organization_id', organizationId)
-      .single()
-    
-    if (error && error.code !== 'PGRST116') throw error
-    
+      .maybeSingle()
+
+    if (error) throw error
+
     // Return defaults if not found
     return data || {
       primary_color: '#3B82F6',
@@ -64,10 +64,10 @@ export const whitelabelService = {
       .from('organization_settings')
       .select('*')
       .eq('organization_id', organizationId)
-      .single()
-    
-    if (error && error.code !== 'PGRST116') throw error
-    
+      .maybeSingle()
+
+    if (error) throw error
+
     // Return defaults if not found
     return data || {
       enabled_features: ['listings', 'messaging', 'analytics'],
@@ -122,8 +122,8 @@ export const whitelabelService = {
       .from('organization_branding')
       .select('organization_id')
       .eq('custom_domain', domain)
-      .single()
-    
+      .maybeSingle()
+
     return !data // Available if no results
   },
 

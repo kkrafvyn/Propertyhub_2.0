@@ -41,13 +41,13 @@ export const orgActivityService = {
         .limit(limit),
       db
         .from("field_activity_logs")
-        .select("id, activity_type, summary, user_id, created_at")
+        .select("id, title, details, user_id, created_at")
         .eq("organization_id", input.organizationId)
         .order("created_at", { ascending: false })
         .limit(limit),
       db
         .from("operational_events")
-        .select("id, event_type, title, severity, created_at")
+        .select("id, event_type, message, severity, created_at")
         .eq("organization_id", input.organizationId)
         .order("created_at", { ascending: false })
         .limit(limit),
@@ -93,7 +93,7 @@ export const orgActivityService = {
       }
       items.push({
         id: `field-${log.id}`,
-        message: log.summary || `Field activity · ${log.activity_type || "update"}`,
+        message: log.title || log.details || "Field activity logged",
         href: `${input.workspaceBasePath}/mobile-settings`,
         createdAt: log.created_at,
       });
@@ -102,7 +102,7 @@ export const orgActivityService = {
     for (const event of eventsRes.data || []) {
       items.push({
         id: `ops-${event.id}`,
-        message: event.title || `Ops event · ${event.event_type || event.severity || "update"}`,
+        message: event.message || `Ops event · ${event.event_type || event.severity || "update"}`,
         href: `${input.workspaceBasePath}/exception-center`,
         createdAt: event.created_at,
       });

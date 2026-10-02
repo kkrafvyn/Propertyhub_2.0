@@ -5,7 +5,7 @@ import { AppLoadingScreen } from "../components/ux/AppLoadingScreen";
 import { adminService } from "../../lib/admin.service";
 import { hasPlatformConsoleAccess } from "../../lib/platform-access";
 import { isEmailVerified, isUserBanned } from "../../lib/security/password-policy";
-import { supabase } from "../../lib/supabase";
+import { hasMfaAssurance } from "../../lib/security/mfa";
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -77,12 +77,11 @@ export function ProtectedAdminRoute({ children }: { children: React.ReactNode })
           return;
         }
 
-        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-        const needsMfa = aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2";
+        const assured = await hasMfaAssurance();
 
         if (!cancelled) {
           setIsAdmin(true);
-          setMfaReady(!needsMfa);
+          setMfaReady(assured);
           setCheckingAdmin(false);
         }
       } catch (error) {

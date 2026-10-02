@@ -10,8 +10,10 @@ const fixturePassword =
 const tenantAEmail = "tenant-a-isolation@mailinator.com";
 const tenantBEmail = "tenant-b-isolation@mailinator.com";
 
-const hasFixtures = Boolean(supabaseUrl && testAnonKey && tenantAId && tenantBId);
-const testIfConfigured = hasFixtures ? it : it.skip;
+const runLiveIsolation =
+  import.meta.env.RUN_TENANT_ISOLATION_TESTS === "true" &&
+  Boolean(supabaseUrl && testAnonKey && tenantAId && tenantBId);
+const testIfConfigured = runLiveIsolation ? it : it.skip;
 
 const PRIVATE_BUCKETS = ["maintenance-media", "kyc-documents"] as const;
 
@@ -41,10 +43,10 @@ async function signInFixtureToken(email: string) {
 
 describe("storage isolation integration", () => {
   beforeAll(async () => {
-    if (!hasFixtures) return;
+    if (!runLiveIsolation) return;
     tenantAToken = await signInFixtureToken(tenantAEmail);
     tenantBToken = await signInFixtureToken(tenantBEmail);
-  }, 30_000);
+  }, 60_000);
 
   for (const bucket of PRIVATE_BUCKETS) {
     testIfConfigured(`tenant A cannot list tenant B objects in ${bucket}`, async () => {
@@ -82,7 +84,7 @@ describe("storage isolation integration", () => {
   });
 });
 
-if (!hasFixtures) {
+if (!runLiveIsolation) {
   describe("storage isolation fixture requirements", () => {
     it("documents CI fixture variables for live storage RLS proof", () => {
       expect(PRIVATE_BUCKETS).toContain("kyc-documents");

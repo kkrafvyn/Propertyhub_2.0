@@ -66,7 +66,7 @@ export const messageService = {
             *,
             property:properties(*)
           ),
-          user:users(full_name, email, phone)
+          user:users!deal_cases_user_id_fkey(full_name, email, phone)
         )
       `
       )
@@ -96,7 +96,7 @@ export const messageService = {
             *,
             property:properties(*)
           ),
-          user:users(full_name, email, phone)
+          user:users!deal_cases_user_id_fkey(full_name, email, phone)
         )
       `
       )
@@ -143,7 +143,7 @@ export const messageService = {
                 *,
                 property:properties(*)
               ),
-              user:users(full_name, email, phone)
+              user:users!deal_cases_user_id_fkey(full_name, email, phone)
             )
           `
           )
@@ -189,7 +189,7 @@ export const messageService = {
             *,
             property:properties(*)
           ),
-          user:users(full_name, email, phone)
+          user:users!deal_cases_user_id_fkey(full_name, email, phone)
         )
       `
       )
@@ -307,9 +307,9 @@ export const messageService = {
       .or(
         `and(participant_1_id.eq.${participantA},participant_2_id.eq.${participantB}),and(participant_1_id.eq.${participantB},participant_2_id.eq.${participantA})`
       )
-      .single()
+      .maybeSingle()
 
-    if (existingError && existingError.code !== 'PGRST116') throw existingError
+    if (existingError) throw existingError
     if (existing) return existing
 
     // Create new conversation

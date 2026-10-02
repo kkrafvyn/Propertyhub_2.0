@@ -11,14 +11,17 @@ import { isEmailVerified } from "../../../lib/security/password-policy";
 import { resolvePostAuthRedirect } from "../../lib/auth-routing";
 
 export function VerifyEmailPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, hasWorkspaceMembership } = useAuth();
   const navigate = useNavigate();
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (!user || !isEmailVerified(user)) return;
-    navigate(resolvePostAuthRedirect(user, profile), { replace: true });
-  }, [user, profile, navigate]);
+    navigate(
+      resolvePostAuthRedirect(user, profile, null, { hasOrgMembership: hasWorkspaceMembership }),
+      { replace: true },
+    );
+  }, [user, profile, hasWorkspaceMembership, navigate]);
 
   if (user && isEmailVerified(user)) {
     return <AppLoadingScreen label="Redirecting…" />;

@@ -358,7 +358,7 @@ async function runLeaseEsignReminders(admin: ReturnType<typeof createAdminClient
       lease:leases(
         id,
         tenant_user_id,
-        tenant:users(email, phone)
+        tenant:users!leases_tenant_user_id_fkey(email, phone)
       )
     `)
     .in("status", ["sent", "viewed", "partially_signed"])
@@ -554,7 +554,7 @@ async function runFollowUpReminders(admin: ReturnType<typeof createAdminClient>)
       next_follow_up_at,
       follow_up_reminded_at,
       listing:listings(id, property:properties(address, city)),
-      user:users(full_name, email)
+      user:users!deal_cases_user_id_fkey(full_name, email)
     `
     )
     .not("next_follow_up_at", "is", null)
@@ -625,7 +625,7 @@ async function runStalePipelineNudges(admin: ReturnType<typeof createAdminClient
       updated_at,
       stale_nudged_at,
       listing:listings(id, property:properties(address)),
-      user:users(full_name, email)
+      user:users!deal_cases_user_id_fkey(full_name, email)
     `
     )
     .lt("updated_at", staleThreshold)
@@ -684,7 +684,7 @@ async function runViewingReminders(admin: ReturnType<typeof createAdminClient>) 
       *,
       listing:listings(id, property:properties(address, city, region)),
       organization:organizations(slug),
-      user:users(id, full_name, email, phone),
+      user:users!property_viewings_user_id_fkey(id, full_name, email, phone),
       assigned_member:users!property_viewings_assigned_to_fkey(id, full_name, email, phone)
     `
     )

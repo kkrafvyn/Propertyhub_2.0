@@ -52,6 +52,14 @@ describe("api authorization — platform admin separation", () => {
     expect(
       resolvePostAuthRedirect({ user_metadata: { role: "consumer" } }, regularWorkspaceUser),
     ).toBe("/app");
+    expect(
+      resolvePostAuthRedirect(
+        { user_metadata: { role: "consumer" } },
+        regularWorkspaceUser,
+        null,
+        { hasOrgMembership: true },
+      ),
+    ).toBe("/workspace");
   });
 
   it("routes platform admin and staff to /admin", () => {

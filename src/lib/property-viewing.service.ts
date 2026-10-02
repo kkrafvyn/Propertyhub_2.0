@@ -27,7 +27,7 @@ const VIEWING_SELECT = `
     *,
     property:properties(*)
   ),
-  user:users(id, full_name, email, phone),
+  user:users!property_viewings_user_id_fkey(id, full_name, email, phone),
   assigned_member:users!property_viewings_assigned_to_fkey(id, full_name, email),
   deal_case:deal_cases(*)
 `;

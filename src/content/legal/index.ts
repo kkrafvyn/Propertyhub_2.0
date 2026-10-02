@@ -68,6 +68,7 @@ export function getLegalPath(slug: string): string {
   if (resolved === "contact") return "/contact";
   if (resolved === "cancellation") return "/cancellation";
   if (resolved === "host-resources") return "/host-resources";
+  if (resolved === "workspace-roles") return "/workspace-roles";
   return `/legal/${resolved}`;
 }
 

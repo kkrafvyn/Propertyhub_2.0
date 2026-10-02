@@ -1,7 +1,8 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { getAllowedOrigins } from "../_shared/cors.ts";
 import { isAllowedAppUrl } from "../_shared/security.ts";
-import { getCorsHeaders } from "../_shared/http.ts";
+import { getCorsHeaders, HttpError } from "../_shared/http.ts";
+import { requireOrgWorkspacePermission } from "../_shared/workspace-role-permissions.ts";
 
 type InviteRole = string;
 
@@ -119,20 +120,13 @@ Deno.serve(async (req) => {
 
   const email = normalizeEmail(rawEmail);
 
-  const { data: membership, error: membershipError } = await userClient
-    .from("organization_members")
-    .select(
-      `
-      role,
-      organization:organizations(id, name, slug)
-    `
-    )
-    .eq("organization_id", organizationId)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (membershipError) {
-    return jsonResponse(500, { error: "Unable to verify organization membership" }, req);
+  try {
+    await requireOrgWorkspacePermission(adminClient, user.id, organizationId, "team:manage");
+  } catch (permissionError) {
+    if (permissionError instanceof HttpError) {
+      return jsonResponse(permissionError.status, { error: permissionError.message }, req);
+    }
+    return jsonResponse(403, { error: "You don't have permission to send invites" }, req);
   }
 
   const { data: canInvite, error: permissionError } = await userClient.rpc("can_invite_organization_role", { p_org: organizationId, p_role: role });

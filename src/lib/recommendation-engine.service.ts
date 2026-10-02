@@ -229,7 +229,7 @@ export const recommendationEngineService = {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
     
     if (log && log.recommended_listings.includes(listingId)) {
       await supabase

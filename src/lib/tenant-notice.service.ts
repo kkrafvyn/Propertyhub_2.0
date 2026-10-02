@@ -27,7 +27,7 @@ export const tenantNoticeService = {
       .from("tenant_notices")
       .select(`
         *,
-        tenant:users(full_name, email)
+        tenant:users!tenant_notices_tenant_user_id_fkey(full_name, email)
       `)
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: false });

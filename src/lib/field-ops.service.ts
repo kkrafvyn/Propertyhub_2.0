@@ -7,7 +7,7 @@ export const fieldOpsService = {
       .select(
         `
         *,
-        user:users(id, full_name, email),
+        user:users!field_activity_logs_user_id_fkey(id, full_name, email),
         viewing:property_viewings(
           id,
           status,

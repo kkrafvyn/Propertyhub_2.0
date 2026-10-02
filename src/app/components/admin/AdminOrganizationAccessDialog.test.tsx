@@ -53,7 +53,7 @@ describe("admin organization access", () => {
   it("assigns the chosen organization role without creating an organization or offering ownership", async () => {
     vi.mocked(adminService.assignOrganizationMember).mockResolvedValue(undefined);
     const { onSaved } = show();
-    fireEvent.change(screen.getByLabelText("Organization action"), { target: { value: "assign" } });
+    fireEvent.change(screen.getByLabelText("Action"), { target: { value: "assign" } });
     expect(screen.getByRole("button", { name: "Save membership" })).toBeDisabled();
     await screen.findByRole("option", { name: "Existing Company /existing-company" });
     expect(screen.getByRole("option", { name: /Suspended Company/ })).toBeDisabled();
@@ -70,7 +70,7 @@ describe("admin organization access", () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
     const { onClose, onSaved } = show();
-    fireEvent.change(screen.getByLabelText("Organization action"), { target: { value: "self_setup" } });
+    fireEvent.change(screen.getByLabelText("Action"), { target: { value: "self_setup" } });
     expect(screen.getByLabelText("Organization setup link")).toHaveValue(`${window.location.origin}/workspace?kind=company`);
     expect(screen.getByText(/identity verification.*admin approval/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Copy setup link" }));

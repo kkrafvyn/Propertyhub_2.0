@@ -231,9 +231,9 @@ class CommissionService {
         .from('payout_schedules')
         .select('*')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
 
-      if (error && error.code !== 'PGRST116') throw error
+      if (error) throw error
       return data ? this.mapPayoutSchedule(data) : null
     } catch (error) {
       console.error('Error fetching payout schedule:', error)

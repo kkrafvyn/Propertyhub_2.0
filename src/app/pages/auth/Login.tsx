@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "sonner";
 import { resolvePostAuthRedirect } from "../../lib/auth-routing";
-import { AuthShell, AuthDivider, OAuthButtons, BiometricLoginButton } from "../../components/baytmiftah";
+import { AuthShell, AuthDivider, OAuthButtons, BiometricLoginButton, PageMeta } from "../../components/baytmiftah";
 import { AppLoadingScreen } from "../../components/ux/AppLoadingScreen";
 import { useTranslation } from "../../i18n/LocaleContext";
 import { nativePluginsService } from "../../../lib/native-plugins.service";
@@ -27,7 +27,7 @@ export function Login() {
   );
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signInWithOAuth, user, profile, loading: authLoading } = useAuth();
+  const { signIn, signInWithOAuth, user, profile, hasWorkspaceMembership, loading: authLoading } = useAuth();
 
   const stateRedirectTo =
     typeof location.state === "object" &&
@@ -48,9 +48,11 @@ export function Login() {
   const postAuthDestination = useMemo(
     () =>
       user
-        ? resolvePostAuthRedirect(user, profile, stateRedirectTo || queryRedirectTo)
+        ? resolvePostAuthRedirect(user, profile, stateRedirectTo || queryRedirectTo, {
+            hasOrgMembership: hasWorkspaceMembership,
+          })
         : null,
-    [user, profile, stateRedirectTo, queryRedirectTo],
+    [user, profile, hasWorkspaceMembership, stateRedirectTo, queryRedirectTo],
   );
   const isConsumerBlockedOnDesktop = Boolean(
     isDesktopLogin &&
@@ -156,6 +158,8 @@ export function Login() {
   };
 
   return (
+    <>
+    <PageMeta title={t("auth.signInTitle")} canonicalPath="/login" />
     <AuthShell
       title={t("auth.signInTitle")}
       subtitle={
@@ -279,5 +283,6 @@ export function Login() {
         </Button>
       </form>
     </AuthShell>
+    </>
   );
 }

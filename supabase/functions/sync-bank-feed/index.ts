@@ -1,5 +1,6 @@
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import { createAdminClient, requireAuthenticatedUser } from "../_shared/supabase.ts";
+import { requireOrgWorkspacePermission } from "../_shared/workspace-role-permissions.ts";
 
 const SUPPORTED_PROVIDERS = new Set([
   "monzo",
@@ -150,24 +151,12 @@ Deno.serve(async (req) => {
       throw new HttpError(404, "Bank feed connection not found");
     }
 
-    const { data: membership } = await admin
-      .from("organization_members")
-      .select("id, role")
-      .eq("organization_id", connection.organization_id)
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    const financeRoles = new Set([
-      "owner",
-      "manager",
-      "finance_manager",
-      "finance_officer",
-      "head_property_management",
-    ]);
-
-    if (!membership || !financeRoles.has(String(membership.role))) {
-      throw new HttpError(403, "You do not have access to this bank feed connection");
-    }
+    await requireOrgWorkspacePermission(
+      admin,
+      user.id,
+      connection.organization_id,
+      "finance:write",
+    );
 
     const provider = String(connection.provider || "").trim().toLowerCase();
     if (!SUPPORTED_PROVIDERS.has(provider)) {

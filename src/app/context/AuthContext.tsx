@@ -31,6 +31,7 @@ interface AuthContextType {
   user: User | null
   profile: UserProfile | null
   role: string | null
+  hasWorkspaceMembership: boolean
   capabilities: string[]
   loading: boolean
   error: Error | null
@@ -56,6 +57,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [hasWorkspaceMembership, setHasWorkspaceMembership] = useState(false)
   const [capabilities, setCapabilities] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -198,6 +200,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       unsubNative()
     }
   }, [])
+
+  useEffect(() => {
+    if (!user?.id) {
+      setHasWorkspaceMembership(false)
+      return
+    }
+
+    let cancelled = false
+    void (async () => {
+      try {
+        const hasMembership = await userService.hasOrganizationMembership(user.id)
+        if (cancelled) return
+        setHasWorkspaceMembership(hasMembership)
+        if (hasMembership) {
+          await userService.syncAppRoleWithOrgMembership(user.id)
+        }
+      } catch (membershipError) {
+        console.warn('Unable to load workspace membership:', membershipError)
+        if (!cancelled) setHasWorkspaceMembership(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id])
 
   useEffect(() => {
     if (!user?.id) {
@@ -400,6 +428,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         profile,
         role,
+        hasWorkspaceMembership,
         capabilities,
         loading,
         error,
@@ -421,6 +450,7 @@ export const DEFAULT_AUTH_CONTEXT: AuthContextType = {
   user: null,
   profile: null,
   role: null,
+  hasWorkspaceMembership: false,
   capabilities: [],
   loading: false,
   error: null,

@@ -132,7 +132,7 @@ export const automationEngineService = {
         .eq('organization_id', orgId)
         .eq('role', 'agent')
         .limit(1)
-        .single()
+        .maybeSingle()
       
       if (assignee) {
         await supabase
