@@ -18,6 +18,7 @@ export function WorkspaceMfaGate({
 
   useEffect(() => {
     let cancelled = false;
+    setReady(false);
 
     const verify = async () => {
       if (!workspaceRoleRequiresMfa(role, permissions)) {
@@ -43,7 +44,13 @@ export function WorkspaceMfaGate({
   }, [role, permissions]);
 
   if (!ready) {
-    return <PageLoadingSkeleton />;
+    return (
+      <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-7xl rounded-2xl border border-surface-border bg-surface-subtle/40 p-6">
+          <PageLoadingSkeleton />
+        </div>
+      </div>
+    );
   }
 
   if (!allowed) {

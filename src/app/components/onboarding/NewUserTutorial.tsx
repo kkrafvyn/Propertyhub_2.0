@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, CircleHelp, Play, RotateCcw, Sparkles, X } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { useAuth } from "../../context/AuthContext";
@@ -63,7 +63,9 @@ function writeStoredTutorial(userId: string, value: StoredTutorial) {
 
 export function NewUserTutorial() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, profile, role } = useAuth();
+  const isWorkspaceRoute = location.pathname.startsWith("/workspace");
   const [status, setStatus] = useState<TutorialStatus | null>(null);
   const [selectedRole, setSelectedRole] = useState<TutorialRole | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
@@ -93,16 +95,35 @@ export function NewUserTutorial() {
     }
 
     if (detectedRole && detectedRole !== "consumer") {
+      const definitionForRole = getTutorialDefinition(detectedRole);
+      const emptyChecklist = Array(definitionForRole.checklist.length).fill(false);
+
+      if (detectedRole === "platform_admin" || isWorkspaceRoute) {
+        writeStoredTutorial(user.id, {
+          status: "skipped",
+          role: detectedRole,
+          checklist: emptyChecklist,
+        });
+        setSelectedRole(detectedRole);
+        setChecklist(emptyChecklist);
+        setStatus(null);
+        return;
+      }
+
       setSelectedRole(detectedRole);
-      setChecklist(Array(getTutorialDefinition(detectedRole).checklist.length).fill(false));
+      setChecklist(emptyChecklist);
       setStatus("intro");
       return;
     }
 
     setStatus("role");
-  }, [detectedRole, user]);
+  }, [detectedRole, isWorkspaceRoute, user]);
 
   if (!user || !status) return null;
+
+  if (isWorkspaceRoute && status !== "role") {
+    return null;
+  }
 
   const closeTutorial = () => setStatus(null);
 

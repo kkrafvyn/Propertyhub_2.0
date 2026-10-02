@@ -88,6 +88,29 @@ function formatDateTime(value?: string | null) {
   }).format(new Date(value));
 }
 
+type DashboardPreviewRole = "owner" | "manager" | "agent" | "analyst";
+
+function resolveDashboardPreviewRole(role: MemberRole | null | undefined): DashboardPreviewRole {
+  if (role === "manager" || role === "property_manager") return "manager";
+  if (role === "agent" || role === "sales") return "agent";
+  if (role === "analyst" || role === "platform_analyst") return "analyst";
+  if (
+    role === "owner" ||
+    role === "property_owner" ||
+    role === "platform_admin" ||
+    role === "organization_admin" ||
+    role === "managing_director"
+  ) {
+    return "owner";
+  }
+  return "owner";
+}
+
+function normalizeDashboardMemberRole(role: MemberRole | null | undefined): MemberRole {
+  if (!role || role === "platform_admin") return "owner";
+  return role;
+}
+
 export function WorkspaceDashboard({
   organization,
   workspaceBasePath,
@@ -105,10 +128,12 @@ export function WorkspaceDashboard({
   const [propertyTransactions, setPropertyTransactions] = useState<any[]>([]);
   const [propertyViewings, setPropertyViewings] = useState<any[]>([]);
   const [activityItems, setActivityItems] = useState<TimelineActivity[]>([]);
-  const [activeRole, setActiveRole] = useState<MemberRole>(currentRole || "owner");
+  const [activeRole, setActiveRole] = useState<MemberRole>(
+    normalizeDashboardMemberRole(currentRole || "owner"),
+  );
 
   useEffect(() => {
-    if (currentRole) setActiveRole(currentRole);
+    if (currentRole) setActiveRole(normalizeDashboardMemberRole(currentRole));
   }, [currentRole]);
 
   useEffect(() => {
@@ -320,12 +345,8 @@ export function WorkspaceDashboard({
     },
   ] as const;
 
-  const activeRoleConfig = roleConfig.find((r) => r.role === activeRole) || roleConfig[0];
-  const dashboardRole = activeRole === "property_owner"
-    ? "owner"
-    : activeRole === "property_manager"
-      ? "manager"
-      : activeRole;
+  const dashboardRole = resolveDashboardPreviewRole(activeRole);
+  const activeRoleConfig = roleConfig.find((r) => r.role === dashboardRole) || roleConfig[0];
 
   return (
     <div className="space-y-8">

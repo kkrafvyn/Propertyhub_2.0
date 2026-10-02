@@ -589,6 +589,10 @@ export function WorkspaceLayout() {
       .catch(() => setPendingCosigns([]));
   }, [organization?.id, user?.id]);
   const effectiveRole: MemberRole = previewRole || currentRole || "owner";
+  const mfaGateRole: MemberRole = isPlatformAdminViewer ? "platform_admin" : effectiveRole;
+  const dashboardRole: MemberRole = isPlatformAdminViewer
+    ? previewRole || "owner"
+    : effectiveRole;
   const accessRole: MemberRole =
     shouldUseBusinessMobileShell() ? currentRole || "owner" : effectiveRole;
   const currentPage = page || "";
@@ -781,7 +785,7 @@ export function WorkspaceLayout() {
           <WorkspaceDashboard
             organization={organization}
             workspaceBasePath={workspaceBasePath}
-            currentRole={effectiveRole}
+            currentRole={dashboardRole}
             onRoleChange={(r) => setPreviewRole(r)}
             {...memberScopeProps}
           />
@@ -1152,7 +1156,7 @@ export function WorkspaceLayout() {
           <WorkspaceDashboard
             organization={organization}
             workspaceBasePath={workspaceBasePath}
-            currentRole={effectiveRole}
+            currentRole={dashboardRole}
             onRoleChange={(r) => setPreviewRole(r)}
             {...memberScopeProps}
           />
@@ -1327,7 +1331,13 @@ export function WorkspaceLayout() {
           state={{ restrictedAccess: true, attemptedPage: currentPage }}
         />
       ) : (
-        <Suspense fallback={<PageLoadingSkeleton />}>
+        <Suspense
+          fallback={
+            <div className="rounded-2xl border border-surface-border bg-surface-subtle/40 p-6">
+              <PageLoadingSkeleton />
+            </div>
+          }
+        >
           {renderPage()}
         </Suspense>
       )}
@@ -1353,7 +1363,7 @@ export function WorkspaceLayout() {
 
   if (isElectron()) {
     return (
-      <WorkspaceMfaGate role={effectiveRole} permissions={navPermissions}>
+      <WorkspaceMfaGate role={mfaGateRole} permissions={navPermissions}>
         <BusinessDesktopShell organizationName={organization.name}>
           <div className="max-w-full">{workspacePageContent}</div>
         </BusinessDesktopShell>
@@ -1364,7 +1374,7 @@ export function WorkspaceLayout() {
 
   if (shouldUseBusinessMobileShell()) {
     return (
-      <WorkspaceMfaGate role={effectiveRole} permissions={navPermissions}>
+      <WorkspaceMfaGate role={mfaGateRole} permissions={navPermissions}>
         <BusinessMobileShell
           jobRole={mapMemberRoleToMobileJobRole(accessRole)}
           organizationSlug={organizationSlug}
@@ -1424,7 +1434,7 @@ export function WorkspaceLayout() {
   }
 
   return (
-    <WorkspaceMfaGate role={effectiveRole} permissions={navPermissions}>
+    <WorkspaceMfaGate role={mfaGateRole} permissions={navPermissions}>
       <div className="desktop-shell workspace-portal min-h-screen">
         {/* ── Top Header ─────────────────────────────────────────────── */}
         <nav className="desktop-header sticky top-0 z-50 border-b border-surface-border bg-surface/95 backdrop-blur-xl">

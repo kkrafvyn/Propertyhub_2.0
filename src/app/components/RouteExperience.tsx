@@ -51,7 +51,7 @@ export function RouteExperience() {
       >
         Skip to main content
       </a>
-      <div id="main-content" tabIndex={-1} className="route-focus-target" />
+      <div id="route-focus-sink" tabIndex={-1} className="route-focus-target" aria-hidden="true" />
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {announcement}
       </div>
