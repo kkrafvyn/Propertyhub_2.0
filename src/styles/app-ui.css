@@ -18,6 +18,10 @@
     @apply mb-8 space-y-4;
   }
 
+  .workspace-page-header {
+    @apply mb-0 space-y-0;
+  }
+
   .app-page-title {
     @apply font-serif text-3xl sm:text-4xl font-semibold tracking-tight text-ink;
   }
@@ -124,12 +128,24 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), var(--border-sheen);
   }
 
+  .workspace-portal {
+    @apply flex min-h-[100dvh] flex-col overflow-x-hidden;
+  }
+
+  .workspace-portal .desktop-header {
+    @apply relative z-50 shrink-0;
+  }
+
+  .workspace-portal .workspace-body {
+    @apply flex min-h-0 flex-1;
+  }
+
   .workspace-portal .workspace-sidebar {
-    @apply border-r border-surface-border bg-surface/95 backdrop-blur-md;
+    @apply border-r border-surface-border bg-surface/95 backdrop-blur-md min-h-0 overflow-y-auto;
   }
 
   .workspace-portal .workspace-main-panel {
-    @apply relative;
+    @apply relative min-h-0;
     background:
       radial-gradient(ellipse 70% 45% at 100% 0%, rgba(15, 41, 34, 0.05), transparent 55%),
       radial-gradient(ellipse 50% 35% at 0% 100%, rgba(224, 122, 95, 0.03), transparent 50%),

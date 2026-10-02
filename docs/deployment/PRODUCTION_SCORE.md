@@ -40,12 +40,13 @@ Deductions: each **failed** check removes its category share proportionally. **W
 
 Repo wiring for PayAngels webhooks, Resend dispatch, Prembly edge functions, monitoring, and offsite backup workflows is in-tree — **`npm run production:check` warnings should reduce to missing secret values** once you fill `.env` and run `npm run integrations:wire` + `npm run supabase:deploy:payments -- --skip-db`.
 
-1. **Supabase secrets** (via deploy helper): `PAYANGELS_SECRET_KEY`, `PAYANGELS_WEBHOOK_SECRET`, `RESEND_API_KEY`, `NOTIFICATION_EMAIL_FROM`, Prembly server keys when live KYC is enabled.
-2. **Vercel**: `VITE_PAYANGELS_PUBLIC_KEY`, `VITE_ENABLE_DEMO_DATA=false`, Prembly widget keys when required.
-3. **GitHub Actions** (`npm run ops:sync-github-secrets`): `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`, `INTERNAL_AUTOMATIONS_KEY`, `OPS_ALERT_WEBHOOK_URL`, `BACKUP_S3_*`, AWS keys.
-4. **Legal**: Complete every item in `LEGAL_LAUNCH_CHECKLIST`, then set `LEGAL_LAUNCH_SIGNED_OFF=true` in production env (Vercel + operator `.env`) — no code path fakes sign-off.
-5. **Edge cleanup**: Run `npm run supabase:audit:edge`, deploy missing functions, delete legacy remote-only functions (see script output).
-6. **Deploy polygon-transactions**:
+1. **Supabase client keys** (public, safe in Vercel): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` / `VITE_SUPABASE_PUBLISHABLE_KEY` from [Dashboard → API](https://supabase.com/dashboard/project/ixmbfnfwpjwbfahqaftc/settings/api) or `npx supabase projects api-keys --project-ref ixmbfnfwpjwbfahqaftc` when the CLI response parses cleanly.
+2. **Supabase secrets** (via deploy helper): `SUPABASE_SERVICE_ROLE_KEY` (local/CI only — never client), `PAYANGELS_SECRET_KEY`, `PAYANGELS_WEBHOOK_SECRET`, `RESEND_API_KEY`, `NOTIFICATION_EMAIL_FROM`, Prembly server keys when live KYC is enabled. Edge: `npx supabase secrets set --project-ref ixmbfnfwpjwbfahqaftc KEY=value`.
+3. **Vercel**: `VITE_PAYANGELS_PUBLIC_KEY`, `VITE_ENABLE_DEMO_DATA=false`, Prembly widget keys when required.
+4. **GitHub Actions** (`npm run ops:sync-github-secrets`): `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`, `INTERNAL_AUTOMATIONS_KEY`, `OPS_ALERT_WEBHOOK_URL`, `BACKUP_S3_*`, AWS keys.
+5. **Legal**: Complete every item in `LEGAL_LAUNCH_CHECKLIST`, then set `LEGAL_LAUNCH_SIGNED_OFF=true` in production env (Vercel + operator `.env`) — no code path fakes sign-off.
+6. **Edge cleanup**: Run `npm run supabase:audit:edge`, deploy missing functions, delete legacy remote-only functions (see script output).
+7. **Deploy polygon-transactions**:
    ```powershell
    Set-Location "C:\Users\ponk3\Desktop\property hub\Propertyhub_2.0"
    npx supabase functions deploy polygon-transactions --project-ref ixmbfnfwpjwbfahqaftc

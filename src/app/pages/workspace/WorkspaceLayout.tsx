@@ -1391,14 +1391,14 @@ export function WorkspaceLayout() {
         </BusinessMobileShell>
 
         {mobileDrawerOpen && (
-          <div className="fixed inset-0 z-[80] flex">
+          <div className="fixed inset-0 z-[80]" role="dialog" aria-modal="true" aria-label="Workspace menu">
             <button
               type="button"
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+              className="absolute inset-0 z-0 bg-black/50 backdrop-blur-sm"
               onClick={() => setMobileDrawerOpen(false)}
               aria-label="Close workspace menu"
             />
-            <div className="relative z-10 flex h-full w-72 max-w-[85vw] flex-col border-r border-surface-border bg-surface shadow-2xl" role="dialog" aria-modal="true" aria-label="Workspace menu">
+            <div className="relative z-10 flex h-full w-72 max-w-[85vw] flex-col border-r border-surface-border bg-surface shadow-2xl">
               <div className="flex items-center justify-between gap-3 border-b border-surface-border px-4 py-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-ink">{organization.name}</p>
@@ -1433,9 +1433,9 @@ export function WorkspaceLayout() {
 
   return (
     <WorkspaceMfaGate role={mfaGateRole} permissions={navPermissions}>
-      <div className="desktop-shell workspace-portal min-h-screen">
+      <div className="desktop-shell workspace-portal">
         {/* ── Top Header ─────────────────────────────────────────────── */}
-        <nav className="desktop-header sticky top-0 z-50 border-b border-surface-border bg-surface/95 backdrop-blur-xl">
+        <nav className="desktop-header border-b border-surface-border bg-surface/95 backdrop-blur-xl">
           <div className="mx-auto max-w-[var(--max-width-page)] px-4 sm:px-6">
             <div className="flex h-14 items-center justify-between gap-3">
 
@@ -1572,17 +1572,15 @@ export function WorkspaceLayout() {
 
         {/* ── Mobile Slide-over Drawer ───────────────────────────────── */}
         {mobileDrawerOpen && (
-          <div className="fixed inset-0 z-[80] lg:hidden flex">
-            {/* Backdrop */}
+          <div className="fixed inset-0 z-[80] lg:hidden" role="dialog" aria-modal="true" aria-label="Workspace menu">
             <button
               type="button"
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+              className="absolute inset-0 z-0 bg-black/50 backdrop-blur-sm"
               onClick={() => setMobileDrawerOpen(false)}
               aria-label="Close workspace menu"
             />
 
-            {/* Drawer panel */}
-            <div className="relative w-72 max-w-[85vw] bg-surface border-r border-surface-border flex flex-col h-full shadow-2xl z-10 animate-in slide-in-from-left-4 duration-200" role="dialog" aria-modal="true" aria-label="Workspace menu">
+            <div className="relative z-10 flex h-full w-72 max-w-[85vw] flex-col border-r border-surface-border bg-surface shadow-2xl animate-in slide-in-from-left-4 duration-200">
               {/* Drawer header */}
               <div className="px-4 py-3 border-b border-surface-border flex items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -1669,10 +1667,10 @@ export function WorkspaceLayout() {
         )}
 
         {/* Main Content Layout */}
-        <div className="flex">
+        <div className="workspace-body">
           {/* ── Desktop Collapsible Sidebar ────────────────────────── */}
           <aside
-            className={`workspace-sidebar hidden lg:flex flex-col min-h-[calc(100vh-56px)] transition-[width] duration-300 ease-in-out shrink-0 ${
+            className={`workspace-sidebar hidden lg:flex flex-col transition-[width] duration-300 ease-in-out shrink-0 ${
               isCollapsed ? "w-[4.5rem]" : "w-64"
             }`}
           >
@@ -1752,7 +1750,7 @@ export function WorkspaceLayout() {
           <main
             id="main-content"
             tabIndex={-1}
-            className="main-content-region workspace-main-panel flex-1 min-h-[calc(100vh-3.5rem)] p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-full"
+            className="main-content-region workspace-main-panel flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden max-w-full"
           >
             <div className="max-w-7xl mx-auto">
               {workspacePageContent}

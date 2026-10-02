@@ -33,7 +33,7 @@ export function WorkspacePageShell({
 }: WorkspacePageShellProps) {
   return (
     <div className="space-y-6">
-      <header className="app-page-header mb-0">
+      <header className="workspace-page-header">
         <div
           className={`relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br app-surface-card ${HERO_TONE_CLASS[tone]}`}
         >
