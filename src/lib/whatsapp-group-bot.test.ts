@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   normalizeGroupBotAliases,
   processGroupBotMessage,
+  resolveNextBotSessionState,
+  shouldOpenMaintenanceFromSession,
   shouldRespondInGroup,
   stripGroupBotPrefix,
 } from "./whatsapp-group-bot-core";
@@ -21,6 +23,24 @@ describe("whatsapp group bot", () => {
   it("strips group prefix before command parsing", () => {
     expect(stripGroupBotPrefix("@BaytMiftah menu", normalizeGroupBotAliases())).toBe("menu");
     expect(stripGroupBotPrefix("/bm gate pass", normalizeGroupBotAliases())).toBe("gate pass");
+    expect(stripGroupBotPrefix("Hey @BaytMiftah kitchen leak", normalizeGroupBotAliases())).toBe("Hey kitchen leak");
+  });
+
+  it("opens maintenance from session follow-up", () => {
+    expect(shouldOpenMaintenanceFromSession("awaiting_maintenance", "kitchen sink leak")).toBe(true);
+    expect(shouldOpenMaintenanceFromSession("awaiting_maintenance", "menu")).toBe(false);
+    expect(shouldOpenMaintenanceFromSession("idle", "kitchen sink leak")).toBe(false);
+    expect(resolveNextBotSessionState("3", "idle")).toBe("awaiting_maintenance");
+    expect(resolveNextBotSessionState("kitchen leak", "awaiting_maintenance")).toBe("idle");
+  });
+
+  it("maps maintenance keywords to manager alert when ticket already created", () => {
+    const res = processGroupBotMessage("233244123456", "kitchen sink leak", true, {
+      tenantUserId: "tenant-1",
+      lastMaintenanceTicket: { ticketId: "abc-123", title: "kitchen sink leak", status: "open" },
+    });
+    expect(res.actionRequired).toBe("ALERT_MANAGER");
+    expect(res.replyMessage).toContain("Maintenance ticket");
   });
 
   it("returns group concierge menu", () => {

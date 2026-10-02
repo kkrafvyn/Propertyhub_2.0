@@ -63,9 +63,50 @@ export function stripGroupBotPrefix(text: string, aliases: string[]): string {
   for (const alias of aliases) {
     const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     cleaned = cleaned.replace(new RegExp(`^${escaped}\\s*`, "i"), "").trim();
+    if (alias.startsWith("@")) {
+      cleaned = cleaned.replace(new RegExp(`${escaped}\\s*`, "gi"), " ").trim();
+    }
   }
-  return cleaned.replace(/^@\S+\s*/, "").trim() || text.trim();
+  cleaned = cleaned.replace(/@\S+\s*/g, " ").replace(/\s+/g, " ").trim();
+  return cleaned || text.trim();
 }
+
+export function isMenuResetCommand(text: string): boolean {
+  const clean = text.trim().toLowerCase();
+  return clean === "menu" || clean === "start" || clean === "hi" || clean === "hello";
+}
+
+/** Follow-up message after user chose maintenance option 3. */
+export function shouldOpenMaintenanceFromSession(
+  sessionState: string | null | undefined,
+  commandText: string
+): boolean {
+  return (
+    sessionState === "awaiting_maintenance" &&
+    !isMenuResetCommand(commandText) &&
+    commandText.trim().length > 0
+  );
+}
+
+export function resolveNextBotSessionState(commandText: string, priorState?: string | null): string {
+  if (shouldOpenMaintenanceFromSession(priorState, commandText)) {
+    return "idle";
+  }
+  const clean = commandText.trim().toLowerCase();
+  if (clean === "3") {
+    return "awaiting_maintenance";
+  }
+  return "idle";
+}
+
+export const WHATSAPP_GROUP_RESIDENT_COMMANDS = [
+  { example: "menu", summary: "Show concierge menu (rent, gate, maintenance, manager)" },
+  { example: "/bm 3", summary: "Start maintenance report (then describe issue in next message)" },
+  { example: "/bm kitchen sink leak", summary: "Open maintenance ticket in one message" },
+  { example: "/bm 2", summary: "Visitor gate pass (phone must match tenant on file)" },
+  { example: "/bm 5", summary: "Escalate to estate manager (in-app alert for owners/managers)" },
+  { example: "@BaytMiftah 1", summary: "Rent balance and PayAngels payment link" },
+] as const;
 
 export function formatMinorAmount(minor: number, currency = "GHS"): string {
   return `${currency} ${(minor / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

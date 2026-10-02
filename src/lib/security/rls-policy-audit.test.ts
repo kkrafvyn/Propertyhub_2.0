@@ -68,6 +68,17 @@ describe('WhatsApp tenant-context RPC privilege contract', () => {
     expect(migration).toMatch(/GRANT EXECUTE ON FUNCTION public\.get_whatsapp_bot_context\(UUID, TEXT\) TO service_role/i);
     expect(migration).not.toMatch(/GRANT EXECUTE ON FUNCTION public\.get_whatsapp_bot_context\(UUID, TEXT\) TO [^;]*authenticated/i);
   });
+
+  it('allows org members to preview bot context via scoped RPC', () => {
+    const migration = readFileSync(
+      path.join(migrationsDir, '2026100221_whatsapp_org_member_bot_context.sql'),
+      'utf8',
+    );
+
+    expect(migration).toMatch(/get_whatsapp_bot_context_for_org_member/i);
+    expect(migration).toMatch(/GRANT EXECUTE ON FUNCTION public\.get_whatsapp_bot_context_for_org_member\(UUID, TEXT\) TO authenticated/i);
+    expect(migration).toMatch(/organization_members/i);
+  });
 });
 
 describe('tenant mutation hardening migration contract', () => {

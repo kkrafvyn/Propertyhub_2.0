@@ -7,6 +7,8 @@ import {
 import {
   normalizeGroupBotAliases,
   processGroupBotMessage,
+  resolveNextBotSessionState,
+  shouldOpenMaintenanceFromSession,
   shouldRespondInGroup,
   stripGroupBotPrefix,
 } from "../_shared/whatsapp-bot-core.ts";
@@ -100,11 +102,40 @@ Deno.serve(async (req) => {
 
     for (const msg of messages) {
       const integration = await resolveOrganizationByPhoneNumberId(admin, msg.phoneNumberId);
-      const organizationId = integration?.organizationId || Deno.env.get("WHATSAPP_DEFAULT_ORG_ID");
+      let organizationId =
+        integration?.organizationId || Deno.env.get("WHATSAPP_DEFAULT_ORG_ID") || null;
 
       let groupChannel: GroupChannelRow | null = null;
-      if (msg.isGroup && msg.groupId && organizationId) {
-        groupChannel = await getOrCreateGroupChannel(admin, organizationId, msg.groupId);
+      if (msg.isGroup && msg.groupId) {
+        const { data: linkedGroup } = await admin
+          .from("whatsapp_group_channels")
+          .select("*")
+          .eq("group_id", msg.groupId)
+          .maybeSingle();
+        if (linkedGroup) {
+          groupChannel = linkedGroup as GroupChannelRow;
+          organizationId = organizationId || groupChannel.organization_id;
+        } else if (organizationId) {
+          groupChannel = await getOrCreateGroupChannel(admin, organizationId, msg.groupId);
+        }
+      }
+
+      if (groupChannel && !groupChannel.is_active) {
+        await admin.from("whatsapp_inbound_messages").insert({
+          organization_id: organizationId,
+          group_channel_id: groupChannel.id,
+          wa_message_id: msg.messageId || null,
+          sender_phone: msg.from,
+          sender_name: msg.senderName || null,
+          group_id: msg.groupId,
+          is_group: true,
+          message_text: msg.text,
+          message_type: msg.messageType,
+          bot_replied: false,
+          raw_payload: payload,
+        });
+        results.push({ messageId: msg.messageId, skipped: true, reason: "group_paused" });
+        continue;
       }
 
       const aliases = normalizeGroupBotAliases(groupChannel?.bot_aliases);
@@ -130,11 +161,29 @@ Deno.serve(async (req) => {
 
       const commandText = msg.isGroup ? stripGroupBotPrefix(msg.text, aliases) : msg.text;
 
+      let priorSessionState = "idle";
+      if (organizationId) {
+        let sessionQuery = admin
+          .from("whatsapp_bot_sessions")
+          .select("session_state")
+          .eq("organization_id", organizationId)
+          .eq("sender_phone", msg.from);
+        sessionQuery = msg.groupId
+          ? sessionQuery.eq("group_id", msg.groupId)
+          : sessionQuery.is("group_id", null);
+        const { data: priorSession } = await sessionQuery.maybeSingle();
+        priorSessionState = String(priorSession?.session_state || "idle");
+      }
+
+      const forceMaintenance = shouldOpenMaintenanceFromSession(priorSessionState, commandText);
+
       let botContext = undefined;
       if (organizationId) {
         const leasePending = await lookupPendingLeaseSignForPhone(admin, organizationId, msg.from);
         botContext = await loadWhatsAppBotContext(admin, organizationId, msg.from, leasePending);
-        botContext = await applyWhatsAppBotMutations(admin, organizationId, msg.from, commandText, botContext);
+        botContext = await applyWhatsAppBotMutations(admin, organizationId, msg.from, commandText, botContext, {
+          forceMaintenanceDescription: forceMaintenance,
+        });
       }
 
       const botResponse = processGroupBotMessage(msg.from, commandText, msg.isGroup, botContext);
@@ -176,11 +225,12 @@ Deno.serve(async (req) => {
           organization_id: organizationId,
           sender_phone: msg.from,
           group_id: msg.groupId || null,
-          session_state: botResponse.actionRequired || "idle",
+          session_state: resolveNextBotSessionState(commandText, priorSessionState),
           context: {
             lastMessage: msg.text,
             lastReply: botResponse.replyMessage,
             isGroup: msg.isGroup,
+            actionRequired: botResponse.actionRequired || "NONE",
           },
           updated_at: new Date().toISOString(),
         };

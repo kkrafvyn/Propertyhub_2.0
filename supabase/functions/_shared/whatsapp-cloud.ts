@@ -149,6 +149,45 @@ export async function sendWhatsAppTextMessage(input: {
 
 type AdminClient = ReturnType<typeof import("./supabase.ts").createAdminClient>;
 
+export async function resolveWhatsAppCredentialsForOrg(
+  admin: AdminClient,
+  organizationId: string
+): Promise<WhatsAppIntegrationConfig | null> {
+  const { data: row, error } = await admin
+    .from("organization_integrations")
+    .select("organization_id, config, status")
+    .eq("organization_id", organizationId)
+    .eq("catalog_slug", "whatsapp-business")
+    .in("status", ["connected", "available"])
+    .maybeSingle();
+
+  if (error) {
+    console.error("resolveWhatsAppCredentialsForOrg:", error);
+  }
+
+  if (row) {
+    const cfg = (row.config || {}) as Record<string, unknown>;
+    const phoneNumberId = String(cfg.phone_number_id || cfg.phoneNumberId || Deno.env.get("WHATSAPP_PHONE_NUMBER_ID") || "");
+    const accessToken = String(
+      cfg.access_token || cfg.accessToken || Deno.env.get("WHATSAPP_CLOUD_TOKEN") || ""
+    );
+    if (phoneNumberId && accessToken) {
+      return { organizationId, phoneNumberId, accessToken };
+    }
+  }
+
+  const fallbackOrgId = Deno.env.get("WHATSAPP_DEFAULT_ORG_ID");
+  if (fallbackOrgId && fallbackOrgId === organizationId) {
+    const phoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID") || undefined;
+    const accessToken = Deno.env.get("WHATSAPP_CLOUD_TOKEN") || undefined;
+    if (phoneNumberId && accessToken) {
+      return { organizationId, phoneNumberId, accessToken };
+    }
+  }
+
+  return null;
+}
+
 export async function resolveOrganizationByPhoneNumberId(
   admin: AdminClient,
   phoneNumberId: string | undefined

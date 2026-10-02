@@ -57,6 +57,7 @@ Repo wiring for PayAngels webhooks, Resend dispatch, Prembly edge functions, mon
 | Flag | Effect |
 |------|--------|
 | `PREMBLY_LIVE_KYC_OPTIONAL=true` | Missing Prembly keys → warning only (non-blocking for `ready` integration sub-score). |
+| Meta `WHATSAPP_*` secrets | Group bot and Cloud outbound; optional for launch if estate uses manual wa.me only (see `docs/API_KEYS_AND_INTEGRATIONS.md`). |
 | `PREMBLY_LIVE_KYC_OPTIONAL=false` (default) | Prembly keys expected for Ghana live KYC. |
 | `PRODUCTION_INTEGRATIONS_DEFERRED=true` (via `npm run production:check:repo` only) | Missing PayAngels/Resend/AWS/service-role/ops secrets → informational; full integration category credit for repo gate. **`ready` stays false** until secrets are set. |
 | `LEGAL_LAUNCH_DEFERRED=true` (paired with repo check) | Legal sign-off warning informational; **`ready` stays false** until `LEGAL_LAUNCH_SIGNED_OFF=true`. |

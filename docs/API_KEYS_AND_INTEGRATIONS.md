@@ -74,6 +74,25 @@ Env placeholders when integrated: `SUMSUB_APP_TOKEN`, `SUMSUB_SECRET_KEY`, `SUMS
 | `TWILIO_ACCOUNT_SID` | SMS / WhatsApp | [console.twilio.com](https://console.twilio.com) |
 | `TWILIO_AUTH_TOKEN` | Twilio auth | Same |
 
+## WhatsApp Business — Meta Cloud API (group bot)
+
+**Edge functions:** `whatsapp-webhook` (public, signature-verified), `send-whatsapp` (authenticated org staff).
+
+| Secret (Supabase Edge only) | Purpose |
+|---|---|
+| `WHATSAPP_VERIFY_TOKEN` | Meta webhook subscription handshake (`hub.verify_token`) |
+| `WHATSAPP_APP_SECRET` | Validates `X-Hub-Signature-256` on inbound webhook POST |
+| `WHATSAPP_CLOUD_TOKEN` | Graph API bearer token to send replies |
+| `WHATSAPP_PHONE_NUMBER_ID` | Phone number ID from Meta WhatsApp → API setup |
+| `WHATSAPP_GRAPH_URL` | Optional; default `https://graph.facebook.com/v21.0` |
+| `WHATSAPP_DEFAULT_ORG_ID` | Optional UUID when one WABA maps to a single organization |
+
+**Webhook URL:** `https://<SUPABASE_PROJECT_REF>.supabase.co/functions/v1/whatsapp-webhook`
+
+**Workspace setup:** Connect **WhatsApp Business** under organization integrations (`phone_number_id`, `access_token` in integration config). Residents add the business number to groups and message with `@BaytMiftah` or `/bm`. Link groups in **Workspace → WhatsApp Hub → Group Bot**.
+
+**Docs:** [Meta WhatsApp Cloud API](https://developers.facebook.com/docs/whatsapp/cloud-api)
+
 ## App versioning & update notifications
 
 | Variable | Purpose | Notes |

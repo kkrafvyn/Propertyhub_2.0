@@ -59,8 +59,39 @@ export function stripGroupBotPrefix(text: string, aliases: string[]): string {
   for (const alias of aliases) {
     const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     cleaned = cleaned.replace(new RegExp(`^${escaped}\\s*`, "i"), "").trim();
+    if (alias.startsWith("@")) {
+      cleaned = cleaned.replace(new RegExp(`${escaped}\\s*`, "gi"), " ").trim();
+    }
   }
-  return cleaned.replace(/^@\S+\s*/, "").trim() || text.trim();
+  cleaned = cleaned.replace(/@\S+\s*/g, " ").replace(/\s+/g, " ").trim();
+  return cleaned || text.trim();
+}
+
+export function isMenuResetCommand(text: string): boolean {
+  const clean = text.trim().toLowerCase();
+  return clean === "menu" || clean === "start" || clean === "hi" || clean === "hello";
+}
+
+export function shouldOpenMaintenanceFromSession(
+  sessionState: string | null | undefined,
+  commandText: string
+): boolean {
+  return (
+    sessionState === "awaiting_maintenance" &&
+    !isMenuResetCommand(commandText) &&
+    commandText.trim().length > 0
+  );
+}
+
+export function resolveNextBotSessionState(commandText: string, priorState?: string | null): string {
+  if (shouldOpenMaintenanceFromSession(priorState, commandText)) {
+    return "idle";
+  }
+  const clean = commandText.trim().toLowerCase();
+  if (clean === "3") {
+    return "awaiting_maintenance";
+  }
+  return "idle";
 }
 
 export function formatMinorAmount(minor: number, currency = "GHS"): string {

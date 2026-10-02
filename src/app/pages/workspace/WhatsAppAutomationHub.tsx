@@ -46,6 +46,8 @@ import {
   type WhatsAppInboundMessage,
 } from '../../../lib/whatsapp-group-bot.service';
 import { isDemoSimulationAllowed } from '../../../lib/simulation-mode';
+import { whatsappOutboundService } from '../../../lib/whatsapp-outbound.service';
+import { WHATSAPP_GROUP_RESIDENT_COMMANDS } from '../../../lib/whatsapp-group-bot-core';
 
 interface ChatMessage {
   id: string;
@@ -201,14 +203,15 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
     toast.success('WhatsApp message template copied to clipboard!');
   };
 
-  const handleOpenWhatsApp = () => {
-    const phone =
-      activeDispatcher === 'gate_pass'
-        ? gatePassForm.recipientPhone
-        : activeDispatcher === 'rent_invoice'
+  const dispatcherRecipientPhone = () =>
+    activeDispatcher === 'gate_pass'
+      ? gatePassForm.recipientPhone
+      : activeDispatcher === 'rent_invoice'
         ? rentInvoiceForm.recipientPhone
         : maintenanceForm.recipientPhone;
 
+  const handleOpenWhatsApp = () => {
+    const phone = dispatcherRecipientPhone();
     const url = whatsappBusinessBotService.buildDirectChatUrl(phone, currentPreviewText());
     if (!url) {
       toast.error('Invalid recipient phone number.');
@@ -216,6 +219,23 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
     }
     window.open(url, '_blank');
     toast.success('Opening WhatsApp Web / Mobile Client...');
+  };
+
+  const handleSendViaCloud = () => {
+    const phone = dispatcherRecipientPhone().trim();
+    const message = currentPreviewText();
+    if (!organizationId) {
+      toast.error('Select a workspace organization first.');
+      return;
+    }
+    if (!phone) {
+      toast.error('Recipient phone is required for Cloud API send.');
+      return;
+    }
+    void whatsappOutboundService
+      .sendMessage({ organizationId, to: phone, message })
+      .then(() => toast.success('Message sent via WhatsApp Cloud API.'))
+      .catch((err: Error) => toast.error(err.message || 'Cloud send failed. Check Meta secrets and org integration.'));
   };
 
   const handleSendSimMessage = (textToSend?: string) => {
@@ -510,22 +530,37 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
                 </div>
               )}
 
-              <div className="flex gap-3 pt-4 border-t border-surface-border mt-4">
+              <div className="flex flex-col gap-2 pt-4 border-t border-surface-border mt-4">
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleCopyMessage}
+                    variant="outline"
+                    className="flex-1 gap-2 border-surface-border text-ink"
+                  >
+                    <Copy className="w-4 h-4" />
+                    Copy Text
+                  </Button>
+                  <Button
+                    onClick={handleOpenWhatsApp}
+                    variant="outline"
+                    className="flex-1 gap-2 border-surface-border text-ink"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Open wa.me
+                  </Button>
+                </div>
                 <Button
-                  onClick={handleCopyMessage}
-                  variant="outline"
-                  className="flex-1 gap-2 border-surface-border text-ink"
+                  onClick={handleSendViaCloud}
+                  disabled={!organizationId}
+                  className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
                 >
-                  <Copy className="w-4 h-4" />
-                  Copy Text
+                  <Send className="w-4 h-4" />
+                  Send via Cloud API
                 </Button>
-                <Button
-                  onClick={handleOpenWhatsApp}
-                  className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  Send via WhatsApp
-                </Button>
+                <p className="text-[11px] text-ink-muted">
+                  Cloud send uses the <code className="text-[10px]">send-whatsapp</code> edge function and your org&apos;s
+                  WhatsApp Business integration (Meta <code className="text-[10px]">WHATSAPP_*</code> secrets).
+                </p>
               </div>
             </Card>
           </div>
@@ -757,10 +792,27 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
                 <Copy className="w-4 h-4 mr-1" /> Copy connection URL
               </Button>
               <ol className="text-xs text-muted-foreground list-decimal pl-4 space-y-1">
-                <li>Add the business number to your WhatsApp group as a participant.</li>
-                <li>Tenants type <strong>@BaytMiftah menu</strong> or <strong>/bm 1</strong> for rent, gate pass, etc.</li>
-                <li>Copy the <strong>Group ID</strong> from the live feed below and link it here.</li>
+                <li>In Meta Developer Console, set webhook URL above with verify token <strong>WHATSAPP_VERIFY_TOKEN</strong>.</li>
+                <li>Add your WhatsApp Business number to the resident group.</li>
+                <li>Residents without the app tag the bot or use <strong>/bm</strong> — see commands below.</li>
+                <li>Copy the <strong>Group ID</strong> from the live feed and link it here (optional rename).</li>
               </ol>
+              <div className="rounded-lg border border-surface-border p-3 space-y-2">
+                <p className="text-xs font-semibold text-ink">What residents can type in groups</p>
+                <ul className="text-xs text-ink-secondary space-y-1.5">
+                  {WHATSAPP_GROUP_RESIDENT_COMMANDS.map((cmd) => (
+                    <li key={cmd.example}>
+                      <code className="text-[11px] bg-surface-subtle px-1 rounded">{cmd.example}</code>
+                      {' — '}
+                      {cmd.summary}
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-[11px] text-ink-muted pt-1">
+                  Maintenance tickets appear under <strong>Workspace → Maintenance</strong> when the sender&apos;s phone
+                  matches a tenant. Otherwise managers get an in-app escalation alert.
+                </p>
+              </div>
             </Card>
 
             <Card className="p-5 border-surface-border bg-surface space-y-3">

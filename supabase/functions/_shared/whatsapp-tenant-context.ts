@@ -119,7 +119,8 @@ export async function applyWhatsAppBotMutations(
   organizationId: string,
   phone: string,
   commandText: string,
-  context: WhatsAppBotContextData
+  context: WhatsAppBotContextData,
+  options?: { forceMaintenanceDescription?: boolean }
 ): Promise<WhatsAppBotContextData> {
   const next = { ...context };
 
@@ -142,7 +143,7 @@ export async function applyWhatsAppBotMutations(
     }
   }
 
-  if (isMaintenanceCreateCommand(commandText)) {
+  if (options?.forceMaintenanceDescription || isMaintenanceCreateCommand(commandText)) {
     const description =
       commandText.replace(/^(3|maintenance|report)\s*/i, "").trim() || commandText.trim();
     const { data, error } = await admin.rpc("bot_create_whatsapp_maintenance", {
@@ -150,8 +151,10 @@ export async function applyWhatsAppBotMutations(
       p_phone: phone,
       p_description: description,
     });
-    if (!error && data && (data as Record<string, unknown>).success) {
-      const row = data as Record<string, unknown>;
+    const row = data as Record<string, unknown> | null;
+    const maintenanceOk = !error && row?.success;
+
+    if (maintenanceOk) {
       next.lastMaintenanceTicket = {
         ticketId: String(row.ticketId || ""),
         title: String(row.title || "Maintenance request"),
@@ -166,6 +169,21 @@ export async function applyWhatsAppBotMutations(
         },
         ...(context.openTickets || []),
       ];
+    } else if (options?.forceMaintenanceDescription || isMaintenanceCreateCommand(commandText)) {
+      const escalateMessage = `WhatsApp group maintenance: ${description} (from ${phone.slice(-4)})`;
+      const { data: escData } = await admin.rpc("bot_escalate_whatsapp_to_manager", {
+        p_organization_id: organizationId,
+        p_phone: phone,
+        p_message: escalateMessage,
+      });
+      if (escData && (escData as Record<string, unknown>).success) {
+        next.managerEscalated = true;
+        next.lastMaintenanceTicket = {
+          ticketId: "manager-escalation",
+          title: description.slice(0, 80),
+          status: "escalated",
+        };
+      }
     }
   }
 
