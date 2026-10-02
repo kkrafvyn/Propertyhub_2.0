@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Calculator, Plus } from "lucide-react";
@@ -152,7 +153,7 @@ export function CamBilling({ organizationId }: { organizationId: string }) {
               <label htmlFor="property-estate" className="block text-xs font-medium text-muted-foreground mb-1">
                 Property / Estate
               </label>
-              <select
+              <NativeSelectControl
                 id="property-estate"
                 className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground"
                 value={form.estateId}
@@ -163,7 +164,7 @@ export function CamBilling({ organizationId }: { organizationId: string }) {
                     {e.name}
                   </option>
                 ))}
-              </select>
+              </NativeSelectControl>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -224,7 +225,7 @@ export function CamBilling({ organizationId }: { organizationId: string }) {
             )}
           </div>
           {lines.length === 0 ? <p className="text-sm text-muted-foreground">No allocations yet.</p> : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" role="region" aria-label="CAM allocations" tabIndex={0}>
               <table className="w-full text-sm">
                 <thead><tr className="border-b text-left text-muted-foreground"><th className="py-2">Unit</th><th className="py-2">Share</th><th className="py-2">Amount</th></tr></thead>
                 <tbody>

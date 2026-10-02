@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { platformOperationsService } from "../../../lib/platform-operations.service";
 import { Button } from "../ui/Button";
@@ -18,10 +19,10 @@ export function ActivityFeed({organizationId,department}:{organizationId?:string
   return <section className="space-y-3">
     <div className="flex flex-wrap items-center gap-3">
       <h3 className="font-semibold">Recorded activity</h3>
-      <label className="text-sm">Area <select className="rounded border bg-background p-2" value={entity} onChange={e=>setEntity(e.target.value)}>
+      <label className="text-sm">Area <NativeSelectControl className="rounded border bg-background p-2" value={entity} onChange={e=>setEntity(e.target.value)}>
         <option value="">All recorded areas</option>
         {["users","organizations","organization_members","organization_departments","listings","deal_cases","leases","transactions","workspace_tasks","maintenance_requests"].map(v=><option key={v} value={v}>{v.replaceAll("_"," ")}</option>)}
-      </select></label>
+      </NativeSelectControl></label>
       <Button variant="outline" size="sm" disabled={loading} onClick={()=>{setPage(undefined);setRevision(v=>v+1);}}>Latest activity</Button>
     </div>
     <p className="text-xs text-muted-foreground">Database changes recorded since activity tracking was deployed. Newest first; 50 per page. Historical changes and uninstrumented external services are not reconstructed.</p>

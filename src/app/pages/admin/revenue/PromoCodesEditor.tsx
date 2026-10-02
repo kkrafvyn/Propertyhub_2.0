@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "../../../components/ui/Button";
@@ -88,7 +89,7 @@ export function PromoCodesEditor() {
             onChange={(event) => setDraft({ ...draft, label: event.target.value })}
             placeholder="Label"
           />
-          <select
+          <NativeSelectControl
             className="w-full rounded-lg border border-border px-3 py-2"
             value={draft.discount_type}
             onChange={(event) =>
@@ -97,7 +98,7 @@ export function PromoCodesEditor() {
           >
             <option value="percentage">Percentage</option>
             <option value="fixed">Fixed amount</option>
-          </select>
+          </NativeSelectControl>
           <Input
             type="number"
             value={draft.discount_value ?? ""}

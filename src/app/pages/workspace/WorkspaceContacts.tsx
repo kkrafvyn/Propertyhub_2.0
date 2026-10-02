@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { Plus, UserRound, CheckCircle2, UserPlus, ChevronDown, Search, Mail, Phone, Building2 } from "lucide-react";
 import { toast } from "sonner";
@@ -310,7 +311,7 @@ export function WorkspaceContacts({
                   {canWrite ? (
                     <>
                       <div className="relative">
-                        <select
+                        <NativeSelectControl
                           className="appearance-none px-3 py-1.5 rounded-xl border border-surface-border bg-surface text-xs font-medium text-foreground pr-8 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
                           value={contact.assigned_to || ""}
                           onChange={(event) => void assignContact(contact.id, event.target.value)}
@@ -321,7 +322,7 @@ export function WorkspaceContacts({
                               {member.user?.full_name || member.user?.email}
                             </option>
                           ))}
-                        </select>
+                        </NativeSelectControl>
                         <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                       </div>
                       <Button

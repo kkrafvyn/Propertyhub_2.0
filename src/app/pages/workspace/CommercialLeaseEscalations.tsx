@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { TrendingUp, Plus } from "lucide-react";
@@ -91,16 +92,16 @@ export function CommercialLeaseEscalations({ organizationId }: { organizationId:
         <Card className="p-6">
           <h2 className="font-semibold mb-4">Schedule escalation</h2>
           <form onSubmit={handleSchedule} className="space-y-3">
-            <select className="w-full rounded-lg border px-3 py-2" value={form.leaseId} onChange={(e) => setForm({ ...form, leaseId: e.target.value })}>
+            <NativeSelectControl className="w-full rounded-lg border px-3 py-2" value={form.leaseId} onChange={(e) => setForm({ ...form, leaseId: e.target.value })}>
               {leases.map((l) => <option key={l.id} value={l.id}>Lease · {(l.rent_minor / 100).toFixed(2)} {l.currency}</option>)}
-            </select>
+            </NativeSelectControl>
             <Input type="date" value={form.effectiveDate} onChange={(e) => setForm({ ...form, effectiveDate: e.target.value })} required />
-            <select className="w-full rounded-lg border px-3 py-2" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as typeof form.type })}>
+            <NativeSelectControl className="w-full rounded-lg border px-3 py-2" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as typeof form.type })}>
               <option value="percentage">Percentage increase</option>
               <option value="fixed_amount">Fixed amount increase</option>
               <option value="cpi">CPI index</option>
               <option value="step_rent">Step rent</option>
-            </select>
+            </NativeSelectControl>
             {form.type === "percentage" ? (
               <Input type="number" placeholder="Basis points (300 = 3%)" value={form.basisPoints} onChange={(e) => setForm({ ...form, basisPoints: e.target.value })} />
             ) : (

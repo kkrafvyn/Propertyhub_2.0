@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { FileSpreadsheet, Plus, Download } from "lucide-react";
@@ -146,11 +147,11 @@ export function Contractor1099({ organizationId }: { organizationId: string }) {
           <form onSubmit={handleAddProfile} className="space-y-3">
             <Input placeholder="Legal name" value={form.legalName} onChange={(e) => setForm({ ...form, legalName: e.target.value })} required />
             <Input placeholder="Tax ID (EIN/SSN)" value={form.taxId} onChange={(e) => setForm({ ...form, taxId: e.target.value })} required />
-            <select className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm" value={form.taxIdType} onChange={(e) => setForm({ ...form, taxIdType: e.target.value })}>
+            <NativeSelectControl className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm" value={form.taxIdType} onChange={(e) => setForm({ ...form, taxIdType: e.target.value })}>
               <option value="ein">EIN</option>
               <option value="ssn">SSN</option>
               <option value="tin">TIN</option>
-            </select>
+            </NativeSelectControl>
             <Input type="number" step="0.01" placeholder={`Total paid in ${taxYear}`} value={form.totalPaid} onChange={(e) => setForm({ ...form, totalPaid: e.target.value })} />
             <Button type="submit"><Plus className="h-4 w-4 mr-1" /> Save profile</Button>
           </form>

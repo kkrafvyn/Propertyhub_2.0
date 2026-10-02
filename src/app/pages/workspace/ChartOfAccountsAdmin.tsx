@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -247,7 +248,7 @@ export function ChartOfAccountsAdmin({
               </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto border border-surface-border rounded-xl">
+            <div className="overflow-x-auto border border-surface-border rounded-xl" role="region" aria-label="Chart of accounts" tabIndex={0}>
               <table className="w-full text-left text-sm">
                 <thead className="bg-surface-subtle border-b border-surface-border text-xs uppercase text-ink-muted font-semibold">
                   <tr>
@@ -358,7 +359,7 @@ export function ChartOfAccountsAdmin({
                 <label className="block text-xs font-semibold text-ink-muted mb-1">
                   Account Type
                 </label>
-                <select
+                <NativeSelectControl
                   className="w-full px-3 py-2 rounded-xl border border-surface-border bg-surface text-ink text-sm"
                   value={formData.type}
                   onChange={(e) => {
@@ -373,14 +374,14 @@ export function ChartOfAccountsAdmin({
                   <option value="EQUITY">Equity</option>
                   <option value="REVENUE">Revenue</option>
                   <option value="EXPENSE">Expense</option>
-                </select>
+                </NativeSelectControl>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-ink-muted mb-1">
                   Balance Type
                 </label>
-                <select
+                <NativeSelectControl
                   className="w-full px-3 py-2 rounded-xl border border-surface-border bg-surface text-ink text-sm"
                   value={formData.balanceType}
                   onChange={(e) =>
@@ -392,7 +393,7 @@ export function ChartOfAccountsAdmin({
                 >
                   <option value="DEBIT">Debit</option>
                   <option value="CREDIT">Credit</option>
-                </select>
+                </NativeSelectControl>
               </div>
             </div>
 
@@ -400,7 +401,7 @@ export function ChartOfAccountsAdmin({
               <label className="block text-xs font-semibold text-ink-muted mb-1">
                 Parent Account (Optional)
               </label>
-              <select
+              <NativeSelectControl
                 className="w-full px-3 py-2 rounded-xl border border-surface-border bg-surface text-ink text-sm"
                 value={formData.parentAccountId}
                 onChange={(e) =>
@@ -415,7 +416,7 @@ export function ChartOfAccountsAdmin({
                       {a.account_code} - {a.account_name} ({a.account_type})
                     </option>
                   ))}
-              </select>
+              </NativeSelectControl>
             </div>
 
             <div>

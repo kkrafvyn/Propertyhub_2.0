@@ -1,3 +1,4 @@
+import { Textarea } from "@/app/components/ui/textarea";
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { Phone, Video as VideoIcon } from 'lucide-react'
@@ -140,7 +141,7 @@ export default function ChatThread({
           stickyInput ? 'sticky bottom-0 z-10 pb-[max(1rem,env(safe-area-inset-bottom))]' : ''
         }`}
       >
-        <textarea
+        <Textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={handleKeyDown}

@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Card } from "@/app/components/ui/Card";
@@ -338,7 +340,7 @@ export default function VendorManagement({ organizationId, currentUserId }: { or
             </p>
             <label className="block text-sm font-medium">
               Property
-              <select
+              <NativeSelectControl
                 className="mt-1 w-full rounded-lg border border-border px-3 py-2"
                 value={propertyId}
                 onChange={(event) => setPropertyId(event.target.value)}
@@ -349,11 +351,11 @@ export default function VendorManagement({ organizationId, currentUserId }: { or
                     {property.city ? ` · ${property.city}` : ""}
                   </option>
                 ))}
-              </select>
+              </NativeSelectControl>
             </label>
             <label className="block text-sm font-medium">
               Job notes
-              <textarea
+              <Textarea
                 className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm"
                 rows={3}
                 value={jobNotes}

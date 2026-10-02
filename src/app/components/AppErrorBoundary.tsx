@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Link } from "react-router";
 import { monitoring } from "../../lib/monitoring";
-import { Button } from "./ui/Button";
+import { buttonVariants } from "./ui/Button";
 import { ErrorState } from "./ux/ErrorState";
 import { StandalonePageShell } from "./ux/StandalonePageShell";
 
@@ -38,10 +38,11 @@ export class AppErrorBoundary extends Component<Props, State> {
               }}
             />
             <div className="mt-4 text-center">
-              <Link to="/search">
-                <Button variant="outline" size="sm">
-                  Browse properties
-                </Button>
+              <Link
+                to="/search"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                Browse properties
               </Link>
             </div>
           </div>

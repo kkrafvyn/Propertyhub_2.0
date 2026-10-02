@@ -1,3 +1,4 @@
+import { Textarea } from "@/app/components/ui/textarea";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -358,7 +359,7 @@ export function WorkspaceSettings({
 
           <div>
             <label className="block mb-2 text-xs font-medium text-ink-secondary">Brand Mission & Portfolio Bio</label>
-            <textarea
+            <Textarea
               className="w-full px-4 py-3 rounded-2xl border border-surface-border bg-surface-subtle text-ink placeholder:text-ink-muted text-xs leading-relaxed min-h-28 focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs transition-all"
               value={form.description}
               onChange={(event) => updateField("description", event.target.value)}

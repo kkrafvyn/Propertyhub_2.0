@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { FileCheck2, Loader2, ShieldCheck, Stamp, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
@@ -171,7 +172,7 @@ export function GhanaTrustCenter({
           <div className="mt-5 space-y-4">
             <div>
               <label className="mb-2 block text-sm text-foreground">Request type</label>
-              <select
+              <NativeSelectControl
                 className="w-full rounded-lg border border-border bg-input-background px-4 py-3"
                 value={requestType}
                 onChange={(event) => setRequestType(event.target.value as TrustRequestType)}
@@ -181,7 +182,7 @@ export function GhanaTrustCenter({
                     {item.label}
                   </option>
                 ))}
-              </select>
+              </NativeSelectControl>
               <p className="mt-2 text-xs text-muted-foreground">
                 {REQUEST_TYPES.find((item) => item.value === requestType)?.helper}
               </p>

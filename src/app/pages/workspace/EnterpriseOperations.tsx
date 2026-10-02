@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
@@ -311,7 +312,7 @@ export function EnterpriseOperations({
           {estates.length > 0 && (
             <div className="relative flex items-center">
               <Building2 className="pointer-events-none absolute left-3 h-4 w-4 text-muted-foreground" />
-              <select
+              <NativeSelectControl
                 aria-label="Select property or estate"
                 className="h-10 rounded-xl border border-border bg-card pl-9 pr-8 text-sm font-medium text-foreground shadow-xs transition-colors hover:border-primary/50 focus:border-primary focus:outline-hidden"
                 value={estateId}
@@ -322,7 +323,7 @@ export function EnterpriseOperations({
                     {x.name} ({x.currency || "GHS"})
                   </option>
                 ))}
-              </select>
+              </NativeSelectControl>
             </div>
           )}
 
@@ -1097,7 +1098,7 @@ export function EnterpriseOperations({
                 </div>
                 <div>
                   <label className="text-xs font-medium text-foreground">Category</label>
-                  <select
+                  <NativeSelectControl
                     className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground"
                     value={assetForm.type}
                     onChange={(e) => setAssetForm({ ...assetForm, type: e.target.value })}
@@ -1107,7 +1108,7 @@ export function EnterpriseOperations({
                         {c}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelectControl>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-foreground">Location / Room (Optional)</label>
@@ -1183,7 +1184,7 @@ export function EnterpriseOperations({
                 </div>
                 <div>
                   <label className="text-xs font-medium text-foreground">Utility Type</label>
-                  <select
+                  <NativeSelectControl
                     className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground"
                     value={meterForm.type}
                     onChange={(e) => setMeterForm({ ...meterForm, type: e.target.value })}
@@ -1193,11 +1194,11 @@ export function EnterpriseOperations({
                         {v.label}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelectControl>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-foreground">Assigned Location</label>
-                  <select
+                  <NativeSelectControl
                     className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground"
                     value={meterForm.unit}
                     onChange={(e) => setMeterForm({ ...meterForm, unit: e.target.value })}
@@ -1208,7 +1209,7 @@ export function EnterpriseOperations({
                         Unit: {u.identifier}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelectControl>
                 </div>
                 <DialogFooter className="pt-2">
                   <Button type="button" variant="outline" onClick={() => setShowMeterModal(false)}>
@@ -1252,7 +1253,7 @@ export function EnterpriseOperations({
               >
                 <div>
                   <label className="text-xs font-medium text-foreground">Select Meter</label>
-                  <select
+                  <NativeSelectControl
                     className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground"
                     value={readingForm.meterId}
                     onChange={(e) => setReadingForm({ ...readingForm, meterId: e.target.value })}
@@ -1267,7 +1268,7 @@ export function EnterpriseOperations({
                         </option>
                       );
                     })}
-                  </select>
+                  </NativeSelectControl>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-foreground">Current Meter Reading</label>
@@ -1326,7 +1327,7 @@ export function EnterpriseOperations({
               >
                 <div>
                   <label className="text-xs font-medium text-foreground">Utility Type</label>
-                  <select
+                  <NativeSelectControl
                     className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground"
                     value={tariffForm.type}
                     onChange={(e) => setTariffForm({ ...tariffForm, type: e.target.value })}
@@ -1336,7 +1337,7 @@ export function EnterpriseOperations({
                         {v.label}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelectControl>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-foreground">
@@ -1407,7 +1408,7 @@ export function EnterpriseOperations({
               >
                 <div>
                   <label className="text-xs font-medium text-foreground">Expense Category</label>
-                  <select
+                  <NativeSelectControl
                     className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground"
                     value={budgetForm.category}
                     onChange={(e) => setBudgetForm({ ...budgetForm, category: e.target.value })}
@@ -1417,7 +1418,7 @@ export function EnterpriseOperations({
                         {c}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelectControl>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-foreground">Target Month</label>
@@ -1589,7 +1590,7 @@ export function EnterpriseOperations({
                 </div>
                 <div>
                   <label className="text-xs font-medium text-foreground">Service Type</label>
-                  <select
+                  <NativeSelectControl
                     className="mt-1 h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground"
                     value={contractForm.type}
                     onChange={(e) => setContractForm({ ...contractForm, type: e.target.value })}
@@ -1599,7 +1600,7 @@ export function EnterpriseOperations({
                         {t}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelectControl>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>

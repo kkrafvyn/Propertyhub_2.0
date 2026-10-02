@@ -36,6 +36,7 @@ import { formatPlatformGrantSummary, PLATFORM_CONSOLE_GRANT_LABELS } from "../..
 import { PlatformRoleAssignmentDialog } from "../../components/admin/PlatformRoleAssignmentDialog";
 import { AdminOrganizationAccessDialog } from "../../components/admin/AdminOrganizationAccessDialog";
 import { AdminDeleteAccountDialog } from "../../components/admin/AdminDeleteAccountDialog";
+import { AdminActionDialog, type AdminActionTone } from "../../components/admin/AdminActionDialog";
 import { isElectron } from "../../../lib/surface-detection";
 import { shouldUseAdminMobileShell } from "../../lib/admin-mobile-nav";
 import { AdminMobileShell } from "../../shells/AdminMobileShell";
@@ -48,10 +49,6 @@ import FraudDashboard from "./FraudDashboard";
 import { AdminOperations } from "./AdminOperations";
 import { platformOperationsService, type HealthSnapshot } from "../../../lib/platform-operations.service";
 import { getPlatformStaffDashboardConfig } from "../../lib/role-dashboard";
-
-function confirmAdminAction(message: string) {
-  return window.confirm(message);
-}
 
 function renderAccessDenied(sectionLabel: string) {
   return (
@@ -177,6 +174,16 @@ export function AdminLayout() {
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [organizationAccessUser, setOrganizationAccessUser] = useState(null);
   const [deleteAccountUser, setDeleteAccountUser] = useState(null);
+  const [adminAction, setAdminAction] = useState<{
+    title: string;
+    description: string;
+    confirmLabel: string;
+    tone?: AdminActionTone;
+    notesLabel?: string;
+    notesPlaceholder?: string;
+    run: (notes: string) => Promise<boolean | void>;
+  } | null>(null);
+  const [adminActionNotes, setAdminActionNotes] = useState("");
   const staffDashboard = useMemo(() => getPlatformStaffDashboardConfig(role), [role]);
 
   const queueCount = triageAlerts.length + reviewCases.length;
@@ -228,10 +235,12 @@ export function AdminLayout() {
       setWorkingId(actionKey);
       await task();
       await loadAdminState();
+      return true;
     } catch (error) {
       console.error("Admin action failed:", error);
       toast.error(error && typeof error === "object" && "message" in error
         ? String(error.message) : "That admin action could not be completed.");
+      return false;
     } finally {
       setWorkingId(null);
     }
@@ -279,21 +288,32 @@ export function AdminLayout() {
 
   const handleCaseStatus = async (caseId: string, status: any) => {
     if (!user) return;
-
-    const note =
-      status === "resolved" || status === "dismissed"
-        ? window.prompt("Add a short resolution note (optional):") || undefined
-        : undefined;
-
-    await runAction(`case:${caseId}:${status}`, async () => {
+    const update = async (note?: string) => runAction(`case:${caseId}:${status}`, async () => {
       await fraudDetectionService.updateReviewCaseStatus({
         caseId,
         status,
         actorUserId: user.id,
-        note,
+        note: note?.trim() || undefined,
       });
       toast.success(`Case moved to ${String(status).replaceAll("_", " ")}.`);
     });
+
+    if (status === "resolved" || status === "dismissed") {
+      setAdminActionNotes("");
+      setAdminAction({
+        title: status === "resolved" ? "Resolve this review case?" : "Dismiss this review case?",
+        description: status === "resolved"
+          ? "The case will leave the active investigation queue. Add a concise outcome for future reviewers."
+          : "The case will be closed without further investigation. Add context for the audit trail.",
+        confirmLabel: status === "resolved" ? "Resolve case" : "Dismiss case",
+        tone: status === "dismissed" ? "destructive" : "default",
+        notesLabel: "Resolution note (optional)",
+        notesPlaceholder: "Summarize the decision…",
+        run: async (notes) => update(notes),
+      });
+      return;
+    }
+    await update();
   };
 
   const renderStats = () => (
@@ -619,10 +639,18 @@ export function AdminLayout() {
                     variant="outline"
                     disabled={workingId === `user:${entry.id}:verify`}
                     onClick={() => {
-                      if (!confirmAdminAction(entry.verified ? "Revoke verification for this user?" : "Verify this user?")) return;
-                      void runAction(`user:${entry.id}:verify`, async () => {
-                        await adminService.updateUser(entry.id, { verified: !entry.verified });
-                        toast.success(entry.verified ? "User marked unverified." : "User verified.");
+                      setAdminActionNotes("");
+                      setAdminAction({
+                        title: entry.verified ? "Revoke user verification?" : "Verify this user?",
+                        description: entry.verified
+                          ? "The user will lose verified status until their identity is approved again."
+                          : "The account will be marked verified and can proceed through verification-gated workflows.",
+                        confirmLabel: entry.verified ? "Revoke verification" : "Verify user",
+                        tone: entry.verified ? "destructive" : "default",
+                        run: async () => runAction(`user:${entry.id}:verify`, async () => {
+                          await adminService.updateUser(entry.id, { verified: !entry.verified });
+                          toast.success(entry.verified ? "User marked unverified." : "User verified.");
+                        }),
                       });
                     }}
                   >
@@ -633,10 +661,18 @@ export function AdminLayout() {
                     variant="outline"
                     disabled={!canManageRoles || entry.id === user?.id || entry.is_platform_admin || workingId === `user:${entry.id}:ban`}
                     onClick={() => {
-                      if (!confirmAdminAction(entry.banned ? "Restore account access? Previously revoked keys and share links stay revoked." : "Block this account? Sign-in, sessions, API keys created by this user, and their external-access links will be revoked.")) return;
-                      void runAction(`user:${entry.id}:ban`, async () => {
-                        await adminService.updateUser(entry.id, { banned: !entry.banned });
-                        toast.success(entry.banned ? "User unbanned." : "User banned.");
+                      setAdminActionNotes("");
+                      setAdminAction({
+                        title: entry.banned ? "Restore account access?" : "Block this account?",
+                        description: entry.banned
+                          ? "The user can sign in again. Previously revoked API keys and share links remain revoked."
+                          : "Sign-in sessions, user-created API keys, and external-access links will be revoked immediately.",
+                        confirmLabel: entry.banned ? "Restore access" : "Block account",
+                        tone: entry.banned ? "default" : "destructive",
+                        run: async () => runAction(`user:${entry.id}:ban`, async () => {
+                          await adminService.updateUser(entry.id, { banned: !entry.banned });
+                          toast.success(entry.banned ? "User unbanned." : "User banned.");
+                        }),
                       });
                     }}
                   >
@@ -753,14 +789,22 @@ export function AdminLayout() {
                     variant="outline"
                     disabled={workingId === `org:${organization.id}:suspend`}
                     onClick={() => {
-                      if (!confirmAdminAction(organization.suspended ? "Reinstate this organization?" : "Suspend this organization? Members will lose workspace access.")) return;
-                      void runAction(`org:${organization.id}:suspend`, async () => {
-                        await adminService.updateOrganization(organization.id, {
-                          suspended: !organization.suspended,
-                        });
-                        toast.success(
-                          organization.suspended ? "Organization reinstated." : "Organization suspended."
-                        );
+                      setAdminActionNotes("");
+                      setAdminAction({
+                        title: organization.suspended ? "Reinstate this organization?" : "Suspend this organization?",
+                        description: organization.suspended
+                          ? "Members will regain workspace access, subject to their existing roles and permissions."
+                          : "Members will immediately lose workspace access until a platform admin reinstates it.",
+                        confirmLabel: organization.suspended ? "Reinstate organization" : "Suspend organization",
+                        tone: organization.suspended ? "default" : "destructive",
+                        run: async () => runAction(`org:${organization.id}:suspend`, async () => {
+                          await adminService.updateOrganization(organization.id, {
+                            suspended: !organization.suspended,
+                          });
+                          toast.success(
+                            organization.suspended ? "Organization reinstated." : "Organization suspended."
+                          );
+                        }),
                       });
                     }}
                   >
@@ -1274,6 +1318,27 @@ export function AdminLayout() {
           setRoleDialogOpen(false);
           setRoleDialogUser(null);
         });
+      }}
+    />
+    <AdminActionDialog
+      open={Boolean(adminAction)}
+      onOpenChange={(open) => { if (!open) { setAdminAction(null); setAdminActionNotes(""); } }}
+      title={adminAction?.title || "Confirm administrative action"}
+      description={adminAction?.description || "Review this change before continuing."}
+      confirmLabel={adminAction?.confirmLabel || "Confirm"}
+      tone={adminAction?.tone}
+      notesLabel={adminAction?.notesLabel}
+      notesPlaceholder={adminAction?.notesPlaceholder}
+      notes={adminActionNotes}
+      onNotesChange={setAdminActionNotes}
+      pending={Boolean(workingId)}
+      onConfirm={async () => {
+        if (!adminAction) return;
+        const succeeded = await adminAction.run(adminActionNotes);
+        if (succeeded !== false) {
+          setAdminAction(null);
+          setAdminActionNotes("");
+        }
       }}
     />
     </>

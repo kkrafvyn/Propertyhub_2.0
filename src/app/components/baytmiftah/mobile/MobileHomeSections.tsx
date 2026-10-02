@@ -69,9 +69,9 @@ export function MobileHeroBanner() {
       <img src={HERO_IMAGE} alt="" className="h-[180px] w-full object-cover sm:h-[200px]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
       <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-        <h2 className="text-lg font-bold leading-tight text-white sm:text-[22px]">
+        <h1 className="text-lg font-bold leading-tight text-white sm:text-[22px]">
           {t("mobile.homeScreen.heroTitle")}
-        </h2>
+        </h1>
         <p className="mt-1.5 text-sm leading-snug text-white/90">
           {t("mobile.homeScreen.heroSubtitle")}
         </p>

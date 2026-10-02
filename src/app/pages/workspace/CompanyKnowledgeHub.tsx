@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookOpen, Upload, Sparkles, FileText, CheckCircle2, Lock, Loader2 } from "lucide-react";
@@ -167,7 +169,7 @@ export function CompanyKnowledgeHub({ organizationId }: { organizationId?: strin
           </h3>
           <form onSubmit={handleUpload} className="space-y-3">
             <Input required placeholder="Document title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="text-xs" />
-            <select
+            <NativeSelectControl
               className="w-full px-3 py-1.5 rounded-lg border border-surface-border bg-surface text-ink text-xs"
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
@@ -177,8 +179,8 @@ export function CompanyKnowledgeHub({ organizationId }: { organizationId?: strin
               <option>Estate Operations</option>
               <option>Leasing & Screening</option>
               <option>Operations</option>
-            </select>
-            <textarea
+            </NativeSelectControl>
+            <Textarea
               required
               className="w-full min-h-[140px] rounded-lg border border-surface-border bg-background px-3 py-2 text-xs"
               placeholder="Paste policy text to index…"

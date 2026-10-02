@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../../../i18n/LocaleContext'
 import {
@@ -48,7 +49,7 @@ function SelectField({ label, value, onChange, options }) {
   return (
     <label className="block text-sm">
       <span className="mb-1.5 block font-medium text-ink">{label}</span>
-      <select
+      <NativeSelectControl
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-xl border border-surface-border bg-surface px-3 py-2.5 text-sm text-ink outline-none focus:border-mobile-forest"
@@ -56,7 +57,7 @@ function SelectField({ label, value, onChange, options }) {
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
-      </select>
+      </NativeSelectControl>
     </label>
   )
 }

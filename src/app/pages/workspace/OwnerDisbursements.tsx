@@ -471,7 +471,7 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
               <p className="font-semibold text-muted-foreground">No disbursement history yet</p>
             </Card>
           ) : (
-            <div className="rounded-xl border border-border overflow-hidden">
+            <div className="rounded-xl border border-border overflow-x-auto" role="region" aria-label="Owner disbursements" tabIndex={0}>
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 text-xs uppercase text-muted-foreground font-semibold border-b border-border">
                   <tr>

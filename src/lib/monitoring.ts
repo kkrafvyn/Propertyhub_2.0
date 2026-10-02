@@ -1,3 +1,5 @@
+import { supabase } from "./supabase";
+
 type MonitoringPayload = Record<string, unknown>;
 
 declare global {
@@ -55,7 +57,7 @@ export const monitoring = {
     // error messages/stacks may contain user data and stay out of this feed.
     const category = context === "window.error" || context === "window.unhandledrejection"
       ? context : context?.includes("\n") || context === "react-boundary" ? "react-boundary" : "application";
-    void import("./supabase").then(async ({ supabase }) => {
+    void Promise.resolve().then(async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) await supabase.rpc("record_client_error", { p_context: category });
     }).catch(() => undefined);

@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle, Clock, MailPlus, MessageSquare, RefreshCw, Shield, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -645,7 +647,7 @@ export default function TeamCollaborationHub({
                 <label htmlFor="hub-role" className="block mb-2 text-sm text-foreground">
                   Role
                 </label>
-                <select
+                <NativeSelectControl
                   id="hub-role"
                   className="w-full h-10 px-3 rounded-lg border border-border bg-background text-xs font-medium text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                   value={inviteRole}
@@ -657,7 +659,7 @@ export default function TeamCollaborationHub({
                       {role}
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
               </div>
               <div className="md:self-end">
                 <Button type="submit" disabled={!canManageTeam || submittingInvite} className="h-10">
@@ -684,7 +686,7 @@ export default function TeamCollaborationHub({
                       <p className="text-sm text-muted-foreground mt-2">{member.user?.email}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <select
+                      <NativeSelectControl
                         className="h-9 px-3 rounded-lg border border-border bg-background text-xs font-medium text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                         value={member.role}
                         onChange={(event) =>
@@ -697,7 +699,7 @@ export default function TeamCollaborationHub({
                             {role}
                           </option>
                         ))}
-                      </select>
+                      </NativeSelectControl>
                       <Button
                         variant="outline"
                         size="sm"
@@ -723,7 +725,7 @@ export default function TeamCollaborationHub({
             <div className="grid gap-3 md:grid-cols-3">
               <div>
                 <label className="block mb-1.5 text-xs font-medium text-muted-foreground">Property / estate</label>
-                <select
+                <NativeSelectControl
                   className="w-full h-9 px-3 rounded-lg border border-border bg-background text-xs font-medium text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                   value={mgmtForm.estateId}
                   onChange={(e) => setMgmtForm((c) => ({ ...c, estateId: e.target.value }))}
@@ -736,11 +738,11 @@ export default function TeamCollaborationHub({
                       {!estate.property_id ? " (no property link)" : ""}
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
               </div>
               <div>
                 <label className="block mb-1.5 text-xs font-medium text-muted-foreground">Owner member</label>
-                <select
+                <NativeSelectControl
                   className="w-full h-9 px-3 rounded-lg border border-border bg-background text-xs font-medium text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                   value={mgmtForm.ownerUserId}
                   onChange={(e) => setMgmtForm((c) => ({ ...c, ownerUserId: e.target.value }))}
@@ -752,11 +754,11 @@ export default function TeamCollaborationHub({
                       {getDisplayName(member.profile || member.user)} ({member.role})
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
               </div>
               <div>
                 <label className="block mb-1.5 text-xs font-medium text-muted-foreground">Management mode</label>
-                <select
+                <NativeSelectControl
                   className="w-full h-9 px-3 rounded-lg border border-border bg-background text-xs font-medium text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                   value={mgmtForm.mode}
                   onChange={(e) =>
@@ -767,7 +769,7 @@ export default function TeamCollaborationHub({
                   <option value="company_managed">Company managed</option>
                   <option value="hybrid">Hybrid</option>
                   <option value="self_managed">Self managed</option>
-                </select>
+                </NativeSelectControl>
               </div>
             </div>
             <Button onClick={() => void handleCreateManagementAgreement()} disabled={!canManageTeam || savingAgreement}>
@@ -912,7 +914,7 @@ export default function TeamCollaborationHub({
               <label htmlFor="claim-reviewer-note" className="block text-xs font-semibold text-foreground mb-1.5">
                 Claimant Instructions / Required Documents
               </label>
-              <textarea
+              <Textarea
                 id="claim-reviewer-note"
                 rows={3}
                 value={needsInfoClaim?.note || ""}

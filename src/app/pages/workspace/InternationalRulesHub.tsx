@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Globe, MapPin, Receipt, CreditCard, Scale, Save } from "lucide-react";
@@ -178,7 +179,7 @@ export function InternationalRulesHub({ organizationId }: { organizationId: stri
                 GB: "Nation",
               }[selected] || "Region"}
             </label>
-            <select
+            <NativeSelectControl
               className="rounded-lg border px-3 py-2 text-sm max-w-xs"
               value={subdivision}
               onChange={(e) => setSubdivision(e.target.value)}
@@ -187,7 +188,7 @@ export function InternationalRulesHub({ organizationId }: { organizationId: stri
               {subdivisionOptions.map((s) => (
                 <option key={s.code} value={s.code}>{s.label}</option>
               ))}
-            </select>
+            </NativeSelectControl>
             {subdivisionOverlay && (
               <Badge variant="outline" className="w-fit">{subdivisionLabel} overlay active</Badge>
             )}

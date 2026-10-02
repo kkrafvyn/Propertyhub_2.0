@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { Building2, CircleDollarSign, ClipboardList, Loader2, Wrench } from "lucide-react";
 import { Card } from "../../components/ui/Card";
@@ -101,7 +102,7 @@ export function Unit360({ organizationId }: Unit360Props) {
       <Card className="grid gap-3 p-4 sm:grid-cols-2">
         <div>
           <label className="text-xs font-semibold text-muted-foreground block mb-1">Select Property:</label>
-          <select
+          <NativeSelectControl
             className="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
             value={estateId}
             onChange={(e) => {
@@ -115,12 +116,12 @@ export function Unit360({ organizationId }: Unit360Props) {
                 {x.name}
               </option>
             ))}
-          </select>
+          </NativeSelectControl>
         </div>
 
         <div>
           <label className="text-xs font-semibold text-muted-foreground block mb-1">Select Unit:</label>
-          <select
+          <NativeSelectControl
             className="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
             value={unitId}
             onChange={(e) => setUnitId(e.target.value)}
@@ -132,7 +133,7 @@ export function Unit360({ organizationId }: Unit360Props) {
                 {x.identifier}
               </option>
             ))}
-          </select>
+          </NativeSelectControl>
         </div>
       </Card>
 

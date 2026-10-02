@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { maintenanceService } from '../../../lib/maintenance.service';
@@ -67,13 +69,13 @@ export function MaintenanceRequestForm({ userId, leases, onCreated }: {
     {pendingRequest && <p role="status" className="text-sm">Request saved. Retry attaches photos to this request without creating another request.</p>}
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     {progress && <p role="status" className="text-xs">{progress}</p>}
-    {activeLeases.length > 1 && <select aria-label="Lease" className="w-full rounded-lg border border-border px-3 py-2"
+    {activeLeases.length > 1 && <NativeSelectControl aria-label="Lease" className="w-full rounded-lg border border-border px-3 py-2"
       disabled={submitting || Boolean(pendingRequest)} value={leaseId || activeLeases[0]?.id || ''}
       onChange={event => setLeaseId(event.target.value)}>
       {activeLeases.map(lease => <option key={lease.id} value={lease.id}>{lease.listing?.property?.address || lease.id}</option>)}
-    </select>}
+    </NativeSelectControl>}
     <Input aria-label="Issue title" placeholder="Issue title" value={title} disabled={submitting || Boolean(pendingRequest)} onChange={event => setTitle(event.target.value)} />
-    <textarea aria-label="Describe the issue" placeholder="Describe the issue" className="w-full min-h-28 rounded-lg border border-border px-3 py-2"
+    <Textarea aria-label="Describe the issue" placeholder="Describe the issue" className="w-full min-h-28 rounded-lg border border-border px-3 py-2"
       disabled={submitting || Boolean(pendingRequest)} value={description} onChange={event => setDescription(event.target.value)} />
     <label className="text-sm text-muted-foreground block">
       Photos (optional, up to ten)

@@ -5,6 +5,7 @@ import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { Input } from "../../../components/ui/Input";
+import { NativeSelect } from "../../../components/ui/NativeSelect";
 import {
   revenueManagementService,
   type RevenueRule,
@@ -102,9 +103,8 @@ function PlatformFeeRuleCard({ rule, onSaved }: { rule: RevenueRule; onSaved: ()
 
       <div className="grid gap-3 md:grid-cols-3">
         <div>
-          <label className="text-sm text-muted-foreground block mb-1">Fee type</label>
-          <select
-            className="w-full rounded-lg border border-border px-3 py-2"
+          <NativeSelect
+            label="Fee type"
             value={draft.fee_type}
             onChange={(event) =>
               setDraft({ ...draft, fee_type: event.target.value as RevenueRule["fee_type"] })
@@ -112,13 +112,11 @@ function PlatformFeeRuleCard({ rule, onSaved }: { rule: RevenueRule; onSaved: ()
           >
             <option value="percentage">Percentage</option>
             <option value="fixed">Fixed</option>
-          </select>
+          </NativeSelect>
         </div>
         <div>
-          <label className="text-sm text-muted-foreground block mb-1">
-            {draft.fee_type === "percentage" ? "Rate %" : "Amount"}
-          </label>
           <Input
+            label={draft.fee_type === "percentage" ? "Rate %" : "Amount"}
             type="number"
             step="0.1"
             value={draft.fee_value ?? ""}
@@ -131,9 +129,8 @@ function PlatformFeeRuleCard({ rule, onSaved }: { rule: RevenueRule; onSaved: ()
           />
         </div>
         <div>
-          <label className="text-sm text-muted-foreground block mb-1">Charged to</label>
-          <select
-            className="w-full rounded-lg border border-border px-3 py-2"
+          <NativeSelect
+            label="Charged to"
             value={chargedTo}
             onChange={(event) =>
               setDraft({
@@ -147,12 +144,11 @@ function PlatformFeeRuleCard({ rule, onSaved }: { rule: RevenueRule; onSaved: ()
                 {option.label}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
         <div>
-          <label className="text-sm text-muted-foreground block mb-1">Pricing tier tag</label>
-          <select
-            className="w-full rounded-lg border border-border px-3 py-2"
+          <NativeSelect
+            label="Pricing tier tag"
             value={tier}
             onChange={(event) =>
               setDraft({
@@ -164,7 +160,7 @@ function PlatformFeeRuleCard({ rule, onSaved }: { rule: RevenueRule; onSaved: ()
             <option value="">Any / untiered</option>
             <option value="founding">Founding</option>
             <option value="standard">Standard</option>
-          </select>
+          </NativeSelect>
         </div>
       </div>
 
@@ -342,9 +338,8 @@ export function PlatformPricingEditor() {
         </p>
         <div className="grid gap-3 md:grid-cols-2">
           <div>
-            <label className="text-sm text-muted-foreground block mb-1">Active tier</label>
-            <select
-              className="w-full rounded-lg border border-border px-3 py-2"
+            <NativeSelect
+              label="Active tier"
               value={activeTier}
               onChange={(event) =>
                 setActiveTier(event.target.value === "standard" ? "standard" : "founding")
@@ -352,11 +347,10 @@ export function PlatformPricingEditor() {
             >
               <option value="founding">Founding</option>
               <option value="standard">Standard</option>
-            </select>
+            </NativeSelect>
           </div>
           <div>
-            <label className="text-sm text-muted-foreground block mb-1">Checkout display name</label>
-            <Input value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
+            <Input label="Checkout display name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
           </div>
         </div>
         <Button onClick={() => void saveTier()} disabled={savingTier}>

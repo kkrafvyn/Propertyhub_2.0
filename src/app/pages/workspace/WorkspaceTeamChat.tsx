@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Hash, Loader2, MessageSquare, Plus, Send, UserRound } from "lucide-react";
 import { toast } from "sonner";
@@ -381,7 +382,7 @@ export function WorkspaceTeamChat({
             {/* Assign-to selector (only visible if a message is being assigned) */}
             {showAssignFor && (
               <div className="flex items-center gap-2 shrink-0">
-                <select
+                <NativeSelectControl
                   className="h-8 rounded-md border border-border bg-background px-2 text-xs"
                   value={assignUserId}
                   onChange={(e) => setAssignUserId(e.target.value)}
@@ -394,7 +395,7 @@ export function WorkspaceTeamChat({
                         {memberNameById.get(member.user_id)}
                       </option>
                     ))}
-                </select>
+                </NativeSelectControl>
                 <Button
                   size="sm"
                   className="h-8 text-xs"

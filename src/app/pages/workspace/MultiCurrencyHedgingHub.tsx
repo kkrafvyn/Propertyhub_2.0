@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 /**
  * BaytMiftah REOS — Multi-Currency FX & Dual-Currency Hedging Hub
  * 
@@ -220,7 +221,7 @@ export function MultiCurrencyHedgingHub() {
                 <div className="col-span-2">
                   <label className="font-semibold text-ink-secondary">Base Rent Amount</label>
                   <div className="flex items-center gap-2 mt-1">
-                    <select
+                    <NativeSelectControl
                       value={selectedCurrency}
                       onChange={(e) => setSelectedCurrency(e.target.value as any)}
                       className="bg-input-background border border-border rounded-lg px-2 py-2 text-xs text-ink outline-none"
@@ -228,7 +229,7 @@ export function MultiCurrencyHedgingHub() {
                       <option value="USD">USD ($)</option>
                       <option value="EUR">EUR (€)</option>
                       <option value="GBP">GBP (£)</option>
-                    </select>
+                    </NativeSelectControl>
                     <input
                       type="number"
                       value={baseAmountUSD}

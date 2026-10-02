@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ClipboardCheck,
@@ -672,7 +673,7 @@ export function FieldInspectionEngine({
 
                         <div>
                           <label className="text-xs font-medium text-ink-secondary">Action Required</label>
-                          <select
+                          <NativeSelectControl
                             value={item.actionRequired}
                             onChange={(e) => handleUpdateItem(def.key, { actionRequired: e.target.value as any })}
                             className="w-full bg-input-background border border-border rounded px-2 py-1 text-xs text-ink outline-none mt-1"
@@ -682,7 +683,7 @@ export function FieldInspectionEngine({
                             <option value="repair">Artisan Repair</option>
                             <option value="replacement">Full Replacement</option>
                             <option value="artisan_dispatch">Dispatch Contractor MoMo</option>
-                          </select>
+                          </NativeSelectControl>
                         </div>
 
                         <div>
@@ -858,7 +859,7 @@ export function FieldInspectionEngine({
 
               <div>
                 <label className="block text-sm font-medium text-ink-secondary mb-1">Inspection Type</label>
-                <select
+                <NativeSelectControl
                   name="type"
                   className="w-full bg-input-background border border-border rounded-lg px-3 py-2 text-sm text-ink outline-none"
                 >
@@ -867,7 +868,7 @@ export function FieldInspectionEngine({
                   <option value="routine">Routine Bi-Annual Assessment</option>
                   <option value="turnover">Post-Renovation Turnover</option>
                   <option value="emergency">Emergency Damage Assessment</option>
-                </select>
+                </NativeSelectControl>
               </div>
 
               <div>

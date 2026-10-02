@@ -23,6 +23,7 @@ export function AdminMobileTabBar() {
             <NavLink
               key={tab.to}
               to={tab.to}
+              aria-current={isActive ? "page" : undefined}
               className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium transition ${
                 isActive
                   ? "bg-secondary font-bold text-rose-400"

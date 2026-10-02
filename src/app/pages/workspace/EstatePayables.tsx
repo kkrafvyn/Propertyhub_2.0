@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, FileText, Loader2, Plus, Wallet } from "lucide-react";
 import { toast } from "sonner";
@@ -128,7 +129,7 @@ export function EstatePayables({ organizationId, currentUserId }: EstatePayables
         {estates.length > 0 && (
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground shrink-0">Property:</span>
-            <select
+            <NativeSelectControl
               className="h-9 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary min-w-[200px]"
               value={estateId}
               onChange={(e) => setEstateId(e.target.value)}
@@ -138,7 +139,7 @@ export function EstatePayables({ organizationId, currentUserId }: EstatePayables
                   {x.name}
                 </option>
               ))}
-            </select>
+            </NativeSelectControl>
           </div>
         )}
       </div>

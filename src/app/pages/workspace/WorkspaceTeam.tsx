@@ -1,3 +1,5 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
+import { Link } from "react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   MailPlus,
@@ -369,7 +371,10 @@ export function WorkspaceTeam({
               Team & Access Control
             </h1>
             <p className="mt-1.5 text-sm text-ink-secondary max-w-2xl leading-relaxed">
-              Assign multi-tier job roles, departmental hierarchies, and granular permissions for {organization.name}. Teammates see a personalized workspace strictly scoped to their credentials.
+              Assign multi-tier job roles, departmental hierarchies, and granular permissions for {organization.name}. Teammates see a personalized workspace strictly scoped to their credentials.{" "}
+              <Link to="/workspace-roles" className="text-primary hover:underline font-medium">
+                Role glossary
+              </Link>
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
@@ -492,14 +497,14 @@ export function WorkspaceTeam({
           <div>
             <label className="mb-2 block text-xs font-medium text-ink-secondary">Job role</label>
             <div className="relative">
-              <select
+              <NativeSelectControl
                 className="w-full appearance-none rounded-xl border border-surface-border bg-surface-subtle px-4 py-2.5 pr-10 text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs"
                 value={inviteRole}
                 onChange={(event) => setInviteRole(event.target.value as MemberRole)}
                 disabled={!canManageTeam || !assignableRoles.length}
               >
                 {renderRoleOptions(false)}
-              </select>
+              </NativeSelectControl>
               <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
             </div>
             {inviteRole ? (
@@ -617,7 +622,7 @@ export function WorkspaceTeam({
             </div>
 
             {departments.length > 1 ? (
-              <select
+              <NativeSelectControl
                 className="rounded-xl border border-surface-border bg-surface-subtle px-3 py-2 text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs"
                 value={departmentFilter}
                 onChange={(event) => setDepartmentFilter(event.target.value)}
@@ -628,7 +633,7 @@ export function WorkspaceTeam({
                     {department.name}
                   </option>
                 ))}
-              </select>
+              </NativeSelectControl>
             ) : null}
           </div>
         </div>
@@ -751,7 +756,7 @@ export function WorkspaceTeam({
 
                   <div className="flex items-center gap-2.5 self-end lg:self-center shrink-0">
                     <div className="relative">
-                      <select
+                      <NativeSelectControl
                         className="appearance-none rounded-xl border border-surface-border bg-surface-subtle px-3 py-1.5 pr-8 text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs"
                         value={member.role}
                         onChange={(event) =>
@@ -767,7 +772,7 @@ export function WorkspaceTeam({
                           <option value="owner">Owner / Founder</option>
                         ) : null}
                         {renderRoleOptions(false)}
-                      </select>
+                      </NativeSelectControl>
                       <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-muted" />
                     </div>
                     <Button

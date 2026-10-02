@@ -4,6 +4,7 @@ import { COMPANY_TYPE_DEFINITIONS, ROLE_CATALOG } from "../../../lib/company-mod
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
+import { NativeSelect } from "../ui/NativeSelect";
 
 export function AdminOrganizationAccessDialog({ user, onClose, onSaved }: {
   user: AdminUserRow | null; onClose: () => void; onSaved: () => Promise<void>;
@@ -72,7 +73,6 @@ export function AdminOrganizationAccessDialog({ user, onClose, onSaved }: {
     }
   }
 
-  const selectClass = "w-full rounded-lg border border-border bg-background p-3 text-sm";
   const setupUrl = `${window.location.origin}/workspace?kind=company`;
   return <Dialog open={Boolean(user)} onOpenChange={(open) => { if (!open && !saving) onClose(); }}>
     <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
@@ -82,13 +82,11 @@ export function AdminOrganizationAccessDialog({ user, onClose, onSaved }: {
       </DialogHeader>
       <form onSubmit={(event) => void save(event)} className="space-y-4">
         <fieldset disabled={saving} className="space-y-4">
-          <label className="block text-sm">Action
-            <select aria-label="Organization action" className={selectClass} value={mode} onChange={(e) => { setMode(e.target.value); setError(""); }}>
+          <NativeSelect label="Action" value={mode} onChange={(e) => { setMode(e.target.value); setError(""); }}>
               <option value="create">Create organization for this user</option>
               <option value="self_setup">Let the user set up their organization</option>
               <option value="assign">Assign membership / change role</option>
-            </select>
-          </label>
+          </NativeSelect>
           {mode === "self_setup" ? <>
             <p className="text-sm text-muted-foreground">
               Send this link to the user so they can submit their own organization workspace application. They must complete identity verification, accept the terms, and receive admin approval before workspace access is granted. This does not create an organization or membership.
@@ -102,27 +100,31 @@ export function AdminOrganizationAccessDialog({ user, onClose, onSaved }: {
             <p className="text-sm text-muted-foreground">The user becomes the organization owner. Identity verification is required. Existing pending enrollments must be reviewed from Enrollment Requests.</p>
             <Input label="Organization name" required minLength={2} maxLength={120} value={name} onChange={(e) => setName(e.target.value)} />
             <Input label="Workspace slug" required minLength={3} maxLength={63} pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="example-properties" value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase())} />
-            <label className="block text-sm">Business type
-              <select aria-label="Business type" className={selectClass} value={businessType} onChange={(e) => setBusinessType(e.target.value)}>
+            <NativeSelect label="Business type" value={businessType} onChange={(e) => setBusinessType(e.target.value)}>
                 {COMPANY_TYPE_DEFINITIONS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
-              </select>
-            </label>
+            </NativeSelect>
           </> : <>
             <Input label="Search organizations by name" value={search} onChange={(e) => setSearch(e.target.value)} />
-            {searchError && <p role="alert" className="text-sm text-destructive">{searchError}</p>}
-            <label className="block text-sm">Organization
-              <select aria-label="Organization" required className={selectClass} disabled={searching} value={organizationId} onChange={(e) => setOrganizationId(e.target.value)}>
+            <NativeSelect
+              label="Organization"
+              required
+              disabled={searching}
+              value={organizationId}
+              onChange={(e) => setOrganizationId(e.target.value)}
+              description="Up to 30 matches. Refine the search to find another organization."
+              error={searchError || undefined}
+            >
                 <option value="">{searching ? "Searching…" : "Select an organization"}</option>
                 {organizations.map((org) => <option key={org.id} value={org.id} disabled={Boolean(org.suspended)}>{org.name} /{org.slug}{org.suspended ? " (suspended)" : ""}</option>)}
-              </select>
-            </label>
-            <p className="text-xs text-muted-foreground">Up to 30 matches. Refine the search to find another organization.</p>
-            <label className="block text-sm">Member role
-              <select aria-label="Member role" className={selectClass} value={role} onChange={(e) => setRole(e.target.value)}>
+            </NativeSelect>
+            <NativeSelect
+              label="Member role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              description="This adds membership or changes the existing role. Existing property scopes and custom permissions are retained. Ownership transfers are separate."
+            >
                 {ROLE_CATALOG.filter((item) => item.invitable).map((item) => <option key={item.role} value={item.role}>{item.label}</option>)}
-              </select>
-            </label>
-            <p className="text-sm text-muted-foreground">This adds membership or changes the existing role. Existing property scopes and custom permissions are retained. Ownership transfers are separate.</p>
+            </NativeSelect>
           </>}
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           {mode !== "self_setup" && <div className="flex justify-end gap-2">

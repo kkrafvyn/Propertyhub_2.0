@@ -1,3 +1,4 @@
+import { Textarea } from "@/app/components/ui/textarea";
 import { useMemo, useState } from "react";
 import { Download, FileText, Scale } from "lucide-react";
 import { toast } from "sonner";
@@ -135,7 +136,7 @@ export function PropertyLeaseClausePanel({
 
       <div className="space-y-2 border-t pt-4">
         <label className="text-sm font-medium">Audit draft against {schedule.subdivisionLabel || schedule.jurisdictionLabel}</label>
-        <textarea
+        <Textarea
           className="w-full min-h-[120px] rounded-lg border px-3 py-2 text-sm"
           value={draftText}
           onChange={(e) => setDraftText(e.target.value)}

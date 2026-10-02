@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useState } from "react";
 import { Link, Navigate } from "react-router";
 import { Loader2 } from "lucide-react";
@@ -87,7 +89,7 @@ export function ComplaintFormPanel({ embedded = false }: { embedded?: boolean })
         <label htmlFor="complaint-category" className="mb-1 block text-sm font-medium text-ink">
           {t("legal.complaint.category")}
         </label>
-        <select
+        <NativeSelectControl
           id="complaint-category"
           value={form.category}
           onChange={(e) => setForm({ ...form, category: e.target.value })}
@@ -99,7 +101,7 @@ export function ComplaintFormPanel({ embedded = false }: { embedded?: boolean })
               {cat}
             </option>
           ))}
-        </select>
+        </NativeSelectControl>
       </div>
 
       <Input
@@ -113,7 +115,7 @@ export function ComplaintFormPanel({ embedded = false }: { embedded?: boolean })
         <label htmlFor="complaint-description" className="mb-1 block text-sm font-medium text-ink">
           {t("legal.complaint.description")}
         </label>
-        <textarea
+        <Textarea
           id="complaint-description"
           rows={6}
           value={form.description}

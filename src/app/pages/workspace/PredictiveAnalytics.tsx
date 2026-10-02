@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
@@ -221,7 +222,7 @@ export default function PredictiveAnalytics({
               <label htmlFor="predictive-time-range" className="text-sm font-medium block mb-2">
                 Time Range
               </label>
-              <select
+              <NativeSelectControl
                 id="predictive-time-range"
                 value={timeRange}
                 onChange={(event) => setTimeRange(event.target.value)}
@@ -231,13 +232,13 @@ export default function PredictiveAnalytics({
                 <option value="3m">Last 3 months</option>
                 <option value="6m">Last 6 months</option>
                 <option value="1y">Last year</option>
-              </select>
+              </NativeSelectControl>
             </div>
             <div>
               <label htmlFor="predictive-location" className="text-sm font-medium block mb-2">
                 Market
               </label>
-              <select
+              <NativeSelectControl
                 id="predictive-location"
                 value={selectedLocation}
                 onChange={(event) => setSelectedLocation(event.target.value)}
@@ -256,7 +257,7 @@ export default function PredictiveAnalytics({
                       {value}
                     </option>
                   ))}
-              </select>
+              </NativeSelectControl>
             </div>
           </div>
           <Badge variant="outline">

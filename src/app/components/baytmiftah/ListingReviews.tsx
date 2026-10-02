@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from 'react'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { fetchReviews, submitReview, checkReviewEligibility } from '../../lib/baytmiftah/review-service'
@@ -71,13 +73,13 @@ export default function ListingReviews({ listingId }) {
         <p className="text-sm font-semibold">{t('reviews.leaveReview')}</p>
         <label className="block text-sm">
           {t('reviews.rating')}
-          <select value={rating} onChange={(e) => setRating(Number(e.target.value))} disabled={!canReview} className="mt-1 w-full rounded-lg border border-surface-border px-3 py-2">
+          <NativeSelectControl value={rating} onChange={(e) => setRating(Number(e.target.value))} disabled={!canReview} className="mt-1 w-full rounded-lg border border-surface-border px-3 py-2">
             {[5, 4, 3, 2, 1].map((n) => (
               <option key={n} value={n}>{n}</option>
             ))}
-          </select>
+          </NativeSelectControl>
         </label>
-        <textarea value={body} onChange={(e) => setBody(e.target.value)} disabled={!canReview} rows={3} placeholder={t('reviews.placeholder')} className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm" />
+        <Textarea value={body} onChange={(e) => setBody(e.target.value)} disabled={!canReview} rows={3} placeholder={t('reviews.placeholder')} className="w-full rounded-lg border border-surface-border px-3 py-2 text-sm" />
         <button type="submit" disabled={!canReview} className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{t('reviews.submit')}</button>
         {status && <p className="text-sm text-ink-secondary">{status}</p>}
       </form>

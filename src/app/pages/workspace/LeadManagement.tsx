@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Send, Filter, Star, Archive, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
@@ -166,7 +168,7 @@ export function LeadManagement({ organizationId }: {
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-ink-secondary mb-2">Status</label>
-              <select
+              <NativeSelectControl
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-input-background text-ink outline-none"
@@ -179,12 +181,12 @@ export function LeadManagement({ organizationId }: {
                 <option value="negotiation">Negotiation</option>
                 <option value="won">Won</option>
                 <option value="lost">Lost</option>
-              </select>
+              </NativeSelectControl>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-ink-secondary mb-2">Source</label>
-              <select
+              <NativeSelectControl
                 value={filterSource}
                 onChange={(e) => setFilterSource(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-input-background text-ink outline-none"
@@ -196,7 +198,7 @@ export function LeadManagement({ organizationId }: {
                 <option value="internal">Internal</option>
                 <option value="website">Website</option>
                 <option value="referral">Referral</option>
-              </select>
+              </NativeSelectControl>
             </div>
           </div>
 
@@ -280,7 +282,7 @@ export function LeadManagement({ organizationId }: {
 
             <div>
               <label className="text-sm text-ink-secondary">Status</label>
-              <select
+              <NativeSelectControl
                 value={selectedLead.status}
                 onChange={(e) => handleStatusChange(selectedLead.id, e.target.value as Lead['status'])}
                 className="w-full px-3 py-2 border border-border rounded-lg text-sm mt-1 bg-input-background text-ink outline-none"
@@ -292,7 +294,7 @@ export function LeadManagement({ organizationId }: {
                 <option value="negotiation">Negotiation</option>
                 <option value="won">Won</option>
                 <option value="lost">Lost</option>
-              </select>
+              </NativeSelectControl>
             </div>
 
             {selectedLead.requested_timeframe && (
@@ -336,7 +338,7 @@ export function LeadManagement({ organizationId }: {
           {/* Follow-up */}
           <div className="space-y-2 border-t border-surface-border pt-4">
             <label className="text-sm font-medium text-ink">Send Follow-up</label>
-            <textarea
+            <Textarea
               value={followUpMessage}
               onChange={(e) => setFollowUpMessage(e.target.value)}
               placeholder="Type your message..."

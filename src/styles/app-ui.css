@@ -1,6 +1,14 @@
 /* BaytMiftah app-wide UI (consumer, workspace, auth, marketing — not admin) */
 
 @layer components {
+  .skip-to-content {
+    @apply fixed left-4 top-3 z-[200] -translate-y-24 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition-transform focus:translate-y-0;
+  }
+
+  .route-focus-target {
+    @apply absolute left-0 top-0 h-px w-px overflow-hidden outline-none;
+  }
+
   .app-page-header {
     @apply mb-8 space-y-4;
   }
@@ -166,5 +174,25 @@
 
   .app-textarea {
     @apply w-full min-h-32 resize-y rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ink-muted outline-none transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/15;
+  }
+}
+
+@media (pointer: coarse) {
+  button:not([role="switch"]),
+  [role="button"],
+  input:not([type="checkbox"]):not([type="radio"]),
+  select {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

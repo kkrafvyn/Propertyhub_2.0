@@ -15,6 +15,7 @@ import {
 import { useTranslation } from "../../i18n/LocaleContext";
 import { toast } from "sonner";
 import { PageHeader, PageLayout } from "../../components/ux";
+import { ActionDialog } from "../../components/ux/ActionDialog";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -41,6 +42,11 @@ interface SessionInfo {
   last_seen_at: string;
   user_agent: string | null;
 }
+
+type PendingSecurityAction =
+  | { kind: "factor"; id: string }
+  | { kind: "session"; id: string }
+  | { kind: "all" };
 
 function parseDeviceFromUserAgent(ua: string | null) {
   if (!ua) return { type: "unknown", name: "Unknown Device", icon: Globe };
@@ -110,6 +116,8 @@ export function SecuritySettingsPage() {
   const [appLockEnabled, setAppLockEnabled] = useState(() => isBiometricAppLockEnabled());
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingSecurityAction | null>(null);
+  const [actionPending, setActionPending] = useState(false);
 
   const isMfaActive = verifiedFactors.length > 0;
 
@@ -229,7 +237,6 @@ export function SecuritySettingsPage() {
   };
 
   const unenrollFactor = async (fId: string) => {
-    if (!window.confirm("Are you sure you want to disable this 2FA authenticator?")) return;
     try {
       const { error } = await supabase.auth.mfa.unenroll({ factorId: fId });
       if (error) throw error;
@@ -241,7 +248,6 @@ export function SecuritySettingsPage() {
   };
 
   const revokeSession = async (sessionId: string) => {
-    if (!window.confirm(t("securityPage.revokeConfirm"))) return;
     try {
       setRevokingId(sessionId);
       await supabase
@@ -256,8 +262,20 @@ export function SecuritySettingsPage() {
   };
 
   const signOutEverywhere = async () => {
-    if (!window.confirm(t("securityPage.signOutConfirm"))) return;
     await supabase.auth.signOut({ scope: "global" });
+  };
+
+  const confirmSecurityAction = async () => {
+    if (!pendingAction) return;
+    setActionPending(true);
+    try {
+      if (pendingAction.kind === "factor") await unenrollFactor(pendingAction.id);
+      if (pendingAction.kind === "session") await revokeSession(pendingAction.id);
+      if (pendingAction.kind === "all") await signOutEverywhere();
+      setPendingAction(null);
+    } finally {
+      setActionPending(false);
+    }
   };
 
   // Security score calculation
@@ -422,7 +440,7 @@ export function SecuritySettingsPage() {
                     key={f.id}
                     variant="outline"
                     size="sm"
-                    onClick={() => void unenrollFactor(f.id)}
+                    onClick={() => setPendingAction({ kind: "factor", id: f.id })}
                     className="text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 border-red-200 dark:border-red-900/40"
                   >
                     Unlink Authenticator
@@ -590,7 +608,7 @@ export function SecuritySettingsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void signOutEverywhere()}
+              onClick={() => setPendingAction({ kind: "all" })}
               className="text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 border-red-200 dark:border-red-900/40 gap-1.5"
             >
               <LogOut className="w-3.5 h-3.5" />
@@ -652,7 +670,7 @@ export function SecuritySettingsPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => void revokeSession(session.id)}
+                      onClick={() => setPendingAction({ kind: "session", id: session.id })}
                       disabled={revokingId === session.id}
                       className="text-xs shrink-0 ml-3 h-8"
                     >
@@ -665,6 +683,16 @@ export function SecuritySettingsPage() {
           </div>
         </Card>
       </div>
+      <ActionDialog
+        open={Boolean(pendingAction)}
+        onOpenChange={(open) => !open && setPendingAction(null)}
+        title={pendingAction?.kind === "factor" ? "Disable authenticator?" : pendingAction?.kind === "all" ? "Sign out everywhere?" : "Revoke this session?"}
+        description={pendingAction?.kind === "factor" ? "Two-factor protection from this authenticator will be removed from your account." : pendingAction?.kind === "all" ? String(t("securityPage.signOutConfirm")) : String(t("securityPage.revokeConfirm"))}
+        confirmLabel={pendingAction?.kind === "factor" ? "Disable authenticator" : pendingAction?.kind === "all" ? "Sign out everywhere" : "Revoke session"}
+        tone="destructive"
+        pending={actionPending}
+        onConfirm={confirmSecurityAction}
+      />
     </PageLayout>
   );
 }

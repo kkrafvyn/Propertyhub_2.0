@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import {
@@ -179,7 +180,7 @@ export function OwnerOversight({
           </p>
         </div>
         {overviews.length > 1 ? (
-          <select
+          <NativeSelectControl
             className="h-9 rounded-md border border-border bg-background px-2 text-sm"
             value={selected?.propertyId || ""}
             onChange={(e) => setSelectedPropertyId(e.target.value)}
@@ -189,7 +190,7 @@ export function OwnerOversight({
                 {o.address}
               </option>
             ))}
-          </select>
+          </NativeSelectControl>
         ) : null}
       </div>
 
@@ -262,10 +263,10 @@ export function OwnerOversight({
       {tab === "activity" ? (
         <div className="space-y-3">
           <label className="block text-sm">Activity for property
-            <select className="ml-2 rounded border bg-background p-2" value={activityPropertyId} onChange={event => setActivityPropertyId(event.target.value)}>
+            <NativeSelectControl className="ml-2 rounded border bg-background p-2" value={activityPropertyId} onChange={event => setActivityPropertyId(event.target.value)}>
               <option value="">All properties</option>
               {overviews.map(property => <option key={property.propertyId} value={property.propertyId}>{property.address}</option>)}
-            </select>
+            </NativeSelectControl>
           </label>
           {activity.length ? <ActivityFeed items={activity} /> : <Card className="p-8 text-center text-sm text-muted-foreground">No activity recorded yet.</Card>}
           {activityCursor ? <Button variant="outline" disabled={loadingOlder} onClick={() => void loadOlderActivity()}>{loadingOlder ? "Loading older activity…" : "Load older activity"}</Button> : null}
@@ -315,7 +316,7 @@ export function OwnerOversight({
             {expenseLines.length === 0 ? (
               <p className="text-sm text-muted-foreground">No work-order expenses yet.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" role="region" aria-label="Owner work-order expenses" tabIndex={0}>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left text-xs text-muted-foreground border-b border-border">

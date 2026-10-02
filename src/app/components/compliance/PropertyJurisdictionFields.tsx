@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo } from "react";
 import { MapPin, Scale } from "lucide-react";
 import { Badge } from "../ui/badge";
@@ -110,7 +111,7 @@ export function PropertyJurisdictionFields({
             <MapPin className="h-3.5 w-3.5" />
             Sub-national region
           </label>
-          <select
+          <NativeSelectControl
             className="rounded-lg border border-surface-border bg-white px-3 py-2 text-sm max-w-md"
             value={values.subdivisionCode}
             onChange={(e) => {
@@ -131,7 +132,7 @@ export function PropertyJurisdictionFields({
                 {opt.label}
               </option>
             ))}
-          </select>
+          </NativeSelectControl>
         </div>
       ) : null}
 

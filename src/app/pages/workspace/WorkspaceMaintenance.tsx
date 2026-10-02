@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 import {
@@ -834,7 +835,7 @@ export function WorkspaceMaintenance({
                       {/* Vendor selector */}
                       {!request.vendor_id && vendors.length > 0 ? (
                         <div className="relative">
-                          <select
+                          <NativeSelectControl
                             className="appearance-none rounded-xl border border-surface-border bg-surface/80 backdrop-blur-sm pl-3 pr-8 py-2 text-xs text-ink font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
                             defaultValue=""
                             onChange={(event) => {
@@ -850,7 +851,7 @@ export function WorkspaceMaintenance({
                                 {vendor.business_name}
                               </option>
                             ))}
-                          </select>
+                          </NativeSelectControl>
                           <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-muted" />
                         </div>
                       ) : null}

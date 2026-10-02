@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import {
@@ -1498,7 +1500,7 @@ export function PropertyDetail() {
                       <label htmlFor="property-viewing-note" className="block mb-2 text-sm">
                         Note
                       </label>
-                      <textarea
+                      <Textarea
                         id="property-viewing-note"
                         className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         rows={4}
@@ -1542,7 +1544,7 @@ export function PropertyDetail() {
                       }
                       placeholder={String(listing.price || "")}
                     />
-                    <textarea
+                    <Textarea
                       className="w-full min-h-24 rounded-lg border border-border px-4 py-3"
                       placeholder="Optional terms or message for the seller"
                       value={offerForm.message}
@@ -1589,7 +1591,7 @@ export function PropertyDetail() {
                       <label htmlFor="property-inquiry-message" className="block mb-2 text-sm">
                         Message
                       </label>
-                      <textarea
+                      <Textarea
                         id="property-inquiry-message"
                         className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         rows={4}
@@ -1629,7 +1631,7 @@ export function PropertyDetail() {
                         setBookingForm((current) => ({ ...current, checkOut: e.target.value }))
                       }
                     />
-                    <textarea
+                    <Textarea
                       className="w-full min-h-24 rounded-lg border border-border px-4 py-3"
                       placeholder="Optional note for the host"
                       value={bookingForm.guestNote}
@@ -1684,7 +1686,7 @@ export function PropertyDetail() {
                       <label htmlFor="property-payment-purpose" className="block mb-2 text-sm">
                         Payment Purpose
                       </label>
-                      <select
+                      <NativeSelectControl
                         id="property-payment-purpose"
                         className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         value={paymentForm.purpose}
@@ -1702,7 +1704,7 @@ export function PropertyDetail() {
                         <option value="booking_fee">Booking Fee</option>
                         <option value="purchase_installment">Purchase Installment</option>
                         <option value="other">Other</option>
-                      </select>
+                      </NativeSelectControl>
                     </div>
                     <Input
                       label="Payer Name"

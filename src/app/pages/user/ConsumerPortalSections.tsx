@@ -1,3 +1,4 @@
+import { Textarea } from "@/app/components/ui/textarea";
 import { MaintenanceRequestForm } from "../../components/maintenance/MaintenanceRequestForm";
 import { MaintenancePhotoThumb } from "../../components/maintenance/MaintenancePhotoThumb";
 import { useEffect, useMemo, useState } from "react";
@@ -943,7 +944,7 @@ function BookingCard({
               </button>
             ))}
           </div>
-          <textarea
+          <Textarea
             className="w-full min-h-20 rounded-lg border border-border px-3 py-2 text-sm"
             placeholder="Share your stay experience"
             value={comment}

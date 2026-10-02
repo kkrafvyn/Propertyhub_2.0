@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -294,7 +296,7 @@ export function JournalEntryManager({
               </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto border border-surface-border rounded-xl">
+            <div className="overflow-x-auto border border-surface-border rounded-xl" role="region" aria-label="Journal entries" tabIndex={0}>
               <table className="w-full text-left text-sm">
                 <thead className="bg-surface-subtle border-b border-surface-border text-xs uppercase text-ink-muted font-semibold">
                   <tr>
@@ -430,7 +432,7 @@ export function JournalEntryManager({
               </Button>
             </div>
 
-            <div className="overflow-x-auto border border-surface-border rounded-xl">
+            <div className="overflow-x-auto border border-surface-border rounded-xl" role="region" aria-label="Journal entry lines" tabIndex={0}>
               <table className="w-full text-left text-sm">
                 <thead className="bg-surface-subtle border-b border-surface-border text-xs uppercase text-ink-muted font-semibold">
                   <tr>
@@ -445,7 +447,7 @@ export function JournalEntryManager({
                   {lines.map((line, idx) => (
                     <tr key={idx}>
                       <td className="p-2">
-                        <select
+                        <NativeSelectControl
                           className="w-full px-2 py-1.5 rounded-lg border border-surface-border bg-surface text-ink text-xs"
                           value={line.accountId}
                           onChange={(e) =>
@@ -458,7 +460,7 @@ export function JournalEntryManager({
                               {a.account_code} — {a.account_name}
                             </option>
                           ))}
-                        </select>
+                        </NativeSelectControl>
                       </td>
                       <td className="p-2">
                         <Input
@@ -577,7 +579,7 @@ export function JournalEntryManager({
               <label htmlFor="reversal-reason" className="block text-xs font-semibold text-ink mb-1.5">
                 Reason for Reversal
               </label>
-              <textarea
+              <Textarea
                 id="reversal-reason"
                 rows={3}
                 value={reversalReason}

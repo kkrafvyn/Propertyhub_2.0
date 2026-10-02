@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Copy, Download, Link2, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -217,7 +218,7 @@ export function CalendarOperations({
           <div className="space-y-4">
             <div>
               <label className="block mb-2 text-sm text-foreground">Team member</label>
-              <select
+              <NativeSelectControl
                 className="w-full rounded-lg border border-border bg-input-background px-4 py-3"
                 value={draft.userId}
                 onChange={(event) =>
@@ -229,13 +230,13 @@ export function CalendarOperations({
                     {member.user?.full_name || member.user?.email || "Team member"}
                   </option>
                 ))}
-              </select>
+              </NativeSelectControl>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block mb-2 text-sm text-foreground">Day</label>
-                <select
+                <NativeSelectControl
                   className="w-full rounded-lg border border-border bg-input-background px-4 py-3"
                   value={draft.dayOfWeek}
                   onChange={(event) =>
@@ -247,7 +248,7 @@ export function CalendarOperations({
                       {day}
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
               </div>
               <div>
                 <label className="block mb-2 text-sm text-foreground">Buffer (mins)</label>

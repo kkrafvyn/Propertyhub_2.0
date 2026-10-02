@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import type { LucideIcon } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button, buttonVariants } from "../ui/Button";
 import { Card } from "../ui/Card";
 
 interface EmptyStateProps {
@@ -63,10 +63,12 @@ export function EmptyState({
 
         <div className="flex flex-wrap items-center justify-center gap-3">
           {actionLabel && actionHref && (
-            <Link to={actionHref}>
-              <Button size="sm" aria-label={actionLabel} className="shadow-xs">
-                {actionLabel}
-              </Button>
+            <Link
+              to={actionHref}
+              aria-label={actionLabel}
+              className={buttonVariants({ size: "sm", className: "shadow-xs" })}
+            >
+              {actionLabel}
             </Link>
           )}
           {actionLabel && onAction && (
@@ -75,10 +77,12 @@ export function EmptyState({
             </Button>
           )}
           {secondaryActionLabel && secondaryActionHref && (
-            <Link to={secondaryActionHref}>
-              <Button variant="outline" size="sm" aria-label={secondaryActionLabel}>
-                {secondaryActionLabel}
-              </Button>
+            <Link
+              to={secondaryActionHref}
+              aria-label={secondaryActionLabel}
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              {secondaryActionLabel}
             </Link>
           )}
         </div>

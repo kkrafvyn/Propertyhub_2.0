@@ -179,7 +179,7 @@ export function PortfolioAnalytics({
         })}
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-x-auto" role="region" aria-label="Estate operating breakdown" tabIndex={0}>
         <div className="p-3 border-b border-border text-xs font-semibold">Estate operating breakdown</div>
         <table className="w-full text-left text-xs">
           <thead className="bg-muted/40 text-muted-foreground font-semibold border-b border-border">

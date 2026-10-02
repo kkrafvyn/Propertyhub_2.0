@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { SlidersHorizontal, Grid3x3, List, Map, MapPin, Bed, Bath, X, Loader2, Bell, Heart, Search } from "lucide-react";
@@ -644,6 +645,7 @@ export function PropertySearch() {
                     key={mode}
                     type="button"
                     onClick={() => setViewMode(mode)}
+                    aria-label={`${t("searchPage.viewMode")}: ${mode}`}
                     aria-pressed={viewMode === mode}
                     className={`p-1.5 rounded-lg transition-all duration-150 ${
                       viewMode === mode
@@ -651,7 +653,7 @@ export function PropertySearch() {
                         : "text-ink-secondary hover:text-ink hover:bg-surface-hover"
                     }`}
                   >
-                    <Icon className="w-3.5 h-3.5" />
+                    <Icon className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 ))}
               </div>
@@ -1073,7 +1075,7 @@ function SearchFiltersPanel({
           <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]" htmlFor="region-filter">
             {t("searchPage.region")}
           </label>
-          <select
+          <NativeSelectControl
             id="region-filter"
             value={filters.region || "all"}
             onChange={(e) => setFilters({ ...filters, region: e.target.value })}
@@ -1085,14 +1087,14 @@ function SearchFiltersPanel({
                 {region.label}
               </option>
             ))}
-          </select>
+          </NativeSelectControl>
         </div>
 
         <div>
           <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]" htmlFor="sort-filter">
             {t("searchPage.sortBy")}
           </label>
-          <select
+          <NativeSelectControl
             id="sort-filter"
             value={filters.sort || "newest"}
             onChange={(e) => setFilters({ ...filters, sort: e.target.value })}
@@ -1102,7 +1104,7 @@ function SearchFiltersPanel({
             <option value="price_asc">{t("searchPage.priceAsc")}</option>
             <option value="price_desc">{t("searchPage.priceDesc")}</option>
             <option value="featured">{t("searchPage.featured")}</option>
-          </select>
+          </NativeSelectControl>
         </div>
 
         <div className="border-t border-surface-border pt-5 space-y-2.5">
@@ -1165,7 +1167,7 @@ function SearchFiltersPanel({
           <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]" htmlFor="property-type-filter">
             {t("searchPage.propertyType")}
           </label>
-          <select
+          <NativeSelectControl
             id="property-type-filter"
             value={filters.propertyType}
             onChange={(e) => setFilters({ ...filters, propertyType: e.target.value })}
@@ -1177,7 +1179,7 @@ function SearchFiltersPanel({
             <option value="office">{t("searchPage.propertyTypes.office")}</option>
             <option value="commercial">{t("searchPage.propertyTypes.commercial")}</option>
             <option value="land">{t("searchPage.propertyTypes.land")}</option>
-          </select>
+          </NativeSelectControl>
         </div>
 
         <div className="border-t border-surface-border pt-5">

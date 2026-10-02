@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 /**
  * BaytMiftah REOS — Contractor MoMo Dispatch & Work Order Suite
  * 
@@ -609,7 +611,7 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
 
               <div>
                 <label className="text-xs font-medium text-ink">Detailed Description</label>
-                <textarea
+                <Textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={2}
@@ -621,7 +623,7 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-medium text-ink">Estate</label>
-                  <select
+                  <NativeSelectControl
                     className="mt-1 w-full rounded-xl border border-border bg-input-background p-2 text-xs"
                     value={estateId}
                     onChange={(e) => setEstateId(e.target.value)}
@@ -631,11 +633,11 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
                         {estate.name}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelectControl>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-ink">Trade</label>
-                  <select
+                  <NativeSelectControl
                     className="mt-1 w-full rounded-xl border border-border bg-input-background p-2 text-xs"
                     value={trade}
                     onChange={(e) => setTrade(e.target.value as ArtisanTrade)}
@@ -645,13 +647,13 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
                     <option value="hvac_ac">HVAC / AC</option>
                     <option value="generator_tech">Generator Tech</option>
                     <option value="painter">Painter</option>
-                  </select>
+                  </NativeSelectControl>
                 </div>
               </div>
 
               <div>
                 <label className="text-xs font-medium text-ink">Unit</label>
-                <select
+                <NativeSelectControl
                   className="mt-1 w-full rounded-xl border border-border bg-input-background p-2 text-xs"
                   value={unitId}
                   onChange={(e) => setUnitId(e.target.value)}
@@ -664,13 +666,13 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
                         {unit.identifier}
                       </option>
                     ))}
-                </select>
+                </NativeSelectControl>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-medium text-ink">Priority</label>
-                  <select
+                  <NativeSelectControl
                     className="mt-1 w-full rounded-xl border border-border bg-input-background p-2 text-xs"
                     value={priority}
                     onChange={(e) => setPriority(e.target.value as any)}
@@ -679,7 +681,7 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
                     <option value="high">High (24h)</option>
                     <option value="medium">Medium (48h)</option>
                     <option value="low">Low</option>
-                  </select>
+                  </NativeSelectControl>
                 </div>
 
                 <div>
@@ -695,7 +697,7 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
 
               <div>
                 <label className="text-xs font-medium text-ink">Assign Vetted Artisan</label>
-                <select
+                <NativeSelectControl
                   className="mt-1 w-full rounded-xl border border-border bg-input-background p-2 text-xs"
                   value={selectedArtisanId}
                   onChange={(e) => setSelectedArtisanId(e.target.value)}
@@ -705,7 +707,7 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
                       {a.fullName} ({a.trade}) — ★{a.rating}
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
               </div>
 
               <div className="pt-2 flex justify-end gap-2">

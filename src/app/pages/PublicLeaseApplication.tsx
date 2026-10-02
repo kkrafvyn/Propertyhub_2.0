@@ -1,3 +1,4 @@
+import { Textarea } from "@/app/components/ui/textarea";
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import {
@@ -295,7 +296,7 @@ export function PublicLeaseApplication() {
                 <label className="text-xs font-semibold text-ink">
                   Employment or Business Summary
                 </label>
-                <textarea
+                <Textarea
                   className="min-h-24 w-full rounded-xl border border-surface-border bg-surface-subtle/50 px-3.5 py-2.5 text-xs text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
                   placeholder="e.g. Senior Software Engineer at Stanbic Bank Ghana, employed since 2021..."
                   value={form.employment}

@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Building2, Camera, Loader2, Plus, ShieldCheck, Wrench } from "lucide-react";
 import { toast } from "sonner";
@@ -611,13 +612,13 @@ export function EstateOperations({
           ) : null}
         </div>
         {estates.length > 0 ? (
-          <select className="rounded-lg border border-border bg-input-background px-3 py-2" value={selectedEstateId} onChange={(event) => setSelectedEstateId(event.target.value)}>
+          <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={selectedEstateId} onChange={(event) => setSelectedEstateId(event.target.value)}>
             {estates.map((estate) => (
               <option key={estate.id} value={estate.id}>
                 {estate.name}
               </option>
             ))}
-          </select>
+          </NativeSelectControl>
         ) : null}
       </div>
 
@@ -634,7 +635,7 @@ export function EstateOperations({
                 <label className="mb-1 block text-sm font-medium text-ink-secondary" htmlFor="estate-property">
                   Link to property (optional)
                 </label>
-                <select
+                <NativeSelectControl
                   id="estate-property"
                   className="w-full rounded-lg border border-border bg-input-background px-3 py-2 text-sm"
                   value={selectedPropertyId}
@@ -654,7 +655,7 @@ export function EstateOperations({
                       {linkedPropertyIds.has(property.id) ? " (linked)" : ""}
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
               </div>
             ) : null}
             <div className="flex gap-3">
@@ -740,20 +741,20 @@ export function EstateOperations({
             <form className="mt-5 grid gap-3 md:grid-cols-[1.5fr,1fr,1fr,1fr,auto]" onSubmit={createSchedule}>
               <Input value={scheduleName} onChange={(event) => setScheduleName(event.target.value)} placeholder="e.g. Monthly service charge" />
               <Input value={scheduleAmount} onChange={(event) => setScheduleAmount(event.target.value)} inputMode="decimal" placeholder="Amount (GHS)" />
-              <select className="rounded-lg border border-border bg-input-background px-3 py-2" value={scheduleType} onChange={(event) => setScheduleType(event.target.value as EstateChargeSchedule["type"])}>
+              <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={scheduleType} onChange={(event) => setScheduleType(event.target.value as EstateChargeSchedule["type"])}>
                 <option value="service_charge">Service charge</option>
                 <option value="rent">Rent</option>
                 <option value="water">Water</option>
                 <option value="levy">Levy</option>
                 <option value="penalty">Penalty</option>
                 <option value="other">Other</option>
-              </select>
-              <select className="rounded-lg border border-border bg-input-background px-3 py-2" value={scheduleFrequency} onChange={(event) => setScheduleFrequency(event.target.value as EstateChargeSchedule["frequency"])}>
+              </NativeSelectControl>
+              <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={scheduleFrequency} onChange={(event) => setScheduleFrequency(event.target.value as EstateChargeSchedule["frequency"])}>
                 <option value="monthly">Monthly</option>
                 <option value="quarterly">Quarterly</option>
                 <option value="annual">Annual</option>
                 <option value="one_off">One-off</option>
-              </select>
+              </NativeSelectControl>
               <Button type="submit" variant="outline" disabled={submitting}>
                 Save
               </Button>
@@ -785,21 +786,21 @@ export function EstateOperations({
               For cash, bank transfer, card, or mobile-money payments received outside the checkout flow. BaytMiftah allocates the amount to the oldest open unit charges first.
             </p>
             <form className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5" onSubmit={recordPayment}>
-              <select className="rounded-lg border border-border bg-input-background px-3 py-2" value={paymentUnitId} onChange={(event) => setPaymentUnitId(event.target.value)}>
+              <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={paymentUnitId} onChange={(event) => setPaymentUnitId(event.target.value)}>
                 <option value="">Select unit</option>
                 {selectedUnits.map((unit) => (
                   <option key={unit.id} value={unit.id}>
                     {unit.identifier}
                   </option>
                 ))}
-              </select>
+              </NativeSelectControl>
               <Input value={paymentAmount} onChange={(event) => setPaymentAmount(event.target.value)} inputMode="decimal" placeholder="Amount (GHS)" />
-              <select className="rounded-lg border border-border bg-input-background px-3 py-2" value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as typeof paymentMethod)}>
+              <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as typeof paymentMethod)}>
                 <option value="momo">Mobile money</option>
                 <option value="bank_transfer">Bank transfer</option>
                 <option value="cash">Cash</option>
                 <option value="card">Card</option>
-              </select>
+              </NativeSelectControl>
               <Input value={paymentReference} onChange={(event) => setPaymentReference(event.target.value)} placeholder="Provider or receipt reference" />
               <Button type="submit" disabled={submitting}>
                 Record payment
@@ -840,20 +841,20 @@ export function EstateOperations({
               <p className="mt-1 text-sm text-muted-foreground">Every issue is timestamped, tracked, and can become a work order in one click.</p>
               <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={createIssue}>
                 <Input value={issueTitle} onChange={(event) => setIssueTitle(event.target.value)} placeholder="Describe the issue" />
-                <select className="rounded-lg border border-border bg-input-background px-3 py-2" value={issueUnitId} onChange={(event) => setIssueUnitId(event.target.value)}>
+                <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={issueUnitId} onChange={(event) => setIssueUnitId(event.target.value)}>
                   <option value="">Common area / no unit</option>
                   {selectedUnits.map((unit) => (
                     <option key={unit.id} value={unit.id}>
                       {unit.identifier}
                     </option>
                   ))}
-                </select>
-                <select className="rounded-lg border border-border bg-input-background px-3 py-2" value={issuePriority} onChange={(event) => setIssuePriority(event.target.value as EstateIssue["priority"])}>
+                </NativeSelectControl>
+                <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={issuePriority} onChange={(event) => setIssuePriority(event.target.value as EstateIssue["priority"])}>
                   <option value="low">Low priority</option>
                   <option value="normal">Normal priority</option>
                   <option value="high">High priority</option>
                   <option value="urgent">Urgent</option>
-                </select>
+                </NativeSelectControl>
                 <Button type="submit" variant="outline" disabled={submitting}>
                   Log issue
                 </Button>
@@ -965,21 +966,21 @@ export function EstateOperations({
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <select className="rounded-lg border border-border bg-input-background px-3 py-2" value={workOrderVendorId} onChange={(event) => setWorkOrderVendorId(event.target.value)}>
+                    <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={workOrderVendorId} onChange={(event) => setWorkOrderVendorId(event.target.value)}>
                       <option value="">Assign verified vendor</option>
                       {vendors.map((vendor) => (
                         <option key={vendor.id} value={vendor.id}>
                           {vendor.business_name}
                         </option>
                       ))}
-                    </select>
-                    <select className="rounded-lg border border-border bg-input-background px-3 py-2" value={workOrderStatus} onChange={(event) => setWorkOrderStatus(event.target.value as EstateWorkOrder["status"])}>
+                    </NativeSelectControl>
+                    <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={workOrderStatus} onChange={(event) => setWorkOrderStatus(event.target.value as EstateWorkOrder["status"])}>
                       <option value="open">Open</option>
                       <option value="scheduled">Scheduled</option>
                       <option value="in_progress">In progress</option>
                       <option value="completed">Completed</option>
                       <option value="cancelled">Cancelled</option>
-                    </select>
+                    </NativeSelectControl>
                     <Input value={workOrderScheduleFor} onChange={(event) => setWorkOrderScheduleFor(event.target.value)} type="datetime-local" />
                     <Input value={workOrderAssignedTo} onChange={(event) => setWorkOrderAssignedTo(event.target.value)} placeholder="Assigned staff user ID" />
                     <Input value={workOrderEstimatedCost} onChange={(event) => setWorkOrderEstimatedCost(event.target.value)} inputMode="decimal" placeholder="Estimated cost (GHS)" />
@@ -1033,12 +1034,12 @@ export function EstateOperations({
                       <h4 className="font-medium">Approvals</h4>
                     </div>
                     <form className="mt-3 grid gap-3 md:grid-cols-[1fr,1fr,auto]" onSubmit={createApprovalRequest}>
-                      <select className="rounded-lg border border-border bg-input-background px-3 py-2" value={approvalType} onChange={(event) => setApprovalType(event.target.value as EstateWorkOrderApproval["approval_type"])}>
+                      <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={approvalType} onChange={(event) => setApprovalType(event.target.value as EstateWorkOrderApproval["approval_type"])}>
                         <option value="quote">Quote</option>
                         <option value="budget">Budget</option>
                         <option value="completion">Completion</option>
                         <option value="chargeable_cost">Chargeable cost</option>
-                      </select>
+                      </NativeSelectControl>
                       <Input value={approvalNote} onChange={(event) => setApprovalNote(event.target.value)} placeholder="Approval note" />
                       <Button type="submit" variant="outline" disabled={submitting}>
                         Request approval
@@ -1105,11 +1106,11 @@ export function EstateOperations({
                     <form className="mt-3 grid gap-3 md:grid-cols-[1fr,1fr,1fr,auto]" onSubmit={addEvidence}>
                       <Input value={evidencePath} onChange={(event) => setEvidencePath(event.target.value)} placeholder="Storage path or file reference" />
                       <Input value={evidenceCaption} onChange={(event) => setEvidenceCaption(event.target.value)} placeholder="Caption" />
-                      <select className="rounded-lg border border-border bg-input-background px-3 py-2" value={evidenceType} onChange={(event) => setEvidenceType(event.target.value as "photo" | "video" | "document")}>
+                      <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={evidenceType} onChange={(event) => setEvidenceType(event.target.value as "photo" | "video" | "document")}>
                         <option value="photo">Photo</option>
                         <option value="video">Video</option>
                         <option value="document">Document</option>
-                      </select>
+                      </NativeSelectControl>
                       <Button type="submit" variant="outline" disabled={submitting}>
                         Add evidence
                       </Button>
@@ -1182,14 +1183,14 @@ export function EstateOperations({
               <Input value={planCategory} onChange={(event) => setPlanCategory(event.target.value)} placeholder="Category" />
               <Input value={planFrequencyDays} onChange={(event) => setPlanFrequencyDays(event.target.value)} inputMode="numeric" placeholder="Every N days" />
               <Input value={planNextDueDate} onChange={(event) => setPlanNextDueDate(event.target.value)} type="date" />
-              <select className="rounded-lg border border-border bg-input-background px-3 py-2" value={planVendorId} onChange={(event) => setPlanVendorId(event.target.value)}>
+              <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={planVendorId} onChange={(event) => setPlanVendorId(event.target.value)}>
                 <option value="">Default vendor</option>
                 {vendors.map((vendor) => (
                   <option key={vendor.id} value={vendor.id}>
                     {vendor.business_name}
                   </option>
                 ))}
-              </select>
+              </NativeSelectControl>
               <Button type="submit" variant="outline" disabled={submitting}>
                 Save plan
               </Button>

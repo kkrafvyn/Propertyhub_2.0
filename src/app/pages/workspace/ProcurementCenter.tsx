@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { ArrowRight, CheckCircle2, ClipboardList, Loader2, PackagePlus, ReceiptText, Send, ShoppingBag } from "lucide-react";
@@ -417,7 +418,7 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
             <h2 className="font-semibold">Create purchase request</h2>
           </div>
           <form className="mt-4 space-y-3" onSubmit={createRequest}>
-            <select
+            <NativeSelectControl
               className="w-full rounded-lg border border-border bg-input-background px-3 py-2"
               value={estateId}
               onChange={(event) => setEstateId(event.target.value)}
@@ -427,7 +428,7 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
                   {estate.name}
                 </option>
               ))}
-            </select>
+            </NativeSelectControl>
             <Input
               placeholder="Request title"
               value={requestForm.title}
@@ -520,7 +521,7 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
             Keep the PO linked to the approved request so approvals, delivery, and bills stay together.
           </p>
           <form className="mt-4 space-y-3" onSubmit={createPurchaseOrder}>
-            <select
+            <NativeSelectControl
               className="w-full rounded-lg border border-border bg-input-background px-3 py-2"
               value={poForm.requestId}
               onChange={(event) => {
@@ -541,7 +542,7 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
                     {request.title}
                   </option>
                 ))}
-            </select>
+            </NativeSelectControl>
             <Input
               placeholder="Vendor name"
               value={poForm.vendorName}
@@ -644,7 +645,7 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
           Three-way match compares purchase order, goods receipt, and vendor bill totals.
         </p>
         <form className="mt-4 grid gap-3 md:grid-cols-[2fr_1fr_1fr_1fr_auto]" onSubmit={createVendorBill}>
-          <select
+          <NativeSelectControl
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
             value={billForm.poId}
             onChange={(event) => setBillForm({ ...billForm, poId: event.target.value })}
@@ -657,7 +658,7 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
                   {order.po_number} — {order.vendor_name} ({money(order.amount_minor, order.currency || currency)})
                 </option>
               ))}
-          </select>
+          </NativeSelectControl>
           <Input
             placeholder="Bill number"
             value={billForm.billNumber}
@@ -681,7 +682,7 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
           </Button>
         </form>
         <form className="mt-4 grid gap-3 md:grid-cols-[2fr_1fr_auto]" onSubmit={evaluateMatch}>
-          <select
+          <NativeSelectControl
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
             value={invoiceMatch.billId}
             onChange={(event) => setInvoiceMatch({ ...invoiceMatch, billId: event.target.value })}
@@ -692,7 +693,7 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
                 {bill.bill_number} — {money(bill.amount_minor, currency)} ({bill.status})
               </option>
             ))}
-          </select>
+          </NativeSelectControl>
           <Input
             type="number"
             min="0"

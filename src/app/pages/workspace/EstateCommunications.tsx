@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 /**
  * BaytMiftah REOS — Estate Communications & Omnichannel Calling Hub
  * 
@@ -413,7 +415,7 @@ export function EstateCommunications({
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className="text-[11px] font-medium text-muted-foreground">Target Estate</label>
-                    <select
+                    <NativeSelectControl
                       className="mt-1 w-full rounded-xl border border-border bg-input-background px-3 py-2 text-xs"
                       value={estateId}
                       onChange={(e) => setEstateId(e.target.value)}
@@ -424,12 +426,12 @@ export function EstateCommunications({
                           {e.name}
                         </option>
                       ))}
-                    </select>
+                    </NativeSelectControl>
                   </div>
 
                   <div>
                     <label className="text-[11px] font-medium text-muted-foreground">Target Audience</label>
-                    <select
+                    <NativeSelectControl
                       className="mt-1 w-full rounded-xl border border-border bg-input-background px-3 py-2 text-xs"
                       value={audience}
                       onChange={(e) => setAudience(e.target.value as typeof audience)}
@@ -438,7 +440,7 @@ export function EstateCommunications({
                       <option value="tenant">Current Tenants Only</option>
                       <option value="owner">Property Owners & Landlords</option>
                       <option value="buyer">Prospective Buyers & Leads</option>
-                    </select>
+                    </NativeSelectControl>
                   </div>
                 </div>
 
@@ -454,7 +456,7 @@ export function EstateCommunications({
 
                 <div>
                   <label className="text-[11px] font-medium text-muted-foreground">Message Body</label>
-                  <textarea
+                  <Textarea
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
                     rows={4}

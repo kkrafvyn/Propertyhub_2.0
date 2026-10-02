@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -393,7 +395,7 @@ export function WorkspaceNewListing({
             <div>
               <label className="block mb-2 text-sm text-foreground">Category</label>
               <div className="relative">
-                <select
+                <NativeSelectControl
                   className="w-full appearance-none px-4 py-3 rounded-lg border border-border bg-input-background pr-10 text-ink text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary"
                   value={form.category}
                   onChange={(event) => updateField("category", event.target.value)}
@@ -403,7 +405,7 @@ export function WorkspaceNewListing({
                       {category.charAt(0).toUpperCase() + category.slice(1)}
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
               </div>
             </div>
@@ -511,7 +513,7 @@ export function WorkspaceNewListing({
                 <span>{generatingDescription ? "Generating..." : "Generate with AI"}</span>
               </Button>
             </div>
-            <textarea
+            <Textarea
               className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground min-h-32 focus:outline-none focus:ring-1 focus:ring-primary"
               value={form.description}
               onChange={(event) => updateField("description", event.target.value)}
@@ -538,7 +540,7 @@ export function WorkspaceNewListing({
             <div>
               <label className="block mb-2 text-sm text-foreground">Listing Type</label>
               <div className="relative">
-                <select
+                <NativeSelectControl
                   className="w-full appearance-none px-4 py-3 rounded-lg border border-border bg-input-background pr-10 text-ink text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary"
                   value={form.listingType}
                   onChange={(event) => updateField("listingType", event.target.value)}
@@ -548,7 +550,7 @@ export function WorkspaceNewListing({
                       {listingType.charAt(0).toUpperCase() + listingType.slice(1)}
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
               </div>
             </div>
@@ -570,7 +572,7 @@ export function WorkspaceNewListing({
             <div>
               <label className="block mb-2 text-sm text-foreground">Status</label>
               <div className="relative">
-                <select
+                <NativeSelectControl
                   className="w-full appearance-none px-4 py-3 rounded-lg border border-border bg-input-background pr-10 text-ink text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary"
                   value={form.status}
                   onChange={(event) => updateField("status", event.target.value)}
@@ -580,14 +582,14 @@ export function WorkspaceNewListing({
                       {status.replaceAll("_", " ")}
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
               </div>
             </div>
             <div>
               <label className="block mb-2 text-sm text-foreground">Visibility</label>
               <div className="relative">
-                <select
+                <NativeSelectControl
                   className="w-full appearance-none px-4 py-3 rounded-lg border border-border bg-input-background pr-10 text-ink text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary"
                   value={form.visibility}
                   onChange={(event) => updateField("visibility", event.target.value)}
@@ -597,7 +599,7 @@ export function WorkspaceNewListing({
                       {visibility}
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
               </div>
             </div>
@@ -635,7 +637,7 @@ export function WorkspaceNewListing({
             <div>
               <label className="block mb-2 text-sm text-foreground">Document Status</label>
               <div className="relative">
-                <select
+                <NativeSelectControl
                   className="w-full appearance-none px-4 py-3 rounded-lg border border-border bg-input-background pr-10 text-ink text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary"
                   value={form.titleDocumentStatus}
                   onChange={(event) => updateField("titleDocumentStatus", event.target.value)}
@@ -645,7 +647,7 @@ export function WorkspaceNewListing({
                   <option value="in_review">In review</option>
                   <option value="verified">Verified</option>
                   <option value="signed">Signed mandate</option>
-                </select>
+                </NativeSelectControl>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
               </div>
             </div>

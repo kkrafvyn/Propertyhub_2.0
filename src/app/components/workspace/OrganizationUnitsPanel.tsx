@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { Building2, Link2, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -123,7 +124,7 @@ export function OrganizationUnitsPanel({
               onChange={(event) => setName(event.target.value)}
               placeholder="e.g. Accra Portfolio"
             />
-            <select
+            <NativeSelectControl
               className="rounded-lg border border-border bg-input-background px-3 py-2 text-sm"
               value={unitType}
               onChange={(event) => setUnitType(event.target.value as OrganizationUnitType)}
@@ -132,7 +133,7 @@ export function OrganizationUnitsPanel({
               <option value="business_unit">Business unit</option>
               <option value="portfolio">Portfolio</option>
               <option value="custom">Custom</option>
-            </select>
+            </NativeSelectControl>
             <Button type="button" onClick={() => void createUnit()}>
               <Plus className="mr-2 h-4 w-4" />
               Add unit
@@ -146,7 +147,7 @@ export function OrganizationUnitsPanel({
                 Link property to unit
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
-                <select
+                <NativeSelectControl
                   className="rounded-lg border border-border bg-input-background px-3 py-2 text-sm"
                   value={linkUnitId}
                   onChange={(event) => setLinkUnitId(event.target.value)}
@@ -156,8 +157,8 @@ export function OrganizationUnitsPanel({
                       {unit.name}
                     </option>
                   ))}
-                </select>
-                <select
+                </NativeSelectControl>
+                <NativeSelectControl
                   className="rounded-lg border border-border bg-input-background px-3 py-2 text-sm"
                   value={linkPropertyId}
                   onChange={(event) => setLinkPropertyId(event.target.value)}
@@ -168,7 +169,7 @@ export function OrganizationUnitsPanel({
                       {property.label}
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
               </div>
               <Button className="mt-3" size="sm" variant="outline" onClick={() => void linkProperty()}>
                 Link property

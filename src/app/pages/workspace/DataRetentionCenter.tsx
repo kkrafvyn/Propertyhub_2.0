@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ShieldAlert } from "lucide-react";
@@ -92,11 +93,11 @@ export function DataRetentionCenter({ organizationId }: { organizationId?: strin
       <Card className="p-5 space-y-3">
         <h2 className="font-semibold flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-amber-500" /> Compliance & Legal Holds</h2>
         <form className="grid gap-2 sm:grid-cols-[1fr_2fr_auto]" onSubmit={placeHold}>
-          <select className="rounded-lg border border-border bg-background px-3 py-2 text-sm" value={entity} onChange={(e) => setEntity(e.target.value)}>
+          <NativeSelectControl className="rounded-lg border border-border bg-background px-3 py-2 text-sm" value={entity} onChange={(e) => setEntity(e.target.value)}>
             {DEFAULT_RETENTION_ENTITIES.map((row) => (
               <option key={row.entity} value={row.entity}>{formatEntityName(row.entity)}</option>
             ))}
-          </select>
+          </NativeSelectControl>
           <Input required placeholder="Reason for hold (e.g., audit review, disputed claim…)" value={reason} onChange={(e) => setReason(e.target.value)} />
           <Button>Place Hold</Button>
         </form>

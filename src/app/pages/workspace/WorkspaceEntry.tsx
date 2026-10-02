@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { Building2, Home, Loader2, Sparkles } from "lucide-react";
@@ -343,7 +345,12 @@ export function WorkspaceEntry() {
               )}
             </div>
             <div>
-              <p className="text-sm text-primary font-medium">Workspace enrollment</p>
+              <p className="text-sm text-primary font-medium">
+                Workspace enrollment ·{" "}
+                <Link to="/workspace-roles" className="underline underline-offset-2 hover:text-primary/80">
+                  Role glossary
+                </Link>
+              </p>
               <h1 className="text-3xl font-semibold">Apply for a workspace</h1>
             </div>
           </div>
@@ -385,7 +392,7 @@ export function WorkspaceEntry() {
             <label className="mb-2 block text-sm font-medium" htmlFor="operating-jurisdiction">
               Operating country
             </label>
-            <select
+            <NativeSelectControl
               id="operating-jurisdiction"
               className="app-input w-full"
               value={operatingJurisdiction}
@@ -396,7 +403,7 @@ export function WorkspaceEntry() {
                   {pack.label}
                 </option>
               ))}
-            </select>
+            </NativeSelectControl>
           </div>
 
           <WorkspaceEnrollmentKycPanel
@@ -459,7 +466,7 @@ export function WorkspaceEntry() {
 
             <div>
               <label className="block mb-2 text-sm text-foreground">Description</label>
-              <textarea
+              <Textarea
                 className="app-input min-h-32"
                 value={form.description}
                 onChange={(event) =>

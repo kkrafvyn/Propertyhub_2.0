@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import {
@@ -183,7 +184,7 @@ export function AutomationBuilder({ organizationId: organizationIdProp }: { orga
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             required
           />
-          <select
+          <NativeSelectControl
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
             value={form.trigger}
             onChange={(e) => setForm({ ...form, trigger: e.target.value })}
@@ -193,8 +194,8 @@ export function AutomationBuilder({ organizationId: organizationIdProp }: { orga
                 Trigger: {t.label}
               </option>
             ))}
-          </select>
-          <select
+          </NativeSelectControl>
+          <NativeSelectControl
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
             value={form.action}
             onChange={(e) => setForm({ ...form, action: e.target.value })}
@@ -204,7 +205,7 @@ export function AutomationBuilder({ organizationId: organizationIdProp }: { orga
                 Action: {a.label}
               </option>
             ))}
-          </select>
+          </NativeSelectControl>
           <input
             className="rounded-lg border border-border bg-background px-3 py-2 text-sm md:col-span-2"
             placeholder="Optional message template"

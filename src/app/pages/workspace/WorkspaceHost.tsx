@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Home, MessageCircle, Star } from "lucide-react";
 import { toast } from "sonner";
@@ -384,7 +386,7 @@ export function WorkspaceHost({
         <>
           <Card className="p-6 space-y-4">
             <h2 className="text-xl font-semibold">Listing settings</h2>
-            <select
+            <NativeSelectControl
               className="w-full rounded-lg border border-border px-3 py-2"
               value={selectedListingId}
               onChange={(event) => setSelectedListingId(event.target.value)}
@@ -394,11 +396,11 @@ export function WorkspaceHost({
                   {listing.property?.address || listing.id}
                 </option>
               ))}
-            </select>
+            </NativeSelectControl>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="text-sm">
                 Booking mode
-                <select
+                <NativeSelectControl
                   className="w-full mt-2 rounded-lg border border-border px-3 py-2"
                   value={bookingMode}
                   onChange={(event) =>
@@ -407,7 +409,7 @@ export function WorkspaceHost({
                 >
                   <option value="instant">Instant book (secure checkout)</option>
                   <option value="request">Request to book (host approves)</option>
-                </select>
+                </NativeSelectControl>
               </label>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -422,13 +424,13 @@ export function WorkspaceHost({
                 placeholder="Check-in instructions"
               />
             </div>
-            <textarea
+            <Textarea
               className="w-full min-h-24 rounded-lg border border-border px-3 py-2"
               value={houseRules}
               onChange={(event) => setHouseRules(event.target.value)}
               placeholder="House rules"
             />
-            <textarea
+            <Textarea
               className="w-full min-h-24 rounded-lg border border-border px-3 py-2"
               value={cleaningNotes}
               onChange={(event) => setCleaningNotes(event.target.value)}

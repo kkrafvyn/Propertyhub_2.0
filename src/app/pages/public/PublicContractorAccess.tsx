@@ -1,3 +1,4 @@
+import { Textarea } from "@/app/components/ui/textarea";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
@@ -89,7 +90,7 @@ export function PublicContractorAccess() {
                   Status: {maintenance.status}
                 </p>
               </div>
-              <textarea
+              <Textarea
                 className="min-h-24 w-full rounded-lg border border-border bg-input-background px-3 py-2 text-sm"
                 placeholder="Add a progress note (saved when you update status online)"
                 value={note}

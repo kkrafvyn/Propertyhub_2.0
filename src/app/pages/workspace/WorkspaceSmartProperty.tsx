@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
@@ -203,7 +204,7 @@ export function WorkspaceSmartProperty({ organizationId }: { organizationId: str
       <Card className="p-5 space-y-4">
         <h2 className="font-semibold">Register device</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <select
+          <NativeSelectControl
             className="w-full rounded-lg border border-border px-3 py-2"
             value={deviceForm.leaseId}
             onChange={(event) => {
@@ -222,8 +223,8 @@ export function WorkspaceSmartProperty({ organizationId }: { organizationId: str
                 {lease.listing?.property?.address || lease.id}
               </option>
             ))}
-          </select>
-          <select
+          </NativeSelectControl>
+          <NativeSelectControl
             className="w-full rounded-lg border border-border px-3 py-2"
             value={deviceForm.deviceType}
             onChange={(event) =>
@@ -238,7 +239,7 @@ export function WorkspaceSmartProperty({ organizationId }: { organizationId: str
                 {type.replace(/_/g, " ")}
               </option>
             ))}
-          </select>
+          </NativeSelectControl>
           <Input
             value={deviceForm.label}
             onChange={(event) => setDeviceForm((current) => ({ ...current, label: event.target.value }))}

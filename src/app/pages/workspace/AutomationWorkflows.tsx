@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Card } from "@/app/components/ui/Card";
 import { Button } from "@/app/components/ui/Button";
 import { Badge } from "@/app/components/ui/badge";
+import { ActionDialog } from "@/app/components/ux/ActionDialog";
 import { automationEngineService } from "@/lib/automation-engine.service";
 import type { MemberRole } from "@/lib/workspace";
 
@@ -18,6 +19,8 @@ export default function AutomationWorkflows({
 }: AutomationWorkflowsProps) {
   const [workflows, setWorkflows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [workflowToDelete, setWorkflowToDelete] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const canManageWorkflows = currentRole === "owner" || currentRole === "manager";
 
   const loadWorkflows = async () => {
@@ -48,18 +51,19 @@ export default function AutomationWorkflows({
     }
   };
 
-  const handleDeleteWorkflow = async (workflowId: string) => {
-    if (!window.confirm("Are you sure you want to delete this workflow?")) {
-      return;
-    }
-
+  const handleDeleteWorkflow = async () => {
+    if (!workflowToDelete) return;
     try {
-      await automationEngineService.deleteWorkflow(workflowId);
+      setDeleting(true);
+      await automationEngineService.deleteWorkflow(workflowToDelete.id);
       toast.success("Workflow deleted.");
+      setWorkflowToDelete(null);
       await loadWorkflows();
     } catch (error) {
       console.error("Failed to delete workflow:", error);
       toast.error("We couldn't delete that workflow.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -244,8 +248,9 @@ export default function AutomationWorkflows({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => void handleDeleteWorkflow(workflow.id)}
+                      onClick={() => setWorkflowToDelete(workflow)}
                       disabled={!canManageWorkflows}
+                      aria-label={`Delete ${workflow.name}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -256,6 +261,16 @@ export default function AutomationWorkflows({
           </div>
         )}
       </div>
+      <ActionDialog
+        open={Boolean(workflowToDelete)}
+        onOpenChange={(open) => !open && setWorkflowToDelete(null)}
+        title="Delete workflow?"
+        description={`This permanently deletes “${workflowToDelete?.name || "this workflow"}”. Its execution history may remain in audit logs.`}
+        confirmLabel="Delete workflow"
+        tone="destructive"
+        pending={deleting}
+        onConfirm={handleDeleteWorkflow}
+      />
     </div>
   );
 }

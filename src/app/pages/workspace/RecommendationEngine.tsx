@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import {
@@ -325,7 +326,7 @@ export default function RecommendationEngine() {
             </div>
 
             {/* Category */}
-            <select
+            <NativeSelectControl
               value={filterType}
               onChange={(event) => setFilterType(event.target.value)}
               className="px-3 py-2 rounded-xl border border-surface-border bg-surface-subtle text-ink text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs cursor-pointer"
@@ -337,10 +338,10 @@ export default function RecommendationEngine() {
               <option value="office">Commercial Office</option>
               <option value="commercial">Retail & Logistics</option>
               <option value="land">Parcels & Land</option>
-            </select>
+            </NativeSelectControl>
 
             {/* Sort */}
-            <select
+            <NativeSelectControl
               value={sortBy}
               onChange={(event) => setSortBy(event.target.value)}
               className="px-3 py-2 rounded-xl border border-surface-border bg-surface-subtle text-ink text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs cursor-pointer"
@@ -349,7 +350,7 @@ export default function RecommendationEngine() {
               <option value="match">Rank: Match Score</option>
               <option value="price">Rank: Lowest Price</option>
               <option value="quality">Rank: Highest Trust Score</option>
-            </select>
+            </NativeSelectControl>
           </div>
 
           <div className="text-xs font-semibold text-ink-secondary px-3 py-1.5 rounded-full bg-surface-subtle border border-surface-border shrink-0">

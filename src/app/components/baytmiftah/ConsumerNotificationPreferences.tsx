@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "../ui/Button";
@@ -108,7 +109,7 @@ export function ConsumerNotificationPreferences({ userId }: { userId: string }) 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="text-sm">
           Frequency
-          <select
+          <NativeSelectControl
             className="w-full mt-2 rounded-lg border border-border px-3 py-2"
             value={formData.notification_frequency || "daily"}
             onChange={(event) =>
@@ -121,7 +122,7 @@ export function ConsumerNotificationPreferences({ userId }: { userId: string }) 
             <option value="instant">Instant</option>
             <option value="daily">Daily digest</option>
             <option value="weekly">Weekly digest</option>
-          </select>
+          </NativeSelectControl>
         </label>
         <label className="text-sm">
           Quiet hours start

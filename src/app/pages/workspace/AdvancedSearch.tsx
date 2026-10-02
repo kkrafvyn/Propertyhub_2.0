@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, Bell, Filter, MapPin, Save, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -277,7 +278,7 @@ export default function AdvancedSearch({
                     <label htmlFor="advanced-search-category" className="block mb-2 text-sm text-foreground">
                       Category
                     </label>
-                    <select
+                    <NativeSelectControl
                       id="advanced-search-category"
                       className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
                       value={filters.category || ""}
@@ -294,7 +295,7 @@ export default function AdvancedSearch({
                       <option value="office">Office</option>
                       <option value="commercial">Commercial</option>
                       <option value="land">Land</option>
-                    </select>
+                    </NativeSelectControl>
                   </div>
                   <Input
                     label="Minimum Price"

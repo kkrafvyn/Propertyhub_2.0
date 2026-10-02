@@ -197,13 +197,22 @@ export function MobileAppShell() {
               <Loader2 aria-hidden="true" />
             </div>
           ) : (
-            homeListings.slice(0, 8).map((listing) => (
-              <MobileHomeListingCard
-                key={listing.id}
-                listing={listing}
-                to={`/property/${listing.id}`}
-              />
-            ))
+            homeListings.length > 0 ? (
+              homeListings.slice(0, 8).map((listing) => (
+                <MobileHomeListingCard
+                  key={listing.id}
+                  listing={listing}
+                  to={`/property/${listing.id}`}
+                />
+              ))
+            ) : (
+              <div className="w-full rounded-2xl border border-dashed border-surface-border bg-surface px-5 py-6 text-center">
+                <p className="text-sm font-semibold text-ink">{t("searchPage.noPropertiesTitle")}</p>
+                <Link to={seeAllTo} className="mt-2 inline-flex text-sm font-semibold text-primary underline-offset-4 hover:underline">
+                  {t("searchPage.clearFilters")}
+                </Link>
+              </div>
+            )
           )}
         </MobileCarouselSection>
 
@@ -233,14 +242,16 @@ export function MobileAppShell() {
             <h2>{t("mobile.appShell.verifiedAgencies")}</h2>
           </div>
           <div className="mobile-agency-row">
-            {agencies.map((agency) => (
+            {agencies.length === 0 ? (
+              <p className="py-3 text-sm text-muted-foreground">{t("mobile.appShell.noVerifiedAgencies")}</p>
+            ) : agencies.map((agency) => (
               <Link
                 key={agency.id}
                 to={`/search?agency=${agency.slug}`}
                 className="mobile-agency-chip"
               >
                 {agency.logo_url ? (
-                  <img src={agency.logo_url} alt="" />
+                  <img src={agency.logo_url} alt="" loading="lazy" decoding="async" />
                 ) : (
                   <div className="mobile-agency-logo-fallback" aria-hidden="true">
                     <Building2 className="w-5 h-5" />

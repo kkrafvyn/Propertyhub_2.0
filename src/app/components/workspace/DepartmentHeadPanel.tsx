@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useMemo, useState } from "react";
 import { Crown, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -134,7 +135,7 @@ export function DepartmentHeadPanel({
                 {canManage ? (
                   <div className="flex min-w-[220px] flex-col gap-1">
                     <label className="text-[11px] font-medium text-ink-secondary">Department head</label>
-                    <select
+                    <NativeSelectControl
                       className="rounded-lg border border-surface-border bg-surface px-3 py-2 text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-primary"
                       value={department.head_user_id || ""}
                       disabled={savingDepartmentId === department.id}
@@ -148,7 +149,7 @@ export function DepartmentHeadPanel({
                           {getMemberLabel(member)} ({member.role.replace(/_/g, " ")})
                         </option>
                       ))}
-                    </select>
+                    </NativeSelectControl>
                   </div>
                 ) : null}
               </div>

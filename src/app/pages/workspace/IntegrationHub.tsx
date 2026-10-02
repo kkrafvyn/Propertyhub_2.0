@@ -227,7 +227,7 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
       {/* Sync History */}
       <Card className="p-6 border-surface-border bg-surface">
         <h2 className="text-xl font-bold mb-4 text-ink">Recent Sync History</h2>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" role="region" aria-label="Recent integration sync history" tabIndex={0}>
           <table className="w-full">
             <thead className="border-b border-surface-border">
               <tr>

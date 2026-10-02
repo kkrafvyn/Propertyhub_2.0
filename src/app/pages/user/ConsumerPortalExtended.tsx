@@ -29,6 +29,7 @@ import { vendorService } from "../../../lib/vendor.service";
 import { walletService } from "../../../lib/wallet.service";
 import { escrowService } from "../../../lib/escrow.service";
 import { ActivityTimeline, EmptyState } from "../../components/ux";
+import { ActionDialog } from "../../components/ux/ActionDialog";
 import { CONSUMER_PAGE_CONFIG } from "../../lib/consumer-page-config";
 import { buildPurchaseTimeline, buildMaintenanceTimeline, buildEscrowTimeline } from "../../lib/workflow-timeline";
 import { purchaseWorkflowService } from "../../../lib/purchase-workflow.service";
@@ -1169,15 +1170,17 @@ export function WalletHubSection({
   const [methodLabel, setMethodLabel] = useState("");
   const [savingMethod, setSavingMethod] = useState(false);
   const [disputingHoldId, setDisputingHoldId] = useState<string | null>(null);
+  const [holdToDispute, setHoldToDispute] = useState<string | null>(null);
+  const [disputeNote, setDisputeNote] = useState("");
 
-  const handleDisputeEscrow = async (holdId: string) => {
-    const note = window.prompt("Describe the issue with this payment:");
-    if (!note?.trim()) return;
-
+  const handleDisputeEscrow = async () => {
+    if (!holdToDispute || !disputeNote.trim()) return;
     try {
-      setDisputingHoldId(holdId);
-      await escrowService.disputeEscrowHold(holdId, note.trim());
+      setDisputingHoldId(holdToDispute);
+      await escrowService.disputeEscrowHold(holdToDispute, disputeNote.trim());
       toast.success("Payment dispute submitted.");
+      setHoldToDispute(null);
+      setDisputeNote("");
       await onRefresh();
     } catch (error) {
       console.error(error);
@@ -1276,7 +1279,7 @@ export function WalletHubSection({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => void handleDisputeEscrow(hold.id)}
+                  onClick={() => setHoldToDispute(hold.id)}
                   disabled={disputingHoldId === hold.id}
                 >
                   {disputingHoldId === hold.id ? "Submitting..." : "Dispute hold"}
@@ -1348,6 +1351,26 @@ export function WalletHubSection({
           ))}
         </Card>
       )}
+      <ActionDialog
+        open={Boolean(holdToDispute)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setHoldToDispute(null);
+            setDisputeNote("");
+          }
+        }}
+        title="Dispute this payment hold?"
+        description="Describe the issue clearly. Your note will be recorded and shared with the team reviewing the escrow hold."
+        confirmLabel="Submit dispute"
+        tone="destructive"
+        notesLabel="Issue details"
+        notesPlaceholder="Explain what is wrong with this payment…"
+        notesRequired
+        notes={disputeNote}
+        onNotesChange={setDisputeNote}
+        pending={Boolean(disputingHoldId)}
+        onConfirm={handleDisputeEscrow}
+      />
     </section>
   );
 }

@@ -478,7 +478,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" role="region" aria-label="AI command activity" tabIndex={0}>
           <table className="w-full text-left text-xs">
             <thead className="bg-surface-subtle text-ink-secondary font-semibold border-b border-surface-border">
               <tr>

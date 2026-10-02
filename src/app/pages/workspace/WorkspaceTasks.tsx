@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
@@ -293,7 +294,7 @@ export function WorkspaceTasks({
             <div className="md:col-span-2 flex flex-col justify-end">
               <label className="text-xs font-medium text-ink-secondary mb-1">Priority</label>
               <div className="relative">
-                <select
+                <NativeSelectControl
                   className="w-full appearance-none rounded-xl border border-surface-border bg-surface-subtle pl-3 pr-8 py-2.5 text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs"
                   value={priority}
                   onChange={(event) => setPriority(event.target.value)}
@@ -302,7 +303,7 @@ export function WorkspaceTasks({
                   <option value="medium">Medium priority</option>
                   <option value="high">High priority</option>
                   <option value="urgent">Urgent</option>
-                </select>
+                </NativeSelectControl>
                 <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-muted" />
               </div>
             </div>
@@ -310,7 +311,7 @@ export function WorkspaceTasks({
             <div className="md:col-span-2 flex flex-col justify-end">
               <label className="text-xs font-medium text-ink-secondary mb-1">Assignee</label>
               <div className="relative">
-                <select
+                <NativeSelectControl
                   className="w-full appearance-none rounded-xl border border-surface-border bg-surface-subtle pl-3 pr-8 py-2.5 text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs"
                   value={assignedTo}
                   onChange={(event) => setAssignedTo(event.target.value)}
@@ -321,7 +322,7 @@ export function WorkspaceTasks({
                       {member.user?.full_name || member.user?.email}
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
                 <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-muted" />
               </div>
             </div>
@@ -379,7 +380,7 @@ export function WorkspaceTasks({
 
             {/* Assignee Filter */}
             <div className="relative">
-              <select
+              <NativeSelectControl
                 className="appearance-none rounded-xl border border-surface-border bg-surface-subtle px-3 py-1.5 pr-7 text-xs font-medium text-ink focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs"
                 value={assigneeFilter}
                 onChange={(e) => setAssigneeFilter(e.target.value)}
@@ -391,7 +392,7 @@ export function WorkspaceTasks({
                     {member.user?.full_name || member.user?.email}
                   </option>
                 ))}
-              </select>
+              </NativeSelectControl>
               <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-ink-muted" />
             </div>
 

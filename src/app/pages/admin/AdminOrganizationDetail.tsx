@@ -19,6 +19,8 @@ import type { CompanyCapability } from "../../../lib/company-model";
 import { getWorkspaceRoute } from "../../../lib/workspace";
 import { getRoleLabel } from "../../../lib/company-model";
 import { useAuth } from "../../context/AuthContext";
+import { AdminActionDialog } from "../../components/admin/AdminActionDialog";
+import { NativeSelect } from "../../components/ui/NativeSelect";
 
 interface AdminOrganizationDetailProps {
   organizationId: string;
@@ -34,6 +36,7 @@ export function AdminOrganizationDetail({ organizationId, onBack }: AdminOrganiz
   const { profile: actor } = useAuth();
   const [newOwnerId, setNewOwnerId] = useState("");
   const [transferring, setTransferring] = useState(false);
+  const [transferConfirmOpen, setTransferConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<AdminOrganizationProfile | null>(null);
 
@@ -129,20 +132,33 @@ export function AdminOrganizationDetail({ organizationId, onBack }: AdminOrganiz
       {actor?.is_platform_admin && <Card className="p-4 space-y-3">
         <h3 className="font-semibold">Transfer organization ownership</h3>
         <p className="text-sm text-muted-foreground">Choose an active, identity-verified member. The previous owner becomes an organization admin. Transfer ownership before deleting the previous owner's account.</p>
-        <label className="block text-sm">New owner
-          <select className="ml-2 rounded border bg-background p-2" value={newOwnerId} disabled={transferring} onChange={e=>setNewOwnerId(e.target.value)}>
+        <div className="max-w-md">
+          <NativeSelect
+            label="New owner"
+            description="Only active, identity-verified organization members are eligible."
+            value={newOwnerId}
+            disabled={transferring}
+            onChange={e=>setNewOwnerId(e.target.value)}
+          >
             <option value="">Select a member</option>
             {members.filter(m=>m.user_id!==organization.owner_id).map(m=><option key={m.user_id} value={m.user_id}>{m.user?.full_name||m.user?.email||m.user_id}</option>)}
-          </select>
-        </label>
-        <Button variant="outline" disabled={!newOwnerId||transferring} onClick={()=>void (async()=>{
-          const selected=members.find(m=>m.user_id===newOwnerId);
-          if(!window.confirm(`Transfer ownership of ${organization.name} to ${selected?.user?.email||newOwnerId}?`))return;
+          </NativeSelect>
+        </div>
+        <Button variant="outline" disabled={!newOwnerId||transferring} onClick={()=>setTransferConfirmOpen(true)}>Transfer ownership</Button>
+        <AdminActionDialog
+          open={transferConfirmOpen}
+          onOpenChange={setTransferConfirmOpen}
+          title="Transfer organization ownership?"
+          description={`Transfer ${organization.name} to ${members.find((member) => member.user_id === newOwnerId)?.user?.email || newOwnerId}? The current owner becomes an organization admin.`}
+          confirmLabel="Transfer ownership"
+          pending={transferring}
+          onConfirm={()=>void (async()=>{
           setTransferring(true);
-          try{await adminService.transferOrganizationOwnership(organizationId,newOwnerId);setNewOwnerId("");toast.success("Ownership transferred.");await loadProfile();}
+          try{await adminService.transferOrganizationOwnership(organizationId,newOwnerId);setNewOwnerId("");setTransferConfirmOpen(false);toast.success("Ownership transferred.");await loadProfile();}
           catch(error){toast.error((error as Error).message||"Unable to transfer ownership.");}
           finally{setTransferring(false);}
-        })()}>Transfer ownership</Button>
+        })()}
+        />
       </Card>}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

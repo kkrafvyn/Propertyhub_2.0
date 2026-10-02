@@ -152,7 +152,7 @@ export function ProductivityWorkspace({
 
             {/* If Spreadsheet */}
             {parsedSpreadsheet && (
-              <div className="overflow-x-auto border border-surface-border rounded-xl">
+              <div className="overflow-x-auto border border-surface-border rounded-xl" role="region" aria-label="Spreadsheet preview" tabIndex={0}>
                 <table className="w-full text-left text-xs font-mono">
                   <thead className="bg-surface-subtle border-b border-surface-border text-ink-muted font-semibold">
                     <tr>

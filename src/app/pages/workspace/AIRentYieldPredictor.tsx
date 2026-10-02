@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import React, { useState, useMemo } from 'react';
 import {
   TrendingUp,
@@ -122,7 +123,7 @@ export function AIRentYieldPredictor({
               <label className="block text-xs font-semibold text-ink-secondary uppercase mb-1.5">
                 Micro-Neighborhood
               </label>
-              <select
+              <NativeSelectControl
                 value={neighborhood}
                 onChange={(e) => setNeighborhood(e.target.value)}
                 className="w-full bg-input-background border border-border rounded-lg px-3 py-2 text-sm text-ink outline-none transition focus:border-primary"
@@ -132,7 +133,7 @@ export function AIRentYieldPredictor({
                     {name}
                   </option>
                 ))}
-              </select>
+              </NativeSelectControl>
             </div>
 
             {/* Property Type */}
@@ -163,7 +164,7 @@ export function AIRentYieldPredictor({
                 <label className="block text-xs font-semibold text-ink-secondary uppercase mb-1.5">
                   Bedrooms
                 </label>
-                <select
+                <NativeSelectControl
                   value={bedrooms}
                   onChange={(e) => setBedrooms(parseInt(e.target.value))}
                   className="w-full bg-input-background border border-border rounded-lg px-3 py-2 text-sm text-ink outline-none"
@@ -174,7 +175,7 @@ export function AIRentYieldPredictor({
                   <option value={3}>3 Bedrooms</option>
                   <option value={4}>4 Bedrooms</option>
                   <option value={5}>5+ Bedrooms</option>
-                </select>
+                </NativeSelectControl>
               </div>
 
               <div>

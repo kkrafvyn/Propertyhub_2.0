@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { Headphones, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -123,7 +124,7 @@ export function ServiceDesk({ organizationId }: { organizationId: string }) {
             onChange={(e) => setSubject(e.target.value)}
             placeholder="What does the customer need?"
           />
-          <select
+          <NativeSelectControl
             className="rounded-lg border border-border bg-input-background px-3 py-2"
             value={channel}
             onChange={(e) => setChannel(e.target.value as ServiceCase["channel"])}
@@ -133,8 +134,8 @@ export function ServiceDesk({ organizationId }: { organizationId: string }) {
                 {item.replace("_", " ")}
               </option>
             ))}
-          </select>
-          <select
+          </NativeSelectControl>
+          <NativeSelectControl
             className="rounded-lg border border-border bg-input-background px-3 py-2"
             value={priority}
             onChange={(e) => setPriority(e.target.value as ServiceCase["priority"])}
@@ -144,7 +145,7 @@ export function ServiceDesk({ organizationId }: { organizationId: string }) {
                 {item}
               </option>
             ))}
-          </select>
+          </NativeSelectControl>
           <Button disabled={saving}>
             <Plus className="h-4 w-4" />
             Create case

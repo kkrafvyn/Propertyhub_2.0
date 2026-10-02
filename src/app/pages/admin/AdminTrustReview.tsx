@@ -32,6 +32,7 @@ import {
   trustVerificationService,
   type TrustRequestStatus,
 } from "../../../lib/trust-verification.service";
+import { AdminActionDialog } from "../../components/admin/AdminActionDialog";
 
 function formatLabel(value?: string | null) {
   if (!value) return "Unknown";
@@ -167,6 +168,12 @@ export function AdminTrustReview() {
   const [previewDoc, setPreviewDoc] = useState<{ url: string; title: string } | null>(null);
   const [previewZoom, setPreviewZoom] = useState(1);
   const [previewRotation, setPreviewRotation] = useState(0);
+  const [reviewAction, setReviewAction] = useState<
+    | { kind: "kyc"; id: string; status: "verified" | "rejected" }
+    | { kind: "trust"; id: string; status: TrustRequestStatus }
+    | null
+  >(null);
+  const [reviewNotes, setReviewNotes] = useState("");
 
   const loadQueues = async () => {
     try {
@@ -217,39 +224,33 @@ export function AdminTrustReview() {
     }
   };
 
-  const reviewKyc = async (submissionId: string, status: "verified" | "rejected") => {
-    const confirmMessage =
-      status === "verified"
-        ? "Approve this identity verification? This certifies the applicant and grants verified resident/investor status."
-        : "Reject this KYC submission?";
-    if (!window.confirm(confirmMessage)) return;
-    const notes =
-      status === "rejected"
-        ? window.prompt("Rejection reason (e.g., photo blurry, ID expired, name mismatch):") || undefined
-        : undefined;
+  const reviewKyc = async (submissionId: string, status: "verified" | "rejected", notes?: string) => {
     try {
       setWorkingId(`kyc:${submissionId}:${status}`);
-      await kycService.reviewSubmission(submissionId, status, notes);
+      await kycService.reviewSubmission(submissionId, status, notes?.trim() || undefined);
       toast.success(`KYC submission ${status}.`);
       await loadQueues();
+      return true;
     } catch (error) {
       console.error(error);
       toast.error("Unable to review KYC submission.");
+      return false;
     } finally {
       setWorkingId(null);
     }
   };
 
-  const reviewTrust = async (requestId: string, status: TrustRequestStatus) => {
-    const notes = window.prompt("Reviewer notes (optional):") || undefined;
+  const reviewTrust = async (requestId: string, status: TrustRequestStatus, notes?: string) => {
     try {
       setWorkingId(`trust:${requestId}:${status}`);
-      await trustVerificationService.reviewTrustRequest(requestId, status, notes);
+      await trustVerificationService.reviewTrustRequest(requestId, status, notes?.trim() || undefined);
       toast.success(`Trust request marked ${status.replace(/_/g, " ")}.`);
       await loadQueues();
+      return true;
     } catch (error) {
       console.error(error);
       toast.error("Unable to review trust request.");
+      return false;
     } finally {
       setWorkingId(null);
     }
@@ -465,7 +466,7 @@ export function AdminTrustReview() {
                             <Button
                               size="sm"
                               disabled={workingId === `kyc:${submission.id}:verified`}
-                              onClick={() => void reviewKyc(submission.id, "verified")}
+                              onClick={() => { setReviewNotes(""); setReviewAction({ kind: "kyc", id: submission.id, status: "verified" }); }}
                               className="h-8 gap-1 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
                             >
                               <CheckCircle2 className="h-3.5 w-3.5" />
@@ -475,7 +476,7 @@ export function AdminTrustReview() {
                               size="sm"
                               variant="destructive"
                               disabled={workingId === `kyc:${submission.id}:rejected`}
-                              onClick={() => void reviewKyc(submission.id, "rejected")}
+                              onClick={() => { setReviewNotes(""); setReviewAction({ kind: "kyc", id: submission.id, status: "rejected" }); }}
                               className="h-8 gap-1 text-xs font-bold"
                             >
                               <XCircle className="h-3.5 w-3.5" />
@@ -608,7 +609,7 @@ export function AdminTrustReview() {
                           <Button
                             size="sm"
                             disabled={workingId === `trust:${request.id}:verified`}
-                            onClick={() => void reviewTrust(request.id, "verified")}
+                            onClick={() => { setReviewNotes(""); setReviewAction({ kind: "trust", id: request.id, status: "verified" }); }}
                             className="h-8 gap-1 bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
                           >
                             <BadgeCheck className="h-3.5 w-3.5" />
@@ -618,7 +619,7 @@ export function AdminTrustReview() {
                             size="sm"
                             variant="outline"
                             disabled={workingId === `trust:${request.id}:needs_changes`}
-                            onClick={() => void reviewTrust(request.id, "needs_changes")}
+                            onClick={() => { setReviewNotes(""); setReviewAction({ kind: "trust", id: request.id, status: "needs_changes" }); }}
                             className="h-8 gap-1 text-xs font-semibold"
                           >
                             Request Changes
@@ -627,7 +628,7 @@ export function AdminTrustReview() {
                             size="sm"
                             variant="destructive"
                             disabled={workingId === `trust:${request.id}:rejected`}
-                            onClick={() => void reviewTrust(request.id, "rejected")}
+                            onClick={() => { setReviewNotes(""); setReviewAction({ kind: "trust", id: request.id, status: "rejected" }); }}
                             className="h-8 gap-1 text-xs font-bold"
                           >
                             <XCircle className="h-3.5 w-3.5" />
@@ -645,6 +646,43 @@ export function AdminTrustReview() {
       )}
 
       {/* ── Document Inspection Modal ── */}
+      <AdminActionDialog
+        open={Boolean(reviewAction)}
+        onOpenChange={(open) => { if (!open) { setReviewAction(null); setReviewNotes(""); } }}
+        title={
+          reviewAction?.kind === "kyc"
+            ? reviewAction.status === "verified" ? "Approve identity verification?" : "Reject identity verification?"
+            : reviewAction?.status === "verified" ? "Verify trust request?" : reviewAction?.status === "needs_changes" ? "Request changes?" : "Reject trust request?"
+        }
+        description={
+          reviewAction?.kind === "kyc" && reviewAction.status === "verified"
+            ? "This certifies the applicant and grants verified resident or investor status."
+            : reviewAction?.status === "rejected"
+              ? "This decision prevents the current submission from being approved. Record a clear reason for the audit trail."
+              : reviewAction?.status === "needs_changes"
+                ? "The applicant will need to correct the requested information before verification can continue."
+                : "This marks the request as verified and records your decision."
+        }
+        confirmLabel={reviewAction?.status === "verified" ? "Approve verification" : reviewAction?.status === "needs_changes" ? "Request changes" : "Reject submission"}
+        tone={reviewAction?.status === "rejected" ? "destructive" : "default"}
+        notesLabel={reviewAction?.status === "verified" ? "Reviewer notes (optional)" : "Reviewer reason"}
+        notesPlaceholder={reviewAction?.status === "rejected" ? "For example: document expired or details do not match…" : "Add context for this decision…"}
+        notesRequired={reviewAction?.status !== "verified"}
+        notes={reviewNotes}
+        onNotesChange={setReviewNotes}
+        pending={Boolean(workingId)}
+        onConfirm={async () => {
+          if (!reviewAction) return;
+          const succeeded = reviewAction.kind === "kyc"
+            ? await reviewKyc(reviewAction.id, reviewAction.status, reviewNotes)
+            : await reviewTrust(reviewAction.id, reviewAction.status, reviewNotes);
+          if (succeeded) {
+            setReviewAction(null);
+            setReviewNotes("");
+          }
+        }}
+      />
+
       {previewDoc && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"

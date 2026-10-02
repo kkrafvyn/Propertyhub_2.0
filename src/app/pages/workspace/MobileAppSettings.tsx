@@ -6,6 +6,7 @@ import { Button } from "@/app/components/ui/Button";
 import { Badge } from "@/app/components/ui/badge";
 import { Input } from "@/app/components/ui/Input";
 import { Textarea } from "@/app/components/ui/textarea";
+import { ActionDialog } from "@/app/components/ux/ActionDialog";
 import { fieldOpsService } from "@/lib/field-ops.service";
 import { mobileAppService } from "@/lib/mobile-app.service";
 import { pushNotificationService } from "@/lib/push-notification.service";
@@ -30,6 +31,8 @@ export default function MobileAppSettings({
     details: "",
   });
   const [loggingFieldNote, setLoggingFieldNote] = useState(false);
+  const [deviceToRemove, setDeviceToRemove] = useState<any | null>(null);
+  const [removingDevice, setRemovingDevice] = useState(false);
 
   const browserPushSupported = pushNotificationService.isSupported();
 
@@ -85,18 +88,19 @@ export default function MobileAppSettings({
     };
   }, [currentUserId, organizationId]);
 
-  const handleRemoveDevice = async (deviceId: string) => {
-    if (!window.confirm("Are you sure you want to remove this device?")) {
-      return;
-    }
-
+  const handleRemoveDevice = async () => {
+    if (!deviceToRemove) return;
     try {
-      await mobileAppService.remoteLogout(deviceId);
+      setRemovingDevice(true);
+      await mobileAppService.remoteLogout(deviceToRemove.device_id);
       toast.success("Device removed.");
+      setDeviceToRemove(null);
       await loadDevices();
     } catch (error) {
       console.error("Failed to remove device:", error);
       toast.error("We couldn't remove that device.");
+    } finally {
+      setRemovingDevice(false);
     }
   };
 
@@ -362,7 +366,7 @@ export default function MobileAppSettings({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => void handleRemoveDevice(device.device_id)}
+                      onClick={() => setDeviceToRemove(device)}
                     >
                       <LogOut className="w-4 h-4 mr-1" />
                       Logout
@@ -370,7 +374,7 @@ export default function MobileAppSettings({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => void handleRemoveDevice(device.device_id)}
+                      onClick={() => setDeviceToRemove(device)}
                       className="text-red-600 hover:text-red-700"
                       aria-label={`Remove ${device.device_type || "device"}`}
                       title={`Remove ${device.device_type || "device"}`}
@@ -384,6 +388,16 @@ export default function MobileAppSettings({
           </div>
         )}
       </div>
+      <ActionDialog
+        open={Boolean(deviceToRemove)}
+        onOpenChange={(open) => !open && setDeviceToRemove(null)}
+        title="Sign out this device?"
+        description={`This removes access for the selected ${deviceToRemove?.device_type || "device"}. The user will need to sign in again.`}
+        confirmLabel="Remove device"
+        tone="destructive"
+        pending={removingDevice}
+        onConfirm={handleRemoveDevice}
+      />
     </div>
   );
 }

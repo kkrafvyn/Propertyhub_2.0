@@ -1,5 +1,7 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { lazy, Suspense, useEffect, useMemo, useState, type ComponentType } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router";
+import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router";
+import { toast } from "sonner";
 import {
   Activity,
   AlertOctagon,
@@ -101,70 +103,6 @@ import { ErrorState, PageLoadingSkeleton } from "../../components/ux";
 import { SignatureActionBanner } from "../../components/ux/SignatureActionBanner";
 import { hasPlatformConsoleAccess } from "../../../lib/platform-access";
 import { eSignatureService } from "../../../lib/esignature.service";
-import { FraudAlerts } from "./FraudAlerts";
-import ComplianceCenter from "./ComplianceCenter";
-import BlockchainVerification from "./BlockchainVerification";
-import { CalendarOperations } from "./CalendarOperations";
-import { WorkspaceDocuments } from "./WorkspaceDocuments";
-import { WorkspaceFinance } from "./WorkspaceFinance";
-import { GhanaTrustCenter } from "./GhanaTrustCenter";
-import { WorkspaceNewListing } from "./WorkspaceNewListing";
-import { WorkspaceSettings } from "./WorkspaceSettings";
-import { WorkspaceTeam } from "./WorkspaceTeam";
-import { WorkspaceContacts } from "./WorkspaceContacts";
-import { WorkspaceTasks } from "./WorkspaceTasks";
-import { WorkspaceSmartProperty } from "./WorkspaceSmartProperty";
-import { EstateFinance } from "./EstateFinance";
-import { EstateCommunications } from "./EstateCommunications";
-import { ContextualInboxHub } from "./ContextualInboxHub";
-import { StakeholderPortals } from "./StakeholderPortals";
-import { CommandCenter } from "./CommandCenter";
-import { DataMigration } from "./DataMigration";
-import { Property360 } from "./Property360";
-import { Customer360 } from "./Customer360";
-import { TechnicianJobs } from "./TechnicianJobs";
-import { EstateAIOperations } from "./EstateAIOperations";
-import { CompanyLaunchpad } from "./CompanyLaunchpad";
-import { OpeningBalanceImport } from "./OpeningBalanceImport";
-import { PaymentImport } from "./PaymentImport";
-import { EstatePayables } from "./EstatePayables";
-import { OwnerStatements } from "./OwnerStatements";
-import { ServiceDesk } from "./ServiceDesk";
-import { Unit360 } from "./Unit360";
-import { GeneralLedger } from "./GeneralLedger";
-import { ProcurementCenter } from "./ProcurementCenter";
-import { PortfolioAnalytics } from "./PortfolioAnalytics";
-import { AICommandCenter } from "./AICommandCenter";
-import { AutomationBuilder } from "./AutomationBuilder";
-import { BulkOperations } from "./BulkOperations";
-import { DataImportExport } from "./DataImportExport";
-import { ChartOfAccountsAdmin } from "./ChartOfAccountsAdmin";
-import { JournalEntryManager } from "./JournalEntryManager";
-import { FinancialStatementsViewer } from "./FinancialStatementsViewer";
-import { CollectionsCases } from "./CollectionsCases";
-import { LeasingApplications } from "./LeasingApplications";
-import { ESignature } from "./ESignature";
-import { HoaManagement } from "./HoaManagement";
-import { CamBilling } from "./CamBilling";
-import { Contractor1099 } from "./Contractor1099";
-import { TrustAccounting } from "./TrustAccounting";
-import { TenantScreeningCenter } from "./TenantScreeningCenter";
-import { IntegrationMarketplace } from "./IntegrationMarketplace";
-import { CommercialLeaseEscalations } from "./CommercialLeaseEscalations";
-import { InternationalRulesHub } from "./InternationalRulesHub";
-import { OwnerDisbursements } from "./OwnerDisbursements";
-import { ApprovalCenter } from "./ApprovalCenter";
-import { ExceptionCenter } from "./ExceptionCenter";
-import { CompanyKnowledgeHub } from "./CompanyKnowledgeHub";
-import { EvidenceCenter } from "./EvidenceCenter";
-import { ProductivityWorkspace } from "./ProductivityWorkspace";
-import { MyWorkQueue } from "./MyWorkQueue";
-import { DesktopMyWorkHome } from "./DesktopMyWorkHome";
-import { OwnerOversight } from "./OwnerOversight";
-import { WorkspaceTeamChat } from "./WorkspaceTeamChat";
-import { StaffTimeTracking } from "./StaffTimeTracking";
-import { DataRetentionCenter } from "./DataRetentionCenter";
-import { ContractorPortal } from "./ContractorPortal";
 import { UniversalCommandBar } from "../../components/navigation/UniversalCommandBar";
 import { ShowMeHowOverlay } from "../../components/ux/ShowMeHowOverlay";
 import { practiceModeService } from "../../../lib/practice-mode-fixtures";
@@ -197,10 +135,6 @@ import { canWorkspace } from "../../../lib/workspace-permissions";
 import type { MemberApprovalProfile } from "../../../lib/authorization.service";
 import { memberScopeService } from "../../../lib/member-scope.service";
 import type { MemberScopeMode } from "../../../lib/member-scope";
-import { CompanySetupWizard } from "./CompanySetupWizard";
-import { CustomizeWorkspace } from "./CustomizeWorkspace";
-import { WorkflowApprovalHub } from "./WorkflowApprovalHub";
-import { ModuleMarketplace } from "./ModuleMarketplace";
 import { whitelabelService } from "../../../lib/whitelabel.service";
 import { OfflineStatusBanner } from "../../components/workspace/OfflineStatusBanner";
 import {
@@ -210,6 +144,85 @@ import {
 import { isNavSlugEnabledByModules } from "../../../lib/workspace-module-catalog";
 import { workspaceSyncService } from "../../../lib/workspace-sync.service";
 import { getRoleLabel, type CompanyCapability } from "../../../lib/company-model";
+
+function lazyNamed<TModule, TKey extends keyof TModule>(
+  loader: () => Promise<TModule>,
+  exportName: TKey,
+) {
+  return lazy(async () => {
+    const module = await loader();
+    return { default: module[exportName] as Extract<TModule[TKey], ComponentType<any>> };
+  });
+}
+
+const FraudAlerts = lazyNamed(() => import("./FraudAlerts"), "FraudAlerts");
+const ComplianceCenter = lazyNamed(() => import("./ComplianceCenter"), "ComplianceCenter");
+const BlockchainVerification = lazy(() => import("./BlockchainVerification"));
+const CalendarOperations = lazyNamed(() => import("./CalendarOperations"), "CalendarOperations");
+const WorkspaceDocuments = lazyNamed(() => import("./WorkspaceDocuments"), "WorkspaceDocuments");
+const WorkspaceFinance = lazyNamed(() => import("./WorkspaceFinance"), "WorkspaceFinance");
+const GhanaTrustCenter = lazyNamed(() => import("./GhanaTrustCenter"), "GhanaTrustCenter");
+const WorkspaceNewListing = lazyNamed(() => import("./WorkspaceNewListing"), "WorkspaceNewListing");
+const WorkspaceSettings = lazyNamed(() => import("./WorkspaceSettings"), "WorkspaceSettings");
+const WorkspaceTeam = lazyNamed(() => import("./WorkspaceTeam"), "WorkspaceTeam");
+const WorkspaceContacts = lazyNamed(() => import("./WorkspaceContacts"), "WorkspaceContacts");
+const WorkspaceTasks = lazyNamed(() => import("./WorkspaceTasks"), "WorkspaceTasks");
+const WorkspaceSmartProperty = lazyNamed(() => import("./WorkspaceSmartProperty"), "WorkspaceSmartProperty");
+const EstateFinance = lazyNamed(() => import("./EstateFinance"), "EstateFinance");
+const EstateCommunications = lazyNamed(() => import("./EstateCommunications"), "EstateCommunications");
+const ContextualInboxHub = lazyNamed(() => import("./ContextualInboxHub"), "ContextualInboxHub");
+const StakeholderPortals = lazyNamed(() => import("./StakeholderPortals"), "StakeholderPortals");
+const CommandCenter = lazyNamed(() => import("./CommandCenter"), "CommandCenter");
+const DataMigration = lazyNamed(() => import("./DataMigration"), "DataMigration");
+const Property360 = lazyNamed(() => import("./Property360"), "Property360");
+const Customer360 = lazyNamed(() => import("./Customer360"), "Customer360");
+const TechnicianJobs = lazyNamed(() => import("./TechnicianJobs"), "TechnicianJobs");
+const EstateAIOperations = lazyNamed(() => import("./EstateAIOperations"), "EstateAIOperations");
+const CompanyLaunchpad = lazyNamed(() => import("./CompanyLaunchpad"), "CompanyLaunchpad");
+const OpeningBalanceImport = lazyNamed(() => import("./OpeningBalanceImport"), "OpeningBalanceImport");
+const PaymentImport = lazyNamed(() => import("./PaymentImport"), "PaymentImport");
+const EstatePayables = lazyNamed(() => import("./EstatePayables"), "EstatePayables");
+const OwnerStatements = lazyNamed(() => import("./OwnerStatements"), "OwnerStatements");
+const ServiceDesk = lazyNamed(() => import("./ServiceDesk"), "ServiceDesk");
+const Unit360 = lazyNamed(() => import("./Unit360"), "Unit360");
+const GeneralLedger = lazyNamed(() => import("./GeneralLedger"), "GeneralLedger");
+const ProcurementCenter = lazyNamed(() => import("./ProcurementCenter"), "ProcurementCenter");
+const PortfolioAnalytics = lazyNamed(() => import("./PortfolioAnalytics"), "PortfolioAnalytics");
+const AICommandCenter = lazyNamed(() => import("./AICommandCenter"), "AICommandCenter");
+const AutomationBuilder = lazyNamed(() => import("./AutomationBuilder"), "AutomationBuilder");
+const BulkOperations = lazyNamed(() => import("./BulkOperations"), "BulkOperations");
+const DataImportExport = lazyNamed(() => import("./DataImportExport"), "DataImportExport");
+const ChartOfAccountsAdmin = lazyNamed(() => import("./ChartOfAccountsAdmin"), "ChartOfAccountsAdmin");
+const JournalEntryManager = lazyNamed(() => import("./JournalEntryManager"), "JournalEntryManager");
+const FinancialStatementsViewer = lazyNamed(() => import("./FinancialStatementsViewer"), "FinancialStatementsViewer");
+const CollectionsCases = lazyNamed(() => import("./CollectionsCases"), "CollectionsCases");
+const LeasingApplications = lazyNamed(() => import("./LeasingApplications"), "LeasingApplications");
+const ESignature = lazyNamed(() => import("./ESignature"), "ESignature");
+const HoaManagement = lazyNamed(() => import("./HoaManagement"), "HoaManagement");
+const CamBilling = lazyNamed(() => import("./CamBilling"), "CamBilling");
+const Contractor1099 = lazyNamed(() => import("./Contractor1099"), "Contractor1099");
+const TrustAccounting = lazyNamed(() => import("./TrustAccounting"), "TrustAccounting");
+const TenantScreeningCenter = lazyNamed(() => import("./TenantScreeningCenter"), "TenantScreeningCenter");
+const IntegrationMarketplace = lazyNamed(() => import("./IntegrationMarketplace"), "IntegrationMarketplace");
+const CommercialLeaseEscalations = lazyNamed(() => import("./CommercialLeaseEscalations"), "CommercialLeaseEscalations");
+const InternationalRulesHub = lazyNamed(() => import("./InternationalRulesHub"), "InternationalRulesHub");
+const OwnerDisbursements = lazyNamed(() => import("./OwnerDisbursements"), "OwnerDisbursements");
+const ApprovalCenter = lazyNamed(() => import("./ApprovalCenter"), "ApprovalCenter");
+const ExceptionCenter = lazyNamed(() => import("./ExceptionCenter"), "ExceptionCenter");
+const CompanyKnowledgeHub = lazyNamed(() => import("./CompanyKnowledgeHub"), "CompanyKnowledgeHub");
+const EvidenceCenter = lazyNamed(() => import("./EvidenceCenter"), "EvidenceCenter");
+const ProductivityWorkspace = lazyNamed(() => import("./ProductivityWorkspace"), "ProductivityWorkspace");
+const MyWorkQueue = lazyNamed(() => import("./MyWorkQueue"), "MyWorkQueue");
+const DesktopMyWorkHome = lazyNamed(() => import("./DesktopMyWorkHome"), "DesktopMyWorkHome");
+const OwnerOversight = lazyNamed(() => import("./OwnerOversight"), "OwnerOversight");
+const WorkspaceTeamChat = lazyNamed(() => import("./WorkspaceTeamChat"), "WorkspaceTeamChat");
+const StaffTimeTracking = lazyNamed(() => import("./StaffTimeTracking"), "StaffTimeTracking");
+const DataRetentionCenter = lazyNamed(() => import("./DataRetentionCenter"), "DataRetentionCenter");
+const ContractorPortal = lazyNamed(() => import("./ContractorPortal"), "ContractorPortal");
+const CompanySetupWizard = lazyNamed(() => import("./CompanySetupWizard"), "CompanySetupWizard");
+const CustomizeWorkspace = lazyNamed(() => import("./CustomizeWorkspace"), "CustomizeWorkspace");
+const WorkflowApprovalHub = lazyNamed(() => import("./WorkflowApprovalHub"), "WorkflowApprovalHub");
+const ModuleMarketplace = lazyNamed(() => import("./ModuleMarketplace"), "ModuleMarketplace");
 
 const WorkspaceDashboard = lazy(() => import("./WorkspaceDashboard").then((module) => ({ default: module.WorkspaceDashboard })));
 const WorkspaceLeads = lazy(() => import("./WorkspaceLeads").then((module) => ({ default: module.WorkspaceLeads })));
@@ -369,6 +382,7 @@ void getNavItemClasses; // suppress unused-var lint
 export function WorkspaceLayout() {
   const { user, profile, role } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { organizationSlug = "", page } = useParams();
   const [loading, setLoading] = useState(true);
   const [memberships, setMemberships] = useState<OrganizationMembership[]>([]);
@@ -713,6 +727,17 @@ export function WorkspaceLayout() {
     currentPage === "company-setup" ||
     currentPage === "" ||
     canAccessWorkspaceSlug(currentPage, isPlatformAdminViewer ? "owner" : accessRole, navPermissions, navCapabilities);
+
+  useEffect(() => {
+    const state = location.state as { restrictedAccess?: boolean; attemptedPage?: string } | null;
+    if (!state?.restrictedAccess) return;
+    toast.message("Access restricted", {
+      description: state.attemptedPage
+        ? `Your role does not include ${state.attemptedPage.replace(/-/g, " ")}.`
+        : "Your role does not include this section.",
+    });
+    navigate(location.pathname + location.search, { replace: true, state: null });
+  }, [location.pathname, location.search, location.state, navigate]);
 
   const handleOrganizationChange = (organizationId: string) => {
     const nextMembership = memberships.find(
@@ -1226,6 +1251,7 @@ export function WorkspaceLayout() {
               <Link
                 key={item.slug || "dashboard"}
                 to={href}
+                aria-current={isActive ? "page" : undefined}
                 onClick={() => isMobile && setMobileDrawerOpen(false)}
                 title={isCollapsed && !isMobile ? `${item.label}` : undefined}
                 className={`workspace-nav-link group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all duration-200 ${
@@ -1290,17 +1316,12 @@ export function WorkspaceLayout() {
     <>
       <OfflineStatusBanner organizationId={organization.id} />
       {cosignBanner}
-      {!pageAllowed && currentPage ? (
-        <Card className="p-8">
-          <h2 className="text-xl font-semibold text-foreground mb-2">Access restricted</h2>
-          <p className="text-muted-foreground mb-4">
-            Your role ({getRoleLabel(effectiveRole)}) does not include access to this section.
-            Contact an owner or manager if you need permission.
-          </p>
-          <Link to={workspaceBasePath}>
-            <Button variant="outline">Back to dashboard</Button>
-          </Link>
-        </Card>
+      {!pageAllowed && currentPage && organization ? (
+        <Navigate
+          to={getWorkspaceRoute(organization.slug, orgHomeSlug)}
+          replace
+          state={{ restrictedAccess: true, attemptedPage: currentPage }}
+        />
       ) : (
         <Suspense fallback={<PageLoadingSkeleton />}>
           {renderPage()}
@@ -1328,7 +1349,7 @@ export function WorkspaceLayout() {
 
   if (isElectron()) {
     return (
-      <WorkspaceMfaGate role={effectiveRole}>
+      <WorkspaceMfaGate role={effectiveRole} permissions={navPermissions}>
         <BusinessDesktopShell organizationName={organization.name}>
           <div className="max-w-full">{workspacePageContent}</div>
         </BusinessDesktopShell>
@@ -1339,7 +1360,7 @@ export function WorkspaceLayout() {
 
   if (shouldUseBusinessMobileShell()) {
     return (
-      <WorkspaceMfaGate role={effectiveRole}>
+      <WorkspaceMfaGate role={effectiveRole} permissions={navPermissions}>
         <BusinessMobileShell
           jobRole={mapMemberRoleToMobileJobRole(accessRole)}
           organizationSlug={organizationSlug}
@@ -1359,11 +1380,13 @@ export function WorkspaceLayout() {
 
         {mobileDrawerOpen && (
           <div className="fixed inset-0 z-[80] flex">
-            <div
+            <button
+              type="button"
               className="fixed inset-0 bg-black/50 backdrop-blur-sm"
               onClick={() => setMobileDrawerOpen(false)}
+              aria-label="Close workspace menu"
             />
-            <div className="relative z-10 flex h-full w-72 max-w-[85vw] flex-col border-r border-surface-border bg-surface shadow-2xl">
+            <div className="relative z-10 flex h-full w-72 max-w-[85vw] flex-col border-r border-surface-border bg-surface shadow-2xl" role="dialog" aria-modal="true" aria-label="Workspace menu">
               <div className="flex items-center justify-between gap-3 border-b border-surface-border px-4 py-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-ink">{organization.name}</p>
@@ -1397,7 +1420,7 @@ export function WorkspaceLayout() {
   }
 
   return (
-    <WorkspaceMfaGate role={effectiveRole}>
+    <WorkspaceMfaGate role={effectiveRole} permissions={navPermissions}>
       <div className="desktop-shell workspace-portal min-h-screen">
         {/* ── Top Header ─────────────────────────────────────────────── */}
         <nav className="desktop-header sticky top-0 z-50 border-b border-surface-border bg-surface/95 backdrop-blur-xl">
@@ -1464,7 +1487,7 @@ export function WorkspaceLayout() {
               <div className="flex items-center gap-2">
                 {/* Org switcher */}
                 {memberships.length > 1 && (
-                  <select
+                  <NativeSelectControl
                     className="hidden sm:block px-2.5 py-1.5 rounded-lg border border-surface-border bg-surface text-xs text-ink outline-none transition focus:border-primary max-w-[9rem]"
                     value={organization.id}
                     onChange={(event) => handleOrganizationChange(event.target.value)}
@@ -1475,7 +1498,7 @@ export function WorkspaceLayout() {
                         {membership.organization.name}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelectControl>
                 )}
 
                 {/* Sandbox toggle – mobile uses icon-only */}
@@ -1539,13 +1562,15 @@ export function WorkspaceLayout() {
         {mobileDrawerOpen && (
           <div className="fixed inset-0 z-[80] lg:hidden flex">
             {/* Backdrop */}
-            <div
+            <button
+              type="button"
               className="fixed inset-0 bg-black/50 backdrop-blur-sm"
               onClick={() => setMobileDrawerOpen(false)}
+              aria-label="Close workspace menu"
             />
 
             {/* Drawer panel */}
-            <div className="relative w-72 max-w-[85vw] bg-surface border-r border-surface-border flex flex-col h-full shadow-2xl z-10 animate-in slide-in-from-left-4 duration-200">
+            <div className="relative w-72 max-w-[85vw] bg-surface border-r border-surface-border flex flex-col h-full shadow-2xl z-10 animate-in slide-in-from-left-4 duration-200" role="dialog" aria-modal="true" aria-label="Workspace menu">
               {/* Drawer header */}
               <div className="px-4 py-3 border-b border-surface-border flex items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -1577,6 +1602,7 @@ export function WorkspaceLayout() {
                   <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
                   <input
                     type="text"
+                    aria-label="Search workspace tools and modules"
                     value={toolSearch}
                     onChange={(e) => setToolSearch(e.target.value)}
                     placeholder="Search tools & modules..."
@@ -1587,6 +1613,7 @@ export function WorkspaceLayout() {
                       type="button"
                       onClick={() => setToolSearch("")}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink"
+                      aria-label="Clear workspace search"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -1645,6 +1672,7 @@ export function WorkspaceLayout() {
                     <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
                     <input
                       type="text"
+                      aria-label="Search workspace tools and modules"
                       value={toolSearch}
                       onChange={(e) => setToolSearch(e.target.value)}
                       placeholder="Search tools & modules..."
@@ -1655,6 +1683,7 @@ export function WorkspaceLayout() {
                         type="button"
                         onClick={() => setToolSearch("")}
                         className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink"
+                        aria-label="Clear workspace search"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -1664,7 +1693,7 @@ export function WorkspaceLayout() {
               )}
 
               {/* Nav groups */}
-              <nav className="flex-1 overflow-y-auto space-y-1 pr-0.5">
+              <nav className="flex-1 overflow-y-auto space-y-1 pr-0.5" aria-label="Workspace sections">
                 {filteredSearchResults ? (
                   <div>
                     {!isCollapsed && (
@@ -1708,7 +1737,7 @@ export function WorkspaceLayout() {
           </aside>
 
           {/* Main Content Area */}
-          <main className="workspace-main-panel flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-full">
+          <main id="main-content" tabIndex={-1} className="route-focus-target workspace-main-panel flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-full">
             <div className="max-w-7xl mx-auto">
               {workspacePageContent}
             </div>

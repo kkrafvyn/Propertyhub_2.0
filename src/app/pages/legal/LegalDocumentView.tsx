@@ -18,7 +18,7 @@ import {
 } from "../../components/legal/LegalPageLayout";
 import { LegalRelatedPolicies, LegalContactCard } from "../../components/legal/LegalRelatedPolicies";
 import { LegalTableOfContents } from "../../components/legal/LegalTableOfContents";
-import { openCookiePreferences } from "../../components/legal/CookieConsentBanner";
+import { openCookiePreferences } from "../../components/legal/cookie-preferences";
 import { ComplaintFormPanel } from "./ComplaintForm";
 
 function categoryLabel(document: LegalDocument) {

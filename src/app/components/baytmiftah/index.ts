@@ -14,7 +14,6 @@ export {
 export { AuthPageLayout } from "./AuthPageLayout";
 export { AuthShell } from "./AuthShell";
 export { WorkspaceShell } from "./WorkspaceShell";
-export { MapView } from "./MapView";
 export { MapErrorBoundary } from "./MapErrorBoundary";
 export { SimilarListings } from "./SimilarListings";
 export { ShareListingButton } from "./ShareListingButton";

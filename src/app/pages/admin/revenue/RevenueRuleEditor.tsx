@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "../../../components/ui/badge";
@@ -94,7 +95,7 @@ function RuleCard({
       <div className="grid gap-3 md:grid-cols-2">
         <div>
           <label className="text-sm text-muted-foreground block mb-1">Fee type</label>
-          <select
+          <NativeSelectControl
             className="w-full rounded-lg border border-border px-3 py-2"
             value={draft.fee_type}
             onChange={(event) =>
@@ -104,7 +105,7 @@ function RuleCard({
             <option value="fixed">Fixed</option>
             <option value="percentage">Percentage</option>
             <option value="custom">Custom</option>
-          </select>
+          </NativeSelectControl>
         </div>
         <div>
           <label className="text-sm text-muted-foreground block mb-1">Currency</label>

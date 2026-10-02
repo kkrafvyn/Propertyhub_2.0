@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useAuth } from "../../context/AuthContext";
 import { useEffect, useMemo, useState } from "react";
 import { Download, Send } from "lucide-react";
@@ -8,6 +9,7 @@ import { Badge } from "../../components/ui/badge";
 import { Input } from "../../components/ui/Input";
 import { estateOperationsService } from "../../../lib/estate-operations.service";
 import { estateReportingService } from "../../../lib/estate-reporting.service";
+import { supabase } from "../../../lib/supabase";
 import {
   canApproveAmount,
   formatApprovalLimit,
@@ -53,7 +55,6 @@ export function OwnerStatements({
       const units = await estateOperationsService.getUnits(estateRows.map((estate) => estate.id));
       const occupancies = await estateOperationsService.getOccupancies(units.map((unit) => unit.id));
       const ownerRows = occupancies.filter((occupancy) => occupancy.role === "owner");
-      const { supabase } = await import("../../../lib/supabase");
       const { data, error } = await (supabase as any)
         .from("estate_owner_statement_runs")
         .select("*")
@@ -215,8 +216,8 @@ export function OwnerStatements({
     <Card className="p-5 space-y-4">
       <div><h2 className="font-semibold">Create a statement</h2><p className="mt-1 text-sm text-muted-foreground">Pick the property, owner, and period. BaytMiftah calculates the amounts; a person still approves any actual payout.</p></div>
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <select className="rounded-lg border border-border px-3 py-2" value={estateId} onChange={(event) => { setEstateId(event.target.value); setOwnerId(""); }}><option value="">Choose property</option>{estates.map((estate) => <option key={estate.id} value={estate.id}>{estate.name}</option>)}</select>
-        <select className="rounded-lg border border-border px-3 py-2" value={ownerId} onChange={(event) => setOwnerId(event.target.value)}><option value="">Choose owner</option>{estateOwners.map((owner) => <option key={`${owner.unit_id}-${owner.user_id}`} value={owner.user_id}>{people[owner.user_id]?.full_name || people[owner.user_id]?.email || `Owner ${owner.user_id.slice(0, 8)}`}</option>)}</select>
+        <NativeSelectControl className="rounded-lg border border-border px-3 py-2" value={estateId} onChange={(event) => { setEstateId(event.target.value); setOwnerId(""); }}><option value="">Choose property</option>{estates.map((estate) => <option key={estate.id} value={estate.id}>{estate.name}</option>)}</NativeSelectControl>
+        <NativeSelectControl className="rounded-lg border border-border px-3 py-2" value={ownerId} onChange={(event) => setOwnerId(event.target.value)}><option value="">Choose owner</option>{estateOwners.map((owner) => <option key={`${owner.unit_id}-${owner.user_id}`} value={owner.user_id}>{people[owner.user_id]?.full_name || people[owner.user_id]?.email || `Owner ${owner.user_id.slice(0, 8)}`}</option>)}</NativeSelectControl>
         <Input type="date" value={periodStart} onChange={(event) => setPeriodStart(event.target.value)} aria-label="Statement period start" />
         <Input type="date" value={periodEnd} onChange={(event) => setPeriodEnd(event.target.value)} aria-label="Statement period end" />
       </div>

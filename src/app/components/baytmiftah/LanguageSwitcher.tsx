@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useRef, useState } from 'react'
 import { LOCALE_META, LOCALE_GROUPS } from '../../i18n'
 import { useLocale, useTranslation } from '../../i18n/LocaleContext'
@@ -83,7 +84,7 @@ export function LanguageSelect({ className = '' }) {
   const { locale, setLocale, t } = useLocale()
 
   return (
-    <select
+    <NativeSelectControl
       value={locale}
       onChange={(e) => setLocale(e.target.value)}
       className={`w-full rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm text-ink ${className}`}
@@ -92,7 +93,7 @@ export function LanguageSelect({ className = '' }) {
       {LOCALE_META.map(({ code, label }) => (
         <option key={code} value={code}>{label}</option>
       ))}
-    </select>
+    </NativeSelectControl>
   )
 }
 

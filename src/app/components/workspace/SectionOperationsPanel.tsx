@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { platformOperationsService } from "../../../lib/platform-operations.service";
 import { workspaceTasksService } from "../../../lib/workspace-tasks.service";
@@ -40,10 +41,10 @@ export function SectionOperationsPanel({organizationId}:{organizationId:string})
       {!open.length&&<p className="text-sm text-muted-foreground">No open tasks in your authorized sections.</p>}
       {open.length>20&&<p className="text-xs text-muted-foreground">Showing the first 20. Open the task workspace for the complete list.</p>}
     </section>
-    <label className="block text-sm">Activity scope <select className="ml-2 rounded border bg-background p-2" value={department} onChange={e=>setDepartment(e.target.value)}>
+    <label className="block text-sm">Activity scope <NativeSelectControl className="ml-2 rounded border bg-background p-2" value={department} onChange={e=>setDepartment(e.target.value)}>
       {scope.organizationAdmin&&<option value="">Entire organization</option>}
       {scope.departments.map(d=><option key={d.key} value={d.key}>{d.name}</option>)}
-    </select></label>
+    </NativeSelectControl></label>
     <ActivityFeed organizationId={organizationId} department={department||undefined}/>
   </Card>;
 }

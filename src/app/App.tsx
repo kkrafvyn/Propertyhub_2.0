@@ -22,7 +22,7 @@ export default function App() {
               <MarketProvider>
                 <RouterProvider router={router} />
                 <AppUpdateBanner />
-                <Toaster richColors position="top-right" />
+                <Toaster richColors closeButton position="top-right" visibleToasts={4} />
               </MarketProvider>
             </AuthProvider>
           </CurrencyProvider>

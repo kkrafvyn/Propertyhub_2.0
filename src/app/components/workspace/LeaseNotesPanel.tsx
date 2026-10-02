@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { MessageSquarePlus } from "lucide-react";
 import { toast } from "sonner";
@@ -80,7 +81,7 @@ export function LeaseNotesPanel({ organizationId, leaseId, authorUserId }: Lease
       </div>
 
       <div className="mt-2 flex flex-wrap gap-2">
-        <select
+        <NativeSelectControl
           className="rounded-lg border border-surface-border bg-surface px-2 py-1.5 text-xs"
           value={noteType}
           onChange={(event) => setNoteType(event.target.value as LeaseNoteType)}
@@ -90,7 +91,7 @@ export function LeaseNotesPanel({ organizationId, leaseId, authorUserId }: Lease
           <option value="renewal">Renewal</option>
           <option value="move_out">Move-out</option>
           <option value="compliance">Compliance</option>
-        </select>
+        </NativeSelectControl>
         <input
           className="min-w-[12rem] flex-1 rounded-lg border border-surface-border bg-surface px-2 py-1.5 text-xs"
           value={body}

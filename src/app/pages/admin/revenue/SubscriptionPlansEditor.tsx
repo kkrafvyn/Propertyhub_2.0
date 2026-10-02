@@ -4,6 +4,9 @@ import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { Input } from "../../../components/ui/Input";
 import { Badge } from "../../../components/ui/badge";
+import { NativeSelect } from "../../../components/ui/NativeSelect";
+import { TextareaField } from "../../../components/ui/TextareaField";
+import { EmptyState, ErrorState } from "../../../components/ux";
 import {
   revenueManagementService,
   type SubscriptionPlan,
@@ -13,13 +16,16 @@ export function SubscriptionPlansEditor() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   const load = async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       setPlans(await revenueManagementService.listPlans());
     } catch (error) {
       console.error(error);
+      setLoadError(true);
       toast.error("Unable to load subscription plans.");
     } finally {
       setLoading(false);
@@ -46,6 +52,14 @@ export function SubscriptionPlansEditor() {
 
   if (loading) {
     return <Card className="p-8 text-center text-muted-foreground">Loading agency plans…</Card>;
+  }
+
+  if (loadError) {
+    return <ErrorState title="Subscription plans unavailable" message="Plan settings could not be loaded. No pricing was changed." onRetry={() => void load()} />;
+  }
+
+  if (plans.length === 0) {
+    return <EmptyState title="No subscription plans configured" description="Add a plan before inviting agencies or developers to subscribe." onAction={() => void load()} actionLabel="Refresh plans" />;
   }
 
   return (
@@ -82,6 +96,7 @@ export function SubscriptionPlansEditor() {
 
           <div className="grid gap-3 md:grid-cols-2">
             <Input
+              label="Plan description"
               value={plan.description || ""}
               onChange={(event) =>
                 setPlans((current) =>
@@ -92,8 +107,8 @@ export function SubscriptionPlansEditor() {
               }
               placeholder="Description"
             />
-            <select
-              className="w-full rounded-lg border border-border px-3 py-2"
+            <NativeSelect
+              label="Billing cycle"
               value={plan.billing_cycle}
               onChange={(event) =>
                 setPlans((current) =>
@@ -108,8 +123,9 @@ export function SubscriptionPlansEditor() {
               <option value="monthly">Monthly</option>
               <option value="yearly">Yearly</option>
               <option value="custom">Custom</option>
-            </select>
+            </NativeSelect>
             <Input
+              label="Price"
               type="number"
               value={plan.price_amount ?? ""}
               disabled={plan.is_custom_pricing}
@@ -125,6 +141,7 @@ export function SubscriptionPlansEditor() {
               placeholder={plan.is_custom_pricing ? "Custom pricing" : "Price"}
             />
             <Input
+              label="Currency"
               value={plan.currency}
               onChange={(event) =>
                 setPlans((current) =>
@@ -154,8 +171,10 @@ export function SubscriptionPlansEditor() {
             Custom / contact-sales pricing
           </label>
 
-          <textarea
-            className="w-full min-h-24 rounded-lg border border-border px-3 py-2 text-sm"
+          <TextareaField
+            label="Plan features"
+            description="Enter one customer-facing feature per line."
+            className="min-h-24"
             value={(plan.features || []).join("\n")}
             onChange={(event) =>
               setPlans((current) =>

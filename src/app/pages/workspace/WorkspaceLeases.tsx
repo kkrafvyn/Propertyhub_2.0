@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 import {
@@ -28,6 +30,7 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { MetricCard } from "../../components/ui/MetricCard";
+import { ActionDialog } from "../../components/ux/ActionDialog";
 import { leaseService } from "../../../lib/lease.service";
 import { leaseWorkflowService } from "../../../lib/lease-workflow.service";
 import { tenantNoticeService } from "../../../lib/tenant-notice.service";
@@ -88,13 +91,13 @@ function StyledSelect({
             <Icon className="w-3.5 h-3.5 text-ink-tertiary" />
           </span>
         )}
-        <select
+        <NativeSelectControl
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className={`w-full appearance-none rounded-xl border border-surface-border bg-surface/80 backdrop-blur-sm px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200 pr-9 ${Icon ? "pl-9" : "pl-3"}`}
         >
           {children}
-        </select>
+        </NativeSelectControl>
         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-tertiary pointer-events-none" />
       </div>
     </div>
@@ -157,6 +160,7 @@ export function WorkspaceLeases({
   const [screeningProvider, setScreeningProvider] = useState<"manual_review" | "provider_pending_setup">("manual_review");
   const [clauseLeaseId, setClauseLeaseId] = useState("");
   const [pendingEsignByLease, setPendingEsignByLease] = useState<Record<string, any>>({});
+  const [overrideRequest, setOverrideRequest] = useState<{ lease: any; message: string } | null>(null);
 
   const loadLeases = async () => {
     try {
@@ -319,11 +323,9 @@ export function WorkspaceLeases({
       toast.success(`Lease sent for signature.${request.signing_url ? " Signing link ready." : ""}`);
     } catch (error: any) {
       console.error(error);
-      if (error?.name === "LeaseAuditBlockedError" && window.confirm(`${error.message}\n\nSend anyway with manager override?`)) {
-        await sendForEsignature(lease, true); return;
-      }
-      if (error?.name === "CounselSignoffRequiredError" && window.confirm(`${error.message}\n\nRecord counsel sign-off in International Markets, or send with manager override?`)) {
-        await sendForEsignature(lease, true); return;
+      if (error?.name === "LeaseAuditBlockedError" || error?.name === "CounselSignoffRequiredError") {
+        setOverrideRequest({ lease, message: error.message });
+        return;
       }
       toast.error(error?.message || "Unable to send lease for e-signature.");
     } finally { setBusyId(null); }
@@ -928,7 +930,7 @@ export function WorkspaceLeases({
             </div>
             <div>
               <p className="text-[11px] font-semibold text-ink-secondary uppercase tracking-wider mb-1.5">Message</p>
-              <textarea
+              <Textarea
                 className="w-full min-h-[80px] rounded-xl border border-surface-border bg-surface/80 backdrop-blur-sm px-3 py-2.5 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200 resize-none"
                 value={noticeBody}
                 onChange={(e) => setNoticeBody(e.target.value)}
@@ -1059,6 +1061,21 @@ export function WorkspaceLeases({
           </div>
         )}
       </Card>
+      <ActionDialog
+        open={Boolean(overrideRequest)}
+        onOpenChange={(open) => !open && setOverrideRequest(null)}
+        title="Send with manager override?"
+        description={`${overrideRequest?.message || "This lease requires additional review."} The override is recorded in the audit trail.`}
+        confirmLabel="Send with override"
+        tone="destructive"
+        pending={Boolean(overrideRequest && busyId === `esign-${overrideRequest.lease.id}`)}
+        onConfirm={async () => {
+          const lease = overrideRequest?.lease;
+          if (!lease) return;
+          setOverrideRequest(null);
+          await sendForEsignature(lease, true);
+        }}
+      />
     </div>
   );
 }

@@ -85,7 +85,7 @@ export function BusinessDesktopShell({ children, organizationName }: BusinessDes
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-72 bg-card border-r border-border flex flex-col shrink-0">
+        <aside className="w-72 bg-card border-r border-border flex flex-col shrink-0" aria-label="Workspace navigation">
           <div className="p-3 space-y-1 overflow-y-auto flex-1">
             <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-3 py-2">
               Professional Workspaces
@@ -101,6 +101,8 @@ export function BusinessDesktopShell({ children, organizationName }: BusinessDes
                   <button
                     type="button"
                     onClick={() => toggleWorkspace(workspace.id)}
+                    aria-expanded={isExpanded}
+                    aria-current={isActive ? "page" : undefined}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                       isActive
                         ? "bg-primary text-primary-foreground shadow-xs"
@@ -127,6 +129,7 @@ export function BusinessDesktopShell({ children, organizationName }: BusinessDes
                           <Link
                             key={mod.slug}
                             to={modPath}
+                            aria-current={modActive ? "page" : undefined}
                             className={`block px-3 py-1.5 rounded-md text-[11px] transition truncate ${
                               modActive
                                 ? "bg-secondary text-emerald-600 dark:text-emerald-400 font-medium"
@@ -151,7 +154,7 @@ export function BusinessDesktopShell({ children, organizationName }: BusinessDes
           </div>
         </aside>
 
-        <main className="flex-1 overflow-y-auto bg-background p-6">{children}</main>
+        <main id="main-content" tabIndex={-1} className="route-focus-target flex-1 overflow-y-auto bg-background p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );

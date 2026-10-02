@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
-import { platformKycService } from "../../../lib/platform-kyc.service";
+import { NativeSelect } from "../../components/ui/NativeSelect";
+import { EmptyState, ErrorState } from "../../components/ux";
 import { KYC_PROVIDER_ENGINES } from "../../../lib/kyc-provider-engines";
 import type { PlatformKycPolicy } from "../../../lib/kyc-gate.service";
 
@@ -12,13 +13,17 @@ export function AdminKycPolicies() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [policies, setPolicies] = useState<PlatformKycPolicy[]>([]);
+  const [loadError, setLoadError] = useState(false);
 
   const load = async () => {
     try {
       setLoading(true);
+      setLoadError(false);
+      const { platformKycService } = await import("../../../lib/platform-kyc.service");
       setPolicies(await platformKycService.listPolicies());
     } catch (error) {
       console.error(error);
+      setLoadError(true);
       toast.error("Unable to load platform KYC policies.");
     } finally {
       setLoading(false);
@@ -40,6 +45,7 @@ export function AdminKycPolicies() {
   const savePolicy = async (policy: PlatformKycPolicy) => {
     try {
       setSavingId(policy.jurisdiction_id);
+      const { platformKycService } = await import("../../../lib/platform-kyc.service");
       await platformKycService.updatePolicy(policy.jurisdiction_id, {
         consumer_booking_required: policy.consumer_booking_required,
         workspace_enrollment_required: policy.workspace_enrollment_required,
@@ -64,6 +70,14 @@ export function AdminKycPolicies() {
     );
   }
 
+  if (loadError) {
+    return <ErrorState title="KYC policies unavailable" message="The platform policies could not be loaded. No settings were changed." onRetry={() => void load()} />;
+  }
+
+  if (policies.length === 0) {
+    return <EmptyState title="No KYC policies configured" description="Add jurisdiction policies in the database migration before enabling identity checks." onAction={() => void load()} actionLabel="Refresh policies" />;
+  }
+
   return (
     <Card className="p-6">
       <div className="mb-4 flex items-center gap-2">
@@ -77,7 +91,7 @@ export function AdminKycPolicies() {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" role="region" aria-label="Country KYC policies" tabIndex={0}>
         <table className="w-full min-w-[720px] text-sm">
           <thead>
             <tr className="border-b border-border text-left text-muted-foreground">
@@ -99,6 +113,7 @@ export function AdminKycPolicies() {
                 <td className="py-3 pr-4">
                   <input
                     type="checkbox"
+                    aria-label={`Require consumer booking verification in ${policy.label}`}
                     checked={policy.consumer_booking_required}
                     onChange={(event) =>
                       updatePolicy(policy.jurisdiction_id, {
@@ -110,6 +125,7 @@ export function AdminKycPolicies() {
                 <td className="py-3 pr-4">
                   <input
                     type="checkbox"
+                    aria-label={`Require workspace enrollment verification in ${policy.label}`}
                     checked={policy.workspace_enrollment_required}
                     onChange={(event) =>
                       updatePolicy(policy.jurisdiction_id, {
@@ -119,8 +135,9 @@ export function AdminKycPolicies() {
                   />
                 </td>
                 <td className="py-3 pr-4">
-                  <select
-                    className="app-input w-full min-w-[180px]"
+                  <NativeSelect
+                    label={`KYC engine for ${policy.label}`}
+                    className="min-w-[180px]"
                     value={policy.provider_engine}
                     onChange={(event) =>
                       updatePolicy(policy.jurisdiction_id, { provider_engine: event.target.value })
@@ -131,7 +148,7 @@ export function AdminKycPolicies() {
                         {engine.label}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </td>
                 <td className="py-3 pr-4">
                   <Badge variant={policy.enabled ? "default" : "outline"}>

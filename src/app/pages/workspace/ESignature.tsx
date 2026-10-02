@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -26,6 +28,7 @@ import {
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { ActionDialog } from "../../components/ux/ActionDialog";
 import { Badge } from "../../components/ui/badge";
 import {
   Dialog,
@@ -255,6 +258,7 @@ function SendModal({
   const [clausePreview, setClausePreview] = useState("");
   const [auditScore, setAuditScore] = useState<number | null>(null);
   const [forceOverride, setForceOverride] = useState(false);
+  const [overrideMessage, setOverrideMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (docType !== "lease_agreement" || !selectedLeaseId) {
@@ -295,8 +299,8 @@ function SendModal({
       toast.success("eSignature envelope sent to recipient");
       onSent();
     } catch (err: any) {
-      if (err?.name === "CounselSignoffRequiredError" && window.confirm(`${err.message}\n\nSend with manager override?`)) {
-        setForceOverride(true);
+      if (err?.name === "CounselSignoffRequiredError") {
+        setOverrideMessage(err.message);
       } else {
         toast.error(err.message || "Failed to send eSignature request");
       }
@@ -332,7 +336,7 @@ function SendModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Document Type</label>
-              <select
+              <NativeSelectControl
                 className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                 value={docType}
                 onChange={(e) => setDocType(e.target.value as DocumentType)}
@@ -342,7 +346,7 @@ function SendModal({
                 <option value="purchase_agreement">Purchase Agreement</option>
                 <option value="addendum">Lease Addendum</option>
                 <option value="custom">Custom Document</option>
-              </select>
+              </NativeSelectControl>
             </div>
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Validity Window (Days)</label>
@@ -357,7 +361,7 @@ function SendModal({
                 <Shield className="w-4 h-4 text-indigo-600" />
                 <h3 className="text-sm font-bold">Auto-clauses from property jurisdiction</h3>
               </div>
-              <select
+              <NativeSelectControl
                 className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm focus:outline-none"
                 value={selectedLeaseId}
                 onChange={(e) => setSelectedLeaseId(e.target.value)}
@@ -368,9 +372,9 @@ function SendModal({
                     {lease.listing?.property?.address || "Property"} — {lease.tenant?.full_name || "Tenant"}
                   </option>
                 ))}
-              </select>
+              </NativeSelectControl>
               {selectedLeaseId && (
-                <select
+                <NativeSelectControl
                   className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm focus:outline-none"
                   value={templateId}
                   onChange={(e) => setTemplateId(e.target.value)}
@@ -378,7 +382,7 @@ function SendModal({
                   {LEASE_TEMPLATE_PRESETS.map((p) => (
                     <option key={p.id} value={p.id}>{p.label}</option>
                   ))}
-                </select>
+                </NativeSelectControl>
               )}
               {auditScore != null && (
                 <div className={`flex items-center gap-2 text-xs rounded-lg px-3 py-2
@@ -436,6 +440,19 @@ function SendModal({
           </div>
         </form>
       </Card>
+      <ActionDialog
+        open={Boolean(overrideMessage)}
+        onOpenChange={(open) => !open && setOverrideMessage(null)}
+        title="Enable manager override?"
+        description={`${overrideMessage || "Counsel sign-off is required."} Enabling an override is recorded; review the document and select Send again to continue.`}
+        confirmLabel="Enable override"
+        tone="destructive"
+        onConfirm={() => {
+          setForceOverride(true);
+          setOverrideMessage(null);
+          toast.info("Manager override enabled. Review the document, then send again.");
+        }}
+      />
     </div>
   );
 }
@@ -630,7 +647,7 @@ export function ESignature({ organizationId }: { organizationId?: string }) {
               <label htmlFor="void-reason" className="block text-xs font-semibold text-foreground mb-1.5">
                 Reason for Voiding
               </label>
-              <textarea
+              <Textarea
                 id="void-reason"
                 rows={3}
                 value={voidReason}

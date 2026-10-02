@@ -3,6 +3,8 @@ import { toast } from "sonner";
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { Input } from "../../../components/ui/Input";
+import { NativeSelect } from "../../../components/ui/NativeSelect";
+import { EmptyState, ErrorState } from "../../../components/ux";
 import { Badge } from "../../../components/ui/badge";
 import {
   revenueManagementService,
@@ -13,13 +15,16 @@ export function PaymentGatewaysEditor() {
   const [gateways, setGateways] = useState<PaymentGateway[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   const load = async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       setGateways(await revenueManagementService.listPaymentGatewaysAdmin());
     } catch (error) {
       console.error(error);
+      setLoadError(true);
       toast.error("Unable to load payment gateways.");
     } finally {
       setLoading(false);
@@ -50,6 +55,14 @@ export function PaymentGatewaysEditor() {
 
   if (loading) {
     return <Card className="p-8 text-center text-muted-foreground">Loading payment gateways…</Card>;
+  }
+
+  if (loadError) {
+    return <ErrorState title="Payment gateways unavailable" message="Gateway settings could not be loaded. Existing payment configuration remains unchanged." onRetry={() => void load()} />;
+  }
+
+  if (gateways.length === 0) {
+    return <EmptyState title="No payment gateways configured" description="Configure at least one payment provider before accepting live payments." onAction={() => void load()} actionLabel="Refresh gateways" />;
   }
 
   return (
@@ -85,8 +98,8 @@ export function PaymentGatewaysEditor() {
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <select
-              className="w-full rounded-lg border border-border px-3 py-2"
+            <NativeSelect
+              label="Fee type"
               value={gateway.fee_type}
               onChange={(event) =>
                 setGateways((current) =>
@@ -100,8 +113,9 @@ export function PaymentGatewaysEditor() {
             >
               <option value="percentage">Percentage</option>
               <option value="fixed">Fixed</option>
-            </select>
+            </NativeSelect>
             <Input
+              label="Fee value"
               type="number"
               value={gateway.fee_value ?? ""}
               onChange={(event) =>
@@ -113,9 +127,10 @@ export function PaymentGatewaysEditor() {
                   ),
                 )
               }
-              placeholder="Fee value"
+              placeholder="Enter fee value"
             />
             <Input
+              label="Supported currencies"
               value={(gateway.supported_currencies || []).join(", ")}
               onChange={(event) =>
                 setGateways((current) =>
@@ -135,6 +150,7 @@ export function PaymentGatewaysEditor() {
               placeholder="Currencies (comma-separated)"
             />
             <Input
+              label="Supported regions"
               value={(gateway.supported_regions || []).join(", ")}
               onChange={(event) =>
                 setGateways((current) =>
@@ -153,8 +169,8 @@ export function PaymentGatewaysEditor() {
               }
               placeholder="Regions (comma-separated)"
             />
-            <select
-              className="w-full rounded-lg border border-border px-3 py-2"
+            <NativeSelect
+              label="Connection status"
               value={gateway.api_status}
               onChange={(event) =>
                 setGateways((current) =>
@@ -170,7 +186,7 @@ export function PaymentGatewaysEditor() {
               <option value="disconnected">Disconnected</option>
               <option value="unknown">Unknown</option>
               <option value="error">Error</option>
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="flex items-center gap-2">

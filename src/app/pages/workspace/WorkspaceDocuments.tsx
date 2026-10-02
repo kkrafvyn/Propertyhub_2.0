@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { Download, FileSignature, Globe, History, PenSquare, Plus, Upload, FileText, FileCheck, ShieldCheck, Sparkles, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -592,7 +593,7 @@ export function WorkspaceDocuments({
               />
               <div>
                 <label className="block mb-2 text-sm text-foreground">Document type</label>
-                <select
+                <NativeSelectControl
                   className="w-full rounded-lg border border-border bg-input-background px-4 py-3"
                   value={draft.documentType}
                   onChange={(event) =>
@@ -611,14 +612,14 @@ export function WorkspaceDocuments({
                       {formatLabel(option)}
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label className="block mb-2 text-sm text-foreground">Linked lead</label>
-                <select
+                <NativeSelectControl
                   className="w-full rounded-lg border border-border bg-input-background px-4 py-3"
                   value={draft.dealCaseId}
                   onChange={(event) =>
@@ -632,11 +633,11 @@ export function WorkspaceDocuments({
                       {dealCase.listing?.property?.address || "Property"}
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
               </div>
               <div>
                 <label className="block mb-2 text-sm text-foreground">Linked payment</label>
-                <select
+                <NativeSelectControl
                   className="w-full rounded-lg border border-border bg-input-background px-4 py-3"
                   value={draft.transactionId}
                   onChange={(event) =>
@@ -650,7 +651,7 @@ export function WorkspaceDocuments({
                       {formatMoney(payment.amount_minor, payment.currency || "GHS")}
                     </option>
                   ))}
-                </select>
+                </NativeSelectControl>
               </div>
             </div>
 
@@ -766,7 +767,7 @@ export function WorkspaceDocuments({
             />
             <div>
               <label className="block mb-2 text-sm text-foreground">Signer role</label>
-              <select
+              <NativeSelectControl
                 className="w-full rounded-lg border border-border bg-input-background px-4 py-3"
                 value={signDraft.signerRole}
                 onChange={(event) =>
@@ -778,7 +779,7 @@ export function WorkspaceDocuments({
                     {formatLabel(option)}
                   </option>
                 ))}
-              </select>
+              </NativeSelectControl>
             </div>
           </div>
 

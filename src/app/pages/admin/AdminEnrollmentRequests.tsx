@@ -14,6 +14,7 @@ import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
 import { getWorkspaceRoute } from "../../../lib/workspace";
 import { Link } from "react-router";
+import { AdminActionDialog } from "../../components/admin/AdminActionDialog";
 
 function formatTimestamp(value?: string | null) {
   if (!value) return "—";
@@ -30,6 +31,11 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
   const [pending, setPending] = useState<OrganizationEnrollmentRequest[]>([]);
   const [recent, setRecent] = useState<OrganizationEnrollmentRequest[]>([]);
   const [kycByUser, setKycByUser] = useState<Record<string, Awaited<ReturnType<typeof kycService.getLatestSubmission>>>>({});
+  const [action, setAction] = useState<{
+    type: "approve" | "verify" | "reject";
+    request: OrganizationEnrollmentRequest;
+  } | null>(null);
+  const [actionNotes, setActionNotes] = useState("");
 
   const loadRequests = async () => {
     try {
@@ -61,17 +67,15 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
     void loadRequests();
   }, []);
 
-  const handleApprove = async (request: OrganizationEnrollmentRequest) => {
-    const notes = window.prompt("Optional approval note for the applicant:");
-    if (notes === null) return;
-
+  const handleApprove = async (request: OrganizationEnrollmentRequest, notes?: string) => {
     try {
       setWorkingId(request.id);
-      const orgId = await enrollmentService.approveRequest(request.id, notes || undefined);
+      const orgId = await enrollmentService.approveRequest(request.id, notes?.trim() || undefined);
       toast.success(`${request.company_name} approved. Workspace is live.`);
       await loadRequests();
       onApproved?.();
       void orgId;
+      return true;
     } catch (error: unknown) {
       console.error(error);
       const message =
@@ -79,45 +83,39 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
           ? String((error as { message?: string }).message)
           : "Unable to approve this enrollment request.";
       toast.error(message);
+      return false;
     } finally {
       setWorkingId(null);
     }
   };
 
   const handleVerifyApplicant = async (request: OrganizationEnrollmentRequest) => {
-    if (
-      !window.confirm(
-        `Mark ${request.requester?.full_name || request.requester?.email || "this applicant"} as identity-verified? This unlocks workspace approval.`,
-      )
-    ) {
-      return;
-    }
-
     try {
       setWorkingId(`verify:${request.requester_user_id}`);
       await adminService.updateUser(request.requester_user_id, { verified: true });
       toast.success("Applicant marked as verified. You can now approve the workspace.");
       await loadRequests();
+      return true;
     } catch (error) {
       console.error(error);
       toast.error("Unable to verify this applicant.");
+      return false;
     } finally {
       setWorkingId(null);
     }
   };
 
-  const handleReject = async (request: OrganizationEnrollmentRequest) => {
-    const notes = window.prompt("Reason for rejection (shared internally):");
-    if (notes === null) return;
-
+  const handleReject = async (request: OrganizationEnrollmentRequest, notes: string) => {
     try {
       setWorkingId(request.id);
-      await enrollmentService.rejectRequest(request.id, notes || undefined);
+      await enrollmentService.rejectRequest(request.id, notes.trim());
       toast.success("Enrollment request rejected.");
       await loadRequests();
+      return true;
     } catch (error) {
       console.error(error);
       toast.error("Unable to reject this enrollment request.");
+      return false;
     } finally {
       setWorkingId(null);
     }
@@ -235,7 +233,7 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
                           size="sm"
                           variant="outline"
                           disabled={workingId === `verify:${request.requester_user_id}`}
-                          onClick={() => void handleVerifyApplicant(request)}
+                          onClick={() => { setActionNotes(""); setAction({ type: "verify", request }); }}
                         >
                           <Shield className="mr-2 h-4 w-4" />
                           Verify identity
@@ -255,7 +253,7 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
                           ? undefined
                           : "Verify the applicant's identity first"
                       }
-                      onClick={() => void handleApprove(request)}
+                      onClick={() => { setActionNotes(""); setAction({ type: "approve", request }); }}
                     >
                       <CheckCircle2 className="mr-2 h-4 w-4" />
                       Approve & create workspace
@@ -264,7 +262,7 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
                       size="sm"
                       variant="outline"
                       disabled={workingId === request.id}
-                      onClick={() => void handleReject(request)}
+                      onClick={() => { setActionNotes(""); setAction({ type: "reject", request }); }}
                     >
                       <XCircle className="mr-2 h-4 w-4" />
                       Reject
@@ -317,6 +315,44 @@ export function AdminEnrollmentRequests({ onApproved }: AdminEnrollmentRequestsP
           </div>
         </Card>
       ) : null}
+      <AdminActionDialog
+        open={Boolean(action)}
+        onOpenChange={(open) => { if (!open) { setAction(null); setActionNotes(""); } }}
+        title={
+          action?.type === "approve"
+            ? `Approve ${action.request.company_name}?`
+            : action?.type === "reject"
+              ? `Reject ${action.request.company_name}?`
+              : "Verify applicant identity?"
+        }
+        description={
+          action?.type === "approve"
+            ? "This creates the workspace, grants owner access, and makes the organization available to its members."
+            : action?.type === "reject"
+              ? "The request will be closed without creating a workspace. The reason will be retained in the audit record."
+              : `This marks ${action?.request.requester?.full_name || action?.request.requester?.email || "the applicant"} as identity-verified and unlocks workspace approval.`
+        }
+        confirmLabel={action?.type === "approve" ? "Approve & create workspace" : action?.type === "reject" ? "Reject request" : "Verify identity"}
+        tone={action?.type === "reject" ? "destructive" : "default"}
+        notesLabel={action?.type === "verify" ? undefined : action?.type === "reject" ? "Rejection reason" : "Approval note (optional)"}
+        notesPlaceholder={action?.type === "reject" ? "Explain why this request cannot be approved…" : "Add a note for the applicant…"}
+        notesRequired={action?.type === "reject"}
+        notes={actionNotes}
+        onNotesChange={setActionNotes}
+        pending={Boolean(workingId)}
+        onConfirm={async () => {
+          if (!action) return;
+          const succeeded = action.type === "approve"
+            ? await handleApprove(action.request, actionNotes)
+            : action.type === "reject"
+              ? await handleReject(action.request, actionNotes)
+              : await handleVerifyApplicant(action.request);
+          if (succeeded) {
+            setAction(null);
+            setActionNotes("");
+          }
+        }}
+      />
     </div>
   );
 }

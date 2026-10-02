@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Building, Plus, AlertTriangle, DollarSign, Users } from "lucide-react";
@@ -103,9 +104,9 @@ export function HoaManagement({ organizationId }: { organizationId: string }) {
           </Button>
         ))}
         {associations.length > 0 && (
-          <select className="ml-auto rounded-lg border px-3 py-2" value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
+          <NativeSelectControl className="ml-auto rounded-lg border px-3 py-2" value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
             {associations.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-          </select>
+          </NativeSelectControl>
         )}
       </div>
 

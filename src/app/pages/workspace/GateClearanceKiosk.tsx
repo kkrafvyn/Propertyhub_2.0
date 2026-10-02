@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 /**
  * BaytMiftah REOS — QR Visitor Gate Clearance & Estate Security Kiosk
  * 
@@ -214,7 +215,7 @@ export function GateClearanceKiosk({
         </div>
 
         <div className="flex items-center gap-2">
-          <select
+          <NativeSelectControl
             className="rounded-xl border border-border bg-input-background px-3 py-2 text-xs"
             value={estateId}
             onChange={(event) => setEstateId(event.target.value)}
@@ -225,7 +226,7 @@ export function GateClearanceKiosk({
                 {estate.name}
               </option>
             ))}
-          </select>
+          </NativeSelectControl>
           <Button
             size="sm"
             onClick={() => setActiveTab('generate_pass')}
@@ -486,7 +487,7 @@ export function GateClearanceKiosk({
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
                     <label className="text-xs font-medium text-ink">Pass Category</label>
-                    <select
+                    <NativeSelectControl
                       className="mt-1 w-full rounded-xl border border-border bg-input-background p-2 text-xs"
                       value={passType}
                       onChange={(e) => {
@@ -499,7 +500,7 @@ export function GateClearanceKiosk({
                       <option value="delivery">Delivery (Bolt/Yango/Courier)</option>
                       <option value="contractor">Contractor / Artisan</option>
                       <option value="resident_vehicle">Resident Temporary Vehicle</option>
-                    </select>
+                    </NativeSelectControl>
                   </div>
 
                   <div>
@@ -514,7 +515,7 @@ export function GateClearanceKiosk({
 
                   <div>
                     <label className="text-xs font-medium text-ink">Pass Validity</label>
-                    <select
+                    <NativeSelectControl
                       className="mt-1 w-full rounded-xl border border-border bg-input-background p-2 text-xs"
                       value={validHours}
                       onChange={(e) => setValidHours(e.target.value)}
@@ -522,14 +523,14 @@ export function GateClearanceKiosk({
                       {validityOptions.map((hours) => (
                         <option key={hours} value={hours}>{hours} Hours</option>
                       ))}
-                    </select>
+                    </NativeSelectControl>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 pt-2 border-t border-border">
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">Host Unit</label>
-                    <select
+                    <NativeSelectControl
                       className="mt-1 w-full rounded-xl border border-border bg-input-background p-2 text-xs"
                       value={hostUnitId}
                       onChange={(e) => setHostUnitId(e.target.value)}
@@ -543,7 +544,7 @@ export function GateClearanceKiosk({
                             {unit.identifier}
                           </option>
                         ))}
-                    </select>
+                    </NativeSelectControl>
                   </div>
                 </div>
 

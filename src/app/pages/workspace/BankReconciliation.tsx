@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { BadgeCheck, Landmark, Loader2, Plus, RefreshCw, ShieldAlert } from "lucide-react";
@@ -762,7 +763,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
               <Badge variant="outline">Live Feed</Badge>
             </div>
             <div className="grid gap-3 md:grid-cols-3">
-              <select
+              <NativeSelectControl
                 className="rounded-lg border border-border bg-input-background px-3 py-2 text-sm"
                 value={feedProvider}
                 onChange={(e) => setFeedProvider(e.target.value)}
@@ -772,7 +773,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
                     {provider.label}
                   </option>
                 ))}
-              </select>
+              </NativeSelectControl>
               <Input
                 placeholder="Provider account ID"
                 value={feedProviderAccountId}
@@ -856,7 +857,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
           </div>
           <form className="mt-4 space-y-3" onSubmit={uploadStatement}>
             <div className="grid gap-3 md:grid-cols-2">
-              <select
+              <NativeSelectControl
                 className="rounded-lg border border-border bg-input-background px-3 py-2"
                 value={selectedAccountId}
                 onChange={(event) => setSelectedAccountId(event.target.value)}
@@ -867,7 +868,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
                     {account.bank_name || "Bank"} · {account.account_number || account.id}
                   </option>
                 ))}
-              </select>
+              </NativeSelectControl>
               <Input
                 type="date"
                 value={statementForm.statementDate}
@@ -911,14 +912,14 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
                     value={row.amount}
                     onChange={(event) => updateRow(index, "amount", event.target.value)}
                   />
-                  <select
+                  <NativeSelectControl
                     className="rounded-lg border border-border bg-input-background px-3 py-2"
                     value={row.type}
                     onChange={(event) => updateRow(index, "type", event.target.value)}
                   >
                     <option value="DEBIT">Debit</option>
                     <option value="CREDIT">Credit</option>
-                  </select>
+                  </NativeSelectControl>
                   <Button type="button" variant="outline" onClick={() => removeRow(index)} disabled={rows.length === 1}>
                     Remove
                   </Button>
@@ -1026,7 +1027,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
                         {txn.is_matched ? "Matched" : "Open"}
                       </Badge>
                       {!txn.is_matched && paymentCandidates.length > 0 ? (
-                        <select
+                        <NativeSelectControl
                           className="mt-2 w-full max-w-[220px] rounded-lg border border-border bg-input-background px-2 py-1 text-xs"
                           defaultValue=""
                           disabled={matchingTxnId === txn.id || saving}
@@ -1043,7 +1044,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
                               {(payment.provider_reference || payment.payment_reference || payment.id).slice(0, 12)}
                             </option>
                           ))}
-                        </select>
+                        </NativeSelectControl>
                       ) : null}
                     </div>
                   </div>
@@ -1064,7 +1065,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
             </p>
             <form className="mt-4 space-y-3" onSubmit={createVariance}>
               <div className="grid gap-3 md:grid-cols-3">
-                <select
+                <NativeSelectControl
                   className="rounded-lg border border-border bg-input-background px-3 py-2"
                   value={varianceForm.type}
                   onChange={(event) => setVarianceForm({ ...varianceForm, type: event.target.value })}
@@ -1073,7 +1074,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
                   <option value="TIMING">Timing difference</option>
                   <option value="MISSING_PAYMENT">Missing payment</option>
                   <option value="UNIDENTIFIED">Unidentified line</option>
-                </select>
+                </NativeSelectControl>
                 <Input
                   type="number"
                   step="0.01"

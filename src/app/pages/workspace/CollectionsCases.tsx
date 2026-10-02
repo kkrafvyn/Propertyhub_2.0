@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -266,7 +267,7 @@ export function CollectionsCases({
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto border border-surface-border rounded-xl">
+            <div className="overflow-x-auto border border-surface-border rounded-xl" role="region" aria-label="Collection cases" tabIndex={0}>
               <table className="w-full text-left text-sm">
                 <thead className="bg-surface-subtle border-b border-surface-border text-xs uppercase text-ink-muted font-semibold">
                   <tr>
@@ -502,7 +503,7 @@ export function CollectionsCases({
                   <label className="block text-xs font-semibold text-ink-muted mb-1">
                     Channel
                   </label>
-                  <select
+                  <NativeSelectControl
                     className="w-full px-3 py-1.5 rounded-lg border border-surface-border bg-surface text-ink text-xs"
                     value={contactChannel}
                     onChange={(e) =>
@@ -514,7 +515,7 @@ export function CollectionsCases({
                     <option value="sms">SMS</option>
                     <option value="email">Email</option>
                     <option value="in_person">In-Person Visit</option>
-                  </select>
+                  </NativeSelectControl>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-ink-muted mb-1">

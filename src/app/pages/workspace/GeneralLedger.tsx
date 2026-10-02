@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   AlertCircle,
@@ -380,7 +381,7 @@ export function GeneralLedger({ organizationId }: { organizationId?: string }) {
                 value={account.name}
                 onChange={(e) => setAccount({ ...account, name: e.target.value })}
               />
-              <select
+              <NativeSelectControl
                 className="rounded-lg border border-border bg-input-background px-3 py-2"
                 value={account.type}
                 onChange={(e) => setAccount({ ...account, type: e.target.value })}
@@ -388,15 +389,15 @@ export function GeneralLedger({ organizationId }: { organizationId?: string }) {
                 {["ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE"].map((type) => (
                   <option key={type}>{type}</option>
                 ))}
-              </select>
-              <select
+              </NativeSelectControl>
+              <NativeSelectControl
                 className="rounded-lg border border-border bg-input-background px-3 py-2"
                 value={account.balance}
                 onChange={(e) => setAccount({ ...account, balance: e.target.value })}
               >
                 <option>DEBIT</option>
                 <option>CREDIT</option>
-              </select>
+              </NativeSelectControl>
               <Button disabled={saving}>
                 <Plus className="h-4 w-4" />
                 Add account
@@ -468,7 +469,7 @@ export function GeneralLedger({ organizationId }: { organizationId?: string }) {
               <div className="space-y-2">
                 {entry.lines.map((line, index) => (
                   <div className="grid gap-2 md:grid-cols-4" key={index}>
-                    <select
+                    <NativeSelectControl
                       className="rounded-lg border border-border bg-input-background px-3 py-2"
                       value={line.accountId}
                       onChange={(e) =>
@@ -481,7 +482,7 @@ export function GeneralLedger({ organizationId }: { organizationId?: string }) {
                           {item.account_code} · {item.account_name}
                         </option>
                       ))}
-                    </select>
+                    </NativeSelectControl>
                     <Input
                       placeholder="Debit"
                       type="number"

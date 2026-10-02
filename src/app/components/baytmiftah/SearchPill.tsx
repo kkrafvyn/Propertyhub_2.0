@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { Link } from "react-router";
 import { ChevronDown, CreditCard, Home, MapPin, Search, X } from "lucide-react";
 import type { ReactNode } from "react";
@@ -99,7 +100,7 @@ export function SearchPill({
 
       <SearchSegment icon={Home} label={t("search.type")} htmlFor="search-type">
         <div className="relative flex items-center">
-          <select
+          <NativeSelectControl
             id="search-type"
             value={propertyType}
             onChange={(e) => onTypeChange(e.target.value)}
@@ -110,7 +111,7 @@ export function SearchPill({
                 {t(key)}
               </option>
             ))}
-          </select>
+          </NativeSelectControl>
           <ChevronDown className="pointer-events-none absolute right-0 h-3.5 w-3.5 text-ink-muted opacity-70" />
         </div>
       </SearchSegment>

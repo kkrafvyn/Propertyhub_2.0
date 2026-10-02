@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { type ReactNode } from "react";
 import { Link } from "react-router";
 import { Menu } from "lucide-react";
@@ -70,7 +71,7 @@ export function BusinessMobileShell({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {organizationOptions.length > 1 && onOrganizationChange && organizationId ? (
-            <select
+            <NativeSelectControl
               className="max-w-[7rem] rounded-lg border border-border bg-surface px-2 py-1 text-[10px] text-foreground outline-none focus:border-primary"
               value={organizationId}
               onChange={(event) => onOrganizationChange(event.target.value)}
@@ -81,7 +82,7 @@ export function BusinessMobileShell({
                   {org.name}
                 </option>
               ))}
-            </select>
+            </NativeSelectControl>
           ) : organizationSlug ? (
             <Link
               to={`/workspace/${organizationSlug}/settings`}
@@ -93,7 +94,7 @@ export function BusinessMobileShell({
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-3">{children}</main>
+      <main id="main-content" tabIndex={-1} className="route-focus-target flex-1 overflow-y-auto p-3">{children}</main>
 
       {tabs.length > 0 ? <BusinessMobileTabBar tabs={tabs} /> : null}
     </div>

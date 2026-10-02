@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { GitBranch, Loader2, Plus, Save, Trash2, Workflow } from "lucide-react";
@@ -208,7 +209,7 @@ export function WorkflowApprovalHub({
                 />
                 <label className="block text-sm">
                   <span className="mb-2 block font-medium">Approver role</span>
-                  <select
+                  <NativeSelectControl
                     className="app-input w-full"
                     value={step.role || ""}
                     onChange={(e) => updateStep(index, { role: e.target.value || null })}
@@ -219,7 +220,7 @@ export function WorkflowApprovalHub({
                         {role.replace(/_/g, " ")}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelectControl>
                 </label>
               </div>
             ))}

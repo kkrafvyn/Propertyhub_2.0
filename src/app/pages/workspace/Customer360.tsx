@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { Building2, CircleDollarSign, Loader2, Mail, Phone, UserRound, Wrench } from "lucide-react";
 import { Card } from "../../components/ui/Card";
@@ -10,6 +11,7 @@ import {
   type ManagedEstate,
 } from "../../../lib/estate-operations.service";
 import { getChargeOutstandingMinor, type EstateChargeRow } from "../../../lib/estate-ledger";
+import { supabase } from "../../../lib/supabase";
 
 const money = (v = 0, c = "GHS") =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency: c }).format(v / 100);
@@ -50,7 +52,7 @@ export function Customer360({ organizationId }: Customer360Props) {
         ]);
 
         const ids = [...new Set(o.map((x) => x.user_id))];
-        const { data } = await (await import("../../../lib/supabase")).supabase
+        const { data } = await supabase
           .from("users")
           .select("id, full_name, email, phone")
           .in("id", ids);
@@ -99,7 +101,7 @@ export function Customer360({ organizationId }: Customer360Props) {
         {people.length > 0 && (
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground shrink-0">Customer:</span>
-            <select
+            <NativeSelectControl
               className="h-9 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary min-w-[200px]"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
@@ -109,7 +111,7 @@ export function Customer360({ organizationId }: Customer360Props) {
                   {x.full_name || x.email || x.id}
                 </option>
               ))}
-            </select>
+            </NativeSelectControl>
           </div>
         )}
       </div>

@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useState } from "react";
 import { useLocation, useParams } from "react-router";
 import { Search, ShieldCheck, Clock, FileText, Sparkles, CheckCircle2, Shield, ArrowRight } from "lucide-react";
@@ -78,7 +79,7 @@ export function PublicEventLedger() {
           <p className="text-sm font-semibold text-ink">Verify Public Record</p>
         </div>
         <form className="flex flex-col gap-3 sm:flex-row" onSubmit={lookup}>
-          <select
+          <NativeSelectControl
             className="h-12 rounded-xl border border-surface-border bg-surface-subtle px-3.5 text-sm font-medium text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 sm:w-40"
             value={kind}
             onChange={(e) => setKind(e.target.value as PublicLedgerKind)}
@@ -86,7 +87,7 @@ export function PublicEventLedger() {
             <option value="transaction">Transaction</option>
             <option value="unit">Unit</option>
             <option value="property">Property</option>
-          </select>
+          </NativeSelectControl>
           <Input
             className="h-12 flex-1 rounded-xl border-surface-border bg-surface-subtle text-sm px-4"
             placeholder={kind === "transaction" ? "e.g. TXN-892348" : kind === "unit" ? "e.g. BM-UNIT-001" : "e.g. PROP-ACC-102"}

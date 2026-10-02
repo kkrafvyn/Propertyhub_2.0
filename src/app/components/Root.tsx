@@ -9,16 +9,9 @@ import { MobileAppShell } from "../mobile/MobileAppShell";
 import { MobileBiometricGate } from "../mobile/MobileBiometricGate";
 import { MobileBottomNav } from "../mobile/MobileBottomNav";
 import { MobileWorkspaceDock } from "../mobile/MobileWorkspaceDock";
-import { LocationOnboarding } from "./onboarding/LocationOnboarding";
-import { CookieConsentBanner } from "./legal/CookieConsentBanner";
-import { BaytMiftahAIPanel } from "./ux/BaytMiftahAIPanel";
-import { PolicyUpdateBanner } from "./legal/PolicyUpdateBanner";
 import { useUserMarket } from "../context/MarketContext";
 import { SurfaceProvider } from "../context/SurfaceContext";
 import { CallProvider } from "../context/CallContext";
-import { CallModal } from "./communication/CallModal";
-import { IncomingCallBanner } from "./communication/IncomingCallBanner";
-import { ActiveCallBar } from "./communication/ActiveCallBar";
 import { PHONE_MEDIA, TABLET_MEDIA } from "../lib/viewports";
 import { isBusinessMobileApp } from "../../lib/mobile-app";
 import { isElectron } from "../../lib/surface-detection";
@@ -30,11 +23,20 @@ import {
 import { AdminDesktopShell } from "../shells/AdminDesktopShell";
 import { DesktopNavigationBridge } from "./DesktopNavigationBridge";
 import { DesktopProfessionalGateway } from "./DesktopProfessionalGateway";
-import { GettingStartedChecklist, NewUserTutorial } from "./onboarding/NewUserTutorial";
 import { isMarketingSite, isMarketingPublicPath } from "../../lib/site-mode";
-import { MarketingSiteFrame } from "../components/marketing/MarketingSiteFrame";
+import { RouteExperience } from "./RouteExperience";
 
 const MarketingHome = lazy(() => import("../pages/marketing/MarketingHome").then((module) => ({ default: module.MarketingHome })));
+const MarketingSiteFrame = lazy(() => import("../components/marketing/MarketingSiteFrame").then((module) => ({ default: module.MarketingSiteFrame })));
+const LocationOnboarding = lazy(() => import("./onboarding/LocationOnboarding").then((module) => ({ default: module.LocationOnboarding })));
+const CookieConsentBanner = lazy(() => import("./legal/CookieConsentBanner").then((module) => ({ default: module.CookieConsentBanner })));
+const BaytMiftahAIPanel = lazy(() => import("./ux/BaytMiftahAIPanel").then((module) => ({ default: module.BaytMiftahAIPanel })));
+const PolicyUpdateBanner = lazy(() => import("./legal/PolicyUpdateBanner").then((module) => ({ default: module.PolicyUpdateBanner })));
+const CallModal = lazy(() => import("./communication/CallModal").then((module) => ({ default: module.CallModal })));
+const IncomingCallBanner = lazy(() => import("./communication/IncomingCallBanner").then((module) => ({ default: module.IncomingCallBanner })));
+const ActiveCallBar = lazy(() => import("./communication/ActiveCallBar").then((module) => ({ default: module.ActiveCallBar })));
+const NewUserTutorial = lazy(() => import("./onboarding/NewUserTutorial").then((module) => ({ default: module.NewUserTutorial })));
+const GettingStartedChecklist = lazy(() => import("./onboarding/NewUserTutorial").then((module) => ({ default: module.GettingStartedChecklist })));
 
 function useViewportFlags() {
   const [flags, setFlags] = useState(() => {
@@ -139,7 +141,7 @@ export function Root() {
     return (
       <>
         {isElectron() ? <DesktopNavigationBridge /> : null}
-        <LocationOnboarding />
+        <Suspense fallback={null}><LocationOnboarding /></Suspense>
       </>
     );
   }
@@ -153,13 +155,18 @@ export function Root() {
     (isMarketingSite() && isMarketingPublicPath(location.pathname))
   ) {
     return (
-      <MarketingSiteFrame
-        home={
-          location.pathname === "/" || location.pathname === "/marketing" ? (
-            <Suspense fallback={null}><MarketingHome /></Suspense>
-          ) : undefined
-        }
-      />
+      <>
+        <RouteExperience />
+        <Suspense fallback={null}>
+          <MarketingSiteFrame
+            home={
+              location.pathname === "/" || location.pathname === "/marketing" ? (
+                <Suspense fallback={null}><MarketingHome /></Suspense>
+              ) : undefined
+            }
+          />
+        </Suspense>
+      </>
     );
   }
 
@@ -169,16 +176,19 @@ export function Root() {
         <CallProvider>
           <MobileBiometricGate>
             <div className="mobile-bolt min-h-[100dvh] bg-bolt-bg has-mobile-tab-bar">
+              <RouteExperience />
               {isElectron() ? <DesktopNavigationBridge /> : null}
               <RouteMonitoring />
-              <PolicyUpdateBanner />
+              <Suspense fallback={null}><PolicyUpdateBanner /></Suspense>
               <MobileAppShell />
-              <BaytMiftahAIPanel />
-              <CookieConsentBanner />
-              <CallModal />
-              <IncomingCallBanner />
-              <ActiveCallBar />
-              <NewUserTutorial />
+              <Suspense fallback={null}>
+                <BaytMiftahAIPanel />
+                <CookieConsentBanner />
+                <CallModal />
+                <IncomingCallBanner />
+                <ActiveCallBar />
+                <NewUserTutorial />
+              </Suspense>
             </div>
           </MobileBiometricGate>
         </CallProvider>
@@ -203,9 +213,10 @@ export function Root() {
       <CallProvider>
         <MobileBiometricGate>
           <div className={shellClass}>
+            <RouteExperience />
             {isElectron() ? <DesktopNavigationBridge /> : null}
             <RouteMonitoring />
-            <PolicyUpdateBanner />
+            <Suspense fallback={null}><PolicyUpdateBanner /></Suspense>
             {showAdminDesktopShell ? (
               <AdminDesktopShell>
                 <Outlet />
@@ -217,13 +228,15 @@ export function Root() {
             )}
             {!isDesktopApp && showWorkspaceDock ? <MobileWorkspaceDock /> : null}
             {!isDesktopApp && showBottomNav ? <MobileBottomNav variant="phone" /> : null}
-            {!isDesktopApp ? <BaytMiftahAIPanel /> : null}
-            {!isDesktopApp ? <CookieConsentBanner /> : null}
-            <CallModal />
-            <IncomingCallBanner />
-            <ActiveCallBar />
-            {!isDesktopApp ? <NewUserTutorial /> : null}
-            {!isDesktopApp ? <GettingStartedChecklist /> : null}
+            <Suspense fallback={null}>
+              {!isDesktopApp ? <BaytMiftahAIPanel /> : null}
+              {!isDesktopApp ? <CookieConsentBanner /> : null}
+              <CallModal />
+              <IncomingCallBanner />
+              <ActiveCallBar />
+              {!isDesktopApp ? <NewUserTutorial /> : null}
+              {!isDesktopApp ? <GettingStartedChecklist /> : null}
+            </Suspense>
           </div>
         </MobileBiometricGate>
       </CallProvider>

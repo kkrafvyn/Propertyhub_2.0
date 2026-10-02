@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 /**
  * BaytMiftah REOS — AI Lease Analyzer & Ghana Rent Act Compliance Studio
  * 
@@ -182,7 +184,7 @@ export function AILeaseAnalyzer() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <select
+          <NativeSelectControl
             className="rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold bg-surface"
             value={marketId}
             disabled={isOcrScanning}
@@ -198,7 +200,7 @@ export function AILeaseAnalyzer() {
                 {preset.label}
               </option>
             ))}
-          </select>
+          </NativeSelectControl>
 
           <label className="cursor-pointer">
             <input
@@ -299,7 +301,7 @@ export function AILeaseAnalyzer() {
               <span className="text-[10px] text-muted-foreground">Editable Markdown / Plain Text</span>
             </div>
 
-            <textarea
+            <Textarea
               value={agreementText}
               aria-label="Agreement text"
               disabled={isOcrScanning}

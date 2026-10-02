@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { LayoutGrid, LayoutDashboard, Loader2, Palette, Puzzle, Save, Type } from "lucide-react";
 import { toast } from "sonner";
@@ -340,7 +341,7 @@ export function CustomizeWorkspace({ organizationId, currentRole }: CustomizeWor
           <label className="block text-sm font-medium" htmlFor="default-home">
             Default home page
           </label>
-          <select
+          <NativeSelectControl
             id="default-home"
             className="app-input w-full max-w-md"
             value={defaultHomeSlug}
@@ -353,7 +354,7 @@ export function CustomizeWorkspace({ organizationId, currentRole }: CustomizeWor
                 {option.label}
               </option>
             ))}
-          </select>
+          </NativeSelectControl>
         </Card>
       ) : null}
 

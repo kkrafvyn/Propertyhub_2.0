@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { supabase } from '../../../lib/supabase';
 import { Badge } from '../../components/ui/badge';
 import {
   utilitySubmeterService,
@@ -187,7 +188,7 @@ export function UtilitySubmetering({ organizationId }: { organizationId?: string
       const tenant = occupancies.find((row) => row.role === 'tenant' && !row.end_date);
       let reference = invoice.id;
       if (tenant) {
-        const { data: profile } = await (await import('../../../lib/supabase')).supabase
+        const { data: profile } = await supabase
           .from('users')
           .select('phone')
           .eq('id', tenant.user_id)

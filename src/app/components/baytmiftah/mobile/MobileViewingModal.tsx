@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../../../context/AuthContext";
@@ -115,7 +117,7 @@ export default function MobileViewingModal({
         {hasSlots ? (
           <label className="mt-4 block text-sm font-semibold text-ink">
             {t("property.selectSlot")}
-            <select
+            <NativeSelectControl
               required
               value={slotId}
               onChange={(e) => {
@@ -130,7 +132,7 @@ export default function MobileViewingModal({
                   {s.date} · {s.time}
                 </option>
               ))}
-            </select>
+            </NativeSelectControl>
           </label>
         ) : (
           <>
@@ -163,7 +165,7 @@ export default function MobileViewingModal({
 
         <label className="mt-3 block text-sm font-semibold text-ink">
           {t("mobile.viewingNotes")}
-          <textarea
+          <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}

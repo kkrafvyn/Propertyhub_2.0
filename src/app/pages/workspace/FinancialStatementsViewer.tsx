@@ -252,7 +252,7 @@ export function FinancialStatementsViewer({
           </div>
         ) : tab === "trial" ? (
           <div className="space-y-4">
-            <div className="overflow-x-auto border border-surface-border rounded-xl">
+            <div className="overflow-x-auto border border-surface-border rounded-xl" role="region" aria-label="Trial balance" tabIndex={0}>
               <table className="w-full text-left text-sm">
                 <thead className="bg-surface-subtle border-b border-surface-border text-xs uppercase text-ink-muted font-semibold">
                   <tr>
@@ -398,7 +398,7 @@ export function FinancialStatementsViewer({
                 </div>
               </div>
             )}
-            <div className="overflow-x-auto border border-surface-border rounded-xl">
+            <div className="overflow-x-auto border border-surface-border rounded-xl" role="region" aria-label="Financial statement" tabIndex={0}>
               <table className="w-full text-left text-sm">
                 <thead className="bg-surface-subtle border-b border-surface-border text-xs uppercase text-ink-muted font-semibold">
                   <tr>

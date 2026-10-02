@@ -59,6 +59,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          if (
+            /[\\/]src[\\/]app[\\/]i18n[\\/](LocaleContext|index|localeRegistry|mergeLocale|translate)\.(jsx?|tsx?)$/.test(id) ||
+            /[\\/]src[\\/]app[\\/]i18n[\\/]locales[\\/](en|partials)[\\/]/.test(id)
+          ) {
+            return 'app-i18n'
+          }
+
           if (!id.includes('node_modules')) {
             return
           }
@@ -73,6 +80,14 @@ export default defineConfig({
 
           if (id.includes('@supabase')) {
             return 'supabase'
+          }
+
+          if (id.includes('@capacitor')) {
+            return 'capacitor-vendor'
+          }
+
+          if (id.includes('sonner')) {
+            return 'notification-vendor'
           }
 
           if (id.includes('@mui') || id.includes('@emotion')) {
@@ -119,7 +134,13 @@ export default defineConfig({
       '**/node_modules/**',
       '**/dist/**',
       'e2e/**',
-      ...(process.env.RUN_TENANT_ISOLATION_TESTS ? [] : ['**/tenant-isolation.test.ts']),
+      ...(process.env.RUN_TENANT_ISOLATION_TESTS
+        ? []
+        : [
+            '**/tenant-isolation.test.ts',
+            '**/storage-isolation.test.ts',
+            '**/platform-admin-live.test.ts',
+          ]),
     ],
     env: {
       VITE_SUPABASE_URL: 'https://test.supabase.co',

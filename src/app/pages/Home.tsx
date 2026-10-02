@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { Link, useNavigate } from "react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Compass, Home as HomeIcon, Key, RotateCcw, ShieldCheck, Sparkles, X } from "lucide-react";
@@ -561,7 +562,7 @@ function FiltersPanel({
             <label className="block text-xs font-bold uppercase tracking-wider text-ink-secondary mb-1.5">
               {t("searchPage.region")}
             </label>
-            <select
+            <NativeSelectControl
               value={ghanaRegion}
               onChange={(e) => onGhanaRegionChange(e.target.value)}
               className="w-full rounded-xl border border-surface-border bg-surface-subtle px-3 py-2.5 text-sm text-ink"
@@ -572,7 +573,7 @@ function FiltersPanel({
                   {region.label}
                 </option>
               ))}
-            </select>
+            </NativeSelectControl>
           </div>
 
           <label className="flex items-center justify-between rounded-xl border border-surface-border bg-surface-subtle p-3.5 text-sm font-medium text-ink cursor-pointer hover:bg-surface-hover transition-colors">
@@ -592,7 +593,7 @@ function FiltersPanel({
             <label className="block text-xs font-bold uppercase tracking-wider text-ink-secondary mb-1.5">
               {t("home.minBedrooms")}
             </label>
-            <select
+            <NativeSelectControl
               value={minBedrooms}
               onChange={(e) => onMinBedroomsChange(Number(e.target.value))}
               className="w-full rounded-xl border border-surface-border bg-surface text-ink px-4 py-3 font-medium outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all cursor-pointer"
@@ -603,7 +604,7 @@ function FiltersPanel({
                   {n}+ {n === 1 ? "bedroom" : "bedrooms"}
                 </option>
               ))}
-            </select>
+            </NativeSelectControl>
           </div>
         </div>
 

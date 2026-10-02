@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Landmark, Plus, ArrowDownLeft, ArrowUpRight } from "lucide-react";
@@ -102,12 +103,12 @@ export function TrustAccounting({ organizationId }: { organizationId: string }) 
           ))}
           <form onSubmit={handleCreateAccount} className="space-y-2 pt-2 border-t">
             <Input placeholder="Account name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-            <select className="w-full rounded-lg border px-3 py-2" value={form.accountType} onChange={(e) => setForm({ ...form, accountType: e.target.value })}>
+            <NativeSelectControl className="w-full rounded-lg border px-3 py-2" value={form.accountType} onChange={(e) => setForm({ ...form, accountType: e.target.value })}>
               <option value="tenant_security">Tenant security</option>
               <option value="owner_reserve">Owner reserve</option>
               <option value="operating_segregated">Operating segregated</option>
               <option value="escrow">Escrow</option>
-            </select>
+            </NativeSelectControl>
             <Button type="submit" size="sm"><Plus className="h-4 w-4 mr-1" /> Add account</Button>
           </form>
         </Card>
@@ -116,11 +117,11 @@ export function TrustAccounting({ organizationId }: { organizationId: string }) 
           <h2 className="font-semibold">Ledger {selected ? `— ${selected.name}` : ""}</h2>
           {selected && (
             <form onSubmit={handlePostEntry} className="flex flex-wrap gap-2 items-end">
-              <select className="rounded-lg border px-3 py-2" value={entryForm.type} onChange={(e) => setEntryForm({ ...entryForm, type: e.target.value as typeof entryForm.type })}>
+              <NativeSelectControl className="rounded-lg border px-3 py-2" value={entryForm.type} onChange={(e) => setEntryForm({ ...entryForm, type: e.target.value as typeof entryForm.type })}>
                 <option value="deposit">Deposit</option>
                 <option value="disbursement">Disbursement</option>
                 <option value="adjustment">Adjustment</option>
-              </select>
+              </NativeSelectControl>
               <Input type="number" step="0.01" placeholder="Amount" className="w-32" value={entryForm.amount} onChange={(e) => setEntryForm({ ...entryForm, amount: e.target.value })} required />
               <Input placeholder="Memo" className="flex-1 min-w-[120px]" value={entryForm.memo} onChange={(e) => setEntryForm({ ...entryForm, memo: e.target.value })} />
               <Button type="submit" size="sm">Post</Button>

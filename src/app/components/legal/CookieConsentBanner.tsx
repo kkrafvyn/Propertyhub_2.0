@@ -23,10 +23,6 @@ function saveConsent(consent: CookieConsent) {
   window.dispatchEvent(new CustomEvent("bm:cookie-consent", { detail: consent }));
 }
 
-export function openCookiePreferences() {
-  window.dispatchEvent(new Event("bm:open-cookie-preferences"));
-}
-
 export function CookieConsentBanner() {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);

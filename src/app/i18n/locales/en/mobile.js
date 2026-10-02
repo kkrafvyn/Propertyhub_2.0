@@ -121,6 +121,7 @@ export default {
       "monthlyHomes": "Monthly homes",
       "shortStays": "Short stays",
       "verifiedAgencies": "Verified agencies",
+      "noVerifiedAgencies": "No verified agencies are available yet.",
       "contextNav": "Contextual navigation",
       "offlineCache": "Showing saved listings from your last visit while offline."
     },

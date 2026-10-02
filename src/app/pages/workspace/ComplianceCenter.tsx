@@ -1,3 +1,4 @@
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 
 import { Download, MapPin, Shield } from "lucide-react";
@@ -282,7 +283,7 @@ export function ComplianceCenter({
 
                   <MapPin className="h-4 w-4 text-brand-forest" />
 
-                  <select
+                  <NativeSelectControl
 
                     className="rounded-lg border px-3 py-1.5 text-sm"
 
@@ -300,7 +301,7 @@ export function ComplianceCenter({
 
                     ))}
 
-                  </select>
+                  </NativeSelectControl>
 
                   {orgSettings?.default_subdivision === subdivision && subdivision ? (
 

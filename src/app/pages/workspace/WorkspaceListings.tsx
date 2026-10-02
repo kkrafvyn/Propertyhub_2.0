@@ -1,3 +1,5 @@
+import { Textarea } from "@/app/components/ui/textarea";
+import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { Eye, Copy, ImagePlus, RotateCcw, SquarePen, Star, Trash2, Building2, CheckCircle2, FileText } from "lucide-react";
@@ -881,7 +883,7 @@ export function WorkspaceListings({
                       </div>
                       <div>
                         <label className="block mb-1.5 text-xs font-medium text-muted-foreground">Listing Type</label>
-                        <select
+                        <NativeSelectControl
                           className="w-full px-3.5 py-2.5 rounded-xl border border-surface-border bg-surface text-foreground text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                           value={draft?.listingType || listing.listing_type}
                           onChange={(event) => updateDraft(listing.id, "listingType", event.target.value)}
@@ -891,11 +893,11 @@ export function WorkspaceListings({
                               {listingType}
                             </option>
                           ))}
-                        </select>
+                        </NativeSelectControl>
                       </div>
                       <div>
                         <label className="block mb-1.5 text-xs font-medium text-muted-foreground">Status</label>
-                        <select
+                        <NativeSelectControl
                           className="w-full px-3.5 py-2.5 rounded-xl border border-surface-border bg-surface text-foreground text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                           value={draft?.status || listing.status}
                           onChange={(event) => updateDraft(listing.id, "status", event.target.value)}
@@ -905,11 +907,11 @@ export function WorkspaceListings({
                               {status.replaceAll("_", " ")}
                             </option>
                           ))}
-                        </select>
+                        </NativeSelectControl>
                       </div>
                       <div>
                         <label className="block mb-1.5 text-xs font-medium text-muted-foreground">Visibility</label>
-                        <select
+                        <NativeSelectControl
                           className="w-full px-3.5 py-2.5 rounded-xl border border-surface-border bg-surface text-foreground text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                           value={draft?.visibility || listing.visibility}
                           onChange={(event) => updateDraft(listing.id, "visibility", event.target.value)}
@@ -919,7 +921,7 @@ export function WorkspaceListings({
                               {visibility}
                             </option>
                           ))}
-                        </select>
+                        </NativeSelectControl>
                       </div>
                     </div>
                   </div>
@@ -1020,7 +1022,7 @@ export function WorkspaceListings({
                         ) : null}
                         <div>
                           <label className="block mb-2 text-sm text-foreground">Category</label>
-                          <select
+                          <NativeSelectControl
                             className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
                             value={draft?.category || "apartment"}
                             onChange={(event) => updateDraft(listing.id, "category", event.target.value)}
@@ -1030,7 +1032,7 @@ export function WorkspaceListings({
                                 {category}
                               </option>
                             ))}
-                          </select>
+                          </NativeSelectControl>
                         </div>
                         <Input
                           label="Bedrooms"
@@ -1075,7 +1077,7 @@ export function WorkspaceListings({
                           <label className="block mb-2 text-sm text-foreground">
                             Document Status
                           </label>
-                          <select
+                          <NativeSelectControl
                             className="w-full px-4 py-3 rounded-lg border border-border bg-input-background"
                             value={draft?.titleDocumentStatus || "missing"}
                             onChange={(event) =>
@@ -1087,13 +1089,13 @@ export function WorkspaceListings({
                             <option value="in_review">In review</option>
                             <option value="verified">Verified</option>
                             <option value="signed">Signed mandate</option>
-                          </select>
+                          </NativeSelectControl>
                         </div>
                       </div>
 
                       <div>
                         <label className="block mb-2 text-sm text-foreground">Description</label>
-                        <textarea
+                        <Textarea
                           className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground min-h-32"
                           value={draft?.description || ""}
                           onChange={(event) => updateDraft(listing.id, "description", event.target.value)}

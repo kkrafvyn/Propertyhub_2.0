@@ -343,7 +343,7 @@ export default function BlockchainVerification({ organizationId }: BlockchainVer
             ) : liveTransactions.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">No transactions were returned for the configured {configuredNetwork === 'amoy' ? 'Polygon Amoy' : 'Polygon Mainnet'} contracts.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" role="region" aria-label="Blockchain transactions" tabIndex={0}>
                 <table className="w-full">
                   <thead><tr className="border-b border-border">
                     <th className="text-left py-3 px-4 font-semibold">Transaction</th>
@@ -370,7 +370,7 @@ export default function BlockchainVerification({ organizationId }: BlockchainVer
             {verificationRecords.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">No Polygon transactions recorded yet. Deploy a contract on Amoy and refresh this page.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" role="region" aria-label="Recorded Polygon transactions" tabIndex={0}>
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border">

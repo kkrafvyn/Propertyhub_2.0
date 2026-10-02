@@ -68,14 +68,14 @@ export function PageHeader({
           {description ? <p className="app-page-description">{description}</p> : null}
         </div>
         {actions ? (
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0 pt-1 lg:pt-0">
+          <div className="flex w-full flex-wrap items-center gap-2.5 pt-1 [&>*]:grow sm:w-auto sm:[&>*]:grow-0 lg:shrink-0 lg:pt-0">
             {actions}
           </div>
         ) : null}
       </div>
 
       {filters ? (
-        <div className="flex flex-wrap items-center gap-2.5 pt-2 border-t border-surface-border/60">
+        <div className="flex max-w-full flex-wrap items-center gap-2.5 overflow-x-auto pt-2 border-t border-surface-border/60">
           {filters}
         </div>
       ) : null}
