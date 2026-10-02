@@ -90,6 +90,28 @@ function formatDateTime(value?: string | null) {
 
 type DashboardPreviewRole = "owner" | "manager" | "agent" | "analyst";
 
+const DASHBOARD_HERO_COPY: Record<
+  DashboardPreviewRole,
+  { title: string; description: string }
+> = {
+  owner: {
+    title: "Portfolio & Performance Overview",
+    description: "Monitor income, payments, and company performance in real time.",
+  },
+  manager: {
+    title: "Operations & Property Management",
+    description: "Oversee gate clearance, property inspections, and contractor work orders.",
+  },
+  agent: {
+    title: "Leasing Deals & Pipeline",
+    description: "Manage tenant leads, track lease agreements, and dispatch payment links.",
+  },
+  analyst: {
+    title: "Market Intelligence & Insights",
+    description: "Track rental trends, occupancy, and portfolio financial performance.",
+  },
+};
+
 function resolveDashboardPreviewRole(role: MemberRole | null | undefined): DashboardPreviewRole {
   if (role === "manager" || role === "property_manager") return "manager";
   if (role === "agent" || role === "sales") return "agent";
@@ -122,6 +144,7 @@ export function WorkspaceDashboard({
 }: WorkspaceDashboardProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [membersCount, setMembersCount] = useState(0);
   const [listings, setListings] = useState<any[]>([]);
   const [dealCases, setDealCases] = useState<any[]>([]);
@@ -140,83 +163,110 @@ export function WorkspaceDashboard({
     let cancelled = false;
 
     const loadDashboard = async () => {
-      try {
-        if (!cancelled) setLoading(true);
-
-        const [organizationListings, organizationDeals, members, payments, viewings, activity] = await Promise.all([
-          listingService.getOrganizationListings(organization.id),
-          dealCaseService.getDealCasesByOrganization(organization.id),
-          organizationService.getOrganizationMembers(organization.id),
-          paymentService.getOrganizationPropertyTransactions(organization.id),
-          propertyViewingService.getOrganizationViewings(organization.id),
-          orgActivityService.getRecentActivity({
-            organizationId: organization.id,
-            userId: user?.id,
-            role: currentRole || activeRole,
-            workspaceBasePath,
-            limit: 20,
-          }).catch(() => [] as TimelineActivity[]),
-        ]);
-
-        const scope = withMemberScopeDefaults({
-          scopeMode,
-          scopedPropertyIds,
-          bypassPropertyScope,
-        });
-
-        if (!cancelled) {
-          setListings(
-            filterByPropertyScope(
-              organizationListings || [],
-              scope.scopeMode,
-              scope.scopedPropertyIds,
-              scope.bypassPropertyScope,
-            ),
-          );
-          setDealCases(
-            filterByNestedPropertyScope(
-              organizationDeals || [],
-              (deal) => {
-                const property = deal.property;
-                if (Array.isArray(property)) return property[0]?.id;
-                return property?.id ?? deal.property_id;
-              },
-              scope.scopeMode,
-              scope.scopedPropertyIds,
-              scope.bypassPropertyScope,
-            ),
-          );
-          setMembersCount((members || []).length);
-          setPropertyTransactions(
-            filterByNestedPropertyScope(
-              payments || [],
-              (payment) => {
-                const property = payment.property;
-                if (Array.isArray(property)) return property[0]?.id;
-                return property?.id ?? payment.property_id;
-              },
-              scope.scopeMode,
-              scope.scopedPropertyIds,
-              scope.bypassPropertyScope,
-            ),
-          );
-          setPropertyViewings(
-            filterByPropertyScope(
-              viewings || [],
-              scope.scopeMode,
-              scope.scopedPropertyIds,
-              scope.bypassPropertyScope,
-            ),
-          );
-          setActivityItems(activity || []);
-        }
-      } catch (error) {
-        console.error("Failed to load workspace dashboard:", error);
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+      if (!cancelled) {
+        setLoading(true);
+        setLoadError(null);
       }
+
+      const scope = withMemberScopeDefaults({
+        scopeMode,
+        scopedPropertyIds,
+        bypassPropertyScope,
+      });
+
+      const results = await Promise.allSettled([
+        listingService.getOrganizationListings(organization.id),
+        dealCaseService.getDealCasesByOrganization(organization.id),
+        organizationService.getOrganizationMembers(organization.id),
+        paymentService.getOrganizationPropertyTransactions(organization.id),
+        propertyViewingService.getOrganizationViewings(organization.id),
+        orgActivityService.getRecentActivity({
+          organizationId: organization.id,
+          userId: user?.id,
+          role: currentRole || activeRole,
+          workspaceBasePath,
+          limit: 20,
+        }),
+      ]);
+
+      if (cancelled) return;
+
+      const failedSources: string[] = [];
+      const read = <T,>(index: number, label: string, fallback: T): T => {
+        const result = results[index];
+        if (result.status === "fulfilled") return result.value as T;
+        failedSources.push(label);
+        console.error(`Failed to load ${label}:`, result.reason);
+        return fallback;
+      };
+
+      const organizationListings = read(0, "listings", [] as Awaited<
+        ReturnType<typeof listingService.getOrganizationListings>
+      >);
+      const organizationDeals = read(1, "deal cases", [] as Awaited<
+        ReturnType<typeof dealCaseService.getDealCasesByOrganization>
+      >);
+      const members = read(2, "team members", [] as Awaited<
+        ReturnType<typeof organizationService.getOrganizationMembers>
+      >);
+      const payments = read(3, "payments", [] as Awaited<
+        ReturnType<typeof paymentService.getOrganizationPropertyTransactions>
+      >);
+      const viewings = read(4, "viewings", [] as Awaited<
+        ReturnType<typeof propertyViewingService.getOrganizationViewings>
+      >);
+      const activity = read(5, "recent activity", [] as TimelineActivity[]);
+
+      setListings(
+        filterByPropertyScope(
+          organizationListings || [],
+          scope.scopeMode,
+          scope.scopedPropertyIds,
+          scope.bypassPropertyScope,
+        ),
+      );
+      setDealCases(
+        filterByNestedPropertyScope(
+          organizationDeals || [],
+          (deal) => {
+            const property = deal.property;
+            if (Array.isArray(property)) return property[0]?.id;
+            return property?.id ?? deal.property_id;
+          },
+          scope.scopeMode,
+          scope.scopedPropertyIds,
+          scope.bypassPropertyScope,
+        ),
+      );
+      setMembersCount((members || []).length);
+      setPropertyTransactions(
+        filterByNestedPropertyScope(
+          payments || [],
+          (payment) => {
+            const property = payment.property;
+            if (Array.isArray(property)) return property[0]?.id;
+            return property?.id ?? payment.property_id;
+          },
+          scope.scopeMode,
+          scope.scopedPropertyIds,
+          scope.bypassPropertyScope,
+        ),
+      );
+      setPropertyViewings(
+        filterByPropertyScope(
+          viewings || [],
+          scope.scopeMode,
+          scope.scopedPropertyIds,
+          scope.bypassPropertyScope,
+        ),
+      );
+      setActivityItems(activity || []);
+      setLoadError(
+        failedSources.length > 0
+          ? `Some dashboard data could not be loaded (${failedSources.join(", ")}). Showing available metrics below.`
+          : null,
+      );
+      setLoading(false);
     };
 
     loadDashboard();
@@ -275,6 +325,8 @@ export function WorkspaceDashboard({
     onRoleChange?.(newRole);
   };
 
+  const dashboardRole = resolveDashboardPreviewRole(activeRole);
+
   const dashboardWidgets = useMemo(
     () => parseWorkspaceCustomization(organization).dashboardWidgets,
     [organization],
@@ -286,25 +338,7 @@ export function WorkspaceDashboard({
   const showViewingsWidget = isDashboardWidgetEnabled(dashboardWidgets, "viewings");
   const showQuickActions = isDashboardWidgetEnabled(dashboardWidgets, "quick_actions");
   const showRecentActivity = isDashboardWidgetEnabled(dashboardWidgets, "recent_activity");
-
-  if (loading) {
-    return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-14 rounded-2xl bg-surface-subtle border border-surface-border" />
-        <div className="h-36 rounded-3xl bg-gradient-to-br from-emerald-500/8 via-amber-500/4 to-surface border border-emerald-500/15" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-28 rounded-2xl bg-surface-subtle border border-surface-border" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-64 rounded-2xl bg-surface-subtle border border-surface-border" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const showCoreMetrics = showKpiGrid || dashboardRole === "owner";
 
   const roleConfig = [
     {
@@ -345,8 +379,8 @@ export function WorkspaceDashboard({
     },
   ] as const;
 
-  const dashboardRole = resolveDashboardPreviewRole(activeRole);
   const activeRoleConfig = roleConfig.find((r) => r.role === dashboardRole) || roleConfig[0];
+  const heroCopy = DASHBOARD_HERO_COPY[dashboardRole];
 
   return (
     <div className="space-y-8">
@@ -386,6 +420,15 @@ export function WorkspaceDashboard({
         </span>
       </div>
 
+      {loadError ? (
+        <div
+          role="status"
+          className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-ink-secondary"
+        >
+          {loadError}
+        </div>
+      ) : null}
+
       {/* Role-Specific Hero Header */}
       <div className={`relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br ${activeRoleConfig.gradient} to-surface border border-surface-border/80 shadow-xl backdrop-blur-sm transition-all duration-500`}>
         {/* Atmospheric orb */}
@@ -402,17 +445,11 @@ export function WorkspaceDashboard({
             </div>
 
             <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-ink leading-tight">
-              {dashboardRole === "owner" && "Portfolio & Performance Overview"}
-              {dashboardRole === "manager" && "Operations & Property Management"}
-              {dashboardRole === "agent" && "Leasing Deals & Pipeline"}
-              {dashboardRole === "analyst" && "Market Intelligence & Insights"}
+              {heroCopy.title}
             </h1>
 
             <p className="text-xs sm:text-sm text-ink-secondary max-w-xl leading-relaxed">
-              {dashboardRole === "owner" && "Monitor income, payments, and company performance in real time."}
-              {dashboardRole === "manager" && "Oversee gate clearance, property inspections, and contractor work orders."}
-              {dashboardRole === "agent" && "Manage tenant leads, track lease agreements, and dispatch payment links."}
-              {dashboardRole === "analyst" && "Track rental trends, occupancy, and portfolio financial performance."}
+              {heroCopy.description}
             </p>
           </div>
 
@@ -487,7 +524,13 @@ export function WorkspaceDashboard({
       </div>
 
       {/* Role-Tailored KPI Grid */}
-      {showKpiGrid ? (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-28 rounded-2xl bg-surface-subtle border border-surface-border" />
+          ))}
+        </div>
+      ) : showCoreMetrics ? (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" style={{ '--stagger': '80ms' } as React.CSSProperties}>
         {dashboardRole === "owner" && (
           <>
@@ -625,10 +668,20 @@ export function WorkspaceDashboard({
           </>
         )}
       </div>
-      ) : null}
+      ) : (
+        <div className="rounded-2xl border border-dashed border-surface-border bg-surface-subtle/40 p-6 text-center text-sm text-ink-secondary">
+          Core metrics are hidden in workspace customization. Enable pipeline or revenue widgets to restore KPI cards.
+        </div>
+      )}
 
       {/* Main Content Split: Activity & Pipeline */}
-      {(showListingsWidget || showViewingsWidget || showQuickActions) ? (
+      {loading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-pulse">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-64 rounded-2xl bg-surface-subtle border border-surface-border" />
+          ))}
+        </div>
+      ) : (showListingsWidget || showViewingsWidget || showQuickActions) ? (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Active Inventory List */}
         {showListingsWidget ? (

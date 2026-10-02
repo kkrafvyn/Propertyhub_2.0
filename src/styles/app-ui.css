@@ -5,8 +5,13 @@
     @apply fixed left-4 top-3 z-[200] -translate-y-24 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition-transform focus:translate-y-0;
   }
 
-  .route-focus-target {
+  /* Visually hidden focus sink only — never apply to layout regions like <main>. */
+  .route-focus-sink {
     @apply absolute left-0 top-0 h-px w-px overflow-hidden outline-none;
+  }
+
+  .main-content-region {
+    @apply relative min-h-0 outline-none;
   }
 
   .app-page-header {

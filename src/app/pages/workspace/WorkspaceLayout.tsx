@@ -1751,7 +1751,11 @@ export function WorkspaceLayout() {
           </aside>
 
           {/* Main Content Area */}
-          <main id="main-content" tabIndex={-1} className="route-focus-target workspace-main-panel flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-full">
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="main-content-region workspace-main-panel flex-1 min-h-[calc(100vh-3.5rem)] p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-full"
+          >
             <div className="max-w-7xl mx-auto">
               {workspacePageContent}
             </div>

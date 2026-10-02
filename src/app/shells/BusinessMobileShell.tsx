@@ -94,7 +94,7 @@ export function BusinessMobileShell({
         </div>
       </header>
 
-      <main id="main-content" tabIndex={-1} className="route-focus-target flex-1 overflow-y-auto p-3">{children}</main>
+      <main id="main-content" tabIndex={-1} className="main-content-region flex-1 min-h-0 overflow-y-auto p-3">{children}</main>
 
       {tabs.length > 0 ? <BusinessMobileTabBar tabs={tabs} /> : null}
     </div>

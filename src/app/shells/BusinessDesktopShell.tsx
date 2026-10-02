@@ -154,7 +154,7 @@ export function BusinessDesktopShell({ children, organizationName }: BusinessDes
           </div>
         </aside>
 
-        <main id="main-content" tabIndex={-1} className="route-focus-target flex-1 overflow-y-auto bg-background p-4 sm:p-6">{children}</main>
+        <main id="main-content" tabIndex={-1} className="main-content-region flex-1 min-h-0 overflow-y-auto bg-background p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );
