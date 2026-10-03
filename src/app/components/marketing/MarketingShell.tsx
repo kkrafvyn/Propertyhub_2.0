@@ -29,14 +29,16 @@ export function MarketingShell({
   children,
   cinematic = false,
   editorial = false,
+  launch = false,
   navLinks,
 }: {
   children: ReactNode;
   cinematic?: boolean;
   editorial?: boolean;
+  launch?: boolean;
   navLinks?: readonly MarketingNavLink[];
 }) {
-  const darkChrome = cinematic || editorial;
+  const darkChrome = cinematic || editorial || launch;
   const links = navLinks ?? NAV_LINKS_DEFAULT;
   const [scrolled, setScrolled] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -90,7 +92,7 @@ export function MarketingShell({
 
   return (
     <div
-      className={`marketing-page marketing-shell${cinematic ? " marketing-page--cinematic" : ""}${editorial ? " marketing-page--editorial" : ""}`}
+      className={`marketing-page marketing-shell${cinematic ? " marketing-page--cinematic" : ""}${editorial ? " marketing-page--editorial" : ""}${launch ? " marketing-page--launch" : ""}`}
     >
       {!darkChrome ? <MarketingBackgroundCarousel /> : null}
       <div className="mk-page-scrim" aria-hidden="true" />
@@ -102,7 +104,9 @@ export function MarketingShell({
       <a href="#mk-main-content" className="mk-skip-link">
         Skip to content
       </a>
-      <header className={`mk-nav${scrolled ? " mk-nav--scrolled" : ""}${darkChrome ? " mk-nav--dark-chrome" : ""}`}>
+      <header
+        className={`mk-nav${scrolled ? " mk-nav--scrolled" : ""}${darkChrome ? " mk-nav--dark-chrome" : ""}${launch ? " mk-nav--launch" : ""}`}
+      >
         <div className="mk-nav-inner">
           <Logo to="/" size="sm" inverted={darkChrome} />
           <nav className="mk-nav-links" aria-label="Primary">
@@ -115,7 +119,7 @@ export function MarketingShell({
               href={appPath("/login")}
               className={`mk-btn mk-btn-secondary mk-nav-login${darkChrome ? " mk-nav-login--desktop" : " hidden sm:inline-flex"}`}
             >
-              Log in
+              {launch ? "Sign in" : "Log in"}
             </a>
             <a
               href={appPath("/signup")}

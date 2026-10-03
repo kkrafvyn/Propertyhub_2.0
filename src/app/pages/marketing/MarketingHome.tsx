@@ -1,5 +1,5 @@
 /**
- * Public marketing homepage — editorial redesign.
- * Legacy layouts: MarketingHomeLegacy.tsx, MarketingCinematicHome.tsx.
+ * Public marketing homepage — product-led launch layout.
+ * Legacy: MarketingHomeLegacy.tsx, MarketingCinematicHome.tsx, MarketingEditorialHome.tsx.
  */
-export { MarketingEditorialHome as MarketingHome } from "./MarketingEditorialHome";
+export { MarketingLaunchHome as MarketingHome } from "./MarketingLaunchHome";
