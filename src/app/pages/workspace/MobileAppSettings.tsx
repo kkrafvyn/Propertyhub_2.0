@@ -107,7 +107,11 @@ export default function MobileAppSettings({
   const handleRegisterBrowserPush = async () => {
     try {
       setRegisteringBrowserPush(true);
-      await pushNotificationService.registerBrowserPush(currentUserId);
+      const result = await pushNotificationService.registerBrowserPush(currentUserId);
+      if (result.configured === false) {
+        toast.error(result.reason);
+        return;
+      }
       toast.success("Browser push notifications connected.");
       await loadDevices();
     } catch (error) {
@@ -392,7 +396,7 @@ export default function MobileAppSettings({
         open={Boolean(deviceToRemove)}
         onOpenChange={(open) => !open && setDeviceToRemove(null)}
         title="Sign out this device?"
-        description={`This removes access for the selected ${deviceToRemove?.device_type || "device"}. The user will need to sign in again.`}
+        description={`This removes the ${deviceToRemove?.device_type || "device"} record and push subscription from this workspace. It does not sign the user out on that device.`}
         confirmLabel="Remove device"
         tone="destructive"
         pending={removingDevice}

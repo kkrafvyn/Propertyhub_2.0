@@ -20,6 +20,12 @@ import {
 } from "../_shared/whatsapp-tenant-context.ts";
 import { getCorsHeaders, HttpError, jsonResponse, safeErrorMessage } from "../_shared/http.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
+import {
+  groupAcknowledgementForSensitiveCommand,
+  isSensitiveBotResponse,
+  redactBotReplyForStorage,
+  safeGroupMessageWhenDmFails,
+} from "../_shared/whatsapp-privacy.ts";
 
 type GroupChannelRow = {
   id: string;
@@ -52,7 +58,7 @@ async function getOrCreateGroupChannel(
       organization_id: organizationId,
       group_id: groupId,
       group_name: groupName || `Group ${groupId.slice(-6)}`,
-      is_active: true,
+      is_active: false,
     })
     .select("*")
     .single();
@@ -112,6 +118,21 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      let inboundClaimId: string | null = null;
+      if (msg.messageId) {
+        const { data: claimRows, error: claimError } = await admin.rpc("claim_whatsapp_inbound_message", {
+          p_organization_id: organizationId,
+          p_wa_message_id: msg.messageId,
+        });
+        if (claimError) throw claimError;
+        const claim = Array.isArray(claimRows) ? claimRows[0] : claimRows;
+        if (claim && claim.claimed === false) {
+          results.push({ messageId: msg.messageId, skipped: true, reason: "duplicate_webhook" });
+          continue;
+        }
+        inboundClaimId = claim?.inbound_id ?? null;
+      }
+
       let groupChannel: GroupChannelRow | null = null;
       if (msg.isGroup && msg.groupId) {
         const { data: linkedGroup } = await admin
@@ -128,20 +149,20 @@ Deno.serve(async (req) => {
       }
 
       if (groupChannel && !groupChannel.is_active) {
-        await admin.from("whatsapp_inbound_messages").insert({
-          organization_id: organizationId,
-          group_channel_id: groupChannel.id,
-          wa_message_id: msg.messageId || null,
-          sender_phone: msg.from,
-          sender_name: msg.senderName || null,
-          group_id: msg.groupId,
-          is_group: true,
-          message_text: msg.text,
-          message_type: msg.messageType,
-          bot_replied: false,
-          raw_payload: messagePayload,
-        });
-        results.push({ messageId: msg.messageId, skipped: true, reason: "group_paused" });
+        if (inboundClaimId) {
+          await admin.from("whatsapp_inbound_messages").update({
+            group_channel_id: groupChannel.id,
+            sender_phone: msg.from,
+            sender_name: msg.senderName || null,
+            group_id: msg.groupId,
+            is_group: true,
+            message_text: msg.text,
+            message_type: msg.messageType,
+            processing_status: "skipped",
+            raw_payload: messagePayload,
+          }).eq("id", inboundClaimId);
+        }
+        results.push({ messageId: msg.messageId, skipped: true, reason: "group_pending_approval" });
         continue;
       }
 
@@ -149,19 +170,20 @@ Deno.serve(async (req) => {
       const respondWithoutMention = groupChannel?.respond_without_mention ?? false;
 
       if (msg.isGroup && !shouldRespondInGroup(msg.text, aliases, respondWithoutMention)) {
-        await admin.from("whatsapp_inbound_messages").insert({
-          organization_id: organizationId,
-          group_channel_id: groupChannel?.id || null,
-          wa_message_id: msg.messageId || null,
-          sender_phone: msg.from,
-          sender_name: msg.senderName || null,
-          group_id: msg.groupId,
-          is_group: true,
-          message_text: msg.text,
-          message_type: msg.messageType,
-          bot_replied: false,
-          raw_payload: messagePayload,
-        });
+        if (inboundClaimId) {
+          await admin.from("whatsapp_inbound_messages").update({
+            group_channel_id: groupChannel?.id || null,
+            sender_phone: msg.from,
+            sender_name: msg.senderName || null,
+            group_id: msg.groupId,
+            is_group: true,
+            message_text: msg.text,
+            message_type: msg.messageType,
+            bot_replied: false,
+            processing_status: "skipped",
+            raw_payload: messagePayload,
+          }).eq("id", inboundClaimId);
+        }
         results.push({ messageId: msg.messageId, skipped: true, reason: "no_mention" });
         continue;
       }
@@ -191,40 +213,88 @@ Deno.serve(async (req) => {
       });
 
       const botResponse = processGroupBotMessage(msg.from, commandText, msg.isGroup, botContext);
+      const sensitive = msg.isGroup && isSensitiveBotResponse(botResponse.actionRequired);
+      const groupReplyText = sensitive
+        ? groupAcknowledgementForSensitiveCommand()
+        : botResponse.replyMessage;
+      const privateReplyText = sensitive ? botResponse.replyMessage : null;
       const replyTarget = msg.isGroup && msg.groupId ? msg.groupId : msg.from;
 
       let sendResult: { success: boolean; messageId?: string; simulated?: boolean } = { success: false };
+      let dmResult: { success: boolean } = { success: false };
       try {
         if (integration?.phoneNumberId && integration.accessToken) {
           sendResult = await sendWhatsAppTextMessage({
             to: replyTarget,
-            text: botResponse.replyMessage,
+            text: groupReplyText,
             phoneNumberId: integration.phoneNumberId,
             accessToken: integration.accessToken,
           });
+          if (privateReplyText) {
+            dmResult = await sendWhatsAppTextMessage({
+              to: msg.from,
+              text: privateReplyText,
+              phoneNumberId: integration.phoneNumberId,
+              accessToken: integration.accessToken,
+            });
+            if (!dmResult.success && msg.isGroup) {
+              sendResult = await sendWhatsAppTextMessage({
+                to: replyTarget,
+                text: safeGroupMessageWhenDmFails(),
+                phoneNumberId: integration.phoneNumberId,
+                accessToken: integration.accessToken,
+              });
+            }
+          }
         }
       } catch (sendError) {
         console.error("WhatsApp reply failed:", sendError);
       }
 
-      const { data: inboundRow } = await admin
-        .from("whatsapp_inbound_messages")
-        .insert({
-          organization_id: organizationId,
-          group_channel_id: groupChannel?.id || null,
-          wa_message_id: msg.messageId || null,
-          sender_phone: msg.from,
-          sender_name: msg.senderName || null,
-          group_id: msg.groupId,
-          is_group: msg.isGroup,
-          message_text: msg.text,
-          message_type: msg.messageType,
-          bot_replied: sendResult.success,
-          bot_reply_text: botResponse.replyMessage,
-          raw_payload: messagePayload,
-        })
-        .select("id")
-        .single();
+      const storedReply = redactBotReplyForStorage(botResponse.replyMessage, botResponse.actionRequired);
+      let inboundRow: { id: string } | null = null;
+      if (inboundClaimId) {
+        const { data: updated } = await admin
+          .from("whatsapp_inbound_messages")
+          .update({
+            group_channel_id: groupChannel?.id || null,
+            sender_phone: msg.from,
+            sender_name: msg.senderName || null,
+            group_id: msg.groupId,
+            is_group: msg.isGroup,
+            message_text: msg.text,
+            message_type: msg.messageType,
+            bot_replied: sendResult.success,
+            bot_reply_text: storedReply,
+            processing_status: "completed",
+            raw_payload: messagePayload,
+          })
+          .eq("id", inboundClaimId)
+          .select("id")
+          .single();
+        inboundRow = updated;
+      } else {
+        const { data: inserted } = await admin
+          .from("whatsapp_inbound_messages")
+          .insert({
+            organization_id: organizationId,
+            group_channel_id: groupChannel?.id || null,
+            wa_message_id: msg.messageId || null,
+            sender_phone: msg.from,
+            sender_name: msg.senderName || null,
+            group_id: msg.groupId,
+            is_group: msg.isGroup,
+            message_text: msg.text,
+            message_type: msg.messageType,
+            bot_replied: sendResult.success,
+            bot_reply_text: storedReply,
+            processing_status: "completed",
+            raw_payload: messagePayload,
+          })
+          .select("id")
+          .single();
+        inboundRow = inserted;
+      }
 
       {
         const sessionPayload = {

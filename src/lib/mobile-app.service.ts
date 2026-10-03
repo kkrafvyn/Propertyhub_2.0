@@ -58,22 +58,45 @@ export const mobileAppService = {
     subscriptionEndpoint: string,
     subscriptionKey: string | { p256dh?: string; auth?: string; keys?: { p256dh?: string; auth?: string } }
   ) {
+    const keyPayload =
+      typeof subscriptionKey === 'string'
+        ? subscriptionKey
+        : JSON.stringify(subscriptionKey);
+
+    const { data: existing } = await supabase
+      .from('push_subscriptions')
+      .select('id')
+      .eq('subscription_endpoint', subscriptionEndpoint)
+      .maybeSingle();
+
+    if (existing?.id) {
+      const { data, error } = await supabase
+        .from('push_subscriptions')
+        .update({
+          device_id: deviceId,
+          subscription_key: keyPayload,
+          active: true,
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
     const { data, error } = await supabase
       .from('push_subscriptions')
       .insert({
         device_id: deviceId,
         subscription_endpoint: subscriptionEndpoint,
-        subscription_key:
-          typeof subscriptionKey === 'string'
-            ? subscriptionKey
-            : JSON.stringify(subscriptionKey),
-        active: true
+        subscription_key: keyPayload,
+        active: true,
       })
       .select()
-      .single()
-    
-    if (error) throw error
-    return data
+      .single();
+
+    if (error) throw error;
+    return data;
   },
 
   getBrowserDeviceId() {
@@ -218,8 +241,8 @@ export const mobileAppService = {
     }
   },
 
-  // Remote logout
-  async remoteLogout(deviceId: string) {
+  /** Removes device registration only; does not invalidate auth sessions. */
+  async unregisterDeviceRecord(deviceId: string) {
     const { error } = await supabase
       .from('mobile_devices')
       .delete()
@@ -228,17 +251,7 @@ export const mobileAppService = {
     if (error) throw error
   },
 
-  // Wipe device
-  async wipeDevice(deviceId: string) {
-    // Mark for remote wipe in production
-    const { error } = await supabase
-      .from('mobile_devices')
-      .update({ 
-        last_active_at: new Date().toISOString()
-        // In production: add wipe_requested flag
-      })
-      .eq('device_id', deviceId)
-    
-    if (error) throw error
-  }
+  async remoteLogout(deviceId: string) {
+    return this.unregisterDeviceRecord(deviceId);
+  },
 }

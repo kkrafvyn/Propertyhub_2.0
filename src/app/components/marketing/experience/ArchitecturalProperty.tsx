@@ -62,7 +62,7 @@ export function ArchitecturalProperty({ mobile }: ArchitecturalPropertyProps) {
     return mats;
   }, []);
 
-  useFrame(({ clock }) => {
+  useFrame(() => {
     const s = experienceScalars(marketingScrollState.progress);
     const sep = s.floorSeparation * (mobile ? 0.5 : 1);
     const spreadBase = mobile ? 0.28 : 0.42;
@@ -78,9 +78,9 @@ export function ArchitecturalProperty({ mobile }: ArchitecturalPropertyProps) {
     if (coreRef.current) {
       coreRef.current.scale.y = 1 + sep * 0.85;
     }
-    const flicker = 0.88 + Math.sin(clock.elapsedTime * 0.55 + 0.3) * 0.06;
+    const lightBase = 0.1 + s.exteriorLight * 0.32;
     windowLights.forEach((m, i) => {
-      m.opacity = (0.1 + s.exteriorLight * 0.32) * (i % 4 === 0 ? flicker : 1);
+      m.opacity = lightBase * (0.92 + (i % 5) * 0.015);
     });
   });
 

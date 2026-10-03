@@ -135,7 +135,7 @@ export function OwnerPortal() {
                     <h2 className="text-lg font-display font-medium text-ink">{estate.name}</h2>
                     <div className="flex items-center gap-1.5 text-xs text-ink-secondary">
                       <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
-                      <span>{[estate.city, estate.region, "Ghana"].filter(Boolean).join(", ")}</span>
+                      <span>{[estate.city, estate.region, (estate as { country?: string }).country].filter(Boolean).join(", ")}</span>
                     </div>
                   </div>
                 </div>

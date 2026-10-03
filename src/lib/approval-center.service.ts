@@ -182,15 +182,11 @@ export const approvalCenterService = {
     }
 
     if (input.domain === "owner_disbursement") {
-      const { data, error } = await db
-        .from("estate_distribution_approvals")
-        .update({
-          status: input.decision === "approved" ? "approved" : "rejected",
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", input.id)
-        .select("*")
-        .single();
+      const { data, error } = await db.rpc("review_distribution_approval", {
+        p_approval_id: input.id,
+        p_decision: input.decision,
+        p_note: input.note?.trim() || null,
+      });
       if (error) throw error;
       return data;
     }

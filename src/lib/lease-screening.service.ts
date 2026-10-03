@@ -1,5 +1,12 @@
 import { supabase } from "./supabase";
-import { getProviderForCheck, type ScreeningCheckType } from "./tenant-screening-providers";
+import {
+  getProviderForCheck,
+  isScreeningCheckAvailable,
+  type ScreeningCheckType,
+  type ScreeningRecommendation,
+} from "./tenant-screening-providers";
+
+export type { ScreeningRecommendation };
 
 const db = supabase as any;
 
@@ -79,6 +86,9 @@ export const leaseScreeningService = {
   }) {
     const provider = getProviderForCheck(input.checkType);
     if (!provider) throw new Error(`No provider configured for ${input.checkType} checks.`);
+    if (!isScreeningCheckAvailable(input.checkType)) {
+      throw new Error(`Provider not configured for ${input.checkType} checks.`);
+    }
 
     const result = await provider.submitCheck({
       applicantName: input.applicantName,
@@ -115,6 +125,40 @@ export const leaseScreeningService = {
     return data || [];
   },
 
+  async runSelectedScreeningChecks(input: {
+    organizationId: string;
+    applicationId?: string;
+    screeningId?: string;
+    applicantName: string;
+    applicantEmail: string;
+    reviewedBy?: string;
+    checkTypes: ScreeningCheckType[];
+  }) {
+    const unique = [...new Set(input.checkTypes)];
+    if (unique.length === 0) throw new Error("Select at least one screening check.");
+
+    for (const checkType of unique) {
+      if (!isScreeningCheckAvailable(checkType)) {
+        throw new Error(`Provider not configured for ${checkType} checks.`);
+      }
+    }
+
+    return Promise.all(
+      unique.map((checkType) =>
+        this.submitScreeningCheck({
+          organizationId: input.organizationId,
+          applicationId: input.applicationId,
+          screeningId: input.screeningId,
+          applicantName: input.applicantName,
+          applicantEmail: input.applicantEmail,
+          reviewedBy: input.reviewedBy,
+          checkType,
+        }),
+      ),
+    );
+  },
+
+  /** @deprecated Use runSelectedScreeningChecks */
   async runFullUsScreeningPack(input: {
     organizationId: string;
     applicationId?: string;
@@ -123,7 +167,9 @@ export const leaseScreeningService = {
     applicantEmail: string;
     reviewedBy?: string;
   }) {
-    const types: ScreeningCheckType[] = ["credit", "criminal", "eviction"];
-    return Promise.all(types.map((checkType) => this.submitScreeningCheck({ ...input, checkType })));
+    return this.runSelectedScreeningChecks({
+      ...input,
+      checkTypes: ["credit", "criminal", "eviction"],
+    });
   },
 };

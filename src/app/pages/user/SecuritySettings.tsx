@@ -7,6 +7,10 @@ import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/badge";
 import { supabase } from "../../../lib/supabase";
+import {
+  removeSessionFromActivityList,
+  trackUserSession,
+} from "../../../lib/security/session-tracking";
 import { nativePluginsService } from "../../../lib/native-plugins.service";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
 import {
@@ -116,6 +120,7 @@ export function SecuritySettingsPage() {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [appLockEnabled, setAppLockEnabled] = useState(() => isBiometricAppLockEnabled());
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
+  const [currentActivitySessionId, setCurrentActivitySessionId] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingSecurityAction | null>(null);
   const [actionPending, setActionPending] = useState(false);
@@ -139,6 +144,14 @@ export function SecuritySettingsPage() {
   useEffect(() => {
     void loadSessions();
     void loadEnrolledFactors();
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void trackUserSession(user.id).then((id) => {
+      if (id) setCurrentActivitySessionId(id);
+      void loadSessions();
+    });
   }, [user?.id]);
 
   useEffect(() => {
@@ -272,14 +285,12 @@ export function SecuritySettingsPage() {
     }
   };
 
-  const revokeSession = async (sessionId: string) => {
+  const removeActivitySession = async (sessionId: string) => {
+    if (!user?.id) return;
     try {
       setRevokingId(sessionId);
-      await supabase
-        .from("user_sessions")
-        .update({ revoked_at: new Date().toISOString() })
-        .eq("id", sessionId);
-      toast.success(t("securityPage.sessionRevoked"));
+      await removeSessionFromActivityList(user.id, sessionId);
+      toast.success("Device removed from your activity list.");
       void loadSessions();
     } finally {
       setRevokingId(null);
@@ -295,7 +306,7 @@ export function SecuritySettingsPage() {
     setActionPending(true);
     try {
       if (pendingAction.kind === "factor") await unenrollFactor(pendingAction.id);
-      if (pendingAction.kind === "session") await revokeSession(pendingAction.id);
+      if (pendingAction.kind === "session") await removeActivitySession(pendingAction.id);
       if (pendingAction.kind === "all") await signOutEverywhere();
       setPendingAction(null);
     } finally {
@@ -647,7 +658,7 @@ export function SecuritySettingsPage() {
                   {t("securityPage.activeSessions")}
                 </h2>
                 <p className="text-xs text-ink-secondary">
-                  Active login sessions across web browsers, desktop apps, and mobile devices.
+                  Recent sign-in activity on this account. Removing a device hides it here only; use Sign out everywhere to invalidate credentials.
                 </p>
               </div>
             </div>
@@ -671,7 +682,7 @@ export function SecuritySettingsPage() {
               sessions.map((session, index) => {
                 const device = parseDeviceFromUserAgent(session.user_agent);
                 const DeviceIcon = device.icon;
-                const isCurrent = index === 0;
+                const isCurrent = session.id === currentActivitySessionId;
 
                 return (
                   <div
@@ -713,15 +724,17 @@ export function SecuritySettingsPage() {
                       </div>
                     </div>
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPendingAction({ kind: "session", id: session.id })}
-                      disabled={revokingId === session.id}
-                      className="text-xs shrink-0 ml-3 h-8"
-                    >
-                      {revokingId === session.id ? "Revoking..." : t("securityPage.revokeSession")}
-                    </Button>
+                    {!isCurrent ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPendingAction({ kind: "session", id: session.id })}
+                        disabled={revokingId === session.id}
+                        className="text-xs shrink-0 ml-3 h-8"
+                      >
+                        {revokingId === session.id ? "Removing..." : "Remove from list"}
+                      </Button>
+                    ) : null}
                   </div>
                 );
               })
@@ -732,9 +745,9 @@ export function SecuritySettingsPage() {
       <ActionDialog
         open={Boolean(pendingAction)}
         onOpenChange={(open) => !open && setPendingAction(null)}
-        title={pendingAction?.kind === "factor" ? "Disable authenticator?" : pendingAction?.kind === "all" ? "Sign out everywhere?" : "Revoke this session?"}
-        description={pendingAction?.kind === "factor" ? "Two-factor protection from this authenticator will be removed from your account." : pendingAction?.kind === "all" ? String(t("securityPage.signOutConfirm")) : String(t("securityPage.revokeConfirm"))}
-        confirmLabel={pendingAction?.kind === "factor" ? "Disable authenticator" : pendingAction?.kind === "all" ? "Sign out everywhere" : "Revoke session"}
+        title={pendingAction?.kind === "factor" ? "Disable authenticator?" : pendingAction?.kind === "all" ? "Sign out everywhere?" : "Remove from activity list?"}
+        description={pendingAction?.kind === "factor" ? "Two-factor protection from this authenticator will be removed from your account." : pendingAction?.kind === "all" ? String(t("securityPage.signOutConfirm")) : "This hides the device from your activity list. It does not sign that device out. Use Sign out everywhere to invalidate all sessions."}
+        confirmLabel={pendingAction?.kind === "factor" ? "Disable authenticator" : pendingAction?.kind === "all" ? "Sign out everywhere" : "Remove device"}
         tone="destructive"
         pending={actionPending}
         onConfirm={confirmSecurityAction}

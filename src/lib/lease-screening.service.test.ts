@@ -1,10 +1,40 @@
 import { describe, expect, it } from "vitest";
-import { validateLeaseApplicationInput } from "./lease-screening.service";
+import { isScreeningCheckAvailable } from "./tenant-screening-providers";
 
-describe("lease application intake contract", () => {
-  it("requires a positive whole household size", () => {
-    expect(validateLeaseApplicationInput({ applicantName: "Ama", applicantEmail: "ama@example.com", householdSize: 2 })).toBeNull();
-    expect(validateLeaseApplicationInput({ applicantName: "Ama", applicantEmail: "ama@example.com", householdSize: 0 })).toContain("Household size");
-    expect(validateLeaseApplicationInput({ applicantName: "", applicantEmail: "ama@example.com", householdSize: 1 })).toContain("name and email");
+describe("tenant screening availability", () => {
+  it("marks bureau checks unavailable when TransUnion is not configured", () => {
+    expect(isScreeningCheckAvailable("credit")).toBe(false);
+    expect(isScreeningCheckAvailable("criminal")).toBe(false);
+    expect(isScreeningCheckAvailable("eviction")).toBe(false);
+  });
+
+  it("allows identity checks via manual trust path", () => {
+    expect(isScreeningCheckAvailable("identity")).toBe(true);
+  });
+});
+
+describe("runSelectedScreeningChecks", () => {
+  it("rejects empty selection", async () => {
+    const { leaseScreeningService } = await import("./lease-screening.service");
+    await expect(
+      leaseScreeningService.runSelectedScreeningChecks({
+        organizationId: "org-1",
+        applicantName: "Test User",
+        applicantEmail: "test@example.com",
+        checkTypes: [],
+      }),
+    ).rejects.toThrow(/at least one/i);
+  });
+
+  it("rejects unavailable bureau checks", async () => {
+    const { leaseScreeningService } = await import("./lease-screening.service");
+    await expect(
+      leaseScreeningService.runSelectedScreeningChecks({
+        organizationId: "org-1",
+        applicantName: "Test User",
+        applicantEmail: "test@example.com",
+        checkTypes: ["credit"],
+      }),
+    ).rejects.toThrow(/not configured/i);
   });
 });

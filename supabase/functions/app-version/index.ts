@@ -13,15 +13,18 @@ Deno.serve(async (req) => {
 
   let surface: Surface = "web";
   let current = "0.0.0";
+  let desktopOs = "";
 
   if (req.method === "POST") {
     const body = await req.json().catch(() => ({}));
     surface = (body?.surface || "web") as Surface;
     current = String(body?.current || "0.0.0").trim();
+    desktopOs = String(body?.desktop_os || "").toLowerCase();
   } else {
     const url = new URL(req.url);
     surface = (url.searchParams.get("surface") || "web") as Surface;
     current = url.searchParams.get("current")?.trim() || "0.0.0";
+    desktopOs = (url.searchParams.get("desktop_os") || "").toLowerCase();
   }
 
   const latest = readVersion("APP_LATEST_VERSION", readVersion("VITE_APP_VERSION", "1.0.0"));
@@ -32,11 +35,24 @@ Deno.serve(async (req) => {
   const changelog = Deno.env.get("APP_CHANGELOG")?.trim() || null;
   const forceUpdate = Deno.env.get("APP_FORCE_UPDATE") === "true";
 
+  const desktopDownloadUrl =
+    desktopOs === "macos" || desktopOs === "mac"
+      ? Deno.env.get("DESKTOP_MACOS_DOWNLOAD_URL") ||
+        Deno.env.get("VITE_DESKTOP_MACOS_DOWNLOAD_URL") ||
+        ""
+      : desktopOs === "linux"
+        ? Deno.env.get("DESKTOP_LINUX_DOWNLOAD_URL") ||
+          Deno.env.get("VITE_DESKTOP_LINUX_DOWNLOAD_URL") ||
+          ""
+        : Deno.env.get("DESKTOP_WINDOWS_DOWNLOAD_URL") ||
+          Deno.env.get("VITE_DESKTOP_WINDOWS_DOWNLOAD_URL") ||
+          Deno.env.get("DESKTOP_DOWNLOAD_URL") ||
+          Deno.env.get("VITE_DESKTOP_DOWNLOAD_URL") ||
+          "";
+
   const downloadUrl =
     surface === "desktop"
-      ? Deno.env.get("DESKTOP_DOWNLOAD_URL") ||
-        Deno.env.get("VITE_DESKTOP_DOWNLOAD_URL") ||
-        "/downloads/baytmiftah-desktop-setup.exe"
+      ? desktopDownloadUrl || null
       : surface === "ios"
         ? Deno.env.get("IOS_APP_URL") || Deno.env.get("VITE_IOS_APP_URL") || ""
         : surface === "android"

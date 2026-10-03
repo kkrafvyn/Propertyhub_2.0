@@ -197,14 +197,14 @@ export class VendorSLAService {
   async updateVendorPerformance(orgId: string, vendorId: string, periodMonth: Date) {
     try {
       const monthStart = new Date(periodMonth.getFullYear(), periodMonth.getMonth(), 1);
-      const monthEnd = new Date(periodMonth.getFullYear(), periodMonth.getMonth() + 1, 0);
+      const nextMonthStart = new Date(periodMonth.getFullYear(), periodMonth.getMonth() + 1, 1);
 
       const { data: workOrders, error } = await db('estate_issues')
         .select('*, work_order_evidence(*), estate_work_orders(estimated_cost_minor, actual_cost_minor)')
         .eq('vendor_id', vendorId)
         .eq('organization_id', orgId)
         .gte('created_at', monthStart.toISOString())
-        .lte('created_at', monthEnd.toISOString());
+        .lt('created_at', nextMonthStart.toISOString());
 
       if (error) throw error;
 
@@ -249,6 +249,7 @@ export class VendorSLAService {
     let totalResponseTime = 0;
     let totalResolutionTime = 0;
     let completedCount = 0;
+    let responseCount = 0;
     const costPerformanceSamples: number[] = [];
 
     for (const wo of workOrders) {
@@ -276,6 +277,7 @@ export class VendorSLAService {
       if (wo.acknowledged_at) {
         const responseMs = new Date(wo.acknowledged_at).getTime() - new Date(wo.created_at).getTime();
         totalResponseTime += responseMs;
+        responseCount += 1;
       }
 
       for (const order of wo.estate_work_orders || []) {
@@ -293,7 +295,7 @@ export class VendorSLAService {
       completedOnTime,
       completedLate,
       incomplete,
-      avgResponseHours: completedCount > 0 ? (totalResponseTime / completedCount) / 3600000 : 0,
+      avgResponseHours: responseCount > 0 ? (totalResponseTime / responseCount) / 3600000 : 0,
       avgResolutionHours: completedCount > 0 ? (totalResolutionTime / completedCount) / 3600000 : 0,
       qualityRating: completedCount > 0 ? (completedOnTime / completedCount) * 5 : 0,
       costPerformance: costPerformanceSamples.length

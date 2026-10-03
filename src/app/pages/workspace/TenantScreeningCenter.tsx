@@ -26,9 +26,13 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/badge";
 import { leaseScreeningService } from "../../../lib/lease-screening.service";
+import {
+  isScreeningCheckAvailable,
+  type ScreeningCheckType,
+} from "../../../lib/tenant-screening-providers";
 import { useAuth } from "../../context/AuthContext";
 
-type Recommendation = "clear" | "consider" | "decline" | "pending" | string;
+type Recommendation = "clear" | "review" | "decline" | "pending" | string;
 
 interface ScreeningCheck {
   id: string;
@@ -48,14 +52,14 @@ interface ScreeningCheck {
 
 function riskColor(rec: Recommendation) {
   if (rec === "clear") return { ring: "#10b981", bg: "bg-emerald-500/10", text: "text-emerald-600", border: "border-emerald-200 dark:border-emerald-800" };
-  if (rec === "consider") return { ring: "#f59e0b", bg: "bg-amber-500/10", text: "text-amber-600", border: "border-amber-200 dark:border-amber-800" };
+  if (rec === "review" || rec === "consider") return { ring: "#f59e0b", bg: "bg-amber-500/10", text: "text-amber-600", border: "border-amber-200 dark:border-amber-800" };
   if (rec === "decline") return { ring: "#ef4444", bg: "bg-red-500/10", text: "text-red-600", border: "border-red-200 dark:border-red-800" };
   return { ring: "#6366f1", bg: "bg-indigo-500/10", text: "text-indigo-600", border: "border-indigo-200 dark:border-indigo-800" };
 }
 
 function recBadge(rec: Recommendation) {
   if (rec === "clear") return <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200 dark:border-emerald-800 gap-1"><CheckCircle2 className="w-3 h-3" /> Clear</Badge>;
-  if (rec === "consider") return <Badge className="bg-amber-500/10 text-amber-700 border-amber-200 gap-1"><AlertTriangle className="w-3 h-3" /> Consider</Badge>;
+  if (rec === "review" || rec === "consider") return <Badge className="bg-amber-500/10 text-amber-700 border-amber-200 gap-1"><AlertTriangle className="w-3 h-3" /> Review</Badge>;
   if (rec === "decline") return <Badge className="bg-red-500/10 text-red-700 border-red-200 gap-1"><XCircle className="w-3 h-3" /> Decline</Badge>;
   return <Badge className="bg-indigo-500/10 text-indigo-700 border-indigo-200 gap-1"><Clock className="w-3 h-3" /> Pending</Badge>;
 }
@@ -207,13 +211,14 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
   const handleRunPack = async () => {
     try {
       setRunning(true);
-      await leaseScreeningService.runFullUsScreeningPack({
+      await leaseScreeningService.runSelectedScreeningChecks({
         organizationId,
         applicantName: form.applicantName,
         applicantEmail: form.applicantEmail,
         reviewedBy: user?.id,
+        checkTypes: selectedChecks as ScreeningCheckType[],
       });
-      toast.success("Screening pack completed — credit, criminal & eviction checked");
+      toast.success("Selected screening checks completed");
       setForm(BLANK_FORM);
       setShowWizard(false);
       setWizardStep(0);
@@ -239,11 +244,12 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
 
   // Aggregate metrics
   const totalClear = checks.filter((c) => c.recommendation === "clear").length;
-  const totalConsider = checks.filter((c) => c.recommendation === "consider").length;
+  const totalReview = checks.filter((c) => c.recommendation === "review" || c.recommendation === "consider").length;
   const totalDecline = checks.filter((c) => c.recommendation === "decline").length;
-  const avgScore = checks.length
-    ? Math.round(checks.reduce((s, c) => s + (c.score ?? 50), 0) / checks.length)
-    : 0;
+  const scored = checks.filter((c) => typeof c.score === "number" && Number.isFinite(c.score));
+  const avgScore = scored.length
+    ? Math.round(scored.reduce((s, c) => s + (c.score as number), 0) / scored.length)
+    : null;
 
   const STEPS = ["Applicant Info", "Select Checks", "Review & Run"];
 
@@ -280,14 +286,14 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
       {/* ── Metric strip ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Avg Risk Score", value: avgScore, sub: "/ 100", ring: true, rec: avgScore >= 70 ? "clear" : avgScore >= 45 ? "consider" : "decline" as Recommendation },
+          { label: "Avg Risk Score", value: avgScore ?? "—", sub: avgScore != null ? "/ 100" : "Not available", ring: avgScore != null, rec: (avgScore ?? 0) >= 70 ? "clear" : (avgScore ?? 0) >= 45 ? "review" : "decline" as Recommendation },
           { label: "Clear", value: totalClear, icon: <CheckCircle2 className="w-4 h-4 text-emerald-600" />, accent: "text-emerald-600" },
-          { label: "Consider", value: totalConsider, icon: <AlertTriangle className="w-4 h-4 text-amber-600" />, accent: "text-amber-600" },
+          { label: "Review", value: totalReview, icon: <AlertTriangle className="w-4 h-4 text-amber-600" />, accent: "text-amber-600" },
           { label: "Decline", value: totalDecline, icon: <XCircle className="w-4 h-4 text-red-600" />, accent: "text-red-600" },
         ].map((m, i) => (
           <Card key={i} className="p-4 flex items-center gap-3">
-            {"ring" in m && m.ring ? (
-              <RiskRing score={m.value} recommendation={m.rec} />
+            {"ring" in m && m.ring && typeof avgScore === "number" ? (
+              <RiskRing score={avgScore} recommendation={m.rec} />
             ) : (
               <div className="p-2.5 rounded-xl bg-muted/50">{m.icon}</div>
             )}
@@ -316,11 +322,11 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
                 title={`Clear: ${totalClear}`}
               />
             )}
-            {totalConsider > 0 && (
+            {totalReview > 0 && (
               <div
                 className="bg-amber-500 transition-all duration-700 ease-out"
-                style={{ width: `${(totalConsider / checks.length) * 100}%` }}
-                title={`Consider: ${totalConsider}`}
+                style={{ width: `${(totalReview / checks.length) * 100}%` }}
+                title={`Review: ${totalReview}`}
               />
             )}
             {totalDecline > 0 && (
@@ -330,17 +336,17 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
                 title={`Decline: ${totalDecline}`}
               />
             )}
-            {(checks.length - totalClear - totalConsider - totalDecline) > 0 && (
+            {(checks.length - totalClear - totalReview - totalDecline) > 0 && (
               <div
                 className="bg-indigo-400 transition-all duration-700 ease-out"
-                style={{ width: `${((checks.length - totalClear - totalConsider - totalDecline) / checks.length) * 100}%` }}
+                style={{ width: `${((checks.length - totalClear - totalReview - totalDecline) / checks.length) * 100}%` }}
                 title={`Pending`}
               />
             )}
           </div>
           <div className="flex items-center gap-4 mt-2 text-xs">
             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />Clear ({Math.round((totalClear / checks.length) * 100)}%)</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />Consider ({Math.round((totalConsider / checks.length) * 100)}%)</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />Review ({Math.round((totalReview / checks.length) * 100)}%)</span>
             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />Decline ({Math.round((totalDecline / checks.length) * 100)}%)</span>
           </div>
         </div>
@@ -429,12 +435,16 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
                   <h2 className="font-bold text-lg">Select Check Types</h2>
                   <p className="text-sm text-muted-foreground">Choose which screening packs to run for this applicant.</p>
                   <div className="space-y-2">
-                    {CHECK_TYPES.map((ct) => (
+                    {CHECK_TYPES.map((ct) => {
+                      const available = isScreeningCheckAvailable(ct.key as ScreeningCheckType);
+                      return (
                       <button
                         key={ct.key}
-                        onClick={() => toggleCheck(ct.key)}
+                        type="button"
+                        disabled={!available}
+                        onClick={() => available && toggleCheck(ct.key)}
                         className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all
-                          ${selectedChecks.includes(ct.key)
+                          ${!available ? "opacity-60 cursor-not-allowed border-border" : selectedChecks.includes(ct.key)
                             ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30"
                             : "border-border hover:border-muted-foreground"}`}
                       >
@@ -443,18 +453,23 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
                         </div>
                         <div className="flex-1">
                           <p className="font-semibold text-sm">{ct.label}</p>
-                          <p className="text-xs text-muted-foreground">{ct.desc}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {available ? ct.desc : "Provider not configured."}
+                          </p>
                         </div>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors
                           ${selectedChecks.includes(ct.key) ? "bg-indigo-600 border-indigo-600" : "border-muted-foreground"}`}>
                           {selectedChecks.includes(ct.key) && <CheckCircle2 className="w-3 h-3 text-white" />}
                         </div>
                       </button>
-                    ))}
+                    );})}
                   </div>
                   <div className="flex justify-between pt-2">
                     <Button variant="outline" onClick={() => setWizardStep(0)}>Back</Button>
-                    <Button disabled={selectedChecks.length === 0} onClick={() => setWizardStep(2)}>
+                    <Button
+                      disabled={selectedChecks.filter((k) => isScreeningCheckAvailable(k as ScreeningCheckType)).length === 0}
+                      onClick={() => setWizardStep(2)}
+                    >
                       Next <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>

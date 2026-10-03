@@ -23,6 +23,33 @@ function currentAppVersion() {
   );
 }
 
+function resolveDesktopOs(): "windows" | "macos" | "linux" | "unknown" {
+  if (typeof navigator === "undefined") return "unknown";
+  const ua = navigator.userAgent.toLowerCase();
+  const platform = (navigator.platform || "").toLowerCase();
+  if (ua.includes("win") || platform.includes("win")) return "windows";
+  if (ua.includes("mac") || platform.includes("mac")) return "macos";
+  if (ua.includes("linux") || platform.includes("linux")) return "linux";
+  return "unknown";
+}
+
+function desktopDownloadUrlForOs(os: ReturnType<typeof resolveDesktopOs>): string | null {
+  if (os === "macos") {
+    return import.meta.env.VITE_DESKTOP_MACOS_DOWNLOAD_URL || null;
+  }
+  if (os === "linux") {
+    return import.meta.env.VITE_DESKTOP_LINUX_DOWNLOAD_URL || null;
+  }
+  if (os === "windows") {
+    return (
+      import.meta.env.VITE_DESKTOP_WINDOWS_DOWNLOAD_URL ||
+      import.meta.env.VITE_DESKTOP_DOWNLOAD_URL ||
+      null
+    );
+  }
+  return null;
+}
+
 function resolveSurface(): AppUpdateSurface {
   if (isElectron()) return "desktop";
   if (typeof navigator !== "undefined" && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
@@ -57,8 +84,7 @@ function envBasedUpdateInfo(surface: AppUpdateSurface, current: string): AppUpda
     minimum_version: minimum,
     download_url:
       surface === "desktop"
-        ? import.meta.env.VITE_DESKTOP_DOWNLOAD_URL ||
-          "/downloads/baytmiftah-desktop-setup.exe"
+        ? desktopDownloadUrlForOs(resolveDesktopOs())
         : import.meta.env.VITE_PUBLIC_APP_URL || null,
     changelog: import.meta.env.VITE_APP_CHANGELOG || null,
   };
@@ -91,7 +117,11 @@ export const appUpdateService = {
 
     try {
       const { data, error } = await supabase.functions.invoke("app-version", {
-        body: { surface, current },
+        body: {
+          surface,
+          current,
+          desktop_os: surface === "desktop" ? resolveDesktopOs() : undefined,
+        },
       });
 
       if (error) throw error;

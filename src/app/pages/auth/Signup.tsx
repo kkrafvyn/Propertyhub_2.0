@@ -16,9 +16,8 @@ type SignupAccountType = "user" | "landlord";
 
 export function Signup() {
   const [searchParams] = useSearchParams();
-  const initialAccountType: SignupAccountType =
+  const accountType: SignupAccountType =
     searchParams.get("type") === "landlord" ? "landlord" : "user";
-  const [accountType, setAccountType] = useState<SignupAccountType>(initialAccountType);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -148,31 +147,6 @@ export function Signup() {
       />
 
       <AuthDivider label="Or register with email" />
-
-      <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-white/10 lg:bg-muted/40 border border-white/15 lg:border-border/60">
-        <button
-          type="button"
-          onClick={() => setAccountType("user")}
-          className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
-            accountType === "user"
-              ? "bg-white text-neutral-900 lg:bg-background shadow-sm"
-              : "text-white/80 lg:text-muted-foreground"
-          }`}
-        >
-          Buyer / renter
-        </button>
-        <button
-          type="button"
-          onClick={() => setAccountType("landlord")}
-          className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
-            accountType === "landlord"
-              ? "bg-white text-neutral-900 lg:bg-background shadow-sm"
-              : "text-white/80 lg:text-muted-foreground"
-          }`}
-        >
-          Landlord / pro
-        </button>
-      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">

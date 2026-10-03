@@ -261,20 +261,18 @@ export const estateReportingService = {
 
   async requestDistributionApproval(input: {
     statementRunId: string;
-    amountMinor: number;
-    requestedBy: string;
+    amountMinor?: number;
+    requestedBy?: string;
     organizationId?: string;
+    clientRequestId?: string;
   }) {
-    if (input.amountMinor < 0) throw new Error("Distribution amount cannot be negative");
-
     if (typeof navigator !== "undefined" && !navigator.onLine && input.organizationId) {
       const { workspaceSyncService } = await import("./workspace-sync.service");
       const entry = await workspaceSyncService.queueFinanceDistributionRequest({
         organizationId: input.organizationId,
         payload: {
           statementRunId: input.statementRunId,
-          amountMinor: input.amountMinor,
-          requestedBy: input.requestedBy,
+          offlineClientId: input.clientRequestId,
         },
       });
       return { id: entry.id, offlineQueued: true, status: "pending" };
@@ -282,6 +280,7 @@ export const estateReportingService = {
 
     const { data, error } = await db.rpc("request_distribution_approval", {
       p_statement_run_id: input.statementRunId,
+      p_client_request_id: input.clientRequestId || null,
     });
     if (error) throw error;
     return data;

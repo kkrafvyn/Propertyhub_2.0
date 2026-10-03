@@ -4,7 +4,7 @@
  */
 
 export type ScreeningCheckType = 'credit' | 'criminal' | 'eviction' | 'income' | 'identity';
-export type ScreeningRecommendation = 'clear' | 'review' | 'decline';
+export type ScreeningRecommendation = 'clear' | 'review' | 'decline' | 'pending';
 
 export type ScreeningProviderResult = {
   provider: string;
@@ -80,4 +80,13 @@ export const SCREENING_PROVIDERS: ScreeningProviderAdapter[] = [
 
 export function getProviderForCheck(checkType: ScreeningCheckType): ScreeningProviderAdapter | undefined {
   return SCREENING_PROVIDERS.find((p) => p.supportedChecks.includes(checkType));
+}
+
+export function isScreeningCheckAvailable(checkType: ScreeningCheckType): boolean {
+  const provider = getProviderForCheck(checkType);
+  if (!provider) return false;
+  if (checkType === "identity" || checkType === "income") {
+    return true;
+  }
+  return provider.isConfigured();
 }

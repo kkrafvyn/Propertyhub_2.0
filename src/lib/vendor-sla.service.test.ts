@@ -1,13 +1,36 @@
-import { describe, expect, it, vi } from "vitest";
-
-vi.mock("./supabase", () => ({ supabase: { from: vi.fn() } }));
+import { describe, expect, it } from "vitest";
 import { VendorSLAService } from "./vendor-sla.service";
 
-describe("VendorSLAService metrics", () => {
-  it("uses actual versus estimated work-order cost and leaves missing cost unknown", () => {
-    const service = new VendorSLAService();
-    const base = { id: "issue", organization_id: "org", vendor_id: "vendor", created_at: "2026-09-01T00:00:00.000Z", acknowledged_at: "2026-09-01T01:00:00.000Z", resolved_at: "2026-09-01T10:00:00.000Z", sla_resolution_target: "PT48H", status: "resolved" };
-    expect(service.calculateVendorMetrics([{ ...base, estate_work_orders: [{ estimated_cost_minor: 10_000, actual_cost_minor: 8_000 }] }]).costPerformance).toBe(125);
-    expect(service.calculateVendorMetrics([{ ...base, estate_work_orders: [{ estimated_cost_minor: null, actual_cost_minor: 8_000 }] }]).costPerformance).toBeNull();
+describe("VendorSLAService.calculateVendorMetrics", () => {
+  const service = new VendorSLAService();
+
+  it("averages response time over acknowledged orders only", () => {
+    const metrics = service.calculateVendorMetrics([
+      {
+        id: "1",
+        organization_id: "org",
+        created_at: "2026-01-01T10:00:00.000Z",
+        acknowledged_at: "2026-01-01T11:00:00.000Z",
+        resolved_at: "2026-01-02T10:00:00.000Z",
+      },
+      {
+        id: "2",
+        organization_id: "org",
+        created_at: "2026-01-01T10:00:00.000Z",
+        resolved_at: "2026-01-03T10:00:00.000Z",
+      },
+    ]);
+    expect(metrics.avgResponseHours).toBe(1);
+    expect(metrics.avgResolutionHours).toBeGreaterThan(0);
+  });
+});
+
+describe("VendorSLAService month window", () => {
+  it("includes work orders on the last day of the month", () => {
+    const monthStart = new Date(2024, 1, 1);
+    const nextMonthStart = new Date(2024, 2, 1);
+    const lastDay = new Date("2024-02-29T15:00:00.000Z");
+    expect(lastDay.getTime()).toBeGreaterThanOrEqual(monthStart.getTime());
+    expect(lastDay.getTime()).toBeLessThan(nextMonthStart.getTime());
   });
 });

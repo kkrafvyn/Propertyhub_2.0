@@ -160,12 +160,12 @@ export default function NotificationSettings() {
 
     try {
       setRegisteringPush(true);
-      await pushNotificationService.registerBrowserPush(user.id);
-      toast.success(
-        pushNotificationService.hasWebPushKeys()
-          ? "Browser push connected."
-          : "Browser alerts enabled."
-      );
+      const result = await pushNotificationService.registerBrowserPush(user.id);
+      if (result.configured === false) {
+        toast.error(result.reason);
+        return;
+      }
+      toast.success("Browser push connected.");
     } catch (error) {
       console.error("Failed to register browser push:", error);
       toast.error(

@@ -13,6 +13,10 @@ function decodeBase64Url(value: string) {
   return output;
 }
 
+export type BrowserPushRegisterResult =
+  | { configured: true; subscription: PushSubscription | null }
+  | { configured: false; reason: string };
+
 export const pushNotificationService = {
   isSupported() {
     return (
@@ -62,7 +66,7 @@ export const pushNotificationService = {
     return notification;
   },
 
-  async registerBrowserPush(userId: string) {
+  async registerBrowserPush(userId: string): Promise<BrowserPushRegisterResult> {
     if (!this.canUseLocalNotifications()) {
       throw new Error("Browser notifications are not supported in this environment.");
     }
@@ -74,19 +78,17 @@ export const pushNotificationService = {
 
     const vapidPublicKey = import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY;
     if (!vapidPublicKey) {
-      this.showLocalNotification({
-        title: "BaytMiftah alerts enabled",
-        body: "You'll receive in-app notifications and browser alerts while this app is open.",
-      });
-      return null;
+      return {
+        configured: false,
+        reason: "Web push is not configured (missing VITE_WEB_PUSH_PUBLIC_KEY).",
+      };
     }
 
     if (!this.isSupported()) {
-      this.showLocalNotification({
-        title: "BaytMiftah alerts enabled",
-        body: "In-app notifications are active. Full web push requires a supported browser.",
-      });
-      return null;
+      return {
+        configured: false,
+        reason: "This browser does not support web push subscriptions.",
+      };
     }
 
     const registration = await navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" });
@@ -119,6 +121,6 @@ export const pushNotificationService = {
       auth: subscriptionJson.keys?.auth,
     });
 
-    return subscription;
+    return { configured: true, subscription };
   },
 };
