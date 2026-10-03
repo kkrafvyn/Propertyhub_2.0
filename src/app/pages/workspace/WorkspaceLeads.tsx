@@ -7,6 +7,7 @@ import {
   MapPin,
   MessageCircle,
   Phone,
+  RefreshCw,
   Send,
   UserCheck,
   Wallet,
@@ -24,15 +25,9 @@ import {
   DialogTitle,
 } from "../../components/ui/dialog";
 import { Input } from "../../components/ui/Input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../components/ui/select";
+import { NativeSelect } from "../../components/ui/NativeSelect";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
-import { Textarea } from "../../components/ui/textarea";
+import { TextareaField } from "../../components/ui/TextareaField";
 import type { Database } from "../../../lib/database.types";
 import { dealCaseService } from "../../../lib/dealcase.service";
 import { workflowOrchestratorService } from "../../../lib/workflow-orchestrator.service";
@@ -42,6 +37,11 @@ import { paymentService } from "../../../lib/payment.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
 import { inspectionService } from "../../../lib/inspection.service";
 import { PurchaseNegotiationPanel } from "./PurchaseNegotiationPanel";
+import {
+  DashboardStatsSkeleton,
+  OperationalQueryState,
+  WorkspacePageShell,
+} from "../../components/ux";
 import { savedPropertyService } from "../../../lib/savedproperty.service";
 import { savedSearchAlertService } from "../../../lib/saved-search-alert.service";
 import { userService } from "../../../lib/user.service";
@@ -213,6 +213,7 @@ const WHATSAPP_TEMPLATES: Array<{ key: LeadWhatsappTemplate; label: string }> = 
 
 export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsProps) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [cases, setCases] = useState<any[]>([]);
   const [sharedConversations, setSharedConversations] = useState<any[]>([]);
   const [organizationViewings, setOrganizationViewings] = useState<any[]>([]);
@@ -266,6 +267,7 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
   async function loadData() {
     try {
       setLoading(true);
+      setLoadError(null);
 
       const [organizationCases, inboxConversations, members, viewings, payments, inspections] =
         await Promise.all([
@@ -304,6 +306,7 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
       });
     } catch (error) {
       console.error("Failed to load workspace leads:", error);
+      setLoadError("We couldn't load leads and messages. Check your connection and try again.");
       toast.error("Unable to load leads and messages right now.");
     } finally {
       setLoading(false);
@@ -763,20 +766,36 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
   const leadProfileForDisplay =
     selectedLeadProfile || (selectedLeadId ? leadProfiles[selectedLeadId] : null) || selectedLeadPrimaryCase?.user;
 
-  if (loading) {
-    return <Card className="p-8 text-center text-muted-foreground">Loading leads...</Card>;
-  }
+  const queryPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : cases.length === 0 &&
+          sharedConversations.length === 0 &&
+          organizationViewings.length === 0
+        ? "empty"
+        : "ready";
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">Leads & Messages</h1>
-        <p className="text-muted-foreground mt-2">
-          Run the full lead workflow for {organization.name}: triage inquiries, schedule viewings,
-          and keep the shared inbox moving.
-        </p>
-      </div>
-
+    <WorkspacePageShell
+      title="Leads & Messages"
+      description={`Run the full lead workflow for ${organization.name}: triage inquiries, schedule viewings, and keep the shared inbox moving.`}
+      actions={
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => void loadData()}
+          aria-label="Refresh leads"
+        >
+          <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
+          Refresh
+        </Button>
+      }
+    >
+      {loading && !loadError ? (
+        <DashboardStatsSkeleton />
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Open Pipeline</p>
@@ -801,7 +820,17 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
           <p className="text-xs text-muted-foreground mt-2">Collected through checkout and linked to leads</p>
         </Card>
       </div>
+      )}
 
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void loadData()}
+        retryLabel="Reload leads"
+        loadingFallback={<DashboardStatsSkeleton />}
+        emptyTitle="No leads yet"
+        emptyDescription="New inquiries, viewings, and inbox threads will appear here when they arrive."
+      >
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-1 gap-1">
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
@@ -811,7 +840,7 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
         </TabsList>
 
         <TabsContent value="pipeline" className="space-y-6">
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_380px]">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_380px] ">
             <Card className="p-4">
               <div className="mb-4">
                 <h2 className="text-xl font-semibold">Deal Pipeline</h2>
@@ -821,9 +850,9 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
               </div>
 
               {cases.length === 0 ? (
-                <div className="text-muted-foreground text-sm py-10 text-center">
-                  No leads yet. New inquiries and viewing requests will land here.
-                </div>
+                <p className="py-10 text-center text-sm text-ink-secondary" role="status">
+                  No deal cases in the pipeline yet. Inquiries with an active deal case will appear in these columns.
+                </p>
               ) : (
                 <div className="overflow-x-auto pb-2">
                   <div className="grid min-w-max auto-cols-[280px] grid-flow-col gap-4">
@@ -1069,53 +1098,39 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
                     </div>
 
                     <div className="grid gap-3">
-                      <div>
-                        <label className="mb-2 block text-sm text-foreground">Pipeline stage</label>
-                        <Select
-                          value={caseDraft.pipelineStage}
-                          onValueChange={(value) =>
-                            setCaseDraft((current) => ({
-                              ...current,
-                              pipelineStage: value as PipelineStage,
-                            }))
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select stage" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {PIPELINE_COLUMNS.map((column) => (
-                              <SelectItem key={column.key} value={column.key}>
-                                {column.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      <NativeSelect
+                        label="Pipeline stage"
+                        value={caseDraft.pipelineStage}
+                        onChange={(event) =>
+                          setCaseDraft((current) => ({
+                            ...current,
+                            pipelineStage: event.target.value as PipelineStage,
+                          }))
+                        }
+                      >
+                        {PIPELINE_COLUMNS.map((column) => (
+                          <option key={column.key} value={column.key}>
+                            {column.label}
+                          </option>
+                        ))}
+                      </NativeSelect>
 
-                      <div>
-                        <label className="mb-2 block text-sm text-foreground">Priority</label>
-                        <Select
-                          value={caseDraft.priority}
-                          onValueChange={(value) =>
-                            setCaseDraft((current) => ({
-                              ...current,
-                              priority: value as LeadPriority,
-                            }))
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select priority" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {["low", "medium", "high", "urgent"].map((priority) => (
-                              <SelectItem key={priority} value={priority}>
-                                {formatLabel(priority)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      <NativeSelect
+                        label="Priority"
+                        value={caseDraft.priority}
+                        onChange={(event) =>
+                          setCaseDraft((current) => ({
+                            ...current,
+                            priority: event.target.value as LeadPriority,
+                          }))
+                        }
+                      >
+                        {(["low", "medium", "high", "urgent"] as const).map((priority) => (
+                          <option key={priority} value={priority}>
+                            {formatLabel(priority)}
+                          </option>
+                        ))}
+                      </NativeSelect>
 
                       <Input
                         type="datetime-local"
@@ -1416,7 +1431,7 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
         </TabsContent>
 
         <TabsContent value="inbox">
-          <div className="grid grid-cols-1 lg:grid-cols-[360px,1fr] gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr]  gap-6">
             <Card className="p-4">
               <div className="mb-4">
                 <h2 className="text-xl font-semibold">Shared Team Inbox</h2>
@@ -1607,6 +1622,7 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
           </div>
         </TabsContent>
       </Tabs>
+      </OperationalQueryState>
 
       <Dialog open={viewingDialogOpen} onOpenChange={setViewingDialogOpen}>
         <DialogContent>
@@ -1618,36 +1634,31 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
           </DialogHeader>
 
           <div className="space-y-4">
-            <div>
-              <label className="mb-2 block text-sm text-foreground">Status</label>
-              <Select
-                value={viewingDraft.status}
-                onValueChange={(value) =>
-                  setViewingDraft((current) => ({
-                    ...current,
-                    status: value as ViewingStatus,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[
-                    "requested",
-                    "confirmed",
-                    "rescheduled",
-                    "completed",
-                    "cancelled",
-                    "no_show",
-                  ].map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {formatLabel(status)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <NativeSelect
+              label="Status"
+              value={viewingDraft.status}
+              onChange={(event) =>
+                setViewingDraft((current) => ({
+                  ...current,
+                  status: event.target.value as ViewingStatus,
+                }))
+              }
+            >
+              {(
+                [
+                  "requested",
+                  "confirmed",
+                  "rescheduled",
+                  "completed",
+                  "cancelled",
+                  "no_show",
+                ] as const
+              ).map((status) => (
+                <option key={status} value={status}>
+                  {formatLabel(status)}
+                </option>
+              ))}
+            </NativeSelect>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Input
@@ -1674,58 +1685,49 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
               />
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm text-foreground">Assigned rep</label>
-              <Select
-                value={viewingDraft.assignedTo}
-                onValueChange={(value) =>
-                  setViewingDraft((current) => ({
-                    ...current,
-                    assignedTo: value,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose team member" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {Object.entries(memberProfiles).map(([memberId, member]) => (
-                    <SelectItem key={memberId} value={memberId}>
-                      {getDisplayName(member)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <NativeSelect
+              label="Assigned rep"
+              value={viewingDraft.assignedTo}
+              onChange={(event) =>
+                setViewingDraft((current) => ({
+                  ...current,
+                  assignedTo: event.target.value,
+                }))
+              }
+            >
+              <option value="unassigned">Unassigned</option>
+              {Object.entries(memberProfiles).map(([memberId, member]) => (
+                <option key={memberId} value={memberId}>
+                  {getDisplayName(member)}
+                </option>
+              ))}
+            </NativeSelect>
 
-            <div>
-              <label className="mb-2 block text-sm text-foreground">Internal notes</label>
-              <Textarea
-                value={viewingDraft.internalNote}
-                onChange={(event) =>
-                  setViewingDraft((current) => ({
-                    ...current,
-                    internalNote: event.target.value,
-                  }))
-                }
-                placeholder="Parking instructions, rep handoff, or prep notes"
-              />
-            </div>
+            <TextareaField
+              label="Internal notes"
+              value={viewingDraft.internalNote}
+              onChange={(event) =>
+                setViewingDraft((current) => ({
+                  ...current,
+                  internalNote: event.target.value,
+                }))
+              }
+              placeholder="Parking instructions, rep handoff, or prep notes"
+              rows={3}
+            />
 
-            <div>
-              <label className="mb-2 block text-sm text-foreground">Outcome notes</label>
-              <Textarea
-                value={viewingDraft.outcomeNote}
-                onChange={(event) =>
-                  setViewingDraft((current) => ({
-                    ...current,
-                    outcomeNote: event.target.value,
-                  }))
-                }
-                placeholder="What happened after the viewing?"
-              />
-            </div>
+            <TextareaField
+              label="Outcome notes"
+              value={viewingDraft.outcomeNote}
+              onChange={(event) =>
+                setViewingDraft((current) => ({
+                  ...current,
+                  outcomeNote: event.target.value,
+                }))
+              }
+              placeholder="What happened after the viewing?"
+              rows={3}
+            />
           </div>
 
           <DialogFooter>
@@ -1738,6 +1740,6 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </WorkspacePageShell>
   );
 }

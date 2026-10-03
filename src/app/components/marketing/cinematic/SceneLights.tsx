@@ -1,13 +1,9 @@
-import { useMemo } from "react";
-
 type SceneLightsProps = {
   mobile?: boolean;
 };
 
 export function SceneLights({ mobile }: SceneLightsProps) {
   const intensity = mobile ? 0.85 : 1;
-
-  const shadow = useMemo(() => !mobile, [mobile]);
 
   return (
     <>
@@ -23,9 +19,7 @@ export function SceneLights({ mobile }: SceneLightsProps) {
         position={[6, 8, 4]}
         intensity={1.1 * intensity}
         color="#f5efe6"
-        castShadow={shadow}
-        shadow-mapSize-width={shadow ? 1024 : 0}
-        shadow-mapSize-height={shadow ? 1024 : 0}
+        castShadow={false}
       />
       <directionalLight position={[-4, 3, -2]} intensity={0.35} color="#1b4332" />
       <spotLight

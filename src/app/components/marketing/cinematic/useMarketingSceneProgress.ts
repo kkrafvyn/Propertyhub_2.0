@@ -1,15 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { clamp01 } from "./scene-phases";
+import { marketingScrollState, type ScenePointer } from "./marketingScrollState";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export type ScenePointer = { x: number; y: number };
+export type { ScenePointer };
 
 export function useMarketingSceneProgress(scrollRootRef: React.RefObject<HTMLElement | null>) {
-  const [progress, setProgress] = useState(0);
-  const [pointer, setPointer] = useState<ScenePointer>({ x: 0, y: 0 });
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -19,7 +18,7 @@ export function useMarketingSceneProgress(scrollRootRef: React.RefObject<HTMLEle
   useEffect(() => {
     const root = scrollRootRef.current;
     if (!root || reducedMotion) {
-      setProgress(0);
+      marketingScrollState.setProgress(0);
       return undefined;
     }
 
@@ -27,35 +26,47 @@ export function useMarketingSceneProgress(scrollRootRef: React.RefObject<HTMLEle
       trigger: root,
       start: "top top",
       end: "bottom bottom",
-      scrub: 0.85,
-      onUpdate: (self) => setProgress(clamp01(self.progress)),
+      scrub: 0.35,
+      onUpdate: (self) => marketingScrollState.setProgress(clamp01(self.progress)),
     });
-    ScrollTrigger.refresh();
+
+    const refresh = () => ScrollTrigger.refresh();
+    refresh();
+    const refreshTimer = window.setTimeout(refresh, 120);
 
     return () => {
+      window.clearTimeout(refreshTimer);
       trigger.kill();
     };
   }, [scrollRootRef, reducedMotion]);
 
   useEffect(() => {
+    let raf = 0;
     const onMove = (e: PointerEvent) => {
-      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
-      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
-      setPointer({ x: nx, y: ny });
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const nx = (e.clientX / window.innerWidth - 0.5) * 2;
+        const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+        marketingScrollState.setPointer(nx, ny);
+      });
     };
     window.addEventListener("pointermove", onMove, { passive: true });
-    return () => window.removeEventListener("pointermove", onMove);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
   useEffect(() => {
     const onVis = () => {
-      if (document.hidden) ScrollTrigger.refresh();
+      if (!document.hidden) ScrollTrigger.refresh();
     };
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
-  return { progress, pointer, reducedMotion };
+  return { reducedMotion };
 }
 
 export function useIsMobileCinematic(breakpoint = 768) {

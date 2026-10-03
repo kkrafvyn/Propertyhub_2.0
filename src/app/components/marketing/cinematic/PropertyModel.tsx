@@ -1,6 +1,8 @@
-import { useMemo, useRef, type ReactElement } from "react";
+import { useMemo, useRef, type ReactElement, type Ref } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { marketingScrollState } from "./marketingScrollState";
+import { sceneScalars } from "./SceneCameraRig";
 import {
   BUILDING_PALETTE,
   matFrame,
@@ -17,6 +19,8 @@ export type PropertyModelProps = {
   spin?: number;
   modelRef?: React.RefObject<THREE.Group | null>;
   floatPhase?: number;
+  /** Read separation/spin from marketingScrollState each frame (no React scroll re-renders). */
+  scrollDriven?: boolean;
 };
 
 /** Stacked cantilever volumes — inspired by offset high-rise forum architecture. */
@@ -64,7 +68,7 @@ function RibbedCladding({
 
   return (
     <group>
-      <mesh material={matPanel} castShadow receiveShadow>
+      <mesh material={matPanel}>
         <boxGeometry args={[width, height, depth]} />
       </mesh>
       {ribElements}
@@ -123,18 +127,20 @@ function StackedVolume({
   index,
   spec,
   layerSeparation,
+  groupRef,
 }: {
   index: number;
   spec: (typeof VOLUMES)[number];
   layerSeparation: number;
+  groupRef?: Ref<THREE.Group>;
 }) {
   const spread = layerSeparation * (index + 1) * 0.09;
   const y = spec.oy + spread;
 
   return (
-    <group position={[spec.ox, y, spec.oz]} rotation={[0, spec.rot, 0]}>
+    <group ref={groupRef} position={[spec.ox, y, spec.oz]} rotation={[0, spec.rot, 0]}>
       {/* primary mass */}
-      <mesh castShadow receiveShadow material={matSoffit}>
+      <mesh material={matSoffit}>
         <boxGeometry args={[spec.w, spec.h, spec.d]} />
       </mesh>
       {/* front curtain wall */}
@@ -151,7 +157,7 @@ function StackedVolume({
         <RibbedCladding width={spec.d} height={spec.h} depth={0.04} axis="z" />
       </group>
       {/* cantilever soffit */}
-      <mesh position={[0, -spec.h / 2 - 0.015, 0]} material={matSoffit} receiveShadow>
+      <mesh position={[0, -spec.h / 2 - 0.015, 0]} material={matSoffit}>
         <boxGeometry args={[spec.w * 1.02, 0.03, spec.d * 1.02]} />
       </mesh>
     </group>
@@ -163,29 +169,55 @@ export function PropertyModel({
   spin = 0,
   modelRef: externalRef,
   floatPhase = 0,
+  scrollDriven = false,
 }: PropertyModelProps) {
   const internalRef = useRef<THREE.Group>(null);
   const groupRef = externalRef ?? internalRef;
+  const separationRef = useRef(layerSeparation);
+  const spinRef = useRef(spin);
+  const floatPhaseRef = useRef(floatPhase);
+  const volumeRefs = useRef<(THREE.Group | null)[]>([]);
 
   useFrame(({ clock }, delta) => {
+    if (scrollDriven) {
+      const progress = marketingScrollState.progress;
+      const s = sceneScalars(progress);
+      separationRef.current = s.layerSeparation;
+      spinRef.current = s.heroSpin + progress * 0.15;
+      floatPhaseRef.current = progress * Math.PI;
+      volumeRefs.current.forEach((volumeGroup, index) => {
+        if (!volumeGroup) return;
+        const spec = VOLUMES[index];
+        const spread = separationRef.current * (index + 1) * 0.09;
+        volumeGroup.position.set(spec.ox, spec.oy + spread, spec.oz);
+      });
+    } else {
+      separationRef.current = layerSeparation;
+      spinRef.current = spin;
+      floatPhaseRef.current = floatPhase;
+    }
+
     const g = groupRef.current;
     if (!g) return;
-    g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, spin * 0.35, delta * 2);
-    g.position.y = Math.sin(clock.elapsedTime * 0.55 + floatPhase) * 0.03;
+    g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, spinRef.current * 0.35, delta * 2);
+    g.position.y = Math.sin(clock.elapsedTime * 0.55 + floatPhaseRef.current) * 0.03;
   });
 
+  const activeSeparation = scrollDriven ? 0 : layerSeparation;
   const topY =
-    VOLUMES[VOLUMES.length - 1].oy + VOLUMES[VOLUMES.length - 1].h / 2 + layerSeparation * VOLUMES.length * 0.09;
+    VOLUMES[VOLUMES.length - 1].oy +
+    VOLUMES[VOLUMES.length - 1].h / 2 +
+    (scrollDriven ? separationRef.current : activeSeparation) * VOLUMES.length * 0.09;
 
   return (
     <group ref={groupRef}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]}>
         <circleGeometry args={[3.2, 64]} />
         <meshStandardMaterial color="#0a1210" roughness={1} />
       </mesh>
 
       {/* low podium */}
-      <mesh position={[0, 0.12, 0]} castShadow receiveShadow material={matPodium}>
+      <mesh position={[0, 0.12, 0]} material={matPodium}>
         <boxGeometry args={[1.65, 0.24, 1.25]} />
       </mesh>
       <mesh position={[0, 0.26, 0.62]} material={matGold}>
@@ -199,7 +231,19 @@ export function PropertyModel({
       </mesh>
 
       {VOLUMES.map((spec, index) => (
-        <StackedVolume key={index} index={index} spec={spec} layerSeparation={layerSeparation} />
+        <StackedVolume
+          key={index}
+          index={index}
+          spec={spec}
+          layerSeparation={scrollDriven ? 0 : layerSeparation}
+          groupRef={
+            scrollDriven
+              ? (el) => {
+                  volumeRefs.current[index] = el;
+                }
+              : undefined
+          }
+        />
       ))}
 
       {/* roof cap */}

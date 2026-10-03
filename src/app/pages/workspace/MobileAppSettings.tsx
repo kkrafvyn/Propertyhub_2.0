@@ -261,7 +261,7 @@ export default function MobileAppSettings({
           <Badge variant="outline">Mobile workflow MVP</Badge>
         </div>
 
-        <div className="mt-5 grid gap-6 lg:grid-cols-[420px,1fr]">
+        <div className="mt-5 grid gap-6 lg:grid-cols-[420px_1fr] ">
           <div className="space-y-4">
             <Input
               label="Note title"

@@ -28,7 +28,7 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <Card
-      className={`relative overflow-hidden p-8 sm:p-12 text-center border-surface-border bg-gradient-to-b from-surface to-surface-subtle shadow-card ${className}`}
+      className={`relative overflow-hidden p-8 sm:p-12 text-center border-surface-border bg-card shadow-card ${className}`}
       role="status"
       aria-live="polite"
     >

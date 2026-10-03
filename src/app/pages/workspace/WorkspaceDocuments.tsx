@@ -6,7 +6,11 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { MetricCard } from "../../components/ui/MetricCard";
-import { EmptyState } from "../../components/ux/EmptyState";
+import {
+  ListSkeleton,
+  OperationalQueryState,
+  WorkspacePageShell,
+} from "../../components/ux";
 import {
   Dialog,
   DialogContent,
@@ -63,6 +67,7 @@ export function WorkspaceDocuments({
   currentUserId,
 }: WorkspaceDocumentsProps) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [documents, setDocuments] = useState<any[]>([]);
   const [dealCases, setDealCases] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
@@ -95,6 +100,7 @@ export function WorkspaceDocuments({
   const loadData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [documentRows, caseRows, paymentRows] = await Promise.all([
         documentCenterService.getOrganizationDocuments(organization.id),
         dealCaseService.getDealCasesByOrganization(organization.id),
@@ -105,6 +111,7 @@ export function WorkspaceDocuments({
       setPayments(paymentRows || []);
     } catch (error) {
       console.error("Failed to load document center:", error);
+      setLoadError("We couldn't load the document center. Try again in a moment.");
       toast.error("We couldn't load the document center right now.");
     } finally {
       setLoading(false);
@@ -338,81 +345,49 @@ export function WorkspaceDocuments({
     }
   };
 
-  return (
-    <div className="space-y-8">
-      {/* ── Editorial Header ── */}
-      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-indigo-500/10 via-primary/5 to-surface/80 border border-indigo-500/20 shadow-lg backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-radial from-indigo-500/15 via-primary/10 to-transparent blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-radial from-emerald-500/10 via-transparent to-transparent blur-2xl pointer-events-none" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="info" dot pulse className="text-xs font-semibold px-2.5 py-1">
-                Legal & Contract Center
-              </Badge>
-              <span className="text-xs text-ink-muted flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-indigo-500" />
-                Immutable Version Auditing & Digital Signatures
-              </span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-display font-medium tracking-tight text-ink">
-              Document Center
-            </h1>
-            <p className="text-sm text-ink-secondary max-w-xl leading-relaxed">
-              Keep tenancy agreements, offer letters, deeds, signed copies, and versioned deal documents organized and verified.
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5 shrink-0">
-            <Button
-              variant="gradient"
-              size="sm"
-              onClick={() => {
-                resetDraft();
-                setDialogOpen(true);
-              }}
-              className="gap-2 shadow-sm"
-            >
-              <Plus className="w-4 h-4" />
-              New Document
-            </Button>
-          </div>
-        </div>
-      </div>
+  const listPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : groupedDocuments.length === 0
+        ? "empty"
+        : "ready";
 
-      {/* ── KPI Overview with Halo Illumination ── */}
+  return (
+    <WorkspacePageShell
+      title="Document Center"
+      description="Keep tenancy agreements, offer letters, deeds, and versioned deal documents organized and verified."
+      actions={
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void loadData()}
+            aria-label="Refresh documents"
+          >
+            <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
+            Refresh
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => {
+              resetDraft();
+              setDialogOpen(true);
+            }}
+          >
+            <Plus className="w-4 h-4 mr-1.5" aria-hidden="true" />
+            New document
+          </Button>
+        </div>
+      }
+    >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Document Families"
-          value={metrics.total}
-          subtitle="Active document clusters"
-          icon={FileText}
-          iconColor="primary"
-          glow="primary"
-        />
-        <MetricCard
-          title="Signed Documents"
-          value={metrics.signed}
-          subtitle="Audited agreements"
-          icon={FileCheck}
-          iconColor="emerald"
-          glow="emerald"
-        />
-        <MetricCard
-          title="Public Trust Docs"
-          value={metrics.publicDocs}
-          subtitle="Shared external compliance"
-          icon={Globe}
-          iconColor="indigo"
-          glow="indigo"
-        />
-        <MetricCard
-          title="Contracts"
-          value={metrics.contracts}
-          subtitle="Binding deal forms"
-          icon={FileSignature}
-          iconColor="amber"
-          glow="amber"
-        />
+        <MetricCard title="Document families" value={loading ? "—" : metrics.total} subtitle="Active document clusters" icon={FileText} iconColor="primary" />
+        <MetricCard title="Signed documents" value={loading ? "—" : metrics.signed} subtitle="Audited agreements" icon={FileCheck} iconColor="primary" />
+        <MetricCard title="Public trust docs" value={loading ? "—" : metrics.publicDocs} subtitle="Shared external compliance" icon={Globe} iconColor="primary" />
+        <MetricCard title="Contracts" value={loading ? "—" : metrics.contracts} subtitle="Binding deal forms" icon={FileSignature} iconColor="primary" />
       </div>
 
       <Card variant="glass" className="p-6 border border-surface-border/80 rounded-2xl shadow-sm">
@@ -428,21 +403,22 @@ export function WorkspaceDocuments({
           </div>
         </div>
 
-        {loading ? (
-          <div className="py-10 text-center text-muted-foreground">Loading documents...</div>
-        ) : groupedDocuments.length === 0 ? (
-          <EmptyState
-            icon={FileText}
-            title="No documents yet"
-            description="Create your first agreement, lease template, or offer letter to get started."
-            actionLabel="Create Document"
-            onAction={() => {
-              resetDraft();
-              setDialogOpen(true);
-            }}
-          />
-        ) : (
-          <div className="space-y-4">
+        <OperationalQueryState
+          phase={listPhase}
+          errorMessage={loadError ?? undefined}
+          onRetry={() => void loadData()}
+          retryLabel="Reload documents"
+          loadingFallback={<ListSkeleton rows={4} />}
+          emptyIcon={FileText}
+          emptyTitle="No documents yet"
+          emptyDescription="Create your first agreement, lease template, or offer letter to get started."
+          emptyActionLabel="Create document"
+          onEmptyAction={() => {
+            resetDraft();
+            setDialogOpen(true);
+          }}
+        >
+          <div className="space-y-4 min-w-0">
             {groupedDocuments.map((group) => {
               const latest = group.versions[0];
               return (
@@ -570,7 +546,7 @@ export function WorkspaceDocuments({
               );
             })}
           </div>
-        )}
+        </OperationalQueryState>
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -844,6 +820,6 @@ export function WorkspaceDocuments({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </WorkspacePageShell>
   );
 }

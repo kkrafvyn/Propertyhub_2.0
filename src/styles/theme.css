@@ -4,30 +4,45 @@
   color-scheme: light;
   --font-size: 16px;
 
-  /* Original Daylight Ivory & Brand Forest Semantic Tokens */
+  /* BaytMiftah workspace — daylight forest semantic tokens */
   --background: #faf8f5;
-  --foreground: #0f1f1b;
+  --foreground: #14251d;
   --card: #ffffff;
-  --card-foreground: #0f1f1b;
+  --card-foreground: #14251d;
   --popover: #ffffff;
-  --popover-foreground: #0f1f1b;
-  --primary: #0d2821;
+  --popover-foreground: #14251d;
+  --primary: #123b2a;
   --primary-foreground: #ffffff;
+  --primary-hover: #0c2c1f;
   --secondary: #f3f5f3;
-  --secondary-foreground: #0f1f1b;
+  --secondary-foreground: #14251d;
   --muted: #f3f5f3;
-  --muted-foreground: #5e6b66;
-  --accent: #173b31;
+  --muted-foreground: #637269;
+  --accent: #123b2a;
   --accent-foreground: #ffffff;
-  --destructive: #dc2626;
+  --destructive: #b64f3a;
   --destructive-foreground: #ffffff;
-  --border: #e6e9e7;
-  --input: #e6e9e7;
+  --border: #dce3de;
+  --border-strong: #738078;
+  --input: #dce3de;
   --input-background: #ffffff;
-  --switch-background: #cbd2ce;
+  --switch-background: #dce3de;
   --font-weight-medium: 600;
   --font-weight-normal: 400;
-  --ring: #0d2821;
+  --ring: #237a52;
+  --focus-ring: #237a52;
+  --nav-selected-bg: #e5efe8;
+  --nav-selected-text: #123b2a;
+  --terracotta: #b64f3a;
+  --terracotta-subtle: #faece7;
+  --status-success-fg: #166534;
+  --status-success-bg: #edf7ef;
+  --status-warning-fg: #854d0e;
+  --status-warning-bg: #fff6df;
+  --status-error-fg: #b42318;
+  --status-error-bg: #fdedea;
+  --status-info-fg: #245a81;
+  --status-info-bg: #edf4fa;
 
   /* Charts */
   --chart-1: #0d2821;
@@ -38,31 +53,32 @@
   --radius: 0.875rem;
 
   /* Sidebar */
-  --sidebar: #f7f9f8;
-  --sidebar-foreground: #0f1f1b;
-  --sidebar-primary: #0d2821;
+  --sidebar: #f3f5f3;
+  --sidebar-foreground: #14251d;
+  --sidebar-primary: #123b2a;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ffffff;
-  --sidebar-accent-foreground: #0f1f1b;
-  --sidebar-border: #e6e9e7;
-  --sidebar-ring: #0d2821;
+  --sidebar-accent: #e5efe8;
+  --sidebar-accent-foreground: #123b2a;
+  --sidebar-border: #dce3de;
+  --sidebar-ring: #237a52;
 
-  /* Surface & Brand Palette (Light / Daylight Ivory) */
+  /* Surface & brand (light) */
   --surface: #ffffff;
-  --surface-subtle: #f5f7f6;
-  --surface-border: #e6e9e7;
-  --surface-hover: #edf1ef;
-  --ink: #0f1f1b;
-  --ink-secondary: #4a5752;
-  --ink-muted: #83918b;
+  --surface-subtle: #f3f5f3;
+  --surface-border: #dce3de;
+  --surface-hover: #e9efeb;
+  --ink: #14251d;
+  --ink-secondary: #48584f;
+  --ink-muted: #637269;
+  --ink-tertiary: #637269;
 
-  --brand-forest: #0d2821;
-  --brand-marketplace: #081a15;
-  --brand-accent: #e07a5f;
-  --brand-orange: #e07a5f;
+  --brand-forest: #123b2a;
+  --brand-marketplace: #0c2c1f;
+  --brand-accent: #b64f3a;
+  --brand-orange: #b64f3a;
   --brand-gold: #d4a342;
 
-  --mobile-forest: #0d2821;
+  --mobile-forest: #123b2a;
   --bolt-green: #10b981;
   --bolt-green-dark: #059669;
   --bolt-bg: #faf8f5;
@@ -99,93 +115,52 @@
   --font-serif: "Playfair Display", Georgia, Cambria, "Times New Roman", serif;
 }
 
-/* Workspace is a distinct navy product.  Scope its palette to the Workspace
-   build so the consumer app keeps its forest-green identity. */
+/* Authenticated workspace (Capacitor business shell) uses the same forest tokens as web. */
 :root[data-mobile-app="business"] {
-  --background: #f6f8fc;
-  --foreground: #0b2545;
-  --card: #ffffff;
-  --card-foreground: #0b2545;
-  --popover: #ffffff;
-  --popover-foreground: #0b2545;
-  --primary: #0b2545;
-  --primary-foreground: #ffffff;
-  --secondary: #eaf0f8;
-  --secondary-foreground: #0b2545;
-  --muted: #edf2f8;
-  --muted-foreground: #526477;
-  --accent: #123a67;
-  --accent-foreground: #ffffff;
-  --border: #d9e2ef;
-  --input: #d9e2ef;
-  --input-background: #ffffff;
-  --switch-background: #b9c7d8;
-  --ring: #2563eb;
-  --chart-1: #0b2545;
-  --chart-2: #2563eb;
-  --chart-3: #38bdf8;
-  --chart-4: #1d4ed8;
-  --chart-5: #60a5fa;
-  --sidebar: #f7f9fc;
-  --sidebar-foreground: #0b2545;
-  --sidebar-primary: #0b2545;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eaf0f8;
-  --sidebar-accent-foreground: #0b2545;
-  --sidebar-border: #d9e2ef;
-  --sidebar-ring: #2563eb;
-  --surface: #ffffff;
-  --surface-subtle: #f1f5fa;
-  --surface-border: #d9e2ef;
-  --surface-hover: #eaf0f8;
-  --ink: #0b2545;
-  --ink-secondary: #4e6175;
-  --ink-muted: #7c8da0;
-  --brand-forest: #0b2545;
-  --brand-marketplace: #071a33;
-  --brand-accent: #2563eb;
-  --brand-orange: #2563eb;
-  --brand-gold: #38bdf8;
-  --mobile-forest: #0b2545;
-  --bolt-green: #2563eb;
-  --bolt-green-dark: #1d4ed8;
-  --bolt-bg: #f6f8fc;
-  --bolt-card: #ffffff;
-  --shadow-search: 0 4px 20px -2px rgba(11, 37, 69, 0.08), 0 16px 36px -4px rgba(11, 37, 69, 0.06);
-  --shadow-search-hover: 0 8px 30px -2px rgba(11, 37, 69, 0.15), 0 24px 54px -6px rgba(11, 37, 69, 0.1);
-  --shadow-card: 0 2px 8px -2px rgba(11, 37, 69, 0.06), 0 8px 24px -4px rgba(11, 37, 69, 0.05);
-  --shadow-card-hover: 0 16px 40px -6px rgba(11, 37, 69, 0.15), 0 6px 16px -2px rgba(11, 37, 69, 0.08);
-  --shadow-glow: 0 0 28px rgba(37, 99, 235, 0.18);
-  --gradient-aurora: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(56, 189, 248, 0.08) 50%, rgba(11, 37, 69, 0.08) 100%);
-  --gradient-glow-emerald: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.14), transparent 70%);
+  color-scheme: light;
 }
 
 .dark,
 [data-theme="dark"] {
   color-scheme: dark;
 
-  /* Base semantic tokens (Dark / Emerald Midnight - High Contrast Inverted Text) */
-  --background: #081713;
-  --foreground: #ffffff;
-  --card: #0f2820;
-  --card-foreground: #ffffff;
-  --popover: #132f26;
-  --popover-foreground: #ffffff;
-  --primary: #52b788;
-  --primary-foreground: #081713;
-  --secondary: #16362c;
-  --secondary-foreground: #ffffff;
-  --muted: #16362c;
-  --muted-foreground: #a7b7b1;
-  --accent: #1e4539;
-  --accent-foreground: #ffffff;
-  --destructive: #f87171;
-  --destructive-foreground: #ffffff;
-  --border: #1e4539;
-  --input: #1e4539;
-  --input-background: #0f2820;
-  --switch-background: #1e4539;
-  --ring: #52b788;
+  /* Dark forest workspace tokens */
+  --background: #0d1712;
+  --foreground: #f1f5f2;
+  --card: #16231b;
+  --card-foreground: #f1f5f2;
+  --popover: #16231b;
+  --popover-foreground: #f1f5f2;
+  --primary: #8ed3aa;
+  --primary-foreground: #10251a;
+  --primary-hover: #a5dfbd;
+  --secondary: #1c2c22;
+  --secondary-foreground: #f1f5f2;
+  --muted: #1c2c22;
+  --muted-foreground: #9bad9f;
+  --accent: #233e2d;
+  --accent-foreground: #a5dfbd;
+  --destructive: #f0a18b;
+  --destructive-foreground: #10251a;
+  --border: #344a3b;
+  --border-strong: #718779;
+  --input: #344a3b;
+  --input-background: #16231b;
+  --switch-background: #344a3b;
+  --ring: #8ed3aa;
+  --focus-ring: #8ed3aa;
+  --nav-selected-bg: #233e2d;
+  --nav-selected-text: #a5dfbd;
+  --terracotta: #f0a18b;
+  --terracotta-subtle: #38231d;
+  --status-success-fg: #a6dfb5;
+  --status-success-bg: #193424;
+  --status-warning-fg: #f3d18a;
+  --status-warning-bg: #382e19;
+  --status-error-fg: #ffb4aa;
+  --status-error-bg: #3c211f;
+  --status-info-fg: #a8cff0;
+  --status-info-bg: #1b2d3e;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
 
@@ -197,31 +172,31 @@
   --chart-5: #c45d44;
 
   /* Sidebar */
-  --sidebar: #0f2820;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #52b788;
-  --sidebar-primary-foreground: #081713;
-  --sidebar-accent: #16362c;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #1e4539;
-  --sidebar-ring: #52b788;
+  --sidebar: #1c2c22;
+  --sidebar-foreground: #f1f5f2;
+  --sidebar-primary: #8ed3aa;
+  --sidebar-primary-foreground: #10251a;
+  --sidebar-accent: #233e2d;
+  --sidebar-accent-foreground: #a5dfbd;
+  --sidebar-border: #344a3b;
+  --sidebar-ring: #8ed3aa;
 
-  /* Surface & Brand Palette (Dark / Inverted High-Contrast Typography) */
-  --surface: #0c231c;
-  --surface-subtle: #112d24;
-  --surface-border: #1a4235;
-  --surface-hover: #163a2f;
-  --ink: #ffffff;
-  --ink-secondary: #cdd9d4;
-  --ink-muted: #889e95;
+  --surface: #16231b;
+  --surface-subtle: #1c2c22;
+  --surface-border: #344a3b;
+  --surface-hover: #263a2d;
+  --ink: #f1f5f2;
+  --ink-secondary: #c1cec5;
+  --ink-muted: #9bad9f;
+  --ink-tertiary: #9bad9f;
 
-  --brand-forest: #0d2821;
-  --brand-marketplace: #061410;
-  --brand-accent: #e07a5f;
-  --brand-orange: #e07a5f;
+  --brand-forest: #8ed3aa;
+  --brand-marketplace: #0d1712;
+  --brand-accent: #f0a18b;
+  --brand-orange: #f0a18b;
   --brand-gold: #fbbf24;
 
-  --mobile-forest: #52b788;
+  --mobile-forest: #8ed3aa;
   --bolt-green: #34d399;
   --bolt-green-dark: #10b981;
   --bolt-bg: #061410;
@@ -253,62 +228,7 @@
 
 :root[data-mobile-app="business"].dark,
 :root[data-mobile-app="business"][data-theme="dark"] {
-  --background: #071528;
-  --foreground: #f7faff;
-  --card: #0c2039;
-  --card-foreground: #f7faff;
-  --popover: #102944;
-  --popover-foreground: #f7faff;
-  --primary: #93c5fd;
-  --primary-foreground: #071528;
-  --secondary: #102b49;
-  --secondary-foreground: #f7faff;
-  --muted: #102b49;
-  --muted-foreground: #aec0d5;
-  --accent: #1b3d61;
-  --accent-foreground: #ffffff;
-  --border: #1d4168;
-  --input: #1d4168;
-  --input-background: #0c2039;
-  --switch-background: #1d4168;
-  --ring: #93c5fd;
-  --chart-1: #93c5fd;
-  --chart-2: #60a5fa;
-  --chart-3: #38bdf8;
-  --chart-4: #2563eb;
-  --chart-5: #7dd3fc;
-  --sidebar: #0c2039;
-  --sidebar-foreground: #f7faff;
-  --sidebar-primary: #93c5fd;
-  --sidebar-primary-foreground: #071528;
-  --sidebar-accent: #102b49;
-  --sidebar-accent-foreground: #f7faff;
-  --sidebar-border: #1d4168;
-  --sidebar-ring: #93c5fd;
-  --surface: #0c2039;
-  --surface-subtle: #102944;
-  --surface-border: #1d4168;
-  --surface-hover: #143555;
-  --ink: #f7faff;
-  --ink-secondary: #d1dfed;
-  --ink-muted: #8fa8c2;
-  --brand-forest: #93c5fd;
-  --brand-marketplace: #06111f;
-  --brand-accent: #60a5fa;
-  --brand-orange: #60a5fa;
-  --brand-gold: #7dd3fc;
-  --mobile-forest: #93c5fd;
-  --bolt-green: #60a5fa;
-  --bolt-green-dark: #3b82f6;
-  --bolt-bg: #071528;
-  --bolt-card: #0c2039;
-  --shadow-search: 0 4px 20px rgba(0, 0, 0, 0.55);
-  --shadow-search-hover: 0 8px 32px rgba(0, 0, 0, 0.72), 0 0 24px rgba(96, 165, 250, 0.22);
-  --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.48);
-  --shadow-card-hover: 0 12px 36px rgba(0, 0, 0, 0.68), 0 0 20px rgba(96, 165, 250, 0.2);
-  --shadow-glow: 0 0 30px rgba(96, 165, 250, 0.3);
-  --gradient-aurora: linear-gradient(135deg, rgba(96, 165, 250, 0.13) 0%, rgba(56, 189, 248, 0.1) 50%, rgba(11, 37, 69, 0.22) 100%);
-  --gradient-glow-emerald: radial-gradient(circle at 50% 0%, rgba(96, 165, 250, 0.2), transparent 70%);
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -360,7 +280,19 @@
   --color-ink: var(--ink);
   --color-ink-secondary: var(--ink-secondary);
   --color-ink-muted: var(--ink-muted);
+  --color-ink-tertiary: var(--ink-tertiary);
   --color-surface: var(--surface);
+  --color-nav-selected: var(--nav-selected-bg);
+  --color-terracotta: var(--terracotta);
+  --color-terracotta-subtle: var(--terracotta-subtle);
+  --color-status-success: var(--status-success-bg);
+  --color-status-success-fg: var(--status-success-fg);
+  --color-status-warning: var(--status-warning-bg);
+  --color-status-warning-fg: var(--status-warning-fg);
+  --color-status-error: var(--status-error-bg);
+  --color-status-error-fg: var(--status-error-fg);
+  --color-status-info: var(--status-info-bg);
+  --color-status-info-fg: var(--status-info-fg);
   --color-surface-subtle: var(--surface-subtle);
   --color-surface-border: var(--surface-border);
   --color-surface-hover: var(--surface-hover);
@@ -426,8 +358,17 @@
     letter-spacing: -0.015em;
   }
 
-  .font-serif {
+  .font-serif,
+  .font-display {
     font-family: var(--font-serif);
+  }
+
+  .surface-base {
+    background-color: var(--background);
+  }
+
+  .text-ink-tertiary {
+    color: var(--ink-muted);
   }
 
   h1 {

@@ -334,7 +334,7 @@ export function WorkspaceEntry() {
 
   const entryBody = (
     <div className="px-4 py-10">
-      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr,0.9fr] gap-8">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr]  gap-8">
         <Card className="p-8 lg:p-10">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">

@@ -4,6 +4,7 @@ import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import { Logo } from "../../components/baytmiftah/Logo";
 import { CINEMATIC_CHAPTERS } from "../../components/marketing/cinematic/cinematic-chapters";
 import { MarketingWebGLFallback } from "../../components/marketing/cinematic/MarketingWebGLFallback";
+import { useChapterScrollProgress } from "../../components/marketing/cinematic/useChapterScrollProgress";
 import {
   useIsMobileCinematic,
   useMarketingSceneProgress,
@@ -163,7 +164,8 @@ export function MarketingCinematicHome() {
     setReducedMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }, []);
 
-  const { progress, pointer, reducedMotion: scrollReduced } = useMarketingSceneProgress(scrollRef);
+  const { reducedMotion: scrollReduced } = useMarketingSceneProgress(scrollRef);
+  const chapterProgress = useChapterScrollProgress();
   const motionOff = reducedMotion || scrollReduced;
   const use3d = webgl && !motionOff && !sceneFailed;
 
@@ -185,8 +187,6 @@ export function MarketingCinematicHome() {
             <Marketing3DErrorBoundary onFailure={() => setSceneFailed(true)}>
               <Suspense fallback={<div className="mk-cinema-canvas-loader mk-cinema-canvas-loader--page" />}>
                 <Marketing3DScene
-                  progress={progress}
-                  pointer={pointer}
                   mobile={mobile}
                   reducedMotion={reducedMotion}
                   onContextLost={() => setSceneFailed(true)}
@@ -201,7 +201,7 @@ export function MarketingCinematicHome() {
                 key={chapter.id}
                 chapter={chapter}
                 mobile={mobile}
-                scrollProgress={progress}
+                scrollProgress={chapterProgress}
               />
             ))}
           </div>

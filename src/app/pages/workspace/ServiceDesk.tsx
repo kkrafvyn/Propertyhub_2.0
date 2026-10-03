@@ -118,7 +118,7 @@ export function ServiceDesk({ organizationId }: { organizationId: string }) {
       </div>
 
       <Card className="p-6">
-        <form className="grid gap-3 md:grid-cols-[1.5fr,1fr,1fr,auto]" onSubmit={create}>
+        <form className="grid gap-3 md:grid-cols-[1.5fr_1fr_1fr_auto] " onSubmit={create}>
           <Input
             value={subject}
             onChange={(e) => setSubject(e.target.value)}

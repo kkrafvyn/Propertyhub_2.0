@@ -1,13 +1,18 @@
 import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, UserRound, CheckCircle2, UserPlus, ChevronDown, Search, Mail, Phone, Building2 } from "lucide-react";
+import { Plus, UserRound, CheckCircle2, UserPlus, ChevronDown, Mail, Phone, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { MetricCard } from "../../components/ui/MetricCard";
-import { EmptyState } from "../../components/ux/EmptyState";
+import {
+  CardGridSkeleton,
+  DashboardStatsSkeleton,
+  OperationalQueryState,
+  WorkspacePageShell,
+} from "../../components/ux";
 import type { Database } from "../../../lib/database.types";
 import type { MemberRole } from "../../../lib/workspace";
 import { canWorkspace } from "../../../lib/workspace-permissions";
@@ -27,6 +32,7 @@ export function WorkspaceContacts({
 }) {
   const canWrite = canWorkspace(currentRole, "contacts:write");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [contacts, setContacts] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [fullName, setFullName] = useState("");
@@ -40,6 +46,7 @@ export function WorkspaceContacts({
   const loadData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [rows, memberRows] = await Promise.all([
         contactsCrmService.getOrganizationContacts(organization.id),
         organizationService.getOrganizationMembers(organization.id),
@@ -48,6 +55,7 @@ export function WorkspaceContacts({
       setMembers(memberRows || []);
     } catch (error) {
       console.error(error);
+      setLoadError("We couldn't load contacts. Check your connection and try again.");
       toast.error("Unable to load contacts.");
     } finally {
       setLoading(false);
@@ -130,59 +138,53 @@ export function WorkspaceContacts({
     }
   };
 
+  const listPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : activeContacts.length === 0
+        ? "empty"
+        : filteredContacts.length === 0
+          ? "filtered-empty"
+          : "ready";
+
   return (
-    <div className="space-y-6">
-      {/* Workstation Header */}
-      <div className="relative overflow-hidden rounded-3xl p-6 md:p-8 bg-surface-subtle/80 border border-surface-border/80 backdrop-blur-md shadow-card">
-        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-        <div className="absolute right-32 -bottom-16 w-48 h-48 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
-
-        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                <UserRound className="w-3.5 h-3.5" />
-                CRM & Client Relations
-              </span>
-              <span className="text-xs text-muted-foreground">• {organization.name}</span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-display font-semibold tracking-tight text-foreground">
-              Contacts Directory
-            </h1>
-            <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
-              Standalone contact records, client inquiries, landlords, and institutional investors managed across your agency roster.
-            </p>
-          </div>
+    <WorkspacePageShell
+      title="Contacts Directory"
+      description="Standalone contact records for clients, landlords, and partners across your organization."
+      badge={
+        <Badge variant="outline" className="text-xs font-medium">
+          {organization.name}
+        </Badge>
+      }
+    >
+      {loading && !loadError ? (
+        <DashboardStatsSkeleton />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <MetricCard
+            title="Active Directory"
+            value={loading ? "—" : activeContacts.length}
+            icon={UserRound}
+            iconColor="primary"
+            subtitle="Total customer and lead records"
+          />
+          <MetricCard
+            title="Assigned Leads"
+            value={loading ? "—" : assignedCount}
+            icon={CheckCircle2}
+            iconColor="primary"
+            subtitle="Allocated to account reps"
+          />
+          <MetricCard
+            title="Unassigned Inquiries"
+            value={loading ? "—" : unassignedCount}
+            icon={UserPlus}
+            iconColor="primary"
+            subtitle="Pending staff assignment"
+          />
         </div>
-      </div>
-
-      {/* KPI Overview with Ambient Glow */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <MetricCard
-          title="Active Directory"
-          value={activeContacts.length}
-          icon={UserRound}
-          iconColor="primary"
-          glow
-          subtitle="Total customer and lead records"
-        />
-        <MetricCard
-          title="Assigned Leads"
-          value={assignedCount}
-          icon={CheckCircle2}
-          iconColor="emerald"
-          glow
-          subtitle="Allocated to account reps"
-        />
-        <MetricCard
-          title="Unassigned Inquiries"
-          value={unassignedCount}
-          icon={UserPlus}
-          iconColor="amber"
-          glow
-          subtitle="Pending staff assignment"
-        />
-      </div>
+      )}
 
       {canWrite ? (
         <Card className="p-6 rounded-3xl border-surface-border/80 bg-surface/90 backdrop-blur-sm shadow-card">
@@ -226,38 +228,36 @@ export function WorkspaceContacts({
             </Badge>
           </div>
 
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search by name, email, phone..."
+          <div className="w-full sm:w-72">
+            <Input
+              label="Search contacts"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-surface-border bg-surface-subtle text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              placeholder="Name, email, phone..."
+              className="text-sm"
             />
           </div>
         </div>
 
-        {loading ? (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-20 rounded-2xl bg-surface-subtle/80 animate-pulse border border-surface-border" />
-            ))}
-          </div>
-        ) : filteredContacts.length === 0 ? (
-          <EmptyState
-            icon={UserRound}
-            title={searchQuery ? "No matching contacts" : "No contacts yet"}
-            description={
-              searchQuery
-                ? `No contact records matched "${searchQuery}". Try clearing your search query.`
-                : "No customer records have been created in this organization yet."
-            }
-            actionLabel={searchQuery ? "Clear Search" : undefined}
-            onAction={searchQuery ? () => setSearchQuery("") : undefined}
-          />
-        ) : (
-          <div className="space-y-3">
+        <OperationalQueryState
+          phase={listPhase}
+          errorMessage={loadError ?? undefined}
+          onRetry={() => void loadData()}
+          retryLabel="Reload contacts"
+          loadingFallback={<CardGridSkeleton count={3} />}
+          emptyIcon={UserRound}
+          emptyTitle="No contacts yet"
+          emptyDescription="No customer records have been created in this organization yet."
+          filteredEmptyTitle="No matching contacts"
+          filteredEmptyDescription={
+            searchQuery
+              ? `No records matched "${searchQuery}". Try a different search.`
+              : "No records match the current filters."
+          }
+          emptyActionLabel={searchQuery ? "Clear search" : undefined}
+          onEmptyAction={searchQuery ? () => setSearchQuery("") : undefined}
+        >
+          <div className="space-y-3 min-w-0">
             {filteredContacts.map((contact) => (
               <div
                 key={contact.id}
@@ -272,7 +272,7 @@ export function WorkspaceContacts({
                       <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
                         {contact.full_name}
                       </p>
-                      <Badge variant="outline" className="capitalize text-[10px] rounded-full">
+                      <Badge variant="outline" className="capitalize text-xs rounded-full">
                         {contact.status}
                       </Badge>
                     </div>
@@ -345,8 +345,8 @@ export function WorkspaceContacts({
               </div>
             ))}
           </div>
-        )}
+        </OperationalQueryState>
       </Card>
-    </div>
+    </WorkspacePageShell>
   );
 }

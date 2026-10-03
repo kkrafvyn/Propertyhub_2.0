@@ -2,11 +2,9 @@ import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { clamp01, chapterLocalProgress } from "./scene-phases";
-import type { ScenePointer } from "./useMarketingSceneProgress";
+import { marketingScrollState } from "./marketingScrollState";
 
 type SceneCameraRigProps = {
-  progress: number;
-  pointer: ScenePointer;
   mobile?: boolean;
   reducedMotion?: boolean;
 };
@@ -37,12 +35,14 @@ function sampleCamera(progress: number) {
   };
 }
 
-export function SceneCameraRig({ progress, pointer, mobile, reducedMotion }: SceneCameraRigProps) {
+export function SceneCameraRig({ mobile, reducedMotion }: SceneCameraRigProps) {
   const { camera } = useThree();
   const lookAt = useRef(new THREE.Vector3(BUILDING_X, 1, 0));
   const parallaxScale = mobile ? 0.06 : 0.18;
 
   useFrame((_, delta) => {
+    const progress = marketingScrollState.progress;
+    const pointer = marketingScrollState.pointer;
     const { pos, target } = sampleCamera(progress);
     lookAt.current.lerp(target, 1 - Math.pow(0.002, delta));
 

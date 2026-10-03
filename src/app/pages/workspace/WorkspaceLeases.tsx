@@ -31,6 +31,11 @@ import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { MetricCard } from "../../components/ui/MetricCard";
 import { ActionDialog } from "../../components/ux/ActionDialog";
+import {
+  DashboardStatsSkeleton,
+  OperationalQueryState,
+  WorkspacePageShell,
+} from "../../components/ux";
 import { leaseService } from "../../../lib/lease.service";
 import { leaseWorkflowService } from "../../../lib/lease-workflow.service";
 import { tenantNoticeService } from "../../../lib/tenant-notice.service";
@@ -83,7 +88,7 @@ function StyledSelect({
   return (
     <div className="relative">
       {label && (
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-secondary mb-1.5">{label}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-secondary mb-1.5">{label}</p>
       )}
       <div className="relative">
         {Icon && (
@@ -142,6 +147,7 @@ export function WorkspaceLeases({
 }: { organizationId: string } & MemberScopeProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [leases, setLeases] = useState<any[]>([]);
   const [notices, setNotices] = useState<any[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -165,6 +171,7 @@ export function WorkspaceLeases({
   const loadLeases = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [rows, noticeRows, dealCases, screeningRows, pendingEsigns] = await Promise.all([
         leaseService.getOrganizationLeases(organizationId),
         tenantNoticeService.getOrganizationNotices(organizationId),
@@ -207,6 +214,7 @@ export function WorkspaceLeases({
       setDeposits(depositRows);
     } catch (error) {
       console.error(error);
+      setLoadError("We couldn't load lease records. Try again in a moment.");
       toast.error("Unable to load leases.");
     } finally {
       setLoading(false);
@@ -407,50 +415,28 @@ export function WorkspaceLeases({
     } finally { setSendingNotice(false); }
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-24 rounded-2xl bg-surface-subtle animate-pulse" />
-        ))}
-      </div>
-    );
-  }
+  const queryPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : leases.length === 0 && applications.length === 0
+        ? "empty"
+        : "ready";
 
   return (
-    <div className="space-y-8">
-      {/* ── Page Header ── */}
-      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-emerald-500/10 via-primary/5 to-surface/80 border border-emerald-500/20 shadow-lg backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-radial from-emerald-500/15 via-primary/10 to-transparent blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-radial from-blue-500/10 via-transparent to-transparent blur-2xl pointer-events-none" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="success" dot pulse className="text-xs font-semibold px-2.5 py-1">
-                Tenancy & Lease Governance
-              </Badge>
-              <span className="text-xs text-ink-muted flex items-center gap-1">
-                <Shield className="w-3 h-3 text-emerald-500" />
-                Act 220 & Ghana Rent Cap Compliant
-              </span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-display font-medium tracking-tight text-ink">
-              Lease & Tenancy Hub
-            </h1>
-            <p className="text-sm text-ink-secondary max-w-xl leading-relaxed">
-              Automate lease agreements, digital signatures, escrow security deposits, rent reviews, and Ghana Card tenant screening.
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5 shrink-0">
-            <Button variant="gradient" size="sm" className="gap-2 shadow-sm" onClick={() => void loadLeases()}>
-              <RefreshCw className="w-3.5 h-3.5" />
-              Refresh Tenancies
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* ── KPI Strip with Halo Illumination ── */}
+    <WorkspacePageShell
+      title="Lease & tenancy hub"
+      description="Manage lease agreements, digital signatures, security deposits, rent reviews, and tenant screening."
+      actions={
+        <Button type="button" variant="outline" size="sm" onClick={() => void loadLeases()} aria-label="Refresh leases">
+          <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
+          Refresh
+        </Button>
+      }
+    >
+      {loading && !loadError ? (
+        <DashboardStatsSkeleton />
+      ) : (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Applications"
@@ -489,6 +475,19 @@ export function WorkspaceLeases({
           trend={renewalsPending > 0 ? { value: "Review required", isPositive: false } : undefined}
         />
       </div>
+      )}
+
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void loadLeases()}
+        retryLabel="Reload leases"
+        loadingFallback={<DashboardStatsSkeleton />}
+        emptyIcon={KeyRound}
+        emptyTitle="No leases yet"
+        emptyDescription="Lease applications and active tenancies will appear here once created."
+      >
+      <div className="space-y-8 min-w-0 mt-6">
 
       {/* ── Filter & Search Toolbar ── */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-2 bg-surface/60 backdrop-blur-md rounded-2xl border border-surface-border/80">
@@ -1061,6 +1060,9 @@ export function WorkspaceLeases({
           </div>
         )}
       </Card>
+      </div>
+      </OperationalQueryState>
+
       <ActionDialog
         open={Boolean(overrideRequest)}
         onOpenChange={(open) => !open && setOverrideRequest(null)}
@@ -1076,6 +1078,6 @@ export function WorkspaceLeases({
           await sendForEsignature(lease, true);
         }}
       />
-    </div>
+    </WorkspacePageShell>
   );
 }

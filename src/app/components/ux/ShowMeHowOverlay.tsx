@@ -97,7 +97,7 @@ export function ShowMeHowOverlay({
   const step = selectedTour.steps[currentStepIndex];
 
   return (
-    <div className="fixed bottom-6 right-6 z-[100] w-96 max-w-[calc(100vw-3rem)] animate-in slide-in-from-bottom-5 duration-200">
+    <div className="fixed bottom-[max(5.5rem,env(safe-area-inset-bottom,0px))] right-4 z-[90] w-96 max-w-[calc(100vw-2rem)] sm:bottom-6 sm:right-6 animate-in slide-in-from-bottom-5 duration-200">
       <Card className="p-5 bg-surface border-2 border-primary shadow-2xl rounded-2xl space-y-4">
         <div className="flex items-start justify-between gap-2 border-b border-surface-border pb-3">
           <div className="flex items-center gap-2">

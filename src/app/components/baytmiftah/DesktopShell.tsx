@@ -283,14 +283,14 @@ export function DesktopShell({
   const hideFooterOnMobile = Capacitor.isNativePlatform() || isPhone;
   const footerVisible = !isElectron() && (showFooter ?? !minimal) && !hideFooterOnMobile;
   return (
-    <div className="desktop-shell min-h-[100dvh] overflow-x-clip text-ink">
+    <div className="desktop-shell min-h-[100dvh] overflow-x-clip text-ink isolation-isolate">
       <div className="desktop-shell-ambient" aria-hidden />
       <Header search={search} minimal={minimal} categoryBar={categoryBar} compareCount={compareCount} />
       <main
         className={
           fullBleed
             ? "relative z-[1] w-full"
-            : "relative z-[1] mx-auto w-full min-w-0 max-w-[var(--max-width-page)] px-4 py-5 sm:px-6 md:px-8 md:py-6 xl:px-20 xl:py-8"
+            : "relative z-[1] mx-auto w-full min-w-0 max-w-[var(--max-width-page)] px-4 py-5 sm:px-6 md:px-8 md:py-6 xl:px-20 xl:py-8 overflow-x-hidden"
         }
       >
         {children}

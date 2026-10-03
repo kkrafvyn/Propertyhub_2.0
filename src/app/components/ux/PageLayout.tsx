@@ -23,7 +23,7 @@ export function PageLayout({
   const shouldShowShell = showNavbar && !hideNavbarOnNativeConsumer;
 
   const content = sidebar ? (
-    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px]  gap-8">
       <main>{children}</main>
       <aside className="space-y-6 lg:sticky lg:top-28 lg:self-start">{sidebar}</aside>
     </div>

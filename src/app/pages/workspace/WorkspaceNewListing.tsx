@@ -7,6 +7,7 @@ import { ChevronDown, Sparkles, Building2, CheckCircle2 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
+import { WorkspacePageShell } from "../../components/ux";
 import { PropertyMediaPicker } from "../../components/PropertyMediaPicker";
 import { ListingQualityPanel } from "../../components/ListingQualityPanel";
 import { GhanaRegionInput } from "../../components/GhanaRegionInput";
@@ -319,23 +320,17 @@ export function WorkspaceNewListing({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-ink">
-            Create a New Listing
-          </h1>
-          <p className="text-sm text-ink-secondary mt-1">
-            Add a property and publish it into {organization.name}&apos;s workspace inventory.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-surface-border bg-surface-subtle text-xs text-ink-secondary self-start sm:self-auto">
-          <Building2 className="w-4 h-4 text-primary" />
-          <span className="font-semibold text-ink">Inventory Publishing</span>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <WorkspacePageShell
+      title="Create a new listing"
+      description={`Add a property and publish it into ${organization.name}'s workspace inventory.`}
+      badge={
+        <span className="inline-flex items-center gap-2 rounded-full border border-surface-border bg-secondary px-3 py-1 text-xs font-medium text-ink-secondary">
+          <Building2 className="w-4 h-4 text-primary" aria-hidden="true" />
+          Inventory publishing
+        </span>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-6 min-w-0">
         <Card className="p-6 border-surface-border bg-surface shadow-card">
           <h2 className="text-xl font-semibold mb-4 text-ink">Property Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -726,6 +721,6 @@ export function WorkspaceNewListing({
           </Button>
         </div>
       </form>
-    </div>
+    </WorkspacePageShell>
   );
 }

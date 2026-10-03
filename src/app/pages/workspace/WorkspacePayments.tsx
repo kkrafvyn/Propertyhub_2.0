@@ -26,6 +26,11 @@ import { Card } from "../../components/ui/Card";
 import { MetricCard } from "../../components/ui/MetricCard";
 import { AnimatedNumber } from "../../components/ui/AnimatedNumber";
 import {
+  DashboardStatsSkeleton,
+  OperationalQueryState,
+  WorkspacePageShell,
+} from "../../components/ux";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -178,6 +183,8 @@ export function WorkspacePayments({
   currentRole,
 }: WorkspacePaymentsProps) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
   const [payments, setPayments] = useState<any[]>([]);
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [verifyingPaymentId, setVerifyingPaymentId] = useState<string | null>(null);
@@ -213,7 +220,10 @@ export function WorkspacePayments({
 
     const loadPayments = async () => {
       try {
-        if (!cancelled) setLoading(true);
+        if (!cancelled) {
+          setLoading(true);
+          setLoadError(null);
+        }
         const [rows, holds] = await Promise.all([
           paymentService.getOrganizationPropertyTransactions(organization.id),
           escrowService.getOrganizationEscrowHolds(organization.id),
@@ -226,6 +236,7 @@ export function WorkspacePayments({
       } catch (error) {
         console.error("Failed to load workspace payments:", error);
         if (!cancelled) {
+          setLoadError("We couldn't load payments and escrow data. Try again in a moment.");
           toast.error("We couldn't load organization payments right now.");
         }
       } finally {
@@ -240,7 +251,7 @@ export function WorkspacePayments({
     return () => {
       cancelled = true;
     };
-  }, [organization.id]);
+  }, [organization.id, reloadToken]);
 
   const handleReleaseEscrow = async (holdId: string) => {
     try {
@@ -476,40 +487,43 @@ export function WorkspacePayments({
     }
   };
 
-  if (loading) {
-    return (
-      <Card className="p-8 text-center text-muted-foreground">
-        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3" />
-        Loading organization payments...
-      </Card>
-    );
-  }
+  const queryPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : "ready";
 
   return (
     <>
-      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="flex items-center gap-2.5 mb-2">
-            <h1 className="text-3xl font-bold tracking-tight text-ink font-serif">Payments & Settlements</h1>
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-              <span className="radar-pulse-dot" />
-              <span>Gateways Live</span>
-            </div>
-          </div>
-          <p className="text-sm text-ink-secondary max-w-2xl leading-relaxed">
-            Enterprise settlement tracking, SHA-256 verified receipts, multi-channel MoMo routing, and escrow releases for {organization.name}.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="glass" className="px-3 py-1.5 text-xs font-semibold">
-            Base: Ghana Cedi (GHS ₵)
+      <WorkspacePageShell
+        title="Payments & Settlements"
+        description={`Track MoMo and card settlements, verified receipts, and escrow releases for ${organization.name}. Amounts shown in Ghana Cedi (GHS).`}
+        badge={
+          <Badge variant="outline" className="text-xs font-medium">
+            GHS · {organization.name}
           </Badge>
-          <Badge variant="outline" className="px-3 py-1.5 text-xs font-semibold">
-            Bank of Ghana Act 220 Compliant
-          </Badge>
-        </div>
-      </div>
+        }
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setReloadToken((value) => value + 1)}
+            aria-label="Refresh payments"
+          >
+            <RefreshCcw className="w-4 h-4 mr-1.5" aria-hidden="true" />
+            Refresh
+          </Button>
+        }
+      >
+        <OperationalQueryState
+          phase={queryPhase}
+          errorMessage={loadError ?? undefined}
+          onRetry={() => setReloadToken((value) => value + 1)}
+          retryLabel="Reload payments"
+          loadingFallback={<DashboardStatsSkeleton />}
+        >
+          <div className="space-y-8 min-w-0 w-full">
 
       {escrowHolds.filter((hold) => hold.status === "held").length > 0 && (
         <Card variant="glass" className="p-6 mb-8 border-primary/30 shadow-[0_0_24px_rgba(16,185,129,0.12)]">
@@ -877,6 +891,10 @@ export function WorkspacePayments({
           })}
         </div>
       )}
+
+          </div>
+        </OperationalQueryState>
+      </WorkspacePageShell>
 
       <Dialog
         open={Boolean(refundDraftPayment)}

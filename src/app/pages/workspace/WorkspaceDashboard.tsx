@@ -402,7 +402,7 @@ export function WorkspaceDashboard({
       {/* Role Switcher Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 sm:p-4 rounded-2xl bg-surface-subtle/80 border border-surface-border backdrop-blur-sm">
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-[10px] font-black text-ink-muted uppercase tracking-[0.15em] whitespace-nowrap">
+          <span className="text-xs font-semibold text-ink-muted uppercase tracking-wide whitespace-nowrap">
             Viewing As:
           </span>
           <div className="flex flex-wrap gap-1.5">
@@ -430,9 +430,8 @@ export function WorkspaceDashboard({
             })}
           </div>
         </div>
-        <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full self-start sm:self-auto shrink-0">
-          <span className="radar-pulse-dot" aria-hidden="true" />
-          Live Updates
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-secondary bg-secondary border border-surface-border px-2.5 py-1 rounded-full self-start sm:self-auto shrink-0">
+          Live updates
         </span>
       </div>
 
@@ -448,17 +447,12 @@ export function WorkspaceDashboard({
         />
       ) : null}
 
-      {/* Role-Specific Hero Header */}
-      <div className={`relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br ${activeRoleConfig.gradient} to-surface border border-surface-border/80 shadow-xl backdrop-blur-sm transition-all duration-500`}>
-        {/* Atmospheric orb */}
-        <div className="absolute -top-16 -right-16 w-80 h-80 rounded-full bg-radial from-emerald-500/12 via-emerald-500/4 to-transparent blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-64 h-32 bg-gradient-to-t from-amber-500/6 to-transparent blur-2xl pointer-events-none" />
-
-        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="app-surface-card rounded-2xl p-6 sm:p-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="success" dot pulse className="capitalize text-xs font-bold px-2.5 py-0.5">
-                {activeRole} View
+              <Badge variant="outline" className="capitalize text-xs font-medium px-2.5 py-0.5">
+                {activeRole} view
               </Badge>
               <span className="text-xs text-ink-muted font-medium">{organization.name}</span>
             </div>
@@ -477,14 +471,14 @@ export function WorkspaceDashboard({
             {dashboardRole === "owner" && (
               <>
                 <Link to={`${workspaceBasePath}/ai-rent-yield`}>
-                  <Button size="sm" variant="gradient" className="gap-1.5 shadow-md shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-shadow">
-                    <TrendingUp className="w-3.5 h-3.5" />
+                  <Button size="sm" className="gap-1.5">
+                    <TrendingUp className="w-3.5 h-3.5" aria-hidden="true" />
                     Yield Predictor
                   </Button>
                 </Link>
                 <Link to={`${workspaceBasePath}/multi-currency-fx`}>
-                  <Button size="sm" variant="glass" className="gap-1.5 border-amber-500/30 text-ink hover:border-amber-500/50 transition-colors">
-                    <Coins className="w-3.5 h-3.5 text-amber-500" />
+                  <Button size="sm" variant="outline" className="gap-1.5">
+                    <Coins className="w-3.5 h-3.5" aria-hidden="true" />
                     FX & Currency
                   </Button>
                 </Link>

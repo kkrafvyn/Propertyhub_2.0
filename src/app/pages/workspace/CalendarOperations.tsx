@@ -206,7 +206,7 @@ export function CalendarOperations({
         </Card>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[420px,1fr]">
+      <div className="grid gap-6 xl:grid-cols-[420px_1fr] ">
         <Card className="p-6">
           <div className="mb-4">
             <h2 className="text-xl font-semibold">Agent Availability</h2>

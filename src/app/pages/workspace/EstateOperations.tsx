@@ -692,7 +692,7 @@ export function EstateOperations({
             </Card>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[1.15fr,1fr]">
+          <div className="grid gap-6 xl:grid-cols-[1.15fr_1fr] ">
             <Card className="p-6">
               <h2 className="text-lg font-semibold">Aged arrears</h2>
               <p className="mt-1 text-sm text-muted-foreground">Outstanding balances are derived from charges less payment allocations.</p>
@@ -738,7 +738,7 @@ export function EstateOperations({
                 </p>
               </div>
             </div>
-            <form className="mt-5 grid gap-3 md:grid-cols-[1.5fr,1fr,1fr,1fr,auto]" onSubmit={createSchedule}>
+            <form className="mt-5 grid gap-3 md:grid-cols-[1.5fr_1fr_1fr_1fr_auto] " onSubmit={createSchedule}>
               <Input value={scheduleName} onChange={(event) => setScheduleName(event.target.value)} placeholder="e.g. Monthly service charge" />
               <Input value={scheduleAmount} onChange={(event) => setScheduleAmount(event.target.value)} inputMode="decimal" placeholder="Amount (GHS)" />
               <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={scheduleType} onChange={(event) => setScheduleType(event.target.value as EstateChargeSchedule["type"])}>
@@ -912,7 +912,7 @@ export function EstateOperations({
               <Badge variant="outline">{selectedWorkOrders.length} total</Badge>
             </div>
 
-            <div className="mt-5 grid gap-4 xl:grid-cols-[1fr,1.15fr]">
+            <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_1.15fr] ">
               <div className="space-y-2">
                 {selectedWorkOrders.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No work orders yet.</p>
@@ -1033,7 +1033,7 @@ export function EstateOperations({
                       <ShieldCheck className="h-4 w-4 text-primary" />
                       <h4 className="font-medium">Approvals</h4>
                     </div>
-                    <form className="mt-3 grid gap-3 md:grid-cols-[1fr,1fr,auto]" onSubmit={createApprovalRequest}>
+                    <form className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_auto] " onSubmit={createApprovalRequest}>
                       <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={approvalType} onChange={(event) => setApprovalType(event.target.value as EstateWorkOrderApproval["approval_type"])}>
                         <option value="quote">Quote</option>
                         <option value="budget">Budget</option>
@@ -1103,7 +1103,7 @@ export function EstateOperations({
                       <Camera className="h-4 w-4 text-primary" />
                       <h4 className="font-medium">Evidence</h4>
                     </div>
-                    <form className="mt-3 grid gap-3 md:grid-cols-[1fr,1fr,1fr,auto]" onSubmit={addEvidence}>
+                    <form className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto] " onSubmit={addEvidence}>
                       <Input value={evidencePath} onChange={(event) => setEvidencePath(event.target.value)} placeholder="Storage path or file reference" />
                       <Input value={evidenceCaption} onChange={(event) => setEvidenceCaption(event.target.value)} placeholder="Caption" />
                       <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={evidenceType} onChange={(event) => setEvidenceType(event.target.value as "photo" | "video" | "document")}>
@@ -1134,7 +1134,7 @@ export function EstateOperations({
                       <Plus className="h-4 w-4 text-primary" />
                       <h4 className="font-medium">Quotes</h4>
                     </div>
-                    <form className="mt-3 grid gap-3 md:grid-cols-[1fr,1fr,auto]" onSubmit={createQuote}>
+                    <form className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_auto] " onSubmit={createQuote}>
                       <Input value={quoteAmount} onChange={(event) => setQuoteAmount(event.target.value)} inputMode="decimal" placeholder="Quote amount (GHS)" />
                       <Input value={quoteNote} onChange={(event) => setQuoteNote(event.target.value)} placeholder="Quote note" />
                       <Button type="submit" variant="outline" disabled={submitting}>
@@ -1178,7 +1178,7 @@ export function EstateOperations({
               </div>
               <Badge variant="outline">{duePlans.length} active plans</Badge>
             </div>
-            <form className="mt-5 grid gap-3 md:grid-cols-[1.2fr,1fr,0.8fr,1fr,1fr,auto]" onSubmit={createPlan}>
+            <form className="mt-5 grid gap-3 md:grid-cols-[1.2fr_1fr_0.8fr_1fr_1fr_auto] " onSubmit={createPlan}>
               <Input value={planName} onChange={(event) => setPlanName(event.target.value)} placeholder="e.g. Fire alarm testing" />
               <Input value={planCategory} onChange={(event) => setPlanCategory(event.target.value)} placeholder="Category" />
               <Input value={planFrequencyDays} onChange={(event) => setPlanFrequencyDays(event.target.value)} inputMode="numeric" placeholder="Every N days" />

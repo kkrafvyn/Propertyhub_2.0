@@ -65,13 +65,23 @@
 .mk-cinema-scroll {
   position: relative;
   z-index: 1;
+  isolation: isolate;
 }
 
 .mk-cinema-chapter {
+  position: relative;
+  z-index: 1;
   min-height: 100dvh;
   display: flex;
   align-items: center;
   padding: clamp(5rem, 12vh, 7rem) clamp(1.25rem, 4vw, 2.5rem) 4rem;
+}
+
+.mk-cinema-chapter__inner,
+.mk-cinema-actions,
+.mk-cinema-actions a {
+  position: relative;
+  z-index: 2;
 }
 
 .mk-cinema-chapter--short {
@@ -500,6 +510,16 @@
 @media (prefers-reduced-motion: reduce) {
   .mk-cinema-scroll-cue {
     animation: none;
+  }
+
+  .mk-cinema-chapter__glass {
+    transform: none !important;
+    opacity: 1 !important;
+    transition: none !important;
+  }
+
+  .mk-btn-glow {
+    box-shadow: none;
   }
 }
 

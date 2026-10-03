@@ -446,7 +446,7 @@ export default function TeamCollaborationHub({
       ) : null}
 
       {!loading && activeTab === "overview" && (
-        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr,0.8fr] gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr]  gap-6">
           <Card className="p-6">
             <h2 className="text-lg font-semibold mb-4">Recent Collaboration Activity</h2>
             {recentActivity.length === 0 ? (
@@ -633,7 +633,7 @@ export default function TeamCollaborationHub({
             </div>
             <form
               onSubmit={handleInvite}
-              className="grid grid-cols-1 md:grid-cols-[1fr,180px,auto] gap-4"
+              className="grid grid-cols-1 md:grid-cols-[1fr_180px_auto]  gap-4"
             >
               <Input
                 label="Email"

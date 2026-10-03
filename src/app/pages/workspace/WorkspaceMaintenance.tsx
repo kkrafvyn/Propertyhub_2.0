@@ -28,12 +28,23 @@ import {
   Maximize2,
   AlertTriangle,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { MetricCard } from "../../components/ui/MetricCard";
-import { EmptyState } from "../../components/ux/EmptyState";
-import { ActivityTimeline } from "../../components/ux";
+import {
+  ActivityTimeline,
+  DashboardStatsSkeleton,
+  OperationalQueryState,
+  WorkspacePageShell,
+} from "../../components/ux";
 import { buildMaintenanceTimeline } from "../../lib/workflow-timeline";
 import { maintenanceService } from "../../../lib/maintenance.service";
 import { vendorService } from "../../../lib/vendor.service";
@@ -120,6 +131,7 @@ export function WorkspaceMaintenance({
   bypassPropertyScope = false,
 }: WorkspaceMaintenanceProps) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -137,6 +149,7 @@ export function WorkspaceMaintenance({
   const loadRequests = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [rows, vendorRows] = await Promise.all([
         maintenanceService.getOrganizationRequests(organizationId),
         vendorService.getVerifiedVendors("maintenance", 20),
@@ -153,6 +166,7 @@ export function WorkspaceMaintenance({
       setVendors(vendorRows || []);
     } catch (error) {
       console.error(error);
+      setLoadError("We couldn't load the maintenance queue. Try again in a moment.");
       toast.error("Unable to load maintenance queue.");
     } finally {
       setLoading(false);
@@ -251,127 +265,85 @@ export function WorkspaceMaintenance({
     });
   }, [requests, statusFilter, searchQuery]);
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="h-10 w-64 rounded-lg bg-surface-subtle animate-pulse" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-28 rounded-2xl bg-surface-subtle animate-pulse border border-surface-border" />
-          ))}
-        </div>
-        <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-44 rounded-2xl bg-surface-subtle animate-pulse border border-surface-border" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const listPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : requests.length === 0
+        ? "empty"
+        : filteredRequests.length === 0
+          ? "filtered-empty"
+          : "ready";
 
   return (
-    <div className="space-y-8">
-      {/* ── Editorial Header ── */}
-      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-amber-500/10 via-primary/5 to-surface/80 border border-amber-500/20 shadow-lg backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-radial from-amber-500/15 via-primary/10 to-transparent blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-radial from-emerald-500/10 via-transparent to-transparent blur-2xl pointer-events-none" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="warning" dot pulse className="text-xs font-semibold px-2.5 py-1">
-                Field Operations & Dispatch
-              </Badge>
-              <span className="text-xs text-ink-muted flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-amber-500" />
-                Contractor & Repair Tracking
-              </span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-display font-medium tracking-tight text-ink">
-              Maintenance Operations
-            </h1>
-            <p className="text-sm text-ink-secondary max-w-xl leading-relaxed">
-              Assign contractors, track repairs in progress, review tenant photos, and make sure every job gets completed on time.
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5 shrink-0">
-            {/* View Mode Toggle */}
-            <div className="flex items-center bg-surface/90 border border-surface-border rounded-xl p-1 shadow-xs">
-              <button
-                type="button"
-                onClick={() => setViewMode("list")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  viewMode === "list"
-                    ? "bg-primary text-white shadow-xs"
-                    : "text-ink-secondary hover:text-ink"
-                }`}
-              >
-                <List className="w-3.5 h-3.5" />
-                <span>List</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("kanban")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  viewMode === "kanban"
-                    ? "bg-primary text-white shadow-xs"
-                    : "text-ink-secondary hover:text-ink"
-                }`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>Kanban</span>
-              </button>
-            </div>
-
-            <Button
-              variant="gradient"
-              size="sm"
-              onClick={() => void loadRequests()}
-              className="gap-2 shadow-sm"
+    <WorkspacePageShell
+      title="Maintenance Operations"
+      description="Assign contractors, track repairs in progress, review tenant photos, and close out work orders on time."
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center bg-secondary border border-surface-border rounded-xl p-1">
+            <button
+              type="button"
+              aria-label="List view"
+              aria-pressed={viewMode === "list"}
+              onClick={() => setViewMode("list")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                viewMode === "list" ? "bg-primary text-primary-foreground" : "text-ink-secondary hover:text-ink"
+              }`}
             >
-              <RefreshCw className="w-3.5 h-3.5" />
-              Refresh Tickets
-            </Button>
+              <List className="w-3.5 h-3.5" aria-hidden="true" />
+              List
+            </button>
+            <button
+              type="button"
+              aria-label="Kanban view"
+              aria-pressed={viewMode === "kanban"}
+              onClick={() => setViewMode("kanban")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                viewMode === "kanban" ? "bg-primary text-primary-foreground" : "text-ink-secondary hover:text-ink"
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" aria-hidden="true" />
+              Kanban
+            </button>
           </div>
+          <Button type="button" variant="outline" size="sm" onClick={() => void loadRequests()} aria-label="Refresh maintenance tickets">
+            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
+            Refresh
+          </Button>
         </div>
-      </div>
+      }
+    >
+      {loading && !loadError ? (
+        <DashboardStatsSkeleton />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard title="Open Requests" value={loading ? "—" : metrics.open} icon={AlertCircle} iconColor="primary" subtitle="Awaiting contractor dispatch" />
+          <MetricCard title="In Progress" value={loading ? "—" : metrics.inProgress} icon={Clock} iconColor="primary" subtitle="Active contractor repairs" />
+          <MetricCard title="Resolved" value={loading ? "—" : metrics.resolved} icon={CheckCircle2} iconColor="primary" subtitle="Completed and verified" />
+          <MetricCard title="Total Work Orders" value={loading ? "—" : metrics.total} icon={Wrench} iconColor="primary" subtitle="All-time recorded tickets" />
+        </div>
+      )}
 
-      {/* ── KPI Overview with Halo Illumination ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Open Requests"
-          value={metrics.open}
-          icon={AlertCircle}
-          iconColor="amber"
-          glow="amber"
-          subtitle="Awaiting contractor dispatch"
-          trend={metrics.open > 0 ? { value: `${metrics.open} dispatch pending`, isPositive: false } : undefined}
-        />
-        <MetricCard
-          title="In Progress"
-          value={metrics.inProgress}
-          icon={Clock}
-          iconColor="indigo"
-          glow="indigo"
-          subtitle="Active contractor repairs"
-        />
-        <MetricCard
-          title="Resolved"
-          value={metrics.resolved}
-          icon={CheckCircle2}
-          iconColor="emerald"
-          glow="emerald"
-          subtitle="Completed and verified"
-        />
-        <MetricCard
-          title="Total Work Orders"
-          value={metrics.total}
-          icon={Wrench}
-          iconColor="primary"
-          glow="primary"
-          subtitle="All-time recorded tickets"
-        />
-      </div>
-
+      <OperationalQueryState
+        phase={listPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void loadRequests()}
+        retryLabel="Reload queue"
+        loadingFallback={<DashboardStatsSkeleton />}
+        emptyIcon={Wrench}
+        emptyTitle="No maintenance requests"
+        emptyDescription="When tenants report issues, tickets will appear here for review and vendor assignment."
+        filteredEmptyTitle="No matching work orders"
+        filteredEmptyDescription={
+          searchQuery
+            ? `No tickets matched "${searchQuery}". Try clearing search or changing the status filter.`
+            : "No tickets match the current filters."
+        }
+        emptyActionLabel={searchQuery ? "Clear search" : undefined}
+        onEmptyAction={searchQuery ? () => setSearchQuery("") : undefined}
+      >
+      <div className="space-y-6 min-w-0 mt-6">
       {/* ── Search & Filter Toolbar ── */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-2 bg-surface/60 backdrop-blur-md rounded-2xl border border-surface-border/80">
         {/* Status Tabs */}
@@ -619,19 +591,6 @@ export function WorkspaceMaintenance({
         </div>
       ) : (
         /* ── LIST VIEW ── */
-        filteredRequests.length === 0 ? (
-          <EmptyState
-            icon={Wrench}
-            title={searchQuery ? "No matching work orders" : "No maintenance requests"}
-            description={
-              searchQuery
-                ? `No maintenance tickets matched "${searchQuery}". Try clearing search terms or selecting another status filter.`
-                : "There are currently no maintenance tickets in this queue. When tenants report issues, they will appear here for review and vendor assignment."
-            }
-            actionLabel={searchQuery ? "Clear Search" : undefined}
-            onAction={searchQuery ? () => setSearchQuery("") : undefined}
-          />
-        ) : (
           <div className="space-y-4">
             {filteredRequests.map((request) => {
               const isTimelineOpen = expandedTimelineId === request.id;
@@ -775,7 +734,8 @@ export function WorkspaceMaintenance({
                                 title: request.title,
                               })
                             }
-                            className="group relative h-20 w-20 rounded-xl overflow-hidden border border-surface-border shadow-xs hover:border-primary/50 transition-all cursor-zoom-in"
+                            aria-label={`View evidence photo ${index + 1} of ${request.photo_urls!.length} for ${request.title}`}
+                            className="group relative h-20 w-20 rounded-xl overflow-hidden border border-surface-border shadow-xs hover:border-primary/50 transition-colors cursor-zoom-in"
                           >
                             <img
                               src={url}
@@ -881,49 +841,30 @@ export function WorkspaceMaintenance({
               );
             })}
           </div>
-        )
       )}
 
-      {/* ── Photo Evidence Lightbox Modal ── */}
-      {activeLightbox && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
-          onClick={() => setActiveLightbox(null)}
-        >
-          <div
-            className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center gap-3 bg-surface-base/90 rounded-2xl p-4 border border-surface-border/50 shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-full flex items-center justify-between text-xs text-ink-secondary pb-2 border-b border-surface-border">
-              <span className="font-medium text-ink truncate max-w-md">
-                {activeLightbox.title}
-              </span>
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-ink-muted">
-                  Photo {activeLightbox.index} of {activeLightbox.total}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setActiveLightbox(null)}
-                  className="p-1.5 rounded-lg bg-surface-subtle hover:bg-surface-hover text-ink transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+      </div>
+      </OperationalQueryState>
 
-            <div className="w-full max-h-[75vh] overflow-auto flex items-center justify-center rounded-xl bg-black/20 p-2">
+      <Dialog open={Boolean(activeLightbox)} onOpenChange={(open) => !open && setActiveLightbox(null)}>
+        <DialogContent className="max-w-4xl gap-3 p-4 sm:p-6">
+          <DialogHeader className="text-left">
+            <DialogTitle className="truncate pr-8">{activeLightbox?.title ?? "Evidence photo"}</DialogTitle>
+            <DialogDescription>
+              Photo {activeLightbox?.index ?? 0} of {activeLightbox?.total ?? 0}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[75vh] overflow-auto rounded-xl border border-surface-border bg-secondary p-2">
+            {activeLightbox ? (
               <img
                 src={activeLightbox.url}
-                alt="Full size evidence"
-                className="max-h-[70vh] max-w-full object-contain rounded-lg shadow-lg"
+                alt={`Evidence for ${activeLightbox.title}`}
+                className="mx-auto max-h-[70vh] max-w-full object-contain rounded-lg"
               />
-            </div>
+            ) : null}
           </div>
-        </div>
-      )}
-    </div>
+        </DialogContent>
+      </Dialog>
+    </WorkspacePageShell>
   );
 }

@@ -118,7 +118,7 @@ export function OrganizationUnitsPanel({
 
       {canManage ? (
         <>
-          <div className="grid gap-3 sm:grid-cols-[1fr,auto,auto]">
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto] ">
             <Input
               value={name}
               onChange={(event) => setName(event.target.value)}

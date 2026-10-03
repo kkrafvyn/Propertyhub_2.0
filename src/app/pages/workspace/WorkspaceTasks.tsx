@@ -25,7 +25,11 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { MetricCard } from "../../components/ui/MetricCard";
-import { EmptyState } from "../../components/ux/EmptyState";
+import {
+  DashboardStatsSkeleton,
+  OperationalQueryState,
+  WorkspacePageShell,
+} from "../../components/ux";
 import type { Database } from "../../../lib/database.types";
 import type { MemberRole } from "../../../lib/workspace";
 import { canWorkspace } from "../../../lib/workspace-permissions";
@@ -45,6 +49,7 @@ export function WorkspaceTasks({
 }) {
   const canWrite = canWorkspace(currentRole, "tasks:write");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [tasks, setTasks] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [title, setTitle] = useState("");
@@ -57,6 +62,7 @@ export function WorkspaceTasks({
   const loadData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [rows, memberRows] = await Promise.all([
         workspaceTasksService.getOrganizationTasks(organization.id),
         organizationService.getOrganizationMembers(organization.id),
@@ -65,6 +71,7 @@ export function WorkspaceTasks({
       setMembers(memberRows || []);
     } catch (error) {
       console.error(error);
+      setLoadError("We couldn't load tasks for this organization. Check your connection and try again.");
       toast.error("Unable to load tasks.");
     } finally {
       setLoading(false);
@@ -158,95 +165,68 @@ export function WorkspaceTasks({
     }
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="h-10 w-64 rounded-lg bg-surface-subtle animate-pulse" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-28 rounded-2xl bg-surface-subtle animate-pulse border border-surface-border" />
-          ))}
-        </div>
-        <div className="space-y-4">
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="h-44 rounded-2xl bg-surface-subtle animate-pulse border border-surface-border" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const listPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : filteredInbox.length === 0
+        ? inbox.length === 0
+          ? "empty"
+          : "filtered-empty"
+        : "ready";
 
   return (
-    <div className="space-y-8">
-      {/* ── Editorial Header ── */}
-      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-amber-500/10 via-primary/5 to-surface/80 border border-amber-500/20 shadow-lg backdrop-blur-md">
-        <div className="absolute -top-12 -right-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-semibold border border-amber-500/20 shadow-xs">
-                <CheckSquare className="w-3.5 h-3.5" />
-                Pipeline Task Manager
-              </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium border border-emerald-500/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {inbox.length} Open In-Queue
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-4xl font-serif font-bold tracking-tight text-ink font-display">
-              Tasks & Follow-ups
-            </h1>
-            <p className="mt-1.5 text-sm text-ink-secondary max-w-2xl leading-relaxed">
-              Operational follow-up inbox for client inquiries, property inspections, lease renegotiations, and milestone reminders for {organization.name}.
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void loadData()}
-              className="flex items-center gap-1.5 border-surface-border/80 bg-surface/60 backdrop-blur-xs hover:bg-surface rounded-xl text-xs"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-              <span>Refresh</span>
-            </Button>
-          </div>
-        </div>
-      </div>
+    <WorkspacePageShell
+      title="Tasks & Follow-ups"
+      description={`Open follow-ups, deadlines, and assignments for ${organization.name}.`}
+      badge={
+        <span className="inline-flex items-center rounded-lg border border-surface-border bg-secondary px-2.5 py-1 text-xs font-medium text-ink-secondary">
+          {loading ? "—" : `${inbox.length} open`}
+        </span>
+      }
+      actions={
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void loadData()}
+          aria-label="Refresh tasks"
+          className="text-xs"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
+          Refresh
+        </Button>
+      }
+    >
+      <div className="space-y-6">
 
       {/* ── Metric Cards with Halo Glow ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Open Follow-ups"
-          value={inbox.length}
+          value={loading ? "—" : inbox.length}
           icon={Clock3}
-          iconColor="amber"
-          glow="amber"
+          iconColor="primary"
           subtitle="Awaiting team resolution"
         />
         <MetricCard
           title="Urgent Priority"
-          value={urgentTasks.length}
+          value={loading ? "—" : urgentTasks.length}
           icon={AlertCircle}
           iconColor="terracotta"
-          glow="terracotta"
           subtitle="High or immediate action"
         />
         <MetricCard
           title="Completed"
-          value={completedTasks.length}
+          value={loading ? "—" : completedTasks.length}
           icon={CheckCircle2}
-          iconColor="emerald"
-          glow="emerald"
+          iconColor="primary"
           subtitle="Successfully closed tasks"
         />
         <MetricCard
           title="Total In Registry"
-          value={tasks.length}
+          value={loading ? "—" : tasks.length}
           icon={CheckSquare}
           iconColor="primary"
-          glow="primary"
           subtitle="All organization tasks"
         />
       </div>
@@ -419,17 +399,17 @@ export function WorkspaceTasks({
           </div>
         </div>
 
-        {filteredInbox.length === 0 ? (
-          <EmptyState
-            icon={CheckCircle2}
-            title={inbox.length === 0 ? "All caught up" : "No matching tasks found"}
-            description={
-              inbox.length === 0
-                ? "You have no open tasks or follow-ups in this organization. Create a new task above when you need a pipeline reminder."
-                : "No open follow-up tasks match the selected filters. Clear your filters or try another search term."
-            }
-          />
-        ) : (
+        <OperationalQueryState
+          phase={listPhase}
+          errorMessage={loadError ?? undefined}
+          onRetry={() => void loadData()}
+          loadingFallback={<DashboardStatsSkeleton />}
+          emptyIcon={CheckCircle2}
+          emptyTitle="All caught up"
+          emptyDescription="You have no open tasks or follow-ups. Create a task above when you need a reminder."
+          filteredEmptyTitle="No matching tasks"
+          filteredEmptyDescription="Clear filters or try another search term."
+        >
           <div className="space-y-3">
             {filteredInbox.map((task) => {
               const isUrgent = ["urgent", "high"].includes(task.priority);
@@ -497,8 +477,9 @@ export function WorkspaceTasks({
               );
             })}
           </div>
-        )}
+        </OperationalQueryState>
       </Card>
-    </div>
+      </div>
+    </WorkspacePageShell>
   );
 }

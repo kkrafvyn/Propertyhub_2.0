@@ -32,8 +32,8 @@ import type { MemberRole } from "../../../lib/workspace";
 import {
   DashboardStatsSkeleton,
   EmptyState,
-  ErrorState,
   ListSkeleton,
+  OperationalQueryState,
   WorkspacePageShell,
 } from "../../components/ux";
 
@@ -190,67 +190,44 @@ export function WorkspaceFinance({
         <FileText className="w-3.5 h-3.5" />
         Print / PDF
       </Button>
-      <Button variant="gradient" size="sm" className="gap-1.5 text-xs shadow-sm" onClick={() => void loadData()} disabled={loading}>
-        <RefreshCw className={`w-3.5 h-3.5 ${loading ? "motion-safe:animate-spin" : ""}`} />
-        Sync Ledger
+      <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => void loadData()} disabled={loading} aria-label="Sync ledger">
+        <RefreshCw className={`w-3.5 h-3.5 ${loading ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
+        Sync ledger
       </Button>
     </>
   );
 
-  if (!loading && loadError && payments.length === 0 && !orgWallet) {
-    return (
-      <WorkspacePageShell
-        tone="finance"
-        title="Financial Operations & Treasury"
-        description="Trust reconciliation, owner payout disbursement queues, broker commission reporting, and export-ready ledger statements."
-        badge={
-          <Badge variant="success" dot pulse className="text-xs font-semibold px-2.5 py-1">
-            Trust Accounting & Treasury
-          </Badge>
-        }
-        meta={
-          <span className="text-xs text-ink-muted flex items-center gap-1">
-            <ShieldCheck className="w-3 h-3 text-emerald-500" aria-hidden="true" />
-            Multi-Currency Escrow & PayAngels Clearing
-          </span>
-        }
-        actions={headerActions}
-      >
-        <ErrorState message={loadError} onRetry={() => void loadData()} />
-      </WorkspacePageShell>
-    );
-  }
+  const queryPhase =
+    loadError && payments.length === 0 && !orgWallet
+      ? "error"
+      : loading && payments.length === 0
+        ? "loading"
+        : "ready";
 
   return (
     <WorkspacePageShell
-      tone="finance"
-      title="Financial Operations & Treasury"
-      description="Trust reconciliation, owner payout disbursement queues, broker commission reporting, and export-ready ledger statements."
+      title="Financial operations & treasury"
+      description="Trust reconciliation, payout queues, commission reporting, and export-ready ledger statements."
       badge={
-        <Badge variant="success" dot pulse className="text-xs font-semibold px-2.5 py-1">
-          Trust Accounting & Treasury
+        <Badge variant="outline" className="text-xs font-medium">
+          Trust accounting
         </Badge>
-      }
-      meta={
-        <span className="text-xs text-ink-muted flex items-center gap-1">
-          <ShieldCheck className="w-3 h-3 text-emerald-500" aria-hidden="true" />
-          Multi-Currency Escrow & PayAngels Clearing
-        </span>
       }
       actions={headerActions}
     >
-      {loadError && !loading ? (
-        <div role="status" className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-ink-secondary">
-          {loadError}
-        </div>
-      ) : null}
-
-      {loading && payments.length === 0 ? (
-        <>
-          <DashboardStatsSkeleton />
-          <ListSkeleton rows={4} />
-        </>
-      ) : (
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void loadData()}
+        retryLabel="Reload finance data"
+        hasStaleData={Boolean(loadError && (payments.length > 0 || orgWallet))}
+        loadingFallback={
+          <>
+            <DashboardStatsSkeleton />
+            <ListSkeleton rows={4} />
+          </>
+        }
+      >
         <>
       {/* ── KPI Strip with Halo Illumination ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -260,23 +237,20 @@ export function WorkspaceFinance({
           subtitle="Gross volume recorded"
           icon={TrendingUp}
           iconColor="primary"
-          glow="primary"
         />
         <MetricCard
           title="Net Collected"
           value={summary.formatted.netCollected}
           subtitle="Net after refunds & fees"
           icon={Banknote}
-          iconColor="emerald"
-          glow="emerald"
+          iconColor="primary"
         />
         <MetricCard
           title="Total Refunded"
           value={summary.formatted.totalRefunded}
           subtitle={`${Math.round(summary.refundRate * 100)}% refund rate`}
           icon={RotateCcw}
-          iconColor="purple"
-          glow="purple"
+          iconColor="primary"
         />
         <MetricCard
           title="Pending / Attention"
@@ -284,7 +258,6 @@ export function WorkspaceFinance({
           subtitle="Requires staff action"
           icon={AlertCircle}
           iconColor="amber"
-          glow="amber"
           trend={attentionPayments.length > 0 ? { value: "Review required", isPositive: false } : undefined}
         />
       </div>
@@ -297,7 +270,6 @@ export function WorkspaceFinance({
             subtitle="Ready for owner/operating payouts"
             icon={Wallet}
             iconColor="emerald"
-            glow="emerald"
           />
           <MetricCard
             title="Held in Reserve"
@@ -305,7 +277,6 @@ export function WorkspaceFinance({
             subtitle="Pending escrow release & clearance"
             icon={CreditCard}
             iconColor="indigo"
-            glow="indigo"
           />
           <MetricCard
             title="Payout Queue"
@@ -313,7 +284,6 @@ export function WorkspaceFinance({
             subtitle="Requests awaiting disbursement"
             icon={ArrowUpRight}
             iconColor="amber"
-            glow="amber"
             trend={payoutQueueOpen > 0 ? { value: `${payoutQueueOpen} pending`, isPositive: false } : undefined}
           />
         </div>
@@ -361,7 +331,7 @@ export function WorkspaceFinance({
       ) : null}
 
       {canSeeManagerMetrics && (
-        <div className="grid gap-6 xl:grid-cols-[1fr,1fr]">
+        <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
           <Card variant="glass" className="p-6 border border-surface-border/80 rounded-2xl shadow-sm">
             <div className="flex items-center gap-2.5 mb-4">
               <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0">
@@ -511,7 +481,7 @@ export function WorkspaceFinance({
         </Card>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr,1fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_1fr]">
         <Card variant="glass" className="p-6 border border-surface-border/80 rounded-2xl shadow-sm">
           <div className="flex items-center gap-2.5 mb-4">
             <span className="p-2 rounded-xl bg-primary/10 text-primary shrink-0">
@@ -609,11 +579,11 @@ export function WorkspaceFinance({
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono text-xs font-bold text-ink">{payment.provider_reference}</span>
-                        <Badge variant={payment.status === "succeeded" ? "success" : payment.status === "failed" ? "destructive" : "warning"} className="text-[11px]">
+                        <Badge variant={payment.status === "succeeded" ? "success" : payment.status === "failed" ? "destructive" : "warning"} className="text-xs">
                           {formatLabel(payment.status)}
                         </Badge>
                         {latestRefund && (
-                          <Badge variant="outline" className="text-[11px]">
+                          <Badge variant="outline" className="text-xs">
                             Refund {formatLabel(latestRefund.status)}
                           </Badge>
                         )}
@@ -644,7 +614,7 @@ export function WorkspaceFinance({
         )}
       </Card>
         </>
-      )}
+      </OperationalQueryState>
     </WorkspacePageShell>
   );
 }

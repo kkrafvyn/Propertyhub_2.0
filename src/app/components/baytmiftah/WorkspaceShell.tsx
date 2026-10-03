@@ -31,7 +31,7 @@ export function WorkspaceShell({
         {headerAction}
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[240px,minmax(0,1fr)]">
+      <div className="grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)] ">
         <aside className="panel-card h-fit p-3 lg:sticky lg:top-24">
           <nav className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
             {links.map((link) => (

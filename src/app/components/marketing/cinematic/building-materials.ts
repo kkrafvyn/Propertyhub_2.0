@@ -43,15 +43,13 @@ export const matPodium = new THREE.MeshStandardMaterial({
   metalness: 0.05,
 });
 
-export const matGlass = new THREE.MeshPhysicalMaterial({
-  color: BUILDING_PALETTE.glass,
-  roughness: 0.05,
-  metalness: 0.15,
+/** Standard transparent glass — avoids transmission depth/mipmap WebGL warnings on marketing. */
+export const matGlass = new THREE.MeshStandardMaterial({
+  color: BUILDING_PALETTE.glassTint,
+  roughness: 0.12,
+  metalness: 0.2,
   transparent: true,
-  opacity: 0.52,
-  transmission: 0.42,
-  thickness: 0.2,
-  envMapIntensity: 0.35,
+  opacity: 0.45,
 });
 
 export const matGold = new THREE.MeshStandardMaterial({

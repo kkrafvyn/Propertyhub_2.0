@@ -74,7 +74,7 @@
   }
 
   .search-segment-label {
-    @apply relative z-[1] text-[11px] font-bold uppercase tracking-wider text-ink-secondary;
+    @apply relative z-[1] text-xs font-semibold uppercase tracking-wider text-ink-secondary;
   }
 
   .search-segment-value {

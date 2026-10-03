@@ -1619,7 +1619,7 @@ export function UserDashboard() {
               <CreditCard className="w-5 h-5" />
             </div>
             <span className="text-xs font-semibold text-foreground">Pay Rent</span>
-            <span className="text-[11px] text-muted-foreground mt-0.5">MoMo & Cards</span>
+            <span className="text-xs text-ink-muted mt-0.5">MoMo & Cards</span>
           </Link>
 
           <Link to="/app/maintenance" className="quick-action-card group">
@@ -1627,7 +1627,7 @@ export function UserDashboard() {
               <Wrench className="w-5 h-5" />
             </div>
             <span className="text-xs font-semibold text-foreground">Repairs</span>
-            <span className="text-[11px] text-muted-foreground mt-0.5">Request fix</span>
+            <span className="text-xs text-ink-muted mt-0.5">Request fix</span>
           </Link>
 
           <Link to="/app/home" className="quick-action-card group">
@@ -1635,7 +1635,7 @@ export function UserDashboard() {
               <QrCode className="w-5 h-5" />
             </div>
             <span className="text-xs font-semibold text-foreground">Gate Pass</span>
-            <span className="text-[11px] text-muted-foreground mt-0.5">Visitor entry</span>
+            <span className="text-xs text-ink-muted mt-0.5">Visitor entry</span>
           </Link>
 
           <Link to="/app/messages" className="quick-action-card group">
@@ -1648,7 +1648,7 @@ export function UserDashboard() {
               )}
             </div>
             <span className="text-xs font-semibold text-foreground">Messages</span>
-            <span className="text-[11px] text-muted-foreground mt-0.5">Chat agent</span>
+            <span className="text-xs text-ink-muted mt-0.5">Chat agent</span>
           </Link>
 
           <Link to="/app/documents" className="quick-action-card group">
@@ -1656,7 +1656,7 @@ export function UserDashboard() {
               <FileText className="w-5 h-5" />
             </div>
             <span className="text-xs font-semibold text-foreground">Documents</span>
-            <span className="text-[11px] text-muted-foreground mt-0.5">Leases & KYC</span>
+            <span className="text-xs text-ink-muted mt-0.5">Leases & KYC</span>
           </Link>
 
           <Link to="/search" className="quick-action-card group">
@@ -1664,7 +1664,7 @@ export function UserDashboard() {
               <Search className="w-5 h-5" />
             </div>
             <span className="text-xs font-semibold text-foreground">Explore</span>
-            <span className="text-[11px] text-muted-foreground mt-0.5">Find homes</span>
+            <span className="text-xs text-ink-muted mt-0.5">Find homes</span>
           </Link>
         </div>
       </section>

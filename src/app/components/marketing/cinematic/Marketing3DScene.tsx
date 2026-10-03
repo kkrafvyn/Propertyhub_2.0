@@ -1,58 +1,52 @@
 import { Suspense, useEffect, useState } from "react";
-import { Canvas } from "@react-three/fiber";
-import { ContactShadows } from "@react-three/drei";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import * as THREE from "three";
 import { PropertyModel } from "./PropertyModel";
 import { PortfolioCity } from "./PortfolioCity";
 import { SceneLights } from "./SceneLights";
-import { SceneCameraRig, sceneScalars } from "./SceneCameraRig";
+import { SceneCameraRig } from "./SceneCameraRig";
 import { FloatingProductPanels } from "./FloatingProductPanels";
 import { ConsumerPhone3D } from "./ConsumerPhone3D";
 import { AiNetwork } from "./AiNetwork";
 import { PortfolioDashboard3D } from "./PortfolioDashboard3D";
 import { PortfolioConnections } from "./PortfolioConnections";
-import type { ScenePointer } from "./useMarketingSceneProgress";
+import { marketingScrollState } from "./marketingScrollState";
+import { useMarketing3DScalars } from "./useMarketing3DScalars";
 
 type Marketing3DSceneProps = {
-  progress: number;
-  pointer: ScenePointer;
   mobile?: boolean;
   reducedMotion?: boolean;
   onContextLost?: () => void;
 };
 
-function SceneInner({
-  progress,
-  pointer,
-  mobile,
-  reducedMotion,
-}: Marketing3DSceneProps) {
-  const s = sceneScalars(progress);
+function CanvasInvalidateBridge() {
+  const invalidate = useThree((state) => state.invalidate);
+  useEffect(() => {
+    marketingScrollState.registerInvalidate(invalidate);
+    return () => marketingScrollState.registerInvalidate(null);
+  }, [invalidate]);
+  useFrame(() => {
+    /* Keep subtle idle motion alive while scroll-driven updates call invalidate separately. */
+  });
+  return null;
+}
+
+function SceneInner({ mobile, reducedMotion }: Marketing3DSceneProps) {
+  const s = useMarketing3DScalars();
 
   return (
     <>
+      <CanvasInvalidateBridge />
       <SceneLights mobile={mobile} />
-      <SceneCameraRig
-        progress={progress}
-        pointer={pointer}
-        mobile={mobile}
-        reducedMotion={reducedMotion}
-      />
+      <SceneCameraRig mobile={mobile} reducedMotion={reducedMotion} />
 
       <group position={[1.15, -0.15, 0]} visible={s.singleBuildingOpacity > 0.05}>
         <group scale={(1 - s.brandFade * 0.35) * 0.88}>
-          <PropertyModel
-            layerSeparation={s.layerSeparation}
-            spin={s.heroSpin + progress * 0.15}
-            floatPhase={progress * Math.PI}
-          />
+          <PropertyModel scrollDriven />
         </group>
       </group>
 
-      <PortfolioCity
-        visible={s.portfolioBlend}
-        blend={s.portfolioBlend}
-        mobile={mobile}
-      />
+      <PortfolioCity visible={s.portfolioBlend} blend={s.portfolioBlend} mobile={mobile} />
       <PortfolioConnections blend={s.portfolioBlend} mobile={mobile} />
 
       <FloatingProductPanels strength={s.platformPanels} mobile={mobile} />
@@ -60,29 +54,14 @@ function SceneInner({
       <ConsumerPhone3D blend={s.consumerBlend} mobile={mobile} />
       <AiNetwork blend={s.aiBlend} />
 
-      {!mobile ? (
-        <ContactShadows
-          position={[0, 0, 0]}
-          opacity={0.35}
-          scale={12}
-          blur={2.5}
-          far={8}
-        />
-      ) : null}
     </>
   );
 }
 
-export function Marketing3DScene({
-  progress,
-  pointer,
-  mobile,
-  reducedMotion,
-  onContextLost,
-}: Marketing3DSceneProps) {
+export function Marketing3DScene({ mobile, reducedMotion, onContextLost }: Marketing3DSceneProps) {
   const [paused, setPaused] = useState(false);
   const [ready, setReady] = useState(false);
-  const dpr: [number, number] = mobile ? [1, 1.25] : [1, 1.75];
+  const dpr: [number, number] = mobile ? [1, 1.15] : [1, 1.5];
 
   useEffect(() => {
     const onVis = () => setPaused(document.hidden);
@@ -97,8 +76,11 @@ export function Marketing3DScene({
       {!ready ? <div className="mk-cinema-canvas-loader" aria-hidden="true" /> : null}
       <div className="mk-cinema-vignette" aria-hidden="true" />
       <Canvas
-        onCreated={({ gl }) => {
+        onCreated={({ gl, invalidate }) => {
           setReady(true);
+          marketingScrollState.registerInvalidate(invalidate);
+          gl.shadowMap.enabled = false;
+          gl.shadowMap.type = THREE.PCFShadowMap;
           const canvas = gl.domElement;
           const onLost = (event: Event) => {
             event.preventDefault();
@@ -107,18 +89,17 @@ export function Marketing3DScene({
           canvas.addEventListener("webglcontextlost", onLost, { passive: false });
         }}
         dpr={dpr}
-        shadows={!mobile}
+        shadows={false}
         camera={{ fov: 42, near: 0.1, far: 100, position: [5, 2.8, 7.5] }}
-        gl={{ antialias: true, powerPreference: "high-performance", alpha: true }}
-        frameloop={paused ? "never" : "always"}
+        gl={{
+          antialias: !mobile,
+          powerPreference: "high-performance",
+          alpha: true,
+        }}
+        frameloop={paused ? "never" : "demand"}
       >
         <Suspense fallback={null}>
-          <SceneInner
-            progress={progress}
-            pointer={pointer}
-            mobile={mobile}
-            reducedMotion={reducedMotion}
-          />
+          <SceneInner mobile={mobile} reducedMotion={reducedMotion} />
         </Suspense>
       </Canvas>
     </div>

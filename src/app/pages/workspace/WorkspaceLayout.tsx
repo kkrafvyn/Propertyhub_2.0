@@ -371,6 +371,122 @@ const ENTERPRISE_NAV_ITEMS: NavItem[] = [
   { slug: "workflows", label: "Workflows", icon: Workflow },
 ];
 
+const CORE_NAV_TASK_GROUPS: Array<{ title: string; slugs: string[] }> = [
+  {
+    title: "Overview",
+    slugs: ["", "my-work", "owner-oversight"],
+  },
+  {
+    title: "Pipeline & CRM",
+    slugs: ["listings", "leads", "contacts", "tasks", "calendar"],
+  },
+  {
+    title: "Leasing & records",
+    slugs: [
+      "leases",
+      "documents",
+      "leasing-applications",
+      "tenant-screening",
+      "esignature",
+      "inspections",
+    ],
+  },
+  {
+    title: "Property operations",
+    slugs: [
+      "maintenance",
+      "smart-property",
+      "estate-operations",
+      "gate-clearance",
+      "utility-metering",
+      "contractor-work-orders",
+      "technician-jobs",
+      "contractor-portal",
+      "property-360",
+      "unit-360",
+    ],
+  },
+  {
+    title: "Finance & treasury",
+    slugs: [
+      "payments",
+      "estate-finance",
+      "opening-balances",
+      "payment-import",
+      "estate-payables",
+      "owner-statements",
+      "owner-disbursements",
+      "chart-of-accounts",
+      "journal-entries",
+      "financial-statements",
+      "collections-cases",
+      "trust-accounting",
+      "cam-billing",
+      "commercial-escalations",
+      "multi-currency-fx",
+      "contractor-1099",
+    ],
+  },
+  {
+    title: "Communications",
+    slugs: ["contextual-inbox", "estate-communications", "whatsapp-hub", "stakeholder-portals"],
+  },
+  {
+    title: "Governance & setup",
+    slugs: [
+      "command-center",
+      "approval-center",
+      "exception-center",
+      "customer-health",
+      "data-retention",
+      "evidence-center",
+      "company-knowledge",
+      "productivity",
+      "company-launchpad",
+      "data-migration",
+      "service-desk",
+      "hoa-management",
+      "ai-operations",
+      "ai-lease-analyzer",
+      "staff-time",
+      "team",
+    ],
+  },
+];
+
+function groupNavItemsByTask(
+  items: NavItem[],
+  groups: Array<{ title: string; slugs: string[] }>,
+): Array<{ title: string; items: NavItem[] }> {
+  const bySlug = Object.fromEntries(items.map((item) => [item.slug, item])) as Record<
+    string,
+    NavItem
+  >;
+  const used = new Set<string>();
+  const result: Array<{ title: string; items: NavItem[] }> = [];
+
+  for (const group of groups) {
+    const groupItems: NavItem[] = [];
+    for (const slug of group.slugs) {
+      const item = bySlug[slug];
+      if (item) {
+        groupItems.push(item);
+        used.add(slug);
+      }
+    }
+    if (groupItems.length > 0) {
+      result.push({ title: group.title, items: groupItems });
+    }
+  }
+
+  const remainder = items.filter((item) => !used.has(item.slug));
+  if (remainder.length > 0) {
+    result.push({ title: "Other modules", items: remainder });
+  }
+
+  return result;
+}
+
 // Kept for external consumers; internal rendering uses renderNavGroup
 function getNavItemClasses(isActive: boolean) {
   return `workspace-nav-link flex items-center gap-3 ${isActive ? "active" : ""}`;
@@ -689,6 +805,11 @@ export function WorkspaceLayout() {
         navCustomization,
       ),
     [navRole, navPermissions, navCapabilities, navCustomization, enabledModules],
+  );
+
+  const visibleCoreNavGroups = useMemo(
+    () => groupNavItemsByTask(visibleCoreNav, CORE_NAV_TASK_GROUPS),
+    [visibleCoreNav],
   );
 
   const filteredSearchResults = useMemo(() => {
@@ -1234,10 +1355,10 @@ export function WorkspaceLayout() {
       <div className="mb-5">
         {!isCollapsed || isMobile ? (
           <div className="flex items-center justify-between px-3 mb-1.5">
-            <h3 className="text-[10px] font-extrabold text-ink-muted uppercase tracking-[0.12em]">
+            <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wide">
               {title}
             </h3>
-            <span className="text-[9px] font-bold bg-primary/8 text-primary px-1.5 py-0.5 rounded-full tabular-nums">
+            <span className="text-xs font-medium bg-secondary text-ink-secondary px-1.5 py-0.5 rounded-full tabular-nums">
               {items.length}
             </span>
           </div>
@@ -1260,32 +1381,28 @@ export function WorkspaceLayout() {
                 aria-current={isActive ? "page" : undefined}
                 onClick={() => isMobile && setMobileDrawerOpen(false)}
                 title={isCollapsed && !isMobile ? `${item.label}` : undefined}
-                className={`workspace-nav-link group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all duration-200 ${
-                  isActive
-                    ? "active bg-emerald-500/10 dark:bg-emerald-500/15 font-semibold text-emerald-800 dark:text-emerald-300 shadow-xs"
-                    : "text-ink-secondary hover:bg-surface-hover hover:text-ink"
+                className={`workspace-nav-link group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors duration-200 ${
+                  isActive ? "active font-semibold" : "text-ink-secondary hover:bg-surface-hover hover:text-ink"
                 } ${isCollapsed && !isMobile ? "justify-center px-0 py-2.5" : ""}`}
               >
-                {/* Active glowing accent bar */}
                 {isActive && (
-                  <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-gradient-to-b from-emerald-400 to-emerald-600 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                  <span
+                    className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r-full bg-primary"
+                    aria-hidden="true"
+                  />
                 )}
 
                 <Icon
-                  className={`shrink-0 transition-all duration-200 ${
+                  className={`shrink-0 transition-colors duration-200 ${
                     isCollapsed && !isMobile ? "w-5 h-5" : "w-4 h-4"
-                  } ${
-                    isActive
-                      ? "text-emerald-600 dark:text-emerald-400 drop-shadow-xs"
-                      : "text-ink-tertiary group-hover:text-ink"
-                  }`}
+                  } ${isActive ? "text-[var(--nav-selected-text)]" : "text-ink-muted group-hover:text-ink"}`}
                 />
 
                 {(!isCollapsed || isMobile) && (
                   <div className="flex items-center justify-between flex-1 min-w-0">
-                    <span className="truncate text-[13px]">{item.label}</span>
+                    <span className="truncate text-sm">{item.label}</span>
                     {categoryTag && (
-                      <span className="text-[9px] uppercase font-extrabold text-ink-muted bg-surface-subtle border border-surface-border/60 px-1.5 py-0.5 rounded ml-2 shrink-0 tracking-wider">
+                      <span className="text-xs uppercase font-medium text-ink-muted bg-surface-subtle border border-surface-border px-1.5 py-0.5 rounded ml-2 shrink-0 tracking-wide">
                         {categoryTag}
                       </span>
                     )}
@@ -1416,7 +1533,9 @@ export function WorkspaceLayout() {
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto px-3 py-4">
-                {renderNavGroup("Core", visibleCoreNav, undefined, true)}
+                {visibleCoreNavGroups.map((group) =>
+                  renderNavGroup(group.title, group.items, undefined, true),
+                )}
                 {renderNavGroup("Tools", visibleToolsNav, undefined, true)}
                 {renderNavGroup("More", visibleMoreNav, undefined, true)}
                 {renderNavGroup("AI Suite", visibleAiNav, undefined, true)}
@@ -1437,10 +1556,10 @@ export function WorkspaceLayout() {
         {/* ── Top Header ─────────────────────────────────────────────── */}
         <nav className="desktop-header border-b border-surface-border bg-surface/95 backdrop-blur-xl">
           <div className="mx-auto max-w-[var(--max-width-page)] px-4 sm:px-6">
-            <div className="flex h-14 items-center justify-between gap-3">
+            <div className="flex h-14 min-w-0 items-center justify-between gap-2 sm:gap-3">
 
               {/* Left: toggle + logo + org info */}
-              <div className="flex items-center gap-2.5">
+              <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden sm:gap-2.5">
                 {/* Mobile hamburger */}
                 <button
                   type="button"
@@ -1496,7 +1615,7 @@ export function WorkspaceLayout() {
               </div>
 
               {/* Right: actions */}
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:gap-2">
                 {/* Org switcher */}
                 {memberships.length > 1 && (
                   <NativeSelectControl
@@ -1642,7 +1761,9 @@ export function WorkspaceLayout() {
                   </div>
                 ) : (
                   <>
-                    {renderNavGroup("Core Operations", visibleCoreNav, undefined, true)}
+                    {visibleCoreNavGroups.map((group) =>
+                      renderNavGroup(group.title, group.items, undefined, true),
+                    )}
                     {renderNavGroup("Tools & Management", visibleToolsNav, undefined, true)}
                     {renderNavGroup("More Modules", visibleMoreNav, undefined, true)}
                     {renderNavGroup("AI Suite", visibleAiNav, undefined, true)}
@@ -1715,7 +1836,9 @@ export function WorkspaceLayout() {
                   </div>
                 ) : (
                   <>
-                    {renderNavGroup("Core", visibleCoreNav)}
+                    {visibleCoreNavGroups.map((group) =>
+                      renderNavGroup(group.title, group.items),
+                    )}
                     {renderNavGroup("Tools", visibleToolsNav)}
                     {renderNavGroup("More", visibleMoreNav)}
                     {renderNavGroup("AI Suite", visibleAiNav)}
@@ -1750,9 +1873,9 @@ export function WorkspaceLayout() {
           <main
             id="main-content"
             tabIndex={-1}
-            className="main-content-region workspace-main-panel flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden max-w-full"
+            className="main-content-region workspace-main-panel p-4 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden overscroll-y-contain"
           >
-            <div className="max-w-7xl mx-auto">
+            <div className="workspace-main-inner">
               {workspacePageContent}
             </div>
           </main>

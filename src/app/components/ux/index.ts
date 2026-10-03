@@ -1,5 +1,7 @@
 export { EmptyState } from "./EmptyState";
 export { ErrorState } from "./ErrorState";
+export { OperationalQueryState } from "./OperationalQueryState";
+export type { OperationalQueryPhase, OperationalQueryStateProps } from "./OperationalQueryState";
 export {
   CardGridSkeleton,
   DashboardStatsSkeleton,

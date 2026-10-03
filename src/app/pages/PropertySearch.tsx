@@ -902,7 +902,7 @@ export function PropertySearch() {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid gap-6 xl:grid-cols-[380px,1fr]">
+                  <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
                     <div className="space-y-4 max-h-[880px] overflow-y-auto pr-2">
                       {listings.map((listing, index) => (
                         <motion.div

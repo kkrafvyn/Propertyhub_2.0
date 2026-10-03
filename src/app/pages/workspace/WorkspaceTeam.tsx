@@ -10,10 +10,8 @@ import {
   ChevronDown,
   UserPlus,
   Info,
-  Search,
   Sparkles,
   RefreshCw,
-  X,
   SlidersHorizontal,
   CheckCircle2,
 } from "lucide-react";
@@ -23,7 +21,11 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { MetricCard } from "../../components/ui/MetricCard";
-import { EmptyState } from "../../components/ux/EmptyState";
+import {
+  ListSkeleton,
+  OperationalQueryState,
+  WorkspacePageShell,
+} from "../../components/ux";
 import type { Database } from "../../../lib/database.types";
 import { communicationService } from "../../../lib/communication.service";
 import { organizationService } from "../../../lib/organization.service";
@@ -110,6 +112,7 @@ export function WorkspaceTeam({
   }, [assignableRoleSet]);
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [members, setMembers] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -156,6 +159,7 @@ export function WorkspaceTeam({
   const loadTeamData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [memberData, invitationData, departmentData] = await Promise.all([
         organizationService.getOrganizationMembers(organization.id),
         organizationService.getOrganizationInvitations(organization.id),
@@ -166,6 +170,7 @@ export function WorkspaceTeam({
       setDepartments(departmentData || []);
     } catch (error) {
       console.error("Failed to load team data:", error);
+      setLoadError("We couldn't load team data. Check your connection and try again.");
       toast.error("Unable to load team members.");
     } finally {
       setLoading(false);
@@ -349,47 +354,32 @@ export function WorkspaceTeam({
       ];
     });
 
+  const rosterPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : members.length === 0
+        ? "empty"
+        : visibleMembers.length === 0
+          ? "filtered-empty"
+          : "ready";
+
   return (
-    <div className="space-y-8">
-      {/* ── Editorial Header ── */}
-      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-purple-500/10 via-primary/5 to-surface/80 border border-purple-500/20 shadow-lg backdrop-blur-md">
-        <div className="absolute -top-12 -right-12 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-semibold border border-purple-500/20 shadow-xs">
-                <Shield className="w-3.5 h-3.5" />
-                Enterprise Access Governance
-              </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium border border-emerald-500/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live Sync
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-4xl font-serif font-bold tracking-tight text-ink font-display">
-              Team & Access Control
-            </h1>
-            <p className="mt-1.5 text-sm text-ink-secondary max-w-2xl leading-relaxed">
-              Assign multi-tier job roles, departmental hierarchies, and granular permissions for {organization.name}. Teammates see a personalized workspace strictly scoped to their credentials.{" "}
-              <Link to="/workspace-roles" className="text-primary hover:underline font-medium">
-                Role glossary
-              </Link>
-            </p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void loadTeamData()}
-              className="flex items-center gap-1.5 border-surface-border/80 bg-surface/60 backdrop-blur-xs hover:bg-surface"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-              <span>Refresh</span>
-            </Button>
-          </div>
-        </div>
-      </div>
+    <WorkspacePageShell
+      title="Team & access control"
+      description={`Assign roles and permissions for ${organization.name}. See the role glossary from workspace help.`}
+      meta={
+        <Link to="/workspace-roles" className="text-xs text-primary hover:underline font-medium">
+          Role glossary
+        </Link>
+      }
+      actions={
+        <Button type="button" variant="outline" size="sm" onClick={() => void loadTeamData()} aria-label="Refresh team">
+          <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />
+          Refresh
+        </Button>
+      }
+    >
 
       {/* ── Role Policy Banner ── */}
       <Card variant="glass" className="border border-purple-500/20 bg-purple-500/5 p-4 rounded-2xl shadow-xs">
@@ -412,18 +402,16 @@ export function WorkspaceTeam({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Active Members"
-          value={members.length}
+          value={loading ? "—" : members.length}
           icon={Users}
           iconColor="primary"
-          glow="primary"
           subtitle="Confirmed organization seats"
         />
         <MetricCard
           title="Pending Invites"
-          value={pendingInvitations.length}
+          value={loading ? "—" : pendingInvitations.length}
           icon={Clock}
-          iconColor="amber"
-          glow="amber"
+          iconColor="primary"
           subtitle="Awaiting onboarding"
         />
         <MetricCard
@@ -483,7 +471,7 @@ export function WorkspaceTeam({
         ) : null}
         <form
           onSubmit={handleInvite}
-          className="grid grid-cols-1 gap-4 md:grid-cols-[1fr,240px,auto]"
+          className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_240px_auto] "
         >
           <Input
             label="Email Address"
@@ -561,10 +549,10 @@ export function WorkspaceTeam({
                 <div>
                   <div className="flex flex-wrap items-center gap-2.5">
                     <h3 className="text-sm font-semibold text-ink">{invitation.email}</h3>
-                    <Badge variant="outline" className="text-[10px]">
+                    <Badge variant="outline" className="text-xs">
                       {getRoleLabel(invitation.role)}
                     </Badge>
-                    <Badge variant="warning" className="text-[10px]">
+                    <Badge variant="warning" className="text-xs">
                       Pending Acceptance
                     </Badge>
                   </div>
@@ -601,24 +589,14 @@ export function WorkspaceTeam({
 
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Live Search */}
-            <div className="relative min-w-[200px] sm:w-64">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
-              <input
-                type="text"
+            <div className="min-w-[200px] sm:w-64">
+              <Input
+                label="Search members"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name, email, role..."
-                className="w-full pl-8 pr-8 py-2 rounded-xl text-xs bg-surface-subtle border border-surface-border text-ink placeholder:text-ink-muted focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+                placeholder="Name, email, role..."
+                className="text-sm"
               />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
             </div>
 
             {departments.length > 1 ? (
@@ -638,20 +616,21 @@ export function WorkspaceTeam({
           </div>
         </div>
 
-        {loading ? (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-24 animate-pulse rounded-xl border border-surface-border bg-surface-subtle" />
-            ))}
-          </div>
-        ) : visibleMembers.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="No members found"
-            description="No team members match the selected department filter."
-          />
-        ) : (
-          <div className="space-y-3">
+        <OperationalQueryState
+          phase={rosterPhase}
+          errorMessage={loadError ?? undefined}
+          onRetry={() => void loadTeamData()}
+          retryLabel="Reload team"
+          loadingFallback={<ListSkeleton rows={4} />}
+          emptyIcon={Users}
+          emptyTitle="No team members"
+          emptyDescription="This organization does not have any members loaded yet."
+          filteredEmptyTitle="No members found"
+          filteredEmptyDescription="No team members match your search or department filter."
+          emptyActionLabel={searchQuery ? "Clear search" : undefined}
+          onEmptyAction={searchQuery ? () => setSearchQuery("") : undefined}
+        >
+          <div className="space-y-3 min-w-0">
             {visibleMembers.map((member) => {
               const isCurrentUser = member.user_id === currentUserId;
               const displayName = getDisplayName(member.user);
@@ -791,8 +770,8 @@ export function WorkspaceTeam({
               );
             })}
           </div>
-        )}
+        </OperationalQueryState>
       </Card>
-    </div>
+    </WorkspacePageShell>
   );
 }

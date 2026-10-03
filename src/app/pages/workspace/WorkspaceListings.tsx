@@ -9,7 +9,12 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { MetricCard } from "../../components/ui/MetricCard";
-import { EmptyState } from "../../components/ux/EmptyState";
+import {
+  CardGridSkeleton,
+  DashboardStatsSkeleton,
+  OperationalQueryState,
+  WorkspacePageShell,
+} from "../../components/ux";
 import { PropertyMediaPicker } from "../../components/PropertyMediaPicker";
 import { ListingQualityPanel } from "../../components/ListingQualityPanel";
 import { GhanaRegionInput } from "../../components/GhanaRegionInput";
@@ -211,6 +216,7 @@ export function WorkspaceListings({
   const canWrite = canWorkspace(currentRole, "listings:write");
   const location = useLocation();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [listings, setListings] = useState<any[]>([]);
   const [drafts, setDrafts] = useState<Record<string, ListingDraft>>({});
   const [expandedListingId, setExpandedListingId] = useState<string | null>(null);
@@ -248,6 +254,7 @@ export function WorkspaceListings({
   const loadListings = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await listingService.getOrganizationListings(organization.id);
       const scoped = filterByPropertyScope(
         data || [],
@@ -264,6 +271,7 @@ export function WorkspaceListings({
       );
     } catch (error) {
       console.error("Failed to load listings:", error);
+      setLoadError("We couldn't load your listings. Check your connection and try again.");
       toast.error("Unable to load organization listings.");
     } finally {
       setLoading(false);
@@ -598,74 +606,81 @@ export function WorkspaceListings({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Workstation Header */}
-      <div className="relative overflow-hidden rounded-3xl p-6 md:p-8 bg-surface-subtle/80 border border-surface-border/80 backdrop-blur-md shadow-card">
-        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-        <div className="absolute right-32 -bottom-16 w-48 h-48 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
-
-        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                Inventory Management
-              </span>
-              <span className="text-xs text-muted-foreground">• {organization.name}</span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-display font-semibold tracking-tight text-foreground">
-              Properties & Listings
-            </h1>
-            <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
-              Control pricing, publication lifecycles, Ghanaian market compliance, and high-fidelity media galleries across your portfolio.
-            </p>
-          </div>
-          {canWrite ? (
-            <Link to={`${workspaceBasePath}/new`} className="flex-shrink-0">
-              <Button className="shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all">
-                <Building2 className="w-4 h-4 mr-2" />
-                Create New Listing
-              </Button>
-            </Link>
-          ) : null}
+    <WorkspacePageShell
+      title="Properties & Listings"
+      description="Manage pricing, publication status, compliance fields, and media for your portfolio."
+      badge={
+        <Badge variant="outline" className="text-xs font-medium">
+          {organization.name}
+        </Badge>
+      }
+      actions={
+        canWrite ? (
+          <Link to={`${workspaceBasePath}/new`} className="shrink-0">
+            <Button>
+              <Building2 className="w-4 h-4 mr-2" aria-hidden="true" />
+              Create listing
+            </Button>
+          </Link>
+        ) : null
+      }
+    >
+      {loading && !loadError ? (
+        <DashboardStatsSkeleton />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard
+            title="Total Properties"
+            value={loading ? "—" : stats.total}
+            icon={Building2}
+            iconColor="primary"
+            subtitle="All inventory in workspace"
+          />
+          <MetricCard
+            title="Active Listed"
+            value={loading ? "—" : stats.listed}
+            icon={CheckCircle2}
+            iconColor="primary"
+            subtitle="Public on marketplace"
+          />
+          <MetricCard
+            title="Drafts & Staging"
+            value={loading ? "—" : stats.draft}
+            icon={FileText}
+            iconColor="primary"
+            subtitle="Pending review or media"
+          />
+          <MetricCard
+            title="Featured Showcase"
+            value={loading ? "—" : stats.featured}
+            icon={Star}
+            iconColor="primary"
+            subtitle="Promoted placement"
+          />
         </div>
-      </div>
+      )}
 
-      {/* KPI Metric Cards with Ambient Glow */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Total Properties"
-          value={stats.total}
-          icon={Building2}
-          iconColor="primary"
-          glow="primary"
-          subtitle="All inventory in workspace"
-        />
-        <MetricCard
-          title="Active Listed"
-          value={stats.listed}
-          icon={CheckCircle2}
-          iconColor="emerald"
-          glow="emerald"
-          subtitle="Public on marketplace"
-        />
-        <MetricCard
-          title="Drafts & Staging"
-          value={stats.draft}
-          icon={FileText}
-          iconColor="amber"
-          glow="amber"
-          subtitle="Pending review or media"
-        />
-        <MetricCard
-          title="Featured Showcase"
-          value={stats.featured}
-          icon={Star}
-          iconColor="terracotta"
-          glow="terracotta"
-          subtitle="Promoted placement"
-        />
-      </div>
+      <OperationalQueryState
+        phase={
+          loadError
+            ? "error"
+            : loading
+              ? "loading"
+              : listings.length === 0
+                ? "empty"
+                : "ready"
+        }
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void loadListings()}
+        retryLabel="Reload listings"
+        loadingFallback={<CardGridSkeleton count={3} />}
+        emptyIcon={Building2}
+        emptyTitle="No listings yet"
+        emptyDescription="Create your first property listing to publish on the marketplace."
+        emptyActionLabel={canWrite ? "Create listing" : undefined}
+        emptyActionHref={canWrite ? `${workspaceBasePath}/new` : undefined}
+      >
+        <div className="space-y-6 min-w-0 w-full mt-6">
 
       {/* Floating Glass Bulk Action Toolbar */}
       {canWrite && selectedListingIds.length > 0 ? (
@@ -703,26 +718,7 @@ export function WorkspaceListings({
         </Card>
       ) : null}
 
-      {loading ? (
-        <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-40 rounded-2xl bg-surface-subtle animate-pulse border border-surface-border" />
-          ))}
-        </div>
-      ) : listings.length === 0 ? (
-        <EmptyState
-          icon={Building2}
-          title="No listings yet"
-          description={
-            canWrite
-              ? "Add your first listing to start publishing inventory to the marketplace from this workspace."
-              : "No listings are visible in this workspace yet."
-          }
-          actionLabel={canWrite ? "Create New Listing" : undefined}
-          actionHref={canWrite ? `${workspaceBasePath}/new` : undefined}
-        />
-      ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {listings.map((listing) => {
             const draft = drafts[listing.id];
             const isExpanded = expandedListingId === listing.id;
@@ -1271,7 +1267,8 @@ export function WorkspaceListings({
             );
           })}
         </div>
-      )}
-    </div>
+        </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }
