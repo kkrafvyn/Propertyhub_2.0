@@ -27,7 +27,7 @@ export function useMarketingSceneProgress(scrollRootRef: React.RefObject<HTMLEle
       trigger: root,
       start: "top top",
       end: "bottom bottom",
-      scrub: 0.6,
+      scrub: 0.85,
       onUpdate: (self) => setProgress(clamp01(self.progress)),
     });
     ScrollTrigger.refresh();

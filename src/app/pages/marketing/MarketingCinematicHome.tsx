@@ -1,12 +1,15 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
+import { Logo } from "../../components/baytmiftah/Logo";
 import { CINEMATIC_CHAPTERS } from "../../components/marketing/cinematic/cinematic-chapters";
 import { MarketingWebGLFallback } from "../../components/marketing/cinematic/MarketingWebGLFallback";
 import {
   useIsMobileCinematic,
   useMarketingSceneProgress,
 } from "../../components/marketing/cinematic/useMarketingSceneProgress";
+import { chapterFocusOpacity } from "../../components/marketing/cinematic/useChapterFocus";
+import type { ScenePhase } from "../../components/marketing/cinematic/scene-phases";
 import { appPath } from "../../../lib/marketing-urls";
 import "../../components/marketing/cinematic/marketing-cinematic.css";
 
@@ -24,89 +27,102 @@ function resolveHref(href: string) {
 function CinematicChapterSection({
   chapter,
   mobile,
+  scrollProgress,
 }: {
   chapter: (typeof CINEMATIC_CHAPTERS)[number];
   mobile: boolean;
+  scrollProgress: number;
 }) {
   const titleLines = chapter.title.split("\n");
+  const focus = chapterFocusOpacity(chapter.id as ScenePhase, scrollProgress);
 
   return (
     <section
       id={`chapter-${chapter.id}`}
-      className={`mk-cinema-chapter${chapter.short ? " mk-cinema-chapter--short" : ""}`}
+      className={`mk-cinema-chapter${chapter.short ? " mk-cinema-chapter--short" : ""}${
+        chapter.tall ? " mk-cinema-chapter--tall" : ""
+      }${chapter.id === "hero" ? " mk-cinema-chapter--hero" : ""}`}
       aria-labelledby={`cinema-heading-${chapter.id}`}
     >
-      <div className={`mk-cinema-chapter__inner ${chapter.alignClass ?? ""}`}>
-        {chapter.eyebrow ? <p className="mk-cinema-eyebrow">{chapter.eyebrow}</p> : null}
-        <h2 id={`cinema-heading-${chapter.id}`} className="mk-cinema-title">
-          {titleLines.map((line, i) => (
-            <span key={i}>
-              {line}
-              {i < titleLines.length - 1 ? <br /> : null}
-            </span>
-          ))}
-        </h2>
-        {chapter.lead ? <p className="mk-cinema-lead">{chapter.lead}</p> : null}
-
-        {chapter.labels ? (
-          <div className="mk-cinema-labels" aria-label="Connected operations">
-            {chapter.labels.map((l) => (
-              <span key={l} className="mk-cinema-label">
-                {l}
+      <div
+        className="mk-cinema-chapter__glass"
+        style={{
+          opacity: focus.opacity,
+          transform: `translateY(${focus.translateY}px)`,
+        }}
+      >
+        <div className={`mk-cinema-chapter__inner ${chapter.alignClass ?? ""}`}>
+          {chapter.eyebrow ? <p className="mk-cinema-eyebrow">{chapter.eyebrow}</p> : null}
+          <h2 id={`cinema-heading-${chapter.id}`} className="mk-cinema-title">
+            {titleLines.map((line, i) => (
+              <span key={i}>
+                {line}
+                {i < titleLines.length - 1 ? <br /> : null}
               </span>
             ))}
-          </div>
-        ) : null}
+          </h2>
+          {chapter.lead ? <p className="mk-cinema-lead">{chapter.lead}</p> : null}
 
-        {mobile && chapter.mobileCards ? (
-          <div className="mk-cinema-mobile-cards">
-            {chapter.mobileCards.map((card) => (
-              <div key={card.title} className="mk-cinema-mobile-card">
-                <strong>{card.title}</strong>
-                <span>{card.sub}</span>
-              </div>
-            ))}
-          </div>
-        ) : null}
+          {chapter.labels ? (
+            <div className="mk-cinema-labels" aria-label="Connected operations">
+              {chapter.labels.map((l) => (
+                <span key={l} className="mk-cinema-label">
+                  {l}
+                </span>
+              ))}
+            </div>
+          ) : null}
 
-        {chapter.aiPrompts ? (
-          <div className="mk-cinema-ai-prompts" aria-label="Example AI prompts">
-            {chapter.aiPrompts.map((p) => (
-              <span key={p} className="mk-cinema-ai-prompt">
-                {p}
-              </span>
-            ))}
-          </div>
-        ) : null}
+          {mobile && chapter.mobileCards ? (
+            <div className="mk-cinema-mobile-cards">
+              {chapter.mobileCards.map((card) => (
+                <div key={card.title} className="mk-cinema-mobile-card">
+                  <strong>{card.title}</strong>
+                  <span>{card.sub}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
 
-        {chapter.id === "brand" ? (
-          <div className="mk-cinema-brand-lockup" aria-hidden="true">
-            <div className="mk-cinema-brand-mark" />
-          </div>
-        ) : null}
+          {chapter.aiPrompts ? (
+            <div className="mk-cinema-ai-prompts" aria-label="Example AI prompts">
+              {chapter.aiPrompts.map((p) => (
+                <span key={p} className="mk-cinema-ai-prompt">
+                  {p}
+                </span>
+              ))}
+            </div>
+          ) : null}
 
-        {(chapter.primaryCta || chapter.secondaryCta) && (
-          <div className="mk-cinema-actions">
-            {chapter.primaryCta ? (
-              <a
-                href={resolveHref(chapter.primaryCta.href)}
-                className="mk-btn mk-btn-primary mk-btn-glow"
-                id={chapter.primaryCta.id}
-              >
-                {chapter.primaryCta.label} <ArrowRight size={16} aria-hidden="true" />
-              </a>
-            ) : null}
-            {chapter.secondaryCta ? (
-              <a
-                href={resolveHref(chapter.secondaryCta.href)}
-                className="mk-btn mk-btn-secondary"
-                id={chapter.secondaryCta.id}
-              >
-                {chapter.secondaryCta.label}
-              </a>
-            ) : null}
-          </div>
-        )}
+          {chapter.id === "brand" ? (
+            <div className="mk-cinema-brand-lockup">
+              <Logo to="/" size="md" inverted disableLink />
+            </div>
+          ) : null}
+
+          {(chapter.primaryCta || chapter.secondaryCta) && (
+            <div className="mk-cinema-actions">
+              {chapter.primaryCta ? (
+                <a
+                  href={resolveHref(chapter.primaryCta.href)}
+                  className="mk-btn mk-btn-primary mk-btn-glow"
+                  id={chapter.primaryCta.id}
+                >
+                  {chapter.primaryCta.label} <ArrowRight size={16} aria-hidden="true" />
+                </a>
+              ) : null}
+              {chapter.secondaryCta ? (
+                <a
+                  href={resolveHref(chapter.secondaryCta.href)}
+                  className="mk-btn mk-btn-secondary"
+                  id={chapter.secondaryCta.id}
+                >
+                  {chapter.secondaryCta.label}
+                </a>
+              ) : null}
+            </div>
+          )}
+        </div>
       </div>
 
       {chapter.id === "hero" ? (
@@ -163,7 +179,7 @@ export function MarketingCinematicHome() {
         <MarketingWebGLFallback />
       ) : (
         <div className="mk-cinema-root">
-          <Suspense fallback={null}>
+          <Suspense fallback={<div className="mk-cinema-canvas-loader mk-cinema-canvas-loader--page" />}>
             <Marketing3DScene
               progress={progress}
               pointer={pointer}
@@ -174,7 +190,12 @@ export function MarketingCinematicHome() {
 
           <div ref={scrollRef} className="mk-cinema-scroll">
             {CINEMATIC_CHAPTERS.map((chapter) => (
-              <CinematicChapterSection key={chapter.id} chapter={chapter} mobile={mobile} />
+              <CinematicChapterSection
+                key={chapter.id}
+                chapter={chapter}
+                mobile={mobile}
+                scrollProgress={progress}
+              />
             ))}
           </div>
         </div>

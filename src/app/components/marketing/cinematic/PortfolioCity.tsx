@@ -28,7 +28,7 @@ export function PortfolioCity({ visible, blend, mobile }: PortfolioCityProps) {
   return (
     <group visible={blend > 0.02}>
       {slots.slice(0, Math.ceil(slots.length * visible)).map(([x, y, z], i) => (
-        <group key={i} position={[x, y, z]} scale={0.55 + blend * 0.15}>
+        <group key={i} position={[x, y, z]} scale={0.42 + blend * 0.12}>
           <PropertyModel layerSeparation={0} spin={i * 0.15} />
         </group>
       ))}

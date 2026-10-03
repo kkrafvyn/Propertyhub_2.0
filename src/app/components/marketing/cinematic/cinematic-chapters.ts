@@ -4,7 +4,8 @@ export type CinematicChapter = {
   title: string;
   lead?: string;
   labels?: string[];
-  alignClass?: "mk-cinema-chapter__inner--center" | "mk-cinema-chapter__inner--right";
+  alignClass?: "mk-cinema-chapter__inner--center" | "mk-cinema-chapter__inner--left";
+  tall?: boolean;
   aiPrompts?: string[];
   mobileCards?: { title: string; sub: string }[];
   primaryCta?: { label: string; href: string; id?: string };
@@ -18,7 +19,7 @@ export const CINEMATIC_CHAPTERS: CinematicChapter[] = [
     eyebrow: "BAYTMIFTAH",
     title: "The operating system for real estate.",
     lead: "Run discovery, leasing, operations, finance, maintenance and AI from one connected platform.",
-    alignClass: "mk-cinema-chapter__inner--right",
+    alignClass: "mk-cinema-chapter__inner--left",
     primaryCta: { label: "Explore BaytMiftah", href: "#chapter-platform", id: "cinema-cta-explore" },
     secondaryCta: { label: "See how it works", href: "#chapter-enter", id: "cinema-cta-how" },
   },
@@ -33,6 +34,7 @@ export const CINEMATIC_CHAPTERS: CinematicChapter[] = [
     eyebrow: "Platform",
     title: "One system for the entire property lifecycle.",
     lead: "From first enquiry to rent collection and maintenance, every workflow stays connected.",
+    tall: true,
     mobileCards: [
       { title: "Listings", sub: "Discovery & inventory" },
       { title: "CRM", sub: "Leads & relationships" },

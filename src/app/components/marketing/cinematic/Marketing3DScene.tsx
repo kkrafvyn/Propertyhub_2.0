@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { ContactShadows } from "@react-three/drei";
+import { ContactShadows, Environment } from "@react-three/drei";
 import { PropertyModel } from "./PropertyModel";
 import { PortfolioCity } from "./PortfolioCity";
 import { SceneLights } from "./SceneLights";
@@ -9,6 +9,7 @@ import { FloatingProductPanels } from "./FloatingProductPanels";
 import { ConsumerPhone3D } from "./ConsumerPhone3D";
 import { AiNetwork } from "./AiNetwork";
 import { PortfolioDashboard3D } from "./PortfolioDashboard3D";
+import { PortfolioConnections } from "./PortfolioConnections";
 import type { ScenePointer } from "./useMarketingSceneProgress";
 
 type Marketing3DSceneProps = {
@@ -29,6 +30,7 @@ function SceneInner({
   return (
     <>
       <SceneLights mobile={mobile} />
+      {!mobile ? <Environment preset="city" environmentIntensity={0.28} /> : null}
       <SceneCameraRig
         progress={progress}
         pointer={pointer}
@@ -36,11 +38,12 @@ function SceneInner({
         reducedMotion={reducedMotion}
       />
 
-      <group visible={s.singleBuildingOpacity > 0.05}>
-        <group scale={1 - s.brandFade * 0.35}>
+      <group position={[1.15, -0.15, 0]} visible={s.singleBuildingOpacity > 0.05}>
+        <group scale={(1 - s.brandFade * 0.35) * 0.92}>
           <PropertyModel
             layerSeparation={s.layerSeparation}
-            spin={s.heroSpin + progress * 0.2}
+            spin={s.heroSpin + progress * 0.15}
+            floatPhase={progress * Math.PI}
           />
         </group>
       </group>
@@ -50,6 +53,7 @@ function SceneInner({
         blend={s.portfolioBlend}
         mobile={mobile}
       />
+      <PortfolioConnections blend={s.portfolioBlend} mobile={mobile} />
 
       <FloatingProductPanels strength={s.platformPanels} mobile={mobile} />
       <PortfolioDashboard3D blend={s.portfolioBlend} mobile={mobile} />
@@ -76,6 +80,7 @@ export function Marketing3DScene({
   reducedMotion,
 }: Marketing3DSceneProps) {
   const [paused, setPaused] = useState(false);
+  const [ready, setReady] = useState(false);
   const dpr: [number, number] = mobile ? [1, 1.25] : [1, 1.75];
 
   useEffect(() => {
@@ -87,8 +92,11 @@ export function Marketing3DScene({
   if (reducedMotion) return null;
 
   return (
-    <div className="mk-cinema-canvas-wrap" aria-hidden="true">
+    <div className={`mk-cinema-canvas-wrap${ready ? " is-ready" : ""}`} aria-hidden="true">
+      {!ready ? <div className="mk-cinema-canvas-loader" aria-hidden="true" /> : null}
+      <div className="mk-cinema-vignette" aria-hidden="true" />
       <Canvas
+        onCreated={() => setReady(true)}
         dpr={dpr}
         shadows={!mobile}
         camera={{ fov: 42, near: 0.1, far: 100, position: [5, 2.8, 7.5] }}

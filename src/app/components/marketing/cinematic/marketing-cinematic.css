@@ -89,8 +89,155 @@
   text-align: center;
 }
 
-.mk-cinema-chapter__inner--right {
-  margin-left: auto;
+.mk-cinema-chapter__inner--left {
+  margin-left: clamp(0rem, 2vw, 1rem);
+  margin-right: auto;
+}
+
+.mk-cinema-chapter--hero {
+  align-items: center;
+}
+
+.mk-cinema-chapter--hero .mk-cinema-chapter__glass {
+  max-width: min(520px, 92vw);
+}
+
+.mk-cinema-chapter--tall {
+  min-height: 115dvh;
+}
+
+.mk-cinema-chapter__glass {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border-radius: 20px;
+  border: 1px solid rgba(201, 169, 98, 0.12);
+  background: linear-gradient(
+    145deg,
+    rgba(6, 14, 11, 0.82) 0%,
+    rgba(15, 31, 25, 0.55) 100%
+  );
+  backdrop-filter: blur(14px);
+  will-change: opacity, transform;
+  transition: opacity 0.15s ease-out;
+}
+
+.mk-cinema-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 70% 60% at 62% 45%,
+    transparent 0%,
+    rgba(6, 14, 11, 0.35) 55%,
+    rgba(6, 14, 11, 0.85) 100%
+  );
+  z-index: 2;
+}
+
+.mk-cinema-canvas-loader {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(110deg, #060e0b 8%, #0f1f19 18%, #060e0b 33%);
+  background-size: 200% 100%;
+  animation: mk-cinema-shimmer 1.4s ease-in-out infinite;
+}
+
+.mk-cinema-canvas-loader--page {
+  min-height: 100dvh;
+}
+
+.mk-cinema-canvas-wrap.is-ready .mk-cinema-canvas-loader {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+
+@keyframes mk-cinema-shimmer {
+  to {
+    background-position-x: -200%;
+  }
+}
+
+/* Workspace-style mini panels in 3D */
+.mk-cinema-os-card {
+  width: 148px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(201, 169, 98, 0.28);
+  background: rgba(8, 18, 14, 0.94);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.mk-cinema-os-card__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  background: rgba(15, 31, 25, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mk-cinema-os-card__dots {
+  display: flex;
+  gap: 3px;
+}
+
+.mk-cinema-os-card__dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(201, 169, 98, 0.45);
+  font-style: normal;
+}
+
+.mk-cinema-os-card__title {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: #f5f0e8;
+  letter-spacing: 0.03em;
+}
+
+.mk-cinema-os-card__body {
+  padding: 0.45rem 0.5rem 0.55rem;
+}
+
+.mk-cinema-os-card__sub {
+  font-size: 0.52rem;
+  color: #a8b5ad;
+  margin: 0 0 0.35rem;
+  line-height: 1.3;
+}
+
+.mk-cinema-os-card__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.35rem;
+  font-size: 0.52rem;
+  color: #e8e0d4;
+}
+
+.mk-cinema-os-card__row em {
+  font-style: normal;
+  color: #c9a962;
+  font-size: 0.48rem;
+}
+
+.mk-cinema-os-card__metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+
+.mk-cinema-os-card__metrics small {
+  display: block;
+  font-size: 0.48rem;
+  color: #a8b5ad;
+}
+
+.mk-cinema-os-card__metrics strong {
+  font-size: 0.55rem;
+  color: #f5f0e8;
+  font-weight: 600;
 }
 
 .mk-cinema-eyebrow {
@@ -364,5 +511,25 @@
   .mk-cinema-chapter {
     align-items: flex-end;
     padding-bottom: 5rem;
+  }
+
+  .mk-cinema-chapter__glass {
+    width: 100%;
+    padding: 1rem 1.1rem;
+  }
+
+  .mk-cinema-vignette {
+    background: linear-gradient(
+      180deg,
+      rgba(6, 14, 11, 0.55) 0%,
+      transparent 35%,
+      rgba(6, 14, 11, 0.92) 100%
+    );
+  }
+}
+
+@media (min-width: 1024px) {
+  .mk-cinema-chapter--hero .mk-cinema-chapter__inner--left {
+    margin-left: clamp(1rem, 6vw, 4rem);
   }
 }

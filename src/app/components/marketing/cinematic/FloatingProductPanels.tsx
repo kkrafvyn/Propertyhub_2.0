@@ -1,13 +1,44 @@
 import { Html } from "@react-three/drei";
 import { clamp01 } from "./scene-phases";
+import { CinematicProductPanel } from "./CinematicProductPanel";
 
 const PANELS = [
-  { title: "Listings", sub: "Discovery & inventory", pos: [-2.2, 2.2, 0.8] as [number, number, number] },
-  { title: "CRM", sub: "Leads & relationships", pos: [2.3, 2.4, 0.5] as [number, number, number] },
-  { title: "Finance", sub: "Collections & ledger", pos: [-2.4, 1.2, 1.2] as [number, number, number] },
-  { title: "Maintenance", sub: "Tickets & field ops", pos: [2.1, 1.1, 1.3] as [number, number, number] },
-  { title: "Leasing", sub: "Apply · sign · renew", pos: [-1.8, 0.2, 1.6] as [number, number, number] },
-  { title: "AI", sub: "Governed automation", pos: [2, 0.3, 1.5] as [number, number, number] },
+  {
+    title: "Listings",
+    sub: "Discovery & inventory",
+    variant: "listings" as const,
+    pos: [-2.4, 2.35, 0.6] as [number, number, number],
+  },
+  {
+    title: "CRM",
+    sub: "Leads & relationships",
+    variant: "default" as const,
+    pos: [2.5, 2.5, 0.4] as [number, number, number],
+  },
+  {
+    title: "Finance",
+    sub: "Collections & ledger",
+    variant: "finance" as const,
+    pos: [-2.6, 1.15, 1] as [number, number, number],
+  },
+  {
+    title: "Maintenance",
+    sub: "Tickets & field ops",
+    variant: "maintenance" as const,
+    pos: [2.3, 1.05, 1.1] as [number, number, number],
+  },
+  {
+    title: "Leasing",
+    sub: "Apply · sign · renew",
+    variant: "default" as const,
+    pos: [-2, 0.15, 1.5] as [number, number, number],
+  },
+  {
+    title: "AI",
+    sub: "Governed automation",
+    variant: "default" as const,
+    pos: [2.15, 0.25, 1.4] as [number, number, number],
+  },
 ];
 
 type FloatingProductPanelsProps = {
@@ -27,17 +58,14 @@ export function FloatingProductPanels({ strength, mobile }: FloatingProductPanel
           key={panel.title}
           position={panel.pos}
           center
-          distanceFactor={8}
+          distanceFactor={7}
           style={{
             opacity,
             pointerEvents: "none",
-            transition: "opacity 0.4s ease",
+            transition: "opacity 0.35s ease",
           }}
         >
-          <div className="mk-cinema-panel-3d" aria-hidden="true">
-            <span className="mk-cinema-panel-3d__title">{panel.title}</span>
-            <span className="mk-cinema-panel-3d__sub">{panel.sub}</span>
-          </div>
+          <CinematicProductPanel title={panel.title} sub={panel.sub} variant={panel.variant} />
         </Html>
       ))}
     </group>
