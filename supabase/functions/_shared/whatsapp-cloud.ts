@@ -34,6 +34,24 @@ function normalizePhone(value: string): string {
   return value.replace(/\D/g, "");
 }
 
+export function buildInboundMessagePayload(msg: ParsedWhatsAppMessage): Record<string, unknown> {
+  return {
+    messageId: msg.messageId,
+    from: msg.from,
+    senderName: msg.senderName ?? null,
+    text: msg.text,
+    messageType: msg.messageType,
+    groupId: msg.groupId ?? null,
+    isGroup: msg.isGroup,
+    phoneNumberId: msg.phoneNumberId ?? null,
+    timestamp: msg.timestamp,
+  };
+}
+
+function allowDefaultOrgFallback(): boolean {
+  return Deno.env.get("WHATSAPP_ALLOW_DEFAULT_ORG_FALLBACK")?.trim().toLowerCase() === "true";
+}
+
 export function parseWhatsAppWebhookPayload(body: Record<string, unknown>): ParsedWhatsAppMessage[] {
   const entries = (body.entry as Array<Record<string, unknown>>) || [];
   const messages: ParsedWhatsAppMessage[] = [];
@@ -112,11 +130,11 @@ export async function sendWhatsAppTextMessage(input: {
   phoneNumberId?: string;
   accessToken?: string;
 }): Promise<{ success: boolean; messageId?: string; simulated?: boolean }> {
-  const token = input.accessToken || Deno.env.get("WHATSAPP_CLOUD_TOKEN");
-  const phoneNumberId = input.phoneNumberId || Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+  const token = input.accessToken?.trim();
+  const phoneNumberId = input.phoneNumberId?.trim();
 
   if (!token || !phoneNumberId) {
-    throw new Error("WhatsApp Cloud API is not configured");
+    throw new Error("WhatsApp Cloud API credentials are required for this organization");
   }
 
   const baseUrl = (Deno.env.get("WHATSAPP_GRAPH_URL") || "https://graph.facebook.com/v21.0").replace(/\/+$/, "");
@@ -167,19 +185,17 @@ export async function resolveWhatsAppCredentialsForOrg(
 
   if (row) {
     const cfg = (row.config || {}) as Record<string, unknown>;
-    const phoneNumberId = String(cfg.phone_number_id || cfg.phoneNumberId || Deno.env.get("WHATSAPP_PHONE_NUMBER_ID") || "");
-    const accessToken = String(
-      cfg.access_token || cfg.accessToken || Deno.env.get("WHATSAPP_CLOUD_TOKEN") || ""
-    );
+    const phoneNumberId = String(cfg.phone_number_id || cfg.phoneNumberId || "").trim();
+    const accessToken = String(cfg.access_token || cfg.accessToken || "").trim();
     if (phoneNumberId && accessToken) {
       return { organizationId, phoneNumberId, accessToken };
     }
   }
 
-  const fallbackOrgId = Deno.env.get("WHATSAPP_DEFAULT_ORG_ID");
+  const fallbackOrgId = Deno.env.get("WHATSAPP_DEFAULT_ORG_ID")?.trim();
   if (fallbackOrgId && fallbackOrgId === organizationId) {
-    const phoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID") || undefined;
-    const accessToken = Deno.env.get("WHATSAPP_CLOUD_TOKEN") || undefined;
+    const phoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID")?.trim() || undefined;
+    const accessToken = Deno.env.get("WHATSAPP_CLOUD_TOKEN")?.trim() || undefined;
     if (phoneNumberId && accessToken) {
       return { organizationId, phoneNumberId, accessToken };
     }
@@ -192,7 +208,8 @@ export async function resolveOrganizationByPhoneNumberId(
   admin: AdminClient,
   phoneNumberId: string | undefined
 ): Promise<WhatsAppIntegrationConfig | null> {
-  if (!phoneNumberId) return null;
+  const normalizedId = phoneNumberId?.trim();
+  if (!normalizedId) return null;
 
   const { data: rows, error } = await admin
     .from("organization_integrations")
@@ -206,27 +223,34 @@ export async function resolveOrganizationByPhoneNumberId(
 
   const match = (rows || []).find((row) => {
     const cfg = (row.config || {}) as Record<string, unknown>;
-    const configuredId = String(cfg.phone_number_id || cfg.phoneNumberId || "");
-    return !configuredId || configuredId === phoneNumberId;
+    const configuredId = String(cfg.phone_number_id || cfg.phoneNumberId || "").trim();
+    return configuredId !== "" && configuredId === normalizedId;
   }) as { organization_id: string; config: Record<string, unknown> } | undefined;
 
   if (match) {
+    const accessToken = String(match.config?.access_token || match.config?.accessToken || "").trim();
+    if (!accessToken) {
+      console.error("resolveOrganizationByPhoneNumberId: matched org missing access token");
+      return null;
+    }
     return {
       organizationId: match.organization_id,
-      phoneNumberId,
-      accessToken: String(
-        match.config?.access_token || match.config?.accessToken || Deno.env.get("WHATSAPP_CLOUD_TOKEN") || ""
-      ),
+      phoneNumberId: normalizedId,
+      accessToken,
     };
   }
 
-  const fallbackOrgId = Deno.env.get("WHATSAPP_DEFAULT_ORG_ID");
-  if (fallbackOrgId) {
-    return {
-      organizationId: fallbackOrgId,
-      phoneNumberId,
-      accessToken: Deno.env.get("WHATSAPP_CLOUD_TOKEN") || undefined,
-    };
+  if (allowDefaultOrgFallback()) {
+    const fallbackOrgId = Deno.env.get("WHATSAPP_DEFAULT_ORG_ID")?.trim();
+    const accessToken = Deno.env.get("WHATSAPP_CLOUD_TOKEN")?.trim();
+    const fallbackPhoneId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID")?.trim();
+    if (fallbackOrgId && accessToken && fallbackPhoneId === normalizedId) {
+      return {
+        organizationId: fallbackOrgId,
+        phoneNumberId: normalizedId,
+        accessToken,
+      };
+    }
   }
 
   return null;

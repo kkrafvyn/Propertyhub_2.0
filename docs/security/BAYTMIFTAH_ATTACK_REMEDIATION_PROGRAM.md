@@ -518,3 +518,17 @@ These findings should be fixed as a focused attack round, separate from the olde
 13. Add adversarial regression tests for every vulnerability.
 
 Most importantly, do not patch these with dozens of unrelated RLS edits. Introduce reusable authorization primitives such as `has_capability(user, organization, capability, resource)` and narrowly scoped server-side state-transition functions. Otherwise the same vulnerability pattern will keep returning as BaytMiftah grows.
+
+---
+
+# 15. WhatsApp launch blockers (2026-10-03)
+
+Migration `2026100301_whatsapp_and_rpc_security_launch_blockers.sql` plus edge updates to `whatsapp-cloud.ts`, `whatsapp-webhook`, and `send-whatsapp`:
+
+- Inbound org routing requires an exact `phone_number_id` on `organization_integrations`; optional `WHATSAPP_ALLOW_DEFAULT_ORG_FALLBACK=true` for documented platform default org only.
+- Outbound send uses per-org integration credentials only (no silent global Graph token fallback).
+- `get_whatsapp_bot_context_for_org_member` requires `team:manage` / org admin and redacts tenant identifiers.
+- `whatsapp_inbound_messages` RLS no longer exposes rows with `organization_id IS NULL` to authenticated users.
+- Webhook stores message-scoped `raw_payload`, resolves group channels with `organization_id` + `group_id`, and skips unresolved tenants.
+- `get_pending_lease_sign_for_phone` remains `service_role` only; `record_document_signature` and `record_estate_payment` bind actor to `auth.uid()`.
+- `find_user_id_by_phone` uses exact normalized digits with ambiguous-match rejection.

@@ -1,4 +1,5 @@
 import {
+  buildInboundMessagePayload,
   parseWhatsAppWebhookPayload,
   resolveOrganizationByPhoneNumberId,
   sendWhatsAppTextMessage,
@@ -102,20 +103,26 @@ Deno.serve(async (req) => {
 
     for (const msg of messages) {
       const integration = await resolveOrganizationByPhoneNumberId(admin, msg.phoneNumberId);
-      let organizationId =
-        integration?.organizationId || Deno.env.get("WHATSAPP_DEFAULT_ORG_ID") || null;
+      const organizationId = integration?.organizationId ?? null;
+      const messagePayload = buildInboundMessagePayload(msg);
+
+      if (!organizationId) {
+        console.warn("whatsapp-webhook: unmatched phone_number_id; skipping message", msg.phoneNumberId);
+        results.push({ messageId: msg.messageId, skipped: true, reason: "unresolved_organization" });
+        continue;
+      }
 
       let groupChannel: GroupChannelRow | null = null;
       if (msg.isGroup && msg.groupId) {
         const { data: linkedGroup } = await admin
           .from("whatsapp_group_channels")
           .select("*")
+          .eq("organization_id", organizationId)
           .eq("group_id", msg.groupId)
           .maybeSingle();
         if (linkedGroup) {
           groupChannel = linkedGroup as GroupChannelRow;
-          organizationId = organizationId || groupChannel.organization_id;
-        } else if (organizationId) {
+        } else {
           groupChannel = await getOrCreateGroupChannel(admin, organizationId, msg.groupId);
         }
       }
@@ -132,7 +139,7 @@ Deno.serve(async (req) => {
           message_text: msg.text,
           message_type: msg.messageType,
           bot_replied: false,
-          raw_payload: payload,
+          raw_payload: messagePayload,
         });
         results.push({ messageId: msg.messageId, skipped: true, reason: "group_paused" });
         continue;
@@ -153,7 +160,7 @@ Deno.serve(async (req) => {
           message_text: msg.text,
           message_type: msg.messageType,
           bot_replied: false,
-          raw_payload: payload,
+          raw_payload: messagePayload,
         });
         results.push({ messageId: msg.messageId, skipped: true, reason: "no_mention" });
         continue;
@@ -162,7 +169,7 @@ Deno.serve(async (req) => {
       const commandText = msg.isGroup ? stripGroupBotPrefix(msg.text, aliases) : msg.text;
 
       let priorSessionState = "idle";
-      if (organizationId) {
+      {
         let sessionQuery = admin
           .from("whatsapp_bot_sessions")
           .select("session_state")
@@ -177,26 +184,25 @@ Deno.serve(async (req) => {
 
       const forceMaintenance = shouldOpenMaintenanceFromSession(priorSessionState, commandText);
 
-      let botContext = undefined;
-      if (organizationId) {
-        const leasePending = await lookupPendingLeaseSignForPhone(admin, organizationId, msg.from);
-        botContext = await loadWhatsAppBotContext(admin, organizationId, msg.from, leasePending);
-        botContext = await applyWhatsAppBotMutations(admin, organizationId, msg.from, commandText, botContext, {
-          forceMaintenanceDescription: forceMaintenance,
-        });
-      }
+      const leasePending = await lookupPendingLeaseSignForPhone(admin, organizationId, msg.from);
+      let botContext = await loadWhatsAppBotContext(admin, organizationId, msg.from, leasePending);
+      botContext = await applyWhatsAppBotMutations(admin, organizationId, msg.from, commandText, botContext, {
+        forceMaintenanceDescription: forceMaintenance,
+      });
 
       const botResponse = processGroupBotMessage(msg.from, commandText, msg.isGroup, botContext);
       const replyTarget = msg.isGroup && msg.groupId ? msg.groupId : msg.from;
 
       let sendResult: { success: boolean; messageId?: string; simulated?: boolean } = { success: false };
       try {
-        sendResult = await sendWhatsAppTextMessage({
-          to: replyTarget,
-          text: botResponse.replyMessage,
-          phoneNumberId: integration?.phoneNumberId,
-          accessToken: integration?.accessToken,
-        });
+        if (integration?.phoneNumberId && integration.accessToken) {
+          sendResult = await sendWhatsAppTextMessage({
+            to: replyTarget,
+            text: botResponse.replyMessage,
+            phoneNumberId: integration.phoneNumberId,
+            accessToken: integration.accessToken,
+          });
+        }
       } catch (sendError) {
         console.error("WhatsApp reply failed:", sendError);
       }
@@ -215,12 +221,12 @@ Deno.serve(async (req) => {
           message_type: msg.messageType,
           bot_replied: sendResult.success,
           bot_reply_text: botResponse.replyMessage,
-          raw_payload: payload,
+          raw_payload: messagePayload,
         })
         .select("id")
         .single();
 
-      if (organizationId) {
+      {
         const sessionPayload = {
           organization_id: organizationId,
           sender_phone: msg.from,

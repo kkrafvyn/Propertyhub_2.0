@@ -1,7 +1,7 @@
 import { buildTransactionalEmail } from "../_shared/email-template.ts";
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
-import { sendWhatsAppTextMessage } from "../_shared/whatsapp-cloud.ts";
+import { resolveWhatsAppCredentialsForOrg, sendWhatsAppTextMessage } from "../_shared/whatsapp-cloud.ts";
 
 type NotificationChannel = "in_app" | "email" | "sms" | "whatsapp";
 
@@ -142,9 +142,21 @@ async function sendSms(params: { to: string; body: string }) {
   return response.ok;
 }
 
-async function sendWhatsApp(params: { to: string; body: string }) {
+async function sendWhatsApp(
+  admin: ReturnType<typeof createAdminClient>,
+  params: { to: string; body: string; organizationId?: string | null }
+) {
   try {
-    const result = await sendWhatsAppTextMessage({ to: params.to, text: params.body });
+    const orgId = params.organizationId?.trim() || Deno.env.get("WHATSAPP_DEFAULT_ORG_ID")?.trim();
+    if (!orgId) return false;
+    const credentials = await resolveWhatsAppCredentialsForOrg(admin, orgId);
+    if (!credentials?.phoneNumberId || !credentials.accessToken) return false;
+    const result = await sendWhatsAppTextMessage({
+      to: params.to,
+      text: params.body,
+      phoneNumberId: credentials.phoneNumberId,
+      accessToken: credentials.accessToken,
+    });
     return result.success;
   } catch (error) {
     console.error("sendWhatsApp:", error);
@@ -190,6 +202,7 @@ async function notifyUser(
     sendEmailCopy?: boolean;
     sendSmsCopy?: boolean;
     sendWhatsAppCopy?: boolean;
+    organizationId?: string | null;
   }
 ) {
   await createNotification(admin, {
@@ -243,9 +256,10 @@ async function notifyUser(
   }
 
   if (input.sendWhatsAppCopy && input.phone) {
-    const delivered = await sendWhatsApp({
+    const delivered = await sendWhatsApp(admin, {
       to: input.phone,
       body: input.content,
+      organizationId: input.organizationId,
     });
 
     await createNotification(admin, {

@@ -42,11 +42,17 @@ Deno.serve(async (req) => {
 
     const admin = createAdminClient();
     const credentials = await resolveWhatsAppCredentialsForOrg(admin, organizationId);
+    if (!credentials?.phoneNumberId || !credentials.accessToken) {
+      throw new HttpError(
+        503,
+        "WhatsApp is not configured for this organization. Connect WhatsApp Business credentials in integrations."
+      );
+    }
     const result = await sendWhatsAppTextMessage({
       to,
       text: message,
-      phoneNumberId: credentials?.phoneNumberId,
-      accessToken: credentials?.accessToken,
+      phoneNumberId: credentials.phoneNumberId,
+      accessToken: credentials.accessToken,
     });
     return jsonResponse(200, result, req);
   } catch (error) {
