@@ -1,7 +1,7 @@
 type CinematicProductPanelProps = {
   title: string;
   sub: string;
-  variant?: "listings" | "finance" | "maintenance" | "default";
+  variant?: "listings" | "leads" | "payments" | "maintenance" | "default";
 };
 
 /** Mini workspace-style panel for 3D Html overlays (dark theme). */
@@ -20,26 +20,32 @@ export function CinematicProductPanel({ title, sub, variant = "default" }: Cinem
         <p className="mk-cinema-os-card__sub">{sub}</p>
         {variant === "listings" ? (
           <div className="mk-cinema-os-card__row">
-            <span>Airport Hills · Unit 204</span>
-            <em>Active</em>
+            <span>East Legon · 3-bed</span>
+            <em>Published</em>
           </div>
         ) : null}
-        {variant === "finance" ? (
+        {variant === "leads" ? (
+          <div className="mk-cinema-os-card__row">
+            <span>Viewing · Unit 204</span>
+            <em>Tour</em>
+          </div>
+        ) : null}
+        {variant === "payments" ? (
           <div className="mk-cinema-os-card__metrics">
             <div>
-              <small>Collections</small>
-              <strong>Ledger</strong>
+              <small>Rent due</small>
+              <strong>5 days</strong>
             </div>
             <div>
-              <small>Overdue</small>
-              <strong>Aging</strong>
+              <small>MoMo match</small>
+              <strong>Receipt</strong>
             </div>
           </div>
         ) : null}
         {variant === "maintenance" ? (
           <div className="mk-cinema-os-card__row">
-            <span>Ticket #MT-2041</span>
-            <em>Open</em>
+            <span>Plumbing · 12B</span>
+            <em>Assigned</em>
           </div>
         ) : null}
       </div>

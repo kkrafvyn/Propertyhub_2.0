@@ -30,6 +30,8 @@ export function SceneLights({ mobile }: SceneLightsProps) {
         color="#e8dcc8"
         castShadow={false}
       />
+      <directionalLight position={[-5, 2, 6]} intensity={0.55 * intensity} color="#dfc07a" />
+      <pointLight position={[2.5, 1.2, 3]} intensity={0.25 * intensity} color="#c9a962" distance={12} />
     </>
   );
 }

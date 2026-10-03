@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Menu, X } from "lucide-react";
 import { Logo } from "../baytmiftah/Logo";
@@ -38,6 +38,8 @@ export function MarketingShell({
   const [scrolled, setScrolled] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => {
@@ -52,6 +54,11 @@ export function MarketingShell({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const closeMenu = useCallback(() => {
+    setMenuOpen(false);
+    requestAnimationFrame(() => menuButtonRef.current?.focus());
+  }, []);
+
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
     return () => {
@@ -59,7 +66,24 @@ export function MarketingShell({
     };
   }, [menuOpen]);
 
-  const closeMenu = () => setMenuOpen(false);
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMenu();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    const focusTarget = drawerRef.current?.querySelector<HTMLElement>(
+      "a, button, [tabindex]:not([tabindex='-1'])",
+    );
+    focusTarget?.focus();
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen, closeMenu]);
 
   return (
     <div
@@ -72,53 +96,76 @@ export function MarketingShell({
         style={{ width: `${scrollProgress}%` }}
         aria-hidden="true"
       />
-      <header className={`mk-nav${scrolled ? " mk-nav--scrolled" : ""}`}>
+      <a href="#mk-main-content" className="mk-skip-link">
+        Skip to content
+      </a>
+      <header className={`mk-nav${scrolled ? " mk-nav--scrolled" : ""}${cinematic ? " mk-nav--cinematic" : ""}`}>
         <div className="mk-nav-inner">
-          <Logo to="/" size="sm" inverted={false} />
+          <Logo to="/" size="sm" inverted={cinematic} />
           <nav className="mk-nav-links" aria-label="Primary">
             {links.map((link) => (
               <NavLink key={link.href} {...link} />
             ))}
           </nav>
           <div className="mk-nav-actions">
-            <a href={appPath("/login")} className="mk-btn mk-btn-secondary hidden sm:inline-flex">
+            <a
+              href={appPath("/login")}
+              className={`mk-btn mk-btn-secondary mk-nav-login${cinematic ? " mk-nav-login--desktop" : " hidden sm:inline-flex"}`}
+            >
               Log in
             </a>
-            <a href={appPath("/signup")} className="mk-btn mk-btn-primary">
-              Get Started
+            <a
+              href={appPath("/signup")}
+              className={`mk-btn mk-btn-primary${cinematic ? " mk-nav-cta-compact" : ""}`}
+            >
+              {cinematic ? "Get started" : "Get Started"}
             </a>
             <button
+              ref={menuButtonRef}
               type="button"
               className="mk-menu-toggle lg:hidden"
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               aria-expanded={menuOpen}
+              aria-controls="mk-mobile-navigation"
               onClick={() => setMenuOpen((open) => !open)}
             >
-              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {menuOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
             </button>
           </div>
         </div>
       </header>
 
       {menuOpen ? (
-        <div className="mk-mobile-drawer lg:hidden" role="dialog" aria-modal="true">
-          <button type="button" className="absolute inset-0" aria-label="Close menu" onClick={closeMenu} />
+        <div
+          className={`mk-mobile-drawer lg:hidden${cinematic ? " mk-mobile-drawer--cinematic" : ""}`}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mk-mobile-navigation-title"
+          id="mk-mobile-navigation"
+          ref={drawerRef}
+        >
+          <button type="button" className="mk-mobile-drawer__backdrop" aria-label="Close menu" onClick={closeMenu} />
           <div className="mk-mobile-panel">
-            <div className="flex items-center justify-between mb-4">
-              <Logo to="/" size="sm" inverted={false} />
+            <div className="mk-mobile-panel__head">
+              <p id="mk-mobile-navigation-title" className="mk-mobile-panel__title">
+                Menu
+              </p>
+              <Logo to="/" size="sm" inverted={cinematic} />
               <button type="button" className="mk-menu-toggle" aria-label="Close menu" onClick={closeMenu}>
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
-            {links.map((link) => (
-              <NavLink key={link.href} {...link} onClick={closeMenu} />
-            ))}
-            <div className="mt-4 flex flex-col gap-2">
+            <nav className="mk-mobile-panel__links" aria-label="Mobile">
+              {links.map((link) => (
+                <NavLink key={link.href} {...link} onClick={closeMenu} />
+              ))}
+            </nav>
+            <div className="mk-mobile-panel__actions">
               <a href={appPath("/login")} className="mk-btn mk-btn-secondary" onClick={closeMenu}>
                 Log in
               </a>
               <a href={appPath("/signup")} className="mk-btn mk-btn-primary" onClick={closeMenu}>
-                Get Started
+                Get started
               </a>
             </div>
           </div>
@@ -127,18 +174,18 @@ export function MarketingShell({
 
       <main className="mk-main">{children}</main>
 
-      <MarketingFooter />
+      <MarketingFooter cinematic={cinematic} />
     </div>
   );
 }
 
-function MarketingFooter() {
+function MarketingFooter({ cinematic }: { cinematic: boolean }) {
   return (
-    <footer className="mk-footer">
+    <footer className={`mk-footer${cinematic ? " mk-footer--cinematic" : ""}`}>
       <div className="mk-container mk-footer-grid">
         <div className="mk-footer-brand">
-          <Logo to="/" size="sm" inverted={false} />
-          <p>The Operating System for Real Estate.</p>
+          <Logo to="/" size="sm" inverted={cinematic} />
+          <p>Property operations for teams that manage real homes.</p>
         </div>
 
         <div className="mk-footer-col">

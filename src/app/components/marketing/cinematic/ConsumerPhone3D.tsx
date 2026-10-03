@@ -1,7 +1,7 @@
 import { Html } from "@react-three/drei";
 import { clamp01 } from "./scene-phases";
 
-const STEPS = ["Discover", "Apply", "Sign", "Pay", "Maintain"] as const;
+const STEPS = ["Search & apply", "Sign lease", "Pay rent", "Get support"] as const;
 
 type ConsumerPhone3DProps = {
   blend: number;
@@ -22,7 +22,7 @@ export function ConsumerPhone3D({ blend, mobile }: ConsumerPhone3DProps) {
         <div className="mk-cinema-phone" aria-hidden="true">
           <div className="mk-cinema-phone__bezel">
             <div className="mk-cinema-phone__screen">
-              <p className="mk-cinema-phone__label">Resident app</p>
+              <p className="mk-cinema-phone__label">Resident · preview</p>
               <ul className="mk-cinema-phone__steps">
                 {STEPS.map((step, i) => (
                   <li key={step} className={i === activeIndex ? "is-active" : ""}>

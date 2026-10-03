@@ -7,10 +7,10 @@ type PortfolioDashboard3DProps = {
 };
 
 const METRICS = [
-  { label: "Occupancy", value: "Illustrative" },
-  { label: "Collections", value: "Live ledger" },
-  { label: "Open maintenance", value: "Queue view" },
-  { label: "Portfolio value", value: "Reporting" },
+  { label: "Units tracked", value: "48" },
+  { label: "Open tickets", value: "6" },
+  { label: "Leases renewing", value: "4" },
+  { label: "Collections queue", value: "12" },
 ];
 
 export function PortfolioDashboard3D({ blend, mobile }: PortfolioDashboard3DProps) {
@@ -20,7 +20,7 @@ export function PortfolioDashboard3D({ blend, mobile }: PortfolioDashboard3DProp
   return (
     <Html position={[0, 3.2, 0]} center distanceFactor={10} style={{ opacity, pointerEvents: "none" }}>
       <div className="mk-cinema-dash-3d" aria-hidden="true">
-        <p className="mk-cinema-dash-3d__eyebrow">Workspace · preview</p>
+        <p className="mk-cinema-dash-3d__eyebrow">Portfolio · illustrative preview</p>
         <div className="mk-cinema-dash-3d__grid">
           {METRICS.map((m) => (
             <div key={m.label}>

@@ -1,3 +1,5 @@
+import type { ProductPreviewKind } from "./CinematicProductPreviews";
+
 export type CinematicChapter = {
   id: string;
   eyebrow?: string;
@@ -8,85 +10,90 @@ export type CinematicChapter = {
   tall?: boolean;
   aiPrompts?: string[];
   mobileCards?: { title: string; sub: string }[];
+  productPreviews?: ProductPreviewKind[];
   primaryCta?: { label: string; href: string; id?: string };
   secondaryCta?: { label: string; href: string; id?: string };
   short?: boolean;
+  headingLevel?: "h1" | "h2";
 };
 
 export const CINEMATIC_CHAPTERS: CinematicChapter[] = [
   {
     id: "hero",
     eyebrow: "BAYTMIFTAH",
-    title: "The operating system for real estate.",
-    lead: "Run discovery, leasing, operations, finance, maintenance and AI from one connected platform.",
+    title: "Property operations software for teams that manage real homes.",
+    lead: "BaytMiftah helps property managers, owners, and agencies run listings, leasing, payments, maintenance, and resident support in one workspace.",
     alignClass: "mk-cinema-chapter__inner--left",
-    primaryCta: { label: "Explore BaytMiftah", href: "#chapter-platform", id: "cinema-cta-explore" },
-    secondaryCta: { label: "See how it works", href: "#chapter-enter", id: "cinema-cta-how" },
+    headingLevel: "h1",
+    primaryCta: { label: "Create your workspace", href: "/signup", id: "cinema-cta-signup" },
+    secondaryCta: { label: "See the platform", href: "#chapter-platform", id: "cinema-cta-platform" },
   },
   {
     id: "enter",
-    title: "One property.\nEvery operation connected.",
-    labels: ["Leasing", "Payments", "Maintenance", "Residents", "Operations"],
+    title: "From enquiry to keys — without switching tools.",
+    lead: "Publish inventory, qualify leads, sign leases, collect rent, and dispatch maintenance with shared context on every unit.",
+    labels: ["Listings", "Leads", "Leasing", "Payments", "Maintenance"],
+    productPreviews: ["listings", "leads", "maintenance"],
     short: true,
   },
   {
     id: "platform",
     eyebrow: "Platform",
-    title: "One system for the entire property lifecycle.",
-    lead: "From first enquiry to rent collection and maintenance, every workflow stays connected.",
+    title: "One workspace for day-to-day property work.",
+    lead: "Each module reflects how BaytMiftah is built: operational screens your team can open today — previews below use illustrative data.",
     tall: true,
+    productPreviews: ["listings", "leads", "payments", "maintenance"],
     mobileCards: [
-      { title: "Listings", sub: "Discovery & inventory" },
-      { title: "CRM", sub: "Leads & relationships" },
-      { title: "Finance", sub: "Collections & ledger" },
-      { title: "Maintenance", sub: "Tickets & field ops" },
-      { title: "Leasing", sub: "Apply · sign · renew" },
-      { title: "AI", sub: "Governed automation" },
+      { title: "Listings", sub: "Publish & track status" },
+      { title: "Leads", sub: "Pipeline & viewings" },
+      { title: "Payments", sub: "Collections & receipts" },
+      { title: "Maintenance", sub: "Assign & track work" },
     ],
   },
   {
     id: "portfolio",
-    title: "From one property to an entire portfolio.",
-    lead: "Give owners, managers, agents and finance teams one shared source of truth.",
+    title: "Scale from one building to a full portfolio.",
+    lead: "Owners and operations leads see occupancy, open work, renewals, and collections in one overview — aligned with the workspace dashboard.",
+    productPreviews: ["portfolio", "payments", "maintenance"],
     mobileCards: [
-      { title: "Occupancy", sub: "Illustrative workspace metric" },
-      { title: "Collections", sub: "Live ledger preview" },
-      { title: "Open maintenance", sub: "Queue view" },
-      { title: "Portfolio value", sub: "Reporting module" },
+      { title: "Portfolio view", sub: "Multi-property overview" },
+      { title: "Collections", sub: "Payment queue preview" },
+      { title: "Maintenance", sub: "Open work orders" },
+      { title: "Leasing", sub: "Renewals & applications" },
     ],
   },
   {
     id: "consumer",
-    title: "A better experience for residents too.",
-    lead: "Search, apply, sign, pay and request support without leaving BaytMiftah.",
+    title: "Residents stay in the loop.",
+    lead: "Search listings, apply digitally, sign documents, pay rent, and open support requests — the same flows available in the consumer experience.",
+    productPreviews: ["resident"],
     mobileCards: [
       { title: "Discover", sub: "Search & compare" },
       { title: "Apply", sub: "Digital applications" },
       { title: "Sign", sub: "E-signatures" },
-      { title: "Pay", sub: "MoMo & bank-ready" },
-      { title: "Maintain", sub: "Support requests" },
+      { title: "Pay", sub: "Licensed payment partners" },
+      { title: "Support", sub: "Maintenance requests" },
     ],
   },
   {
     id: "ai",
-    title: "AI that understands the operation.",
-    lead: "BaytMiftah connects context across properties, people and workflows to help teams act faster.",
+    title: "AI that respects your approvals.",
+    lead: "BaytMiftah AI can summarize portfolios, flag overdue rent, prioritize maintenance, and draft communications — with tool allowlists and human sign-off where you require it.",
     aiPrompts: [
-      "Summarize this portfolio",
-      "Flag overdue rent",
-      "Prioritize maintenance",
-      "Draft a listing",
-      "Prepare owner update",
+      "Summarize open maintenance by property",
+      "Flag overdue rent this week",
+      "Draft owner update for renewals",
+      "Prioritize tickets breaching SLA",
     ],
     alignClass: "mk-cinema-chapter__inner--center",
   },
   {
     id: "brand",
-    title: "Run real estate from one place.",
-    lead: "BaytMiftah brings discovery, operations and ownership into one connected system.",
+    title: "Get started with verified capabilities.",
+    lead: "Create a workspace, connect your portfolio, and invite your team. Marketplace listings, payments, and KYC integrations follow the setup flows documented in the product.",
     alignClass: "mk-cinema-chapter__inner--center",
-    primaryCta: { label: "Get started", href: "/signup", id: "cinema-cta-start" },
-    secondaryCta: { label: "View platform", href: "#chapter-platform", id: "cinema-cta-platform" },
+    primaryCta: { label: "Create your workspace", href: "/signup", id: "cinema-cta-start" },
+    secondaryCta: { label: "Log in", href: "/login", id: "cinema-cta-login" },
   },
 ];
 

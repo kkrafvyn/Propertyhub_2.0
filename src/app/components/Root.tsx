@@ -84,6 +84,9 @@ function isConsumerRoute(pathname: string) {
 }
 
 function shouldSkipOnboarding(pathname: string) {
+  if (isMarketingPublicPath(pathname)) {
+    return true;
+  }
   return (
     pathname === "/" ||
     pathname.startsWith("/login") ||

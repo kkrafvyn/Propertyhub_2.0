@@ -5,15 +5,21 @@
   --mk-bg-deep: #060e0b;
   --mk-bg-soft: #0f1f19;
   --mk-ink: #f5f0e8;
-  --mk-muted: #a8b5ad;
-  --mk-border: rgba(201, 169, 98, 0.18);
+  --mk-muted: #b7c3bb;
+  --mk-border: rgba(52, 72, 61, 0.85);
+  --mk-border-subtle: rgba(201, 169, 98, 0.18);
   --mk-accent: #c9a962;
   --mk-accent-hover: #dfc07a;
-  --mk-glass: rgba(15, 31, 25, 0.72);
-  --mk-glass-border: rgba(201, 169, 98, 0.22);
+  --mk-on-accent: #142017;
+  --mk-focus: #dfc07a;
+  --mk-glass: rgba(15, 31, 25, 0.88);
+  --mk-glass-border: rgba(52, 72, 61, 0.9);
+  --mk-header-offset: 5.5rem;
+  --cookie-banner-bottom: 0px;
   background: var(--mk-bg);
   color: var(--mk-ink);
   color-scheme: dark;
+  overflow-x: hidden;
 }
 
 .marketing-page--cinematic .mk-page-scrim,
@@ -33,8 +39,48 @@
   color: var(--mk-ink) !important;
 }
 
+.marketing-page--cinematic .mk-btn-primary {
+  background: var(--mk-accent);
+  color: var(--mk-on-accent);
+  border-color: transparent;
+}
+
+.marketing-page--cinematic .mk-btn-primary:hover {
+  background: var(--mk-accent-hover);
+  color: var(--mk-on-accent);
+}
+
 .marketing-page--cinematic .mk-btn-secondary {
-  background: transparent;
+  background: rgba(15, 31, 25, 0.65);
+  border-color: var(--mk-border);
+  color: var(--mk-ink);
+}
+
+.marketing-page--cinematic .mk-btn:focus-visible,
+.marketing-page--cinematic .mk-menu-toggle:focus-visible,
+.marketing-page--cinematic .mk-nav-link:focus-visible {
+  outline: 2px solid var(--mk-focus);
+  outline-offset: 2px;
+}
+
+.marketing-page--cinematic .mk-nav-login--desktop {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .marketing-page--cinematic .mk-nav-login--desktop {
+    display: inline-flex;
+  }
+}
+
+.marketing-page--cinematic .mk-nav-cta-compact {
+  padding-inline: 0.85rem;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.marketing-page--cinematic .mk-nav--cinematic .mk-menu-toggle {
+  background: var(--mk-bg-soft);
   border-color: var(--mk-border);
   color: var(--mk-ink);
 }
@@ -66,6 +112,10 @@
   position: relative;
   z-index: 1;
   isolation: isolate;
+}
+
+.mk-cinema-chapter[id] {
+  scroll-margin-top: var(--mk-header-offset);
 }
 
 .mk-cinema-chapter {
@@ -119,15 +169,16 @@
 .mk-cinema-chapter__glass {
   padding: clamp(1.25rem, 3vw, 2rem);
   border-radius: 20px;
-  border: 1px solid rgba(201, 169, 98, 0.12);
-  background: linear-gradient(
-    145deg,
-    rgba(6, 14, 11, 0.82) 0%,
-    rgba(15, 31, 25, 0.55) 100%
-  );
+  border: 1px solid var(--mk-glass-border);
+  background: linear-gradient(145deg, rgba(6, 14, 11, 0.92) 0%, rgba(15, 31, 25, 0.78) 100%);
   backdrop-filter: blur(14px);
   will-change: opacity, transform;
   transition: opacity 0.15s ease-out;
+  opacity: 1;
+}
+
+.mk-cinema-chapter__glass--dim {
+  pointer-events: none;
 }
 
 .mk-cinema-vignette {
@@ -135,12 +186,44 @@
   inset: 0;
   pointer-events: none;
   background: radial-gradient(
-    ellipse 70% 60% at 62% 45%,
+    ellipse 75% 65% at 58% 42%,
     transparent 0%,
-    rgba(6, 14, 11, 0.35) 55%,
-    rgba(6, 14, 11, 0.85) 100%
+    rgba(6, 14, 11, 0.22) 50%,
+    rgba(6, 14, 11, 0.72) 100%
   );
   z-index: 2;
+}
+
+.mk-cinema-static-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 45% at 70% 38%, rgba(201, 169, 98, 0.08), transparent 55%),
+    linear-gradient(180deg, #060e0b 0%, #0f1f19 45%, #060e0b 100%);
+}
+
+.mk-cinema-static-hero-art {
+  max-width: 1180px;
+  margin: 0 auto 2rem;
+  padding: 0 1.25rem;
+}
+
+.mk-cinema-static-hero-art__building {
+  height: min(42vw, 280px);
+  border-radius: 20px;
+  border: 1px solid var(--mk-glass-border);
+  background:
+    linear-gradient(165deg, rgba(201, 169, 98, 0.15) 0%, transparent 40%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(15, 31, 25, 0.95) 0,
+      rgba(15, 31, 25, 0.95) 12px,
+      rgba(6, 14, 11, 0.98) 12px,
+      rgba(6, 14, 11, 0.98) 24px
+    );
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
 }
 
 .mk-cinema-canvas-loader {
@@ -551,5 +634,143 @@
 @media (min-width: 1024px) {
   .mk-cinema-chapter--hero .mk-cinema-chapter__inner--left {
     margin-left: clamp(1rem, 6vw, 4rem);
+  }
+}
+
+.mk-cinema-product-previews {
+  margin-top: 1.25rem;
+}
+
+.mk-cinema-preview-note {
+  font-size: 0.72rem;
+  color: var(--mk-muted);
+  margin: 0 0 0.65rem;
+}
+
+.mk-cinema-product-previews--grid {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.mk-cinema-product-previews--stack {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.mk-cinema-preview-card {
+  border-radius: 12px;
+  border: 1px solid var(--mk-glass-border);
+  background: rgba(8, 18, 14, 0.92);
+  padding: 0.75rem 0.85rem;
+}
+
+.mk-cinema-preview-card header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.5rem;
+}
+
+.mk-cinema-preview-card__tag {
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mk-accent);
+}
+
+.mk-cinema-preview-card strong {
+  font-size: 0.82rem;
+  color: var(--mk-ink);
+}
+
+.mk-cinema-preview-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.72rem;
+}
+
+.mk-cinema-preview-card li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(52, 72, 61, 0.5);
+  color: var(--mk-muted);
+}
+
+.mk-cinema-preview-card em {
+  font-style: normal;
+  color: var(--mk-accent-hover);
+  font-size: 0.68rem;
+}
+
+.mk-cinema-preview-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.mk-cinema-preview-metrics small {
+  display: block;
+  font-size: 0.62rem;
+  color: var(--mk-muted);
+}
+
+.mk-cinema-preview-metrics strong {
+  font-size: 0.85rem;
+  color: var(--mk-ink);
+}
+
+.mk-cinema-preview-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.72rem;
+  color: var(--mk-muted);
+}
+
+.mk-cinema-preview-steps li {
+  padding: 0.2rem 0;
+}
+
+.mk-cinema-preview-steps .is-active {
+  color: var(--mk-ink);
+  font-weight: 600;
+}
+
+.mk-cinema-preview-steps .is-done {
+  color: var(--mk-muted);
+}
+
+.mk-cinema-chapter--static .mk-cinema-chapter__inner {
+  max-width: min(640px, 100%);
+}
+
+.marketing-page--cinematic .mk-footer--cinematic a[aria-label="BaytMiftah"] span {
+  color: var(--mk-ink);
+}
+
+.marketing-page--cinematic .cookie-consent-banner {
+  background: var(--mk-bg-soft);
+  border-color: var(--mk-border);
+  color: var(--mk-ink);
+}
+
+@media (min-width: 768px) {
+  .marketing-page--cinematic .cookie-consent-banner {
+    inset: auto 1.25rem 1.25rem auto;
+    left: auto;
+    max-width: min(420px, calc(100vw - 2.5rem));
+    border-radius: 14px;
+    border: 1px solid var(--mk-border);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+  }
+}
+
+@media (max-width: 768px) {
+  .marketing-page--cinematic .mk-cinema-chapter--hero {
+    padding-bottom: 6.5rem;
   }
 }

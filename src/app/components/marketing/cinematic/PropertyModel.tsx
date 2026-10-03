@@ -156,10 +156,23 @@ function StackedVolume({
       <group position={[spec.w / 2 + 0.01, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
         <RibbedCladding width={spec.d} height={spec.h} depth={0.04} axis="z" />
       </group>
-      {/* cantilever soffit */}
+      {/* cantilever soffit + terrace slab */}
       <mesh position={[0, -spec.h / 2 - 0.015, 0]} material={matSoffit}>
         <boxGeometry args={[spec.w * 1.02, 0.03, spec.d * 1.02]} />
       </mesh>
+      <mesh position={[0, spec.h / 2 + 0.012, spec.d * 0.08]} material={matGold}>
+        <boxGeometry args={[spec.w * 0.78, 0.018, spec.d * 0.22]} />
+      </mesh>
+      {index === 0 ? (
+        <group position={[0, -spec.h / 2 - 0.08, spec.d / 2 + 0.08]}>
+          <mesh material={matGlass}>
+            <boxGeometry args={[0.42, 0.28, 0.04]} />
+          </mesh>
+          <mesh position={[0, -0.18, 0.06]} material={matGold}>
+            <boxGeometry args={[0.55, 0.04, 0.12]} />
+          </mesh>
+        </group>
+      ) : null}
     </group>
   );
 }
