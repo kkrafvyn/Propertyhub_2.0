@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { clamp01, chapterLocalProgress } from "./scene-phases";
+import { easeInOutQuart } from "./cinematic-easing";
 import { marketingScrollState } from "./marketingScrollState";
 
 type SceneCameraRigProps = {
@@ -28,7 +29,8 @@ function sampleCamera(progress: number) {
   while (i < KEYFRAMES.length - 2 && KEYFRAMES[i + 1].p < p) i += 1;
   const a = KEYFRAMES[i];
   const b = KEYFRAMES[Math.min(i + 1, KEYFRAMES.length - 1)];
-  const t = b.p === a.p ? 0 : (p - a.p) / (b.p - a.p);
+  const rawT = b.p === a.p ? 0 : (p - a.p) / (b.p - a.p);
+  const t = easeInOutQuart(rawT);
   return {
     pos: a.pos.clone().lerp(b.pos, t),
     target: a.target.clone().lerp(b.target, t),

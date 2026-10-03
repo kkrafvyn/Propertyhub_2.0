@@ -10,6 +10,9 @@ import { ExperienceProductLayers } from "./ExperienceProductLayers";
 import { PortfolioWorld } from "./PortfolioWorld";
 import { PropertyModelExperience } from "./PropertyModelExperience";
 import { SpatialLabels } from "./SpatialLabels";
+import { ExplodedFloorLabels } from "./ExplodedFloorLabels";
+import { OperationalAiLayer } from "./OperationalAiLayer";
+import { MaintenanceUnitMarker } from "./MaintenanceUnitMarker";
 import { useExperienceScalars } from "./useExperienceScalars";
 
 type ExperienceSceneProps = {
@@ -48,7 +51,10 @@ function ExperienceSceneInner({ mobile, reducedMotion }: ExperienceSceneProps) {
       <PortfolioConnections blend={s.portfolioWorld} mobile={mobile} />
       <ConnectionSpine />
       <SpatialLabels mobile={mobile} />
+      <ExplodedFloorLabels mobile={mobile} />
+      <MaintenanceUnitMarker />
       <ExperienceProductLayers mobile={mobile} />
+      <OperationalAiLayer mobile={mobile} />
       <ConsumerPhone3D blend={s.resident} mobile={mobile} />
     </>
   );

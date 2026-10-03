@@ -3,14 +3,14 @@ import { ArrowRight } from "lucide-react";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import { Logo } from "../../components/baytmiftah/Logo";
 import { Marketing3DErrorBoundary } from "../../components/marketing/cinematic/Marketing3DErrorBoundary";
-import { CinematicProductPreviews } from "../../components/marketing/cinematic/CinematicProductPreviews";
+import { ProductPresentation } from "../../components/marketing/cinematic/ProductPresentation";
 import {
   useIsMobileCinematic,
   useMarketingSceneProgress,
 } from "../../components/marketing/cinematic/useMarketingSceneProgress";
 import { useSectionFocus } from "../../components/marketing/cinematic/useChapterFocus";
 import { EXPERIENCE_CHAPTERS, type ExperienceChapterCopy } from "../../components/marketing/experience/experience-chapters";
-import { EXPERIENCE_CHAPTER_UI } from "../../components/marketing/experience/experience-chapter-ui";
+import { EXPERIENCE_CHAPTER_UI, HIERARCHY_STAGES } from "../../components/marketing/experience/experience-chapter-ui";
 import { ExperienceWebGLFallback } from "../../components/marketing/experience/ExperienceWebGLFallback";
 import { appPath } from "../../../lib/marketing-urls";
 import "../../components/marketing/cinematic/marketing-cinematic.css";
@@ -41,13 +41,11 @@ function ExperienceChapterSection({
   const focus = useSectionFocus(sectionRef, { headerOffset: 72, disabled: motionOff });
   const titleLines = chapter.title.split("\n");
   const HeadingTag = ui.headingLevel === "h1" ? "h1" : "h2";
-  const stepIndex = (steps: string[] | undefined) =>
-    steps && steps.length > 0
-      ? Math.min(steps.length - 1, Math.floor(focus.opacity * steps.length))
-      : 0;
-  const leasingIndex = stepIndex(ui.leasingSteps);
-  const maintenanceIndex = stepIndex(ui.maintenanceSteps);
-  const orgRoleIndex = stepIndex(ui.orgRoles);
+  const workflowStage = Math.min(5, Math.floor(focus.opacity * 5.5));
+  const hierarchyIndex = Math.min(
+    HIERARCHY_STAGES.length - 1,
+    Math.floor(focus.opacity * HIERARCHY_STAGES.length),
+  );
 
   return (
     <section
@@ -59,7 +57,7 @@ function ExperienceChapterSection({
       aria-labelledby={`xp-heading-${chapter.id}`}
     >
       <div
-        className={`mk-cinema-chapter__glass${focus.readable ? "" : " mk-cinema-chapter__glass--dim"}`}
+        className={`mk-xp-editorial${focus.readable ? "" : " mk-xp-editorial--dim"}`}
         style={
           motionOff
             ? undefined
@@ -85,80 +83,33 @@ function ExperienceChapterSection({
           </HeadingTag>
           {chapter.lead ? <p className="mk-cinema-lead">{chapter.lead}</p> : null}
 
-          {ui.labels ? (
-            <div className="mk-cinema-labels" aria-label="Operational areas">
-              {ui.labels.map((l) => (
-                <span key={l} className="mk-cinema-label">
-                  {l}
+          {ui.showHierarchy ? (
+            <div className="mk-xp-hierarchy" aria-label="Information hierarchy">
+              {HIERARCHY_STAGES.map((stage, i) => (
+                <span key={stage} className={i === hierarchyIndex ? "is-current" : i < hierarchyIndex ? "is-past" : ""}>
+                  {stage}
                 </span>
               ))}
             </div>
           ) : null}
 
-          {ui.leasingSteps ? (
-            <ol className="mk-xp-leasing-steps" aria-label="Leasing workflow">
-              {ui.leasingSteps.map((step, i) => (
-                <li key={step} className={i === leasingIndex ? "is-active" : ""}>
-                  {step}
-                </li>
-              ))}
-            </ol>
-          ) : null}
-
-          {ui.maintenanceSteps ? (
-            <ol className="mk-xp-leasing-steps" aria-label="Maintenance workflow">
-              {ui.maintenanceSteps.map((step, i) => (
-                <li key={step} className={i === maintenanceIndex ? "is-active" : ""}>
-                  {step}
-                </li>
-              ))}
-            </ol>
-          ) : null}
-
-          {ui.productPreviews && !mobile ? (
-            <CinematicProductPreviews kinds={ui.productPreviews} layout="grid" />
-          ) : null}
-
-          {mobile && ui.mobileCards ? (
-            <div className="mk-cinema-mobile-cards">
-              {ui.mobileCards.map((card) => (
-                <div key={card.title} className="mk-cinema-mobile-card">
-                  <strong>{card.title}</strong>
-                  <span>{card.sub}</span>
-                </div>
-              ))}
+          {ui.productStage && !mobile ? (
+            <div className="mk-xp-dom-product">
+              <ProductPresentation
+                variant={ui.productStage}
+                stage={chapter.id === "leasing" || chapter.id === "maintenance" ? workflowStage : 0}
+              />
             </div>
           ) : null}
 
-          {mobile && ui.productPreviews ? (
-            <CinematicProductPreviews kinds={ui.productPreviews.slice(0, 2)} layout="stack" />
-          ) : null}
-
-          {ui.aiPrompts ? (
-            <div className="mk-cinema-ai-prompts" aria-label="Example AI commands">
-              {ui.aiPrompts.map((p) => (
-                <span key={p} className="mk-cinema-ai-prompt">
-                  {p}
-                </span>
-              ))}
-            </div>
-          ) : null}
-
-          {ui.orgRoles ? (
-            <div className="mk-xp-org-roles" aria-label="Role perspectives">
-              <p className="mk-xp-org-roles__active">{ui.orgRoles[orgRoleIndex]} view · preview</p>
-              <div className="mk-xp-org-roles__tabs">
-                {ui.orgRoles.map((role, i) => (
-                  <span key={role} className={i === orgRoleIndex ? "is-active" : ""}>
-                    {role}
-                  </span>
-                ))}
-              </div>
+          {mobile && ui.productStage ? (
+            <div className="mk-xp-dom-product">
+              <ProductPresentation variant={ui.productStage} stage={workflowStage} compact />
             </div>
           ) : null}
 
           {chapter.id === "ai" ? (
-            <div className="mk-xp-ai-brief" aria-label="Illustrative AI response">
+            <div className="mk-xp-ai-brief" aria-label="Example AI response">
               <p className="mk-xp-ai-brief__q">Which properties need attention today?</p>
               <ul>
                 <li>3 overdue collection cases</li>
@@ -166,7 +117,6 @@ function ExperienceChapterSection({
                 <li>4 leases expiring soon</li>
                 <li>1 property with declining occupancy</li>
               </ul>
-              <p className="mk-cinema-preview-note">Illustrative — not live data.</p>
             </div>
           ) : null}
 
@@ -181,7 +131,7 @@ function ExperienceChapterSection({
               {chapter.primaryCta ? (
                 <a
                   href={resolveHref(chapter.primaryCta.href)}
-                  className="mk-btn mk-btn-primary mk-btn-glow"
+                  className="mk-btn mk-btn-primary"
                   tabIndex={focus.readable ? undefined : -1}
                 >
                   {chapter.primaryCta.label} <ArrowRight size={16} aria-hidden="true" />
@@ -198,6 +148,10 @@ function ExperienceChapterSection({
               ) : null}
             </div>
           )}
+
+          {ui.productStage || chapter.id === "ai" ? (
+            <p className="mk-cinema-preview-note mk-cinema-preview-note--inline">Sample data for demonstration.</p>
+          ) : null}
         </div>
       </div>
 

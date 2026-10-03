@@ -1,59 +1,73 @@
 import * as THREE from "three";
 
-/** Reference-inspired palette: glass + ribbed metal, with BaytMiftah forest podium accent. */
+/** Architectural palette — restrained concrete, glass, forest podium. */
 export const BUILDING_PALETTE = {
-  panel: "#7a828a",
-  panelDark: "#5c636a",
-  soffit: "#8b9299",
-  glass: "#6e9098",
-  glassTint: "#4a6670",
-  frame: "#3d454c",
-  podium: "#1a3329",
-  warmInterior: "#e8dcc8",
-  goldAccent: "#c4a055",
+  panel: "#6e757c",
+  panelDark: "#52585e",
+  soffit: "#7a8288",
+  concrete: "#8a9096",
+  glass: "#5a7278",
+  glassTint: "#3d5258",
+  frame: "#343b42",
+  podium: "#152820",
+  landscape: "#0c1612",
+  warmInterior: "#e6dcc8",
+  woodAccent: "#6b5a48",
+  goldAccent: "#a8925c",
 } as const;
 
 export const matPanel = new THREE.MeshStandardMaterial({
   color: BUILDING_PALETTE.panel,
-  roughness: 0.55,
-  metalness: 0.42,
+  roughness: 0.72,
+  metalness: 0.12,
 });
 
 export const matPanelDark = new THREE.MeshStandardMaterial({
   color: BUILDING_PALETTE.panelDark,
-  roughness: 0.65,
-  metalness: 0.35,
+  roughness: 0.78,
+  metalness: 0.08,
 });
 
 export const matSoffit = new THREE.MeshStandardMaterial({
   color: BUILDING_PALETTE.soffit,
-  roughness: 0.48,
-  metalness: 0.38,
+  roughness: 0.68,
+  metalness: 0.1,
+});
+
+export const matConcrete = new THREE.MeshStandardMaterial({
+  color: BUILDING_PALETTE.concrete,
+  roughness: 0.88,
+  metalness: 0.04,
 });
 
 export const matFrame = new THREE.MeshStandardMaterial({
   color: BUILDING_PALETTE.frame,
-  roughness: 0.4,
-  metalness: 0.55,
+  roughness: 0.55,
+  metalness: 0.22,
 });
 
 export const matPodium = new THREE.MeshStandardMaterial({
   color: BUILDING_PALETTE.podium,
-  roughness: 0.88,
+  roughness: 0.92,
+  metalness: 0.02,
+});
+
+export const matWood = new THREE.MeshStandardMaterial({
+  color: BUILDING_PALETTE.woodAccent,
+  roughness: 0.82,
   metalness: 0.05,
 });
 
-/** Standard transparent glass — avoids transmission depth/mipmap WebGL warnings on marketing. */
 export const matGlass = new THREE.MeshStandardMaterial({
   color: BUILDING_PALETTE.glassTint,
-  roughness: 0.12,
-  metalness: 0.2,
+  roughness: 0.22,
+  metalness: 0.08,
   transparent: true,
-  opacity: 0.45,
+  opacity: 0.38,
 });
 
 export const matGold = new THREE.MeshStandardMaterial({
   color: BUILDING_PALETTE.goldAccent,
-  roughness: 0.35,
-  metalness: 0.58,
+  roughness: 0.45,
+  metalness: 0.35,
 });

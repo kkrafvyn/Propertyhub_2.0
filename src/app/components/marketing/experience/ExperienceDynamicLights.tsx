@@ -48,8 +48,8 @@ export function ExperienceDynamicLights({ mobile }: ExperienceDynamicLightsProps
         intensity={0.55 * intensity}
         color="#e8dcc8"
       />
-      <directionalLight position={[-5, 2, 6]} intensity={0.5 * intensity} color="#dfc07a" />
-      <pointLight position={[2.5, 1.2, 3]} intensity={0.22 * intensity} color="#c9a962" distance={12} />
+      <directionalLight position={[-5, 2, 6]} intensity={0.38 * intensity} color="#c4b896" />
+      <pointLight position={[2.5, 1.2, 3]} intensity={0.18 * intensity} color="#e6dcc8" distance={10} />
     </>
   );
 }

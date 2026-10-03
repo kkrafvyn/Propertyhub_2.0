@@ -196,7 +196,7 @@ export function PropertyModel({
       const progress = marketingScrollState.progress;
       const s = sceneScalars(progress);
       separationRef.current = s.layerSeparation;
-      spinRef.current = s.heroSpin + progress * 0.15;
+      spinRef.current = 0;
       floatPhaseRef.current = progress * Math.PI;
       volumeRefs.current.forEach((volumeGroup, index) => {
         if (!volumeGroup) return;
@@ -212,8 +212,10 @@ export function PropertyModel({
 
     const g = groupRef.current;
     if (!g) return;
-    g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, spinRef.current * 0.35, delta * 2);
-    g.position.y = Math.sin(clock.elapsedTime * 0.55 + floatPhaseRef.current) * 0.03;
+    g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, spinRef.current * 0.04, delta * 1.5);
+    if (!scrollDriven) {
+      g.position.y = Math.sin(clock.elapsedTime * 0.55 + floatPhaseRef.current) * 0.03;
+    }
   });
 
   const activeSeparation = scrollDriven ? 0 : layerSeparation;

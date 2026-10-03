@@ -1,6 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { appPath } from "../../../../lib/marketing-urls";
-import { CinematicProductPreviews } from "../cinematic/CinematicProductPreviews";
+import { ProductPresentation } from "../cinematic/ProductPresentation";
 import { EXPERIENCE_CHAPTERS } from "./experience-chapters";
 import { EXPERIENCE_CHAPTER_UI } from "./experience-chapter-ui";
 
@@ -32,17 +32,10 @@ export function ExperienceWebGLFallback() {
                 ))}
               </HeadingTag>
               {ch.lead ? <p className="mk-cinema-lead">{ch.lead}</p> : null}
-              {ui.labels ? (
-                <div className="mk-cinema-labels">
-                  {ui.labels.map((l) => (
-                    <span key={l} className="mk-cinema-label">
-                      {l}
-                    </span>
-                  ))}
+              {ui.productStage ? (
+                <div className="mk-xp-dom-product">
+                  <ProductPresentation variant={ui.productStage} />
                 </div>
-              ) : null}
-              {ui.productPreviews ? (
-                <CinematicProductPreviews kinds={ui.productPreviews} layout="grid" />
               ) : null}
               {(ch.primaryCta || ch.secondaryCta) && (
                 <div className="mk-cinema-actions">

@@ -41,7 +41,6 @@ export type ExperienceChapterCopy = {
 export const EXPERIENCE_CHAPTERS: ExperienceChapterCopy[] = [
   {
     id: "hero",
-    eyebrow: "BaytMiftah",
     title: "Real estate,\noperated as one system.",
     lead: "BaytMiftah connects leasing, finance, maintenance, residents and portfolio operations in one platform.",
     primaryCta: { label: "Explore BaytMiftah", href: "#chapter-operating" },
@@ -49,60 +48,48 @@ export const EXPERIENCE_CHAPTERS: ExperienceChapterCopy[] = [
   },
   {
     id: "approach",
-    eyebrow: "Approach",
-    title: "Every operation\nhas a place.",
-    lead: "Leasing, finance, maintenance and residents — connected around the property.",
+    title: "One property.\nEvery operation connected.",
   },
   {
     id: "explode",
     title: "One property.\nEvery operation connected.",
-    lead: "Each floor reflects how teams run the building — from leasing to finance to AI oversight.",
   },
   {
     id: "operating",
     eyebrow: "Platform",
     title: "One system for the\nproperty lifecycle.",
-    lead: "Workspace modules appear where work happens — illustrative previews, not live tenant data.",
   },
   {
     id: "portfolio",
     title: "From one property\nto an entire portfolio.",
-    lead: "Pull back to a master-plan view — occupancy, collections, and maintenance across assets.",
   },
   {
     id: "unit",
-    title: "See the whole portfolio.\nThen go down to one unit.",
-    lead: "Portfolio → property → unit → resident — one hierarchy, shared context.",
+    title: "See the whole portfolio.\nThen go all the way down to one unit.",
   },
   {
     id: "leasing",
     title: "From enquiry\nto signed lease.",
-    lead: "Applications, verification, lease documents and move-in — in one leasing workflow.",
   },
   {
     id: "finance",
     title: "Know what came in,\nwhat is due,\nand where it goes.",
-    lead: "Collections, owner statements, payouts and transaction activity — finance workspace styling.",
   },
   {
     id: "maintenance",
     title: "From reported\nto resolved.",
-    lead: "Every maintenance request stays visible from issue to completion.",
   },
   {
     id: "resident",
     title: "Residents get\none place too.",
-    lead: "Search, apply, sign, pay, visitor access and support — without fragmented systems.",
   },
   {
     id: "ai",
     title: "AI with\noperational context.",
-    lead: "Ask across finance, leasing, maintenance and occupancy — with human approval where you require it.",
   },
   {
     id: "final",
     title: "Operate real estate\nfrom one place.",
-    lead: "BaytMiftah connects discovery, leasing, operations, finance and residents in one operating system.",
     primaryCta: { label: "Explore BaytMiftah", href: "#chapter-operating" },
     secondaryCta: { label: "Get started", href: "/signup" },
   },
@@ -113,9 +100,11 @@ export const PROPERTY_GLB_PATH = "/models/baytmiftah-property.glb";
 
 export const ANCHOR_NAMES = [
   "heroAnchor",
+  "entryAnchor",
   "leasingAnchor",
   "financeAnchor",
   "maintenanceAnchor",
   "residentAnchor",
+  "aiAnchor",
   "roofAnchor",
 ] as const;
