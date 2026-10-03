@@ -44,6 +44,13 @@ export const consumerRoutes: RouteObject[] = [
     },
   },
   {
+    path: 'marketing/classic',
+    lazy: async () => {
+      const { MarketingHomeLegacy } = await import('../pages/marketing/MarketingHomeLegacy');
+      return { Component: MarketingHomeLegacy };
+    },
+  },
+  {
     path: 'search',
     lazy: async () => {
       const { PropertySearch } = await import('../pages/PropertySearch');

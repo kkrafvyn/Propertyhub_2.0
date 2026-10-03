@@ -6,7 +6,7 @@ import { appPath } from "../../../lib/marketing-urls";
 import { MarketingBackgroundCarousel } from "./MarketingBackgroundCarousel";
 import "./marketing.css";
 
-const NAV_LINKS = [
+const NAV_LINKS_DEFAULT = [
   { label: "Product", href: "#product" },
   { label: "Solutions", href: "#workflow" },
   { label: "AI", href: "#ai" },
@@ -14,6 +14,8 @@ const NAV_LINKS = [
   { label: "For Consumers", href: "#consumers" },
   { label: "Resources", href: "#explorer" },
 ] as const;
+
+export type MarketingNavLink = { label: string; href: string };
 
 function NavLink({ href, label, onClick }: { href: string; label: string; onClick?: () => void }) {
   return (
@@ -23,7 +25,16 @@ function NavLink({ href, label, onClick }: { href: string; label: string; onClic
   );
 }
 
-export function MarketingShell({ children }: { children: ReactNode }) {
+export function MarketingShell({
+  children,
+  cinematic = false,
+  navLinks,
+}: {
+  children: ReactNode;
+  cinematic?: boolean;
+  navLinks?: readonly MarketingNavLink[];
+}) {
+  const links = navLinks ?? NAV_LINKS_DEFAULT;
   const [scrolled, setScrolled] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -51,8 +62,10 @@ export function MarketingShell({ children }: { children: ReactNode }) {
   const closeMenu = () => setMenuOpen(false);
 
   return (
-    <div className="marketing-page marketing-shell">
-      <MarketingBackgroundCarousel />
+    <div
+      className={`marketing-page marketing-shell${cinematic ? " marketing-page--cinematic" : ""}`}
+    >
+      {!cinematic ? <MarketingBackgroundCarousel /> : null}
       <div className="mk-page-scrim" aria-hidden="true" />
       <div
         className="mk-scroll-progress-bar"
@@ -63,7 +76,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
         <div className="mk-nav-inner">
           <Logo to="/" size="sm" inverted={false} />
           <nav className="mk-nav-links" aria-label="Primary">
-            {NAV_LINKS.map((link) => (
+            {links.map((link) => (
               <NavLink key={link.href} {...link} />
             ))}
           </nav>
@@ -97,7 +110,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            {NAV_LINKS.map((link) => (
+            {links.map((link) => (
               <NavLink key={link.href} {...link} onClick={closeMenu} />
             ))}
             <div className="mt-4 flex flex-col gap-2">
