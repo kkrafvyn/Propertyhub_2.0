@@ -51,7 +51,7 @@ export const matGlass = new THREE.MeshPhysicalMaterial({
   opacity: 0.52,
   transmission: 0.42,
   thickness: 0.2,
-  envMapIntensity: 1,
+  envMapIntensity: 0.35,
 });
 
 export const matGold = new THREE.MeshStandardMaterial({

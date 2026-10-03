@@ -11,6 +11,7 @@ import {
 import { chapterFocusOpacity } from "../../components/marketing/cinematic/useChapterFocus";
 import type { ScenePhase } from "../../components/marketing/cinematic/scene-phases";
 import { appPath } from "../../../lib/marketing-urls";
+import { Marketing3DErrorBoundary } from "../../components/marketing/cinematic/Marketing3DErrorBoundary";
 import "../../components/marketing/cinematic/marketing-cinematic.css";
 
 const Marketing3DScene = lazy(() =>
@@ -156,6 +157,7 @@ export function MarketingCinematicHome() {
   const mobile = useIsMobileCinematic();
   const webgl = useWebGLSupported();
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [sceneFailed, setSceneFailed] = useState(false);
 
   useEffect(() => {
     setReducedMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -163,7 +165,7 @@ export function MarketingCinematicHome() {
 
   const { progress, pointer, reducedMotion: scrollReduced } = useMarketingSceneProgress(scrollRef);
   const motionOff = reducedMotion || scrollReduced;
-  const use3d = webgl && !motionOff;
+  const use3d = webgl && !motionOff && !sceneFailed;
 
   return (
     <>
@@ -175,18 +177,23 @@ export function MarketingCinematicHome() {
         ogDescription="Cinematic product story: one luxury property transforms into the BaytMiftah platform as you scroll."
       />
 
-      {!use3d ? (
+      {!webgl || motionOff ? (
         <MarketingWebGLFallback />
       ) : (
         <div className="mk-cinema-root">
-          <Suspense fallback={<div className="mk-cinema-canvas-loader mk-cinema-canvas-loader--page" />}>
-            <Marketing3DScene
-              progress={progress}
-              pointer={pointer}
-              mobile={mobile}
-              reducedMotion={reducedMotion}
-            />
-          </Suspense>
+          {!sceneFailed ? (
+            <Marketing3DErrorBoundary onFailure={() => setSceneFailed(true)}>
+              <Suspense fallback={<div className="mk-cinema-canvas-loader mk-cinema-canvas-loader--page" />}>
+                <Marketing3DScene
+                  progress={progress}
+                  pointer={pointer}
+                  mobile={mobile}
+                  reducedMotion={reducedMotion}
+                  onContextLost={() => setSceneFailed(true)}
+                />
+              </Suspense>
+            </Marketing3DErrorBoundary>
+          ) : null}
 
           <div ref={scrollRef} className="mk-cinema-scroll">
             {CINEMATIC_CHAPTERS.map((chapter) => (

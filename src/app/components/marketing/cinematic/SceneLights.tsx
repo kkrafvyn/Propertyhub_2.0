@@ -13,7 +13,12 @@ export function SceneLights({ mobile }: SceneLightsProps) {
     <>
       <color attach="background" args={["#060e0b"]} />
       <fog attach="fog" args={["#060e0b", 12, 28]} />
-      <ambientLight intensity={0.35 * intensity} color="#c8d4cc" />
+      <hemisphereLight
+        intensity={0.5 * intensity}
+        color="#d8e2dc"
+        groundColor="#0a1612"
+      />
+      <ambientLight intensity={0.28 * intensity} color="#c8d4cc" />
       <directionalLight
         position={[6, 8, 4]}
         intensity={1.1 * intensity}

@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { ContactShadows, Environment } from "@react-three/drei";
+import { ContactShadows } from "@react-three/drei";
 import { PropertyModel } from "./PropertyModel";
 import { PortfolioCity } from "./PortfolioCity";
 import { SceneLights } from "./SceneLights";
@@ -17,6 +17,7 @@ type Marketing3DSceneProps = {
   pointer: ScenePointer;
   mobile?: boolean;
   reducedMotion?: boolean;
+  onContextLost?: () => void;
 };
 
 function SceneInner({
@@ -30,7 +31,6 @@ function SceneInner({
   return (
     <>
       <SceneLights mobile={mobile} />
-      {!mobile ? <Environment preset="city" environmentIntensity={0.28} /> : null}
       <SceneCameraRig
         progress={progress}
         pointer={pointer}
@@ -78,6 +78,7 @@ export function Marketing3DScene({
   pointer,
   mobile,
   reducedMotion,
+  onContextLost,
 }: Marketing3DSceneProps) {
   const [paused, setPaused] = useState(false);
   const [ready, setReady] = useState(false);
@@ -96,7 +97,15 @@ export function Marketing3DScene({
       {!ready ? <div className="mk-cinema-canvas-loader" aria-hidden="true" /> : null}
       <div className="mk-cinema-vignette" aria-hidden="true" />
       <Canvas
-        onCreated={() => setReady(true)}
+        onCreated={({ gl }) => {
+          setReady(true);
+          const canvas = gl.domElement;
+          const onLost = (event: Event) => {
+            event.preventDefault();
+            onContextLost?.();
+          };
+          canvas.addEventListener("webglcontextlost", onLost, { passive: false });
+        }}
         dpr={dpr}
         shadows={!mobile}
         camera={{ fov: 42, near: 0.1, far: 100, position: [5, 2.8, 7.5] }}
