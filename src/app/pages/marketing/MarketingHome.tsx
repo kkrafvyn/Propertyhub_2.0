@@ -1,5 +1,5 @@
 /**
- * Public marketing homepage (baytmiftah.com).
- * Classic multi-section layout preserved in MarketingHomeLegacy.tsx.
+ * Public marketing homepage — editorial redesign.
+ * Legacy layouts: MarketingHomeLegacy.tsx, MarketingCinematicHome.tsx.
  */
-export { MarketingCinematicHome as MarketingHome } from "./MarketingCinematicHome";
+export { MarketingEditorialHome as MarketingHome } from "./MarketingEditorialHome";

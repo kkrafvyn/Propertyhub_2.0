@@ -28,12 +28,15 @@ function NavLink({ href, label, onClick }: { href: string; label: string; onClic
 export function MarketingShell({
   children,
   cinematic = false,
+  editorial = false,
   navLinks,
 }: {
   children: ReactNode;
   cinematic?: boolean;
+  editorial?: boolean;
   navLinks?: readonly MarketingNavLink[];
 }) {
+  const darkChrome = cinematic || editorial;
   const links = navLinks ?? NAV_LINKS_DEFAULT;
   const [scrolled, setScrolled] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -87,9 +90,9 @@ export function MarketingShell({
 
   return (
     <div
-      className={`marketing-page marketing-shell${cinematic ? " marketing-page--cinematic" : ""}`}
+      className={`marketing-page marketing-shell${cinematic ? " marketing-page--cinematic" : ""}${editorial ? " marketing-page--editorial" : ""}`}
     >
-      {!cinematic ? <MarketingBackgroundCarousel /> : null}
+      {!darkChrome ? <MarketingBackgroundCarousel /> : null}
       <div className="mk-page-scrim" aria-hidden="true" />
       <div
         className="mk-scroll-progress-bar"
@@ -99,9 +102,9 @@ export function MarketingShell({
       <a href="#mk-main-content" className="mk-skip-link">
         Skip to content
       </a>
-      <header className={`mk-nav${scrolled ? " mk-nav--scrolled" : ""}${cinematic ? " mk-nav--cinematic" : ""}`}>
+      <header className={`mk-nav${scrolled ? " mk-nav--scrolled" : ""}${darkChrome ? " mk-nav--dark-chrome" : ""}`}>
         <div className="mk-nav-inner">
-          <Logo to="/" size="sm" inverted={cinematic} />
+          <Logo to="/" size="sm" inverted={darkChrome} />
           <nav className="mk-nav-links" aria-label="Primary">
             {links.map((link) => (
               <NavLink key={link.href} {...link} />
@@ -110,15 +113,15 @@ export function MarketingShell({
           <div className="mk-nav-actions">
             <a
               href={appPath("/login")}
-              className={`mk-btn mk-btn-secondary mk-nav-login${cinematic ? " mk-nav-login--desktop" : " hidden sm:inline-flex"}`}
+              className={`mk-btn mk-btn-secondary mk-nav-login${darkChrome ? " mk-nav-login--desktop" : " hidden sm:inline-flex"}`}
             >
               Log in
             </a>
             <a
               href={appPath("/signup")}
-              className={`mk-btn mk-btn-primary${cinematic ? " mk-nav-cta-compact" : ""}`}
+              className={`mk-btn mk-btn-primary${darkChrome ? " mk-nav-cta-compact" : ""}`}
             >
-              {cinematic ? "Get started" : "Get Started"}
+              {darkChrome ? "Get started" : "Get Started"}
             </a>
             <button
               ref={menuButtonRef}
@@ -137,7 +140,7 @@ export function MarketingShell({
 
       {menuOpen ? (
         <div
-          className={`mk-mobile-drawer lg:hidden${cinematic ? " mk-mobile-drawer--cinematic" : ""}`}
+          className={`mk-mobile-drawer lg:hidden${darkChrome ? " mk-mobile-drawer--cinematic" : ""}`}
           role="dialog"
           aria-modal="true"
           aria-labelledby="mk-mobile-navigation-title"
@@ -150,7 +153,7 @@ export function MarketingShell({
               <p id="mk-mobile-navigation-title" className="mk-mobile-panel__title">
                 Menu
               </p>
-              <Logo to="/" size="sm" inverted={cinematic} />
+              <Logo to="/" size="sm" inverted={darkChrome} />
               <button type="button" className="mk-menu-toggle" aria-label="Close menu" onClick={closeMenu}>
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
@@ -174,17 +177,17 @@ export function MarketingShell({
 
       <main className="mk-main">{children}</main>
 
-      <MarketingFooter cinematic={cinematic} />
+      <MarketingFooter darkChrome={darkChrome} />
     </div>
   );
 }
 
-function MarketingFooter({ cinematic }: { cinematic: boolean }) {
+function MarketingFooter({ darkChrome }: { darkChrome: boolean }) {
   return (
-    <footer className={`mk-footer${cinematic ? " mk-footer--cinematic" : ""}`}>
+    <footer className={`mk-footer${darkChrome ? " mk-footer--editorial" : ""}`}>
       <div className="mk-container mk-footer-grid">
         <div className="mk-footer-brand">
-          <Logo to="/" size="sm" inverted={cinematic} />
+          <Logo to="/" size="sm" inverted={darkChrome} />
           <p>Property operations for teams that manage real homes.</p>
         </div>
 
