@@ -1,17 +1,15 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type ReactElement } from "react";
 import { useFrame } from "@react-three/fiber";
-import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import {
   BUILDING_PALETTE,
-  matBronze,
+  matFrame,
   matGlass,
-  matGlassBalcony,
   matGold,
-  matLimestone,
+  matPanel,
+  matPanelDark,
   matPodium,
-  matRail,
-  matSpandrel,
+  matSoffit,
 } from "./building-materials";
 
 export type PropertyModelProps = {
@@ -21,153 +19,141 @@ export type PropertyModelProps = {
   floatPhase?: number;
 };
 
-const FLOOR_H = 0.36;
-const RES_FLOORS = 9;
-const PODIUM_H = 0.52;
-const WIDTH = 1.55;
-const DEPTH = 1.05;
+/** Stacked cantilever volumes — inspired by offset high-rise forum architecture. */
+const VOLUMES = [
+  { w: 1.45, h: 0.52, d: 1.05, ox: 0, oz: 0, oy: 0.28, rot: 0 },
+  { w: 1.38, h: 0.48, d: 1.02, ox: 0.14, oz: -0.1, oy: 0.84, rot: 0.06 },
+  { w: 1.32, h: 0.46, d: 0.98, ox: -0.11, oz: 0.12, oy: 1.36, rot: -0.05 },
+  { w: 1.28, h: 0.44, d: 0.94, ox: 0.18, oz: 0.08, oy: 1.86, rot: 0.08 },
+  { w: 1.22, h: 0.42, d: 0.9, ox: -0.16, oz: -0.06, oy: 2.34, rot: -0.07 },
+  { w: 1.15, h: 0.4, d: 0.86, ox: 0.1, oz: -0.14, oy: 2.8, rot: 0.04 },
+] as const;
 
-function floorY(index: number, layerSeparation: number) {
-  const base = PODIUM_H + 0.08 + index * FLOOR_H;
-  const spread = layerSeparation * (index + 1) * 0.07;
-  return base + spread;
-}
-
-function WindowBay({
-  x,
-  y,
-  z,
-  w,
-  h,
-  depth = 0.04,
+function RibbedCladding({
+  width,
+  height,
+  depth,
+  axis = "x",
 }: {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
-  h: number;
-  depth?: number;
+  width: number;
+  height: number;
+  depth: number;
+  axis?: "x" | "z";
 }) {
+  const ribs = 14;
+  const ribElements = useMemo(() => {
+    const items: ReactElement[] = [];
+    for (let i = 0; i < ribs; i += 1) {
+      const t = (i / (ribs - 1) - 0.5) * (axis === "x" ? width : depth);
+      items.push(
+        <mesh
+          key={i}
+          material={i % 3 === 0 ? matPanelDark : matPanel}
+          position={
+            axis === "x"
+              ? [t, 0, depth / 2 + 0.006]
+              : [width / 2 + 0.006, 0, t]
+          }
+        >
+          <boxGeometry args={axis === "x" ? [0.018, height * 0.98, 0.012] : [0.012, height * 0.98, 0.018]} />
+        </mesh>,
+      );
+    }
+    return items;
+  }, [width, height, depth, axis]);
+
   return (
-    <group position={[x, y, z]}>
-      <mesh position={[0, 0, depth / 2]} material={matGlass}>
-        <boxGeometry args={[w, h, depth]} />
+    <group>
+      <mesh material={matPanel} castShadow receiveShadow>
+        <boxGeometry args={[width, height, depth]} />
       </mesh>
-      <mesh position={[0, 0, depth / 2 + 0.008]} material={matBronze}>
-        <boxGeometry args={[w + 0.02, 0.025, 0.012]} />
-      </mesh>
-      <mesh position={[0, 0, depth / 2 + 0.008]} material={matBronze}>
-        <boxGeometry args={[0.025, h + 0.02, 0.012]} />
-      </mesh>
-      <mesh position={[0, 0, -0.02]}>
-        <planeGeometry args={[w * 0.85, h * 0.88]} />
-        <meshBasicMaterial color={BUILDING_PALETTE.warmInterior} transparent opacity={0.35} />
+      {ribElements}
+    </group>
+  );
+}
+
+function GlassCurtain({
+  width,
+  height,
+  z,
+  cols = 4,
+  rows = 3,
+}: {
+  width: number;
+  height: number;
+  z: number;
+  cols?: number;
+  rows?: number;
+}) {
+  const paneW = width / cols;
+  const paneH = height / rows;
+
+  return (
+    <group position={[0, 0, z]}>
+      {Array.from({ length: rows }, (_, row) =>
+        Array.from({ length: cols }, (_, col) => {
+          const x = (col - (cols - 1) / 2) * paneW;
+          const y = (row - (rows - 1) / 2) * paneH;
+          return (
+            <group key={`${row}-${col}`} position={[x, y, 0]}>
+              <mesh material={matGlass}>
+                <boxGeometry args={[paneW * 0.88, paneH * 0.88, 0.035]} />
+              </mesh>
+              <mesh position={[0, 0, 0.02]}>
+                <planeGeometry args={[paneW * 0.75, paneH * 0.78]} />
+                <meshBasicMaterial
+                  color={BUILDING_PALETTE.warmInterior}
+                  transparent
+                  opacity={0.12 + ((row + col) % 3) * 0.08}
+                />
+              </mesh>
+            </group>
+          );
+        }),
+      )}
+      {/* perimeter frame */}
+      <mesh position={[0, 0, 0.04]} material={matFrame}>
+        <boxGeometry args={[width + 0.04, height + 0.04, 0.02]} />
       </mesh>
     </group>
   );
 }
 
-function Balcony({ y, z, width }: { y: number; z: number; width: number }) {
-  return (
-    <group position={[0, y, z]}>
-      <mesh position={[0, -0.02, 0.12]} castShadow receiveShadow material={matLimestone}>
-        <boxGeometry args={[width, 0.04, 0.22]} />
-      </mesh>
-      <mesh position={[0, 0.06, 0.22]} material={matGlassBalcony}>
-        <boxGeometry args={[width, 0.12, 0.015]} />
-      </mesh>
-      <mesh position={[-width / 2 + 0.02, 0.03, 0.12]} material={matRail}>
-        <boxGeometry args={[0.02, 0.08, 0.22]} />
-      </mesh>
-      <mesh position={[width / 2 - 0.02, 0.03, 0.12]} material={matRail}>
-        <boxGeometry args={[0.02, 0.08, 0.22]} />
-      </mesh>
-    </group>
-  );
-}
-
-function ResidentialFloor({
+function StackedVolume({
   index,
+  spec,
   layerSeparation,
-  isSetback,
 }: {
   index: number;
+  spec: (typeof VOLUMES)[number];
   layerSeparation: number;
-  isSetback: boolean;
 }) {
-  const y = floorY(index, layerSeparation);
-  const taper = isSetback ? 0.88 : 1;
-  const w = WIDTH * taper;
-  const d = DEPTH * taper;
-  const winW = w * 0.22;
-  const winH = FLOOR_H * 0.55;
-  const frontZ = d / 2 + 0.01;
+  const spread = layerSeparation * (index + 1) * 0.09;
+  const y = spec.oy + spread;
 
   return (
-    <group position={[0, y, 0]}>
-      <mesh position={[0, -FLOOR_H * 0.38, frontZ - 0.02]} castShadow material={matSpandrel}>
-        <boxGeometry args={[w * 0.98, FLOOR_H * 0.12, 0.06]} />
+    <group position={[spec.ox, y, spec.oz]} rotation={[0, spec.rot, 0]}>
+      {/* primary mass */}
+      <mesh castShadow receiveShadow material={matSoffit}>
+        <boxGeometry args={[spec.w, spec.h, spec.d]} />
       </mesh>
-      <RoundedBox
-        args={[w, FLOOR_H * 0.92, d]}
-        radius={0.02}
-        smoothness={4}
-        castShadow
-        receiveShadow
-        material={matLimestone}
-      />
-      {[-winW * 1.35, 0, winW * 1.35].map((ox) => (
-        <WindowBay key={ox} x={ox} y={0} z={frontZ} w={winW} h={winH} />
-      ))}
-      {index % 2 === 1 ? <Balcony y={-FLOOR_H * 0.15} z={frontZ} width={winW * 1.15} /> : null}
-      <WindowBay x={w / 2 + 0.01} y={0} z={0} w={0.08} h={winH * 0.9} depth={0.03} />
-    </group>
-  );
-}
-
-function Podium({ layerSeparation }: { layerSeparation: number }) {
-  const y = PODIUM_H / 2 + layerSeparation * 0.02;
-
-  return (
-    <group position={[0, y, 0]}>
-      <RoundedBox
-        args={[WIDTH * 1.12, PODIUM_H, DEPTH * 1.08]}
-        radius={0.03}
-        smoothness={4}
-        castShadow
-        receiveShadow
-        material={matPodium}
-      />
-      <mesh position={[0, 0, DEPTH * 0.54 + 0.02]} material={matGlass}>
-        <boxGeometry args={[WIDTH * 0.55, PODIUM_H * 0.75, 0.05]} />
+      {/* front curtain wall */}
+      <GlassCurtain width={spec.w * 0.92} height={spec.h * 0.88} z={spec.d / 2 + 0.02} />
+      {/* side glass (90°) */}
+      <group rotation={[0, Math.PI / 2, 0]}>
+        <GlassCurtain width={spec.d * 0.85} height={spec.h * 0.82} z={spec.w / 2 + 0.02} cols={3} rows={3} />
+      </group>
+      {/* ribbed side + back */}
+      <group position={[0, 0, -spec.d / 2 - 0.01]}>
+        <RibbedCladding width={spec.w} height={spec.h} depth={0.04} axis="x" />
+      </group>
+      <group position={[spec.w / 2 + 0.01, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <RibbedCladding width={spec.d} height={spec.h} depth={0.04} axis="z" />
+      </group>
+      {/* cantilever soffit */}
+      <mesh position={[0, -spec.h / 2 - 0.015, 0]} material={matSoffit} receiveShadow>
+        <boxGeometry args={[spec.w * 1.02, 0.03, spec.d * 1.02]} />
       </mesh>
-      <mesh position={[0, -PODIUM_H * 0.35, DEPTH * 0.62]} castShadow material={matGold}>
-        <boxGeometry args={[0.7, 0.04, 0.35]} />
-      </mesh>
-      {[-0.28, 0.28].map((x) => (
-        <mesh key={x} position={[x, -PODIUM_H * 0.15, DEPTH * 0.58]} castShadow>
-          <cylinderGeometry args={[0.045, 0.05, PODIUM_H * 0.5, 12]} />
-          <meshStandardMaterial color={BUILDING_PALETTE.stoneDark} roughness={0.75} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-function Crown({ topY }: { topY: number }) {
-  return (
-    <group position={[0, topY + 0.12, 0]}>
-      <mesh castShadow material={matLimestone}>
-        <boxGeometry args={[WIDTH * 0.75, 0.14, DEPTH * 0.75]} />
-      </mesh>
-      <mesh position={[0, 0.12, 0]} material={matGold}>
-        <boxGeometry args={[WIDTH * 0.55, 0.08, DEPTH * 0.55]} />
-      </mesh>
-      {[0, 1, 2, 3].map((i) => (
-        <mesh key={i} position={[-0.35 + i * 0.22, 0.22, 0]} material={matBronze}>
-          <boxGeometry args={[0.04, 0.18, DEPTH * 0.5]} />
-        </mesh>
-      ))}
     </group>
   );
 }
@@ -180,47 +166,46 @@ export function PropertyModel({
 }: PropertyModelProps) {
   const internalRef = useRef<THREE.Group>(null);
   const groupRef = externalRef ?? internalRef;
-  const floorIndices = useMemo(() => Array.from({ length: RES_FLOORS }, (_, i) => i), []);
 
   useFrame(({ clock }, delta) => {
     const g = groupRef.current;
     if (!g) return;
     g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, spin * 0.35, delta * 2);
-    g.position.y = Math.sin(clock.elapsedTime * 0.55 + floatPhase) * 0.035;
+    g.position.y = Math.sin(clock.elapsedTime * 0.55 + floatPhase) * 0.03;
   });
 
-  const topFloorY = floorY(RES_FLOORS - 1, layerSeparation);
+  const topY =
+    VOLUMES[VOLUMES.length - 1].oy + VOLUMES[VOLUMES.length - 1].h / 2 + layerSeparation * VOLUMES.length * 0.09;
 
   return (
     <group ref={groupRef}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]} receiveShadow>
-        <circleGeometry args={[2.8, 64]} />
+        <circleGeometry args={[3.2, 64]} />
         <meshStandardMaterial color="#0a1210" roughness={1} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
-        <ringGeometry args={[1.35, 2.5, 64]} />
-        <meshStandardMaterial color="#142820" roughness={0.95} />
+
+      {/* low podium */}
+      <mesh position={[0, 0.12, 0]} castShadow receiveShadow material={matPodium}>
+        <boxGeometry args={[1.65, 0.24, 1.25]} />
+      </mesh>
+      <mesh position={[0, 0.26, 0.62]} material={matGold}>
+        <boxGeometry args={[0.55, 0.32, 0.04]} />
       </mesh>
 
-      <Podium layerSeparation={layerSeparation} />
+      {/* structural core (visible when volumes separate) */}
+      <mesh position={[0, 1.55 + layerSeparation * 0.4, 0]}>
+        <boxGeometry args={[0.35, 2.8 + layerSeparation * 0.5, 0.35]} />
+        <meshStandardMaterial color={BUILDING_PALETTE.frame} roughness={0.85} metalness={0.2} />
+      </mesh>
 
-      {floorIndices.map((i) => (
-        <ResidentialFloor
-          key={i}
-          index={i}
-          layerSeparation={layerSeparation}
-          isSetback={i >= RES_FLOORS - 2}
-        />
+      {VOLUMES.map((spec, index) => (
+        <StackedVolume key={index} index={index} spec={spec} layerSeparation={layerSeparation} />
       ))}
 
-      <Crown topY={topFloorY + FLOOR_H * 0.5} />
-
-      {layerSeparation > 0.05 ? (
-        <mesh position={[0, PODIUM_H + (topFloorY - PODIUM_H) / 2, 0]}>
-          <boxGeometry args={[WIDTH * 0.35, topFloorY - PODIUM_H + FLOOR_H, DEPTH * 0.35]} />
-          <meshStandardMaterial color={BUILDING_PALETTE.stoneDark} roughness={0.9} />
-        </mesh>
-      ) : null}
+      {/* roof cap */}
+      <mesh position={[VOLUMES[5].ox, topY + 0.08, VOLUMES[5].oz]} material={matPanelDark}>
+        <boxGeometry args={[VOLUMES[5].w * 0.9, 0.06, VOLUMES[5].d * 0.9]} />
+      </mesh>
     </group>
   );
 }

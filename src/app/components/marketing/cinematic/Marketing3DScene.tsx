@@ -39,7 +39,7 @@ function SceneInner({
       />
 
       <group position={[1.15, -0.15, 0]} visible={s.singleBuildingOpacity > 0.05}>
-        <group scale={(1 - s.brandFade * 0.35) * 0.92}>
+        <group scale={(1 - s.brandFade * 0.35) * 0.88}>
           <PropertyModel
             layerSeparation={s.layerSeparation}
             spin={s.heroSpin + progress * 0.15}
