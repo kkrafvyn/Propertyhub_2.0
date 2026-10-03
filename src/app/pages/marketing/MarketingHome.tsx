@@ -1,5 +1,5 @@
 /**
- * Public marketing homepage — product-led launch layout.
+ * Public marketing homepage — cinematic scroll-driven product film.
  * Legacy: MarketingHomeLegacy.tsx, MarketingCinematicHome.tsx, MarketingEditorialHome.tsx.
  */
-export { MarketingLaunchHome as MarketingHome } from "./MarketingLaunchHome";
+export { MarketingExperienceHome as MarketingHome } from "./MarketingExperienceHome";
