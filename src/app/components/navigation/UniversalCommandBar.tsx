@@ -16,6 +16,7 @@ import {
   FolderTree,
   FileSpreadsheet,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Badge } from "../ui/badge";
@@ -26,7 +27,7 @@ interface CommandOption {
   title: string;
   category: "Navigation" | "Financial Action" | "Maintenance" | "Leasing" | "AI Command";
   slug?: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   action?: () => void;
   keywords: string[];
 }

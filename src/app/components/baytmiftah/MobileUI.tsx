@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
+import { createElement, type ComponentPropsWithoutRef, type ElementType, type ReactNode } from "react";
 import { Link } from "react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -12,11 +12,11 @@ export function MobileCard<T extends ElementType = "div">({
   className?: string;
   as?: T;
 } & ComponentPropsWithoutRef<T>) {
-  const Tag = as || "div";
-  return (
-    <Tag className={`rounded-2xl bg-bolt-card p-4 shadow-bolt-card ${className}`} {...props}>
-      {children}
-    </Tag>
+  const Tag = (as || "div") as ElementType;
+  return createElement(
+    Tag,
+    { className: `rounded-2xl bg-bolt-card p-4 shadow-bolt-card ${className}`, ...props },
+    children,
   );
 }
 
@@ -39,14 +39,14 @@ export function MobilePrimaryButton<T extends ElementType = "button">({
   className?: string;
   as?: T;
 } & ComponentPropsWithoutRef<T>) {
-  const Tag = as || "button";
-  return (
-    <Tag
-      className={`inline-flex items-center justify-center rounded-xl bg-mobile-forest px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:opacity-60 ${className}`}
-      {...props}
-    >
-      {children}
-    </Tag>
+  const Tag = (as || "button") as ElementType;
+  return createElement(
+    Tag,
+    {
+      className: `inline-flex items-center justify-center rounded-xl bg-mobile-forest px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:opacity-60 ${className}`,
+      ...props,
+    },
+    children,
   );
 }
 
@@ -60,14 +60,14 @@ export function MobileSecondaryButton<T extends ElementType = "button">({
   className?: string;
   as?: T;
 } & ComponentPropsWithoutRef<T>) {
-  const Tag = as || "button";
-  return (
-    <Tag
-      className={`inline-flex items-center justify-center rounded-xl border border-surface-border bg-bolt-card px-5 py-3 text-sm font-semibold text-ink active:scale-[0.99] ${className}`}
-      {...props}
-    >
-      {children}
-    </Tag>
+  const Tag = (as || "button") as ElementType;
+  return createElement(
+    Tag,
+    {
+      className: `inline-flex items-center justify-center rounded-xl border border-surface-border bg-bolt-card px-5 py-3 text-sm font-semibold text-ink active:scale-[0.99] ${className}`,
+      ...props,
+    },
+    children,
   );
 }
 

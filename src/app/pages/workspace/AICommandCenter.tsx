@@ -26,6 +26,7 @@ import {
   Users,
   Briefcase,
   Layers,
+  type LucideIcon,
 } from "lucide-react";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -41,7 +42,7 @@ import {
 import { organizationService } from "../../../lib/organization.service";
 import { aiToolAllowlistService } from "../../../lib/ai-tool-allowlist.service";
 
-const AGENT_CATALOG: Array<{ type: AgentType; label: string; icon: React.ElementType; color: string; description: string }> = [
+const AGENT_CATALOG: Array<{ type: AgentType; label: string; icon: LucideIcon; color: string; description: string }> = [
   { type: "ExecutiveAgent", label: "Executive Agent", icon: TrendingUp, color: "text-amber-500", description: "Portfolio morning briefing, yield analytics & risk synthesis" },
   { type: "PropertyManagementAgent", label: "Property Management", icon: Briefcase, color: "text-blue-500", description: "Vacancies, lease turnover, SLA breach monitoring" },
   { type: "FinanceAgent", label: "Finance & Reconciliation", icon: DollarSign, color: "text-emerald-500", description: "Sub-ledger balancing, unreferenced credit matching" },

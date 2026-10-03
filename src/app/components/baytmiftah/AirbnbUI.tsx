@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
+import { createElement, type ComponentPropsWithoutRef, type ElementType, type ReactNode } from "react";
 import { Link } from "react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -233,14 +233,14 @@ export function PrimaryButton<T extends ElementType = "button">({
   as,
   ...props
 }: ButtonProps<T>) {
-  const Tag = as || "button";
-  return (
-    <Tag
-      className={`inline-flex items-center justify-center rounded-lg bg-brand-accent px-6 py-3.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60 ${className}`}
-      {...props}
-    >
-      {children}
-    </Tag>
+  const Tag = (as || "button") as ElementType;
+  return createElement(
+    Tag,
+    {
+      className: `inline-flex items-center justify-center rounded-lg bg-brand-accent px-6 py-3.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60 ${className}`,
+      ...props,
+    },
+    children,
   );
 }
 
@@ -250,14 +250,14 @@ export function SecondaryButton<T extends ElementType = "button">({
   as,
   ...props
 }: ButtonProps<T>) {
-  const Tag = as || "button";
-  return (
-    <Tag
-      className={`inline-flex items-center justify-center rounded-lg border border-ink px-6 py-3.5 text-sm font-semibold text-ink transition hover:bg-surface-hover disabled:opacity-60 ${className}`}
-      {...props}
-    >
-      {children}
-    </Tag>
+  const Tag = (as || "button") as ElementType;
+  return createElement(
+    Tag,
+    {
+      className: `inline-flex items-center justify-center rounded-lg border border-ink px-6 py-3.5 text-sm font-semibold text-ink transition hover:bg-surface-hover disabled:opacity-60 ${className}`,
+      ...props,
+    },
+    children,
   );
 }
 

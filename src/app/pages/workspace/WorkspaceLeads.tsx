@@ -28,6 +28,7 @@ import { Input } from "../../components/ui/Input";
 import { NativeSelect } from "../../components/ui/NativeSelect";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { TextareaField } from "../../components/ui/TextareaField";
+import { Textarea } from "../../components/ui/textarea";
 import type { Database } from "../../../lib/database.types";
 import { dealCaseService } from "../../../lib/dealcase.service";
 import { workflowOrchestratorService } from "../../../lib/workflow-orchestrator.service";
