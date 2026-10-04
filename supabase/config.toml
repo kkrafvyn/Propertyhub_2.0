@@ -7,6 +7,9 @@ verify_jwt = false
 [functions.app-version]
 verify_jwt = false
 
+[functions.cancel-short-stay-booking]
+verify_jwt = true
+
 [functions.whatsapp-webhook]
 verify_jwt = false
 
