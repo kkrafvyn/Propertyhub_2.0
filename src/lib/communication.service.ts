@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { Database } from "./database.types";
+import { resolveNotificationDeliveryChannels } from "./communication-channels";
 
 const db = supabase as any;
 
@@ -348,9 +349,7 @@ export const communicationService = {
     options: SendNotificationOptions = {}
   ) {
     const preferences = await this.getNotificationPreferences(userId);
-    const uniqueChannels = Array.from(
-      new Set(options.skipInApp ? channels : (["in_app", ...channels] as NotificationChannel[])),
-    );
+    const uniqueChannels = resolveNotificationDeliveryChannels(channels, options.skipInApp);
     const results: Array<{
       channel: NotificationChannel;
       success: boolean;
