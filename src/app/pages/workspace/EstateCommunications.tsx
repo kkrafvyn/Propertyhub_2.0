@@ -49,6 +49,7 @@ import {
   type ManagedEstate,
 } from '../../../lib/estate-operations.service';
 import { useCall } from '../../context/CallContext';
+import { videoCallsAvailable, voiceCallsAvailable } from '../../../lib/communications-capabilities';
 import {
   buildCellularCallUrl,
   buildWhatsAppCallUrl,
@@ -111,6 +112,8 @@ export function EstateCommunications({
   currentUserId: string;
 }) {
   const { startCall, simulateIncomingCall, callHistory } = useCall();
+  const videoEnabled = videoCallsAvailable();
+  const voiceEnabled = voiceCallsAvailable();
   const [activeTab, setActiveTab] = useState<'broadcasts' | 'rooms' | 'call_logs' | 'gateways'>('broadcasts');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -259,18 +262,24 @@ export function EstateCommunications({
             </Button>
           ) : null}
 
-          <Button
-            size="sm"
-            onClick={() =>
-              handleStartInstantVideoRoom(
-                `${selectedEstate?.name || 'Estate'} Townhall & Board Session`
-              )
-            }
-            className="bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-950/20"
-          >
-            <Video className="mr-1.5 h-4 w-4" />
-            Start Video Room
-          </Button>
+          {videoEnabled ? (
+            <Button
+              size="sm"
+              onClick={() =>
+                handleStartInstantVideoRoom(
+                  `${selectedEstate?.name || 'Estate'} Townhall & Board Session`
+                )
+              }
+              className="bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-950/20"
+            >
+              <Video className="mr-1.5 h-4 w-4" />
+              Start Video Room
+            </Button>
+          ) : (
+            <p className="text-xs text-muted-foreground max-w-xs">
+              Video calling is not configured for this workspace.
+            </p>
+          )}
         </div>
       </div>
 
@@ -572,20 +581,27 @@ export function EstateCommunications({
             <Video className="h-8 w-8 mx-auto text-muted-foreground" />
             <h3 className="font-semibold text-ink">No live video rooms</h3>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Start a townhall or property walkthrough from the header to open an encrypted video room for this estate.
+              {videoEnabled
+                ? "Start a townhall or property walkthrough from the header to open an encrypted video room for this estate."
+                : "Video calling is not configured for this workspace. Voice outreach can still use tel: links where phone numbers are available."}
             </p>
-            <Button
-              size="sm"
-              onClick={() =>
-                handleStartInstantVideoRoom(
-                  `${selectedEstate?.name || 'Estate'} Townhall & Board Session`
-                )
-              }
-              className="bg-emerald-600 text-white hover:bg-emerald-700"
-            >
-              <Video className="mr-1.5 h-4 w-4" />
-              Start Video Room
-            </Button>
+            {videoEnabled ? (
+              <Button
+                size="sm"
+                onClick={() =>
+                  handleStartInstantVideoRoom(
+                    `${selectedEstate?.name || 'Estate'} Townhall & Board Session`
+                  )
+                }
+                className="bg-emerald-600 text-white hover:bg-emerald-700"
+              >
+                <Video className="mr-1.5 h-4 w-4" />
+                Start Video Room
+              </Button>
+            ) : null}
+            {!voiceEnabled ? null : (
+              <p className="text-xs text-muted-foreground">Voice: use listed contact numbers for outbound calls.</p>
+            )}
           </Card>
         </div>
       )}

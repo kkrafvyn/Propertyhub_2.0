@@ -35,6 +35,8 @@ interface SendNotificationOptions {
   actionUrl?: string | null;
   metadata?: Record<string, unknown> | null;
   organizationId?: string | null;
+  /** When true, do not create a second in-app notification row. */
+  skipInApp?: boolean;
 }
 
 interface CreateInAppNotificationOptions extends SendNotificationOptions {
@@ -331,7 +333,7 @@ export const communicationService = {
       notificationType,
       subject,
       content,
-      options
+      { ...options, skipInApp: true },
     );
 
     return { inApp: notification, external };
@@ -346,7 +348,9 @@ export const communicationService = {
     options: SendNotificationOptions = {}
   ) {
     const preferences = await this.getNotificationPreferences(userId);
-    const uniqueChannels = Array.from(new Set(["in_app", ...channels]));
+    const uniqueChannels = Array.from(
+      new Set(options.skipInApp ? channels : (["in_app", ...channels] as NotificationChannel[])),
+    );
     const results: Array<{
       channel: NotificationChannel;
       success: boolean;

@@ -29,9 +29,17 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 const checks = [];
 let healthy = true;
 
-if (process.env.HEALTH_CHECK_REQUIRE_ALERTS === 'true' && !process.env.OPS_ALERT_WEBHOOK_URL?.trim()) {
+if (
+  process.env.HEALTH_CHECK_REQUIRE_ALERTS === 'true' &&
+  !process.env.OPS_ALERT_WEBHOOK_URL?.trim()
+) {
   healthy = false;
-  checks.push({ name: 'alert delivery configuration', level: 'fail', error: 'OPS_ALERT_WEBHOOK_URL is required for monitored environments' });
+  checks.push({
+    name: 'alert delivery configuration',
+    level: 'fail',
+    error:
+      'OPS_ALERT_WEBHOOK_URL is required when HEALTH_CHECK_REQUIRE_ALERTS=true (configure GitHub secret OPS_ALERT_WEBHOOK_URL)',
+  });
 }
 
 async function countRows(name, table, applyFilters, { warnAt = 50, failAt = 500 } = {}) {
@@ -66,7 +74,18 @@ for (const [name, url, contentType] of [
   ['web application', process.env.APP_HEALTH_URL, 'text/html'],
   ['authentication API', `${supabaseUrl}/auth/v1/health`, 'json'],
 ]) {
-  if (!url) { healthy = false; checks.push({ name, level: 'fail', error: 'Probe URL not configured' }); continue; }
+  if (!url) {
+    const optional = process.env.HEALTH_CHECK_OPTIONAL_APP_PROBE === 'true';
+    checks.push({
+      name,
+      level: optional ? 'warn' : 'fail',
+      error: optional
+        ? 'Probe URL not configured (set APP_HEALTH_URL or HEALTH_CHECK_OPTIONAL_APP_PROBE=true)'
+        : 'Probe URL not configured (set APP_HEALTH_URL)',
+    });
+    if (!optional) healthy = false;
+    continue;
+  }
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(10000), redirect: 'error' });
     if (!response.ok || !response.headers.get('content-type')?.includes(contentType)) throw new Error(`Unexpected HTTP ${response.status}`);

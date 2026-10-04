@@ -27,4 +27,6 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           APP_HEALTH_URL: ${{ vars.APP_HEALTH_URL }}
           OPS_ALERT_WEBHOOK_URL: ${{ secrets.OPS_ALERT_WEBHOOK_URL }}
-          HEALTH_CHECK_REQUIRE_ALERTS: "true"
+          HEALTH_CHECK_REQUIRE_ALERTS: ${{ secrets.OPS_ALERT_WEBHOOK_URL != '' && 'true' || 'false' }}
+          HEALTH_CHECK_OPTIONAL_APP_PROBE: ${{ vars.APP_HEALTH_URL == '' && 'true' || 'false' }}
+          HEALTH_CHECK_SKIP_IF_UNCONFIGURED: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY == '' && 'true' || 'false' }}

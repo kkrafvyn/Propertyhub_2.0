@@ -46,6 +46,7 @@ interface SessionInfo {
   session_label: string | null;
   last_seen_at: string;
   user_agent: string | null;
+  auth_session_id: string | null;
 }
 
 type PendingSecurityAction =
@@ -218,7 +219,7 @@ export function SecuritySettingsPage() {
     if (!user?.id) return;
     const { data } = await supabase
       .from("user_sessions")
-      .select("id, session_label, last_seen_at, user_agent")
+      .select("id, session_label, last_seen_at, user_agent, auth_session_id")
       .eq("user_id", user.id)
       .is("revoked_at", null)
       .order("last_seen_at", { ascending: false });
@@ -285,12 +286,20 @@ export function SecuritySettingsPage() {
     }
   };
 
-  const removeActivitySession = async (sessionId: string) => {
+  const removeActivitySession = async (session: SessionInfo) => {
     if (!user?.id) return;
     try {
-      setRevokingId(sessionId);
-      await removeSessionFromActivityList(user.id, sessionId);
-      toast.success("Device removed from your activity list.");
+      setRevokingId(session.id);
+      if (session.auth_session_id) {
+        const { error } = await supabase.rpc("revoke_user_auth_session", {
+          p_auth_session_id: session.auth_session_id,
+        });
+        if (error) throw error;
+        toast.success("That device has been signed out.");
+      } else {
+        await removeSessionFromActivityList(user.id, session.id);
+        toast.success("Device removed from your activity list.");
+      }
       void loadSessions();
     } finally {
       setRevokingId(null);
@@ -306,7 +315,10 @@ export function SecuritySettingsPage() {
     setActionPending(true);
     try {
       if (pendingAction.kind === "factor") await unenrollFactor(pendingAction.id);
-      if (pendingAction.kind === "session") await removeActivitySession(pendingAction.id);
+      if (pendingAction.kind === "session") {
+        const target = sessions.find((row) => row.id === pendingAction.id);
+        if (target) await removeActivitySession(target);
+      }
       if (pendingAction.kind === "all") await signOutEverywhere();
       setPendingAction(null);
     } finally {
@@ -746,8 +758,26 @@ export function SecuritySettingsPage() {
         open={Boolean(pendingAction)}
         onOpenChange={(open) => !open && setPendingAction(null)}
         title={pendingAction?.kind === "factor" ? "Disable authenticator?" : pendingAction?.kind === "all" ? "Sign out everywhere?" : "Remove from activity list?"}
-        description={pendingAction?.kind === "factor" ? "Two-factor protection from this authenticator will be removed from your account." : pendingAction?.kind === "all" ? String(t("securityPage.signOutConfirm")) : "This hides the device from your activity list. It does not sign that device out. Use Sign out everywhere to invalidate all sessions."}
-        confirmLabel={pendingAction?.kind === "factor" ? "Disable authenticator" : pendingAction?.kind === "all" ? "Sign out everywhere" : "Remove device"}
+        description={
+          pendingAction?.kind === "factor"
+            ? "Two-factor protection from this authenticator will be removed from your account."
+            : pendingAction?.kind === "all"
+              ? String(t("securityPage.signOutConfirm"))
+              : pendingAction?.kind === "session" &&
+                  sessions.find((row) => row.id === pendingAction.id)?.auth_session_id
+                ? "This will invalidate that device's sign-in session when supported by the auth provider."
+                : "This hides the device from your activity list only. Use Sign out everywhere to invalidate all sessions."
+        }
+        confirmLabel={
+          pendingAction?.kind === "factor"
+            ? "Disable authenticator"
+            : pendingAction?.kind === "all"
+              ? "Sign out everywhere"
+              : pendingAction?.kind === "session" &&
+                  sessions.find((row) => row.id === pendingAction.id)?.auth_session_id
+                ? "Sign out device"
+                : "Remove device"
+        }
         tone="destructive"
         pending={actionPending}
         onConfirm={confirmSecurityAction}

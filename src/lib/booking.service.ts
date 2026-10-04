@@ -1,6 +1,5 @@
 import { supabase } from "./supabase";
 import { buildCheckoutPath } from "../app/lib/checkout-navigation";
-import { paymentService } from "./payment.service";
 import { notificationService } from "./notification.service";
 
 function countNights(checkIn: string, checkOut: string) {
@@ -379,47 +378,29 @@ export const bookingService = {
   },
 
   async cancelBookingWithRefund(bookingId: string, reason?: string) {
-    const { data: booking, error: fetchError } = await supabase
+    const { data: prior } = await supabase
       .from("short_stay_bookings")
-      .select("*")
+      .select("status, listing_id, check_in, check_out")
       .eq("id", bookingId)
-      .single();
+      .maybeSingle();
 
-    if (fetchError) throw fetchError;
-
-    const refundMinor =
-      booking.status === "confirmed" || booking.status === "pending"
-        ? Math.round(Number(booking.total_minor) * 0.85)
-        : 0;
-
-    if (booking.transaction_id && refundMinor > 0) {
-      await paymentService.initiatePropertyRefund({
-        transactionId: booking.transaction_id,
-        amount: refundMinor / 100,
-        reason: reason || "Guest cancelled short-stay booking",
-        customerNote: reason || "Booking cancellation refund",
-      });
-    }
-
-    const { data, error } = await supabase
-      .from("short_stay_bookings")
-      .update({
-        status: "cancelled",
-        cancelled_at: new Date().toISOString(),
-        refund_minor: refundMinor,
-        cancellation_reason: reason || null,
-      })
-      .eq("id", bookingId)
-      .select("*")
-      .single();
+    const { data, error } = await supabase.functions.invoke("cancel-short-stay-booking", {
+      body: { bookingId, reason },
+    });
 
     if (error) throw error;
+    if (data?.error) throw new Error(String(data.error));
 
-    if (booking.status === "confirmed") {
+    const booking = data?.booking;
+    if (!booking) {
+      throw new Error("Cancellation did not return booking state");
+    }
+
+    if (prior?.status === "confirmed") {
       await this.releaseBookingDates({
-        listingId: booking.listing_id,
-        checkIn: booking.check_in,
-        checkOut: booking.check_out,
+        listingId: prior.listing_id,
+        checkIn: prior.check_in,
+        checkOut: prior.check_out,
       });
     }
 
@@ -427,16 +408,13 @@ export const bookingService = {
       extraContent: reason ? `Reason: ${reason}` : undefined,
     });
 
-    return data;
+    return booking;
   },
 
   async checkInGuest(bookingId: string) {
-    const { data, error } = await supabase
-      .from("short_stay_bookings")
-      .update({ checked_in_at: new Date().toISOString() })
-      .eq("id", bookingId)
-      .select("*")
-      .single();
+    const { data, error } = await supabase.rpc("check_in_short_stay_booking", {
+      p_booking_id: bookingId,
+    });
 
     if (error) throw error;
     void notificationService.notifyBookingEvent(bookingId, "checked_in");
@@ -444,15 +422,9 @@ export const bookingService = {
   },
 
   async checkOutGuest(bookingId: string) {
-    const { data, error } = await supabase
-      .from("short_stay_bookings")
-      .update({
-        checked_out_at: new Date().toISOString(),
-        status: "completed",
-      })
-      .eq("id", bookingId)
-      .select("*")
-      .single();
+    const { data, error } = await supabase.rpc("check_out_short_stay_booking", {
+      p_booking_id: bookingId,
+    });
 
     if (error) throw error;
     void notificationService.notifyBookingEvent(bookingId, "checked_out");

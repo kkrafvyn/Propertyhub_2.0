@@ -73,50 +73,64 @@ export class OmnichannelRouterService {
   /**
    * Route message across prioritized channels
    */
+  resolveChannels(input: RouteMessageInput): DeliveryChannel[] {
+    const supported: DeliveryChannel[] = ["in_app", "push", "sms"];
+    const requested = input.channels?.length ? input.channels : supported;
+    return requested.filter((channel) => supported.includes(channel));
+  }
+
   async routeMessage(input: RouteMessageInput): Promise<OmnichannelDeliveryReport> {
+    const plan = this.resolveChannels(input);
     const channelsAttempted: DeliveryChannel[] = [];
     const channelsSucceeded: DeliveryChannel[] = [];
     const channelsFailed: DeliveryChannel[] = [];
 
-    // 1. Always write to Supabase Postgres & Broadcast In-App
-    channelsAttempted.push("in_app");
     let sentMsg: Message | null = null;
-    try {
-      sentMsg = await realtimeMessagingService.sendMessage({
-        conversationId: input.conversationId,
-        senderId: input.senderId,
-        senderName: input.senderName,
-        senderType: input.senderType || "system",
-        content: input.content,
-      });
-      channelsSucceeded.push("in_app");
-    } catch {
-      channelsFailed.push("in_app");
+
+    if (plan.includes("in_app")) {
+      channelsAttempted.push("in_app");
+      try {
+        sentMsg = await realtimeMessagingService.sendMessage({
+          conversationId: input.conversationId,
+          senderId: input.senderId,
+          senderName: input.senderName,
+          senderType: input.senderType || "system",
+          content: input.content,
+        });
+        channelsSucceeded.push("in_app");
+      } catch {
+        channelsFailed.push("in_app");
+      }
     }
 
-    // 2. Dispatch Push Notification via FCM
-    channelsAttempted.push("push");
-    try {
-      const pushResult = await fcmPushService.dispatchPushNotification({
-        recipientUserId: input.recipientUserId,
-        title: input.senderName ? `${input.senderName} on BaytMiftah` : "BaytMiftah Update",
-        body: input.content,
-        conversationId: input.conversationId,
-        messageId: sentMsg?.id,
-        deepLinkUrl: input.deepLinkUrl,
-      });
+    if (plan.includes("push")) {
+      channelsAttempted.push("push");
+      try {
+        const pushResult = await fcmPushService.dispatchPushNotification({
+          recipientUserId: input.recipientUserId,
+          title: input.senderName ? `${input.senderName} on BaytMiftah` : "BaytMiftah Update",
+          body: input.content,
+          conversationId: input.conversationId,
+          messageId: sentMsg?.id,
+          deepLinkUrl: input.deepLinkUrl,
+        });
 
-      if (pushResult.delivered > 0) {
-        channelsSucceeded.push("push");
-      } else if (pushResult.failed > 0) {
+        if (pushResult.delivered > 0) {
+          channelsSucceeded.push("push");
+        } else if (pushResult.failed > 0) {
+          channelsFailed.push("push");
+        }
+      } catch {
         channelsFailed.push("push");
       }
-    } catch {
-      channelsFailed.push("push");
     }
 
-    // 3. If urgent priority and recipient has phone, send SMS fallback
-    if ((input.priority === "urgent" || input.priority === "high") && input.recipientPhone) {
+    // 3. SMS when explicitly requested (or urgent/high fallback if sms is in plan)
+    if (
+      plan.includes("sms") &&
+      input.recipientPhone &&
+      (input.channels?.includes("sms") || input.priority === "urgent" || input.priority === "high")
+    ) {
       channelsAttempted.push("sms");
       try {
         await sendEstateSms({

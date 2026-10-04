@@ -1,5 +1,128 @@
 import { supabase } from "./supabase";
 import { estateOperationsService } from "./estate-operations.service";
 import { parseOpeningChargesCsv, type OpeningChargeImportRow } from "./estate-import.service";
-const db=supabase as any;
-export const openingChargeImportService={parse:parseOpeningChargesCsv,async createJob(input:{organizationId:string;userId:string;fileName:string;rows:OpeningChargeImportRow[]}){const valid=input.rows.filter(x=>!x.errors.length);const{data:job,error}=await db.from("estate_import_jobs").insert({organization_id:input.organizationId,import_type:"opening_charges",file_name:input.fileName,status:valid.length===input.rows.length?"validated":"draft",total_rows:input.rows.length,valid_rows:valid.length,created_by:input.userId}).select("*").single();if(error)throw error;const{error:rowError}=await db.from("estate_import_rows").insert(input.rows.map(row=>({job_id:job.id,row_number:row.rowNumber,payload_json:row,validation_errors:row.errors})));if(rowError)throw rowError;return job},async execute(input:{jobId:string;organizationId:string;userId:string}){const{data:rows,error}=await db.from("estate_import_rows").select("*").eq("job_id",input.jobId).eq("imported",false).contains("validation_errors",[]);if(error)throw error;const estates=await estateOperationsService.getEstates(input.organizationId),units=await estateOperationsService.getUnits(estates.map(x=>x.id));let imported=0;for(const row of rows||[]){const p=row.payload_json;try{const estate=estates.find(x=>x.name.toLowerCase()===String(p.estateName).toLowerCase());if(!estate)throw new Error("Estate not found; import estates and units first");const unit=units.find(x=>x.estate_id===estate.id&&x.identifier.toLowerCase()===String(p.unitIdentifier).toLowerCase());if(!unit)throw new Error("Unit not found");const type=["rent","service_charge","water","repair","penalty","levy","other"].includes(p.chargeType)?p.chargeType:"other";const{error:chargeError}=await db.from("unit_charges").insert({unit_id:unit.id,type,amount_minor:Math.round(Number(p.amount)*100),currency:estate.currency,due_date:p.dueDate,description:p.description||"Opening balance import",created_by:input.userId});if(chargeError)throw chargeError;await db.from("estate_import_rows").update({imported:true}).eq("id",row.id);imported++}catch(failure:any){await db.from("estate_import_rows").update({validation_errors:[failure.message||"Unable to import row"]}).eq("id",row.id)}}await db.from("estate_import_jobs").update({status:"imported",approved_by:input.userId,imported_rows:imported,imported_at:new Date().toISOString()}).eq("id",input.jobId);return imported}};
+
+const db = supabase as any;
+
+function resolveImportJobStatus(totalEligible: number, imported: number, failed: number) {
+  if (totalEligible === 0) return "failed";
+  if (failed === 0) return "imported";
+  if (imported === 0) return "failed";
+  return "partially_imported";
+}
+
+export const openingChargeImportService = {
+  parse: parseOpeningChargesCsv,
+
+  async createJob(input: {
+    organizationId: string;
+    userId: string;
+    fileName: string;
+    rows: OpeningChargeImportRow[];
+  }) {
+    const valid = input.rows.filter((x) => !x.errors.length);
+    const { data: job, error } = await db
+      .from("estate_import_jobs")
+      .insert({
+        organization_id: input.organizationId,
+        import_type: "opening_charges",
+        file_name: input.fileName,
+        status: valid.length === input.rows.length ? "validated" : "draft",
+        total_rows: input.rows.length,
+        valid_rows: valid.length,
+        created_by: input.userId,
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    const { error: rowError } = await db.from("estate_import_rows").insert(
+      input.rows.map((row) => ({
+        job_id: job.id,
+        row_number: row.rowNumber,
+        payload_json: row,
+        validation_errors: row.errors,
+      })),
+    );
+    if (rowError) throw rowError;
+    return job;
+  },
+
+  async execute(input: { jobId: string; organizationId: string; userId: string }) {
+    const { data: job, error: jobError } = await db
+      .from("estate_import_jobs")
+      .select("*")
+      .eq("id", input.jobId)
+      .single();
+    if (jobError) throw jobError;
+    if (job.organization_id !== input.organizationId) {
+      throw new Error("Import job does not belong to this organization");
+    }
+
+    const orgId = job.organization_id as string;
+    await db.from("estate_import_jobs").update({ status: "importing" }).eq("id", input.jobId);
+
+    const { data: rows, error } = await db
+      .from("estate_import_rows")
+      .select("*")
+      .eq("job_id", input.jobId)
+      .eq("imported", false)
+      .contains("validation_errors", []);
+    if (error) throw error;
+
+    const estates = await estateOperationsService.getEstates(orgId);
+    const units = await estateOperationsService.getUnits(estates.map((x) => x.id));
+    let imported = 0;
+    let failed = 0;
+
+    for (const row of rows || []) {
+      const p = row.payload_json;
+      try {
+        const estate = estates.find((x) => x.name.toLowerCase() === String(p.estateName).toLowerCase());
+        if (!estate) throw new Error("Estate not found; import estates and units first");
+        const unit = units.find(
+          (x) =>
+            x.estate_id === estate.id &&
+            x.identifier.toLowerCase() === String(p.unitIdentifier).toLowerCase(),
+        );
+        if (!unit) throw new Error("Unit not found");
+        const type = ["rent", "service_charge", "water", "repair", "penalty", "levy", "other"].includes(
+          p.chargeType,
+        )
+          ? p.chargeType
+          : "other";
+        const { error: chargeError } = await db.from("unit_charges").insert({
+          unit_id: unit.id,
+          type,
+          amount_minor: Math.round(Number(p.amount) * 100),
+          currency: estate.currency,
+          due_date: p.dueDate,
+          description: p.description || "Opening balance import",
+          created_by: input.userId,
+        });
+        if (chargeError) throw chargeError;
+        await db.from("estate_import_rows").update({ imported: true }).eq("id", row.id);
+        imported += 1;
+      } catch (failure: any) {
+        failed += 1;
+        await db
+          .from("estate_import_rows")
+          .update({ validation_errors: [failure.message || "Unable to import row"] })
+          .eq("id", row.id);
+      }
+    }
+
+    const status = resolveImportJobStatus((rows || []).length, imported, failed);
+    await db
+      .from("estate_import_jobs")
+      .update({
+        status,
+        approved_by: input.userId,
+        imported_rows: imported,
+        failed_rows: failed,
+        imported_at: new Date().toISOString(),
+      })
+      .eq("id", input.jobId);
+
+    return imported;
+  },
+};

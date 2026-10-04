@@ -216,7 +216,7 @@ export async function getPropertyRefundSummary(transactionId: string) {
   const admin = createAdminClient();
   const { data: refunds, error } = await admin
     .from("property_refunds")
-    .select("id, status, amount_minor, created_at, updated_at")
+    .select("id, status, amount_minor, created_at, updated_at, metadata")
     .eq("transaction_id", transactionId)
     .order("updated_at", { ascending: false });
 
@@ -226,7 +226,7 @@ export async function getPropertyRefundSummary(transactionId: string) {
 
   const refundRows = (refunds || []) as Pick<
     PropertyRefundRow,
-    "id" | "status" | "amount_minor" | "created_at" | "updated_at"
+    "id" | "status" | "amount_minor" | "created_at" | "updated_at" | "metadata"
   >[];
   const processedAmountMinor = refundRows.reduce((total, refund) => {
     return refund.status === "processed" ? total + refund.amount_minor : total;
@@ -252,6 +252,7 @@ export async function recordInitiatedPropertyRefund(input: {
   customerNote?: string | null;
   merchantNote?: string | null;
   paystackRefund: PaystackRefundData;
+  metadata?: Record<string, unknown>;
 }) {
   const admin = createAdminClient();
   const { data: transaction, error: transactionError } = await admin
@@ -306,6 +307,7 @@ export async function recordInitiatedPropertyRefund(input: {
       metadata: {
         source: "workspace",
         initiated_at: nowIso,
+        ...(input.metadata || {}),
       },
     })
     .select("*")

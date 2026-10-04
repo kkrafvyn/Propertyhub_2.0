@@ -10,6 +10,7 @@ import { ActionDialog } from "@/app/components/ux/ActionDialog";
 import { fieldOpsService } from "@/lib/field-ops.service";
 import { mobileAppService } from "@/lib/mobile-app.service";
 import { pushNotificationService } from "@/lib/push-notification.service";
+import { nativePushAvailable } from "@/lib/communications-capabilities";
 
 interface MobileAppSettingsProps {
   currentUserId: string;
@@ -250,6 +251,11 @@ export default function MobileAppSettings({
         {!browserPushSupported && (
           <p className="text-sm text-muted-foreground mt-4">
             Browser push is only available in supported secure browser environments.
+          </p>
+        )}
+        {!nativePushAvailable() && (
+          <p className="text-sm text-muted-foreground mt-2">
+            Native background push (FCM/APNs) is not configured for production mobile builds yet.
           </p>
         )}
       </Card>
