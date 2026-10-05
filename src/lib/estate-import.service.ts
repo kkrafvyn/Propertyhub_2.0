@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import { estateOperationsService } from "./estate-operations.service";
 import { csvCell, csvHeaderMap, parseCsv } from "./csv-parse";
+import { resolveImportJobStatus } from "./import-job-status";
 
 const db = supabase as any;
 export type ImportRow = { rowNumber: number; estateName: string; unitIdentifier: string; block?: string; floor?: string; errors: string[] };
@@ -81,13 +82,6 @@ export function parseOpeningChargesCsv(content: string): OpeningChargeImportRow[
       ].filter(Boolean) as string[],
     };
   });
-}
-
-function resolveImportJobStatus(totalEligible: number, imported: number, failed: number) {
-  if (totalEligible === 0) return "failed";
-  if (failed === 0) return "imported";
-  if (imported === 0) return "failed";
-  return "partially_imported";
 }
 
 export const estateImportService = {

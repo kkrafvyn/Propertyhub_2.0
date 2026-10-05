@@ -16,10 +16,12 @@ Set these before controlled pilot. Server secrets → **Supabase Edge Function s
 
 | Variable | Required | Notes |
 |----------|----------|-------|
-| `PAYANGELS_SECRET_KEY` | Yes | Paystack-compatible secret from merchant dashboard |
-| `PAYANGELS_WEBHOOK_SECRET` | Yes | Register webhook URL in PayAngels dashboard |
-| `PAYANGELS_API_BASE` | Yes | Default `https://api.paystack.co` (do not use `api.payangels.com`) |
-| `PAYANGELS_DISBURSEMENT_URL` | If disbursements | |
+| `PAYANGELS_SECRET_KEY` | Yes | Provider-issued after the PayAngel Business channel is Live |
+| `PAYANGELS_WEBHOOK_SECRET` | Yes | Distinct provider-issued webhook verification secret |
+| `PAYANGELS_API_BASE` | Yes | Exact HTTPS endpoint from PayAngel private API documentation; never Paystack |
+| `PAYANGELS_DISBURSEMENT_URL` | Yes | Exact provider-issued payout endpoint |
+| `PAYANGELS_API_CONTRACT_VERIFIED` | Yes | Set true only after review against the private docs |
+| `PAYANGELS_LIVE_CERTIFIED` | Yes | Set true only after init, webhook, verification, refund, and payout pass |
 | `RESEND_API_KEY` | Yes | |
 | `EMAIL_LOGO_URL` | Optional | Defaults to `{PUBLIC_APP_URL}/brand/email-logo.svg` |
 | `PUBLIC_APP_URL` | Yes | `https://app.baytmiftah.com` |

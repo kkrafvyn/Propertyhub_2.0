@@ -18,7 +18,7 @@ function main() {
   }
 
   mkdirSync(outputDir, { recursive: true });
-  const skipPaths = [
+  const skipDirs = [
     "dist-desktop",
     "dist",
     "backups",
@@ -26,11 +26,16 @@ function main() {
     "coverage",
     "android",
     "ios",
+  ];
+  const skipFiles = [
     "supabase/.env.payments",
     "supabase/.env.local",
     ".env",
   ];
-  const skipArgs = skipPaths.flatMap((p) => ["--skip-paths", p]);
+  const skipArgs = [
+    ...skipDirs.flatMap((p) => ["--skip-dirs", p]),
+    ...skipFiles.flatMap((p) => ["--skip-files", p]),
+  ];
 
   const args =
     resolved.via === "docker"

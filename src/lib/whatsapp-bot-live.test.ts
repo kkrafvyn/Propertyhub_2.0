@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { processGroupBotMessage, formatMinorAmount } from "./whatsapp-group-bot-core";
+import { handleLeaseSigningProgress } from "./lease-esignature.service";
 
 describe("whatsapp group bot live context", () => {
   it("formats minor currency amounts", () => {
@@ -52,7 +53,6 @@ describe("whatsapp group bot live context", () => {
 
 describe("handleLeaseSigningProgress", () => {
   it("returns null for partially_signed without cosign notify flag", async () => {
-    const { handleLeaseSigningProgress } = await import("./lease-esignature.service");
     const result = await handleLeaseSigningProgress({
       status: "partially_signed",
       esignature_request_id: "req-1",
@@ -63,7 +63,6 @@ describe("handleLeaseSigningProgress", () => {
   });
 
   it("returns null for completed (server finalizes lease)", async () => {
-    const { handleLeaseSigningProgress } = await import("./lease-esignature.service");
     const result = await handleLeaseSigningProgress({
       status: "completed",
       esignature_request_id: "req-1",

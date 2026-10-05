@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   LEGAL_CONTACT,
   LEGAL_LAUNCH_CHECKLIST,
+  LEGAL_LAUNCH_CHECKLIST_EVIDENCE,
   LEGAL_OPERATOR,
   LEGAL_PLATFORM_POSITION,
   LEGAL_POLICY_VERSION,
@@ -227,6 +228,9 @@ describe("legal catalog", () => {
     expect(LEGAL_PLATFORM_POSITION.summary).toContain("BaytMiftah");
     expect(LEGAL_PLATFORM_POSITION.doesNotAutomaticallyActAs.length).toBeGreaterThan(0);
     expect(LEGAL_LAUNCH_CHECKLIST.length).toBeGreaterThan(0);
+    for (const item of LEGAL_LAUNCH_CHECKLIST) {
+      expect(LEGAL_LAUNCH_CHECKLIST_EVIDENCE[item]).toBeTruthy();
+    }
   });
 
   it("marks the legal bundle as materially updated and not globally production-certified", () => {

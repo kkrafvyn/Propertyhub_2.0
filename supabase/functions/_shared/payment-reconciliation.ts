@@ -348,6 +348,40 @@ async function syncFinancialSideEffects(transaction: PropertyTransactionRow) {
   const metadata = transaction.metadata || {};
   const bookingId =
     typeof metadata.bookingId === "string" ? metadata.bookingId : null;
+  let verifiedBooking: {
+    listing_id: string;
+    organization_id: string;
+    guest_user_id: string;
+    check_in: string;
+    check_out: string;
+    total_minor: number;
+    currency: string;
+    status: string;
+    transaction_id: string | null;
+  } | null = null;
+
+  if (bookingId) {
+    const { data: booking, error: bookingError } = await admin
+      .from("short_stay_bookings")
+      .select("listing_id, organization_id, guest_user_id, check_in, check_out, total_minor, currency, status, transaction_id")
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (bookingError || !booking) throw new Error("Payment references an invalid booking");
+    if (
+      booking.listing_id !== transaction.listing_id ||
+      booking.organization_id !== transaction.organization_id ||
+      booking.guest_user_id !== transaction.payer_user_id ||
+      Number(booking.total_minor) !== Number(transaction.amount_minor) ||
+      String(booking.currency).toUpperCase() !== String(transaction.currency).toUpperCase() ||
+      transaction.purpose !== "booking_fee"
+    ) {
+      throw new Error("Payment does not match the locked booking details");
+    }
+    if (booking.status !== "pending" || booking.transaction_id) {
+      throw new Error("Booking is not awaiting this payment");
+    }
+    verifiedBooking = booking;
+  }
 
   await appendWalletLedger(admin, {
     walletId: wallet.id,
@@ -393,28 +427,27 @@ async function syncFinancialSideEffects(transaction: PropertyTransactionRow) {
   }
 
   if (bookingId) {
-    const { data: booking } = await admin
-      .from("short_stay_bookings")
-      .select("listing_id, check_in, check_out")
-      .eq("id", bookingId)
-      .maybeSingle();
-
-    await admin
+    const { data: claimedBooking, error: claimError } = await admin
       .from("short_stay_bookings")
       .update({
         status: "confirmed",
         transaction_id: transaction.id,
       })
-      .eq("id", bookingId);
+      .eq("id", bookingId)
+      .eq("status", "pending")
+      .is("transaction_id", null)
+      .select("id")
+      .maybeSingle();
+    if (claimError || !claimedBooking) throw new Error("Booking payment was already claimed");
 
-    if (booking) {
-      const start = new Date(`${booking.check_in}T00:00:00`);
-      const end = new Date(`${booking.check_out}T00:00:00`);
+    if (verifiedBooking) {
+      const start = new Date(`${verifiedBooking.check_in}T00:00:00`);
+      const end = new Date(`${verifiedBooking.check_out}T00:00:00`);
       const rows = [];
 
       for (let cursor = new Date(start); cursor < end; cursor.setDate(cursor.getDate() + 1)) {
         rows.push({
-          listing_id: booking.listing_id,
+          listing_id: verifiedBooking.listing_id,
           available_date: cursor.toISOString().slice(0, 10),
           is_available: false,
         });

@@ -42,6 +42,8 @@ import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { useAuth } from "../context/AuthContext";
 import { useCall } from "../context/CallContext";
+import { isVideoCallsEnabledForApp } from "../../lib/app-feature-gates";
+import { usePlatformFeatures } from "../context/PlatformFeaturesContext";
 import { listingService } from "../../lib/listing.service";
 import { getPropertyCoverImage, getPropertyImageGallery } from "../../lib/property-media";
 import { savedPropertyService } from "../../lib/savedproperty.service";
@@ -81,6 +83,8 @@ export function PropertyDetail() {
   const { user } = useAuth();
   const { kyc } = useMyKyc();
   const { startCall } = useCall();
+  const { flags: platformFeatures } = usePlatformFeatures();
+  const videoTourEnabled = isVideoCallsEnabledForApp(platformFeatures);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
@@ -1386,27 +1390,29 @@ export function PropertyDetail() {
                     <Phone className="w-3.5 h-3.5 text-emerald-500" />
                     Voice Call
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-xl border-surface-border hover:border-teal-500/40 hover:bg-teal-500/5 text-foreground flex items-center justify-center gap-1.5 text-xs font-medium"
-                    onClick={() => {
-                      void startCall(
-                        {
-                          name: organization?.name || "Listing Host & Agent",
-                          role: "Listing Agent",
-                        },
-                        "video",
-                        {
-                          listingId: listing.id,
-                          listingTitle: pageTitle,
-                        }
-                      );
-                    }}
-                  >
-                    <VideoIcon className="w-3.5 h-3.5 text-teal-500" />
-                    Live Tour
-                  </Button>
+                  {videoTourEnabled ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl border-surface-border hover:border-teal-500/40 hover:bg-teal-500/5 text-foreground flex items-center justify-center gap-1.5 text-xs font-medium"
+                      onClick={() => {
+                        void startCall(
+                          {
+                            name: organization?.name || "Listing Host & Agent",
+                            role: "Listing Agent",
+                          },
+                          "video",
+                          {
+                            listingId: listing.id,
+                            listingTitle: pageTitle,
+                          }
+                        );
+                      }}
+                    >
+                      <VideoIcon className="w-3.5 h-3.5 text-teal-500" />
+                      Live Tour
+                    </Button>
+                  ) : null}
                   <Button
                     variant="outline"
                     size="sm"

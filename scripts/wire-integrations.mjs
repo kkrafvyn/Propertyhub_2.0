@@ -79,12 +79,25 @@ function main() {
   const aiProvider = resolveAiProvider(payments);
   const aiEnabled = Boolean(aiProvider);
 
+  const payangelsPrerequisites = Boolean(
+    payments.PAYANGELS_SECRET_KEY?.trim() &&
+    payments.PAYANGELS_WEBHOOK_SECRET?.trim() &&
+    payments.PAYANGELS_API_BASE?.trim() &&
+    payments.PAYANGELS_DISBURSEMENT_URL?.trim() &&
+    rootEnv.VITE_PAYANGELS_PUBLIC_KEY?.trim() &&
+    truthyFlag(payments.PAYANGELS_API_CONTRACT_VERIFIED) &&
+    truthyFlag(rootEnv.PAYANGELS_LIVE_CERTIFIED),
+  );
+  // This general sync command cannot prove that payment Edge functions were deployed.
+  const payangelsReady = payangelsPrerequisites && truthyFlag(rootEnv.VITE_PAYANGELS_CONFIGURED);
+
   const clientUpdates = {
     VITE_WEB_PUSH_PUBLIC_KEY: payments.WEB_PUSH_PUBLIC_KEY,
     VITE_OPENAI_ENABLED: aiEnabled ? "true" : rootEnv.VITE_OPENAI_ENABLED || "",
     VITE_AI_ENABLED: aiEnabled ? "true" : rootEnv.VITE_AI_ENABLED || "",
     VITE_AI_PROVIDER: aiProvider || rootEnv.VITE_AI_PROVIDER || "",
     VITE_RESEND_CONFIGURED: payments.RESEND_API_KEY ? "true" : rootEnv.VITE_RESEND_CONFIGURED || "",
+    VITE_PAYANGELS_CONFIGURED: payangelsReady ? "true" : "false",
   };
 
   if (!rootEnv.VITE_PUBLIC_APP_URL) clientUpdates.VITE_PUBLIC_APP_URL = payments.PUBLIC_APP_URL;
@@ -106,7 +119,7 @@ function main() {
   console.log(`Updated ${path.relative(PROJECT_ROOT, ROOT_ENV_PATH)}`);
 
   const configured = {
-    payangels: Boolean(payments.PAYANGELS_SECRET_KEY && rootEnv.VITE_PAYANGELS_PUBLIC_KEY),
+    payangels: payangelsReady,
     resend: Boolean(payments.RESEND_API_KEY && payments.NOTIFICATION_EMAIL_FROM),
     prembly: Boolean(
       payments.PREMBLY_API_KEY &&
@@ -139,7 +152,7 @@ function main() {
 
   const missing = [];
   if (!configured.payangels) {
-    missing.push("PayAngels: VITE_PAYANGELS_PUBLIC_KEY + PAYANGELS_SECRET_KEY in .env");
+    missing.push("PayAngel: provider credentials/endpoints + verified contract + certification + deployed payment Edge functions");
   }
   if (!configured.resend) {
     missing.push("Resend: RESEND_API_KEY + NOTIFICATION_EMAIL_FROM in .env");

@@ -73,35 +73,15 @@ Deno.serve(async (req) => {
       throw new HttpError(404, "Property transaction not found");
     }
 
-    let financeAuthorized = false;
-    try {
-      await requireOrgWorkspacePermission(
-        admin,
-        user.id,
-        transaction.organization_id,
-        "finance:write",
-      );
-      financeAuthorized = true;
-    } catch (membershipError) {
-      if (!(membershipError instanceof HttpError) || membershipError.status !== 403) {
-        throw membershipError;
-      }
-    }
-
-    if (!financeAuthorized) {
-      const { data: payerRow } = await admin
-        .from("property_transactions")
-        .select("payer_user_id, purpose")
-        .eq("id", transaction.id)
-        .maybeSingle();
-
-      const isGuestBookingRefund =
-        payerRow?.payer_user_id === user.id && payerRow?.purpose === "booking_fee";
-
-      if (!isGuestBookingRefund) {
-        throw new HttpError(403, "Only finance-capable workspace roles can issue refunds");
-      }
-    }
+    // Guest booking cancellations use cancel-short-stay-booking, which derives the
+    // refundable amount from the server-owned booking policy. This generic endpoint
+    // is deliberately finance-only so a payer cannot invent their own refund.
+    await requireOrgWorkspacePermission(
+      admin,
+      user.id,
+      transaction.organization_id,
+      "finance:write",
+    );
 
     if (!["success", "reversal_pending"].includes(transaction.status)) {
       throw new HttpError(400, "Only successful property payments can be refunded");

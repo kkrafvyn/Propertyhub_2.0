@@ -6,7 +6,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { loadProjectEnv, getProjectRef } from "../load-project-env.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -29,12 +29,13 @@ function listRemoteFromSnapshot() {
 }
 
 function listRemoteFromCli(projectRef, token) {
-  if (!projectRef) return null;
+  if (!projectRef || !/^[a-z0-9]{20}$/.test(projectRef)) return null;
   const cliEnv = token?.trim()
     ? { ...process.env, SUPABASE_ACCESS_TOKEN: token }
     : process.env;
   try {
-    const out = execSync(`npx supabase functions list --project-ref ${projectRef}`, {
+    const executable = process.platform === "win32" ? "npx.cmd" : "npx";
+    const out = execFileSync(executable, ["supabase", "functions", "list", "--project-ref", projectRef], {
       cwd: root,
       encoding: "utf8",
       env: cliEnv,

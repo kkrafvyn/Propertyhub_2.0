@@ -25,6 +25,10 @@ import {
 } from '../../lib/call.service';
 import { secureId } from '../../lib/secure-id';
 import { isDemoSimulationAllowed } from '../../lib/simulation-mode';
+import {
+  isVideoCallsEnabledForApp,
+  isVoiceCallsEnabledForApp,
+} from '../../lib/app-feature-gates';
 import { useAuth } from './AuthContext';
 
 interface StartCallOptions {
@@ -161,8 +165,22 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     ) => {
       cleanupCall();
       if (!isDemoSimulationAllowed()) {
-        if (type === 'voice' && participant.phone && typeof window !== 'undefined') {
-          window.location.assign(`tel:${participant.phone.replace(/[^+\d]/g, '')}`);
+        if (type === 'voice') {
+          if (!isVoiceCallsEnabledForApp()) {
+            if (typeof window !== 'undefined') {
+              window.alert('Voice calling is disabled for this platform.');
+            }
+            return;
+          }
+          if (participant.phone && typeof window !== 'undefined') {
+            window.location.assign(`tel:${participant.phone.replace(/[^+\d]/g, '')}`);
+            return;
+          }
+        }
+        if (type === 'video' && !isVideoCallsEnabledForApp()) {
+          if (typeof window !== 'undefined') {
+            window.alert('Video calling is disabled or not configured.');
+          }
           return;
         }
         if (typeof window !== 'undefined') {
@@ -261,6 +279,10 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       type: CallType,
       options?: StartCallOptions
     ) => {
+      if (!isDemoSimulationAllowed()) {
+        return;
+      }
+
       cleanupCall();
 
       const myName = profile?.full_name || user?.user_metadata?.full_name || 'You';

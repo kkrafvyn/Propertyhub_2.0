@@ -60,3 +60,22 @@ The root `.env` contains an MLS API token and is set to Bearer authentication. T
 - TypeScript typecheck: passed.
 - Production Vite build: passed.
 - Listing syndication unit tests cover key-only auth, RESO-style mapping, and incomplete configuration behavior.
+
+## 2026-10-04 stub sweep delta
+
+**Fixed**
+
+- Agentic orchestrator: production `executeAgentGoal` / `getLedgerEntriesLive` fail closed (no hardcoded FinanceAgent narratives; empty DB → `[]`).
+- AI Command Center waits for organization UUID before live scans.
+- Omnichannel push already routes via `dispatch-notification`; FCM client dispatch deprecated and fail-closed.
+- TransUnion adapter throws instead of fabricating scores; Ghana path is explicit manual review.
+- Removed `MOCK_*` fixtures and legacy throw-only APIs from owner disbursement, visitor clearance, and contractor dispatch.
+- WhatsApp hub dead simulators removed; group sim gated to test via `isDemoSimulationAllowed()`.
+- AI assistant exposes `responseMode: local_faq` with UI badges; edge returns matching metadata.
+- Checkout sandbox banner when PayAngels is not live or demo env is enabled.
+
+**Still provider-gated (unchanged)**
+
+- TransUnion SmartMove server integration, Firebase Admin FCM (Web Push edge is the live path), full multi-agent workers beyond Executive Night Watch.
+
+See also [STUB_REGISTRY.md](../deployment/STUB_REGISTRY.md).

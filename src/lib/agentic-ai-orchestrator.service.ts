@@ -127,6 +127,21 @@ class AgenticAIOrchestratorService {
     }
   }
 
+  private emptyNightWatchReport(organizationId: string): NightWatchReport {
+    return {
+      id: `nw_empty_${Date.now()}`,
+      organizationId,
+      scannedAt: new Date().toISOString(),
+      leasesScanned: 0,
+      receivablesScanned: 0,
+      maintenanceScanned: 0,
+      riskScore: 0,
+      criticalAlertsCount: 0,
+      pendingApprovalsCount: 0,
+      briefingItems: [],
+    };
+  }
+
   private seedInitialLedger() {
     const now = new Date();
     this.ledger = [
@@ -431,7 +446,10 @@ class AgenticAIOrchestratorService {
 
   public getLatestNightWatchReport(organizationId: string = "org_default"): NightWatchReport {
     if (this.nightWatchReports.length === 0) {
-      return this.runNightWatchAudit(organizationId);
+      if (isDemoSimulationAllowed()) {
+        return this.runNightWatchAudit(organizationId);
+      }
+      return this.emptyNightWatchReport(organizationId);
     }
     return this.nightWatchReports[0];
   }
@@ -446,8 +464,11 @@ class AgenticAIOrchestratorService {
 
   /** Live portfolio scan using Supabase estate data (falls back to demo in test mode). */
   public async runNightWatchAuditLive(organizationId: string): Promise<NightWatchReport> {
-    if (this.isDemoOrTest() || !this.looksLikeUuid(organizationId)) {
+    if (this.isDemoOrTest()) {
       return this.runNightWatchAudit(organizationId);
+    }
+    if (!this.looksLikeUuid(organizationId)) {
+      return this.emptyNightWatchReport(organizationId);
     }
 
     const now = new Date().toISOString();
@@ -587,8 +608,12 @@ class AgenticAIOrchestratorService {
   }
 
   public async getLedgerEntriesLive(organizationId: string): Promise<AIActionLedgerEntry[]> {
-    if (this.isDemoOrTest() || !this.looksLikeUuid(organizationId)) {
-      return this.getLedgerEntries(organizationId);
+    if (this.isDemoOrTest()) {
+      if (!this.looksLikeUuid(organizationId)) {
+        return this.getLedgerEntries(organizationId);
+      }
+    } else if (!this.looksLikeUuid(organizationId)) {
+      return [];
     }
 
     const { data, error } = await aiDb
@@ -599,7 +624,10 @@ class AgenticAIOrchestratorService {
       .limit(50);
 
     if (error || !data?.length) {
-      return this.getLedgerEntries(organizationId);
+      if (this.isDemoOrTest()) {
+        return this.getLedgerEntries(organizationId);
+      }
+      return [];
     }
 
     return (data as any[]).map((row) => ({
@@ -767,6 +795,12 @@ class AgenticAIOrchestratorService {
         requiresApproval: false,
         data: report,
       };
+    }
+
+    if (!this.isDemoOrTest()) {
+      throw new Error(
+        "Resolve a valid organization before running agents. Wait for the workspace to finish loading or refresh the page."
+      );
     }
 
     let summary = "";

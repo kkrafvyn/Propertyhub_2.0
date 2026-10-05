@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase";
-import { requestPushPermission } from "../../lib/baytmiftah/push-service";
+import { enableBrowserPush, isPushEnableFailure } from "../../lib/baytmiftah/push-service";
+import { pushNotificationService } from "../../../lib/push-notification.service";
 import { useTranslation } from "../../i18n/LocaleContext";
 
 const DISMISS_KEY = "baytmiftah_push_dismissed";
@@ -9,20 +10,32 @@ export default function PushPrompt() {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!("Notification" in window) || localStorage.getItem(DISMISS_KEY)) return;
-    if (Notification.permission === "granted") return;
+    if (!pushNotificationService.canUseLocalNotifications() || localStorage.getItem(DISMISS_KEY)) {
+      return;
+    }
 
     void supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setVisible(true);
+      if (data.session?.user?.id) {
+        setUserId(data.session.user.id);
+        setVisible(true);
+      }
     });
   }, []);
 
   async function enable() {
+    if (!userId) return;
     setLoading(true);
-    await requestPushPermission();
-    setVisible(false);
+    setError(null);
+    const result = await enableBrowserPush(userId);
+    if (isPushEnableFailure(result)) {
+      setError(result.reason);
+    } else {
+      setVisible(false);
+    }
     setLoading(false);
   }
 
@@ -37,6 +50,7 @@ export default function PushPrompt() {
     <div className="fixed bottom-4 end-4 z-50 max-w-sm rounded-xl border border-surface-border bg-surface p-4 shadow-card">
       <p className="text-sm font-semibold">{t("extensions.push.title")}</p>
       <p className="mt-1 text-xs text-ink-secondary">{t("extensions.push.body")}</p>
+      {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
       <div className="mt-3 flex gap-2">
         <button
           type="button"

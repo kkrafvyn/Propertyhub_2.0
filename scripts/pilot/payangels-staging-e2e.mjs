@@ -77,7 +77,7 @@ async function invokeFunction(env, name, token, payload) {
 }
 
 function resolveWebhookSecret(env) {
-  return env.PAYANGELS_WEBHOOK_SECRET?.trim() || env.PAYANGELS_SECRET_KEY?.trim() || "";
+  return env.PAYANGELS_WEBHOOK_SECRET?.trim() || "";
 }
 
 async function main() {
@@ -88,7 +88,7 @@ async function main() {
     if (!env[key]?.trim()) fail(`Missing ${key}`);
   }
   if (!resolveWebhookSecret(env)) {
-    fail("Missing PAYANGELS_WEBHOOK_SECRET (or PAYANGELS_SECRET_KEY fallback)");
+    fail("Missing provider-issued PAYANGELS_WEBHOOK_SECRET");
   }
 
   console.log("PayAngels staging E2E");

@@ -8,6 +8,7 @@ description = "Non-secret placeholders and test fixtures"
 paths = [
   '''\.env\.example$''',
   '''docs/''',
+  '''^baytmiftah-backend/(EDGE_FUNCTIONS_SETUP|README_EDGE_FUNCTIONS)\.md$''',
   '''PLATFORM_PARTS_OVERVIEW\.md$''',
   '''scripts/security/provision-tenant-isolation-fixtures\.mjs$''',
   '''src/lib/security/tenant-isolation\.test\.ts$''',

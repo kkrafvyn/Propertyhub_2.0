@@ -14,7 +14,9 @@ import { useCurrency } from '../../context/CurrencyContext'
 import { useUserMarket } from '../../context/MarketContext'
 import { useTheme } from '../../context/ThemeContext'
 import { useTranslation } from '../../i18n/LocaleContext'
-import { requestPushPermission } from '../../lib/baytmiftah/push-service'
+import { enableBrowserPush, isPushEnableFailure } from '../../lib/baytmiftah/push-service'
+import { pushNotificationService } from '../../../lib/push-notification.service'
+import { useAuth } from '../../context/AuthContext'
 import { MARKET_PRESETS } from '../../../lib/user-market.service'
 
 const CURRENCIES = [
@@ -250,34 +252,44 @@ export function ThemePanel() {
 
 export function PushNotificationsPanel() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
-  const [permission, setPermission] = useState(
-    () => (typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'),
-  )
+  const [connected, setConnected] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const supported = pushNotificationService.canUseLocalNotifications()
 
-  if (permission === 'unsupported') return null
+  if (!supported) return null
 
   async function enable() {
+    if (!user?.id) return
     setLoading(true)
-    await requestPushPermission()
-    setPermission(Notification.permission)
+    setError(null)
+    const result = await enableBrowserPush(user.id)
+    if (isPushEnableFailure(result)) {
+      setError(result.reason)
+    } else {
+      setConnected(true)
+    }
     setLoading(false)
   }
 
   return (
     <div>
       <p className="mb-3 text-sm text-ink-secondary">{t('profile.pushDesc')}</p>
-      {permission === 'granted' ? (
+      {connected ? (
         <p className="text-sm font-medium text-ink">{t('profile.pushEnabled')}</p>
       ) : (
-        <button
-          type="button"
-          onClick={enable}
-          disabled={loading}
-          className="rounded-xl border border-surface-border px-4 py-3 text-sm font-semibold text-ink hover:border-ink/30 disabled:opacity-60"
-        >
-          {loading ? t('extensions.push.enabling') : t('extensions.push.enable')}
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={enable}
+            disabled={loading || !user?.id}
+            className="rounded-xl border border-surface-border px-4 py-3 text-sm font-semibold text-ink hover:border-ink/30 disabled:opacity-60"
+          >
+            {loading ? t('extensions.push.enabling') : t('extensions.push.enable')}
+          </button>
+          {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
+        </>
       )}
     </div>
   )

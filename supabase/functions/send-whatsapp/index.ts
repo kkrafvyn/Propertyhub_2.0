@@ -3,6 +3,10 @@ import { requireEstateMessagingMembership } from "../_shared/org-auth.ts";
 import { enforceRateLimit, rateLimitKey } from "../_shared/rate-limit.ts";
 import { requireAuthenticatedUser, createAdminClient } from "../_shared/supabase.ts";
 import { resolveWhatsAppCredentialsForOrg, sendWhatsAppTextMessage } from "../_shared/whatsapp-cloud.ts";
+import {
+  isPlatformFeatureEnabled,
+  PLATFORM_FEATURE_KEYS,
+} from "../_shared/platform-feature-flags.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -41,6 +45,9 @@ Deno.serve(async (req) => {
     if (to.length > 80) throw new HttpError(400, "Recipient is invalid");
 
     const admin = createAdminClient();
+    if (!(await isPlatformFeatureEnabled(admin, PLATFORM_FEATURE_KEYS.whatsapp))) {
+      throw new HttpError(503, "WhatsApp is disabled platform-wide.");
+    }
     const credentials = await resolveWhatsAppCredentialsForOrg(admin, organizationId);
     if (!credentials?.phoneNumberId || !credentials.accessToken) {
       throw new HttpError(

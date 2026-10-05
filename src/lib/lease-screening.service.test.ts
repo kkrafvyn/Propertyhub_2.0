@@ -37,4 +37,18 @@ describe("runSelectedScreeningChecks", () => {
       }),
     ).rejects.toThrow(/not configured/i);
   });
+
+  it("blocks screening when property jurisdiction is not production-ready", async () => {
+    const { leaseScreeningService } = await import("./lease-screening.service");
+    await expect(
+      leaseScreeningService.runSelectedScreeningChecks({
+        organizationId: "org-1",
+        applicantName: "Test User",
+        applicantEmail: "test@example.com",
+        propertyCountry: "United States",
+        propertyRegion: "California",
+        checkTypes: ["identity"],
+      }),
+    ).rejects.toThrow(/tenant screening is not enabled/i);
+  });
 });

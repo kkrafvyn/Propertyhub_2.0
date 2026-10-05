@@ -1,5 +1,6 @@
 import { createAdminClient, requireAuthenticatedUser } from "../_shared/supabase.ts";
 import { getCorsHeaders, HttpError, jsonResponse, safeErrorMessage } from "../_shared/http.ts";
+import { isPayangelsConfigured } from "../_shared/payangels.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null,{headers:getCorsHeaders(req)});
@@ -48,7 +49,7 @@ Deno.serve(async (req) => {
       detail:eventsError?"Telemetry unavailable":`${errors||0} recorded errors; coverage depends on instrumented services`});
     const snapshot={checkedAt:new Date().toISOString(),checks,
       integrations:[
-        {name:"PayAngels",configured:Boolean(Deno.env.get("PAYANGELS_API_KEY")||Deno.env.get("PAYANGELS_SECRET_KEY"))},
+        {name:"PayAngel",configured:isPayangelsConfigured()},
         {name:"Email",configured:Boolean(Deno.env.get("RESEND_API_KEY"))},
         {name:"AI",configured:Boolean(Deno.env.get("OPENAI_API_KEY")||Deno.env.get("QWEN_API_KEY"))},
       ]};

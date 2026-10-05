@@ -47,6 +47,7 @@ import { AdminOrganizationDetail } from "./AdminOrganizationDetail";
 import { AdminEnrollmentRequests } from "./AdminEnrollmentRequests";
 import FraudDashboard from "./FraudDashboard";
 import { AdminOperations } from "./AdminOperations";
+import { AdminPlatformFeatures } from "./AdminPlatformFeatures";
 import { platformOperationsService, type HealthSnapshot } from "../../../lib/platform-operations.service";
 import { getPlatformStaffDashboardConfig } from "../../lib/role-dashboard";
 
@@ -135,7 +136,7 @@ function getOrganizationDetailId(pathname: string) {
   return match?.[1] || null;
 }
 
-export function AdminLayout() {
+export function AdminLayout({ contentOnly = false }: { contentOnly?: boolean } = {}) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, role } = useAuth();
@@ -1013,6 +1014,8 @@ export function AdminLayout() {
         </div>
       </Card>
 
+      {profile?.is_platform_admin ? <AdminPlatformFeatures /> : null}
+
       {canAccessAdminSection(profile, "settings") ? <AdminBackupPanel /> : null}
     </div>
   );
@@ -1343,6 +1346,26 @@ export function AdminLayout() {
     />
     </>
   );
+
+  const sectionBody = (
+    <>
+      <div className="mb-8">
+        <h1 className="text-3xl font-semibold mb-2">{sectionTitle}</h1>
+        <p className="text-muted-foreground">{sectionDescription}</p>
+      </div>
+      {currentSection !== "revenue" ? renderStats() : null}
+      {renderSectionContent()}
+    </>
+  );
+
+  if (contentOnly) {
+    return (
+      <>
+        <div className="space-y-6">{sectionBody}</div>
+        {roleAssignmentDialog}
+      </>
+    );
+  }
 
   if (isElectron()) {
     return (

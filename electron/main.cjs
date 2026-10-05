@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, safeStorage } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const offlineStore = require("./offline-store.cjs");
@@ -108,6 +108,10 @@ function registerOfflineIpc() {
     offlineStore.resolveConflict(id);
     return true;
   });
+  ipcMain.handle("offline:clearAll", () => {
+    offlineStore.clearAll();
+    return true;
+  });
   ipcMain.handle("app:getVersion", () => app.getVersion());
   ipcMain.handle("shell:openExternal", (_event, url) => {
     if (!isSafeExternalUrl(url)) {
@@ -208,6 +212,7 @@ if (!gotSingleInstanceLock) {
 
 app.whenReady().then(() => {
   registerProtocolClient();
+  offlineStore.configureEncryption(safeStorage);
   offlineStore.init(app.getPath("userData"));
   registerOfflineIpc();
   createWindow();

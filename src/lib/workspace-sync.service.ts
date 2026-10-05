@@ -2,6 +2,7 @@ import { supabase } from "./supabase";
 import { offlineDb, type OfflineOutboxEntry } from "./offline-db";
 import { inspectionSyncService } from "./inspection-sync.service";
 import { buildConflictRecord, isServerNewer } from "./offline-sync.conflicts";
+import { isPermanentSyncError } from "./offline-sync-errors";
 
 export type SyncResult = {
   synced: number;
@@ -250,9 +251,11 @@ export const workspaceSyncService = {
       try {
         if (entry.entityType === "maintenance_request") {
           const payload = entry.payload as Record<string, unknown>;
-          const { error } = await supabase.from("maintenance_requests").upsert(payload as never, {
-            onConflict: "organization_id,offline_client_id",
-            ignoreDuplicates: false,
+          const offlineClientId = String(payload.offline_client_id || entry.id);
+          const { error } = await supabase.rpc("upsert_maintenance_request_offline", {
+            p_organization_id: entry.organizationId,
+            p_offline_client_id: offlineClientId,
+            p_payload: payload,
           });
           if (error) throw error;
         } else if (entry.entityType === "maintenance_update") {
@@ -338,11 +341,17 @@ export const workspaceSyncService = {
         await offlineDb.removeOutbox(entry.id);
         synced += 1;
       } catch (error) {
-        retryableFailures += 1;
+        const message = error instanceof Error ? error.message : String(error);
+        const permanent = isPermanentSyncError(message, entry.attempts);
+        if (permanent) {
+          permanentFailures += 1;
+        } else {
+          retryableFailures += 1;
+        }
         await offlineDb.upsertOutbox({
           ...entry,
           attempts: entry.attempts + 1,
-          lastError: error instanceof Error ? error.message : String(error),
+          lastError: message,
           updatedAt: new Date().toISOString(),
         });
       }

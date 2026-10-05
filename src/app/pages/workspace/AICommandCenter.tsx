@@ -42,6 +42,13 @@ import {
 import { organizationService } from "../../../lib/organization.service";
 import { aiToolAllowlistService } from "../../../lib/ai-tool-allowlist.service";
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function looksLikeOrganizationUuid(value: string | undefined): value is string {
+  return Boolean(value && UUID_RE.test(value));
+}
+
 const AGENT_CATALOG: Array<{ type: AgentType; label: string; icon: LucideIcon; color: string; description: string }> = [
   { type: "ExecutiveAgent", label: "Executive Agent", icon: TrendingUp, color: "text-amber-500", description: "Portfolio morning briefing, yield analytics & risk synthesis" },
   { type: "PropertyManagementAgent", label: "Property Management", icon: Briefcase, color: "text-blue-500", description: "Vacancies, lease turnover, SLA breach monitoring" },
@@ -69,7 +76,10 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
   const [runningNightWatch, setRunningNightWatch] = useState(false);
   const [aiGloballyEnabled, setAiGloballyEnabled] = useState(true);
 
-  const organizationId = resolvedOrganizationId || organizationIdProp || organizationSlug;
+  const liveOrganizationId = resolvedOrganizationId || organizationIdProp || "";
+  const orgResolvePending =
+    !looksLikeOrganizationUuid(liveOrganizationId) &&
+    Boolean(organizationSlug && organizationSlug !== "default" && !organizationIdProp);
 
   useEffect(() => {
     if (organizationIdProp) {
@@ -86,26 +96,31 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
   }, [organizationIdProp, organizationSlug]);
 
   const loadState = async () => {
-    const orgKey = resolvedOrganizationId || organizationIdProp || organizationSlug;
+    const orgKey = liveOrganizationId;
+    if (!looksLikeOrganizationUuid(orgKey)) {
+      setNightWatchReport(null);
+      setLedgerEntries([]);
+      return;
+    }
     try {
       const report = await agenticAIOrchestratorService.runNightWatchAuditLive(orgKey);
       setNightWatchReport(report);
       const ledger = await agenticAIOrchestratorService.getLedgerEntriesLive(orgKey);
-      setLedgerEntries(ledger.length ? ledger : agenticAIOrchestratorService.getLedgerEntries(orgKey));
-      const orgId = resolvedOrganizationId || organizationIdProp;
+      setLedgerEntries(ledger);
+      const orgId = orgKey;
       if (orgId) {
         const control = await aiToolAllowlistService.getOrgControl(orgId);
         setAiGloballyEnabled(control?.globally_enabled !== false);
       }
     } catch {
-      setNightWatchReport(agenticAIOrchestratorService.getLatestNightWatchReport(orgKey));
-      setLedgerEntries(agenticAIOrchestratorService.getLedgerEntries(orgKey));
+      setNightWatchReport(null);
+      setLedgerEntries([]);
     }
   };
 
   useEffect(() => {
     void loadState();
-  }, [resolvedOrganizationId, organizationIdProp, organizationSlug]);
+  }, [liveOrganizationId, organizationIdProp, organizationSlug]);
 
   const handleApprove = async (actionId: string) => {
     try {
@@ -142,13 +157,17 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
   };
 
   const handleRunNightWatch = async () => {
+    if (!looksLikeOrganizationUuid(liveOrganizationId)) {
+      toast.error("Organization is still loading. Try again in a moment.");
+      return;
+    }
     setRunningNightWatch(true);
     try {
-      const orgKey = resolvedOrganizationId || organizationIdProp || organizationSlug;
+      const orgKey = liveOrganizationId;
       const freshReport = await agenticAIOrchestratorService.runNightWatchAuditLive(orgKey);
       setNightWatchReport(freshReport);
       const ledger = await agenticAIOrchestratorService.getLedgerEntriesLive(orgKey);
-      setLedgerEntries(ledger.length ? ledger : agenticAIOrchestratorService.getLedgerEntries(orgKey));
+      setLedgerEntries(ledger);
       setActionSuccessMsg("AI Night Watch completed full portfolio scan.");
       setTimeout(() => setActionSuccessMsg(null), 4000);
     } finally {
@@ -159,19 +178,26 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
   const handleDispatchAgentGoal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!goalPrompt.trim()) return;
+    if (!looksLikeOrganizationUuid(liveOrganizationId)) {
+      toast.error("Organization is still loading. Wait until the workspace is ready.");
+      return;
+    }
 
     setExecutingGoal(true);
     try {
-      const orgKey = resolvedOrganizationId || organizationIdProp || organizationSlug;
       await agenticAIOrchestratorService.executeAgentGoal(
         selectedAgent,
         goalPrompt,
-        orgKey
+        liveOrganizationId
       );
       setGoalPrompt("");
       void loadState();
-      setActionSuccessMsg(`Agent ${selectedAgent} completed a live analysis. No operational action was executed.`);
+      setActionSuccessMsg(
+        "Analysis completed from live portfolio data. No operational action was executed."
+      );
       setTimeout(() => setActionSuccessMsg(null), 4000);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Agent analysis failed.");
     } finally {
       setExecutingGoal(false);
     }
@@ -218,7 +244,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
             size="sm"
             variant="outline"
             onClick={() => void handleRunNightWatch()}
-            disabled={runningNightWatch}
+            disabled={runningNightWatch || !looksLikeOrganizationUuid(liveOrganizationId)}
             className="gap-1.5 text-xs border-surface-border text-ink bg-surface hover:bg-surface-hover"
           >
             <RefreshCw className="h-3.5 w-3.5" />
@@ -263,6 +289,13 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
         <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>{actionSuccessMsg}</span>
+        </div>
+      )}
+
+      {orgResolvePending && (
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
+          <RefreshCw className="w-4 h-4 shrink-0 animate-spin" />
+          <span>Loading organization context for live AI data…</span>
         </div>
       )}
 
@@ -445,7 +478,9 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
           />
           <Button
             type="submit"
-            disabled={executingGoal || !goalPrompt.trim()}
+            disabled={
+              executingGoal || !goalPrompt.trim() || !looksLikeOrganizationUuid(liveOrganizationId)
+            }
             className="text-xs gap-1.5 bg-primary text-primary-foreground"
           >
             {executingGoal ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}

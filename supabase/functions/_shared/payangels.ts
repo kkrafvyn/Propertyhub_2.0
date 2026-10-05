@@ -1,7 +1,27 @@
 import { HttpError } from "./http.ts";
 
 function getPayangelsApiBase() {
-  return Deno.env.get("PAYANGELS_API_BASE")?.trim() || "https://api.paystack.co";
+  const configured = Deno.env.get("PAYANGELS_API_BASE")?.trim();
+  if (!configured) {
+    throw new HttpError(503, "PayAngel API endpoint is not configured");
+  }
+
+  let url: URL;
+  try {
+    url = new URL(configured);
+  } catch {
+    throw new HttpError(503, "PayAngel API endpoint is invalid");
+  }
+  if (url.protocol !== "https:" || /(^|\.)paystack\.co$/i.test(url.hostname)) {
+    throw new HttpError(503, "PayAngel API endpoint is not verified");
+  }
+  return configured.replace(/\/$/, "");
+}
+
+function isPayangelsContractVerified() {
+  return /^(1|true|yes)$/i.test(
+    Deno.env.get("PAYANGELS_API_CONTRACT_VERIFIED")?.trim() || "",
+  );
 }
 
 export interface PaystackInitializeInput {
@@ -106,7 +126,15 @@ function getPayangelsSecretKey() {
 }
 
 export function isPayangelsConfigured() {
-  return Boolean(Deno.env.get("PAYANGELS_SECRET_KEY")?.trim());
+  if (!Deno.env.get("PAYANGELS_SECRET_KEY")?.trim() || !isPayangelsContractVerified()) {
+    return false;
+  }
+  try {
+    getPayangelsApiBase();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function timingSafeEqualHex(a: string, b: string) {

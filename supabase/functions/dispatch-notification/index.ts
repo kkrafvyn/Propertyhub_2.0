@@ -377,6 +377,17 @@ Deno.serve(async (req) => {
     return jsonResponse(400, { error: "notificationId is required" });
   }
 
+  await enforceRateLimit({
+    bucket: rateLimitKey("notification-dispatch-user", user.id),
+    maxHits: 30,
+    windowSeconds: 3_600,
+  });
+  await enforceRateLimit({
+    bucket: rateLimitKey("notification-dispatch-id", notificationId),
+    maxHits: 3,
+    windowSeconds: 86_400,
+  });
+
   const { data: notification, error: notificationError } = await adminClient
     .from("notification_logs")
     .select("*")

@@ -26,6 +26,7 @@ import {
   redactBotReplyForStorage,
   safeGroupMessageWhenDmFails,
 } from "../_shared/whatsapp-privacy.ts";
+import { resolveWhatsAppDedupeId } from "../_shared/whatsapp-dedupe.ts";
 
 type GroupChannelRow = {
   id: string;
@@ -118,20 +119,31 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      let inboundClaimId: string | null = null;
-      if (msg.messageId) {
-        const { data: claimRows, error: claimError } = await admin.rpc("claim_whatsapp_inbound_message", {
-          p_organization_id: organizationId,
-          p_wa_message_id: msg.messageId,
-        });
-        if (claimError) throw claimError;
-        const claim = Array.isArray(claimRows) ? claimRows[0] : claimRows;
-        if (claim && claim.claimed === false) {
-          results.push({ messageId: msg.messageId, skipped: true, reason: "duplicate_webhook" });
-          continue;
-        }
-        inboundClaimId = claim?.inbound_id ?? null;
+      const dedupeId = resolveWhatsAppDedupeId({
+        messageId: msg.messageId,
+        organizationId,
+        senderPhone: msg.from,
+        messageText: msg.text,
+        timestamp: msg.timestamp,
+      });
+
+      if (!dedupeId) {
+        results.push({ messageId: msg.messageId, skipped: true, reason: "missing_dedupe_key" });
+        continue;
       }
+
+      let inboundClaimId: string | null = null;
+      const { data: claimRows, error: claimError } = await admin.rpc("claim_whatsapp_inbound_message", {
+        p_organization_id: organizationId,
+        p_wa_message_id: dedupeId,
+      });
+      if (claimError) throw claimError;
+      const claim = Array.isArray(claimRows) ? claimRows[0] : claimRows;
+      if (claim && claim.claimed === false) {
+        results.push({ messageId: dedupeId, skipped: true, reason: "duplicate_webhook" });
+        continue;
+      }
+      inboundClaimId = claim?.inbound_id ?? null;
 
       let groupChannel: GroupChannelRow | null = null;
       if (msg.isGroup && msg.groupId) {

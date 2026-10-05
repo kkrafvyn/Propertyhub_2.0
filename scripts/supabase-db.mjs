@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -196,9 +197,11 @@ try {
     case "file":
       await cmdFile(rest[0]);
       break;
-    case "push":
-      await cmdPushPending();
-      break;
+    case "push": {
+      const script = path.join(import.meta.dirname, "supabase-apply-pending-migrations.mjs");
+      const result = spawnSync(process.execPath, [script], { stdio: "inherit" });
+      process.exit(result.status ?? 1);
+    }
     default:
       printHelp();
       process.exit(command ? 1 : 0);

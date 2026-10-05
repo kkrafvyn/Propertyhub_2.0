@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { isDemoSimulationAllowed } from "./simulation-mode";
 import {
   getWebhookUrlHint,
   mapBotContextFromRpc,
@@ -131,6 +132,9 @@ export const whatsappGroupBotService = {
     pendingLeaseDocumentName?: string | null;
     jurisdictionLabel?: string | null;
   }) {
+    if (!isDemoSimulationAllowed()) {
+      throw new Error("Group message simulation is only available in automated tests.");
+    }
     const aliases = normalizeGroupBotAliases(input.aliases);
     if (!shouldRespondInGroup(input.text, aliases, input.respondWithoutMention)) {
       return { responded: false as const, reason: "no_mention" as const };
@@ -171,4 +175,4 @@ export const whatsappGroupBotService = {
     return whatsappGroupBotService.simulateGroupMessage({ ...input, context });
   },
 };
-
+

@@ -178,28 +178,22 @@ export const bookingService = {
   async onPaymentVerified(bookingId: string, transactionId: string) {
     const { data: booking, error } = await supabase
       .from("short_stay_bookings")
-      .update({ transaction_id: transactionId })
-      .eq("id", bookingId)
       .select("*")
+      .eq("id", bookingId)
       .single();
 
     if (error) throw error;
-
-    if (booking.status === "pending" || (booking.status === "confirmed" && !booking.checked_in_at)) {
-      return this.confirmBooking(bookingId);
+    if (booking.transaction_id !== transactionId || booking.status !== "confirmed") {
+      throw new Error("Payment is still being verified by the payment provider.");
     }
-
     return booking;
   },
 
   async approveBookingRequest(bookingId: string) {
-    const { data, error } = await supabase
-      .from("short_stay_bookings")
-      .update({ status: "confirmed" })
-      .eq("id", bookingId)
-      .eq("booking_mode", "request")
-      .select("*")
-      .single();
+    const { data, error } = await supabase.rpc("transition_short_stay_booking", {
+      p_booking_id: bookingId,
+      p_status: "confirmed",
+    });
 
     if (error) throw error;
 
@@ -500,30 +494,15 @@ export const bookingService = {
   },
 
   async updateBookingStatus(bookingId: string, status: "confirmed" | "cancelled" | "completed") {
-    const { data: booking, error: fetchError } = await supabase
-      .from("short_stay_bookings")
-      .select("*")
-      .eq("id", bookingId)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    const { data, error } = await supabase
-      .from("short_stay_bookings")
-      .update({ status })
-      .eq("id", bookingId)
-      .select("*")
-      .single();
+    if (status === "cancelled") {
+      return this.cancelBookingWithRefund(bookingId, "Cancelled by host");
+    }
+    const { data, error } = await supabase.rpc("transition_short_stay_booking", {
+      p_booking_id: bookingId,
+      p_status: status,
+    });
 
     if (error) throw error;
-
-    if (status === "cancelled" && booking.status === "confirmed") {
-      await this.releaseBookingDates({
-        listingId: booking.listing_id,
-        checkIn: booking.check_in,
-        checkOut: booking.check_out,
-      });
-    }
 
     return data;
   },

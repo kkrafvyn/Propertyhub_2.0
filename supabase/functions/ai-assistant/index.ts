@@ -9,6 +9,10 @@ import {
   resolveAiProvider,
   smartModeHint,
 } from "../_shared/llm-provider.ts";
+import {
+  isPlatformFeatureEnabled,
+  PLATFORM_FEATURE_KEYS,
+} from "../_shared/platform-feature-flags.ts";
 
 type AssistantAction = "chat" | "describe_listing" | "summarize_document";
 
@@ -115,6 +119,11 @@ Deno.serve(async (req) => {
       windowSeconds: 60,
     });
 
+    const admin = createAdminClient();
+    if (!(await isPlatformFeatureEnabled(admin, PLATFORM_FEATURE_KEYS.aiAssistant))) {
+      throw new HttpError(503, "AI assistant is disabled platform-wide.");
+    }
+
     const body = await req.json().catch(() => null);
     const action = (body?.action as AssistantAction) || "chat";
     const message = typeof body?.message === "string" ? body.message.trim().slice(0, 4000) : "";
@@ -199,9 +208,12 @@ Deno.serve(async (req) => {
       throw new HttpError(400, "Unsupported action");
     }
 
+    const responseMode = source === "local" ? "local_faq" : "llm";
+
     return jsonResponse(200, {
       answer,
       source,
+      responseMode,
       provider: isLlmConfigured() ? activeProvider : null,
     }, req);
   } catch (error) {

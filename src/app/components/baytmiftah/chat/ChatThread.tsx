@@ -5,6 +5,8 @@ import { Phone, Video as VideoIcon } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
 import { useTranslation } from '../../../i18n/LocaleContext'
 import { useCall } from '../../../context/CallContext'
+import { isVideoCallsEnabledForApp } from '../../../../lib/app-feature-gates'
+import { usePlatformFeatures } from '../../../context/PlatformFeaturesContext'
 import { inputClass } from '../AirbnbUI'
 import { useChatScroll, useChatThread } from '../../../hooks/useChatThread'
 import { getListingPath } from '../../../lib/baytmiftah/listing-links'
@@ -186,7 +188,11 @@ export function ChatThreadHeader({ conversation, mode = 'consumer' }: { conversa
     )
   }
 
+  const { flags } = usePlatformFeatures()
+  const videoEnabled = isVideoCallsEnabledForApp(flags)
+
   const handleStartVideoCall = () => {
+    if (!videoEnabled) return
     void startCall(
       {
         name: title,
@@ -230,14 +236,16 @@ export function ChatThreadHeader({ conversation, mode = 'consumer' }: { conversa
           <Phone className="h-4 w-4" />
         </button>
 
-        <button
-          type="button"
-          onClick={handleStartVideoCall}
-          title="Start HD Video Tour / Call"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-subtle text-ink transition hover:bg-teal-50 hover:text-teal-600 dark:hover:bg-teal-950/50"
-        >
-          <VideoIcon className="h-4 w-4" />
-        </button>
+        {videoEnabled ? (
+          <button
+            type="button"
+            onClick={handleStartVideoCall}
+            title="Start HD Video Tour / Call"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-subtle text-ink transition hover:bg-teal-50 hover:text-teal-600 dark:hover:bg-teal-950/50"
+          >
+            <VideoIcon className="h-4 w-4" />
+          </button>
+        ) : null}
       </div>
     </div>
   )

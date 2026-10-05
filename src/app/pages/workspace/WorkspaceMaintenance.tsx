@@ -70,6 +70,7 @@ interface MaintenanceRequest {
   vendor?: {
     id: string;
     business_name: string;
+    email?: string | null;
   };
   lease?: {
     listing?: {
@@ -197,13 +198,17 @@ export function WorkspaceMaintenance({
     }
   };
 
-  const shareContractorLink = async (requestId: string, title: string) => {
+  const shareContractorLink = async (request: MaintenanceRequest) => {
     try {
-      setUpdatingId(requestId);
+      setUpdatingId(request.id);
+      if (!request.vendor?.email) {
+        throw new Error("Assign a vendor with a verified email before creating an external link.");
+      }
       const url = await maintenanceService.createContractorAccessLink({
         organizationId,
-        requestId,
-        label: title,
+        requestId: request.id,
+        recipientEmail: request.vendor.email,
+        label: request.title,
       });
       await navigator.clipboard.writeText(url);
       toast.success("Contractor access link copied to clipboard.");
@@ -784,7 +789,7 @@ export function WorkspaceMaintenance({
                         <Button
                           size="sm"
                           variant="glass"
-                          onClick={() => void shareContractorLink(request.id, request.title)}
+                          onClick={() => void shareContractorLink(request)}
                           disabled={updatingId === request.id}
                           className="text-xs"
                         >

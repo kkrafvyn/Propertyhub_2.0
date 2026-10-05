@@ -103,18 +103,22 @@ Deno.serve(async (req) => {
     }
 
     assertListingPayable(listing);
-    const pricing = await resolveCheckoutAmountMinor(admin, {
-      listing,
-      purpose,
-      promoCode: promoCode || null,
-      clientAmountMinor,
-    });
-    const amountMinor = pricing.totalMinor;
-
+    let booking: {
+      id: string;
+      guest_user_id: string;
+      listing_id: string;
+      status: string;
+      total_minor: number;
+      currency: string;
+      check_in: string;
+      check_out: string;
+      nights: number;
+      transaction_id: string | null;
+    } | null = null;
     if (bookingId) {
-      const { data: booking, error: bookingError } = await admin
+      const { data: bookingRow, error: bookingError } = await admin
         .from("short_stay_bookings")
-        .select("id, guest_user_id, listing_id, status")
+        .select("id, guest_user_id, listing_id, status, total_minor, currency, check_in, check_out, nights, transaction_id")
         .eq("id", bookingId)
         .maybeSingle();
 
@@ -122,9 +126,49 @@ Deno.serve(async (req) => {
         throw new HttpError(500, "Unable to validate booking");
       }
 
-      if (!booking || booking.guest_user_id !== user.id || booking.listing_id !== listingId) {
+      if (!bookingRow || bookingRow.guest_user_id !== user.id || bookingRow.listing_id !== listingId) {
         throw new HttpError(403, "Booking does not belong to this user or listing");
       }
+      if (bookingRow.status !== "pending" || bookingRow.transaction_id) {
+        throw new HttpError(409, "Booking is not awaiting payment");
+      }
+      if (purpose !== "booking_fee") {
+        throw new HttpError(400, "Booking payments must use the booking_fee purpose");
+      }
+      if (promoCode) {
+        throw new HttpError(400, "Promo codes must be applied before the booking total is created");
+      }
+      if (!Number.isSafeInteger(Number(bookingRow.total_minor)) || Number(bookingRow.total_minor) <= 0) {
+        throw new HttpError(409, "Booking total is invalid");
+      }
+      if (String(bookingRow.currency).toUpperCase() !== String(listing.currency || "GHS").toUpperCase()) {
+        throw new HttpError(409, "Booking currency does not match the listing currency");
+      }
+      booking = bookingRow as typeof booking;
+    }
+
+    const pricing = booking
+      ? {
+          baseMinor: Number(booking.total_minor),
+          platformFeeMinor: 0,
+          buyerPlatformFeeMinor: 0,
+          providerPlatformFeeMinor: 0,
+          discountMinor: 0,
+          totalMinor: Number(booking.total_minor),
+          feeBreakdown: [],
+          feeDisplayName: "Booking total",
+          promo: null,
+        }
+      : await resolveCheckoutAmountMinor(admin, {
+          listing,
+          purpose,
+          promoCode: promoCode || null,
+          clientAmountMinor,
+        });
+    const amountMinor = pricing.totalMinor;
+
+    if (booking && clientAmountMinor != null && clientAmountMinor !== amountMinor) {
+      throw new HttpError(400, "Payment amount does not match the locked booking total");
     }
 
     if (!user.email) {
@@ -244,7 +288,7 @@ Deno.serve(async (req) => {
         provider: "payangels",
         provider_reference: reference,
         amount_minor: amountMinor,
-        currency: listing.currency || "GHS",
+        currency: booking?.currency || listing.currency || "GHS",
         purpose,
         status: "initialized",
         metadata,
@@ -261,7 +305,7 @@ Deno.serve(async (req) => {
       payangels = await initializePayangelsTransaction({
         amount: String(amountMinor),
         email: user.email,
-        currency: listing.currency || "GHS",
+        currency: booking?.currency || listing.currency || "GHS",
         reference,
         callback_url: callbackUrl,
         channels: ["mobile_money", "card", "bank_transfer", "bank"],

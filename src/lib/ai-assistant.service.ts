@@ -1,9 +1,11 @@
 import { supabase } from './supabase'
+import { isAiAssistantEnabledForApp } from './app-feature-gates'
 import { Database } from './database.types'
 import { clientIntegrations } from './integrations'
 import { AI_ASSISTANT_DISCLAIMER, TRUST_LABELS } from './legal-disclaimers'
 
 export type AiSource = 'openai' | 'qwen' | 'local'
+export type AiResponseMode = 'llm' | 'local_faq'
 
 type AISearch = Database['public']['Tables']['ai_searches']['Row']
 type AIRecommendation = Database['public']['Tables']['ai_recommendations']['Row']
@@ -431,7 +433,14 @@ export const aiAssistantService = {
     context?: string
     organizationId?: string
     history?: Array<{ role: 'user' | 'assistant'; content: string }>
-  }): Promise<{ answer: string; source: AiSource }> {
+  }): Promise<{ answer: string; source: AiSource; responseMode: AiResponseMode }> {
+    if (!isAiAssistantEnabledForApp()) {
+      return {
+        answer: `The AI assistant is turned off for this platform. Contact your administrator.\n\n${AI_ASSISTANT_DISCLAIMER}`,
+        source: 'local',
+        responseMode: 'local_faq',
+      }
+    }
 
     if (clientIntegrations.supabase.configured) {
       try {
@@ -446,14 +455,25 @@ export const aiAssistantService = {
         })
 
         if (!error && data && typeof data === 'object' && 'answer' in data) {
-          const payload = data as { answer: string; source?: AiSource }
+          const payload = data as {
+            answer: string
+            source?: AiSource
+            responseMode?: AiResponseMode
+          }
           const source: AiSource =
             payload.source === 'openai' || payload.source === 'qwen'
               ? payload.source
               : 'local'
+          const responseMode: AiResponseMode =
+            payload.responseMode === 'local_faq' || payload.responseMode === 'llm'
+              ? payload.responseMode
+              : source === 'local'
+                ? 'local_faq'
+                : 'llm'
           return {
             answer: payload.answer,
             source,
+            responseMode,
           }
         }
       } catch (error) {
@@ -464,6 +484,7 @@ export const aiAssistantService = {
     return {
       answer: this.answerFaq(params.message, params.context),
       source: 'local',
+      responseMode: 'local_faq',
     }
   },
 
@@ -471,6 +492,9 @@ export const aiAssistantService = {
     input: Parameters<typeof this.generateListingDescription>[0],
     organizationId?: string,
   ) {
+    if (!isAiAssistantEnabledForApp()) {
+      return this.generateListingDescription(input)
+    }
     if (clientIntegrations.ai.enhanced && clientIntegrations.supabase.configured) {
       try {
         const { data, error } = await supabase.functions.invoke('ai-assistant', {

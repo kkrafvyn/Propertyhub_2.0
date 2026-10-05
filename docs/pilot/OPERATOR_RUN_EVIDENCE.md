@@ -49,7 +49,7 @@ npm run pilot:payangels-e2e                 # partial
 | Config dry-run | Pass |
 | Auth (tenant fixture user) | Pass |
 | Payment init → DB row | Pass (constraint fix `2026090905`) |
-| PayAngels API charge | **Pass** — fixed `PAYANGELS_API_BASE=https://api.paystack.co` |
+| PayAngel API charge | **Invalidated** — the run called Paystack, not PayAngel |
 | Webhook replay | **Pass** — reference `ph_pay_1996cab48e80407ab8` |
 | Refund / disbursement | Skipped — needs transaction + approval IDs |
 
@@ -63,7 +63,7 @@ npm run pilot:payangels-e2e                 # partial
 npm run ops:probe-payangels-api
 ```
 
-Wrong default host `api.payangels.com` → DNS failure. Correct base: **`https://api.paystack.co`**. Deployed via `PAYANGELS_API_BASE` Supabase secret.
+This diagnosis was incorrect: `https://api.paystack.co` is Paystack and cannot certify PayAngel. Obtain the private PayAngel Business API contract after Live activation, deploy the exact provider-issued endpoints, and rerun the complete certification.
 
 ## Still operator-owned
 

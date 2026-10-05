@@ -10,6 +10,7 @@ const offlineStore = {
   listConflicts: (organizationId) => ipcRenderer.invoke("offline:listConflicts", organizationId),
   recordConflict: (conflict) => ipcRenderer.invoke("offline:recordConflict", conflict),
   resolveConflict: (id) => ipcRenderer.invoke("offline:resolveConflict", id),
+  clearAll: () => ipcRenderer.invoke("offline:clearAll"),
 };
 
 contextBridge.exposeInMainWorld("__ELECTRON__", true);

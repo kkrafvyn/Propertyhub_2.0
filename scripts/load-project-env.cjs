@@ -11,6 +11,7 @@ const SERVER_KEYS = [
   "PAYANGELS_WEBHOOK_SECRET",
   "PAYANGELS_API_BASE",
   "PAYANGELS_DISBURSEMENT_URL",
+  "PAYANGELS_API_CONTRACT_VERIFIED",
   "INTERNAL_AUTOMATIONS_KEY",
   "RESEND_API_KEY",
   "NOTIFICATION_EMAIL_FROM",
@@ -87,10 +88,6 @@ function buildServerSecrets(env = loadProjectEnv()) {
 
   for (const key of SERVER_KEYS) {
     if (env[key]) secrets[key] = env[key];
-  }
-
-  if (!secrets.PAYANGELS_WEBHOOK_SECRET && env.PAYANGELS_SECRET_KEY) {
-    secrets.PAYANGELS_WEBHOOK_SECRET = env.PAYANGELS_SECRET_KEY;
   }
 
   if (!secrets.WEB_PUSH_PUBLIC_KEY && env.VITE_WEB_PUSH_PUBLIC_KEY) {

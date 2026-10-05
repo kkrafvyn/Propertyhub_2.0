@@ -4,20 +4,43 @@ const fs = require("fs");
 let db = null;
 let jsonStorePath = null;
 let useJsonFallback = false;
+let encryption = null;
+
+function configureEncryption(provider) {
+  if (!provider || !provider.isEncryptionAvailable()) {
+    throw new Error("OS-backed encryption is required for offline storage");
+  }
+  encryption = provider;
+}
+
+function encryptJson(value) {
+  if (!encryption) throw new Error("Offline encryption is not configured");
+  return `safe:v1:${encryption.encryptString(JSON.stringify(value)).toString("base64")}`;
+}
+
+function decryptJson(value) {
+  if (typeof value !== "string") return value;
+  if (!value.startsWith("safe:v1:")) {
+    // One-way migration support for data written before encrypted storage.
+    return JSON.parse(value);
+  }
+  const encrypted = Buffer.from(value.slice("safe:v1:".length), "base64");
+  return JSON.parse(encryption.decryptString(encrypted));
+}
 
 function ensureJsonStore() {
   if (!jsonStorePath) return { outbox: [], drafts: [], conflicts: [] };
   if (!fs.existsSync(jsonStorePath)) {
     const empty = { outbox: [], drafts: [], conflicts: [] };
-    fs.writeFileSync(jsonStorePath, JSON.stringify(empty, null, 2));
+    fs.writeFileSync(jsonStorePath, encryptJson(empty), { mode: 0o600 });
     return empty;
   }
-  return JSON.parse(fs.readFileSync(jsonStorePath, "utf8"));
+  return decryptJson(fs.readFileSync(jsonStorePath, "utf8"));
 }
 
 function writeJsonStore(store) {
   if (!jsonStorePath) return;
-  fs.writeFileSync(jsonStorePath, JSON.stringify(store, null, 2));
+  fs.writeFileSync(jsonStorePath, encryptJson(store), { mode: 0o600 });
 }
 
 function initSchema() {
@@ -82,7 +105,7 @@ function listOutbox(organizationId) {
   const rows = db.prepare("SELECT * FROM outbox ORDER BY createdAt ASC").all();
   const parsed = rows.map((row) => ({
     ...row,
-    payload: JSON.parse(row.payload),
+    payload: decryptJson(row.payload),
     attempts: Number(row.attempts || 0),
   }));
   return filterByOrg(parsed, organizationId);
@@ -114,7 +137,7 @@ function upsertOutbox(entry) {
       status=excluded.status
   `).run({
     ...entry,
-    payload: JSON.stringify(entry.payload),
+    payload: encryptJson(entry.payload),
     attempts: entry.attempts ?? 0,
     lastError: entry.lastError ?? null,
     baseUpdatedAt: entry.baseUpdatedAt ?? null,
@@ -148,7 +171,7 @@ function saveDraft(draft) {
   db.prepare(`
     INSERT INTO drafts (id, payload) VALUES (?, ?)
     ON CONFLICT(id) DO UPDATE SET payload=excluded.payload
-  `).run(draft.id, JSON.stringify(draft));
+  `).run(draft.id, encryptJson(draft));
   return draft;
 }
 
@@ -159,7 +182,7 @@ function getDraft(id) {
   }
 
   const row = db.prepare("SELECT payload FROM drafts WHERE id = ?").get(id);
-  return row ? JSON.parse(row.payload) : null;
+  return row ? decryptJson(row.payload) : null;
 }
 
 function listDrafts() {
@@ -169,7 +192,7 @@ function listDrafts() {
   }
 
   const rows = db.prepare("SELECT payload FROM drafts").all();
-  return rows.map((row) => JSON.parse(row.payload));
+  return rows.map((row) => decryptJson(row.payload));
 }
 
 function listConflicts(organizationId) {
@@ -183,8 +206,8 @@ function listConflicts(organizationId) {
     .all();
   const parsed = rows.map((row) => ({
     ...row,
-    localPayload: JSON.parse(row.localPayload),
-    serverSnapshot: JSON.parse(row.serverSnapshot),
+    localPayload: decryptJson(row.localPayload),
+    serverSnapshot: decryptJson(row.serverSnapshot),
   }));
   return filterByOrg(parsed, organizationId);
 }
@@ -204,8 +227,8 @@ function recordConflict(conflict) {
     VALUES (@id, @outboxId, @entityType, @organizationId, @localPayload, @serverSnapshot, @detectedAt, @resolvedAt)
   `).run({
     ...conflict,
-    localPayload: JSON.stringify(conflict.localPayload),
-    serverSnapshot: JSON.stringify(conflict.serverSnapshot),
+    localPayload: encryptJson(conflict.localPayload),
+    serverSnapshot: encryptJson(conflict.serverSnapshot),
     resolvedAt: conflict.resolvedAt ?? null,
   });
   return conflict;
@@ -227,7 +250,21 @@ function resolveConflict(id) {
   );
 }
 
+function clearAll() {
+  if (useJsonFallback) {
+    writeJsonStore({ outbox: [], drafts: [], conflicts: [] });
+    return;
+  }
+  const clear = db.transaction(() => {
+    db.prepare("DELETE FROM outbox").run();
+    db.prepare("DELETE FROM drafts").run();
+    db.prepare("DELETE FROM conflicts").run();
+  });
+  clear();
+}
+
 module.exports = {
+  configureEncryption,
   init,
   listOutbox,
   upsertOutbox,
@@ -238,4 +275,5 @@ module.exports = {
   listConflicts,
   recordConflict,
   resolveConflict,
+  clearAll,
 };

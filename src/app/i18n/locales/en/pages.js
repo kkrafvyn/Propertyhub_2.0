@@ -191,9 +191,12 @@ export default {
     "browserSession": "Browser session",
     "unknownDevice": "Unknown device",
     "lastSeen": "Last seen {{time}}",
-    "revokeSession": "Revoke",
-    "revokeConfirm": "Revoke this session?",
-    "sessionRevoked": "Session revoked.",
+    "revokeSession": "Remove from list",
+    "revokeConfirm": "Remove this device from your activity list?",
+    "sessionRevoked": "Device removed from activity list.",
+    "signOutDevice": "Sign out device",
+    "signOutDeviceConfirm": "Invalidate this device's sign-in session?",
+    "deviceSignedOut": "That device has been signed out.",
     "signOutConfirm": "Sign out on all devices?"
   }
 }

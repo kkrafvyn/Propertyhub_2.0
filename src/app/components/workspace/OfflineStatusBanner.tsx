@@ -73,6 +73,10 @@ export function OfflineStatusBanner({ organizationId }: OfflineStatusBannerProps
                 .then((result) => {
                   if (result.conflicts > 0) {
                     toast.warning(`${result.conflicts} sync conflict${result.conflicts === 1 ? "" : "s"} need review.`);
+                  } else if (result.permanentFailures > 0) {
+                    toast.error(
+                      `${result.permanentFailures} change${result.permanentFailures === 1 ? "" : "s"} need manual review.`,
+                    );
                   } else if (result.retryableFailures > 0) {
                     toast.error(`${result.retryableFailures} change${result.retryableFailures === 1 ? "" : "s"} could not sync yet. Will retry when online.`);
                   }

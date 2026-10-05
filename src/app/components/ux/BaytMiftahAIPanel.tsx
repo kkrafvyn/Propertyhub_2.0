@@ -11,7 +11,11 @@ import {
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Badge } from "../ui/badge";
-import { aiAssistantService, type AiSource } from "../../../lib/ai-assistant.service";
+import {
+  aiAssistantService,
+  type AiResponseMode,
+  type AiSource,
+} from "../../../lib/ai-assistant.service";
 import { clientIntegrations } from "../../../lib/integrations";
 import { AI_PANEL_OPEN_EVENT } from "../../lib/baytmiftah/ai-panel";
 
@@ -28,6 +32,7 @@ interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   text: string;
+  responseMode?: AiResponseMode;
 }
 
 const CONTEXT_COPY: Record<
@@ -114,6 +119,7 @@ export function BaytMiftahAIPanel({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [source, setSource] = useState<AiSource | null>(null);
+  const [responseMode, setResponseMode] = useState<AiResponseMode | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const smartMode = clientIntegrations.ai.enhanced;
@@ -304,10 +310,19 @@ export function BaytMiftahAIPanel({
 
   if (shouldHideChat(location.pathname)) return null;
 
-  const appendMessage = (role: ChatMessage["role"], text: string) => {
+  const appendMessage = (
+    role: ChatMessage["role"],
+    text: string,
+    mode?: AiResponseMode
+  ) => {
     setMessages((current) => [
       ...current,
-      { id: `${role}-${Date.now()}-${current.length}`, role, text },
+      {
+        id: `${role}-${Date.now()}-${current.length}`,
+        role,
+        text,
+        ...(mode ? { responseMode: mode } : {}),
+      },
     ]);
   };
 
@@ -332,7 +347,8 @@ export function BaytMiftahAIPanel({
       });
 
       setSource(assistantRes.source);
-      appendMessage("assistant", assistantRes.answer);
+      setResponseMode(assistantRes.responseMode);
+      appendMessage("assistant", assistantRes.answer, assistantRes.responseMode);
     } finally {
       setLoading(false);
     }
@@ -369,6 +385,21 @@ export function BaytMiftahAIPanel({
             <div className="min-w-0 flex-1">
               <h3 className="truncate text-sm font-bold tracking-tight text-white">{copy.title}</h3>
               <p className="mt-0.5 truncate text-xs text-white/80">{copy.description}</p>
+              {responseMode === "local_faq" ? (
+                <Badge
+                  variant="outline"
+                  className="mt-1.5 border-amber-300/50 bg-amber-500/15 text-[10px] text-amber-100"
+                >
+                  Built-in FAQ (AI model unavailable)
+                </Badge>
+              ) : responseMode === "llm" && source ? (
+                <Badge
+                  variant="outline"
+                  className="mt-1.5 border-white/30 bg-white/10 text-[10px] text-white/90"
+                >
+                  {source === "qwen" ? "Qwen" : "OpenAI"} response
+                </Badge>
+              ) : null}
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -417,6 +448,11 @@ export function BaytMiftahAIPanel({
                   }`}
                 >
                   <div className="whitespace-pre-wrap">{message.text}</div>
+                  {message.role === "assistant" && message.responseMode === "local_faq" ? (
+                    <p className="mt-2 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                      Answered from built-in help topics, not a live AI model.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             ))}

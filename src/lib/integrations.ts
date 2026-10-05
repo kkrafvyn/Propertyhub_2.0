@@ -38,14 +38,20 @@ export const clientIntegrations = {
     get clientConfigured() {
       return !!firstEnv("VITE_PAYANGELS_PUBLIC_KEY");
     },
+    /** True after `npm run integrations:wire-payangels` + Vercel env sync (operator signal). */
+    get serverConfiguredHint() {
+      return firstEnv("VITE_PAYANGELS_CONFIGURED") === "true";
+    },
     get checkoutReady() {
-      return clientIntegrations.supabase.configured && clientIntegrations.payangels.clientConfigured;
+      return clientIntegrations.supabase.configured &&
+        clientIntegrations.payangels.clientConfigured &&
+        clientIntegrations.payangels.serverConfiguredHint;
     },
     get configured() {
       return clientIntegrations.payangels.checkoutReady;
     },
     label: "Payments",
-    hint: "Configure PayAngels keys in Supabase secrets for live checkout",
+    hint: "Run npm run integrations:wire-payangels, then npm run vercel:env for the public key",
   },
 
   webPush: {

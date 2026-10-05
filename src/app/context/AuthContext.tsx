@@ -174,6 +174,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         const nextUser = session?.user ?? null
+        if (event === "SIGNED_OUT") {
+          await window.desktopAPI?.offlineStore?.clearAll?.()
+        }
         setUser(nextUser)
         await ensureProfile(nextUser)
         if (nextUser && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
@@ -426,6 +429,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null)
       const { error } = await supabase.auth.signOut({ scope: "global" })
       if (error) throw error
+      await window.desktopAPI?.offlineStore?.clearAll?.()
       setUser(null)
       setProfile(null)
     } catch (err) {

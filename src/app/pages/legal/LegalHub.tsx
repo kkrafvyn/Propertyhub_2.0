@@ -10,7 +10,7 @@ import {
   getLegalDocument,
   getPoliciesByCategory,
 } from "../../../content/legal";
-import { LEGAL_OPERATOR } from "../../../lib/legal-config";
+import { isLegalLaunchSignedOff, LEGAL_OPERATOR, LEGAL_POLICY_VERSION } from "../../../lib/legal-config";
 import { LegalDocumentView } from "./LegalDocumentView";
 import { LegalCentreShell } from "../../components/legal/LegalPageLayout";
 import { LegalPolicyCard } from "../../components/legal/LegalPolicyCard";
@@ -66,6 +66,17 @@ export function LegalHub() {
             platform works, what users are responsible for, and the limits of BaytMiftah's role.
           </p>
         </header>
+
+        {isLegalLaunchSignedOff() ? (
+          <p className="mt-6 inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-900">
+            Production legal bundle signed off ({LEGAL_POLICY_VERSION})
+          </p>
+        ) : (
+          <p className="mt-6 text-xs text-ink-secondary">
+            Policy bundle {LEGAL_POLICY_VERSION}. Operator launch attestation is recorded separately;
+            see docs/legal/LEGAL_LAUNCH_SIGNOFF.md.
+          </p>
+        )}
 
         <div className="mt-8 rounded-xl border border-brand-forest/20 bg-brand-forest/5 p-5 text-sm leading-relaxed text-ink">
           <strong>Central rule.</strong> {PLATFORM_ROLE_STATEMENT}

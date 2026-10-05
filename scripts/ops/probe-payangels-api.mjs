@@ -20,7 +20,20 @@ async function main() {
   const secret = env.PAYANGELS_SECRET_KEY?.trim();
   if (!secret) fail("Missing PAYANGELS_SECRET_KEY in root .env");
 
-  const apiBase = baseOverride || env.PAYANGELS_API_BASE?.trim() || "https://api.paystack.co";
+  const apiBase = baseOverride || env.PAYANGELS_API_BASE?.trim();
+  if (!apiBase) fail("Missing provider-issued PAYANGELS_API_BASE in root .env");
+  if (!/^(1|true|yes)$/i.test(env.PAYANGELS_API_CONTRACT_VERIFIED?.trim() || "")) {
+    fail("PAYANGELS_API_CONTRACT_VERIFIED must be true before probing the provider");
+  }
+  let parsedBase;
+  try {
+    parsedBase = new URL(apiBase);
+  } catch {
+    fail("PAYANGELS_API_BASE is not a valid URL");
+  }
+  if (parsedBase.protocol !== "https:" || /(^|\.)paystack\.co$/i.test(parsedBase.hostname)) {
+    fail("PAYANGELS_API_BASE must be a verified PayAngel HTTPS endpoint, not Paystack");
+  }
   const reference = `probe_${Date.now()}`;
   const payload = {
     amount: "100",

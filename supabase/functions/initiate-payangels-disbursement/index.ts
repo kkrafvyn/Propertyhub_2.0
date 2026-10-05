@@ -54,8 +54,7 @@ Deno.serve(async (req) => {
     await enforceRateLimit({ bucket: rateLimitKey("payangels-disbursement", user.id), maxHits: 10, windowSeconds: 60 });
 
     const body = await req.json().catch(() => null);
-    const amount = Number(body?.amount);
-    const phone = typeof body?.phone === "string" ? body.phone.trim() : "";
+    const requestedAmount = Number(body?.amount);
     const organizationId = typeof body?.organizationId === "string" ? body.organizationId.trim() : "";
     const approvalId = typeof body?.approvalId === "string" ? body.approvalId.trim() : "";
     const workOrderId = typeof body?.workOrderId === "string" ? body.workOrderId.trim() : "";
@@ -63,8 +62,7 @@ Deno.serve(async (req) => {
     if (!organizationId) throw new HttpError(400, "organizationId is required");
     if (!approvalId && !workOrderId) throw new HttpError(400, "approvalId or workOrderId is required");
     if (approvalId && workOrderId) throw new HttpError(400, "Provide either approvalId or workOrderId, not both");
-    if (!Number.isFinite(amount) || amount <= 0) throw new HttpError(400, "Valid amount is required");
-    if (!phone) throw new HttpError(400, "Recipient phone is required");
+    if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) throw new HttpError(400, "Valid amount is required");
 
     const admin = createAdminClient();
     await requireFinanceMembership(admin, user.id, organizationId);
@@ -75,6 +73,9 @@ Deno.serve(async (req) => {
 
     let auditEntityType = "estate_distribution_approval";
     let auditEntityId = approvalId;
+    let recipient = "";
+    let amountMinor = 0;
+    let currency = "GHS";
     let metadata: Record<string, unknown> = {
       organizationId,
       requestedBy: user.id,
@@ -95,7 +96,8 @@ Deno.serve(async (req) => {
           final_cost_pesewas,
           estimate_pesewas,
           provider_disbursement_id,
-          estate:managed_estates(organization_id)
+          estate:managed_estates(organization_id),
+          artisan:estate_artisans(momo_number, momo_provider, ghana_card_verified, payout_destination_verified_at, is_active)
         `)
         .eq("id", workOrderId)
         .maybeSingle();
@@ -120,10 +122,25 @@ Deno.serve(async (req) => {
       }
 
       const expectedMinor = Number(order.final_cost_pesewas || order.estimate_pesewas || 0);
-      const requestedMinor = Math.round(amount * 100);
-      if (expectedMinor > 0 && requestedMinor !== expectedMinor) {
+      const requestedMinor = Math.round(requestedAmount * 100);
+      if (expectedMinor <= 0 || requestedMinor !== expectedMinor) {
         throw new HttpError(400, "Disbursement amount does not match the work order total");
       }
+      const artisan = order.artisan as {
+        momo_number?: string | null;
+        momo_provider?: string | null;
+        ghana_card_verified?: boolean;
+        payout_destination_verified_at?: string | null;
+        is_active?: boolean;
+      } | null;
+      if (
+        !artisan?.is_active || !artisan.ghana_card_verified ||
+        !artisan.payout_destination_verified_at || !artisan.momo_number?.trim()
+      ) {
+        throw new HttpError(409, "The assigned artisan does not have an active, verified payout destination");
+      }
+      recipient = artisan.momo_number.trim();
+      amountMinor = expectedMinor;
 
       const { data: claimed, error: claimError } = await admin
         .from("estate_contractor_work_orders")
@@ -151,6 +168,8 @@ Deno.serve(async (req) => {
           statement:estate_owner_statement_runs(
             id,
             estate_id,
+            owner_user_id,
+            currency,
             estate:managed_estates(organization_id)
           )
         `)
@@ -177,10 +196,32 @@ Deno.serve(async (req) => {
       }
 
       const expectedMinor = Number(approval.requested_amount_minor || 0);
-      const requestedMinor = Math.round(amount * 100);
-      if (expectedMinor > 0 && requestedMinor !== expectedMinor) {
+      const requestedMinor = Math.round(requestedAmount * 100);
+      if (expectedMinor <= 0 || requestedMinor !== expectedMinor) {
         throw new HttpError(400, "Disbursement amount does not match the approved distribution");
       }
+      const statement = approval.statement as {
+        owner_user_id?: string;
+        currency?: string;
+      } | null;
+      const { data: payoutMethod, error: payoutMethodError } = await admin
+        .from("owner_payout_methods")
+        .select("destination, currency, method_type")
+        .eq("owner_user_id", statement?.owner_user_id || "")
+        .eq("organization_id", organizationId)
+        .eq("status", "verified")
+        .eq("is_default", true)
+        .maybeSingle();
+      if (payoutMethodError) throw new HttpError(500, payoutMethodError.message);
+      if (!payoutMethod || payoutMethod.method_type !== "mobile_money" || !payoutMethod.destination?.trim()) {
+        throw new HttpError(409, "The statement owner does not have a verified mobile-money payout method");
+      }
+      if (String(payoutMethod.currency).toUpperCase() !== String(statement?.currency || "GHS").toUpperCase()) {
+        throw new HttpError(409, "Verified payout currency does not match the statement currency");
+      }
+      recipient = payoutMethod.destination.trim();
+      amountMinor = expectedMinor;
+      currency = String(statement?.currency || "GHS").toUpperCase();
 
       const { data: claimed, error: claimError } = await admin
         .from("estate_distribution_approvals")
@@ -215,9 +256,9 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: amount.toFixed(2),
-          currency: "GHS",
-          recipient: phone,
+          amount: (amountMinor / 100).toFixed(2),
+          currency,
+          recipient,
           note: body?.note || "BaytMiftah disbursement",
           externalId,
           metadata,
@@ -257,8 +298,8 @@ Deno.serve(async (req) => {
       entityId: auditEntityId,
       details: {
         organizationId,
-        amountGhs: amount.toFixed(2),
-        recipient: phone,
+        amountGhs: (amountMinor / 100).toFixed(2),
+        recipient,
         referenceId,
         externalId,
         providerStatus: payload?.status || "PENDING",
@@ -273,8 +314,8 @@ Deno.serve(async (req) => {
         type: "disbursement",
         referenceId,
         externalId,
-        amount: amount.toFixed(2),
-        recipient: phone,
+        amount: (amountMinor / 100).toFixed(2),
+        recipient,
         status: payload?.status || "PENDING",
         message: payload?.message,
       },

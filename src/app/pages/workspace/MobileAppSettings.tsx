@@ -11,6 +11,8 @@ import { fieldOpsService } from "@/lib/field-ops.service";
 import { mobileAppService } from "@/lib/mobile-app.service";
 import { pushNotificationService } from "@/lib/push-notification.service";
 import { nativePushAvailable } from "@/lib/communications-capabilities";
+import { registerNativeDevicePush } from "@/lib/native-push-registration.service";
+import { Capacitor } from "@capacitor/core";
 
 interface MobileAppSettingsProps {
   currentUserId: string;
@@ -24,6 +26,7 @@ export default function MobileAppSettings({
   const [devices, setDevices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [registeringBrowserPush, setRegisteringBrowserPush] = useState(false);
+  const [registeringNativePush, setRegisteringNativePush] = useState(false);
   const [iosVersion, setIosVersion] = useState<any>(null);
   const [androidVersion, setAndroidVersion] = useState<any>(null);
   const [fieldLogs, setFieldLogs] = useState<any[]>([]);
@@ -102,6 +105,26 @@ export default function MobileAppSettings({
       toast.error("We couldn't remove that device.");
     } finally {
       setRemovingDevice(false);
+    }
+  };
+
+  const handleRegisterNativePush = async () => {
+    try {
+      setRegisteringNativePush(true);
+      const result = await registerNativeDevicePush(currentUserId);
+      if (!result.configured) {
+        toast.error("reason" in result ? result.reason : "Native push is unavailable.");
+        return;
+      }
+      toast.success("Native push notifications connected.");
+      await loadDevices();
+    } catch (error) {
+      console.error("Failed to register native push:", error);
+      toast.error(
+        error instanceof Error ? error.message : "We couldn't connect native push notifications.",
+      );
+    } finally {
+      setRegisteringNativePush(false);
     }
   };
 
@@ -253,11 +276,22 @@ export default function MobileAppSettings({
             Browser push is only available in supported secure browser environments.
           </p>
         )}
-        {!nativePushAvailable() && (
+        {Capacitor.isNativePlatform() && nativePushAvailable() ? (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => void handleRegisterNativePush()}
+              disabled={registeringNativePush}
+            >
+              <Smartphone className="w-4 h-4" />
+              {registeringNativePush ? "Connecting native push..." : "Enable native push (FCM/APNs)"}
+            </Button>
+          </div>
+        ) : !nativePushAvailable() ? (
           <p className="text-sm text-muted-foreground mt-2">
             Native background push (FCM/APNs) is not configured for production mobile builds yet.
           </p>
-        )}
+        ) : null}
       </Card>
 
       <Card className="p-6">

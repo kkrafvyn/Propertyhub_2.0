@@ -10,9 +10,9 @@
  */
 
 import { realtimeMessagingService, type Message } from "./realtime-messaging.service";
-import { fcmPushService } from "./fcm-push.service";
 import { sendEstateSms } from "./sms-gateway.service";
 import { supabase } from "./supabase";
+import { communicationService } from "./communication.service";
 
 export type DeliveryChannel = "in_app" | "push" | "sms" | "whatsapp";
 
@@ -106,18 +106,23 @@ export class OmnichannelRouterService {
     if (plan.includes("push")) {
       channelsAttempted.push("push");
       try {
-        const pushResult = await fcmPushService.dispatchPushNotification({
-          recipientUserId: input.recipientUserId,
-          title: input.senderName ? `${input.senderName} on BaytMiftah` : "BaytMiftah Update",
-          body: input.content,
-          conversationId: input.conversationId,
-          messageId: sentMsg?.id,
-          deepLinkUrl: input.deepLinkUrl,
-        });
-
-        if (pushResult.delivered > 0) {
+        const title = input.senderName ? `${input.senderName} on BaytMiftah` : "BaytMiftah Update";
+        const results = await communicationService.sendNotification(
+          input.recipientUserId,
+          ["push"],
+          "conversation_message",
+          title,
+          input.content,
+          {
+            skipInApp: true,
+            conversationId: input.conversationId,
+            actionUrl: input.deepLinkUrl ?? null,
+          },
+        );
+        const pushResult = results.find((row) => row.channel === "push");
+        if (pushResult?.success) {
           channelsSucceeded.push("push");
-        } else if (pushResult.failed > 0) {
+        } else {
           channelsFailed.push("push");
         }
       } catch {

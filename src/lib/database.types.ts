@@ -4983,6 +4983,45 @@ request_wallet_payout: {
         }
         Returns: Json
       }
+      revoke_user_auth_session: {
+        Args: { p_auth_session_id: string }
+        Returns: Json
+      }
+      check_in_short_stay_booking: {
+        Args: { p_booking_id: string }
+        Returns: Json
+      }
+      check_out_short_stay_booking: {
+        Args: { p_booking_id: string }
+        Returns: Json
+      }
+      transition_short_stay_booking: {
+        Args: { p_booking_id: string; p_status: string }
+        Returns: Json
+      }
+      request_distribution_approval: {
+        Args: {
+          p_statement_run_id: string
+          p_client_request_id?: string | null
+        }
+        Returns: Json
+      }
+      upsert_maintenance_request_offline: {
+        Args: {
+          p_organization_id: string
+          p_offline_client_id: string
+          p_payload: Json
+        }
+        Returns: Json
+      }
+      claim_whatsapp_inbound_message: {
+        Args: {
+          p_organization_id: string
+          p_wa_message_id: string
+          p_sender_phone?: string | null
+        }
+        Returns: Json
+      }
             get_lead_analytics_by_source: {
         Args: { org_id: string }
         Returns: {

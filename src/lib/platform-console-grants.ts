@@ -7,6 +7,10 @@ export const PLATFORM_CONSOLE_GRANTS = {
   support: "support",
   revenue: "revenue",
   settings: "settings",
+  integrations: "integrations",
+  ai_governance: "ai_governance",
+  payments: "payments",
+  communications: "communications",
 } as const;
 
 export type PlatformConsoleGrant =
@@ -29,6 +33,10 @@ export const PLATFORM_CONSOLE_GRANT_ORDER: PlatformConsoleGrant[] = [
   PLATFORM_CONSOLE_GRANTS.moderation,
   PLATFORM_CONSOLE_GRANTS.trust,
   PLATFORM_CONSOLE_GRANTS.support,
+  PLATFORM_CONSOLE_GRANTS.integrations,
+  PLATFORM_CONSOLE_GRANTS.ai_governance,
+  PLATFORM_CONSOLE_GRANTS.payments,
+  PLATFORM_CONSOLE_GRANTS.communications,
   PLATFORM_CONSOLE_GRANTS.revenue,
   PLATFORM_CONSOLE_GRANTS.settings,
 ];
@@ -42,6 +50,10 @@ export const PLATFORM_CONSOLE_GRANT_LABELS: Record<PlatformConsoleGrant, string>
   support: "Support",
   revenue: "Revenue",
   settings: "Settings",
+  integrations: "Integrations & jobs",
+  ai_governance: "Platform AI",
+  payments: "Payments ledger",
+  communications: "Communications",
 };
 
 export const PLATFORM_CONSOLE_GRANT_DESCRIPTIONS: Record<PlatformConsoleGrant, string> = {
@@ -53,6 +65,10 @@ export const PLATFORM_CONSOLE_GRANT_DESCRIPTIONS: Record<PlatformConsoleGrant, s
   support: "Handle support lookups and escalations.",
   revenue: "Configure platform fees and revenue rules.",
   settings: "Manage platform-wide settings, backups, and role grants.",
+  integrations: "View platform health, integration status, and background job queues.",
+  ai_governance: "Review cross-organization AI action logs and governance signals.",
+  payments: "View platform-wide payment transactions and checkout activity.",
+  communications: "Monitor delivery attempts and communication escalations.",
 };
 
 export type PlatformRolePresetId =
@@ -81,7 +97,13 @@ export const PLATFORM_ROLE_PRESETS: Record<
   },
   operations: {
     label: "Operations manager",
-    grants: [...PLATFORM_OPERATIONS_GRANTS],
+    grants: [
+      ...PLATFORM_OPERATIONS_GRANTS,
+      PLATFORM_CONSOLE_GRANTS.integrations,
+      PLATFORM_CONSOLE_GRANTS.ai_governance,
+      PLATFORM_CONSOLE_GRANTS.payments,
+      PLATFORM_CONSOLE_GRANTS.communications,
+    ],
   },
 };
 

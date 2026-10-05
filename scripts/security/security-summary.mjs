@@ -32,11 +32,17 @@ function readResult(name) {
 function main() {
   const knownJobs = Object.keys(LABELS);
   const discovered = readdirSync(resultsDir)
-    .filter((file) => file.endsWith(".json"))
+    .filter((file) => file.endsWith(".json") && !file.endsWith("-report.json") && file !== "summary.json")
     .map((file) => file.replace(/\.json$/, ""));
 
   const jobs = [...new Set([...knownJobs, ...discovered])];
-  const rows = jobs.map((job) => readResult(job));
+  const rows = jobs.map((job) => {
+    const result = readResult(job);
+    if (!result || Array.isArray(result) || typeof result !== "object") {
+      return { job, status: "UNVERIFIED", reason: "Invalid result file shape" };
+    }
+    return { ...result, job: typeof result.job === "string" && result.job ? result.job : job };
+  });
 
   let overall = "GREEN — SECURITY CHECKS PASSED";
   const hasFail = rows.some((row) => isBlockingStatus(row.status));
@@ -49,7 +55,7 @@ function main() {
     "BAYTMIFTAH SECURITY PIPELINE",
     "",
     ...rows.map((row) => {
-      const label = LABELS[row.job] || row.job;
+      const label = LABELS[row.job] || row.job || "Unknown check";
       const status = String(row.status || "UNVERIFIED").padEnd(12);
       return `${label.padEnd(22)} ${status}`;
     }),

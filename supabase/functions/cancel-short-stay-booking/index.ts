@@ -116,11 +116,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { data: finalized, error: finalizeError } = await userClient.rpc(
+    const { data: finalized, error: finalizeError } = await admin.rpc(
       "finalize_booking_cancellation",
       {
         p_booking_id: bookingId,
-        p_refund_minor: refundMinor,
+        // Retained for the deployed RPC signature; the hardened function ignores
+        // caller input and uses the policy-derived value stored on the booking.
+        p_refund_minor: null,
       },
     );
 

@@ -22,4 +22,15 @@ describe("property-jurisdiction-validation", () => {
     });
     expect(result.valid).toBe(true);
   });
+
+  it("blocks publish in counsel-review jurisdictions", () => {
+    const result = validatePropertyLocationForPublish({
+      country: "United States",
+      city: "Los Angeles",
+      region: "California",
+      address: "1 Test St",
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("not enabled"))).toBe(true);
+  });
 });

@@ -30,6 +30,7 @@ import type { PropertyCheckoutPricing } from "../../../lib/property-checkout-pri
 import { previewPropertyCheckoutPricing } from "../../../lib/property-checkout-pricing.service";
 import { PropertyJurisdictionBadge } from "../../components/compliance/PropertyJurisdictionBadge";
 import { Input } from "../../components/ui/Input";
+import { validateLegalJurisdictionForTransactionalAction } from "../../../lib/legal-jurisdiction-gate";
 
 type CheckoutPhase = "review" | "processing" | "success" | "error";
 
@@ -61,6 +62,11 @@ export function InAppCheckoutPage() {
   const [pricing, setPricing] = useState<PropertyCheckoutPricing | null>(null);
   const [pricingError, setPricingError] = useState<string | null>(null);
   const [applyingPromo, setApplyingPromo] = useState(false);
+  const [simulatedCheckoutDetected, setSimulatedCheckoutDetected] = useState(false);
+  const showSandboxPaymentBanner =
+    simulatedCheckoutDetected ||
+    String(import.meta.env.VITE_ENABLE_DEMO_DATA ?? "").toLowerCase() === "true" ||
+    !clientIntegrations.payangels.checkoutReady;
 
   useEffect(() => {
     setCheckoutParams(parseCheckoutParams(searchParams));
@@ -97,6 +103,16 @@ export function InAppCheckoutPage() {
     () => (listing ? resolvePaymentContextFromListing(listing) : null),
     [listing],
   );
+
+  const checkoutLegalGate = useMemo(() => {
+    if (!listing?.property) return null;
+    return validateLegalJurisdictionForTransactionalAction({
+      country: listing.property.country,
+      region: listing.property.region,
+      city: listing.property.city,
+      action: "payment_checkout",
+    });
+  }, [listing]);
 
   const currency = pricing?.currency || listing?.currency || paymentContext?.currency || "GHS";
   const amount = checkoutParams?.amount ?? 0;
@@ -205,6 +221,11 @@ export function InAppCheckoutPage() {
       return;
     }
 
+    if (checkoutLegalGate && !checkoutLegalGate.allowed) {
+      toast.error(checkoutLegalGate.message || "Checkout is not available in this jurisdiction.");
+      return;
+    }
+
     if (!usePayangels) {
       toast.error("In-app checkout is not available for this market. Contact support for help.");
       return;
@@ -232,6 +253,7 @@ export function InAppCheckoutPage() {
       });
 
       if (checkout.simulated || String(checkout.accessCode || "").startsWith("sim_")) {
+        setSimulatedCheckoutDetected(true);
         throw new Error("Checkout is not configured for live payments.");
       }
 
@@ -338,6 +360,25 @@ export function InAppCheckoutPage() {
     <DesktopShell minimal>
       <PageMeta title="Secure checkout" description="Complete your BaytMiftah payment without leaving the app." />
       <div className="mx-auto max-w-3xl px-4 py-10 md:py-14">
+        {showSandboxPaymentBanner ? (
+          <div
+            role="alert"
+            className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"
+          >
+            <strong className="font-semibold">Test / sandbox payment mode.</strong> Live checkout is
+            unavailable until PayAngels is configured and demo data is turned off.
+          </div>
+        ) : null}
+
+        {checkoutLegalGate && !checkoutLegalGate.allowed ? (
+          <div
+            role="alert"
+            className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900"
+          >
+            {checkoutLegalGate.message}
+          </div>
+        ) : null}
+
         <div className="mb-8">
           <p className="text-sm text-ink-secondary">BaytMiftah checkout</p>
           <h1 className="mt-1 text-3xl font-semibold text-ink">Complete payment</h1>

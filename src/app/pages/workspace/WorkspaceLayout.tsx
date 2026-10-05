@@ -95,6 +95,8 @@ import {
   Zap,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { usePlatformFeatures } from "../../context/PlatformFeaturesContext";
+import { isWorkspaceSlugEnabledByPlatformFeatures } from "../../../lib/workspace-platform-nav";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import type { Database as DatabaseTypes } from "../../../lib/database.types";
@@ -496,6 +498,7 @@ void getNavItemClasses; // suppress unused-var lint
 
 export function WorkspaceLayout() {
   const { user, profile, role } = useAuth();
+  const { flags: platformFeatureFlags } = usePlatformFeatures();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -756,55 +759,68 @@ export function WorkspaceLayout() {
   const filterByEnabledModules = <T extends { slug: string }>(items: T[]) =>
     items.filter((item) => isNavSlugEnabledByModules(item.slug, enabledModules));
 
+  const filterByPlatformFeatures = <T extends { slug: string }>(items: T[]) =>
+    items.filter((item) => isWorkspaceSlugEnabledByPlatformFeatures(item.slug, platformFeatureFlags));
+
   const visibleCoreNav = useMemo(
     () =>
       applyNavCustomization(
-        filterByEnabledModules(
-          filterWorkspaceNavItems(CORE_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        filterByPlatformFeatures(
+          filterByEnabledModules(
+            filterWorkspaceNavItems(CORE_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+          ),
         ),
         navCustomization,
       ),
-    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules],
+    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules, platformFeatureFlags],
   );
   const visibleToolsNav = useMemo(
     () =>
       applyNavCustomization(
-        filterByEnabledModules(
-          filterWorkspaceNavItems(WORKSPACE_SECONDARY_NAV, navRole, navPermissions, navCapabilities),
+        filterByPlatformFeatures(
+          filterByEnabledModules(
+            filterWorkspaceNavItems(WORKSPACE_SECONDARY_NAV, navRole, navPermissions, navCapabilities),
+          ),
         ),
         navCustomization,
       ),
-    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules],
+    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules, platformFeatureFlags],
   );
   const visibleMoreNav = useMemo(
     () =>
       applyNavCustomization(
-        filterByEnabledModules(
-          filterWorkspaceNavItems(TIER_TWO_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        filterByPlatformFeatures(
+          filterByEnabledModules(
+            filterWorkspaceNavItems(TIER_TWO_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+          ),
         ),
         navCustomization,
       ),
-    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules],
+    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules, platformFeatureFlags],
   );
   const visibleAiNav = useMemo(
     () =>
       applyNavCustomization(
-        filterByEnabledModules(
-          filterWorkspaceNavItems(AI_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        filterByPlatformFeatures(
+          filterByEnabledModules(
+            filterWorkspaceNavItems(AI_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+          ),
         ),
         navCustomization,
       ),
-    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules],
+    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules, platformFeatureFlags],
   );
   const visibleEnterpriseNav = useMemo(
     () =>
       applyNavCustomization(
-        filterByEnabledModules(
-          filterWorkspaceNavItems(ENTERPRISE_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+        filterByPlatformFeatures(
+          filterByEnabledModules(
+            filterWorkspaceNavItems(ENTERPRISE_NAV_ITEMS, navRole, navPermissions, navCapabilities),
+          ),
         ),
         navCustomization,
       ),
-    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules],
+    [navRole, navPermissions, navCapabilities, navCustomization, enabledModules, platformFeatureFlags],
   );
 
   const visibleCoreNavGroups = useMemo(

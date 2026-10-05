@@ -40,6 +40,8 @@ const EDGE_FUNCTIONS = [
   { name: "create-docusign-envelope" },
   { name: "app-version", noVerifyJwt: true },
   { name: "listing-syndication" },
+  { name: "cancel-short-stay-booking" },
+  { name: "polygon-transactions" },
 ];
 
 function readFlag(name) {

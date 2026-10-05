@@ -62,6 +62,35 @@ export const LEGAL_LAUNCH_CHECKLIST = [
   "verify tenant isolation and security controls before wider rollout",
 ] as const;
 
+/** Repo evidence mapping for each launch checklist item (operator attestation in LEGAL_LAUNCH_SIGNOFF.md). */
+export const LEGAL_LAUNCH_CHECKLIST_EVIDENCE: Record<
+  (typeof LEGAL_LAUNCH_CHECKLIST)[number],
+  string
+> = {
+  "confirm final legal entity identity and registration details":
+    "LEGAL_OPERATOR + VITE_LEGAL_* in .env; docs/legal/LEGAL_LAUNCH_SIGNOFF.md",
+  "review managed-services and property-management terms for client-specific responsibilities":
+    "policies: business-saas-terms, property-owner-terms, agency-agent-terms",
+  "confirm PayAngels and payment-provider legal disclosures and refund allocation wording":
+    "policies: payments, refunds; checkout LegalAcceptanceCheckbox + PAYMENT disclaimers",
+  "execute data-processing and DPA review for enterprise customer workflows":
+    "policies: data-processing; ACCEPTANCE_SCOPES.agency_onboarding / business_workspace",
+  "confirm privacy, cookie, and complaints handling for production use":
+    "CookieConsentBanner, ComplaintForm, policies: privacy, cookies, complaints",
+  "review AI action approval and audit-log controls for material business decisions":
+    "AI Command Center approvals, platform feature flags, agentic fail-closed prod paths",
+  "validate retention, offboarding, and deletion procedures for customer data":
+    "scripts/workers/apply-data-retention.mjs; policy: data-retention, privacy-rights",
+  "verify tenant isolation and security controls before wider rollout":
+    "tests/tenant-isolation.test.ts; RLS audit; scripts/security/",
+};
+
+/** Client-visible mirror of operator sign-off (set VITE_LEGAL_LAUNCH_SIGNED_OFF in env). */
+export function isLegalLaunchSignedOff(): boolean {
+  const flag = envValue("VITE_LEGAL_LAUNCH_SIGNED_OFF");
+  return flag.toLowerCase() === "true" || flag === "1";
+}
+
 export type LegalAcceptanceScope =
   | "signup_consumer"
   | "signup_host"

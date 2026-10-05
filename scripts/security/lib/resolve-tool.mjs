@@ -24,7 +24,9 @@ function findUserSemgrep() {
 
   for (const version of readdirSync(pythonRoot)) {
     const candidate = path.join(pythonRoot, version, "Scripts", binName("semgrep"));
-    if (existsSync(candidate)) return candidate;
+    if (existsSync(candidate) && spawnSync(candidate, ["--version"], { encoding: "utf8" }).status === 0) {
+      return candidate;
+    }
   }
   return null;
 }

@@ -22,6 +22,7 @@ deployments/
 
 # Local tooling output
 .codex*
+.cursor-fn-list.json
 *.log
 .tmp/
 test-results/

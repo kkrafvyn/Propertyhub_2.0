@@ -14,6 +14,10 @@ import { notificationService } from "./notification.service";
 import { docuSignEnvelopeService } from "./docusign-envelope.service";
 import { leaseCosignService } from "./lease-cosign.service";
 import type { CountryCode } from "./country-rules";
+import {
+  isLegalJurisdictionTransactionalAllowed,
+  legalJurisdictionGateMessage,
+} from "./legal-jurisdiction-gate";
 
 export type LeaseForSigning = {
   id: string;
@@ -108,6 +112,9 @@ export async function sendLeaseForSigning(input: SendLeaseForSigningInput) {
   }
 
   const prepared = prepareLeaseEnvelope(input);
+  if (!isLegalJurisdictionTransactionalAllowed(prepared.jurisdictionId)) {
+    throw new Error(legalJurisdictionGateMessage(prepared.jurisdictionId, "lease_signature"));
+  }
   assertLeaseAuditPassing(prepared.auditScore, {
     forceOverride: input.forceOverride,
     violations: prepared.warnings,

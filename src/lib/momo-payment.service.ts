@@ -70,7 +70,6 @@ export async function requestPayAngelsDisbursement(
   const invocation = supabase.functions.invoke('initiate-payangels-disbursement', {
     body: {
       amount: params.amount,
-      phone: normaliseGhanaPhone(params.phone),
       organizationId: params.organizationId.trim(),
       approvalId: params.approvalId,
       workOrderId: params.workOrderId,

@@ -7,6 +7,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadProjectEnv } from './load-project-env.mjs';
+import { resolveServiceRoleKey } from './supabase/resolve-service-role-key.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const checks = [];
@@ -117,6 +118,10 @@ try {
     'PAYANGELS_WEBHOOK_SECRET',
     'PAYANGELS_SECRET_KEY',
     'VITE_PAYANGELS_PUBLIC_KEY',
+    'PAYANGELS_API_BASE',
+    'PAYANGELS_DISBURSEMENT_URL',
+    'PAYANGELS_API_CONTRACT_VERIFIED',
+    'PAYANGELS_LIVE_CERTIFIED',
     'RESEND_API_KEY',
     'NOTIFICATION_EMAIL_FROM',
     'OPS_ALERT_WEBHOOK_URL',
@@ -139,6 +144,11 @@ try {
     pass('env.example:integrations deferred flag', 'documented', 'integrations');
   } else {
     warn('env.example:integrations deferred flag', 'add PRODUCTION_INTEGRATIONS_DEFERRED', 'integrations', { blocking: false });
+  }
+  if (envExample.includes('INTEGRATIONS_LAUNCH_DEFERRED')) {
+    pass('env.example:launch integrations defer', 'documented', 'integrations');
+  } else {
+    warn('env.example:launch integrations defer', 'add INTEGRATIONS_LAUNCH_DEFERRED', 'integrations', { blocking: false });
   }
   if (envExample.includes('LEGAL_LAUNCH_DEFERRED')) pass('env.example:legal deferred flag', 'documented', 'legal');
   else warn('env.example:legal deferred flag', 'add LEGAL_LAUNCH_DEFERRED', 'legal', { blocking: false });
@@ -184,16 +194,69 @@ try {
   fail('legal launch checklist', error instanceof Error ? error.message : String(error), 'legal');
 }
 
-const runtimeEnv = loadProjectEnv();
+async function hydrateRuntimeEnv(base) {
+  const runtimeEnv = { ...base };
+  const serviceKey = await resolveServiceRoleKey(runtimeEnv);
+  if (serviceKey) runtimeEnv.SUPABASE_SERVICE_ROLE_KEY = serviceKey;
+  return runtimeEnv;
+}
+
+const runtimeEnv = await hydrateRuntimeEnv(loadProjectEnv());
 const integrationsDeferred = truthyFlag(process.env.PRODUCTION_INTEGRATIONS_DEFERRED ?? runtimeEnv.PRODUCTION_INTEGRATIONS_DEFERRED);
 const legalDeferred = truthyFlag(process.env.LEGAL_LAUNCH_DEFERRED ?? runtimeEnv.LEGAL_LAUNCH_DEFERRED);
 const premblyOptional = truthyFlag(runtimeEnv.PREMBLY_LIVE_KYC_OPTIONAL);
+const launchIntegrationsDeferred = truthyFlag(runtimeEnv.INTEGRATIONS_LAUNCH_DEFERRED);
 const integrationWarnOpts = integrationsDeferred
-  ? { blocking: false, deferredFullCredit: true, informational: true }
+  ? { blocking: false, informational: true }
   : { blocking: true };
+const launchDeferWarnOpts = { blocking: false };
 const legalWarnOpts = legalDeferred
-  ? { blocking: false, deferredFullCredit: true, informational: true }
+  ? { blocking: false, informational: true }
   : { blocking: true };
+
+function isVerifiedPayangelUrl(value) {
+  if (!value?.trim()) return false;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === 'https:' && !/(^|\.)paystack\.co$/i.test(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+const payangelsCredentialsReady = Boolean(
+  runtimeEnv.PAYANGELS_SECRET_KEY?.trim() &&
+  runtimeEnv.PAYANGELS_WEBHOOK_SECRET?.trim() &&
+  runtimeEnv.VITE_PAYANGELS_PUBLIC_KEY?.trim(),
+);
+const payangelsApiReady =
+  isVerifiedPayangelUrl(runtimeEnv.PAYANGELS_API_BASE) &&
+  truthyFlag(runtimeEnv.PAYANGELS_API_CONTRACT_VERIFIED);
+const payangelsPayoutReady = isVerifiedPayangelUrl(runtimeEnv.PAYANGELS_DISBURSEMENT_URL);
+const payangelsCertified = truthyFlag(runtimeEnv.PAYANGELS_LIVE_CERTIFIED);
+const payangelsClientEnabled = truthyFlag(runtimeEnv.VITE_PAYANGELS_CONFIGURED);
+const payangelsLive =
+  payangelsCredentialsReady &&
+  payangelsApiReady &&
+  payangelsPayoutReady &&
+  payangelsCertified &&
+  payangelsClientEnabled;
+
+for (const [name, ok, detail] of [
+  ['credentials', payangelsCredentialsReady, 'PAYANGELS_SECRET_KEY, PAYANGELS_WEBHOOK_SECRET, and VITE_PAYANGELS_PUBLIC_KEY'],
+  ['API contract', payangelsApiReady, 'verified PayAngel PAYANGELS_API_BASE + PAYANGELS_API_CONTRACT_VERIFIED=true'],
+  ['payout endpoint', payangelsPayoutReady, 'verified PayAngel PAYANGELS_DISBURSEMENT_URL'],
+  ['certification', payangelsCertified, 'PAYANGELS_LIVE_CERTIFIED=true after init/webhook/refund/payout evidence'],
+  ['client enablement', payangelsClientEnabled, 'VITE_PAYANGELS_CONFIGURED=true only after successful server deployment'],
+]) {
+  if (ok) pass(`runtime config:PayAngel ${name}`, 'configured', 'integrations');
+  else warn(
+    `runtime config:PayAngel ${name}`,
+    integrationsDeferred ? `deferred (repo-only): ${detail}` : `not live: ${detail}`,
+    'integrations',
+    integrationWarnOpts,
+  );
+}
 
 const demoData = runtimeEnv.VITE_ENABLE_DEMO_DATA?.trim().toLowerCase();
 if (!demoData || demoData === 'false' || demoData === '0') {
@@ -202,8 +265,13 @@ if (!demoData || demoData === 'false' || demoData === '0') {
   fail('runtime config:demo data', 'VITE_ENABLE_DEMO_DATA must be false in production environments', 'security');
 }
 
+const launchDeferAreas = new Set([
+  'transactional email (Resend)',
+  'incident alerts',
+  'offsite backups',
+]);
+
 for (const [area, keys] of Object.entries({
-  'PayAngels payments': ['PAYANGELS_SECRET_KEY', 'PAYANGELS_WEBHOOK_SECRET', 'VITE_PAYANGELS_PUBLIC_KEY'],
   'transactional email (Resend)': ['RESEND_API_KEY', 'NOTIFICATION_EMAIL_FROM'],
   'scheduled operations': ['SUPABASE_SERVICE_ROLE_KEY'],
   'incident alerts': ['OPS_ALERT_WEBHOOK_URL'],
@@ -212,13 +280,17 @@ for (const [area, keys] of Object.entries({
   const missing = keys.filter((key) => !runtimeEnv[key]?.trim());
   if (missing.length === 0) pass(`runtime config:${area}`, 'configured', 'integrations');
   else {
+    const launchDefer =
+      launchIntegrationsDeferred && launchDeferAreas.has(area) && !integrationsDeferred;
     warn(
       `runtime config:${area}`,
       integrationsDeferred
         ? `deferred (PRODUCTION_INTEGRATIONS_DEFERRED=true): ${missing.join(', ')}`
-        : `not live locally: ${missing.join(', ')}`,
+        : launchDefer
+          ? `deferred (INTEGRATIONS_LAUNCH_DEFERRED=true): ${missing.join(', ')}`
+          : `not live locally: ${missing.join(', ')}`,
       'integrations',
-      integrationWarnOpts,
+      integrationsDeferred ? integrationWarnOpts : launchDefer ? launchDeferWarnOpts : integrationWarnOpts,
     );
   }
 }
@@ -238,7 +310,7 @@ for (const [area, keys] of Object.entries({
         ? `deferred (PRODUCTION_INTEGRATIONS_DEFERRED): ${missing.join(', ')}`
         : `deferred (PREMBLY_LIVE_KYC_OPTIONAL=true): ${missing.join(', ')}`,
       'integrations',
-      { blocking: false, deferredFullCredit: integrationsDeferred },
+      { blocking: false },
     );
   } else {
     warn(
@@ -299,6 +371,11 @@ for (const [key, weight] of Object.entries(CATEGORY_WEIGHTS)) {
   };
 }
 score = Math.round(score);
+const scoreCaps = [];
+if (!integrationsDeferred && !payangelsLive && score > 75) {
+  score = 75;
+  scoreCaps.push({ maximum: 75, reason: 'Primary payment rail (PayAngel) is not live-certified' });
+}
 
 const failed = checks.filter((c) => !c.ok);
 const warnings = checks.filter((c) => c.warning);
@@ -308,7 +385,10 @@ const ready =
   failed.length === 0 &&
   blockingWarnings.length === 0 &&
   !integrationsDeferred &&
-  !legalDeferred;
+  !legalDeferred &&
+  !launchIntegrationsDeferred &&
+  !premblyOptional &&
+  payangelsLive;
 
 console.log(
   JSON.stringify(
@@ -320,6 +400,8 @@ console.log(
       integrationsDeferred,
       legalDeferred,
       ready,
+      payangelsLive,
+      scoreCaps,
       passed: checks.filter((c) => c.ok && !c.warning).length,
       warnings: warnings.length,
       blockingWarnings: blockingWarnings.length,
@@ -332,4 +414,4 @@ console.log(
     2,
   ),
 );
-process.exit(failed.length > 0 ? 1 : 0);
+process.exit(failed.length > 0 || (!repoDeferredMode && !ready) ? 1 : 0);

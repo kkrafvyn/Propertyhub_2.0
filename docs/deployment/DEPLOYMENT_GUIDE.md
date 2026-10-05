@@ -39,7 +39,10 @@ cat >> .env << 'EOF'
 VITE_PAYANGELS_PUBLIC_KEY=pk_live_...
 PAYANGELS_SECRET_KEY=sk_live_...
 PAYANGELS_WEBHOOK_SECRET=...
-PAYANGELS_API_BASE=https://api.paystack.co
+PAYANGELS_API_BASE=https://provider-issued-payangel-host/...
+PAYANGELS_DISBURSEMENT_URL=https://provider-issued-payangel-host/...
+PAYANGELS_API_CONTRACT_VERIFIED=false
+PAYANGELS_LIVE_CERTIFIED=false
 
 # ===== MLS INTEGRATIONS =====
 MLS_API_KEY=your_mls_key
@@ -157,7 +160,7 @@ const menuItems = [
   {
     icon: AlertCircle,
     label: 'Fraud Alerts',
-    href: 'fraud-alerts', // TODO: Create this page
+    href: 'fraud-alerts',
     description: 'Monitor scams & duplicates'
   }
 ]

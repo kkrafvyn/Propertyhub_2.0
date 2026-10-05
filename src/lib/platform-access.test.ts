@@ -48,6 +48,20 @@ describe("platform-access", () => {
     expect(getPlatformGrants(profile)).toEqual([PLATFORM_CONSOLE_GRANTS.moderation]);
   });
 
+  it("reserves team and features for platform owner", () => {
+    expect(canAccessAdminSection({ is_platform_admin: true }, "team")).toBe(true);
+    expect(canAccessAdminSection({ is_platform_admin: true }, "features")).toBe(true);
+    expect(
+      canAccessAdminSection({ platform_console_grants: [PLATFORM_CONSOLE_GRANTS.integrations] }, "team"),
+    ).toBe(false);
+  });
+
+  it("maps new console grants to sections", () => {
+    const profile = { platform_console_grants: [PLATFORM_CONSOLE_GRANTS.integrations] };
+    expect(canAccessAdminSection(profile, "integrations")).toBe(true);
+    expect(canAccessAdminSection(profile, "payments")).toBe(false);
+  });
+
   it("keeps legacy manager flag as full operations bundle", () => {
     expect(getPlatformGrants({ is_platform_manager: true })).toContain(PLATFORM_CONSOLE_GRANTS.users);
     expect(getPlatformGrants({ is_platform_manager: true })).not.toContain(PLATFORM_CONSOLE_GRANTS.revenue);

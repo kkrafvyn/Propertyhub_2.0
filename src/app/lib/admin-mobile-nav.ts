@@ -10,10 +10,10 @@ export type AdminMobileTabDef = {
 
 export const ADMIN_MOBILE_TABS: AdminMobileTabDef[] = [
   { to: "/admin", labelKey: "adminMobile.alerts", icon: BellRing },
-  { to: "/admin/organizations", labelKey: "adminMobile.organizations", icon: Building2 },
+  { to: "/admin/integrations", labelKey: "adminMobile.integrations", icon: Building2 },
   { to: "/admin/trust", labelKey: "adminMobile.kycQueue", icon: FileCheck2 },
   { to: "/admin/moderation", labelKey: "adminMobile.moderation", icon: ShieldAlert },
-  { to: "/admin/revenue", labelKey: "adminMobile.disputes", icon: Flame },
+  { to: "/admin/support", labelKey: "adminMobile.support", icon: Flame },
 ];
 
 export function shouldUseAdminMobileShell(): boolean {

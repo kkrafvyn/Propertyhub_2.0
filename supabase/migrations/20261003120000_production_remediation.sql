@@ -67,7 +67,7 @@ CREATE POLICY "Finance read distribution approvals" ON public.estate_distributio
     EXISTS (
       SELECT 1
       FROM public.estate_owner_statement_runs sr
-      JOIN public.estates e ON e.id = sr.estate_id
+      JOIN public.managed_estates e ON e.id = sr.estate_id
       WHERE sr.id = estate_distribution_approvals.statement_run_id
         AND private.can_manage_estate_finance(e.id)
     )
@@ -79,7 +79,7 @@ CREATE POLICY "Finance update distribution approvals" ON public.estate_distribut
     EXISTS (
       SELECT 1
       FROM public.estate_owner_statement_runs sr
-      JOIN public.estates e ON e.id = sr.estate_id
+      JOIN public.managed_estates e ON e.id = sr.estate_id
       WHERE sr.id = estate_distribution_approvals.statement_run_id
         AND private.can_manage_estate_finance(e.id)
     )
@@ -88,7 +88,7 @@ CREATE POLICY "Finance update distribution approvals" ON public.estate_distribut
     EXISTS (
       SELECT 1
       FROM public.estate_owner_statement_runs sr
-      JOIN public.estates e ON e.id = sr.estate_id
+      JOIN public.managed_estates e ON e.id = sr.estate_id
       WHERE sr.id = estate_distribution_approvals.statement_run_id
         AND private.can_manage_estate_finance(e.id)
     )

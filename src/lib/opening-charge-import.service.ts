@@ -1,15 +1,9 @@
 import { supabase } from "./supabase";
 import { estateOperationsService } from "./estate-operations.service";
 import { parseOpeningChargesCsv, type OpeningChargeImportRow } from "./estate-import.service";
+import { resolveImportJobStatus } from "./import-job-status";
 
 const db = supabase as any;
-
-function resolveImportJobStatus(totalEligible: number, imported: number, failed: number) {
-  if (totalEligible === 0) return "failed";
-  if (failed === 0) return "imported";
-  if (imported === 0) return "failed";
-  return "partially_imported";
-}
 
 export const openingChargeImportService = {
   parse: parseOpeningChargesCsv,

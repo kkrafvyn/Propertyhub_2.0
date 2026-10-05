@@ -32,6 +32,7 @@ declare global {
         listConflicts: (organizationId?: string) => Promise<OfflineConflictRecord[]>;
         recordConflict: (conflict: OfflineConflictRecord) => Promise<OfflineConflictRecord>;
         resolveConflict: (id: string) => Promise<void>;
+        clearAll: () => Promise<void>;
       };
     };
   }

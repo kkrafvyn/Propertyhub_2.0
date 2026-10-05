@@ -1,5 +1,5 @@
-/**
- * BaytMiftah REOS — Utility Sub-Metering & Generator Fuel Split Service
+﻿/**
+ * BaytMiftah REOS â€” Utility Sub-Metering & Generator Fuel Split Service
  * 
  * Provides automated PURC Ghana tariff calculation (ECG electricity & GWCL water),
  * central standby generator diesel fuel split per unit/floor-area, OCR photo reading capture,
@@ -7,7 +7,6 @@
  */
 
 import { supabase } from './supabase';
-import { isDemoSimulationAllowed } from './simulation-mode';
 
 export type UtilityType = 'electricity' | 'water' | 'generator_diesel' | 'solar_pv' | 'gas';
 
@@ -24,7 +23,7 @@ export interface UtilityMeter {
   status: 'active' | 'tampered' | 'offline' | 'needs_calibration';
   lastReading: number;
   lastReadAt: string;
-  unitOfMeasure: 'kWh' | 'm³' | 'litres' | 'hours';
+  unitOfMeasure: 'kWh' | 'mÂ³' | 'litres' | 'hours';
   isCommonArea: boolean;
 }
 
@@ -222,7 +221,7 @@ export function mapDbMeterToUtilityMeter(row: any, estateName = ''): UtilityMete
     status: row.is_active ? 'active' : 'offline',
     lastReading: 0,
     lastReadAt: row.created_at || new Date().toISOString(),
-    unitOfMeasure: row.meter_type === 'gwcl_water' ? 'm³' : row.meter_type === 'generator' ? 'hours' : 'kWh',
+    unitOfMeasure: row.meter_type === 'gwcl_water' ? 'mÂ³' : row.meter_type === 'generator' ? 'hours' : 'kWh',
     isCommonArea: !row.unit_id,
   };
 }
@@ -310,7 +309,7 @@ export async function loadOrganizationUtilityData(organizationId: string) {
   return { meters: metersWithReadings, readings, genRuns: dbRuns.map(mapDbGeneratorRun), occupiedUnits };
 }
 
-// ── Ghana PURC Standard Utility Tariffs (Q3 2026 Reference) ─────────────────
+// â”€â”€ Ghana PURC Standard Utility Tariffs (Q3 2026 Reference) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const DEFAULT_PURC_TARIFFS: PurcTariffConfig[] = [
   {
     utilityType: 'electricity',
@@ -341,7 +340,7 @@ export const DEFAULT_PURC_TARIFFS: PurcTariffConfig[] = [
   },
   {
     utilityType: 'water',
-    bandName: 'GWCL Residential (0 - 5 m³)',
+    bandName: 'GWCL Residential (0 - 5 mÂ³)',
     minUnits: 0,
     maxUnits: 5,
     ratePerUnitGhs: 6.80,
@@ -350,7 +349,7 @@ export const DEFAULT_PURC_TARIFFS: PurcTariffConfig[] = [
   },
   {
     utilityType: 'water',
-    bandName: 'GWCL Standard (6+ m³)',
+    bandName: 'GWCL Standard (6+ mÂ³)',
     minUnits: 6,
     maxUnits: 99999,
     ratePerUnitGhs: 11.50,
@@ -359,276 +358,7 @@ export const DEFAULT_PURC_TARIFFS: PurcTariffConfig[] = [
   },
 ];
 
-// Initial mock dataset for high-end Ghanaian estates
-const MOCK_METERS: UtilityMeter[] = [
-  {
-    id: 'mtr_01',
-    estateId: 'est_01',
-    estateName: 'East Legon Hills Luxury Enclave',
-    unitId: 'u_101',
-    unitIdentifier: 'Villa 14',
-    meterNumber: 'ECG-ACC-984210',
-    utilityType: 'electricity',
-    meterModel: 'Holley Smart STS Keypad',
-    location: 'Exterior Distribution Board A',
-    status: 'active',
-    lastReading: 4820.5,
-    lastReadAt: '2026-08-15T09:00:00Z',
-    unitOfMeasure: 'kWh',
-    isCommonArea: false,
-  },
-  {
-    id: 'mtr_02',
-    estateId: 'est_01',
-    estateName: 'East Legon Hills Luxury Enclave',
-    unitId: 'u_102',
-    unitIdentifier: 'Villa 15',
-    meterNumber: 'ECG-ACC-984211',
-    utilityType: 'electricity',
-    meterModel: 'Holley Smart STS Keypad',
-    location: 'Exterior Distribution Board A',
-    status: 'active',
-    lastReading: 5190.2,
-    lastReadAt: '2026-08-15T09:15:00Z',
-    unitOfMeasure: 'kWh',
-    isCommonArea: false,
-  },
-  {
-    id: 'mtr_03',
-    estateId: 'est_01',
-    estateName: 'East Legon Hills Luxury Enclave',
-    unitId: 'u_common',
-    unitIdentifier: 'Central Common Facilities & Security Gate',
-    meterNumber: 'ECG-ACC-COM-01',
-    utilityType: 'electricity',
-    meterModel: 'Schneider Electric PowerLogic',
-    location: 'Main Substation Gate 1',
-    status: 'active',
-    lastReading: 12450.0,
-    lastReadAt: '2026-08-15T08:30:00Z',
-    unitOfMeasure: 'kWh',
-    isCommonArea: true,
-  },
-  {
-    id: 'mtr_04',
-    estateId: 'est_01',
-    estateName: 'East Legon Hills Luxury Enclave',
-    unitId: 'u_101',
-    unitIdentifier: 'Villa 14',
-    meterNumber: 'GWCL-W-449102',
-    utilityType: 'water',
-    meterModel: 'Zenner Multijet Brass',
-    location: 'Front Garden Boundary Pit',
-    status: 'active',
-    lastReading: 142.8,
-    lastReadAt: '2026-08-15T09:05:00Z',
-    unitOfMeasure: 'm³',
-    isCommonArea: false,
-  },
-  {
-    id: 'mtr_05',
-    estateId: 'est_01',
-    estateName: 'East Legon Hills Luxury Enclave',
-    unitId: 'u_gen',
-    unitIdentifier: 'Cat 350kVA Central Diesel Generator',
-    meterNumber: 'GEN-CAT-350-01',
-    utilityType: 'generator_diesel',
-    meterModel: 'Deep Sea Electronics 7320 Controller',
-    location: 'Generator Powerhouse Block B',
-    status: 'active',
-    lastReading: 894.0,
-    lastReadAt: '2026-08-17T22:00:00Z',
-    unitOfMeasure: 'hours',
-    isCommonArea: true,
-  },
-];
-
-const MOCK_READINGS: MeterReadingRecord[] = [
-  {
-    id: 'rdg_101',
-    meterId: 'mtr_01',
-    meterNumber: 'ECG-ACC-984210',
-    unitIdentifier: 'Villa 14',
-    utilityType: 'electricity',
-    previousReading: 4520.0,
-    currentReading: 4820.5,
-    consumption: 300.5,
-    tariffPerUnitGhs: 1.82,
-    subtotalGhs: 546.91,
-    generatorFuelContributionGhs: 185.0,
-    totalDueGhs: 731.91,
-    readAt: '2026-08-15T09:00:00Z',
-    readBy: 'Emmanuel Addo (Facility Engineer)',
-    evidencePhotoUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80',
-    ocrConfidence: 97.4,
-    invoiceStatus: 'issued',
-  },
-  {
-    id: 'rdg_102',
-    meterId: 'mtr_04',
-    meterNumber: 'GWCL-W-449102',
-    unitIdentifier: 'Villa 14',
-    utilityType: 'water',
-    previousReading: 128.0,
-    currentReading: 142.8,
-    consumption: 14.8,
-    tariffPerUnitGhs: 11.5,
-    subtotalGhs: 170.2,
-    totalDueGhs: 170.2,
-    readAt: '2026-08-15T09:05:00Z',
-    readBy: 'Emmanuel Addo (Facility Engineer)',
-    ocrConfidence: 98.8,
-    invoiceStatus: 'paid_momo',
-    momoPaymentRef: 'MOMO-20260816-77821',
-  },
-];
-
-const MOCK_GEN_RUNS: GeneratorFuelRun[] = [
-  {
-    id: 'gen_run_01',
-    estateId: 'est_01',
-    runDate: '2026-08-17',
-    startHours: 888.0,
-    endHours: 894.0,
-    hoursRun: 6.0,
-    litresConsumed: 210.0,
-    dieselPricePerLitreGhs: 14.80,
-    totalFuelCostGhs: 3108.0,
-    ecgOutageReason: 'ECG 33kV Substation Feed Tripped during heavy rain',
-    splitMethod: 'by_floor_area',
-    chargePerUnitGhs: 194.25, // 3,108 GHS divided across 16 occupied units
-  },
-];
-const DEMO_DATA_ENABLED = isDemoSimulationAllowed();
-
-const STORAGE_METERS_KEY = 'bm_submeters_list';
-const STORAGE_READINGS_KEY = 'bm_meter_readings_list';
-const STORAGE_GEN_RUNS_KEY = 'bm_generator_runs_list';
-
+/** Tariff helpers shared by the live utility sub-metering UI. */
 export const utilitySubmeterService = {
-  getMeters(): UtilityMeter[] {
-    if (!DEMO_DATA_ENABLED || typeof window === 'undefined') return [];
-    try {
-      const data = localStorage.getItem(STORAGE_METERS_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
-  },
-
-  getReadings(): MeterReadingRecord[] {
-    if (!DEMO_DATA_ENABLED || typeof window === 'undefined') return [];
-    try {
-      const data = localStorage.getItem(STORAGE_READINGS_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
-  },
-
-  getGeneratorRuns(): GeneratorFuelRun[] {
-    if (!DEMO_DATA_ENABLED || typeof window === 'undefined') return [];
-    try {
-      const data = localStorage.getItem(STORAGE_GEN_RUNS_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
-  },
-
   calculatePurcCharge,
-
-  recordReading(input: {
-    meterId: string;
-    currentReading: number;
-    readBy: string;
-    evidencePhotoUrl?: string;
-    includeGeneratorSplit?: boolean;
-    generatorFuelContributionGhs?: number;
-  }): MeterReadingRecord {
-    const meters = this.getMeters();
-    const meter = meters.find((m) => m.id === input.meterId);
-    if (!meter) throw new Error('Meter not found');
-
-    const prevReading = meter.lastReading;
-    const consumption = Math.max(0, Math.round((input.currentReading - prevReading) * 10) / 10);
-    const { tariffRate, total: subtotal } = this.calculatePurcCharge(meter.utilityType, consumption);
-    const genSplit = input.includeGeneratorSplit ? input.generatorFuelContributionGhs || 185.0 : 0;
-    const totalDue = Math.round((subtotal + genSplit) * 100) / 100;
-
-    const newReading: MeterReadingRecord = {
-      id: `rdg_${Date.now()}`,
-      meterId: meter.id,
-      meterNumber: meter.meterNumber,
-      unitIdentifier: meter.unitIdentifier,
-      utilityType: meter.utilityType,
-      previousReading: prevReading,
-      currentReading: input.currentReading,
-      consumption,
-      tariffPerUnitGhs: tariffRate,
-      subtotalGhs: subtotal,
-      generatorFuelContributionGhs: genSplit > 0 ? genSplit : undefined,
-      totalDueGhs: totalDue,
-      readAt: new Date().toISOString(),
-      readBy: input.readBy,
-      evidencePhotoUrl: input.evidencePhotoUrl,
-      ocrConfidence: 98.2,
-      invoiceStatus: 'issued',
-    };
-
-    // Update meter last reading
-    const updatedMeters = meters.map((m) =>
-      m.id === meter.id
-        ? {
-            ...m,
-            lastReading: input.currentReading,
-            lastReadAt: new Date().toISOString(),
-          }
-        : m
-    );
-
-    const existingReadings = this.getReadings();
-    const updatedReadings = [newReading, ...existingReadings];
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_METERS_KEY, JSON.stringify(updatedMeters));
-      localStorage.setItem(STORAGE_READINGS_KEY, JSON.stringify(updatedReadings));
-    }
-
-    return newReading;
-  },
-
-  logGeneratorRun(input: {
-    estateId: string;
-    hoursRun: number;
-    litresConsumed: number;
-    dieselPricePerLitreGhs: number;
-    ecgOutageReason: string;
-    totalOccupiedUnits: number;
-  }): GeneratorFuelRun {
-    const totalCost = input.litresConsumed * input.dieselPricePerLitreGhs;
-    const perUnit = Math.round((totalCost / Math.max(1, input.totalOccupiedUnits)) * 100) / 100;
-
-    const newRun: GeneratorFuelRun = {
-      id: `gen_run_${Date.now()}`,
-      estateId: input.estateId,
-      runDate: new Date().toISOString().slice(0, 10),
-      startHours: 894.0,
-      endHours: 894.0 + input.hoursRun,
-      hoursRun: input.hoursRun,
-      litresConsumed: input.litresConsumed,
-      dieselPricePerLitreGhs: input.dieselPricePerLitreGhs,
-      totalFuelCostGhs: Math.round(totalCost * 100) / 100,
-      ecgOutageReason: input.ecgOutageReason,
-      splitMethod: 'by_floor_area',
-      chargePerUnitGhs: perUnit,
-    };
-
-    const existing = this.getGeneratorRuns();
-    const updated = [newRun, ...existing];
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_GEN_RUNS_KEY, JSON.stringify(updated));
-    }
-    return newRun;
-  },
 };

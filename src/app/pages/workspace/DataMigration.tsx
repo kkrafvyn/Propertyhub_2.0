@@ -11,6 +11,7 @@ import {
   type ImportRow,
   type OccupancyImportRow,
 } from "../../../lib/estate-import.service";
+import { importJobStatusVariant } from "../../../lib/import-job-status";
 
 interface DataMigrationProps {
   organizationId: string;
@@ -230,7 +231,8 @@ export function DataMigration({ organizationId, currentUserId }: DataMigrationPr
                 <div className="space-y-0.5">
                   <p className="font-medium text-foreground">{job.file_name}</p>
                   <p className="text-[11px] text-muted-foreground">
-                    {job.imported_rows}/{job.total_rows} rows imported ·{" "}
+                    {job.imported_rows ?? 0}/{job.total_rows} imported
+                    {(job.failed_rows ?? 0) > 0 ? ` · ${job.failed_rows} failed` : ""} ·{" "}
                     {new Date(job.created_at).toLocaleDateString()}
                   </p>
                 </div>
@@ -240,13 +242,14 @@ export function DataMigration({ organizationId, currentUserId }: DataMigrationPr
                     {job.import_type?.replace(/_/g, " ")}
                   </Badge>
                   <Badge
-                    variant={job.status === "imported" ? "default" : "outline"}
+                    variant={importJobStatusVariant(job.status)}
                     className="capitalize text-[10px]"
                   >
-                    {job.status}
+                    {String(job.status).replace(/_/g, " ")}
                   </Badge>
 
-                  {job.status !== "imported" && job.valid_rows === job.total_rows && (
+                  {["validated", "partially_imported", "failed"].includes(job.status) &&
+                    job.valid_rows === job.total_rows && (
                     <Button
                       size="sm"
                       variant="outline"

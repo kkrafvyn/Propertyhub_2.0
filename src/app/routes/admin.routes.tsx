@@ -2,32 +2,117 @@
  * BaytMiftah Admin Routes
  * ───────────────────────
  * Routes for the Admin product family (Web + Desktop + Mobile).
- *
- * Web: Everyday platform administration (users, orgs, listings, trust, fraud, complaints, audit, analytics)
- * Desktop: Deep platform operations (investigations, bulk moderation, AI oversight)
- * Mobile: Urgent action & alerts (alerts, moderation approvals, fraud alerts, trust cases)
  */
 
-import type { RouteObject } from 'react-router';
-import { ProtectedRoute, ProtectedAdminRoute } from '../components/ProtectedRoute';
+import type { ComponentType } from "react";
+import type { RouteObject } from "react-router";
+import { ProtectedRoute, ProtectedAdminRoute } from "../components/ProtectedRoute";
+
+function adminProtected(Component: ComponentType) {
+  return function ProtectedAdminRouteWrapper() {
+    return (
+      <ProtectedRoute>
+        <ProtectedAdminRoute>
+          <Component />
+        </ProtectedAdminRoute>
+      </ProtectedRoute>
+    );
+  };
+}
 
 export const adminRoutes: RouteObject[] = [
   {
-    path: 'admin/*',
+    path: "admin",
     lazy: async () => {
-      const { AdminLayout } = await import('../pages/admin/AdminLayout');
-
-      return {
-        Component: function ProtectedAdminRouteWrapper() {
-          return (
-            <ProtectedRoute>
-              <ProtectedAdminRoute>
-                <AdminLayout />
-              </ProtectedAdminRoute>
-            </ProtectedRoute>
-          );
-        },
-      };
+      const { AdminShell } = await import("../pages/admin/AdminShell");
+      return { Component: adminProtected(AdminShell) };
     },
+    children: [
+      {
+        index: true,
+        lazy: async () => {
+          const { AdminHome } = await import("../pages/admin/AdminHome");
+          return { Component: AdminHome };
+        },
+      },
+      {
+        path: "team",
+        lazy: async () => {
+          const { PlatformTeamRoster } = await import("../pages/admin/PlatformTeamRoster");
+          return { Component: PlatformTeamRoster };
+        },
+      },
+      {
+        path: "integrations",
+        lazy: async () => {
+          const { AdminIntegrationsHub } = await import("../pages/admin/AdminIntegrationsHub");
+          return { Component: AdminIntegrationsHub };
+        },
+      },
+      {
+        path: "operations",
+        lazy: async () => {
+          const { AdminOperations } = await import("../pages/admin/AdminOperations");
+          const { AdminSectionGate } = await import("../pages/admin/AdminSectionGate");
+          return {
+            Component: function AdminOperationsPage() {
+              return (
+                <AdminSectionGate section="operations" label="App & API health">
+                  <AdminOperations />
+                </AdminSectionGate>
+              );
+            },
+          };
+        },
+      },
+      {
+        path: "features",
+        lazy: async () => {
+          const { AdminPlatformFeatures } = await import("../pages/admin/AdminPlatformFeatures");
+          const { AdminSectionGate } = await import("../pages/admin/AdminSectionGate");
+          return {
+            Component: function AdminFeaturesPage() {
+              return (
+                <AdminSectionGate section="features" label="Feature flags">
+                  <AdminPlatformFeatures />
+                </AdminSectionGate>
+              );
+            },
+          };
+        },
+      },
+      {
+        path: "payments",
+        lazy: async () => {
+          const { AdminPlatformPayments } = await import("../pages/admin/AdminPlatformPayments");
+          return { Component: AdminPlatformPayments };
+        },
+      },
+      {
+        path: "communications",
+        lazy: async () => {
+          const { AdminPlatformCommunications } = await import("../pages/admin/AdminPlatformCommunications");
+          return { Component: AdminPlatformCommunications };
+        },
+      },
+      {
+        path: "ai",
+        lazy: async () => {
+          const { AdminPlatformAi } = await import("../pages/admin/AdminPlatformAi");
+          return { Component: AdminPlatformAi };
+        },
+      },
+      {
+        path: "*",
+        lazy: async () => {
+          const { AdminLayout } = await import("../pages/admin/AdminLayout");
+          return {
+            Component: function AdminLegacySections() {
+              return <AdminLayout contentOnly />;
+            },
+          };
+        },
+      },
+    ],
   },
 ];

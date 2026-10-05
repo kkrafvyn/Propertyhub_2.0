@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   AlertCircle,
   Check,
@@ -33,6 +33,10 @@ import { useTranslation } from '../../i18n/LocaleContext'
 import { LegalAcceptanceCheckbox } from '../../components/legal/LegalAcceptanceCheckbox'
 import { legalAcceptanceService } from '@/lib/legal-acceptance.service'
 import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from '@/lib/legal-config'
+import {
+  isLegalJurisdictionTransactionalAllowed,
+  legalJurisdictionGateMessage,
+} from '@/lib/legal-jurisdiction-gate'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -217,6 +221,21 @@ export function PaymentCheckout({
   const [saveFuturePayment, setSaveFuturePayment] = useState(false)
   const [paymentTermsAccepted, setPaymentTermsAccepted] = useState(false)
   const [completedTransactionId, setCompletedTransactionId] = useState<string | null>(null)
+  const [simulatedCheckoutDetected, setSimulatedCheckoutDetected] = useState(false)
+  const checkoutLegalGate = useMemo(() => {
+    if (!paymentContext) return null
+    const allowed = isLegalJurisdictionTransactionalAllowed(paymentContext.jurisdictionId)
+    return {
+      allowed,
+      message: allowed
+        ? undefined
+        : legalJurisdictionGateMessage(paymentContext.jurisdictionId, 'payment_checkout'),
+    }
+  }, [paymentContext])
+  const showSandboxPaymentBanner =
+    simulatedCheckoutDetected ||
+    String(import.meta.env.VITE_ENABLE_DEMO_DATA ?? '').toLowerCase() === 'true' ||
+    !clientIntegrations.payangels.checkoutReady
 
   useEffect(() => {
     let cancelled = false
@@ -285,6 +304,9 @@ export function PaymentCheckout({
       if (!paymentContext) throw new Error('Property payment details are still loading.')
       if (!paymentState.selectedPaymentInfo) throw new Error('Choose a payment method before continuing.')
       if (!paymentTermsAccepted) throw new Error('Please accept the Payments & Transaction Processing Policy before continuing.')
+      if (checkoutLegalGate && !checkoutLegalGate.allowed) {
+        throw new Error(checkoutLegalGate.message || 'Checkout is not available in this jurisdiction.')
+      }
 
       await legalAcceptanceService.recordAcceptance({
         userId: user.id, scope: 'payment_checkout',
@@ -298,6 +320,7 @@ export function PaymentCheckout({
 
       const checkout = await paymentService.initializePropertyPayment({ listingId, purpose: 'other' })
       if (checkout.simulated || String(checkout.accessCode || '').startsWith('sim_')) {
+        setSimulatedCheckoutDetected(true)
         throw new Error('Checkout is not configured for live payments.')
       }
 
@@ -343,6 +366,25 @@ export function PaymentCheckout({
 
           <div className="p-6 sm:p-8">
             <StepBar step={step} />
+
+            {showSandboxPaymentBanner ? (
+              <div
+                role="alert"
+                className="mb-6 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-800 p-4 text-sm text-amber-950 dark:text-amber-100"
+              >
+                <strong className="font-semibold">Test / sandbox payment mode.</strong> No live money
+                will move until PayAngels checkout is fully configured and demo data is disabled.
+              </div>
+            ) : null}
+
+            {checkoutLegalGate && !checkoutLegalGate.allowed ? (
+              <div
+                role="alert"
+                className="mb-6 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/30 p-4 text-sm text-rose-900 dark:text-rose-100"
+              >
+                {checkoutLegalGate.message}
+              </div>
+            ) : null}
 
             {/* Error banner */}
             {error && (

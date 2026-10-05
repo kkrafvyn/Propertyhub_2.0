@@ -157,7 +157,7 @@ export const maintenanceService = {
   async createContractorAccessLink(input: {
     organizationId: string;
     requestId: string;
-    recipientEmail?: string;
+    recipientEmail: string;
     label?: string;
   }) {
     const { externalAccessService } = await import("./external-access.service");
@@ -275,7 +275,7 @@ export const maintenanceService = {
       .select(`
         *,
         tenant:users!maintenance_requests_tenant_user_id_fkey(full_name, email, phone),
-        vendor:vendors(id, business_name, phone),
+        vendor:vendors(id, business_name, phone, email),
         lease:leases(
           listing:listings(property:properties(id, address, city))
         )

@@ -2,6 +2,7 @@ import { resolveJurisdiction, type JurisdictionId } from "./real-estate-complian
 import { resolveSubdivisionCode } from "./country-rules/subdivision-resolver";
 import { resolveGhanaRegionCode } from "./ghana-regions";
 import type { PropertyLocationInput } from "./property-country-context.service";
+import { validateLegalJurisdictionForTransactionalAction } from "./legal-jurisdiction-gate";
 
 export type PropertyLocationValidationInput = PropertyLocationInput & {
   address?: string | null;
@@ -47,6 +48,16 @@ export function validatePropertyLocationForPublish(
     if (gps && !/^[A-Z]{2}-\d{3,4}-\d{3,4}$/.test(gps)) {
       errors.push("GhanaPostGPS must use format XX-000-0000.");
     }
+  }
+
+  const legalGate = validateLegalJurisdictionForTransactionalAction({
+    country: property.country,
+    region: property.region,
+    city: property.city,
+    action: "listing_publish",
+  });
+  if (!legalGate.allowed && legalGate.message) {
+    errors.push(legalGate.message);
   }
 
   return { valid: errors.length === 0, errors };

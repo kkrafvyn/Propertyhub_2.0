@@ -73,12 +73,6 @@ export function mapDbVisitorPass(row: any, estateName = '', unitIdentifier?: str
   };
 }
 
-function generateGatePin() {
-  const random = new Uint32Array(1);
-  crypto.getRandomValues(random);
-  return String(100000 + (random[0] % 900000));
-}
-
 export const liveVisitorClearanceService = {
   async listPasses(estateIds: string[]) {
     if (!estateIds.length) return [];
@@ -119,93 +113,5 @@ export const liveVisitorClearanceService = {
     });
     if (error) throw error;
     return data ?? { success: false, message: 'Invalid or already-used visitor pass.' };
-  },
-};
-
-const MOCK_PASSES: VisitorPass[] = [
-  {
-    id: 'pass_01',
-    estateId: 'est_01',
-    estateName: 'East Legon Hills Luxury Enclave',
-    hostResidentName: 'Dr. Kwame Boateng',
-    hostUnitNumber: 'Villa 14',
-    hostPhone: '+233 24 555 0192',
-    visitorName: 'Kwesi Appiah (Bolt Food Delivery)',
-    visitorPhone: '+233 50 882 1044',
-    passType: 'delivery',
-    qrCodeToken: 'BM-GATE-774910',
-    entryPin: '774910',
-    vehiclePlate: 'M-22-GR-9012',
-    validFrom: '2026-08-18T18:00:00Z',
-    validUntil: '2026-08-18T20:30:00Z',
-    status: 'used',
-    checkInTime: '2026-08-18T18:42:00Z',
-    securityGuardName: 'Officer Ibrahim (Gate 1)',
-    entryGate: 'Main West Gate',
-  },
-  {
-    id: 'pass_02',
-    estateId: 'est_01',
-    estateName: 'East Legon Hills Luxury Enclave',
-    hostResidentName: 'Mrs. Janet Osei',
-    hostUnitNumber: 'Villa 08',
-    hostPhone: '+233 20 119 4022',
-    visitorName: 'David Mensah (AC Maintenance Technician)',
-    visitorPhone: '+233 24 991 3044',
-    passType: 'contractor',
-    qrCodeToken: 'BM-GATE-391048',
-    entryPin: '391048',
-    vehiclePlate: 'GT-4019-21',
-    validFrom: '2026-08-18T09:00:00Z',
-    validUntil: '2026-08-18T18:00:00Z',
-    status: 'valid',
-    entryGate: 'Service Gate B',
-  },
-  {
-    id: 'pass_03',
-    estateId: 'est_01',
-    estateName: 'East Legon Hills Luxury Enclave',
-    hostResidentName: 'Kofi Mensah',
-    hostUnitNumber: 'Villa 22',
-    hostPhone: '+233 24 330 9912',
-    visitorName: 'Akosua Frimpong (Dinner Guest)',
-    visitorPhone: '+233 27 662 1099',
-    passType: 'guest_visit',
-    qrCodeToken: 'BM-GATE-902144',
-    entryPin: '902144',
-    vehiclePlate: 'GW-8921-25',
-    validFrom: '2026-08-18T19:00:00Z',
-    validUntil: '2026-08-18T23:59:00Z',
-    status: 'valid',
-    entryGate: 'Main West Gate',
-  },
-];
-
-
-export const visitorClearanceService = {
-  getPasses(): VisitorPass[] {
-    throw new Error('Use liveVisitorClearanceService.listPasses for production gate passes.');
-  },
-
-  createPass(_input: {
-    estateName?: string;
-    hostResidentName: string;
-    hostUnitNumber: string;
-    hostPhone: string;
-    visitorName: string;
-    visitorPhone?: string;
-    passType: PassType;
-    vehiclePlate?: string;
-    validHours?: number;
-  }): VisitorPass {
-    throw new Error('Use liveVisitorClearanceService.createPass for production gate passes.');
-  },
-
-  verifyAndCheckIn(_tokenOrPin: string, _guardName = 'Officer Mensah'): {
-    success: boolean;
-    pass?: VisitorPass;
-    message: string;
-  } {
-    throw new Error('Use liveVisitorClearanceService.verifyAndCheckIn for production gate checks.');
   },
 };

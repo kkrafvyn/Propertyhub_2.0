@@ -2,9 +2,8 @@
  * BaytMiftah REOS — WhatsApp Business Automation Hub
  * 
  * Central control room for automated WhatsApp tenant communication:
- * - Live Concierge Bot Simulator (Interactive state machine)
  * - 1-Click WhatsApp Dispatchers (Gate passes, MoMo rent invoices, artisan work orders)
- * - Automated Broadcast Queues (Estate power/water notices, rent billing cycles)
+ * - Group bot linking, inbound feed, and broadcast queues
  */
 
 import React, { useEffect, useState } from 'react';
@@ -17,7 +16,6 @@ import {
   Users,
   Copy,
   ExternalLink,
-  Bot,
   Smartphone,
   CheckCircle2,
   Clock,
@@ -45,21 +43,13 @@ import {
   type WhatsAppGroupChannel,
   type WhatsAppInboundMessage,
 } from '../../../lib/whatsapp-group-bot.service';
-import { isDemoSimulationAllowed } from '../../../lib/simulation-mode';
+import { usePlatformFeatures } from '../../context/PlatformFeaturesContext';
 import { whatsappOutboundService } from '../../../lib/whatsapp-outbound.service';
 import { WHATSAPP_GROUP_RESIDENT_COMMANDS } from '../../../lib/whatsapp-group-bot-core';
 
-interface ChatMessage {
-  id: string;
-  sender: 'user' | 'bot';
-  text: string;
-  timestamp: string;
-  quickReplies?: string[];
-}
-
 export function WhatsAppAutomationHub({ organizationId }: { organizationId?: string }) {
-  const allowSimulator = isDemoSimulationAllowed();
-  const [activeTab, setActiveTab] = useState<'dispatcher' | 'simulator' | 'broadcast' | 'groups'>('dispatcher');
+  const { flags } = usePlatformFeatures();
+  const [activeTab, setActiveTab] = useState<'dispatcher' | 'broadcast' | 'groups'>('dispatcher');
   const [activeDispatcher, setActiveDispatcher] = useState<'gate_pass' | 'rent_invoice' | 'maintenance'>('gate_pass');
 
   // Gate Pass Form State
@@ -98,24 +88,9 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
     estateName: '',
   });
 
-  // Bot Simulator State
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      id: 'msg_0',
-      sender: 'bot',
-      text: `🏢 *Welcome to BaytMiftah Estate Concierge!*\nHow can we assist you today? Reply with a number:\n\n1️⃣ *Check Rent Balance & Pay (MoMo)*\n2️⃣ *Generate Visitor Gate Pass*\n3️⃣ *Report Maintenance Defect*\n4️⃣ *Check Active Ticket Status*\n5️⃣ *Speak with Estate Manager*`,
-      timestamp: 'Just now',
-      quickReplies: ['1. Rent Balance', '2. Gate Pass', '3. Maintenance', '5. Support'],
-    },
-  ]);
-  const [simInput, setSimInput] = useState('');
-
   const [linkedGroups, setLinkedGroups] = useState<WhatsAppGroupChannel[]>([]);
   const [inboundMessages, setInboundMessages] = useState<WhatsAppInboundMessage[]>([]);
   const [groupLinkForm, setGroupLinkForm] = useState({ groupId: '', groupName: '', respondWithoutMention: false });
-  const [groupSimInput, setGroupSimInput] = useState('');
-  const [groupSimSignDemo, setGroupSimSignDemo] = useState(true);
-  const [groupSimLog, setGroupSimLog] = useState<Array<{ user: string; bot?: string; skipped?: boolean }>>([]);
   const webhookUrl = whatsappGroupBotService.getWebhookUrl();
 
   useEffect(() => {
@@ -142,48 +117,6 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
     } catch (err: any) {
       toast.error(err.message || 'Unable to link group.');
     }
-  };
-
-  const handleGroupSimSend = () => {
-    if (!groupSimInput.trim()) return;
-    void (async () => {
-      const demoContext = groupSimSignDemo
-        ? {
-            pendingLeaseSignUrl: 'https://app.baytmiftah.com/sign/demo-token-abc',
-            pendingLeaseDocumentName: 'Residential lease — Unit 4B',
-            jurisdictionLabel: 'Greater Accra, Ghana',
-          }
-        : {};
-
-      const result = organizationId
-        ? await whatsappGroupBotService.simulateGroupMessageLive({
-            organizationId,
-            text: groupSimInput,
-            senderPhone: '233244123456',
-            ...demoContext,
-          })
-        : whatsappGroupBotService.simulateGroupMessage({
-            text: groupSimInput,
-            senderPhone: '233244123456',
-            context: {
-              tenantUserId: 'demo-tenant',
-              tenantName: 'Demo Tenant',
-              unitLabel: '4B',
-              estateName: 'Cantonments Luxury Suites',
-              currency: 'GHS',
-              outstandingMinor: 650000,
-              paymentUrl: 'https://app.baytmiftah.com/app/payments',
-              ...demoContext,
-            },
-          });
-
-      if (!result.responded) {
-        setGroupSimLog((prev) => [...prev, { user: groupSimInput, skipped: true }]);
-      } else {
-        setGroupSimLog((prev) => [...prev, { user: groupSimInput, bot: result.bot.replyMessage }]);
-      }
-      setGroupSimInput('');
-    })();
   };
 
   // Generated template preview
@@ -238,29 +171,16 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
       .catch((err: Error) => toast.error(err.message || 'Cloud send failed. Check Meta secrets and org integration.'));
   };
 
-  const handleSendSimMessage = (textToSend?: string) => {
-    const text = textToSend || simInput;
-    if (!text.trim()) return;
-
-    const userMsg: ChatMessage = {
-      id: `usr_${Date.now()}`,
-      sender: 'user',
-      text: text.trim(),
-      timestamp: 'Just now',
-    };
-
-    const botRes = whatsappBusinessBotService.processIncomingMessage('233244123456', text);
-    const botMsg: ChatMessage = {
-      id: `bot_${Date.now() + 1}`,
-      sender: 'bot',
-      text: botRes.replyMessage,
-      timestamp: 'Just now',
-      quickReplies: botRes.quickReplies,
-    };
-
-    setChatMessages((prev) => [...prev, userMsg, botMsg]);
-    setSimInput('');
-  };
+  if (!flags.whatsapp) {
+    return (
+      <Card className="p-8">
+        <h2 className="text-lg font-semibold">WhatsApp is disabled</h2>
+        <p className="text-sm text-muted-foreground mt-2">
+          A platform administrator has turned off WhatsApp features for this environment.
+        </p>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -300,19 +220,6 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
         >
           <Send className="w-4 h-4" />
           1-Click Dispatch Studio
-        </button>
-
-        <button
-          onClick={() => setActiveTab('simulator')}
-          className={`px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 ${
-            activeTab === 'simulator'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-ink-secondary hover:bg-surface-hover hover:text-ink'
-          }`}
-          style={allowSimulator ? undefined : { display: 'none' }}
-        >
-          <Bot className="w-4 h-4" />
-          Tenant Bot Simulator
         </button>
 
         <button
@@ -603,121 +510,7 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
         </div>
       )}
 
-      {/* Tab 2: Tenant Bot Simulator */}
-      {allowSimulator && activeTab === 'simulator' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-5 space-y-4">
-            <Card className="p-5 border-surface-border bg-surface">
-              <h3 className="text-base font-bold text-ink flex items-center gap-2 mb-2">
-                <Bot className="w-5 h-5 text-emerald-500" />
-                Interactive Concierge Rules
-              </h3>
-              <p className="text-xs text-ink-secondary mb-4 leading-relaxed">
-                The BaytMiftah WhatsApp Bot runs an automated 24/7 rule-based state machine. Test simulated tenant inquiries on the right.
-              </p>
-
-              <div className="space-y-2 text-xs">
-                <div className="p-2.5 rounded-lg bg-surface-subtle border border-surface-border flex items-center justify-between">
-                  <span className="font-semibold text-ink">Type &quot;1&quot; or &quot;Rent&quot;</span>
-                  <Badge variant="outline" className="text-[10px] text-blue-500">Rent Balance & MoMo</Badge>
-                </div>
-                <div className="p-2.5 rounded-lg bg-surface-subtle border border-surface-border flex items-center justify-between">
-                  <span className="font-semibold text-ink">Type &quot;2&quot; or &quot;Gate&quot;</span>
-                  <Badge variant="outline" className="text-[10px] text-emerald-500">Instant Access PIN</Badge>
-                </div>
-                <div className="p-2.5 rounded-lg bg-surface-subtle border border-surface-border flex items-center justify-between">
-                  <span className="font-semibold text-ink">Type &quot;3&quot; or &quot;Leak&quot;</span>
-                  <Badge variant="outline" className="text-[10px] text-amber-500">Artisan Dispatch</Badge>
-                </div>
-                <div className="p-2.5 rounded-lg bg-surface-subtle border border-surface-border flex items-center justify-between">
-                  <span className="font-semibold text-ink">Type &quot;5&quot; or &quot;Help&quot;</span>
-                  <Badge variant="outline" className="text-[10px] text-purple-500">Manager Handoff</Badge>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* Chat Simulator Canvas */}
-          <div className="lg:col-span-7 flex justify-center">
-            <div className="w-full max-w-md bg-[#0b141a] rounded-3xl border-4 border-gray-800 p-4 shadow-2xl flex flex-col h-[560px]">
-              {/* Header */}
-              <div className="bg-[#202c33] -mx-4 -mt-4 px-4 py-3 flex items-center gap-3 border-b border-gray-700">
-                <div className="w-9 h-9 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-sm">
-                  BM
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-100">BaytMiftah Concierge Bot</p>
-                  <p className="text-[10px] text-emerald-400">Online 24/7</p>
-                </div>
-                <button
-                  onClick={() => setChatMessages([chatMessages[0]])}
-                  className="text-xs text-gray-400 hover:text-white"
-                >
-                  Reset
-                </button>
-              </div>
-
-              {/* Message Feed */}
-              <div className="flex-1 overflow-y-auto py-4 space-y-3">
-                {chatMessages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
-                  >
-                    <div
-                      className={`p-3 rounded-2xl text-xs max-w-[85%] whitespace-pre-line shadow ${
-                        msg.sender === 'user'
-                          ? 'bg-[#005c4b] text-white rounded-tr-sm'
-                          : 'bg-[#202c33] text-gray-100 rounded-tl-sm'
-                      }`}
-                    >
-                      {msg.text}
-                    </div>
-                    {msg.quickReplies && (
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {msg.quickReplies.map((qr) => (
-                          <button
-                            key={qr}
-                            onClick={() => handleSendSimMessage(qr)}
-                            className="bg-[#2a3942] hover:bg-[#374955] text-emerald-400 text-[11px] font-semibold px-2.5 py-1 rounded-full transition"
-                          >
-                            {qr}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Input bar */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSendSimMessage();
-                }}
-                className="bg-[#202c33] -mx-4 -mb-4 px-4 py-3 flex items-center gap-2 border-t border-gray-700"
-              >
-                <input
-                  type="text"
-                  value={simInput}
-                  onChange={(e) => setSimInput(e.target.value)}
-                  placeholder="Type a message (e.g. 1, gate, leak)..."
-                  className="flex-1 bg-[#2a3942] rounded-full px-4 py-2 text-xs text-white outline-none"
-                />
-                <button
-                  type="submit"
-                  className="w-9 h-9 rounded-full bg-emerald-600 hover:bg-emerald-700 flex items-center justify-center text-white transition"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tab 3: Broadcast Automation Queue */}
+      {/* Tab 2: Broadcast Automation Queue */}
       {activeTab === 'broadcast' && (
         <Card className="p-6 border-surface-border bg-surface">
           <div className="flex items-center justify-between mb-4">
@@ -894,48 +687,6 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
                 </div>
               )}
             </Card>
-
-            {allowSimulator ? (
-            <Card className="p-5 border-surface-border bg-surface">
-              <h3 className="text-sm font-bold flex items-center gap-2 mb-3">
-                <Bot className="w-4 h-4" />
-                Group message simulator
-              </h3>
-              <p className="text-xs text-muted-foreground mb-3">
-                Test how the bot responds when tagged in a group. Try <strong>@BaytMiftah menu</strong>, <strong>/bm 2</strong>, or <strong>/bm 6</strong> for lease signing.
-              </p>
-              <label className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-                <input
-                  type="checkbox"
-                  checked={groupSimSignDemo}
-                  onChange={(e) => setGroupSimSignDemo(e.target.checked)}
-                />
-                Simulate pending lease sign lookup (command 6)
-              </label>
-              <div className="space-y-2 max-h-48 overflow-y-auto mb-3">
-                {groupSimLog.map((entry, idx) => (
-                  <div key={idx} className="text-xs space-y-1">
-                    <p className="text-right bg-[#005c4b]/10 rounded p-2">{entry.user}</p>
-                    {entry.skipped ? (
-                      <p className="text-muted-foreground italic pl-2">Bot ignored (no mention)</p>
-                    ) : entry.bot ? (
-                      <p className="bg-surface-subtle rounded p-2 whitespace-pre-line">{entry.bot}</p>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  className="flex-1 rounded-lg border px-3 py-2 text-sm"
-                  placeholder="@BaytMiftah menu"
-                  value={groupSimInput}
-                  onChange={(e) => setGroupSimInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleGroupSimSend()}
-                />
-                <Button size="sm" onClick={handleGroupSimSend}>Send</Button>
-              </div>
-            </Card>
-            ) : null}
           </div>
         </div>
       )}

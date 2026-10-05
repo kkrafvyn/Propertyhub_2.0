@@ -66,6 +66,15 @@ Env placeholders when integrated: `SUMSUB_APP_TOKEN`, `SUMSUB_SECRET_KEY`, `SUMS
 | `PAYANGELS_WEBHOOK_SECRET` | Webhook verification | Same |
 | `PAYANGELS_API_BASE` | API host (operator-set) | PayAngels onboarding docs — not Stripe |
 
+**Wire (local `.env` → Supabase Edge + functions):**
+
+```bash
+npm run integrations:wire-payangels
+npm run vercel:env   # VITE_PAYANGELS_PUBLIC_KEY on Vercel, then redeploy
+```
+
+Webhook URL for the PayAngels dashboard: `https://<project-ref>.supabase.co/functions/v1/payangels-webhook`
+
 ## Communications
 
 | Variable | Purpose | Get it |

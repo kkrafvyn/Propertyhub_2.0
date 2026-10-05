@@ -167,7 +167,7 @@ jobs:
         run: npm ci
 
       - name: Tenant isolation live tests
-        run: npm run security:tenant
+        run: npm run security:tenant:strict
         env:
           VITE_SUPABASE_TEST_URL: ${{ secrets.VITE_SUPABASE_TEST_URL }}
           VITE_SUPABASE_TEST_ANON_KEY: ${{ secrets.VITE_SUPABASE_TEST_ANON_KEY }}

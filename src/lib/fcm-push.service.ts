@@ -89,7 +89,8 @@ export class FCMPushService {
   }
 
   /**
-   * Dispatch push notification to all active devices of a recipient
+   * @deprecated Use the dispatch-notification edge function from the server.
+   * Client-side FCM cannot deliver tokens safely; this method only counts failures.
    */
   async dispatchPushNotification(payload: PushNotificationPayload): Promise<{
     delivered: number;

@@ -5,6 +5,7 @@ import {
   type ScreeningCheckType,
   type ScreeningRecommendation,
 } from "./tenant-screening-providers";
+import { validateLegalJurisdictionForTransactionalAction } from "./legal-jurisdiction-gate";
 
 export type { ScreeningRecommendation };
 
@@ -133,7 +134,21 @@ export const leaseScreeningService = {
     applicantEmail: string;
     reviewedBy?: string;
     checkTypes: ScreeningCheckType[];
+    /** Property or org jurisdiction for legal gate (defaults to Ghana pilot). */
+    propertyCountry?: string | null;
+    propertyRegion?: string | null;
+    propertyCity?: string | null;
   }) {
+    const legalGate = validateLegalJurisdictionForTransactionalAction({
+      country: input.propertyCountry ?? "Ghana",
+      region: input.propertyRegion,
+      city: input.propertyCity,
+      action: "tenant_screening",
+    });
+    if (!legalGate.allowed) {
+      throw new Error(legalGate.message || "Tenant screening is not enabled in this jurisdiction.");
+    }
+
     const unique = [...new Set(input.checkTypes)];
     if (unique.length === 0) throw new Error("Select at least one screening check.");
 

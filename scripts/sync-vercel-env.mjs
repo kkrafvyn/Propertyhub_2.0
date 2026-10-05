@@ -7,19 +7,23 @@
  *   npm run vercel:env -- --dry-run
  */
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
 import { CLIENT_KEYS } from "./env-schema.mjs";
-import { loadProjectEnv } from "./load-project-env.mjs";
+import { loadProjectEnv, PROJECT_ROOT } from "./load-project-env.mjs";
+
+const vercelDir = path.join(PROJECT_ROOT, ".vercel");
 
 const args = new Set(process.argv.slice(2));
 const dryRun = args.has("--dry-run");
 const environments = ["production", "preview", "development"];
 
-function runVercel(argsList, input = "") {
+function runVercel(argsList) {
   const result = spawnSync("npx", ["vercel", ...argsList], {
-    input,
     encoding: "utf8",
-    shell: true,
-    stdio: ["pipe", "pipe", "pipe"],
+    shell: false,
+    stdio: ["ignore", "pipe", "pipe"],
+    cwd: PROJECT_ROOT,
   });
 
   return {
@@ -55,20 +59,42 @@ function main() {
     process.exit(1);
   }
 
+  const projectFile = path.join(vercelDir, "project.json");
+  const projectId = env.VERCEL_PROJECT_ID?.trim();
+  if (!fs.existsSync(projectFile) && !projectId) {
+    console.error(
+      "No linked Vercel project (.vercel/project.json). Run: npx vercel link\n" +
+        "Or set VERCEL_PROJECT_ID in .env and re-run.",
+    );
+    process.exit(1);
+  }
+
+  const projectArgs = projectId ? ["--project", projectId] : [];
+
   let updated = 0;
   let failed = 0;
 
   for (const [key, value] of entries) {
     for (const target of environments) {
-      runVercel(["env", "rm", key, target, "--yes"]);
+      runVercel(["env", "rm", key, target, "--yes", ...projectArgs]);
 
-      const add = runVercel(["env", "add", key, target], `${value}\n`);
+      const add = runVercel([
+        "env",
+        "add",
+        key,
+        target,
+        "--value",
+        value,
+        "--yes",
+        ...projectArgs,
+      ]);
       if (add.ok) {
         updated += 1;
         console.log(`  ✓ ${key} → ${target}`);
       } else {
         failed += 1;
-        console.error(`  ✗ ${key} → ${target}: ${add.stderr || add.stdout}`);
+        const detail = [add.stderr, add.stdout].filter(Boolean).join("\n").trim();
+        console.error(`  ✗ ${key} → ${target}: ${detail || "vercel env add failed"}`);
       }
     }
   }

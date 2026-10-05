@@ -17,13 +17,13 @@ This document tracks the major legal and compliance risk areas covered by the Ba
 | --- | --- | --- | --- | --- | --- |
 | minor-capacity | account eligibility | legal capacity and age restrictions | age-minor-protection | implemented_unverified | required |
 | biometric-processing | identity & KYC | document and biometric data handling | biometric-identity-data | implemented_unverified | required |
-| tenant-screening | screening & decision support | applicant and tenant screening | tenant-screening | partially_implemented | required |
-| ai-decision-support | AI oversight | AI recommendations and high-impact decisions | ai-automated-decisions | partially_implemented | required |
+| tenant-screening | screening & decision support | applicant and tenant screening | tenant-screening | implemented_unverified | required |
+| ai-decision-support | AI oversight | AI recommendations and high-impact decisions | ai-automated-decisions | implemented_unverified | required |
 | marketing-consent | communications | marketing and communications consent | communications-marketing | partially_implemented | required |
 | privacy-rights | privacy | rights requests and deletion controls | privacy-rights | implemented_unverified | required |
 | data-retention | data governance | retention and legal holds | data-retention | partially_implemented | required |
 | smart-access | physical security | visitor passes and smart-access control | smart-access-security | partially_implemented | required |
-| developer-API | integration | API misuse and downstream handling | developer-api-terms | partially_implemented | required |
+| developer-API | integration | API misuse and downstream handling | developer-api-terms | implemented_unverified | required |
 | valuation-estimates | market intelligence | valuation and yield disclaimers | valuation-disclaimer | partially_implemented | required |
 
 ## Core policy bundle notes

@@ -284,8 +284,8 @@ export class RealtimeMessagingService {
       }
 
       return created as Conversation;
-    } catch {
-      // Local fallback for offline/test environments
+    } catch (error) {
+      if (!isDemoSimulationAllowed()) throw error;
       const convId = secureId("conv");
       const fallbackConv: Conversation = {
         id: convId,
@@ -362,7 +362,9 @@ export class RealtimeMessagingService {
     } catch (error) {
       if (!isDemoSimulationAllowed()) throw error;
       return Array.from(localConversations.values()).sort(
-        (a, b) => new Date(b.last_message_at || b.created_at).getTime() - new Date(a.last_message_at || a.created_at).getTime()
+        (a, b) =>
+          new Date(b.last_message_at || b.created_at).getTime() -
+          new Date(a.last_message_at || a.created_at).getTime(),
       );
     }
   }

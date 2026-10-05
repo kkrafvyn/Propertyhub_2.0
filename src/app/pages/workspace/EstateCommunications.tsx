@@ -49,13 +49,13 @@ import {
   type ManagedEstate,
 } from '../../../lib/estate-operations.service';
 import { useCall } from '../../context/CallContext';
-import { videoCallsAvailable, voiceCallsAvailable } from '../../../lib/communications-capabilities';
+import { isVideoCallsEnabledForApp, isVoiceCallsEnabledForApp } from '../../../lib/app-feature-gates';
 import {
   buildCellularCallUrl,
   buildWhatsAppCallUrl,
   type CallSession,
 } from '../../../lib/call.service';
-import { isDemoSimulationAllowed } from '../../../lib/simulation-mode';
+import { usePlatformFeatures } from '../../context/PlatformFeaturesContext';
 
 interface CommunicationStats {
   totalNotices: number;
@@ -111,9 +111,10 @@ export function EstateCommunications({
   organizationId: string;
   currentUserId: string;
 }) {
-  const { startCall, simulateIncomingCall, callHistory } = useCall();
-  const videoEnabled = videoCallsAvailable();
-  const voiceEnabled = voiceCallsAvailable();
+  const { flags } = usePlatformFeatures();
+  const { startCall, callHistory } = useCall();
+  const videoEnabled = isVideoCallsEnabledForApp(flags);
+  const voiceEnabled = isVoiceCallsEnabledForApp(flags);
   const [activeTab, setActiveTab] = useState<'broadcasts' | 'rooms' | 'call_logs' | 'gateways'>('broadcasts');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -212,23 +213,6 @@ export function EstateCommunications({
     );
   };
 
-  const handleSimulateInboundCall = () => {
-    simulateIncomingCall(
-      {
-        name: 'Kofi Mensah (Unit 402 - Tenant)',
-        role: 'Resident / Tenant',
-        phone: '+233 24 555 0192',
-        email: 'kofi.mensah@gmail.com',
-      },
-      'voice',
-      {
-        estateId: selectedEstate?.id,
-        estateName: selectedEstate?.name || 'East Legon Hills Estate',
-      }
-    );
-    toast.info('Simulating incoming call from resident...');
-  };
-
   return (
     <div className="space-y-6">
       {/* ── Header ──────────────────────────────────────────────────────── */}
@@ -250,18 +234,6 @@ export function EstateCommunications({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {isDemoSimulationAllowed() ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSimulateInboundCall}
-              className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-            >
-              <PhoneIncoming className="mr-1.5 h-3.5 w-3.5" />
-              Test Inbound Call
-            </Button>
-          ) : null}
-
           {videoEnabled ? (
             <Button
               size="sm"

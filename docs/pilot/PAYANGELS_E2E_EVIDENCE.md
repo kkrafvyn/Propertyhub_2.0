@@ -1,10 +1,12 @@
 # PayAngels live E2E evidence
 
+> **Invalidated 2026-10-05:** this run exercised Paystack endpoints through a renamed adapter, not the PayAngel Business API. It is retained only as historical evidence and must not be used to set `PAYANGELS_LIVE_CERTIFIED=true`.
+
 **Last updated:** 2026-09-10
 
-## Root cause fixed (2026-09-10)
+## Historical diagnosis (not PayAngel certification)
 
-Payment init failed because edge code defaulted to `https://api.payangels.com` (unreachable). Paystack-compatible keys require `PAYANGELS_API_BASE=https://api.paystack.co`.
+The old adapter was pointed at Paystack. A successful Paystack response does not prove PayAngel configuration.
 
 ## Probe
 
@@ -12,7 +14,7 @@ Payment init failed because edge code defaulted to `https://api.payangels.com` (
 npm run ops:probe-payangels-api
 ```
 
-**Result (2026-09-10):** HTTP 200, `Authorization URL created`, base `https://api.paystack.co`.
+**Historical result (invalid for PayAngel):** a Paystack endpoint returned HTTP 200.
 
 ## Full E2E run (2026-09-10)
 
@@ -36,5 +38,6 @@ npm run pilot:payangels-e2e
 ## Supabase secrets required
 
 - `PAYANGELS_SECRET_KEY`
-- `PAYANGELS_WEBHOOK_SECRET` (or same as secret key for pilot)
-- `PAYANGELS_API_BASE=https://api.paystack.co`
+- distinct provider-issued `PAYANGELS_WEBHOOK_SECRET`
+- provider-issued `PAYANGELS_API_BASE` and `PAYANGELS_DISBURSEMENT_URL`
+- reviewed private API contract and a new complete certification run

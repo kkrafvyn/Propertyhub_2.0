@@ -93,6 +93,43 @@ MISSING_FUNCTIONS = """
         Returns: Json
       }"""
 
+REMEDIATION_FUNCTIONS = """
+      revoke_user_auth_session: {
+        Args: { p_auth_session_id: string }
+        Returns: Json
+      }
+      check_in_short_stay_booking: {
+        Args: { p_booking_id: string }
+        Returns: Json
+      }
+      check_out_short_stay_booking: {
+        Args: { p_booking_id: string }
+        Returns: Json
+      }
+      request_distribution_approval: {
+        Args: {
+          p_statement_run_id: string
+          p_client_request_id?: string | null
+        }
+        Returns: Json
+      }
+      upsert_maintenance_request_offline: {
+        Args: {
+          p_organization_id: string
+          p_offline_client_id: string
+          p_payload: Json
+        }
+        Returns: Json
+      }
+      claim_whatsapp_inbound_message: {
+        Args: {
+          p_organization_id: string
+          p_wa_message_id: string
+          p_sender_phone?: string | null
+        }
+        Returns: Json
+      }"""
+
 path = Path("src/lib/database.types.ts")
 text = path.read_text(encoding="utf-8")
 
@@ -117,6 +154,17 @@ if "request_wallet_payout:" not in text:
         raise SystemExit("functions marker not found")
     text = text.replace(fn_marker, f"{MISSING_FUNCTIONS.strip()}\n      {fn_marker}", 1)
     print("inserted rpc functions")
+
+if "upsert_maintenance_request_offline:" not in text:
+    fn_marker = "      get_lead_analytics_by_source: {"
+    if fn_marker not in text:
+        raise SystemExit("functions marker not found")
+    text = text.replace(
+        fn_marker,
+        f"{REMEDIATION_FUNCTIONS.strip()}\n      {fn_marker}",
+        1,
+    )
+    print("inserted remediation rpc functions")
 
 path.write_text(text, encoding="utf-8", newline="\n")
 print("done")

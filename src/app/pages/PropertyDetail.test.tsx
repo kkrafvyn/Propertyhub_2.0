@@ -23,6 +23,14 @@ vi.mock("../hooks/useMyKyc", () => ({
   useMyKyc: () => ({ kyc: null, loading: false }),
 }));
 
+vi.mock("../context/PlatformFeaturesContext", () => ({
+  usePlatformFeatures: () => ({
+    flags: { whatsapp: true, voiceCalls: true, videoCalls: true, aiAssistant: true },
+    loading: false,
+    refresh: vi.fn(),
+  }),
+}));
+
 vi.mock("../components/Navbar", () => ({
   Navbar: () => <div>Navbar</div>,
 }));
