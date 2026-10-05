@@ -121,11 +121,16 @@ export function MarketingShell({
             >
               {launch ? "Sign in" : "Log in"}
             </a>
+            {darkChrome ? (
+              <Link to="/contact" className="mk-btn mk-btn-secondary mk-nav-demo">
+                Book a demo
+              </Link>
+            ) : null}
             <a
               href={appPath("/signup")}
               className={`mk-btn mk-btn-primary${darkChrome ? " mk-nav-cta-compact" : ""}`}
             >
-              {darkChrome ? "Get started" : "Get Started"}
+              {darkChrome ? "Start free" : "Get Started"}
             </a>
             <button
               ref={menuButtonRef}
@@ -171,8 +176,11 @@ export function MarketingShell({
               <a href={appPath("/login")} className="mk-btn mk-btn-secondary" onClick={closeMenu}>
                 Log in
               </a>
+              <Link to="/contact" className="mk-btn mk-btn-secondary" onClick={closeMenu}>
+                Book a demo
+              </Link>
               <a href={appPath("/signup")} className="mk-btn mk-btn-primary" onClick={closeMenu}>
-                Get started
+                Start free
               </a>
             </div>
           </div>
@@ -192,59 +200,44 @@ function MarketingFooter({ darkChrome }: { darkChrome: boolean }) {
       <div className="mk-container mk-footer-grid">
         <div className="mk-footer-brand">
           <Logo to="/" size="sm" inverted={darkChrome} />
-          <p>Property operations for teams that manage real homes.</p>
+          <p>One connected app for modern property operations.</p>
         </div>
 
         <div className="mk-footer-col">
-          <h4>Discover</h4>
+          <h4>Product</h4>
           <ul>
             <li>
-              <a href={appPath("/search")}>Search homes</a>
+              <a href="/#product-tour">Product tour</a>
             </li>
             <li>
-              <a href={appPath("/search?listingType=rental")}>For rent</a>
+              <a href="/#workflow">Workflow</a>
             </li>
             <li>
-              <a href={appPath("/search?listingType=sale")}>For sale</a>
+              <a href="/#features">Features</a>
             </li>
             <li>
-              <a href={appPath("/search?listingType=lease")}>For lease</a>
+              <a href="/#trust">Trust</a>
             </li>
             <li>
-              <a href={appPath("/compare")}>Compare homes</a>
-            </li>
-            <li>
-              <a href={appPath("/explorer")}>Property explorer</a>
+              <a href="/#pricing">Plans</a>
             </li>
           </ul>
         </div>
 
         <div className="mk-footer-col">
-          <h4>Support</h4>
+          <h4>Resources</h4>
           <ul>
             <li>
               <Link to="/help">Help Centre</Link>
             </li>
             <li>
-              <Link to="/legal/safety">Safety</Link>
+              <Link to="/status">System status</Link>
             </li>
             <li>
-              <Link to="/cancellation">Cancellation options</Link>
+              <Link to="/legal">Legal centre</Link>
             </li>
             <li>
-              <Link to="/status">Status</Link>
-            </li>
-          </ul>
-          <h4 className="mt-6">Hosting</h4>
-          <ul>
-            <li>
-              <a href={appPath("/workspace?next=new")}>List your property</a>
-            </li>
-            <li>
-              <Link to="/host-resources">Host resources</Link>
-            </li>
-            <li>
-              <Link to="/referral">Referrals</Link>
+              <Link to="/sitemap">Sitemap</Link>
             </li>
           </ul>
         </div>
@@ -274,18 +267,6 @@ function MarketingFooter({ darkChrome }: { darkChrome: boolean }) {
               <Link to="/legal/cookies">Cookies</Link>
             </li>
             <li>
-              <Link to="/legal/payments">Payments</Link>
-            </li>
-            <li>
-              <Link to="/legal/marketplace-rules">Marketplace Rules</Link>
-            </li>
-            <li>
-              <Link to="/legal/refunds">Refunds</Link>
-            </li>
-            <li>
-              <Link to="/legal/fees">Fees</Link>
-            </li>
-            <li>
               <Link to="/legal/trust-verification">Trust & Verification</Link>
             </li>
             <li>
@@ -293,9 +274,6 @@ function MarketingFooter({ darkChrome }: { darkChrome: boolean }) {
             </li>
             <li>
               <Link to="/legal">All Policies</Link>
-            </li>
-            <li>
-              <Link to="/sitemap">Sitemap</Link>
             </li>
           </ul>
         </div>

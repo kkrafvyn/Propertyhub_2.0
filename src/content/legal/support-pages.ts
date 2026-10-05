@@ -238,6 +238,10 @@ export const COMPANY_PAGES: LegalDocument[] = [
         content: `Help Centre: /help · Email: ${LEGAL_CONTACT.support}`,
       },
       {
+        heading: "Sales and product demos",
+        content: `Email ${LEGAL_CONTACT.support} with your organization name, portfolio size, operating markets, and the workflows you want to improve. The team will arrange the appropriate product walkthrough.`,
+      },
+      {
         heading: "Legal and privacy",
         content: `Legal: ${LEGAL_CONTACT.legal} · Privacy: ${LEGAL_CONTACT.privacy}`,
       },

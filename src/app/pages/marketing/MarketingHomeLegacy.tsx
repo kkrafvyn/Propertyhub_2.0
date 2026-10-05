@@ -168,7 +168,7 @@ function HeroFinancePreview() {
         {[
           { label: "Collected", value: "Live MoMo & bank", delta: "Workspace ledger", up: true },
           { label: "Overdue", value: "Aging views", delta: "Collections queue", up: false },
-          { label: "Owner payouts", value: "Disbursements", delta: "PayAngels-ready", up: true },
+          { label: "Collections", value: "Tracked", delta: "Workspace-ready", up: true },
         ].map((s) => (
           <div key={s.label} className="mk-hpb-stat">
             <span className="mk-hpb-stat-label">{s.label}</span>

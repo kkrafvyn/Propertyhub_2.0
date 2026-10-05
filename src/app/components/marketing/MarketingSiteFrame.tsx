@@ -4,10 +4,8 @@ import { setMarketingThemeLocked } from "../../../lib/marketing-theme-lock";
 import { RouteMonitoring } from "../RouteMonitoring";
 import { SurfaceProvider } from "../../context/SurfaceContext";
 import { MarketingShell } from "./MarketingShell";
-import { EXPERIENCE_NAV_LINKS } from "./experience/experience-nav";
-import "./launch/marketing-launch.css";
-import "./cinematic/marketing-cinematic.css";
-import "./experience/marketing-experience.css";
+import { EDITORIAL_NAV_LINKS } from "./editorial/editorial-nav";
+import "./editorial/marketing-editorial.css";
 
 const CookieConsentBanner = lazy(() => import("../legal/CookieConsentBanner").then((module) => ({ default: module.CookieConsentBanner })));
 const PolicyUpdateBanner = lazy(() => import("../legal/PolicyUpdateBanner").then((module) => ({ default: module.PolicyUpdateBanner })));
@@ -22,7 +20,7 @@ export function MarketingSiteFrame({ home }: { home?: ReactNode }) {
     <SurfaceProvider>
       <RouteMonitoring />
       <Suspense fallback={null}><PolicyUpdateBanner /></Suspense>
-      <MarketingShell cinematic={Boolean(home)} navLinks={home ? EXPERIENCE_NAV_LINKS : undefined}>
+      <MarketingShell editorial={Boolean(home)} navLinks={home ? EDITORIAL_NAV_LINKS : undefined}>
         {home ?? (
           <div className="mk-subpage">
             <Outlet />
