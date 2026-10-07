@@ -1,3 +1,4 @@
+import { EditorialRolesSection, EditorialResidentSection, EditorialIntegrationsSection } from "../../components/marketing/editorial/EditorialSupportingSections";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import { EditorialHero } from "../../components/marketing/editorial/EditorialHero";
 import { EditorialProductTour } from "../../components/marketing/editorial/EditorialProductTour";
@@ -28,9 +29,12 @@ export function MarketingEditorialHome() {
         <EditorialOutcomeSection />
         <EditorialProductTour />
         <EditorialWorkflowSection />
+        <EditorialRolesSection />
+        <EditorialResidentSection />
         <EditorialPortfolioSection />
         <EditorialAiSection />
         <EditorialGettingStartedSection />
+        <EditorialIntegrationsSection />
         <EditorialTrustSection />
         <EditorialSalesSection />
         <EditorialFaqSection />

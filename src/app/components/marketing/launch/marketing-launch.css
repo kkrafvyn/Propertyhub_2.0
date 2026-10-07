@@ -17,8 +17,7 @@
   overflow-x: hidden;
 }
 
-.marketing-page--launch .mk-page-scrim,
-.marketing-page--launch .mk-bg-carousel {
+.marketing-page--launch .mk-page-scrim {
   display: none;
 }
 

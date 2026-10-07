@@ -40,6 +40,13 @@ function electronDesktopBuild() {
 export default defineConfig({
   base: process.env.ELECTRON_BUILD === 'true' ? './' : '/',
   plugins: [
+    {
+      name: 'marketing-hero-preload',
+      transformIndexHtml(html) {
+        if (process.env.VITE_SITE_MODE !== 'marketing') return html;
+        return html.replace('</head>', '<link rel="preload" as="image" href="/marketing/hero/residences-mobile.webp" media="(max-width: 639px)" fetchpriority="high"><link rel="preload" as="image" href="/marketing/hero/residences-1280.webp" imagesrcset="/marketing/hero/residences-1280.webp 1280w, /marketing/hero/residences-2200.webp 2200w" imagesizes="100vw" media="(min-width: 640px)" fetchpriority="high"></head>');
+      },
+    },
     figmaAssetResolver(),
     electronDesktopBuild(),
     mobileBrandPlugin(),

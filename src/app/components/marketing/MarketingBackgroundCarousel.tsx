@@ -1,99 +1,119 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
+import "./marketing-carousel.css";
 
-const SLIDES = [
-  {
-    image:
-      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2400&q=85",
-    caption: "Executive residences",
-  },
-  {
-    image:
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2400&q=85",
-    caption: "Premium estates",
-  },
-  {
-    image:
-      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=2400&q=85",
-    caption: "Modern architectural estates",
-  },
-  {
-    image:
-      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=2400&q=85",
-    caption: "Contemporary villas",
-  },
-  {
-    image:
-      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=2400&q=85",
-    caption: "Residential developments",
-  },
-  {
-    image:
-      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=2400&q=85",
-    caption: "Luxury hilltop residences",
-  },
-  {
-    image:
-      "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=2400&q=85",
-    caption: "Coastal properties",
-  },
-  {
-    image:
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=2400&q=85",
-    caption: "Interior living spaces",
-  },
-  {
-    image:
-      "https://images.unsplash.com/photo-1600573472591-ee6c563aaec9?auto=format&fit=crop&w=2400&q=85",
-    caption: "Curated modern homes",
-  },
-  {
-    image:
-      "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=2400&q=85",
-    caption: "Private estate portfolios",
-  },
+export const HERO_SLIDES = [
+  { id: "residences", label: "Modern residential buildings", overlay: 0.72 },
+  { id: "interior", label: "Apartment interiors", overlay: 0.78 },
+  { id: "community", label: "Residential communities", overlay: 0.76 },
+  { id: "architecture", label: "Contemporary residences", overlay: 0.78 },
+  { id: "commercial", label: "Commercial architecture", overlay: 0.72 },
 ] as const;
 
-const INTERVAL_MS = 7000;
-
-export function MarketingBackgroundCarousel() {
+/** Only decoded photographs can replace the current slide. Failed assets are skipped. */
+export function MarketingBackgroundCarousel({ children }: { children: ReactNode }) {
   const [active, setActive] = useState(0);
-  const [motionOk, setMotionOk] = useState(true);
+  const [requested, setRequested] = useState<number | null>(null);
+  const [ready, setReady] = useState<number[]>([]);
+  const [failed, setFailed] = useState<number[]>([]);
+  const [loadThrough, setLoadThrough] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [hidden, setHidden] = useState(() => document.hidden);
+  const [reduced, setReduced] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   useEffect(() => {
-    setMotionOk(!window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const motionChange = () => setReduced(media.matches);
+    const visibilityChange = () => setHidden(document.hidden);
+    media.addEventListener("change", motionChange);
+    document.addEventListener("visibilitychange", visibilityChange);
+    return () => {
+      media.removeEventListener("change", motionChange);
+      document.removeEventListener("visibilitychange", visibilityChange);
+    };
   }, []);
 
   useEffect(() => {
-    if (!motionOk) return undefined;
-    const timer = window.setInterval(() => {
-      setActive((prev) => (prev + 1) % SLIDES.length);
-    }, INTERVAL_MS);
-    return () => window.clearInterval(timer);
-  }, [motionOk]);
+    if (requested !== null && ready.includes(requested)) {
+      setActive(requested);
+      setRequested(null);
+    } else if (requested !== null && failed.includes(requested)) {
+      setRequested(null);
+    }
+  }, [requested, ready, failed]);
+
+  useEffect(() => {
+    if (paused || focused || hidden || reduced || ready.length < 2) return;
+    const timer = window.setTimeout(() => {
+      for (let offset = 1; offset < HERO_SLIDES.length; offset++) {
+        const next = (active + offset) % HERO_SLIDES.length;
+        if (ready.includes(next)) { setActive(next); break; }
+      }
+    }, 7000);
+    return () => window.clearTimeout(timer);
+  }, [active, paused, focused, hidden, reduced, ready]);
+
+  const select = (index: number) => {
+    if (failed.includes(index)) return;
+    setLoadThrough((value) => Math.max(value, index));
+    setRequested(index);
+  };
+  const advance = (direction: number) => {
+    for (let offset = 1; offset < HERO_SLIDES.length; offset++) {
+      const next = (active + direction * offset + HERO_SLIDES.length) % HERO_SLIDES.length;
+      if (!failed.includes(next)) { select(next); break; }
+    }
+  };
+  const settled = (index: number, ok: boolean) => {
+    if (ok) setReady((value) => value.includes(index) ? value : [...value, index]);
+    else {
+      setFailed((value) => value.includes(index) ? value : [...value, index]);
+      // If the first photo fails, the next successful photo becomes the fallback.
+      if (index === active || !ready.includes(active)) {
+        const fallback = ready.find((candidate) => candidate !== index && !failed.includes(candidate));
+        setRequested((value) => value ?? fallback ?? ((index + 1) % HERO_SLIDES.length));
+      }
+    }
+    setLoadThrough((value) => Math.min(HERO_SLIDES.length - 1, Math.max(value, index + 1)));
+  };
 
   return (
-    <div className="mk-bg-carousel" aria-hidden="true">
-      {SLIDES.map((slide, index) => (
-        <div
-          key={slide.image}
-          className={`mk-bg-carousel-slide${index === active ? " is-active" : ""}`}
-        >
-          <img src={slide.image} alt="" loading={index <= 1 ? "eager" : "lazy"} decoding="async" />
-        </div>
-      ))}
-      <div className="mk-bg-carousel-vignette" />
-      <div className="mk-bg-carousel-grain" />
-      <div className="mk-bg-carousel-dots">
-        {SLIDES.map((slide, index) => (
-          <button
-            key={slide.caption}
-            type="button"
-            className={`mk-bg-carousel-dot${index === active ? " is-active" : ""}`}
-            aria-label={`Show slide ${index + 1}: ${slide.caption}`}
-            onClick={() => setActive(index)}
-          />
-        ))}
+    <section className="mk-photo-hero" aria-labelledby="marketing-hero-heading"
+      onFocusCapture={() => setFocused(true)}
+      onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }}>
+      <div className="mk-photo-hero__background" aria-hidden="true">
+        {HERO_SLIDES.map((slide, index) => index <= loadThrough && !failed.includes(index) ? (
+          <div key={slide.id} className={`mk-photo-hero__slide${index === active && (ready.includes(index) || index === 0) ? " is-active" : ""}`}>
+            <picture>
+              <source media="(max-width: 639px)" srcSet={`/marketing/hero/${slide.id}-mobile.webp`} />
+              <img src={`/marketing/hero/${slide.id}-1280.webp`}
+                srcSet={`/marketing/hero/${slide.id}-1280.webp 1280w, /marketing/hero/${slide.id}-2200.webp 2200w`}
+                sizes="100vw" width="2200" height="1375" alt="" loading="eager"
+                fetchPriority={index === 0 ? "high" : "low"} decoding="async"
+                onLoad={async (event) => {
+                  const img = event.currentTarget;
+                  try { await img.decode(); settled(index, true); } catch { if (img.naturalWidth) settled(index, true); else settled(index, false); }
+                }} onError={() => settled(index, false)} />
+            </picture>
+            <div className="mk-photo-hero__overlay" style={{ backgroundColor: `rgba(13, 25, 19, ${slide.overlay})` }} />
+          </div>
+        ) : null)}
       </div>
-    </div>
+      <div className="mk-photo-hero__content">{children}</div>
+      <div className="mk-ed-container mk-photo-hero__footer">
+        <p>Illustrative properties. Stock photography.</p>
+        <div className="mk-photo-controls" role="group" aria-label="Hero background controls">
+          <button type="button" aria-label="Previous background image" onClick={() => advance(-1)}><ChevronLeft size={18} aria-hidden="true" /></button>
+          {HERO_SLIDES.map((slide, index) => (
+            <button key={slide.id} type="button" className="mk-photo-controls__dot" aria-label={`Show background ${index + 1}: ${slide.label}`}
+              aria-current={index === active ? "true" : undefined} disabled={failed.includes(index)} onClick={() => select(index)}><span /></button>
+          ))}
+          <button type="button" aria-label="Next background image" onClick={() => advance(1)}><ChevronRight size={18} aria-hidden="true" /></button>
+          <button type="button" aria-label={reduced ? "Automatic rotation disabled by reduced motion preference" : paused ? "Play background slideshow" : "Pause background slideshow"}
+            disabled={reduced} onClick={() => setPaused((value) => !value)}>{paused || reduced ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}</button>
+        </div>
+      </div>
+    </section>
   );
 }

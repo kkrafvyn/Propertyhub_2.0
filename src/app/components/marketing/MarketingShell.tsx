@@ -3,7 +3,6 @@ import { Link } from "react-router";
 import { Menu, X } from "lucide-react";
 import { Logo } from "../baytmiftah/Logo";
 import { appPath } from "../../../lib/marketing-urls";
-import { MarketingBackgroundCarousel } from "./MarketingBackgroundCarousel";
 import "./marketing.css";
 
 const NAV_LINKS_DEFAULT = [
@@ -94,7 +93,6 @@ export function MarketingShell({
     <div
       className={`marketing-page marketing-shell${cinematic ? " marketing-page--cinematic" : ""}${editorial ? " marketing-page--editorial" : ""}${launch ? " marketing-page--launch" : ""}`}
     >
-      {!darkChrome ? <MarketingBackgroundCarousel /> : null}
       <div className="mk-page-scrim" aria-hidden="true" />
       <div
         className="mk-scroll-progress-bar"
