@@ -1,0 +1,24 @@
+{
+  "estates_units": {
+    "estate_name": ["property_name", "propertyname", "building_name", "community_name", "site_name"],
+    "unit_identifier": ["unit_no", "unit_num", "unit_hash", "apt_no", "apartment_number"]
+  },
+  "occupancies": {
+    "estate_name": ["property_name", "building_name"],
+    "unit_identifier": ["unit_no", "unit_hash"],
+    "user_email": ["tenant_email", "email_address", "contact_email"]
+  },
+  "opening_charges": {
+    "estate_name": ["property_name"],
+    "amount": ["open_balance", "balance_due"]
+  },
+  "payments": {
+    "estate_name": ["property_name"],
+    "reference": ["receipt_no", "transaction_ref"]
+  },
+  "bank_feed": {
+    "date": ["txn_date", "posting_date", "value_date"],
+    "description": ["narration", "transaction_details"],
+    "type": ["dr_cr", "debit_credit", "cr_dr"]
+  }
+}

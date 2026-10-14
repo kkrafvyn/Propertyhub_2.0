@@ -1,3 +1,5 @@
+import vendorSynonyms from "./import-column-synonyms.json";
+
 export type ImportTypeKey =
   | "estates_units"
   | "occupancies"
@@ -5,7 +7,7 @@ export type ImportTypeKey =
   | "payments"
   | "bank_feed";
 
-const SYNONYMS: Record<ImportTypeKey, Record<string, string[]>> = {
+const BASE_SYNONYMS: Record<ImportTypeKey, Record<string, string[]>> = {
   estates_units: {
     estate_name: ["estate_name", "estate", "property", "property_name", "building", "community", "site"],
     unit_identifier: ["unit_identifier", "unit", "unit_id", "unit_number", "apt", "apartment", "suite", "door"],
@@ -44,8 +46,47 @@ const SYNONYMS: Record<ImportTypeKey, Record<string, string[]>> = {
   },
 };
 
+function mergeSynonymLists(base: string[], extra: string[] | undefined): string[] {
+  if (!extra?.length) return base;
+  return Array.from(new Set([...base, ...extra]));
+}
+
+function buildSynonyms(): Record<ImportTypeKey, Record<string, string[]>> {
+  const out = { ...BASE_SYNONYMS } as Record<ImportTypeKey, Record<string, string[]>>;
+  const vendor = vendorSynonyms as Record<string, Record<string, string[]>>;
+  for (const importType of Object.keys(out) as ImportTypeKey[]) {
+    const extra = vendor[importType];
+    if (!extra) continue;
+    for (const [field, lists] of Object.entries(extra)) {
+      if (out[importType][field]) {
+        out[importType][field] = mergeSynonymLists(out[importType][field], lists);
+      }
+    }
+  }
+  return out;
+}
+
+const SYNONYMS = buildSynonyms();
+
 export function canonicalFieldsForImportType(importType: ImportTypeKey): string[] {
   return Object.keys(SYNONYMS[importType]);
+}
+
+export function requiredFields(importType: ImportTypeKey): string[] {
+  const canonicals = canonicalFieldsForImportType(importType);
+  if (importType === "estates_units") return canonicals.filter((c) => c === "estate_name" || c === "unit_identifier");
+  if (importType === "occupancies")
+    return canonicals.filter((c) =>
+      ["estate_name", "unit_identifier", "user_email", "role", "start_date"].includes(c),
+    );
+  if (importType === "opening_charges")
+    return canonicals.filter((c) => ["estate_name", "unit_identifier", "amount", "due_date"].includes(c));
+  if (importType === "payments")
+    return canonicals.filter((c) =>
+      ["estate_name", "unit_identifier", "charge_id", "amount", "method"].includes(c),
+    );
+  if (importType === "bank_feed") return canonicals.filter((c) => ["date", "amount"].includes(c));
+  return [];
 }
 
 function normalizeHeader(value: string): string {
@@ -56,76 +97,173 @@ function normalizeHeader(value: string): string {
     .replace(/[^a-z0-9_]/g, "");
 }
 
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  const row = new Array<number>(b.length + 1);
+  for (let j = 0; j <= b.length; j += 1) row[j] = j;
+  for (let i = 1; i <= a.length; i += 1) {
+    let prev = i - 1;
+    row[0] = i;
+    for (let j = 1; j <= b.length; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      const next = Math.min(row[j] + 1, row[j - 1] + 1, prev + cost);
+      prev = row[j];
+      row[j] = next;
+    }
+  }
+  return row[b.length];
+}
+
+function findColumnForCanonical(
+  normalized: { raw: string; norm: string; index: number }[],
+  options: string[],
+): { index: number; fuzzy: boolean } | null {
+  const exact = normalized.find((cell) => options.includes(cell.norm));
+  if (exact) return { index: exact.index, fuzzy: false };
+
+  for (const cell of normalized) {
+    if (options.some((opt) => cell.norm.includes(opt) || opt.includes(cell.norm))) {
+      return { index: cell.index, fuzzy: true };
+    }
+  }
+
+  for (const cell of normalized) {
+    if (options.some((opt) => levenshtein(cell.norm, opt) <= 2)) {
+      return { index: cell.index, fuzzy: true };
+    }
+  }
+
+  return null;
+}
+
 export type HeaderMappingResult = {
-  /** canonical field → column index in raw header row */
   mapping: Record<string, number>;
-  /** canonical fields still unmapped */
   missing: string[];
-  /** score 0–1 */
   confidence: number;
+  fuzzyFields: string[];
 };
 
 export function mapHeaders(rawHeaders: string[], importType: ImportTypeKey): HeaderMappingResult {
   const synonyms = SYNONYMS[importType];
   const normalized = rawHeaders.map((h, index) => ({ raw: h, norm: normalizeHeader(h), index }));
   const mapping: Record<string, number> = {};
+  const fuzzyFields: string[] = [];
   const canonicals = Object.keys(synonyms);
 
   for (const canonical of canonicals) {
     const options = synonyms[canonical].map(normalizeHeader);
-    const hit = normalized.find((cell) => options.includes(cell.norm));
-    if (hit) mapping[canonical] = hit.index;
+    const hit = findColumnForCanonical(normalized, options);
+    if (hit) {
+      mapping[canonical] = hit.index;
+      if (hit.fuzzy) fuzzyFields.push(canonical);
+    }
   }
 
-  const required = canonicals.filter((c) => {
-    if (importType === "estates_units") return c === "estate_name" || c === "unit_identifier";
-    if (importType === "occupancies")
-      return ["estate_name", "unit_identifier", "user_email", "role", "start_date"].includes(c);
-    if (importType === "opening_charges")
-      return ["estate_name", "unit_identifier", "amount", "due_date"].includes(c);
-    if (importType === "payments")
-      return ["estate_name", "unit_identifier", "charge_id", "amount", "method"].includes(c);
-    if (importType === "bank_feed") return ["date", "amount"].includes(c);
-    return false;
-  });
-
+  const required = requiredFields(importType);
   const missing = required.filter((c) => mapping[c] === undefined);
-  const confidence =
+  let confidence =
     required.length === 0 ? 1 : Number(((required.length - missing.length) / required.length).toFixed(2));
+  if (fuzzyFields.length > 0) {
+    confidence = Number(Math.max(0, confidence - 0.1 * fuzzyFields.length).toFixed(2));
+  }
 
-  return { mapping, missing, confidence };
+  return { mapping, missing, confidence, fuzzyFields };
 }
 
-/** Rewrite matrix header row to canonical names expected by parsers. */
-export function applyHeaderMapping(matrix: string[][], importType: ImportTypeKey): string[][] {
-  if (matrix.length === 0) return matrix;
-  const { mapping } = mapHeaders(matrix[0], importType);
-  const canonicalOrder = canonicalFieldsForImportType(importType);
-  const newHeader = canonicalOrder.filter((c) => mapping[c] !== undefined);
-  if (newHeader.length === 0) return matrix;
+export function mergeHeaderMapping(
+  auto: Record<string, number>,
+  overrides: Record<string, number>,
+): Record<string, number> {
+  return { ...auto, ...overrides };
+}
 
-  const dataRows = matrix.slice(1).map((row) =>
+export function duplicateMappingWarnings(mapping: Record<string, number>): string[] {
+  const byIndex = new Map<number, string[]>();
+  for (const [field, idx] of Object.entries(mapping)) {
+    const list = byIndex.get(idx) || [];
+    list.push(field);
+    byIndex.set(idx, list);
+  }
+  const warnings: string[] = [];
+  for (const [idx, fields] of byIndex) {
+    if (fields.length > 1) {
+      warnings.push(`Columns ${idx + 1} mapped to multiple fields: ${fields.join(", ")}`);
+    }
+  }
+  return warnings;
+}
+
+/** True when first row is already canonical (e.g. AI output). */
+export function matrixHasCanonicalHeaders(matrix: string[][], importType: ImportTypeKey): boolean {
+  if (matrix.length === 0) return false;
+  const headers = matrix[0].map((h) => normalizeHeader(h));
+  const required = requiredFields(importType);
+  return required.every((field) => headers.includes(normalizeHeader(field)));
+}
+
+export function buildMappedMatrix(
+  rawMatrix: string[][],
+  importType: ImportTypeKey,
+  overrides: Record<string, number> = {},
+): string[][] {
+  if (rawMatrix.length === 0) return rawMatrix;
+
+  if (matrixHasCanonicalHeaders(rawMatrix, importType)) {
+    const required = requiredFields(importType);
+    const optional = canonicalFieldsForImportType(importType).filter((f) => !required.includes(f));
+    const headerOrder = [...required, ...optional.filter((f) => rawMatrix[0].includes(f))];
+    const headerNorm = rawMatrix[0].map(normalizeHeader);
+    const dataRows = rawMatrix.slice(1).map((row) =>
+      headerOrder.map((field) => {
+        const idx = headerNorm.indexOf(normalizeHeader(field));
+        return idx >= 0 ? String(row[idx] ?? "").trim() : "";
+      }),
+    );
+    return [headerOrder, ...dataRows];
+  }
+
+  const { mapping: auto } = mapHeaders(rawMatrix[0], importType);
+  const effective = mergeHeaderMapping(auto, overrides);
+  const canonicalOrder = canonicalFieldsForImportType(importType);
+  const newHeader = canonicalOrder.filter((c) => effective[c] !== undefined);
+  if (newHeader.length === 0) return rawMatrix;
+
+  const dataRows = rawMatrix.slice(1).map((row) =>
     newHeader.map((canonical) => {
-      const idx = mapping[canonical];
+      const idx = effective[canonical];
       return idx !== undefined ? String(row[idx] ?? "").trim() : "";
     }),
   );
   return [newHeader, ...dataRows];
 }
 
-/** User-selected column indices keyed by canonical field name. */
+export function isMappingComplete(
+  rawMatrix: string[][],
+  importType: ImportTypeKey,
+  overrides: Record<string, number> = {},
+): boolean {
+  if (rawMatrix.length === 0) return false;
+  if (matrixHasCanonicalHeaders(rawMatrix, importType)) {
+    return requiredFields(importType).every((f) =>
+      rawMatrix[0].map(normalizeHeader).includes(normalizeHeader(f)),
+    );
+  }
+  const { mapping: auto } = mapHeaders(rawMatrix[0], importType);
+  const effective = mergeHeaderMapping(auto, overrides);
+  return requiredFields(importType).every((f) => effective[f] !== undefined);
+}
+
+/** @deprecated Use buildMappedMatrix */
+export function applyHeaderMapping(matrix: string[][], importType: ImportTypeKey): string[][] {
+  return buildMappedMatrix(matrix, importType);
+}
+
+/** @deprecated Use buildMappedMatrix with overrides */
 export function applyManualHeaderMapping(
   matrix: string[][],
   fieldToColumnIndex: Record<string, number>,
 ): string[][] {
-  const fields = Object.keys(fieldToColumnIndex);
-  if (fields.length === 0 || matrix.length === 0) return matrix;
-  const header = fields;
-  const dataRows = matrix.slice(1).map((row) =>
-    fields.map((field) => {
-      const idx = fieldToColumnIndex[field];
-      return idx !== undefined ? String(row[idx] ?? "").trim() : "";
-    }),
-  );
-  return [header, ...dataRows];
+  return buildMappedMatrix(matrix, "estates_units", fieldToColumnIndex);
 }

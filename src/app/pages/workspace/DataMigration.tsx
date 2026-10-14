@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, FileUp, History, Loader2, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CheckCircle2, FileUp, History, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
-import { ImportColumnMapper } from "../../components/workspace/ImportColumnMapper";
+import { ImportMappingPanel } from "../../components/workspace/ImportMappingPanel";
 import {
   estateImportService,
   parseEstateUnitsTable,
@@ -13,25 +13,9 @@ import {
   type OccupancyImportRow,
 } from "../../../lib/estate-import.service";
 import { importJobStatusVariant } from "../../../lib/import-job-status";
-import {
-  IMPORT_FILE_ACCEPT,
-  IMPORT_FORMATS_LABEL,
-  importFileErrorMessage,
-  readImportDocument,
-  readSpreadsheetSheet,
-  type ImportExtractionResult,
-} from "../../../lib/document-import";
-import {
-  applyHeaderMapping,
-  applyManualHeaderMapping,
-  mapHeaders,
-} from "../../../lib/import-column-mapping";
-import {
-  aiResultToExtraction,
-  isAiExtractSuccess,
-  requestAiImportExtract,
-} from "../../../lib/import-ai-extract.service";
+import { IMPORT_FILE_ACCEPT, IMPORT_FORMATS_LABEL, importFileErrorMessage } from "../../../lib/document-import";
 import { shouldOfferAiAssist } from "../../../lib/import-pipeline";
+import { useImportMapping } from "../../../lib/use-import-mapping";
 
 interface DataMigrationProps {
   organizationId: string;
@@ -39,16 +23,12 @@ interface DataMigrationProps {
 }
 
 export function DataMigration({ organizationId, currentUserId }: DataMigrationProps) {
-  const [rows, setRows] = useState<Array<ImportRow | OccupancyImportRow>>([]);
   const [type, setType] = useState<"estates_units" | "occupancies">("estates_units");
-  const [name, setName] = useState("");
+  const [rows, setRows] = useState<Array<ImportRow | OccupancyImportRow>>([]);
   const [jobs, setJobs] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [extraction, setExtraction] = useState<ImportExtractionResult | null>(null);
-  const [rawMatrix, setRawMatrix] = useState<string[][]>([]);
-  const [manualMapping, setManualMapping] = useState<Record<string, number>>({});
-  const [selectedSheet, setSelectedSheet] = useState("");
+
+  const mapping = useImportMapping(type);
 
   const load = async () => {
     try {
@@ -62,91 +42,43 @@ export function DataMigration({ organizationId, currentUserId }: DataMigrationPr
     void load();
   }, [organizationId]);
 
-  const mappedMatrix = useMemo(() => {
-    if (rawMatrix.length === 0) return [];
-    if (Object.keys(manualMapping).length > 0) {
-      return applyManualHeaderMapping(rawMatrix, manualMapping);
-    }
-    return applyHeaderMapping(rawMatrix, type);
-  }, [rawMatrix, manualMapping, type]);
+  useEffect(() => {
+    mapping.setOverrides({});
+  }, [type]);
 
   useEffect(() => {
-    if (mappedMatrix.length === 0) {
+    const matrix = mapping.mappedMatrix;
+    if (matrix.length === 0 || !mapping.mappingComplete) {
       setRows([]);
       return;
     }
     setRows(
-      type === "estates_units"
-        ? parseEstateUnitsTable(mappedMatrix)
-        : parseOccupanciesTable(mappedMatrix),
+      type === "estates_units" ? parseEstateUnitsTable(matrix) : parseOccupanciesTable(matrix),
     );
-  }, [mappedMatrix, type]);
-
-  const applyExtraction = (result: ImportExtractionResult) => {
-    setExtraction(result);
-    setRawMatrix(result.matrix);
-    setManualMapping({});
-  };
-
-  const ingestFile = async (file: File, sheetName?: string) => {
-    setName(file.name);
-    setBusy(true);
-    try {
-      const result = sheetName
-        ? await readSpreadsheetSheet(file, sheetName, type)
-        : await readImportDocument(file, { importType: type, sheetName });
-      applyExtraction(result);
-      if (result.sheetNames?.length) {
-        setSelectedSheet(sheetName || result.sheetNames[0] || "");
-      }
-      toast.success(`Loaded ${file.name}`);
-      if (shouldOfferAiAssist(result)) {
-        toast.info("Low confidence extraction — map columns or use AI assist.");
-      }
-    } catch (error) {
-      toast.error(importFileErrorMessage(error));
-    } finally {
-      setBusy(false);
-    }
-  };
+  }, [mapping.mappedMatrix, mapping.mappingComplete, type]);
 
   const choose = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPendingFile(file);
-    await ingestFile(file);
+    try {
+      const extraction = await mapping.loadFile(file);
+      toast.success(`Loaded ${file.name}`);
+      if (shouldOfferAiAssist(extraction)) {
+        toast.info("Low confidence extraction — map columns or use AI assist.");
+      }
+    } catch (error) {
+      toast.error(importFileErrorMessage(error));
+    }
     e.target.value = "";
   };
 
-  const onSheetChange = async (sheet: string) => {
-    setSelectedSheet(sheet);
-    if (pendingFile && sheet) {
-      await ingestFile(pendingFile, sheet);
+  const runAi = async () => {
+    const result = await mapping.runAiAssist(organizationId);
+    if (!result.ok) {
+      toast.error(result.reason);
+      return;
     }
-  };
-
-  const runAiAssist = async () => {
-    if (!extraction) return;
-    setBusy(true);
-    try {
-      const ai = await requestAiImportExtract({
-        organizationId,
-        importType: type,
-        fileName: name || "import",
-        extractedText: extraction.extractedText,
-        matrixSample: extraction.matrix.slice(0, 30),
-      });
-      if (!isAiExtractSuccess(ai)) {
-        toast.error(ai.reason);
-        return;
-      }
-      applyExtraction(aiResultToExtraction(ai, extraction.sourceFormat, extraction.extractedText));
-      toast.success("AI mapping applied — review rows before import.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "AI assist failed.");
-    } finally {
-      setBusy(false);
-    }
+    toast.success("AI mapping applied — review rows before import.");
   };
 
   const run = async (id: string) => {
@@ -167,27 +99,26 @@ export function DataMigration({ organizationId, currentUserId }: DataMigrationPr
   };
 
   const save = async () => {
-    if (!rows.length) return;
+    if (!rows.length || !mapping.mappingComplete) return;
     try {
       setBusy(true);
       const job = await estateImportService.createJob({
         organizationId,
-        fileName: name || "estate-import",
+        fileName: mapping.fileName || "estate-import",
         rows,
         userId: currentUserId,
         importType: type,
-        extraction: extraction
+        extraction: mapping.extraction
           ? {
-              sourceFormat: extraction.sourceFormat,
-              extractionMethod: extraction.method,
-              extractionConfidence: extraction.confidence,
+              sourceFormat: mapping.extraction.sourceFormat,
+              extractionMethod: mapping.extraction.method,
+              extractionConfidence: mapping.extraction.confidence,
             }
           : undefined,
       });
       await load();
+      mapping.reset();
       setRows([]);
-      setExtraction(null);
-      setRawMatrix([]);
       if (rows.every((x) => !x.errors.length)) {
         await run(job.id);
       } else {
@@ -202,8 +133,7 @@ export function DataMigration({ organizationId, currentUserId }: DataMigrationPr
 
   const valid = rows.filter((x) => !x.errors.length).length;
   const invalid = rows.length - valid;
-  const rawHeaders = rawMatrix[0] || [];
-  const headerMapping = rawHeaders.length ? mapHeaders(rawHeaders, type) : null;
+  const rawHeaders = mapping.rawMatrix[0] || [];
 
   return (
     <div className="space-y-6">
@@ -218,10 +148,7 @@ export function DataMigration({ organizationId, currentUserId }: DataMigrationPr
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => {
-              setType("estates_units");
-              setRows([]);
-            }}
+            onClick={() => setType("estates_units")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
               type === "estates_units"
                 ? "bg-primary text-primary-foreground shadow-xs"
@@ -232,10 +159,7 @@ export function DataMigration({ organizationId, currentUserId }: DataMigrationPr
           </button>
           <button
             type="button"
-            onClick={() => {
-              setType("occupancies");
-              setRows([]);
-            }}
+            onClick={() => setType("occupancies")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
               type === "occupancies"
                 ? "bg-primary text-primary-foreground shadow-xs"
@@ -248,60 +172,38 @@ export function DataMigration({ organizationId, currentUserId }: DataMigrationPr
 
         <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border p-8 text-center hover:border-primary/50 transition-colors bg-muted/20">
           <div className="p-3 rounded-full bg-primary/10 text-primary mb-3">
-            {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <FileUp className="h-6 w-6" />}
+            {mapping.busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <FileUp className="h-6 w-6" />}
           </div>
           <p className="text-sm font-semibold text-foreground">
-            {name ? `Selected: ${name}` : "Click or drag any supported document"}
+            {mapping.fileName ? `Selected: ${mapping.fileName}` : "Click or drag any supported document"}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">{IMPORT_FORMATS_LABEL}</p>
-          <input className="sr-only" type="file" accept={IMPORT_FILE_ACCEPT} onChange={choose} disabled={busy} />
+          <input
+            className="sr-only"
+            type="file"
+            accept={IMPORT_FILE_ACCEPT}
+            onChange={choose}
+            disabled={mapping.busy}
+          />
         </label>
 
-        {extraction && (
-          <div className="flex flex-wrap items-center gap-2 text-[11px]">
-            <Badge variant="outline">Source: {extraction.sourceFormat}</Badge>
-            <Badge variant="secondary">Method: {extraction.method.replace(/_/g, " ")}</Badge>
-            <Badge variant="outline">Confidence: {Math.round(extraction.confidence * 100)}%</Badge>
-            {extraction.warnings.map((w) => (
-              <span key={w} className="text-amber-600 dark:text-amber-400">
-                {w}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {extraction?.sheetNames && extraction.sheetNames.length > 1 && (
-          <label className="text-xs flex flex-col gap-1 max-w-xs">
-            <span className="font-medium">Excel worksheet</span>
-            <select
-              className="rounded-md border border-border bg-background px-2 py-1.5"
-              value={selectedSheet}
-              onChange={(e) => void onSheetChange(e.target.value)}
-            >
-              {extraction.sheetNames.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-
-        {headerMapping && headerMapping.missing.length > 0 && rawHeaders.length > 0 && (
-          <ImportColumnMapper
-            importType={type}
-            rawHeaders={rawHeaders}
-            manualMapping={manualMapping}
-            onChange={setManualMapping}
-          />
-        )}
-
-        {extraction && shouldOfferAiAssist(extraction) && (
-          <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void runAiAssist()}>
-            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-            Improve mapping with AI
-          </Button>
-        )}
+        <ImportMappingPanel
+          importType={type}
+          extraction={mapping.extraction}
+          rawHeaders={rawHeaders}
+          headerResult={mapping.headerResult}
+          effectiveMapping={mapping.effectiveMapping}
+          overrides={mapping.overrides}
+          mappingComplete={mapping.mappingComplete}
+          mappingWarnings={mapping.mappingWarnings}
+          shouldOfferAi={mapping.shouldOfferAi}
+          busy={mapping.busy}
+          selectedSheet={mapping.selectedSheet}
+          sheetNames={mapping.extraction?.sheetNames}
+          onOverride={mapping.setOverride}
+          onSheetChange={(sheet) => void mapping.reloadSheet(sheet)}
+          onAiAssist={() => void runAi()}
+        />
 
         {rows.length > 0 && (
           <div className="space-y-4 pt-2">
@@ -313,7 +215,12 @@ export function DataMigration({ organizationId, currentUserId }: DataMigrationPr
                 </Badge>
                 {invalid > 0 && <Badge variant="destructive">{invalid} errors</Badge>}
               </div>
-              <Button disabled={busy || valid === 0} onClick={() => void save()} size="sm" className="gap-1.5">
+              <Button
+                disabled={busy || valid === 0 || !mapping.mappingComplete}
+                onClick={() => void save()}
+                size="sm"
+                className="gap-1.5"
+              >
                 {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Approve & Import {valid} Records
               </Button>

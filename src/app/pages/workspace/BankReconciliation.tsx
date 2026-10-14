@@ -13,13 +13,15 @@ import { estateOperationsService, type ManagedEstate } from "@/lib/estate-operat
 import { bankReconciliationService } from "@/lib/bank-reconciliation.service";
 import { getSupportedBankFeedProviders } from "@/lib/bank-feed-providers";
 import { supabase } from "@/lib/supabase";
-import { csvCell, csvHeaderMap } from "@/lib/csv-parse";
 import {
   IMPORT_FILE_ACCEPT,
   IMPORT_FORMATS_LABEL,
   importFileErrorMessage,
 } from "@/lib/document-import";
-import { extractMappedMatrix } from "@/lib/import-pipeline";
+import { shouldOfferAiAssist } from "@/lib/import-pipeline";
+import { parseBankFeedTable, type BankFeedTransactionDraft } from "@/lib/bank-feed-import";
+import { useImportMapping } from "@/lib/use-import-mapping";
+import { ImportMappingPanel } from "@/app/components/workspace/ImportMappingPanel";
 
 type BankAccount = {
   id: string;
@@ -76,52 +78,7 @@ type BankReconciliationProps = {
   currentUserId?: string;
 };
 
-type TransactionDraft = {
-  date: string;
-  description: string;
-  amount: string;
-  type: "DEBIT" | "CREDIT";
-  reference: string;
-};
-
-function pickCell(row: string[], map: Record<string, number>, keys: string[]) {
-  for (const key of keys) {
-    const value = csvCell(row, map, key);
-    if (value) return value;
-  }
-  return "";
-}
-
-function parseBankFeedTable(matrix: string[][]): TransactionDraft[] {
-  const rows = matrix.filter((row) => row.some((cell) => cell.trim().length > 0));
-  if (rows.length <= 1) return [];
-
-  const map = csvHeaderMap(rows[0]);
-
-  return rows.slice(1).map((columns) => {
-    const amountCell = pickCell(columns, map, ["amount", "value", "debit", "credit"]) || "0";
-    const rawType = pickCell(columns, map, ["type", "direction", "dr_cr"]).toUpperCase();
-    const amount = Number(amountCell.replace(/[^0-9.-]/g, "")) || 0;
-    const inferredType =
-      rawType.includes("CREDIT") || rawType === "CR" || amountCell.startsWith("+")
-        ? "CREDIT"
-        : rawType.includes("DEBIT") || rawType === "DR" || amountCell.startsWith("-")
-          ? "DEBIT"
-          : amount >= 0
-            ? "DEBIT"
-            : "CREDIT";
-
-    return {
-      date:
-        pickCell(columns, map, ["date", "transaction_date", "posted_date"]) ||
-        new Date().toISOString().slice(0, 10),
-      description: pickCell(columns, map, ["description", "narration", "details"]) || "Imported bank line",
-      amount: String(Math.abs(amount)),
-      type: inferredType,
-      reference: pickCell(columns, map, ["reference", "bank_reference", "ref"]),
-    };
-  });
-}
+type TransactionDraft = BankFeedTransactionDraft;
 
 export function BankReconciliation({ organizationId, currentUserId }: BankReconciliationProps) {
   const { user } = useAuth();
@@ -170,7 +127,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
     amount: "",
     description: "",
   });
-  const [feedFileName, setFeedFileName] = useState("");
+  const feedMapping = useImportMapping("bank_feed");
   const [feedConnections, setFeedConnections] = useState<Array<{ id: string; provider: string; provider_account_id: string; status: string; last_synced_at?: string | null }>>([]);
   const [feedProvider, setFeedProvider] = useState("gtbank");
   const [feedProviderAccountId, setFeedProviderAccountId] = useState("");
@@ -181,6 +138,18 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
   const actorId = currentUserId || user?.id || "";
   const selectedAccount = bankAccounts.find((item) => item.id === selectedAccountId);
   const selectedStatement = statements.find((item) => item.id === selectedStatementId);
+  const feedOrgId = resolvedOrganizationId || organizationId || "";
+
+  useEffect(() => {
+    if (!feedMapping.extraction || !feedMapping.mappingComplete) return;
+    const parsedRows = parseBankFeedTable(feedMapping.mappedMatrix);
+    if (parsedRows.length === 0) return;
+    setRows(parsedRows);
+    setStatementForm((current) => ({
+      ...current,
+      statementDate: parsedRows[0]?.date || current.statementDate,
+    }));
+  }, [feedMapping.extraction, feedMapping.mappingComplete, feedMapping.mappedMatrix]);
 
   useEffect(() => {
     let cancelled = false;
@@ -374,27 +343,28 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
   const importBankFeedFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    let parsedRows: TransactionDraft[] = [];
     try {
-      const { matrix } = await extractMappedMatrix(file, "bank_feed");
-      parsedRows = parseBankFeedTable(matrix);
+      const extraction = await feedMapping.loadFile(file);
+      if (shouldOfferAiAssist(extraction)) {
+        toast.info("Some columns were not detected. Review mapping below or use AI assist.");
+      }
     } catch (error) {
       toast.error(importFileErrorMessage(error));
-      return;
     }
-    if (parsedRows.length === 0) {
-      toast.error("The bank feed file did not contain any usable rows.");
-      return;
-    }
+    event.target.value = "";
+  };
 
-    setFeedFileName(file.name);
-    setRows(parsedRows);
-    setStatementForm((current) => ({
-      ...current,
-      statementDate: parsedRows[0]?.date || current.statementDate,
-    }));
-    toast.success(`${parsedRows.length} bank feed line(s) imported.`);
+  const runFeedAiAssist = async () => {
+    if (!feedOrgId) {
+      toast.error("Organization context is required for AI assist.");
+      return;
+    }
+    const result = await feedMapping.runAiAssist(feedOrgId);
+    if (!result.ok) {
+      toast.error(result.reason);
+      return;
+    }
+    toast.success("AI mapping applied — review lines before saving the statement.");
   };
 
   const updateRow = (index: number, field: keyof TransactionDraft, value: string) => {
@@ -760,11 +730,28 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
                   Upload a bank export with date, description, amount, type, and reference columns.
                 </p>
               </div>
-              {feedFileName && <Badge variant="outline">{feedFileName}</Badge>}
+              {feedMapping.fileName && <Badge variant="outline">{feedMapping.fileName}</Badge>}
             </div>
             <div className="mt-3">
-              <Input type="file" accept={IMPORT_FILE_ACCEPT} onChange={importBankFeedFile} />
+              <Input type="file" accept={IMPORT_FILE_ACCEPT} onChange={importBankFeedFile} disabled={feedMapping.busy} />
             </div>
+            <ImportMappingPanel
+              importType="bank_feed"
+              extraction={feedMapping.extraction}
+              rawHeaders={feedMapping.rawMatrix[0] || []}
+              headerResult={feedMapping.headerResult}
+              effectiveMapping={feedMapping.effectiveMapping}
+              overrides={feedMapping.overrides}
+              mappingComplete={feedMapping.mappingComplete}
+              mappingWarnings={feedMapping.mappingWarnings}
+              shouldOfferAi={feedMapping.shouldOfferAi}
+              busy={feedMapping.busy}
+              selectedSheet={feedMapping.selectedSheet}
+              sheetNames={feedMapping.extraction?.sheetNames}
+              onOverride={feedMapping.setOverride}
+              onSheetChange={(sheet) => void feedMapping.reloadSheet(sheet)}
+              onAiAssist={() => void runFeedAiAssist()}
+            />
           </div>
           <div className="mt-4 rounded-lg border border-border bg-surface-subtle p-4 space-y-3">
             <div className="flex items-center justify-between gap-2">

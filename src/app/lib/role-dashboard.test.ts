@@ -72,8 +72,9 @@ describe("platform staff dashboard role config", () => {
     expect(normalizePlatformStaffDashboardRole("developer")).toBe("developer");
   });
 
-  it("prioritizes trust for moderators and operations for admins", () => {
+  it("prioritizes trust for moderators and team management for admins", () => {
     expect(getPlatformStaffDashboardConfig("platform_moderator").summaryCards[0].label).toBe("Moderation");
-    expect(getPlatformStaffDashboardConfig("platform_admin").summaryCards[0].label).toBe("Operations");
+    expect(getPlatformStaffDashboardConfig("platform_admin").summaryCards[0].label).toBe("Platform team");
+    expect(getPlatformStaffDashboardConfig("platform_admin").quickActions.map(action => action.href)).toEqual(expect.arrayContaining(["/admin/marketing", "/admin/roles"]));
   });
 });

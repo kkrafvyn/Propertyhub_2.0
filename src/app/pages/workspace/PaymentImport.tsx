@@ -1,13 +1,18 @@
-import { useState } from "react";
-import { AlertCircle, CheckCircle2, FileSpreadsheet, FileUp, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CheckCircle2, FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
 import { paymentImportService, type PaymentImportRow } from "../../../lib/payment-import.service";
-import { IMPORT_FILE_ACCEPT, IMPORT_FORMATS_LABEL, importFileErrorMessage } from "../../../lib/document-import";
-import { extractMappedMatrix } from "../../../lib/import-pipeline";
-import type { ImportExtractionResult } from "../../../lib/document-import";
+import {
+  IMPORT_FILE_ACCEPT,
+  IMPORT_FORMATS_LABEL,
+  importFileErrorMessage,
+} from "../../../lib/document-import";
+import { shouldOfferAiAssist } from "../../../lib/import-pipeline";
+import { useImportMapping } from "../../../lib/use-import-mapping";
+import { ImportMappingPanel } from "../../components/workspace/ImportMappingPanel";
 
 interface PaymentImportProps {
   organizationId: string;
@@ -15,38 +20,59 @@ interface PaymentImportProps {
 }
 
 export function PaymentImport({ organizationId, currentUserId }: PaymentImportProps) {
+  const mapping = useImportMapping("payments");
   const [rows, setRows] = useState<PaymentImportRow[]>([]);
-  const [fileName, setFileName] = useState("");
   const [busy, setBusy] = useState(false);
-  const [extraction, setExtraction] = useState<ImportExtractionResult | null>(null);
+
+  useEffect(() => {
+    if (!mapping.mappedMatrix.length || !mapping.mappingComplete) {
+      setRows([]);
+      return;
+    }
+    setRows(paymentImportService.parseTable(mapping.mappedMatrix));
+  }, [mapping.mappedMatrix, mapping.mappingComplete]);
 
   const choose = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setFileName(file.name);
     try {
-      const { extraction: ext, matrix } = await extractMappedMatrix(file, "payments");
-      setExtraction(ext);
-      setRows(paymentImportService.parseTable(matrix));
+      const extraction = await mapping.loadFile(file);
       toast.success(`Loaded ${file.name}`);
+      if (shouldOfferAiAssist(extraction)) {
+        toast.info("Some columns were not detected. Review mapping below or use AI assist.");
+      }
     } catch (error) {
       toast.error(importFileErrorMessage(error));
     }
+    e.target.value = "";
+  };
+
+  const runAi = async () => {
+    const result = await mapping.runAiAssist(organizationId);
+    if (!result.ok) {
+      toast.error(result.reason);
+      return;
+    }
+    toast.success("AI mapping applied — review rows before import.");
   };
 
   const execute = async () => {
+    if (!mapping.mappingComplete) {
+      toast.error("Map all required columns before import.");
+      return;
+    }
     try {
       setBusy(true);
       const job = await paymentImportService.createJob({
         organizationId,
         userId: currentUserId,
-        fileName: fileName || "payments.csv",
+        fileName: mapping.fileName || "payments.csv",
         rows,
-        extraction: extraction
+        extraction: mapping.extraction
           ? {
-              sourceFormat: extraction.sourceFormat,
-              extractionMethod: extraction.method,
-              extractionConfidence: extraction.confidence,
+              sourceFormat: mapping.extraction.sourceFormat,
+              extractionMethod: mapping.extraction.method,
+              extractionConfidence: mapping.extraction.confidence,
             }
           : undefined,
       });
@@ -56,8 +82,8 @@ export function PaymentImport({ organizationId, currentUserId }: PaymentImportPr
         userId: currentUserId,
       });
       toast.success(`${count} allocated payment(s) imported.`);
+      mapping.reset();
       setRows([]);
-      setFileName("");
     } catch (error) {
       console.error(error);
       toast.error("Unable to import payments.");
@@ -68,10 +94,10 @@ export function PaymentImport({ organizationId, currentUserId }: PaymentImportPr
 
   const valid = rows.filter((x) => !x.errors.length).length;
   const invalid = rows.length - valid;
+  const rawHeaders = mapping.rawMatrix[0] || [];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Payment Import</h1>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -80,22 +106,43 @@ export function PaymentImport({ organizationId, currentUserId }: PaymentImportPr
       </div>
 
       <Card className="p-6 space-y-5">
-        {/* Upload Dropzone */}
         <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border p-8 text-center hover:border-primary/50 transition-colors bg-muted/20">
           <div className="p-3 rounded-full bg-primary/10 text-primary mb-3">
-            <FileSpreadsheet className="h-6 w-6" />
+            {mapping.busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <FileSpreadsheet className="h-6 w-6" />}
           </div>
           <p className="text-sm font-semibold text-foreground">
-            {fileName ? `Selected: ${fileName}` : "Upload payments spreadsheet"}
+            {mapping.fileName ? `Selected: ${mapping.fileName}` : "Upload payments spreadsheet"}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {IMPORT_FORMATS_LABEL}. Required columns:{" "}
-            <span className="font-mono">estate_name, unit_identifier, charge_id, amount, method, reference</span>
+            {IMPORT_FORMATS_LABEL}. Map columns if headers differ from the template.
           </p>
-          <input className="sr-only" type="file" accept={IMPORT_FILE_ACCEPT} onChange={choose} />
+          <input
+            className="sr-only"
+            type="file"
+            accept={IMPORT_FILE_ACCEPT}
+            onChange={choose}
+            disabled={mapping.busy}
+          />
         </label>
 
-        {/* Validation and Preview */}
+        <ImportMappingPanel
+          importType="payments"
+          extraction={mapping.extraction}
+          rawHeaders={rawHeaders}
+          headerResult={mapping.headerResult}
+          effectiveMapping={mapping.effectiveMapping}
+          overrides={mapping.overrides}
+          mappingComplete={mapping.mappingComplete}
+          mappingWarnings={mapping.mappingWarnings}
+          shouldOfferAi={mapping.shouldOfferAi}
+          busy={mapping.busy}
+          selectedSheet={mapping.selectedSheet}
+          sheetNames={mapping.extraction?.sheetNames}
+          onOverride={mapping.setOverride}
+          onSheetChange={(sheet) => void mapping.reloadSheet(sheet)}
+          onAiAssist={() => void runAi()}
+        />
+
         {rows.length > 0 && (
           <div className="space-y-4 pt-2">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -108,7 +155,7 @@ export function PaymentImport({ organizationId, currentUserId }: PaymentImportPr
               </div>
 
               <Button
-                disabled={busy || valid !== rows.length}
+                disabled={busy || valid !== rows.length || !mapping.mappingComplete}
                 onClick={() => void execute()}
                 size="sm"
                 className="gap-1.5"

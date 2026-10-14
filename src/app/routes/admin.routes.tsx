@@ -28,6 +28,8 @@ export const adminRoutes: RouteObject[] = [
       return { Component: adminProtected(AdminShell) };
     },
     children: [
+      { path: "marketing", lazy: async () => { const { AdminMarketingPage } = await import("../pages/admin/AdminMarketingPage"); return { Component: AdminMarketingPage }; } },
+      { path: "roles", lazy: async () => { const { AdminAppRoles } = await import("../pages/admin/AdminAppRoles"); return { Component: AdminAppRoles }; } },
       {
         index: true,
         lazy: async () => {

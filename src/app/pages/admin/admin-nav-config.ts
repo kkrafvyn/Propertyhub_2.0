@@ -26,6 +26,8 @@ export type AdminNavItem = {
 };
 
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
+  { key: "marketing", label: "Marketing page", href: "/admin/marketing", icon: FileText, ownerOnly: true },
+  { key: "roles", label: "App roles", href: "/admin/roles", icon: Users, ownerOnly: true },
   { key: "overview", label: "Command Center", href: "/admin", icon: BarChart3 },
   { key: "team", label: "Platform team", href: "/admin/team", icon: Users, ownerOnly: true },
   { key: "integrations", label: "Integrations & jobs", href: "/admin/integrations", icon: Activity },

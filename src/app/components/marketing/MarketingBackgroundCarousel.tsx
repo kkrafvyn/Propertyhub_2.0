@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, type ReactNode } from "react";
+﻿import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import "./marketing-carousel.css";
 
@@ -11,7 +11,8 @@ export const HERO_SLIDES = [
 ] as const;
 
 /** Only decoded photographs can replace the current slide. Failed assets are skipped. */
-export function MarketingBackgroundCarousel({ children }: { children: ReactNode }) {
+export function MarketingBackgroundCarousel({ children, imageIds }: { children: ReactNode; imageIds?: readonly string[] }) {
+  const slides = useMemo(() => imageIds ? imageIds.map(id => HERO_SLIDES.find(slide => slide.id === id)!).filter(Boolean) : HERO_SLIDES, [imageIds]);
   const [active, setActive] = useState(0);
   const [requested, setRequested] = useState<number | null>(null);
   const [ready, setReady] = useState<number[]>([]);
@@ -46,13 +47,13 @@ export function MarketingBackgroundCarousel({ children }: { children: ReactNode 
   useEffect(() => {
     if (paused || focused || hidden || reduced || ready.length < 2) return;
     const timer = window.setTimeout(() => {
-      for (let offset = 1; offset < HERO_SLIDES.length; offset++) {
-        const next = (active + offset) % HERO_SLIDES.length;
+      for (let offset = 1; offset < slides.length; offset++) {
+        const next = (active + offset) % slides.length;
         if (ready.includes(next)) { setActive(next); break; }
       }
     }, 7000);
     return () => window.clearTimeout(timer);
-  }, [active, paused, focused, hidden, reduced, ready]);
+  }, [active, paused, focused, hidden, reduced, ready, slides.length]);
 
   const select = (index: number) => {
     if (failed.includes(index)) return;
@@ -60,8 +61,8 @@ export function MarketingBackgroundCarousel({ children }: { children: ReactNode 
     setRequested(index);
   };
   const advance = (direction: number) => {
-    for (let offset = 1; offset < HERO_SLIDES.length; offset++) {
-      const next = (active + direction * offset + HERO_SLIDES.length) % HERO_SLIDES.length;
+    for (let offset = 1; offset < slides.length; offset++) {
+      const next = (active + direction * offset + slides.length) % slides.length;
       if (!failed.includes(next)) { select(next); break; }
     }
   };
@@ -72,10 +73,10 @@ export function MarketingBackgroundCarousel({ children }: { children: ReactNode 
       // If the first photo fails, the next successful photo becomes the fallback.
       if (index === active || !ready.includes(active)) {
         const fallback = ready.find((candidate) => candidate !== index && !failed.includes(candidate));
-        setRequested((value) => value ?? fallback ?? ((index + 1) % HERO_SLIDES.length));
+        setRequested((value) => value ?? fallback ?? ((index + 1) % slides.length));
       }
     }
-    setLoadThrough((value) => Math.min(HERO_SLIDES.length - 1, Math.max(value, index + 1)));
+    setLoadThrough((value) => Math.min(slides.length - 1, Math.max(value, index + 1)));
   };
 
   return (
@@ -83,7 +84,7 @@ export function MarketingBackgroundCarousel({ children }: { children: ReactNode 
       onFocusCapture={() => setFocused(true)}
       onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }}>
       <div className="mk-photo-hero__background" aria-hidden="true">
-        {HERO_SLIDES.map((slide, index) => index <= loadThrough && !failed.includes(index) ? (
+        {slides.map((slide, index) => index <= loadThrough && !failed.includes(index) ? (
           <div key={slide.id} className={`mk-photo-hero__slide${index === active && (ready.includes(index) || index === 0) ? " is-active" : ""}`}>
             <picture>
               <source media="(max-width: 639px)" srcSet={`/marketing/hero/${slide.id}-mobile.webp`} />
@@ -105,7 +106,7 @@ export function MarketingBackgroundCarousel({ children }: { children: ReactNode 
         <p>Illustrative properties. Stock photography.</p>
         <div className="mk-photo-controls" role="group" aria-label="Hero background controls">
           <button type="button" aria-label="Previous background image" onClick={() => advance(-1)}><ChevronLeft size={18} aria-hidden="true" /></button>
-          {HERO_SLIDES.map((slide, index) => (
+          {slides.map((slide, index) => (
             <button key={slide.id} type="button" className="mk-photo-controls__dot" aria-label={`Show background ${index + 1}: ${slide.label}`}
               aria-current={index === active ? "true" : undefined} disabled={failed.includes(index)} onClick={() => select(index)}><span /></button>
           ))}

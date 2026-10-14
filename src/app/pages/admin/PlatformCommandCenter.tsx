@@ -111,6 +111,8 @@ export function PlatformCommandCenter() {
       <Card className="p-6">
         <h2 className="text-lg font-semibold mb-4">Owner quick actions</h2>
         <div className="flex flex-wrap gap-2">
+          <Link to="/admin/marketing"><Button size="sm" variant="secondary">Marketing page</Button></Link>
+          <Link to="/admin/roles"><Button size="sm" variant="secondary">App roles</Button></Link>
           <Link to="/admin/features">
             <Button size="sm" variant="secondary">
               Feature flags

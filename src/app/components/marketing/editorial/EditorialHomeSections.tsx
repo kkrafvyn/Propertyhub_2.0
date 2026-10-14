@@ -1,3 +1,4 @@
+import { useMarketingContent } from "./MarketingContentContext";
 import { useState } from "react";
 import { ArrowRight, Link2 } from "lucide-react";
 import { Link } from "react-router";
@@ -157,15 +158,17 @@ export function EditorialSalesSection() {
 }
 
 export function EditorialFaqSection() {
+  const { faq } = useMarketingContent();
   const ref = useEditorialReveal<HTMLElement>();
   return (
-    <section ref={ref} className="mk-ed-section mk-ed-section--muted mk-ed-reveal" aria-labelledby="faq-heading"><div className="mk-ed-container mk-ed-faq"><h2 id="faq-heading" className="mk-ed-heading">Practical questions</h2>{MARKETING_FAQ.map((item) => <details key={item.q} className="mk-ed-details"><summary>{item.q}</summary><p>{item.a}</p></details>)}</div></section>
+    <section ref={ref} className="mk-ed-section mk-ed-section--muted mk-ed-reveal" aria-labelledby="faq-heading"><div className="mk-ed-container mk-ed-faq"><h2 id="faq-heading" className="mk-ed-heading">Practical questions</h2>{faq.map((item, index) => <details key={index} className="mk-ed-details"><summary>{item.q}</summary><p>{item.a}</p></details>)}</div></section>
   );
 }
 
 export function EditorialFinalCtaSection() {
+  const { finalCta } = useMarketingContent();
   const ref = useEditorialReveal<HTMLElement>();
   return (
-    <section ref={ref} className="mk-ed-section mk-ed-section--dark mk-ed-final mk-ed-reveal" aria-labelledby="final-cta-heading"><div className="mk-ed-container mk-ed-final__inner"><h2 id="final-cta-heading" className="mk-ed-heading mk-ed-heading--dark">Bring your property operation together</h2><p className="mk-ed-lead mk-ed-lead--dark">Start with one workspace and add the modules you need.</p><div className="mk-ed-inline-actions"><a href={appPath("/signup")} className="mk-ed-btn mk-ed-btn--light" onClick={() => trackMarketingEvent("marketing_cta_click", { placement: "final_primary" })}>Create workspace <ArrowRight size={16} aria-hidden="true" /></a><a href="#product-tour" className="mk-ed-btn mk-ed-btn--ghost">View product tour</a></div></div></section>
+    <section ref={ref} className="mk-ed-section mk-ed-section--dark mk-ed-final mk-ed-reveal" aria-labelledby="final-cta-heading"><div className="mk-ed-container mk-ed-final__inner"><h2 id="final-cta-heading" className="mk-ed-heading mk-ed-heading--dark">{finalCta.title}</h2><p className="mk-ed-lead mk-ed-lead--dark">{finalCta.description}</p><div className="mk-ed-inline-actions"><a href={appPath("/signup")} className="mk-ed-btn mk-ed-btn--light" onClick={() => trackMarketingEvent("marketing_cta_click", { placement: "final_primary" })}>Create workspace <ArrowRight size={16} aria-hidden="true" /></a><a href="#product-tour" className="mk-ed-btn mk-ed-btn--ghost">View product tour</a></div></div></section>
   );
 }

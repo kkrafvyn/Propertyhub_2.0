@@ -338,6 +338,8 @@ export function getPlatformStaffDashboardConfig(role?: string | null): ConsumerD
       quickActions: [
         { label: "Platform team", href: "/admin/team", icon: "team" },
         { label: "Feature flags", href: "/admin/features", icon: "operations" },
+        { label: "Marketing page", href: "/admin/marketing", icon: "operations" },
+        { label: "App roles", href: "/admin/roles", icon: "team" },
       ],
     },
   };

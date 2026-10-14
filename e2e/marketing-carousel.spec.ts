@@ -1,3 +1,4 @@
+import { DEFAULT_MARKETING_DOCUMENT } from '../src/lib/marketing-page-document';
 ﻿import { test, expect } from '@playwright/test';
 
 async function open(page: import('@playwright/test').Page) {
@@ -66,4 +67,26 @@ test('slow and failed photos preserve readable content and recover', async({page
   await expect(page.getByRole('button',{name:/Show background 1:/})).toBeDisabled();
   await expect(page.locator('.mk-photo-hero h1')).toBeVisible(); await expect(page.locator('.mk-photo-hero').getByRole('link',{name:'Get Started'})).toBeVisible();
   release(); await expect(page.getByRole('button',{name:/Show background 2:/})).toHaveAttribute('aria-current','true');
+});
+
+
+test('published marketing content replaces defaults while preserving the product tour and conversion destinations',async({page})=>{
+  const content=structuredClone(DEFAULT_MARKETING_DOCUMENT);
+  content.hero.title='Your portfolio.';content.hero.secondLine='Clearer every day.';content.hero.description='Published portfolio copy.';
+  content.hero.images=['interior','residences','commercial','community'];
+  content.seo.title='Portfolio clarity with BaytMiftah';
+  content.faq=[{q:'Can our team get started?',a:'Create an account and configure the workspace.'}];
+  content.sections=[{title:'A simpler operating day',body:'Published additional content.'}];
+  await page.route('**/rest/v1/marketing_page_published*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{document:content}])}));
+  await page.goto('/',{waitUntil:'domcontentloaded'});
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Your portfolio.Clearer every day.');
+  await expect(page.locator('.mk-ed-hero__lead')).toHaveText('Published portfolio copy.');
+  await expect(page).toHaveTitle(/Portfolio clarity/);
+  await expect(page.locator('.mk-photo-hero img')).toHaveCount(4);
+  await expect(page.locator('.mk-photo-hero img').first()).toHaveAttribute('src',/interior-1280.webp$/);
+  await expect(page.getByRole('heading',{name:'A simpler operating day'})).toBeAttached();
+  await expect(page.locator('.mk-ed-details')).toHaveCount(1);
+  await expect(page.locator('.mk-photo-hero').getByRole('link',{name:'Get Started'})).toHaveAttribute('href',/\/signup$/);
+  await page.locator('.mk-photo-hero').getByRole('link',{name:'Explore the Platform'}).click();
+  await expect(page.getByRole('region',{name:'Product tour',exact:true})).toBeInViewport();
 });

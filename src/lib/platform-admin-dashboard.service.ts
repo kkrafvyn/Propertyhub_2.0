@@ -62,7 +62,7 @@ export async function listRoleChangeAudit(limit = 15) {
   const { data, error } = await supabase
     .from("audit_logs")
     .select("id, action, admin_id, target_id, created_at")
-    .eq("action", "admin_set_user_platform_access")
+    .in("action", ["admin_set_user_platform_access", "admin_save_platform_role", "admin_assign_platform_role", "admin_delete_platform_role"])
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw error;

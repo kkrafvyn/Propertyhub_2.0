@@ -30,10 +30,12 @@ export type AdminConsoleSection =
   | "ai"
   | "payments"
   | "communications"
-  | "features";
+  | "features"
+  | "roles"
+  | "marketing";
 
 const SECTION_GRANT_MAP: Record<
-  Exclude<AdminConsoleSection, "overview" | "operations" | "team" | "features">,
+  Exclude<AdminConsoleSection, "overview" | "operations" | "team" | "features" | "roles" | "marketing">,
   PlatformConsoleGrant
 > = {
   users: PLATFORM_CONSOLE_GRANTS.users,
@@ -96,7 +98,7 @@ export function canAccessAdminSection(
   section: AdminConsoleSection,
 ) {
   if (!hasPlatformConsoleAccess(profile)) return false;
-  if (section === "team" || section === "features") return isPlatformOwner(profile);
+  if (section === "team" || section === "features" || section === "roles" || section === "marketing") return isPlatformOwner(profile);
   if (section === "operations") return isPlatformOwner(profile);
   if (section === "overview") return true;
   const grant = SECTION_GRANT_MAP[section];

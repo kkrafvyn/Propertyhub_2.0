@@ -1,14 +1,16 @@
-import { applyHeaderMapping, type ImportTypeKey, mapHeaders } from "./import-column-mapping";
+import { buildMappedMatrix, type ImportTypeKey, mapHeaders } from "./import-column-mapping";
 import { readImportDocument, type ImportExtractionResult } from "./document-import";
 
 export async function extractMappedMatrix(
   file: File,
   importType: ImportTypeKey,
   sheetName?: string,
-): Promise<{ extraction: ImportExtractionResult; matrix: string[][] }> {
+  overrides: Record<string, number> = {},
+): Promise<{ extraction: ImportExtractionResult; rawMatrix: string[][]; matrix: string[][] }> {
   const extraction = await readImportDocument(file, { importType, sheetName });
-  const matrix = applyHeaderMapping(extraction.matrix, importType);
-  return { extraction, matrix };
+  const rawMatrix = extraction.matrix;
+  const matrix = buildMappedMatrix(rawMatrix, importType, overrides);
+  return { extraction, rawMatrix, matrix };
 }
 
 export const AI_EXTRACT_CONFIDENCE_THRESHOLD = 0.55;
@@ -22,7 +24,7 @@ export function prepareMatrixForImport(
     return { matrix: raw, headerMapping: mapHeaders([], importType) };
   }
   const headerMapping = mapHeaders(raw[0], importType);
-  const matrix = applyHeaderMapping(raw, importType);
+  const matrix = buildMappedMatrix(raw, importType);
   return { matrix, headerMapping };
 }
 
