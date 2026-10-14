@@ -13,6 +13,13 @@ import { estateOperationsService, type ManagedEstate } from "@/lib/estate-operat
 import { bankReconciliationService } from "@/lib/bank-reconciliation.service";
 import { getSupportedBankFeedProviders } from "@/lib/bank-feed-providers";
 import { supabase } from "@/lib/supabase";
+import { csvCell, csvHeaderMap } from "@/lib/csv-parse";
+import {
+  IMPORT_FILE_ACCEPT,
+  IMPORT_FORMATS_LABEL,
+  importFileErrorMessage,
+} from "@/lib/document-import";
+import { extractMappedMatrix } from "@/lib/import-pipeline";
 
 type BankAccount = {
   id: string;
@@ -77,25 +84,23 @@ type TransactionDraft = {
   reference: string;
 };
 
-function parseBankFeedCsv(content: string): TransactionDraft[] {
-  const lines = content
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
+function pickCell(row: string[], map: Record<string, number>, keys: string[]) {
+  for (const key of keys) {
+    const value = csvCell(row, map, key);
+    if (value) return value;
+  }
+  return "";
+}
 
-  if (lines.length <= 1) return [];
+function parseBankFeedTable(matrix: string[][]): TransactionDraft[] {
+  const rows = matrix.filter((row) => row.some((cell) => cell.trim().length > 0));
+  if (rows.length <= 1) return [];
 
-  const header = lines[0].toLowerCase().split(",").map((item) => item.trim());
-  const dateIndex = header.findIndex((item) => ["date", "transaction_date", "posted_date"].includes(item));
-  const descriptionIndex = header.findIndex((item) => ["description", "narration", "details"].includes(item));
-  const amountIndex = header.findIndex((item) => ["amount", "value", "debit", "credit"].includes(item));
-  const typeIndex = header.findIndex((item) => ["type", "direction", "dr_cr"].includes(item));
-  const referenceIndex = header.findIndex((item) => ["reference", "bank_reference", "ref"].includes(item));
+  const map = csvHeaderMap(rows[0]);
 
-  return lines.slice(1).map((line) => {
-    const columns = line.split(",").map((item) => item.trim().replace(/^"|"$/g, ""));
-    const amountCell = columns[amountIndex] || "0";
-    const rawType = (columns[typeIndex] || "").toUpperCase();
+  return rows.slice(1).map((columns) => {
+    const amountCell = pickCell(columns, map, ["amount", "value", "debit", "credit"]) || "0";
+    const rawType = pickCell(columns, map, ["type", "direction", "dr_cr"]).toUpperCase();
     const amount = Number(amountCell.replace(/[^0-9.-]/g, "")) || 0;
     const inferredType =
       rawType.includes("CREDIT") || rawType === "CR" || amountCell.startsWith("+")
@@ -107,11 +112,13 @@ function parseBankFeedCsv(content: string): TransactionDraft[] {
             : "CREDIT";
 
     return {
-      date: columns[dateIndex] || new Date().toISOString().slice(0, 10),
-      description: columns[descriptionIndex] || "Imported bank line",
+      date:
+        pickCell(columns, map, ["date", "transaction_date", "posted_date"]) ||
+        new Date().toISOString().slice(0, 10),
+      description: pickCell(columns, map, ["description", "narration", "details"]) || "Imported bank line",
       amount: String(Math.abs(amount)),
       type: inferredType,
-      reference: columns[referenceIndex] || "",
+      reference: pickCell(columns, map, ["reference", "bank_reference", "ref"]),
     };
   });
 }
@@ -368,8 +375,14 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const content = await file.text();
-    const parsedRows = parseBankFeedCsv(content);
+    let parsedRows: TransactionDraft[] = [];
+    try {
+      const { matrix } = await extractMappedMatrix(file, "bank_feed");
+      parsedRows = parseBankFeedTable(matrix);
+    } catch (error) {
+      toast.error(importFileErrorMessage(error));
+      return;
+    }
     if (parsedRows.length === 0) {
       toast.error("The bank feed file did not contain any usable rows.");
       return;
@@ -736,12 +749,13 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
             <h2 className="font-semibold">Upload statement</h2>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            Import your bank statement via CSV export or connect a live bank feed.
+            Import your bank statement via CSV or Excel export, or connect a live bank feed.
           </p>
           <div className="mt-4 rounded-lg border border-dashed border-border bg-surface-subtle p-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="font-medium">Import bank feed CSV</p>
+                <p className="font-medium">Import bank feed file</p>
+                <p className="text-xs text-muted-foreground">{IMPORT_FORMATS_LABEL}</p>
                 <p className="text-sm text-muted-foreground">
                   Upload a bank export with date, description, amount, type, and reference columns.
                 </p>
@@ -749,7 +763,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
               {feedFileName && <Badge variant="outline">{feedFileName}</Badge>}
             </div>
             <div className="mt-3">
-              <Input type="file" accept=".csv,text/csv" onChange={importBankFeedFile} />
+              <Input type="file" accept={IMPORT_FILE_ACCEPT} onChange={importBankFeedFile} />
             </div>
           </div>
           <div className="mt-4 rounded-lg border border-border bg-surface-subtle p-4 space-y-3">

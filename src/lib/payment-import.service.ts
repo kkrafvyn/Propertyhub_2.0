@@ -15,8 +15,8 @@ export type PaymentImportRow = {
   errors: string[];
 };
 
-export function parsePaymentCsv(content: string): PaymentImportRow[] {
-  const rows = parseCsv(content).filter((row) => row.some((cell) => cell.trim().length > 0));
+export function parsePaymentTable(matrix: string[][]): PaymentImportRow[] {
+  const rows = matrix.filter((row) => row.some((cell) => cell.trim().length > 0));
   if (rows.length < 2) return [];
   const map = csvHeaderMap(rows[0]);
   return rows.slice(1).map((items, index) => {
@@ -47,13 +47,19 @@ export function parsePaymentCsv(content: string): PaymentImportRow[] {
   });
 }
 
+export function parsePaymentCsv(content: string): PaymentImportRow[] {
+  return parsePaymentTable(parseCsv(content));
+}
+
 export const paymentImportService = {
   parse: parsePaymentCsv,
+  parseTable: parsePaymentTable,
   async createJob(input: {
     organizationId: string;
     userId: string;
     fileName: string;
     rows: PaymentImportRow[];
+    extraction?: { sourceFormat?: string; extractionMethod?: string; extractionConfidence?: number };
   }) {
     const valid = input.rows.filter((row) => !row.errors.length);
     const { data: job, error } = await db
@@ -66,6 +72,9 @@ export const paymentImportService = {
         total_rows: input.rows.length,
         valid_rows: valid.length,
         created_by: input.userId,
+        source_format: input.extraction?.sourceFormat ?? null,
+        extraction_method: input.extraction?.extractionMethod ?? null,
+        extraction_confidence: input.extraction?.extractionConfidence ?? null,
       })
       .select("*")
       .single();

@@ -8,15 +8,15 @@ export type ImportRow = { rowNumber: number; estateName: string; unitIdentifier:
 export type OccupancyImportRow = { rowNumber: number; estateName: string; unitIdentifier: string; userEmail: string; role: "owner" | "tenant" | "buyer" | ""; startDate: string; errors: string[] };
 export type OpeningChargeImportRow = { rowNumber:number; estateName:string; unitIdentifier:string; amount:string; dueDate:string; chargeType:string; description:string; errors:string[] };
 
-function dataRows(content: string) {
-  const rows = parseCsv(content).filter((row) => row.some((cell) => cell.trim().length > 0));
+function dataRowsFromMatrix(matrix: string[][]) {
+  const rows = matrix.filter((row) => row.some((cell) => cell.trim().length > 0));
   const headers = rows[0] || [];
   const map = csvHeaderMap(headers);
   return { rows: rows.slice(1), map };
 }
 
-export function parseEstateUnitsCsv(content: string): ImportRow[] {
-  const { rows, map } = dataRows(content);
+export function parseEstateUnitsTable(matrix: string[][]): ImportRow[] {
+  const { rows, map } = dataRowsFromMatrix(matrix);
   return rows.map((parts, index) => {
     const estateName = csvCell(parts, map, "estate_name") || csvCell(parts, map, "estate");
     const unitIdentifier = csvCell(parts, map, "unit_identifier") || csvCell(parts, map, "unit");
@@ -31,8 +31,12 @@ export function parseEstateUnitsCsv(content: string): ImportRow[] {
   });
 }
 
-export function parseOccupanciesCsv(content: string): OccupancyImportRow[] {
-  const { rows, map } = dataRows(content);
+export function parseEstateUnitsCsv(content: string): ImportRow[] {
+  return parseEstateUnitsTable(parseCsv(content));
+}
+
+export function parseOccupanciesTable(matrix: string[][]): OccupancyImportRow[] {
+  const { rows, map } = dataRowsFromMatrix(matrix);
   return rows.map((parts, index) => {
     const estateName = csvCell(parts, map, "estate_name") || csvCell(parts, map, "estate");
     const unitIdentifier = csvCell(parts, map, "unit_identifier") || csvCell(parts, map, "unit");
@@ -57,8 +61,12 @@ export function parseOccupanciesCsv(content: string): OccupancyImportRow[] {
   });
 }
 
-export function parseOpeningChargesCsv(content: string): OpeningChargeImportRow[] {
-  const { rows, map } = dataRows(content);
+export function parseOccupanciesCsv(content: string): OccupancyImportRow[] {
+  return parseOccupanciesTable(parseCsv(content));
+}
+
+export function parseOpeningChargesTable(matrix: string[][]): OpeningChargeImportRow[] {
+  const { rows, map } = dataRowsFromMatrix(matrix);
   return rows.map((parts, index) => {
     const estateName = csvCell(parts, map, "estate_name") || csvCell(parts, map, "estate");
     const unitIdentifier = csvCell(parts, map, "unit_identifier") || csvCell(parts, map, "unit");
@@ -84,8 +92,19 @@ export function parseOpeningChargesCsv(content: string): OpeningChargeImportRow[
   });
 }
 
+export function parseOpeningChargesCsv(content: string): OpeningChargeImportRow[] {
+  return parseOpeningChargesTable(parseCsv(content));
+}
+
 export const estateImportService = {
-  async createJob(input: { organizationId: string; fileName: string; rows: Array<ImportRow | OccupancyImportRow>; userId: string; importType?: "estates_units" | "occupancies" }) {
+  async createJob(input: {
+    organizationId: string;
+    fileName: string;
+    rows: Array<ImportRow | OccupancyImportRow>;
+    userId: string;
+    importType?: "estates_units" | "occupancies";
+    extraction?: { sourceFormat?: string; extractionMethod?: string; extractionConfidence?: number };
+  }) {
     const valid = input.rows.filter((row) => !row.errors.length);
     const { data: job, error } = await db.from("estate_import_jobs").insert({
       organization_id: input.organizationId,
@@ -95,6 +114,9 @@ export const estateImportService = {
       total_rows: input.rows.length,
       valid_rows: valid.length,
       created_by: input.userId,
+      source_format: input.extraction?.sourceFormat ?? null,
+      extraction_method: input.extraction?.extractionMethod ?? null,
+      extraction_confidence: input.extraction?.extractionConfidence ?? null,
     }).select("*").single();
     if (error) throw error;
     const { error: rowError } = await db.from("estate_import_rows").insert(

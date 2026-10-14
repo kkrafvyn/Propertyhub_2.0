@@ -157,7 +157,7 @@
 | Integration marketplace (50+ partners) | ✅ | ✅ | `IntegrationMarketplace.tsx` — 15+ seeded partners; connect in hub |
 | Integration hub (self-serve) | ⚠️ | ✅ | `IntegrationHub.tsx` |
 | Developer API & webhooks | ⚠️ | ✅ | `developer-api.service.ts` |
-| Data import / migration tools | ✅ | ✅ | `DataMigration.tsx`, `DataImportExport.tsx` |
+| Data import / migration tools | ✅ | ✅ | Universal hybrid import (CSV/Excel/JSON/XML/DOCX/PDF + AI assist): `DataMigration.tsx`, `document-import/`, `import-data-extract` edge function |
 | Multi-tenant org workspaces | ✅ | ✅ | `/workspace/:organizationSlug` |
 | Role-based access (20+ roles) | ✅ | ✅ | Org RBAC throughout |
 | Desktop ERP app (Electron) | ❌ | ✅ | GL, procurement, bulk ops |

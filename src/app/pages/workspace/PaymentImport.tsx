@@ -5,6 +5,9 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
 import { paymentImportService, type PaymentImportRow } from "../../../lib/payment-import.service";
+import { IMPORT_FILE_ACCEPT, IMPORT_FORMATS_LABEL, importFileErrorMessage } from "../../../lib/document-import";
+import { extractMappedMatrix } from "../../../lib/import-pipeline";
+import type { ImportExtractionResult } from "../../../lib/document-import";
 
 interface PaymentImportProps {
   organizationId: string;
@@ -15,17 +18,19 @@ export function PaymentImport({ organizationId, currentUserId }: PaymentImportPr
   const [rows, setRows] = useState<PaymentImportRow[]>([]);
   const [fileName, setFileName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [extraction, setExtraction] = useState<ImportExtractionResult | null>(null);
 
   const choose = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setFileName(file.name);
     try {
-      const text = await file.text();
-      setRows(paymentImportService.parse(text));
+      const { extraction: ext, matrix } = await extractMappedMatrix(file, "payments");
+      setExtraction(ext);
+      setRows(paymentImportService.parseTable(matrix));
       toast.success(`Loaded ${file.name}`);
-    } catch {
-      toast.error("Failed to read CSV file.");
+    } catch (error) {
+      toast.error(importFileErrorMessage(error));
     }
   };
 
@@ -37,6 +42,13 @@ export function PaymentImport({ organizationId, currentUserId }: PaymentImportPr
         userId: currentUserId,
         fileName: fileName || "payments.csv",
         rows,
+        extraction: extraction
+          ? {
+              sourceFormat: extraction.sourceFormat,
+              extractionMethod: extraction.method,
+              extractionConfidence: extraction.confidence,
+            }
+          : undefined,
       });
       const count = await paymentImportService.execute({
         jobId: job.id,
@@ -74,13 +86,13 @@ export function PaymentImport({ organizationId, currentUserId }: PaymentImportPr
             <FileSpreadsheet className="h-6 w-6" />
           </div>
           <p className="text-sm font-semibold text-foreground">
-            {fileName ? `Selected: ${fileName}` : "Upload payments CSV"}
+            {fileName ? `Selected: ${fileName}` : "Upload payments spreadsheet"}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Required columns:{" "}
+            {IMPORT_FORMATS_LABEL}. Required columns:{" "}
             <span className="font-mono">estate_name, unit_identifier, charge_id, amount, method, reference</span>
           </p>
-          <input className="sr-only" type="file" accept=".csv,text/csv" onChange={choose} />
+          <input className="sr-only" type="file" accept={IMPORT_FILE_ACCEPT} onChange={choose} />
         </label>
 
         {/* Validation and Preview */}

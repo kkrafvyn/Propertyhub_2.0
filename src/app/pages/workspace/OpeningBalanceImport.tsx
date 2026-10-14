@@ -5,7 +5,14 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
 import { openingChargeImportService } from "../../../lib/opening-charge-import.service";
-import type { OpeningChargeImportRow } from "../../../lib/estate-import.service";
+import { parseOpeningChargesTable, type OpeningChargeImportRow } from "../../../lib/estate-import.service";
+import {
+  IMPORT_FILE_ACCEPT,
+  IMPORT_FORMATS_LABEL,
+  importFileErrorMessage,
+  type ImportExtractionResult,
+} from "../../../lib/document-import";
+import { extractMappedMatrix } from "../../../lib/import-pipeline";
 
 interface OpeningBalanceImportProps {
   organizationId: string;
@@ -19,17 +26,19 @@ export function OpeningBalanceImport({
   const [rows, setRows] = useState<OpeningChargeImportRow[]>([]);
   const [fileName, setFileName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [extraction, setExtraction] = useState<ImportExtractionResult | null>(null);
 
   const choose = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setFileName(file.name);
     try {
-      const text = await file.text();
-      setRows(openingChargeImportService.parse(text));
+      const { extraction: ext, matrix } = await extractMappedMatrix(file, "opening_charges");
+      setExtraction(ext);
+      setRows(parseOpeningChargesTable(matrix));
       toast.success(`Loaded ${file.name}`);
-    } catch {
-      toast.error("Failed to read CSV file.");
+    } catch (error) {
+      toast.error(importFileErrorMessage(error));
     }
   };
 
@@ -41,6 +50,13 @@ export function OpeningBalanceImport({
         userId: currentUserId,
         fileName: fileName || "opening-charges.csv",
         rows,
+        extraction: extraction
+          ? {
+              sourceFormat: extraction.sourceFormat,
+              extractionMethod: extraction.method,
+              extractionConfidence: extraction.confidence,
+            }
+          : undefined,
       });
       const count = await openingChargeImportService.execute({
         jobId: job.id,
@@ -78,13 +94,13 @@ export function OpeningBalanceImport({
             <FileSpreadsheet className="h-6 w-6" />
           </div>
           <p className="text-sm font-semibold text-foreground">
-            {fileName ? `Selected: ${fileName}` : "Upload opening charges CSV"}
+            {fileName ? `Selected: ${fileName}` : "Upload opening balances spreadsheet"}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Required columns:{" "}
+            {IMPORT_FORMATS_LABEL}. Required columns:{" "}
             <span className="font-mono">estate_name, unit_identifier, amount, due_date, charge_type, description</span>
           </p>
-          <input className="sr-only" type="file" accept=".csv,text/csv" onChange={choose} />
+          <input className="sr-only" type="file" accept={IMPORT_FILE_ACCEPT} onChange={choose} />
         </label>
 
         {/* Validation and List */}

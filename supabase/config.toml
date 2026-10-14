@@ -18,3 +18,6 @@ verify_jwt = false
 
 [functions.kyc-prembly-webhook]
 verify_jwt = false
+
+[functions.import-data-extract]
+verify_jwt = true

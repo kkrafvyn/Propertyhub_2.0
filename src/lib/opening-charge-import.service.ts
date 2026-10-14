@@ -13,6 +13,7 @@ export const openingChargeImportService = {
     userId: string;
     fileName: string;
     rows: OpeningChargeImportRow[];
+    extraction?: { sourceFormat?: string; extractionMethod?: string; extractionConfidence?: number };
   }) {
     const valid = input.rows.filter((x) => !x.errors.length);
     const { data: job, error } = await db
@@ -25,6 +26,9 @@ export const openingChargeImportService = {
         total_rows: input.rows.length,
         valid_rows: valid.length,
         created_by: input.userId,
+        source_format: input.extraction?.sourceFormat ?? null,
+        extraction_method: input.extraction?.extractionMethod ?? null,
+        extraction_confidence: input.extraction?.extractionConfidence ?? null,
       })
       .select("*")
       .single();

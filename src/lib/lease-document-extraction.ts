@@ -126,61 +126,32 @@ function extractionConfidence(text: string, pageCount: number): number {
 }
 
 async function extractPdf(bytes: ArrayBuffer, onProgress: (progress: ExtractionProgress) => void) {
-  const pdfjs = await import('pdfjs-dist');
-  const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
-  pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
-  const task = pdfjs.getDocument({
-    data: new Uint8Array(bytes),
-    useSystemFonts: false,
-    disableFontFace: true,
-    stopAtErrors: true,
-    useWorkerFetch: false,
-  });
-  let timeout: ReturnType<typeof setTimeout>;
+  const { extractPdfPlainText, PdfTextError } = await import('./document-text/pdf-text');
   try {
-    return await Promise.race([
-      (async () => {
-        const document = await task.promise;
-        if (document.numPages > LEASE_DOCUMENT_LIMITS.maxPages) {
-          throw new LeaseExtractionError('This PDF exceeds the 100-page limit. Split it into smaller documents.');
-        }
-        let extractedText = '';
-        const pages: LeaseSourcePage[] = [];
-        for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
-          onProgress({ message: `Extracting page ${pageNumber} of ${document.numPages}…`, page: pageNumber, totalPages: document.numPages });
-          const page = await document.getPage(pageNumber);
-          try {
-            const content = await page.getTextContent();
-            const pageText = content.items.map((item) => 'str' in item ? `${item.str}${item.hasEOL ? '\n' : ' '}` : '').join('').trim();
-            // Reject incomplete extraction, including mixed scanned/text PDFs, rather than omit pages silently.
-            if ((pageText.match(/\p{L}/gu)?.length || 0) < 10) {
-              throw new LeaseExtractionError(`Page ${pageNumber} has no readable agreement text. Scanned or image-only pages need OCR first; remove blank pages or upload a fully searchable PDF.`);
-            }
-            if (extractedText) extractedText += '\n\n';
-            const start = extractedText.length;
-            extractedText += pageText;
-            if (extractedText.length > LEASE_DOCUMENT_LIMITS.maxCharacters) {
-              throw new LeaseExtractionError('This PDF contains too much text. Use a document with at most 500,000 characters.');
-            }
-            pages.push({ page: pageNumber, start, end: extractedText.length });
-          } finally {
-            page.cleanup();
-          }
-        }
-        return { extractedText: readableText(extractedText), pages };
-      })(),
-      new Promise<never>((_, reject) => {
-        timeout = setTimeout(() => reject(new LeaseExtractionError('PDF extraction timed out. Try a smaller PDF or export the agreement as TXT.')), LEASE_DOCUMENT_LIMITS.timeoutMs);
-      }),
-    ]);
-  } catch (error) {
-    if (error instanceof LeaseExtractionError) throw error;
-    if (error instanceof Error && error.name === 'PasswordException') {
-      throw new LeaseExtractionError('This PDF is password protected. Upload an unlocked copy.');
+    const { text, pageCount } = await extractPdfPlainText(
+      bytes,
+      (p) => onProgress({ message: p.message, page: p.page, totalPages: p.totalPages }),
+      {
+        maxPages: LEASE_DOCUMENT_LIMITS.maxPages,
+        maxCharacters: LEASE_DOCUMENT_LIMITS.maxCharacters,
+        timeoutMs: LEASE_DOCUMENT_LIMITS.timeoutMs,
+        strictPages: true,
+      },
+    );
+    const pages: LeaseSourcePage[] = [];
+    if (pageCount > 0) {
+      const chunk = Math.max(1, Math.floor(text.length / pageCount));
+      for (let i = 0; i < pageCount; i += 1) {
+        const start = i * chunk;
+        const end = i === pageCount - 1 ? text.length : (i + 1) * chunk;
+        pages.push({ page: i + 1, start, end });
+      }
     }
-    throw new LeaseExtractionError('The PDF could not be extracted completely. Export a new PDF with selectable text or upload a TXT file.');
-  } finally {
-    clearTimeout(timeout);
-    await task.destroy();
+    return { extractedText: readableText(text), pages };
+  } catch (error) {
+    if (error instanceof PdfTextError) {
+      throw new LeaseExtractionError(error.message);
+    }
+    throw error;
   }
 }
