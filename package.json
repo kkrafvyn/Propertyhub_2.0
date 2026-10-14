@@ -74,6 +74,7 @@
     "desktop:icons": "node scripts/generate-desktop-icon.mjs",
     "desktop:pack:mac": "npm run desktop:icons && npm run build:desktop && npm run desktop:prepare-builder && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --publish never",
     "desktop:prepare-builder": "node scripts/prepare-electron-builder.mjs",
+    "desktop:pack:mas": "npm run desktop:icons && npm run build:desktop && npm run desktop:prepare-builder && electron-builder --mac mas --universal --publish never",
     "desktop:pack:win": "npm run desktop:icons && npm run build:desktop && npm run desktop:prepare-builder && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --dir --x64 && node scripts/patch-desktop-exe-icon.mjs && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64 --publish never --prepackaged dist-desktop/win-unpacked",
     "desktop:publish": "node scripts/publish-desktop-installer.mjs",
     "desktop:release": "npm run desktop:pack:win && npm run desktop:publish",
@@ -316,11 +317,27 @@
     ],
     "mac": {
       "target": [
-        "dmg",
-        "zip"
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "universal"
+          ]
+        }
       ],
       "category": "public.app-category.business",
       "minimumSystemVersion": "12.0",
+      "files": [
+        "dist/**/*",
+        "electron/**/*",
+        "package.json",
+        "!node_modules/**"
+      ],
       "extendInfo": {
         "NSCameraUsageDescription": "BaytMiftah uses your camera when you choose to capture property or verification documents.",
         "NSLocationUsageDescription": "BaytMiftah uses your location when you choose location-based property services."
@@ -328,9 +345,35 @@
       "artifactName": "baytmiftah-desktop-${version}-${arch}.${ext}"
     },
     "mas": {
+      "target": [
+        {
+          "target": "mas",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "appId": "com.baymiftah.workspace",
+      "type": "distribution",
+      "hardenedRuntime": false,
+      "bundleShortVersion": "1.0.0",
+      "bundleVersion": "1",
+      "files": [
+        "dist/**/*",
+        "electron/**/*",
+        "package.json",
+        "!node_modules/**"
+      ],
+      "extendInfo": {
+        "ElectronTeamID": "7T2JK53K5M",
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "BaytMiftah uses your camera when you choose to capture property or verification documents.",
+        "NSLocationUsageDescription": "BaytMiftah uses your location when you choose location-based property services."
+      },
       "entitlements": "electron/build/entitlements.mas.plist",
       "entitlementsInherit": "electron/build/entitlements.mas.inherit.plist",
-      "entitlementsLoginHelper": "electron/build/entitlements.mas.plist"
+      "entitlementsLoginHelper": "electron/build/entitlements.mas.plist",
+      "artifactName": "baytmiftah-workspace-${version}-mas-${arch}.${ext}"
     },
     "win": {
       "target": [

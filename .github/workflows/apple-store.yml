@@ -1,0 +1,114 @@
+name: Apple Store Upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to upload
+        type: choice
+        options: [both, ios, macos]
+        default: both
+      version:
+        description: App Store version
+        default: '1.0.0'
+        required: true
+  push:
+    branches: [main]
+    paths: ['.github/workflows/apple-store.yml', 'scripts/apple/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apple-store-upload
+  cancel-in-progress: false
+
+jobs:
+  credentials:
+    runs-on: ubuntu-latest
+    env:
+      PLATFORM: ${{ inputs.platform || 'both' }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+      IOS_DISTRIBUTION_P12: ${{ secrets.IOS_DISTRIBUTION_P12 }}
+      IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+      IOS_WORKSPACE_PROFILE: ${{ secrets.IOS_WORKSPACE_PROFILE }}
+      MAC_APPLICATION_P12: ${{ secrets.MAC_APPLICATION_P12 }}
+      MAC_APPLICATION_PASSWORD: ${{ secrets.MAC_APPLICATION_PASSWORD }}
+      MAC_INSTALLER_P12: ${{ secrets.MAC_INSTALLER_P12 }}
+      MAC_INSTALLER_PASSWORD: ${{ secrets.MAC_INSTALLER_PASSWORD }}
+      MAC_WORKSPACE_PROFILE: ${{ secrets.MAC_WORKSPACE_PROFILE }}
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+    steps:
+      - name: Check required release credentials
+        shell: python
+        run: |
+          import os, sys
+          required = ['ASC_KEY_ID', 'ASC_ISSUER_ID', 'ASC_PRIVATE_KEY', 'VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY']
+          if os.environ['PLATFORM'] in ('both', 'ios'):
+              required += ['IOS_DISTRIBUTION_P12', 'IOS_P12_PASSWORD', 'IOS_WORKSPACE_PROFILE']
+          if os.environ['PLATFORM'] in ('both', 'macos'):
+              required += ['MAC_APPLICATION_P12', 'MAC_APPLICATION_PASSWORD', 'MAC_INSTALLER_P12', 'MAC_INSTALLER_PASSWORD', 'MAC_WORKSPACE_PROFILE']
+          missing = [key for key in required if not os.environ.get(key)]
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('Required Apple release secrets missing: ' + ', '.join(missing) if missing else 'Release credentials are configured.')
+          for key in missing:
+              print('::error::Missing repository secret: ' + key)
+          sys.exit(bool(missing))
+
+  upload:
+    needs: credentials
+    runs-on: macos-15
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ios, macos]
+    env:
+      PLATFORM: ${{ matrix.platform }}
+      SELECTED_PLATFORM: ${{ inputs.platform || 'both' }}
+      APP_VERSION: ${{ inputs.version || '1.0.0' }}
+      BUILD_NUMBER: ${{ github.run_number }}
+      APPLE_TEAM_ID: 7T2JK53K5M
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+      IOS_DISTRIBUTION_P12: ${{ secrets.IOS_DISTRIBUTION_P12 }}
+      IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+      IOS_WORKSPACE_PROFILE: ${{ secrets.IOS_WORKSPACE_PROFILE }}
+      CSC_LINK: ${{ secrets.MAC_APPLICATION_P12 }}
+      CSC_KEY_PASSWORD: ${{ secrets.MAC_APPLICATION_PASSWORD }}
+      CSC_INSTALLER_LINK: ${{ secrets.MAC_INSTALLER_P12 }}
+      CSC_INSTALLER_KEY_PASSWORD: ${{ secrets.MAC_INSTALLER_PASSWORD }}
+      MAC_WORKSPACE_PROFILE: ${{ secrets.MAC_WORKSPACE_PROFILE }}
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_ENABLE_DEMO_DATA: 'false'
+      VITE_APP_VERSION: ${{ inputs.version || '1.0.0' }}
+      VITE_APP_BUILD_NUMBER: ${{ github.run_number }}
+      VITE_PUBLIC_APP_URL: https://baytmiftah.com
+      VITE_APP_ORIGIN: https://propertyhub-2-0-ecru.vercel.app
+      MOBILE_SYNC_SKIP_PROVISION: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        if: env.SELECTED_PLATFORM == 'both' || env.SELECTED_PLATFORM == matrix.platform
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        if: env.SELECTED_PLATFORM == 'both' || env.SELECTED_PLATFORM == matrix.platform
+        with:
+          node-version: 24
+          cache: npm
+      - name: Build, sign, validate and upload
+        if: env.SELECTED_PLATFORM == 'both' || env.SELECTED_PLATFORM == matrix.platform
+        run: bash scripts/apple/upload-store.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && (env.SELECTED_PLATFORM == 'both' || env.SELECTED_PLATFORM == matrix.platform)
+        with:
+          name: apple-store-${{ matrix.platform }}-${{ github.run_number }}
+          path: |
+            release/*.ipa
+            dist-desktop/mas-universal/*.pkg
+            release/*.log
+          if-no-files-found: ignore
+          retention-days: 7
