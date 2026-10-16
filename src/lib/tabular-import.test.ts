@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import * as XLSX from "xlsx";
+import * as XLSX from "@e965/xlsx";
 import { readImportFileAsMatrix } from "./tabular-import";
 import { fileExtension } from "./document-import/spreadsheet";
 import { parseEstateUnitsTable } from "./estate-import.service";

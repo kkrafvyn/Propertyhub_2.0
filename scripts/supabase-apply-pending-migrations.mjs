@@ -4,26 +4,10 @@
 import fs from "fs";
 import path from "path";
 import pg from "pg";
+import { getDbConfig } from "./backup/lib/db-config.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const migrationsDir = path.join(root, "supabase", "migrations");
-
-function loadEnv() {
-  const env = {};
-  for (const line of fs.readFileSync(path.join(root, ".env"), "utf8").split(/\r?\n/)) {
-    const m = line.match(/^\s*([^#=]+)=(.*)$/);
-    if (m) env[m[1].trim()] = m[2].trim().replace(/^"|"$/g, "");
-  }
-  return env;
-}
-
-function poolerUrl(env) {
-  const ref = env.SUPABASE_PROJECT_REF || "ixmbfnfwpjwbfahqaftc";
-  const pass = env.SUPABASE_DB_PASSWORD;
-  const region = env.SUPABASE_DB_REGION || "eu-west-1";
-  if (!pass) throw new Error("SUPABASE_DB_PASSWORD missing in .env");
-  return `postgresql://postgres.${ref}:${encodeURIComponent(pass)}@aws-0-${region}.pooler.supabase.com:5432/postgres`;
-}
 
 function localVersions() {
   return fs
@@ -40,8 +24,7 @@ const RENAME_MAP = {
 
 const MARK_APPLIED_WITHOUT_RUN = ["001_create_schema_simple"];
 
-const env = loadEnv();
-const client = new pg.Client({ connectionString: poolerUrl(env), ssl: { rejectUnauthorized: false } });
+const client = new pg.Client(getDbConfig());
 await client.connect();
 
 for (const [from, to] of Object.entries(RENAME_MAP)) {

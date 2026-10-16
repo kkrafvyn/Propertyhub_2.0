@@ -4,16 +4,8 @@ import os from "node:os";
 import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "..");
-
-function run(cwd, cmd, args, extraEnv = {}) {
-  const r = spawnSync(cmd, args, {
-    cwd,
-    stdio: "inherit",
-    shell: true,
-    env: { ...process.env, ...extraEnv },
-  });
-  if (r.status !== 0) process.exit(r.status ?? 1);
-}
+const androidDir = path.join(root, "android");
+const gradlew = path.join(androidDir, "gradlew.bat");
 
 function writeLocalProperties() {
   const sdk =
@@ -63,8 +55,15 @@ const sdk =
   process.env.ANDROID_SDK_ROOT ||
   path.join(os.homedir(), "AppData", "Local", "Android", "Sdk");
 
-run(root, "node", ["scripts/mobile-sync.mjs", "consumer"]);
-run(path.join(root, "android"), "gradlew.bat", ["assembleDebug"], {
-  JAVA_HOME: jdkHome,
-  ANDROID_HOME: sdk,
+const sync = spawnSync(process.execPath, [path.join(root, "scripts", "mobile-sync.mjs"), "consumer"], {
+  cwd: root,
+  stdio: "inherit",
 });
+if (sync.status !== 0) process.exit(sync.status ?? 1);
+
+const build = spawnSync(gradlew, ["assembleDebug"], {
+  cwd: androidDir,
+  stdio: "inherit",
+  env: { ...process.env, JAVA_HOME: jdkHome, ANDROID_HOME: sdk },
+});
+if (build.status !== 0) process.exit(build.status ?? 1);

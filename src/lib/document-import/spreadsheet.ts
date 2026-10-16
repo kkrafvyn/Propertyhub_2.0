@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import * as XLSX from "@e965/xlsx";
 import { parseCsv } from "../csv-parse";
 export function fileExtension(fileName: string): string {
   const base = fileName.trim().toLowerCase();

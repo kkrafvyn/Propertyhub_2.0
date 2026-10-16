@@ -1,21 +1,7 @@
-import fs from "fs";
-import path from "path";
 import pg from "pg";
+import { getDbConfig } from "./backup/lib/db-config.mjs";
 
-const root = path.resolve(import.meta.dirname, "..");
-const env = {};
-for (const line of fs.readFileSync(path.join(root, ".env"), "utf8").split(/\r?\n/)) {
-  const m = line.match(/^\s*([^#=]+)=(.*)$/);
-  if (m) env[m[1].trim()] = m[2].trim().replace(/^"|"$/g, "");
-}
-
-const ref = env.SUPABASE_PROJECT_REF || "ixmbfnfwpjwbfahqaftc";
-const pass = env.SUPABASE_DB_PASSWORD;
-const region = env.SUPABASE_DB_REGION || "eu-west-1";
-const enc = encodeURIComponent(pass);
-const url = `postgresql://postgres.${ref}:${enc}@aws-0-${region}.pooler.supabase.com:5432/postgres`;
-
-const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+const client = new pg.Client(getDbConfig());
 await client.connect();
 const count = await client.query("select count(*)::int as c from supabase_migrations.schema_migrations");
 const last = await client.query(
