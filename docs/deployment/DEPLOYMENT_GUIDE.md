@@ -1,5 +1,7 @@
 # Quick Start: Deploy Your Upgrades
 
+> **Routine releases:** see [RELEASE_RUNBOOK.md](./RELEASE_RUNBOOK.md) and GitHub **Release** workflow (web = push `main` to Vercel; stores = Play/Apple uploads; backend = Supabase deploy).
+
 Complete checklist to go live with all new features in the next 48 hours.
 
 ---

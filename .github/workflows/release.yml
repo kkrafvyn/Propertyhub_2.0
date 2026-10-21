@@ -1,0 +1,168 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: App version (semver) for mobile/desktop metadata
+        default: "1.0.0"
+        required: true
+      deploy_supabase:
+        description: Deploy Supabase functions (and DB migrations unless skipped)
+        type: boolean
+        default: true
+      skip_db:
+        description: Skip Supabase DB push (functions only)
+        type: boolean
+        default: false
+      play:
+        description: Google Play upload
+        type: choice
+        options: [none, both, consumer, workspace]
+        default: none
+      apple:
+        description: Apple App Store upload
+        type: choice
+        options: [none, both, ios, macos]
+        default: none
+      play_track:
+        description: Play track when uploading
+        type: choice
+        options: [internal, alpha, beta, production]
+        default: internal
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  production-gate:
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: https://test.supabase.co
+      VITE_SUPABASE_ANON_KEY: test-anon-key
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production readiness gate
+        run: npm run production:check
+
+      - name: Build
+        run: npm run build
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm run test
+
+      - name: Upgrade SQL regressions
+        run: npm run test:sql:upgrades
+
+      - name: Backup restore fixture
+        run: npm run backup:restore-drill:fixture
+
+      - name: Web release note
+        run: |
+          {
+            echo "### Web (Vercel)"
+            echo "Pushing \`main\` already triggers a Vercel production deploy when the GitHub integration is connected."
+            echo "This release workflow does not deploy the web app; verify the Vercel dashboard after \`git push\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  supabase-deploy:
+    needs: production-gate
+    if: inputs.deploy_supabase
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy Supabase backend
+        run: |
+          if [ "${{ inputs.skip_db }}" = "true" ]; then
+            npm run supabase:deploy:payments -- --skip-db
+          else
+            npm run supabase:deploy:payments -- --with-db
+          fi
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      - name: Supabase deploy summary
+        run: echo "Supabase deploy finished (DB push skipped=${{ inputs.skip_db }})." >> "$GITHUB_STEP_SUMMARY"
+
+  trigger-play:
+    needs: production-gate
+    if: inputs.play != 'none'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start Google Play Upload workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run play-store.yml \
+            --ref "${{ github.ref_name }}" \
+            -f variant="${{ inputs.play }}" \
+            -f version="${{ inputs.version }}" \
+            -f track="${{ inputs.play_track }}" \
+            -f status=completed
+          echo "Triggered **Google Play Upload** for \`${{ inputs.play }}\` at version \`${{ inputs.version }}\`." >> "$GITHUB_STEP_SUMMARY"
+
+  trigger-apple:
+    needs: production-gate
+    if: inputs.apple != 'none'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start Apple Store Upload workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run apple-store.yml \
+            --ref "${{ github.ref_name }}" \
+            -f platform="${{ inputs.apple }}" \
+            -f version="${{ inputs.version }}"
+          echo "Triggered **Apple Store Upload** for \`${{ inputs.apple }}\` at version \`${{ inputs.version }}\`." >> "$GITHUB_STEP_SUMMARY"
+
+  release-summary:
+    needs:
+      - production-gate
+      - supabase-deploy
+      - trigger-play
+      - trigger-apple
+    if: always() && needs.production-gate.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release checklist
+        run: |
+          {
+            echo "## Release orchestration"
+            echo ""
+            echo "| Step | Action |"
+            echo "|------|--------|"
+            echo "| Web | Push \`main\` → Vercel (automatic via GitHub integration) |"
+            echo "| Backend | deploy_supabase=${{ inputs.deploy_supabase }}, skip_db=${{ inputs.skip_db }} |"
+            echo "| Play | ${{ inputs.play }} (version ${{ inputs.version }}) |"
+            echo "| Apple | ${{ inputs.apple }} (version ${{ inputs.version }}) |"
+            echo ""
+            echo "Store builds run in their own workflows; check Actions for Play/Apple job status."
+          } >> "$GITHUB_STEP_SUMMARY"
