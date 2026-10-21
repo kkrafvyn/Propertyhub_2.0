@@ -52,7 +52,6 @@ import { messageService } from "../../lib/message.service";
 import { communicationService } from "../../lib/communication.service";
 import { organizationService } from "../../lib/organization.service";
 import { paymentService } from "../../lib/payment.service";
-import { bookingService } from "../../lib/booking.service";
 import { hostSettingsService } from "../../lib/host-settings.service";
 import { propertyViewingService } from "../../lib/property-viewing.service";
 import { trustCenterService } from "../../lib/trust-center.service";
@@ -76,6 +75,11 @@ import {
 } from "../../lib/payment-routing.service";
 import { geointelligenceService } from "../../lib/geointelligence.service";
 import { trackRecentlyViewed } from "../../lib/recently-viewed";
+import {
+  clearJourneyDraft,
+  readJourneyDraft,
+  saveJourneyDraft,
+} from "../../lib/journey-draft-storage";
 
 export function PropertyDetail() {
   const { id } = useParams();
@@ -97,8 +101,6 @@ export function PropertyDetail() {
   const [viewingSubmitting, setViewingSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [showBookingForm, setShowBookingForm] = useState(false);
-  const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [showViewingForm, setShowViewingForm] = useState(false);
   const [showOfferForm, setShowOfferForm] = useState(false);
   const [offerSubmitting, setOfferSubmitting] = useState(false);
@@ -139,18 +141,26 @@ export function PropertyDetail() {
       requesterNote: "",
     };
   });
-  const [bookingForm, setBookingForm] = useState(() => {
-    const checkIn = new Date();
-    checkIn.setDate(checkIn.getDate() + 1);
-    const checkOut = new Date(checkIn);
-    checkOut.setDate(checkOut.getDate() + 2);
-    return {
-      checkIn: checkIn.toISOString().slice(0, 10),
-      checkOut: checkOut.toISOString().slice(0, 10),
-      guestNote: "",
-    };
-  });
   const [hostBookingMode, setHostBookingMode] = useState<"instant" | "request">("instant");
+
+  useEffect(() => {
+    if (!listing?.id) return;
+    const inquiryDraft = readJourneyDraft<{
+      fullName?: string;
+      email?: string;
+      phone?: string;
+      message?: string;
+    }>(listing.id, "inquiry");
+    if (inquiryDraft) {
+      setContactForm((current) => ({ ...current, ...inquiryDraft }));
+      setShowContactForm(true);
+    }
+    const offerDraft = readJourneyDraft<{ amount?: string; message?: string }>(listing.id, "offer");
+    if (offerDraft) {
+      setOfferForm((current) => ({ ...current, ...offerDraft }));
+      setShowOfferForm(true);
+    }
+  }, [listing?.id]);
 
   useEffect(() => {
     if (!id) return;
@@ -313,13 +323,6 @@ export function PropertyDetail() {
   );
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
 
-  const caseType = useMemo(() => {
-    if (!listing) return "rental_application";
-    if (listing.listing_type === "sale") return "purchase_offer";
-    if (listing.listing_type === "lease") return "lease_application";
-    return "rental_application";
-  }, [listing]);
-
   const toggleSave = async () => {
     if (!user) {
       toast.error("Log in to save properties.");
@@ -341,6 +344,7 @@ export function PropertyDetail() {
     e.preventDefault();
 
     if (!user) {
+      saveJourneyDraft(listing.id, "inquiry", contactForm);
       toast.error("Log in to contact the listing team.");
       navigate("/login", { state: { from: `/property/${id}` } });
       return;
@@ -357,7 +361,8 @@ export function PropertyDetail() {
         listing_id: listing.id,
         user_id: user.id,
         organization_id: listing.organization_id,
-        case_type: caseType,
+        case_type: "property_inquiry",
+        pipeline_stage: "new_inquiry",
         message: contactForm.message,
       });
 
@@ -407,6 +412,7 @@ export function PropertyDetail() {
         console.error("Failed to create inquiry notification:", notificationError);
       }
 
+      clearJourneyDraft(listing.id, "inquiry");
       toast.success("Your inquiry has been sent.");
       setContactForm((current) => ({ ...current, message: "" }));
       setShowContactForm(false);
@@ -422,12 +428,14 @@ export function PropertyDetail() {
     e.preventDefault();
 
     if (!user || !listing) {
+      if (listing?.id) saveJourneyDraft(listing.id, "offer", offerForm);
       toast.error("Log in before submitting an offer.");
       navigate("/login", { state: { from: `/property/${id}` } });
       return;
     }
 
     if (!canSubmitOffer(kyc)) {
+      saveJourneyDraft(listing.id, "offer", offerForm);
       toast.error("Complete identity verification before submitting an offer.");
       navigate(CONSUMER_ROUTES.kyc);
       return;
@@ -441,17 +449,24 @@ export function PropertyDetail() {
 
     try {
       setOfferSubmitting(true);
-      await dealCaseService.createDealCase({
+      const dealCase = await dealCaseService.createDealCase({
         listing_id: listing.id,
         user_id: user.id,
         organization_id: listing.organization_id,
         case_type: "purchase_offer",
-        message: [
-          `Offer amount: ${paymentCurrency} ${amount.toLocaleString()}`,
-          offerForm.message.trim() || "Purchase offer submitted from property page.",
-        ].join("\n\n"),
+        message: offerForm.message.trim() || "Purchase offer submitted from property page.",
         pipeline_stage: "negotiation",
       });
+      const { purchaseWorkflowService } = await import("../../lib/purchase-workflow.service");
+      await purchaseWorkflowService.submitCounterOffer({
+        dealCaseId: dealCase.id,
+        userId: user.id,
+        role: "buyer",
+        amountMinor: Math.round(amount * 100),
+        currency: paymentCurrency,
+        message: offerForm.message.trim() || undefined,
+      });
+      clearJourneyDraft(listing.id, "offer");
       monitoring.trackWorkflowStep("purchase", "offer_submitted", { listingId: listing.id });
       toast.success("Offer submitted. Track progress in My BaytMiftah.");
       setShowOfferForm(false);
@@ -483,86 +498,6 @@ export function PropertyDetail() {
       if (error instanceof Error && error.name === "AbortError") return;
       console.error("Failed to share property:", error);
       toast.error("We couldn't share this property right now.");
-    }
-  };
-
-  const handleShortStayBooking = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!user || !listing) {
-      toast.error("Log in before booking a stay.");
-      navigate("/login", { state: { from: `/property/${id}` } });
-      return;
-    }
-
-    if (!bookingForm.checkIn || !bookingForm.checkOut) {
-      toast.error("Choose check-in and check-out dates.");
-      return;
-    }
-
-    if (bookingForm.checkOut <= bookingForm.checkIn) {
-      toast.error("Check-out must be after check-in.");
-      return;
-    }
-
-    if (!canBookStay(kyc, jurisdictionId)) {
-      toast.error("Identity verification is required to book in this market.");
-      navigate(`${CONSUMER_ROUTES.kyc}?context=consumer&jurisdiction=${jurisdictionId}`);
-      return;
-    }
-
-    try {
-      setBookingSubmitting(true);
-      if (hostBookingMode !== "request" && paymentContext && !clientIntegrations.payangels.checkoutReady) {
-        toast.error(
-          `Checkout for properties in ${paymentContext.propertyLabel} is not available yet.`
-        );
-        return;
-      }
-
-      const nightlyRateMinor = Math.round(Number(listing.price || 0) * 100);
-      await bookingService.validateDatesAvailable(
-        listing.id,
-        bookingForm.checkIn,
-        bookingForm.checkOut
-      );
-
-      const booking = await bookingService.createPendingBooking({
-        listingId: listing.id,
-        organizationId: listing.organization_id,
-        guestUserId: user.id,
-        checkIn: bookingForm.checkIn,
-        checkOut: bookingForm.checkOut,
-        nightlyRateMinor,
-        currency: paymentCurrency,
-        guestNote: bookingForm.guestNote,
-        bookingMode: hostBookingMode,
-      });
-
-      if (hostBookingMode === "request") {
-        monitoring.trackWorkflowStep("short_stay", "request_submitted", { listingId: listing.id });
-        toast.success("Request sent. The host will confirm before payment.");
-        setShowBookingForm(false);
-        navigate("/app/reservations");
-        return;
-      }
-
-      navigate(
-        buildCheckoutPath({
-          listingId: listing.id,
-          amount: booking.total_minor / 100,
-          purpose: "booking_fee",
-          bookingId: booking.id,
-          returnTo: CONSUMER_ROUTES.reservations,
-          customerName: user.user_metadata?.full_name,
-          customerPhone: bookingForm.guestNote,
-        }),
-      );
-    } catch (error) {
-      console.error("Failed to start short-stay booking:", error);
-      toast.error("Unable to start booking checkout right now.");
-    } finally {
-      setBookingSubmitting(false);
     }
   };
 
@@ -1254,8 +1189,10 @@ export function PropertyDetail() {
                     id: listing.id,
                     price: listing.price,
                     priceLabel: `${paymentCurrency} ${listing.price.toLocaleString()}`,
-                    instantBook: true,
+                    currency: paymentCurrency,
+                    instantBook: hostBookingMode !== "request",
                     jurisdictionId,
+                    checkoutReady: paymentContext ? clientIntegrations.payangels.checkoutReady : true,
                   }}
                 />
               </div>
@@ -1283,7 +1220,9 @@ export function PropertyDetail() {
                 {listing.listing_type === "short_stay" ? (
                   <Button
                     className="w-full font-semibold rounded-2xl bg-gradient-to-r from-primary to-primary-hover text-primary-foreground shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.98] transition-all py-3.5"
-                    onClick={() => setShowBookingForm(true)}
+                    onClick={() =>
+                      document.getElementById("stay-booking")?.scrollIntoView({ behavior: "smooth", block: "start" })
+                    }
                   >
                     Reserve Short Stay
                   </Button>
@@ -1608,49 +1547,6 @@ export function PropertyDetail() {
                     </div>
                     <Button size="lg" className="w-full" type="submit" disabled={submitting}>
                       {submitting ? "Sending..." : "Send Inquiry"}
-                    </Button>
-                  </form>
-                </motion.div>
-              )}
-
-              {showBookingForm && listing.listing_type === "short_stay" && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  className="border-t border-border pt-6 mt-6"
-                >
-                  <h4 className="font-semibold mb-4">Book this stay</h4>
-                  <form className="space-y-4" onSubmit={handleShortStayBooking}>
-                    <Input
-                      label="Check-in"
-                      type="date"
-                      value={bookingForm.checkIn}
-                      onChange={(e) =>
-                        setBookingForm((current) => ({ ...current, checkIn: e.target.value }))
-                      }
-                    />
-                    <Input
-                      label="Check-out"
-                      type="date"
-                      value={bookingForm.checkOut}
-                      onChange={(e) =>
-                        setBookingForm((current) => ({ ...current, checkOut: e.target.value }))
-                      }
-                    />
-                    <Textarea
-                      className="w-full min-h-24 rounded-lg border border-border px-4 py-3"
-                      placeholder="Optional note for the host"
-                      value={bookingForm.guestNote}
-                      onChange={(e) =>
-                        setBookingForm((current) => ({ ...current, guestNote: e.target.value }))
-                      }
-                    />
-                    <Button size="lg" className="w-full" type="submit" disabled={bookingSubmitting}>
-                      {bookingSubmitting
-                        ? "Submitting..."
-                        : hostBookingMode === "request"
-                          ? "Request to book"
-                          : "Continue to checkout"}
                     </Button>
                   </form>
                 </motion.div>

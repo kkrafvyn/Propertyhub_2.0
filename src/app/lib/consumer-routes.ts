@@ -13,6 +13,8 @@ export const CONSUMER_ROUTES = {
   trips: "/app/trips",
   reservations: "/app/reservations",
   applications: "/app/applications",
+  journey: (dealCaseId: string) => `/app/journey/${dealCaseId}`,
+  journeyBooking: (bookingId: string) => `/app/journey/booking?bookingId=${encodeURIComponent(bookingId)}`,
   viewings: "/app/viewings",
   payments: "/app/payments",
   wallet: "/app/wallet",

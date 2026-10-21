@@ -31,6 +31,8 @@ export const purchaseWorkflowService = {
     amountMinor: number;
     currency?: string;
     message?: string;
+    conditions?: string;
+    expiresAt?: string;
   }) {
     const { data, error } = await supabase
       .from("deal_case_counter_offers")
@@ -41,6 +43,8 @@ export const purchaseWorkflowService = {
         amount_minor: input.amountMinor,
         currency: input.currency || "GHS",
         message: input.message || null,
+        conditions: input.conditions || null,
+        expires_at: input.expiresAt || null,
       })
       .select("*")
       .single();

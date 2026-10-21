@@ -7,8 +7,8 @@ android {
         applicationId "com.baymiftah.workspace"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode (findProperty("playVersionCode") ?: "1").toInteger()
-        versionName findProperty("playVersionName") ?: "1.0"
+        versionCode Integer.parseInt((findProperty("playVersionCode") ?: "1").toString().trim() ?: "1")
+        versionName (findProperty("playVersionName") ?: "1.0").toString()
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

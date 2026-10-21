@@ -11,13 +11,14 @@ export async function createReservation({
   checkIn,
   checkOut,
   guests,
-  total,
+  bookingMode = "instant",
 }: {
   listingId: string;
   checkIn: string;
   checkOut: string;
   guests: number;
-  total: number;
+  total?: number;
+  bookingMode?: "instant" | "request";
 }) {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id;
@@ -35,7 +36,7 @@ export async function createReservation({
       (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)
     )
   );
-  const nightlyRateMinor = Math.round((Number(listing?.price) || total / nights) * 100);
+  const nightlyRateMinor = Math.round((Number(listing?.price) || 0) * 100);
 
   const booking = await bookingService.createPendingBooking({
     listingId,
@@ -46,11 +47,13 @@ export async function createReservation({
     nightlyRateMinor,
     currency: listing?.currency || "GHS",
     guestNote: guests ? `${guests} guest(s)` : undefined,
+    bookingMode,
   });
 
   return {
     ok: true,
     reservation: booking,
+    bookingMode: booking.booking_mode === "request" ? "request" : "instant",
     id: booking.id,
     source: "supabase",
   };

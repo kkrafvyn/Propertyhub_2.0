@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildBookingTimeline,
   buildEscrowTimeline,
+  buildInquiryTimeline,
   buildLeaseTimeline,
   buildMaintenanceTimeline,
   buildPurchaseTimeline,
@@ -17,6 +18,30 @@ describe("workflow-timeline", () => {
 
     expect(steps.some((step) => step.label.includes("Counter-offer"))).toBe(true);
     expect(steps.some((step) => step.id === "signing" && step.status === "upcoming")).toBe(true);
+  });
+
+  it("builds booking timeline with payment step for pending instant booking", () => {
+    const steps = buildBookingTimeline({
+      status: "pending",
+      booking_mode: "instant",
+      check_in: "2026-08-01",
+      check_out: "2026-08-05",
+      created_at: "2026-07-01",
+    });
+
+    const payment = steps.find((step) => step.id === "payment");
+    expect(payment?.status).toBe("current");
+    expect(payment?.label).toMatch(/payment/i);
+  });
+
+  it("builds inquiry timeline through viewing", () => {
+    const steps = buildInquiryTimeline(
+      { pipeline_stage: "new_inquiry", status: "pending", created_at: "2026-01-01" },
+      { status: "scheduled" }
+    );
+
+    expect(steps[0]?.id).toBe("enquiry");
+    expect(steps.some((step) => step.id === "viewing" && step.status === "current")).toBe(true);
   });
 
   it("builds booking timeline with cancellation refund", () => {

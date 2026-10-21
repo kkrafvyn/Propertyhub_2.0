@@ -70,6 +70,7 @@
     "ios:business:open": "node scripts/mobile-sync.mjs business && npx cap open ios",
     "ios:business:build:sim": "cd ios-business/App && xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' build",
     "mobile:release": "node scripts/build-mobile-release.mjs",
+    "play:export-assets": "node scripts/play/export-store-icons.mjs",
     "desktop:start": "electron electron/main.cjs",
     "desktop:dev": "concurrently -k \"cross-env VITE_DESKTOP_WORKSPACE_ONLY=true npm run dev\" \"wait-on http://localhost:5173 && cross-env ELECTRON_START_URL=http://localhost:5173 electron electron/main.cjs\"",
     "desktop:build": "npm run build:desktop && electron electron/main.cjs",

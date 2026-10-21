@@ -26,6 +26,7 @@ function main() {
     "coverage",
     "android",
     "ios",
+    ".agents",
   ];
   const skipFiles = [
     "supabase/.env.payments",

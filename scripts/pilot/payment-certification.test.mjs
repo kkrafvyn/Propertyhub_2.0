@@ -2,6 +2,9 @@ import { expect,it } from 'vitest';
 import { assertStableLedger,requireAccepted,requireCertificationConfig,CERTIFICATION_KEYS } from './payment-certification.mjs';
 it('certification rejects skipped fixtures, dry runs and non-sandbox execution',()=>{
  const env=Object.fromEntries(CERTIFICATION_KEYS.map(key=>[key,'fixture']));
+ env.PAYANGELS_API_BASE='https://sandbox.payangels.example/api';
+ env.PAYANGELS_DISBURSEMENT_URL='https://sandbox.payangels.example/disburse';
+ env.PAYANGELS_API_CONTRACT_VERIFIED='true';
  expect(()=>requireCertificationConfig(env,false)).toThrow('sandbox');
  env.PILOT_ENVIRONMENT='sandbox';expect(()=>requireCertificationConfig(env,false)).not.toThrow();
  expect(()=>requireCertificationConfig(env,true)).toThrow('dry run');

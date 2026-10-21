@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { toast } from 'sonner'
 import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from '../../i18n/LocaleContext'
 import { useCurrency } from '../../context/CurrencyContext'
@@ -11,9 +12,21 @@ import { LegalAcceptanceCheckbox } from '../legal/LegalAcceptanceCheckbox'
 import { legalAcceptanceService } from '../../../lib/legal-acceptance.service'
 import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from '../../../lib/legal-config'
 import { canBookStay } from '../../../lib/kyc-gate.service'
+import { clientIntegrations } from '../../../lib/integrations'
 import KycBanner from './KycBanner'
+import { clearJourneyDraft, readJourneyDraft, saveJourneyDraft } from '../../../lib/journey-draft-storage'
 
-export default function StayBookingCard({ listing }) {
+type StayBookingListing = {
+  id: string
+  price: number
+  priceLabel: string
+  currency?: string
+  instantBook: boolean
+  jurisdictionId?: string
+  checkoutReady?: boolean
+}
+
+export default function StayBookingCard({ listing }: { listing: StayBookingListing }) {
   const { user } = useAuth()
   const { kyc } = useMyKyc()
   const { t } = useTranslation()
@@ -22,12 +35,25 @@ export default function StayBookingCard({ listing }) {
   const [checkIn, setCheckIn] = useState('')
   const [checkOut, setCheckOut] = useState('')
   const [guests, setGuests] = useState(1)
-  const [availability, setAvailability] = useState([])
+  const [availability, setAvailability] = useState<Array<{ available_date: string; is_available: boolean }>>([])
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('')
   const [bookingTermsAccepted, setBookingTermsAccepted] = useState(false)
+
+  const bookingMode = listing.instantBook ? 'instant' : 'request'
+
   useEffect(() => {
     fetchListingAvailability(listing.id).then(({ availability: rows }) => setAvailability(rows ?? []))
+  }, [listing.id])
+
+  useEffect(() => {
+    const draft = readJourneyDraft<{ checkIn?: string; checkOut?: string; guests?: number }>(
+      listing.id,
+      'booking',
+    )
+    if (draft?.checkIn) setCheckIn(draft.checkIn)
+    if (draft?.checkOut) setCheckOut(draft.checkOut)
+    if (draft?.guests && draft.guests > 0) setGuests(draft.guests)
   }, [listing.id])
 
   const nightlyRate = Number(listing.price) || 0
@@ -52,6 +78,7 @@ export default function StayBookingCard({ listing }) {
 
   async function handleBook() {
     if (!user) {
+      saveJourneyDraft(listing.id, 'booking', { checkIn, checkOut, guests })
       navigate('/login', { state: { from: `/property/${listing.id}` } })
       return
     }
@@ -71,8 +98,19 @@ export default function StayBookingCard({ listing }) {
 
     const jurisdictionId = listing.jurisdictionId || 'GLOBAL'
     if (!canBookStay(kyc, jurisdictionId)) {
+      saveJourneyDraft(listing.id, 'booking', { checkIn, checkOut, guests })
       setMessage('Identity verification is required to book in this market.')
       navigate(`${CONSUMER_ROUTES.kyc}?context=consumer&jurisdiction=${jurisdictionId}`)
+      return
+    }
+
+    if (bookingMode === 'instant' && listing.checkoutReady === false) {
+      setMessage('Checkout is not available for this property yet.')
+      return
+    }
+
+    if (bookingMode === 'instant' && !clientIntegrations.payangels.checkoutReady) {
+      setMessage('Checkout is temporarily unavailable.')
       return
     }
 
@@ -85,12 +123,13 @@ export default function StayBookingCard({ listing }) {
         checkIn,
         checkOut,
         guests,
-        total,
+        bookingMode,
       })
       if (!result?.ok && !result?.reservation) {
         throw new Error((result as { error?: string })?.error || 'Could not create reservation')
       }
-      const reservationId = result.reservation?.id ?? result.id
+      const reservation = result.reservation
+      const reservationId = reservation?.id ?? result.id
       if (user?.id) {
         await legalAcceptanceService.recordAcceptance({
           userId: user.id,
@@ -100,25 +139,35 @@ export default function StayBookingCard({ listing }) {
         })
       }
 
+      clearJourneyDraft(listing.id, 'booking')
+
+      if (result.bookingMode === 'request') {
+        toast.success('Request sent. The host will confirm before payment.')
+        navigate(CONSUMER_ROUTES.reservations)
+        return
+      }
+
       navigate(
         buildCheckoutPath({
           listingId: listing.id,
-          amount: total,
+          amount: (reservation?.total_minor ?? total * 100) / 100,
           purpose: 'booking_fee',
           bookingId: String(reservationId),
-          returnTo: CONSUMER_ROUTES.trips,
+          returnTo: CONSUMER_ROUTES.reservations,
         }),
       )
     } catch (err) {
       setStatus('error')
-      setMessage(err.message || 'Booking failed')
+      setMessage(err instanceof Error ? err.message : 'Booking failed')
     }
   }
 
   return (
-    <div className="sticky top-28 rounded-xl border border-surface-border bg-surface p-6 shadow-card">
+    <div id="stay-booking" className="sticky top-28 rounded-xl border border-surface-border bg-surface p-6 shadow-card">
       <p className="text-2xl font-semibold text-ink">{listing.priceLabel}</p>
-      <p className="text-sm text-ink-secondary">Short stay · {listing.instantBook ? 'Instant book' : 'Request to book'}</p>
+      <p className="text-sm text-ink-secondary">
+        Short stay · {listing.instantBook ? 'Instant book' : 'Request to book'}
+      </p>
 
       <div className="mt-4 grid grid-cols-2 gap-2 overflow-hidden rounded-lg border border-surface-border">
         <div className="border-e border-surface-border p-3">
@@ -187,7 +236,11 @@ export default function StayBookingCard({ listing }) {
         disabled={status === 'loading' || status === 'success' || !bookingTermsAccepted}
         className="mt-4 w-full rounded-lg bg-brand-accent py-3.5 text-base font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
       >
-        {status === 'loading' ? 'Booking…' : status === 'success' ? 'Booked' : 'Book stay'}
+        {status === 'loading'
+          ? 'Booking…'
+          : bookingMode === 'request'
+            ? 'Request to book'
+            : 'Continue to checkout'}
       </button>
 
       <p className="mt-3 text-center text-sm text-ink-secondary">{message || t('common.notChargedYet')}</p>

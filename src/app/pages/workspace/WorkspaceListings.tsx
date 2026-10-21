@@ -33,6 +33,7 @@ import { PropertyJurisdictionFields } from "../../components/compliance/Property
 import { countryRulesService } from "../../../lib/country-rules.service";
 import { resolveSubdivisionCode } from "../../../lib/country-rules/subdivision-resolver";
 import { resolveJurisdiction } from "../../../lib/real-estate-compliance";
+import { LISTING_TYPES as LISTING_TYPE_OPTIONS } from "../../../lib/listing-types";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 type ListingStatus = Database["public"]["Tables"]["listings"]["Row"]["status"];
@@ -89,7 +90,6 @@ const LISTING_STATUS_OPTIONS: ListingStatus[] = [
 ];
 
 const LISTING_VISIBILITY_OPTIONS: ListingVisibility[] = ["public", "private", "hidden"];
-const LISTING_TYPE_OPTIONS: ListingType[] = ["rental", "sale", "lease"];
 const PROPERTY_CATEGORY_OPTIONS: PropertyCategory[] = [
   "apartment",
   "house",

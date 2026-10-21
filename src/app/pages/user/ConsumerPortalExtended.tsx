@@ -31,7 +31,12 @@ import { escrowService } from "../../../lib/escrow.service";
 import { ActivityTimeline, EmptyState } from "../../components/ux";
 import { ActionDialog } from "../../components/ux/ActionDialog";
 import { CONSUMER_PAGE_CONFIG } from "../../lib/consumer-page-config";
-import { buildPurchaseTimeline, buildMaintenanceTimeline, buildEscrowTimeline } from "../../lib/workflow-timeline";
+import {
+  buildPurchaseTimeline,
+  buildMaintenanceTimeline,
+  buildEscrowTimeline,
+  buildInquiryTimeline,
+} from "../../lib/workflow-timeline";
 import { purchaseWorkflowService } from "../../../lib/purchase-workflow.service";
 import { workflowOrchestratorService } from "../../../lib/workflow-orchestrator.service";
 import { CONSUMER_ROUTES, messageThreadPath } from "../../lib/consumer-routes";
@@ -749,6 +754,7 @@ export function ApplicationsWorkflowSection({
       {dealCases.map((item) => {
         const escrow = escrowHolds.find((hold) => hold.deal_case_id === item.id);
         const isPurchase = item.case_type === "purchase_offer";
+        const isInquiry = item.case_type === "property_inquiry";
         const isRenting = ["rental_application", "lease_application"].includes(item.case_type);
         const canPayDeposit =
           isPurchase && ["approved", "pending"].includes(String(item.status));
@@ -764,8 +770,8 @@ export function ApplicationsWorkflowSection({
           <Card key={item.id} className="p-5 space-y-4">
             <div className="flex items-start justify-between gap-4 mb-4">
               <div>
-                <h3 className="font-semibold text-lg capitalize">
-                  {item.case_type?.replace(/_/g, " ")}
+                <h3 className="font-semibold text-lg">
+                  {isInquiry ? "Property enquiry" : (item.case_type?.replace(/_/g, " ") ?? "Application")}
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   {item.listing?.property?.address || "Property"} in{" "}
@@ -784,6 +790,21 @@ export function ApplicationsWorkflowSection({
             </div>
 
             {item.message ? <p className="text-sm mb-4">{item.message}</p> : null}
+
+            {isInquiry ? (
+              <div className="flex flex-wrap gap-3 mb-4">
+                <Link to={CONSUMER_ROUTES.journey(item.id)}>
+                  <Button size="sm" variant="outline">
+                    View journey
+                  </Button>
+                </Link>
+                <Link to={`/property/${item.listing_id}#viewing`}>
+                  <Button size="sm" variant="outline">
+                    Schedule viewing
+                  </Button>
+                </Link>
+              </div>
+            ) : null}
 
             <div className="flex flex-wrap gap-3">
               {canPayDeposit ? (
@@ -932,6 +953,8 @@ export function ApplicationsWorkflowSection({
                 />
               </>
             ) : null}
+
+            {isInquiry ? <ActivityTimeline steps={buildInquiryTimeline(item)} /> : null}
           </Card>
         );
       })}

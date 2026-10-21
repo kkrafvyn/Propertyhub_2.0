@@ -1,5 +1,7 @@
 # Google Play uploads (Consumer + Workspace)
 
+**Store listing assets & copy:** [`marketing/google-play/README.md`](../../marketing/google-play/README.md) — icons, screenshot folders, descriptions, checklist.
+
 Workflow: `.github/workflows/play-store.yml` → **Google Play Upload**.
 
 Builds signed **AAB** files and uploads them with the Play Developer API. You still complete store listing, Data safety, content rating, and review in [Google Play Console](https://play.google.com/console).
@@ -65,6 +67,8 @@ Add under **Settings → Secrets and variables → Actions**:
 Artifacts retain the AAB for seven days. Successful API upload sends the build to the chosen track; promotion to production is still done in Play Console.
 
 ## Local signed AAB (optional)
+
+On **PowerShell**, quote Gradle properties so semver is not split: `" -PplayVersionName=1.0.0"`.
 
 Set the same `PLAY_<VARIANT>_KEYSTORE_*` variables (or export `ANDROID_KEYSTORE_*` after decoding the keystore), then:
 

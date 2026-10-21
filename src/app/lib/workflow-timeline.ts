@@ -110,11 +110,49 @@ export function buildLeaseTimeline(lease: any, schedule?: any[]): TimelineStep[]
   ];
 }
 
+export function buildInquiryTimeline(dealCase: any, viewing?: { status?: string | null }): TimelineStep[] {
+  const stage = String(dealCase?.pipeline_stage || "new_inquiry");
+  const hasApplication = Boolean(dealCase?.source_deal_case_id) || stage === "qualified";
+
+  return [
+    {
+      id: "enquiry",
+      label: "Enquiry sent",
+      status: "completed",
+      timestamp: dealCase?.created_at,
+    },
+    {
+      id: "viewing",
+      label: viewing?.status === "completed" ? "Viewing completed" : "Schedule viewing",
+      status:
+        viewing?.status === "completed"
+          ? "completed"
+          : stage === "viewing_scheduled" || viewing
+            ? "current"
+            : "upcoming",
+    },
+    {
+      id: "application",
+      label: "Application or offer",
+      status: hasApplication || ["negotiation", "payment_pending"].includes(stage) ? "current" : "upcoming",
+    },
+    {
+      id: "decision",
+      label: "Decision",
+      status: ["approved", "closed", "rejected"].includes(String(dealCase?.status))
+        ? "completed"
+        : "upcoming",
+      timestamp: dealCase?.updated_at,
+    },
+  ];
+}
+
 export function buildBookingTimeline(booking: any, reviews?: any[]): TimelineStep[] {
   const status = String(booking?.status || "pending");
   const today = new Date().toISOString().slice(0, 10);
   const isRequest = booking?.booking_mode === "request";
   const hasReview = (reviews || []).some((r) => r.reviewer_role === "guest");
+  const paid = Boolean(booking?.transaction_id);
 
   return [
     {
@@ -128,11 +166,28 @@ export function buildBookingTimeline(booking: any, reviews?: any[]): TimelineSte
       label: isRequest ? "Host approved request" : "Booking confirmed",
       status: ["confirmed", "completed"].includes(status)
         ? "completed"
-        : status === "pending"
+        : status === "pending" && isRequest
           ? "current"
           : status === "cancelled"
             ? "completed"
-            : "upcoming",
+            : isRequest
+              ? "upcoming"
+              : "completed",
+    },
+    {
+      id: "payment",
+      label: paid ? "Payment received" : isRequest ? "Pay after approval" : "Complete payment",
+      status: paid
+        ? "completed"
+        : status === "cancelled"
+          ? "upcoming"
+          : isRequest
+            ? status === "confirmed"
+              ? "current"
+              : "upcoming"
+            : status === "pending"
+              ? "current"
+              : "upcoming",
     },
     {
       id: "checkin",

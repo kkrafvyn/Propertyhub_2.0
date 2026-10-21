@@ -16,6 +16,7 @@ import { walletService } from "../../../lib/wallet.service";
 import { ActivityTimeline, EmptyState } from "../../components/ux";
 import { CONSUMER_PAGE_CONFIG } from "../../lib/consumer-page-config";
 import { buildBookingTimeline, buildEscrowTimeline, buildLeaseTimeline, buildMaintenanceTimeline } from "../../lib/workflow-timeline";
+import { resolveBookingPaymentAction } from "../../../lib/booking-payment-action";
 import { maintenanceService } from "../../../lib/maintenance.service";
 import { tenantNoticeService } from "../../../lib/tenant-notice.service";
 import { inspectionService } from "../../../lib/inspection.service";
@@ -789,8 +790,17 @@ function BookingCard({
     (booking.status === "completed" || booking.checked_out_at) &&
     !reviews.some((row) => row.reviewer_user_id === userId && row.reviewer_role === "guest");
   const canCancel = ["pending", "confirmed"].includes(booking.status);
-  const needsPayment =
-    booking.status === "confirmed" && !booking.transaction_id && booking.booking_mode === "request";
+  const paymentAction = resolveBookingPaymentAction({
+    id: booking.id,
+    listing_id: booking.listing_id,
+    status: booking.status,
+    booking_mode: booking.booking_mode,
+    transaction_id: booking.transaction_id,
+    total_minor: booking.total_minor,
+    currency: booking.currency,
+    check_in: booking.check_in,
+    payment_transaction_status: booking.payment_transaction?.status,
+  });
 
   const loadReviews = async () => {
     const rows = await bookingService.getBookingReviews(booking.id);
@@ -845,25 +855,19 @@ function BookingCard({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {needsPayment ? (
+        {paymentAction.kind !== "none" ? (
           <Button
             size="sm"
-            disabled={busy === "pay"}
-            onClick={() =>
+            disabled={busy === "pay" || paymentAction.disabled}
+            title={paymentAction.reason}
+            onClick={() => {
+              if (!paymentAction.checkoutPath || paymentAction.disabled) return;
               void runAction("pay", async () => {
-                navigate(
-                  buildCheckoutPath({
-                    listingId: booking.listing_id,
-                    amount: booking.total_minor / 100,
-                    purpose: "booking_fee",
-                    bookingId: booking.id,
-                    returnTo: CONSUMER_ROUTES.reservations,
-                  }),
-                );
-              })
-            }
+                navigate(paymentAction.checkoutPath!);
+              });
+            }}
           >
-            {busy === "pay" ? "Opening checkout…" : "Pay now"}
+            {busy === "pay" ? "Opening checkout…" : paymentAction.label}
           </Button>
         ) : null}
         {booking.listing?.id ? (

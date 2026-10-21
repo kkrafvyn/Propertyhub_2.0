@@ -142,6 +142,7 @@ function getSection(pathname: string) {
   if (pathname.startsWith("/app/saved")) return "saved";
   if (pathname.startsWith("/app/messages")) return "messages";
   if (pathname.startsWith("/app/applications")) return "applications";
+  if (pathname.startsWith("/app/journey")) return "applications";
   if (pathname.startsWith("/app/viewings")) return "viewings";
   if (pathname.startsWith("/app/alerts")) return "alerts";
   if (pathname.startsWith("/app/payments")) return "payments";

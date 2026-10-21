@@ -317,6 +317,36 @@ export const consumerRoutes: RouteObject[] = [
     },
   },
   {
+    path: 'app/journey/:dealCaseId',
+    lazy: async () => {
+      const { ConsumerJourneyPage } = await import('../pages/user/ConsumerJourneyPage');
+      return {
+        Component: function ProtectedJourneyRoute() {
+          return (
+            <ProtectedRoute>
+              <ConsumerJourneyPage />
+            </ProtectedRoute>
+          );
+        },
+      };
+    },
+  },
+  {
+    path: 'app/journey/booking',
+    lazy: async () => {
+      const { ConsumerJourneyPage } = await import('../pages/user/ConsumerJourneyPage');
+      return {
+        Component: function ProtectedBookingJourneyRoute() {
+          return (
+            <ProtectedRoute>
+              <ConsumerJourneyPage />
+            </ProtectedRoute>
+          );
+        },
+      };
+    },
+  },
+  {
     path: 'app/*',
     lazy: async () => {
       const { UserDashboard } = await import('../pages/user/Dashboard');

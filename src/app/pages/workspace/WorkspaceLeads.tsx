@@ -130,6 +130,14 @@ function formatLabel(value?: string | null) {
   return value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function leadKindLabel(caseType?: string | null) {
+  if (caseType === "property_inquiry") return "Enquiry";
+  if (["rental_application", "lease_application", "purchase_offer"].includes(String(caseType))) {
+    return "Application";
+  }
+  return formatLabel(caseType);
+}
+
 function normalizePipelineStage(dealCase: any): PipelineStage {
   if (dealCase?.pipeline_stage) return dealCase.pipeline_stage;
   if (dealCase?.status === "approved") return "qualified";
@@ -900,8 +908,11 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
                                           {dealCase.user?.full_name || dealCase.user?.email || "Prospect"}
                                         </h4>
                                         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                          {dealCase.listing?.property?.address || "Property"} -{" "}
-                                          {formatLabel(dealCase.case_type)}
+                                          {dealCase.listing?.property?.address || "Property"} —{" "}
+                                          {leadKindLabel(dealCase.case_type)}
+                                          {dealCase.case_type !== "property_inquiry"
+                                            ? ` (${formatLabel(dealCase.case_type)})`
+                                            : ""}
                                         </p>
                                       </div>
                                       <Badge variant={getStatusVariant(dealCase.status)}>
@@ -1024,7 +1035,12 @@ export function WorkspaceLeads({ organization, currentUserId }: WorkspaceLeadsPr
                     </div>
 
                     <div className="mt-4 flex flex-wrap gap-2">
-                      <Badge variant="outline">{formatLabel(selectedLeadPrimaryCase.case_type)}</Badge>
+                      <Badge variant={selectedLeadPrimaryCase.case_type === "property_inquiry" ? "secondary" : "outline"}>
+                        {leadKindLabel(selectedLeadPrimaryCase.case_type)}
+                      </Badge>
+                      {selectedLeadPrimaryCase.case_type !== "property_inquiry" ? (
+                        <Badge variant="outline">{formatLabel(selectedLeadPrimaryCase.case_type)}</Badge>
+                      ) : null}
                       <Badge variant={getPriorityVariant(caseDraft.priority)}>
                         {formatLabel(caseDraft.priority)} priority
                       </Badge>

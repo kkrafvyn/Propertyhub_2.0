@@ -20,18 +20,14 @@ import { countryRulesService } from "../../../lib/country-rules.service";
 import { resolveSubdivisionCode } from "../../../lib/country-rules/subdivision-resolver";
 import { validatePropertyLocationForPublish } from "../../../lib/property-jurisdiction-validation";
 import { resolveJurisdiction } from "../../../lib/real-estate-compliance";
-import { listingService } from "../../../lib/listing.service";
 import { listingQualityService } from "../../../lib/listing-quality.service";
-import { legalAcceptanceService } from "../../../lib/legal-acceptance.service";
-import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from "../../../lib/legal-config";
-import { propertyMediaService } from "../../../lib/property-media.service";
-import { propertyService } from "../../../lib/property.service";
+import { LISTING_TYPES, type ListingType } from "../../../lib/listing-types";
+import { publishListingDraft, saveListingDraft } from "../../../lib/listing-publish.workflow";
 import { aiAssistantService } from "../../../lib/ai-assistant.service";
 import { openStreetMapService, type GeocodingResult } from "../../../lib/openstreetmap.service";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 type PropertyCategory = Database["public"]["Tables"]["properties"]["Row"]["category"];
-type ListingType = Database["public"]["Tables"]["listings"]["Row"]["listing_type"];
 type ListingStatus = Database["public"]["Tables"]["listings"]["Row"]["status"];
 type ListingVisibility = Database["public"]["Tables"]["listings"]["Row"]["visibility"];
 
@@ -49,7 +45,6 @@ const PROPERTY_CATEGORIES: PropertyCategory[] = [
   "land",
 ];
 
-const LISTING_TYPES: ListingType[] = ["rental", "sale", "lease", "short_stay"];
 const LISTING_STATUSES: ListingStatus[] = ["draft", "pending_review", "listed"];
 const VISIBILITY_OPTIONS: ListingVisibility[] = ["public", "private", "hidden"];
 
@@ -64,6 +59,7 @@ export function WorkspaceNewListing({
   const [complianceReady, setComplianceReady] = useState(false);
   const [marketInsight, setMarketInsight] = useState<GhanaLocationInsight | null>(null);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [draftIds, setDraftIds] = useState<{ propertyId?: string; listingId?: string }>({});
   const [geocoding, setGeocoding] = useState(false);
   const [geocodingResult, setGeocodingResult] = useState<GeocodingResult | null>(null);
   const [orgMarket, setOrgMarket] = useState<{ jurisdiction?: string; subdivision?: string; currency?: string }>({});
@@ -174,29 +170,32 @@ export function WorkspaceNewListing({
         resolveSubdivisionCode(jurisdictionId, form.region, form.city) ||
         null;
 
-      const property = await propertyService.createProperty({
-        organization_id: organization.id,
+      const saved = await saveListingDraft({
+        organizationId: organization.id,
+        currentUserId,
+        propertyId: draftIds.propertyId,
+        listingId: draftIds.listingId,
         address: form.address,
-        ghana_post_gps: ghanaMarketService.normalizeGhanaPostGps(form.ghanaPostGps) || null,
+        ghanaPostGps: ghanaMarketService.normalizeGhanaPostGps(form.ghanaPostGps) || null,
         city: form.city,
         region: form.region,
         neighborhood: form.neighborhood.trim() || null,
         country: form.country,
-        subdivision_code: subdivisionCode,
+        subdivisionCode,
         latitude: geocodingResult?.latitude || null,
         longitude: geocodingResult?.longitude || null,
-        location_confidence: ghanaMarketService.calculateLocationConfidence({
+        locationConfidence: ghanaMarketService.calculateLocationConfidence({
           address: form.address,
           city: form.city,
           region: form.region,
           neighborhood: form.neighborhood,
           ghanaPostGps: form.ghanaPostGps,
         }),
-        flood_risk_level: locationInsight?.floodRiskLevel || "unknown",
+        floodRiskLevel: locationInsight?.floodRiskLevel || "unknown",
         category: form.category,
         bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
         bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
-        square_meters: form.squareMeters ? Number(form.squareMeters) : null,
+        squareMeters: form.squareMeters ? Number(form.squareMeters) : null,
         description: form.description || null,
         amenities: form.amenities
           ? form.amenities
@@ -204,61 +203,49 @@ export function WorkspaceNewListing({
               .map((item) => item.trim())
               .filter(Boolean)
           : null,
-      });
-
-      const listing = await listingService.createListing({
-        property_id: property.id,
-        organization_id: organization.id,
-        listing_type: form.listingType,
+        listingType: form.listingType,
         price: Number(form.price),
         currency: form.currency,
         status: form.status,
         visibility: form.visibility,
         featured: form.featured,
-        whatsapp_enabled: form.whatsappEnabled,
-        inspection_fee_amount: form.inspectionFeeAmount ? Number(form.inspectionFeeAmount) : null,
-        minimum_deposit_amount: form.minimumDepositAmount
-          ? Number(form.minimumDepositAmount)
-          : null,
-        quality_score: qualityReport.score,
-        quality_breakdown: {
-          checks: qualityReport.checks,
-          titleDocumentStatus: form.titleDocumentStatus,
-          evaluatedAt: new Date().toISOString(),
-        } as any,
-        last_quality_checked_at: new Date().toISOString(),
-        verification_status: qualityReport.score >= 75 ? "submitted" : "draft",
-        published_at: form.status === "listed" ? new Date().toISOString() : null,
+        whatsappEnabled: form.whatsappEnabled,
+        inspectionFeeAmount: form.inspectionFeeAmount ? Number(form.inspectionFeeAmount) : null,
+        minimumDepositAmount: form.minimumDepositAmount ? Number(form.minimumDepositAmount) : null,
+        titleDocumentStatus: form.titleDocumentStatus,
+        qualityReport,
+        mediaFiles,
+        mediaAltText: form.address,
       });
 
-      if (mediaFiles.length > 0) {
-        try {
-          await propertyMediaService.uploadPropertyMedia({
-            organizationId: organization.id,
-            propertyId: property.id,
-            createdBy: currentUserId,
-            files: mediaFiles,
-            altText: form.address,
-          });
-        } catch (mediaError) {
-          console.error("Failed to upload property media:", mediaError);
-          toast.error("The listing was created, but one or more photos failed to upload.");
-        }
+      setDraftIds({ propertyId: saved.propertyId, listingId: saved.listingId });
+
+      if (saved.mediaUploadFailed) {
+        toast.error("Draft saved, but one or more photos failed to upload. Retry from listings.");
+        navigate(`${workspaceBasePath}/listings`, {
+          replace: true,
+          state: { createdListingId: saved.listingId, recoverDraft: true },
+        });
+        return;
       }
 
-      if (form.status === "listed" && currentUserId) {
-        await legalAcceptanceService.recordAcceptance({
+      if (form.status === "listed" || form.status === "pending_review") {
+        const targetStatus = form.status as Extract<ListingStatus, "listed" | "pending_review">;
+        await publishListingDraft({
+          listingId: saved.listingId,
           userId: currentUserId,
-          scope: "listing_publish",
-          policySlugs: ACCEPTANCE_SCOPES.listing_publish.policySlugs,
-          policyVersion: LEGAL_POLICY_VERSION,
+          targetStatus,
         });
       }
 
-      toast.success("Listing created successfully.");
+      toast.success(
+        form.status === "listed" || form.status === "pending_review"
+          ? "Listing published successfully."
+          : "Listing draft saved.",
+      );
       navigate(`${workspaceBasePath}/listings`, {
         replace: true,
-        state: { createdListingId: listing.id },
+        state: { createdListingId: saved.listingId },
       });
     } catch (error) {
       console.error("Failed to create listing:", error);

@@ -1,0 +1,15 @@
+---
+description: Apply Supabase SQL migrations locally when changing schema or RPCs
+globs: supabase/migrations/**/*.sql
+alwaysApply: false
+---
+
+# Supabase migrations
+
+When you add or edit files under `supabase/migrations/` (or ship app code that depends on new schema/RPCs):
+
+1. Apply pending migrations to the linked database: `npm run supabase:migrate:apply`
+2. If apply fails, fix the SQL or migration history before continuing feature work—do not leave code merged that assumes unapplied migrations.
+3. Prefer this script over ad-hoc `supabase db push` unless deployment docs explicitly require CLI push for that environment.
+
+After apply succeeds, re-run any affected tests or typecheck if types depend on the new schema.
