@@ -23,7 +23,7 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { MetricCard } from "../../components/ui/MetricCard";
-import { WorkspacePageShell } from "../../components/ux";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 import { OrganizationUnitsPanel } from "../../components/workspace/OrganizationUnitsPanel";
 import type { Database } from "../../../lib/database.types";
 import { organizationService } from "../../../lib/organization.service";
@@ -46,6 +46,7 @@ export function WorkspaceSettings({
     currentRole === "manager" ||
     currentRole === "organization_admin" ||
     currentRole === "managing_director";
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: organization.name,
@@ -133,6 +134,8 @@ export function WorkspaceSettings({
     }
   };
 
+  const queryPhase = loadError ? "error" : "ready";
+
   return (
     <WorkspacePageShell
       title="Organization settings"
@@ -155,6 +158,11 @@ export function WorkspaceSettings({
         </Button>
       }
     >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => setLoadError(null)}
+      >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Verification tier"
@@ -364,6 +372,7 @@ export function WorkspaceSettings({
           </Button>
         </div>
       </form>
+      </OperationalQueryState>
     </WorkspacePageShell>
   );
 }

@@ -113,7 +113,7 @@ export function EnrollmentStatusPage() {
       ) : (
         <div className="space-y-4">
           {latestApproved ? (
-            <Card className="border-primary/25 bg-primary/5 p-5">
+            <Card className="app-surface-card border-primary/25 bg-primary/5 p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="font-semibold text-ink">Workspace ready</p>

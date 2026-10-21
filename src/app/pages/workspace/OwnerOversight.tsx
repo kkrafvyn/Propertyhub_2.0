@@ -17,6 +17,7 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { ActivityFeed } from "../../components/ux/ActivityTimeline";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 import { useAuth } from "../../context/AuthContext";
 import {
   ownerOversightService,
@@ -148,57 +149,62 @@ export function OwnerOversight({
     return "text-amber-600";
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading owner oversight…
-      </div>
-    );
-  }
-
-  if (!agreements.length && !overviews.length && !loadError) {
-    return (
-      <Card className="p-10 text-center space-y-3">
-        <Shield className="h-8 w-8 mx-auto text-muted-foreground" />
-        <h1 className="text-xl font-semibold">Owner Oversight</h1>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          When you hand a property to a management company, your oversight dashboard appears here.
-          Claim a listing or join a company with an approved property claim to get started.
-        </p>
-      </Card>
-    );
-  }
+  const queryPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : !agreements.length && !overviews.length
+        ? "empty"
+        : "ready";
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Owner Oversight</h1>
-          <p className="text-sm text-muted-foreground">
-            Transparency for properties managed by {organization.name || "your management company"}.
-            You own the asset; they operate it; BaytMiftah records the activity.
-          </p>
+    <WorkspacePageShell
+      tone="finance"
+      title="Owner Oversight"
+      description={`Transparency for properties managed by ${organization.name || "your management company"}. You own the asset; they operate it; BaytMiftah records the activity.`}
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          {overviews.length > 1 ? (
+            <NativeSelectControl
+              className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+              value={selected?.propertyId || ""}
+              onChange={(e) => setSelectedPropertyId(e.target.value)}
+            >
+              {overviews.map((o) => (
+                <option key={o.propertyId} value={o.propertyId}>
+                  {o.address}
+                </option>
+              ))}
+            </NativeSelectControl>
+          ) : null}
+          <Button size="sm" variant="outline" onClick={() => void load()}>
+            Refresh
+          </Button>
         </div>
-        {overviews.length > 1 ? (
-          <NativeSelectControl
-            className="h-9 rounded-md border border-border bg-background px-2 text-sm"
-            value={selected?.propertyId || ""}
-            onChange={(e) => setSelectedPropertyId(e.target.value)}
-          >
-            {overviews.map((o) => (
-              <option key={o.propertyId} value={o.propertyId}>
-                {o.address}
-              </option>
-            ))}
-          </NativeSelectControl>
-        ) : null}
-      </div>
-
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+        hasStaleData={Boolean(loadError && lastRefreshedAt)}
+        loadingFallback={
+          <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading owner oversight…
+          </div>
+        }
+        emptyTitle="Owner oversight not available yet"
+        emptyDescription="When you hand a property to a management company, your oversight dashboard appears here."
+      >
+    <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-        <span>{lastRefreshedAt ? `Last refreshed ${new Date(lastRefreshedAt).toLocaleString()}` : "Data has not loaded yet."} Refresh to see new activity and approval decisions.</span>
-        <Button size="sm" variant="outline" onClick={() => void load()}>Refresh</Button>
+        <span>
+          {lastRefreshedAt
+            ? `Last refreshed ${new Date(lastRefreshedAt).toLocaleString()}`
+            : "Data has not loaded yet."}{" "}
+          Refresh to see new activity and approval decisions.
+        </span>
       </div>
-      {loadError ? <Card className="p-4 text-sm text-red-600" role="alert">{loadError}. {lastRefreshedAt ? "Previously loaded data may be out of date." : "Please retry loading."}</Card> : null}
 
       <div className="flex flex-wrap gap-2 border-b border-border pb-2">
         {(
@@ -514,6 +520,8 @@ export function OwnerOversight({
         </Card>
       ) : null}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }
 

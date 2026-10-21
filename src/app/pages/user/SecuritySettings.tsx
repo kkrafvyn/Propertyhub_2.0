@@ -19,7 +19,7 @@ import {
 } from "../../../lib/biometric-preferences";
 import { useTranslation } from "../../i18n/LocaleContext";
 import { toast } from "sonner";
-import { PageHeader, PageLayout } from "../../components/ux";
+import { ConsumerHubChrome, PageHeader, PageLayout } from "../../components/ux";
 import { ActionDialog } from "../../components/ux/ActionDialog";
 import {
   ShieldCheck,
@@ -337,6 +337,7 @@ export function SecuritySettingsPage() {
 
   return (
     <PageLayout variant="consumer" maxWidthClassName="max-w-3xl">
+      <ConsumerHubChrome activeSection="settings">
       <PageHeader
         title={t("securityPage.title")}
         description={t("securityPage.subtitle")}
@@ -552,17 +553,17 @@ export function SecuritySettingsPage() {
             <div className="space-y-4 pt-2 border-t border-surface-border">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-3 rounded-xl border border-surface-border bg-surface-subtle/50 space-y-1">
-                  <span className="text-[10px] font-mono font-bold text-primary">STEP 1</span>
+                  <span className="text-xs font-mono font-bold text-primary">STEP 1</span>
                   <p className="text-xs font-semibold text-ink">Get Authenticator App</p>
                   <p className="text-[11px] text-ink-secondary">Install Google Authenticator or 1Password</p>
                 </div>
                 <div className="p-3 rounded-xl border border-surface-border bg-surface-subtle/50 space-y-1">
-                  <span className="text-[10px] font-mono font-bold text-primary">STEP 2</span>
+                  <span className="text-xs font-mono font-bold text-primary">STEP 2</span>
                   <p className="text-xs font-semibold text-ink">Scan Secret QR</p>
                   <p className="text-[11px] text-ink-secondary">Link your account securely in seconds</p>
                 </div>
                 <div className="p-3 rounded-xl border border-surface-border bg-surface-subtle/50 space-y-1">
-                  <span className="text-[10px] font-mono font-bold text-primary">STEP 3</span>
+                  <span className="text-xs font-mono font-bold text-primary">STEP 3</span>
                   <p className="text-xs font-semibold text-ink">Enter 6-Digit Code</p>
                   <p className="text-[11px] text-ink-secondary">Verify and activate 2FA protection</p>
                 </div>
@@ -604,7 +605,7 @@ export function SecuritySettingsPage() {
 
                   {secretKey && (
                     <div className="space-y-1">
-                      <span className="text-[10px] font-semibold uppercase text-ink-muted">
+                      <span className="text-xs font-semibold uppercase text-ink-muted">
                         Manual Entry Secret Key:
                       </span>
                       <div className="flex items-center gap-2">
@@ -722,7 +723,7 @@ export function SecuritySettingsPage() {
                             {session.session_label || device.name}
                           </p>
                           {isCurrent && (
-                            <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+                            <span className="text-xs font-bold px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
                               Current Device
                             </span>
                           )}
@@ -782,6 +783,7 @@ export function SecuritySettingsPage() {
         pending={actionPending}
         onConfirm={confirmSecurityAction}
       />
+      </ConsumerHubChrome>
     </PageLayout>
   );
 }

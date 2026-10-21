@@ -6,6 +6,7 @@ import { Input } from '@/app/components/ui/Input'
 import { whitelabelService } from '@/lib/whitelabel.service'
 import type { MemberRole } from '@/lib/workspace'
 import { Palette, Globe, FileText } from 'lucide-react'
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux'
 
 interface WhitelabelConfigurationProps {
   organizationId: string
@@ -19,6 +20,7 @@ export default function WhitelabelConfiguration({
   const [branding, setBranding] = useState<any>(null)
   const [settings, setSettings] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const canManage = currentRole === 'owner' || currentRole === 'manager'
 
@@ -37,6 +39,8 @@ export default function WhitelabelConfiguration({
 
   const loadData = async () => {
     try {
+      setLoading(true)
+      setLoadError(null)
       const [brandingData, settingsData] = await Promise.all([
         whitelabelService.getBranding(organizationId),
         whitelabelService.getSettings(organizationId)
@@ -54,11 +58,14 @@ export default function WhitelabelConfiguration({
       })
     } catch (error) {
       console.error('Failed to load branding:', error)
+      setLoadError("We couldn't load white-label settings.")
       toast.error("We couldn't load white-label settings.")
     } finally {
       setLoading(false)
     }
   }
+
+  const queryPhase = loadError ? 'error' : loading ? 'loading' : 'ready'
 
   const handleSave = async () => {
     if (!canManage) {
@@ -89,17 +96,17 @@ export default function WhitelabelConfiguration({
     }
   }
 
-  if (loading) {
-    return <div className="text-center py-12 text-muted-foreground">Loading...</div>
-  }
-
   return (
+    <WorkspacePageShell
+      title="Branding & Custom Domain"
+      description="Customize your platform logo, brand colors, and custom web address."
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadData()}
+      >
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Branding & Custom Domain</h1>
-        <p className="text-muted-foreground mt-2">Customize your platform logo, brand colors, and custom web address.</p>
-      </div>
-
       {/* Color Customization */}
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
@@ -273,5 +280,7 @@ export default function WhitelabelConfiguration({
         </Button>
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   )
 }

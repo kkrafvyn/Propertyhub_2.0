@@ -5,6 +5,8 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { fraudDetectionService } from "../../../lib/fraud-detection.service";
 import { useAuth } from "../../context/AuthContext";
+import { OperationalQueryState } from "../../components/ux";
+import { PageMeta } from "../../components/baytmiftah/PageMeta";
 
 export default function FraudDashboard() {
   const { user } = useAuth();
@@ -73,12 +75,9 @@ export default function FraudDashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Fraud Detection Dashboard</h1>
-        <p className="mt-2 text-muted-foreground">Review and manage fraud alerts</p>
-      </div>
-
+    <>
+      <PageMeta title="Fraud Detection Dashboard" description="Review and manage fraud alerts." />
+      <div className="space-y-6">
       <div className="flex gap-2">
         {["pending", "approved", "rejected", "resolved"].map((status) => (
           <Button
@@ -92,10 +91,9 @@ export default function FraudDashboard() {
         ))}
       </div>
 
+      <OperationalQueryState phase={loading ? "loading" : "ready"}>
       <div className="grid gap-4">
-        {loading ? (
-          <Card className="p-8 text-center text-muted-foreground">Loading fraud alerts...</Card>
-        ) : alerts.length === 0 ? (
+        {alerts.length === 0 ? (
           <Card className="p-8 text-center text-muted-foreground">No {filter} alerts found</Card>
         ) : (
           alerts.map((alert) => (
@@ -139,6 +137,8 @@ export default function FraudDashboard() {
           ))
         )}
       </div>
+      </OperationalQueryState>
     </div>
+    </>
   );
 }

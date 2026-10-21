@@ -11,6 +11,7 @@ import {
   type ManagedEstate,
 } from "../../../lib/estate-operations.service";
 import { getChargeOutstandingMinor, type EstateChargeRow } from "../../../lib/estate-ledger";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface Unit360Props {
   organizationId: string;
@@ -18,6 +19,7 @@ interface Unit360Props {
 
 export function Unit360({ organizationId }: Unit360Props) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [units, setUnits] = useState<EstateUnit[]>([]);
   const [charges, setCharges] = useState<EstateChargeRow[]>([]);
@@ -26,11 +28,11 @@ export function Unit360({ organizationId }: Unit360Props) {
   const [estateId, setEstateId] = useState("");
   const [unitId, setUnitId] = useState("");
 
-  useEffect(() => {
-    void (async () => {
-      try {
-        setLoading(true);
-        const rows = await estateOperationsService.getEstates(organizationId);
+  const load = async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const rows = await estateOperationsService.getEstates(organizationId);
         const ids = rows.map((x) => x.id);
         const unitRows = await estateOperationsService.getUnits(ids);
         const [chargeRows, issueRows, orderRows] = await Promise.all([
@@ -45,11 +47,18 @@ export function Unit360({ organizationId }: Unit360Props) {
         setIssues(issueRows);
         setWorkOrders(orderRows);
         setEstateId(rows[0]?.id || "");
-      } finally {
-        setLoading(false);
-      }
-    })();
+    } catch {
+      setLoadError("Unable to load unit profile.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
   }, [organizationId]);
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   const estateUnits = useMemo(
     () => units.filter((x) => x.estate_id === estateId),
@@ -79,25 +88,23 @@ export function Unit360({ organizationId }: Unit360Props) {
   const money = (value: number) =>
     new Intl.NumberFormat("en-GH", { style: "currency", currency }).format(value / 100);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-24 text-muted-foreground gap-2">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        <span>Loading unit profile…</span>
-      </div>
-    );
-  }
-
   return (
+    <WorkspacePageShell
+      title="Unit 360"
+      description="Single unit operational view across tenancy status, charges, and maintenance history."
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+        loadingFallback={
+          <div className="flex justify-center items-center py-24 text-muted-foreground gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Loading unit profile…</span>
+          </div>
+        }
+      >
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Unit 360</h1>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Single unit operational view across tenancy status, charges, and maintenance history.
-        </p>
-      </div>
-
       {/* Selectors */}
       <Card className="grid gap-3 p-4 sm:grid-cols-2">
         <div>
@@ -247,5 +254,7 @@ export function Unit360({ organizationId }: Unit360Props) {
         </>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

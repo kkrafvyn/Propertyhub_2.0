@@ -8,6 +8,7 @@ import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/badge";
 import { camBillingService, type CamAllocationPlan, type CamAllocationLine } from "../../../lib/cam-billing.service";
 import { estateOperationsService, type ManagedEstate, type EstateUnit } from "../../../lib/estate-operations.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const money = (minor = 0, currency = "GHS") =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency }).format(minor / 100);
@@ -19,11 +20,13 @@ export function CamBilling({ organizationId }: { organizationId: string }) {
   const [lines, setLines] = useState<CamAllocationLine[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", estateId: "", periodStart: "", periodEnd: "", totalExpense: "", method: "pro_rata_sqft" as const });
 
   const load = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [planRows, estateRows] = await Promise.all([
         camBillingService.listPlans(organizationId),
         estateOperationsService.getEstates(organizationId),
@@ -32,8 +35,10 @@ export function CamBilling({ organizationId }: { organizationId: string }) {
       setEstates(estateRows);
       setForm((f) => ({ ...f, estateId: f.estateId || estateRows[0]?.id || "" }));
       if (planRows[0]) setSelectedPlanId(planRows[0].id);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unable to load CAM billing.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -86,18 +91,25 @@ export function CamBilling({ organizationId }: { organizationId: string }) {
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
   const unitLabel = (id: string) => units.find((u) => u.id === id)?.identifier || id.slice(0, 8);
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2 text-foreground">
-          <Calculator className="h-6 w-6 text-primary" /> Common Area Maintenance (CAM) Billing
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Distribute and bill shared property maintenance, security, and facility upkeep costs across tenants.
-        </p>
-      </div>
-
+    <WorkspacePageShell
+      tone="finance"
+      title="Common Area Maintenance (CAM) Billing"
+      description="Distribute and bill shared property maintenance, security, and facility upkeep costs across tenants."
+      badge={
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-secondary">
+          <Calculator className="h-4 w-4 text-primary" aria-hidden="true" />
+          CAM allocation
+        </span>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void load()}
+      >
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-6 space-y-4">
           <h2 className="font-semibold text-foreground">Allocation Plans</h2>
@@ -242,6 +254,7 @@ export function CamBilling({ organizationId }: { organizationId: string }) {
           )}
         </Card>
       )}
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

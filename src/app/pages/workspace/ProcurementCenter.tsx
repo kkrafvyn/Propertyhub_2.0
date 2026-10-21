@@ -14,6 +14,7 @@ import { estateOperationsService, type ManagedEstate } from "@/lib/estate-operat
 import { estatePayablesService } from "@/lib/estate-payables.service";
 import { invoiceMatchingService, type ProcurementInvoiceMatch } from "@/lib/invoice-matching.service";
 import { procurementWorkflowService, type ProcurementRequest, type PurchaseOrder } from "@/lib/procurement-workflow.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const money = (amount = 0, currency = "GHS") =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency }).format(amount / 100);
@@ -45,6 +46,7 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
   const [saving, setSaving] = useState(false);
   const [resolvingOrg, setResolvingOrg] = useState(!organizationId && !!organizationSlug);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [requests, setRequests] = useState<ProcurementRequest[]>([]);
@@ -121,6 +123,7 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
     if (!resolvedOrganizationId) return;
     try {
       setLoading(true);
+      setLoadError(null);
       const estateRows = await estateOperationsService.getEstates(resolvedOrganizationId);
       setEstates(estateRows);
       setEstateId((current) => current || estateRows[0]?.id || "");
@@ -159,11 +162,15 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
       }
     } catch (failure: any) {
       console.error(failure);
-      toast.error(failure?.message || "Unable to load procurement data.");
+      const message = failure?.message || "Unable to load procurement data.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
+
+  const queryPhase = loadError ? "error" : loading || resolvingOrg ? "loading" : "ready";
 
   useEffect(() => {
     void load();
@@ -331,22 +338,14 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
     );
   };
 
-  if (loading || resolvingOrg) {
+  if (!resolvedOrganizationId && !loading && !resolvingOrg) {
     return (
-      <div className="flex justify-center py-20 text-muted-foreground">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Loading procurement workspace...
-      </div>
-    );
-  }
-
-  if (!resolvedOrganizationId) {
-    return (
-      <Card className="p-8 text-center">
-        <ShoppingBag className="mx-auto h-10 w-10 text-primary" />
-        <h1 className="mt-4 text-2xl font-semibold">Procurement</h1>
-        <p className="mt-2 text-muted-foreground">{error || "Open this module from a workspace to continue."}</p>
-      </Card>
+      <WorkspacePageShell tone="finance" title="Procurement" description="Open this module from a workspace to continue.">
+        <Card className="p-8 text-center">
+          <ShoppingBag className="mx-auto h-10 w-10 text-primary" />
+          <p className="mt-2 text-muted-foreground">{error || "Open this module from a workspace to continue."}</p>
+        </Card>
+      </WorkspacePageShell>
     );
   }
 
@@ -364,6 +363,22 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
 
   return (
     <DesktopOnlyGate fallback={desktopFallback}>
+    <WorkspacePageShell
+      tone="finance"
+      title="Procurement Center"
+      description="Request, approve, order, receive, and review vendor work without leaving the workspace."
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+        loadingFallback={
+          <div className="flex justify-center py-20 text-muted-foreground">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Loading procurement workspace...
+          </div>
+        }
+      >
     <div className="space-y-6">
       <div className="rounded-2xl border border-border bg-gradient-to-br from-surface to-surface-subtle p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -371,12 +386,6 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
             <div className="flex items-center gap-2">
               <div className="rounded-xl bg-primary/10 p-2 text-primary">
                 <ShoppingBag className="h-5 w-5" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Procurement Center</h1>
-                <p className="text-sm text-muted-foreground">
-                  Request, approve, order, receive, and review vendor work without leaving the workspace.
-                </p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -743,6 +752,8 @@ export function ProcurementCenter({ organizationId, currentUserId }: Procurement
         ) : null}
       </Card>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
     </DesktopOnlyGate>
   );
 }

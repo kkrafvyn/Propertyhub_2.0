@@ -1,7 +1,8 @@
 import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 
-import { Download, MapPin, Shield } from "lucide-react";
+import { Download, Loader2, MapPin, Shield } from "lucide-react";
+import { toast } from "sonner";
 
 import { Card } from "../../components/ui/Card";
 
@@ -31,7 +32,7 @@ import {
 
 } from "../../../lib/country-rules";
 
-
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface ComplianceCenterProps {
 
@@ -58,29 +59,33 @@ export function ComplianceCenter({
   const [subdivision, setSubdivision] = useState("");
 
   const [orgSettings, setOrgSettings] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-
+  const loadSettings = async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const settings = await countryRulesService.getOrganizationSettings(organizationId);
+      setOrgSettings(settings);
+      if (settings?.default_jurisdiction) {
+        setActiveJurisdiction(settings.default_jurisdiction as JurisdictionId);
+      }
+      if (settings?.default_subdivision) {
+        setSubdivision(settings.default_subdivision);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to load compliance settings.";
+      setLoadError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-
-    void countryRulesService.getOrganizationSettings(organizationId).then((settings) => {
-
-      setOrgSettings(settings);
-
-      if (settings?.default_jurisdiction) {
-
-        setActiveJurisdiction(settings.default_jurisdiction as JurisdictionId);
-
-      }
-
-      if (settings?.default_subdivision) {
-
-        setSubdivision(settings.default_subdivision);
-
-      }
-
-    });
-
+    void loadSettings();
   }, [organizationId]);
 
 
@@ -205,23 +210,25 @@ export function ComplianceCenter({
 
 
 
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
+
   return (
-
+    <WorkspacePageShell
+      title={t("compliance.center.title")}
+      description={t("compliance.center.subtitle")}
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void loadSettings()}
+        loadingFallback={
+          <div className="flex justify-center py-20 text-muted-foreground">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Loading compliance center...
+          </div>
+        }
+      >
     <div className="space-y-6">
-
-      <div>
-
-        <h1 className="text-3xl font-bold text-ink">{t("compliance.center.title")}</h1>
-
-        <p className="mt-1 text-ink-secondary">
-
-          {t("compliance.center.subtitle")}
-
-        </p>
-
-      </div>
-
-
 
       <Card className="border-brand-forest/20 bg-brand-forest/5 p-5">
 
@@ -464,7 +471,8 @@ export function ComplianceCenter({
       </div>
 
     </div>
-
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 
 }

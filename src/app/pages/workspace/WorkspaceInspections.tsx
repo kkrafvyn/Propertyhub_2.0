@@ -15,7 +15,7 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { MetricCard } from "../../components/ui/MetricCard";
-import { EmptyState } from "../../components/ux/EmptyState";
+import { EmptyState, OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 import { inspectionService } from "../../../lib/inspection.service";
 import { FieldInspectionEngine } from "./FieldInspectionEngine";
 import {
@@ -37,12 +37,14 @@ export function WorkspaceInspections({
 } & MemberScopeProps) {
   const [activeTab, setActiveTab] = useState<"field_engine" | "scheduled">("field_engine");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [inspections, setInspections] = useState<any[]>([]);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const loadInspections = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const rows = await inspectionService.getOrganizationInspections(organizationId);
       const scope = withMemberScopeDefaults({
         scopeMode,
@@ -60,10 +62,13 @@ export function WorkspaceInspections({
       );
     } catch (error) {
       console.error(error);
+      setLoadError("Unable to load inspections.");
     } finally {
       setLoading(false);
     }
   };
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   useEffect(() => {
     void loadInspections();
@@ -90,6 +95,15 @@ export function WorkspaceInspections({
   }, [inspections]);
 
   return (
+    <WorkspacePageShell
+      title="Inspections"
+      description="Field inspection engine and scheduled lease inspections for your portfolio."
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadInspections()}
+      >
     <div className="space-y-6">
       {/* Tab Switcher */}
       <div className="flex items-center gap-2 border-b border-surface-border pb-3">
@@ -324,5 +338,7 @@ export function WorkspaceInspections({
         </div>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

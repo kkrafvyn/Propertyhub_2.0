@@ -19,6 +19,7 @@ import {
   type MemberScopeProps,
   withMemberScopeDefaults,
 } from "../../../lib/member-scope";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const money = (minor = 0, currency = "GHS") =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency, maximumFractionDigits: 0 }).format(minor / 100);
@@ -30,6 +31,7 @@ export function PortfolioAnalytics({
   bypassPropertyScope = false,
 }: { organizationId?: string } & MemberScopeProps) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [unitCounts, setUnitCounts] = useState<Record<string, number>>({});
   const [estateLedger, setEstateLedger] = useState<Record<string, ReturnType<typeof summarizeEstateLedger>>>({});
@@ -44,16 +46,16 @@ export function PortfolioAnalytics({
   );
   const periodEnd = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-  useEffect(() => {
+  const load = async () => {
     if (!organizationId) {
       setLoading(false);
       return;
     }
 
-    void (async () => {
-      try {
-        setLoading(true);
-        const scope = withMemberScopeDefaults({ scopeMode, scopedPropertyIds, bypassPropertyScope });
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const scope = withMemberScopeDefaults({ scopeMode, scopedPropertyIds, bypassPropertyScope });
         const estateRows = filterEstatesByPropertyScope(
           await estateOperationsService.getEstates(organizationId),
           scope.scopeMode,
@@ -85,13 +87,19 @@ export function PortfolioAnalytics({
         setEstateLedger(ledgerByEstate);
         setPortfolioReport(report);
         setBudgetRows(budgets.slice(0, 8));
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    } catch (error) {
+      console.error(error);
+      setLoadError("Unable to load portfolio analytics.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
   }, [organizationId, periodStart, periodEnd, scopeMode, scopedPropertyIds, bypassPropertyScope]);
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   const currency = estates[0]?.currency || "GHS";
   const totalUnits = Object.values(unitCounts).reduce((sum, n) => sum + n, 0);
@@ -103,18 +111,15 @@ export function PortfolioAnalytics({
 
   if (!organizationId) {
     return (
-      <Card className="p-8 text-center text-muted-foreground">
-        Open portfolio analytics from a workspace to load live estate data.
-      </Card>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="flex justify-center py-20 text-muted-foreground">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Loading portfolio analytics...
-      </div>
+      <WorkspacePageShell
+        tone="finance"
+        title="Portfolio Performance"
+        description="Financial summary across all managed properties."
+      >
+        <Card className="p-8 text-center text-muted-foreground">
+          Open portfolio analytics from a workspace to load live estate data.
+        </Card>
+      </WorkspacePageShell>
     );
   }
 
@@ -146,20 +151,24 @@ export function PortfolioAnalytics({
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-border pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <BarChart4 className="h-6 w-6 text-emerald-500" />
-            <h1 className="text-xl font-bold tracking-tight">Portfolio Performance</h1>
-            <Badge variant="outline">Live ledger</Badge>
+    <WorkspacePageShell
+      tone="finance"
+      title="Portfolio Performance"
+      description={`Financial summary across all managed properties · ${periodStart} to ${periodEnd}.`}
+      badge={<Badge variant="outline">Live ledger</Badge>}
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+        loadingFallback={
+          <div className="flex justify-center py-20 text-muted-foreground">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Loading portfolio analytics...
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Financial summary across all managed properties · {periodStart} to {periodEnd}.
-          </p>
-        </div>
-      </div>
-
+        }
+      >
+    <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((m) => {
           const Icon = m.icon;
@@ -234,5 +243,7 @@ export function PortfolioAnalytics({
         </Card>
       ) : null}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

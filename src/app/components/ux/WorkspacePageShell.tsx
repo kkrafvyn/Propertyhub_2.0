@@ -17,12 +17,16 @@ export function WorkspacePageShell({
   badge,
   meta,
   actions,
+  tone = "neutral",
   children,
 }: WorkspacePageShellProps) {
   return (
     <div className="space-y-6 min-w-0 w-full">
       <header className="workspace-page-header">
-        <div className="app-surface-card rounded-2xl p-6 sm:p-8">
+        <div
+          className="app-surface-card workspace-shell-header rounded-2xl p-6 sm:p-8"
+          data-workspace-tone={tone}
+        >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-2 min-w-0">
               {(badge || meta) && (

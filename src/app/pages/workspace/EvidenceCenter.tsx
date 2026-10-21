@@ -6,10 +6,12 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/badge";
 import { evidenceDossierService, type EvidenceDossier, type EvidenceEvent } from "../../../lib/evidence-dossier.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 export function EvidenceCenter({ organizationId }: { organizationId?: string }) {
   const [searchTarget, setSearchTarget] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [dossier, setDossier] = useState<EvidenceDossier | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -17,12 +19,15 @@ export function EvidenceCenter({ organizationId }: { organizationId?: string }) 
     if (!organizationId || !searchTarget.trim()) return;
     try {
       setLoading(true);
+      setLoadError(null);
       const result = await evidenceDossierService.buildUnitDossier(organizationId, searchTarget.trim());
       setDossier(result);
       if (!result) toast.error("No unit matched that identifier in this organization.");
     } catch (error) {
       console.error(error);
-      toast.error("Unable to assemble dossier.");
+      const message = "Unable to assemble dossier.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -53,21 +58,30 @@ export function EvidenceCenter({ organizationId }: { organizationId?: string }) 
     return <Badge className={`${map[cat] || ""} border-none`}>{cat}</Badge>;
   };
 
+  const queryPhase = loadError ? "error" : "ready";
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">Evidence & Activity History</h1>
-          <p className="text-sm text-ink-muted">
-            View the full read-only activity record for any unit in your organisation.
-          </p>
-        </div>
+    <WorkspacePageShell
+      title="Evidence & Activity History"
+      description="View the full read-only activity record for any unit in your organisation."
+      badge={
         <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 flex items-center gap-1">
           <Lock className="w-3.5 h-3.5" />
           Protected Record
         </Badge>
-      </div>
-
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => {
+          setLoadError(null);
+          if (searchTarget.trim() && organizationId) {
+            void handleSearch({ preventDefault: () => {} } as React.FormEvent);
+          }
+        }}
+      >
+    <div className="space-y-6">
       <Card className="p-6">
         <form onSubmit={handleSearch} className="flex gap-3">
           <div className="relative flex-1">
@@ -117,5 +131,7 @@ export function EvidenceCenter({ organizationId }: { organizationId?: string }) 
         </div>
       ) : null}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

@@ -6,6 +6,7 @@ import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/badge';
 import { MetricCard } from '../../components/ui/MetricCard';
 import { automationEngineService } from '../../../lib/automation-engine.service';
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 import type { MemberRole } from '../../../lib/workspace';
 import {
   Plus,
@@ -132,6 +133,7 @@ export default function CustomWorkflowsBuilder({
 }: CustomWorkflowsBuilderProps) {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const canManageWorkflows = currentRole === 'owner' || currentRole === 'manager';
 
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
@@ -143,13 +145,16 @@ export default function CustomWorkflowsBuilder({
   const loadWorkflows = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const summaries = await automationEngineService.getWorkflowSummaries(organizationId);
       setWorkflows(
         summaries.map(({ workflow, stats }) => mapWorkflowRecord(workflow, stats))
       );
     } catch (error) {
       console.error('Failed to load workflows:', error);
-      toast.error('We could not load workflows right now.');
+      const message = 'We could not load workflows right now.';
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -227,49 +232,23 @@ export default function CustomWorkflowsBuilder({
     );
   }, [workflows, searchQuery]);
 
-  /* ── Loading skeleton ──────────────────────────────────────── */
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 gap-4">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-amber-500/20 flex items-center justify-center animate-pulse">
-          <Zap className="w-7 h-7 text-emerald-500" />
-        </div>
-        <p className="text-sm text-ink-muted font-medium">Loading your automations…</p>
-      </div>
-    );
-  }
+  const queryPhase = loadError ? 'error' : loading ? 'loading' : 'ready';
 
   return (
-    <div className="space-y-8">
-      {/* ═══════════════════════════════════════════════════════════
-          EDITORIAL HERO HEADER
-       ═══════════════════════════════════════════════════════════ */}
-      <section className="relative rounded-3xl overflow-hidden border border-emerald-500/20 bg-surface/80 backdrop-blur-xl p-8 sm:p-10">
-        {/* Ambient dual orbs */}
-        <div className="absolute -top-20 -left-20 w-72 h-72 bg-emerald-500/15 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute -bottom-16 -right-16 w-64 h-64 bg-amber-500/12 rounded-full blur-[90px] pointer-events-none" />
-
-        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25 shrink-0">
-              <Zap className="w-7 h-7" />
-            </div>
-            <div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1
-                  className="text-3xl sm:text-4xl font-bold tracking-tight text-ink"
-                  style={{ fontFamily: "'Playfair Display', serif" }}
-                >
-                  Custom Workflows
-                </h1>
-                <Badge variant="success" dot pulse>Active</Badge>
-              </div>
-              <p className="text-sm text-ink-muted mt-1.5 max-w-lg">
-                Build automatic actions triggered by events in your workspace — no code required.
-              </p>
-            </div>
-          </div>
-
+    <WorkspacePageShell
+      title="Custom Workflows"
+      description="Build automatic actions triggered by events in your workspace — no code required."
+      badge={<Badge variant="success" dot pulse>Active</Badge>}
+      meta={
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white shrink-0">
+          <Zap className="w-5 h-5" />
+        </div>
+      }
+      actions={
+        <>
+          <Button variant="outline" size="sm" onClick={() => void loadWorkflows()} disabled={loading}>
+            Refresh
+          </Button>
           <Button
             onClick={() => setShowBuilder(!showBuilder)}
             disabled={!canManageWorkflows}
@@ -279,9 +258,15 @@ export default function CustomWorkflowsBuilder({
             {showBuilder ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
             {showBuilder ? 'Close Builder' : 'New Workflow'}
           </Button>
-        </div>
-      </section>
-
+        </>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadWorkflows()}
+      >
+    <div className="space-y-8">
       {/* ═══════════════════════════════════════════════════════════
           TELEMETRY METRIC CARDS
        ═══════════════════════════════════════════════════════════ */}
@@ -830,5 +815,7 @@ export default function CustomWorkflowsBuilder({
         </div>
       </Card>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

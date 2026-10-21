@@ -17,6 +17,7 @@ import {
   type OrganizationApprovalChain,
 } from "../../../lib/approval-chain.types";
 import { getWorkspaceRoute } from "../../../lib/workspace";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface WorkflowApprovalHubProps {
   organizationId: string;
@@ -47,6 +48,7 @@ export function WorkflowApprovalHub({
   const canManage =
     currentRole === "owner" || currentRole === "manager" || currentRole === "organization_admin";
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [chains, setChains] = useState<OrganizationApprovalChain[]>([]);
   const [draft, setDraft] = useState<OrganizationApprovalChain | null>(null);
@@ -54,10 +56,13 @@ export function WorkflowApprovalHub({
   const load = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       setChains(await approvalChainService.list(organizationId));
     } catch (error) {
       console.error(error);
-      toast.error("Unable to load approval chains.");
+      const message = "Unable to load approval chains.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -107,28 +112,32 @@ export function WorkflowApprovalHub({
     }
   };
 
-  if (loading) {
-    return (
-      <Card className="flex min-h-[240px] items-center justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </Card>
-    );
-  }
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Approval Chains</h1>
-        </div>
+    <WorkspacePageShell
+      title="Approval Chains"
+      description="Configure multi-step approval chains for operational and financial workflows."
+      actions={
         <Link to={getWorkspaceRoute(organizationSlug, "workflows")}>
           <Button variant="outline">
             <Workflow className="mr-2 h-4 w-4" />
             Open Workflow Builder
           </Button>
         </Link>
-      </div>
-
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+        loadingFallback={
+          <Card className="flex min-h-[240px] items-center justify-center p-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </Card>
+        }
+      >
+      <div className="space-y-6">
       <Card className="p-6">
         <h2 className="mb-4 font-semibold">Approval chains</h2>
         <div className="mb-4 flex flex-wrap gap-2">
@@ -237,5 +246,7 @@ export function WorkflowApprovalHub({
         </Card>
       ) : null}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

@@ -261,6 +261,10 @@ export function ConsumerJourneyShowcase() {
           use BaytMiftah alongside the business operating system — connected to the same platform,
           without the operational complexity.
         </p>
+        <p className="text-xs text-ink-muted mt-2 max-w-prose">
+          Illustrative preview — screens are simplified for marketing. Live product flows (search, offers,
+          and your property journey timeline) may differ in layout and copy.
+        </p>
 
         <div className="mk-journey-nav" role="tablist" aria-label="Consumer journey">
           {STEPS.map((step) => {

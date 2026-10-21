@@ -39,6 +39,7 @@ import { estateOperationsService, type EstateUnit, type ManagedEstate } from '..
 import { useCall } from '../../context/CallContext';
 import { buildWhatsAppCallUrl } from '../../../lib/call.service';
 import { sendGatePassSms } from '../../../lib/sms-gateway.service';
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 
 export function GateClearanceKiosk({
   organizationId,
@@ -53,6 +54,7 @@ export function GateClearanceKiosk({
   const [units, setUnits] = useState<EstateUnit[]>([]);
   const [estateId, setEstateId] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'guard_kiosk' | 'generate_pass' | 'logbook'>('guard_kiosk');
 
   const [inputCode, setInputCode] = useState('');
@@ -89,31 +91,36 @@ export function GateClearanceKiosk({
     );
   };
 
-  useEffect(() => {
+  const loadInitial = async () => {
     if (!organizationId) return;
-    void (async () => {
-      try {
-        setLoading(true);
-        const estateRows = await estateOperationsService.getEstates(organizationId);
-        const unitRows = await estateOperationsService.getUnits(estateRows.map((estate) => estate.id));
-        setEstates(estateRows);
-        setUnits(unitRows);
-        const firstEstate = estateRows[0]?.id || '';
-        setEstateId(firstEstate);
-        const nameMap = Object.fromEntries(estateRows.map((estate) => [estate.id, estate.name]));
-        const unitMap = Object.fromEntries(unitRows.map((unit) => [unit.id, unit]));
-        await reloadPasses(
-          estateRows.map((estate) => estate.id),
-          nameMap,
-          unitMap
-        );
-      } catch (error) {
-        console.error(error);
-        toast.error('Unable to load live visitor passes.');
-      } finally {
-        setLoading(false);
-      }
-    })();
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const estateRows = await estateOperationsService.getEstates(organizationId);
+      const unitRows = await estateOperationsService.getUnits(estateRows.map((estate) => estate.id));
+      setEstates(estateRows);
+      setUnits(unitRows);
+      const firstEstate = estateRows[0]?.id || '';
+      setEstateId(firstEstate);
+      const nameMap = Object.fromEntries(estateRows.map((estate) => [estate.id, estate.name]));
+      const unitMap = Object.fromEntries(unitRows.map((unit) => [unit.id, unit]));
+      await reloadPasses(
+        estateRows.map((estate) => estate.id),
+        nameMap,
+        unitMap
+      );
+    } catch (error) {
+      console.error(error);
+      const message = 'Unable to load live visitor passes.';
+      setLoadError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadInitial();
   }, [organizationId]);
 
   const handleVerifyCode = async (e: React.FormEvent) => {
@@ -196,27 +203,16 @@ export function GateClearanceKiosk({
     );
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <ShieldCheck className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-ink">
-              QR Visitor Gate Clearance & Kiosk
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Instant QR passes for guests, Bolt Food/Yango delivery, security gate barcode validation, and resident voice clearance.
-            </p>
-          </div>
-        </div>
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
-        <div className="flex items-center gap-2">
+  return (
+    <WorkspacePageShell
+      title="QR visitor gate clearance & kiosk"
+      description="Instant QR passes for guests, delivery, gate barcode validation, and resident voice clearance."
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
           <NativeSelectControl
-            className="rounded-xl border border-border bg-input-background px-3 py-2 text-xs"
+            className="min-h-11 rounded-xl border border-border bg-input-background px-3 py-2 text-sm"
             value={estateId}
             onChange={(event) => setEstateId(event.target.value)}
           >
@@ -228,16 +224,22 @@ export function GateClearanceKiosk({
             ))}
           </NativeSelectControl>
           <Button
-            size="sm"
+            size="md"
             onClick={() => setActiveTab('generate_pass')}
-            className="bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-950/20"
+            className="min-h-11 bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-950/20"
           >
             <Plus className="mr-1.5 h-4 w-4" />
-            Generate Visitor Pass
+            Generate visitor pass
           </Button>
         </div>
-      </div>
-
+      }
+    >
+    <OperationalQueryState
+      phase={queryPhase}
+      errorMessage={loadError || undefined}
+      onRetry={() => void loadInitial()}
+    >
+    <div className="space-y-6">
       {/* Live Pass Stats Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
@@ -261,7 +263,7 @@ export function GateClearanceKiosk({
         <button
           type="button"
           onClick={() => setActiveTab('guard_kiosk')}
-          className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+          className={`flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-3 text-sm font-semibold transition ${
             activeTab === 'guard_kiosk'
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:bg-surface-subtle'
@@ -274,7 +276,7 @@ export function GateClearanceKiosk({
         <button
           type="button"
           onClick={() => setActiveTab('generate_pass')}
-          className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+          className={`flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-3 text-sm font-semibold transition ${
             activeTab === 'generate_pass'
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:bg-surface-subtle'
@@ -287,7 +289,7 @@ export function GateClearanceKiosk({
         <button
           type="button"
           onClick={() => setActiveTab('logbook')}
-          className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+          className={`flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-3 text-sm font-semibold transition ${
             activeTab === 'logbook'
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:bg-surface-subtle'
@@ -695,5 +697,7 @@ export function GateClearanceKiosk({
         </Card>
       )}
     </div>
+    </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

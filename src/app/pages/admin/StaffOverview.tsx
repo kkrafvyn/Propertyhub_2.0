@@ -13,6 +13,8 @@ import {
 import { ActivityFeed } from "../../components/admin/ActivityFeed";
 import { AdminEnrollmentRequests } from "./AdminEnrollmentRequests";
 import { canAccessAdminSection } from "../../../lib/platform-access";
+import { OperationalQueryState } from "../../components/ux";
+import { PageMeta } from "../../components/baytmiftah/PageMeta";
 
 export function StaffOverview() {
   const { profile, role } = useAuth();
@@ -39,6 +41,8 @@ export function StaffOverview() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title={staffDashboard.heading} description={staffDashboard.description} />
+      <OperationalQueryState phase={loading ? "loading" : "ready"}>
       <Card className="border-primary/20 bg-primary/5 p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -97,6 +101,7 @@ export function StaffOverview() {
           <ActivityFeed />
         </Card>
       ) : null}
+      </OperationalQueryState>
     </div>
   );
 }

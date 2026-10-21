@@ -19,6 +19,7 @@ import { ProgressMeter } from "@/app/components/ui/ProgressMeter";
 import { AnimatedNumber } from "@/app/components/ui/AnimatedNumber";
 import { marketIntelligenceService } from "@/lib/market-intelligence.service";
 import { customerHealthService, type OrgHealthRecord } from "@/lib/customer-health.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface OrganizationInsightsProps {
   organizationId: string;
@@ -40,38 +41,33 @@ export default function OrganizationInsights({
   const [bestPerformers, setBestPerformers] = useState<any[]>([]);
   const [customerHealth, setCustomerHealth] = useState<OrgHealthRecord | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const loadInsights = async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const [insightsData, performersData, healthData] = await Promise.all([
+        marketIntelligenceService.getOrganizationInsights(organizationId),
+        marketIntelligenceService.getBestPerformingListings(organizationId, 5),
+        customerHealthService.getOrganizationHealth(organizationId),
+      ]);
+      setInsights(insightsData);
+      setBestPerformers(performersData || []);
+      setCustomerHealth(healthData[0] || null);
+    } catch (error) {
+      console.error("Failed to load insights:", error);
+      setLoadError("Unable to load organization insights.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let cancelled = false;
-
-    const loadInsights = async () => {
-      try {
-        const [insightsData, performersData, healthData] = await Promise.all([
-          marketIntelligenceService.getOrganizationInsights(organizationId),
-          marketIntelligenceService.getBestPerformingListings(organizationId, 5),
-          customerHealthService.getOrganizationHealth(organizationId),
-        ]);
-
-        if (!cancelled) {
-          setInsights(insightsData);
-          setBestPerformers(performersData || []);
-          setCustomerHealth(healthData[0] || null);
-        }
-      } catch (error) {
-        console.error("Failed to load insights:", error);
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
     void loadInsights();
-
-    return () => {
-      cancelled = true;
-    };
   }, [organizationId]);
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   const recommendations = useMemo(() => {
     const cards: { title: string; tag: string; type: "urgent" | "win" | "strategy" }[] = [];
@@ -112,15 +108,6 @@ export default function OrganizationInsights({
     return cards.slice(0, 4);
   }, [bestPerformers, insights]);
 
-  if (loading) {
-    return (
-      <Card variant="glass" className="p-12 text-center text-ink-muted">
-        <Activity className="w-8 h-8 animate-pulse text-primary mx-auto mb-3" />
-        <p className="font-medium">Loading your performance data...</p>
-      </Card>
-    );
-  }
-
   const leadQualityProgress = Math.min(100, Math.round(((insights?.avg_lead_quality || 0) / 5) * 100));
   const satisfactionScore = customerHealth?.satisfactionScore ?? null;
   const satisfactionProgress = Math.min(
@@ -143,29 +130,32 @@ export default function OrganizationInsights({
   );
 
   return (
+    <WorkspacePageShell
+      title="Organization Insights"
+      description="Portfolio performance, response times, tenant satisfaction, and growth opportunities at a glance."
+      badge={
+        <Badge variant="success" dot pulse dotColor="emerald">
+          Live
+        </Badge>
+      }
+      actions={
+        <Badge variant="glass" className="px-3 py-1.5 text-xs font-semibold">
+          Market Benchmark: Greater Accra
+        </Badge>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadInsights()}
+        loadingFallback={
+          <Card variant="glass" className="p-12 text-center text-ink-muted">
+            <Activity className="w-8 h-8 animate-pulse text-primary mx-auto mb-3" />
+            <p className="font-medium">Loading your performance data...</p>
+          </Card>
+        }
+      >
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="flex items-center gap-2.5 mb-1.5">
-            <h1 className="text-3xl font-bold tracking-tight text-ink font-serif">
-              Organization Insights
-            </h1>
-            <Badge variant="success" dot pulse dotColor="emerald">
-              Live
-            </Badge>
-          </div>
-          <p className="text-sm text-ink-secondary max-w-2xl leading-relaxed">
-            Portfolio performance, response times, tenant satisfaction, and growth opportunities at a glance.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Badge variant="glass" className="px-3 py-1.5 text-xs font-semibold">
-            Market Benchmark: Greater Accra
-          </Badge>
-        </div>
-      </div>
 
       {/* Executive Health Score Banner */}
       <Card
@@ -424,6 +414,8 @@ export default function OrganizationInsights({
         </div>
       </Card>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }
 

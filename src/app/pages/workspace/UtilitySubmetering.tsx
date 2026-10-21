@@ -41,6 +41,7 @@ import {
   type UtilityType,
 } from '../../../lib/utility-submeter.service';
 import { useAuth } from '@/app/context/AuthContext';
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 
 export function UtilitySubmetering({ organizationId }: { organizationId?: string }) {
   const { user } = useAuth();
@@ -49,12 +50,14 @@ export function UtilitySubmetering({ organizationId }: { organizationId?: string
   const [genRuns, setGenRuns] = useState<GeneratorFuelRun[]>([]);
   const [occupiedUnits, setOccupiedUnits] = useState(1);
   const [loadingLive, setLoadingLive] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [estateId, setEstateId] = useState('');
 
   const reloadData = useCallback(async () => {
     if (!organizationId) return;
     try {
       setLoadingLive(true);
+      setLoadError(null);
       const live = await loadOrganizationUtilityData(organizationId);
       setMeters(live.meters);
       setReadings(live.readings);
@@ -62,11 +65,15 @@ export function UtilitySubmetering({ organizationId }: { organizationId?: string
       setOccupiedUnits(Math.max(1, live.occupiedUnits));
       if (!estateId && live.meters[0]?.estateId) setEstateId(live.meters[0].estateId);
     } catch (error: any) {
-      toast.error(error?.message || 'Unable to load live utility meters.');
+      const message = error?.message || 'Unable to load live utility meters.';
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoadingLive(false);
     }
   }, [organizationId]);
+
+  const queryPhase = loadError ? 'error' : loadingLive ? 'loading' : 'ready';
 
   useEffect(() => {
     reloadData();
@@ -207,23 +214,11 @@ export function UtilitySubmetering({ organizationId }: { organizationId?: string
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <Gauge className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-ink">
-              Utility Sub-Metering & Fuel Split
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Automated PURC Ghana tariffs, ECG electricity & GWCL water sub-meters, and central diesel generator cost splitting.
-            </p>
-          </div>
-        </div>
-
+    <WorkspacePageShell
+      tone="finance"
+      title="Utility Sub-Metering & Fuel Split"
+      description="Automated PURC Ghana tariffs, ECG electricity and GWCL water sub-meters, and central diesel generator cost splitting."
+      actions={
         <div className="flex items-center gap-2">
           <Button
             size="sm"
@@ -246,8 +241,14 @@ export function UtilitySubmetering({ organizationId }: { organizationId?: string
             Scan / Record Reading
           </Button>
         </div>
-      </div>
-
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void reloadData()}
+      >
+    <div className="space-y-6">
       {/* Metrics Row */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Card className="p-4 bg-surface border-surface-border flex items-center gap-3">
@@ -787,5 +788,7 @@ export function UtilitySubmetering({ organizationId }: { organizationId?: string
         </div>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

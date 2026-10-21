@@ -37,11 +37,12 @@ import {
   type DualCurrencyLeaseCalculation,
   type FXHedgingScenario,
 } from '../../../lib/multi-currency-fx.service';
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 
 export function MultiCurrencyHedgingHub() {
   const [rates, setRates] = useState<FXRate[]>(() => multiCurrencyFxService.getLiveRates());
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [rateError, setRateError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Dual-Currency Calculator State
   const [baseAmountUSD, setBaseAmountUSD] = useState<number>(2500);
@@ -71,13 +72,13 @@ export function MultiCurrencyHedgingHub() {
 
   const handleRefreshRates = async () => {
     setIsRefreshing(true);
-    setRateError(null);
+    setLoadError(null);
     try {
       setRates(await multiCurrencyFxService.syncRatesFromProvider());
       toast.success('Exchange rates synchronized successfully.');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Exchange rates are unavailable.';
-      setRateError(message);
+      setLoadError(message);
       toast.error(message);
     } finally {
       setIsRefreshing(false);
@@ -102,37 +103,19 @@ export function MultiCurrencyHedgingHub() {
     toast.success('Dual-currency invoice details copied!');
   };
 
-  if (!dualCalc || !hedgingScenario) {
-    return (
-      <Card className="p-8 text-center">
-        <RefreshCw className={`mx-auto mb-3 h-6 w-6 ${isRefreshing ? 'animate-spin' : ''}`} />
-        <p className="font-semibold">Live exchange rates are required</p>
-        <p className="mt-2 text-sm text-ink-secondary">
-          {rateError || 'Loading verified provider rates…'}
-        </p>
-        {!isRefreshing && <Button className="mt-4" onClick={() => void handleRefreshRates()}>Retry rate sync</Button>}
-      </Card>
-    );
-  }
+  const queryPhase = loadError
+    ? 'error'
+    : isRefreshing || !dualCalc || !hedgingScenario
+      ? 'loading'
+      : 'ready';
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface border border-surface-border p-6 rounded-2xl shadow-sm">
-        <div className="flex items-center gap-3">
-          <span className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-            <Coins className="w-6 h-6" />
-          </span>
-          <div>
-            <h1 className="text-2xl font-bold text-ink">Multi-Currency FX & Hedging Engine</h1>
-            <p className="text-sm text-ink-secondary">
-              Bank of Ghana interbank rate synchronization, USD-pegged rent indexing, and FX collar hedging.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
+    <WorkspacePageShell
+      tone="finance"
+      title="Multi-Currency FX & Hedging Engine"
+      description="Bank of Ghana interbank rate synchronization, USD-pegged rent indexing, and FX collar hedging."
+      actions={
+        <Button
             onClick={handleRefreshRates}
             disabled={isRefreshing}
             variant="outline"
@@ -141,9 +124,14 @@ export function MultiCurrencyHedgingHub() {
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             {isRefreshing ? 'Syncing Rates...' : 'Sync BOG Rates'}
           </Button>
-        </div>
-      </div>
-
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void handleRefreshRates()}
+      >
+      <div className="space-y-6">
       {/* Live Exchange Rate Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {rates.map((r) => {
@@ -388,5 +376,7 @@ export function MultiCurrencyHedgingHub() {
         </div>
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

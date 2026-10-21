@@ -31,6 +31,7 @@ import {
   type ScreeningCheckType,
 } from "../../../lib/tenant-screening-providers";
 import { useAuth } from "../../context/AuthContext";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 type Recommendation = "clear" | "review" | "decline" | "pending" | string;
 
@@ -184,6 +185,7 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
   const { user } = useAuth();
   const [checks, setChecks] = useState<ScreeningCheck[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [search, setSearch] = useState("");
   const [filterRec, setFilterRec] = useState<"all" | Recommendation>("all");
@@ -197,10 +199,13 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
   const load = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const rows = await leaseScreeningService.listScreeningChecks(organizationId);
       setChecks(rows ?? []);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unable to load screening history.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -256,23 +261,20 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
   const toggleCheck = (k: string) =>
     setSelectedChecks((prev) => prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k]);
 
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
+
   return (
-    <div className="space-y-6">
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-indigo-500/10">
-              <ShieldCheck className="h-5 w-5 text-indigo-600" />
-            </span>
-            Tenant Screening
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Credit, criminal, eviction &amp; identity verification powered by TransUnion + Ghana NIA.
-          </p>
-        </div>
+    <WorkspacePageShell
+      title="Tenant Screening"
+      description="Credit, criminal, eviction and identity verification powered by TransUnion and Ghana NIA."
+      badge={
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-500/10 p-1.5">
+          <ShieldCheck className="h-4 w-4 text-indigo-600" aria-hidden="true" />
+        </span>
+      }
+      actions={
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
@@ -281,8 +283,29 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
             New Screening
           </Button>
         </div>
-      </div>
-
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void load()}
+        loadingFallback={
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-20 rounded-xl border border-border bg-surface overflow-hidden">
+                <div className="h-full p-4 flex items-center gap-4 animate-pulse">
+                  <div className="w-10 h-10 rounded-lg bg-muted/60 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 bg-muted/60 rounded-full w-1/3" />
+                    <div className="h-2.5 bg-muted/40 rounded-full w-2/3" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        }
+      >
+    <div className="space-y-6">
       {/* ── Metric strip ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
@@ -558,22 +581,7 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
           </h2>
         </div>
 
-        {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-20 rounded-xl border border-border bg-surface overflow-hidden">
-                <div className="h-full p-4 flex items-center gap-4 animate-pulse">
-                  <div className="w-10 h-10 rounded-lg bg-muted/60 shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3.5 bg-muted/60 rounded-full w-1/3" />
-                    <div className="h-2.5 bg-muted/40 rounded-full w-2/3" />
-                  </div>
-                  <div className="w-20 h-6 bg-muted/60 rounded-full shrink-0" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <Card className="p-12 text-center space-y-3">
             <ShieldCheck className="w-12 h-12 mx-auto text-muted-foreground/40" />
             <p className="font-semibold text-muted-foreground">No screenings found</p>
@@ -593,5 +601,7 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
         )}
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

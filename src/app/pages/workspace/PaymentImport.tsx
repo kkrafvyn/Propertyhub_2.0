@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 import { paymentImportService, type PaymentImportRow } from "../../../lib/payment-import.service";
 import {
   IMPORT_FILE_ACCEPT,
@@ -97,14 +98,12 @@ export function PaymentImport({ organizationId, currentUserId }: PaymentImportPr
   const rawHeaders = mapping.rawMatrix[0] || [];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Payment Import</h1>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Import historic receipts and bank transfers with matching charge allocations.
-        </p>
-      </div>
-
+    <WorkspacePageShell
+      tone="finance"
+      title="Payment Import"
+      description="Import historic receipts and bank transfers with matching charge allocations."
+    >
+      <OperationalQueryState phase="ready">
       <Card className="p-6 space-y-5">
         <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border p-8 text-center hover:border-primary/50 transition-colors bg-muted/20">
           <div className="p-3 rounded-full bg-primary/10 text-primary mb-3">
@@ -193,6 +192,7 @@ export function PaymentImport({ organizationId, currentUserId }: PaymentImportPr
           </div>
         )}
       </Card>
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

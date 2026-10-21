@@ -6,6 +6,7 @@ import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/badge";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 import { hoaManagementService, type HoaAssociation, type HoaViolation, type HoaAssessment } from "../../../lib/hoa-management.service";
 
 const money = (minor = 0, currency = "GHS") =>
@@ -90,27 +91,29 @@ export function HoaManagement({ organizationId }: { organizationId: string }) {
 
   const selected = associations.find((a) => a.id === selectedId);
 
+  const queryPhase = loading ? "loading" : "ready";
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">HOA & Association Management</h1>
-        <p className="text-sm text-muted-foreground">Violations, assessments, dues, and board operations.</p>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {(["associations", "violations", "assessments"] as const).map((t) => (
-          <Button key={t} size="sm" variant={tab === t ? "default" : "outline"} onClick={() => setTab(t)}>
-            {t.charAt(0).toUpperCase() + t.slice(1)}
-          </Button>
-        ))}
-        {associations.length > 0 && (
-          <NativeSelectControl className="ml-auto rounded-lg border px-3 py-2" value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
-            {associations.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-          </NativeSelectControl>
-        )}
-      </div>
-
-      {loading ? <p className="text-muted-foreground">Loading...</p> : null}
+    <WorkspacePageShell
+      tone="finance"
+      title="HOA & Association Management"
+      description="Violations, assessments, dues, and board operations."
+      actions={
+        <div className="flex flex-wrap gap-2">
+          {(["associations", "violations", "assessments"] as const).map((t) => (
+            <Button key={t} size="sm" variant={tab === t ? "default" : "outline"} onClick={() => setTab(t)}>
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </Button>
+          ))}
+          {associations.length > 0 && (
+            <NativeSelectControl className="ml-auto rounded-lg border px-3 py-2" value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
+              {associations.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </NativeSelectControl>
+          )}
+        </div>
+      }
+    >
+      <OperationalQueryState phase={queryPhase}>
 
       {tab === "associations" && (
         <div className="grid gap-6 lg:grid-cols-2">
@@ -177,6 +180,7 @@ export function HoaManagement({ organizationId }: { organizationId: string }) {
           <p className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3 w-3" /> Board portal links available under Stakeholder Portals.</p>
         </Card>
       )}
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

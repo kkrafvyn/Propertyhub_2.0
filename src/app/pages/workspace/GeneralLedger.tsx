@@ -2,7 +2,6 @@ import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   AlertCircle,
-  Calculator,
   CheckCircle2,
   CalendarClock,
   Loader2,
@@ -22,6 +21,10 @@ import {
   isClosedPeriodError,
 } from "../../../lib/general-ledger.service";
 import { estateReportingService } from "../../../lib/estate-reporting.service";
+import {
+  OperationalQueryState,
+  WorkspacePageShell,
+} from "../../components/ux";
 
 type JournalLine = {
   accountId: string;
@@ -53,6 +56,7 @@ export function GeneralLedger({ organizationId }: { organizationId?: string }) {
     "accounts"
   );
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [journals, setJournals] = useState<any[]>([]);
@@ -93,6 +97,7 @@ export function GeneralLedger({ organizationId }: { organizationId?: string }) {
 
     try {
       setLoading(true);
+      setLoadError(null);
       const [coa, journalsData, trialData, periodsData] = await Promise.all([
         generalLedgerService.getChartOfAccounts(organizationId),
         generalLedgerService.getJournalEntries(organizationId),
@@ -103,9 +108,11 @@ export function GeneralLedger({ organizationId }: { organizationId?: string }) {
       setJournals(journalsData || []);
       setTrial(trialData || []);
       setPeriods(periodsData || []);
-    } catch (error) {
-      console.error(error);
-      toast.error("Unable to load ledger data.");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unable to load ledger data.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -306,14 +313,11 @@ export function GeneralLedger({ organizationId }: { organizationId?: string }) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-20 text-muted-foreground">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Loading ledger...
-      </div>
-    );
-  }
+  const queryPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : "ready";
 
   const desktopFallback = (
     <div className="rounded-2xl border border-amber-500/30 bg-amber-950/20 p-6 text-sm text-amber-200">
@@ -329,19 +333,11 @@ export function GeneralLedger({ organizationId }: { organizationId?: string }) {
 
   return (
     <DesktopOnlyGate fallback={desktopFallback}>
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Calculator className="h-6 w-6 text-primary" />
-          <h1 className="text-3xl font-semibold">General Ledger</h1>
-        </div>
-        <p className="max-w-3xl text-muted-foreground">
-          Double-entry accounting with chart of accounts, journal control, period
-          locking, and a live trial balance. Once a period is closed, no entries can
-          be posted into it.
-        </p>
-      </div>
-
+    <WorkspacePageShell
+      tone="finance"
+      title="General Ledger"
+      description="Double-entry accounting with chart of accounts, journal control, period locking, and a live trial balance. Once a period is closed, no entries can be posted into it."
+      actions={
       <div className="flex flex-wrap gap-2">
         {(["accounts", "journals", "periods", "trial", "reports"] as const).map((key) => (
           <Button
@@ -355,7 +351,19 @@ export function GeneralLedger({ organizationId }: { organizationId?: string }) {
           </Button>
         ))}
       </div>
-
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+        loadingFallback={
+          <div className="flex justify-center py-20 text-muted-foreground">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Loading ledger...
+          </div>
+        }
+      >
       {tab === "accounts" && (
         <>
           <Card className="p-6">
@@ -792,7 +800,8 @@ export function GeneralLedger({ organizationId }: { organizationId?: string }) {
           </Card>
         </div>
       )}
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
     </DesktopOnlyGate>
   );
 }

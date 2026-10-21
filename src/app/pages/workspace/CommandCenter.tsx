@@ -4,8 +4,6 @@ import {
   Building2,
   CheckCircle2,
   CircleDollarSign,
-  LayoutDashboard,
-  Loader2,
   RefreshCw,
   Wrench,
 } from "lucide-react";
@@ -20,6 +18,10 @@ import {
   type ManagedEstate,
 } from "../../../lib/estate-operations.service";
 import { summarizeEstateLedger, type EstateChargeRow } from "../../../lib/estate-ledger";
+import {
+  OperationalQueryState,
+  WorkspacePageShell,
+} from "../../components/ux";
 
 const money = (value = 0, currency = "GHS") =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency }).format(value / 100);
@@ -56,6 +58,7 @@ function Metric({ icon: Icon, label, value, sublabel, color = "primary" }: Metri
 
 export function CommandCenter({ organizationId }: { organizationId: string }) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [units, setUnits] = useState<EstateUnit[]>([]);
@@ -67,6 +70,7 @@ export function CommandCenter({ organizationId }: { organizationId: string }) {
     try {
       if (isManual) setRefreshing(true);
       else setLoading(true);
+      setLoadError(null);
 
       const es = await estateOperationsService.getEstates(organizationId);
       const ids = es.map((x) => x.id);
@@ -81,6 +85,10 @@ export function CommandCenter({ organizationId }: { organizationId: string }) {
       setCharges(c);
       setIssues(i);
       setOrders(o);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load command center data";
+      setLoadError(message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -97,25 +105,13 @@ export function CommandCenter({ organizationId }: { organizationId: string }) {
   const vacant = units.filter((x) => !x.status || x.status !== "active").length;
   const currency = estates[0]?.currency || "GHS";
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="h-10 w-48 bg-muted animate-pulse rounded-lg" />
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="p-5 space-y-3">
-              <div className="h-4 w-24 bg-muted animate-pulse rounded" />
-              <div className="h-8 w-32 bg-muted animate-pulse rounded" />
-            </Card>
-          ))}
-        </div>
-        <div className="grid gap-6 xl:grid-cols-2">
-          <div className="p-6 h-48 rounded-xl border border-border bg-muted/40 animate-pulse" />
-          <div className="p-6 h-48 rounded-xl border border-border bg-muted/40 animate-pulse" />
-        </div>
-      </div>
-    );
-  }
+  const queryPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : estates.length === 0
+        ? "empty"
+        : "ready";
 
   const risks: Array<{ label: string; severity: "critical" | "warning" | "info" }> = [
     ...(ledger.overdueMinor > 0
@@ -133,41 +129,35 @@ export function CommandCenter({ organizationId }: { organizationId: string }) {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-primary/10 text-primary">
-            <LayoutDashboard className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight text-foreground">Command Center</h1>
-              <Badge variant="outline" className="text-xs border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5">
-                Live Monitoring
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Real-time portfolio overview, operational health, arrears tracking, and maintenance dispatch.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void loadData(true)}
-            disabled={refreshing}
-            className="gap-1.5 text-xs"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-        </div>
-      </div>
-
-      {/* KPI Strip */}
+    <WorkspacePageShell
+      title="Command Center"
+      description="Real-time portfolio overview, operational health, arrears tracking, and maintenance dispatch."
+      badge={
+        <Badge variant="outline" className="text-xs border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5">
+          Live Monitoring
+        </Badge>
+      }
+      actions={
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void loadData(true)}
+          disabled={refreshing}
+          className="gap-1.5 text-xs"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadData()}
+        emptyTitle="No estates in this workspace"
+        emptyDescription="Add managed estates to see portfolio KPIs, risks, and maintenance queues here."
+        emptyIcon={Building2}
+      >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Metric
           icon={Building2}
@@ -313,7 +303,8 @@ export function CommandCenter({ organizationId }: { organizationId: string }) {
           </div>
         </Card>
       )}
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }
 

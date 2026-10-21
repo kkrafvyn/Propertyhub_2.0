@@ -29,6 +29,7 @@ import {
 import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux'
 import { Input } from '../../components/ui/Input'
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -272,17 +273,21 @@ export function FraudAlerts({ organizationId }: { organizationId: string }) {
   const [severityFilter, setSeverityFilter] = useState<typeof SEVERITY_FILTERS[number]>('all')
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
 
   useEffect(() => { void loadAlerts() }, [organizationId])
 
   async function loadAlerts() {
     setLoading(true)
+    setLoadError(null)
     try {
       const data = await enhancedFraudDetectionService.getFraudAlerts(organizationId, undefined, 200)
       setAlerts(data ?? [])
     } catch (e) {
       console.error(e)
+      const message = 'Unable to load fraud alerts.'
+      setLoadError(message)
     } finally {
       setLoading(false)
     }
@@ -334,23 +339,20 @@ export function FraudAlerts({ organizationId }: { organizationId: string }) {
   const resolved = alerts.filter((a) => a.status === 'resolved').length
   const resolvedRate = alerts.length > 0 ? Math.round((resolved / alerts.length) * 100) : 0
 
+  const queryPhase = loadError ? 'error' : loading ? 'loading' : 'ready'
+
   return (
-    <div className="space-y-6">
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-red-500/10">
-              <Shield className="h-5 w-5 text-red-600" />
-            </span>
-            Fraud Detection
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            AI-powered monitoring for duplicate listings, scam patterns &amp; suspicious leads.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={loadAlerts} disabled={loading}>
+    <WorkspacePageShell
+      title="Fraud Detection"
+      description="AI-powered monitoring for duplicate listings, scam patterns and suspicious leads."
+      badge={
+        <span className="p-1.5 rounded-lg bg-red-500/10 inline-flex">
+          <Shield className="h-5 w-5 text-red-600" />
+        </span>
+      }
+      actions={
+        <>
+          <Button variant="outline" size="sm" onClick={() => void loadAlerts()} disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
@@ -361,9 +363,15 @@ export function FraudAlerts({ organizationId }: { organizationId: string }) {
               : <><Zap className="w-4 h-4 mr-1.5" />Run Scan</>
             }
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadAlerts()}
+      >
+    <div className="space-y-6">
       {/* ── KPI strip ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard label="Total Alerts" value={alerts.length} icon={<AlertCircle className="w-5 h-5 text-muted-foreground" />} accent="bg-muted/50" />
@@ -448,5 +456,7 @@ export function FraudAlerts({ organizationId }: { organizationId: string }) {
         </div>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   )
 }

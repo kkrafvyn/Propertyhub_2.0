@@ -1,6 +1,8 @@
 import { Link } from "react-router";
 import type { LucideIcon } from "lucide-react";
 import { CheckCircle2, Circle } from "lucide-react";
+import { useMemo } from "react";
+import { useLocale } from "../../i18n/LocaleContext";
 import { Card } from "../ui/Card";
 
 export type TimelineStep = {
@@ -20,12 +22,12 @@ export type TimelineActivity = {
   icon?: LucideIcon;
 };
 
-function formatRelativeTime(dateString?: string | null) {
+function formatRelativeTime(dateString: string | null | undefined, locale: string) {
   if (!dateString) return "Recently";
 
   const diffMs = new Date(dateString).getTime() - Date.now();
   const diffMinutes = Math.round(diffMs / (1000 * 60));
-  const formatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  const formatter = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
 
   if (Math.abs(diffMinutes) < 60) return formatter.format(diffMinutes, "minute");
 
@@ -36,9 +38,18 @@ function formatRelativeTime(dateString?: string | null) {
   return formatter.format(diffDays, "day");
 }
 
-export function ActivityTimeline({ steps }: { steps: TimelineStep[] }) {
-  return (
-    <Card className="p-6">
+export function ActivityTimeline({
+  steps,
+  embedded = false,
+}: {
+  steps: TimelineStep[];
+  /** When true, omit outer Card (parent supplies app-surface-card chrome). */
+  embedded?: boolean;
+}) {
+  const { locale } = useLocale();
+  const formatTime = useMemo(() => (value?: string | null) => formatRelativeTime(value, locale), [locale]);
+
+  const timeline = (
       <ol className="space-y-4" aria-label="Activity timeline">
         {steps.map((step, index) => {
           const Icon = step.status === "completed" ? CheckCircle2 : Circle;
@@ -63,7 +74,7 @@ export function ActivityTimeline({ steps }: { steps: TimelineStep[] }) {
                 ) : null}
                 {step.timestamp ? (
                   <p className="text-xs text-muted-foreground mt-1">
-                    {formatRelativeTime(step.timestamp)}
+                    {formatTime(step.timestamp)}
                   </p>
                 ) : null}
               </div>
@@ -83,11 +94,16 @@ export function ActivityTimeline({ steps }: { steps: TimelineStep[] }) {
           );
         })}
       </ol>
-    </Card>
   );
+
+  if (embedded) return timeline;
+  return <Card className="p-6">{timeline}</Card>;
 }
 
 export function ActivityFeed({ items }: { items: TimelineActivity[] }) {
+  const { locale } = useLocale();
+  const formatTime = useMemo(() => (value?: string | null) => formatRelativeTime(value, locale), [locale]);
+
   if (items.length === 0) return null;
 
   return (
@@ -102,7 +118,7 @@ export function ActivityFeed({ items }: { items: TimelineActivity[] }) {
             <div className="flex-1">
               <p>{item.message}</p>
               <p className="text-sm text-muted-foreground mt-1">
-                {formatRelativeTime(item.createdAt)}
+                {formatTime(item.createdAt)}
               </p>
             </div>
           </div>

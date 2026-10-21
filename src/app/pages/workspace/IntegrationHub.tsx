@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { RefreshCw, CheckCircle2, TrendingUp, Zap, Lock, Building2, Search, Globe } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -7,8 +8,8 @@ import { mlsIntegrationService } from '../../../lib/mls-integration.service';
 import { leadAggregationService } from '../../../lib/lead-aggregation.service';
 import { PlatformIntegrationsPanel } from '../../components/workspace/PlatformIntegrationsPanel';
 import { DeveloperApiStudio } from '../../components/workspace/DeveloperApiStudio';
-import { LeadManagement } from './LeadManagement';
 import { toast } from 'sonner';
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 
 interface MLSIntegration {
   provider: 'mls' | 'zillow' | 'realtor';
@@ -40,6 +41,7 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
   const [syncHistory, setSyncHistory] = useState<SyncJob[]>([]);
   const [leadMetrics, setLeadMetrics] = useState<LeadMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,6 +51,7 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
   const loadIntegrations = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       
       // Fetch integrations and sync history
       const statuses = await mlsIntegrationService.getProviderStatuses(organizationId);
@@ -82,6 +85,8 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
       }
     } catch (error) {
       console.error('Failed to load integrations:', error);
+      setLoadError('Failed to load integrations.');
+      toast.error('Failed to load integrations.');
     } finally {
       setLoading(false);
     }
@@ -101,28 +106,27 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const queryPhase = loadError ? 'error' : loading ? 'loading' : 'ready';
 
   return (
+    <WorkspacePageShell
+      title="Integration Hub"
+      description="Connect to MLS, Zillow, and Realtor.com to sync listings. Provider keys are managed securely on the server."
+      actions={
+        <Link
+          to={`${workspaceBasePath}/leads`}
+          className="inline-flex items-center justify-center rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-surface-subtle"
+        >
+          Open BaytMiftah leads
+        </Link>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadIntegrations()}
+      >
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-start gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-ink">Integration Hub</h1>
-          <p className="text-ink-secondary mt-1">
-            Connect to MLS, Zillow, and Realtor.com to sync listings and aggregate leads
-          </p>
-          <p className="mt-2 text-sm text-ink-muted">
-            Provider keys are managed securely on the server and are never entered or returned in the browser.
-          </p>
-        </div>
-      </div>
 
       <PlatformIntegrationsPanel />
 
@@ -269,9 +273,24 @@ export function IntegrationHub({ organizationId, workspaceBasePath }: {
         </div>
       </Card>
 
-      <LeadManagement organizationId={organizationId} />
+      <Card className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-ink">MLS & aggregated leads</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            External feed leads are synced above. Active deal-case pipelines are managed in workspace Leads.
+          </p>
+        </div>
+        <Link
+          to={`${workspaceBasePath}/leads`}
+          className="inline-flex items-center justify-center rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-surface-subtle"
+        >
+          Open workspace leads
+        </Link>
+      </Card>
 
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }
 

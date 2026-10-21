@@ -45,10 +45,7 @@ export const consumerRoutes: RouteObject[] = [
   },
   {
     path: 'marketing/classic',
-    lazy: async () => {
-      const { MarketingHomeLegacy } = await import('../pages/marketing/MarketingHomeLegacy');
-      return { Component: MarketingHomeLegacy };
-    },
+    element: <Navigate to="/marketing" replace />,
   },
   {
     path: 'search',
@@ -256,6 +253,7 @@ export const consumerRoutes: RouteObject[] = [
   },
 
   // ── User Dashboard ──────────────────────────────────────────────
+  // Standalone /app routes use ConsumerHubChrome + PageLayout (not UserDashboard outlet).
   {
     path: 'app/security',
     lazy: async () => {

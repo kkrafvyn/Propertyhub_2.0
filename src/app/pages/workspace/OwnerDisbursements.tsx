@@ -31,9 +31,15 @@ import {
 } from "../../../lib/owner-disbursement.service";
 import { useAuth } from "../../context/AuthContext";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
+import {
   EmptyState,
-  ErrorState,
   ListSkeleton,
+  OperationalQueryState,
   WorkspacePageShell,
 } from "../../components/ux";
 
@@ -121,22 +127,21 @@ function ConfirmDisburse({
   loading: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-      <Card className="w-full max-w-sm p-6 shadow-2xl space-y-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-xl bg-amber-500/10">
-            <AlertTriangle className="w-5 h-5 text-amber-600" />
+    <Dialog open onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="max-w-sm gap-4">
+        <DialogHeader className="text-left space-y-0">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-amber-500/10">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+            </div>
+            <div className="flex-1 pr-6">
+              <DialogTitle className="text-base">Confirm Disbursement</DialogTitle>
+              <p className="text-sm text-muted-foreground mt-0.5 font-normal">
+                You are about to release funds to {statement.ownerName}.
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-bold text-base">Confirm Disbursement</h3>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              You are about to release funds to {statement.ownerName}.
-            </p>
-          </div>
-          <button className="ml-auto text-muted-foreground hover:text-foreground" onClick={onCancel}>
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        </DialogHeader>
 
         <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2 text-sm">
           <div className="flex justify-between">
@@ -158,14 +163,16 @@ function ConfirmDisburse({
         </div>
 
         <div className="flex gap-2 pt-1">
-          <Button variant="outline" className="flex-1" onClick={onCancel}>Cancel</Button>
+          <Button variant="outline" className="flex-1" onClick={onCancel}>
+            Cancel
+          </Button>
           <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={onConfirm} disabled={loading}>
             {loading ? <RefreshCw className="w-4 h-4 mr-1.5 animate-spin" /> : <Send className="w-4 h-4 mr-1.5" />}
             {loading ? "Sending…" : "Confirm & Send"}
           </Button>
         </div>
-      </Card>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -321,24 +328,11 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
     </Button>
   );
 
-  if (!loading && loadError && owners.length === 0 && statements.length === 0) {
-    return (
-      <WorkspacePageShell
-        tone="finance"
-        title="Owner Payouts & Rent Waterfall"
-        description="Execute net rental income payouts via Bank Wire or Mobile Money."
-        badge={
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-            <Banknote className="h-3.5 w-3.5" aria-hidden="true" />
-            Owner disbursements
-          </span>
-        }
-        actions={refreshAction}
-      >
-        <ErrorState message={loadError} onRetry={() => void loadData()} />
-      </WorkspacePageShell>
-    );
-  }
+  const queryPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : "ready";
 
   return (
     <WorkspacePageShell
@@ -363,12 +357,12 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
         />
       )}
 
-      {loadError && !loading ? (
-        <div role="status" className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-ink-secondary">
-          {loadError}
-        </div>
-      ) : null}
-
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void loadData()}
+        loadingFallback={<ListSkeleton rows={4} />}
+      >
       {/* ── KPI strip ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card className="app-surface-card p-4 space-y-1">
@@ -563,6 +557,7 @@ export function OwnerDisbursements({ organizationId }: { organizationId?: string
           )}
         </div>
       )}
+      </OperationalQueryState>
     </WorkspacePageShell>
   );
 }

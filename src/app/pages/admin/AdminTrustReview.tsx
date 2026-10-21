@@ -33,6 +33,8 @@ import {
   type TrustRequestStatus,
 } from "../../../lib/trust-verification.service";
 import { AdminActionDialog } from "../../components/admin/AdminActionDialog";
+import { OperationalQueryState } from "../../components/ux";
+import { PageMeta } from "../../components/baytmiftah/PageMeta";
 
 function formatLabel(value?: string | null) {
   if (!value) return "Unknown";
@@ -264,21 +266,23 @@ export function AdminTrustReview() {
     return kycQueue;
   }, [kycQueue, kycFilter]);
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[320px] flex-col items-center justify-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border/60 bg-card shadow-sm">
-          <Fingerprint className="h-7 w-7 animate-pulse text-primary" />
-        </div>
-        <div className="space-y-1 text-center">
-          <p className="text-sm font-semibold text-foreground">Loading trust review queues…</p>
-          <p className="text-xs text-muted-foreground">Fetching KYC submissions and agency requests</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
+    <>
+      <PageMeta title="Trust review" description="Review KYC submissions and agency trust requests." />
+      <OperationalQueryState
+        phase={loading ? "loading" : "ready"}
+        loadingFallback={
+          <div className="flex min-h-[320px] flex-col items-center justify-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border/60 bg-card shadow-sm">
+              <Fingerprint className="h-7 w-7 animate-pulse text-primary" />
+            </div>
+            <div className="space-y-1 text-center">
+              <p className="text-sm font-semibold text-foreground">Loading trust review queues…</p>
+              <p className="text-xs text-muted-foreground">Fetching KYC submissions and agency requests</p>
+            </div>
+          </div>
+        }
+      >
     <div className="space-y-6">
       {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -784,5 +788,7 @@ export function AdminTrustReview() {
         </div>
       )}
     </div>
+      </OperationalQueryState>
+    </>
   );
 }

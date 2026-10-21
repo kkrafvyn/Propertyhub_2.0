@@ -24,11 +24,11 @@ export function PageLayout({
 
   const content = sidebar ? (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px]  gap-8">
-      <main>{children}</main>
+      <main id="main-content" tabIndex={-1}>{children}</main>
       <aside className="space-y-6 lg:sticky lg:top-28 lg:self-start">{sidebar}</aside>
     </div>
   ) : (
-    <main>{children}</main>
+    <main id="main-content" tabIndex={-1}>{children}</main>
   );
 
   if (variant === "consumer") {

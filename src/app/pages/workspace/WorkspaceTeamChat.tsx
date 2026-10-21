@@ -9,6 +9,7 @@ import { workspaceChatService, type WorkspaceChannel, type MessageCursor } from 
 import { organizationService } from "../../../lib/organization.service";
 import { canWorkspace } from "../../../lib/workspace-permissions";
 import type { MemberRole } from "../../../lib/workspace";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 type ChatMessage = {
   id: string;
@@ -41,6 +42,7 @@ export function WorkspaceTeamChat({
 }) {
   const canManage = canWorkspace(currentRole || "agent", "team:manage");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [channels, setChannels] = useState<WorkspaceChannel[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -122,7 +124,11 @@ export function WorkspaceTeamChat({
     let active = true;
     setLoading(true);
     void loadSidebar()
-      .catch((error) => toast.error(error.message || "Failed to load team chat"))
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Failed to load team chat";
+        setLoadError(message);
+        toast.error(message);
+      })
       .finally(() => {
         if (active) setLoading(false);
       });
@@ -234,40 +240,41 @@ export function WorkspaceTeamChat({
     }
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-4 animate-pulse">
-        <div className="h-10 w-56 bg-muted rounded-xl" />
-        <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4 h-[500px]">
-          <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-3">
-            {[1,2,3,4,5].map(i => <div key={i} className="h-8 bg-muted rounded-lg" />)}
-          </div>
-          <div className="rounded-xl border border-border bg-muted/30 p-4 flex flex-col gap-3">
-            {[1,2,3].map(i => <div key={i} className={`h-12 bg-muted rounded-xl ${i % 2 === 0 ? 'ml-auto w-2/3' : 'w-2/3'}`} />)}
-            <div className="mt-auto h-10 bg-muted rounded-xl" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   return (
+    <WorkspacePageShell
+      title="Team Chat"
+      description={`${channels.length} ${channels.length === 1 ? "channel" : "channels"} · ${members.length} ${members.length === 1 ? "member" : "members"}`}
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => {
+          setLoadError(null);
+          setLoading(true);
+          void loadSidebar().finally(() => setLoading(false));
+        }}
+        loadingFallback={
+          <div className="space-y-4 animate-pulse">
+            <div className="h-10 w-56 bg-muted rounded-xl" />
+            <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4 h-[500px]">
+              <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="h-8 bg-muted rounded-lg" />
+                ))}
+              </div>
+              <div className="rounded-xl border border-border bg-muted/30 p-4 flex flex-col gap-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className={`h-12 bg-muted rounded-xl ${i % 2 === 0 ? "ml-auto w-2/3" : "w-2/3"}`} />
+                ))}
+                <div className="mt-auto h-10 bg-muted rounded-xl" />
+              </div>
+            </div>
+          </div>
+        }
+      >
     <div className="space-y-4">
-      {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-primary/10 text-primary">
-            <MessageSquare className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">Team Chat</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {channels.length} {channels.length === 1 ? 'channel' : 'channels'} · {members.length} {members.length === 1 ? 'member' : 'members'}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Chat layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4 h-[calc(100vh-13rem)] min-h-[500px]">
         {/* ── Sidebar ── */}
@@ -535,5 +542,7 @@ export function WorkspaceTeamChat({
         </Card>
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

@@ -10,6 +10,7 @@ import { estateOperationsService, type EstateCollectionAction, type EstatePaymen
 import { getChargeOutstandingMinor, summarizeEstateLedger, type EstateChargeRow } from "../../../lib/estate-ledger";
 import { exportEstateReceivables } from "../../../lib/estate-accounting-export.service";
 import { collectionsQueueService, type CollectionQueueItem } from "../../../lib/collections-queue.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface EstateFinanceProps { organizationId: string; currentUserId: string; }
 
@@ -18,6 +19,7 @@ const date = () => new Date().toISOString().slice(0, 10);
 
 export function EstateFinance({ organizationId, currentUserId }: EstateFinanceProps) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [units, setUnits] = useState<EstateUnit[]>([]);
@@ -47,6 +49,7 @@ export function EstateFinance({ organizationId, currentUserId }: EstateFinancePr
   const refresh = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const estateRows = await estateOperationsService.getEstates(organizationId);
       const estateIds = estateRows.map((item) => item.id);
       const unitRows = await estateOperationsService.getUnits(estateIds);
@@ -62,7 +65,13 @@ export function EstateFinance({ organizationId, currentUserId }: EstateFinancePr
       setCollectionUnitId((value) => value || unitRows[0]?.id || "");
       setSelectedReconciliationId((value) => value || reconciliationRows[0]?.id || "");
     } catch (error) {
-      console.error(error); toast.error("Unable to load estate finance. Apply the latest database migration and try again.");
+      console.error(error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to load estate finance. Apply the latest database migration and try again.";
+      setLoadError(message);
+      toast.error(message);
     } finally { setLoading(false); }
   };
   useEffect(() => { void refresh(); }, [organizationId]);
@@ -115,9 +124,39 @@ export function EstateFinance({ organizationId, currentUserId }: EstateFinancePr
 
   const collectionQueuePanel = selectedEstate ? <Card className="p-6"><div className="flex items-center justify-between gap-3"><div><h2 className="text-lg font-semibold">Collections queue</h2><p className="mt-1 text-sm text-muted-foreground">Prioritized by balance, age, and follow-up history.</p></div><Badge variant="outline">{estateQueue.length} cases</Badge></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{estateQueue.slice(0, 12).map((item) => <div key={item.unitId} className="rounded-lg border border-border p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-medium">{unitName(item.unitId)}</p><p className="text-xs text-muted-foreground">{item.agingBucket.replace("_", "-")} · {item.daysOverdue} days overdue</p></div><Badge variant={item.priorityScore >= 70 ? "destructive" : "outline"}>P{item.priorityScore}</Badge></div><p className="mt-3 text-lg font-semibold">{money(item.totalOutstandingMinor, selectedEstate.currency)}</p><p className="text-xs text-muted-foreground">Status: {item.status}</p></div>)}{estateQueue.length === 0 && <p className="text-sm text-muted-foreground">No outstanding cases in this estate.</p>}</div></Card> : null;
 
-  if (loading) return <div className="flex items-center justify-center py-20 text-muted-foreground"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading estate finance...</div>;
-  return <div className="space-y-6">{collectionQueuePanel}
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><h1 className="text-3xl font-semibold">Estate Finance</h1><p className="mt-2 text-muted-foreground">Run property-level billing, receivables, payment plans, bank matching, and collections from one finance record.</p></div><Button variant="outline" onClick={() => exportEstateReceivables(charges.filter((charge) => estateUnits.some((unit) => unit.id === charge.unit_id)), unitName)}>Export receivables CSV</Button></div>
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
+
+  return (
+    <WorkspacePageShell
+      tone="finance"
+      title="Estate Finance"
+      description="Run property-level billing, receivables, payment plans, bank matching, and collections from one finance record."
+      actions={
+        <Button
+          variant="outline"
+          onClick={() =>
+            exportEstateReceivables(
+              charges.filter((charge) => estateUnits.some((unit) => unit.id === charge.unit_id)),
+              unitName,
+            )
+          }
+        >
+          Export receivables CSV
+        </Button>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void refresh()}
+        loadingFallback={
+          <div className="flex items-center justify-center py-20 text-muted-foreground">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Loading estate finance...
+          </div>
+        }
+      >
+    <div className="space-y-6">{collectionQueuePanel}
     <div className="flex flex-wrap gap-3"><NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={estateId} onChange={(event) => setEstateId(event.target.value)}><option value="">Select estate</option>{estates.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</NativeSelectControl><Badge variant="outline">{estateUnits.length} units</Badge></div>
     {!selectedEstate ? <Card className="p-8 text-center text-muted-foreground">Create an estate and unit in Estate Operations first, then finance it here.</Card> : <>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"><Card className="p-4"><p className="text-sm text-muted-foreground">Outstanding</p><p className="mt-1 text-2xl font-semibold">{money(ledger.totalOutstandingMinor, selectedEstate.currency)}</p></Card><Card className="p-4"><p className="text-sm text-muted-foreground">Overdue</p><p className="mt-1 text-2xl font-semibold text-destructive">{money(ledger.overdueMinor, selectedEstate.currency)}</p></Card><Card className="p-4"><p className="text-sm text-muted-foreground">Active plans</p><p className="mt-1 text-2xl font-semibold">{estatePlans.filter((plan) => plan.status === "active").length}</p></Card><Card className="p-4"><p className="text-sm text-muted-foreground">Unmatched statement lines</p><p className="mt-1 text-2xl font-semibold">{estateReconciliations.flatMap((item) => item.lines || []).filter((line) => !line.matched).length}</p></Card></div>
@@ -127,5 +166,8 @@ export function EstateFinance({ organizationId, currentUserId }: EstateFinancePr
       </div>
       <Card className="p-6"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex items-center gap-2"><BellRing className="h-5 w-5 text-primary" /><h2 className="text-lg font-semibold">Arrears & collections</h2></div><p className="mt-1 text-sm text-muted-foreground">Record every reminder and follow-up against the unit’s financial history.</p></div><div className="flex flex-wrap gap-2"><NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={collectionChannel || ""} onChange={(event) => setCollectionChannel(event.target.value as EstateCollectionAction["channel"])}><option value="sms">SMS</option><option value="email">Email</option><option value="whatsapp">WhatsApp</option><option value="phone">Phone</option><option value="in_app">In-app</option></NativeSelectControl><Input className="w-64" placeholder="Collection note / message" value={collectionNote} onChange={(event) => setCollectionNote(event.target.value)} /></div></div><div className="mt-5 space-y-2">{arrears.slice(0, 12).map((charge) => <div key={charge.id} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">{unitName(charge.unit_id)} · {money(getChargeOutstandingMinor(charge), charge.currency || selectedEstate.currency)}</p><p className="text-sm text-muted-foreground">Due {new Date(charge.due_date).toLocaleDateString()} · {charge.description || charge.type || "Charge"}</p></div><div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => openStatement(charge.unit_id)}>Statement</Button><Button size="sm" variant="outline" onClick={() => void logCollection(charge)} disabled={submitting}>Log reminder</Button></div></div>)}{arrears.length === 0 && <div className="py-6 text-center text-muted-foreground"><FileText className="mx-auto mb-2 h-5 w-5" />No outstanding estate charges.</div>}</div></Card>
     </>}
-  </div>;
+  </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
+  );
 }

@@ -11,6 +11,7 @@ import { getChargeOutstandingMinor, summarizeEstateLedger, type EstateChargeRow 
 import { vendorService } from "../../../lib/vendor.service";
 import { stakeholderPortalService } from "../../../lib/stakeholder-portal.service";
 import { useAuth } from "../../context/AuthContext";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 type Portal = "resident" | "owner" | "vendor" | "executive";
 const portalCopy: Record<Portal, { title: string; description: string; icon: typeof UserRound }> = {
@@ -23,13 +24,45 @@ const money = (amount = 0, currency = "GHS") => new Intl.NumberFormat("en-GH", {
 
 export function StakeholderPortals({ organizationId }: { organizationId: string }) {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true); const [portal, setPortal] = useState<Portal>("resident"); const [estateId, setEstateId] = useState("");
+  const [loading, setLoading] = useState(true); const [loadError, setLoadError] = useState<string | null>(null); const [portal, setPortal] = useState<Portal>("resident"); const [estateId, setEstateId] = useState("");
   const [estates, setEstates] = useState<ManagedEstate[]>([]); const [units, setUnits] = useState<EstateUnit[]>([]); const [occupancies, setOccupancies] = useState<EstateOccupancy[]>([]); const [charges, setCharges] = useState<EstateChargeRow[]>([]); const [issues, setIssues] = useState<EstateIssue[]>([]); const [orders, setOrders] = useState<EstateWorkOrder[]>([]); const [plans, setPlans] = useState<EstatePaymentPlan[]>([]); const [vendors, setVendors] = useState<any[]>([]);
   const [portalLinks, setPortalLinks] = useState<any[]>([]);
   const [linkForm, setLinkForm] = useState({ contactName: "", contactEmail: "", portalType: "owner" as const });
-  useEffect(() => { void (async () => { try { const estateRows = await estateOperationsService.getEstates(organizationId); const estateIds = estateRows.map((row) => row.id); const unitRows = await estateOperationsService.getUnits(estateIds); const [occupancyRows, chargeRows, issueRows, orderRows, planRows, vendorRows, accessRows] = await Promise.all([estateOperationsService.getOccupancies(unitRows.map((row) => row.id)), estateOperationsService.getCharges(unitRows.map((row) => row.id)), estateOperationsService.getIssues(estateIds), estateOperationsService.getWorkOrders(estateIds), estateOperationsService.getPaymentPlans(unitRows.map((row) => row.id)), vendorService.getVerifiedVendors("maintenance", 100).catch(() => []), stakeholderPortalService.listAccess(organizationId).catch(() => [])]); setEstates(estateRows); setUnits(unitRows); setOccupancies(occupancyRows); setCharges(chargeRows); setIssues(issueRows); setOrders(orderRows); setPlans(planRows); setVendors(vendorRows || []); setPortalLinks(accessRows || []); setEstateId(estateRows[0]?.id || ""); } finally { setLoading(false); } })(); }, [organizationId]);
+  const load = async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const estateRows = await estateOperationsService.getEstates(organizationId);
+      const estateIds = estateRows.map((row) => row.id);
+      const unitRows = await estateOperationsService.getUnits(estateIds);
+      const [occupancyRows, chargeRows, issueRows, orderRows, planRows, vendorRows, accessRows] = await Promise.all([
+        estateOperationsService.getOccupancies(unitRows.map((row) => row.id)),
+        estateOperationsService.getCharges(unitRows.map((row) => row.id)),
+        estateOperationsService.getIssues(estateIds),
+        estateOperationsService.getWorkOrders(estateIds),
+        estateOperationsService.getPaymentPlans(unitRows.map((row) => row.id)),
+        vendorService.getVerifiedVendors("maintenance", 100).catch(() => []),
+        stakeholderPortalService.listAccess(organizationId).catch(() => []),
+      ]);
+      setEstates(estateRows);
+      setUnits(unitRows);
+      setOccupancies(occupancyRows);
+      setCharges(chargeRows);
+      setIssues(issueRows);
+      setOrders(orderRows);
+      setPlans(planRows);
+      setVendors(vendorRows || []);
+      setPortalLinks(accessRows || []);
+      setEstateId(estateRows[0]?.id || "");
+    } catch {
+      setLoadError("Unable to load portal data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => { void load(); }, [organizationId]);
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
   const estate = estates.find((item) => item.id === estateId); const estateUnits = useMemo(() => units.filter((item) => item.estate_id === estateId), [units, estateId]); const unitIds = estateUnits.map((item) => item.id); const ledger = useMemo(() => summarizeEstateLedger(charges.filter((item) => unitIds.includes(item.unit_id))), [charges, estateId]); const estateIssues = issues.filter((item) => item.estate_id === estateId); const estateOrders = orders.filter((item) => item.estate_id === estateId); const activeOccupancies = occupancies.filter((item) => unitIds.includes(item.unit_id) && !item.end_date); const currency = estate?.currency || "GHS"; const unitLabel = (id: string) => units.find((unit) => unit.id === id)?.identifier || "Unit"; const issueForOrder = (order: EstateWorkOrder) => issues.find((issue) => issue.id === order.issue_id); const activePlans = plans.filter((plan) => unitIds.includes(plan.unit_id) && plan.status === "active");
-  if (loading) return <div className="flex justify-center py-20 text-muted-foreground"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading portal data...</div>;
   const PortalIcon = portalCopy[portal].icon;
 
   const handleCreateLink = async (e: React.FormEvent) => {
@@ -58,8 +91,14 @@ export function StakeholderPortals({ organizationId }: { organizationId: string 
     toast.success("Portal link copied");
   };
 
-  return <div className="space-y-6"><div><p className="text-sm font-medium text-primary">BaytMiftah ERP</p><h1 className="text-3xl font-semibold">Stakeholder Portals</h1><p className="mt-2 text-muted-foreground">Role-specific views built from the same estate records—no disconnected spreadsheets or duplicate customer data.</p></div>
-
+  return (
+    <WorkspacePageShell
+      title="Stakeholder Portals"
+      description="Role-specific views built from the same estate records—no disconnected spreadsheets or duplicate customer data."
+      meta={<p className="text-sm font-medium text-primary">BaytMiftah ERP</p>}
+    >
+      <OperationalQueryState phase={queryPhase} errorMessage={loadError || undefined} onRetry={() => void load()}>
+  <div className="space-y-6">
   <Card className="p-6 space-y-4">
     <h2 className="font-semibold flex items-center gap-2"><Link2 className="h-4 w-4" /> Branded portal links</h2>
     <form onSubmit={handleCreateLink} className="flex flex-wrap gap-2 items-end">
@@ -83,7 +122,10 @@ export function StakeholderPortals({ organizationId }: { organizationId: string 
         ))}
       </div>
     )}
-  </Card><div className="flex flex-wrap gap-2">{(Object.keys(portalCopy) as Portal[]).map((item) => <Button key={item} size="sm" variant={portal === item ? "default" : "outline"} onClick={() => setPortal(item)}>{portalCopy[item].title.replace(" portal", "")}</Button>)}<NativeSelectControl className="ml-auto rounded-lg border border-border bg-input-background px-3 py-2" value={estateId} onChange={(event) => setEstateId(event.target.value)}>{estates.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</NativeSelectControl></div><Card className="flex gap-3 p-5"><PortalIcon className="mt-0.5 h-6 w-6 text-primary" /><div><h2 className="font-semibold">{portalCopy[portal].title}</h2><p className="mt-1 text-sm text-muted-foreground">{portalCopy[portal].description}</p></div></Card>{portal === "resident" && <ResidentView occupancies={activeOccupancies} charges={charges} issues={estateIssues} plans={activePlans} currency={currency} unitLabel={unitLabel} />}{portal === "owner" && <OwnerView units={estateUnits} occupancies={activeOccupancies} ledger={ledger} orders={estateOrders} currency={currency} unitLabel={unitLabel} />}{portal === "vendor" && <VendorView orders={estateOrders} vendors={vendors} currency={currency} issueForOrder={issueForOrder} />}{portal === "executive" && <ExecutiveView units={estateUnits} occupancies={activeOccupancies} ledger={ledger} issues={estateIssues} orders={estateOrders} currency={currency} />}</div>;
+  </Card><div className="flex flex-wrap gap-2">{(Object.keys(portalCopy) as Portal[]).map((item) => <Button key={item} size="sm" variant={portal === item ? "default" : "outline"} onClick={() => setPortal(item)}>{portalCopy[item].title.replace(" portal", "")}</Button>)}<NativeSelectControl className="ml-auto rounded-lg border border-border bg-input-background px-3 py-2" value={estateId} onChange={(event) => setEstateId(event.target.value)}>{estates.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</NativeSelectControl></div><Card className="flex gap-3 p-5"><PortalIcon className="mt-0.5 h-6 w-6 text-primary" /><div><h2 className="font-semibold">{portalCopy[portal].title}</h2><p className="mt-1 text-sm text-muted-foreground">{portalCopy[portal].description}</p></div></Card>{portal === "resident" && <ResidentView occupancies={activeOccupancies} charges={charges} issues={estateIssues} plans={activePlans} currency={currency} unitLabel={unitLabel} />}{portal === "owner" && <OwnerView units={estateUnits} occupancies={activeOccupancies} ledger={ledger} orders={estateOrders} currency={currency} unitLabel={unitLabel} />}{portal === "vendor" && <VendorView orders={estateOrders} vendors={vendors} currency={currency} issueForOrder={issueForOrder} />}{portal === "executive" && <ExecutiveView units={estateUnits} occupancies={activeOccupancies} ledger={ledger} issues={estateIssues} orders={estateOrders} currency={currency} />}</div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
+  );
 }
 
 function ResidentView({ occupancies, charges, issues, plans, currency, unitLabel }: { occupancies: EstateOccupancy[]; charges: EstateChargeRow[]; issues: EstateIssue[]; plans: EstatePaymentPlan[]; currency: string; unitLabel: (id: string) => string }) { const residentUnits = occupancies.filter((item) => item.role === "tenant" || item.role === "buyer").map((item) => item.unit_id); const due = charges.filter((item) => residentUnits.includes(item.unit_id)).reduce((total, item) => total + Math.max(0, getChargeOutstandingMinor(item)), 0); return <div className="grid gap-6 xl:grid-cols-2"><Card className="p-6"><h2 className="font-semibold">My home & balance</h2><p className="mt-3 text-3xl font-semibold">{money(due, currency)}</p><p className="text-sm text-muted-foreground">Current balance across your occupied unit(s).</p><div className="mt-5 space-y-2">{occupancies.filter((item) => residentUnits.includes(item.unit_id)).map((item) => <div key={item.id} className="rounded-lg border border-border p-3"><p className="font-medium">{unitLabel(item.unit_id)}</p><p className="text-sm text-muted-foreground capitalize">{item.role} since {item.start_date}</p></div>)}</div></Card><Card className="p-6"><h2 className="font-semibold">Payments & maintenance</h2><div className="mt-4 space-y-2"><p className="text-sm">{plans.filter((plan) => residentUnits.includes(plan.unit_id)).length} active payment plan(s)</p>{issues.filter((issue) => issue.unit_id && residentUnits.includes(issue.unit_id)).slice(0, 5).map((issue) => <div key={issue.id} className="rounded-lg border border-border p-3"><p className="font-medium">{issue.title}</p><p className="text-xs capitalize text-muted-foreground">{issue.status.replace(/_/g, " ")} · {issue.priority}</p></div>)}</div></Card></div>; }

@@ -14,6 +14,7 @@ import {
 import { shouldOfferAiAssist } from "../../../lib/import-pipeline";
 import { useImportMapping } from "../../../lib/use-import-mapping";
 import { ImportMappingPanel } from "../../components/workspace/ImportMappingPanel";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface OpeningBalanceImportProps {
   organizationId: string;
@@ -98,14 +99,12 @@ export function OpeningBalanceImport({ organizationId, currentUserId }: OpeningB
   const rawHeaders = mapping.rawMatrix[0] || [];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Opening Balances Import</h1>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Import pre-existing tenant arrears into the ledger to begin generating accurate statements.
-        </p>
-      </div>
-
+    <WorkspacePageShell
+      tone="finance"
+      title="Opening Balances Import"
+      description="Import pre-existing tenant arrears into the ledger to begin generating accurate statements."
+    >
+      <OperationalQueryState phase="ready">
       <Card className="p-6 space-y-5">
         <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border p-8 text-center hover:border-primary/50 transition-colors bg-muted/20">
           <div className="p-3 rounded-full bg-primary/10 text-primary mb-3">
@@ -194,6 +193,7 @@ export function OpeningBalanceImport({ organizationId, currentUserId }: OpeningB
           </div>
         )}
       </Card>
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

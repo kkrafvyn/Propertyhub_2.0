@@ -24,6 +24,7 @@ import {
   mapListingToMapListing,
   type MarketplaceListingCard,
 } from "../components/baytmiftah";
+import { EmptyState } from "../components/ux";
 const MapView = lazy(() =>
   import("../components/baytmiftah/MapView").then((m) => ({ default: m.MapView })),
 );
@@ -346,7 +347,16 @@ export function Home() {
             </div>
 
             {visible.length === 0 ? (
-              <EmptyState onBrowse={() => navigate("/search")} onListProperty={() => navigate(listPropertyPath)} />
+              <EmptyState
+                icon={HomeIcon}
+                title={t("home.emptyTitle")}
+                description={t("home.emptyDesc")}
+                actionLabel={t("home.browseAll")}
+                onAction={() => navigate("/search")}
+                secondaryActionLabel={t("nav.listProperty")}
+                secondaryActionHref={listPropertyPath}
+                className="desktop-empty-state border-0 bg-transparent shadow-none"
+              />
             ) : (
               <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {visible.map((listing) => (
@@ -620,30 +630,3 @@ function FiltersPanel({
   );
 }
 
-function EmptyState({
-  onBrowse,
-  onListProperty,
-}: {
-  onBrowse: () => void;
-  onListProperty: () => void;
-}) {
-  const { t } = useTranslation();
-
-  return (
-    <div className="desktop-empty-state">
-      <div className="desktop-empty-state-icon" aria-hidden>
-        <HomeIcon className="h-7 w-7" />
-      </div>
-      <h2 className="text-xl font-semibold text-ink">{t("home.emptyTitle")}</h2>
-      <p className="mt-2 max-w-md text-ink-secondary">{t("home.emptyDesc")}</p>
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-        <button type="button" onClick={onBrowse} className="desktop-hero-btn desktop-hero-btn-primary">
-          {t("home.browseAll")}
-        </button>
-        <button type="button" onClick={onListProperty} className="desktop-hero-btn desktop-hero-btn-secondary">
-          {t("nav.listProperty")}
-        </button>
-      </div>
-    </div>
-  );
-}

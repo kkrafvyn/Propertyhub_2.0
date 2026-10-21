@@ -11,6 +11,7 @@ import {
   type WorkspaceModuleCategory,
 } from "../../../lib/workspace-module-catalog";
 import type { MemberRole } from "../../../lib/workspace";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface ModuleMarketplaceProps {
   organizationId: string;
@@ -20,6 +21,7 @@ interface ModuleMarketplaceProps {
 export function ModuleMarketplace({ organizationId, currentRole }: ModuleMarketplaceProps) {
   const canManage = currentRole === "owner" || currentRole === "manager" || currentRole === "organization_admin";
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [catalog, setCatalog] = useState<WorkspaceModuleCatalogItem[]>([]);
   const [enabledModules, setEnabledModules] = useState<string[]>([]);
@@ -28,6 +30,7 @@ export function ModuleMarketplace({ organizationId, currentRole }: ModuleMarketp
   const load = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [items, enabled] = await Promise.all([
         workspaceModuleService.getCatalog(),
         workspaceModuleService.getEnabledModules(organizationId),
@@ -40,11 +43,15 @@ export function ModuleMarketplace({ organizationId, currentRole }: ModuleMarketp
       );
     } catch (error) {
       console.error(error);
-      toast.error("Unable to load module marketplace.");
+      const message = "Unable to load module marketplace.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   useEffect(() => {
     void load();
@@ -85,45 +92,37 @@ export function ModuleMarketplace({ organizationId, currentRole }: ModuleMarketp
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Hero Header */}
-      <div className="rounded-2xl border border-border bg-gradient-to-br from-surface to-surface-subtle p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Package className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Module Marketplace</h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Enable the BaytMiftah modules your business needs. Security and platform roles remain fixed.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <p className="text-2xl font-bold tabular-nums text-primary">{enabledModules.length}</p>
-              <p className="text-xs text-muted-foreground">of {catalog.length} enabled</p>
-            </div>
-            <Button size="sm" onClick={() => void save()} disabled={!canManage || saving} className="gap-1.5">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Save Selection
-            </Button>
-          </div>
+    <WorkspacePageShell
+      title="Module Marketplace"
+      description="Enable the BaytMiftah modules your business needs. Security and platform roles remain fixed."
+      badge={
+        <div className="flex items-center gap-2 text-sm">
+          <Package className="h-4 w-4 text-primary" />
+          <span className="font-semibold tabular-nums text-primary">{enabledModules.length}</span>
+          <span className="text-muted-foreground">of {catalog.length} enabled</span>
         </div>
-
-        {/* Enabled progress bar */}
-        {catalog.length > 0 && (
-          <div className="mt-4">
-            <div className="h-1.5 w-full rounded-full bg-surface-subtle overflow-hidden">
-              <div
-                className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
-                style={{ width: `${(enabledModules.length / catalog.length) * 100}%` }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
+      }
+      actions={
+        <Button size="sm" onClick={() => void save()} disabled={!canManage || saving} className="gap-1.5">
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          Save Selection
+        </Button>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+      >
+    <div className="space-y-6">
+      {catalog.length > 0 && (
+        <div className="h-1.5 w-full rounded-full bg-surface-subtle overflow-hidden">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
+            style={{ width: `${(enabledModules.length / catalog.length) * 100}%` }}
+          />
+        </div>
+      )}
 
       {/* Category Filter Pills */}
       <div className="flex flex-wrap gap-2">
@@ -143,13 +142,6 @@ export function ModuleMarketplace({ organizationId, currentRole }: ModuleMarketp
       </div>
 
       {/* Module Grid */}
-      {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-28 rounded-xl border border-border bg-surface animate-pulse" />
-          ))}
-        </div>
-      ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((item) => {
             const enabled = enabledModules.includes(item.slug);
@@ -194,7 +186,8 @@ export function ModuleMarketplace({ organizationId, currentRole }: ModuleMarketp
             );
           })}
         </div>
-      )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

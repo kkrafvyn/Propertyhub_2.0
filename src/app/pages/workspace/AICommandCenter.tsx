@@ -41,6 +41,7 @@ import {
 } from "../../../lib/agentic-ai-orchestrator.service";
 import { organizationService } from "../../../lib/organization.service";
 import { aiToolAllowlistService } from "../../../lib/ai-tool-allowlist.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -75,6 +76,8 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
   const [runningNightWatch, setRunningNightWatch] = useState(false);
   const [aiGloballyEnabled, setAiGloballyEnabled] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const liveOrganizationId = resolvedOrganizationId || organizationIdProp || "";
   const orgResolvePending =
@@ -103,6 +106,8 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
       return;
     }
     try {
+      setLoading(true);
+      setLoadError(null);
       const report = await agenticAIOrchestratorService.runNightWatchAuditLive(orgKey);
       setNightWatchReport(report);
       const ledger = await agenticAIOrchestratorService.getLedgerEntriesLive(orgKey);
@@ -115,6 +120,9 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
     } catch {
       setNightWatchReport(null);
       setLedgerEntries([]);
+      setLoadError("Unable to load AI command center data.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -214,32 +222,28 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
     return true;
   });
 
-  return (
-    <div className="space-y-6">
-      {/* Header & Status Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-surface border border-surface-border shadow-sm">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-              <Cpu className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-ink tracking-tight">
-                  AI Command Center & Autonomous Fleet
-                </h1>
-                <Badge variant="outline" className="text-[11px] border-primary/30 text-primary bg-primary/5">
-                  15 Active Agents
-                </Badge>
-              </div>
-              <p className="text-xs text-ink-secondary mt-0.5">
-                4-Tier risk governance, autonomous Night Watch audits, and human-in-the-loop approval queues.
-              </p>
-            </div>
-          </div>
-        </div>
+  const queryPhase = loadError ? "error" : orgResolvePending || loading ? "loading" : "ready";
 
+  return (
+    <WorkspacePageShell
+      title="AI Command Center & Autonomous Fleet"
+      description="4-Tier risk governance, autonomous Night Watch audits, and human-in-the-loop approval queues."
+      badge={
+        <Badge variant="outline" className="text-[11px] border-primary/30 text-primary bg-primary/5">
+          15 Active Agents
+        </Badge>
+      }
+      meta={
+        <div className="p-2 rounded-xl bg-primary/10 text-primary">
+          <Cpu className="h-5 w-5" />
+        </div>
+      }
+      actions={
         <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => void loadState()} disabled={loading}>
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
           <Button
             size="sm"
             variant="outline"
@@ -283,7 +287,14 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
             <span>AI: {aiGloballyEnabled ? "ENABLED" : "KILLED"}</span>
           </button>
         </div>
-      </div>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadState()}
+      >
+    <div className="space-y-6">
 
       {actionSuccessMsg && (
         <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
@@ -591,5 +602,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
         </div>
       </Card>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

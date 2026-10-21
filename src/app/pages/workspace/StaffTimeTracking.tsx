@@ -7,6 +7,7 @@ import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/badge";
 import { staffTimeService } from "../../../lib/staff-time.service";
 import { useAuth } from "../../context/AuthContext";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 export function StaffTimeTracking({ organizationId }: { organizationId?: string }) {
   const { user } = useAuth();
@@ -14,18 +15,32 @@ export function StaffTimeTracking({ organizationId }: { organizationId?: string 
   const [minutes, setMinutes] = useState("60");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = async () => {
-    if (!organizationId) return;
-    setEntries(await staffTimeService.listEntries(organizationId));
+    if (!organizationId) {
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      setLoadError(null);
+      setEntries(await staffTimeService.listEntries(organizationId));
+    } catch (error) {
+      console.error(error);
+      setLoadError("Unable to load time entries.");
+      toast.error("Unable to load time entries.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    void load().catch((error) => {
-      console.error(error);
-      toast.error("Unable to load time entries.");
-    });
+    void load();
   }, [organizationId]);
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,21 +76,23 @@ export function StaffTimeTracking({ organizationId }: { organizationId?: string 
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Team Time Tracking</h1>
-          <p className="text-sm text-muted-foreground">
-            Log operational hours against property maintenance, inspections, and estate duties.
-          </p>
-        </div>
-        {entries.length > 0 && (
+    <WorkspacePageShell
+      title="Team Time Tracking"
+      description="Log operational hours against property maintenance, inspections, and estate duties."
+      actions={
+        entries.length > 0 ? (
           <Badge variant="outline" className="text-sm font-medium px-3 py-1 bg-primary/5 border-primary/20 text-primary w-fit">
             Total logged: {formatDuration(totalMinutes)}
           </Badge>
-        )}
-      </div>
-
+        ) : undefined
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+      >
+      <div className="space-y-6">
       {/* Log Form Card */}
       <Card className="p-5">
         <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -187,5 +204,7 @@ export function StaffTimeTracking({ organizationId }: { organizationId?: string 
         )}
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

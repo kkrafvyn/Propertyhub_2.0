@@ -29,6 +29,7 @@ import { getPropertyCoverImage } from "../../../lib/property-media";
 import { listingQualityService } from "../../../lib/listing-quality.service";
 import { listingService } from "../../../lib/listing.service";
 import { savedPropertyService } from "../../../lib/savedproperty.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface Recommendation {
   listing: any;
@@ -127,6 +128,7 @@ async function scoreListingWithInsight(listing: any, savedRows: any[]) {
 export default function RecommendationEngine() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
@@ -135,6 +137,7 @@ export default function RecommendationEngine() {
   const loadRecommendations = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [listingRows, savedRows] = await Promise.all([
         listingService.getPublicListings(50, 0),
         user ? savedPropertyService.getSavedProperties(user.id).catch(() => []) : Promise.resolve([]),
@@ -157,11 +160,15 @@ export default function RecommendationEngine() {
       setRecommendations(scored);
     } catch (error) {
       console.error("Failed to load recommendations:", error);
-      toast.error("Unable to load recommendations.");
+      const message = "Unable to load recommendations.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   useEffect(() => {
     void loadRecommendations();
@@ -211,59 +218,44 @@ export default function RecommendationEngine() {
       return 0;
     });
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="h-28 rounded-3xl bg-surface-subtle/80 border border-surface-border animate-pulse" />
-        <div className="h-36 rounded-3xl bg-surface-subtle/60 border border-surface-border animate-pulse" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-96 rounded-3xl bg-surface-subtle/70 border border-surface-border animate-pulse" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">
-      {/* ── Editorial Header ── */}
-      <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-amber-500/10 via-primary/5 to-surface/80 border border-amber-500/20 shadow-lg backdrop-blur-md">
-        <div className="absolute -top-12 -right-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-semibold border border-amber-500/20 shadow-xs">
-                <Sparkles className="w-3.5 h-3.5" />
-                BaytMiftah REOS Matching Matrix
-              </span>
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Ghana Market Telemetry Active
-              </span>
+    <WorkspacePageShell
+      title="Smart Market Recommendations"
+      description="Prime Ghanaian real estate ranked by trust score, buyer affinity, agency verification, and micro-market demand."
+      badge={
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-semibold border border-amber-500/20">
+          <Sparkles className="w-3.5 h-3.5" />
+          BaytMiftah REOS Matching Matrix
+        </span>
+      }
+      actions={
+        <Button
+          onClick={() => void loadRecommendations()}
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2 rounded-xl text-xs"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          <span>Re-evaluate Matrix</span>
+        </Button>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadRecommendations()}
+        loadingFallback={
+          <div className="space-y-6">
+            <div className="h-28 rounded-3xl bg-surface-subtle/80 border border-surface-border animate-pulse" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-96 rounded-3xl bg-surface-subtle/70 border border-surface-border animate-pulse" />
+              ))}
             </div>
-            <h1 className="text-2xl sm:text-4xl font-serif font-bold tracking-tight text-ink font-display">
-              Smart Market Recommendations
-            </h1>
-            <p className="mt-1.5 text-sm text-ink-secondary max-w-2xl leading-relaxed">
-              Prime Ghanaian real estate ranked dynamically by title trust score, buyer affinity signals, agency verification, and micro-market demand metrics.
-            </p>
           </div>
-          <div className="flex items-center gap-2.5 shrink-0">
-            <Button
-              onClick={() => void loadRecommendations()}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2 rounded-xl border-surface-border/80 bg-surface/60 backdrop-blur-xs hover:bg-surface text-xs"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-              <span>Re-evaluate Matrix</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-
+        }
+      >
+    <div className="space-y-8">
       {/* ── Signal Telemetry Halo Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
@@ -494,5 +486,7 @@ export default function RecommendationEngine() {
         </div>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

@@ -28,7 +28,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
-import { PageHeader, PageLayout } from "../../components/ux";
+import { ConsumerHubChrome, PageHeader, PageLayout } from "../../components/ux";
 import { useAuth } from "../../context/AuthContext";
 
 function ResidentInboxContent() {
@@ -94,6 +94,7 @@ function ResidentInboxContent() {
 
   return (
     <PageLayout variant="consumer" maxWidthClassName="max-w-6xl">
+      <ConsumerHubChrome activeSection="messages">
       {/* ── Editorial Header ── */}
       <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 mb-6 bg-gradient-to-br from-violet-500/10 via-primary/5 to-surface/80 border border-violet-500/20 shadow-lg backdrop-blur-md">
         <div className="absolute -top-12 -right-12 w-48 h-48 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -231,7 +232,7 @@ function ResidentInboxContent() {
                         className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
                       >
                         {!isMe && (
-                          <span className="text-[10px] text-ink-secondary font-medium mb-1 px-1 flex items-center gap-1">
+                          <span className="text-xs text-ink-secondary font-medium mb-1 px-1 flex items-center gap-1">
                             {isAI && <Sparkles className="w-3 h-3 text-violet-500" />}
                             {msg.sender_name || (isAI ? "BaytMiftah Operations AI" : "Property Manager")}
                           </span>
@@ -258,7 +259,7 @@ function ResidentInboxContent() {
                             <LeaseContextCard metadata={msg.metadata} onAction={handleCardAction} />
                           )}
 
-                          <div className={`flex items-center justify-end gap-1 mt-1 text-[10px] ${isMe ? "text-white/80" : "opacity-60"}`}>
+                          <div className={`flex items-center justify-end gap-1 mt-1 text-xs ${isMe ? "text-white/80" : "opacity-60"}`}>
                             <span>
                               {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                             </span>
@@ -317,6 +318,7 @@ function ResidentInboxContent() {
           )}
         </div>
       </div>
+      </ConsumerHubChrome>
     </PageLayout>
   );
 }

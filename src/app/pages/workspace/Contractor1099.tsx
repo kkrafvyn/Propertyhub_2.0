@@ -6,6 +6,7 @@ import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/badge";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 import {
   Dialog,
   DialogContent,
@@ -99,12 +100,12 @@ export function Contractor1099({ organizationId }: { organizationId: string }) {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><FileSpreadsheet className="h-6 w-6" /> 1099 Contractor Reporting</h1>
-        <p className="text-sm text-muted-foreground">Track contractor payments and prepare IRS 1099-NEC filings.</p>
-      </div>
-
+    <WorkspacePageShell
+      tone="finance"
+      title="1099 Contractor Reporting"
+      description="Track contractor payments and prepare IRS 1099-NEC filings."
+    >
+      <OperationalQueryState phase="ready">
       <div className="flex items-center gap-3">
         <label className="text-sm">Tax year</label>
         <Input type="number" className="w-28" value={taxYear} onChange={(e) => setTaxYear(parseInt(e.target.value))} />
@@ -198,6 +199,7 @@ export function Contractor1099({ organizationId }: { organizationId: string }) {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

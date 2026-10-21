@@ -39,6 +39,7 @@ import {
 } from '../../../lib/contractor-dispatch.service';
 import { useCall } from '../../context/CallContext';
 import { estateOperationsService, type EstateUnit, type ManagedEstate } from '../../../lib/estate-operations.service';
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 
 export function ContractorWorkOrders({ organizationId, currentUserId }: { organizationId?: string; currentUserId?: string }) {
   const { startCall } = useCall();
@@ -48,7 +49,8 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [units, setUnits] = useState<EstateUnit[]>([]);
   const [estateId, setEstateId] = useState('');
-  const [liveError, setLiveError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'board' | 'artisans'>('board');
 
   const [inspectionOrder, setInspectionOrder] = useState<WorkOrder | null>(null);
@@ -88,16 +90,24 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
     if (!selectedArtisanId && liveArtisans[0]?.id) setSelectedArtisanId(liveArtisans[0].id);
   };
 
-  useEffect(() => {
+  const loadBoard = async () => {
     if (!organizationId) return;
-    void (async () => {
-      try {
-        await reloadLive();
-      } catch (error) {
-        console.error(error);
-        setLiveError('Unable to load live contractor operations.');
-      }
-    })();
+    try {
+      setLoading(true);
+      setLoadError(null);
+      await reloadLive();
+    } catch (error) {
+      console.error(error);
+      const message = 'Unable to load live contractor operations.';
+      setLoadError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadBoard();
   }, [organizationId]);
 
   const handleCreateOrder = async (e: React.FormEvent) => {
@@ -166,26 +176,22 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
     );
   };
 
-  return (
-    <div className="space-y-6">
-    {liveError && <Card className="border-destructive p-4 text-sm text-destructive">{liveError}</Card>}
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-            <Wrench className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-ink">
-              Contractor MoMo Dispatch &amp; Work Orders
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Vetted artisan directory, GPS job dispatch, before/after photo inspection verification, and Mobile Money escrow releases.
-            </p>
-          </div>
-        </div>
+  const queryPhase = loadError ? 'error' : loading ? 'loading' : 'ready';
 
-        <div className="flex items-center gap-2">
+  return (
+    <WorkspacePageShell
+      title="Contractor MoMo Dispatch & Work Orders"
+      description="Vetted artisan directory, GPS job dispatch, before/after photo inspection verification, and Mobile Money escrow releases."
+      meta={
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+          <Wrench className="h-5 w-5" />
+        </div>
+      }
+      actions={
+        <>
+          <Button variant="outline" size="sm" onClick={() => void loadBoard()} disabled={loading}>
+            Refresh
+          </Button>
           <Button
             size="sm"
             onClick={() => setCreateModalOpen(true)}
@@ -194,9 +200,15 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
             <Plus className="mr-1.5 h-4 w-4" />
             Dispatch Work Order
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadBoard()}
+      >
+    <div className="space-y-6">
       {/* KPI Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
@@ -728,5 +740,7 @@ export function ContractorWorkOrders({ organizationId, currentUserId }: { organi
         </div>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

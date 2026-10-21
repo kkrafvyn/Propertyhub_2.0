@@ -6,6 +6,7 @@ import { Input } from '@/app/components/ui/Input'
 import { geointelligenceService } from '@/lib/geointelligence.service'
 import { ghanaMarketService } from '@/lib/ghana-market.service'
 import { MapPin, Zap, GraduationCap, Search } from 'lucide-react'
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux'
 
 type SelectableLocation = {
   name: string
@@ -22,6 +23,7 @@ export default function LocationIntelligence() {
   const [nearbyServices, setNearbyServices] = useState<any[]>([])
   const [heatmapData, setHeatmapData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -37,6 +39,7 @@ export default function LocationIntelligence() {
       .catch((error) => {
         console.error('Failed to load locations:', error)
         if (!cancelled) {
+          setLoadError('Unable to load location list.')
           setLocations([])
           setSelectedLocation(null)
         }
@@ -68,6 +71,7 @@ export default function LocationIntelligence() {
       setHeatmapData(heatmapResult.data || [])
     } catch (error) {
       console.error('Failed to load location data:', error)
+      setLoadError('Unable to load location intelligence.')
     } finally {
       setLoading(false)
     }
@@ -85,27 +89,26 @@ export default function LocationIntelligence() {
     )
   }, [locations, locationQuery])
 
-  if (loading && !selectedLocation) {
-    return <div className="text-center py-12 text-muted-foreground">Loading location data...</div>
+  const reloadLocations = () => {
+    setLoadError(null)
+    setLoading(true)
+    void ghanaMarketService
+      .getSelectableLocations(500)
+      .then((nextLocations) => {
+        setLocations(nextLocations)
+        setSelectedLocation((current) => current || nextLocations[0] || null)
+      })
+      .catch(() => setLoadError('Unable to load location list.'))
+      .finally(() => setLoading(false))
   }
 
-  if (locations.length === 0) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Location Intelligence</h1>
-          <p className="text-muted-foreground mt-2">
-            Analyze neighborhoods for demand, safety, and accessibility
-          </p>
-        </div>
-        <Card className="p-8 text-center">
-          <p className="text-muted-foreground">
-            No neighborhood data yet. Location insights will appear once listings include neighborhoods or cities.
-          </p>
-        </Card>
-      </div>
-    )
-  }
+  const queryPhase = loadError
+    ? 'error'
+    : loading && locations.length === 0
+      ? 'loading'
+      : locations.length === 0
+        ? 'empty'
+        : 'ready'
 
   const hasScoreData = Boolean(
     locationScore?.safety_score ||
@@ -117,14 +120,18 @@ export default function LocationIntelligence() {
   const accessibilityProgress = Math.min(100, (locationScore?.accessibility_score || 0) * 10)
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Location Intelligence</h1>
-        <p className="text-muted-foreground mt-2">
-          Analyze neighborhoods for demand, safety, and accessibility
-        </p>
-      </div>
-
+    <WorkspacePageShell
+      title="Location Intelligence"
+      description="Analyze neighborhoods for demand, safety, and accessibility"
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={reloadLocations}
+        emptyTitle="No neighborhood data yet"
+        emptyDescription="Location insights will appear once listings include neighborhoods or cities."
+      >
+      <div className="space-y-6">
       <Card className="p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold">
@@ -298,5 +305,7 @@ export default function LocationIntelligence() {
         </div>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   )
 }

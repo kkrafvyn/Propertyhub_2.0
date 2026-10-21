@@ -33,6 +33,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/badge';
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 import {
   aiLeaseAnalyzerService,
   type GhanaCardSigner,
@@ -165,24 +166,18 @@ export function AILeaseAnalyzer() {
     toast.success(`${signer?.fullName || 'Signer'} verified and digitally signed.`);
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-            <Scale className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-ink">
-              Multi-Jurisdiction Lease Analyzer
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Rule-based screening of your lease text. Findings and suggested wording require review; scores do not certify legal compliance.
-            </p>
-          </div>
-        </div>
+  const queryPhase = 'ready' as const;
 
+  return (
+    <WorkspacePageShell
+      title="Multi-Jurisdiction Lease Analyzer"
+      description="Rule-based screening of your lease text. Findings and suggested wording require review; scores do not certify legal compliance."
+      meta={
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+          <Scale className="h-5 w-5" />
+        </div>
+      }
+      actions={
         <div className="flex items-center gap-2 flex-wrap">
           <NativeSelectControl
             className="rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold bg-surface"
@@ -246,8 +241,10 @@ export function AILeaseAnalyzer() {
             {isAuditing ? 'Analyzing Clauses...' : 'Run Lease Review'}
           </Button>
         </div>
-      </div>
-
+      }
+    >
+      <OperationalQueryState phase={queryPhase}>
+    <div className="space-y-6">
       <p className="text-xs text-muted-foreground">PDF with selectable text, TXT or Markdown · Up to 10 MB, 100 PDF pages and 500,000 characters. Scanned pages need OCR before uploading. Files are processed on this device.</p>
       {isOcrScanning && <p role="status" className="text-sm text-primary">{extractionProgress}</p>}
       {extractionError && <p role="alert" className="rounded-xl border border-rose-500/30 p-3 text-sm text-rose-600">{extractionError} No analysis was generated for this file.</p>}
@@ -589,5 +586,7 @@ export function AILeaseAnalyzer() {
         </div>
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

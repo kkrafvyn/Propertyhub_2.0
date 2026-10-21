@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { blockchainService, type LivePolygonTransaction } from '../../../lib/blockchain.service';
 import { smartContractService } from '../../../lib/smart-contract.service';
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 
 interface VerificationRecord {
   id: string;
@@ -125,26 +126,28 @@ export default function BlockchainVerification({ organizationId }: BlockchainVer
     );
   };
 
+  const queryPhase = loadError ? 'error' : loading ? 'loading' : 'ready';
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold mb-2 flex items-center gap-2">
-          <Shield className="w-8 h-8 text-primary" />
-          Live Blockchain Transactions
-        </h1>
-        <p className="text-muted-foreground">
-          View recorded Polygon transactions, confirmations, contracts, and authorized wallets.
-        </p>
-        <div className="mt-4 flex items-center gap-3">
+    <WorkspacePageShell
+      title="Live Blockchain Transactions"
+      description="View recorded Polygon transactions, confirmations, contracts, and authorized wallets."
+      meta={<Shield className="w-5 h-5 text-primary" aria-hidden />}
+      actions={
+        <>
           <Button variant="outline" size="sm" onClick={() => void loadBlockchainData()} disabled={loading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          {loadError ? <span className="text-sm text-red-600">{loadError}</span> : null}
-        </div>
-      </div>
-
+        </>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadBlockchainData()}
+      >
+    <div className="space-y-6">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="p-6">
@@ -540,5 +543,7 @@ export default function BlockchainVerification({ organizationId }: BlockchainVer
         )}
       </Tabs>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

@@ -16,6 +16,7 @@ import { importJobStatusVariant } from "../../../lib/import-job-status";
 import { IMPORT_FILE_ACCEPT, IMPORT_FORMATS_LABEL, importFileErrorMessage } from "../../../lib/document-import";
 import { shouldOfferAiAssist } from "../../../lib/import-pipeline";
 import { useImportMapping } from "../../../lib/use-import-mapping";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface DataMigrationProps {
   organizationId: string;
@@ -27,14 +28,22 @@ export function DataMigration({ organizationId, currentUserId }: DataMigrationPr
   const [rows, setRows] = useState<Array<ImportRow | OccupancyImportRow>>([]);
   const [jobs, setJobs] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const mapping = useImportMapping(type);
 
   const load = async () => {
     try {
+      setLoading(true);
+      setLoadError(null);
       setJobs(await estateImportService.getJobs(organizationId));
     } catch {
-      toast.error("Unable to load import history.");
+      const message = "Unable to load import history.";
+      setLoadError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -135,15 +144,24 @@ export function DataMigration({ organizationId, currentUserId }: DataMigrationPr
   const invalid = rows.length - valid;
   const rawHeaders = mapping.rawMatrix[0] || [];
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Data Migration & Import</h1>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Universal import: {IMPORT_FORMATS_LABEL}. Review extracted rows before approving.
-        </p>
-      </div>
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
+  return (
+    <WorkspacePageShell
+      title="Data Migration & Import"
+      description={`Universal import: ${IMPORT_FORMATS_LABEL}. Review extracted rows before approving.`}
+      actions={
+        <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
+          Refresh
+        </Button>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+      >
+    <div className="space-y-6">
       <Card className="p-6 space-y-5">
         <div className="flex items-center gap-2">
           <button
@@ -297,5 +315,7 @@ export function DataMigration({ organizationId, currentUserId }: DataMigrationPr
         )}
       </Card>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

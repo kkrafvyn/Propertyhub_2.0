@@ -1,12 +1,14 @@
 import { Textarea } from "@/app/components/ui/textarea";
 import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { Send, Filter, Star, Archive, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/badge';
 import { leadAggregationService } from '../../../lib/lead-aggregation.service';
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 
 interface Lead {
   id: string;
@@ -25,12 +27,26 @@ interface Lead {
   created_at: string;
 }
 
+export function WorkspaceLeadsLinkBanner({ organizationSlug }: { organizationSlug: string }) {
+  return (
+    <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-ink-secondary">
+      For the full CRM pipeline (tasks, listings, and team routing), use{" "}
+      <Link className="font-medium text-primary hover:underline" to={`/workspace/${organizationSlug}/leads`}>
+        Workspace Leads
+      </Link>
+      .
+    </div>
+  );
+}
+
 export function LeadManagement({ organizationId }: {
   organizationId: string;
 }) {
+  const { organizationSlug } = useParams();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterSource, setFilterSource] = useState<string>('all');
@@ -49,10 +65,14 @@ export function LeadManagement({ organizationId }: {
   const loadLeads = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await leadAggregationService.getLeads(organizationId, undefined, 100);
       setLeads(data);
     } catch (error) {
       console.error('Failed to load leads:', error);
+      const message = 'Unable to load leads.';
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -143,15 +163,25 @@ export function LeadManagement({ organizationId }: {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const queryPhase = loadError ? 'error' : loading ? 'loading' : 'ready';
 
   return (
+    <WorkspacePageShell
+      title="Lead Management"
+      description="Aggregate and qualify inbound leads before routing them into the full CRM pipeline."
+      actions={
+        <Button variant="outline" size="sm" onClick={() => void loadLeads()} disabled={loading}>
+          Refresh
+        </Button>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadLeads()}
+      >
+    <div className="space-y-4">
+      {organizationSlug ? <WorkspaceLeadsLinkBanner organizationSlug={organizationSlug} /> : null}
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Leads List */}
       <div className="lg:col-span-2 space-y-4">
@@ -357,5 +387,8 @@ export function LeadManagement({ organizationId }: {
         </Card>
       )}
     </div>
+    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

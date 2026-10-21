@@ -1,5 +1,6 @@
 import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import React, { useState, useEffect, useRef } from 'react';
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 import {
   ClipboardCheck,
   Camera,
@@ -27,6 +28,12 @@ import {
   Crosshair,
   Smartphone,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/ui/dialog';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/badge';
@@ -267,36 +274,32 @@ export function FieldInspectionEngine({
     setActiveDraft(updated);
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Top Banner & Status */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-ink">Field Inspection Engine</h1>
-            <Badge
-              variant={isOnline ? 'default' : 'secondary'}
-              className="gap-1.5 px-3 py-1 font-medium bg-surface border border-surface-border text-ink"
-            >
-              {isOnline ? (
-                <>
-                  <Wifi className="w-3.5 h-3.5 text-green-500" />
-                  Cloud Online
-                </>
-              ) : (
-                <>
-                  <WifiOff className="w-3.5 h-3.5 text-amber-500" />
-                  Offline Storage Active
-                </>
-              )}
-            </Badge>
-          </div>
-          <p className="text-ink-secondary mt-1">
-            150-point offline move-in/out checklists with photo evidence, sub-meter indexing, and security deposit deductions.
-          </p>
-        </div>
+  const queryPhase = 'ready' as const;
 
-        <div className="flex flex-wrap items-center gap-3">
+  return (
+    <WorkspacePageShell
+      title="Field Inspection Engine"
+      description="150-point offline move-in/out checklists with photo evidence, sub-meter indexing, and security deposit deductions."
+      badge={
+        <Badge
+          variant={isOnline ? 'default' : 'secondary'}
+          className="gap-1.5 px-3 py-1 font-medium bg-surface border border-surface-border text-ink"
+        >
+          {isOnline ? (
+            <>
+              <Wifi className="w-3.5 h-3.5 text-green-500" />
+              Cloud Online
+            </>
+          ) : (
+            <>
+              <WifiOff className="w-3.5 h-3.5 text-amber-500" />
+              Offline Storage Active
+            </>
+          )}
+        </Badge>
+      }
+      actions={
+        <>
           <Button
             variant="outline"
             size="sm"
@@ -307,7 +310,6 @@ export function FieldInspectionEngine({
             <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
             {isSyncing ? 'Syncing...' : 'Sync Cloud Queue'}
           </Button>
-
           <Button
             onClick={() => setShowNewModal(true)}
             className="gap-2 bg-primary text-primary-foreground hover:opacity-90"
@@ -315,9 +317,11 @@ export function FieldInspectionEngine({
             <Plus className="w-4 h-4" />
             New Inspection
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+    >
+      <OperationalQueryState phase={queryPhase}>
+    <div className="space-y-6">
       {/* Overall Progress Bar */}
       {activeDraft && summary && (
         <div className="rounded-xl border border-surface-border bg-surface p-4">
@@ -829,11 +833,11 @@ export function FieldInspectionEngine({
         </div>
       )}
 
-      {/* New Inspection Modal */}
-      {showNewModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md p-6 border-surface-border bg-surface">
-            <h3 className="text-xl font-bold text-ink mb-4">Start 150-Point Field Inspection</h3>
+      <Dialog open={showNewModal} onOpenChange={setShowNewModal}>
+        <DialogContent className="max-w-md border-surface-border bg-surface">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-ink">Start 150-Point Field Inspection</DialogTitle>
+          </DialogHeader>
 
             <form
               onSubmit={(e) => {
@@ -896,23 +900,14 @@ export function FieldInspectionEngine({
                 </Button>
               </div>
             </form>
-          </Card>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
-      {/* Photo Capture Modal */}
-      {showPhotoModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-sm p-6 border-surface-border bg-surface">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-bold text-ink">Attach Photo Evidence</h3>
-              <button
-                onClick={() => setShowPhotoModal(null)}
-                className="text-ink-muted hover:text-ink transition p-1"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      <Dialog open={!!showPhotoModal} onOpenChange={(open) => !open && setShowPhotoModal(null)}>
+        <DialogContent className="max-w-sm border-surface-border bg-surface">
+            <DialogHeader className="text-left">
+              <DialogTitle className="text-lg text-ink">Attach Photo Evidence</DialogTitle>
+            </DialogHeader>
             <p className="text-xs text-ink-secondary mb-4">
               Stored offline automatically in base64 buffer and synced when online.
             </p>
@@ -947,9 +942,10 @@ export function FieldInspectionEngine({
                 Cancel
               </Button>
             </div>
-          </Card>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

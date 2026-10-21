@@ -7,7 +7,7 @@ import { ChevronDown, Sparkles, Building2, CheckCircle2 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
-import { WorkspacePageShell } from "../../components/ux";
+import { FormRow, OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 import { PropertyMediaPicker } from "../../components/PropertyMediaPicker";
 import { ListingQualityPanel } from "../../components/ListingQualityPanel";
 import { GhanaRegionInput } from "../../components/GhanaRegionInput";
@@ -54,6 +54,8 @@ export function WorkspaceNewListing({
   currentUserId,
 }: WorkspaceNewListingProps) {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [complianceReady, setComplianceReady] = useState(false);
@@ -94,17 +96,37 @@ export function WorkspaceNewListing({
   };
 
   useEffect(() => {
-    void countryRulesService.getOrganizationSettings(organization.id).then((settings) => {
-      if (!settings) return;
-      setOrgMarket({
-        jurisdiction: settings.default_jurisdiction,
-        subdivision: settings.default_subdivision || undefined,
-        currency: settings.default_currency || undefined,
-      });
-      if (settings.default_currency) {
-        setForm((current) => ({ ...current, currency: settings.default_currency! }));
+    let cancelled = false;
+    const loadOrgMarket = async () => {
+      try {
+        setLoading(true);
+        setLoadError(null);
+        const settings = await countryRulesService.getOrganizationSettings(organization.id);
+        if (cancelled) return;
+        if (settings) {
+          setOrgMarket({
+            jurisdiction: settings.default_jurisdiction,
+            subdivision: settings.default_subdivision || undefined,
+            currency: settings.default_currency || undefined,
+          });
+          if (settings.default_currency) {
+            setForm((current) => ({ ...current, currency: settings.default_currency! }));
+          }
+        }
+      } catch (error) {
+        if (cancelled) return;
+        const message =
+          error instanceof Error ? error.message : "Unable to load listing defaults.";
+        setLoadError(message);
+        toast.error(message);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    });
+    };
+    void loadOrgMarket();
+    return () => {
+      cancelled = true;
+    };
   }, [organization.id]);
 
   useEffect(() => {
@@ -306,6 +328,8 @@ export function WorkspaceNewListing({
     }
   };
 
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
+
   return (
     <WorkspacePageShell
       title="Create a new listing"
@@ -317,6 +341,35 @@ export function WorkspaceNewListing({
         </span>
       }
     >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => {
+          setLoadError(null);
+          setLoading(true);
+          void countryRulesService
+            .getOrganizationSettings(organization.id)
+            .then((settings) => {
+              if (settings) {
+                setOrgMarket({
+                  jurisdiction: settings.default_jurisdiction,
+                  subdivision: settings.default_subdivision || undefined,
+                  currency: settings.default_currency || undefined,
+                });
+                if (settings.default_currency) {
+                  setForm((current) => ({ ...current, currency: settings.default_currency! }));
+                }
+              }
+            })
+            .catch((error: unknown) => {
+              const message =
+                error instanceof Error ? error.message : "Unable to load listing defaults.";
+              setLoadError(message);
+              toast.error(message);
+            })
+            .finally(() => setLoading(false));
+        }}
+      >
       <form onSubmit={handleSubmit} className="space-y-6 min-w-0">
         <Card className="p-6 border-surface-border bg-surface shadow-card">
           <h2 className="text-xl font-semibold mb-4 text-ink">Property Details</h2>
@@ -435,14 +488,16 @@ export function WorkspaceNewListing({
           </div>
 
           <div className="mt-4">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <label className="block text-sm text-foreground">Description</label>
-              <Button
+            <FormRow
+              label={
+                <span className="flex w-full items-center justify-between gap-3">
+                  <span>Description</span>
+                  <Button
                 type="button"
                 size="sm"
                 variant="outline"
                 disabled={generatingDescription}
-                className="flex items-center gap-1.5"
+                className="flex items-center gap-1.5 shrink-0"
                 onClick={async () => {
                   setGeneratingDescription(true);
                   try {
@@ -494,13 +549,17 @@ export function WorkspaceNewListing({
                 <Sparkles className="w-3.5 h-3.5 text-primary" />
                 <span>{generatingDescription ? "Generating..." : "Generate with AI"}</span>
               </Button>
-            </div>
+                </span>
+              }
+              hint="Edit AI drafts before publishing."
+            >
             <Textarea
               className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground min-h-32 focus:outline-none focus:ring-1 focus:ring-primary"
               value={form.description}
               onChange={(event) => updateField("description", event.target.value)}
               placeholder="Describe the property, neighborhood, and unique selling points."
             />
+            </FormRow>
           </div>
 
           <div className="mt-4">
@@ -708,6 +767,7 @@ export function WorkspaceNewListing({
           </Button>
         </div>
       </form>
+      </OperationalQueryState>
     </WorkspacePageShell>
   );
 }

@@ -36,6 +36,7 @@ import {
   type MemberApprovalProfile,
 } from "../../../lib/authorization.service";
 import { ownerOperatorService } from "../../../lib/owner-operator.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface EstateOperationsProps extends MemberScopeProps {
   organizationId: string;
@@ -57,6 +58,7 @@ export function EstateOperations({
   bypassPropertyScope = false,
 }: EstateOperationsProps) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [units, setUnits] = useState<EstateUnit[]>([]);
@@ -110,6 +112,7 @@ export function EstateOperations({
   const refresh = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const scope = withMemberScopeDefaults({ scopeMode, scopedPropertyIds, bypassPropertyScope });
       const estateRows = filterEstatesByPropertyScope(
         await estateOperationsService.getEstates(organizationId),
@@ -162,7 +165,12 @@ export function EstateOperations({
       setSelectedWorkOrderId((current) => current || workOrderRows[0]?.id || "");
     } catch (error) {
       console.error(error);
-      toast.error("Unable to load estate operations. Apply the estate-operations migration, then try again.");
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to load estate operations. Apply the estate-operations migration, then try again.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -587,41 +595,46 @@ export function EstateOperations({
     }
   };
 
-  if (loading) {
-    return (
-      <Card className="p-8 text-center text-muted-foreground">
-        <Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin" />
-        Loading estate operations...
-      </Card>
-    );
-  }
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-medium text-primary">BaytMiftah Workspace</p>
-          <h1 className="text-3xl font-semibold">Estate Operations</h1>
-          <p className="mt-2 text-muted-foreground">
-            Manage estates as connected operating records: people, issues, bills, payments, work orders, and preventive maintenance stay linked.
-          </p>
-          {selectedEstateId && managementModes[selectedEstateId] ? (
-            <Badge variant="outline" className="mt-2 capitalize">
-              {String(managementModes[selectedEstateId]).replace(/_/g, " ")}
-            </Badge>
-          ) : null}
-        </div>
-        {estates.length > 0 ? (
-          <NativeSelectControl className="rounded-lg border border-border bg-input-background px-3 py-2" value={selectedEstateId} onChange={(event) => setSelectedEstateId(event.target.value)}>
+    <WorkspacePageShell
+      title="Estate operations"
+      description="Manage estates as connected operating records: people, issues, bills, payments, work orders, and preventive maintenance stay linked."
+      meta={
+        selectedEstateId && managementModes[selectedEstateId] ? (
+          <Badge variant="outline" className="capitalize">
+            {String(managementModes[selectedEstateId]).replace(/_/g, " ")}
+          </Badge>
+        ) : null
+      }
+      actions={
+        estates.length > 0 ? (
+          <NativeSelectControl
+            className="rounded-lg border border-border bg-input-background px-3 py-2"
+            value={selectedEstateId}
+            onChange={(event) => setSelectedEstateId(event.target.value)}
+          >
             {estates.map((estate) => (
               <option key={estate.id} value={estate.id}>
                 {estate.name}
               </option>
             ))}
           </NativeSelectControl>
-        ) : null}
-      </div>
-
+        ) : null
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void refresh()}
+        loadingFallback={
+          <div className="flex justify-center py-20 text-muted-foreground">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Loading estate operations...
+          </div>
+        }
+      >
       {estates.length === 0 ? (
         <Card className="max-w-xl p-6">
           <Building2 className="mb-3 h-7 w-7 text-primary" />
@@ -1228,6 +1241,7 @@ export function EstateOperations({
           </Card>
         </>
       )}
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

@@ -125,7 +125,7 @@ export function CallModal() {
     <div
       role="dialog"
       aria-label="Active Call Window"
-      className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/85 p-2 sm:p-6 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-200"
+      className="fixed inset-0 z-[var(--z-overlay-call)] flex items-center justify-center bg-black/85 p-2 sm:p-6 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-200 motion-safe-only"
     >
       <div className="relative flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-[0_32px_100px_rgba(0,0,0,0.9)]">
         

@@ -27,6 +27,7 @@ import {
   type CoaTemplateName,
 } from "../../../lib/coa-templates";
 import { useAuth } from "../../context/AuthContext";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 export function ChartOfAccountsAdmin({
   organizationId,
@@ -36,6 +37,7 @@ export function ChartOfAccountsAdmin({
   const { user } = useAuth();
   const [tab, setTab] = useState<"tree" | "create" | "templates">("tree");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [accounts, setAccounts] = useState<CoaAccount[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,10 +60,14 @@ export function ChartOfAccountsAdmin({
     if (!organizationId) return;
     try {
       setLoading(true);
+      setLoadError(null);
       const list = await chartOfAccountsService.listAccounts(organizationId);
       setAccounts(list);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to load Chart of Accounts");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load Chart of Accounts";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -163,18 +169,15 @@ export function ChartOfAccountsAdmin({
     }
   };
 
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
-            Chart of Accounts
-          </h1>
-          <p className="text-sm text-ink-muted">
-            Configure financial ledger accounts, parent-child hierarchies, and standard templates.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+    <WorkspacePageShell
+      tone="finance"
+      title="Chart of Accounts"
+      description="Configure financial ledger accounts, parent-child hierarchies, and standard templates."
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant={tab === "tree" ? "primary" : "outline"}
             onClick={() => setTab("tree")}
@@ -200,8 +203,16 @@ export function ChartOfAccountsAdmin({
             Templates
           </Button>
         </div>
-      </div>
-
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void fetchAccounts()}
+        loadingFallback={
+          <div className="py-12 text-center text-ink-muted">Loading Chart of Accounts...</div>
+        }
+      >
       {tab === "tree" && (
         <Card className="p-6 space-y-4">
           <div className="flex flex-col sm:flex-row gap-3 justify-between items-center">
@@ -231,11 +242,7 @@ export function ChartOfAccountsAdmin({
             </div>
           </div>
 
-          {loading ? (
-            <div className="py-12 text-center text-ink-muted">
-              Loading Chart of Accounts...
-            </div>
-          ) : filteredAccounts.length === 0 ? (
+          {filteredAccounts.length === 0 ? (
             <div className="py-12 text-center space-y-3">
               <BookOpen className="w-10 h-10 mx-auto text-ink-muted opacity-40" />
               <p className="text-ink-muted">No accounts found.</p>
@@ -522,6 +529,7 @@ export function ChartOfAccountsAdmin({
           </div>
         </Card>
       )}
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

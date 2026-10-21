@@ -7,6 +7,7 @@ import { Card } from "../../components/ui/Card";
 import { useAuth } from "../../context/AuthContext";
 import { AppLoadingScreen } from "../../components/ux/AppLoadingScreen";
 import { StandalonePageShell } from "../../components/ux/StandalonePageShell";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 import { communicationService } from "../../../lib/communication.service";
 import { organizationService } from "../../../lib/organization.service";
 import { userService } from "../../../lib/user.service";
@@ -106,20 +107,28 @@ export function WorkspaceInviteAccept() {
     }
   };
 
+  const queryPhase = error ? "error" : loading ? "loading" : "ready";
+
   if (loading) {
     return <AppLoadingScreen label="Loading invitation…" />;
   }
 
   return (
     <StandalonePageShell maxWidthClassName="max-w-2xl">
+      <WorkspacePageShell
+        title="Join this workspace"
+        description="Accept your team invitation to access this organization."
+        meta={<p className="text-sm font-medium text-primary">Team Invitation</p>}
+      >
+        <OperationalQueryState
+          phase={queryPhase}
+          errorMessage={error || undefined}
+          onRetry={() => window.location.reload()}
+        >
       <Card className="my-10 p-8 lg:p-10">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
             <MailCheck className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-primary">Team Invitation</p>
-            <h1 className="app-page-title text-3xl">Join this workspace</h1>
           </div>
         </div>
 
@@ -199,6 +208,8 @@ export function WorkspaceInviteAccept() {
           </>
         )}
       </Card>
+        </OperationalQueryState>
+      </WorkspacePageShell>
     </StandalonePageShell>
   );
 }

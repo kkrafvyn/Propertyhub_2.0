@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 import { useAuth } from "../../context/AuthContext";
 
 interface ContextualInboxHubProps {
@@ -107,8 +108,11 @@ function InboxContent() {
     broadcastTypingStatus(e.target.value.length > 0);
   };
 
+  const queryPhase = loading ? "loading" : "ready";
+
   return (
-    <div className="h-[calc(100vh-8rem)] flex rounded-2xl border border-border bg-card/60 backdrop-blur-md overflow-hidden shadow-sm">
+    <OperationalQueryState phase={queryPhase}>
+    <div className="h-[calc(100vh-12rem)] min-h-[420px] flex rounded-2xl border border-border bg-card/60 backdrop-blur-md overflow-hidden shadow-sm">
       {/* ── Left Column: Conversation Sidebar ──────────────────────────────── */}
       <div className="w-80 sm:w-96 border-r border-border flex flex-col bg-card/90">
         {/* Header */}
@@ -369,13 +373,20 @@ function InboxContent() {
         )}
       </div>
     </div>
+    </OperationalQueryState>
   );
 }
 
 export function ContextualInboxHub({ organizationId }: ContextualInboxHubProps) {
   return (
-    <RealtimeMessagingProvider organizationId={organizationId}>
-      <InboxContent />
-    </RealtimeMessagingProvider>
+    <WorkspacePageShell
+      tone="emerald"
+      title="Realtime inbox"
+      description="Enterprise multi-department communications with live context for units, leases, maintenance, and payments."
+    >
+      <RealtimeMessagingProvider organizationId={organizationId}>
+        <InboxContent />
+      </RealtimeMessagingProvider>
+    </WorkspacePageShell>
   );
 }

@@ -14,6 +14,8 @@ import { chargeGenerationService, type ChargeGenerationRun } from "../../../lib/
 import { organizationService } from "../../../lib/organization.service";
 import { supabase } from "../../../lib/supabase";
 import { toast } from "sonner";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
+import { Button } from "../../components/ui/Button";
 
 const db = supabase as any;
 
@@ -25,6 +27,8 @@ export function BulkOperations({ organizationId: organizationIdProp }: { organiz
   const [arrears, setArrears] = useState<{ count: number; totalMinor: number } | null>(null);
   const [broadcast, setBroadcast] = useState("");
   const [showBroadcast, setShowBroadcast] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (organizationIdProp) {
@@ -38,12 +42,24 @@ export function BulkOperations({ organizationId: organizationIdProp }: { organiz
       .catch(() => undefined);
   }, [organizationIdProp, organizationSlug]);
 
-  useEffect(() => {
+  const loadHistory = async () => {
     if (!organizationId) return;
-    void chargeGenerationService
-      .getGenerationHistory(organizationId, 10)
-      .then(setHistory)
-      .catch(() => undefined);
+    try {
+      setLoading(true);
+      setLoadError(null);
+      setHistory(await chargeGenerationService.getGenerationHistory(organizationId, 10));
+    } catch (error) {
+      console.error(error);
+      const message = "Unable to load bulk operation history.";
+      setLoadError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadHistory();
   }, [organizationId]);
 
   const runRentRoll = async () => {
@@ -121,25 +137,33 @@ export function BulkOperations({ organizationId: organizationIdProp }: { organiz
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-border pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Layers className="h-6 w-6 text-emerald-500 dark:text-emerald-400" />
-            <h1 className="text-xl font-bold text-foreground tracking-tight">
-              Bulk Operations & Recurring Billing
-            </h1>
-            <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium px-2 py-0.5 rounded-full border border-emerald-500/20">
-              Batch Actions
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Perform mass operations across all units, tenants, and ledger accounts in one click.
-          </p>
-        </div>
-      </div>
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
+  return (
+    <WorkspacePageShell
+      tone="finance"
+      title="Bulk Operations & Recurring Billing"
+      description="Perform mass operations across all units, tenants, and ledger accounts in one click."
+      badge={
+        <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium px-2 py-0.5 rounded-full border border-emerald-500/20">
+          Batch Actions
+        </span>
+      }
+      meta={<Layers className="h-5 w-5 text-emerald-500 dark:text-emerald-400" aria-hidden />}
+      actions={
+        organizationId ? (
+          <Button variant="outline" size="sm" onClick={() => void loadHistory()} disabled={loading}>
+            Refresh
+          </Button>
+        ) : null
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadHistory()}
+      >
+    <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-card border border-border rounded-xl p-5 space-y-3 shadow">
           <div className="flex items-center justify-between">
@@ -267,5 +291,7 @@ export function BulkOperations({ organizationId: organizationIdProp }: { organiz
         )}
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

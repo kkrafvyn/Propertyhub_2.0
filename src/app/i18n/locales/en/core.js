@@ -68,6 +68,21 @@ export default {
     "copyright": "© {{year}} BaytMiftah, Inc. · Accra, Ghana",
     "currency": "₵ GHS"
   },
+  "consumerJourney": {
+    "pageTitle": "Your property journey",
+    "pageDescription": "Track your stage, next action, and documents in one place.",
+    "backToApplications": "Back to applications",
+    "documentsTitle": "Documents",
+    "documentFallback": "Document",
+    "scheduleViewing": "Schedule viewing",
+    "startApplication": "Start application",
+    "loadError": "We couldn't load this journey. Check your connection and try again.",
+    "notFoundTitle": "Journey not found",
+    "notFoundDescription": "This offer or booking may have been removed, or you may not have access.",
+    "startApplicationSuccess": "Application started.",
+    "startApplicationError": "Unable to start application.",
+    "retry": "Try again"
+  },
   "common": {
     "loading": "Loading…",
     "close": "Close",

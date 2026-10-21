@@ -11,33 +11,28 @@ import {
 } from "../../../lib/platform-admin-dashboard.service";
 import { PLATFORM_ROLE_PRESETS } from "../../../lib/platform-console-grants";
 import { AdminEnrollmentRequests } from "./AdminEnrollmentRequests";
+import { PageMeta } from "../../components/baytmiftah/PageMeta";
+import { OperationalQueryState } from "../../components/ux";
 
 export function PlatformCommandCenter() {
   const [snapshot, setSnapshot] = useState<CommandCenterSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const load = () => {
+    setLoading(true);
+    setLoadError(null);
+    void loadOwnerCommandCenterSnapshot()
+      .then((data) => setSnapshot(data))
+      .catch(() => setLoadError("Unable to load platform command center."))
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
-    let cancelled = false;
-    void loadOwnerCommandCenterSnapshot()
-      .then((data) => {
-        if (!cancelled) setSnapshot(data);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+    load();
   }, []);
 
-  if (loading) {
-    return (
-      <Card className="p-10 text-center">
-        <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />
-        <p className="text-muted-foreground">Loading command center…</p>
-      </Card>
-    );
-  }
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   const mod = snapshot?.moderationOverview;
   const health = snapshot?.health;
@@ -49,6 +44,19 @@ export function PlatformCommandCenter() {
         : "unknown";
 
   return (
+    <>
+    <PageMeta title="Platform command center" description="Platform operations overview for BaytMiftah staff." />
+    <OperationalQueryState
+      phase={queryPhase}
+      errorMessage={loadError ?? undefined}
+      onRetry={load}
+      loadingFallback={
+        <Card className="p-10 text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" />
+          <p className="text-muted-foreground">Loading command center…</p>
+        </Card>
+      }
+    >
     <div className="space-y-6">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Platform owner</p>
@@ -199,6 +207,8 @@ export function PlatformCommandCenter() {
         <ActivityFeed />
       </Card>
     </div>
+    </OperationalQueryState>
+    </>
   );
 }
 

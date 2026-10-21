@@ -24,6 +24,7 @@ import {
   DEFAULT_DASHBOARD_WIDGETS,
   type DashboardWidgetId,
 } from "../../../lib/workspace-module-catalog";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 type TabId = "navigation" | "modules" | "branding" | "terminology" | "home" | "dashboard";
 
@@ -43,6 +44,7 @@ interface CustomizeWorkspaceProps {
 export function CustomizeWorkspace({ organizationId, currentRole }: CustomizeWorkspaceProps) {
   const canManage = currentRole === "owner" || currentRole === "manager" || currentRole === "organization_admin";
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<TabId>("navigation");
   const [hiddenSlugs, setHiddenSlugs] = useState<string[]>([]);
@@ -63,6 +65,7 @@ export function CustomizeWorkspace({ organizationId, currentRole }: CustomizeWor
   const load = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const bundle = await workspaceCustomizationService.loadBundle(organizationId);
       setSetupMetadata((bundle.organization as { setup_metadata?: unknown }).setup_metadata ?? {});
       setHiddenSlugs(bundle.customization.hiddenSlugs);
@@ -80,7 +83,9 @@ export function CustomizeWorkspace({ organizationId, currentRole }: CustomizeWor
       });
     } catch (error) {
       console.error(error);
-      toast.error("Unable to load workspace customization.");
+      const message = "Unable to load workspace customization.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -143,13 +148,7 @@ export function CustomizeWorkspace({ organizationId, currentRole }: CustomizeWor
     }
   };
 
-  if (loading) {
-    return (
-      <Card className="flex min-h-[320px] items-center justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </Card>
-    );
-  }
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   const tabs: Array<{ id: TabId; label: string; icon: typeof LayoutGrid }> = [
     { id: "navigation", label: "Navigation", icon: LayoutGrid },
@@ -161,21 +160,27 @@ export function CustomizeWorkspace({ organizationId, currentRole }: CustomizeWor
   ];
 
   return (
+    <WorkspacePageShell
+      title="Customize workspace"
+      description="Configure what your team sees, how modules behave, and how BaytMiftah represents your company. Platform security and tenant isolation cannot be changed here."
+      actions={
+        <>
+          <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
+            Refresh
+          </Button>
+          <Button onClick={() => void handleSave()} disabled={!canManage || saving}>
+            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Save changes
+          </Button>
+        </>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+      >
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Customize workspace</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Configure what your team sees, how modules behave, and how BaytMiftah represents your company.
-            Platform security and tenant isolation cannot be changed here.
-          </p>
-        </div>
-        <Button onClick={() => void handleSave()} disabled={!canManage || saving}>
-          {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-          Save changes
-        </Button>
-      </div>
-
       <div className="flex flex-wrap gap-2">
         {tabs.map((entry) => {
           const Icon = entry.icon;
@@ -395,5 +400,7 @@ export function CustomizeWorkspace({ organizationId, currentRole }: CustomizeWor
         </Card>
       ) : null}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

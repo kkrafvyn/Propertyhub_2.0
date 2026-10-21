@@ -21,7 +21,7 @@ import { Card } from "../components/ui/Card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/Button";
 import { stakeholderPortalService, type OwnerPortalSnapshot } from "../../lib/stakeholder-portal.service";
-import { StandalonePageShell } from "../components/ux/StandalonePageShell";
+import { OperationalQueryState, StandalonePageShell } from "../components/ux";
 
 export function OwnerPortal() {
   const { token } = useParams<{ token: string }>();
@@ -70,25 +70,17 @@ export function OwnerPortal() {
   return (
     <StandalonePageShell maxWidthClassName="max-w-4xl">
       <div className="py-10 px-4 space-y-8">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-28 text-ink-muted space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm font-medium">Authenticating encrypted stakeholder portal...</p>
-          </div>
-        ) : error ? (
-          <Card className="p-10 text-center space-y-4 max-w-md mx-auto border-red-500/30 bg-surface/90 backdrop-blur-md rounded-3xl">
-            <div className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mx-auto">
-              <Lock className="w-6 h-6" />
+        <OperationalQueryState
+          phase={loading ? "loading" : error ? "error" : "ready"}
+          errorMessage={error || undefined}
+          loadingFallback={
+            <div className="flex flex-col items-center justify-center py-28 text-ink-muted space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm font-medium">Authenticating encrypted stakeholder portal...</p>
             </div>
-            <h1 className="text-xl font-display font-semibold text-ink">Access Restricted</h1>
-            <p className="text-xs text-ink-secondary leading-relaxed">{error}</p>
-            <Link to="/">
-              <Button variant="outline" size="sm" className="mt-2">
-                Return to BaytMiftah
-              </Button>
-            </Link>
-          </Card>
-        ) : snapshot ? (
+          }
+        >
+        {snapshot ? (
           <>
             {/* ── Editorial Header ── */}
             <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-primary/10 via-emerald-500/5 to-surface/80 border border-primary/20 shadow-lg backdrop-blur-md">
@@ -243,6 +235,7 @@ export function OwnerPortal() {
             </div>
           </>
         ) : null}
+        </OperationalQueryState>
       </div>
     </StandalonePageShell>
   );

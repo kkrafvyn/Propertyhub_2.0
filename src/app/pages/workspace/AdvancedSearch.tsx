@@ -8,6 +8,7 @@ import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/badge";
 import { aiAssistantService } from "../../../lib/ai-assistant.service";
 import { listingService } from "../../../lib/listing.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface SearchFilter {
   location?: string;
@@ -74,9 +75,13 @@ export default function AdvancedSearch({
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [totalResults, setTotalResults] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadSearchData = async () => {
     try {
+      setLoading(true);
+      setLoadError(null);
       const [saved, recent] = await Promise.all([
         aiAssistantService.getSavedSearches(currentUserId),
         aiAssistantService.getSearchHistory(currentUserId, 8),
@@ -86,6 +91,11 @@ export default function AdvancedSearch({
       setRecentSearches(recent);
     } catch (error) {
       console.error("Failed to load search data:", error);
+      const message = "Unable to load saved searches.";
+      setLoadError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -186,22 +196,30 @@ export default function AdvancedSearch({
     [filters]
   );
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold">Advanced Search</h1>
-          <p className="text-muted-foreground mt-1">
-            Natural-language property discovery backed by live listings, saved searches, and search
-            history.
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => void saveCurrentSearch()}>
-          <Save className="w-4 h-4" />
-          Save Search
-        </Button>
-      </div>
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
+  return (
+    <WorkspacePageShell
+      title="Advanced Search"
+      description="Natural-language property discovery backed by live listings, saved searches, and search history."
+      actions={
+        <>
+          <Button variant="outline" size="sm" onClick={() => void loadSearchData()} disabled={loading}>
+            Refresh
+          </Button>
+          <Button variant="outline" onClick={() => void saveCurrentSearch()}>
+            <Save className="w-4 h-4" />
+            Save Search
+          </Button>
+        </>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadSearchData()}
+      >
+    <div className="space-y-6">
       <div className="flex gap-2 border-b">
         {[
           { key: "search", label: "Search" },
@@ -502,5 +520,7 @@ export default function AdvancedSearch({
         </div>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

@@ -1,6 +1,7 @@
 import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { Building2, CircleDollarSign, Loader2, Mail, Phone, UserRound, Wrench } from "lucide-react";
+import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
 import {
@@ -12,6 +13,8 @@ import {
 } from "../../../lib/estate-operations.service";
 import { getChargeOutstandingMinor, type EstateChargeRow } from "../../../lib/estate-ledger";
 import { supabase } from "../../../lib/supabase";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
+import { toast } from "sonner";
 
 const money = (v = 0, c = "GHS") =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency: c }).format(v / 100);
@@ -31,6 +34,7 @@ interface Customer360Props {
 
 export function Customer360({ organizationId }: Customer360Props) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [units, setUnits] = useState<EstateUnit[]>([]);
   const [occupancies, setOccupancies] = useState<EstateOccupancy[]>([]);
@@ -39,35 +43,42 @@ export function Customer360({ organizationId }: Customer360Props) {
   const [people, setPeople] = useState<any[]>([]);
   const [userId, setUserId] = useState("");
 
+  const load = async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const es = await estateOperationsService.getEstates(organizationId);
+      const us = await estateOperationsService.getUnits(es.map((x) => x.id));
+      const [o, c, i] = await Promise.all([
+        estateOperationsService.getOccupancies(us.map((x) => x.id)),
+        estateOperationsService.getCharges(us.map((x) => x.id)),
+        estateOperationsService.getIssues(es.map((x) => x.id)),
+      ]);
+
+      const ids = [...new Set(o.map((x) => x.user_id))];
+      const { data } = await supabase
+        .from("users")
+        .select("id, full_name, email, phone")
+        .in("id", ids);
+
+      setEstates(es);
+      setUnits(us);
+      setOccupancies(o);
+      setCharges(c);
+      setIssues(i);
+      setPeople(data || []);
+      setUserId(ids[0] || "");
+    } catch {
+      const message = "Unable to load customer records.";
+      setLoadError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    void (async () => {
-      try {
-        setLoading(true);
-        const es = await estateOperationsService.getEstates(organizationId);
-        const us = await estateOperationsService.getUnits(es.map((x) => x.id));
-        const [o, c, i] = await Promise.all([
-          estateOperationsService.getOccupancies(us.map((x) => x.id)),
-          estateOperationsService.getCharges(us.map((x) => x.id)),
-          estateOperationsService.getIssues(es.map((x) => x.id)),
-        ]);
-
-        const ids = [...new Set(o.map((x) => x.user_id))];
-        const { data } = await supabase
-          .from("users")
-          .select("id, full_name, email, phone")
-          .in("id", ids);
-
-        setEstates(es);
-        setUnits(us);
-        setOccupancies(o);
-        setCharges(c);
-        setIssues(i);
-        setPeople(data || []);
-        setUserId(ids[0] || "");
-      } finally {
-        setLoading(false);
-      }
-    })();
+    void load();
   }, [organizationId]);
 
   const person = people.find((x) => x.id === userId);
@@ -77,45 +88,42 @@ export function Customer360({ organizationId }: Customer360Props) {
   const due = customerCharges.reduce((s, x) => s + Math.max(0, getChargeOutstandingMinor(x)), 0);
   const currency = estates[0]?.currency || "GHS";
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-24 text-muted-foreground gap-2">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        <span>Loading customer records…</span>
-      </div>
-    );
-  }
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   return (
+    <WorkspacePageShell
+      title="Customer 360"
+      description="Complete customer history across tenancy, payments, maintenance tickets, and units."
+      actions={
+        <>
+          {people.length > 0 ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground shrink-0">Customer:</span>
+              <NativeSelectControl
+                className="h-9 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary min-w-[200px]"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+              >
+                {people.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.full_name || x.email || x.id}
+                  </option>
+                ))}
+              </NativeSelectControl>
+            </div>
+          ) : null}
+          <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
+            Refresh
+          </Button>
+        </>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+      >
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Customer 360</h1>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Complete customer history across tenancy, payments, maintenance tickets, and units.
-          </p>
-        </div>
-
-        {/* Customer Selector */}
-        {people.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground shrink-0">Customer:</span>
-            <NativeSelectControl
-              className="h-9 rounded-lg border border-border bg-background px-3 text-xs font-medium text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary min-w-[200px]"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-            >
-              {people.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.full_name || x.email || x.id}
-                </option>
-              ))}
-            </NativeSelectControl>
-          </div>
-        )}
-      </div>
-
       {person ? (
         <>
           {/* Overview Cards */}
@@ -255,5 +263,7 @@ export function Customer360({ organizationId }: Customer360Props) {
         </Card>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

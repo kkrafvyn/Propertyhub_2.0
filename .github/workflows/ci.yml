@@ -31,6 +31,20 @@ jobs:
       - name: Unit tests
         run: npm run test
 
+      - name: Workspace shell coverage audit
+        continue-on-error: true
+        run: |
+          npm run workspace:audit:shell >> "$GITHUB_STEP_SUMMARY"
+          node scripts/audit-workspace-shell.mjs --json > workspace-shell-audit.json
+
+      - name: Upload workspace shell audit
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@4.3.4
+        with:
+          name: workspace-shell-audit
+          path: workspace-shell-audit.json
+
       - name: Upgrade policy tests
         run: npx vitest run scripts/backup/backup-evidence.test.mjs scripts/pilot/payment-certification.test.mjs
 

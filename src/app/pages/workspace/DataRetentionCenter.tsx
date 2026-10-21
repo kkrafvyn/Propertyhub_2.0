@@ -7,6 +7,7 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { DEFAULT_RETENTION_ENTITIES, retentionService } from "../../../lib/retention.service";
 import { useAuth } from "../../context/AuthContext";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 export function DataRetentionCenter({ organizationId }: { organizationId?: string }) {
   const { user } = useAuth();
@@ -61,13 +62,11 @@ export function DataRetentionCenter({ organizationId }: { organizationId?: strin
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Data Retention & Compliance Holds</h1>
-        <p className="text-sm text-muted-foreground">
-          Configure how long historical records and activity logs are preserved. Active compliance holds protect records from scheduled cleanup.
-        </p>
-      </div>
+    <WorkspacePageShell
+      title="Data Retention & Compliance Holds"
+      description="Configure how long historical records and activity logs are preserved. Active compliance holds protect records from scheduled cleanup."
+    >
+      <OperationalQueryState phase="ready">
       <Card className="p-5 space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Retention Schedules</h2>
@@ -108,6 +107,7 @@ export function DataRetentionCenter({ organizationId }: { organizationId?: strin
           </div>
         ))}
       </Card>
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

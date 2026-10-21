@@ -22,6 +22,10 @@ import { shouldOfferAiAssist } from "@/lib/import-pipeline";
 import { parseBankFeedTable, type BankFeedTransactionDraft } from "@/lib/bank-feed-import";
 import { useImportMapping } from "@/lib/use-import-mapping";
 import { ImportMappingPanel } from "@/app/components/workspace/ImportMappingPanel";
+import {
+  OperationalQueryState,
+  WorkspacePageShell,
+} from "@/app/components/ux";
 
 type BankAccount = {
   id: string;
@@ -89,6 +93,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
@@ -198,6 +203,7 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
     if (!resolvedOrganizationId) return;
     try {
       setLoading(true);
+      setLoadError(null);
       const estateRows = await estateOperationsService.getEstates(resolvedOrganizationId);
       const { data: accountRows, error: accountError } = await supabase
         .from("bank_accounts")
@@ -237,9 +243,14 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
       setPaymentCandidates(candidates);
       const connections = await bankReconciliationService.getBankFeedConnections(resolvedOrganizationId);
       setFeedConnections(connections || []);
-    } catch (failure: any) {
+    } catch (failure: unknown) {
+      const message =
+        failure instanceof Error
+          ? failure.message
+          : "Unable to load reconciliation data.";
+      setLoadError(message);
       console.error(failure);
-      toast.error(failure?.message || "Unable to load reconciliation data.");
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -483,79 +494,78 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
     setMatchingTxnId(null);
   };
 
-  if (loading || resolvingOrg) {
-    return (
-      <div className="space-y-6 animate-pulse">
-        <div className="rounded-2xl border border-border bg-surface p-6">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-2xl bg-muted" />
-            <div className="space-y-2 flex-1">
-              <div className="h-5 w-48 bg-muted rounded-full" />
-              <div className="h-3 w-72 bg-muted/60 rounded-full" />
-            </div>
-          </div>
-        </div>
-        <div className="grid gap-4 md:grid-cols-4">
-          {[1,2,3,4].map(i => (
-            <div key={i} className="rounded-xl border border-border bg-surface p-5 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-muted shrink-0" />
-              <div className="space-y-2 flex-1">
-                <div className="h-3 w-20 bg-muted rounded-full" />
-                <div className="h-6 w-12 bg-muted rounded-full" />
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="grid gap-6 xl:grid-cols-2">
-          <div className="rounded-xl border border-border bg-surface p-6 h-64" />
-          <div className="rounded-xl border border-border bg-surface p-6 h-64" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!resolvedOrganizationId) {
-    return (
-      <Card className="p-8 text-center">
-        <Landmark className="mx-auto h-10 w-10 text-primary" />
-        <h1 className="mt-4 text-2xl font-semibold">Bank Reconciliation</h1>
-        <p className="mt-2 text-muted-foreground">{error || "Open this module from a workspace to continue."}</p>
-      </Card>
-    );
-  }
+  const queryPhase = loadError
+    ? "error"
+    : loading || resolvingOrg
+      ? "loading"
+      : !resolvedOrganizationId
+        ? "empty"
+        : "ready";
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border border-border bg-gradient-to-br from-surface to-surface-subtle p-6 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="rounded-xl bg-primary/10 p-2 text-primary">
-                <Landmark className="h-5 w-5" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Bank Reconciliation</h1>
-                <p className="text-sm text-muted-foreground">
-                  Connect bank accounts, upload statements, match transactions to payments, and review variances.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline">{organizationName || "Live organization"}</Badge>
-              <Badge variant="outline">{bankAccounts.length} bank account(s)</Badge>
-              <Badge variant="outline">{statements.length} statement(s)</Badge>
-              {selectedStatement && <Badge variant="outline">{matchRate} match rate</Badge>}
-            </div>
+    <WorkspacePageShell
+      tone="finance"
+      title="Bank reconciliation"
+      description="Connect bank accounts, upload statements, match transactions to payments, and review variances."
+      meta={
+        resolvedOrganizationId ? (
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline">{organizationName || "Live organization"}</Badge>
+            <Badge variant="outline">{bankAccounts.length} bank account(s)</Badge>
+            <Badge variant="outline">{statements.length} statement(s)</Badge>
+            {selectedStatement ? (
+              <Badge variant="outline">{matchRate} match rate</Badge>
+            ) : null}
           </div>
+        ) : null
+      }
+      actions={
+        resolvedOrganizationId ? (
           <Button variant="outline" size="sm" onClick={() => void load()} disabled={saving}>
             <RefreshCw className="h-4 w-4" />
             Refresh
           </Button>
+        ) : null
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+        emptyTitle="Open from a workspace"
+        emptyDescription={error || "Open this module from a workspace to load live account data."}
+        emptyIcon={Landmark}
+        loadingFallback={
+          <div className="space-y-6 animate-pulse">
+            <div className="grid gap-4 md:grid-cols-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="rounded-xl border border-border bg-surface p-5 flex items-center gap-3"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-muted shrink-0" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-3 w-20 bg-muted rounded-full" />
+                    <div className="h-6 w-12 bg-muted rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="grid gap-6 xl:grid-cols-2">
+              <div className="rounded-xl border border-border bg-surface p-6 h-64" />
+              <div className="rounded-xl border border-border bg-surface p-6 h-64" />
+            </div>
+          </div>
+        }
+      >
+      {error && resolvedOrganizationId ? (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
         </div>
-      </div>
+      ) : null}
 
-      {error && <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
-
+      {resolvedOrganizationId ? (
+      <>
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="p-5 flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 shrink-0">
@@ -1120,6 +1130,9 @@ export function BankReconciliation({ organizationId, currentUserId }: BankReconc
           </Card>
         </div>
       )}
-    </div>
+      </>
+      ) : null}
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

@@ -40,6 +40,8 @@ import { GhanaRoutePlanner } from "../components/GhanaRoutePlanner";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
+import { FormRow } from "../components/ux";
+import { Dialog, DialogContent, DialogTitle } from "../components/ui/dialog";
 import { useAuth } from "../context/AuthContext";
 import { useCall } from "../context/CallContext";
 import { isVideoCallsEnabledForApp } from "../../lib/app-feature-gates";
@@ -741,14 +743,13 @@ export function PropertyDetail() {
           </div>
         </div>
 
-        {/* Fullscreen Photo Modal */}
-        {showAllPhotos && (
-          <div
-            className="fixed inset-0 z-[100] flex flex-col bg-black/95 text-white animate-in fade-in duration-200"
-            role="dialog"
-            aria-modal="true"
+        <Dialog open={showAllPhotos} onOpenChange={setShowAllPhotos}>
+          <DialogContent
+            className="motion-safe-only fixed inset-0 top-0 left-0 z-[var(--z-overlay-gallery)] flex h-[100dvh] max-h-[100dvh] w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 bg-black/95 p-0 text-white shadow-none sm:max-w-none [&>button:last-child]:hidden"
           >
-            {/* Top Bar */}
+            <DialogTitle className="sr-only">
+              Photo gallery {currentImageIndex + 1} of {images.length}
+            </DialogTitle>
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
               <div className="flex items-center gap-3">
                 <span className="text-sm font-semibold">
@@ -767,9 +768,7 @@ export function PropertyDetail() {
                 <span>Close</span>
               </button>
             </div>
-
-            {/* Main Photo Center */}
-            <div className="relative flex-1 flex items-center justify-center p-4">
+            <div className="relative flex flex-1 items-center justify-center p-4 min-h-0">
               <img
                 src={images[currentImageIndex]}
                 alt={`${pageTitle} ${currentImageIndex + 1}`}
@@ -796,12 +795,11 @@ export function PropertyDetail() {
                 </>
               )}
             </div>
-
-            {/* Bottom Thumbnails */}
             <div className="flex items-center justify-center gap-2 px-4 py-3 overflow-x-auto border-t border-white/10 max-h-24">
               {images.map((img, idx) => (
                 <button
                   key={img}
+                  type="button"
                   onClick={() => setCurrentImageIndex(idx)}
                   className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition cursor-pointer ${
                     currentImageIndex === idx ? "border-primary scale-105" : "border-transparent opacity-50 hover:opacity-90"
@@ -811,8 +809,8 @@ export function PropertyDetail() {
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          </DialogContent>
+        </Dialog>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
@@ -1183,7 +1181,7 @@ export function PropertyDetail() {
 
           <div className="lg:col-span-1">
             {listing.listing_type === "short_stay" && (
-              <div className="mb-4">
+              <div className="app-surface-card rounded-2xl p-4 mb-4">
                 <StayBookingCard
                   listing={{
                     id: listing.id,
@@ -1508,9 +1506,9 @@ export function PropertyDetail() {
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
-                  className="border-t border-border pt-6 mt-6"
+                  className="app-surface-card rounded-2xl p-5 mt-6 motion-safe-only"
                 >
-                  <h4 className="font-semibold mb-4">Contact the Team</h4>
+                  <h4 className="app-page-title text-lg mb-4">Contact the Team</h4>
                   <form className="space-y-4" onSubmit={handleInquiry}>
                     <Input
                       label="Full Name"
@@ -1532,10 +1530,7 @@ export function PropertyDetail() {
                       value={contactForm.phone}
                       onChange={(e) => setContactForm((current) => ({ ...current, phone: e.target.value }))}
                     />
-                    <div>
-                      <label htmlFor="property-inquiry-message" className="block mb-2 text-sm">
-                        Message
-                      </label>
+                    <FormRow htmlFor="property-inquiry-message" label="Message">
                       <Textarea
                         id="property-inquiry-message"
                         className="w-full px-4 py-3 rounded-lg border border-border bg-input-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -1544,7 +1539,7 @@ export function PropertyDetail() {
                         value={contactForm.message}
                         onChange={(e) => setContactForm((current) => ({ ...current, message: e.target.value }))}
                       />
-                    </div>
+                    </FormRow>
                     <Button size="lg" className="w-full" type="submit" disabled={submitting}>
                       {submitting ? "Sending..." : "Send Inquiry"}
                     </Button>

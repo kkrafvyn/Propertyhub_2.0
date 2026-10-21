@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Loader2, Inbox } from "lucide-react";
+import { toast } from "sonner";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
@@ -8,6 +9,7 @@ import { workQueueService, type WorkItem } from "../../../lib/work-queue.service
 import { orgActivityService } from "../../../lib/org-activity.service";
 import { useAuth } from "../../context/AuthContext";
 import type { MemberRole } from "../../../lib/workspace";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 export function MyWorkQueue({
   organizationId,
@@ -23,52 +25,63 @@ export function MyWorkQueue({
   const [scope, setScope] = useState<"org" | "mine">(isExecutive ? "org" : "mine");
   const [items, setItems] = useState<WorkItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     setScope(isExecutive ? "org" : "mine");
   }, [isExecutive]);
 
-  useEffect(() => {
+  const loadQueue = async () => {
     if (!organizationId) {
       setLoading(false);
       return;
     }
-    let active = true;
-    setLoading(true);
-    const load =
-      scope === "org"
-        ? workQueueService.getOrgWork(organizationId)
-        : workQueueService.getMyWork(organizationId, user?.id);
-    void load
-      .then((rows) => {
-        if (active) setItems(rows);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const rows =
+        scope === "org"
+          ? await workQueueService.getOrgWork(organizationId)
+          : await workQueueService.getMyWork(organizationId, user?.id);
+      setItems(rows);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to load work queue.";
+      setLoadError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadQueue();
   }, [organizationId, user?.id, scope]);
 
   const open = (item: WorkItem) => {
     if (organizationSlug) navigate(`/workspace/${organizationSlug}/${item.href}`);
   };
 
+  const title = scope === "org" ? "Team work" : "My work";
+  const description =
+    scope === "org"
+      ? "Organization-wide approvals, exceptions, AI decisions, and open tasks."
+      : "Unified queue of pending approvals, exceptions, AI decisions, and assigned tasks.";
+
+  const queryPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : items.length === 0
+        ? "empty"
+        : "ready";
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {scope === "org" ? "Team work" : "My work"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {scope === "org"
-              ? "Organization-wide approvals, exceptions, AI decisions, and open tasks."
-              : "Unified queue of pending approvals, exceptions, AI decisions, and assigned tasks."}
-          </p>
-        </div>
-        {isExecutive ? (
+    <WorkspacePageShell
+      title={title}
+      description={description}
+      actions={
+        isExecutive ? (
           <div className="flex gap-2">
             <Button
               size="sm"
@@ -85,18 +98,22 @@ export function MyWorkQueue({
               Assigned to me
             </Button>
           </div>
-        ) : null}
-      </div>
-      {loading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground py-12 justify-center">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading queue…
-        </div>
-      ) : items.length === 0 ? (
-        <Card className="p-10 text-center text-sm text-muted-foreground">
-          <Inbox className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          Nothing in this queue right now.
-        </Card>
-      ) : (
+        ) : null
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void loadQueue()}
+        loadingFallback={
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-12 justify-center">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading queue…
+          </div>
+        }
+        emptyIcon={Inbox}
+        emptyTitle="Nothing in this queue right now"
+        emptyDescription="Pending approvals, exceptions, and assigned tasks will appear here."
+      >
         <div className="space-y-2">
           {items.map((item) => (
             <button
@@ -114,7 +131,7 @@ export function MyWorkQueue({
             </button>
           ))}
         </div>
-      )}
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

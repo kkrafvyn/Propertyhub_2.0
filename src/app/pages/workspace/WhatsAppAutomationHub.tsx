@@ -31,6 +31,7 @@ import {
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/badge';
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 import { toast } from 'sonner';
 import {
   whatsappBusinessBotService,
@@ -182,31 +183,21 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface border border-surface-border p-6 rounded-2xl shadow-sm">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <MessageSquare className="w-6 h-6" />
-            </span>
-            <div>
-              <h1 className="text-2xl font-bold text-ink">WhatsApp Business Hub</h1>
-              <p className="text-sm text-ink-secondary">
-                Automated gate passes, MoMo rent payment notices, and 24/7 AI tenant concierge.
-              </p>
-            </div>
-          </div>
-        </div>
+  const queryPhase = "ready" as const;
 
-        <div className="flex items-center gap-2">
-          <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-3 py-1.5 flex items-center gap-1.5 text-xs font-semibold">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            Cloud API Active
-          </Badge>
-        </div>
-      </div>
+  return (
+    <WorkspacePageShell
+      title="WhatsApp Business Hub"
+      description="Automated gate passes, MoMo rent payment notices, and 24/7 AI tenant concierge."
+      badge={
+        <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-3 py-1.5 flex items-center gap-1.5 text-xs font-semibold">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          Cloud API Active
+        </Badge>
+      }
+    >
+      <OperationalQueryState phase={queryPhase}>
+    <div className="space-y-6">
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-surface-border pb-2">
@@ -691,5 +682,7 @@ export function WhatsAppAutomationHub({ organizationId }: { organizationId?: str
         </div>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

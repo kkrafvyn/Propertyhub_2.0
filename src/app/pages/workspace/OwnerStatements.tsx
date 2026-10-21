@@ -16,6 +16,7 @@ import {
   getApprovalLimitMinor,
   type MemberApprovalProfile,
 } from "../../../lib/authorization.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const minorToMoney = (value: number | null | undefined, currency = "GHS") =>
   new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 2 }).format((value || 0) / 100);
@@ -33,6 +34,7 @@ export function OwnerStatements({
 }) {
     const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [estates, setEstates] = useState<any[]>([]);
   const [units, setUnits] = useState<any[]>([]);
   const [owners, setOwners] = useState<any[]>([]);
@@ -51,6 +53,7 @@ export function OwnerStatements({
     if (!organizationId) return;
     try {
       setLoading(true);
+      setLoadError(null);
       const estateRows = await estateOperationsService.getEstates(organizationId);
       const units = await estateOperationsService.getUnits(estateRows.map((estate) => estate.id));
       const occupancies = await estateOperationsService.getOccupancies(units.map((unit) => unit.id));
@@ -75,7 +78,9 @@ export function OwnerStatements({
       setOwnerId((current) => current || ownerRows.find((owner) => owner.role === "owner")?.user_id || "");
     } catch (error) {
       console.error(error);
-      toast.error("Unable to load owner reporting.");
+      const message = "Unable to load owner reporting.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -204,16 +209,30 @@ export function OwnerStatements({
     }
   };
 
-  if (loading) return <Card className="p-8 text-center text-muted-foreground">Loading owner reporting...</Card>;
-  if (!organizationId) return <Card className="p-8 text-center text-muted-foreground">Choose an organization to view owner reporting.</Card>;
+  const queryPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : !organizationId
+        ? "empty"
+        : "ready";
 
-  return <div className="space-y-6">
-    <div>
-      <h1 className="text-3xl font-semibold">Owner statements</h1>
-      <p className="mt-1 text-muted-foreground">A simple, review-first statement workflow built from recorded collections and paid vendor bills.</p>
-    </div>
+  return (
+    <WorkspacePageShell
+      tone="finance"
+      title="Owner statements"
+      description="A simple, review-first statement workflow built from recorded collections and paid vendor bills."
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+        emptyTitle="Choose an organization"
+        emptyDescription="Select a workspace organization to view owner reporting."
+      >
+  <div className="space-y-6">
 
-    <Card className="p-5 space-y-4">
+    <Card className="app-surface-card p-5 space-y-4">
       <div><h2 className="font-semibold">Create a statement</h2><p className="mt-1 text-sm text-muted-foreground">Pick the property, owner, and period. BaytMiftah calculates the amounts; a person still approves any actual payout.</p></div>
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <NativeSelectControl className="rounded-lg border border-border px-3 py-2" value={estateId} onChange={(event) => { setEstateId(event.target.value); setOwnerId(""); }}><option value="">Choose property</option>{estates.map((estate) => <option key={estate.id} value={estate.id}>{estate.name}</option>)}</NativeSelectControl>
@@ -264,5 +283,8 @@ export function OwnerStatements({
         </div>
       );
     })}</div></Card> : null}
-  </div>;
+  </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
+  );
 }

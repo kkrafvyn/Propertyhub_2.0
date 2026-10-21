@@ -13,6 +13,7 @@ import { pushNotificationService } from "@/lib/push-notification.service";
 import { nativePushAvailable } from "@/lib/communications-capabilities";
 import { registerNativeDevicePush } from "@/lib/native-push-registration.service";
 import { Capacitor } from "@capacitor/core";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface MobileAppSettingsProps {
   currentUserId: string;
@@ -25,6 +26,7 @@ export default function MobileAppSettings({
 }: MobileAppSettingsProps) {
   const [devices, setDevices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [registeringBrowserPush, setRegisteringBrowserPush] = useState(false);
   const [registeringNativePush, setRegisteringNativePush] = useState(false);
   const [iosVersion, setIosVersion] = useState<any>(null);
@@ -58,6 +60,7 @@ export default function MobileAppSettings({
 
     const loadData = async () => {
       try {
+        setLoadError(null);
         const [deviceData, iosInfo, androidInfo] = await Promise.all([
           mobileAppService.getUserDevices(currentUserId),
           mobileAppService.getAppVersion("ios"),
@@ -76,6 +79,7 @@ export default function MobileAppSettings({
       } catch (error) {
         console.error("Failed to load mobile settings:", error);
         if (!cancelled) {
+          setLoadError("We couldn't load mobile settings.");
           toast.error("We couldn't load mobile settings.");
         }
       } finally {
@@ -91,6 +95,15 @@ export default function MobileAppSettings({
       cancelled = true;
     };
   }, [currentUserId, organizationId]);
+
+  const reload = () => {
+    setLoading(true);
+    void mobileAppService.getUserDevices(currentUserId).then((deviceData) => {
+      setDevices(deviceData || []);
+    }).catch(() => setLoadError("We couldn't load mobile settings.")).finally(() => setLoading(false));
+  };
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   const handleRemoveDevice = async () => {
     if (!deviceToRemove) return;
@@ -207,14 +220,16 @@ export default function MobileAppSettings({
   };
 
   return (
+    <WorkspacePageShell
+      title="Mobile App Settings"
+      description="Manage connected devices and connect browser push for live delivery."
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={reload}
+      >
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Mobile App Settings</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage connected devices and connect browser push for live delivery.
-        </p>
-      </div>
-
       <Card className="p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
@@ -443,5 +458,7 @@ export default function MobileAppSettings({
         onConfirm={handleRemoveDevice}
       />
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

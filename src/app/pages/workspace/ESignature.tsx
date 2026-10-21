@@ -29,6 +29,7 @@ import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { ActionDialog } from "../../components/ux/ActionDialog";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 import { Badge } from "../../components/ui/badge";
 import {
   Dialog,
@@ -462,6 +463,7 @@ function SendModal({
 export function ESignature({ organizationId }: { organizationId?: string }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [requests, setRequests] = useState<EsigRequest[]>([]);
   const [leases, setLeases] = useState<any[]>([]);
   const [showSendModal, setShowSendModal] = useState(false);
@@ -475,10 +477,13 @@ export function ESignature({ organizationId }: { organizationId?: string }) {
     if (!organizationId) return;
     try {
       setLoading(true);
+      setLoadError(null);
       const list = await eSignatureService.listRequests(organizationId);
       setRequests(list);
     } catch (err: any) {
-      toast.error(err.message || "Failed to load eSignature requests");
+      const message = err.message || "Failed to load eSignature requests";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -536,9 +541,29 @@ export function ESignature({ organizationId }: { organizationId?: string }) {
   const filtered = filterStatus === "all" ? requests : requests.filter((r) => r.status === filterStatus);
 
   const STATUS_OPTIONS = ["all", "sent", "viewed", "partially_signed", "completed", "declined", "voided", "expired"];
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   return (
-    <div className="space-y-6">
+    <WorkspacePageShell
+      title="eSignature & Digital Contracts"
+      description="Send, track, and execute legally binding leases, addendums, and offer letters."
+      badge={
+        <span className="p-1.5 rounded-lg bg-indigo-500/10 inline-flex">
+          <FileSignature className="h-5 w-5 text-indigo-600" />
+        </span>
+      }
+      actions={
+        <>
+          <Button variant="outline" size="sm" onClick={() => void loadRequests()} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          <Button size="sm" onClick={() => setShowSendModal(true)}>
+            <Plus className="w-4 h-4 mr-1.5" /> Send New Envelope
+          </Button>
+        </>
+      }
+    >
       {showSendModal && organizationId && (
         <SendModal
           organizationId={organizationId}
@@ -548,31 +573,12 @@ export function ESignature({ organizationId }: { organizationId?: string }) {
           onSent={() => { setShowSendModal(false); void loadRequests(); }}
         />
       )}
-
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-indigo-500/10">
-              <FileSignature className="h-5 w-5 text-indigo-600" />
-            </span>
-            eSignature &amp; Digital Contracts
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Send, track, and execute legally binding leases, addendums, and offer letters.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={loadRequests} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => setShowSendModal(true)}>
-            <Plus className="w-4 h-4 mr-1.5" /> Send New Envelope
-          </Button>
-        </div>
-      </div>
-
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadRequests()}
+      >
+    <div className="space-y-6">
       {/* ── KPI strip ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
@@ -632,6 +638,8 @@ export function ESignature({ organizationId }: { organizationId?: string }) {
           ))
         )}
       </div>
+    </div>
+      </OperationalQueryState>
 
       {/* Void Envelope Dialog */}
       <Dialog open={Boolean(voidingEnvelopeId)} onOpenChange={(open) => !open && setVoidingEnvelopeId(null)}>
@@ -674,6 +682,6 @@ export function ESignature({ organizationId }: { organizationId?: string }) {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </WorkspacePageShell>
   );
 }

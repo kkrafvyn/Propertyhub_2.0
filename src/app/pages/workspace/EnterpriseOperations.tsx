@@ -43,6 +43,7 @@ import {
   type ManagedEstate,
 } from "../../../lib/estate-operations.service";
 import { enterpriseOperationsService } from "../../../lib/enterprise-operations.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 import { procurementWorkflowService } from "../../../lib/procurement-workflow.service";
 
 const money = (amount = 0, currency = "GHS") =>
@@ -133,6 +134,7 @@ export function EnterpriseOperations({
   currentUserId: string;
 }) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [units, setUnits] = useState<EstateUnit[]>([]);
@@ -188,6 +190,7 @@ export function EnterpriseOperations({
   const load = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const es = await estateOperationsService.getEstates(organizationId);
       setEstates(es);
       setUnits(await estateOperationsService.getUnits(es.map((x) => x.id)));
@@ -195,7 +198,9 @@ export function EnterpriseOperations({
       setData(await enterpriseOperationsService.load(es.map((x) => x.id)));
     } catch (error) {
       console.error(error);
-      toast.error("Unable to load operations data. Please try again.");
+      const message = "Unable to load operations data. Please try again.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -283,31 +288,18 @@ export function EnterpriseOperations({
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center gap-3 text-muted-foreground">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm font-medium">Loading operations...</p>
-      </div>
-    );
-  }
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   return (
-    <div className="space-y-6">
-      {/* ── Header ─────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Enterprise Operations
-            </h1>
-            <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary">
-              Multi-Unit
-            </Badge>
-          </div>
-        </div>
-
-        {/* Estate Switcher & Refresh */}
+    <WorkspacePageShell
+      title="Enterprise Operations"
+      description="Manage assets, meters, budgets, procurement, and contracts across your portfolio."
+      badge={
+        <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary">
+          Multi-Unit
+        </Badge>
+      }
+      actions={
         <div className="flex items-center gap-2">
           {estates.length > 0 && (
             <div className="relative flex items-center">
@@ -326,19 +318,25 @@ export function EnterpriseOperations({
               </NativeSelectControl>
             </div>
           )}
-
           <Button
             variant="outline"
             size="sm"
             onClick={() => void load()}
-            disabled={saving}
+            disabled={loading || saving}
             className="h-10 px-3"
             title="Refresh operations data"
           >
-            <RefreshCw className={`h-4 w-4 ${saving ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-4 w-4 ${loading || saving ? "animate-spin" : ""}`} />
           </Button>
         </div>
-      </div>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+      >
+    <div className="space-y-6">
 
       {estate && (
         <>
@@ -1649,5 +1647,7 @@ export function EnterpriseOperations({
         </>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

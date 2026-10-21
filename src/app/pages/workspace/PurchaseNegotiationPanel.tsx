@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { purchaseWorkflowService } from "../../../lib/purchase-workflow.service";
 import { walletService } from "../../../lib/wallet.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 function formatMoney(amountMinor?: number | null, currency = "GHS") {
   return walletService.formatWalletAmount(amountMinor, currency);
@@ -21,18 +22,23 @@ export function PurchaseNegotiationPanel({
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadOffers = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const rows = await purchaseWorkflowService.getCounterOffers(dealCase.id);
       setCounterOffers(rows);
     } catch (error) {
       console.error(error);
+      setLoadError("Unable to load counter-offers.");
     } finally {
       setLoading(false);
     }
   };
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   useEffect(() => {
     void loadOffers();
@@ -76,11 +82,18 @@ export function PurchaseNegotiationPanel({
   };
 
   return (
+    <WorkspacePageShell
+      tone="finance"
+      title="Purchase negotiation"
+      description="Review and respond to buyer counter-offers on this deal."
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadOffers()}
+      >
     <div className="rounded-lg border border-border p-4 space-y-4">
-      <h3 className="font-semibold">Purchase negotiation</h3>
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Loading counter-offers...</p>
-      ) : counterOffers.length === 0 ? (
+      {counterOffers.length === 0 ? (
         <p className="text-sm text-muted-foreground">No counter-offers yet.</p>
       ) : (
         <div className="space-y-2">
@@ -116,5 +129,7 @@ export function PurchaseNegotiationPanel({
         </Button>
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

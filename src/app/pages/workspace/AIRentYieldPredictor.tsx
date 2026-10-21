@@ -28,6 +28,7 @@ import {
   GHANA_NEIGHBORHOOD_BENCHMARKS,
   type YieldPredictionInput,
 } from '../../../lib/ai-rent-yield.service';
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 
 export function AIRentYieldPredictor({
   organizationId,
@@ -80,23 +81,19 @@ export function AIRentYieldPredictor({
 
   const benchmark = GHANA_NEIGHBORHOOD_BENCHMARKS[neighborhood] || GHANA_NEIGHBORHOOD_BENCHMARKS['Cantonments'];
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-ink">AI Rent Yield & Valuation Engine</h1>
-            <Badge className="bg-primary/10 text-primary border border-primary/20 gap-1.5 px-3 py-1 font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
-              Ghana Micro-Market ML
-            </Badge>
-          </div>
-          <p className="text-ink-secondary mt-1">
-            Predict rental yields, Cap Rates, and tenant value-add premiums across prime Accra, Kumasi, and Takoradi corridors.
-          </p>
-        </div>
+  const queryPhase = 'ready' as const;
 
+  return (
+    <WorkspacePageShell
+      title="AI Rent Yield & Valuation Engine"
+      description="Predict rental yields, Cap Rates, and tenant value-add premiums across prime Accra, Kumasi, and Takoradi corridors."
+      badge={
+        <Badge className="bg-primary/10 text-primary border border-primary/20 gap-1.5 px-3 py-1 font-semibold">
+          <Sparkles className="w-3.5 h-3.5" />
+          Ghana Micro-Market ML
+        </Badge>
+      }
+      actions={
         <Button
           onClick={() => {
             toast.success(`Appraisal Memo generated for ${neighborhood} asset.`);
@@ -106,8 +103,10 @@ export function AIRentYieldPredictor({
           <FileSpreadsheet className="w-4 h-4" />
           Export Investment Memo
         </Button>
-      </div>
-
+      }
+    >
+      <OperationalQueryState phase={queryPhase}>
+    <div className="space-y-6">
       {/* Main Grid: Parameters Sidebar vs Real-Time Forecast */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Asset Parameters & Feature Switches */}
@@ -470,5 +469,7 @@ export function AIRentYieldPredictor({
         </div>
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

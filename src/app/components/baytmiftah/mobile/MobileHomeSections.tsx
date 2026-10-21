@@ -66,7 +66,7 @@ export function MobileHeroBanner() {
 
   return (
     <section className="relative mx-3 mb-5 overflow-hidden rounded-2xl sm:mx-4">
-      <img src={HERO_IMAGE} alt="" className="h-[180px] w-full object-cover sm:h-[200px]" />
+      <img src={HERO_IMAGE} alt="Featured homes on BaytMiftah" className="h-[180px] w-full object-cover sm:h-[200px]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
       <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
         <h1 className="text-lg font-bold leading-tight text-white sm:text-[22px]">
@@ -247,7 +247,7 @@ export function MobileHomeListingCard({
         className="block overflow-hidden rounded-2xl bg-bolt-card shadow-[0_2px_12px_rgba(0,0,0,0.08)]"
       >
         <div className="relative aspect-[4/3]">
-          <ListingCardImage listing={listing} className="h-full w-full" alt="" />
+          <ListingCardImage listing={listing} className="h-full w-full" />
           {displayBadge && (
             <span
               className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white ${
@@ -303,7 +303,7 @@ export function MobilePromoCard({
       to={to}
       className="relative flex h-[168px] w-[148px] shrink-0 snap-start flex-col justify-end overflow-hidden rounded-2xl p-3 text-white shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
     >
-      <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      <img src={image} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
       <div className="relative">
         <p className="text-sm font-bold leading-tight">{title}</p>

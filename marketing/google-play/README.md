@@ -30,12 +30,14 @@ In-app launcher PNGs: `android/.../mipmap-*` and `android-business/.../mipmap-*`
 
 Suggested phone sizes to satisfy Play: **1080×1920** (portrait) or **1920×1080** (landscape).
 
+Wave 2 UI checklist (journey, search, checkout banners): [PLAY_STORE_SCREENSHOTS.md](../../docs/deployment/PLAY_STORE_SCREENSHOTS.md).
+
 ### Screenshot ideas (Consumer)
 
 1. Home / search  
 2. Property detail + map  
 3. Short-stay booking  
-4. My applications / journey  
+4. My applications / journey (`/app/journey/*` — PageLayout + timeline; capture after login)  
 5. Messages with host  
 6. Wallet / payments (if enabled)
 

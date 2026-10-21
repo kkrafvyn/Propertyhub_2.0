@@ -1,5 +1,18 @@
 /* BaytMiftah app-wide UI (consumer, workspace, auth, marketing — not admin) */
 
+:root {
+  --z-overlay-gallery: 100;
+  --z-overlay-call: 9998;
+  --z-overlay-ai: 9999;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe-only {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
 @layer components {
   .skip-to-content {
     @apply fixed left-4 top-3 z-[200] -translate-y-24 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition-transform focus:translate-y-0;
@@ -34,8 +47,20 @@
     @apply rounded-2xl border border-surface-border bg-card shadow-card transition-colors duration-200;
   }
 
+  .workspace-shell-header[data-workspace-tone="finance"] {
+    @apply border-brand-forest/25;
+  }
+
+  .workspace-shell-header[data-workspace-tone="emerald"] {
+    @apply border-emerald-500/25;
+  }
+
   .app-surface-card-hover {
     @apply hover:border-primary/30 hover:shadow-card-hover hover:-translate-y-1;
+  }
+
+  .bm-ai-chat {
+    z-index: var(--z-overlay-ai);
   }
 
   .glass-panel-elevated {

@@ -10,6 +10,7 @@ import { calendarOperationsService } from "../../../lib/calendar-operations.serv
 import { maintenanceCalendarService } from "../../../lib/staff-time.service";
 import { organizationService } from "../../../lib/organization.service";
 import { propertyViewingService } from "../../../lib/property-viewing.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 
@@ -46,6 +47,7 @@ export function CalendarOperations({
   currentUserId,
 }: CalendarOperationsProps) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [rules, setRules] = useState<any[]>([]);
   const [connections, setConnections] = useState<any[]>([]);
   const [viewings, setViewings] = useState<any[]>([]);
@@ -63,6 +65,7 @@ export function CalendarOperations({
   const loadData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [ruleRows, connectionRows, viewingRows, memberRows, maintenanceRows] = await Promise.all([
         calendarOperationsService.getAvailabilityRules(organization.id),
         calendarOperationsService.getConnections(organization.id),
@@ -77,7 +80,9 @@ export function CalendarOperations({
       setMaintenanceEvents(maintenanceRows || []);
     } catch (error) {
       console.error("Failed to load calendar operations:", error);
-      toast.error("We couldn't load calendar operations right now.");
+      const message = "We couldn't load calendar operations right now.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -168,15 +173,25 @@ export function CalendarOperations({
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">Calendar Operations</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage team availability, sync metadata, reminder-ready viewings, and reschedule links.
-        </p>
-      </div>
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
+  return (
+    <WorkspacePageShell
+      title="Calendar Operations"
+      description="Manage team availability, sync metadata, reminder-ready viewings, and reschedule links."
+      actions={
+        <Button variant="outline" size="sm" onClick={() => void loadData()} disabled={loading}>
+          <RefreshCcw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadData()}
+      >
+    <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Availability Rules</p>
@@ -431,5 +446,7 @@ export function CalendarOperations({
         </div>
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

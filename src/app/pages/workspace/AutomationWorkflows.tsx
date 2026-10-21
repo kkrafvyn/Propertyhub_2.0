@@ -5,6 +5,7 @@ import { Card } from "@/app/components/ui/Card";
 import { Button } from "@/app/components/ui/Button";
 import { Badge } from "@/app/components/ui/badge";
 import { ActionDialog } from "@/app/components/ux/ActionDialog";
+import { OperationalQueryState, WorkspacePageShell } from "@/app/components/ux";
 import { automationEngineService } from "@/lib/automation-engine.service";
 import type { MemberRole } from "@/lib/workspace";
 
@@ -19,6 +20,7 @@ export default function AutomationWorkflows({
 }: AutomationWorkflowsProps) {
   const [workflows, setWorkflows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [workflowToDelete, setWorkflowToDelete] = useState<any | null>(null);
   const [deleting, setDeleting] = useState(false);
   const canManageWorkflows = currentRole === "owner" || currentRole === "manager";
@@ -26,11 +28,14 @@ export default function AutomationWorkflows({
   const loadWorkflows = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await automationEngineService.getWorkflows(organizationId);
       setWorkflows(data || []);
     } catch (error) {
       console.error("Failed to load workflows:", error);
-      toast.error("We couldn't load automation workflows.");
+      const message = "We couldn't load automation workflows.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -102,15 +107,24 @@ export default function AutomationWorkflows({
     };
   }, [workflows]);
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Automation Workflows</h1>
-        <p className="text-muted-foreground mt-2">
-          Live workflow templates and execution controls for your organization.
-        </p>
-      </div>
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
+  return (
+    <WorkspacePageShell
+      title="Automation Workflows"
+      description="Live workflow templates and execution controls for your organization."
+      actions={
+        <Button variant="outline" size="sm" onClick={() => void loadWorkflows()} disabled={loading}>
+          Refresh
+        </Button>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadWorkflows()}
+      >
+    <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Enabled</p>
@@ -191,9 +205,7 @@ export default function AutomationWorkflows({
           <Badge variant="outline">Live Supabase data</Badge>
         </div>
 
-        {loading ? (
-          <Card className="p-8 text-center text-muted-foreground">Loading workflows...</Card>
-        ) : workflows.length === 0 ? (
+        {workflows.length === 0 ? (
           <Card className="p-8 text-center text-muted-foreground">
             <p>No workflows yet. Create one from the templates above to get started.</p>
           </Card>
@@ -261,6 +273,8 @@ export default function AutomationWorkflows({
           </div>
         )}
       </div>
+    </div>
+      </OperationalQueryState>
       <ActionDialog
         open={Boolean(workflowToDelete)}
         onOpenChange={(open) => !open && setWorkflowToDelete(null)}
@@ -271,6 +285,6 @@ export default function AutomationWorkflows({
         pending={deleting}
         onConfirm={handleDeleteWorkflow}
       />
-    </div>
+    </WorkspacePageShell>
   );
 }

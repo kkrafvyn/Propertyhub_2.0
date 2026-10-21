@@ -35,6 +35,7 @@ import {
   BRAND_PRESETS,
   type WhitelabelConfig,
 } from '../../../lib/whitelabel-platform.service';
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 
 export function CompanyLaunchpad({
   organizationId,
@@ -47,14 +48,20 @@ export function CompanyLaunchpad({
   const [activeTab, setActiveTab] = useState<'theme' | 'domain' | 'modules'>('theme');
   const [isDeploying, setIsDeploying] = useState(false);
   const [loadingConfig, setLoadingConfig] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!organizationId) return;
     setLoadingConfig(true);
+    setLoadError(null);
     whitelabelPlatformService
       .getConfig(organizationId)
       .then(setConfig)
-      .catch((error) => toast.error(error?.message || 'Unable to load white-label settings.'))
+      .catch((error) => {
+        const message = error?.message || 'Unable to load white-label settings.';
+        setLoadError(message);
+        toast.error(message);
+      })
       .finally(() => setLoadingConfig(false));
   }, [organizationId]);
 
@@ -99,25 +106,19 @@ export function CompanyLaunchpad({
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-            <Palette className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-ink">
-              Company Launchpad & White-Label Studio
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Turn BaytMiftah into your company’s branded mobile and web app with custom domains, themes, and instant deployment.
-            </p>
-          </div>
-        </div>
+  const queryPhase = loadError ? 'error' : loadingConfig ? 'loading' : 'ready';
 
-        <div className="flex items-center gap-2">
+  return (
+    <WorkspacePageShell
+      title="Company Launchpad & White-Label Studio"
+      description="Turn BaytMiftah into your company’s branded mobile and web app with custom domains, themes, and instant deployment."
+      meta={
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+          <Palette className="h-5 w-5" />
+        </div>
+      }
+      actions={
+        <>
           <Button
             size="sm"
             onClick={handleDeploy}
@@ -128,9 +129,24 @@ export function CompanyLaunchpad({
             <Sparkles className="mr-1.5 h-4 w-4" />
             {isDeploying ? 'Deploying App...' : 'Publish Branded App'}
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => {
+          if (organizationId) {
+            setLoadError(null);
+            setLoadingConfig(true);
+            void whitelabelPlatformService.getConfig(organizationId).then(setConfig).catch((error) => {
+              const message = error?.message || 'Unable to load white-label settings.';
+              setLoadError(message);
+            }).finally(() => setLoadingConfig(false));
+          }
+        }}
+      >
+    <div className="space-y-6">
       {/* Main Studio Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Left Column: Brand Configuration & Presets */}
@@ -468,5 +484,7 @@ export function CompanyLaunchpad({
         </div>
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

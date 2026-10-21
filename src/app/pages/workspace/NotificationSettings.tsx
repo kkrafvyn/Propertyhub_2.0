@@ -14,6 +14,7 @@ import {
 import { pushNotificationService } from "../../../lib/push-notification.service";
 import { notificationService } from "../../../lib/notification.service";
 import { WORKSPACE_ENTRY_PATH } from "../../../lib/workspace";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 function formatRelativeTime(value?: string | null) {
   if (!value) return "Recently";
@@ -34,6 +35,7 @@ function formatRelativeTime(value?: string | null) {
 export default function NotificationSettings() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
   const [markingAllRead, setMarkingAllRead] = useState(false);
@@ -51,6 +53,7 @@ export default function NotificationSettings() {
 
     try {
       setLoading(true);
+      setLoadError(null);
       const [preferences, notifications] = await Promise.all([
         communicationService.getNotificationPreferences(user.id),
         communicationService.getNotificationHistory(user.id, 20),
@@ -60,7 +63,12 @@ export default function NotificationSettings() {
       setHistory(notifications);
     } catch (error) {
       console.error("Failed to load notification settings:", error);
-      toast.error("We couldn't load your notification settings right now.");
+      const message =
+        error instanceof Error
+          ? error.message
+          : "We couldn't load your notification settings right now.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -178,15 +186,14 @@ export default function NotificationSettings() {
     }
   };
 
-  if (loading) {
-    return <div className="text-center py-12 text-muted-foreground">Loading notifications...</div>;
-  }
-
-  if (!user) {
-    return <div className="text-center py-12 text-muted-foreground">Sign in to manage notifications.</div>;
-  }
-
   const unreadCount = history.filter((notification) => !notification.read).length;
+  const queryPhase = !user
+    ? "ready"
+    : loadError
+      ? "error"
+      : loading
+        ? "loading"
+        : "ready";
   const externalProviders = notificationService.areExternalProvidersConfigured();
   const channels = [
     {
@@ -238,18 +245,18 @@ export default function NotificationSettings() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">Notifications</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage how you and your team receive alerts for bookings, maintenance, leases, and tenant messages.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-3">
+    <WorkspacePageShell
+      title="Notifications"
+      description="Manage how you and your team receive alerts for bookings, maintenance, leases, and tenant messages."
+      badge={
+        user ? (
           <Badge variant={unreadCount > 0 ? "default" : "outline"}>
             {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
           </Badge>
+        ) : null
+      }
+      actions={
+        user ? (
           <Button
             variant="outline"
             onClick={() => void handleSendTest()}
@@ -258,9 +265,21 @@ export default function NotificationSettings() {
             <TestTube2 className="w-4 h-4" />
             {sendingTest ? "Sending..." : "Send Test"}
           </Button>
-        </div>
-      </div>
-
+        ) : null
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void loadData()}
+        loadingFallback={
+          <div className="text-center py-12 text-muted-foreground">Loading notifications...</div>
+        }
+      >
+      {!user ? (
+        <div className="text-center py-12 text-muted-foreground">Sign in to manage notifications.</div>
+      ) : (
+      <div className="space-y-6">
       <Card className="p-4 bg-secondary/20 border-dashed">
         <p className="text-sm text-muted-foreground">
           Workflow updates for bookings, maintenance, offers, leases, and messages are delivered
@@ -512,5 +531,8 @@ export default function NotificationSettings() {
         </Button>
       </div>
     </div>
+      )}
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

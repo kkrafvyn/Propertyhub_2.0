@@ -8,6 +8,7 @@ import { Input } from "../../components/ui/Input";
 import { useAuth } from "../../context/AuthContext";
 import { leaseService } from "../../../lib/lease.service";
 import { smartDeviceService, type SmartDeviceType } from "../../../lib/smart-device.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const DEVICE_TYPES: SmartDeviceType[] = [
   "door_lock",
@@ -21,6 +22,7 @@ const DEVICE_TYPES: SmartDeviceType[] = [
 export function WorkspaceSmartProperty({ organizationId }: { organizationId: string }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [leases, setLeases] = useState<any[]>([]);
   const [devices, setDevices] = useState<any[]>([]);
   const [accessByLease, setAccessByLease] = useState<Record<string, any>>({});
@@ -41,6 +43,7 @@ export function WorkspaceSmartProperty({ organizationId }: { organizationId: str
   const loadState = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [leaseRows, deviceRows] = await Promise.all([
         leaseService.getOrganizationLeases(organizationId),
         smartDeviceService.getOrganizationDevices(organizationId),
@@ -57,11 +60,15 @@ export function WorkspaceSmartProperty({ organizationId }: { organizationId: str
       setAccessByLease(Object.fromEntries(profiles));
     } catch (error) {
       console.error(error);
-      toast.error("Unable to load smart property settings.");
+      const message = "Unable to load smart property settings.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   useEffect(() => {
     void loadState();
@@ -142,19 +149,17 @@ export function WorkspaceSmartProperty({ organizationId }: { organizationId: str
     }
   };
 
-  if (loading) {
-    return <Card className="p-8 text-center text-muted-foreground">Loading smart property...</Card>;
-  }
-
   return (
+    <WorkspacePageShell
+      title="Smart Property"
+      description="Register IoT devices and control when tenants can access door codes, meters, and building controls."
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadState()}
+      >
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold mb-2">Smart Property</h1>
-        <p className="text-muted-foreground">
-          Register IoT devices and control when tenants can access door codes, meters, and building controls.
-        </p>
-      </div>
-
       <Card className="p-5 space-y-4">
         <h2 className="font-semibold">Tenant access</h2>
         <p className="text-sm text-muted-foreground">
@@ -289,5 +294,7 @@ export function WorkspaceSmartProperty({ organizationId }: { organizationId: str
         )}
       </Card>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

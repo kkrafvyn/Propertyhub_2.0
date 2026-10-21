@@ -28,7 +28,7 @@ import { maintenanceService } from "../../../lib/maintenance.service";
 import { vendorService } from "../../../lib/vendor.service";
 import { walletService } from "../../../lib/wallet.service";
 import { escrowService } from "../../../lib/escrow.service";
-import { ActivityTimeline, EmptyState } from "../../components/ux";
+import { ActivityTimeline, EmptyState, OperationalQueryState } from "../../components/ux";
 import { ActionDialog } from "../../components/ux/ActionDialog";
 import { CONSUMER_PAGE_CONFIG } from "../../lib/consumer-page-config";
 import {
@@ -374,6 +374,7 @@ export function DocumentFoldersSection({
   dealCases: any[];
 }) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [folders, setFolders] = useState<Record<string, any[]>>({});
   const [previewDocument, setPreviewDocument] = useState<any | null>(null);
   const [documentSummary, setDocumentSummary] = useState<string | null>(null);
@@ -388,6 +389,7 @@ export function DocumentFoldersSection({
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setLoadError(null);
 
     void documentCenterService
       .getUserDocumentsByFolder(userId)
@@ -396,7 +398,10 @@ export function DocumentFoldersSection({
       })
       .catch((error) => {
         console.error(error);
-        if (!cancelled) setFolders({});
+        if (!cancelled) {
+          setFolders({});
+          setLoadError("Unable to load your document folders.");
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -450,17 +455,15 @@ export function DocumentFoldersSection({
     "Other",
   ];
 
-  if (loading) {
-    return (
-      <div className="min-h-[30vh] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   const hasDocuments = Object.values(folders).some((items) => items.length > 0);
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   return (
+    <OperationalQueryState
+      phase={queryPhase}
+      errorMessage={loadError ?? undefined}
+      onRetry={() => void reloadFolders()}
+    >
     <section className="space-y-6">
       {hasDocuments ? (
         <div className="flex justify-end">
@@ -471,7 +474,7 @@ export function DocumentFoldersSection({
       ) : null}
 
       {!hasDocuments ? (
-        <Card className="p-8 text-center text-muted-foreground">
+        <Card className="app-surface-card p-8 text-center text-muted-foreground">
           <FileText className="w-10 h-10 mx-auto mb-3 opacity-60" />
           Documents shared with you will appear in folders here.
           {dealCases.length > 0 ? (
@@ -591,6 +594,7 @@ export function DocumentFoldersSection({
         </Card>
       ) : null}
     </section>
+    </OperationalQueryState>
   );
 }
 

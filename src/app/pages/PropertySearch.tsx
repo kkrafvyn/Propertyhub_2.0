@@ -15,7 +15,8 @@ import {
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
+import { Sheet, SheetContent } from "../components/ui/sheet";
 import { getPropertyCoverImage } from "../../lib/property-media";
 import { listingService } from "../../lib/listing.service";
 import { normalizePropertyCategory } from "../../lib/property-category";
@@ -757,27 +758,17 @@ export function PropertySearch() {
               />
             </aside>
           ) : (
-            <AnimatePresence>
-              {showFilters && (
-                <motion.aside
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="fixed inset-0 z-50 flex bg-black/40 p-4"
-                  onClick={() => setShowFilters(false)}
-                >
-                  <div className="w-full max-w-sm" onClick={(event) => event.stopPropagation()}>
-                    <SearchFiltersPanel
-                      filters={filters}
-                      setFilters={setFilters}
-                      onApply={handleApplyFilters}
-                      onClear={clearFilters}
-                      onClose={() => setShowFilters(false)}
-                    />
-                  </div>
-                </motion.aside>
-              )}
-            </AnimatePresence>
+            <Sheet open={showFilters} onOpenChange={setShowFilters}>
+              <SheetContent side="left" className="w-full max-w-sm overflow-y-auto p-0">
+                <SearchFiltersPanel
+                  filters={filters}
+                  setFilters={setFilters}
+                  onApply={handleApplyFilters}
+                  onClear={clearFilters}
+                  onClose={() => setShowFilters(false)}
+                />
+              </SheetContent>
+            </Sheet>
           )}
 
           {/* Properties Grid/List */}

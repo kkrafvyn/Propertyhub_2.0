@@ -17,6 +17,7 @@ import { Badge } from "../../components/ui/badge";
 import { generalLedgerService } from "../../../lib/general-ledger.service";
 import { chartOfAccountsService } from "../../../lib/chart-of-accounts.service";
 import { estateReportingService } from "../../../lib/estate-reporting.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const money = (pesewas: number = 0) =>
   new Intl.NumberFormat("en-GH", {
@@ -31,6 +32,7 @@ export function FinancialStatementsViewer({
 }) {
   const [tab, setTab] = useState<"trial" | "pl" | "balance" | "cash">("trial");
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [asOfDate, setAsOfDate] = useState(
     new Date().toISOString().slice(0, 10)
   );
@@ -48,6 +50,7 @@ export function FinancialStatementsViewer({
     if (!organizationId) return;
     try {
       setLoading(true);
+      setLoadError(null);
       if (tab === "trial") {
         const data = await generalLedgerService.getTrialBalance(
           organizationId,
@@ -69,7 +72,9 @@ export function FinancialStatementsViewer({
         setBalanceSheet(sheet);
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to generate financial statement");
+      const message = err.message || "Failed to generate financial statement";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -152,18 +157,15 @@ export function FinancialStatementsViewer({
     0
   );
 
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
-            Financial Statements & Reporting
-          </h1>
-          <p className="text-sm text-ink-muted">
-            Auditable Trial Balance, Income Statement (P&L), Balance Sheet, and Cash Flow.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+    <WorkspacePageShell
+      tone="finance"
+      title="Financial Statements & Reporting"
+      description="Auditable Trial Balance, Income Statement (P&L), Balance Sheet, and Cash Flow."
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant={tab === "trial" ? "primary" : "outline"}
             onClick={() => setTab("trial")}
@@ -196,9 +198,18 @@ export function FinancialStatementsViewer({
             <Layers className="w-4 h-4 mr-1.5" />
             Cash Flow
           </Button>
+          <Button variant="outline" size="sm" onClick={() => void loadStatements()} disabled={loading}>
+            Refresh
+          </Button>
         </div>
-      </div>
-
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadStatements()}
+      >
+      <div className="space-y-6">
       <Card className="p-6 space-y-5">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface-subtle/60 p-4 rounded-xl border border-surface-border">
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
@@ -434,6 +445,8 @@ export function FinancialStatementsViewer({
           </div>
         )}
       </Card>
-    </div>
+      </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

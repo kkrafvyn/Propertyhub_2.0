@@ -22,6 +22,7 @@ import {
   type MemberScopeProps,
   withMemberScopeDefaults,
 } from "../../../lib/member-scope";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const money = (v = 0, c = "GHS") =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency: c }).format(v / 100);
@@ -37,6 +38,7 @@ export function Property360({
   bypassPropertyScope = false,
 }: Property360Props) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [units, setUnits] = useState<EstateUnit[]>([]);
   const [occupancies, setOccupancies] = useState<EstateOccupancy[]>([]);
@@ -54,11 +56,11 @@ export function Property360({
   });
   const [estateId, setEstateId] = useState("");
 
-  useEffect(() => {
-    void (async () => {
-      try {
-        setLoading(true);
-        const scope = withMemberScopeDefaults({ scopeMode, scopedPropertyIds, bypassPropertyScope });
+  const load = async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const scope = withMemberScopeDefaults({ scopeMode, scopedPropertyIds, bypassPropertyScope });
         const es = filterEstatesByPropertyScope(
           await estateOperationsService.getEstates(organizationId),
           scope.scopeMode,
@@ -85,11 +87,18 @@ export function Property360({
         setNotices(n);
         setEnterprise(e);
         setEstateId(es[0]?.id || "");
-      } finally {
-        setLoading(false);
-      }
-    })();
+    } catch {
+      setLoadError("Unable to load property overview.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
   }, [organizationId, scopeMode, scopedPropertyIds, bypassPropertyScope]);
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   const estate = estates.find((x) => x.id === estateId);
   const estateUnits = units.filter((x) => x.estate_id === estateId);
@@ -102,27 +111,12 @@ export function Property360({
   const e = (key: string) => (enterprise[key] || []).filter((x: any) => x.estate_id === estateId);
   const currency = estate?.currency || "GHS";
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-24 text-muted-foreground gap-2">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        <span>Loading property overview…</span>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Header & Estate Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Property 360</h1>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Complete property profile combining units, financials, maintenance tickets, and contracts.
-          </p>
-        </div>
-
-        {estates.length > 0 && (
+    <WorkspacePageShell
+      title="Property 360"
+      description="Complete property profile combining units, financials, maintenance tickets, and contracts."
+      actions={
+        estates.length > 0 ? (
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground shrink-0">Property:</span>
             <NativeSelectControl
@@ -137,9 +131,21 @@ export function Property360({
               ))}
             </NativeSelectControl>
           </div>
-        )}
-      </div>
-
+        ) : undefined
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+        loadingFallback={
+          <div className="flex justify-center items-center py-24 text-muted-foreground gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Loading property overview…</span>
+          </div>
+        }
+      >
+    <div className="space-y-6">
       {estate ? (
         <>
           {/* Key Metrics */}
@@ -343,5 +349,7 @@ export function Property360({
         </Card>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

@@ -1,18 +1,21 @@
 import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Landmark, Plus, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { Landmark, Plus, ArrowDownLeft, ArrowUpRight, Loader2 } from "lucide-react";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { trustAccountingService, type TrustAccount, type TrustLedgerEntry } from "../../../lib/trust-accounting.service";
 import { useAuth } from "../../context/AuthContext";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const money = (minor = 0, currency = "USD") =>
   new Intl.NumberFormat("en-US", { style: "currency", currency }).format(minor / 100);
 
 export function TrustAccounting({ organizationId }: { organizationId: string }) {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<TrustAccount[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [ledger, setLedger] = useState<TrustLedgerEntry[]>([]);
@@ -22,12 +25,18 @@ export function TrustAccounting({ organizationId }: { organizationId: string }) 
 
   const load = async () => {
     try {
+      setLoading(true);
+      setLoadError(null);
       const s = await trustAccountingService.getTrustSummary(organizationId);
       setAccounts(s.accounts);
       setSummary({ totalBalance: s.totalBalance });
       setSelectedId((id) => id || s.accounts[0]?.id || "");
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unable to load trust accounts.";
+      setLoadError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -76,14 +85,31 @@ export function TrustAccounting({ organizationId }: { organizationId: string }) 
   };
 
   const selected = accounts.find((a) => a.id === selectedId);
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Landmark className="h-6 w-6" /> Trust Accounting</h1>
-        <p className="text-sm text-muted-foreground">Segregated trust ledgers for tenant deposits, owner reserves, and escrow.</p>
-      </div>
-
+    <WorkspacePageShell
+      tone="finance"
+      title="Trust Accounting"
+      description="Segregated trust ledgers for tenant deposits, owner reserves, and escrow."
+      badge={
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-secondary">
+          <Landmark className="h-4 w-4" aria-hidden="true" />
+          Trust ledgers
+        </span>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void load()}
+        loadingFallback={
+          <div className="flex justify-center py-20 text-muted-foreground">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Loading trust accounts...
+          </div>
+        }
+      >
       {summary && (
         <Card className="p-5">
           <p className="text-sm text-muted-foreground">Total trust balance</p>
@@ -144,6 +170,7 @@ export function TrustAccounting({ organizationId }: { organizationId: string }) 
           ))}
         </Card>
       </div>
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

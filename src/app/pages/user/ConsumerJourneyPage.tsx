@@ -1,9 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
-import { Card } from "../../components/ui/Card";
 import { Button, buttonVariants } from "../../components/ui/Button";
-import { ActivityTimeline } from "../../components/ux";
+import {
+  ActivityTimeline,
+  ConsumerHubChrome,
+  OperationalQueryState,
+  PageHeader,
+  PageLayout,
+  SectionHeader,
+} from "../../components/ux";
+import KycBanner from "../../components/baytmiftah/KycBanner";
+import { PropertyContextCard } from "../../components/messaging/ContextCards";
+import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import { dealCaseService } from "../../../lib/dealcase.service";
 import { documentCenterService } from "../../../lib/document-center.service";
 import { inquiryWorkflowService } from "../../../lib/inquiry-workflow.service";
@@ -12,40 +21,69 @@ import { propertyViewingService } from "../../../lib/property-viewing.service";
 import { bookingService } from "../../../lib/booking.service";
 import { resolveBookingPaymentAction } from "../../../lib/booking-payment-action";
 import { CONSUMER_ROUTES, propertyPath } from "../../lib/consumer-routes";
+import { CONSUMER_PAGE_CONFIG } from "../../lib/consumer-page-config";
 import {
   buildBookingTimeline,
   buildInquiryTimeline,
   buildPurchaseTimeline,
 } from "../../lib/workflow-timeline";
 import { useAuth } from "../../context/AuthContext";
+import { useTranslation } from "../../i18n/LocaleContext";
+
+const pageConfig = CONSUMER_PAGE_CONFIG.journey;
 
 export function ConsumerJourneyPage() {
   const { dealCaseId } = useParams();
   const [searchParams] = useSearchParams();
   const bookingId = searchParams.get("bookingId");
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const { t } = useTranslation();
   const [dealCase, setDealCase] = useState<any | null>(null);
   const [booking, setBooking] = useState<any | null>(null);
   const [viewing, setViewing] = useState<any | null>(null);
   const [documents, setDocuments] = useState<any[]>([]);
   const [counterOffers, setCounterOffers] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
-  useEffect(() => {
-    if (!user?.id) return;
-
-    if (bookingId) {
-      void bookingService.getGuestBookings(user.id).then((rows) => {
-        setBooking(rows.find((row) => row.id === bookingId) || null);
-      });
+  const loadJourney = useCallback(async () => {
+    if (!user?.id) {
+      setLoading(false);
       return;
     }
 
-    if (!dealCaseId) return;
+    setLoading(true);
+    setLoadError(null);
+    setNotFound(false);
+    setDealCase(null);
+    setBooking(null);
+    setViewing(null);
+    setDocuments([]);
+    setCounterOffers([]);
 
-    void (async () => {
+    try {
+      if (bookingId) {
+        const rows = await bookingService.getGuestBookings(user.id);
+        const match = rows.find((row) => row.id === bookingId) || null;
+        setBooking(match);
+        setNotFound(!match);
+        return;
+      }
+
+      if (!dealCaseId) {
+        setNotFound(true);
+        return;
+      }
+
       const row = await dealCaseService.getDealCaseById(dealCaseId);
+      if (!row) {
+        setNotFound(true);
+        return;
+      }
+
       setDealCase(row);
       if (row.case_type === "purchase_offer") {
         setCounterOffers(await purchaseWorkflowService.getCounterOffers(row.id));
@@ -56,11 +94,18 @@ export function ConsumerJourneyPage() {
       }
       const allDocs = await documentCenterService.getUserDocuments(user.id);
       setDocuments(allDocs.filter((doc) => doc.deal_case_id === row.id));
-    })().catch((error) => {
+    } catch (error) {
       console.error(error);
-      toast.error("Unable to load journey.");
-    });
-  }, [bookingId, dealCaseId, user?.id]);
+      setLoadError(t("consumerJourney.loadError"));
+      toast.error(t("consumerJourney.loadError"));
+    } finally {
+      setLoading(false);
+    }
+  }, [bookingId, dealCaseId, t, user?.id]);
+
+  useEffect(() => {
+    void loadJourney();
+  }, [loadJourney]);
 
   const timeline = useMemo(() => {
     if (booking) return buildBookingTimeline(booking);
@@ -95,76 +140,126 @@ export function ConsumerJourneyPage() {
         inquiryDealCaseId: dealCase.id,
         userId: user.id,
       });
-      toast.success("Application started.");
+      toast.success(t("consumerJourney.startApplicationSuccess"));
       navigate(CONSUMER_ROUTES.journey(created.id));
     } catch (error) {
       console.error(error);
-      toast.error("Unable to start application.");
+      toast.error(t("consumerJourney.startApplicationError"));
     } finally {
       setBusy(false);
     }
   };
 
-  const title =
+  const propertyTitle =
     booking?.listing?.property?.address ||
     dealCase?.listing?.property?.address ||
-    "Your property journey";
+    null;
+
+  const headerTitle = propertyTitle || t("consumerJourney.pageTitle");
+
+  const queryPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : notFound
+        ? "empty"
+        : "ready";
+
+  const listingMeta = booking?.listing || dealCase?.listing;
+  const listingId = listingMeta?.id || dealCase?.listing_id;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 p-4 md:p-0">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">{title}</h1>
-          <p className="text-sm text-muted-foreground">
-            Track your stage, next action, and documents in one place.
-          </p>
-        </div>
-        <Link
-          to={CONSUMER_ROUTES.applications}
-          className={buttonVariants({ variant: "outline", size: "md" })}
-        >
-          Back to applications
-        </Link>
-      </div>
-
-      <Card className="p-5 space-y-4">
-        <ActivityTimeline steps={timeline} />
-        {paymentAction && paymentAction.kind !== "none" ? (
-          <Button
-            disabled={paymentAction.disabled}
-            onClick={() => paymentAction.checkoutPath && navigate(paymentAction.checkoutPath)}
+    <PageLayout variant="consumer" maxWidthClassName="max-w-3xl">
+      <PageMeta
+        title={headerTitle}
+        description={t("consumerJourney.pageDescription")}
+      />
+      <ConsumerHubChrome activeSection="applications">
+      <PageHeader
+        title={headerTitle}
+        description={t("consumerJourney.pageDescription")}
+        breadcrumbs={pageConfig.breadcrumb}
+        actions={
+          <Link
+            to={CONSUMER_ROUTES.applications}
+            className={buttonVariants({ variant: "outline", size: "md" })}
           >
-            {paymentAction.label}
-          </Button>
-        ) : null}
-        {dealCase?.case_type === "property_inquiry" ? (
-          <div className="flex flex-wrap gap-2">
-            <Link
-              to={`${propertyPath(dealCase.listing_id)}#viewing`}
-              className={buttonVariants({ variant: "outline", size: "md" })}
-            >
-              Schedule viewing
-            </Link>
-            <Button disabled={busy} onClick={() => void promoteInquiry()}>
-              Start application
-            </Button>
-          </div>
-        ) : null}
-      </Card>
+            {t("consumerJourney.backToApplications")}
+          </Link>
+        }
+      />
 
-      {documents.length > 0 ? (
-        <Card className="p-5 space-y-3">
-          <h2 className="font-semibold">Documents</h2>
-          <ul className="space-y-2 text-sm">
-            {documents.map((doc) => (
-              <li key={doc.id} className="flex items-center justify-between gap-3">
-                <span>{doc.title || doc.document_type || "Document"}</span>
-                <span className="text-muted-foreground capitalize">{doc.status || "pending"}</span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      ) : null}
-    </div>
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadJourney()}
+        retryLabel={t("consumerJourney.retry")}
+        emptyTitle={t("consumerJourney.notFoundTitle")}
+        emptyDescription={t("consumerJourney.notFoundDescription")}
+        emptyActionLabel={pageConfig.emptyActionLabel}
+        emptyActionHref={pageConfig.emptyActionHref}
+      >
+        <div className="space-y-6">
+          {(booking || paymentAction) && profile ? (
+            <KycBanner kyc={profile} />
+          ) : null}
+          {listingMeta ? (
+            <div className="max-w-md">
+              <PropertyContextCard
+                metadata={{
+                  propertyName: listingMeta.property?.address || headerTitle,
+                  address: listingMeta.property?.address,
+                  listingId: listingId || listingMeta.id,
+                }}
+                onAction={(action) => {
+                  if (action === "view_property" && listingId) {
+                    navigate(propertyPath(String(listingId)));
+                  }
+                }}
+              />
+            </div>
+          ) : null}
+          <div className="app-surface-card rounded-2xl p-5 sm:p-6 space-y-4">
+            <ActivityTimeline embedded steps={timeline} />
+            {paymentAction && paymentAction.kind !== "none" ? (
+              <Button
+                disabled={paymentAction.disabled}
+                onClick={() => paymentAction.checkoutPath && navigate(paymentAction.checkoutPath)}
+              >
+                {paymentAction.label}
+              </Button>
+            ) : null}
+            {dealCase?.case_type === "property_inquiry" ? (
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  to={`${propertyPath(dealCase.listing_id)}#viewing`}
+                  className={buttonVariants({ variant: "outline", size: "md" })}
+                >
+                  {t("consumerJourney.scheduleViewing")}
+                </Link>
+                <Button disabled={busy} onClick={() => void promoteInquiry()}>
+                  {t("consumerJourney.startApplication")}
+                </Button>
+              </div>
+            ) : null}
+          </div>
+
+          {documents.length > 0 ? (
+            <div className="app-surface-card rounded-2xl p-5 sm:p-6 space-y-3">
+              <SectionHeader title={t("consumerJourney.documentsTitle")} />
+              <ul className="space-y-2 text-sm">
+                {documents.map((doc) => (
+                  <li key={doc.id} className="flex items-center justify-between gap-3">
+                    <span>{doc.title || doc.document_type || t("consumerJourney.documentFallback")}</span>
+                    <span className="text-muted-foreground capitalize">{doc.status || "pending"}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      </OperationalQueryState>
+      </ConsumerHubChrome>
+    </PageLayout>
   );
 }

@@ -9,6 +9,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { IMPORT_FORMATS_LABEL } from "../../../lib/document-import";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const FORMAT_BADGE = "CSV · Excel · JSON · XML · Word · PDF";
 
@@ -65,23 +66,21 @@ export function DataImportExport() {
     URL.revokeObjectURL(url);
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-border pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Database className="h-6 w-6 text-emerald-500 dark:text-emerald-400" />
-            <h1 className="text-xl font-bold text-foreground tracking-tight">Data Import & Export</h1>
-            <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium px-2 py-0.5 rounded-full border border-emerald-500/20">
-              {FORMAT_BADGE}
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Imports accept {IMPORT_FORMATS_LABEL}. Save Excel as .xlsx or export from Google Sheets — same column headers as CSV templates.
-          </p>
-        </div>
-      </div>
+  const queryPhase = "ready" as const;
 
+  return (
+    <WorkspacePageShell
+      title="Data Import & Export"
+      description={`Imports accept ${IMPORT_FORMATS_LABEL}. Save Excel as .xlsx or export from Google Sheets — same column headers as CSV templates.`}
+      badge={
+        <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium px-2 py-0.5 rounded-full border border-emerald-500/20">
+          {FORMAT_BADGE}
+        </span>
+      }
+      meta={<Database className="h-5 w-5 text-emerald-500 dark:text-emerald-400" aria-hidden />}
+    >
+      <OperationalQueryState phase={queryPhase}>
+    <div className="space-y-6">
       <div className="bg-muted/40 border border-border rounded-lg p-3 text-xs text-muted-foreground flex items-start gap-2">
         <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500 mt-0.5" />
         <span>
@@ -158,5 +157,7 @@ export function DataImportExport() {
         </div>
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

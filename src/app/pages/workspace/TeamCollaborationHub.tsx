@@ -26,6 +26,7 @@ import { membershipRequestService } from "../../../lib/membership-request.servic
 import { canWorkspace } from "../../../lib/workspace-permissions";
 import type { MemberRole as ExtendedMemberRole } from "../../../lib/workspace";
 import { estateOperationsService } from "../../../lib/estate-operations.service";
+import { OperationalQueryState, SectionHeader, WorkspacePageShell } from "../../components/ux";
 import {
   ownerOversightService,
   type PropertyManagementAgreement,
@@ -80,6 +81,7 @@ export default function TeamCollaborationHub({
   const canManageTeam = ["owner", "organization_admin", "managing_director", "platform_admin"].includes(currentRole || "");
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
@@ -133,6 +135,7 @@ export default function TeamCollaborationHub({
   const loadData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [memberData, invitationData, inboxData, workflowData, settingsData, claimData, membershipData, agreementData, estateData] =
         await Promise.all([
           organizationService.getOrganizationMembers(organization.id),
@@ -163,11 +166,15 @@ export default function TeamCollaborationHub({
       }
     } catch (error) {
       console.error("Failed to load collaboration hub:", error);
-      toast.error("We couldn't load the collaboration hub right now.");
+      const message = "We couldn't load the collaboration hub right now.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   useEffect(() => {
     void loadData();
@@ -307,26 +314,15 @@ export default function TeamCollaborationHub({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold tracking-tight text-foreground">Team Collaboration Hub</h1>
-                <Badge variant="outline" className="text-xs">
-                  {members.length} {members.length === 1 ? "Member" : "Members"}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Manage organization members, role permissions, listing claims, and management agreements.
-              </p>
-            </div>
-          </div>
-        </div>
+    <WorkspacePageShell
+      title="Team Collaboration Hub"
+      description="Manage organization members, role permissions, listing claims, and management agreements."
+      badge={
+        <Badge variant="outline" className="text-xs">
+          {members.length} {members.length === 1 ? "Member" : "Members"}
+        </Badge>
+      }
+      actions={
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -349,8 +345,14 @@ export default function TeamCollaborationHub({
             </Button>
           )}
         </div>
-      </div>
-
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadData()}
+      >
+    <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Card
           onClick={() => setActiveTab("members")}
@@ -441,14 +443,10 @@ export default function TeamCollaborationHub({
         </div>
       </div>
 
-      {loading ? (
-        <Card className="p-8 text-center text-muted-foreground">Loading collaboration data...</Card>
-      ) : null}
-
       {!loading && activeTab === "overview" && (
         <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr]  gap-6">
           <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Recent Collaboration Activity</h2>
+            <SectionHeader title="Recent Collaboration Activity" />
             {recentActivity.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 New shared inbox traffic and workflow execution will appear here.
@@ -944,5 +942,7 @@ export default function TeamCollaborationHub({
         </DialogContent>
       </Dialog>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

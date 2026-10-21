@@ -9,6 +9,7 @@ import { vendorService } from "@/lib/vendor.service";
 import { vendorSLAService } from "@/lib/vendor-sla.service";
 import { propertyService } from "@/lib/property.service";
 import { Star, Wrench, MapPin, Phone } from "lucide-react";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const CATEGORIES = [
   "all",
@@ -59,6 +60,7 @@ export default function VendorManagement({ organizationId, currentUserId }: { or
   const [properties, setProperties] = useState<PropertyRow[]>([]);
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<(typeof CATEGORIES)[number]>("all");
   const [hiringVendor, setHiringVendor] = useState<VendorRow | null>(null);
   const [propertyId, setPropertyId] = useState("");
@@ -69,6 +71,7 @@ export default function VendorManagement({ organizationId, currentUserId }: { or
   const loadVendors = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       let data: VendorRow[] = [];
 
       if (filterCategory === "all") {
@@ -83,11 +86,15 @@ export default function VendorManagement({ organizationId, currentUserId }: { or
       setVendors(data);
     } catch (error) {
       console.error("Failed to load vendors:", error);
-      toast.error("Unable to load vendors.");
+      const message = "Unable to load vendors.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   const loadWorkspace = async () => {
     try {
@@ -168,14 +175,17 @@ export default function VendorManagement({ organizationId, currentUserId }: { or
   };
 
   return (
+    <WorkspacePageShell
+      tone="finance"
+      title="Vendor & Contractor Ecosystem"
+      description="Find and hire verified contractors for maintenance and repairs."
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadVendors()}
+      >
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Vendor & Contractor Ecosystem</h1>
-        <p className="text-muted-foreground mt-2">
-          Find and hire verified contractors for maintenance and repairs
-        </p>
-      </div>
-
       {assignments.length > 0 && (
         <Card className="p-4 space-y-3">
           <h2 className="font-semibold">Open assignments</h2>
@@ -375,5 +385,7 @@ export default function VendorManagement({ organizationId, currentUserId }: { or
         </div>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

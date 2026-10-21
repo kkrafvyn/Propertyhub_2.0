@@ -4,6 +4,7 @@ import { Card } from "@/app/components/ui/Card";
 import { Button } from "@/app/components/ui/Button";
 import { Badge } from "@/app/components/ui/badge";
 import { marketIntelligenceService } from "@/lib/market-intelligence.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface MarketIntelligenceDashboardProps {
   organizationId: string;
@@ -20,15 +21,14 @@ export default function MarketIntelligenceDashboard({
   const [analytics, setAnalytics] = useState<any[]>([]);
   const [topLocations, setTopLocations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
 
-    const loadData = async () => {
-      try {
-        setLoading(true);
-
-        const [insightsData, locationsData] = await Promise.all([
+      const [insightsData, locationsData] = await Promise.all([
           marketIntelligenceService.getOrganizationInsights(organizationId),
           marketIntelligenceService.getTopLocations(3),
         ]);
@@ -38,26 +38,21 @@ export default function MarketIntelligenceDashboard({
           ? await marketIntelligenceService.getOrComputeMarketAnalytics(marketLocation)
           : [];
 
-        if (!cancelled) {
-          setInsights(insightsData);
-          setAnalytics(analyticsData || []);
-          setTopLocations(locationsData || []);
-        }
-      } catch (error) {
-        console.error("Failed to load market intelligence:", error);
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
+      setInsights(insightsData);
+      setAnalytics(analyticsData || []);
+      setTopLocations(locationsData || []);
+    } catch {
+      setLoadError("Unable to load market intelligence.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     void loadData();
-
-    return () => {
-      cancelled = true;
-    };
   }, [organizationId]);
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   const recommendations = useMemo(() => {
     const cards: Array<{
@@ -105,17 +100,15 @@ export default function MarketIntelligenceDashboard({
   }, [analytics, insights, topLocations]);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Market Intelligence</h1>
-        <p className="text-muted-foreground mt-2">
-          Track live market signals and adjust pricing, inventory, and response strategy.
-        </p>
-      </div>
-
-      {loading ? (
-        <div className="text-center text-muted-foreground py-12">Loading market data...</div>
-      ) : (
+    <WorkspacePageShell
+      title="Market Intelligence"
+      description="Track live market signals and adjust pricing, inventory, and response strategy."
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadData()}
+      >
         <>
           {insights && (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -242,7 +235,7 @@ export default function MarketIntelligenceDashboard({
             </Card>
           </div>
         </>
-      )}
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

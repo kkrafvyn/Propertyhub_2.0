@@ -11,6 +11,7 @@ import {
   type ManagedEstate,
 } from "../../../lib/estate-operations.service";
 import { estatePayablesService } from "../../../lib/estate-payables.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const money = (v = 0, c = "GHS") =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency: c }).format(v / 100);
@@ -22,6 +23,7 @@ interface EstatePayablesProps {
 
 export function EstatePayables({ organizationId, currentUserId }: EstatePayablesProps) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [bills, setBills] = useState<any[]>([]);
@@ -37,12 +39,16 @@ export function EstatePayables({ organizationId, currentUserId }: EstatePayables
   const load = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const es = await estateOperationsService.getEstates(organizationId);
       setEstates(es);
       setEstateId((x) => x || es[0]?.id || "");
       setBills(await estatePayablesService.getBills(es.map((x) => x.id)));
-    } catch {
-      toast.error("Unable to load payables.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to load payables.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -106,27 +112,15 @@ export function EstatePayables({ organizationId, currentUserId }: EstatePayables
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-24 text-muted-foreground gap-2">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        <span>Loading vendor bills…</span>
-      </div>
-    );
-  }
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Vendor Bills & Payables</h1>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Track and approve contractor invoices, utility charges, and supplier bills.
-          </p>
-        </div>
-
-        {estates.length > 0 && (
+    <WorkspacePageShell
+      tone="finance"
+      title="Vendor Bills & Payables"
+      description="Track and approve contractor invoices, utility charges, and supplier bills."
+      actions={
+        estates.length > 0 ? (
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground shrink-0">Property:</span>
             <NativeSelectControl
@@ -141,9 +135,20 @@ export function EstatePayables({ organizationId, currentUserId }: EstatePayables
               ))}
             </NativeSelectControl>
           </div>
-        )}
-      </div>
-
+        ) : null
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void load()}
+        loadingFallback={
+          <div className="flex justify-center items-center py-24 text-muted-foreground gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Loading vendor bills…</span>
+          </div>
+        }
+      >
       {/* Summary Metrics */}
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="p-5">
@@ -327,6 +332,7 @@ export function EstatePayables({ organizationId, currentUserId }: EstatePayables
           </div>
         )}
       </Card>
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

@@ -9,6 +9,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Button } from "../ui/Button";
+import { DegradedModeBanner } from "./DegradedModeBanner";
 import { Input } from "../ui/Input";
 import { Badge } from "../ui/badge";
 import {
@@ -388,14 +389,14 @@ export function BaytMiftahAIPanel({
               {responseMode === "local_faq" ? (
                 <Badge
                   variant="outline"
-                  className="mt-1.5 border-amber-300/50 bg-amber-500/15 text-[10px] text-amber-100"
+                  className="mt-1.5 border-amber-300/50 bg-amber-500/15 text-xs text-amber-100"
                 >
                   Built-in FAQ (AI model unavailable)
                 </Badge>
               ) : responseMode === "llm" && source ? (
                 <Badge
                   variant="outline"
-                  className="mt-1.5 border-white/30 bg-white/10 text-[10px] text-white/90"
+                  className="mt-1.5 border-white/30 bg-white/10 text-xs text-white/90"
                 >
                   {source === "qwen" ? "Qwen" : "OpenAI"} response
                 </Badge>
@@ -420,6 +421,14 @@ export function BaytMiftahAIPanel({
               </button>
             </div>
           </header>
+
+          {responseMode === "local_faq" ? (
+            <div className="px-4 pt-3">
+              <DegradedModeBanner tone="warning" className="mb-0">
+                Answers use built-in help topics — the live AI model is unavailable.
+              </DegradedModeBanner>
+            </div>
+          ) : null}
 
           {/* Chat Messages List */}
           <div ref={listRef} className="flex-1 space-y-3.5 overflow-y-auto bg-surface-subtle/40 p-4">
@@ -449,7 +458,7 @@ export function BaytMiftahAIPanel({
                 >
                   <div className="whitespace-pre-wrap">{message.text}</div>
                   {message.role === "assistant" && message.responseMode === "local_faq" ? (
-                    <p className="mt-2 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                    <p className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300">
                       Answered from built-in help topics, not a live AI model.
                     </p>
                   ) : null}

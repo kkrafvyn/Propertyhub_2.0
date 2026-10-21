@@ -16,6 +16,7 @@ import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/badge";
 import { marketIntelligenceService } from "../../../lib/market-intelligence.service";
 import { ghanaMarketService } from "../../../lib/ghana-market.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface PredictiveAnalyticsProps {
   organizationId: string;
@@ -33,52 +34,46 @@ export default function PredictiveAnalytics({
   const [timeRange, setTimeRange] = useState("6m");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [insights, setInsights] = useState<any | null>(null);
   const [analytics, setAnalytics] = useState<any[]>([]);
   const [forecast, setForecast] = useState<any[]>([]);
   const [topLocations, setTopLocations] = useState<any[]>([]);
   const [allLocations, setAllLocations] = useState<{ name: string; city: string; region: string; count: number }[]>([]);
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadBaseData = async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
 
-    const loadBaseData = async () => {
-      try {
-        setLoading(true);
+      const [insightsData, refreshedInsights, locations, allLocs] = await Promise.all([
+        marketIntelligenceService.getOrganizationInsights(organizationId),
+        marketIntelligenceService.updateOrganizationInsights(organizationId),
+        marketIntelligenceService.getTopLocations(5),
+        ghanaMarketService.getSelectableLocations(500),
+      ]);
 
-        const [insightsData, refreshedInsights, locations, allLocs] = await Promise.all([
-          marketIntelligenceService.getOrganizationInsights(organizationId),
-          marketIntelligenceService.updateOrganizationInsights(organizationId),
-          marketIntelligenceService.getTopLocations(5),
-          ghanaMarketService.getSelectableLocations(500),
-        ]);
-
-        if (!cancelled) {
-          setInsights(refreshedInsights || insightsData);
-          setTopLocations(locations);
-          setAllLocations(allLocs);
-          if (locations[0]?.city) {
-            setSelectedLocation(locations[0].city);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load predictive analytics:", error);
-        if (!cancelled) {
-          toast.error("We couldn't load predictive analytics right now.");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+      setInsights(refreshedInsights || insightsData);
+      setTopLocations(locations);
+      setAllLocations(allLocs);
+      if (locations[0]?.city) {
+        setSelectedLocation(locations[0].city);
       }
-    };
+    } catch (error) {
+      console.error("Failed to load predictive analytics:", error);
+      const message = "We couldn't load predictive analytics right now.";
+      setLoadError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     void loadBaseData();
-
-    return () => {
-      cancelled = true;
-    };
   }, [organizationId]);
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   useEffect(() => {
     if (!selectedLocation) {
@@ -196,25 +191,23 @@ export default function PredictiveAnalytics({
     return cards;
   }, [insights, latestAnalytics, selectedLocation, topLocations]);
 
-  if (loading) {
-    return <div className="text-center py-12 text-muted-foreground">Loading analytics...</div>;
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold">Predictive Analytics</h1>
-          <p className="text-muted-foreground mt-1">
-            Live organization insight plus market trend and location forecast signals.
-          </p>
-        </div>
+    <WorkspacePageShell
+      title="Predictive Analytics"
+      description="Live organization insight plus market trend and location forecast signals."
+      actions={
         <Button variant="outline">
           <Download className="w-4 h-4" />
           Export Snapshot
         </Button>
-      </div>
-
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadBaseData()}
+      >
+    <div className="space-y-6">
       <Card className="p-4 bg-secondary/20">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="flex gap-4">
@@ -506,5 +499,7 @@ export default function PredictiveAnalytics({
         </Card>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

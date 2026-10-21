@@ -16,7 +16,7 @@ import {
   type OrganizationMembershipRequest,
 } from "../../../lib/membership-request.service";
 import { TRUST_LABELS } from "../../../lib/legal-disclaimers";
-import { PageHeader, PageLayout } from "../../components/ux";
+import { ConsumerHubChrome, PageHeader, PageLayout } from "../../components/ux";
 import { ownerOversightService } from "../../../lib/owner-oversight.service";
 import { organizationService } from "../../../lib/organization.service";
 
@@ -148,7 +148,8 @@ export function ConsumerWorkspaceAccessPage() {
   }
 
   return (
-    <PageLayout>
+    <PageLayout variant="consumer">
+      <ConsumerHubChrome activeSection="overview">
       <PageHeader
         title="Own property? Use the workspace"
         description="Claim a listing, create your landlord workspace, or request to join an existing company."
@@ -277,6 +278,7 @@ export function ConsumerWorkspaceAccessPage() {
           )}
         </Card>
       </div>
+      </ConsumerHubChrome>
     </PageLayout>
   );
 }

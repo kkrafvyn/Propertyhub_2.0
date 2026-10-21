@@ -14,6 +14,8 @@ import {
 import { automationEngineService } from "../../../lib/automation-engine.service";
 import { organizationService } from "../../../lib/organization.service";
 import { toast } from "sonner";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
+import { Button } from "../../components/ui/Button";
 
 interface WorkflowRow {
   id: string;
@@ -47,6 +49,7 @@ export function AutomationBuilder({ organizationId: organizationIdProp }: { orga
   const [organizationId, setOrganizationId] = useState<string | null>(organizationIdProp || null);
   const [workflows, setWorkflows] = useState<WorkflowRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [runningId, setRunningId] = useState<string | null>(null);
@@ -75,11 +78,14 @@ export function AutomationBuilder({ organizationId: organizationIdProp }: { orga
   const load = async (orgId: string) => {
     try {
       setLoading(true);
+      setLoadError(null);
       const rows = await automationEngineService.getWorkflows(orgId);
       setWorkflows((rows || []) as WorkflowRow[]);
     } catch (error) {
       console.error(error);
-      toast.error("Unable to load automation rules.");
+      const message = "Unable to load automation rules.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -148,33 +154,42 @@ export function AutomationBuilder({ organizationId: organizationIdProp }: { orga
     return ACTION_OPTIONS.find((a) => a.value === type)?.label || String(type || "Custom action");
   };
 
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
+
   return (
+    <WorkspacePageShell
+      title="Visual Automation Engine & Workflow Builder"
+      description="Construct event-driven escalations, automated tenant notifications, and automated accounting postings."
+      badge={
+        <span className="bg-emerald-950 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded border border-emerald-800">
+          Low-Code REOS Rules
+        </span>
+      }
+      meta={<Workflow className="h-5 w-5 text-emerald-500 dark:text-emerald-400" aria-hidden />}
+      actions={
+        <>
+          {organizationId ? (
+            <Button variant="outline" size="sm" onClick={() => void load(organizationId)} disabled={loading}>
+              Refresh
+            </Button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setShowForm((v) => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition shadow"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>New Workflow Rule</span>
+          </button>
+        </>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => organizationId && void load(organizationId)}
+      >
     <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-border pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Workflow className="h-6 w-6 text-emerald-500 dark:text-emerald-400" />
-            <h1 className="text-xl font-bold text-foreground tracking-tight">
-              Visual Automation Engine & Workflow Builder
-            </h1>
-            <span className="bg-emerald-950 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded border border-emerald-800">
-              Low-Code REOS Rules
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Construct event-driven escalations, automated tenant notifications, and automated accounting postings.
-          </p>
-        </div>
-
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition shadow"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          <span>New Workflow Rule</span>
-        </button>
-      </div>
-
       {showForm ? (
         <form onSubmit={createRule} className="bg-card border border-border rounded-xl p-4 grid gap-3 md:grid-cols-2">
           <input
@@ -230,11 +245,7 @@ export function AutomationBuilder({ organizationId: organizationIdProp }: { orga
         </form>
       ) : null}
 
-      {loading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground py-12 justify-center">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading automation rules…
-        </div>
-      ) : workflows.length === 0 ? (
+      {workflows.length === 0 ? (
         <div className="bg-card border border-dashed border-border rounded-xl p-10 text-center text-sm text-muted-foreground">
           No automation rules yet. Create your first event-driven rule to automate notifications, escalations, and
           follow-ups.
@@ -293,5 +304,7 @@ export function AutomationBuilder({ organizationId: organizationIdProp }: { orga
         </div>
       )}
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

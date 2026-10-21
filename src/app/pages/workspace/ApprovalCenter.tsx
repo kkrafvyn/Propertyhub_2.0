@@ -21,6 +21,7 @@ import {
   type ApprovalDomain,
 } from "../../../lib/approval-center.service";
 import { useAuth } from "../../context/AuthContext";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const money = (pesewas: number = 0, currency = "GHS") =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency }).format(
@@ -34,6 +35,7 @@ export function ApprovalCenter({
 }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [items, setItems] = useState<PendingApprovalItem[]>([]);
   const [selectedDomain, setSelectedDomain] = useState<string>("ALL");
@@ -42,10 +44,13 @@ export function ApprovalCenter({
     if (!organizationId) return;
     try {
       setLoading(true);
+      setLoadError(null);
       const list = await approvalCenterService.getPendingApprovals(organizationId);
       setItems(list);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to load approval center");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to load approval center";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -112,41 +117,49 @@ export function ApprovalCenter({
     }
   };
 
+  const queryPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : filtered.length === 0
+        ? "empty"
+        : "ready";
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <CheckSquare className="h-6 w-6 text-emerald-600" />
-          Approval Center
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Multi-domain governance queue including owner spend thresholds and disbursements.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {["ALL", "owner_expense", "owner_disbursement", "procurement_request", "lease_application", "journal_entry"].map(
-          (domain) => (
-            <Button
-              key={domain}
-              size="sm"
-              variant={selectedDomain === domain ? "default" : "outline"}
-              onClick={() => setSelectedDomain(domain)}
-            >
-              {domain === "ALL" ? "All" : domain.replace(/_/g, " ")}
-            </Button>
-          ),
-        )}
-      </div>
-
-      {loading ? (
-        <Card className="p-8 text-center text-muted-foreground">Loading approvals…</Card>
-      ) : filtered.length === 0 ? (
-        <Card className="p-10 text-center text-sm text-muted-foreground">
-          <ShieldCheck className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          No pending approvals in this filter.
-        </Card>
-      ) : (
+    <WorkspacePageShell
+      title="Approval Center"
+      description="Multi-domain governance queue including owner spend thresholds and disbursements."
+      badge={
+        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-secondary">
+          <CheckSquare className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+          Pending approvals
+        </span>
+      }
+      actions={
+        <div className="flex flex-wrap gap-2">
+          {["ALL", "owner_expense", "owner_disbursement", "procurement_request", "lease_application", "journal_entry"].map(
+            (domain) => (
+              <Button
+                key={domain}
+                size="sm"
+                variant={selectedDomain === domain ? "default" : "outline"}
+                onClick={() => setSelectedDomain(domain)}
+              >
+                {domain === "ALL" ? "All" : domain.replace(/_/g, " ")}
+              </Button>
+            ),
+          )}
+        </div>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void loadApprovals()}
+        emptyIcon={ShieldCheck}
+        emptyTitle="No pending approvals"
+        emptyDescription="No pending approvals in this filter."
+      >
         <div className="space-y-3">
           {filtered.map((item) => (
             <Card key={`${item.domain}-${item.id}`} className="p-4">
@@ -197,7 +210,7 @@ export function ApprovalCenter({
             </Card>
           ))}
         </div>
-      )}
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

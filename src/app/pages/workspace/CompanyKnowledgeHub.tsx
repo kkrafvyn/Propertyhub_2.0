@@ -9,11 +9,13 @@ import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/badge";
 import { sopKnowledgeService, type SopAnswer, type SopDocument } from "../../../lib/sop-knowledge.service";
 import { useAuth } from "../../context/AuthContext";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 export function CompanyKnowledgeHub({ organizationId }: { organizationId?: string }) {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<SopDocument[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [question, setQuestion] = useState("");
   const [asking, setAsking] = useState(false);
   const [answer, setAnswer] = useState<SopAnswer | null>(null);
@@ -26,10 +28,13 @@ export function CompanyKnowledgeHub({ organizationId }: { organizationId?: strin
     if (!organizationId) return;
     try {
       setLoading(true);
+      setLoadError(null);
       setDocuments(await sopKnowledgeService.listDocuments(organizationId));
     } catch (error) {
       console.error(error);
-      toast.error("Unable to load SOP documents. Apply the latest migration first.");
+      const message = "Unable to load SOP documents. Apply the latest migration first.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -76,21 +81,29 @@ export function CompanyKnowledgeHub({ organizationId }: { organizationId?: strin
     }
   };
 
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">Company SOP & Knowledge AI Hub</h1>
-          <p className="text-sm text-ink-muted">
-            Upload organizational handbooks and policies. Search stays inside this organization; PII is redacted from queries.
-          </p>
-        </div>
+    <WorkspacePageShell
+      title="Company SOP & Knowledge AI Hub"
+      description="Upload organizational handbooks and policies. Search stays inside this organization; PII is redacted from queries."
+      badge={
         <Badge className="bg-primary/10 text-primary border-primary/20 flex items-center gap-1">
           <Lock className="w-3.5 h-3.5" />
           Strict Organization Boundary
         </Badge>
-      </div>
-
+      }
+      actions={
+        <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
+          Refresh
+        </Button>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+      >
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card className="p-6 space-y-4">
@@ -135,9 +148,7 @@ export function CompanyKnowledgeHub({ organizationId }: { organizationId?: strin
 
           <Card className="p-6 space-y-4">
             <h2 className="text-base font-bold text-ink">Indexed documents ({documents.length})</h2>
-            {loading ? (
-              <div className="flex items-center gap-2 text-sm text-ink-muted"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
-            ) : documents.length === 0 ? (
+            {documents.length === 0 ? (
               <p className="text-sm text-ink-muted">No SOPs uploaded yet.</p>
             ) : (
               <div className="divide-y divide-surface-border border border-surface-border rounded-xl overflow-hidden">
@@ -193,6 +204,7 @@ export function CompanyKnowledgeHub({ organizationId }: { organizationId?: strin
           </form>
         </Card>
       </div>
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

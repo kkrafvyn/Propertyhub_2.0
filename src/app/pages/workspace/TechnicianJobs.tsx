@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/badge";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 import {
   estateOperationsService,
   type EstateIssue,
@@ -18,6 +19,7 @@ interface TechnicianJobsProps {
 
 export function TechnicianJobs({ organizationId, currentUserId }: TechnicianJobsProps) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [orders, setOrders] = useState<EstateWorkOrder[]>([]);
   const [issues, setIssues] = useState<EstateIssue[]>([]);
@@ -27,6 +29,7 @@ export function TechnicianJobs({ organizationId, currentUserId }: TechnicianJobs
   const load = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const estates = await estateOperationsService.getEstates(organizationId);
       const ids = estates.map((x) => x.id);
       const [o, i] = await Promise.all([
@@ -36,7 +39,9 @@ export function TechnicianJobs({ organizationId, currentUserId }: TechnicianJobs
       setOrders(o);
       setIssues(i);
     } catch {
-      toast.error("Unable to load technician jobs.");
+      const message = "Unable to load technician jobs.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -109,27 +114,20 @@ export function TechnicianJobs({ organizationId, currentUserId }: TechnicianJobs
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-24 text-muted-foreground gap-2">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        <span>Loading assignments…</span>
-      </div>
-    );
-  }
+  const queryPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : filteredJobs.length === 0
+        ? "empty"
+        : "ready";
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">My Jobs</h1>
-          <p className="mt-1 text-xs text-muted-foreground">
-            View assigned work orders, update repair progress, and attach completion photos.
-          </p>
-        </div>
-
-        {/* Filter pills */}
+    <WorkspacePageShell
+      tone="emerald"
+      title="My Jobs"
+      description="View assigned work orders, update repair progress, and attach completion photos."
+      actions={
         <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 border border-border w-fit">
           <button
             type="button"
@@ -165,20 +163,26 @@ export function TechnicianJobs({ organizationId, currentUserId }: TechnicianJobs
             All ({assignedJobs.length})
           </button>
         </div>
-      </div>
-
-      {/* Jobs list */}
-      {filteredJobs.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-          <ClipboardList className="mb-3 h-10 w-10 opacity-40 text-primary" />
-          <p className="text-sm font-semibold text-foreground">No jobs in this view</p>
-          <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-            {statusFilter === "active"
-              ? "You're all caught up! No active work orders currently require your attention."
-              : "No work orders matching this filter."}
-          </p>
-        </Card>
-      ) : (
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void load()}
+        loadingFallback={
+          <div className="flex justify-center items-center py-24 text-muted-foreground gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Loading assignments…</span>
+          </div>
+        }
+        emptyIcon={ClipboardList}
+        emptyTitle="No jobs in this view"
+        emptyDescription={
+          statusFilter === "active"
+            ? "You're all caught up! No active work orders currently require your attention."
+            : "No work orders matching this filter."
+        }
+      >
         <div className="space-y-4">
           {filteredJobs.map((order) => {
             const issue = issues.find((x) => x.id === order.issue_id);
@@ -284,7 +288,7 @@ export function TechnicianJobs({ organizationId, currentUserId }: TechnicianJobs
             );
           })}
         </div>
-      )}
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

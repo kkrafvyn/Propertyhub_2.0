@@ -11,6 +11,7 @@ import {
 } from "../../../lib/estate-operations.service";
 import { summarizeEstateLedger, type EstateChargeRow } from "../../../lib/estate-ledger";
 import { supabase } from "../../../lib/supabase";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 interface EstateAIOperationsProps {
   organizationId: string;
@@ -19,6 +20,7 @@ interface EstateAIOperationsProps {
 
 export function EstateAIOperations({ organizationId, currentUserId }: EstateAIOperationsProps) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [charges, setCharges] = useState<EstateChargeRow[]>([]);
@@ -28,6 +30,7 @@ export function EstateAIOperations({ organizationId, currentUserId }: EstateAIOp
   const load = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const es = await estateOperationsService.getEstates(organizationId);
       const us = await estateOperationsService.getUnits(es.map((x) => x.id));
       const [c, i, l] = await Promise.all([
@@ -44,7 +47,9 @@ export function EstateAIOperations({ organizationId, currentUserId }: EstateAIOp
       setIssues(i);
       setLogs(l.data || []);
     } catch {
-      toast.error("Unable to load AI operations.");
+      const message = "Unable to load AI operations.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -131,25 +136,24 @@ export function EstateAIOperations({ organizationId, currentUserId }: EstateAIOp
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-24 text-muted-foreground gap-2">
-        <Loader2 className="h-5 w-5 animate-spin" />
-        <span>Preparing daily briefing…</span>
-      </div>
-    );
-  }
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   return (
+    <WorkspacePageShell
+      title="AI Operations Briefing"
+      description="Automated summaries and operational suggestions to help your team prioritize tasks."
+      actions={
+        <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
+          Refresh
+        </Button>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void load()}
+      >
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">AI Operations Briefing</h1>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Automated summaries and operational suggestions to help your team prioritize tasks.
-        </p>
-      </div>
-
       {/* Recommendations Card */}
       <Card className="p-5 space-y-4">
         <div className="flex items-center gap-2">
@@ -271,5 +275,7 @@ export function EstateAIOperations({ organizationId, currentUserId }: EstateAIOp
         </div>
       </Card>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

@@ -10,6 +10,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { aiAssistantService } from "@/lib/ai-assistant.service";
 import { recommendationEngineService } from "@/lib/recommendation-engine.service";
 import { listingService } from "@/lib/listing.service";
+import { OperationalQueryState, WorkspacePageShell } from "@/app/components/ux";
 
 export function AIAssistant({ organizationId }: { organizationId?: string }) {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export function AIAssistant({ organizationId }: { organizationId?: string }) {
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [workflowOutput, setWorkflowOutput] = useState("");
   const [agencyInsights, setAgencyInsights] = useState<any[]>([]);
@@ -56,7 +58,10 @@ export function AIAssistant({ organizationId }: { organizationId?: string }) {
 
     const loadRecommendations = async () => {
       try {
-        if (!cancelled) setLoadingRecommendations(true);
+        if (!cancelled) {
+          setLoadingRecommendations(true);
+          setLoadError(null);
+        }
         let data = await aiAssistantService.getRecommendations(user.id, 5);
         if (!data || data.length === 0) {
           await aiAssistantService.generateRecommendations(user.id).catch(() => []);
@@ -69,6 +74,7 @@ export function AIAssistant({ organizationId }: { organizationId?: string }) {
         console.error("Failed to load recommendations:", error);
         if (!cancelled) {
           setRecommendations([]);
+          setLoadError("Unable to load assistant recommendations.");
         }
       } finally {
         if (!cancelled) {
@@ -167,15 +173,25 @@ export function AIAssistant({ organizationId }: { organizationId?: string }) {
     );
   };
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">AI Property Assistant</h1>
-        <p className="text-muted-foreground mt-2">
-          Search listings in natural language and use your saved behavior to guide the next step.
-        </p>
-      </div>
+  const queryPhase = loadError ? "error" : loadingRecommendations ? "loading" : "ready";
 
+  return (
+    <WorkspacePageShell
+      title="AI Property Assistant"
+      description="Search listings in natural language and use your saved behavior to guide the next step."
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => {
+          if (user) {
+            setLoadError(null);
+            setLoadingRecommendations(true);
+            void aiAssistantService.getRecommendations(user.id, 5).then(setRecommendations).catch(() => setLoadError("Unable to load assistant recommendations.")).finally(() => setLoadingRecommendations(false));
+          }
+        }}
+      >
+    <div className="space-y-6">
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <Card className="p-4 h-96 flex flex-col">
@@ -375,5 +391,7 @@ export function AIAssistant({ organizationId }: { organizationId?: string }) {
         </div>
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

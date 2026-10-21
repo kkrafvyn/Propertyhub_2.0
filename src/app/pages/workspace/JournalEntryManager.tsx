@@ -34,6 +34,7 @@ import {
   DialogTitle,
 } from "../../components/ui/dialog";
 import { useAuth } from "../../context/AuthContext";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 type LineDraft = {
   accountId: string;
@@ -50,6 +51,7 @@ export function JournalEntryManager({
   const { user } = useAuth();
   const [tab, setTab] = useState<"list" | "create">("list");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [accounts, setAccounts] = useState<CoaAccount[]>([]);
   const [journals, setJournals] = useState<any[]>([]);
@@ -73,6 +75,7 @@ export function JournalEntryManager({
     if (!organizationId) return;
     try {
       setLoading(true);
+      setLoadError(null);
       const [accs, jes] = await Promise.all([
         chartOfAccountsService.listAccounts(organizationId, { isActive: true }),
         generalLedgerService.getJournalEntries(organizationId),
@@ -80,7 +83,9 @@ export function JournalEntryManager({
       setAccounts(accs);
       setJournals(jes);
     } catch (err: any) {
-      toast.error(err.message || "Failed to load journal entries");
+      const message = err.message || "Failed to load journal entries";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -230,17 +235,14 @@ export function JournalEntryManager({
     return j.status === statusFilter;
   });
 
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
-            Journal Entries
-          </h1>
-          <p className="text-sm text-ink-muted">
-            Manage draft, posted, and reversed double-entry general ledger records.
-          </p>
-        </div>
+    <WorkspacePageShell
+      tone="finance"
+      title="Journal Entries"
+      description="Manage draft, posted, and reversed double-entry general ledger records."
+      actions={
         <div className="flex items-center gap-2">
           <Button
             variant={tab === "list" ? "primary" : "outline"}
@@ -259,7 +261,14 @@ export function JournalEntryManager({
             New Entry
           </Button>
         </div>
-      </div>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadData()}
+      >
+    <div className="space-y-6">
 
       {tab === "list" && (
         <Card className="p-6 space-y-4">
@@ -607,5 +616,7 @@ export function JournalEntryManager({
         </DialogContent>
       </Dialog>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

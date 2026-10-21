@@ -1,3 +1,4 @@
+/** @deprecated Prefer UserDashboard + ConsumerHubChrome for /app routes; kept for journey-nav experiments. */
 import { WorkspaceShell } from './WorkspaceShell'
 import { useTranslation } from '../../i18n/LocaleContext'
 import {

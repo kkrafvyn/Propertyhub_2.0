@@ -671,7 +671,7 @@ export function MaintenanceSection({
 
       <div className="space-y-4">
         {requests.length === 0 ? (
-          <Card className="p-8 text-center text-muted-foreground">No maintenance requests yet.</Card>
+          <Card className="app-surface-card p-8 text-center text-muted-foreground">No maintenance requests yet.</Card>
         ) : (
           requests.map((request) => (
             <Card key={request.id} className="p-5 space-y-4">
@@ -993,7 +993,7 @@ export function TripsSection({
   return (
     <section className="space-y-4">
       {upcoming.length === 0 ? (
-        <Card className="p-8 text-center text-muted-foreground">No upcoming trips yet.</Card>
+        <Card className="app-surface-card p-8 text-center text-muted-foreground">No upcoming trips yet.</Card>
       ) : (
         upcoming.map((booking) => (
           <BookingCard key={booking.id} booking={booking} userId={userId} onRefresh={onRefresh} />
@@ -1015,7 +1015,7 @@ export function ReservationsSection({
   return (
     <section className="space-y-4">
       {bookings.length === 0 ? (
-        <Card className="p-8 text-center text-muted-foreground">No reservations yet.</Card>
+        <Card className="app-surface-card p-8 text-center text-muted-foreground">No reservations yet.</Card>
       ) : (
         bookings.map((booking) => (
           <BookingCard key={booking.id} booking={booking} userId={userId} onRefresh={onRefresh} />
@@ -1031,7 +1031,7 @@ export function DocumentsSection({ dealCases }: { dealCases: any[] }) {
   return (
     <section className="space-y-4">
       {purchaseCases.length === 0 ? (
-        <Card className="p-8 text-center text-muted-foreground">
+        <Card className="app-surface-card p-8 text-center text-muted-foreground">
           Purchase documents will appear when you have active offers.
         </Card>
       ) : (
@@ -1063,7 +1063,7 @@ export function TransactionsSection({ payments, escrowHolds }: { payments: any[]
   return (
     <section className="space-y-4">
       {purchasePayments.length === 0 ? (
-        <Card className="p-8 text-center text-muted-foreground">No purchase transactions yet.</Card>
+        <Card className="app-surface-card p-8 text-center text-muted-foreground">No purchase transactions yet.</Card>
       ) : (
         purchasePayments.map((payment) => {
           const hold = escrowHolds.find((entry) => entry.transaction_id === payment.id);
@@ -1118,7 +1118,7 @@ export function PaymentsWithWalletSection({
       <div>
         <h3 className="font-semibold mb-4">Payments history</h3>
         {payments.length === 0 ? (
-          <Card className="p-8 text-center text-muted-foreground">No payments yet.</Card>
+          <Card className="app-surface-card p-8 text-center text-muted-foreground">No payments yet.</Card>
         ) : (
           payments.map((payment) => (
             <Card key={payment.id} className="p-5 mb-4">

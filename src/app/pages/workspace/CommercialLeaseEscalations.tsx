@@ -9,6 +9,7 @@ import { Badge } from "../../components/ui/badge";
 import { commercialLeaseService, type CommercialEscalation } from "../../../lib/commercial-lease.service";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const db = supabase as any;
 
@@ -66,12 +67,12 @@ export function CommercialLeaseEscalations({ organizationId }: { organizationId:
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><TrendingUp className="h-6 w-6" /> Commercial Lease Escalations</h1>
-        <p className="text-sm text-muted-foreground">Schedule CPI, percentage, and step-rent increases for commercial leases.</p>
-      </div>
-
+    <WorkspacePageShell
+      tone="finance"
+      title="Commercial Lease Escalations"
+      description="Schedule CPI, percentage, and step-rent increases for commercial leases."
+    >
+      <OperationalQueryState phase="ready">
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-6 space-y-3">
           <h2 className="font-semibold">Scheduled escalations</h2>
@@ -111,6 +112,7 @@ export function CommercialLeaseEscalations({ organizationId }: { organizationId:
           </form>
         </Card>
       </div>
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

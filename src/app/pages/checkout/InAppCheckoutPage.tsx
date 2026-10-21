@@ -31,6 +31,7 @@ import { previewPropertyCheckoutPricing } from "../../../lib/property-checkout-p
 import { PropertyJurisdictionBadge } from "../../components/compliance/PropertyJurisdictionBadge";
 import { Input } from "../../components/ui/Input";
 import { validateLegalJurisdictionForTransactionalAction } from "../../../lib/legal-jurisdiction-gate";
+import { DegradedModeBanner } from "../../components/ux";
 
 type CheckoutPhase = "review" | "processing" | "success" | "error";
 
@@ -361,22 +362,13 @@ export function InAppCheckoutPage() {
       <PageMeta title="Secure checkout" description="Complete your BaytMiftah payment without leaving the app." />
       <div className="mx-auto max-w-3xl px-4 py-10 md:py-14">
         {showSandboxPaymentBanner ? (
-          <div
-            role="alert"
-            className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950"
-          >
-            <strong className="font-semibold">Test / sandbox payment mode.</strong> Live checkout is
-            unavailable until PayAngels is configured and demo data is turned off.
-          </div>
+          <DegradedModeBanner tone="warning" title="Test / sandbox payment mode.">
+            Live checkout is unavailable until PayAngels is configured and demo data is turned off.
+          </DegradedModeBanner>
         ) : null}
 
         {checkoutLegalGate && !checkoutLegalGate.allowed ? (
-          <div
-            role="alert"
-            className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900"
-          >
-            {checkoutLegalGate.message}
-          </div>
+          <DegradedModeBanner tone="danger">{checkoutLegalGate.message}</DegradedModeBanner>
         ) : null}
 
         <div className="mb-8">
@@ -390,7 +382,7 @@ export function InAppCheckoutPage() {
 
         <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-6">
-            <section className="rounded-2xl border border-surface-border bg-surface p-6 shadow-card">
+            <section className="app-surface-card rounded-2xl p-6 shadow-card">
               <h2 className="text-lg font-semibold text-ink">Promo code</h2>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                 <Input
@@ -421,7 +413,7 @@ export function InAppCheckoutPage() {
               ) : null}
             </section>
 
-            <section className="rounded-2xl border border-surface-border bg-surface p-6 shadow-card">
+            <section className="app-surface-card rounded-2xl p-6 shadow-card">
               <h2 className="text-lg font-semibold text-ink">Payment method</h2>
               <div className="mt-4 flex items-start gap-3 rounded-xl border border-brand-forest/20 bg-brand-forest/5 p-4">
                 <CreditCard className="mt-0.5 h-5 w-5 text-brand-forest" />
@@ -493,7 +485,7 @@ export function InAppCheckoutPage() {
             </button>
           </div>
 
-          <aside className="h-fit rounded-2xl border border-surface-border bg-surface p-6 shadow-card md:sticky md:top-24">
+          <aside className="app-surface-card h-fit rounded-2xl p-6 shadow-card md:sticky md:top-24">
             <h2 className="text-lg font-semibold text-ink">Order summary</h2>
             {loadingListing ? (
               <p className="mt-4 text-sm text-ink-secondary">Loading property…</p>

@@ -20,6 +20,7 @@ import { getJurisdictionRules } from "../../../lib/real-estate-compliance";
 import { getSubdivisionClauseAddendum } from "../../../lib/country-rules/subdivision-clause-addenda";
 import { countAvailableAddenda } from "../../../lib/country-rules/subdivision-addenda-auto";
 import { useAuth } from "../../context/AuthContext";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 const money = (minor: number, currency: string) =>
   new Intl.NumberFormat(undefined, { style: "currency", currency }).format(minor / 100);
@@ -38,6 +39,8 @@ export function InternationalRulesHub({ organizationId }: { organizationId: stri
   const [recordingCounsel, setRecordingCounsel] = useState(false);
   const [collectPlatformFees, setCollectPlatformFees] = useState(true);
   const [collectCheckoutTaxes, setCollectCheckoutTaxes] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const context = useMemo(
     () => countryRulesService.resolveContext({
@@ -58,9 +61,27 @@ export function InternationalRulesHub({ organizationId }: { organizationId: stri
 
   const rails = useMemo(() => getAvailablePaymentRails(context, "rent"), [context]);
 
+  const loadSettings = async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const [settings, signoffs] = await Promise.all([
+        countryRulesService.getOrganizationSettings(organizationId),
+        jurisdictionCounselSignoffService.list(organizationId),
+      ]);
+      setOrgSettings(settings);
+      setCounselSignoffs(signoffs);
+    } catch (err: any) {
+      const message = err?.message || "Unable to load international rules settings.";
+      setLoadError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    void countryRulesService.getOrganizationSettings(organizationId).then(setOrgSettings);
-    void jurisdictionCounselSignoffService.list(organizationId).then(setCounselSignoffs);
+    void loadSettings();
   }, [organizationId]);
 
   useEffect(() => {
@@ -136,18 +157,31 @@ export function InternationalRulesHub({ organizationId }: { organizationId: stri
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Globe className="h-6 w-6" /> International Markets & Rules
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Configure your operating country — taxes, lease rules, and compliance follow local regulations.
-          <strong className="font-medium text-foreground"> PayAngels</strong> is the worldwide payment rail for all markets.
-        </p>
-      </div>
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
+  return (
+    <WorkspacePageShell
+      title="International Markets & Rules"
+      description="Configure your operating country — taxes, lease rules, and compliance follow local regulations. PayAngels is the worldwide payment rail for all markets."
+      meta={<Globe className="h-5 w-5" aria-hidden />}
+      actions={
+        <>
+          <Button variant="outline" size="sm" onClick={() => void loadSettings()} disabled={loading}>
+            Refresh
+          </Button>
+          <Button size="sm" onClick={() => void handleSave()} disabled={saving}>
+            <Save className="h-4 w-4 mr-1.5" />
+            Save market
+          </Button>
+        </>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadSettings()}
+      >
+    <div className="space-y-6">
       <Card className="p-6 space-y-4">
         <h2 className="font-semibold">Primary operating market</h2>
         <div className="flex flex-wrap gap-2">
@@ -355,5 +389,7 @@ export function InternationalRulesHub({ organizationId }: { organizationId: stri
         ) : null}
       </Card>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

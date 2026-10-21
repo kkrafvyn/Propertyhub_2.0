@@ -11,6 +11,7 @@ import {
   trustVerificationService,
   type TrustRequestType,
 } from "../../../lib/trust-verification.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 
@@ -62,6 +63,7 @@ export function GhanaTrustCenter({
   currentUserId: string;
 }) {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<any | null>(null);
   const [requestType, setRequestType] = useState<TrustRequestType>("business_registration");
   const [notes, setNotes] = useState("");
@@ -70,13 +72,16 @@ export function GhanaTrustCenter({
   const loadSnapshot = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const nextSnapshot = await trustVerificationService.getOrganizationTrustSnapshot(
         organization.id
       );
       setSnapshot(nextSnapshot);
     } catch (error) {
       console.error("Failed to load trust center:", error);
-      toast.error("Unable to load trust verification data.");
+      const message = "Unable to load trust verification data.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -111,34 +116,32 @@ export function GhanaTrustCenter({
     }
   };
 
-  if (loading) {
-    return (
-      <Card className="p-8 text-center text-muted-foreground">
-        <Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin" />
-        Loading Ghana trust center...
-      </Card>
-    );
-  }
-
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
   const requests = snapshot?.requests || [];
   const checks = snapshot?.checks || [];
   const documents = snapshot?.documents || [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">Ghana Trust Center</h1>
-          <p className="mt-2 text-muted-foreground">
-            Verify agencies, GhanaPostGPS addresses, title evidence, and listing readiness before
-            scaling public promotion.
-          </p>
-        </div>
+    <WorkspacePageShell
+      title="Ghana Trust Center"
+      description="Verify agencies, GhanaPostGPS addresses, title evidence, and listing readiness before scaling public promotion."
+      badge={
         <Badge variant={organization.verified ? "default" : "secondary"}>
           {organization.verified ? "Verified agency" : "Agency verification pending"}
         </Badge>
-      </div>
-
+      }
+      actions={
+        <Button variant="outline" size="sm" onClick={() => void loadSnapshot()} disabled={loading}>
+          Refresh
+        </Button>
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadSnapshot()}
+      >
+    <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-4">
           <ShieldCheck className="h-5 w-5 text-primary" />
@@ -283,5 +286,7 @@ export function GhanaTrustCenter({
         </div>
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

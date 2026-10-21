@@ -46,6 +46,7 @@ import {
   CardGridSkeleton,
   DashboardStatsSkeleton,
   ErrorState,
+  WorkspacePageShell,
 } from "../../components/ux";
 import { orgActivityService } from "../../../lib/org-activity.service";
 import { useAuth } from "../../context/AuthContext";
@@ -398,6 +399,10 @@ export function WorkspaceDashboard({
   const heroCopy = DASHBOARD_HERO_COPY[dashboardRole];
 
   return (
+    <WorkspacePageShell
+      title={heroCopy.title}
+      description={heroCopy.description}
+    >
     <div className="space-y-8">
       {/* Role Switcher Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 sm:p-4 rounded-2xl bg-surface-subtle/80 border border-surface-border backdrop-blur-sm">
@@ -456,14 +461,6 @@ export function WorkspaceDashboard({
               </Badge>
               <span className="text-xs text-ink-muted font-medium">{organization.name}</span>
             </div>
-
-            <h1 className="app-page-title text-2xl sm:text-3xl lg:text-4xl leading-tight">
-              {heroCopy.title}
-            </h1>
-
-            <p className="app-page-description text-xs sm:text-sm">
-              {heroCopy.description}
-            </p>
           </div>
 
           {/* Role-Specific Quick Launch Actions */}
@@ -921,5 +918,6 @@ export function WorkspaceDashboard({
         </div>
       ) : null}
     </div>
+    </WorkspacePageShell>
   );
 }

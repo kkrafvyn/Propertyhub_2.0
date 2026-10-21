@@ -28,6 +28,7 @@ import {
   ExternalLink,
   Plus,
   RefreshCw,
+  Loader2,
   Zap,
   Sliders,
   Bell,
@@ -56,6 +57,7 @@ import {
   type CallSession,
 } from '../../../lib/call.service';
 import { usePlatformFeatures } from '../../context/PlatformFeaturesContext';
+import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 
 interface CommunicationStats {
   totalNotices: number;
@@ -117,6 +119,7 @@ export function EstateCommunications({
   const voiceEnabled = isVoiceCallsEnabledForApp(flags);
   const [activeTab, setActiveTab] = useState<'broadcasts' | 'rooms' | 'call_logs' | 'gateways'>('broadcasts');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [estates, setEstates] = useState<ManagedEstate[]>([]);
   const [notices, setNotices] = useState<EstateNotice[]>([]);
@@ -130,6 +133,7 @@ export function EstateCommunications({
   const load = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const rows = await estateOperationsService.getEstates(organizationId);
       setEstates(rows);
       setEstateId((prev) => prev || rows[0]?.id || '');
@@ -137,7 +141,10 @@ export function EstateCommunications({
       setNotices(fetchedNotices);
     } catch (error) {
       console.error(error);
-      toast.error('Unable to load estate communications.');
+      const message =
+        error instanceof Error ? error.message : 'Unable to load estate communications.';
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -213,49 +220,44 @@ export function EstateCommunications({
     );
   };
 
+  const queryPhase = loadError ? 'error' : loading ? 'loading' : 'ready';
+
   return (
-    <div className="space-y-6">
-      {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <Megaphone className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-ink">
-                Client Communications
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                Send notices, start video rooms, and manage client messages.
-              </p>
-            </div>
+    <WorkspacePageShell
+      title="Client communications"
+      description="Send notices, start video rooms, and manage client messages."
+      actions={
+        videoEnabled ? (
+          <Button
+            size="sm"
+            onClick={() =>
+              handleStartInstantVideoRoom(
+                `${selectedEstate?.name || 'Estate'} Townhall & Board Session`
+              )
+            }
+            className="bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-950/20"
+          >
+            <Video className="mr-1.5 h-4 w-4" />
+            Start Video Room
+          </Button>
+        ) : (
+          <p className="text-xs text-muted-foreground max-w-xs">
+            Video calling is not configured for this workspace.
+          </p>
+        )
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void load()}
+        loadingFallback={
+          <div className="flex justify-center py-20 text-muted-foreground">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Loading communications...
           </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          {videoEnabled ? (
-            <Button
-              size="sm"
-              onClick={() =>
-                handleStartInstantVideoRoom(
-                  `${selectedEstate?.name || 'Estate'} Townhall & Board Session`
-                )
-              }
-              className="bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-950/20"
-            >
-              <Video className="mr-1.5 h-4 w-4" />
-              Start Video Room
-            </Button>
-          ) : (
-            <p className="text-xs text-muted-foreground max-w-xs">
-              Video calling is not configured for this workspace.
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* ── Overview Metrics Grid ─────────────────────────────────────── */}
+        }
+      >
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Card className="p-4 bg-surface border-surface-border">
           <div className="flex items-center justify-between">
@@ -756,6 +758,7 @@ export function EstateCommunications({
           </Card>
         </div>
       )}
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

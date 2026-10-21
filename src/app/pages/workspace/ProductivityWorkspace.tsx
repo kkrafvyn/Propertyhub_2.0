@@ -18,6 +18,7 @@ import {
   livingDocumentsService,
   type LivingDocumentTemplate,
 } from "../../../lib/living-documents.service";
+import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
 
 export function ProductivityWorkspace({
   organizationId,
@@ -50,24 +51,20 @@ export function ProductivityWorkspace({
         )
       : null;
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
-            Living Spreadsheets & Legal Documents
-          </h1>
-          <p className="text-sm text-ink-muted">
-            Interactive financial models and statutory legal notices linked to live property & tenant variables.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge className="bg-primary/10 text-primary border-primary/20">
-            Real Estate Operations Kit
-          </Badge>
-        </div>
-      </div>
+  const queryPhase = "ready" as const;
 
+  return (
+    <WorkspacePageShell
+      title="Living Spreadsheets & Legal Documents"
+      description="Interactive financial models and statutory legal notices linked to live property and tenant variables."
+      badge={
+        <Badge className="bg-primary/10 text-primary border-primary/20">
+          Real Estate Operations Kit
+        </Badge>
+      }
+    >
+      <OperationalQueryState phase={queryPhase}>
+      <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Template Picker */}
         <div className="space-y-3">
@@ -216,5 +213,7 @@ export function ProductivityWorkspace({
         </div>
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

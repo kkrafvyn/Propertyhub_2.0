@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
-import { PageHeader, PageLayout } from "../../components/ux";
+import { OperationalQueryState, PageHeader, PageLayout } from "../../components/ux";
 import { EmptyState } from "../../components/ux/EmptyState";
 import { leaseScreeningService } from "../../../lib/lease-screening.service";
 import { useAuth } from "../../context/AuthContext";
@@ -46,6 +46,7 @@ export function Applications() {
   const { user } = useAuth();
   const [applications, setApplications] = useState<LeaseApplication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
 
@@ -53,8 +54,15 @@ export function Applications() {
     if (!user?.id) return;
     void leaseScreeningService
       .listMyApplications(user.id)
-      .then((data) => setApplications((data as LeaseApplication[]) || []))
-      .catch(console.error)
+      .then((data) => {
+        setLoadError(null);
+        setApplications((data as LeaseApplication[]) || []);
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Unable to load applications.";
+        setLoadError(message);
+        console.error(error);
+      })
       .finally(() => setLoading(false));
   }, [user?.id]);
 
@@ -82,28 +90,38 @@ export function Applications() {
     });
   }, [applications, statusFilter, searchQuery]);
 
-  if (loading) {
-    return (
-      <PageLayout variant="consumer" maxWidthClassName="max-w-4xl">
-        <div className="space-y-6 animate-pulse">
-          <div className="h-10 w-64 rounded-xl bg-surface-subtle" />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-24 rounded-2xl bg-surface-subtle border border-surface-border" />
-            ))}
-          </div>
-          <div className="space-y-4">
-            {[...Array(2)].map((_, i) => (
-              <div key={i} className="h-48 rounded-2xl bg-surface-subtle border border-surface-border" />
-            ))}
-          </div>
-        </div>
-      </PageLayout>
-    );
-  }
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   return (
     <PageLayout variant="consumer" maxWidthClassName="max-w-4xl">
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => {
+          if (!user?.id) return;
+          setLoading(true);
+          void leaseScreeningService
+            .listMyApplications(user.id)
+            .then((data) => setApplications((data as LeaseApplication[]) || []))
+            .catch(console.error)
+            .finally(() => setLoading(false));
+        }}
+        loadingFallback={
+          <div className="space-y-6 animate-pulse">
+            <div className="h-10 w-64 rounded-xl bg-surface-subtle" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-24 rounded-2xl bg-surface-subtle border border-surface-border" />
+              ))}
+            </div>
+            <div className="space-y-4">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="h-48 rounded-2xl bg-surface-subtle border border-surface-border" />
+              ))}
+            </div>
+          </div>
+        }
+      >
       {/* ── Page Header ── */}
       <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-primary/10 via-emerald-500/5 to-surface/80 border border-primary/20 shadow-lg backdrop-blur-md mb-8">
         <div className="absolute top-0 right-0 w-80 h-80 bg-radial from-primary/15 via-emerald-500/10 to-transparent blur-3xl pointer-events-none" />
@@ -388,6 +406,7 @@ export function Applications() {
           })}
         </div>
       )}
+      </OperationalQueryState>
     </PageLayout>
   );
 }

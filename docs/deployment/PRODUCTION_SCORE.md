@@ -100,6 +100,8 @@ npm run build
 
 High-traffic workspace routes use `WorkspacePageShell` + shared `EmptyState` / `LoadingSkeleton` / `ErrorState` (`src/styles/app-ui.css` tokens: `app-page-title`, `app-surface-card`). Extend the same pattern when touching other workspace modules.
 
+Flagship examples: `WorkspaceLeads`, `OwnerDisbursements`, `LeasingApplications`, `CollectionsCases`, `CommandCenter`, `EstateCommunications`, `GeneralLedger`, `BankReconciliation`, `GateClearanceKiosk`, `EstateOperations`; consumer funnel: `ConsumerJourneyPage` (`PageLayout` + `ConsumerHubChrome` + `OperationalQueryState` + `CONSUMER_PAGE_CONFIG.journey`). Run `npm run workspace:audit:shell` (103/103 audited workspace modules as of Wave 2–5). See [UI_PATTERNS.md](../design/UI_PATTERNS.md).
+
 ## Manual steps (not automatable in repo)
 
 - PayAngels dashboard: webhook URL `https://ixmbfnfwpjwbfahqaftc.supabase.co/functions/v1/payangels-webhook`

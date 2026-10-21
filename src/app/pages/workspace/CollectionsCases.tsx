@@ -24,6 +24,10 @@ import {
 } from "../../../lib/collections-case.service";
 import { promiseToPayService, type PtPSummary } from "../../../lib/promise-to-pay.service";
 import { useAuth } from "../../context/AuthContext";
+import {
+  OperationalQueryState,
+  WorkspacePageShell,
+} from "../../components/ux";
 
 const money = (pesewas: number = 0, currency = "GHS") =>
   new Intl.NumberFormat("en-GH", {
@@ -39,6 +43,7 @@ export function CollectionsCases({
   const { user } = useAuth();
   const [tab, setTab] = useState<"queue" | "detail" | "ptp">("queue");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [cases, setCases] = useState<CollectionCase[]>([]);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [caseDetail, setCaseDetail] = useState<CaseDetail | null>(null);
@@ -56,9 +61,13 @@ export function CollectionsCases({
   const [escalateReason, setEscalateReason] = useState("");
 
   const loadCases = async () => {
-    if (!organizationId) return;
+    if (!organizationId) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
+      setLoadError(null);
       const [caseList, ptp, active, overdue] = await Promise.all([
         collectionsCaseService.listCases(organizationId),
         promiseToPayService.getSummary(organizationId),
@@ -69,8 +78,11 @@ export function CollectionsCases({
       setPtpSummary(ptp);
       setActivePtps(active);
       setOverduePtps(overdue);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to load collections cases");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load collections cases";
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -193,17 +205,19 @@ export function CollectionsCases({
     }
   };
 
+  const queryPhase = loadError
+    ? "error"
+    : loading
+      ? "loading"
+      : tab === "queue" && cases.length === 0
+        ? "empty"
+        : "ready";
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
-            Collections & Arrears Cases
-          </h1>
-          <p className="text-sm text-ink-muted">
-            Track overdue accounts, log contact attempts, and manage payment agreements from one place.
-          </p>
-        </div>
+    <WorkspacePageShell
+      title="Collections & arrears cases"
+      description="Track overdue accounts, log contact attempts, and manage payment agreements from one place."
+      actions={
         <div className="flex items-center gap-2">
           <Button
             variant={tab === "queue" ? "primary" : "outline"}
@@ -222,8 +236,16 @@ export function CollectionsCases({
             Promises ({ptpSummary?.totalActive || 0})
           </Button>
         </div>
-      </div>
-
+      }
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError || undefined}
+        onRetry={() => void loadCases()}
+        emptyTitle="All accounts in good standing"
+        emptyDescription="No open collection cases. Overdue accounts will appear here when cases are opened."
+        emptyIcon={CheckCircle2}
+      >
       {ptpSummary && (
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Card className="p-4 bg-surface border-surface-border">
@@ -253,20 +275,8 @@ export function CollectionsCases({
         </div>
       )}
 
-      {tab === "queue" && (
+      {tab === "queue" && cases.length > 0 && (
         <Card className="p-6 space-y-4">
-          {loading ? (
-            <div className="py-12 text-center text-ink-muted">
-              Loading active collections cases...
-            </div>
-          ) : cases.length === 0 ? (
-            <div className="py-12 text-center space-y-3">
-              <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500 opacity-60" />
-              <p className="text-ink-muted">
-                No open collection cases! All accounts are currently in good standing.
-              </p>
-            </div>
-          ) : (
             <div className="overflow-x-auto border border-surface-border rounded-xl" role="region" aria-label="Collection cases" tabIndex={0}>
               <table className="w-full text-left text-sm">
                 <thead className="bg-surface-subtle border-b border-surface-border text-xs uppercase text-ink-muted font-semibold">
@@ -322,7 +332,6 @@ export function CollectionsCases({
                 </tbody>
               </table>
             </div>
-          )}
         </Card>
       )}
 
@@ -609,6 +618,7 @@ export function CollectionsCases({
           </div>
         </div>
       )}
-    </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   );
 }

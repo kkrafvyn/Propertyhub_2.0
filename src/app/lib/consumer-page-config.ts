@@ -31,7 +31,8 @@ export type ConsumerSection =
   | "insurance"
   | "vendors"
   | "settings"
-  | "kyc";
+  | "kyc"
+  | "journey";
 
 export type PageConfig = {
   title: string;
@@ -224,6 +225,20 @@ export const CONSUMER_PAGE_CONFIG: Record<ConsumerSection, PageConfig> = {
     title: "Identity & Trust Verification",
     description: "Government-issued ID verification, biometric liveness check, and anti-money laundering (AML) compliance.",
     breadcrumb: [{ label: "My BaytMiftah", href: "/app" }, { label: "Identity Verification (KYC)" }],
+  },
+  journey: {
+    title: "Property journey",
+    description: "Track your stage, next action, and documents in one place.",
+    breadcrumb: [
+      { label: "My BaytMiftah", href: "/app" },
+      { label: "Offers & applications", href: "/app/applications" },
+      { label: "Journey" },
+    ],
+    emptyTitle: "Journey not found",
+    emptyDescription:
+      "This offer or booking may have been removed, or you may not have access.",
+    emptyActionLabel: "Back to applications",
+    emptyActionHref: "/app/applications",
   },
 };
 

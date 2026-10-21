@@ -17,6 +17,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { DegradedModeBanner, OperationalQueryState, WorkspacePageShell } from '../../components/ux'
 import { currencyService } from '@/lib/currency.service'
 import { internationalPaymentService } from '@/lib/international-payment.service'
 import { revenueManagementService } from '@/lib/revenue-management.service'
@@ -353,8 +354,20 @@ export function PaymentCheckout({
   }
 
   const fmt = (n: number) => currencyService.formatCurrency(n, paymentState.currency)
+  const listingLoadError = listingLoading ? null : error && !paymentContext ? error : null
+  const queryPhase = listingLoadError ? 'error' : listingLoading ? 'loading' : 'ready'
 
   return (
+    <WorkspacePageShell
+      tone="finance"
+      title="Secure checkout"
+      description="Complete payment for this property with your chosen method."
+    >
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={listingLoadError || undefined}
+        onRetry={() => window.location.reload()}
+      >
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-violet-50/20 dark:from-slate-950 dark:via-indigo-950/20 dark:to-violet-950/10 p-4 flex items-center justify-center">
       <div className="w-full max-w-lg">
 
@@ -368,22 +381,14 @@ export function PaymentCheckout({
             <StepBar step={step} />
 
             {showSandboxPaymentBanner ? (
-              <div
-                role="alert"
-                className="mb-6 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-800 p-4 text-sm text-amber-950 dark:text-amber-100"
-              >
+              <DegradedModeBanner tone="warning">
                 <strong className="font-semibold">Test / sandbox payment mode.</strong> No live money
                 will move until PayAngels checkout is fully configured and demo data is disabled.
-              </div>
+              </DegradedModeBanner>
             ) : null}
 
             {checkoutLegalGate && !checkoutLegalGate.allowed ? (
-              <div
-                role="alert"
-                className="mb-6 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/30 p-4 text-sm text-rose-900 dark:text-rose-100"
-              >
-                {checkoutLegalGate.message}
-              </div>
+              <DegradedModeBanner tone="danger">{checkoutLegalGate.message}</DegradedModeBanner>
             ) : null}
 
             {/* Error banner */}
@@ -655,5 +660,7 @@ export function PaymentCheckout({
         </div>
       </div>
     </div>
+      </OperationalQueryState>
+    </WorkspacePageShell>
   )
 }
