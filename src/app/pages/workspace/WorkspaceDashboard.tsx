@@ -46,6 +46,7 @@ import {
   CardGridSkeleton,
   DashboardStatsSkeleton,
   ErrorState,
+  SectionHeader,
   WorkspacePageShell,
 } from "../../components/ux";
 import { orgActivityService } from "../../../lib/org-activity.service";
@@ -697,7 +698,7 @@ export function WorkspaceDashboard({
                   </span>
                   Active Inventory
                 </h2>
-                <p className="text-[11px] text-ink-muted mt-0.5 ml-0.5">Managed units & rental availability</p>
+                <p className="text-xs text-ink-muted mt-0.5 ml-0.5">Managed units & rental availability</p>
               </div>
               <Link to={`${workspaceBasePath}/listings`}>
                 <Button variant="glass" size="sm" className="text-xs text-ink gap-1">
@@ -721,14 +722,14 @@ export function WorkspaceDashboard({
                       <p className="text-xs font-bold text-ink truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                         {listing.property?.address || "Untitled property"}
                       </p>
-                      <p className="text-[11px] text-ink-secondary truncate">
+                      <p className="text-xs text-ink-secondary truncate">
                         {[listing.property?.city, listing.property?.region].filter(Boolean).join(", ") || "Location TBD"}
                       </p>
                       <p className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
                         {currencyFormatter.format(listing.price)} / mo
                       </p>
                     </div>
-                    <Badge variant="outline" className="text-[10px] border-surface-border shrink-0 capitalize">
+                    <Badge variant="outline" className="text-xs border-surface-border shrink-0 capitalize">
                       {listing.status || "listed"}
                     </Badge>
                   </div>
@@ -751,7 +752,7 @@ export function WorkspaceDashboard({
                   </span>
                   Upcoming Viewings
                 </h2>
-                <p className="text-[11px] text-ink-muted mt-0.5 ml-0.5">Confirmed calendar appointments</p>
+                <p className="text-xs text-ink-muted mt-0.5 ml-0.5">Confirmed calendar appointments</p>
               </div>
               <Link to={`${workspaceBasePath}/calendar`}>
                 <Button variant="glass" size="sm" className="text-xs text-ink gap-1">
@@ -775,12 +776,12 @@ export function WorkspaceDashboard({
                       <p className="text-xs font-bold text-ink truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {viewing.property?.address || "Untitled property"}
                       </p>
-                      <p className="text-[11px] text-ink-secondary flex items-center gap-1.5 mt-0.5">
+                      <p className="text-xs text-ink-secondary flex items-center gap-1.5 mt-0.5">
                         <Clock className="w-3 h-3 text-blue-500 shrink-0" />
                         {formatDateTime(viewing.confirmed_datetime || viewing.requested_datetime)}
                       </p>
                     </div>
-                    <Badge variant="info" className="text-[10px] shrink-0">
+                    <Badge variant="info" className="text-xs shrink-0">
                       {viewing.status || "Scheduled"}
                     </Badge>
                   </div>
@@ -802,7 +803,7 @@ export function WorkspaceDashboard({
                 </span>
                 Fast Action Launchpad
               </h2>
-              <p className="text-[11px] text-ink-muted mt-0.5 ml-0.5">Direct shortcuts for {activeRole} workflows</p>
+              <p className="text-xs text-ink-muted mt-0.5 ml-0.5">Direct shortcuts for {activeRole} workflows</p>
             </div>
 
             <div className="space-y-2">
@@ -816,7 +817,7 @@ export function WorkspaceDashboard({
                   </span>
                   <div>
                     <p className="text-xs font-bold text-ink group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">WhatsApp Business Hub</p>
-                    <p className="text-[11px] text-ink-secondary">Gate passes, rent links & bot</p>
+                    <p className="text-xs text-ink-secondary">Gate passes, rent links & bot</p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink group-hover:translate-x-0.5 transition-all" />
@@ -832,7 +833,7 @@ export function WorkspaceDashboard({
                   </span>
                   <div>
                     <p className="text-xs font-bold text-ink group-hover:text-primary transition-colors">AI Rent Yield Predictor</p>
-                    <p className="text-[11px] text-ink-secondary">Cap rate modeling for Ghana</p>
+                    <p className="text-xs text-ink-secondary">Cap rate modeling for Ghana</p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink group-hover:translate-x-0.5 transition-all" />
@@ -848,7 +849,7 @@ export function WorkspaceDashboard({
                   </span>
                   <div>
                     <p className="text-xs font-bold text-ink group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Multi-Currency FX & Hedging</p>
-                    <p className="text-[11px] text-ink-secondary">Bank of Ghana rate sync & collar</p>
+                    <p className="text-xs text-ink-secondary">Bank of Ghana rate sync & collar</p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink group-hover:translate-x-0.5 transition-all" />
@@ -864,7 +865,7 @@ export function WorkspaceDashboard({
                   </span>
                   <div>
                     <p className="text-xs font-bold text-ink group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">AI Command & Approval Center</p>
-                    <p className="text-[11px] text-ink-secondary">Night Watch audits & Level 2 approvals</p>
+                    <p className="text-xs text-ink-secondary">Night Watch audits & Level 2 approvals</p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink group-hover:translate-x-0.5 transition-all" />
@@ -880,7 +881,7 @@ export function WorkspaceDashboard({
                   </span>
                   <div>
                     <p className="text-xs font-bold text-ink group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Procurement & Contractor RFQ</p>
-                    <p className="text-[11px] text-ink-secondary">Quote comparison & 3-way PO match</p>
+                    <p className="text-xs text-ink-secondary">Quote comparison & 3-way PO match</p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-ink-muted group-hover:text-ink group-hover:translate-x-0.5 transition-all" />
@@ -900,14 +901,15 @@ export function WorkspaceDashboard({
 
       {showRecentActivity ? (
         <div className="space-y-3">
-          <div>
-            <h2 className="text-sm font-black text-ink uppercase tracking-wide">Recent activity</h2>
-            <p className="text-[11px] text-ink-muted mt-0.5">
-              {orgActivityService.isExecutiveRole(activeRole)
+          <SectionHeader
+            level="subsection"
+            title="Recent activity"
+            description={
+              orgActivityService.isExecutiveRole(activeRole)
                 ? "Organization-wide tasks, deals, inbox, and field updates"
-                : "Your assigned tasks, deals, and related updates"}
-            </p>
-          </div>
+                : "Your assigned tasks, deals, and related updates"
+            }
+          />
           {activityItems.length === 0 ? (
             <Card className="p-8 text-center text-sm text-ink-muted border-dashed">
               No recent activity yet.

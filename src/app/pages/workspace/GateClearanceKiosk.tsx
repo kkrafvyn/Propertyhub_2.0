@@ -397,7 +397,7 @@ export function GateClearanceKiosk({
                 <h3 className="font-bold text-xs text-ink uppercase tracking-wider">
                   Active Verified Passes Today
                 </h3>
-                <span className="text-[10px] text-muted-foreground">Gate 1 West Terminal</span>
+                <span className="text-xs text-muted-foreground">Gate 1 West Terminal</span>
               </div>
 
               <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
@@ -419,7 +419,7 @@ export function GateClearanceKiosk({
                           {pass.status.toUpperCase()}
                         </Badge>
                       </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         To: {pass.hostUnitNumber} ({pass.hostResidentName}) · PIN:{' '}
                         <strong className="font-mono text-ink">{pass.entryPin}</strong>
                       </p>
@@ -432,7 +432,7 @@ export function GateClearanceKiosk({
                         onClick={() => {
                           setInputCode(pass.entryPin);
                         }}
-                        className="text-[11px] py-1 h-7"
+                        className="text-xs py-1 h-7"
                       >
                         Auto-Fill
                       </Button>
@@ -440,7 +440,7 @@ export function GateClearanceKiosk({
                         size="sm"
                         variant="outline"
                         onClick={() => handleVoiceCallHost(pass)}
-                        className="text-[11px] py-1 h-7 text-emerald-600 dark:text-emerald-400"
+                        className="text-xs py-1 h-7 text-emerald-600 dark:text-emerald-400"
                       >
                         <Phone className="h-3 w-3" />
                       </Button>
@@ -593,7 +593,7 @@ export function GateClearanceKiosk({
                   <p>
                     <strong>Destination:</strong> {generatedPass.hostUnitNumber} ({generatedPass.hostResidentName})
                   </p>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-xs text-slate-400">
                     Expires: {new Date(generatedPass.validUntil).toLocaleTimeString()}
                   </p>
                 </div>
@@ -661,11 +661,11 @@ export function GateClearanceKiosk({
                       <Badge variant="outline" className="text-[9px] font-mono uppercase">
                         {pass.passType.replace('_', ' ')}
                       </Badge>
-                      <span className="font-mono text-[10px] text-muted-foreground">
+                      <span className="font-mono text-xs text-muted-foreground">
                         PIN: {pass.entryPin}
                       </span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       Host: {pass.hostResidentName} ({pass.hostUnitNumber}) · Gate: {pass.entryGate}
                       {pass.vehiclePlate ? ` · Plate: ${pass.vehiclePlate}` : ''}
                     </p>
@@ -673,12 +673,12 @@ export function GateClearanceKiosk({
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="text-right text-[11px] text-muted-foreground">
+                  <div className="text-right text-xs text-muted-foreground">
                     <p>
                       Check-in:{' '}
                       {pass.checkInTime ? new Date(pass.checkInTime).toLocaleTimeString() : 'Pending'}
                     </p>
-                    <p className="text-[10px]">{new Date(pass.validFrom).toLocaleDateString()}</p>
+                    <p className="text-xs">{new Date(pass.validFrom).toLocaleDateString()}</p>
                   </div>
 
                   <Button

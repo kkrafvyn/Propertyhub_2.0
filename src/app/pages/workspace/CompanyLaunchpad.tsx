@@ -168,7 +168,7 @@ export function CompanyLaunchpad({
                     className="h-6 w-6 rounded-full shadow-inner mb-1.5"
                     style={{ backgroundColor: preset.primaryColor }}
                   />
-                  <span className="text-[11px] font-bold text-ink truncate w-full">
+                  <span className="text-xs font-bold text-ink truncate w-full">
                     {preset.companyName}
                   </span>
                 </button>
@@ -243,7 +243,7 @@ export function CompanyLaunchpad({
               {/* Color Pickers */}
               <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border">
                 <div>
-                  <label className="text-[11px] font-medium text-muted-foreground">
+                  <label className="text-xs font-medium text-muted-foreground">
                     Primary Brand Color
                   </label>
                   <div className="flex items-center gap-2 mt-1">
@@ -262,7 +262,7 @@ export function CompanyLaunchpad({
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-medium text-muted-foreground">
+                  <label className="text-xs font-medium text-muted-foreground">
                     Secondary Color
                   </label>
                   <div className="flex items-center gap-2 mt-1">
@@ -281,7 +281,7 @@ export function CompanyLaunchpad({
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-medium text-muted-foreground">
+                  <label className="text-xs font-medium text-muted-foreground">
                     Accent Highlight
                   </label>
                   <div className="flex items-center gap-2 mt-1">
@@ -335,7 +335,7 @@ export function CompanyLaunchpad({
                   </Badge>
                 </div>
 
-                <div className="rounded-xl bg-surface p-2.5 font-mono text-[11px] text-ink border border-border flex items-center justify-between">
+                <div className="rounded-xl bg-surface p-2.5 font-mono text-xs text-ink border border-border flex items-center justify-between">
                   <span>CNAME: {config.customDomain} → cname.baytmiftah.app</span>
                   <Button
                     size="sm"
@@ -344,12 +344,12 @@ export function CompanyLaunchpad({
                       navigator.clipboard.writeText('cname.baytmiftah.app');
                       toast.success('Copied DNS Target!');
                     }}
-                    className="h-6 px-1.5 text-[10px]"
+                    className="h-6 px-1.5 text-xs"
                   >
                     <Copy className="h-3 w-3" />
                   </Button>
                 </div>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Automatic Let’s Encrypt SSL certificate provisioned upon DNS propagation.
                 </p>
               </div>
@@ -415,18 +415,18 @@ export function CompanyLaunchpad({
               >
                 <div className="flex items-center justify-between">
                   <span className="font-extrabold text-sm tracking-tight">{config.companyName}</span>
-                  <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold">
+                  <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">
                     GH
                   </div>
                 </div>
-                <p className="text-[10px] text-white/80">{config.brandTagline}</p>
+                <p className="text-xs text-white/80">{config.brandTagline}</p>
               </div>
 
               {/* App Body Content */}
               <div className="p-3.5 space-y-3 flex-1 overflow-y-auto bg-surface">
                 {/* Welcome Card */}
                 <div className="rounded-2xl bg-surface-subtle p-3 border border-border space-y-1">
-                  <span className="text-[10px] text-muted-foreground">Welcome Back,</span>
+                  <span className="text-xs text-muted-foreground">Welcome Back,</span>
                   <h4 className="font-bold text-xs text-ink">Villa 14 — East Legon Hills</h4>
                 </div>
 
@@ -437,35 +437,35 @@ export function CompanyLaunchpad({
                     style={{ backgroundColor: config.primaryColor }}
                   >
                     <QrCode className="h-5 w-5 mb-1" />
-                    <span className="text-[10px] font-bold">Gate Pass</span>
+                    <span className="text-xs font-bold">Gate Pass</span>
                   </div>
 
                   <div className="flex flex-col items-center justify-center rounded-2xl p-3 bg-surface-subtle border border-border text-center text-ink">
                     <Zap className="h-5 w-5 text-amber-500 mb-1" />
-                    <span className="text-[10px] font-bold">Pay Utilities</span>
+                    <span className="text-xs font-bold">Pay Utilities</span>
                   </div>
 
                   <div className="flex flex-col items-center justify-center rounded-2xl p-3 bg-surface-subtle border border-border text-center text-ink">
                     <Wrench className="h-5 w-5 text-indigo-500 mb-1" />
-                    <span className="text-[10px] font-bold">Artisan MoMo</span>
+                    <span className="text-xs font-bold">Artisan MoMo</span>
                   </div>
 
                   <div className="flex flex-col items-center justify-center rounded-2xl p-3 bg-surface-subtle border border-border text-center text-ink">
                     <Scale className="h-5 w-5 text-emerald-500 mb-1" />
-                    <span className="text-[10px] font-bold">Lease (Act 220)</span>
+                    <span className="text-xs font-bold">Lease (Act 220)</span>
                   </div>
                 </div>
 
                 {/* Recent Activity Card */}
                 <div className="rounded-2xl bg-surface-subtle p-3 border border-border space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                  <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                     Active Utilities & Power
                   </span>
-                  <div className="flex justify-between items-center text-[11px]">
+                  <div className="flex justify-between items-center text-xs">
                     <span className="text-ink">ECG Sub-Meter</span>
                     <span className="font-mono font-bold text-emerald-600">4,820 kWh</span>
                   </div>
-                  <div className="flex justify-between items-center text-[11px]">
+                  <div className="flex justify-between items-center text-xs">
                     <span className="text-ink">Cat Generator Split</span>
                     <span className="font-mono font-bold text-amber-600">₵194.25</span>
                   </div>

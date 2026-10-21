@@ -125,12 +125,12 @@ function KycAiStatusCard({ submission }: { submission: Record<string, unknown> |
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             {t("kycPage.aiScreeningTitle") || "AI Screening Assessment"}
           </p>
         </div>
         {recommendation && (
-          <Badge variant="outline" className={`capitalize text-[10px] font-bold ${recColors.badge}`}>
+          <Badge variant="outline" className={`capitalize text-xs font-bold ${recColors.badge}`}>
             {recommendation}
           </Badge>
         )}
@@ -139,7 +139,7 @@ function KycAiStatusCard({ submission }: { submission: Record<string, unknown> |
       {typeof confidence === "number" && (
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">AI Confidence</span>
+            <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">AI Confidence</span>
             <span className="text-[11px] font-bold tabular-nums text-foreground">{confidence}%</span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-border/60 overflow-hidden">
@@ -159,12 +159,12 @@ function KycAiStatusCard({ submission }: { submission: Record<string, unknown> |
 
       {flags.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Screening Flags</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Screening Flags</p>
           <div className="flex flex-wrap gap-1.5">
             {flags.map((flag) => (
               <span
                 key={flag}
-                className="inline-flex items-center gap-1 rounded-lg border border-red-400/30 bg-red-500/8 px-2 py-0.5 text-[10px] font-semibold capitalize text-red-600 dark:text-red-400"
+                className="inline-flex items-center gap-1 rounded-lg border border-red-400/30 bg-red-500/8 px-2 py-0.5 text-xs font-semibold capitalize text-red-600 dark:text-red-400"
               >
                 <AlertCircle className="h-2.5 w-2.5 shrink-0" />
                 {formatAiFlag(flag)}
@@ -174,7 +174,7 @@ function KycAiStatusCard({ submission }: { submission: Record<string, unknown> |
         </div>
       )}
 
-      <div className="flex items-center gap-1.5 border-t border-border/40 pt-2 text-[10px] text-muted-foreground">
+      <div className="flex items-center gap-1.5 border-t border-border/40 pt-2 text-xs text-muted-foreground">
         <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
         <span>{t("kycPage.aiScreeningDisclaimer") || "AI screening is verified by BaytMiftah licensed compliance officers."}</span>
       </div>
@@ -662,7 +662,7 @@ export function KycVerificationPanel() {
                     <span className="text-xl">{j.flag}</span>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold text-foreground truncate">{j.label}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">{j.regulator}</p>
+                      <p className="text-xs text-muted-foreground truncate">{j.regulator}</p>
                     </div>
                   </button>
                 ))}
@@ -773,17 +773,17 @@ export function KycVerificationPanel() {
               <div className="space-y-1">
                 <span className="text-base">📐</span>
                 <p className="text-[11px] font-semibold text-foreground">All 4 Corners</p>
-                <p className="text-[10px] text-muted-foreground">Keep entire document in frame</p>
+                <p className="text-xs text-muted-foreground">Keep entire document in frame</p>
               </div>
               <div className="space-y-1">
                 <span className="text-base">💡</span>
                 <p className="text-[11px] font-semibold text-foreground">Zero Glare</p>
-                <p className="text-[10px] text-muted-foreground">Avoid direct flash reflections</p>
+                <p className="text-xs text-muted-foreground">Avoid direct flash reflections</p>
               </div>
               <div className="space-y-1">
                 <span className="text-base">🔍</span>
                 <p className="text-[11px] font-semibold text-foreground">Crystal Clear</p>
-                <p className="text-[10px] text-muted-foreground">Text & numbers readable</p>
+                <p className="text-xs text-muted-foreground">Text & numbers readable</p>
               </div>
             </div>
 

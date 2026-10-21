@@ -6,6 +6,13 @@ import { useAuth } from "../../../context/AuthContext";
 import { useTranslation } from "../../../i18n/LocaleContext";
 import { getAvailability, requestViewing } from "../../../lib/baytmiftah/booking-service";
 import { MobilePrimaryButton } from "../MobileUI";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../../ui/dialog";
 
 export default function MobileViewingModal({
   listing,
@@ -73,124 +80,115 @@ export default function MobileViewingModal({
     setMessage((result as { message?: string })?.message || t("mobile.viewingError"));
   }
 
-  if (!user) {
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center"
-        role="dialog"
-        aria-modal="true"
-      >
-        <div className="w-full max-w-md rounded-t-2xl bg-surface p-6 shadow-card sm:rounded-2xl">
-          <h3 className="text-lg font-bold text-ink">{t("listing.requestViewing")}</h3>
-          <p className="mt-2 text-sm text-ink-secondary">{t("mobile.viewingSignIn")}</p>
-          <Link
-            to="/login"
-            className="mt-4 block w-full rounded-xl bg-mobile-forest py-3 text-center text-sm font-semibold text-white"
-          >
-            {t("auth.logIn")}
-          </Link>
-          <button
-            type="button"
-            onClick={onClose}
-            className="mt-3 w-full py-2 text-sm font-semibold text-ink-secondary"
-          >
-            {t("common.close")}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center"
-      role="dialog"
-      aria-modal="true"
-    >
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-t-2xl bg-surface p-6 shadow-card sm:rounded-2xl"
-      >
-        <h3 className="text-lg font-bold text-ink">{t("listing.requestViewing")}</h3>
-        <p className="mt-1 truncate text-sm text-ink-secondary">{listing.title}</p>
-
-        {hasSlots ? (
-          <label className="mt-4 block text-sm font-semibold text-ink">
-            {t("property.selectSlot")}
-            <NativeSelectControl
-              required
-              value={slotId}
-              onChange={(e) => {
-                const next = slots.find((s) => s.id === e.target.value);
-                setSlotId(e.target.value);
-                if (next) setDate(next.date);
-              }}
-              className="mt-1 w-full rounded-xl border border-surface-border px-3 py-2.5 text-sm"
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-md gap-0 p-0 sm:rounded-2xl">
+        {!user ? (
+          <div className="p-6">
+            <DialogHeader>
+              <DialogTitle>{t("listing.requestViewing")}</DialogTitle>
+              <DialogDescription>{t("mobile.viewingSignIn")}</DialogDescription>
+            </DialogHeader>
+            <Link
+              to="/login"
+              className="mt-4 block w-full rounded-xl bg-mobile-forest py-3 text-center text-sm font-semibold text-white"
             >
-              {slots.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.date} · {s.time}
-                </option>
-              ))}
-            </NativeSelectControl>
-          </label>
+              {t("auth.logIn")}
+            </Link>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-3 w-full py-2 text-sm font-semibold text-ink-secondary"
+            >
+              {t("common.close")}
+            </button>
+          </div>
         ) : (
-          <>
-            <p className="mt-3 text-sm text-ink-secondary">{t("property.noSlotsYet")}</p>
-            <label className="mt-4 block text-sm font-semibold text-ink">
-              {t("mobile.viewingDate")}
+          <form onSubmit={handleSubmit} className="p-6">
+            <DialogHeader className="text-left">
+              <DialogTitle>{t("listing.requestViewing")}</DialogTitle>
+              <DialogDescription className="truncate">{listing.title}</DialogDescription>
+            </DialogHeader>
+
+            {hasSlots ? (
+              <label className="mt-4 block text-sm font-semibold text-ink">
+                {t("property.selectSlot")}
+                <NativeSelectControl
+                  required
+                  value={slotId}
+                  onChange={(e) => {
+                    const next = slots.find((s) => s.id === e.target.value);
+                    setSlotId(e.target.value);
+                    if (next) setDate(next.date);
+                  }}
+                  className="mt-1 w-full rounded-xl border border-surface-border px-3 py-2.5 text-sm"
+                >
+                  {slots.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.date} · {s.time}
+                    </option>
+                  ))}
+                </NativeSelectControl>
+              </label>
+            ) : (
+              <>
+                <p className="mt-3 text-sm text-ink-secondary">{t("property.noSlotsYet")}</p>
+                <label className="mt-4 block text-sm font-semibold text-ink">
+                  {t("mobile.viewingDate")}
+                  <input
+                    required
+                    type="date"
+                    value={date}
+                    min={new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-surface-border px-3 py-2.5 text-sm"
+                  />
+                </label>
+              </>
+            )}
+
+            <label className="mt-3 block text-sm font-semibold text-ink">
+              {t("mobile.viewingGuests")}
               <input
-                required
-                type="date"
-                value={date}
-                min={new Date().toISOString().slice(0, 10)}
-                onChange={(e) => setDate(e.target.value)}
+                type="number"
+                min={1}
+                max={20}
+                value={guests}
+                onChange={(e) => setGuests(Number(e.target.value))}
                 className="mt-1 w-full rounded-xl border border-surface-border px-3 py-2.5 text-sm"
               />
             </label>
-          </>
+
+            <label className="mt-3 block text-sm font-semibold text-ink">
+              {t("mobile.viewingNotes")}
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                placeholder={t("mobile.viewingNotesPlaceholder")}
+                className="mt-1 w-full rounded-xl border border-surface-border px-3 py-2.5 text-sm"
+              />
+            </label>
+
+            {message && <p className="mt-3 text-sm text-red-600">{message}</p>}
+
+            <MobilePrimaryButton
+              type="submit"
+              disabled={loading || (hasSlots && !slotId)}
+              className="mt-4 w-full"
+            >
+              {loading ? t("mobile.viewingSending") : t("listing.requestViewing")}
+            </MobilePrimaryButton>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-3 w-full py-2 text-sm font-semibold text-ink-secondary"
+            >
+              {t("common.close")}
+            </button>
+          </form>
         )}
-
-        <label className="mt-3 block text-sm font-semibold text-ink">
-          {t("mobile.viewingGuests")}
-          <input
-            type="number"
-            min={1}
-            max={20}
-            value={guests}
-            onChange={(e) => setGuests(Number(e.target.value))}
-            className="mt-1 w-full rounded-xl border border-surface-border px-3 py-2.5 text-sm"
-          />
-        </label>
-
-        <label className="mt-3 block text-sm font-semibold text-ink">
-          {t("mobile.viewingNotes")}
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={2}
-            placeholder={t("mobile.viewingNotesPlaceholder")}
-            className="mt-1 w-full rounded-xl border border-surface-border px-3 py-2.5 text-sm"
-          />
-        </label>
-
-        {message && <p className="mt-3 text-sm text-red-600">{message}</p>}
-
-        <MobilePrimaryButton
-          type="submit"
-          disabled={loading || (hasSlots && !slotId)}
-          className="mt-4 w-full"
-        >
-          {loading ? t("mobile.viewingSending") : t("listing.requestViewing")}
-        </MobilePrimaryButton>
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-3 w-full py-2 text-sm font-semibold text-ink-secondary"
-        >
-          {t("common.close")}
-        </button>
-      </form>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

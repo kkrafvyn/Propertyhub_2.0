@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/Button";
-import { OperationalQueryState, PageHeader, PageLayout } from "../../components/ux";
+import { FormRow, OperationalQueryState, PageHeader, PageLayout } from "../../components/ux";
 import { EmptyState } from "../../components/ux/EmptyState";
 import { leaseScreeningService } from "../../../lib/lease-screening.service";
 import { useAuth } from "../../context/AuthContext";
@@ -212,7 +212,7 @@ export function Applications() {
               >
                 <span>{tab.label}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                  className={`text-xs px-1.5 py-0.2 rounded-full font-mono font-bold ${
                     isActive ? "bg-white/20 text-white" : "bg-surface-subtle text-ink-tertiary"
                   }`}
                 >
@@ -223,16 +223,19 @@ export function Applications() {
           })}
         </div>
 
-        <div className="relative min-w-[220px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-muted pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search by ID, name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 rounded-xl text-xs bg-surface/90 border border-surface-border text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
+        <FormRow htmlFor="applications-search" label="Search" className="min-w-[220px] mb-0">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-muted pointer-events-none" />
+            <input
+              id="applications-search"
+              type="text"
+              placeholder="Search by ID, name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 rounded-xl text-xs bg-surface/90 border border-surface-border text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+        </FormRow>
       </div>
 
       {/* ── Applications List ── */}

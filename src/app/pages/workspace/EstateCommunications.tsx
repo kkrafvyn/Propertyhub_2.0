@@ -265,7 +265,7 @@ export function EstateCommunications({
             <Megaphone className="h-4 w-4 text-emerald-500" />
           </div>
           <p className="mt-2 text-xl font-bold text-ink">{notices.length}</p>
-          <span className="text-[10px] text-muted-foreground font-medium">
+          <span className="text-xs text-muted-foreground font-medium">
             Estate notices sent
           </span>
         </Card>
@@ -276,7 +276,7 @@ export function EstateCommunications({
             <Video className="h-4 w-4 text-teal-500" />
           </div>
           <p className="mt-2 text-xl font-bold text-ink">0</p>
-          <span className="text-[10px] text-muted-foreground">Start a room to go live</span>
+          <span className="text-xs text-muted-foreground">Start a room to go live</span>
         </Card>
 
         <Card className="p-4 bg-surface border-surface-border">
@@ -285,7 +285,7 @@ export function EstateCommunications({
             <Smartphone className="h-4 w-4 text-amber-500" />
           </div>
           <p className="mt-2 text-xl font-bold text-ink">—</p>
-          <span className="text-[10px] text-muted-foreground font-medium">
+          <span className="text-xs text-muted-foreground font-medium">
             Connect gateway to send SMS
           </span>
         </Card>
@@ -296,7 +296,7 @@ export function EstateCommunications({
             <MessageSquare className="h-4 w-4 text-emerald-500" />
           </div>
           <p className="mt-2 text-xl font-bold text-ink">Setup</p>
-          <span className="text-[10px] text-muted-foreground font-medium">
+          <span className="text-xs text-muted-foreground font-medium">
             Connect in workspace settings
           </span>
         </Card>
@@ -368,12 +368,12 @@ export function EstateCommunications({
                   <Send className="h-4 w-4 text-emerald-500" />
                   <h3 className="font-semibold text-sm text-ink">Compose Multi-Channel Broadcast</h3>
                 </div>
-                <span className="text-[10px] text-muted-foreground">Instant dispatch across selected channels</span>
+                <span className="text-xs text-muted-foreground">Instant dispatch across selected channels</span>
               </div>
 
               {/* Template Presets */}
               <div className="mb-4 space-y-1.5">
-                <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+                <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                   <Sparkles className="h-3 w-3 text-amber-500" /> Fast Ghana Presets:
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -384,7 +384,7 @@ export function EstateCommunications({
                         key={tmpl.id}
                         type="button"
                         onClick={() => applyTemplate(tmpl)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-subtle px-2.5 py-1 text-[11px] font-medium text-ink hover:border-primary hover:bg-surface transition"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-subtle px-2.5 py-1 text-xs font-medium text-ink hover:border-primary hover:bg-surface transition"
                       >
                         <IconComponent className={`h-3 w-3 ${tmpl.iconColor} shrink-0`} />
                         <span>{tmpl.title}</span>
@@ -397,7 +397,7 @@ export function EstateCommunications({
               <form onSubmit={handleSendNotice} className="space-y-3.5">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="text-[11px] font-medium text-muted-foreground">Target Estate</label>
+                    <label className="text-xs font-medium text-muted-foreground">Target Estate</label>
                     <NativeSelectControl
                       className="mt-1 w-full rounded-xl border border-border bg-input-background px-3 py-2 text-xs"
                       value={estateId}
@@ -413,7 +413,7 @@ export function EstateCommunications({
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-medium text-muted-foreground">Target Audience</label>
+                    <label className="text-xs font-medium text-muted-foreground">Target Audience</label>
                     <NativeSelectControl
                       className="mt-1 w-full rounded-xl border border-border bg-input-background px-3 py-2 text-xs"
                       value={audience}
@@ -428,7 +428,7 @@ export function EstateCommunications({
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-medium text-muted-foreground">Notice Subject</label>
+                  <label className="text-xs font-medium text-muted-foreground">Notice Subject</label>
                   <Input
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
@@ -438,7 +438,7 @@ export function EstateCommunications({
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-medium text-muted-foreground">Message Body</label>
+                  <label className="text-xs font-medium text-muted-foreground">Message Body</label>
                   <Textarea
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
@@ -449,7 +449,7 @@ export function EstateCommunications({
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-medium text-muted-foreground mb-1.5 block">
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                     Dispatch Channels:
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -496,7 +496,7 @@ export function EstateCommunications({
                   <Clock className="h-4 w-4 text-emerald-500" />
                   <h3 className="font-semibold text-sm text-ink">Broadcast Delivery Audit</h3>
                 </div>
-                <span className="text-[10px] text-muted-foreground">{estateNotices.length} Recorded</span>
+                <span className="text-xs text-muted-foreground">{estateNotices.length} Recorded</span>
               </div>
 
               <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
@@ -519,7 +519,7 @@ export function EstateCommunications({
                       >
                         <div className="flex items-start justify-between gap-2">
                           <h4 className="font-bold text-xs text-ink line-clamp-1">{notice.subject}</h4>
-                          <span className="text-[10px] text-muted-foreground shrink-0">
+                          <span className="text-xs text-muted-foreground shrink-0">
                             {new Date(notice.created_at).toLocaleDateString()}
                           </span>
                         </div>
@@ -533,7 +533,7 @@ export function EstateCommunications({
                               </Badge>
                             ))}
                           </div>
-                          <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                          <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                             <CheckCheck className="h-3 w-3" />
                             {deliveredCount > 0 ? `${deliveredCount} Delivered` : 'Queued'}
                           </span>
@@ -638,14 +638,14 @@ export function EstateCommunications({
                           </Badge>
                         )}
                       </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {call.remoteParticipant.role} {call.listingTitle ? `· ${call.listingTitle}` : ''}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="text-right text-[11px] text-muted-foreground">
+                    <div className="text-right text-xs text-muted-foreground">
                       <p className="font-mono font-medium text-ink">
                         {Math.floor(call.duration / 60)}m {call.duration % 60}s
                       </p>
@@ -695,7 +695,7 @@ export function EstateCommunications({
                   <p className="text-xs text-muted-foreground">Hubtel / Arkesel / Twilio routing</p>
                 </div>
               </div>
-              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-500">
+              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-500">
                 ACTIVE
               </span>
             </div>
@@ -730,7 +730,7 @@ export function EstateCommunications({
                   <p className="text-xs text-muted-foreground">Meta Business verified channel</p>
                 </div>
               </div>
-              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-500">
+              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-500">
                 VERIFIED
               </span>
             </div>

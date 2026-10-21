@@ -124,7 +124,7 @@ function InboxContent() {
               </div>
               <div>
                 <h2 className="text-sm font-bold text-foreground">Inbox</h2>
-                <p className="text-[11px] text-muted-foreground">Live conversations</p>
+                <p className="text-xs text-muted-foreground">Live conversations</p>
               </div>
             </div>
 
@@ -139,7 +139,7 @@ function InboxContent() {
               title="Toggle AI Assistant"
             >
               <Brain className="w-3.5 h-3.5" />
-              <span className="text-[10px] hidden sm:inline">{enableAiAgent ? "AI On" : "AI Off"}</span>
+              <span className="text-xs hidden sm:inline">{enableAiAgent ? "AI On" : "AI Off"}</span>
             </button>
           </div>
 
@@ -156,7 +156,7 @@ function InboxContent() {
           </div>
 
           {/* Category Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px] scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-none">
             {(
               [
                 { id: "all", label: "All" },
@@ -211,29 +211,29 @@ function InboxContent() {
                       <h4 className="text-xs font-semibold text-foreground truncate">
                         {conv.title || "Contextual Thread"}
                       </h4>
-                      <span className="text-[10px] text-muted-foreground shrink-0">
+                      <span className="text-xs text-muted-foreground shrink-0">
                         {conv.last_message_at ? new Date(conv.last_message_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-muted-foreground truncate mb-1.5">
+                    <p className="text-xs text-muted-foreground truncate mb-1.5">
                       {conv.last_message_preview || "No messages yet"}
                     </p>
 
                     {/* Operational Badges */}
                     <div className="flex items-center gap-1 flex-wrap">
                       {conv.metadata?.unitNumber && (
-                        <span className="text-[10px] bg-muted px-1.5 py-0.2 rounded font-medium text-foreground">
+                        <span className="text-xs bg-muted px-1.5 py-0.2 rounded font-medium text-foreground">
                           Unit {conv.metadata.unitNumber}
                         </span>
                       )}
                       {hasTicket && (
-                        <span className="text-[10px] bg-amber-500/10 text-amber-600 px-1.5 py-0.2 rounded font-medium border border-amber-500/20">
+                        <span className="text-xs bg-amber-500/10 text-amber-600 px-1.5 py-0.2 rounded font-medium border border-amber-500/20">
                           Ticket Open
                         </span>
                       )}
                       {hasLease && (
-                        <span className="text-[10px] bg-emerald-500/10 text-emerald-600 px-1.5 py-0.2 rounded font-medium border border-emerald-500/20">
+                        <span className="text-xs bg-emerald-500/10 text-emerald-600 px-1.5 py-0.2 rounded font-medium border border-emerald-500/20">
                           Active Lease
                         </span>
                       )}
@@ -272,7 +272,7 @@ function InboxContent() {
                   >
                     {/* Sender Name */}
                     {!isMe && !isSystem && (
-                      <span className="text-[10px] text-muted-foreground font-medium mb-1 px-1 flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground font-medium mb-1 px-1 flex items-center gap-1">
                         {isAI && <Sparkles className="w-3 h-3 text-violet-500" />}
                         {msg.sender_name || (isAI ? "BaytMiftah AI" : "Participant")}
                       </span>
@@ -286,7 +286,7 @@ function InboxContent() {
                           : isAI
                           ? "bg-violet-500/10 text-foreground border border-violet-500/20 rounded-bl-xs"
                           : isSystem
-                          ? "bg-muted/80 text-muted-foreground text-[11px] text-center"
+                          ? "bg-muted/80 text-muted-foreground text-xs text-center"
                           : "bg-card border border-border text-foreground rounded-bl-xs"
                       }`}
                     >
@@ -303,7 +303,7 @@ function InboxContent() {
                         <LeaseContextCard metadata={msg.metadata} />
                       )}
 
-                      <div className="flex items-center justify-end gap-1 mt-1 text-[10px] opacity-70">
+                      <div className="flex items-center justify-end gap-1 mt-1 text-xs opacity-70">
                         <span>
                           {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>

@@ -28,6 +28,7 @@ import {
   type MarketplacePartner,
 } from "../../../lib/marketplace-partners";
 import { CONSUMER_ROUTES } from "../../lib/consumer-routes";
+import { OperationalQueryState } from "../../components/ux";
 
 // ── Math helpers ──────────────────────────────────────────────────────────────
 
@@ -71,7 +72,7 @@ function AmortizationBar({ schedule }: { schedule: ReturnType<typeof buildAmorti
   const maxTotal = Math.max(...schedule.map((r) => r.principal + r.interest));
   return (
     <div className="space-y-1.5 mt-4">
-      <div className="flex justify-between text-[10px] text-muted-foreground">
+      <div className="flex justify-between text-xs text-muted-foreground">
         <span>Year-by-year repayment breakdown</span>
         <span className="flex gap-3">
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" />Principal</span>
@@ -423,15 +424,18 @@ export function VendorMarketplaceSection() {
   const [category, setCategory] = useState("general");
   const [vendors, setVendors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadVendors = async (cat: string) => {
     try {
       setLoading(true);
+      setLoadError(null);
       const { vendorService } = await import("../../../lib/vendor.service");
       const rows = await vendorService.listMarketplaceVendors(cat, 24);
       setVendors(rows);
     } catch {
       setVendors([]);
+      setLoadError("Unable to load vendors for this category.");
     } finally {
       setLoading(false);
     }
@@ -447,6 +451,8 @@ export function VendorMarketplaceSection() {
     { id: "security", label: "Security" },
     { id: "general", label: "General" },
   ];
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   return (
     <div className="space-y-6">
@@ -477,6 +483,11 @@ export function VendorMarketplaceSection() {
         ))}
       </div>
 
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={() => void loadVendors(category)}
+      >
       {loading ? (
         <div className="grid gap-4 md:grid-cols-2">
           {[1, 2, 3, 4].map((i) => <div key={i} className="h-32 rounded-xl border border-border bg-muted/30 animate-pulse" />)}
@@ -530,6 +541,7 @@ export function VendorMarketplaceSection() {
           ))}
         </div>
       )}
+      </OperationalQueryState>
     </div>
   );
 }

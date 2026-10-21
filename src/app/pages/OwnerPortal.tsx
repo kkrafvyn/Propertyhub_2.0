@@ -105,7 +105,7 @@ export function OwnerPortal() {
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-surface/80 border border-surface-border backdrop-blur-md shadow-xs shrink-0 text-right">
-                  <span className="text-[10px] uppercase font-bold text-ink-muted tracking-wider block">
+                  <span className="text-xs uppercase font-bold text-ink-muted tracking-wider block">
                     Verified Stakeholder
                   </span>
                   <span className="text-xs font-semibold text-ink">{snapshot.contact_email}</span>
@@ -205,7 +205,7 @@ export function OwnerPortal() {
                           <Badge
                             variant={isOccupied ? "success" : isVacant ? "warning" : "outline"}
                             dot
-                            className="capitalize text-[10px] font-bold"
+                            className="capitalize text-xs font-bold"
                           >
                             {unit.status?.replace(/_/g, " ") || "Active"}
                           </Badge>

@@ -1450,6 +1450,7 @@ export function AdminLayout({ contentOnly = false }: { contentOnly?: boolean } =
                 <Link
                   key={item.key}
                   to={item.href}
+                  aria-current={isActive ? "page" : undefined}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                     isActive ? "bg-primary text-white" : "hover:bg-secondary"
                   }`}

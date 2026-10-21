@@ -22,6 +22,14 @@ All production email HTML is built by `supabase/functions/_shared/email-template
 
 Root: `/favicon.svg` (browser tab), `/logo.svg` (default mark)
 
+## Deprecated assets
+
+Prefer the files in the table above for new work. Legacy PNGs under `/icons/` and duplicate lockups may remain for older installs — regenerate with `npm run cap:assets` rather than editing PNGs by hand.
+
+## PWA theme colors
+
+Consumer `manifest.webmanifest` uses forest green `#0F2922` (matches `index.html` `theme-color`). Workspace install uses `manifest.workspace.webmanifest` with navy `#0B2545` — keep each manifest aligned with its shell, not interchangeable.
+
 ## Native app (Capacitor)
 
 Splash uses the **`logo-inverted`** lockup (white mark + wordmark on `#0F2922`). App icon uses **`app-icon.svg`**.

@@ -5,8 +5,7 @@ import { listingService } from "../../lib/listing.service";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Badge } from "../components/ui/badge";
-import { AppLoadingScreen } from "../components/ux/AppLoadingScreen";
-import { StandalonePageShell } from "../components/ux/StandalonePageShell";
+import { AppLoadingScreen, EmptyState, StandalonePageShell } from "../components/ux";
 
 export function PublicPropertyExplorer() {
   const { id } = useParams();
@@ -60,6 +59,20 @@ export function PublicPropertyExplorer() {
 
   if (loading) {
     return <AppLoadingScreen label="Loading property explorer…" />;
+  }
+
+  if (!listing) {
+    return (
+      <StandalonePageShell maxWidthClassName="max-w-2xl">
+        <EmptyState
+          icon={Eye}
+          title="No property matches this preview link"
+          description="The listing may have been removed or the link is incorrect. Search BaytMiftah for active inventory."
+          actionLabel="Browse properties"
+          actionHref="/search"
+        />
+      </StandalonePageShell>
+    );
   }
 
   return (
@@ -199,7 +212,7 @@ export function PublicPropertyExplorer() {
                   <span>Request Private Viewing Access</span>
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-                <p className="text-[11px] text-center text-ink-muted mt-2.5">
+                <p className="text-xs text-center text-ink-muted mt-2.5">
                   Requires certified BaytMiftah tenant credentials
                 </p>
               </div>

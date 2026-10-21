@@ -31,6 +31,12 @@ import { Input } from '../../components/ui/Input';
 import { supabase } from '../../../lib/supabase';
 import { Badge } from '../../components/ui/badge';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/ui/dialog';
+import {
   utilitySubmeterService,
   liveUtilitySubmeterService,
   loadOrganizationUtilityData,
@@ -619,24 +625,19 @@ export function UtilitySubmetering({ organizationId }: { organizationId?: string
       )}
 
       {/* ── Modal: Record Meter Reading ───────────────────────────────── */}
-      {selectedMeterForReading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-border bg-surface p-6 shadow-2xl animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
-              <div className="flex items-center gap-2">
-                <Camera className="h-5 w-5 text-emerald-500" />
-                <h3 className="font-bold text-sm text-ink">Record Sub-Meter Reading</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedMeterForReading(null)}
-                className="rounded-full p-1 text-muted-foreground hover:bg-surface-subtle hover:text-ink transition"
-                aria-label="Close modal"
-              >
-                <X className="h-4 w-4" />
-              </button>
+      <Dialog
+        open={!!selectedMeterForReading}
+        onOpenChange={(open) => !open && setSelectedMeterForReading(null)}
+      >
+        <DialogContent className="max-w-md border-border bg-surface">
+          <DialogHeader className="text-left space-y-0 border-b border-border pb-3 mb-2">
+            <div className="flex items-center gap-2 pr-8">
+              <Camera className="h-5 w-5 text-emerald-500" />
+              <DialogTitle className="text-sm font-bold text-ink">Record Sub-Meter Reading</DialogTitle>
             </div>
+          </DialogHeader>
 
+          {selectedMeterForReading && (
             <form onSubmit={handleSaveReading} className="space-y-4">
               <div className="rounded-xl bg-surface-subtle p-3 text-xs space-y-1">
                 <p>
@@ -694,28 +695,19 @@ export function UtilitySubmetering({ organizationId }: { organizationId?: string
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* ── Modal: Log Generator Run ──────────────────────────────────── */}
-      {genModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-border bg-surface p-6 shadow-2xl animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
-              <div className="flex items-center gap-2">
-                <Fuel className="h-5 w-5 text-amber-500" />
-                <h3 className="font-bold text-sm text-ink">Log Standby Generator Run</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setGenModalOpen(false)}
-                className="rounded-full p-1 text-muted-foreground hover:bg-surface-subtle hover:text-ink transition"
-                aria-label="Close modal"
-              >
-                <X className="h-4 w-4" />
-              </button>
+      <Dialog open={genModalOpen} onOpenChange={setGenModalOpen}>
+        <DialogContent className="max-w-md border-border bg-surface">
+          <DialogHeader className="text-left space-y-0 border-b border-border pb-3 mb-2">
+            <div className="flex items-center gap-2 pr-8">
+              <Fuel className="h-5 w-5 text-amber-500" />
+              <DialogTitle className="text-sm font-bold text-ink">Log Standby Generator Run</DialogTitle>
             </div>
+          </DialogHeader>
 
             <form onSubmit={handleSaveGeneratorRun} className="space-y-3.5">
               <div>
@@ -784,9 +776,8 @@ export function UtilitySubmetering({ organizationId }: { organizationId?: string
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
       </OperationalQueryState>
     </WorkspacePageShell>

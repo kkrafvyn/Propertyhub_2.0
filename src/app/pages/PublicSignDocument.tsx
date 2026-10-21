@@ -23,6 +23,7 @@ import { Badge } from "../components/ui/badge";
 import { eSignatureService } from "../../lib/esignature.service";
 import { leaseEsignatureService } from "../../lib/lease-esignature.service";
 import { sanitizePublicDocumentUrl } from "../../lib/sanitize-document-url";
+import { OperationalQueryState } from "../components/ux";
 import { StandalonePageShell } from "../components/ux/StandalonePageShell";
 
 type PublicSigningRequest = Awaited<ReturnType<typeof eSignatureService.getRequestByToken>>;
@@ -101,15 +102,22 @@ export function PublicSignDocument() {
     }
   };
 
+  const queryPhase = loading ? "loading" : linkError || !request ? "error" : "ready";
+
   return (
     <StandalonePageShell maxWidthClassName="max-w-2xl">
       <div className="py-10 px-4 space-y-6">
-        {loading ? (
-          <div className="py-24 text-center space-y-3">
-            <FileSignature className="h-8 w-8 animate-bounce text-primary mx-auto" />
-            <p className="text-sm text-ink-muted">Loading secure signing envelope...</p>
-          </div>
-        ) : linkError || !request ? (
+        <OperationalQueryState
+          phase={queryPhase}
+          errorMessage={linkError || (!loading && !request ? "This signing link is invalid or has expired." : undefined)}
+          loadingFallback={
+            <div className="py-24 text-center space-y-3">
+              <FileSignature className="h-8 w-8 animate-bounce text-primary mx-auto" />
+              <p className="text-sm text-ink-muted">Loading secure signing envelope...</p>
+            </div>
+          }
+        >
+        {linkError || !request ? (
           <Card className="p-10 text-center space-y-4 max-w-md mx-auto border-red-500/30 bg-surface/90 backdrop-blur-md rounded-3xl">
             <div className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mx-auto">
               <Lock className="w-6 h-6" />
@@ -338,6 +346,7 @@ export function PublicSignDocument() {
             )}
           </Card>
         )}
+        </OperationalQueryState>
       </div>
     </StandalonePageShell>
   );

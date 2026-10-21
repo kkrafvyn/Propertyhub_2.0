@@ -36,7 +36,6 @@ export { default as MobileExploreFiltersSheet } from "./mobile/MobileExploreFilt
 export { default as MobileViewingModal } from "./mobile/MobileViewingModal";
 export { default as MobilePhotoGallery } from "./mobile/MobilePhotoGallery";
 export { default as MobileHomeMenu } from "./mobile/MobileHomeMenu";
-export { default as ConsumerShell } from "./ConsumerShell";
 /** Pro workspace shells — live pro UI is routed via `/workspace` (WorkspaceEntry). */
 export { default as HostShell } from "./HostShell";
 export { default as AgentShell } from "./AgentShell";

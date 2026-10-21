@@ -41,7 +41,7 @@ import {
 } from "../../../lib/agentic-ai-orchestrator.service";
 import { organizationService } from "../../../lib/organization.service";
 import { aiToolAllowlistService } from "../../../lib/ai-tool-allowlist.service";
-import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
+import { OperationalQueryState, SectionHeader, WorkspacePageShell } from "../../components/ux";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -229,7 +229,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
       title="AI Command Center & Autonomous Fleet"
       description="4-Tier risk governance, autonomous Night Watch audits, and human-in-the-loop approval queues."
       badge={
-        <Badge variant="outline" className="text-[11px] border-primary/30 text-primary bg-primary/5">
+        <Badge variant="outline" className="text-xs border-primary/30 text-primary bg-primary/5">
           15 Active Agents
         </Badge>
       }
@@ -318,12 +318,11 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
               <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500">
                 <Sparkles className="w-4 h-4" />
               </span>
-              <div>
-                <h2 className="text-base font-bold text-ink">AI Night Watch — Morning Operational Briefing</h2>
-                <p className="text-xs text-ink-secondary">
-                  Last automated audit scanned {nightWatchReport.leasesScanned} leases, {nightWatchReport.receivablesScanned} invoices, and {nightWatchReport.maintenanceScanned} work orders.
-                </p>
-              </div>
+              <SectionHeader
+                level="subsection"
+                title="AI Night Watch — Morning Operational Briefing"
+                description={`Last automated audit scanned ${nightWatchReport.leasesScanned} leases, ${nightWatchReport.receivablesScanned} invoices, and ${nightWatchReport.maintenanceScanned} work orders.`}
+              />
             </div>
 
             <div className="flex items-center gap-2">
@@ -350,7 +349,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
                   <div className="flex items-center justify-between mb-1.5">
                     <Badge
                       variant="outline"
-                      className={`text-[10px] uppercase font-bold ${
+                      className={`text-xs uppercase font-bold ${
                         item.severity === "critical"
                           ? "border-rose-500/30 text-rose-500"
                           : item.severity === "warning"
@@ -360,17 +359,17 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
                     >
                       {item.category}
                     </Badge>
-                    <span className="text-[10px] text-ink-muted">{item.riskLevel}</span>
+                    <span className="text-xs text-ink-muted">{item.riskLevel}</span>
                   </div>
                   <h3 className="text-xs font-bold text-ink leading-snug">{item.title}</h3>
-                  <p className="text-[11px] text-ink-secondary mt-1.5 leading-relaxed">{item.evidence}</p>
+                  <p className="text-xs text-ink-secondary mt-1.5 leading-relaxed">{item.evidence}</p>
                 </div>
 
                 <div className="mt-3 pt-2.5 border-t border-surface-border flex items-center justify-between">
-                  <span className="text-[11px] text-ink-muted font-medium truncate max-w-[170px]">
+                  <span className="text-xs text-ink-muted font-medium truncate max-w-[170px]">
                     {item.recommendation}
                   </span>
-                  <Badge className="text-[10px] bg-primary/10 text-primary border border-primary/20 shrink-0">
+                  <Badge className="text-xs bg-primary/10 text-primary border border-primary/20 shrink-0">
                     {item.suggestedAction}
                   </Badge>
                 </div>
@@ -405,7 +404,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
               >
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-mono text-primary font-bold">{app.id}</span>
-                  <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-500">
+                  <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-500">
                     {app.agent} · {app.riskLevel}
                   </Badge>
                 </div>
@@ -416,7 +415,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
                 </div>
 
                 <div className="flex items-center justify-between pt-2.5 border-t border-surface-border">
-                  <span className="text-[11px] text-ink-muted font-mono">{app.actionType}</span>
+                  <span className="text-xs text-ink-muted font-mono">{app.actionType}</span>
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
@@ -472,7 +471,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
                 </div>
                 <div>
                   <p className="text-xs font-bold text-ink truncate">{item.label}</p>
-                  <p className="text-[10px] text-ink-muted truncate mt-0.5">{item.description}</p>
+                  <p className="text-xs text-ink-muted truncate mt-0.5">{item.description}</p>
                 </div>
               </button>
             );
@@ -542,7 +541,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
                   <td colSpan={5} className="p-8 text-center text-ink-muted">
                     <Bot className="w-8 h-8 mx-auto mb-2 text-ink-muted/40" />
                     <p className="font-semibold text-xs text-ink">No actions recorded for this filter</p>
-                    <p className="text-[11px] mt-0.5">Switch filter tier or dispatch an agent goal above.</p>
+                    <p className="text-xs mt-0.5">Switch filter tier or dispatch an agent goal above.</p>
                   </td>
                 </tr>
               ) : (
@@ -558,7 +557,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
                   <td className="p-3">
                     <Badge
                       variant="outline"
-                      className={`text-[10px] ${
+                      className={`text-xs ${
                         entry.riskLevel === "LEVEL_0"
                           ? "border-blue-500/30 text-blue-500"
                           : entry.riskLevel === "LEVEL_1"
@@ -574,12 +573,12 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
 
                   <td className="p-3">
                     <p className="font-medium text-ink">{entry.targetEntity}</p>
-                    <p className="text-[11px] text-ink-secondary mt-0.5">{entry.reasoning}</p>
+                    <p className="text-xs text-ink-secondary mt-0.5">{entry.reasoning}</p>
                   </td>
 
                   <td className="p-3">
                     <span
-                      className={`inline-flex items-center gap-1 text-[11px] font-medium capitalize ${
+                      className={`inline-flex items-center gap-1 text-xs font-medium capitalize ${
                         entry.approvalStatus === "approved" || entry.approvalStatus === "executed" || entry.approvalStatus === "auto_approved"
                           ? "text-emerald-600 dark:text-emerald-400"
                           : entry.approvalStatus === "rejected"
@@ -592,7 +591,7 @@ export function AICommandCenter({ organizationId: organizationIdProp }: { organi
                     </span>
                   </td>
 
-                  <td className="p-3 text-right text-ink-muted font-mono text-[11px]">
+                  <td className="p-3 text-right text-ink-muted font-mono text-xs">
                     {new Date(entry.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </td>
                 </tr>

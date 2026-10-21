@@ -19,6 +19,7 @@ import {
 } from "../../../lib/biometric-preferences";
 import { useTranslation } from "../../i18n/LocaleContext";
 import { toast } from "sonner";
+import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import { ConsumerHubChrome, PageHeader, PageLayout } from "../../components/ux";
 import { ActionDialog } from "../../components/ux/ActionDialog";
 import {
@@ -337,6 +338,7 @@ export function SecuritySettingsPage() {
 
   return (
     <PageLayout variant="consumer" maxWidthClassName="max-w-3xl">
+      <PageMeta title={t("securityPage.title")} description={t("securityPage.subtitle")} canonicalPath="/app/security" />
       <ConsumerHubChrome activeSection="settings">
       <PageHeader
         title={t("securityPage.title")}

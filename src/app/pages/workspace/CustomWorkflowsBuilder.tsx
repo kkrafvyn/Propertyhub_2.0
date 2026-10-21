@@ -6,6 +6,7 @@ import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/badge';
 import { MetricCard } from '../../components/ui/MetricCard';
 import { automationEngineService } from '../../../lib/automation-engine.service';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import { OperationalQueryState, WorkspacePageShell } from '../../components/ux';
 import type { MemberRole } from '../../../lib/workspace';
 import {
@@ -617,9 +618,10 @@ export default function CustomWorkflowsBuilder({
       {/* ═══════════════════════════════════════════════════════════
           WORKFLOW DETAILS MODAL
        ═══════════════════════════════════════════════════════════ */}
-      {selectedWorkflow && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <Card variant="glass" className="p-7 md:p-9 max-w-2xl w-full max-h-[90vh] overflow-y-auto border-emerald-500/30 bg-surface/95 text-ink shadow-2xl relative">
+      <Dialog open={Boolean(selectedWorkflow)} onOpenChange={(open) => { if (!open) setSelectedWorkflow(null); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 border-emerald-500/30">
+          {selectedWorkflow ? (
+          <Card variant="glass" className="p-7 md:p-9 border-0 bg-surface/95 text-ink shadow-none relative">
             {/* Modal ambient glow */}
             <div className="absolute -top-16 -right-16 w-56 h-56 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
 
@@ -644,16 +646,10 @@ export default function CustomWorkflowsBuilder({
                   </div>
                   <p className="text-ink-muted text-xs sm:text-sm mt-1.5">{selectedWorkflow.description}</p>
                 </div>
-                <Button
-                  onClick={() => setSelectedWorkflow(null)}
-                  variant="glass"
-                  size="sm"
-                  className="h-9 w-9 p-0 rounded-full text-ink-muted hover:text-ink hover:bg-surface-subtle"
-                  aria-label="Close"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
               </div>
+              <DialogHeader className="sr-only">
+                <DialogTitle>{selectedWorkflow.name}</DialogTitle>
+              </DialogHeader>
 
               <div className="space-y-7">
                 {/* Pipeline Component Library */}
@@ -779,8 +775,9 @@ export default function CustomWorkflowsBuilder({
               </div>
             </div>
           </Card>
-        </div>
-      )}
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       {/* ═══════════════════════════════════════════════════════════
           BEST PRACTICES FOOTER

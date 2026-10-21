@@ -129,6 +129,30 @@ export function AdminOrganizationDetail({ organizationId, onBack }: AdminOrganiz
         </div>
       </div>
 
+      <Card className="p-4 space-y-3">
+        <h3 className="font-semibold text-sm">Membership & scope summary</h3>
+        <p className="text-sm text-muted-foreground">
+          {stats.memberCount} active members · {stats.propertyCount} properties · {stats.listingCount} listings ·{" "}
+          {stats.openTaskCount} open tasks
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {members.slice(0, 6).map((member) => (
+            <Badge key={member.user_id} variant="outline" className="text-xs capitalize">
+              {getRoleLabel(member.role || "member")}
+              {member.scope_mode && member.scope_mode !== "organization" ? ` · ${member.scope_mode}` : ""}
+            </Badge>
+          ))}
+          {members.length > 6 ? (
+            <Badge variant="secondary" className="text-xs">
+              +{members.length - 6} more
+            </Badge>
+          ) : null}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Capabilities: {formatCapabilityList(capabilities).join(", ") || "None configured yet"}
+        </p>
+      </Card>
+
       {actor?.is_platform_admin && <Card className="p-4 space-y-3">
         <h3 className="font-semibold">Transfer organization ownership</h3>
         <p className="text-sm text-muted-foreground">Choose an active, identity-verified member. The previous owner becomes an organization admin. Transfer ownership before deleting the previous owner's account.</p>

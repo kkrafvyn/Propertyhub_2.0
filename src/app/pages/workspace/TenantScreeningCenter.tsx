@@ -25,6 +25,12 @@ import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
 import { leaseScreeningService } from "../../../lib/lease-screening.service";
 import {
   isScreeningCheckAvailable,
@@ -376,9 +382,20 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
       )}
 
       {/* ── Wizard Modal ── */}
-      {showWizard && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-          <Card className="w-full max-w-lg p-0 overflow-hidden shadow-2xl">
+      <Dialog
+        open={showWizard}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowWizard(false);
+            setWizardStep(0);
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg gap-0 overflow-hidden p-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>New tenant screening</DialogTitle>
+          </DialogHeader>
+          <Card className="w-full border-0 shadow-none p-0 overflow-hidden">
             {/* Progress bar */}
             <div className="h-1 bg-muted">
               <div
@@ -400,9 +417,6 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
                     {i < STEPS.length - 1 && <div className="w-8 h-px bg-muted mx-1" />}
                   </div>
                 ))}
-                <button className="ml-auto text-muted-foreground hover:text-foreground" onClick={() => { setShowWizard(false); setWizardStep(0); }}>
-                  <X className="w-5 h-5" />
-                </button>
               </div>
 
               {/* Step 0 — Applicant Info */}
@@ -544,8 +558,8 @@ export function TenantScreeningCenter({ organizationId }: { organizationId: stri
               )}
             </div>
           </Card>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       {/* ── Filters ── */}
       <div className="flex flex-col sm:flex-row gap-3">

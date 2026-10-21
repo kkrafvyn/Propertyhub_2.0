@@ -33,6 +33,12 @@ import {
   type TrustRequestStatus,
 } from "../../../lib/trust-verification.service";
 import { AdminActionDialog } from "../../components/admin/AdminActionDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
 import { OperationalQueryState } from "../../components/ux";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
 
@@ -687,19 +693,17 @@ export function AdminTrustReview() {
         }}
       />
 
-      {previewDoc && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
-          onClick={(e) => { if (e.target === e.currentTarget) setPreviewDoc(null); }}
-        >
-          <div className="relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-background shadow-2xl">
+      <Dialog open={!!previewDoc} onOpenChange={(open) => !open && setPreviewDoc(null)}>
+        <DialogContent className="flex max-h-[92vh] w-full max-w-4xl flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl">
+          {previewDoc && (
+          <>
             {/* Modal header */}
-            <div className="flex items-center justify-between border-b border-border/60 bg-muted/40 px-6 py-3.5">
-              <div className="flex items-center gap-2">
+            <DialogHeader className="flex-row items-center justify-between space-y-0 border-b border-border/60 bg-muted/40 px-6 py-3.5 text-left">
+              <div className="flex items-center gap-2 pr-4">
                 <FileText className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-bold text-foreground">{previewDoc.title}</h3>
+                <DialogTitle className="text-sm font-bold text-foreground">{previewDoc.title}</DialogTitle>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 pr-8">
                 <Button
                   size="sm"
                   variant="outline"
@@ -739,16 +743,8 @@ export function AdminTrustReview() {
                   <ExternalLink className="h-3.5 w-3.5" />
                   Open Tab
                 </a>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 rounded-xl p-0"
-                  onClick={() => setPreviewDoc(null)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
               </div>
-            </div>
+            </DialogHeader>
 
             {/* Document preview area */}
             <div className="flex min-h-[400px] flex-1 items-center justify-center overflow-auto bg-black/10 p-6 dark:bg-black/30">
@@ -784,9 +780,10 @@ export function AdminTrustReview() {
                 Close Preview
               </Button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
       </OperationalQueryState>
     </>

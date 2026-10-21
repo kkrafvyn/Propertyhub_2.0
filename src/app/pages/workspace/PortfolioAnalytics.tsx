@@ -19,7 +19,18 @@ import {
   type MemberScopeProps,
   withMemberScopeDefaults,
 } from "../../../lib/member-scope";
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "../../components/ui/chart";
 import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
+
+const estateChartConfig = {
+  outstanding: { label: "Outstanding", color: "hsl(var(--primary))" },
+} satisfies ChartConfig;
 
 const money = (minor = 0, currency = "GHS") =>
   new Intl.NumberFormat("en-GH", { style: "currency", currency, maximumFractionDigits: 0 }).format(minor / 100);
@@ -109,6 +120,15 @@ export function PortfolioAnalytics({
   );
   const totalOverdue = Object.values(estateLedger).reduce((sum, ledger) => sum + (ledger.overdueMinor || 0), 0);
 
+  const estateChartData = useMemo(
+    () =>
+      estates.slice(0, 8).map((estate) => ({
+        slot: estate.name.length > 14 ? `${estate.name.slice(0, 12)}…` : estate.name,
+        outstanding: (estateLedger[estate.id]?.totalOutstandingMinor || 0) / 100,
+      })),
+    [estates, estateLedger],
+  );
+
   if (!organizationId) {
     return (
       <WorkspacePageShell
@@ -187,6 +207,20 @@ export function PortfolioAnalytics({
           );
         })}
       </div>
+
+      {estateChartData.some((row) => row.outstanding > 0) ? (
+        <Card variant="glass" className="p-6">
+          <h2 className="text-sm font-semibold mb-4">Outstanding receivables by estate</h2>
+          <ChartContainer config={estateChartConfig} className="h-[220px] w-full">
+            <BarChart data={estateChartData} margin={{ left: 8, right: 8 }}>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/50" />
+              <XAxis dataKey="slot" tickLine={false} axisLine={false} fontSize={12} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="outstanding" fill="var(--color-outstanding)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ChartContainer>
+        </Card>
+      ) : null}
 
       <Card className="overflow-x-auto" role="region" aria-label="Estate operating breakdown" tabIndex={0}>
         <div className="p-3 border-b border-border text-xs font-semibold">Estate operating breakdown</div>

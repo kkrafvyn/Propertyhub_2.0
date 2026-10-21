@@ -29,3 +29,21 @@ export function clearJourneyDraft(listingId: string, kind: JourneyDraftKind) {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem(`${PREFIX}${listingId}.${kind}`);
 }
+
+/** Active session drafts (listing id + kind) for resume banners. */
+export function listActiveJourneyDrafts(): Array<{ listingId: string; kind: JourneyDraftKind }> {
+  if (typeof window === "undefined") return [];
+  const rows: Array<{ listingId: string; kind: JourneyDraftKind }> = [];
+  const kinds: JourneyDraftKind[] = ["inquiry", "offer", "booking"];
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (!key?.startsWith(PREFIX)) continue;
+    const suffix = key.slice(PREFIX.length);
+    const dot = suffix.lastIndexOf(".");
+    if (dot <= 0) continue;
+    const kind = suffix.slice(dot + 1) as JourneyDraftKind;
+    if (!kinds.includes(kind)) continue;
+    rows.push({ listingId: suffix.slice(0, dot), kind });
+  }
+  return rows;
+}

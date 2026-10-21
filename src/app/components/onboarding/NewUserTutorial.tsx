@@ -3,6 +3,13 @@ import { Check, ChevronLeft, ChevronRight, CircleHelp, Play, RotateCcw, Sparkles
 import { useLocation, useNavigate } from "react-router";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 import { useAuth } from "../../context/AuthContext";
 import {
   getTutorialDefinition,
@@ -176,24 +183,34 @@ export function NewUserTutorial() {
 
   if (status === "role") {
     return (
-      <div className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/75 px-4 py-8 backdrop-blur-sm">
-        <Card className="mx-auto max-w-3xl border-surface-border bg-surface p-6 shadow-2xl sm:p-8">
-          <div className="mb-6 flex items-start justify-between gap-4">
-            <div>
-              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-primary">First login</p>
-              <h1 className="text-3xl font-bold text-ink">Welcome to BaytMiftah</h1>
-              <p className="mt-2 text-ink-secondary">Choose where you want to start. You can add workspace access later.</p>
-            </div>
-            <button type="button" onClick={closeTutorial} className="rounded-full p-2 text-ink-secondary hover:bg-surface-hover" aria-label="Close tutorial"><X className="h-5 w-5" /></button>
-          </div>
+      <Dialog open onOpenChange={(open) => { if (!open) closeTutorial(); }}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Welcome to BaytMiftah</DialogTitle>
+            <DialogDescription>
+              Choose where you want to start. You can add workspace access later.
+            </DialogDescription>
+          </DialogHeader>
           <div className="grid gap-3 sm:grid-cols-3">
-            {ONBOARDING_PATHS.map((path) => {
-              return <button key={path.role} type="button" onClick={() => chooseOnboardingPath(path)} className="rounded-xl border border-surface-border bg-surface-subtle p-4 text-left transition hover:border-primary hover:bg-primary/5"><span className="font-semibold text-ink">{path.label}</span><span className="mt-1 block text-sm text-ink-secondary">{path.description}</span></button>;
-            })}
+            {ONBOARDING_PATHS.map((path) => (
+              <button
+                key={path.role}
+                type="button"
+                onClick={() => chooseOnboardingPath(path)}
+                className="rounded-xl border border-surface-border bg-surface-subtle p-4 text-left transition hover:border-primary hover:bg-primary/5"
+              >
+                <span className="font-semibold text-ink">{path.label}</span>
+                <span className="mt-1 block text-sm text-ink-secondary">{path.description}</span>
+              </button>
+            ))}
           </div>
-          <div className="mt-6 flex justify-end"><Button variant="outline" onClick={() => setStatus(null)}>Skip for now</Button></div>
-        </Card>
-      </div>
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => setStatus(null)}>
+              Skip for now
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 

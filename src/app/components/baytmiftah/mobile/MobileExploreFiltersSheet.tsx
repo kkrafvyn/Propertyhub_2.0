@@ -1,4 +1,5 @@
 import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/app/components/ui/sheet";
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../../../i18n/LocaleContext'
 import {
@@ -109,8 +110,6 @@ export default function MobileExploreFiltersSheet({
     return rows.length
   }, [draft, listings, search])
 
-  if (!open) return null
-
   function patch(updates) {
     setDraft((prev) => ({ ...prev, ...updates }))
   }
@@ -137,25 +136,13 @@ export default function MobileExploreFiltersSheet({
   const priceCeiling = 10_000_000
 
   return (
-    <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/45"
-      role="dialog"
-      aria-modal="true"
-      onClick={onClose}
-    >
-      <div
-        className="flex h-[88vh] w-full max-w-lg flex-col rounded-t-2xl bg-surface shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex shrink-0 flex-col items-center border-b border-surface-border px-5 py-3">
-          <span className="mb-3 h-1 w-10 rounded-full bg-surface-border" aria-hidden />
-          <div className="flex w-full items-center justify-between">
-            <h2 className="text-lg font-bold text-ink">{t('exploreFilters.title')}</h2>
-            <button type="button" onClick={onClose} className="text-sm font-semibold text-ink-secondary">
-              {t('common.close')}
-            </button>
-          </div>
-        </div>
+    <Sheet open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+      <SheetContent side="bottom" className="flex h-[88vh] max-h-[88vh] w-full max-w-lg flex-col gap-0 p-0 sm:mx-auto">
+        <SheetHeader className="shrink-0 border-b border-surface-border px-5 py-3 text-left">
+          <span className="mb-2 h-1 w-10 rounded-full bg-surface-border sm:hidden" aria-hidden />
+          <SheetTitle className="text-lg font-bold text-ink">{t('exploreFilters.title')}</SheetTitle>
+          <SheetDescription className="sr-only">{t('exploreFilters.title')}</SheetDescription>
+        </SheetHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           <Section title={t('exploreFilters.propertyType')}>
@@ -381,7 +368,7 @@ export default function MobileExploreFiltersSheet({
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   )
 }

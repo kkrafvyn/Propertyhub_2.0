@@ -61,6 +61,7 @@ import { ComplianceDisclosurePanel } from "../components/compliance/ComplianceDi
 import { PropertyJurisdictionBadge } from "../components/compliance/PropertyJurisdictionBadge";
 import { realEstateComplianceService } from "../../lib/real-estate-compliance.service";
 import { ConsumerTrustBadges } from "../components/ConsumerTrustBadges";
+import { ListingTrustStrip } from "../components/ListingTrustStrip";
 import { MarketplaceDisclaimerStrip } from "../components/legal/MarketplaceDisclaimerStrip";
 import { TrustBadge } from "../components/legal/TrustBadge";
 import { TRUST_LABELS } from "../../lib/legal-disclaimers";
@@ -1303,9 +1304,19 @@ export function PropertyDetail() {
                 </div>
               </div>
 
+              {listing.organization_id ? (
+                <ListingTrustStrip
+                  className="mb-5"
+                  listingId={listing.id}
+                  organizationId={listing.organization_id}
+                  organizationVerified={organization?.verified}
+                  qualityScore={listing.quality_score}
+                />
+              ) : null}
+
               {/* Direct Communication Grid (Voice, Video, In-App Chat, Email) */}
               <div className="space-y-2 mb-6">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Connect Directly
                 </p>
                 <div className="grid grid-cols-2 gap-2">

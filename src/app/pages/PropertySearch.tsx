@@ -77,6 +77,16 @@ export function PropertySearch() {
   const { defaultSearchLocation } = useUserMarket();
   const isDesktop = useIsDesktopViewport();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setReduceMotion(media.matches);
+    apply();
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, []);
   const currentPage = Math.max(parseInt(searchParams.get("page") || "1", 10) || 1, 1);
   const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
   const [showFilters, setShowFilters] = useState(false);
@@ -836,9 +846,9 @@ export function PropertySearch() {
                     {listings.map((listing, index) => (
                       <motion.div
                         key={listing.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
+                        initial={reduceMotion ? false : { opacity: 0, x: -20 }}
+                        animate={reduceMotion ? undefined : { opacity: 1, x: 0 }}
+                        transition={reduceMotion ? undefined : { delay: index * 0.05 }}
                       >
                         <Link to={`/property/${listing.id}`}>
                           <Card hover className="overflow-hidden">
@@ -898,9 +908,9 @@ export function PropertySearch() {
                       {listings.map((listing, index) => (
                         <motion.div
                           key={listing.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.04 }}
+                          initial={reduceMotion ? false : { opacity: 0, x: -20 }}
+                          animate={reduceMotion ? undefined : { opacity: 1, x: 0 }}
+                          transition={reduceMotion ? undefined : { delay: index * 0.04 }}
                         >
                           <Card
                             hover

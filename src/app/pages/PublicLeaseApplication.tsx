@@ -23,7 +23,16 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { Badge } from "../components/ui/badge";
+import { FormRow } from "../components/ux/FormRow";
 import { StandalonePageShell } from "../components/ux/StandalonePageShell";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
 import { leaseScreeningService } from "../../lib/lease-screening.service";
 
 export function PublicLeaseApplication() {
@@ -32,6 +41,7 @@ export function PublicLeaseApplication() {
   const [submittedData, setSubmittedData] = useState<{ id: string; public_token?: string } | null>(null);
   const [copiedToken, setCopiedToken] = useState(false);
   const [consentGiven, setConsentGiven] = useState(false);
+  const [consentDialogOpen, setConsentDialogOpen] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -42,10 +52,10 @@ export function PublicLeaseApplication() {
     monthlyIncome: "",
   });
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
+  const submit = async (event?: FormEvent) => {
+    event?.preventDefault();
     if (!consentGiven) {
-      toast.error("Please confirm your consent to the Ghana Data Protection Act check.");
+      setConsentDialogOpen(true);
       return;
     }
 
@@ -136,19 +146,19 @@ export function PublicLeaseApplication() {
               </h3>
               <div className="space-y-2 text-xs text-ink-secondary">
                 <div className="flex items-start gap-2">
-                  <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-[10px] font-bold">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-xs font-bold">
                     1
                   </div>
                   <span><strong>Background Screening:</strong> Income, credit profile, and identification are validated in accordance with Act 220 regulations.</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-[10px] font-bold">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-xs font-bold">
                     2
                   </div>
                   <span><strong>Leasing Desk Review:</strong> The property manager evaluates the application and issues an approval or conditional notice.</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-[10px] font-bold">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-xs font-bold">
                     3
                   </div>
                   <span><strong>Digital Lease Agreement:</strong> You will receive a direct invitation to sign the digital agreement via BaytMiftah eSignature.</span>
@@ -225,25 +235,25 @@ export function PublicLeaseApplication() {
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-ink">Email Address *</label>
+                <FormRow htmlFor="lease-applicant-email" label="Email Address *">
                   <Input
+                    id="lease-applicant-email"
                     required
                     type="email"
                     placeholder="kwame@example.com"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                   />
-                </div>
+                </FormRow>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-ink">Phone Number (Ghana / WhatsApp)</label>
+                <FormRow htmlFor="lease-applicant-phone" label="Phone Number (Ghana / WhatsApp)">
                   <Input
+                    id="lease-applicant-phone"
                     placeholder="+233 24 000 0000"
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   />
-                </div>
+                </FormRow>
               </div>
             </div>
 
@@ -344,6 +354,43 @@ export function PublicLeaseApplication() {
             </div>
           </form>
         </Card>
+
+        <Dialog open={consentDialogOpen} onOpenChange={setConsentDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirm screening consent</DialogTitle>
+              <DialogDescription className="text-xs leading-relaxed">
+                Before we submit your tenancy credentials, confirm that the details are accurate and you authorize
+                verification under the Ghana Data Protection Act 2012 (Act 843) and Rent Act 1963 (Act 220).
+              </DialogDescription>
+            </DialogHeader>
+            <label className="flex items-start gap-3 cursor-pointer select-none text-xs text-ink-secondary">
+              <input
+                type="checkbox"
+                checked={consentGiven}
+                onChange={(e) => setConsentGiven(e.target.checked)}
+                className="mt-1 h-4 w-4 accent-primary rounded shrink-0"
+              />
+              <span>I agree to background, credit, and employment verification for this application.</span>
+            </label>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button type="button" variant="outline" onClick={() => setConsentDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="gradient"
+                disabled={!consentGiven || submitting}
+                onClick={() => {
+                  setConsentDialogOpen(false);
+                  void submit();
+                }}
+              >
+                Submit application
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </StandalonePageShell>
   );

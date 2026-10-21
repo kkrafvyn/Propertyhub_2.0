@@ -20,6 +20,7 @@ import {
 import { summarizeEstateLedger, type EstateChargeRow } from "../../../lib/estate-ledger";
 import {
   OperationalQueryState,
+  SectionHeader,
   WorkspacePageShell,
 } from "../../components/ux";
 
@@ -192,15 +193,15 @@ export function CommandCenter({ organizationId }: { organizationId: string }) {
       {/* Priority Risks + Daily Brief */}
       <div className="grid gap-6 xl:grid-cols-2">
         <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-foreground text-sm flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
-              Action Items & Operational Flags
-            </h2>
-            <Badge variant="outline" className="text-xs">
-              {risks.length} {risks.length === 1 ? "Item" : "Items"}
-            </Badge>
-          </div>
+          <SectionHeader
+            level="subsection"
+            title="Action Items & Operational Flags"
+            actions={
+              <Badge variant="outline" className="text-xs">
+                {risks.length} {risks.length === 1 ? "Item" : "Items"}
+              </Badge>
+            }
+          />
           <div className="space-y-2.5">
             {risks.length ? (
               risks.map((risk, index) => (
@@ -284,17 +285,17 @@ export function CommandCenter({ organizationId }: { organizationId: string }) {
                 <div>
                   <span className="text-xs font-semibold text-foreground">{issue.title}</span>
                   {issue.description && (
-                    <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{issue.description}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{issue.description}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <Badge
                     variant={issue.priority === "urgent" ? "destructive" : "outline"}
-                    className="capitalize text-[10px]"
+                    className="capitalize text-xs"
                   >
                     {issue.priority}
                   </Badge>
-                  <Badge variant="outline" className="capitalize text-[10px]">
+                  <Badge variant="outline" className="capitalize text-xs">
                     {issue.status}
                   </Badge>
                 </div>

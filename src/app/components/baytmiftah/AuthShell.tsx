@@ -102,7 +102,7 @@ export function AuthShell({
         </div>
 
         {/* Form Container */}
-        <div className="my-auto py-6 sm:py-10 w-full max-w-md mx-auto">
+        <main id="main-content" tabIndex={-1} className="my-auto py-6 sm:py-10 w-full max-w-md mx-auto">
           {/* Brand Identity */}
           <div className="mb-6 sm:mb-8">
             <div className="mb-6">
@@ -128,7 +128,7 @@ export function AuthShell({
               {footer}
             </div>
           )}
-        </div>
+        </main>
 
         {/* Minimal Footer */}
         <div className="text-[11px] text-white/50 lg:text-muted-foreground/80 flex items-center justify-between">

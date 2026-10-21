@@ -239,7 +239,7 @@ export function ConsumerWorkspaceAccessPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 mt-4">
-        <Card className="p-4 space-y-2">
+        <Card className="app-surface-card p-4 space-y-2">
           <h3 className="text-sm font-semibold">Your claims</h3>
           {claims.length === 0 ? (
             <p className="text-xs text-muted-foreground">No claims yet.</p>
@@ -254,7 +254,7 @@ export function ConsumerWorkspaceAccessPage() {
             ))
           )}
         </Card>
-        <Card className="p-4 space-y-2">
+        <Card className="app-surface-card p-4 space-y-2">
           <h3 className="text-sm font-semibold">Membership requests</h3>
           {requests.length === 0 ? (
             <p className="text-xs text-muted-foreground">No membership requests yet.</p>

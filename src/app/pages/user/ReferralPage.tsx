@@ -16,6 +16,8 @@ import {
 import { toast } from "sonner";
 import { DesktopShell } from "../../components/baytmiftah/DesktopShell";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
+import { EmptyState } from "../../components/ux/EmptyState";
+import { OperationalQueryState, PageLayout } from "../../components/ux";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/badge";
@@ -48,7 +50,9 @@ export function ReferralPage() {
   return (
     <DesktopShell minimal showFooter>
       <PageMeta title={t("referral.title")} description={t("referral.subtitle")} />
-      <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 md:py-16 space-y-8">
+      <PageLayout variant="consumer" maxWidthClassName="max-w-4xl">
+        <OperationalQueryState phase="ready">
+      <div className="space-y-8 py-12 md:py-16">
         {/* Editorial Header */}
         <div className="relative overflow-hidden rounded-3xl p-6 sm:p-10 bg-gradient-to-br from-emerald-500/10 via-primary/5 to-surface/80 border border-emerald-500/20 shadow-lg backdrop-blur-md">
           <div className="absolute top-0 right-0 w-80 h-80 bg-radial from-emerald-500/15 via-primary/10 to-transparent blur-3xl pointer-events-none" />
@@ -72,7 +76,7 @@ export function ReferralPage() {
             </div>
 
             <div className="p-3.5 rounded-2xl bg-surface/80 border border-surface-border backdrop-blur-md shadow-xs shrink-0 text-right">
-              <span className="text-[10px] uppercase font-bold text-ink-muted tracking-wider block">
+              <span className="text-xs uppercase font-bold text-ink-muted tracking-wider block">
                 Reward Benefit
               </span>
               <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
@@ -89,7 +93,7 @@ export function ReferralPage() {
             <div className="text-2xl font-bold text-ink mt-2 font-mono">
               {user ? "0" : "—"}
             </div>
-            <p className="text-[11px] text-ink-muted mt-1">Users registered with your link</p>
+            <p className="text-xs text-ink-muted mt-1">Users registered with your link</p>
           </Card>
 
           <Card variant="glass" className="p-5 border border-surface-border/80 bg-surface/80">
@@ -97,7 +101,7 @@ export function ReferralPage() {
             <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2 font-mono">
               {user ? "GHS 0.00" : "—"}
             </div>
-            <p className="text-[11px] text-ink-muted mt-1">Available for fee settlement</p>
+            <p className="text-xs text-ink-muted mt-1">Available for fee settlement</p>
           </Card>
 
           <Card variant="glass" className="p-5 border border-surface-border/80 bg-surface/80">
@@ -105,7 +109,7 @@ export function ReferralPage() {
             <div className="text-2xl font-bold text-primary mt-2 font-mono">
               1.0x Tier
             </div>
-            <p className="text-[11px] text-ink-muted mt-1">Standard member referral rate</p>
+            <p className="text-xs text-ink-muted mt-1">Standard member referral rate</p>
           </Card>
         </div>
 
@@ -160,23 +164,23 @@ export function ReferralPage() {
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-ink-secondary">
                   <div className="p-3.5 rounded-2xl bg-surface-subtle/60 border border-surface-border space-y-1">
-                    <span className="font-mono font-bold text-primary text-[10px]">STEP 01</span>
+                    <span className="font-mono font-bold text-primary text-xs">STEP 01</span>
                     <p className="font-semibold text-ink">Share Your Link</p>
-                    <p className="text-[11px] text-ink-muted leading-relaxed">
+                    <p className="text-xs text-ink-muted leading-relaxed">
                       Send your link to prospective clients, tenants, or agency colleagues.
                     </p>
                   </div>
                   <div className="p-3.5 rounded-2xl bg-surface-subtle/60 border border-surface-border space-y-1">
-                    <span className="font-mono font-bold text-primary text-[10px]">STEP 02</span>
+                    <span className="font-mono font-bold text-primary text-xs">STEP 02</span>
                     <p className="font-semibold text-ink">They Execute Lease</p>
-                    <p className="text-[11px] text-ink-muted leading-relaxed">
+                    <p className="text-xs text-ink-muted leading-relaxed">
                       When your referral signs a lease or lists a verified property on BaytMiftah.
                     </p>
                   </div>
                   <div className="p-3.5 rounded-2xl bg-surface-subtle/60 border border-surface-border space-y-1">
-                    <span className="font-mono font-bold text-primary text-[10px]">STEP 03</span>
+                    <span className="font-mono font-bold text-primary text-xs">STEP 03</span>
                     <p className="font-semibold text-ink">Collect Credits</p>
-                    <p className="text-[11px] text-ink-muted leading-relaxed">
+                    <p className="text-xs text-ink-muted leading-relaxed">
                       Receive automated escrow fee deductions and cash credits to your wallet.
                     </p>
                   </div>
@@ -184,34 +188,20 @@ export function ReferralPage() {
               </div>
             </div>
           ) : (
-            <div className="text-center py-8 space-y-4 max-w-md mx-auto">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
-                <Users className="w-6 h-6" />
-              </div>
-              <div className="space-y-1">
-                <h2 className="text-lg font-display font-medium text-ink">
-                  Join the Network Rewards Program
-                </h2>
-                <p className="text-xs text-ink-secondary leading-relaxed">
-                  Sign in to obtain your personalized invitation credentials and start accumulating network credits.
-                </p>
-              </div>
-              <div className="flex items-center justify-center gap-3 pt-2">
-                <Link to="/login">
-                  <Button variant="gradient" size="sm">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link to="/signup">
-                  <Button variant="outline" size="sm">
-                    Create Account
-                  </Button>
-                </Link>
-              </div>
-            </div>
+            <EmptyState
+              icon={Users}
+              title="Join the Network Rewards Program"
+              description="Sign in to obtain your personalized invitation credentials and start accumulating network credits."
+              actionLabel="Sign In"
+              actionHref="/login"
+              secondaryActionLabel="Create Account"
+              secondaryActionHref="/signup"
+            />
           )}
         </Card>
       </div>
+        </OperationalQueryState>
+      </PageLayout>
     </DesktopShell>
   );
 }

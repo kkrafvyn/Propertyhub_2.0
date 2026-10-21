@@ -58,7 +58,7 @@ export function OfflineStatusBanner({ organizationId }: OfflineStatusBannerProps
           <span>
             {online
               ? `${pending} change${pending === 1 ? "" : "s"} waiting to sync`
-              : "You are offline — changes save locally and sync when reconnected"}
+              : "You are offline — changes save locally. Reconnect, then use Sync now to retry."}
           </span>
         </div>
         {online && pending > 0 ? (

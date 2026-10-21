@@ -12,6 +12,10 @@ export function AdminDeleteAccountDialog({ user, onClose, onChanged }: {
   const [error, setError] = useState("");
   useEffect(() => { setConfirmation(""); setError(""); }, [user?.id]);
   const expected = user?.email || user?.id || "";
+  const isProtectedAccount =
+    Boolean(user?.is_platform_admin) ||
+    Boolean(user?.is_platform_manager) ||
+    (user?.platform_console_grants?.length ?? 0) > 0;
   async function remove(event: React.FormEvent) {
     event.preventDefault();
     if (!user || saving || confirmation !== expected) return;
@@ -30,7 +34,21 @@ export function AdminDeleteAccountDialog({ user, onClose, onChanged }: {
     <DialogContent>
       <DialogHeader>
         <DialogTitle>Delete sign-in account</DialogTitle>
-        <DialogDescription>Remove sign-in access for {user?.full_name || expected}. Property, payment, membership and audit records are retained. This cannot be undone. Organization ownership must be transferred first.</DialogDescription>
+        <DialogDescription>
+          Remove sign-in access for {user?.full_name || expected}. Property, payment, membership and audit records are
+          retained. This cannot be undone.
+          {isProtectedAccount ? (
+            <>
+              {" "}
+              <strong className="text-destructive">
+                This account has platform console access — transfer organization ownership and revoke platform roles
+                before deletion, or deletion may be rejected.
+              </strong>
+            </>
+          ) : (
+            <> Organization ownership must be transferred before deleting an organization owner.</>
+          )}
+        </DialogDescription>
       </DialogHeader>
       <form onSubmit={(event) => void remove(event)} className="space-y-4">
         <Input label={`Type ${expected} to confirm`} value={confirmation} disabled={saving} autoComplete="off" onChange={(event) => setConfirmation(event.target.value)} />

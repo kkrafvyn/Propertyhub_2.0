@@ -311,21 +311,17 @@ function SendModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="p-6 border-b border-border flex items-center justify-between sticky top-0 bg-background z-10">
-          <div>
-            <h2 className="text-lg font-bold flex items-center gap-2">
+    <>
+      <Dialog open onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] gap-0 overflow-y-auto p-0 sm:max-w-2xl">
+          <DialogHeader className="border-b border-border p-6 pb-4 text-left space-y-1 sticky top-0 bg-background z-10">
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-indigo-600" /> Send for eSignature
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground font-normal">
               Legally binding envelope delivered digitally for execution.
             </p>
-          </div>
-          <button className="text-muted-foreground hover:text-foreground" onClick={onClose}>
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+          </DialogHeader>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Document title */}
@@ -440,7 +436,8 @@ function SendModal({
             </Button>
           </div>
         </form>
-      </Card>
+        </DialogContent>
+      </Dialog>
       <ActionDialog
         open={Boolean(overrideMessage)}
         onOpenChange={(open) => !open && setOverrideMessage(null)}
@@ -454,7 +451,7 @@ function SendModal({
           toast.info("Manager override enabled. Review the document, then send again.");
         }}
       />
-    </div>
+    </>
   );
 }
 

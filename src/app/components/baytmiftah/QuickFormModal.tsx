@@ -1,4 +1,12 @@
 import type { FormEvent, ReactNode } from "react";
+import { Button } from "../ui/Button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 
 export function QuickFormModal({
   title,
@@ -16,45 +24,29 @@ export function QuickFormModal({
   loading?: boolean;
 }) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-modal="true"
-      onClick={onClose}
-    >
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit?.(e);
-        }}
-        className="w-full max-w-md rounded-xl bg-surface p-5 shadow-menu"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <h2 className="text-lg font-semibold text-ink">{title}</h2>
-          <button type="button" onClick={onClose} className="text-ink-secondary hover:text-ink" aria-label="Close">
-            ×
-          </button>
-        </div>
-        <div className="space-y-3">{children}</div>
-        <div className="mt-5 flex gap-2">
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {loading ? "Saving…" : submitLabel}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-surface-border px-4 py-2 text-sm font-semibold"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
+    <Dialog open onOpenChange={(open) => { if (!open && !loading) onClose(); }}>
+      <DialogContent className="max-w-md">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit?.(e);
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">{children}</div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" disabled={loading} onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Saving…" : submitLabel}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 

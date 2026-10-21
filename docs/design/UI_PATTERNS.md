@@ -44,7 +44,7 @@ Use CSS variables from `app-ui.css`: `--z-overlay-gallery`, `--z-overlay-call`, 
 
 ## Charts
 
-`src/app/components/ui/chart.tsx` (Recharts) — **OrganizationInsights** includes a tokenized bar chart for top-listing inquiry volume; **PortfolioAnalytics** remains on `MetricCard` / tables until APIs stabilize.
+`src/app/components/ui/chart.tsx` (Recharts) — **OrganizationInsights** and **PortfolioAnalytics** include tokenized bar charts (inquiry volume and estate receivables, respectively).
 
 ## Forms
 

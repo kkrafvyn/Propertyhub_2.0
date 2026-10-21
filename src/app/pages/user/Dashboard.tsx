@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import {
   ArrowRight,
@@ -58,14 +58,24 @@ import {
   PageLayout,
   PageLoadingSkeleton,
 } from "../../components/ux";
-import {
-  ApplicationsWorkflowSection,
-  DocumentFoldersSection,
-  MaintenanceWithVendorsSection,
-  NotificationsCenterSection,
-  ResidentHomeSection,
-  WalletHubSection,
-} from "./ConsumerPortalExtended";
+import { WalletHubSection } from "./ConsumerPortalExtended";
+import { listActiveJourneyDrafts } from "../../../lib/journey-draft-storage";
+
+const ApplicationsWorkflowSection = lazy(() =>
+  import("./ConsumerPortalExtended").then((m) => ({ default: m.ApplicationsWorkflowSection })),
+);
+const DocumentFoldersSection = lazy(() =>
+  import("./ConsumerPortalExtended").then((m) => ({ default: m.DocumentFoldersSection })),
+);
+const MaintenanceWithVendorsSection = lazy(() =>
+  import("./ConsumerPortalExtended").then((m) => ({ default: m.MaintenanceWithVendorsSection })),
+);
+const NotificationsCenterSection = lazy(() =>
+  import("./ConsumerPortalExtended").then((m) => ({ default: m.NotificationsCenterSection })),
+);
+const ResidentHomeSection = lazy(() =>
+  import("./ConsumerPortalExtended").then((m) => ({ default: m.ResidentHomeSection })),
+);
 import {
   InsuranceMarketplaceSection,
   MortgageMarketplaceSection,
@@ -295,6 +305,30 @@ export function UserDashboard() {
 
   const section = getSection(location.pathname);
   useFinancialAccessGuard();
+
+  const [journeyDraftTick, setJourneyDraftTick] = useState(0);
+  useEffect(() => {
+    const refreshDrafts = () => setJourneyDraftTick((n) => n + 1);
+    window.addEventListener("storage", refreshDrafts);
+    window.addEventListener("focus", refreshDrafts);
+    return () => {
+      window.removeEventListener("storage", refreshDrafts);
+      window.removeEventListener("focus", refreshDrafts);
+    };
+  }, []);
+
+  const resumeListingDrafts = useMemo(() => {
+    void journeyDraftTick;
+    const listingIds = new Set(
+      [
+        ...savedProperties.map((row: any) => row.listing_id || row.listing?.id),
+        ...dealCases.map((row: any) => row.listing_id || row.listing?.id),
+      ].filter(Boolean) as string[],
+    );
+    return listActiveJourneyDrafts().filter((draft) => listingIds.has(draft.listingId));
+  }, [savedProperties, dealCases, journeyDraftTick]);
+
+  const extendedSectionFallback = <ListSkeleton rows={4} />;
 
   useEffect(() => {
     if (section === "settings" && location.hash === "#kyc") {
@@ -1174,7 +1208,7 @@ export function UserDashboard() {
   const renderApplications = () => {
     if (dealCases.length === 0) {
       return (
-        <Card className="p-8 text-center">
+        <Card className="app-surface-card p-8 text-center">
           <FileText className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
           <h3 className="text-xl font-semibold mb-2">No active applications yet</h3>
           <p className="text-muted-foreground mb-5">
@@ -1219,7 +1253,7 @@ export function UserDashboard() {
   const renderPayments = () => {
     if (propertyTransactions.length === 0) {
       return (
-        <Card className="p-8 text-center">
+        <Card className="app-surface-card p-8 text-center">
           <CreditCard className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
           <h3 className="text-xl font-semibold mb-2">No payments yet</h3>
           <p className="text-muted-foreground mb-5">
@@ -1318,7 +1352,7 @@ export function UserDashboard() {
   const renderViewings = () => {
     if (propertyViewings.length === 0) {
       return (
-        <Card className="p-8 text-center">
+        <Card className="app-surface-card p-8 text-center">
           <CalendarDays className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
           <h3 className="text-xl font-semibold mb-2">No viewings yet</h3>
           <p className="text-muted-foreground mb-5">
@@ -1376,7 +1410,7 @@ export function UserDashboard() {
   const renderAlerts = () => {
     if (savedAlerts.length === 0) {
       return (
-        <Card className="p-8 text-center">
+        <Card className="app-surface-card p-8 text-center">
           <Bell className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
           <h3 className="text-xl font-semibold mb-2">No saved alerts yet</h3>
           <p className="text-muted-foreground mb-5">
@@ -1496,6 +1530,21 @@ export function UserDashboard() {
   const renderOverview = () => (
     <div className="space-y-8">
       {!kycVerified ? <KycBanner kyc={kyc} /> : null}
+      {resumeListingDrafts.length > 0 ? (
+        <Card className="app-surface-card p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-primary/25">
+          <div>
+            <Badge variant="secondary" className="mb-2">
+              Draft in progress
+            </Badge>
+            <p className="text-sm text-muted-foreground">
+              Finish your saved {resumeListingDrafts[0].kind.replace(/_/g, " ")} on a listing you were viewing.
+            </p>
+          </div>
+          <Link to={`/property/${resumeListingDrafts[0].listingId}`}>
+            <Button size="sm">Resume listing</Button>
+          </Link>
+        </Card>
+      ) : null}
       <Card className="p-6 border-brand-forest/15 bg-brand-forest/[0.04]">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -1838,7 +1887,7 @@ export function UserDashboard() {
             <div className="consumer-panel-card p-5 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-serif font-medium text-ink tracking-tight text-base">Quick Actions</h3>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-ink-secondary">Portal</span>
+                <span className="text-xs font-mono uppercase tracking-widest text-ink-secondary">Portal</span>
               </div>
               <div className="space-y-2">
                 <Link
@@ -1988,14 +2037,16 @@ export function UserDashboard() {
             renderSectionShell(renderConversations())
           ) : section === "applications" ? (
             renderSectionShell(
-              <ApplicationsWorkflowSection
-                dealCases={dealCases}
-                escrowHolds={escrowHolds}
-                userId={user!.id}
-                userName={displayName}
-                userEmail={user?.email || undefined}
-                onPayDeposit={handlePayFromApplication}
-              />
+              <Suspense fallback={extendedSectionFallback}>
+                <ApplicationsWorkflowSection
+                  dealCases={dealCases}
+                  escrowHolds={escrowHolds}
+                  userId={user!.id}
+                  userName={displayName}
+                  userEmail={user?.email || undefined}
+                  onPayDeposit={handlePayFromApplication}
+                />
+              </Suspense>,
             )
           ) : section === "viewings" ? (
             renderSectionShell(renderViewings())
@@ -2012,12 +2063,14 @@ export function UserDashboard() {
             renderSectionShell(<LeasesSection leases={leases} userId={user!.id} />)
           ) : section === "maintenance" ? (
             renderSectionShell(
-              <MaintenanceWithVendorsSection
-                userId={user!.id}
-                leases={leases}
-                requests={maintenanceRequests}
-                onCreated={refreshMaintenanceState}
-              />
+              <Suspense fallback={extendedSectionFallback}>
+                <MaintenanceWithVendorsSection
+                  userId={user!.id}
+                  leases={leases}
+                  requests={maintenanceRequests}
+                  onCreated={refreshMaintenanceState}
+                />
+              </Suspense>,
             )
           ) : section === "trips" ? (
             renderSectionShell(
@@ -2033,21 +2086,29 @@ export function UserDashboard() {
             )
           ) : section === "documents" ? (
             renderSectionShell(
-              <DocumentFoldersSection userId={user!.id} dealCases={dealCases} />
+              <Suspense fallback={extendedSectionFallback}>
+                <DocumentFoldersSection userId={user!.id} dealCases={dealCases} />
+              </Suspense>,
             )
           ) : section === "transactions" ? (
             renderSectionShell(
               <TransactionsSection payments={propertyTransactions} escrowHolds={escrowHolds} />
             )
           ) : section === "home" ? (
-            renderSectionShell(<ResidentHomeSection profile={residentProfile} />)
+            renderSectionShell(
+              <Suspense fallback={extendedSectionFallback}>
+                <ResidentHomeSection userId={user!.id} />
+              </Suspense>,
+            )
           ) : section === "notifications" ? (
             renderSectionShell(
-              <NotificationsCenterSection
-                userId={user!.id}
-                notifications={notifications}
-                onRefresh={refreshNotifications}
-              />
+              <Suspense fallback={extendedSectionFallback}>
+                <NotificationsCenterSection
+                  userId={user!.id}
+                  notifications={notifications}
+                  onRefresh={refreshNotifications}
+                />
+              </Suspense>,
             )
           ) : section === "mortgage" ? (
             renderSectionShell(

@@ -33,4 +33,11 @@ test.describe("Consumer funnel smoke", () => {
     await dismissMarketGateIfPresent(page);
     await expect(consumerFunnelSurface(page)).toBeVisible({ timeout: 15000 });
   });
+
+  test("consumer hub exposes main content landmark", async ({ page }) => {
+    await openRoute(page, "/app");
+    await dismissMarketGateIfPresent(page);
+    await expect(page).toHaveURL(/\/(app|login)/, { timeout: 15000 });
+    await expect(page.locator("#main-content")).toBeVisible({ timeout: 15000 });
+  });
 });

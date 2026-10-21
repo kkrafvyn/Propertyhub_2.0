@@ -28,7 +28,8 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
-import { ConsumerHubChrome, PageHeader, PageLayout } from "../../components/ux";
+import { PageMeta } from "../../components/baytmiftah/PageMeta";
+import { ConsumerHubChrome, EmptyState, PageHeader, PageLayout } from "../../components/ux";
 import { useAuth } from "../../context/AuthContext";
 
 function ResidentInboxContent() {
@@ -94,6 +95,11 @@ function ResidentInboxContent() {
 
   return (
     <PageLayout variant="consumer" maxWidthClassName="max-w-6xl">
+      <PageMeta
+        title="Resident messages"
+        description="Message your property team and track maintenance updates."
+        canonicalPath="/app/messages"
+      />
       <ConsumerHubChrome activeSection="messages">
       {/* ── Editorial Header ── */}
       <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 mb-6 bg-gradient-to-br from-violet-500/10 via-primary/5 to-surface/80 border border-violet-500/20 shadow-lg backdrop-blur-md">
@@ -136,11 +142,12 @@ function ResidentInboxContent() {
 
           <div className="flex-1 overflow-y-auto divide-y divide-surface-border/40 p-2 space-y-1">
             {conversations.length === 0 ? (
-              <div className="p-8 text-center text-xs text-ink-secondary">
-                <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-40 text-ink-muted" />
-                <p className="font-medium">No active conversations</p>
-                <p className="text-[11px] text-ink-muted mt-1">Threads for your active tenancy or inquiry will appear here.</p>
-              </div>
+              <EmptyState
+                icon={MessageCircle}
+                title="No active conversations"
+                description="Threads for your active tenancy or inquiry will appear here."
+                className="border-0 bg-transparent shadow-none py-6"
+              />
             ) : (
               conversations.map((conv) => {
                 const isSelected = activeConversation?.id === conv.id;

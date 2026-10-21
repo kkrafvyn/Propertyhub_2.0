@@ -28,6 +28,7 @@ import { maintenanceService } from "../../../lib/maintenance.service";
 import { vendorService } from "../../../lib/vendor.service";
 import { walletService } from "../../../lib/wallet.service";
 import { escrowService } from "../../../lib/escrow.service";
+import { residentHomeService } from "../../../lib/resident-home.service";
 import { ActivityTimeline, EmptyState, OperationalQueryState } from "../../components/ux";
 import { ActionDialog } from "../../components/ux/ActionDialog";
 import { CONSUMER_PAGE_CONFIG } from "../../lib/consumer-page-config";
@@ -46,28 +47,59 @@ function formatMoney(amountMinor?: number | null, currency = "GHS") {
   return walletService.formatWalletAmount(amountMinor, currency);
 }
 
-export function ResidentHomeSection({ profile }: { profile: any | null }) {
-  if (!profile) {
-    return (
-      <section className="space-y-6">
-        <Card className="p-8 text-center text-muted-foreground">
-          No active resident profile yet. Complete a lease to unlock door access, utilities, and announcements.
-        </Card>
-      </section>
-    );
-  }
+export function ResidentHomeSection({ userId }: { userId: string }) {
+  const [profile, setProfile] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  if (!profile.smart_access_enabled) {
+  const reloadProfile = () => {
+    if (!userId) return;
+    setLoading(true);
+    setLoadError(null);
+    void residentHomeService
+      .getActiveTenantProfile(userId)
+      .then((row) => setProfile(row))
+      .catch((error) => {
+        console.error(error);
+        setProfile(null);
+        setLoadError("Unable to load your resident profile.");
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    reloadProfile();
+  }, [userId]);
+
+  const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
+
+  const body = !profile ? (
+    <section className="space-y-6">
+      <Card className="app-surface-card p-8 text-center text-muted-foreground">
+        No active resident profile yet. Complete a lease to unlock door access, utilities, and announcements.
+      </Card>
+    </section>
+  ) : !profile.smart_access_enabled ? (
+    <section className="space-y-6">
+      <Card className="app-surface-card p-8 text-center">
+        <h3 className="text-lg font-semibold mb-2">Smart property access pending</h3>
+        <p className="text-muted-foreground">
+          Your property owner has not enabled smart building access for this lease yet. You will be
+          notified when door codes, meters, and connected devices become available.
+        </p>
+      </Card>
+    </section>
+  ) : null;
+
+  if (body) {
     return (
-      <section className="space-y-6">
-        <Card className="p-8 text-center">
-          <h3 className="text-lg font-semibold mb-2">Smart property access pending</h3>
-          <p className="text-muted-foreground">
-            Your property owner has not enabled smart building access for this lease yet. You will be
-            notified when door codes, meters, and connected devices become available.
-          </p>
-        </Card>
-      </section>
+      <OperationalQueryState
+        phase={queryPhase}
+        errorMessage={loadError ?? undefined}
+        onRetry={reloadProfile}
+      >
+        {body}
+      </OperationalQueryState>
     );
   }
 
@@ -78,6 +110,11 @@ export function ResidentHomeSection({ profile }: { profile: any | null }) {
   const waterMeter = devices.find((device: any) => device.device_type === "water_meter");
 
   return (
+    <OperationalQueryState
+      phase={queryPhase}
+      errorMessage={loadError ?? undefined}
+      onRetry={reloadProfile}
+    >
     <section className="space-y-6">
       <p className="text-sm text-muted-foreground">
         {profile.lease?.listing?.property?.address || "Your residence"} · Smart Property
@@ -150,6 +187,7 @@ export function ResidentHomeSection({ profile }: { profile: any | null }) {
         ) : null}
       </Card>
     </section>
+    </OperationalQueryState>
   );
 }
 
@@ -621,10 +659,12 @@ export function ApplicationsWorkflowSection({
   const [signingDocId, setSigningDocId] = useState<string | null>(null);
   const [loadingDealId, setLoadingDealId] = useState<string | null>(null);
   const [downloadingPackId, setDownloadingPackId] = useState<string | null>(null);
+  const [workflowLoadError, setWorkflowLoadError] = useState<string | null>(null);
 
   const loadPurchaseWorkflow = async (dealCaseId: string) => {
     try {
       setLoadingDealId(dealCaseId);
+      setWorkflowLoadError(null);
       const [counterOffers, checklist, pendingDocs] = await Promise.all([
         purchaseWorkflowService.getCounterOffers(dealCaseId),
         purchaseWorkflowService.ensureClosingChecklist(dealCaseId),
@@ -636,6 +676,7 @@ export function ApplicationsWorkflowSection({
       }));
     } catch (error) {
       console.error(error);
+      setWorkflowLoadError("Unable to load purchase workflow details.");
     } finally {
       setLoadingDealId(null);
     }
@@ -648,6 +689,15 @@ export function ApplicationsWorkflowSection({
       }
     }
   }, [dealCases, userId]);
+
+  const retryWorkflowLoads = () => {
+    setWorkflowLoadError(null);
+    for (const item of dealCases) {
+      if (item.case_type === "purchase_offer") {
+        void loadPurchaseWorkflow(item.id);
+      }
+    }
+  };
 
   const submitCounterOffer = async (dealCase: any) => {
     const amountMinor = Math.round(Number(counterAmount[dealCase.id] || 0) * 100);
@@ -753,7 +803,14 @@ export function ApplicationsWorkflowSection({
     );
   }
 
+  const workflowPhase = workflowLoadError ? "error" : loadingDealId ? "loading" : "ready";
+
   return (
+    <OperationalQueryState
+      phase={workflowPhase}
+      errorMessage={workflowLoadError ?? undefined}
+      onRetry={retryWorkflowLoads}
+    >
     <div className="space-y-4">
       {dealCases.map((item) => {
         const escrow = escrowHolds.find((hold) => hold.deal_case_id === item.id);
@@ -963,6 +1020,7 @@ export function ApplicationsWorkflowSection({
         );
       })}
     </div>
+    </OperationalQueryState>
   );
 }
 
