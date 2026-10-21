@@ -52,6 +52,21 @@ npm run supabase:deploy:payments
 | `PLAY_WORKSPACE_KEYSTORE_B64`, `PLAY_WORKSPACE_*` | Workspace Android signing |
 | `ASC_*`, `IOS_*`, `MAC_*` | Apple Store Upload workflow |
 
+### Google Play secrets status (repo operator)
+
+The **Google Play Upload** workflow (`.github/workflows/play-store.yml`) fails its credentials job until **all** of the following exist in **Settings → Secrets and variables → Actions**:
+
+| Required for upload | Notes |
+|---------------------|--------|
+| `PLAY_SERVICE_ACCOUNT_JSON` | Play Developer API service account key (full JSON) |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Baked into release builds (anon key only) |
+| `PLAY_CONSUMER_KEYSTORE_B64`, `PLAY_CONSUMER_KEYSTORE_PASSWORD`, `PLAY_CONSUMER_KEY_ALIAS`, `PLAY_CONSUMER_KEY_PASSWORD` | Consumer (`com.baymiftah.app`) |
+| `PLAY_WORKSPACE_KEYSTORE_B64`, `PLAY_WORKSPACE_KEYSTORE_PASSWORD`, `PLAY_WORKSPACE_KEY_ALIAS`, `PLAY_WORKSPACE_KEY_PASSWORD` | Workspace (`com.baymiftah.workspace`) |
+
+Check configured names (not values): `gh secret list` on the repo. After secrets are set, run **Actions → Google Play Upload → Run workflow** (`variant: both`, `track: internal`). See [GOOGLE_PLAY_UPLOAD.md](../deployment/GOOGLE_PLAY_UPLOAD.md).
+
+**GitHub Actions billing:** if jobs fail immediately with a payments/spending-limit message, fix billing under **Settings → Billing & plans** before CI, Security, or Play workflows can run.
+
 ## Resend
 
 1. Add domain `baytmiftah.com` at [resend.com/domains](https://resend.com/domains)

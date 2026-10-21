@@ -57,7 +57,7 @@ jobs:
         run: npm ci
 
       - name: Production readiness gate
-        run: npm run production:check
+        run: npm run production:check:repo
 
       - name: Build
         run: npm run build

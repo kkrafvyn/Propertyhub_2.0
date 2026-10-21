@@ -28,7 +28,7 @@ jobs:
       - run: npm run build
       - run: npm run test:sql:upgrades
       - run: npx vitest run scripts/backup/backup-evidence.test.mjs scripts/pilot/payment-certification.test.mjs
-      - run: npm run production:check
+      - run: npm run production:check:repo
       - run: npm run backup:restore-drill:fixture
 
   payment-certification:

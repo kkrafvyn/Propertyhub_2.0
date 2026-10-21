@@ -38,7 +38,7 @@ jobs:
         run: npm run test:sql:upgrades
 
       - name: Production readiness gate
-        run: npm run production:check
+        run: npm run production:check:repo
 
       - name: Legal catalog tests
         run: npm run test -- src/content/legal/legal-catalog.test.ts

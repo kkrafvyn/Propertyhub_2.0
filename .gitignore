@@ -35,6 +35,9 @@ public/downloads/*.exe
 public/downloads/*.blockmap
 public/downloads/*.yml
 
+# Local release bundles (never commit)
+release/
+
 # Native build output
 android/.gradle/
 android/local.properties

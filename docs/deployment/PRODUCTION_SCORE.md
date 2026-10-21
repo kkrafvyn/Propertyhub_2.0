@@ -80,7 +80,7 @@ Do not substitute Paystack endpoints or reuse the API secret as the webhook secr
 
 - **`dist/`** — listed in `.gitignore`; build output should not be committed.
 - **Edge inventory** — `npm run supabase:audit:edge` compares 29 local slugs to remote; delete legacy remote-only monolith/payment rails with `node scripts/supabase/delete-legacy-remote-functions.mjs` (log: `docs/deployment/edge-legacy-deletions.log`).
-- **Repo production gate** — `npm run production:check:repo` targets **score ≥ 90** without live integration secrets or legal sign-off; `npm run production:check` remains the honest live launch gate.
+- **Repo production gate** — `npm run production:check:repo` targets **score ≥ 90** without live integration secrets or legal sign-off; `npm run production:check` remains the honest live launch gate. **CI** (`.github/workflows/ci.yml`, deploy, release, upgrade-certification) runs `production:check:repo` so merges are not blocked by missing PayAngel live secrets in GitHub.
 
 ## Commands for evidence
 
