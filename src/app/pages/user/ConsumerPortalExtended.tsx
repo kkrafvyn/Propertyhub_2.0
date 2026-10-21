@@ -982,17 +982,27 @@ export function MaintenanceWithVendorsSection({
   const [ratingComments, setRatingComments] = useState<Record<string, string>>({});
   const [vendors, setVendors] = useState<any[]>([]);
   const [loadingVendors, setLoadingVendors] = useState(true);
+  const [vendorLoadError, setVendorLoadError] = useState<string | null>(null);
   const [assigning, setAssigning] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
 
 
-  useEffect(() => {
+  const reloadVendors = () => {
+    setLoadingVendors(true);
+    setVendorLoadError(null);
     void vendorService
       .getVerifiedVendors("maintenance", 12)
       .then(setVendors)
-      .catch(() => setVendors([]))
+      .catch(() => {
+        setVendors([]);
+        setVendorLoadError("Unable to load verified vendors.");
+      })
       .finally(() => setLoadingVendors(false));
+  };
+
+  useEffect(() => {
+    reloadVendors();
   }, []);
 
 
@@ -1029,14 +1039,17 @@ export function MaintenanceWithVendorsSection({
     <section className="space-y-6">
       <MaintenanceRequestForm key={userId} userId={userId} leases={leases} onCreated={onCreated} />
 
-      <Card className="p-6">
+      <Card className="p-6 app-surface-card">
         <div className="flex items-center gap-2 mb-4">
           <Wrench className="w-5 h-5 text-primary" />
           <h3 className="font-semibold">Vendor marketplace</h3>
         </div>
-        {loadingVendors ? (
-          <p className="text-sm text-muted-foreground">Loading verified vendors...</p>
-        ) : vendors.length === 0 ? (
+        <OperationalQueryState
+          phase={vendorLoadError ? "error" : loadingVendors ? "loading" : "ready"}
+          errorMessage={vendorLoadError ?? undefined}
+          onRetry={reloadVendors}
+        >
+        {vendors.length === 0 ? (
           <p className="text-sm text-muted-foreground">No verified maintenance vendors available yet.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1050,11 +1063,12 @@ export function MaintenanceWithVendorsSection({
             ))}
           </div>
         )}
+        </OperationalQueryState>
       </Card>
 
       <div className="space-y-4">
         {requests.length === 0 ? (
-          <Card className="p-8 text-center text-muted-foreground">No maintenance requests yet.</Card>
+          <Card className="app-surface-card p-8 text-center text-muted-foreground">No maintenance requests yet.</Card>
         ) : (
           requests.map((request) => (
             <Card key={request.id} className="p-5 space-y-4">

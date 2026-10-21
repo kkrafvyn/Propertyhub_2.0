@@ -45,7 +45,7 @@ export default function KycBanner({ kyc }: { kyc?: any }) {
                   : t('kycPage.requiredTitle') || 'Complete Your Identity Verification'}
               </p>
               <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wider ${
                   pending
                     ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
                     : 'bg-primary/20 text-primary'

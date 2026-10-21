@@ -14,6 +14,15 @@ test.describe("Consumer funnel smoke", () => {
     await expect(consumerFunnelSurface(page)).toBeVisible({ timeout: 15000 });
   });
 
+  test("checkout may show sandbox payment banner in test env", async ({ page }) => {
+    await openRoute(page, "/checkout?listingId=test-listing");
+    await dismissMarketGateIfPresent(page);
+    const sandbox = page.getByText(/sandbox payment mode/i);
+    const payment = page.getByRole("heading", { name: /complete payment/i });
+    const signIn = page.getByRole("heading", { name: /sign in/i });
+    await expect(sandbox.or(payment).or(signIn)).toBeVisible({ timeout: 15000 });
+  });
+
   test("public lease apply route loads", async ({ page }) => {
     await openRoute(page, "/apply/lease/demo-token");
     await expect(page.getByRole("heading").first()).toBeVisible();

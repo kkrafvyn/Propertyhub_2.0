@@ -44,7 +44,7 @@ Use CSS variables from `app-ui.css`: `--z-overlay-gallery`, `--z-overlay-call`, 
 
 ## Charts
 
-`src/app/components/ui/chart.tsx` (Recharts) is stock shadcn. **OrganizationInsights** and **PortfolioAnalytics** intentionally use `MetricCard` / tables for v1 — migrate to tokenized charts when analytics API stabilizes.
+`src/app/components/ui/chart.tsx` (Recharts) — **OrganizationInsights** includes a tokenized bar chart for top-listing inquiry volume; **PortfolioAnalytics** remains on `MetricCard` / tables until APIs stabilize.
 
 ## Forms
 

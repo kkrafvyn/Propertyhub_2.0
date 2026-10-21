@@ -65,7 +65,16 @@ export function AdminOperations() {
     void refresh();
   }, []);
 
+  useEffect(() => {
+    const autoRefreshMs = 5 * 60 * 1000;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refresh();
+    }, autoRefreshMs);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const isStale = health ? now - Date.parse(health.checkedAt) > 5 * 60 * 1000 : false;
+  const neverFetched = !health && !busy && !healthError;
 
   return (
     <div className="space-y-6">
@@ -103,10 +112,23 @@ export function AdminOperations() {
           </Button>
         </div>
 
+        {neverFetched && (
+          <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+            No health snapshot yet — run a check or wait for the automatic 5-minute refresh.
+          </div>
+        )}
+
         {healthError && (
           <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             <span>{healthError}. Showing previous recorded snapshot.</span>
+          </div>
+        )}
+
+        {eventsError && (
+          <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-900 dark:text-amber-200 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>Activity feed unavailable: {eventsError}</span>
           </div>
         )}
 

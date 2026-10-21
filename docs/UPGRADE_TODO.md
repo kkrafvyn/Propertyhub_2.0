@@ -21,6 +21,8 @@ Deployment and smoke checks above do not complete the authenticated acceptance c
 
 ### 1. Verify frontend and admin workflows
 
+Live acceptance script: [docs/ops/P0_ADMIN_ACCEPTANCE.md](ops/P0_ADMIN_ACCEPTANCE.md). Playwright smoke: `npx playwright test e2e/admin-acceptance.spec.ts`.
+
 - [x] Confirm the deployed frontend is serving and healthy on the production URL; record deployment URL and live smoke result. Evidence: production smoke passed for the Vercel app shell, listing route, login route, admin route, and asset MIME checks; no failed checks in `node scripts/ops/smoke-live.mjs` or `node scripts/ops/smoke-production.mjs`.
 - [ ] Test platform-admin organization creation, existing membership assignment and ownership transfer with disposable accounts.
 - [ ] Test block/unblock using an already-signed-in account: protected REST, Storage and authenticated Edge access must reject the blocked identity; revoked keys/shares must stay revoked after unblocking.

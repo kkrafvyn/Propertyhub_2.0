@@ -102,6 +102,10 @@ High-traffic workspace routes use `WorkspacePageShell` + shared `EmptyState` / `
 
 Flagship examples: `WorkspaceLeads`, `OwnerDisbursements`, `LeasingApplications`, `CollectionsCases`, `CommandCenter`, `EstateCommunications`, `GeneralLedger`, `BankReconciliation`, `GateClearanceKiosk`, `EstateOperations`; consumer funnel: `ConsumerJourneyPage` (`PageLayout` + `ConsumerHubChrome` + `OperationalQueryState` + `CONSUMER_PAGE_CONFIG.journey`). Run `npm run workspace:audit:shell` (103/103 audited workspace modules as of Wave 2–5). See [UI_PATTERNS.md](../design/UI_PATTERNS.md).
 
+## Launch operator runbook
+
+Unified checklist (Play Store, PayAngels, legal, edge audit): [LAUNCH_OPERATOR_RUNBOOK.md](./LAUNCH_OPERATOR_RUNBOOK.md). Run `npm run launch:preflight` for automated repo checks.
+
 ## Manual steps (not automatable in repo)
 
 - PayAngels dashboard: webhook URL `https://ixmbfnfwpjwbfahqaftc.supabase.co/functions/v1/payangels-webhook`

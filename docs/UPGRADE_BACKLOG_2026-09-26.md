@@ -48,8 +48,8 @@ Files to review:
 - [src/lib/kyc.service.ts](../src/lib/kyc.service.ts)
 
 Planned improvements:
-- visible identity / verification status badges
-- explicit KYC requirement banners before final booking or payout workflows
+- visible identity / verification status badges — **partial:** [`ListingTrustStrip`](../../src/app/components/ListingTrustStrip.tsx) on property detail + short-stay booking card; checkout sandbox payment status copy
+- explicit KYC requirement banners before final booking or payout workflows — **existing:** [`KycBanner`](../../src/app/components/baytmiftah/KycBanner.tsx) on stay booking + offers
 - risk labels for high-sensitivity actions
 - clearer “pending review / approved / blocked” states across listing and booking flows
 

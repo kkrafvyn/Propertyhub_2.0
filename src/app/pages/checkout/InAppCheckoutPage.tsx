@@ -362,9 +362,15 @@ export function InAppCheckoutPage() {
       <PageMeta title="Secure checkout" description="Complete your BaytMiftah payment without leaving the app." />
       <div className="mx-auto max-w-3xl px-4 py-10 md:py-14">
         {showSandboxPaymentBanner ? (
+          <>
           <DegradedModeBanner tone="warning" title="Test / sandbox payment mode.">
             Live checkout is unavailable until PayAngels is configured and demo data is turned off.
           </DegradedModeBanner>
+          <p className="mt-3 text-sm text-ink-secondary rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+            Payment status: <strong className="text-ink">Not submitted</strong> — charges in this mode are simulated or blocked.
+            Complete PayAngels live certification before accepting real funds.
+          </p>
+          </>
         ) : null}
 
         {checkoutLegalGate && !checkoutLegalGate.allowed ? (

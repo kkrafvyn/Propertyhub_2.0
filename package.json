@@ -16,6 +16,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "workspace:audit:shell": "node scripts/audit-workspace-shell.mjs",
+    "launch:preflight": "node scripts/ops/launch-preflight.mjs",
     "test": "vitest run",
     "security:dependency-audit": "npm audit --audit-level=high",
     "security:sast": "node scripts/security/run-sast.mjs",

@@ -14,6 +14,7 @@ import { ACCEPTANCE_SCOPES, LEGAL_POLICY_VERSION } from '../../../lib/legal-conf
 import { canBookStay } from '../../../lib/kyc-gate.service'
 import { clientIntegrations } from '../../../lib/integrations'
 import KycBanner from './KycBanner'
+import { ListingTrustStrip } from '../ListingTrustStrip'
 import { clearJourneyDraft, readJourneyDraft, saveJourneyDraft } from '../../../lib/journey-draft-storage'
 
 type StayBookingListing = {
@@ -24,6 +25,9 @@ type StayBookingListing = {
   instantBook: boolean
   jurisdictionId?: string
   checkoutReady?: boolean
+  organizationId?: string
+  organizationVerified?: boolean
+  qualityScore?: number | null
 }
 
 export default function StayBookingCard({ listing }: { listing: StayBookingListing }) {
@@ -211,6 +215,16 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
           {nights} night{nights > 1 ? 's' : ''} · {formatPrice(total, { currency: listing.currency || undefined })} total
         </p>
       )}
+
+      {listing.organizationId ? (
+        <ListingTrustStrip
+          className="mt-4 pt-4 border-t border-surface-border/60"
+          listingId={listing.id}
+          organizationId={listing.organizationId}
+          organizationVerified={listing.organizationVerified}
+          qualityScore={listing.qualityScore}
+        />
+      ) : null}
 
       <LegalAcceptanceCheckbox
         scope="short_stay_booking"

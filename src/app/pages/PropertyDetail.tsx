@@ -1191,6 +1191,9 @@ export function PropertyDetail() {
                     instantBook: hostBookingMode !== "request",
                     jurisdictionId,
                     checkoutReady: paymentContext ? clientIntegrations.payangels.checkoutReady : true,
+                    organizationId: organization?.id,
+                    organizationVerified: organization?.verified,
+                    qualityScore: listing.quality_score,
                   }}
                 />
               </div>

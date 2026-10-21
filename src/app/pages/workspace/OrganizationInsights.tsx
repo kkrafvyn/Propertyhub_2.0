@@ -19,7 +19,18 @@ import { ProgressMeter } from "@/app/components/ui/ProgressMeter";
 import { AnimatedNumber } from "@/app/components/ui/AnimatedNumber";
 import { marketIntelligenceService } from "@/lib/market-intelligence.service";
 import { customerHealthService, type OrgHealthRecord } from "@/lib/customer-health.service";
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/app/components/ui/chart";
 import { OperationalQueryState, WorkspacePageShell } from "../../components/ux";
+
+const inquiryChartConfig = {
+  inquiries: { label: "Inquiries", color: "hsl(var(--primary))" },
+} satisfies ChartConfig;
 
 interface OrganizationInsightsProps {
   organizationId: string;
@@ -127,6 +138,15 @@ export default function OrganizationInsights({
       (satisfactionProgress * 0.35) +
       (Math.min(100, (insights?.conversion_rate || 0) * 5) * 0.3)
     )
+  );
+
+  const inquiryChartData = useMemo(
+    () =>
+      bestPerformers.slice(0, 5).map((listing, index) => ({
+        slot: `#${index + 1}`,
+        inquiries: getInquiryCount(listing),
+      })),
+    [bestPerformers],
   );
 
   return (
@@ -287,6 +307,20 @@ export default function OrganizationInsights({
           </div>
         </div>
       </Card>
+
+      {inquiryChartData.some((row) => row.inquiries > 0) ? (
+        <Card variant="glass" className="p-6">
+          <h2 className="text-lg font-bold text-ink mb-4">Inquiry volume (top listings)</h2>
+          <ChartContainer config={inquiryChartConfig} className="h-[220px] w-full">
+            <BarChart data={inquiryChartData} margin={{ left: 8, right: 8 }}>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border/50" />
+              <XAxis dataKey="slot" tickLine={false} axisLine={false} fontSize={12} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="inquiries" fill="var(--color-inquiries)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ChartContainer>
+        </Card>
+      ) : null}
 
       {/* Top Performing Listings */}
       <div className="space-y-4">

@@ -702,7 +702,7 @@ export function PropertySearch() {
         {/* Active Filter Tags */}
         {activeFilters.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 mb-5">
-            <span className="text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.activeFilters")}:</span>
+            <span className="text-xs font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.activeFilters")}:</span>
             {activeFilters.map((badge, idx) => (
               <span
                 key={idx}
@@ -722,7 +722,7 @@ export function PropertySearch() {
             <button
               type="button"
               onClick={clearFilters}
-              className="text-[10px] text-ink-muted hover:text-ink font-bold uppercase tracking-wide underline underline-offset-2 ml-1 cursor-pointer"
+              className="text-xs text-ink-muted hover:text-ink font-bold uppercase tracking-wide underline underline-offset-2 ml-1 cursor-pointer"
             >
               {t("searchPage.clearAll")}
             </button>
@@ -1021,7 +1021,7 @@ function SearchFiltersPanel({
       <div className="sticky top-0 z-10 flex items-center justify-between p-5 border-b border-surface-border bg-surface/90 backdrop-blur-md rounded-t-2xl">
         <div>
           <h3 className="text-sm font-black text-ink uppercase tracking-wide">{t("searchPage.filters")}</h3>
-          <p className="text-[10px] text-ink-muted mt-0.5">Refine your property search</p>
+          <p className="text-xs text-ink-muted mt-0.5">Refine your property search</p>
         </div>
         {onClose ? (
           <button
@@ -1036,7 +1036,7 @@ function SearchFiltersPanel({
       </div>
       <div className="p-5 space-y-5">
         <div>
-          <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.listingType")}</label>
+          <label className="mb-2 block text-xs font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.listingType")}</label>
           <div className="grid grid-cols-2 gap-1.5">
             {(
               [
@@ -1063,7 +1063,7 @@ function SearchFiltersPanel({
         </div>
 
         <div className="border-t border-surface-border pt-5">
-          <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]" htmlFor="region-filter">
+          <label className="mb-2 block text-xs font-black text-ink-muted uppercase tracking-[0.12em]" htmlFor="region-filter">
             {t("searchPage.region")}
           </label>
           <NativeSelectControl
@@ -1082,7 +1082,7 @@ function SearchFiltersPanel({
         </div>
 
         <div>
-          <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]" htmlFor="sort-filter">
+          <label className="mb-2 block text-xs font-black text-ink-muted uppercase tracking-[0.12em]" htmlFor="sort-filter">
             {t("searchPage.sortBy")}
           </label>
           <NativeSelectControl
@@ -1099,7 +1099,7 @@ function SearchFiltersPanel({
         </div>
 
         <div className="border-t border-surface-border pt-5 space-y-2.5">
-          <label className="block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em] mb-2">Quick Filters</label>
+          <label className="block text-xs font-black text-ink-muted uppercase tracking-[0.12em] mb-2">Quick Filters</label>
           <label className="flex items-center gap-3 text-xs text-ink cursor-pointer group">
             <div className={`w-8 h-4.5 rounded-full border-2 transition-all flex items-center px-0.5 ${
               filters.verifiedOnly ? "bg-emerald-500 border-emerald-500" : "border-surface-border bg-surface-subtle"
@@ -1135,7 +1135,7 @@ function SearchFiltersPanel({
         </div>
 
         <div className="border-t border-surface-border pt-5">
-          <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.priceRange")}</label>
+          <label className="mb-2 block text-xs font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.priceRange")}</label>
           <div className="flex gap-2">
             <Input
               type="number"
@@ -1155,7 +1155,7 @@ function SearchFiltersPanel({
         </div>
 
         <div className="border-t border-surface-border pt-5">
-          <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]" htmlFor="property-type-filter">
+          <label className="mb-2 block text-xs font-black text-ink-muted uppercase tracking-[0.12em]" htmlFor="property-type-filter">
             {t("searchPage.propertyType")}
           </label>
           <NativeSelectControl
@@ -1174,7 +1174,7 @@ function SearchFiltersPanel({
         </div>
 
         <div className="border-t border-surface-border pt-5">
-          <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.bedrooms")}</label>
+          <label className="mb-2 block text-xs font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.bedrooms")}</label>
           <div className="grid grid-cols-5 gap-1.5">
             {["Any", "1", "2", "3", "4+"].map((bed) => (
               <button
@@ -1194,7 +1194,7 @@ function SearchFiltersPanel({
         </div>
 
         <div className="border-t border-surface-border pt-5">
-          <label className="mb-2 block text-[10px] font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.bathrooms")}</label>
+          <label className="mb-2 block text-xs font-black text-ink-muted uppercase tracking-[0.12em]">{t("searchPage.bathrooms")}</label>
           <div className="grid grid-cols-5 gap-1.5">
             {["Any", "1", "2", "3", "4+"].map((bath) => (
               <button
