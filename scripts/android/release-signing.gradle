@@ -1,0 +1,34 @@
+/**
+ * Release signing for CI and local Play uploads.
+ * Set ANDROID_KEYSTORE_FILE, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD.
+ */
+def storePath = System.getenv("ANDROID_KEYSTORE_FILE")
+def storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+def keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+def keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+
+def signingReady = storePath != null && storePassword != null && keyAlias != null && keyPassword != null &&
+        new File(storePath).exists()
+
+if (signingReady) {
+    android {
+        signingConfigs {
+            release {
+                storeFile file(storePath)
+                storePassword storePassword
+                keyAlias keyAlias
+                keyPassword keyPassword
+            }
+        }
+        buildTypes {
+            release {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+} else if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("release") }) {
+    logger.lifecycle(
+        "Release signing env not set (ANDROID_KEYSTORE_*). " +
+        "Configure secrets for Play upload or set env vars locally."
+    )
+}

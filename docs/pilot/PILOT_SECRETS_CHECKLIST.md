@@ -47,6 +47,10 @@ npm run supabase:deploy:payments
 | `OPS_ALERT_WEBHOOK_URL` | Monitoring workflow |
 | `DAST_TARGET_URL` | Security DAST (staging only) |
 | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` | Deploy workflow |
+| `PLAY_SERVICE_ACCOUNT_JSON` | Google Play API upload |
+| `PLAY_CONSUMER_KEYSTORE_B64`, `PLAY_CONSUMER_*` | Consumer Android signing |
+| `PLAY_WORKSPACE_KEYSTORE_B64`, `PLAY_WORKSPACE_*` | Workspace Android signing |
+| `ASC_*`, `IOS_*`, `MAC_*` | Apple Store Upload workflow |
 
 ## Resend
 

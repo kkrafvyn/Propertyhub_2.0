@@ -1,0 +1,156 @@
+name: Google Play Upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: App variant to upload
+        type: choice
+        options: [both, consumer, workspace]
+        default: both
+      version:
+        description: Play versionName (semver)
+        default: "1.0.0"
+        required: true
+      track:
+        description: Play track
+        type: choice
+        options: [internal, alpha, beta, production]
+        default: internal
+      status:
+        description: Release status in Play Console
+        type: choice
+        options: [completed, draft, inProgress, halted]
+        default: completed
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/play-store.yml"
+      - "scripts/play/**"
+      - "scripts/android/**"
+      - "android/**"
+      - "android-business/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: play-store-upload
+  cancel-in-progress: false
+
+jobs:
+  credentials:
+    runs-on: ubuntu-latest
+    env:
+      SELECTED: ${{ inputs.variant || 'both' }}
+      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+      PLAY_CONSUMER_KEYSTORE_B64: ${{ secrets.PLAY_CONSUMER_KEYSTORE_B64 }}
+      PLAY_CONSUMER_KEYSTORE_PASSWORD: ${{ secrets.PLAY_CONSUMER_KEYSTORE_PASSWORD }}
+      PLAY_CONSUMER_KEY_ALIAS: ${{ secrets.PLAY_CONSUMER_KEY_ALIAS }}
+      PLAY_CONSUMER_KEY_PASSWORD: ${{ secrets.PLAY_CONSUMER_KEY_PASSWORD }}
+      PLAY_WORKSPACE_KEYSTORE_B64: ${{ secrets.PLAY_WORKSPACE_KEYSTORE_B64 }}
+      PLAY_WORKSPACE_KEYSTORE_PASSWORD: ${{ secrets.PLAY_WORKSPACE_KEYSTORE_PASSWORD }}
+      PLAY_WORKSPACE_KEY_ALIAS: ${{ secrets.PLAY_WORKSPACE_KEY_ALIAS }}
+      PLAY_WORKSPACE_KEY_PASSWORD: ${{ secrets.PLAY_WORKSPACE_KEY_PASSWORD }}
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+    steps:
+      - name: Check required Play release secrets
+        shell: python
+        run: |
+          import os, sys
+          required = [
+              "PLAY_SERVICE_ACCOUNT_JSON",
+              "VITE_SUPABASE_URL",
+              "VITE_SUPABASE_ANON_KEY",
+          ]
+          selected = os.environ.get("SELECTED", "both")
+          if selected in ("both", "consumer"):
+              required += [
+                  "PLAY_CONSUMER_KEYSTORE_B64",
+                  "PLAY_CONSUMER_KEYSTORE_PASSWORD",
+                  "PLAY_CONSUMER_KEY_ALIAS",
+                  "PLAY_CONSUMER_KEY_PASSWORD",
+              ]
+          if selected in ("both", "workspace"):
+              required += [
+                  "PLAY_WORKSPACE_KEYSTORE_B64",
+                  "PLAY_WORKSPACE_KEYSTORE_PASSWORD",
+                  "PLAY_WORKSPACE_KEY_ALIAS",
+                  "PLAY_WORKSPACE_KEY_PASSWORD",
+              ]
+          missing = [key for key in required if not os.environ.get(key)]
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              if missing:
+                  summary.write("Missing Google Play secrets: " + ", ".join(missing))
+              else:
+                  summary.write("Google Play release credentials are configured.")
+          for key in missing:
+              print("::error::Missing repository secret: " + key)
+          sys.exit(bool(missing))
+
+  upload:
+    needs: credentials
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [consumer, workspace]
+    env:
+      SELECTED: ${{ inputs.variant || 'both' }}
+      PLAY_VARIANT: ${{ matrix.variant }}
+      APP_VERSION: ${{ inputs.version || '1.0.0' }}
+      BUILD_NUMBER: ${{ github.run_number }}
+      PLAY_TRACK: ${{ inputs.track || 'internal' }}
+      PLAY_STATUS: ${{ inputs.status || 'completed' }}
+      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+      PLAY_CONSUMER_KEYSTORE_B64: ${{ secrets.PLAY_CONSUMER_KEYSTORE_B64 }}
+      PLAY_CONSUMER_KEYSTORE_PASSWORD: ${{ secrets.PLAY_CONSUMER_KEYSTORE_PASSWORD }}
+      PLAY_CONSUMER_KEY_ALIAS: ${{ secrets.PLAY_CONSUMER_KEY_ALIAS }}
+      PLAY_CONSUMER_KEY_PASSWORD: ${{ secrets.PLAY_CONSUMER_KEY_PASSWORD }}
+      PLAY_WORKSPACE_KEYSTORE_B64: ${{ secrets.PLAY_WORKSPACE_KEYSTORE_B64 }}
+      PLAY_WORKSPACE_KEYSTORE_PASSWORD: ${{ secrets.PLAY_WORKSPACE_KEYSTORE_PASSWORD }}
+      PLAY_WORKSPACE_KEY_ALIAS: ${{ secrets.PLAY_WORKSPACE_KEY_ALIAS }}
+      PLAY_WORKSPACE_KEY_PASSWORD: ${{ secrets.PLAY_WORKSPACE_KEY_PASSWORD }}
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_ENABLE_DEMO_DATA: "false"
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        if: env.SELECTED == 'both' || env.SELECTED == matrix.variant
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        if: env.SELECTED == 'both' || env.SELECTED == matrix.variant
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        if: env.SELECTED == 'both' || env.SELECTED == matrix.variant
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Build signed release AAB
+        if: env.SELECTED == 'both' || env.SELECTED == matrix.variant
+        run: bash scripts/play/upload-android.sh
+
+      - name: Upload to Google Play
+        if: env.SELECTED == 'both' || env.SELECTED == matrix.variant
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ${{ matrix.variant == 'consumer' && 'com.baymiftah.app' || 'com.baymiftah.workspace' }}
+          releaseFiles: release/${{ matrix.variant }}-release.aab
+          track: ${{ inputs.track || 'internal' }}
+          status: ${{ inputs.status || 'completed' }}
+          inAppUpdatePriority: 0
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && (env.SELECTED == 'both' || env.SELECTED == matrix.variant)
+        with:
+          name: play-${{ matrix.variant }}-${{ github.run_number }}
+          path: |
+            release/${{ matrix.variant }}-release.aab
+          retention-days: 7

@@ -164,3 +164,12 @@ npm run mobile:release
 ```
 
 Validates Capacitor config, Android permissions, iOS privacy keys, then builds + syncs.
+
+## Google Play (Consumer + Workspace)
+
+Signed AAB builds and CI upload to Play Console are documented in [GOOGLE_PLAY_UPLOAD.md](./GOOGLE_PLAY_UPLOAD.md).
+
+```bash
+npm run android:consumer:bundle:release   # com.baymiftah.app
+npm run android:workspace:bundle:release  # com.baymiftah.workspace
+```
