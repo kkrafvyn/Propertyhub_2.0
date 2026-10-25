@@ -28,13 +28,6 @@ const legacyRedirectRoutes: RouteObject[] = LEGACY_REDIRECT_SEGMENTS.flatMap(
 );
 
 export const consumerRoutes: RouteObject[] = [
-  {
-    path: 'demo',
-    lazy: async () => {
-      const { ConsumerDemo } = await import('../pages/ConsumerDemo');
-      return { Component: ConsumerDemo };
-    },
-  },
   // ── Marketplace & Discovery ─────────────────────────────────────
   {
     index: true,
