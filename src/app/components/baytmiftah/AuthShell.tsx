@@ -1,4 +1,3 @@
-import "../../../styles/consumer-account.css";
 import { useState, useEffect, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Logo } from "./Logo";
@@ -15,28 +14,28 @@ interface CarouselSlide {
 const CAROUSEL_SLIDES: CarouselSlide[] = [
   {
     image:
-      `${import.meta.env.BASE_URL}marketing/hero/architecture-1280.webp`,
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=85",
     title: "The Architecture of Trust",
     subtitle: "End-to-end lease governance, autonomous SLA dispatch, and verifiable ownership ledgers.",
     location: "Airport Hills • Executive Enclaves",
   },
   {
     image:
-      `${import.meta.env.BASE_URL}marketing/hero/residences-1280.webp`,
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=85",
     title: "Deterministic Financial Rigor",
     subtitle: "Automated rental waterfall distributions, statutory GRA withholding, and immutable double-entry sub-ledgers.",
     location: "Cantonments • Signature Residences",
   },
   {
     image:
-      `${import.meta.env.BASE_URL}marketing/hero/interior-1280.webp`,
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=85",
     title: "Living Enterprise Ecosystems",
     subtitle: "Specialized AI workforce operating 24/7 across leasing, collections, and predictive maintenance triage.",
     location: "East Legon • Prime Sanctuaries",
   },
   {
     image:
-      `${import.meta.env.BASE_URL}marketing/hero/community-1280.webp`,
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=85",
     title: "Curated Luxury & Discovery",
     subtitle: "Privacy-preserving public exploration paired with certified biometric digital agreements.",
     location: "Ridge & Roman Ridge • High-Value Portfolios",
@@ -70,7 +69,7 @@ export function AuthShell({
   return (
     <div className="auth-shell min-h-[100dvh] flex bg-neutral-950 lg:bg-background text-foreground font-sans antialiased relative overflow-hidden">
       {/* Mobile Full-Bleed Animated Carousel Background */}
-      <div className="auth-mobile-background lg:hidden absolute inset-0 z-0 select-none overflow-hidden">
+      <div className="lg:hidden absolute inset-0 z-0 select-none overflow-hidden">
         {CAROUSEL_SLIDES.map((s, idx) => (
           <div
             key={idx}
@@ -89,7 +88,7 @@ export function AuthShell({
       </div>
 
       {/* Left Form Surface */}
-      <div className="auth-content flex-1 flex flex-col justify-between px-4 sm:px-10 lg:px-16 xl:px-20 py-8 lg:py-12 overflow-y-auto max-w-2xl mx-auto lg:mx-0 w-full relative z-10">
+      <div className="flex-1 flex flex-col justify-between px-4 sm:px-10 lg:px-16 xl:px-20 py-8 lg:py-12 overflow-y-auto max-w-2xl mx-auto lg:mx-0 w-full relative z-10">
         {/* Top Header */}
         <div className="flex items-center justify-between w-full">
           <Link
@@ -107,7 +106,7 @@ export function AuthShell({
           {/* Brand Identity */}
           <div className="mb-6 sm:mb-8">
             <div className="mb-6">
-              <div className="lg:hidden"><Logo to="/" /></div>
+              <div className="lg:hidden"><Logo to="/" inverted /></div>
               <div className="hidden lg:block"><Logo to="/" /></div>
             </div>
 
@@ -120,7 +119,7 @@ export function AuthShell({
           </div>
 
           {/* Form Content Card on Mobile */}
-          <div className="auth-form-card bg-neutral-900/80 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none border border-white/10 lg:border-none p-6 sm:p-8 lg:p-0 rounded-3xl shadow-2xl lg:shadow-none space-y-6">
+          <div className="bg-neutral-900/80 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none border border-white/10 lg:border-none p-6 sm:p-8 lg:p-0 rounded-3xl shadow-2xl lg:shadow-none space-y-6">
             {children}
           </div>
 
