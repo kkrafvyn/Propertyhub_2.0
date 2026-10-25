@@ -96,8 +96,8 @@ function Header({
         <div
           className={`flex min-w-0 items-center gap-2 sm:gap-3 md:gap-4 ${minimal ? "h-[68px] md:h-[72px]" : "h-[68px] md:h-[72px] xl:h-[76px]"}`}
         >
-          <Logo size="sm" className="md:hidden" />
-          <Logo className="hidden md:flex" />
+          <div className="md:hidden"><Logo size="sm" /></div>
+          <div className="hidden md:block"><Logo /></div>
 
           <div className="ml-auto flex shrink-0 items-center gap-0.5 md:gap-1.5">
             {!minimal && (

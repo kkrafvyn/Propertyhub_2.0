@@ -575,7 +575,7 @@ export function PropertySearch() {
         <CategoryBar
           active={categoryActive}
           onChange={handleCategoryChange}
-          onFiltersClick={() => setShowFilters(true)}
+          onFiltersClick={isDesktop ? () => setShowFilters(true) : undefined}
           showMapToggle={false}
         />
       }
@@ -792,6 +792,7 @@ export function PropertySearch() {
             ) : listings.length === 0 ? (
               <div className="space-y-6">
                 <EmptyState
+                  className="mobile-search-empty"
                   icon={Search}
                   title={t("searchPage.noPropertiesTitle")}
                   description={t("searchPage.noPropertiesDesc")}

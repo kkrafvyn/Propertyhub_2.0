@@ -138,6 +138,8 @@ export function MobilePropertyTypeRow({
   const { t } = useTranslation();
 
   return (
+    <div className="mobile-type-navigation">
+      <p className="mobile-type-swipe-hint">Property type <span aria-hidden="true">Swipe to explore →</span></p>
     <div
       className="marketplace-mobile-types mobile-type-scroll mb-6 flex gap-4 overflow-x-auto px-3 sm:gap-5 sm:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       role="tablist"
@@ -190,6 +192,7 @@ export function MobilePropertyTypeRow({
           </button>
         );
       })}
+    </div>
     </div>
   );
 }

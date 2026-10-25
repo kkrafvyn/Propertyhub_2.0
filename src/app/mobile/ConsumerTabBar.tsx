@@ -1,4 +1,5 @@
-import type { LucideIcon } from "lucide-react";
+import { Sparkles, type LucideIcon } from "lucide-react";
+import { openBaytMiftahAIPanel } from "../lib/baytmiftah/ai-panel";
 
 export type ConsumerTabItem = {
   id: string;
@@ -46,6 +47,10 @@ export function ConsumerTabBar({
             </button>
           );
         })}
+        <button type="button" className="mobile-tab-button" onClick={openBaytMiftahAIPanel} aria-label="Open BaytMiftah AI">
+          <span className="mobile-tab-icon-wrap" aria-hidden="true"><Sparkles className="mobile-tab-icon" /></span>
+          <span className="mobile-tab-label">Assist</span>
+        </button>
       </div>
     </nav>
   );

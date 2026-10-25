@@ -388,7 +388,7 @@ export function BaytMiftahAIPanel({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex h-12 w-12 items-center justify-center rounded-full border border-surface-border bg-surface text-ink shadow-lg transition hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+        className="bm-ai-launcher flex h-12 w-12 items-center justify-center rounded-full border border-surface-border bg-surface text-ink shadow-lg transition hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
         aria-label={open ? "Close BaytMiftah AI" : "Open BaytMiftah AI"}
         aria-expanded={open}
       >
