@@ -15,3 +15,11 @@ For App Review, use the saved credentials, then open the review workspace. Explo
 The four 1280 × 800 JPEG screenshots under `marketing/apple/workspace/screenshots/` are direct captures of the app's desktop UI, rendered locally with the same desktop build configuration and live private review fixture. They contain no real customer data and were not composited or resized. They show the portfolio, pipeline, workstation overview, and sign-in screen. App Store Connect received them on October 25, 2026.
 
 Mac build 103 includes deferred Supabase auth follow-up work, access to the protected account security screen for MFA completion, the approved logo, and a logo size that fits the desktop header. Uploading/processing a build does not submit it for review or publish the app.
+
+## Consumer reviewer account
+
+Run `node scripts/apple/provision-review-consumer.mjs` to create or verify the isolated consumer reviewer login. Credentials are stored only in `secrets/app-review/consumer.json` (gitignored, mode 0600). The account has no organization membership, payment methods, completed transactions, or private customer data. Sign-in was verified through both Supabase and the consumer UI. Ghana / Accra and the Resident onboarding choice were completed without accepting the policy update banner.
+
+Consumer reviewer credentials and notes were saved on the iOS and macOS App Store Connect versions. Three 1280 × 800 screenshots were accepted on the macOS listing: discovery, search, and sign-in. A fourth consumer portal capture is prepared locally under `marketing/apple/consumer/screenshots/`; it has not yet been uploaded. These are actual browser-rendered consumer screens, not native iOS simulator captures. The live marketplace currently shows no public properties; no fictional listings were published to fill it.
+
+Apple's consumer iOS submission validation on October 25, 2026 reported a missing build and price tier. There are no consumer builds or Xcode Cloud products visible through the configured Apple API. Local Xcode 16.1 cannot produce the required iOS SDK 26 store build; the consumer Xcode Cloud workflow still requires its initial Xcode connection. Privacy disclosures remain drafts pending an explicit change to the user's prior instruction. Workspace Mac build 103 is now VALID but has not yet replaced selected build 102 in the listing.
