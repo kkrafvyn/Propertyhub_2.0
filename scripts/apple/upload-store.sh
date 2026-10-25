@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 umask 077
+# Continue after the already uploaded Workspace build 101.
+[[ "${BUILD_NUMBER:?Build number is required}" =~ ^[0-9]+$ ]] || { echo "Build number must be numeric"; exit 1; }
+export BUILD_NUMBER="$((10#$BUILD_NUMBER + 101))"
+export VITE_APP_BUILD_NUMBER="$BUILD_NUMBER"
 export APPLE_TEAM_ID=7T2JK53K5M
 export APPLE_RELEASE_DIR="$RUNNER_TEMP/apple-release-$PLATFORM"
 mkdir -p "$APPLE_RELEASE_DIR" release
