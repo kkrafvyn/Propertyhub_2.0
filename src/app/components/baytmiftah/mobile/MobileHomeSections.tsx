@@ -59,14 +59,14 @@ export function MobileReferenceHeader({
 }
 
 const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80";
+  `${import.meta.env.BASE_URL}marketing/hero/residences-mobile.webp`;
 
 export function MobileHeroBanner() {
   const { t } = useTranslation();
 
   return (
     <section className="relative mx-3 mb-5 overflow-hidden rounded-2xl sm:mx-4">
-      <img src={HERO_IMAGE} alt="Featured homes on BaytMiftah" className="h-[180px] w-full object-cover sm:h-[200px]" />
+      <img src={HERO_IMAGE} alt="Illustrative residential architecture" className="h-[180px] w-full object-cover sm:h-[200px]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
       <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
         <h1 className="text-lg font-bold leading-tight text-white sm:text-[22px]">
@@ -281,10 +281,10 @@ export function MobileHomeListingCard({
 }
 
 export const EXPLORE_MODE_IMAGES = {
-  buy: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80",
-  rent: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80",
-  lease: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80",
-  stay: "https://images.unsplash.com/photo-1631049307264-da486c479a4d?auto=format&fit=crop&w=600&q=80",
+  buy: `${import.meta.env.BASE_URL}marketing/hero/residences-mobile.webp`,
+  rent: `${import.meta.env.BASE_URL}marketing/hero/interior-mobile.webp`,
+  lease: `${import.meta.env.BASE_URL}marketing/hero/architecture-mobile.webp`,
+  stay: `${import.meta.env.BASE_URL}marketing/hero/community-mobile.webp`,
 } as const;
 
 export function MobilePromoCard({
@@ -327,7 +327,7 @@ export function MobileAreaCard({
 }) {
   const { t } = useTranslation();
   const image =
-    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80";
+    `${import.meta.env.BASE_URL}marketing/hero/interior-mobile.webp`;
 
   return (
     <Link to={to} className="relative h-[120px] w-[140px] shrink-0 overflow-hidden rounded-2xl">

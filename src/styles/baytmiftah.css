@@ -424,7 +424,7 @@
     radial-gradient(ellipse 65% 50% at 95% 10%, rgba(224, 122, 95, 0.08), transparent 60%),
     radial-gradient(ellipse 55% 45% at 5% 90%, rgba(13, 40, 33, 0.06), transparent 55%),
     linear-gradient(165deg, var(--surface) 0%, var(--surface-subtle) 60%, var(--surface) 100%);
-  padding: 3.25rem 3.5rem;
+  padding: clamp(1.5rem, 3vw, 2.25rem);
   box-shadow: var(--shadow-card), var(--border-sheen);
   color: var(--ink);
   transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s ease;

@@ -129,6 +129,7 @@ export function SearchPill({
         <input
           id="search-budget"
           type="text"
+          inputMode="decimal"
           value={budget}
           onChange={(e) => onBudgetChange?.(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && onSearch?.()}

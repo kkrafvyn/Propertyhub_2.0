@@ -34,6 +34,21 @@ export const organizationService = {
     return data
   },
 
+  /** Public discovery excludes incomplete setup and personal owner workspaces. */
+  async getVerifiedAgencies(limit = 20) {
+    const { data, error } = await supabase
+      .from('organizations')
+      .select('id,name,slug,logo_url')
+      .eq('verified', true)
+      .eq('suspended', false)
+      .eq('company_setup_completed', true)
+      .eq('workspace_kind', 'company')
+      .contains('business_types', ['agency_brokerage'])
+      .limit(limit)
+    if (error) throw error
+    return data
+  },
+
   async getVerifiedOrganizations(limit = 20) {
     const { data, error } = await supabase
       .from('organizations')

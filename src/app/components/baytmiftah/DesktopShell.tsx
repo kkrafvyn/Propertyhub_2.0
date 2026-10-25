@@ -90,7 +90,7 @@ function Header({
   const listPropertyPath = `${WORKSPACE_ENTRY_PATH}?next=new`;
 
   return (
-    <header className="desktop-header sticky top-0 z-50 border-b border-surface-border bg-surface/90 backdrop-blur-xl backdrop-saturate-150 transition-colors duration-200">
+    <header className="desktop-header relative z-30 border-b border-surface-border bg-surface/90 backdrop-blur-xl backdrop-saturate-150 transition-colors duration-200">
       <div className="mx-auto w-full min-w-0 max-w-[var(--max-width-page)] px-4 sm:px-6 md:px-8 xl:px-20">
         <div
           className={`flex min-w-0 items-center gap-2 sm:gap-3 md:gap-4 ${minimal ? "h-[68px] md:h-[72px]" : "h-[68px] md:h-[72px] xl:h-[76px]"}`}
@@ -290,7 +290,7 @@ export function DesktopShell({
         className={
           fullBleed
             ? "relative z-[1] w-full"
-            : "relative z-[1] mx-auto w-full min-w-0 max-w-[var(--max-width-page)] px-4 py-5 sm:px-6 md:px-8 md:py-6 xl:px-20 xl:py-8 overflow-x-hidden"
+            : "relative z-[1] mx-auto w-full min-w-0 max-w-[var(--max-width-page)] px-4 py-5 sm:px-6 md:px-8 md:py-6 xl:px-20 xl:py-8 !pb-28 overflow-x-hidden"
         }
       >
         {children}

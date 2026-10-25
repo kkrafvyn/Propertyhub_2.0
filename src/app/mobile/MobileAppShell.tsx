@@ -44,6 +44,8 @@ export function MobileAppShell() {
   });
   const [propType, setPropType] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [listings, setListings] = useState<any[]>([]);
   const [usingOfflineCache, setUsingOfflineCache] = useState(false);
   const [agencies, setAgencies] = useState<any[]>([]);
@@ -74,9 +76,10 @@ export function MobileAppShell() {
     const load = async () => {
       try {
         setLoading(true);
+        setLoadError(false);
         const [searchResults, agencyRows] = await Promise.all([
           listingService.searchListingsWithCount({}, 48, 0),
-          organizationService.getVerifiedOrganizations(6),
+          organizationService.getVerifiedAgencies(6).catch(() => []),
         ]);
 
         if (!cancelled) {
@@ -91,6 +94,7 @@ export function MobileAppShell() {
           setListings(cached as any[]);
           setUsingOfflineCache(true);
         }
+        if (!cancelled && !cached.length) setLoadError(true);
         console.error("Failed to load mobile home listings:", error);
       } finally {
         if (!cancelled) setLoading(false);
@@ -102,7 +106,7 @@ export function MobileAppShell() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadAttempt]);
 
   useEffect(() => {
     if (!user) {
@@ -193,8 +197,14 @@ export function MobileAppShell() {
 
         <MobileCarouselSection title={t("mobile.appShell.availableNow")} seeAllTo={seeAllTo}>
           {loading ? (
-            <div className="mobile-loading px-4">
+            <div className="mobile-loading w-full gap-2 px-4" role="status" aria-label="Loading properties">
               <Loader2 aria-hidden="true" />
+              <span className="text-sm">Loading properties…</span>
+            </div>
+          ) : loadError ? (
+            <div className="w-full rounded-2xl border border-surface-border bg-surface p-5 text-center" role="alert">
+              <p className="text-sm text-ink">Couldn’t load properties. Check your connection.</p>
+              <button onClick={() => setLoadAttempt((attempt) => attempt + 1)} className="mt-3 rounded-full border border-surface-border px-4 py-2 text-sm text-ink">Try again</button>
             </div>
           ) : (
             homeListings.length > 0 ? (
@@ -208,8 +218,8 @@ export function MobileAppShell() {
             ) : (
               <div className="w-full rounded-2xl border border-dashed border-surface-border bg-surface px-5 py-6 text-center">
                 <p className="text-sm font-semibold text-ink">{t("searchPage.noPropertiesTitle")}</p>
-                <Link to={seeAllTo} className="mt-2 inline-flex text-sm font-semibold text-primary underline-offset-4 hover:underline">
-                  {t("searchPage.clearFilters")}
+                <Link to="/search" className="mt-2 inline-flex text-sm font-semibold text-primary underline-offset-4 hover:underline">
+                  {t("home.browseAll")}
                 </Link>
               </div>
             )

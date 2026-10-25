@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Compass, Home as HomeIcon, Key, RotateCcw, ShieldCheck, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
+import { parseMaximumBudget } from "../../lib/marketplace-budget";
 import { listingService } from "../../lib/listing.service";
 import { savedPropertyService } from "../../lib/savedproperty.service";
 import { syncCompareIds, toggleCompareIdAsync } from "../../lib/compare-listings";
@@ -47,6 +48,8 @@ export function Home() {
   const [mapMode, setMapMode] = useState(false);
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     syncCompareIds().then(setCompareIds);
@@ -58,11 +61,12 @@ export function Home() {
     const load = async () => {
       try {
         setLoading(true);
+        setLoadError(false);
         const rows = await listingService.getPublicListings(200, 0);
         if (!ignore) setListings(rows);
       } catch (error) {
         console.error("Failed to load listings:", error);
-        if (!ignore) toast.error(t("searchPage.loadListingsFailed"));
+        if (!ignore) setLoadError(true);
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -72,7 +76,7 @@ export function Home() {
     return () => {
       ignore = true;
     };
-  }, [t]);
+  }, [t, loadAttempt]);
 
   useEffect(() => {
     if (!user) {
@@ -117,9 +121,11 @@ export function Home() {
         ghanaRegion
       );
 
-      return matchesQuery && matchesRegion;
+      const maximum = parseMaximumBudget(budget);
+      const matchesBudget = maximum === null || (listing.price != null && Number.isFinite(Number(listing.price)) && Number(listing.price) <= maximum);
+      return matchesQuery && matchesRegion && matchesBudget;
     });
-  }, [listings, location, ghanaRegion]);
+  }, [listings, location, ghanaRegion, budget]);
 
   const cards = useMemo(() => listingFiltered.map(mapListingToCard), [listingFiltered]);
 
@@ -134,18 +140,12 @@ export function Home() {
         propertyType === "any" ||
         normalizePropertyCategory(listing.type) === normalizePropertyCategory(propertyType);
 
-      const haystack = `${listing.title} ${listing.location}`.toLowerCase();
-      const matchesBudget =
-        !budget.trim() ||
-        haystack.includes(budget.toLowerCase()) ||
-        listing.priceLabel.includes(budget);
-
       const matchesVerified = !verifiedOnly || listing.verified;
       const matchesBeds = !minBedrooms || (listing.bedrooms ?? 0) >= minBedrooms;
 
-      return matchesCategory && matchesType && matchesBudget && matchesVerified && matchesBeds;
+      return matchesCategory && matchesType && matchesVerified && matchesBeds;
     });
-  }, [cards, category, propertyType, budget, verifiedOnly, minBedrooms]);
+  }, [cards, category, propertyType, verifiedOnly, minBedrooms]);
 
   const featured = useMemo(() => cards.filter((l) => l.featured).slice(0, 12), [cards]);
 
@@ -154,7 +154,8 @@ export function Home() {
     if (location.trim()) params.set("q", location.trim());
     if (ghanaRegion !== "all") params.set("region", ghanaRegion);
     if (propertyType !== "any") params.set("propertyType", propertyType);
-    if (budget.trim()) params.set("priceMax", budget.replace(/\D/g, ""));
+    const maximum = parseMaximumBudget(budget);
+    if (maximum !== null) params.set("priceMax", String(maximum));
     navigate(`/search?${params.toString()}`);
   };
 
@@ -295,7 +296,7 @@ export function Home() {
               ))}
             </div>
           </div>
-          <div className="sticky top-28 h-[calc(100vh-12rem)]">
+          <div className="sticky top-6 h-[calc(100dvh-3rem)]">
             <Suspense fallback={<div className="h-full animate-pulse rounded-xl bg-surface-subtle" />}>
               <MapErrorBoundary>
                 <MapView listings={mapListings} />
@@ -303,6 +304,8 @@ export function Home() {
             </Suspense>
           </div>
         </div>
+      ) : loadError ? (
+        <EmptyState title="Couldn’t load properties" description="Check your connection and try again." actionLabel="Try again" onAction={() => setLoadAttempt((attempt) => attempt + 1)} />
       ) : loading ? (
         <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {Array.from({ length: 10 }).map((_, i) => (

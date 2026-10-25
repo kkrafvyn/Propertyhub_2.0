@@ -5,8 +5,6 @@ import {
   X,
   ArrowRight,
   Bot,
-  GripHorizontal,
-  RotateCcw,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { DegradedModeBanner } from "./DegradedModeBanner";
@@ -41,7 +39,7 @@ const CONTEXT_COPY: Record<
   { title: string; description: string; placeholder: string }
 > = {
   consumer: {
-    title: "BaytMiftah REOS Copilot",
+    title: "BaytMiftah Assistant",
     description: "Plain-language help across properties, payments, leases, and maintenance.",
     placeholder: "Ask how to find a home, review a lease, or report an issue...",
   },
@@ -51,7 +49,7 @@ const CONTEXT_COPY: Record<
     placeholder: "Ask about units, occupancies, or leads...",
   },
   search: {
-    title: "Marketplace Query Copilot",
+    title: "BaytMiftah Assistant",
     description: "Find and compare properties using plain language.",
     placeholder: "Find a 3-bed house in Cantonments under 15000...",
   },
@@ -130,119 +128,6 @@ export function BaytMiftahAIPanel({
       : clientIntegrations.ai.provider === "openai"
         ? "OpenAI"
         : "Smart AI";
-
-  // Draggable Bubble State
-  // On mobile we push the bubble above the floating tab bar (~92px) and safe-area.
-  const MOBILE_BOTTOM_CLEARANCE = 160; // tab bar height + breathing room
-  const isMobileViewport = () =>
-    typeof window !== "undefined" && window.innerWidth < 768;
-  const getDefaultBubblePos = () => {
-    if (typeof window === "undefined") return { x: 20, y: 20 };
-    const bottomClearance = isMobileViewport() ? MOBILE_BOTTOM_CLEARANCE : 88;
-    return {
-      x: Math.max(10, window.innerWidth - 76),
-      y: Math.max(10, window.innerHeight - bottomClearance),
-    };
-  };
-
-  const [bubblePos, setBubblePos] = useState<{ x: number; y: number }>(() => {
-    if (typeof window === "undefined") return { x: 20, y: 20 };
-    const saved = localStorage.getItem("bm_ai_bubble_pos");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (typeof parsed.x === "number" && typeof parsed.y === "number") {
-          const bottomClearance = isMobileViewport() ? MOBILE_BOTTOM_CLEARANCE : 88;
-          return {
-            x: Math.max(10, Math.min(window.innerWidth - 70, parsed.x)),
-            y: Math.max(10, Math.min(window.innerHeight - bottomClearance, parsed.y)),
-          };
-        }
-      } catch {
-        // ignore
-      }
-    }
-    return getDefaultBubblePos();
-  });
-
-  const [isDragging, setIsDragging] = useState(false);
-  const dragRef = useRef<{
-    startX: number;
-    startY: number;
-    originX: number;
-    originY: number;
-    isDragging: boolean;
-    pointerId: number;
-  } | null>(null);
-
-  // Recalculate on screen resize to keep bubble inside viewport
-  useEffect(() => {
-    const handleResize = () => {
-      setBubblePos((prev) => ({
-        x: Math.max(12, Math.min(window.innerWidth - 68, prev.x)),
-        y: Math.max(12, Math.min(window.innerHeight - 68, prev.y)),
-      }));
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (e.button !== 0) return;
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch {}
-    dragRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      originX: bubblePos.x,
-      originY: bubblePos.y,
-      isDragging: false,
-      pointerId: e.pointerId,
-    };
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (!dragRef.current || dragRef.current.pointerId !== e.pointerId) return;
-    const dx = e.clientX - dragRef.current.startX;
-    const dy = e.clientY - dragRef.current.startY;
-    if (!dragRef.current.isDragging && Math.hypot(dx, dy) > 4) {
-      dragRef.current.isDragging = true;
-      setIsDragging(true);
-    }
-    if (dragRef.current.isDragging) {
-      const newX = Math.max(12, Math.min(window.innerWidth - 68, dragRef.current.originX + dx));
-      const newY = Math.max(12, Math.min(window.innerHeight - 68, dragRef.current.originY + dy));
-      setBubblePos({ x: newX, y: newY });
-    }
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (!dragRef.current || dragRef.current.pointerId !== e.pointerId) return;
-    const wasDragging = dragRef.current.isDragging;
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {}
-    dragRef.current = null;
-    setIsDragging(false);
-
-    if (wasDragging) {
-      localStorage.setItem("bm_ai_bubble_pos", JSON.stringify(bubblePos));
-    } else {
-      setOpen((curr) => !curr);
-    }
-  };
-
-  const handleResetPosition = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const defaultPos = getDefaultBubblePos();
-    setBubblePos(defaultPos);
-    localStorage.setItem("bm_ai_bubble_pos", JSON.stringify(defaultPos));
-  };
-
-  // Adaptive Placement Calculation
-  const isUpperHalf = typeof window !== "undefined" ? bubblePos.y < window.innerHeight / 2 : false;
-  const isLeftHalf = typeof window !== "undefined" ? bubblePos.x < window.innerWidth / 2 : false;
 
   const suggestions = useMemo(() => {
     switch (resolvedContext) {
@@ -356,27 +241,14 @@ export function BaytMiftahAIPanel({
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        left: `${bubblePos.x}px`,
-        top: `${bubblePos.y}px`,
-        zIndex: 9999,
-        touchAction: "none",
-      }}
-      className="bm-ai-chat select-none"
-    >
-      {/* Floating Chat Modal (Positioned Adaptively relative to Draggable Bubble) */}
+    <div className="bm-ai-chat fixed end-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-40 md:end-6 md:bottom-6">
+      {/* Dock the panel above its launcher, within the available viewport. */}
       {open ? (
         <section
           role="dialog"
-          aria-label="BaytMiftah REOS Copilot"
-          style={{
-            position: "absolute",
-            ...(isUpperHalf ? { top: "64px" } : { bottom: "64px" }),
-            ...(isLeftHalf ? { left: "0px" } : { right: "0px" }),
-          }}
-          className="flex h-[min(38rem,calc(100dvh-5.5rem))] w-[min(28rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-3xl border border-surface-border bg-surface text-ink shadow-[0_24px_64px_rgba(0,0,0,0.32)] backdrop-blur-2xl animate-in fade-in-0 zoom-in-95 duration-200"
+          aria-label="BaytMiftah Assistant"
+          style={{ position: "absolute", bottom: "64px", right: 0 }}
+          className="flex h-[min(38rem,calc(100dvh-12rem))] md:h-[min(38rem,calc(100dvh-6rem))] w-[min(28rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-3xl border border-surface-border bg-surface text-ink shadow-[0_24px_64px_rgba(0,0,0,0.32)] backdrop-blur-2xl animate-in fade-in-0 zoom-in-95 duration-200"
         >
           {/* Header */}
           <header className="flex items-start gap-3 border-b border-surface-border bg-gradient-to-r from-brand-forest via-[#16382c] to-[#1f4a3c] p-4 text-white">
@@ -403,14 +275,6 @@ export function BaytMiftahAIPanel({
               ) : null}
             </div>
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                className="rounded-full p-1.5 text-white/70 hover:bg-white/15 hover:text-white transition"
-                title="Reset AI position to bottom-right"
-                onClick={handleResetPosition}
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-              </button>
               <button
                 type="button"
                 className="rounded-full p-1.5 text-white/80 transition hover:bg-white/15 hover:text-white"
@@ -521,54 +385,15 @@ export function BaytMiftahAIPanel({
         </section>
       ) : null}
 
-      {/* Floating AI Trigger Bubble (Draggable) */}
-      <div className="relative group cursor-grab active:cursor-grabbing">
-        {/* Ambient Pulsing Halo */}
-        <div
-          className={`pointer-events-none absolute -inset-1.5 rounded-full bg-gradient-to-r from-brand-forest via-emerald-400 to-[#52b788] opacity-50 blur-md transition duration-500 ${
-            isDragging ? "opacity-90 scale-110" : "group-hover:opacity-80 animate-pulse"
-          }`}
-          aria-hidden="true"
-        />
-
-        <button
-          type="button"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          className={`relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-tr from-brand-forest via-[#184232] to-[#2b644d] dark:from-[#0f2820] dark:via-[#163d30] dark:to-primary text-white shadow-[0_12px_28px_rgba(15,41,34,0.45)] ring-2 ring-white/30 dark:ring-primary/50 transition-transform select-none ${
-            isDragging ? "scale-105 cursor-grabbing" : "hover:scale-110 active:scale-95 cursor-grab"
-          }`}
-          aria-label={open ? "Close BaytMiftah AI" : "Open BaytMiftah AI (Drag to move)"}
-          aria-expanded={open}
-        >
-          {open ? (
-            <X className="h-6 w-6 transition-transform duration-200" />
-          ) : (
-            <div className="relative flex items-center justify-center pointer-events-none">
-              <Sparkles className="h-6 w-6 text-amber-300 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
-              <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-orange px-1 text-[8px] font-black text-white shadow-sm ring-1 ring-white">
-                QL
-              </span>
-            </div>
-          )}
-        </button>
-
-        {/* Hover Drag Tooltip when closed */}
-        {!open && !isDragging && (
-          <div
-            className={`pointer-events-none absolute hidden sm:group-hover:block transition-all duration-200 animate-in fade-in-0 ${
-              isUpperHalf ? "top-full mt-2" : "bottom-full mb-2"
-            } ${isLeftHalf ? "left-0" : "right-0"}`}
-          >
-            <div className="whitespace-nowrap rounded-xl border border-surface-border bg-surface px-3 py-1.5 text-xs font-semibold text-ink shadow-lg flex items-center gap-1.5">
-              <GripHorizontal className="h-3.5 w-3.5 text-emerald-500 opacity-80" />
-              <span>Drag to move · Click for REOS-QL</span>
-            </div>
-          </div>
-        )}
-      </div>
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex h-12 w-12 items-center justify-center rounded-full border border-surface-border bg-surface text-ink shadow-lg transition hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+        aria-label={open ? "Close BaytMiftah AI" : "Open BaytMiftah AI"}
+        aria-expanded={open}
+      >
+        {open ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+      </button>
     </div>
   );
 }
