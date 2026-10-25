@@ -1,6 +1,7 @@
+import { parseMaximumBudget } from "../../lib/marketplace-budget";
 import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate, useSearchParams, useLocation, useNavigationType } from "react-router";
 import { SlidersHorizontal, Grid3x3, List, Map, MapPin, Bed, Bath, X, Loader2, Bell, Heart, Search } from "lucide-react";
 import { savedPropertyService } from "../../lib/savedproperty.service";
 import { EmptyState } from "../components/ux";
@@ -45,6 +46,7 @@ type SearchFilters = {
   sort: string;
   verifiedOnly: boolean;
   featuredOnly: boolean;
+  amenities: string[];
 };
 
 function buildFiltersFromSearchParams(searchParams: URLSearchParams): SearchFilters {
@@ -67,6 +69,7 @@ function buildFiltersFromSearchParams(searchParams: URLSearchParams): SearchFilt
     sort: searchParams.get("sort") || "newest",
     verifiedOnly: ["1", "true"].includes(searchParams.get("verified") || ""),
     featuredOnly: searchParams.get("featured") === "1",
+    amenities: searchParams.getAll("amenity").filter((value) => ["parking", "furnished", "pets allowed"].includes(value)),
   };
 }
 
@@ -88,7 +91,12 @@ export function PropertySearch() {
     return () => media.removeEventListener("change", apply);
   }, []);
   const currentPage = Math.max(parseInt(searchParams.get("page") || "1", 10) || 1, 1);
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
+  const viewMode = (["grid", "list", "map"].includes(searchParams.get("view") || "") ? searchParams.get("view") : "grid") as "grid" | "list" | "map";
+  const setViewMode = (mode: "grid" | "list" | "map") => {
+    const next = new URLSearchParams(searchParams);
+    next.set("view", mode);
+    setSearchParams(next, { replace: true });
+  };
   const [showFilters, setShowFilters] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,6 +107,25 @@ export function PropertySearch() {
   const [savedListingIds, setSavedListingIds] = useState<Set<string>>(new Set());
   const [selectedMapListingId, setSelectedMapListingId] = useState<string | null>(null);
   const [recentlyViewedListings, setRecentlyViewedListings] = useState<any[]>([]);
+
+  const routeLocation = useLocation();
+  const navigationType = useNavigationType();
+  const restoredKey = useRef<string | null>(null);
+  useEffect(() => {
+    const key = `baytmiftah:search-scroll:${routeLocation.key}`;
+    const save = () => { try { sessionStorage.setItem(key, String(window.scrollY)); } catch { /* Storage is optional. */ } };
+    window.addEventListener("scroll", save, { passive: true });
+    return () => window.removeEventListener("scroll", save);
+  }, [routeLocation.key]);
+  useEffect(() => {
+    if (loading || restoredKey.current === routeLocation.key) return;
+    restoredKey.current = routeLocation.key;
+    if (navigationType !== "POP") return;
+    let top = 0;
+    try { top = Number(sessionStorage.getItem(`baytmiftah:search-scroll:${routeLocation.key}`)) || 0; } catch { /* Storage is optional. */ }
+    const frame = requestAnimationFrame(() => window.scrollTo({ top, behavior: "instant" }));
+    return () => cancelAnimationFrame(frame);
+  }, [loading, routeLocation.key, navigationType]);
 
   const [filters, setFilters] = useState(() => buildFiltersFromSearchParams(searchParams));
 
@@ -189,8 +216,8 @@ export function PropertySearch() {
       const queryText = searchParams.get("q") || "";
       const searchFilter = {
         location: queryText || undefined,
-        priceMin: activeFilters.priceMin ? parseInt(activeFilters.priceMin, 10) : undefined,
-        priceMax: activeFilters.priceMax ? parseInt(activeFilters.priceMax, 10) : undefined,
+        priceMin: parseMaximumBudget(activeFilters.priceMin) ?? undefined,
+        priceMax: parseMaximumBudget(activeFilters.priceMax) ?? undefined,
         bedrooms: parseCountFilter(activeFilters.bedrooms),
         bathrooms: parseCountFilter(activeFilters.bathrooms),
         propertyType:
@@ -201,6 +228,7 @@ export function PropertySearch() {
         sort: activeFilters.sort as "newest" | "price_asc" | "price_desc" | "featured",
         verifiedOnly: activeFilters.verifiedOnly,
         featuredOnly: activeFilters.featuredOnly,
+        amenities: activeFilters.amenities,
       };
 
       const offset = (currentPage - 1) * PAGE_SIZE;
@@ -252,6 +280,9 @@ export function PropertySearch() {
 
   const handleApplyFilters = () => {
     const nextParams = new URLSearchParams(searchParams);
+
+    nextParams.delete("amenity");
+    filters.amenities.forEach((value) => nextParams.append("amenity", value));
 
     if (filters.priceMin) nextParams.set("priceMin", filters.priceMin);
     else nextParams.delete("priceMin");
@@ -319,6 +350,7 @@ export function PropertySearch() {
 
   const clearFilters = () => {
     const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("amenity");
     nextParams.delete("priceMin");
     nextParams.delete("priceMax");
     nextParams.delete("bedrooms");
@@ -374,6 +406,12 @@ export function PropertySearch() {
   const activeFilters = useMemo(() => {
     const list: Array<{ label: string; onRemove: () => void }> = [];
 
+    searchParams.getAll("amenity").forEach((value) => list.push({ label: value, onRemove: () => {
+      const next = new URLSearchParams(searchParams);
+      const remaining = next.getAll("amenity").filter((item) => item !== value);
+      next.delete("amenity"); remaining.forEach((item) => next.append("amenity", item));
+      next.set("page", "1"); setSearchParams(next);
+    } }));
     const q = searchParams.get("q");
     if (q) {
       list.push({
@@ -562,7 +600,7 @@ export function PropertySearch() {
     else nextParams.delete("q");
     if (searchPropertyType !== "any") nextParams.set("propertyType", searchPropertyType);
     else nextParams.delete("propertyType");
-    if (searchBudget.trim()) nextParams.set("priceMax", searchBudget.replace(/\D/g, ""));
+    if (parseMaximumBudget(searchBudget) !== null) nextParams.set("priceMax", String(parseMaximumBudget(searchBudget)));
     else nextParams.delete("priceMax");
     nextParams.set("page", "1");
     setSearchParams(nextParams);
@@ -598,7 +636,7 @@ export function PropertySearch() {
           budget={searchBudget}
           onBudgetChange={(value) => {
             const nextParams = new URLSearchParams(searchParams);
-            if (value.trim()) nextParams.set("priceMax", value.replace(/\D/g, ""));
+            if (parseMaximumBudget(value) !== null) nextParams.set("priceMax", String(parseMaximumBudget(value)));
             else nextParams.delete("priceMax");
             setSearchParams(nextParams);
           }}
@@ -769,7 +807,7 @@ export function PropertySearch() {
             </aside>
           ) : (
             <Sheet open={showFilters} onOpenChange={setShowFilters}>
-              <SheetContent side="left" className="w-full max-w-sm overflow-y-auto p-0">
+              <SheetContent side="left" className="marketplace-filter-sheet w-full max-w-sm overflow-y-auto p-0">
                 <SearchFiltersPanel
                   filters={filters}
                   setFilters={setFilters}
@@ -1109,6 +1147,13 @@ function SearchFiltersPanel({
           </NativeSelectControl>
         </div>
 
+        <fieldset className="border-t border-surface-border pt-5">
+          <legend className="pt-4 text-xs font-semibold text-ink">Amenities</legend>
+          <p className="mt-1 text-xs text-ink-muted">Only properties that explicitly list these features.</p>
+          {[["parking", "Parking"], ["furnished", "Furnished"], ["pets allowed", "Pets allowed"]].map(([value, label]) => <label key={value} className="flex min-h-11 items-center gap-3 text-sm text-ink">
+            <input type="checkbox" checked={filters.amenities.includes(value)} onChange={(event) => setFilters({ ...filters, amenities: event.target.checked ? [...filters.amenities, value] : filters.amenities.filter((item) => item !== value) })} />{label}
+          </label>)}
+        </fieldset>
         <div className="border-t border-surface-border pt-5 space-y-2.5">
           <label className="block text-xs font-black text-ink-muted uppercase tracking-[0.12em] mb-2">Quick Filters</label>
           <label className="flex items-center gap-3 text-xs text-ink cursor-pointer group">

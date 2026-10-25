@@ -172,3 +172,9 @@
   .desktop-shell .search-segment-label { font-size: 10px; }
   .desktop-shell .search-orb { min-width: 44px; min-height: 44px; }
 }
+
+.marketplace-filter-sheet { z-index: 80; }
+.marketplace-filter-sheet > button:last-child { display: none; }
+.marketplace-filter-sheet .desktop-filters-panel { position: relative; top: 0; max-height: none; min-height: 100%; border-radius: 0; }
+.marketplace-filter-sheet .desktop-filters-panel > div:first-child { top: 0; border-radius: 0; }
+.marketplace-filter-sheet .desktop-filters-panel > div:last-child { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }

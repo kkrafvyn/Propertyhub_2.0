@@ -1,3 +1,4 @@
+import { matchesMarketplaceAmenities } from "./marketplace-amenities";
 import { supabase } from "./supabase";
 import type { Database } from "./database.types";
 import { normalizePropertyCategory } from "./property-category";
@@ -121,6 +122,7 @@ export const listingService = {
       sort?: "newest" | "price_asc" | "price_desc" | "featured";
       verifiedOnly?: boolean;
       featuredOnly?: boolean;
+      amenities?: string[];
     },
     limit = 20,
     offset = 0
@@ -150,6 +152,7 @@ export const listingService = {
       if (filters.priceMax && listing.price > filters.priceMax) return false;
       if (filters.listingType && listing.listing_type !== filters.listingType) return false;
       if (normalizedPropertyType && normalizedListingCategory !== normalizedPropertyType) return false;
+      if (!matchesMarketplaceAmenities(property?.amenities, filters.amenities)) return false;
       if (filters.bedrooms && (property?.bedrooms || 0) < filters.bedrooms) return false;
       if (filters.bathrooms && (property?.bathrooms || 0) < filters.bathrooms) return false;
       if (normalizedLocation && !locationHaystack.includes(normalizedLocation)) return false;

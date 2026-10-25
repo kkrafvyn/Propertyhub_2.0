@@ -1367,12 +1367,15 @@ export function PropertyDetail() {
                   <Button
                     variant="outline"
                     size="sm"
-                    aria-label="Start inquiry"
+                    aria-label="Check availability"
                     className="rounded-xl border-surface-border hover:border-primary/40 hover:bg-primary/5 text-foreground flex items-center justify-center gap-1.5 text-xs font-medium"
-                    onClick={() => setShowContactForm(true)}
+                    onClick={() => {
+                      setContactForm((current) => ({ ...current, message: current.message || "Hi, is this property still available? Please confirm availability and the next viewing times." }));
+                      setShowContactForm(true);
+                    }}
                   >
                     <MessageCircle className="w-3.5 h-3.5 text-primary" />
-                    Start inquiry
+                    Check availability
                   </Button>
                   <Button
                     variant="outline"
