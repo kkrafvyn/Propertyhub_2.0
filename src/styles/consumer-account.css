@@ -1,0 +1,19 @@
+/* Shared account surfaces follow the marketplace's existing theme tokens. */
+@media (max-width: 1023px) {
+  .auth-shell { background: var(--background); }
+  .auth-shell .auth-mobile-background { display: none; }
+  .auth-shell .auth-content { min-height: 100dvh; padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)); }
+  .auth-shell .auth-content [class*="text-white"] { color: var(--ink-secondary); }
+  .auth-shell .auth-content h1 { font-family: var(--font-sans); font-weight: 600; }
+  .auth-shell .auth-content h1, .auth-shell .auth-content label { color: var(--ink); }
+  .auth-shell .auth-form-card { background: var(--surface); border: 1px solid var(--surface-border); padding: 20px; border-radius: 16px; box-shadow: none; backdrop-filter: none; }
+  .auth-shell input:not([type="checkbox"]) { min-height: 48px; font-size: 16px; color: var(--ink); background: var(--surface-subtle); border-color: var(--surface-border); }
+  .auth-shell .auth-form-card span[class*="bg-neutral-900"] { background: var(--surface); color: var(--ink-secondary); }
+  .auth-shell input::placeholder { color: var(--ink-muted); }
+  .auth-shell .auth-content button[type="submit"] { background: var(--primary); color: var(--primary-foreground); min-height: 48px; box-shadow: none; }
+  .consumer-account h1 { font-family: var(--font-sans); font-size: 26px; letter-spacing: -.025em; }
+  .consumer-account .app-surface-card, .consumer-account .consumer-panel-card { border-radius: 14px; border: 1px solid var(--surface-border); box-shadow: none; }
+  .consumer-account input:not([type="checkbox"]), .consumer-account textarea, .consumer-account select { font-size: 16px; min-height: 44px; }
+  .consumer-account button { min-height: 44px; }
+  .consumer-account main { overflow-wrap: anywhere; }
+}

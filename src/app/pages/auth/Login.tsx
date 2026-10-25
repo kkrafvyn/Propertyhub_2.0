@@ -201,10 +201,11 @@ export function Login() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+          <label htmlFor="login-email" className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
             Email address
           </label>
           <Input
+            id="login-email"
             type="email"
             placeholder="name@domain.com"
             value={email}
@@ -217,7 +218,7 @@ export function Login() {
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
+            <label htmlFor="login-password" className="block text-xs font-medium text-white/90 lg:text-muted-foreground">
               Password
             </label>
             <Link
@@ -229,6 +230,7 @@ export function Login() {
           </div>
           <div className="relative">
             <Input
+              id="login-password"
               type={showPassword ? "text" : "password"}
               placeholder="••••••••••••"
               value={password}
@@ -240,7 +242,7 @@ export function Login() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 lg:text-muted-foreground hover:text-white lg:hover:text-foreground transition-colors p-1"
+              className="absolute right-1 top-1/2 flex min-h-11 min-w-11 items-center justify-center -translate-y-1/2 text-white/70 lg:text-muted-foreground hover:text-white lg:hover:text-foreground transition-colors p-1"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (

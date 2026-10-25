@@ -1,3 +1,4 @@
+import "../../../styles/consumer-account.css";
 import type { ReactNode } from "react";
 import { Capacitor } from "@capacitor/core";
 import { DesktopShell } from "../baytmiftah/DesktopShell";
@@ -34,7 +35,7 @@ export function PageLayout({
   if (variant === "consumer") {
     if (!shouldShowShell) {
       return (
-        <div className="consumer-portal min-h-screen">
+        <div className="consumer-portal consumer-account min-h-screen">
           <div
             className={`px-4 mx-auto ${maxWidthClassName}`}
             style={{ paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))" }}
@@ -47,7 +48,7 @@ export function PageLayout({
 
     return (
       <DesktopShell minimal showFooter={false}>
-        <div className={`mx-auto w-full ${maxWidthClassName}`}>{content}</div>
+        <div className={`consumer-account mx-auto w-full ${maxWidthClassName}`}>{content}</div>
       </DesktopShell>
     );
   }

@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Link } from 'react-router'
 import { useTranslation } from '../../../i18n/LocaleContext'
 import { CONSUMER_ROUTES, messageThreadPath } from '../../../lib/consumer-routes'
@@ -32,7 +33,7 @@ export function InboxRow({ conversation, listingImage, to, variant = 'mobile' })
   const listingTitle = conversation.listingTitle || conversation.listing_title
   const lastMessage = conversation.lastMessage || conversation.last_message
   const time = formatRelativeTime(conversation.updated_at)
-  const unread = conversation.unread ?? 0
+  const unread = Number(conversation.unread ?? 0)
 
   if (variant === 'desktop') {
     return (
@@ -53,7 +54,7 @@ export function InboxRow({ conversation, listingImage, to, variant = 'mobile' })
           <img src={listingImage} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
         )}
         {unread > 0 && (
-          <span className="self-center rounded-full bg-brand-accent px-2 py-0.5 text-xs font-semibold text-white">
+          <span aria-label={`${unread} unread messages`} className="self-center rounded-full bg-brand-accent px-2 py-0.5 text-xs font-semibold text-white">
             {unread}
           </span>
         )}
@@ -70,7 +71,7 @@ export function InboxRow({ conversation, listingImage, to, variant = 'mobile' })
           <div className="flex shrink-0 items-center gap-2">
             {time && <span className="text-xs text-ink-secondary">{time}</span>}
             {unread > 0 && (
-              <span className="rounded-full bg-mobile-forest px-2 py-0.5 text-xs font-semibold text-white">
+              <span aria-label={`${unread} unread messages`} className="rounded-full bg-mobile-forest px-2 py-0.5 text-xs font-semibold text-white">
                 {unread}
               </span>
             )}
@@ -91,11 +92,16 @@ export function InboxList({
   listingImages = {},
   basePath = CONSUMER_ROUTES.messages,
   variant = 'mobile',
-  empty,
+  empty = null,
   className = '',
 }) {
   const { t } = useTranslation()
-
+  const [query, setQuery] = useState('')
+  const [unreadOnly, setUnreadOnly] = useState(false)
+  const visible = conversations.filter((conversation) => {
+    const text = [conversation.participant, conversation.participant_name, conversation.listingTitle, conversation.listing_title, conversation.lastMessage, conversation.last_message].filter(Boolean).join(' ').toLowerCase()
+    return (!unreadOnly || Number(conversation.unread) > 0) && text.includes(query.trim().toLowerCase())
+  })
   if (!conversations.length) {
     return empty ?? (
       <p className="p-4 text-sm text-ink-secondary">{t('messagesPage.emptyInbox')}</p>
@@ -106,7 +112,13 @@ export function InboxList({
 
   return (
     <div className={wrapClass}>
-      {conversations.map((conv) => {
+      <div className="space-y-3 border-b border-surface-border p-4">
+        <label className="sr-only" htmlFor={`inbox-search-${variant}`}>Search conversations</label>
+        <input id={`inbox-search-${variant}`} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search people, properties or messages" className="min-h-11 w-full rounded-lg border border-surface-border bg-surface px-3 text-sm text-ink" />
+        <button type="button" aria-pressed={unreadOnly} onClick={() => setUnreadOnly(!unreadOnly)} className="min-h-11 rounded-lg border border-surface-border px-3 text-sm font-semibold text-ink">{unreadOnly ? 'Showing unread' : 'Unread only'}</button>
+      </div>
+      {!visible.length && <p role="status" className="p-4 text-sm text-ink-secondary">No conversations match. Try another search or turn off Unread only.</p>}
+      {visible.map((conv) => {
         const listingId = conv.listingId || conv.listing_id
         return (
           <InboxRow

@@ -47,7 +47,17 @@ export const messageService = {
       console.error('Failed to load conversations:', error)
       return []
     }
-    return (data || []).map(sortMessages)
+    const conversations = (data || []).map(sortMessages)
+    if (!conversations.length) return conversations
+    // Listing context is optional; inaccessible/deleted listings do not hide the inbox.
+    const { data: contexts } = await supabase.from('organization_conversations')
+      .select('conversation_id, deal_case:deal_cases(listing:listings(id, title, property:properties(*)))')
+      .in('conversation_id', conversations.map((conversation) => conversation.id))
+    const byId = new Map((contexts || []).map((context: any) => [context.conversation_id, context.deal_case?.listing]))
+    return conversations.map((conversation) => {
+      const listing = byId.get(conversation.id) as any
+      return { ...conversation, listing_id: listing?.id || (conversation as any).listing_id, listing_title: listing?.property?.address || listing?.title || (conversation as any).listing_title, listing }
+    })
   },
 
   async getOrganizationInbox(organizationId: string) {

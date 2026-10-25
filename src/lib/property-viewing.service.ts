@@ -1,3 +1,4 @@
+import { assertFutureViewing } from "./viewing-calendar";
 import { supabase } from "./supabase";
 import { communicationService } from "./communication.service";
 import { organizationService } from "./organization.service";
@@ -45,6 +46,7 @@ export const propertyViewingService = {
     contactEmail?: string;
     listingType?: string;
   }) {
+    assertFutureViewing(input.requestedDateTime);
     const openStatuses = ["pending", "approved"];
     const { data: existingDealCase, error: existingDealCaseError } = await supabase
       .from("deal_cases")

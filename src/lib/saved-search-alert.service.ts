@@ -59,8 +59,8 @@ function isNotificationDue(lastNotifiedAt: string | null | undefined, frequency:
 function toListingFilters(alert: any) {
   return {
     location: alert.location_query || undefined,
-    priceMin: alert.price_min || undefined,
-    priceMax: alert.price_max || undefined,
+    priceMin: alert.price_min ?? undefined,
+    priceMax: alert.price_max ?? undefined,
     bedrooms: alert.bedrooms || undefined,
     bathrooms: alert.bathrooms || undefined,
     propertyType: alert.property_type || undefined,
@@ -204,8 +204,8 @@ export const savedSearchAlertService = {
     if (alert.location_query) params.set("q", alert.location_query);
     if (alert.listing_type) params.set("listingType", alert.listing_type);
     if (alert.property_type) params.set("propertyType", alert.property_type);
-    if (alert.price_min) params.set("priceMin", String(alert.price_min));
-    if (alert.price_max) params.set("priceMax", String(alert.price_max));
+    if (alert.price_min != null) params.set("priceMin", String(alert.price_min));
+    if (alert.price_max != null) params.set("priceMax", String(alert.price_max));
     if (alert.bedrooms) params.set("bedrooms", String(alert.bedrooms));
     if (alert.bathrooms) params.set("bathrooms", String(alert.bathrooms));
     const query = params.toString();

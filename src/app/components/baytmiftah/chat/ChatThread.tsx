@@ -1,5 +1,5 @@
 import { Textarea } from "@/app/components/ui/textarea";
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { Phone, Video as VideoIcon } from 'lucide-react'
 import { useAuth } from '../../../context/AuthContext'
@@ -69,6 +69,7 @@ export default function ChatThread({
   const { t } = useTranslation()
   const { user, profile } = useAuth()
   const [draft, setDraft] = useState('')
+  useEffect(() => { setDraft('') }, [conversationId])
   const selfLabel = profile?.full_name || user?.user_metadata?.full_name || 'You'
   const { conversation, sending, error, live, send, isOwnMessage } = useChatThread(conversationId, {
     selfLabel: mode === 'agent' ? (profile?.full_name || 'Agent') : selfLabel,
@@ -84,7 +85,7 @@ export default function ChatThread({
   }
 
   function handleKeyDown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
       handleSubmit(e)
     }
@@ -134,9 +135,12 @@ export default function ChatThread({
       </div>
 
       {error && (
-        <p className="px-4 pb-2 text-sm text-red-600">{error}</p>
+        <p role="alert" className="px-4 pb-2 text-sm text-red-600">{error}</p>
       )}
 
+      {mode === 'consumer' && <div className="flex shrink-0 gap-2 overflow-x-auto border-t border-surface-border px-4 py-2" aria-label="Suggested replies">
+        {['Is this property still available?', 'Could we arrange a viewing?', 'Please confirm the total upfront cost.'].map((reply) => <button key={reply} type="button" disabled={sending} onClick={() => setDraft(reply)} className="min-h-11 shrink-0 rounded-full border border-surface-border px-3 text-xs text-ink">{reply}</button>)}
+      </div>}
       <form
         onSubmit={handleSubmit}
         className={`flex items-end gap-2 border-t border-surface-border bg-surface p-4 ${
@@ -147,6 +151,7 @@ export default function ChatThread({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={handleKeyDown}
+          aria-label="Message"
           placeholder={t('messagesPage.placeholder')}
           rows={1}
           className={`${inputClass} ${inputRounded} max-h-32 min-h-[44px] flex-1 resize-none py-3`}

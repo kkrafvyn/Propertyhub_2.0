@@ -1,3 +1,4 @@
+import { ViewingActions } from "../../components/consumer/ViewingActions";
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import {
@@ -1183,7 +1184,9 @@ export function UserDashboard() {
               return {
                 id: conversation.id,
                 participant: counterpart?.full_name || counterpart?.email || "Conversation",
-                lastMessage: latestMessage?.content,
+                listingId: conversation.listing_id || conversation.deal_case?.listing?.id,
+                listingTitle: conversation.listing_title || conversation.deal_case?.listing?.property?.address,
+                lastMessage: latestMessage?.content || "Start the conversation",
                 updated_at: conversation.last_message_at || latestMessage?.created_at,
                 unread:
                   conversation.messages?.filter(
@@ -1191,6 +1194,7 @@ export function UserDashboard() {
                   ).length || 0,
               };
             })}
+            listingImages={Object.fromEntries(conversations.filter((conversation) => conversation.listing?.property).map((conversation) => [conversation.listing.id, getPropertyCoverImage(conversation.listing.property)]))}
             variant="desktop"
             className="divide-y divide-border"
             empty={
@@ -1401,6 +1405,7 @@ export function UserDashboard() {
                 </Link>
               )}
             </div>
+            <ViewingActions viewing={viewing} />
           </Card>
         ))}
       </div>
@@ -1447,6 +1452,16 @@ export function UserDashboard() {
                 <Link to={savedSearchAlertService.buildSearchUrlFromAlert(alert)}>
                   <Button variant="default">View matches</Button>
                 </Link>
+                <label className="text-xs text-ink-secondary">Frequency
+                  <select aria-label={`Alert frequency for ${alert.title}`} value={alert.frequency} onChange={async (event) => {
+                    try { const updated = await savedSearchAlertService.updateAlert(alert.id, { frequency: event.target.value }); setSavedAlerts((current) => current.map((item) => item.id === alert.id ? updated : item)); toast.success("Alert frequency updated."); }
+                    catch { toast.error("Could not update alert frequency."); }
+                  }} className="ml-2 min-h-11 rounded-lg border border-surface-border bg-surface px-3 text-sm text-ink"><option value="immediate">As soon as checked</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select>
+                </label>
+                <Button variant="outline" onClick={async () => {
+                  try { const updated = await savedSearchAlertService.refreshAlert(alert); setSavedAlerts((current) => current.map((item) => item.id === alert.id ? updated : item)); toast.success("Matches refreshed."); }
+                  catch { toast.error("Could not refresh matches."); }
+                }}>Check matches</Button>
                 <Button variant="outline" onClick={() => void handleToggleAlert(alert)}>
                   {alert.is_active ? "Pause" : "Resume"}
                 </Button>

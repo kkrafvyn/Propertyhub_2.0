@@ -102,6 +102,7 @@ export function PropertySearch() {
   const [loading, setLoading] = useState(true);
   const [listings, setListings] = useState<any[]>([]);
   const [totalResults, setTotalResults] = useState(0);
+  const [alertFrequency, setAlertFrequency] = useState<"immediate" | "daily" | "weekly">("daily");
   const [savingAlert, setSavingAlert] = useState(false);
   const [userAlerts, setUserAlerts] = useState<any[]>([]);
   const [savedListingIds, setSavedListingIds] = useState<Set<string>>(new Set());
@@ -244,6 +245,7 @@ export function PropertySearch() {
   };
 
   const handleSaveAlert = async () => {
+    const filters = buildFiltersFromSearchParams(searchParams);
     if (!user) {
       toast.error(t("searchPage.loginSaveSearch"));
       navigate("/login", {
@@ -254,15 +256,22 @@ export function PropertySearch() {
       return;
     }
 
+    if (filters.listingType === "short_stay" || filters.amenities.length || filters.region !== "all" || filters.agency || filters.verifiedOnly || filters.featuredOnly) {
+      toast.error("Alerts support rent, buy or lease searches with location, price, property type and room counts. Remove the other filters before saving."); return;
+    }
+    if ([filters.priceMin, filters.priceMax].some((value) => value && !Number.isInteger(parseMaximumBudget(value)))) {
+      toast.error("Use whole-number budget limits for saved alerts."); return;
+    }
     try {
       setSavingAlert(true);
       const alert = await savedSearchAlertService.createAlert({
         userId: user.id,
+        frequency: alertFrequency,
         locationQuery: searchParams.get("q") || undefined,
         listingType: filters.listingType as "rental" | "sale" | "lease",
         propertyType: filters.propertyType !== "all" ? filters.propertyType : null,
-        priceMin: filters.priceMin ? parseInt(filters.priceMin, 10) : null,
-        priceMax: filters.priceMax ? parseInt(filters.priceMax, 10) : null,
+        priceMin: parseMaximumBudget(filters.priceMin),
+        priceMax: parseMaximumBudget(filters.priceMax),
         bedrooms: parseCountFilter(filters.bedrooms) ?? null,
         bathrooms: parseCountFilter(filters.bathrooms) ?? null,
         initialMatchCount: totalResults,
@@ -669,6 +678,8 @@ export function PropertySearch() {
               <p className="text-xs text-ink-muted mt-0.5">{resultSummary}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <label className="sr-only" htmlFor="alert-frequency">Saved search frequency</label>
+              <select id="alert-frequency" value={alertFrequency} onChange={(event) => setAlertFrequency(event.target.value as typeof alertFrequency)} className="min-h-11 max-w-[160px] rounded-lg border border-surface-border bg-surface px-2 text-xs text-ink"><option value="immediate">As soon as checked</option><option value="daily">Daily alerts</option><option value="weekly">Weekly alerts</option></select>
               <Button
                 variant="outline"
                 size="sm"
