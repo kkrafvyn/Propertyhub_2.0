@@ -160,9 +160,14 @@ export function MobileAppShell() {
 
   const cards = listings.map(mapListingToCard);
   const homeListings = filterHomeListings(cards, txTab, propType);
-  const seeAllTo = exploreModeUrl(
+  const modeSearchUrl = exploreModeUrl(
     txTab === "buy" ? "buy" : txTab === "lease" ? "lease" : txTab === "stay" ? "shortStay" : "rent",
   );
+
+  const searchParams = new URLSearchParams(modeSearchUrl.split("?")[1]);
+  if (propType && propType !== "shortStay") searchParams.set("propertyType", propType);
+  if (propType === "shortStay") searchParams.set("listingType", "short_stay");
+  const seeAllTo = `/search?${searchParams.toString()}`;
 
   const handleTabPress = (tab: { id: string; href: string }) => {
     if (tab.id === "home") {

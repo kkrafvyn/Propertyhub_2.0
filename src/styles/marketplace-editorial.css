@@ -131,9 +131,6 @@
   .mobile-tab-button { min-height: 56px; }
 }
 
-@media (max-width: 767px) {
-  body:has(.mobile-tab-bar) .bm-ai-launcher[aria-expanded="false"] { display: none; }
-}
 
 @media (max-width: 767px) {
   .mobile-search-empty { padding: 20px; box-shadow: none; text-align: start; }
@@ -141,4 +138,37 @@
   .mobile-search-empty h3 { font-family: inherit; font-size: 18px; }
   .mobile-search-empty p { margin-bottom: 16px; }
   .mobile-search-empty > div:last-child > div:last-child { justify-content: flex-start; }
+}
+
+/* Consistent phone spacing and readable controls, using the existing brand tokens. */
+@media (max-width: 767px) {
+  .mobile-discovery .mobile-content { padding-top: 0; }
+  .mobile-discovery .mobile-content > header { min-height: 64px; background: var(--background); }
+  .mobile-discovery-heading { padding-top: 18px; padding-bottom: 14px; }
+  .mobile-discovery-heading > p { font-size: 10px; letter-spacing: .12em; }
+  .mobile-discovery .mobile-content > form { min-height: 56px; border-color: var(--ink-muted); }
+  .mobile-discovery input[type="search"], .desktop-shell input, .desktop-shell select { font-size: 16px; }
+  .mobile-discovery .mobile-type-scroll { gap: 8px; padding-inline: 16px; }
+  .mobile-discovery .mobile-type-scroll > button { width: 76px; min-height: 76px; }
+  .mobile-discovery .mobile-type-scroll > button > span:last-child { font-size: 11px; }
+  .mobile-discovery .mobile-type-scroll > button > span:first-child { border-radius: 14px; }
+  .mobile-discovery .mobile-discovery-grid .mobile-promo-card { height: 196px; }
+  .mobile-discovery .mobile-promo-card p:last-child { line-height: 1.5; font-size: 12px; }
+  .mobile-discovery .marketplace-property-info { padding: 14px; }
+  .mobile-discovery .marketplace-property-price { font-size: 23px; }
+  .mobile-discovery .mobile-agency-chip { padding: 14px; border-radius: 12px; }
+  .mobile-tab-bar { padding-inline: 12px; }
+  .mobile-tab-bar-inner { padding: 6px; gap: 4px; }
+  .mobile-tab-button { min-height: 58px; }
+  .mobile-tab-button:focus-visible { outline: 2px solid var(--brand-orange); outline-offset: -2px; border-radius: 12px; }
+  .mobile-tab-button.is-active .mobile-tab-label { text-decoration: none; }
+  .mobile-tab-button.is-active { background: var(--surface-hover); border-radius: 12px; }
+  .mobile-tab-active-pill { background: transparent; }
+  .mobile-tab-label { font-size: 11px; }
+  .bm-ai-launcher { width: 44px; height: 44px; border-color: var(--ink-muted); box-shadow: 0 3px 12px rgb(0 0 0 / 18%); }
+  .desktop-shell .desktop-header > div { padding-inline: 16px; }
+  .desktop-shell .search-pill { height: 64px; }
+  .desktop-shell .search-segment { padding-inline: 10px; gap: 8px; }
+  .desktop-shell .search-segment-label { font-size: 10px; }
+  .desktop-shell .search-orb { min-width: 44px; min-height: 44px; }
 }
