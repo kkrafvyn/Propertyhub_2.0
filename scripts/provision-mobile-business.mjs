@@ -36,7 +36,7 @@ function replaceInFile(filePath, replacements) {
   if (!fs.existsSync(filePath)) return;
   let content = fs.readFileSync(filePath, 'utf8');
   for (const [from, to] of replacements) {
-    content = content.split(from).join(to);
+    content = from instanceof RegExp ? content.replace(from, to) : content.split(from).join(to);
   }
   fs.writeFileSync(filePath, content);
 }
@@ -53,8 +53,7 @@ function applyBusinessLauncherIcons(dest) {
   for (const launcherFile of ['ic_launcher.xml', 'ic_launcher_round.xml']) {
     const launcherPath = path.join(dest, 'app', 'src', 'main', 'res', 'mipmap-anydpi-v26', launcherFile);
     replaceInFile(launcherPath, [
-      ['@drawable/ic_launcher_foreground_workspace_workspace', '@drawable/ic_launcher_foreground_workspace'],
-      ['@drawable/ic_launcher_foreground', '@drawable/ic_launcher_foreground_workspace'],
+      [/@drawable\/ic_launcher_foreground(?:_workspace)*/g, '@drawable/ic_launcher_foreground_workspace'],
     ]);
   }
 

@@ -37,6 +37,10 @@ if (variant === 'business' && env.MOBILE_SYNC_SKIP_PROVISION !== '1') {
   execFileSync(process.execPath, ['scripts/provision-mobile-business.mjs'], { cwd: ROOT, stdio: 'inherit' });
 }
 
+// Regenerate launch assets before copying the selected app into native projects.
+execFileSync(process.execPath, ['scripts/export-brand-icons.mjs'], { cwd: ROOT, stdio: 'inherit' });
+execFileSync(process.execPath, ['scripts/apple/export-store-icons.mjs'], { cwd: ROOT, stdio: 'inherit' });
+
 console.log(`\n📱 Syncing ${variant} mobile app (${configFile})…\n`);
 
 execFileSync(process.execPath, ['node_modules/vite/bin/vite.js', 'build'], { cwd: ROOT, stdio: 'inherit', env });

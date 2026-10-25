@@ -1,4 +1,4 @@
-const CACHE_NAME = "baytmiftah-v3";
+const CACHE_NAME = "baytmiftah-v4-brand";
 
 /** Static shell only — never cache Vite hashed bundles under /assets/. */
 const APP_SHELL = [

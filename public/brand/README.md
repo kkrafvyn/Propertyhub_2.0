@@ -41,3 +41,18 @@ npm run cap:assets
 ```
 
 Sources live in `assets/splash.svg` and `assets/icon-only.svg`.
+
+## Approved October 2026 artwork
+
+`source/baytmiftah-brand-reference.jpg` preserves the supplied brand sheet. `logo-approved.png` is the original full logo cropped from that sheet, used by the shared app header. App icons use a vector adaptation of its tapered arc and offset dot, in consumer green and Workspace navy.
+
+Regenerate assets after editing the icon SVGs:
+
+```sh
+node scripts/apple/export-store-icons.mjs
+node scripts/generate-desktop-icon.mjs
+node scripts/play/export-store-icons.mjs
+node scripts/export-brand-icons.mjs
+```
+
+Native store icons take effect after rebuilding and uploading each app.

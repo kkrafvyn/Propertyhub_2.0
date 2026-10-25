@@ -43,6 +43,8 @@ export function mobileBrandPlugin() {
           `<meta name="apple-mobile-web-app-title" content="${brand.appName}" />`,
         )
         .replace(/href="\/manifest\.webmanifest"/, `href="${brand.manifest}"`)
+        .replace(/href="\/favicon\.svg"/, brand === BRANDS.business ? 'href="/brand/app-icon-workspace.svg"' : 'href="/favicon.svg"')
+        .replace(/href="\/icons\//g, brand === BRANDS.business ? 'href="/icons/workspace/' : 'href="/icons/')
         .replace(/<title>[^<]*<\/title>/, `<title>${brand.appName}</title>`);
 
       next = next.replace(

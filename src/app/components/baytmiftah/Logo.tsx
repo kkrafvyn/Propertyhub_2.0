@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { useTheme } from "../../context/ThemeContext";
 import { isBusinessMobileApp } from "../../../lib/mobile-app";
 import { isDesktopWorkspaceApp } from "../../../lib/desktop-app";
-import { BRAND_NAME, SPLASH_WORDMARK } from "./splash/constants";
+import { BRAND_NAME } from "./splash/constants";
 
 const BRAND_GREEN = "#0F2922";
 const WORKSPACE_NAVY = "#0B2545";
@@ -35,12 +35,10 @@ export function LogoMark({
         {...props}
       >
         <rect width="48" height="48" rx="10.5" fill={WORKSPACE_NAVY} />
-        <circle cx="24" cy="15" r="5.5" fill="#FFFFFF" />
+        <circle cx="19.6" cy="21.75" r="2.72" fill="#FFFFFF" />
         <path
-          d="M9 33.5Q24 24.5 39 33.5"
-          stroke="#FFFFFF"
-          strokeWidth="2.25"
-          strokeLinecap="round"
+          d="M4.5 30.56Q24 19.5 43.5 30.56Q24 23.72 4.5 30.56Z"
+          fill="#FFFFFF"
         />
       </svg>
     );
@@ -57,12 +55,10 @@ export function LogoMark({
       aria-hidden="true"
       {...props}
     >
-      <circle cx="24" cy="15" r="5.5" fill={fill} />
+      <circle cx="19.6" cy="21.75" r="2.72" fill={fill} />
       <path
-        d="M9 33.5Q24 24.5 39 33.5"
-        stroke={fill}
-        strokeWidth="2.25"
-        strokeLinecap="round"
+        d="M4.5 30.56Q24 19.5 43.5 30.56Q24 23.72 4.5 30.56Z"
+        fill={fill}
       />
     </svg>
   );
@@ -87,23 +83,20 @@ export function Logo({
   variant,
   disableLink = false,
 }: LogoProps) {
-  const { resolvedTheme } = useTheme();
   const logoVariant = resolveLogoVariant(variant);
   const useDesktopAsset = isDesktopWorkspaceApp();
-  const textSize = size === "sm" ? "text-sm" : "text-lg";
   const markSize = size === "sm" ? "h-8 w-8" : "h-9 w-9";
-  const textColor =
-    logoVariant === "workspace"
-      ? inverted || resolvedTheme === "dark"
-        ? "text-white"
-        : "text-[#0B2545]"
-      : inverted || resolvedTheme === "dark"
-        ? "text-white"
-        : "text-brand-forest";
 
   const content = (
     <>
-      {useDesktopAsset ? (
+      {showText ? (
+        <img
+          src={`${import.meta.env.BASE_URL}brand/logo-approved.png`}
+          alt=""
+          className={`${size === "sm" ? "h-12 w-36" : "h-16 w-48"} shrink-0 rounded bg-white object-contain`}
+          aria-hidden="true"
+        />
+      ) : useDesktopAsset ? (
         <img
           src={DESKTOP_LOGO_SRC}
           alt=""
@@ -113,14 +106,7 @@ export function Logo({
       ) : (
         <LogoMark className={markSize} inverted={inverted} variant={logoVariant} />
       )}
-      {showText && (
-        <span
-          className={`${textSize} font-bold tracking-[0.08em] ${textColor}`}
-          aria-hidden="true"
-        >
-          {SPLASH_WORDMARK}
-        </span>
-      )}
+
     </>
   );
 
