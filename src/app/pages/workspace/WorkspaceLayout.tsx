@@ -117,7 +117,7 @@ import {
   mapMemberRoleToMobileJobRole,
   shouldUseBusinessMobileShell,
 } from "../../lib/business-mobile-nav";
-import { isElectron } from "../../../lib/surface-detection";
+import { isDesktopWorkspaceApp } from "../../../lib/desktop-app";
 import { persistDesktopLastOrg } from "../../../lib/desktop-navigation";
 import {
   WORKSPACE_ENTRY_PATH,
@@ -907,7 +907,7 @@ export function WorkspaceLayout() {
           />
         );
       case "":
-        if (isElectron()) {
+        if (isDesktopWorkspaceApp()) {
           return (
             <DesktopMyWorkHome
               organization={organization}
@@ -1354,7 +1354,7 @@ export function WorkspaceLayout() {
     orgHomeSlug &&
     orgHomeSlug !== "" &&
     canAccessWorkspaceSlug(orgHomeSlug, accessRole, currentPermissions, enabledCapabilities) &&
-    !isElectron()
+    !isDesktopWorkspaceApp()
   ) {
     return <Navigate to={getWorkspaceRoute(organization.slug, orgHomeSlug)} replace />;
   }
@@ -1492,7 +1492,7 @@ export function WorkspaceLayout() {
     </>
   );
 
-  if (isElectron()) {
+  if (isDesktopWorkspaceApp()) {
     return (
       <WorkspaceMfaGate role={mfaGateRole} permissions={navPermissions}>
         <BusinessDesktopShell organizationName={organization.name}>

@@ -21,7 +21,7 @@ export function BusinessDesktopShell({ children, organizationName }: BusinessDes
   const { organizationSlug = "" } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [version, setVersion] = useState("2.0.0");
+  const [version, setVersion] = useState(import.meta.env.VITE_APP_VERSION || "1.0.0");
 
   const currentPage = useMemo(() => {
     const parts = location.pathname.split("/").filter(Boolean);

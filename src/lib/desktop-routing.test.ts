@@ -13,6 +13,12 @@ describe("desktop routing", () => {
     expect(isDesktopConsumerOnlyRoute("/admin/users")).toBe(false);
   });
 
+  it("allows the protected security screen for workspace MFA without opening consumer routes", () => {
+    expect(isDesktopConsumerOnlyRoute("/app/security")).toBe(false);
+    expect(isDesktopConsumerOnlyRoute("/app")).toBe(true);
+    expect(isDesktopConsumerOnlyRoute("/app/security-other")).toBe(true);
+  });
+
   it("treats auth routes as allowed entry points", () => {
     expect(isDesktopAuthRoute("/login")).toBe(true);
     expect(isDesktopConsumerOnlyRoute("/login")).toBe(false);

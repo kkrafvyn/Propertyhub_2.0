@@ -170,23 +170,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     void bootstrapAuth()
 
-    // Listen for auth changes
+    // Supabase holds its auth lock while notifying listeners. Profile queries
+    // and session tracking must start after this callback returns.
+    const followUpTimers = new Set<number>()
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         const nextUser = session?.user ?? null
-        if (event === "SIGNED_OUT") {
-          await window.desktopAPI?.offlineStore?.clearAll?.()
-        }
         setUser(nextUser)
-        await ensureProfile(nextUser)
-        if (nextUser && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
-          void trackUserSession(nextUser.id)
-        }
+        const timer = window.setTimeout(() => {
+          followUpTimers.delete(timer)
+          if (event === "SIGNED_OUT") {
+            void window.desktopAPI?.offlineStore?.clearAll?.().catch(console.error)
+          }
+          void ensureProfile(nextUser)
+          if (nextUser && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+            void trackUserSession(nextUser.id).catch(console.error)
+          }
+        }, 0)
+        followUpTimers.add(timer)
       }
     )
 
     return () => {
       authListener?.subscription?.unsubscribe()
+      followUpTimers.forEach((timer) => window.clearTimeout(timer))
     }
   }, [])
 

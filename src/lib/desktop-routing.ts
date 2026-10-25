@@ -11,6 +11,8 @@ const DESKTOP_AUTH_PATHS = ["/login", "/signup", "/reset-password", "/auth", "/v
 
 /** Routes that belong to the consumer/marketing web app — not the desktop workstation. */
 export function isDesktopConsumerOnlyRoute(pathname: string): boolean {
+  // Professional users must be able to complete the workspace MFA challenge.
+  if (pathname === "/app/security") return false;
   if (DESKTOP_AUTH_PATHS.some((p) => pathname.startsWith(p))) return false;
   if (pathname.startsWith("/workspace") || pathname.startsWith("/admin")) return false;
   return true;

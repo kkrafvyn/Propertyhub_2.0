@@ -93,7 +93,7 @@ export function Logo({
         <img
           src={`${import.meta.env.BASE_URL}brand/logo-approved.png`}
           alt=""
-          className={`${size === "sm" ? "h-12 w-36" : "h-16 w-48"} shrink-0 rounded bg-white object-contain`}
+          className={`${size === "sm" ? "h-8 w-24" : "h-10 w-32"} shrink-0 rounded bg-white object-contain`}
           aria-hidden="true"
         />
       ) : useDesktopAsset ? (
