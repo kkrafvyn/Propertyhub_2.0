@@ -4,7 +4,6 @@ import { isBusinessMobileApp } from "../../../lib/mobile-app";
 import { isDesktopWorkspaceApp } from "../../../lib/desktop-app";
 import { BRAND_NAME, SPLASH_WORDMARK } from "./splash/constants";
 
-const BRAND_GREEN = "#0F2922";
 const WORKSPACE_NAVY = "#0B2545";
 const DESKTOP_LOGO_SRC = `${import.meta.env.BASE_URL}brand/app-icon-workspace.svg`;
 
@@ -21,7 +20,6 @@ export function LogoMark({
   variant,
   ...props
 }: React.SVGProps<SVGSVGElement> & { inverted?: boolean; variant?: LogoVariant }) {
-  const { resolvedTheme } = useTheme();
   const logoVariant = resolveLogoVariant(variant);
 
   if (logoVariant === "workspace") {
@@ -44,7 +42,7 @@ export function LogoMark({
     );
   }
 
-  const fill = inverted || resolvedTheme === "dark" ? "#FFFFFF" : BRAND_GREEN;
+  const fill = inverted ? "#FFFFFF" : "var(--foreground, #0F2922)";
 
   return (
     <svg
@@ -95,7 +93,7 @@ export function Logo({
         : "text-[#0B2545]"
       : inverted || resolvedTheme === "dark"
         ? "text-white"
-        : "text-brand-forest";
+        : "text-ink";
 
   const content = (
     <>
@@ -111,7 +109,7 @@ export function Logo({
       )}
       {showText && (
         <span
-          className={`${textSize} font-bold tracking-[0.08em] ${textColor}`}
+          className={`${textSize} font-semibold tracking-[0.06em] ${textColor}`}
           aria-hidden="true"
         >
           {SPLASH_WORDMARK}

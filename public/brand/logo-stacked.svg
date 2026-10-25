@@ -1,8 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" fill="none" role="img" aria-label="BaytMiftah stacked logo">
   <g transform="translate(128 18)">
-    <rect width="64" height="64" rx="18" fill="#0F2922"/>
-    <circle cx="32" cy="21" r="7" fill="#FFFFFF"/>
-    <path d="M6 43Q32 28 58 43Q32 35 6 43Z" fill="#FFFFFF"/>
+    <circle cx="32" cy="21" r="7" fill="#0F2922"/>
+    <path d="M6 43Q32 28 58 43Q32 35 6 43Z" fill="#0F2922"/>
   </g>
-  <text x="160" y="126" fill="#0F2922" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="0.16em" text-anchor="middle">BAYTMIFTAH</text>
+  <text x="160" y="126" fill="#0F2922" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="0.16em" text-anchor="middle">BAYTMIFTAH</text>
 </svg>
