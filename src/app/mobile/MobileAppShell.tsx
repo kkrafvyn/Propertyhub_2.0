@@ -1,3 +1,4 @@
+import { LocationSuggestions } from "../components/baytmiftah/LocationSuggestions";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Building2, Loader2, Search, SlidersHorizontal } from "lucide-react";
@@ -198,7 +199,8 @@ export function MobileAppShell() {
         </div>
         <form className="mx-4 mb-4 flex min-h-12 items-center gap-3 rounded-xl border border-surface-border bg-surface px-3" onSubmit={(event) => { event.preventDefault(); const query = new FormData(event.currentTarget).get("q"); navigate(`${seeAllTo}&q=${encodeURIComponent(String(query || ""))}`); }}>
           <Search className="h-5 w-5 shrink-0 text-ink-secondary" aria-hidden="true" />
-          <input name="q" type="search" aria-label="Search area or city" placeholder="Search area or city" className="min-w-0 flex-1 bg-transparent py-3 text-sm text-ink outline-none" />
+          <LocationSuggestions id="mobile-location-suggestions" />
+          <input list="mobile-location-suggestions" autoComplete="off" name="q" type="search" aria-label="Search area or city" placeholder="Search area or city" className="min-w-0 flex-1 bg-transparent py-3 text-sm text-ink outline-none" />
           <button type="submit" aria-label="Search properties" className="flex h-11 w-11 items-center justify-center rounded-lg bg-surface-hover text-ink"><Search className="h-4 w-4" /></button>
         </form>
         <MobileTransactionTabs active={txTab} onChange={setTxTab} />

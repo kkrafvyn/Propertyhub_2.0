@@ -1,6 +1,7 @@
+import { PropertyCostSummary } from "../components/baytmiftah/PropertyCostSummary";
 import { Textarea } from "@/app/components/ui/textarea";
 import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import {
   MapPin,
@@ -94,6 +95,7 @@ export function PropertyDetail() {
   const videoTourEnabled = isVideoCallsEnabledForApp(platformFeatures);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showAllPhotos, setShowAllPhotos] = useState(false);
+  const galleryTouch = useRef<{ x: number; y: number } | null>(null);
   const [showContactForm, setShowContactForm] = useState(false);
   const [listing, setListing] = useState<any | null>(null);
   const [relatedListings, setRelatedListings] = useState<any[]>([]);
@@ -279,6 +281,7 @@ export function PropertyDetail() {
   );
   const paymentCurrency = paymentContext?.currency || listing?.currency || "USD";
   const images = getPropertyImageGallery(property);
+
 
   useEffect(() => {
     if (!showAllPhotos) return;
@@ -695,7 +698,17 @@ export function PropertyDetail() {
           )}
 
           {/* Mobile / Tablet Gallery Carousel */}
-          <div className="lg:hidden relative overflow-hidden rounded-2xl aspect-[4/3] sm:aspect-[16/9] bg-surface-subtle mt-2">
+          <div className="lg:hidden relative overflow-hidden rounded-2xl aspect-[4/3] sm:aspect-[16/9] bg-surface-subtle mt-2" style={{ touchAction: "pan-y pinch-zoom" }}
+            onTouchStart={(event) => { const touch = event.touches[0]; galleryTouch.current = touch ? { x: touch.clientX, y: touch.clientY } : null; }}
+            onTouchCancel={() => { galleryTouch.current = null; }}
+            onTouchEnd={(event) => {
+              const start = galleryTouch.current; galleryTouch.current = null;
+              const touch = event.changedTouches[0];
+              if (!start || !touch || images.length < 2) return;
+              const dx = touch.clientX - start.x; const dy = touch.clientY - start.y;
+              if (Math.abs(dx) < 50 || Math.abs(dx) <= Math.abs(dy)) return;
+              setCurrentImageIndex((current) => (current + (dx < 0 ? 1 : -1) + images.length) % images.length);
+            }}>
             <img
               src={images[currentImageIndex]}
               alt={pageTitle}
@@ -709,7 +722,7 @@ export function PropertyDetail() {
                 <button
                   type="button"
                   onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/20"
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/20"
                   aria-label="Previous image"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -717,7 +730,7 @@ export function PropertyDetail() {
                 <button
                   type="button"
                   onClick={() => setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/20"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/20"
                   aria-label="Next image"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -731,6 +744,8 @@ export function PropertyDetail() {
             {images.map((image, index) => (
               <button
                 key={image}
+                aria-label={`Show photo ${index + 1} of ${images.length}`}
+                aria-pressed={currentImageIndex === index}
                 onClick={() => setCurrentImageIndex(index)}
                 className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
                   currentImageIndex === index
@@ -904,6 +919,8 @@ export function PropertyDetail() {
                   </Button>
                 </div>
               </div>
+
+              <PropertyCostSummary currency={paymentCurrency} price={listing.price} listingType={listing.listing_type} minimumDeposit={listing.minimum_deposit_amount} inspectionFee={listing.inspection_fee_amount} />
 
               {/* Luxury Spec Tiles */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 py-6 border-y border-surface-border my-6">

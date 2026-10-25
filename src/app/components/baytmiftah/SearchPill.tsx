@@ -1,3 +1,5 @@
+import { useId } from "react";
+import { LocationSuggestions } from "./LocationSuggestions";
 import { Link } from "react-router";
 import { ChevronDown, CreditCard, Home, MapPin, Search, X } from "lucide-react";
 import type { ReactNode } from "react";
@@ -80,9 +82,11 @@ export function SearchPill({
   onSearch,
 }: SearchPillProps) {
   const { t } = useTranslation();
+  const suggestionsId = useId();
 
   return (
     <div className="w-full min-w-0">
+      <LocationSuggestions id={suggestionsId} />
       {onListingModeChange && <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="Listing purpose">
         {[["any", "All properties"], ["rental", "Rent"], ["sale", "Buy"], ["short_stay", "Short stays"]].map(([value, label]) => <button key={value} type="button" aria-pressed={listingMode === value} onClick={() => onListingModeChange(value)} className={`min-h-11 rounded-lg border px-4 text-sm font-semibold ${listingMode === value ? "border-primary bg-surface-hover text-ink" : "border-surface-border text-ink-secondary"}`}>{label}</button>)}
       </div>}
@@ -96,6 +100,8 @@ export function SearchPill({
       >
         <input
           id="search-location"
+          list={suggestionsId}
+          autoComplete="off"
           type="text"
           value={location}
           onChange={(e) => onLocationChange(e.target.value)}

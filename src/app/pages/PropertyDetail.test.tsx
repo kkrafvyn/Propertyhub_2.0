@@ -220,12 +220,14 @@ describe("PropertyDetail inquiry flow", () => {
     expect(await screen.findByText("5 Independence Ave, Accra")).toBeInTheDocument();
 
     const user = userEvent.setup();
-    const startButtons = await screen.findAllByRole("button", { name: /start inquiry/i });
+    const startButtons = await screen.findAllByRole("button", { name: /check availability/i });
     await user.click(startButtons[0]);
 
     const messageField = await screen.findByPlaceholderText(
       "I'm interested in this property and would like more details."
     );
+    expect(messageField).toHaveValue("Hi, is this property still available? Please confirm availability and the next viewing times.");
+    await user.clear(messageField);
     await user.type(messageField, "I would like to schedule a viewing this weekend.");
     await user.click(screen.getByRole("button", { name: /send inquiry/i }));
 
