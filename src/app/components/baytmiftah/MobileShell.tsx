@@ -92,7 +92,7 @@ export function MobileHeader({ title, subtitle, backTo, showLogo = false }) {
             <IconChevronLeft className="h-5 w-5 rtl-flip" />
           </NavLink>
         ) : showLogo ? (
-          <Logo size="sm" showText={false} to="/" />
+          <Logo size="sm" showText to="/" />
         ) : null}
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-bold text-ink">{title}</h1>

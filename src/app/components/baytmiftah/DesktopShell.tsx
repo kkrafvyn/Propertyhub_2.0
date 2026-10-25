@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Capacitor } from "@capacitor/core";
 import { Heart, Plus, Scale } from "lucide-react";
 import { isElectron } from "../../../lib/surface-detection";
-import { Logo, LogoMark } from "./Logo";
+import { Logo } from "./Logo";
 import { UserMenu } from "./UserMenu";
 import { NotificationBell } from "../NotificationBell";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -209,9 +209,8 @@ function Footer() {
       <div className="mx-auto max-w-[var(--max-width-page)] px-4 py-10 sm:px-6 md:px-8 md:py-14 xl:px-20">
         <div className="mb-8 flex flex-col gap-4 border-b border-surface-border pb-8 md:mb-10 md:pb-10 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <LogoMark className="h-10 w-10" />
+            <Logo />
             <div>
-              <p className="text-base font-semibold text-ink">{t("brand.name")}</p>
               <p className="text-sm text-ink-secondary">{t("footer.tagline")}</p>
             </div>
           </div>
