@@ -11,7 +11,6 @@ import { consumerContextService } from "../../lib/consumer-context.service";
 import {
   EXPLORE_MODE_IMAGES,
   MobileCarouselSection,
-  MobileHeroBanner,
   MobileHomeListingCard,
   MobilePromoCard,
   MobilePropertyTypeRow,
@@ -180,7 +179,7 @@ export function MobileAppShell() {
   const hasContextNav = contextualNav.length > 0 && Boolean(user);
 
   return (
-    <main className={`mobile-bolt mobile-app-shell${hasContextNav ? " has-context-nav" : ""}`}>
+    <main className={`mobile-bolt mobile-app-shell mobile-discovery${hasContextNav ? " has-context-nav" : ""}`}>
       <div className="mobile-content">
         <MobileReferenceHeader
           menuEnabled
@@ -188,12 +187,15 @@ export function MobileAppShell() {
           onBiometricSuccess={(credentials) => void handleBiometricSignIn(credentials)}
           onBiometricError={(message) => toast.error(message)}
         />
+        <div className="mobile-discovery-heading px-4 pb-4 pt-5">
+          <p className="text-xs font-semibold uppercase tracking-widest text-ink-muted">Your property search</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink">Explore properties</h1>
+        </div>
         <form className="mx-4 mb-4 flex min-h-12 items-center gap-3 rounded-xl border border-surface-border bg-surface px-3" onSubmit={(event) => { event.preventDefault(); const query = new FormData(event.currentTarget).get("q"); navigate(`${seeAllTo}&q=${encodeURIComponent(String(query || ""))}`); }}>
           <Search className="h-5 w-5 shrink-0 text-ink-secondary" aria-hidden="true" />
           <input name="q" type="search" aria-label="Search area or city" placeholder="Search area or city" className="min-w-0 flex-1 bg-transparent py-3 text-sm text-ink outline-none" />
           <button type="submit" aria-label="Search properties" className="flex h-11 w-11 items-center justify-center rounded-lg bg-surface-hover text-ink"><Search className="h-4 w-4" /></button>
         </form>
-        <MobileHeroBanner />
         <MobileTransactionTabs active={txTab} onChange={setTxTab} />
         <MobilePropertyTypeRow active={propType} onChange={setPropType} />
         <div className="mb-3 flex items-center justify-between gap-3 px-4">
@@ -226,7 +228,7 @@ export function MobileAppShell() {
                 />
               ))
             ) : (
-              <div className="w-full rounded-2xl border border-dashed border-surface-border bg-surface px-5 py-6 text-center">
+              <div className="mobile-discovery-empty w-full rounded-2xl border border-surface-border bg-surface px-5 py-6 text-center">
                 <p className="text-sm font-semibold text-ink">{t("searchPage.noPropertiesTitle")}</p>
                 <p className="mt-2 text-sm text-ink-secondary">Try another property type or explore more areas.</p>
                 {propType && <button type="button" onClick={() => setPropType(null)} className="mt-3 min-h-11 rounded-lg border border-surface-border px-4 text-sm font-semibold text-ink">Clear property type</button>}
@@ -238,26 +240,17 @@ export function MobileAppShell() {
           )}
         </MobileCarouselSection>
 
-        <MobileCarouselSection title={t("mobile.appShell.exploreModes")}>
-          <MobilePromoCard
-            title={t("mobile.homeScreen.buy")}
-            subtitle={t("mobile.appShell.browseSales")}
-            to={exploreModeUrl("buy")}
-            image={EXPLORE_MODE_IMAGES.buy}
-          />
-          <MobilePromoCard
-            title={t("mobile.homeScreen.rent")}
-            subtitle={t("mobile.appShell.monthlyHomes")}
-            to={exploreModeUrl("rent")}
-            image={EXPLORE_MODE_IMAGES.rent}
-          />
-          <MobilePromoCard
-            title={t("mobile.homeScreen.stay")}
-            subtitle={t("mobile.appShell.shortStays")}
-            to={exploreModeUrl("shortStay")}
-            image={EXPLORE_MODE_IMAGES.stay}
-          />
-        </MobileCarouselSection>
+        <section className="mb-7 px-4" aria-labelledby="mobile-discover-title">
+          <div className="mb-3 flex items-end justify-between">
+            <div><p className="text-xs uppercase tracking-widest text-ink-muted">Explore your options</p><h2 id="mobile-discover-title" className="mt-1 text-lg font-semibold text-ink">Make your next move</h2></div>
+          </div>
+          <div className="mobile-discovery-grid">
+            <MobilePromoCard title={t("mobile.homeScreen.buy")} subtitle={t("mobile.appShell.browseSales")} to={exploreModeUrl("buy")} image={EXPLORE_MODE_IMAGES.buy} />
+            <MobilePromoCard title={t("mobile.homeScreen.rent")} subtitle={t("mobile.appShell.monthlyHomes")} to={exploreModeUrl("rent")} image={EXPLORE_MODE_IMAGES.rent} />
+            <MobilePromoCard title={t("mobile.homeScreen.stay")} subtitle={t("mobile.appShell.shortStays")} to={exploreModeUrl("shortStay")} image={EXPLORE_MODE_IMAGES.stay} />
+            <MobilePromoCard title={t("mobile.homeScreen.lease")} subtitle="Explore longer-term spaces" to={exploreModeUrl("lease")} image={EXPLORE_MODE_IMAGES.lease} />
+          </div>
+        </section>
 
         <section className="mobile-section px-4">
           <div className="mobile-section-heading">

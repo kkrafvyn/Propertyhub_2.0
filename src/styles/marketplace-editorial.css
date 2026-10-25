@@ -101,3 +101,18 @@
 .desktop-shell .search-segment,
 .desktop-shell .search-segment::before,
 .desktop-shell .search-segment select { border-radius: 6px; }
+
+/* Compact mobile discovery keeps search and inventory above promotional content. */
+.mobile-discovery .mobile-content { padding-inline: 0; }
+.mobile-discovery .mobile-content > header { border-bottom: 1px solid var(--surface-border); padding-inline: 20px; }
+.mobile-discovery .mobile-content > form { border-radius: 12px; }
+.mobile-discovery .mobile-discovery-heading h1 { max-width: 19rem; line-height: 1.2; }
+.mobile-discovery-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mobile-discovery .mobile-discovery-grid .mobile-promo-card { width: 100%; height: 180px; border-radius: 12px; }
+.mobile-discovery .mobile-discovery-grid .mobile-promo-card p:first-child { font-size: 20px; }
+.mobile-discovery .mobile-agency-chip { min-height: 64px; border: 1px solid var(--surface-border); }
+.mobile-discovery button:focus-visible,
+.mobile-discovery a:focus-visible,
+.mobile-discovery input:focus-visible { outline: 2px solid var(--brand-orange); outline-offset: 3px; }
+
+.mobile-discovery .mobile-discovery-empty { padding: 16px; }
