@@ -2,8 +2,8 @@
   <rect width="640" height="160" fill="#0F2922"/>
   <g transform="translate(38 28)">
     <rect width="64" height="64" rx="18" fill="#FFFFFF"/>
-    <circle cx="26.125" cy="29" r="3.625" fill="#0F2922"/>
-    <path d="M6 40.75Q32 26 58 40.75Q32 31.625 6 40.75Z" fill="#0F2922"/>
+    <circle cx="32" cy="21" r="7" fill="#0F2922"/>
+    <path d="M12 42C20 34 28 31 32 31C36 31 44 34 52 42" stroke="#0F2922" stroke-width="3.2" stroke-linecap="round"/>
   </g>
   <text x="138" y="94" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="0.1em">BAYTMIFTAH</text>
 </svg>

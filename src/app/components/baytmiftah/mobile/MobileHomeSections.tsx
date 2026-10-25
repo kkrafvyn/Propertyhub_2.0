@@ -397,7 +397,7 @@ export function MobileHeader({
             <ChevronLeft className="h-5 w-5" />
           </NavLink>
         ) : showLogo ? (
-          <Logo size="sm" showText to="/" />
+          <Logo size="sm" showText={false} to="/" />
         ) : null}
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-bold text-ink">{title}</h1>

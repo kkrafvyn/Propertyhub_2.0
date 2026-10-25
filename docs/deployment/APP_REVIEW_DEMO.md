@@ -23,3 +23,7 @@ Run `node scripts/apple/provision-review-consumer.mjs` to create or verify the i
 Consumer reviewer credentials and notes were saved on the iOS and macOS App Store Connect versions. Four 1280 × 800 screenshots were accepted on the macOS listing: discovery, search, sign-in, and the consumer portal. The source captures are under `marketing/apple/consumer/screenshots/`. These are actual browser-rendered consumer screens, not native iOS simulator captures. The live marketplace currently shows no public properties; no fictional listings were published to fill it.
 
 Apple's consumer iOS submission validation on October 25, 2026 reported a missing build and price tier. There are no consumer builds or Xcode Cloud products visible through the configured Apple API. Local Xcode 16.1 cannot produce the required iOS SDK 26 store build; the consumer Xcode Cloud workflow still requires its initial Xcode connection. Privacy disclosures remain drafts pending an explicit change to the user's prior instruction. Workspace Mac build 103 is now VALID but has not yet replaced selected build 102 in the listing.
+
+## Logo restoration
+
+At the owner's request, the app now uses the older centered dot-and-arc logo and original wordmark from before the uploaded-photo branding change. Native icons and the export generator have been restored to that mark. Existing uploaded builds and screenshots retain their previous artwork until replaced; no App Store update is implied by this source change.
