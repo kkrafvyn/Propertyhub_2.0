@@ -37,10 +37,8 @@ export function LogoMark({
         <rect width="48" height="48" rx="10.5" fill={WORKSPACE_NAVY} />
         <circle cx="24" cy="15" r="5.5" fill="#FFFFFF" />
         <path
-          d="M9 33.5Q24 24.5 39 33.5"
-          stroke="#FFFFFF"
-          strokeWidth="2.25"
-          strokeLinecap="round"
+          d="M4.5 33.5Q24 22.4 43.5 33.5Q24 26.9 4.5 33.5Z"
+          fill="#FFFFFF"
         />
       </svg>
     );
@@ -59,10 +57,8 @@ export function LogoMark({
     >
       <circle cx="24" cy="15" r="5.5" fill={fill} />
       <path
-        d="M9 33.5Q24 24.5 39 33.5"
-        stroke={fill}
-        strokeWidth="2.25"
-        strokeLinecap="round"
+        d="M4.5 33.5Q24 22.4 43.5 33.5Q24 26.9 4.5 33.5Z"
+        fill={fill}
       />
     </svg>
   );

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="BaytMiftah logo">
   <rect width="64" height="64" rx="18" fill="#0F2922"/>
   <circle cx="32" cy="21" r="7" fill="#FFFFFF"/>
-  <path d="M12 42C20 34 28 31 32 31C36 31 44 34 52 42" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M6 43Q32 28 58 43Q32 35 6 43Z" fill="#FFFFFF"/>
 </svg>

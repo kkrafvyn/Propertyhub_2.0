@@ -27,3 +27,5 @@ Apple's consumer iOS submission validation on October 25, 2026 reported a missin
 ## Logo restoration
 
 At the owner's request, the app now uses the older centered dot-and-arc logo and original wordmark from before the uploaded-photo branding change. Native icons and the export generator have been restored to that mark. Existing uploaded builds and screenshots retain their previous artwork until replaced; no App Store update is implied by this source change.
+
+The owner subsequently requested the arc shape from the supplied picture: the mark now uses a broad, tapered filled curve while retaining the older centered dot and wordmark. App, splash, web, and generated native icon sources use this arc.

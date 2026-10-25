@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" role="img" aria-label="BaytMiftah Workspace app icon">
   <rect width="512" height="512" rx="96" fill="#0B2545"/>
   <circle cx="256" cy="198" r="42" fill="#FFFFFF"/>
-  <path d="M128 306C181 261 222 245 256 245C290 245 331 261 384 306" stroke="#FFFFFF" stroke-width="15" stroke-linecap="round"/>
+  <path d="M48 326Q256 208 464 326Q256 253 48 326Z" fill="#FFFFFF"/>
 </svg>

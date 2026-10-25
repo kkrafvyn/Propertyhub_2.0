@@ -1,6 +1,6 @@
 import { SPLASH_COLORS } from "./constants";
 
-const ARC_PATH = "M9 33.5Q24 24.5 39 33.5";
+const ARC_PATH = "M4.5 33.5Q24 22.4 43.5 33.5Q24 26.9 4.5 33.5Z";
 
 export function SplashLogoMark({
   className = "splash-mark",
@@ -53,10 +53,7 @@ export function SplashLogoMark({
         className="splash-mark__arc"
         d={ARC_PATH}
         pathLength="1"
-        stroke={primary}
-        strokeWidth="2.25"
-        strokeLinecap="round"
-        fill="none"
+        fill={primary}
       />
     </svg>
   );
