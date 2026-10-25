@@ -1,55 +1,20 @@
-/* Consumer marketplace: warm paper, architectural photography, clear hierarchy. */
+/* Consumer marketplace layout; colours inherit the original app theme. */
 .desktop-shell,
 .mobile-app-shell {
-  --surface: #fffdf8;
-  --surface-subtle: #f1eee6;
-  --surface-border: #dedbd2;
-  --surface-hover: #eae6dc;
-  --background: #f7f4ec;
-  --foreground: #242a27;
-  --ink: #242a27;
-  --ink-secondary: #59615b;
-  --ink-muted: #687169;
-  --primary: #204c3b;
-  --brand-forest: #204c3b;
-  --brand-orange: #a44d36;
-  --bolt-bg: #f7f4ec;
-  --bolt-card: #fffdf8;
-  --mobile-forest: #204c3b;
   --radius-listing: 8px;
   background: var(--background);
 }
 
-.dark .desktop-shell,
-.dark .mobile-app-shell {
-  --surface: #202323;
-  --surface-subtle: #272b2a;
-  --surface-border: #3a403d;
-  --surface-hover: #323834;
-  --background: #171b19;
-  --foreground: #f4f1e9;
-  --ink: #f4f1e9;
-  --ink-secondary: #bec6bf;
-  --ink-muted: #a0aaa2;
-  --primary: #b9d5bf;
-  --brand-orange: #df9c82;
-  --bolt-bg: #171b19;
-  --bolt-card: #202323;
-}
-
 .desktop-shell .desktop-shell-ambient { display: none; }
-.desktop-shell .desktop-header { background: var(--background); backdrop-filter: none; }
+.desktop-shell .desktop-header { background: var(--surface); backdrop-filter: none; }
 .desktop-shell .desktop-header > div { max-width: 1600px; }
 .desktop-shell .nav-pill { border-radius: 6px; box-shadow: none; }
 .desktop-shell .nav-pill-cta,
 .desktop-shell .search-orb {
-  background: #204c3b;
-  color: #fff;
   box-shadow: none;
-  border: 1px solid #204c3b;
 }
 .desktop-shell .nav-pill-cta:hover,
-.desktop-shell .search-orb:hover { background: #173b2d; box-shadow: none; }
+.desktop-shell .search-orb:hover { box-shadow: none; }
 .desktop-shell .search-pill {
   height: 64px;
   border-radius: 8px;
@@ -89,8 +54,7 @@
 .desktop-shell .desktop-hero-subtitle { font-size: 16px; line-height: 1.75; max-width: 32rem; }
 .desktop-shell .desktop-hero-actions { gap: 16px; flex-wrap: wrap; }
 .desktop-shell .desktop-hero-btn { border-radius: 6px; box-shadow: none; font-weight: 600; }
-.desktop-shell .desktop-hero-btn-primary { background: #204c3b; color: #fff; border: 1px solid #204c3b; }
-.desktop-shell .desktop-hero-btn-primary:hover { background: #173b2d; box-shadow: none; }
+.desktop-shell .desktop-hero-btn-primary:hover { box-shadow: none; }
 .desktop-shell .desktop-hero-btn-secondary { padding-inline: 0; background: none; border-color: transparent; box-shadow: none; }
 .desktop-shell .desktop-hero-chips { gap: 18px; flex-wrap: wrap; }
 .desktop-shell .desktop-hero-chip { padding: 0 0 5px; border: 0; border-bottom: 1px solid var(--surface-border); border-radius: 0; box-shadow: none; background: none; }
@@ -134,20 +98,6 @@
   .marketplace-property-card img { transition: none; transform: none; }
 }
 
-/* Quiet category tiles replace the previous multicolour icon backgrounds. */
-.mobile-app-shell .marketplace-mobile-types button > span:first-child {
-  background: var(--surface);
-  border: 1px solid var(--surface-border);
-  border-radius: 8px;
-  box-shadow: none;
-}
-.mobile-app-shell .marketplace-mobile-types button[aria-selected="true"] > span:first-child {
-  background: var(--surface-subtle);
-  border-color: var(--primary);
-  outline: 1px solid var(--primary);
-  --tw-ring-shadow: 0 0 transparent;
-  --tw-ring-offset-shadow: 0 0 transparent;
-}
 .desktop-shell .search-segment,
 .desktop-shell .search-segment::before,
 .desktop-shell .search-segment select { border-radius: 6px; }
