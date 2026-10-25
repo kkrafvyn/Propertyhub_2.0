@@ -55,6 +55,9 @@ const PROPERTY_TYPE_KEYS: Record<string, string> = {
 };
 
 interface SearchPillProps {
+  listingMode?: string;
+  onListingModeChange?: (value: string) => void;
+  currency?: string;
   location: string;
   onLocationChange: (value: string) => void;
   propertyType: string;
@@ -65,6 +68,9 @@ interface SearchPillProps {
 }
 
 export function SearchPill({
+  listingMode = "any",
+  onListingModeChange,
+  currency = "GHS",
   location,
   onLocationChange,
   propertyType,
@@ -76,6 +82,10 @@ export function SearchPill({
   const { t } = useTranslation();
 
   return (
+    <div className="w-full min-w-0">
+      {onListingModeChange && <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="Listing purpose">
+        {[["any", "All properties"], ["rental", "Rent"], ["sale", "Buy"], ["short_stay", "Short stays"]].map(([value, label]) => <button key={value} type="button" aria-pressed={listingMode === value} onClick={() => onListingModeChange(value)} className={`min-h-11 rounded-lg border px-4 text-sm font-semibold ${listingMode === value ? "border-primary bg-surface-hover text-ink" : "border-surface-border text-ink-secondary"}`}>{label}</button>)}
+      </div>}
     <div className="search-pill min-w-0 w-full max-w-full">
       <SearchSegment
         icon={MapPin}
@@ -119,7 +129,7 @@ export function SearchPill({
 
       <SearchSegment
         icon={CreditCard}
-        label={t("search.budget")}
+        label={`${t("search.budget")} (${currency})`}
         htmlFor="search-budget"
         className="hidden xl:flex"
         hasValue={Boolean(budget.trim())}
@@ -145,6 +155,7 @@ export function SearchPill({
       >
         <Search className="h-4.5 w-4.5 transition-transform duration-300 group-hover:scale-110 group-active:scale-90" />
       </button>
+    </div>
     </div>
   );
 }

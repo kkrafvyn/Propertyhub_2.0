@@ -39,6 +39,7 @@ export function Home() {
   const [location, setLocation] = useState("");
   const [ghanaRegion, setGhanaRegion] = useState("all");
   const [propertyType, setPropertyType] = useState("any");
+  const [listingMode, setListingMode] = useState("any");
   const [budget, setBudget] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
@@ -123,9 +124,9 @@ export function Home() {
 
       const maximum = parseMaximumBudget(budget);
       const matchesBudget = maximum === null || (listing.price != null && Number.isFinite(Number(listing.price)) && Number(listing.price) <= maximum);
-      return matchesQuery && matchesRegion && matchesBudget;
+      return matchesQuery && matchesRegion && matchesBudget && (listingMode === "any" || listing.listing_type === listingMode);
     });
-  }, [listings, location, ghanaRegion, budget]);
+  }, [listings, location, ghanaRegion, budget, listingMode]);
 
   const cards = useMemo(() => listingFiltered.map(mapListingToCard), [listingFiltered]);
 
@@ -151,6 +152,7 @@ export function Home() {
 
   const handleSearch = () => {
     const params = new URLSearchParams();
+    if (listingMode !== "any") params.set("listingType", listingMode);
     if (location.trim()) params.set("q", location.trim());
     if (ghanaRegion !== "all") params.set("region", ghanaRegion);
     if (propertyType !== "any") params.set("propertyType", propertyType);
@@ -199,6 +201,9 @@ export function Home() {
         compareCount={compareIds.length}
       search={
         <SearchPill
+          listingMode={listingMode}
+          onListingModeChange={setListingMode}
+          currency={market?.currency ?? "GHS"}
           location={location}
           onLocationChange={setLocation}
           propertyType={propertyType}
@@ -273,7 +278,7 @@ export function Home() {
       {!loading && visible.length === 0 && cards.length > 0 && (
         <p className="desktop-inline-note mb-6">
           {t("home.noFilterMatches")}{" "}
-          <button type="button" className="desktop-inline-link" onClick={() => setCategory("all")}>
+          <button type="button" className="desktop-inline-link" onClick={() => { setCategory("all"); setPropertyType("any"); setListingMode("any"); setLocation(""); setGhanaRegion("all"); setBudget(""); setVerifiedOnly(false); setMinBedrooms(0); }}>
             {t("home.clearFilters")}
           </button>
           .

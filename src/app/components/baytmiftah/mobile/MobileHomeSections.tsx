@@ -104,8 +104,9 @@ export function MobileTransactionTabs({
           <button
             key={id}
             type="button"
+            aria-pressed={isActive}
             onClick={() => onChange(id)}
-            className={`flex min-w-0 items-center justify-center gap-0.5 rounded-full px-1.5 py-2 text-xs font-semibold transition sm:gap-1 sm:px-2 sm:py-2.5 sm:text-sm ${
+            className={`flex min-h-11 min-w-0 items-center justify-center gap-0.5 rounded-full px-1.5 py-2 text-xs font-semibold transition sm:gap-1 sm:px-2 sm:py-2.5 sm:text-sm ${
               isActive ? "bg-mobile-forest text-white shadow-sm" : "bg-surface-subtle text-ink-secondary"
             }`}
           >
@@ -271,8 +272,9 @@ export function MobileHomeListingCard({
             e.preventDefault();
             onToggleSave(listing.id);
           }}
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-surface/90 shadow-sm"
-          aria-label={t("listing.save")}
+          className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-surface/90 shadow-sm"
+          aria-pressed={Boolean(saved)}
+          aria-label={saved ? "Remove from saved" : t("listing.save")}
         >
           <Heart className={`h-4 w-4 ${saved ? "fill-brand-orange text-brand-orange" : "text-ink"}`} />
         </button>

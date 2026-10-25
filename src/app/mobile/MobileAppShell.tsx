@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { Building2, Loader2 } from "lucide-react";
+import { Building2, Loader2, Search, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { isWorkspaceRole } from "../lib/baytmiftah/roles";
@@ -188,9 +188,18 @@ export function MobileAppShell() {
           onBiometricSuccess={(credentials) => void handleBiometricSignIn(credentials)}
           onBiometricError={(message) => toast.error(message)}
         />
+        <form className="mx-4 mb-4 flex min-h-12 items-center gap-3 rounded-xl border border-surface-border bg-surface px-3" onSubmit={(event) => { event.preventDefault(); const query = new FormData(event.currentTarget).get("q"); navigate(`${seeAllTo}&q=${encodeURIComponent(String(query || ""))}`); }}>
+          <Search className="h-5 w-5 shrink-0 text-ink-secondary" aria-hidden="true" />
+          <input name="q" type="search" aria-label="Search area or city" placeholder="Search area or city" className="min-w-0 flex-1 bg-transparent py-3 text-sm text-ink outline-none" />
+          <button type="submit" aria-label="Search properties" className="flex h-11 w-11 items-center justify-center rounded-lg bg-surface-hover text-ink"><Search className="h-4 w-4" /></button>
+        </form>
         <MobileHeroBanner />
         <MobileTransactionTabs active={txTab} onChange={setTxTab} />
         <MobilePropertyTypeRow active={propType} onChange={setPropType} />
+        <div className="mb-3 flex items-center justify-between gap-3 px-4">
+          <span className="text-xs text-ink-secondary">Prices in {market?.currency ?? "GHS"}</span>
+          <Link to={seeAllTo} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-surface-border px-3 text-sm font-semibold text-ink"><SlidersHorizontal className="h-4 w-4" /> Search & filters</Link>
+        </div>
 
         {usingOfflineCache ? (
           <p className="px-4 text-sm text-muted-foreground">{t("mobile.appShell.offlineCache")}</p>
@@ -219,7 +228,9 @@ export function MobileAppShell() {
             ) : (
               <div className="w-full rounded-2xl border border-dashed border-surface-border bg-surface px-5 py-6 text-center">
                 <p className="text-sm font-semibold text-ink">{t("searchPage.noPropertiesTitle")}</p>
-                <Link to="/search" className="mt-2 inline-flex text-sm font-semibold text-primary underline-offset-4 hover:underline">
+                <p className="mt-2 text-sm text-ink-secondary">Try another property type or explore more areas.</p>
+                {propType && <button type="button" onClick={() => setPropType(null)} className="mt-3 min-h-11 rounded-lg border border-surface-border px-4 text-sm font-semibold text-ink">Clear property type</button>}
+                <Link to="/search" className="mt-2 min-h-11 items-center justify-center px-3 inline-flex text-sm font-semibold text-primary underline-offset-4 hover:underline">
                   {t("home.browseAll")}
                 </Link>
               </div>

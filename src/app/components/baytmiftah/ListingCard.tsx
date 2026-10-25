@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { ChevronLeft, ChevronRight, Heart, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, Star, ShieldCheck } from "lucide-react";
 import type { MarketplaceListingCard } from "./listing-mappers";
 import { getListingPhotos, useListingPhotoCarousel } from "./useListingPhotoCarousel";
 
@@ -155,6 +155,7 @@ export function ListingCard({
 
       <div className="marketplace-property-info space-y-2">
         <p className="marketplace-property-price">{listing.priceLabel}</p>
+        {listing.verified && <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary"><ShieldCheck className="h-4 w-4" aria-hidden="true" /> Verified property</span>}
         <div className="flex items-start justify-between gap-2">
           <h3 className="truncate text-base font-semibold text-ink group-hover:text-primary transition-colors">
             {listing.location || listing.title}
