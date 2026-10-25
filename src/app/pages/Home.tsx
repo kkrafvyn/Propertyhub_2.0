@@ -225,6 +225,12 @@ export function Home() {
         />
       )}
 
+      {!mapMode && !loading && cards.length === 0 && (
+        <Link to="/demo" className="mb-6 inline-flex rounded-full border border-surface-border bg-surface px-5 py-3 text-sm font-semibold text-ink">
+          Explore demo homes with photos
+        </Link>
+      )}
+
       {filtersOpen && (
         <FiltersPanel
           verifiedOnly={verifiedOnly}
@@ -353,8 +359,8 @@ export function Home() {
                 description={t("home.emptyDesc")}
                 actionLabel={t("home.browseAll")}
                 onAction={() => navigate("/search")}
-                secondaryActionLabel={t("nav.listProperty")}
-                secondaryActionHref={listPropertyPath}
+                secondaryActionLabel="Explore demo homes"
+                secondaryActionHref="/demo"
                 className="desktop-empty-state border-0 bg-transparent shadow-none"
               />
             ) : (
