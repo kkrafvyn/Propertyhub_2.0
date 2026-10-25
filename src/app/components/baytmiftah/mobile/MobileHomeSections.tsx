@@ -65,14 +65,13 @@ export function MobileHeroBanner() {
   const { t } = useTranslation();
 
   return (
-    <section className="relative mx-3 mb-5 overflow-hidden rounded-2xl sm:mx-4">
+    <section className="marketplace-mobile-hero relative mx-3 mb-5 overflow-hidden sm:mx-4">
       <img src={HERO_IMAGE} alt="Illustrative residential architecture" className="h-[180px] w-full object-cover sm:h-[200px]" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
-      <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-        <h1 className="text-lg font-bold leading-tight text-white sm:text-[22px]">
+      <div className="marketplace-mobile-hero-copy py-5">
+        <h1 className="font-serif text-3xl leading-tight text-ink">
           {t("mobile.homeScreen.heroTitle")}
         </h1>
-        <p className="mt-1.5 text-sm leading-snug text-white/90">
+        <p className="mt-3 text-sm leading-relaxed text-ink-secondary">
           {t("mobile.homeScreen.heroSubtitle")}
         </p>
       </div>
@@ -139,7 +138,7 @@ export function MobilePropertyTypeRow({
 
   return (
     <div
-      className="mobile-type-scroll mb-6 flex gap-4 overflow-x-auto px-3 sm:gap-5 sm:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="marketplace-mobile-types mobile-type-scroll mb-6 flex gap-4 overflow-x-auto px-3 sm:gap-5 sm:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       role="tablist"
       aria-label={t("mobile.homeScreen.propertyTypes")}
     >
@@ -244,7 +243,7 @@ export function MobileHomeListingCard({
     <div className="relative w-[min(260px,78vw)] shrink-0 snap-start">
       <Link
         to={to}
-        className="block overflow-hidden rounded-2xl bg-bolt-card shadow-[0_2px_12px_rgba(0,0,0,0.08)]"
+        className="marketplace-property-card block overflow-hidden"
       >
         <div className="relative aspect-[4/3]">
           <ListingCardImage listing={listing} className="h-full w-full" />
@@ -258,9 +257,11 @@ export function MobileHomeListingCard({
             </span>
           )}
         </div>
-        <div className="p-3">
-          <p className="truncate font-bold text-ink">{listing.title}</p>
-          <p className="mt-1 text-sm font-bold text-mobile-forest">{listing.priceLabel}</p>
+        <div className="marketplace-property-info">
+          <p className="marketplace-property-price">{listing.priceLabel}</p>
+          <p className="mt-2 truncate font-semibold text-ink">{listing.title}</p>
+          <p className="mt-1 truncate text-xs text-ink-secondary">{listing.location}</p>
+          <p className="mt-2 text-xs text-ink-muted">{listing.bedrooms ? `${listing.bedrooms} beds · ` : ""}{listing.type}</p>
         </div>
       </Link>
       {onToggleSave && (
@@ -301,7 +302,7 @@ export function MobilePromoCard({
   return (
     <Link
       to={to}
-      className="relative flex h-[168px] w-[148px] shrink-0 snap-start flex-col justify-end overflow-hidden rounded-2xl p-3 text-white shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
+      className="mobile-promo-card relative flex h-[168px] w-[148px] shrink-0 snap-start flex-col justify-end overflow-hidden rounded-2xl p-3 text-white shadow-[0_2px_12px_rgba(0,0,0,0.12)]"
     >
       <img src={image} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />

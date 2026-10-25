@@ -29,6 +29,7 @@ import { buildConsumerTabItems } from "./consumer-bottom-tabs";
 import { useSurfaceContext } from "../context/SurfaceContext";
 import { readCachedMobileListings, writeCachedMobileListings } from "../../lib/mobile-offline-cache";
 import "./mobile.css";
+import "../../styles/marketplace-editorial.css";
 
 export function MobileAppShell() {
   const navigate = useNavigate();

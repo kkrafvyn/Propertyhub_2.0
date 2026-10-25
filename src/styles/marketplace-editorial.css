@@ -1,0 +1,153 @@
+/* Consumer marketplace: warm paper, architectural photography, clear hierarchy. */
+.desktop-shell,
+.mobile-app-shell {
+  --surface: #fffdf8;
+  --surface-subtle: #f1eee6;
+  --surface-border: #dedbd2;
+  --surface-hover: #eae6dc;
+  --background: #f7f4ec;
+  --foreground: #242a27;
+  --ink: #242a27;
+  --ink-secondary: #59615b;
+  --ink-muted: #687169;
+  --primary: #204c3b;
+  --brand-forest: #204c3b;
+  --brand-orange: #a44d36;
+  --bolt-bg: #f7f4ec;
+  --bolt-card: #fffdf8;
+  --mobile-forest: #204c3b;
+  --radius-listing: 8px;
+  background: var(--background);
+}
+
+.dark .desktop-shell,
+.dark .mobile-app-shell {
+  --surface: #202323;
+  --surface-subtle: #272b2a;
+  --surface-border: #3a403d;
+  --surface-hover: #323834;
+  --background: #171b19;
+  --foreground: #f4f1e9;
+  --ink: #f4f1e9;
+  --ink-secondary: #bec6bf;
+  --ink-muted: #a0aaa2;
+  --primary: #b9d5bf;
+  --brand-orange: #df9c82;
+  --bolt-bg: #171b19;
+  --bolt-card: #202323;
+}
+
+.desktop-shell .desktop-shell-ambient { display: none; }
+.desktop-shell .desktop-header { background: var(--background); backdrop-filter: none; }
+.desktop-shell .desktop-header > div { max-width: 1600px; }
+.desktop-shell .nav-pill { border-radius: 6px; box-shadow: none; }
+.desktop-shell .nav-pill-cta,
+.desktop-shell .search-orb {
+  background: #204c3b;
+  color: #fff;
+  box-shadow: none;
+  border: 1px solid #204c3b;
+}
+.desktop-shell .nav-pill-cta:hover,
+.desktop-shell .search-orb:hover { background: #173b2d; box-shadow: none; }
+.desktop-shell .search-pill {
+  height: 64px;
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 3%);
+  backdrop-filter: none;
+}
+.desktop-shell .search-pill:hover { box-shadow: 0 2px 8px rgb(0 0 0 / 5%); }
+.desktop-shell .search-pill:focus-within { box-shadow: 0 0 0 2px var(--primary); }
+.desktop-shell .search-orb { border-radius: 6px; }
+.desktop-shell .category-chip { flex-direction: row; gap: 8px; border-radius: 6px; padding: 10px 12px; }
+.desktop-shell .category-chip svg { width: 18px; height: 18px; }
+.desktop-shell .category-chip::after { display: none; }
+
+.desktop-shell .desktop-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 64px);
+  align-items: center;
+  padding: 28px 0 36px;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.desktop-shell .desktop-hero-content { max-width: 36rem; }
+.desktop-shell .desktop-hero-eyebrow {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--brand-orange);
+  background: none;
+  letter-spacing: .14em;
+}
+.desktop-shell .desktop-hero-title { font-size: clamp(36px, 4.2vw, 66px); line-height: 1.06; }
+.desktop-shell .desktop-hero-subtitle { font-size: 16px; line-height: 1.75; max-width: 32rem; }
+.desktop-shell .desktop-hero-actions { gap: 16px; flex-wrap: wrap; }
+.desktop-shell .desktop-hero-btn { border-radius: 6px; box-shadow: none; font-weight: 600; }
+.desktop-shell .desktop-hero-btn-primary { background: #204c3b; color: #fff; border: 1px solid #204c3b; }
+.desktop-shell .desktop-hero-btn-primary:hover { background: #173b2d; box-shadow: none; }
+.desktop-shell .desktop-hero-btn-secondary { padding-inline: 0; background: none; border-color: transparent; box-shadow: none; }
+.desktop-shell .desktop-hero-chips { gap: 18px; flex-wrap: wrap; }
+.desktop-shell .desktop-hero-chip { padding: 0 0 5px; border: 0; border-bottom: 1px solid var(--surface-border); border-radius: 0; box-shadow: none; background: none; }
+.marketplace-hero-photo { min-width: 0; margin: 0; }
+.marketplace-hero-photo img { width: 100%; height: clamp(300px, 32vw, 460px); object-fit: cover; border-radius: 8px; }
+.marketplace-hero-photo figcaption { margin-top: 10px; color: var(--ink-muted); font-size: 12px; letter-spacing: .04em; }
+.desktop-shell .desktop-empty-state { padding: 28px; border: 1px solid var(--surface-border); border-radius: 8px; background: var(--surface); box-shadow: none; }
+.desktop-shell .desktop-empty-state > div:first-child[aria-hidden] { display: none; }
+.desktop-shell .section-heading { font-size: 28px; font-weight: 500; }
+
+.marketplace-property-card {
+  overflow: hidden;
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  transition: border-color .2s ease;
+}
+.marketplace-property-card:hover { border-color: var(--ink-muted); }
+.marketplace-property-card > div:first-child { border-radius: 0; box-shadow: none; }
+.marketplace-property-info { padding: 18px; }
+.marketplace-property-price { color: var(--ink); font-size: 22px; font-weight: 650; letter-spacing: -.03em; }
+.marketplace-property-card h3 { font-size: 15px; }
+.marketplace-property-card button:focus-visible,
+.desktop-shell a:focus-visible,
+.desktop-shell button:focus-visible { outline: 2px solid var(--brand-orange); outline-offset: 3px; }
+
+.mobile-app-shell .marketplace-mobile-hero { border-radius: 0; }
+.mobile-app-shell .marketplace-mobile-hero > img { border-radius: 8px; }
+.mobile-app-shell .marketplace-mobile-hero-copy h1 { color: var(--ink); font-weight: 500; font-family: var(--font-serif); }
+.mobile-app-shell .marketplace-mobile-hero-copy p { color: var(--ink-secondary); }
+.mobile-app-shell .mobile-promo-card,
+.mobile-app-shell .mobile-agency-chip { border-radius: 8px; box-shadow: none; }
+
+@media (max-width: 767px) {
+  .desktop-shell .desktop-hero { display: none; }
+  .desktop-shell .search-pill { border-radius: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marketplace-property-card,
+  .marketplace-property-card img { transition: none; transform: none; }
+}
+
+/* Quiet category tiles replace the previous multicolour icon backgrounds. */
+.mobile-app-shell .marketplace-mobile-types button > span:first-child {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+.mobile-app-shell .marketplace-mobile-types button[aria-selected="true"] > span:first-child {
+  background: var(--surface-subtle);
+  border-color: var(--primary);
+  outline: 1px solid var(--primary);
+  --tw-ring-shadow: 0 0 transparent;
+  --tw-ring-offset-shadow: 0 0 transparent;
+}
+.desktop-shell .search-segment,
+.desktop-shell .search-segment::before,
+.desktop-shell .search-segment select { border-radius: 6px; }

@@ -401,8 +401,6 @@ function DesktopHero({
 
   return (
     <section className="desktop-hero mb-10 hidden md:block">
-      <div className="desktop-hero-glow" aria-hidden />
-      <div className="desktop-hero-glow-secondary" aria-hidden />
       <div className="desktop-hero-content">
         <p className="desktop-hero-eyebrow">
           <Sparkles className="h-3.5 w-3.5 text-brand-orange" />
@@ -436,6 +434,10 @@ function DesktopHero({
           </div>
         )}
       </div>
+      <figure className="marketplace-hero-photo">
+        <img src={`${import.meta.env.BASE_URL}marketing/hero/architecture-1280.webp`} alt="Contemporary residential architecture, illustrative photograph" fetchPriority="high" />
+        <figcaption>A fresh perspective on home.</figcaption>
+      </figure>
     </section>
   );
 }

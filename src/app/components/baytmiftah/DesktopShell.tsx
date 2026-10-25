@@ -1,3 +1,4 @@
+import "../../../styles/marketplace-editorial.css";
 import { Link, useLocation } from "react-router";
 import type { ReactNode } from "react";
 import { Capacitor } from "@capacitor/core";
@@ -150,7 +151,7 @@ function Header({
           </div>
         </div>
 
-        {!minimal ? <DesktopSubNav /> : null}
+        {!minimal && !search ? <DesktopSubNav /> : null}
 
         {!minimal && search ? (
           <div className="flex justify-center pb-4 pt-2 md:pb-5 md:pt-1">

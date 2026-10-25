@@ -37,15 +37,15 @@ export function ListingCard({
   const listingTypeLabel = listingTypeLabels[listing.listingType];
 
   return (
-    <Link to={`/property/${listing.id}`} className={`group block ${widthClass}`}>
-      <div className="relative aspect-square overflow-hidden rounded-[var(--radius-listing)] bg-surface-subtle shadow-card transition-all duration-300 group-hover:shadow-card-hover group-hover:-translate-y-1">
+    <Link to={`/property/${listing.id}`} className={`marketplace-property-card group block ${widthClass}`}>
+      <div className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-listing)] bg-surface-subtle transition-all duration-300">
         {photos.map((src, i) => (
           <img
             key={`${src}-${i}`}
             src={src}
             alt={listing.title}
             loading={i === 0 ? "lazy" : undefined}
-            className={`absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-[1.06] ${
+            className={`absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-[1.025] ${
               i === photoIndex ? "opacity-100" : "opacity-0"
             }`}
           />
@@ -153,7 +153,8 @@ export function ListingCard({
         )}
       </div>
 
-      <div className="mt-3.5 space-y-1">
+      <div className="marketplace-property-info space-y-2">
+        <p className="marketplace-property-price">{listing.priceLabel}</p>
         <div className="flex items-start justify-between gap-2">
           <h3 className="truncate text-base font-semibold text-ink group-hover:text-primary transition-colors">
             {listing.location || listing.title}
@@ -170,9 +171,6 @@ export function ListingCard({
           {listing.bedrooms ? `${listing.bedrooms} beds` : listing.type}
           {listingTypeLabel ? ` · ${listingTypeLabel}` : ""}
         </p>
-        <p className="pt-0.5 text-[15px] text-ink">
-          <span className="font-bold tracking-tight">{listing.priceLabel}</span>
-        </p>
       </div>
     </Link>
   );
@@ -183,7 +181,7 @@ export function ListingCardSkeleton({ compact = false }: { compact?: boolean }) 
     <div
       className={`animate-pulse ${compact ? "w-[min(100%,320px)] shrink-0 sm:w-[300px] lg:w-[320px]" : "w-full"}`}
     >
-      <div className="aspect-square rounded-[var(--radius-listing)] bg-surface-subtle border border-surface-border/50" />
+      <div className="aspect-[4/3] rounded-[var(--radius-listing)] bg-surface-subtle border border-surface-border/50" />
       <div className="mt-3 space-y-2">
         <div className="h-4 w-3/4 rounded bg-surface-subtle" />
         <div className="h-3 w-1/2 rounded bg-surface-subtle" />
