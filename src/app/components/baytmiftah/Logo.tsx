@@ -86,6 +86,8 @@ export function Logo({
   const useDesktopAsset = isDesktopWorkspaceApp();
   const textSize = size === "sm" ? "text-sm" : "text-lg";
   const markSize = size === "sm" ? "h-8 w-8" : "h-9 w-9";
+  const inlineMark = showText && logoVariant === "default";
+  const inlineMarkSize = size === "sm" ? "h-3 w-6" : "h-3.5 w-7";
   const textColor =
     logoVariant === "workspace"
       ? inverted || resolvedTheme === "dark"
@@ -105,11 +107,16 @@ export function Logo({
           aria-hidden="true"
         />
       ) : (
-        <LogoMark className={markSize} inverted={inverted} variant={logoVariant} />
+        <LogoMark
+          className={inlineMark ? inlineMarkSize : markSize}
+          viewBox={inlineMark ? "0 8 48 27" : "0 0 48 48"}
+          inverted={inverted}
+          variant={logoVariant}
+        />
       )}
       {showText && (
         <span
-          className={`${textSize} font-semibold tracking-[0.06em] ${textColor}`}
+          className={`${textSize} leading-none font-semibold tracking-[0.06em] ${textColor}`}
           aria-hidden="true"
         >
           {SPLASH_WORDMARK}
@@ -120,7 +127,7 @@ export function Logo({
 
   if (disableLink) {
     return (
-      <div className={`flex shrink-0 items-center gap-2.5 ${className}`} aria-label={BRAND_NAME}>
+      <div className={`inline-flex shrink-0 items-center gap-2.5 ${className}`} aria-label={BRAND_NAME}>
         {content}
       </div>
     );
@@ -130,7 +137,7 @@ export function Logo({
     <Link
       to={to}
       aria-label={BRAND_NAME}
-      className={`flex shrink-0 items-center gap-2.5 ${className}`}
+      className={`inline-flex shrink-0 items-center gap-2.5 ${className}`}
     >
       {content}
     </Link>

@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" fill="none" role="img" aria-label="BaytMiftah inverted logo">
-  <g transform="translate(38 28)">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 96" fill="none" role="img" aria-label="BaytMiftah logo">
+  <g transform="translate(18 25.2) scale(0.8)">
     <circle cx="32" cy="21" r="7" fill="#FFFFFF"/>
     <path d="M6 43Q32 28 58 43Q32 35 6 43Z" fill="#FFFFFF"/>
   </g>
-  <text x="138" y="94" fill="#FFFFFF" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="0.1em">BAYTMIFTAH</text>
+  <text x="90" y="60" fill="#FFFFFF" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif" font-size="32" font-weight="600" letter-spacing="0.06em">BAYTMIFTAH</text>
 </svg>
