@@ -1,3 +1,4 @@
+import { withinSearchBounds, type SearchBounds } from "./consumer-discovery";
 import { matchesMarketplaceAmenities } from "./marketplace-amenities";
 import { supabase } from "./supabase";
 import type { Database } from "./database.types";
@@ -93,6 +94,7 @@ export const listingService = {
   async searchListings(
     filters: {
       location?: string;
+      bounds?: SearchBounds;
       priceMin?: number;
       priceMax?: number;
       bedrooms?: number;
@@ -110,6 +112,7 @@ export const listingService = {
   async searchListingsWithCount(
     filters: {
       location?: string;
+      bounds?: SearchBounds;
       priceMin?: number;
       priceMax?: number;
       bedrooms?: number;
@@ -148,8 +151,9 @@ export const listingService = {
         .join(" ")
         .toLowerCase();
 
-      if (filters.priceMin && listing.price < filters.priceMin) return false;
-      if (filters.priceMax && listing.price > filters.priceMax) return false;
+      if (filters.bounds && !withinSearchBounds(property?.latitude, property?.longitude, filters.bounds)) return false;
+      if (filters.priceMin != null && listing.price < filters.priceMin) return false;
+      if (filters.priceMax != null && listing.price > filters.priceMax) return false;
       if (filters.listingType && listing.listing_type !== filters.listingType) return false;
       if (normalizedPropertyType && normalizedListingCategory !== normalizedPropertyType) return false;
       if (!matchesMarketplaceAmenities(property?.amenities, filters.amenities)) return false;
@@ -225,6 +229,22 @@ export const listingService = {
     return results.filter((item) => item.id !== listingId).slice(0, limit);
   },
 
+  async getPublicShortlist(ids: string[]) {
+    if (!ids.length) return [];
+    const { data, error } = await supabase.from("listings").select(LISTING_SELECT).in("id", ids.slice(0, 12)).eq("status", "listed").eq("visibility", "public");
+    if (error) throw error;
+    return resolveListingsPropertyMedia(data || []);
+  },
+  async confirmAvailability(id: string) {
+    const current = await this.getListingById(id);
+    const details = current.quality_breakdown && typeof current.quality_breakdown === "object" && !Array.isArray(current.quality_breakdown) ? current.quality_breakdown : {};
+    let query = supabase.from("listings").update({ quality_breakdown: { ...details, availabilityConfirmedAt: new Date().toISOString() } }).eq("id", id);
+    if (current.updated_at) query = query.eq("updated_at", current.updated_at);
+    const { data, error } = await query.select().maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error("The listing changed or you do not have permission. Refresh and retry.");
+    return data;
+  },
   async getListingById(id: string) {
     const { data, error } = await supabase
       .from("listings")
@@ -336,7 +356,7 @@ export const listingService = {
         visibility: "public",
         published_at: new Date().toISOString(),
         quality_score: report.score,
-        quality_breakdown: { checks: report.checks, evaluatedAt: new Date().toISOString() },
+        quality_breakdown: { ...(data.quality_breakdown && typeof data.quality_breakdown === "object" && !Array.isArray(data.quality_breakdown) ? data.quality_breakdown : {}), checks: report.checks, evaluatedAt: new Date().toISOString() },
         last_quality_checked_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })

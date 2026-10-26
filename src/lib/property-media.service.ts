@@ -117,6 +117,7 @@ export const propertyMediaService = {
     createdBy: string;
     files: File[];
     altText?: string | null;
+    onUploaded?: (file: File) => void;
   }) {
     if (params.files.length === 0) return [];
 
@@ -141,7 +142,7 @@ export const propertyMediaService = {
         .from(PROPERTY_MEDIA_BUCKET)
         .createSignedUrl(storagePath, 60 * 60 * 24 * 7);
 
-      if (signedUrlError) throw signedUrlError;
+      if (signedUrlError) { await supabase.storage.from(PROPERTY_MEDIA_BUCKET).remove([storagePath]); throw signedUrlError; }
 
       const insertPayload: PropertyMediaInsert = {
         property_id: params.propertyId,
@@ -166,6 +167,7 @@ export const propertyMediaService = {
       }
 
       uploadedRows.push(data);
+      params.onUploaded?.(file);
     }
 
     return uploadedRows;

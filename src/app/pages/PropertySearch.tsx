@@ -1,3 +1,5 @@
+import { FullScreenPropertyMap } from "../components/consumer/FullScreenPropertyMap";
+import { parseSearchBounds } from "../../lib/consumer-discovery";
 import { parseMaximumBudget } from "../../lib/marketplace-budget";
 import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -100,6 +102,7 @@ export function PropertySearch() {
   const [showFilters, setShowFilters] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const listingRequest = useRef(0);
   const [listings, setListings] = useState<any[]>([]);
   const [totalResults, setTotalResults] = useState(0);
   const [alertFrequency, setAlertFrequency] = useState<"immediate" | "daily" | "weekly">("daily");
@@ -135,7 +138,8 @@ export function PropertySearch() {
   }, [searchParams]);
 
   useEffect(() => {
-    loadListings();
+    void loadListings();
+    return () => { listingRequest.current += 1; };
   }, [searchParams]);
 
   useEffect(() => {
@@ -211,12 +215,14 @@ export function PropertySearch() {
   };
 
   const loadListings = async () => {
+    const request = ++listingRequest.current;
     try {
       setLoading(true);
       const activeFilters = buildFiltersFromSearchParams(searchParams);
       const queryText = searchParams.get("q") || "";
       const searchFilter = {
         location: queryText || undefined,
+        bounds: parseSearchBounds(searchParams),
         priceMin: parseMaximumBudget(activeFilters.priceMin) ?? undefined,
         priceMax: parseMaximumBudget(activeFilters.priceMax) ?? undefined,
         bedrooms: parseCountFilter(activeFilters.bedrooms),
@@ -233,14 +239,16 @@ export function PropertySearch() {
       };
 
       const offset = (currentPage - 1) * PAGE_SIZE;
-      const data = await listingService.searchListingsWithCount(searchFilter, PAGE_SIZE, offset);
+      const data = await listingService.searchListingsWithCount(searchFilter, viewMode === "map" ? 200 : PAGE_SIZE, viewMode === "map" ? 0 : offset);
+      if (request !== listingRequest.current) return;
       setListings(data.results);
       setTotalResults(data.total);
     } catch (error) {
+      if (request !== listingRequest.current) return;
       console.error("Failed to load listings:", error);
       toast.error(t("searchPage.loadListingsFailed"));
     } finally {
-      setLoading(false);
+      if (request === listingRequest.current) setLoading(false);
     }
   };
 
@@ -256,7 +264,7 @@ export function PropertySearch() {
       return;
     }
 
-    if (filters.listingType === "short_stay" || filters.amenities.length || filters.region !== "all" || filters.agency || filters.verifiedOnly || filters.featuredOnly) {
+    if (parseSearchBounds(searchParams) || filters.listingType === "short_stay" || filters.amenities.length || filters.region !== "all" || filters.agency || filters.verifiedOnly || filters.featuredOnly) {
       toast.error("Alerts support rent, buy or lease searches with location, price, property type and room counts. Remove the other filters before saving."); return;
     }
     if ([filters.priceMin, filters.priceMax].some((value) => value && !Number.isInteger(parseMaximumBudget(value)))) {
@@ -359,6 +367,7 @@ export function PropertySearch() {
 
   const clearFilters = () => {
     const nextParams = new URLSearchParams(searchParams);
+    ["north", "south", "east", "west"].forEach((key) => nextParams.delete(key));
     nextParams.delete("amenity");
     nextParams.delete("priceMin");
     nextParams.delete("priceMax");
@@ -421,6 +430,9 @@ export function PropertySearch() {
       next.delete("amenity"); remaining.forEach((item) => next.append("amenity", item));
       next.set("page", "1"); setSearchParams(next);
     } }));
+    if (parseSearchBounds(searchParams)) list.push({ label: "Map area", onRemove: () => {
+      const next = new URLSearchParams(searchParams); ["north", "south", "east", "west"].forEach((key) => next.delete(key)); next.set("page", "1"); setSearchParams(next);
+    } });
     const q = searchParams.get("q");
     if (q) {
       list.push({
@@ -605,7 +617,7 @@ export function PropertySearch() {
 
   const handleHeaderSearch = () => {
     const nextParams = new URLSearchParams(searchParams);
-    if (searchLocation.trim()) nextParams.set("q", searchLocation.trim());
+    if (searchLocation.trim()) { nextParams.set("q", searchLocation.trim()); ["north", "south", "east", "west"].forEach((key) => nextParams.delete(key)); }
     else nextParams.delete("q");
     if (searchPropertyType !== "any") nextParams.set("propertyType", searchPropertyType);
     else nextParams.delete("propertyType");
@@ -631,7 +643,7 @@ export function PropertySearch() {
           location={searchLocation}
           onLocationChange={(value) => {
             const nextParams = new URLSearchParams(searchParams);
-            if (value.trim()) nextParams.set("q", value.trim());
+            if (value.trim()) { nextParams.set("q", value.trim()); ["north", "south", "east", "west"].forEach((key) => nextParams.delete(key)); }
             else nextParams.delete("q");
             setSearchParams(nextParams);
           }}
@@ -653,6 +665,11 @@ export function PropertySearch() {
         />
       }
     >
+      {viewMode === "map" && <FullScreenPropertyMap initialBounds={parseSearchBounds(searchParams)} listings={listings} loading={loading} onClose={() => setViewMode("grid")} onSearchArea={(bounds) => {
+        const next = new URLSearchParams(searchParams);
+        Object.entries(bounds).forEach(([key, value]) => next.set(key, String(value)));
+        next.delete("q"); next.set("page", "1"); setSearchParams(next, { replace: true });
+      }} />}
       <div className="pb-12">
         {recentlyViewedListings.length > 0 ? (
           <section className="mb-8">
@@ -953,57 +970,7 @@ export function PropertySearch() {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-                    <div className="space-y-4 max-h-[880px] overflow-y-auto pr-2">
-                      {listings.map((listing, index) => (
-                        <motion.div
-                          key={listing.id}
-                          initial={reduceMotion ? false : { opacity: 0, x: -20 }}
-                          animate={reduceMotion ? undefined : { opacity: 1, x: 0 }}
-                          transition={reduceMotion ? undefined : { delay: index * 0.04 }}
-                        >
-                          <Card
-                            hover
-                            className={`overflow-hidden ${
-                              selectedMapListingId === listing.id ? "border-primary" : ""
-                            }`}
-                            onClick={() => setSelectedMapListingId(listing.id)}
-                          >
-                            <div className="flex gap-4 p-4">
-                              <div className="relative h-28 w-28 overflow-hidden rounded-lg flex-shrink-0">
-                                <img
-                                  src={getPropertyCoverImage(listing.property)}
-                                  alt={listing.property?.address}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              <div className="min-w-0">
-                                <h3 className="font-semibold line-clamp-2">
-                                  {listing.property?.address || t("searchPage.propertyFallback")}
-                                </h3>
-                                <p className="text-sm text-muted-foreground mt-2">
-                                  {listing.property?.city}, {listing.property?.region}
-                                </p>
-                                <p className="text-lg font-semibold text-primary mt-3">
-                                  GHS {listing.price.toLocaleString()}
-                                </p>
-                              </div>
-                            </div>
-                          </Card>
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    <Card className="overflow-hidden sticky top-24 h-[880px]">
-                      <iframe
-                        title={t("searchPage.mapSearchTitle", { location: selectedMapQuery })}
-                        src={selectedMapEmbedUrl}
-                        className="h-full w-full border-0"
-                        loading="lazy"
-                        referrerPolicy="no-referrer-when-downgrade"
-                      />
-                    </Card>
-                  </div>
+                  <p className="text-sm text-ink-secondary">Full-screen map browsing is open.</p>
                 )}
               </>
             )}

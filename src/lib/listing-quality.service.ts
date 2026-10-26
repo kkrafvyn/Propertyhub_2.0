@@ -215,6 +215,7 @@ export const listingQualityService = {
       .update({
         quality_score: report.score,
         quality_breakdown: {
+          ...(listing?.quality_breakdown && typeof listing.quality_breakdown === "object" && !Array.isArray(listing.quality_breakdown) ? listing.quality_breakdown : {}),
           checks: report.checks,
           evaluatedAt: checkedAt,
         },

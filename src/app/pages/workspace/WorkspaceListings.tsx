@@ -386,6 +386,7 @@ export function WorkspaceListings({
           : null,
         quality_score: qualityReport.score,
         quality_breakdown: {
+          ...(listing.quality_breakdown || {}),
           checks: qualityReport.checks,
           titleDocumentStatus: draft.titleDocumentStatus,
           evaluatedAt: new Date().toISOString(),
@@ -403,6 +404,7 @@ export function WorkspaceListings({
           currency: draft.currency.trim() || "GHS",
           whatsapp_enabled: draft.whatsappEnabled,
           quality_breakdown: {
+            ...(listing.quality_breakdown || {}),
             titleDocumentStatus: draft.titleDocumentStatus,
           },
           property: {
@@ -557,6 +559,7 @@ export function WorkspaceListings({
         propertyId: listing.property_id,
         createdBy: currentUserId,
         files: queuedFiles,
+        onUploaded: (file) => setPendingMediaFiles((current) => ({ ...current, [listing.id]: (current[listing.id] || []).filter((item) => item !== file) })),
         altText: drafts[listing.id]?.address || listing.property?.address || null,
       });
       setPendingMediaFiles((current) => ({
@@ -567,7 +570,7 @@ export function WorkspaceListings({
       await loadListings();
     } catch (error) {
       console.error("Failed to upload property media:", error);
-      toast.error("We couldn't upload those photos.");
+      toast.error("Upload interrupted. Completed photos were removed from the queue; remaining photos are still selected. Reconnect and retry.");
     } finally {
       setUploadingMediaForListingId(null);
     }
@@ -766,6 +769,12 @@ export function WorkspaceListings({
                         </p>
                       </div>
                     </div>
+                    <Button variant="outline" disabled={savingId === listing.id} onClick={async () => {
+                      setSavingId(listing.id);
+                      try { await listingService.confirmAvailability(listing.id); toast.success("Availability confirmation recorded."); await loadListings(); }
+                      catch (error) { toast.error(error instanceof Error ? error.message : "Could not confirm availability."); }
+                      finally { setSavingId(null); }
+                    }}>Confirm still available</Button>
                     <Link to={`/property/${listing.id}`}>
                       <Button variant="outline" className="rounded-xl">
                         <Eye className="w-4 h-4 mr-2" />

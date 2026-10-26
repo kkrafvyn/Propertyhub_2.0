@@ -1,3 +1,4 @@
+import { ConnectionStatus } from "./consumer/ConnectionStatus";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigationType } from "react-router";
 
@@ -9,6 +10,7 @@ export function RouteExperience() {
   const [announcement, setAnnouncement] = useState("");
 
   const focusMainContent = (scroll: boolean) => {
+    if (document.querySelector('[role="dialog"][data-state="open"]')) return;
     const target = document.querySelector<HTMLElement>("main")
       || document.getElementById("main-content");
     if (!target) return;
@@ -27,7 +29,7 @@ export function RouteExperience() {
       if (location.hash) {
         const target = document.getElementById(location.hash.slice(1));
         target?.scrollIntoView({ block: "start" });
-      } else if (navigationType !== "POP") {
+      } else if (navigationType !== "POP" && !document.querySelector('[role="dialog"][data-state="open"]')) {
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       }
 
@@ -41,6 +43,7 @@ export function RouteExperience() {
 
   return (
     <>
+      {!location.pathname.startsWith("/workspace") && !location.pathname.startsWith("/admin") && <ConnectionStatus />}
       <a
         className="skip-to-content"
         href="#main-content"

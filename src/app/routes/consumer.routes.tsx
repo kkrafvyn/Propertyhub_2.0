@@ -28,6 +28,7 @@ const legacyRedirectRoutes: RouteObject[] = LEGACY_REDIRECT_SEGMENTS.flatMap(
 );
 
 export const consumerRoutes: RouteObject[] = [
+  { path: 'shortlist', lazy: async () => { const { SharedShortlist } = await import('../pages/SharedShortlist'); return { Component: SharedShortlist }; } },
   // ── Marketplace & Discovery ─────────────────────────────────────
   {
     index: true,

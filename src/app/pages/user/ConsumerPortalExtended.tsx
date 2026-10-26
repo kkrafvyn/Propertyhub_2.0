@@ -1,3 +1,5 @@
+import { NotificationControls } from "../../components/consumer/NotificationControls";
+import { DocumentChecklist } from "../../components/consumer/DocumentChecklist";
 import { MaintenanceRequestForm } from "../../components/maintenance/MaintenanceRequestForm";
 import { MaintenancePhotoThumb } from "../../components/maintenance/MaintenancePhotoThumb";
 import { useEffect, useMemo, useState } from "react";
@@ -254,6 +256,7 @@ export function NotificationsCenterSection({
 
   return (
     <section className="space-y-6">
+      <NotificationControls userId={userId} />
       <div className="flex items-start justify-between gap-4">
         <Button variant="outline" onClick={() => void handleMarkAllRead()} disabled={markingAll}>
           {markingAll ? "Updating..." : "Mark all read"}
@@ -497,6 +500,8 @@ export function DocumentFoldersSection({
   const queryPhase = loadError ? "error" : loading ? "loading" : "ready";
 
   return (
+    <>
+    <DocumentChecklist />
     <OperationalQueryState
       phase={queryPhase}
       errorMessage={loadError ?? undefined}
@@ -633,6 +638,7 @@ export function DocumentFoldersSection({
       ) : null}
     </section>
     </OperationalQueryState>
+    </>
   );
 }
 

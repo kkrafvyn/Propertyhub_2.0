@@ -1,49 +1,32 @@
-const PREFIX = "baytmiftah.journey.draft.";
-
-export type JourneyDraftKind = "inquiry" | "offer" | "booking";
-
-export function saveJourneyDraft(listingId: string, kind: JourneyDraftKind, payload: Record<string, unknown>) {
-  if (typeof window === "undefined") return;
-  try {
-    sessionStorage.setItem(`${PREFIX}${listingId}.${kind}`, JSON.stringify(payload));
-  } catch {
-    // ignore quota errors
+import { readSessionDraft, writeSessionDraft, clearSessionDraft } from './session-draft';
+export type JourneyDraftKind = 'inquiry' | 'offer' | 'booking';
+const keyFor = (listingId: string, kind: JourneyDraftKind, owner = 'guest') => `journey:${owner}:${listingId}.${kind}`;
+export function saveJourneyDraft(listingId: string, kind: JourneyDraftKind, payload: Record<string, unknown>, owner?: string) {
+  writeSessionDraft(keyFor(listingId, kind, owner), payload);
+}
+export function readJourneyDraft<T extends Record<string, unknown>>(listingId: string, kind: JourneyDraftKind, owner?: string): T | null {
+  const key = keyFor(listingId, kind, owner);
+  let value = readSessionDraft<T>(key);
+  // Claim an anonymous draft once after sign-in, without exposing another account's draft.
+  if (!value && owner) {
+    value = readSessionDraft<T>(keyFor(listingId, kind));
+    if (value) { writeSessionDraft(key, value); clearSessionDraft(keyFor(listingId, kind)); }
   }
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
 }
-
-export function readJourneyDraft<T extends Record<string, unknown>>(
-  listingId: string,
-  kind: JourneyDraftKind,
-): T | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = sessionStorage.getItem(`${PREFIX}${listingId}.${kind}`);
-    if (!raw) return null;
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
-  }
+export function clearJourneyDraft(listingId: string, kind: JourneyDraftKind, owner?: string) {
+  clearSessionDraft(keyFor(listingId, kind, owner));
 }
-
-export function clearJourneyDraft(listingId: string, kind: JourneyDraftKind) {
-  if (typeof window === "undefined") return;
-  sessionStorage.removeItem(`${PREFIX}${listingId}.${kind}`);
-}
-
-/** Active session drafts (listing id + kind) for resume banners. */
-export function listActiveJourneyDrafts(): Array<{ listingId: string; kind: JourneyDraftKind }> {
-  if (typeof window === "undefined") return [];
+export function listActiveJourneyDrafts(owner?: string): Array<{ listingId: string; kind: JourneyDraftKind }> {
+  const prefix = `baytmiftah.session-draft.journey:${owner || 'guest'}:`;
   const rows: Array<{ listingId: string; kind: JourneyDraftKind }> = [];
-  const kinds: JourneyDraftKind[] = ["inquiry", "offer", "booking"];
-  for (let i = 0; i < sessionStorage.length; i++) {
-    const key = sessionStorage.key(i);
-    if (!key?.startsWith(PREFIX)) continue;
-    const suffix = key.slice(PREFIX.length);
-    const dot = suffix.lastIndexOf(".");
-    if (dot <= 0) continue;
-    const kind = suffix.slice(dot + 1) as JourneyDraftKind;
-    if (!kinds.includes(kind)) continue;
-    rows.push({ listingId: suffix.slice(0, dot), kind });
-  }
+  try {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i); if (!key?.startsWith(prefix)) continue;
+      const suffix = key.slice(prefix.length); const dot = suffix.lastIndexOf('.');
+      const kind = suffix.slice(dot + 1) as JourneyDraftKind; const listingId = suffix.slice(0, dot);
+      if (dot > 0 && ['inquiry', 'offer', 'booking'].includes(kind) && readJourneyDraft(listingId, kind, owner)) rows.push({ listingId, kind });
+    }
+  } catch { return []; }
   return rows;
 }

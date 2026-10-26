@@ -1,3 +1,5 @@
+import { ListingFreshness } from "../components/consumer/ListingFreshness";
+import { DocumentChecklist } from "../components/consumer/DocumentChecklist";
 import { PropertyCostSummary } from "../components/baytmiftah/PropertyCostSummary";
 import { Textarea } from "@/app/components/ui/textarea";
 import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
@@ -155,17 +157,24 @@ export function PropertyDetail() {
       email?: string;
       phone?: string;
       message?: string;
-    }>(listing.id, "inquiry");
+    }>(listing.id, "inquiry", user?.id);
     if (inquiryDraft) {
       setContactForm((current) => ({ ...current, ...inquiryDraft }));
       setShowContactForm(true);
     }
-    const offerDraft = readJourneyDraft<{ amount?: string; message?: string }>(listing.id, "offer");
+    const offerDraft = readJourneyDraft<{ amount?: string; message?: string }>(listing.id, "offer", user?.id);
     if (offerDraft) {
       setOfferForm((current) => ({ ...current, ...offerDraft }));
       setShowOfferForm(true);
     }
-  }, [listing?.id]);
+  }, [listing?.id, user?.id]);
+
+  useEffect(() => {
+    if (listing?.id && showContactForm && contactForm.message.trim()) saveJourneyDraft(listing.id, "inquiry", contactForm, user?.id);
+  }, [listing?.id, showContactForm, contactForm, user?.id]);
+  useEffect(() => {
+    if (listing?.id && showOfferForm && (offerForm.amount || offerForm.message)) saveJourneyDraft(listing.id, "offer", offerForm, user?.id);
+  }, [listing?.id, showOfferForm, offerForm, user?.id]);
 
   useEffect(() => {
     if (!id) return;
@@ -350,7 +359,7 @@ export function PropertyDetail() {
     e.preventDefault();
 
     if (!user) {
-      saveJourneyDraft(listing.id, "inquiry", contactForm);
+      saveJourneyDraft(listing.id, "inquiry", contactForm, user?.id);
       toast.error("Log in to contact the listing team.");
       navigate("/login", { state: { from: `/property/${id}` } });
       return;
@@ -418,7 +427,7 @@ export function PropertyDetail() {
         console.error("Failed to create inquiry notification:", notificationError);
       }
 
-      clearJourneyDraft(listing.id, "inquiry");
+      clearJourneyDraft(listing.id, "inquiry", user?.id);
       toast.success("Your inquiry has been sent.");
       setContactForm((current) => ({ ...current, message: "" }));
       setShowContactForm(false);
@@ -434,14 +443,14 @@ export function PropertyDetail() {
     e.preventDefault();
 
     if (!user || !listing) {
-      if (listing?.id) saveJourneyDraft(listing.id, "offer", offerForm);
+      if (listing?.id) saveJourneyDraft(listing.id, "offer", offerForm, user?.id);
       toast.error("Log in before submitting an offer.");
       navigate("/login", { state: { from: `/property/${id}` } });
       return;
     }
 
     if (!canSubmitOffer(kyc)) {
-      saveJourneyDraft(listing.id, "offer", offerForm);
+      saveJourneyDraft(listing.id, "offer", offerForm, user?.id);
       toast.error("Complete identity verification before submitting an offer.");
       navigate(CONSUMER_ROUTES.kyc);
       return;
@@ -472,7 +481,7 @@ export function PropertyDetail() {
         currency: paymentCurrency,
         message: offerForm.message.trim() || undefined,
       });
-      clearJourneyDraft(listing.id, "offer");
+      clearJourneyDraft(listing.id, "offer", user?.id);
       monitoring.trackWorkflowStep("purchase", "offer_submitted", { listingId: listing.id });
       toast.success("Offer submitted. Track progress in My BaytMiftah.");
       setShowOfferForm(false);
@@ -920,6 +929,8 @@ export function PropertyDetail() {
                 </div>
               </div>
 
+              <ListingFreshness key={listing.id} listing={listing} />
+              <DocumentChecklist />
               <PropertyCostSummary currency={paymentCurrency} price={listing.price} listingType={listing.listing_type} minimumDeposit={listing.minimum_deposit_amount} inspectionFee={listing.inspection_fee_amount} />
 
               {/* Luxury Spec Tiles */}

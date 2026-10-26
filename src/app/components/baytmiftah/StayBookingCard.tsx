@@ -48,12 +48,13 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
 
   useEffect(() => {
     fetchListingAvailability(listing.id).then(({ availability: rows }) => setAvailability(rows ?? []))
-  }, [listing.id])
+  }, [listing.id, user?.id])
 
   useEffect(() => {
     const draft = readJourneyDraft<{ checkIn?: string; checkOut?: string; guests?: number }>(
       listing.id,
       'booking',
+      user?.id,
     )
     if (draft?.checkIn) setCheckIn(draft.checkIn)
     if (draft?.checkOut) setCheckOut(draft.checkOut)
@@ -82,7 +83,7 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
 
   async function handleBook() {
     if (!user) {
-      saveJourneyDraft(listing.id, 'booking', { checkIn, checkOut, guests })
+      saveJourneyDraft(listing.id, 'booking', { checkIn, checkOut, guests }, user?.id)
       navigate('/login', { state: { from: `/property/${listing.id}` } })
       return
     }
@@ -102,7 +103,7 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
 
     const jurisdictionId = listing.jurisdictionId || 'GLOBAL'
     if (!canBookStay(kyc, jurisdictionId)) {
-      saveJourneyDraft(listing.id, 'booking', { checkIn, checkOut, guests })
+      saveJourneyDraft(listing.id, 'booking', { checkIn, checkOut, guests }, user?.id)
       setMessage('Identity verification is required to book in this market.')
       navigate(`${CONSUMER_ROUTES.kyc}?context=consumer&jurisdiction=${jurisdictionId}`)
       return
@@ -143,7 +144,7 @@ export default function StayBookingCard({ listing }: { listing: StayBookingListi
         })
       }
 
-      clearJourneyDraft(listing.id, 'booking')
+      clearJourneyDraft(listing.id, 'booking', user?.id)
 
       if (result.bookingMode === 'request') {
         toast.success('Request sent. The host will confirm before payment.')

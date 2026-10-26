@@ -1,3 +1,4 @@
+import { readTextSessionDraft, writeSessionDraft, clearSessionDraft } from "../../../../lib/session-draft";
 import { Textarea } from "@/app/components/ui/textarea";
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
@@ -68,8 +69,10 @@ export default function ChatThread({
 }) {
   const { t } = useTranslation()
   const { user, profile } = useAuth()
-  const [draft, setDraft] = useState('')
-  useEffect(() => { setDraft('') }, [conversationId])
+  const draftKey = `message:${user?.id || 'guest'}:${conversationId}`
+  const [draft, setDraft] = useState(() => readTextSessionDraft(draftKey))
+  useEffect(() => { setDraft(readTextSessionDraft(draftKey)) }, [draftKey])
+  const updateDraft = (value: string) => { setDraft(value); if (value) writeSessionDraft(draftKey, value); else clearSessionDraft(draftKey) }
   const selfLabel = profile?.full_name || user?.user_metadata?.full_name || 'You'
   const { conversation, sending, error, live, send, isOwnMessage } = useChatThread(conversationId, {
     selfLabel: mode === 'agent' ? (profile?.full_name || 'Agent') : selfLabel,
@@ -81,7 +84,7 @@ export default function ChatThread({
   async function handleSubmit(e) {
     e.preventDefault()
     const ok = await send(draft)
-    if (ok) setDraft('')
+    if (ok) updateDraft('')
   }
 
   function handleKeyDown(e) {
@@ -139,7 +142,7 @@ export default function ChatThread({
       )}
 
       {mode === 'consumer' && <div className="flex shrink-0 gap-2 overflow-x-auto border-t border-surface-border px-4 py-2" aria-label="Suggested replies">
-        {['Is this property still available?', 'Could we arrange a viewing?', 'Please confirm the total upfront cost.'].map((reply) => <button key={reply} type="button" disabled={sending} onClick={() => setDraft(reply)} className="min-h-11 shrink-0 rounded-full border border-surface-border px-3 text-xs text-ink">{reply}</button>)}
+        {['Is this property still available?', 'Could we arrange a viewing?', 'Please confirm the total upfront cost.'].map((reply) => <button key={reply} type="button" disabled={sending} onClick={() => updateDraft(reply)} className="min-h-11 shrink-0 rounded-full border border-surface-border px-3 text-xs text-ink">{reply}</button>)}
       </div>}
       <form
         onSubmit={handleSubmit}
@@ -149,7 +152,7 @@ export default function ChatThread({
       >
         <Textarea
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => updateDraft(e.target.value)}
           onKeyDown={handleKeyDown}
           aria-label="Message"
           placeholder={t('messagesPage.placeholder')}

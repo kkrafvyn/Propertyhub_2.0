@@ -1,3 +1,4 @@
+import type { SearchBounds } from "../../../lib/consumer-discovery";
 import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -26,6 +27,9 @@ interface MapViewProps {
   listings: MapListing[];
   center?: [number, number];
   zoom?: number;
+  autoFit?: boolean;
+  pricePins?: boolean;
+  onBoundsChange?: (bounds: SearchBounds) => void;
   userLocation?: { lat: number; lng: number; accuracy?: number } | null;
 }
 
@@ -53,13 +57,33 @@ function MapViewport({ listings, userLocation }: Pick<MapViewProps, "listings" |
   return null;
 }
 
+function BoundsListener({ onChange }: { onChange?: (bounds: SearchBounds) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    const publish = () => { const bounds = map.getBounds(); const wrap = (value: number) => ((value + 180) % 360 + 360) % 360 - 180; const world = bounds.getEast() - bounds.getWest() >= 360; onChange?.({ north: Math.min(90, bounds.getNorth()), south: Math.max(-90, bounds.getSouth()), east: world ? 180 : wrap(bounds.getEast()), west: world ? -180 : wrap(bounds.getWest()) }); };
+    map.on('moveend', publish); publish();
+    return () => { map.off('moveend', publish); };
+  }, [map, onChange]);
+  return null;
+}
+function pricePin(label: string) {
+  const element = document.createElement('div');
+  element.textContent = label;
+  element.style.cssText = 'background:#123b2a;color:white;padding:6px 10px;border:2px solid white;border-radius:18px;white-space:nowrap;font-weight:700;box-shadow:0 2px 8px #0004';
+  return L.divIcon({ className: '', html: element, iconSize: [110, 34], iconAnchor: [55, 17] });
+}
 export function MapView({
   listings,
   center = [5.6037, -0.187],
   zoom = 12,
   userLocation = null,
+  autoFit = true,
+  pricePins = false,
+  onBoundsChange,
 }: MapViewProps) {
   const [ready, setReady] = useState(false);
+  const [tileError, setTileError] = useState(false);
+  const [tileRetry, setTileRetry] = useState(0);
   const [currentLocation, setCurrentLocation] = useState(userLocation);
 
   useEffect(() => {
@@ -106,8 +130,11 @@ export function MapView({
           className="h-full w-full"
           scrollWheelZoom
         >
-        <MapViewport listings={mappable} userLocation={currentLocation} />
+        {autoFit && <MapViewport listings={mappable} userLocation={currentLocation} />}
+        <BoundsListener onChange={onBoundsChange} />
         <TileLayer
+          key={tileRetry}
+          eventHandlers={{ tileerror: () => setTileError(true), tileload: () => setTileError(false) }}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
@@ -122,7 +149,7 @@ export function MapView({
           </>
         )}
         {mappable.map((listing) => (
-          <Marker key={listing.id} position={[listing.lat!, listing.lng!]} icon={pin}>
+          <Marker key={listing.id} position={[listing.lat!, listing.lng!]} icon={pricePins ? pricePin(listing.priceLabel) : pin}>
             <Popup>
               <div className="min-w-[160px]">
                 <p className="font-semibold text-ink">{listing.title}</p>
@@ -141,10 +168,11 @@ export function MapView({
           </Marker>
         ))}
         </MapContainer>
+        {tileError && <div role="alert" className="absolute inset-x-3 bottom-8 z-[1000] rounded-lg border border-surface-border bg-surface p-3 text-sm text-ink">Some map tiles could not load. Your search is retained.<button type="button" className="ml-2 min-h-11 underline" onClick={() => { setTileError(false); setTileRetry((value) => value + 1); }}>Retry map</button></div>}
         <button
           type="button"
           onClick={locateUser}
-          className="absolute end-3 top-3 z-[1000] rounded-lg border border-surface-border bg-white p-2 text-ink shadow-md transition hover:bg-surface-subtle"
+          className="absolute end-3 top-3 z-[1000] rounded-lg border border-surface-border bg-surface p-2 text-ink shadow-md transition hover:bg-surface-subtle"
           aria-label="Use my location"
           title="Use my location"
         >

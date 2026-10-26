@@ -1,3 +1,4 @@
+import { ShareShortlist } from "../../components/consumer/ShareShortlist";
 import { ViewingActions } from "../../components/consumer/ViewingActions";
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
@@ -326,8 +327,8 @@ export function UserDashboard() {
         ...dealCases.map((row: any) => row.listing_id || row.listing?.id),
       ].filter(Boolean) as string[],
     );
-    return listActiveJourneyDrafts().filter((draft) => listingIds.has(draft.listingId));
-  }, [savedProperties, dealCases, journeyDraftTick]);
+    return listActiveJourneyDrafts(user?.id).filter((draft) => listingIds.has(draft.listingId));
+  }, [savedProperties, dealCases, journeyDraftTick, user?.id]);
 
   const extendedSectionFallback = <ListSkeleton rows={4} />;
 
@@ -2047,7 +2048,7 @@ export function UserDashboard() {
           ) : loading ? (
             <ListSkeleton rows={4} />
           ) : section === "saved" ? (
-            renderSectionShell(renderSavedGrid(savedProperties))
+            renderSectionShell(<><ShareShortlist ids={savedProperties.filter((item) => item.listing?.status === "listed" && item.listing?.visibility === "public").map((item) => item.listing?.id || item.listing_id).filter(Boolean)} />{renderSavedGrid(savedProperties)}</>)
           ) : section === "messages" ? (
             renderSectionShell(renderConversations())
           ) : section === "applications" ? (
