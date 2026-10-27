@@ -1,4 +1,4 @@
-﻿# Hero photography
+# Hero photography
 
 Five self-hosted Unsplash stock photographs, licensed for commercial use under
 https://unsplash.com/license (checked 2026-10-05). These are illustrative property
@@ -23,7 +23,8 @@ covered by per-slide forest overlays; even an all-white source retains readable
 text. First image is prioritized and preloaded on the marketing build. Subsequent
 images load sequentially at low priority, and only decoded images can become
 active. Failed images are disabled/skipped, with a solid forest fallback if all
-images fail. The hero includes no live region for automatic changes.
+images fail. Automatic slide changes stay silent; a polite live region announces
+the slide label only when the visitor uses the hero background controls.
 
 Implemented service descriptions are checked against `src/lib/integrations.ts`
 (payment checkout, email, web push). They require configuration; no provider logo,

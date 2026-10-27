@@ -50,7 +50,7 @@ describe('hero background carousel', () => {
     act(() => vi.advanceTimersByTime(28000)); expect(active(container)).toContain('residences');
     expect(screen.getByRole('button',{name:/Automatic rotation disabled/})).toBeDisabled();
     fireEvent.click(screen.getByRole('button',{name:'Next background image'})); expect(active(container)).toContain('interior');
-    expect(container.querySelector('[aria-live]')).toBeNull();
+    expect(container.querySelector('[aria-live]')).toHaveTextContent('Background: Apartment interiors');
     expect(container.querySelector('img')).toHaveAttribute('alt','');
   });
   it('holds the current photo during loading and skips failed assets', async () => {

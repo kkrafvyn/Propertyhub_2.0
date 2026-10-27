@@ -92,7 +92,7 @@ export function EditorialAiSection() {
     { prompt: "Draft a renewal summary", output: "Illustrative draft - requires human review before use." },
   ];
   return (
-    <section ref={ref} className="mk-ed-section mk-ed-reveal" aria-labelledby="ai-heading">
+    <section id="ai" ref={ref} className="mk-ed-section mk-ed-reveal" aria-labelledby="ai-heading">
       <div className="mk-ed-container">
         <p className="mk-ed-kicker">AI with context</p>
         <h2 id="ai-heading" className="mk-ed-heading">Assistance grounded in your operation</h2>

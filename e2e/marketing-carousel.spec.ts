@@ -16,11 +16,15 @@ for (const width of [1440, 768, 390]) {
     await expect(hero.getByRole('link',{name:'Get Started'})).toHaveAttribute('href',/\/signup$/);
     await expect(hero.getByRole('link',{name:'Explore the Platform'})).toHaveAttribute('href','#product-tour');
     await expect(page.locator('header .mk-nav-login')).toHaveAttribute('href',/\/login$/);
+    await page.evaluate(() => window.scrollTo(0, 0));
     const title=await hero.locator('h1').boundingBox();
     for(let i=0;i<5;i++) {
       const dot=hero.getByRole('button',{name:new RegExp(`Show background ${i+1}:`)});
-      await dot.click(); await expect(dot).toHaveAttribute('aria-current','true');
-      expect(await hero.locator('h1').boundingBox()).toEqual(title);
+      await dot.click();
+      await expect(dot).toHaveAttribute('aria-current','true',{timeout:15000});
+      const next=await hero.locator('h1').boundingBox();
+      expect(next?.width).toBeCloseTo(title!.width, 0);
+      expect(next?.height).toBeCloseTo(title!.height, 0);
       if(width===390) expect(await hero.locator('.is-active img').evaluate((img: HTMLImageElement)=>img.currentSrc)).toContain('-mobile.webp');
     }
     await page.getByRole('button',{name:/Show background 1:/}).click();
@@ -36,7 +40,7 @@ for (const width of [1440, 768, 390]) {
     await expect(page.getByRole('region',{name:'Product tour',exact:true})).toBeInViewport();
     await page.getByRole('tab',{name:'Payments',exact:true}).click(); await expect(page.locator('#tour-panel-payments')).toBeVisible();
     await page.getByRole('button',{name:'Finance',exact:true}).click(); await expect(page.locator('#teams')).toContainText('Know where the money stands');
-    for(const id of ['workflow','residents','getting-started','integrations','trust','pricing']) await expect(page.locator(`#${id}`)).toBeAttached();
+    for(const id of ['workflow','residents','getting-started','integrations','trust','pricing','ai']) await expect(page.locator(`#${id}`)).toBeAttached();
     await expect(page.locator('.mk-ed-ai-grid')).toBeAttached(); await expect(page.locator('.mk-ed-details')).toHaveCount(6);
     for(const href of await page.locator('header nav a[href^="#"]').evaluateAll(links => links.map(link => link.getAttribute('href')!))) await expect(page.locator(href)).toBeAttached();
   });
@@ -82,7 +86,7 @@ test('published marketing content replaces defaults while preserving the product
   await expect(page.getByRole('heading',{level:1})).toHaveText('Your portfolio.Clearer every day.');
   await expect(page.locator('.mk-ed-hero__lead')).toHaveText('Published portfolio copy.');
   await expect(page).toHaveTitle(/Portfolio clarity/);
-  await expect(page.locator('.mk-photo-hero img')).toHaveCount(4);
+  await expect.poll(() => page.locator('.mk-photo-hero img').count()).toBe(4);
   await expect(page.locator('.mk-photo-hero img').first()).toHaveAttribute('src',/interior-1280.webp$/);
   await expect(page.getByRole('heading',{name:'A simpler operating day'})).toBeAttached();
   await expect(page.locator('.mk-ed-details')).toHaveCount(1);

@@ -7,6 +7,7 @@ import {
   SAMPLE_PROPERTY,
 } from "./marketing-editorial-data";
 import { trackMarketingEvent } from "./marketing-editorial-analytics";
+import { useEditorialReveal } from "./useEditorialReveal";
 
 type TourStep = "portfolio" | "property" | "payments" | "maintenance";
 
@@ -18,6 +19,7 @@ const STEPS: { id: TourStep; label: string }[] = [
 ];
 
 export function EditorialProductTour() {
+  const ref = useEditorialReveal<HTMLElement>();
   const [step, setStep] = useState<TourStep>("portfolio");
   const [started, setStarted] = useState(false);
 
@@ -37,7 +39,7 @@ export function EditorialProductTour() {
   };
 
   return (
-    <section id="product-tour" className="mk-ed-section mk-ed-section--surface" aria-labelledby="product-tour-heading">
+    <section id="product-tour" ref={ref} className="mk-ed-section mk-ed-section--surface mk-ed-reveal" aria-labelledby="product-tour-heading">
       <div className="mk-ed-container">
         <p className="mk-ed-kicker">Interactive preview</p>
         <h2 id="product-tour-heading" className="mk-ed-heading">
@@ -69,78 +71,86 @@ export function EditorialProductTour() {
           </div>
 
           <div className="mk-ed-tour__panel">
-            {step === "portfolio" ? (
-              <div role="tabpanel" id="tour-panel-portfolio" aria-labelledby="tour-tab-portfolio">
-                <p className="mk-ed-note">{SAMPLE_PORTFOLIO.name}</p>
-                <ul className="mk-ed-list">
-                  {SAMPLE_PORTFOLIO.properties.map((p) => (
-                    <li key={p.id}>
-                      <button type="button" className="mk-ed-list__btn" onClick={() => go("property")}>
-                        <strong>{p.name}</strong>
-                        <span>
-                          {p.units} units · {p.occupancy}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
+            <div
+              key={step}
+              className="mk-ed-tour__panel-inner"
+              role="tabpanel"
+              id={`tour-panel-${step}`}
+              aria-labelledby={`tour-tab-${step}`}
+            >
+              {step === "portfolio" ? (
+                <>
+                  <p className="mk-ed-note">{SAMPLE_PORTFOLIO.name}</p>
+                  <ul className="mk-ed-list">
+                    {SAMPLE_PORTFOLIO.properties.map((p) => (
+                      <li key={p.id}>
+                        <button type="button" className="mk-ed-list__btn" onClick={() => go("property")}>
+                          <strong>{p.name}</strong>
+                          <span>
+                            {p.units} units · {p.occupancy}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
 
-            {step === "property" ? (
-              <div role="tabpanel" id="tour-panel-property" aria-labelledby="tour-tab-property">
-                <h3 className="mk-ed-panel-title">{SAMPLE_PROPERTY.title}</h3>
-                <dl className="mk-ed-dl">
-                  <div>
-                    <dt>Unit</dt>
-                    <dd>{SAMPLE_PROPERTY.unit}</dd>
+              {step === "property" ? (
+                <>
+                  <h3 className="mk-ed-panel-title">{SAMPLE_PROPERTY.title}</h3>
+                  <dl className="mk-ed-dl">
+                    <div>
+                      <dt>Unit</dt>
+                      <dd>{SAMPLE_PROPERTY.unit}</dd>
+                    </div>
+                    <div>
+                      <dt>Listing</dt>
+                      <dd>{SAMPLE_PROPERTY.listingStatus}</dd>
+                    </div>
+                    <div>
+                      <dt>Lease</dt>
+                      <dd>{SAMPLE_PROPERTY.leaseStatus}</dd>
+                    </div>
+                  </dl>
+                  <div className="mk-ed-inline-actions">
+                    <button type="button" className="mk-ed-btn mk-ed-btn--secondary" onClick={() => go("payments")}>
+                      View payments
+                    </button>
+                    <button type="button" className="mk-ed-btn mk-ed-btn--secondary" onClick={() => go("maintenance")}>
+                      View maintenance
+                    </button>
                   </div>
-                  <div>
-                    <dt>Listing</dt>
-                    <dd>{SAMPLE_PROPERTY.listingStatus}</dd>
-                  </div>
-                  <div>
-                    <dt>Lease</dt>
-                    <dd>{SAMPLE_PROPERTY.leaseStatus}</dd>
-                  </div>
-                </dl>
-                <div className="mk-ed-inline-actions">
-                  <button type="button" className="mk-ed-btn mk-ed-btn--secondary" onClick={() => go("payments")}>
-                    View payments
-                  </button>
-                  <button type="button" className="mk-ed-btn mk-ed-btn--secondary" onClick={() => go("maintenance")}>
-                    View maintenance
-                  </button>
-                </div>
-              </div>
-            ) : null}
+                </>
+              ) : null}
 
-            {step === "payments" ? (
-              <div role="tabpanel" id="tour-panel-payments" aria-labelledby="tour-tab-payments">
-                <h3 className="mk-ed-panel-title">Collections · illustrative</h3>
-                <ul className="mk-ed-bullets">
-                  <li>{SAMPLE_PAYMENTS.rentDue}</li>
-                  <li>{SAMPLE_PAYMENTS.lastReceipt}</li>
-                  <li>{SAMPLE_PAYMENTS.openCases}</li>
-                </ul>
-              </div>
-            ) : null}
+              {step === "payments" ? (
+                <>
+                  <h3 className="mk-ed-panel-title">Collections · illustrative</h3>
+                  <ul className="mk-ed-bullets">
+                    <li>{SAMPLE_PAYMENTS.rentDue}</li>
+                    <li>{SAMPLE_PAYMENTS.lastReceipt}</li>
+                    <li>{SAMPLE_PAYMENTS.openCases}</li>
+                  </ul>
+                </>
+              ) : null}
 
-            {step === "maintenance" ? (
-              <div role="tabpanel" id="tour-panel-maintenance" aria-labelledby="tour-tab-maintenance">
-                <h3 className="mk-ed-panel-title">
-                  {SAMPLE_MAINTENANCE.ticket} · {SAMPLE_MAINTENANCE.title}
-                </h3>
-                <p className="mk-ed-status">Status: {SAMPLE_MAINTENANCE.status}</p>
-                <ol className="mk-ed-stages">
-                  {SAMPLE_MAINTENANCE.stages.map((label, i) => (
-                    <li key={label} className={i <= SAMPLE_MAINTENANCE.activeStage ? "is-done" : ""}>
-                      {label}
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            ) : null}
+              {step === "maintenance" ? (
+                <>
+                  <h3 className="mk-ed-panel-title">
+                    {SAMPLE_MAINTENANCE.ticket} · {SAMPLE_MAINTENANCE.title}
+                  </h3>
+                  <p className="mk-ed-status">Status: {SAMPLE_MAINTENANCE.status}</p>
+                  <ol className="mk-ed-stages">
+                    {SAMPLE_MAINTENANCE.stages.map((label, i) => (
+                      <li key={label} className={i <= SAMPLE_MAINTENANCE.activeStage ? "is-done" : ""}>
+                        {label}
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              ) : null}
+            </div>
           </div>
         </div>
 

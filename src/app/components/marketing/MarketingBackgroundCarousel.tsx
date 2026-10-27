@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import "./marketing-carousel.css";
 
@@ -22,6 +22,8 @@ export function MarketingBackgroundCarousel({ children, imageIds }: { children: 
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(() => document.hidden);
   const [reduced, setReduced] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const [liveMessage, setLiveMessage] = useState("");
+  const manualChange = useRef(false);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -55,15 +57,24 @@ export function MarketingBackgroundCarousel({ children, imageIds }: { children: 
     return () => window.clearTimeout(timer);
   }, [active, paused, focused, hidden, reduced, ready, slides.length]);
 
-  const select = (index: number) => {
+  useEffect(() => {
+    if (!manualChange.current) return;
+    const slide = slides[active];
+    if (slide) setLiveMessage(`Background: ${slide.label}`);
+    manualChange.current = false;
+  }, [active, slides]);
+
+  const select = (index: number, fromUser = false) => {
     if (failed.includes(index)) return;
+    if (fromUser) manualChange.current = true;
     setLoadThrough((value) => Math.max(value, index));
     setRequested(index);
   };
-  const advance = (direction: number) => {
+  const advance = (direction: number, fromUser = false) => {
+    if (fromUser) manualChange.current = true;
     for (let offset = 1; offset < slides.length; offset++) {
       const next = (active + direction * offset + slides.length) % slides.length;
-      if (!failed.includes(next)) { select(next); break; }
+      if (!failed.includes(next)) { select(next, fromUser); break; }
     }
   };
   const settled = (index: number, ok: boolean) => {
@@ -105,16 +116,21 @@ export function MarketingBackgroundCarousel({ children, imageIds }: { children: 
       <div className="mk-ed-container mk-photo-hero__footer">
         <p>Illustrative properties. Stock photography.</p>
         <div className="mk-photo-controls" role="group" aria-label="Hero background controls">
-          <button type="button" aria-label="Previous background image" onClick={() => advance(-1)}><ChevronLeft size={18} aria-hidden="true" /></button>
+          <button type="button" aria-label="Previous background image" onClick={() => advance(-1, true)}><ChevronLeft size={18} aria-hidden="true" /></button>
           {slides.map((slide, index) => (
             <button key={slide.id} type="button" className="mk-photo-controls__dot" aria-label={`Show background ${index + 1}: ${slide.label}`}
-              aria-current={index === active ? "true" : undefined} disabled={failed.includes(index)} onClick={() => select(index)}><span /></button>
+              aria-current={index === active ? "true" : undefined} disabled={failed.includes(index)} onClick={() => select(index, true)}><span /></button>
           ))}
-          <button type="button" aria-label="Next background image" onClick={() => advance(1)}><ChevronRight size={18} aria-hidden="true" /></button>
+          <button type="button" aria-label="Next background image" onClick={() => advance(1, true)}><ChevronRight size={18} aria-hidden="true" /></button>
           <button type="button" aria-label={reduced ? "Automatic rotation disabled by reduced motion preference" : paused ? "Play background slideshow" : "Pause background slideshow"}
             disabled={reduced} onClick={() => setPaused((value) => !value)}>{paused || reduced ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}</button>
         </div>
       </div>
+      {liveMessage ? (
+        <span className="mk-photo-hero__sr-live" aria-live="polite" aria-atomic="true">
+          {liveMessage}
+        </span>
+      ) : null}
     </section>
   );
 }

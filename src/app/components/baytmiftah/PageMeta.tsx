@@ -26,18 +26,33 @@ function upsertMeta(selector: string, attributes: Record<string, string>) {
   return element;
 }
 
+function absoluteOgImage(ogImage: string) {
+  if (ogImage.startsWith("http://") || ogImage.startsWith("https://")) {
+    return ogImage;
+  }
+  const origin = (
+    import.meta.env.VITE_PUBLIC_APP_URL ||
+    import.meta.env.VITE_SITE_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "https://baytmiftah.com")
+  ).replace(/\/$/, "");
+  const path = ogImage.startsWith("/") ? ogImage : `/${ogImage}`;
+  return `${origin}${path}`;
+}
+
 export function PageMeta({
   title,
   description,
   canonicalPath,
   ogTitle,
   ogDescription,
+  ogImage,
 }: {
   title: string;
   description?: string;
   canonicalPath?: string;
   ogTitle?: string;
   ogDescription?: string;
+  ogImage?: string;
 }) {
   useEffect(() => {
     const fullTitle = title.includes("BaytMiftah") ? title : `${title} · BaytMiftah`;
@@ -68,7 +83,13 @@ export function PageMeta({
         content: ogDesc,
       });
     }
-  }, [title, description, canonicalPath, ogTitle, ogDescription]);
+
+    if (ogImage) {
+      const imageUrl = absoluteOgImage(ogImage);
+      upsertMeta('meta[property="og:image"]', { property: "og:image", content: imageUrl });
+      upsertMeta('meta[name="twitter:image"]', { name: "twitter:image", content: imageUrl });
+    }
+  }, [title, description, canonicalPath, ogTitle, ogDescription, ogImage]);
 
   return null;
 }

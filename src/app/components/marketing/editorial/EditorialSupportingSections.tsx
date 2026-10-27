@@ -78,7 +78,9 @@ export function EditorialRolesSection() {
   return <section id="teams" ref={ref} className="mk-ed-section mk-ed-reveal" aria-labelledby="teams-heading"><div className="mk-ed-container">
     <p className="mk-ed-kicker">One platform, many teams</p><h2 id="teams-heading" className="mk-ed-heading">Role-aware experiences for every function</h2>
     <div className="mk-ed-roles__tabs" role="group" aria-label="Team roles">{ROLES.map((item) => <button key={item.id} type="button" aria-pressed={active === item.id} className={"mk-ed-roles__tab" + (active === item.id ? " is-active" : "")} onClick={() => setActive(item.id)}>{item.label}</button>)}</div>
-    <div className="mk-ed-preview-card" aria-live="polite"><p className="mk-ed-note">Illustrative role preview. Sample metrics, not customer results.</p><h3>{role.title}</h3><p className="mk-ed-lead">{role.copy}</p><dl className="mk-ed-role-metrics">{role.metrics.map((metric) => <div key={metric.label}><dt>{metric.label}</dt><dd>{metric.value}</dd></div>)}</dl></div>
+    <div key={active} className="mk-ed-roles__panel-inner">
+      <div className="mk-ed-preview-card" aria-live="polite"><p className="mk-ed-note">Illustrative role preview. Sample metrics, not customer results.</p><h3>{role.title}</h3><p className="mk-ed-lead">{role.copy}</p><dl className="mk-ed-role-metrics">{role.metrics.map((metric) => <div key={metric.label}><dt>{metric.label}</dt><dd>{metric.value}</dd></div>)}</dl></div>
+    </div>
   </div></section>;
 }
 

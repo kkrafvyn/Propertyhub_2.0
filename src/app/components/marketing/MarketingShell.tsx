@@ -16,9 +16,24 @@ const NAV_LINKS_DEFAULT = [
 
 export type MarketingNavLink = { label: string; href: string };
 
-function NavLink({ href, label, onClick }: { href: string; label: string; onClick?: () => void }) {
+function NavLink({
+  href,
+  label,
+  onClick,
+  active = false,
+}: {
+  href: string;
+  label: string;
+  onClick?: () => void;
+  active?: boolean;
+}) {
   return (
-    <a href={href} className="mk-nav-link" onClick={onClick}>
+    <a
+      href={href}
+      className={`mk-nav-link${active ? " mk-nav-link--active" : ""}`}
+      onClick={onClick}
+      aria-current={active ? "true" : undefined}
+    >
       {label}
     </a>
   );
@@ -40,7 +55,9 @@ export function MarketingShell({
   const darkChrome = cinematic || editorial || launch;
   const links = navLinks ?? NAV_LINKS_DEFAULT;
   const [scrolled, setScrolled] = useState(false);
+  const [pastHero, setPastHero] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -48,6 +65,7 @@ export function MarketingShell({
   useEffect(() => {
     const onScroll = () => {
       setScrolled(window.scrollY > 8);
+      setPastHero(window.scrollY > window.innerHeight * 0.35);
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
       if (totalHeight > 0) {
         setScrollProgress(Math.min(100, Math.max(0, (window.scrollY / totalHeight) * 100)));
@@ -57,6 +75,36 @@ export function MarketingShell({
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    if (!editorial) return undefined;
+
+    const sectionIds = links
+      .map((link) => link.href.replace(/^#/, ""))
+      .filter((id) => id.length > 0);
+
+    const elements = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter((node): node is HTMLElement => node !== null);
+
+    if (elements.length === 0) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        const top = visible[0]?.target;
+        if (top instanceof HTMLElement && top.id) {
+          setActiveSection(`#${top.id}`);
+        }
+      },
+      { rootMargin: "-42% 0px -48% 0px", threshold: [0, 0.15, 0.35] },
+    );
+
+    elements.forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, [editorial, links]);
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
@@ -91,7 +139,7 @@ export function MarketingShell({
 
   return (
     <div
-      className={`marketing-page marketing-shell${cinematic ? " marketing-page--cinematic" : ""}${editorial ? " marketing-page--editorial" : ""}${launch ? " marketing-page--launch" : ""}`}
+      className={`marketing-page marketing-shell${cinematic ? " marketing-page--cinematic" : ""}${editorial ? " marketing-page--editorial" : ""}${editorial && pastHero ? " mk-shell--past-hero" : ""}${launch ? " marketing-page--launch" : ""}`}
     >
       <div className="mk-page-scrim" aria-hidden="true" />
       <div
@@ -109,7 +157,7 @@ export function MarketingShell({
           <Logo to="/" size="sm" inverted={darkChrome} />
           <nav className="mk-nav-links" aria-label="Primary">
             {links.map((link) => (
-              <NavLink key={link.href} {...link} />
+              <NavLink key={link.href} {...link} active={editorial && activeSection === link.href} />
             ))}
           </nav>
           <div className="mk-nav-actions">
@@ -167,7 +215,12 @@ export function MarketingShell({
             </div>
             <nav className="mk-mobile-panel__links" aria-label="Mobile">
               {links.map((link) => (
-                <NavLink key={link.href} {...link} onClick={closeMenu} />
+                <NavLink
+                  key={link.href}
+                  {...link}
+                  onClick={closeMenu}
+                  active={editorial && activeSection === link.href}
+                />
               ))}
             </nav>
             <div className="mk-mobile-panel__actions">
