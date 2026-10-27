@@ -1,3 +1,4 @@
+/** Not routed in production — see ALTERNATE_HOMES.md */
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
 import { LaunchHero } from "../../components/marketing/launch/LaunchHero";
 import {

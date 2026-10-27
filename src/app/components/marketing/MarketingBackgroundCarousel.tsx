@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
+﻿import { useEffect, useMemo, useState, type ReactNode } from "react";
 import "./marketing-carousel.css";
 
 export const HERO_SLIDES = [
@@ -18,12 +17,9 @@ export function MarketingBackgroundCarousel({ children, imageIds }: { children: 
   const [ready, setReady] = useState<number[]>([]);
   const [failed, setFailed] = useState<number[]>([]);
   const [loadThrough, setLoadThrough] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(() => document.hidden);
   const [reduced, setReduced] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  const [liveMessage, setLiveMessage] = useState("");
-  const manualChange = useRef(false);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -47,41 +43,23 @@ export function MarketingBackgroundCarousel({ children, imageIds }: { children: 
   }, [requested, ready, failed]);
 
   useEffect(() => {
-    if (paused || focused || hidden || reduced || ready.length < 2) return;
+    if (focused || hidden || reduced || ready.length < 2) return;
     const timer = window.setTimeout(() => {
       for (let offset = 1; offset < slides.length; offset++) {
         const next = (active + offset) % slides.length;
-        if (ready.includes(next)) { setActive(next); break; }
+        if (ready.includes(next)) {
+          setActive(next);
+          break;
+        }
       }
     }, 7000);
     return () => window.clearTimeout(timer);
-  }, [active, paused, focused, hidden, reduced, ready, slides.length]);
+  }, [active, focused, hidden, reduced, ready, slides.length]);
 
-  useEffect(() => {
-    if (!manualChange.current) return;
-    const slide = slides[active];
-    if (slide) setLiveMessage(`Background: ${slide.label}`);
-    manualChange.current = false;
-  }, [active, slides]);
-
-  const select = (index: number, fromUser = false) => {
-    if (failed.includes(index)) return;
-    if (fromUser) manualChange.current = true;
-    setLoadThrough((value) => Math.max(value, index));
-    setRequested(index);
-  };
-  const advance = (direction: number, fromUser = false) => {
-    if (fromUser) manualChange.current = true;
-    for (let offset = 1; offset < slides.length; offset++) {
-      const next = (active + direction * offset + slides.length) % slides.length;
-      if (!failed.includes(next)) { select(next, fromUser); break; }
-    }
-  };
   const settled = (index: number, ok: boolean) => {
     if (ok) setReady((value) => value.includes(index) ? value : [...value, index]);
     else {
       setFailed((value) => value.includes(index) ? value : [...value, index]);
-      // If the first photo fails, the next successful photo becomes the fallback.
       if (index === active || !ready.includes(active)) {
         const fallback = ready.find((candidate) => candidate !== index && !failed.includes(candidate));
         setRequested((value) => value ?? fallback ?? ((index + 1) % slides.length));
@@ -91,22 +69,41 @@ export function MarketingBackgroundCarousel({ children, imageIds }: { children: 
   };
 
   return (
-    <section className="mk-photo-hero" aria-labelledby="marketing-hero-heading"
+    <section
+      className="mk-photo-hero"
+      aria-labelledby="marketing-hero-heading"
       onFocusCapture={() => setFocused(true)}
-      onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }}>
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false);
+      }}
+    >
       <div className="mk-photo-hero__background" aria-hidden="true">
         {slides.map((slide, index) => index <= loadThrough && !failed.includes(index) ? (
           <div key={slide.id} className={`mk-photo-hero__slide${index === active && (ready.includes(index) || index === 0) ? " is-active" : ""}`}>
             <picture>
               <source media="(max-width: 639px)" srcSet={`/marketing/hero/${slide.id}-mobile.webp`} />
-              <img src={`/marketing/hero/${slide.id}-1280.webp`}
+              <img
+                src={`/marketing/hero/${slide.id}-1280.webp`}
                 srcSet={`/marketing/hero/${slide.id}-1280.webp 1280w, /marketing/hero/${slide.id}-2200.webp 2200w`}
-                sizes="100vw" width="2200" height="1375" alt="" loading="eager"
-                fetchPriority={index === 0 ? "high" : "low"} decoding="async"
+                sizes="100vw"
+                width="2200"
+                height="1375"
+                alt=""
+                loading="eager"
+                fetchPriority={index === 0 ? "high" : "low"}
+                decoding="async"
                 onLoad={async (event) => {
                   const img = event.currentTarget;
-                  try { await img.decode(); settled(index, true); } catch { if (img.naturalWidth) settled(index, true); else settled(index, false); }
-                }} onError={() => settled(index, false)} />
+                  try {
+                    await img.decode();
+                    settled(index, true);
+                  } catch {
+                    if (img.naturalWidth) settled(index, true);
+                    else settled(index, false);
+                  }
+                }}
+                onError={() => settled(index, false)}
+              />
             </picture>
             <div className="mk-photo-hero__overlay" style={{ backgroundColor: `rgba(13, 25, 19, ${slide.overlay})` }} />
           </div>
@@ -115,22 +112,7 @@ export function MarketingBackgroundCarousel({ children, imageIds }: { children: 
       <div className="mk-photo-hero__content">{children}</div>
       <div className="mk-ed-container mk-photo-hero__footer">
         <p>Illustrative properties. Stock photography.</p>
-        <div className="mk-photo-controls" role="group" aria-label="Hero background controls">
-          <button type="button" aria-label="Previous background image" onClick={() => advance(-1, true)}><ChevronLeft size={18} aria-hidden="true" /></button>
-          {slides.map((slide, index) => (
-            <button key={slide.id} type="button" className="mk-photo-controls__dot" aria-label={`Show background ${index + 1}: ${slide.label}`}
-              aria-current={index === active ? "true" : undefined} disabled={failed.includes(index)} onClick={() => select(index, true)}><span /></button>
-          ))}
-          <button type="button" aria-label="Next background image" onClick={() => advance(1, true)}><ChevronRight size={18} aria-hidden="true" /></button>
-          <button type="button" aria-label={reduced ? "Automatic rotation disabled by reduced motion preference" : paused ? "Play background slideshow" : "Pause background slideshow"}
-            disabled={reduced} onClick={() => setPaused((value) => !value)}>{paused || reduced ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}</button>
-        </div>
       </div>
-      {liveMessage ? (
-        <span className="mk-photo-hero__sr-live" aria-live="polite" aria-atomic="true">
-          {liveMessage}
-        </span>
-      ) : null}
     </section>
   );
 }

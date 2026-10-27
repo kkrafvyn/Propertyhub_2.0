@@ -1,3 +1,4 @@
+import { EditorialTrustTracePreview } from "./EditorialTrustTracePreview";
 import { useMarketingContent } from "./MarketingContentContext";
 import { useState } from "react";
 import { ArrowRight, Link2 } from "lucide-react";
@@ -13,19 +14,15 @@ function resolveHref(href: string) {
 }
 
 export function EditorialOutcomeSection() {
+  const { proofOutcomes } = useMarketingContent();
   const ref = useEditorialReveal<HTMLElement>();
-  const outcomes = [
-    { title: "One connected record", detail: "Keep property, unit, lease, collection, document, and work-order context connected across the app." },
-    { title: "A clear operating view", detail: "See occupancy, collections, renewals, approvals, and open work without piecing together exports." },
-    { title: "Work that moves visibly", detail: "Move enquiries, applications, maintenance, and approvals through clear, trackable stages." },
-  ];
 
   return (
     <section ref={ref} className="mk-ed-proof mk-ed-reveal" aria-label="Product outcomes">
       <div className="mk-ed-container">
         <p className="mk-ed-note">Built around connected property workflows. Product previews use illustrative data.</p>
         <div className="mk-ed-proof__grid">
-          {outcomes.map((outcome) => <article key={outcome.title}><h2>{outcome.title}</h2><p>{outcome.detail}</p></article>)}
+          {proofOutcomes.map((outcome) => <article key={outcome.title}><h2>{outcome.title}</h2><p>{outcome.detail}</p></article>)}
         </div>
       </div>
     </section>
@@ -126,13 +123,13 @@ export function EditorialTrustSection() {
   const ref = useEditorialReveal<HTMLElement>();
   return (
     <section id="trust" ref={ref} className="mk-ed-section mk-ed-section--surface mk-ed-reveal" aria-labelledby="trust-heading">
-      <div className="mk-ed-container mk-ed-split">
+      <div className="mk-ed-container mk-ed-split mk-ed-split--trust">
         <div>
           <p className="mk-ed-kicker">Trust and safeguards</p><h2 id="trust-heading" className="mk-ed-heading">Permissions, approvals, and auditability</h2>
           <ul className="mk-ed-bullets"><li>Role-based workspace access</li><li>Human approval for sensitive actions</li><li>Action logs and operational history</li><li>Privacy and cookie controls</li></ul>
           <div className="mk-ed-inline-actions"><Link to="/privacy" className="mk-ed-link">Privacy policy</Link><Link to="/legal/trust-verification" className="mk-ed-link">Trust and verification</Link></div>
         </div>
-        <aside className="mk-ed-callout"><p>Security claims on this page stay limited to implemented product controls. Contractual commitments remain in the applicable legal documents.</p></aside>
+        <EditorialTrustTracePreview />
       </div>
     </section>
   );
@@ -149,7 +146,7 @@ export function EditorialSalesSection() {
     <section id="pricing" ref={ref} className="mk-ed-section mk-ed-reveal" aria-labelledby="sales-heading">
       <div className="mk-ed-container mk-ed-callout mk-ed-callout--accent">
         <h2 id="sales-heading" className="mk-ed-heading">Choose the workspace you need</h2>
-        <p className="mk-ed-lead">Plan fit depends on portfolio size, enabled modules, governance needs, and rollout support.</p>
+        <p className="mk-ed-lead">Plan fit depends on portfolio size, enabled modules, governance needs, and rollout support. Published platform fees and regional availability are confirmed during onboarding—not on this marketing page.</p>
         <div className="mk-ed-plan-grid">{plans.map((plan) => <article key={plan.name} className="mk-ed-plan-card"><p className="mk-ed-kicker">{plan.name}</p><h3>{plan.fit}</h3><p>{plan.detail}</p></article>)}</div>
         <div className="mk-ed-inline-actions"><a href={appPath("/signup")} className="mk-ed-btn mk-ed-btn--primary" onClick={() => trackMarketingEvent("marketing_cta_click", { placement: "sales_signup" })}>Start free</a><Link to="/contact" className="mk-ed-btn mk-ed-btn--secondary">Book a demo</Link></div>
       </div>

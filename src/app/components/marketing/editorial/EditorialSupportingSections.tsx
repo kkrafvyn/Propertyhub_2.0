@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { ConsumerJourneyShowcase } from "../ConsumerJourneyShowcase";
+import { Suspense, useEffect, useState, type ComponentType } from "react";
 import { useEditorialReveal } from "./useEditorialReveal";
 const ROLES = [
   {
@@ -86,9 +85,42 @@ export function EditorialRolesSection() {
 
 export function EditorialResidentSection() {
   const ref = useEditorialReveal<HTMLElement>();
-  return <section id="residents" ref={ref} className="mk-ed-section mk-ed-section--surface mk-ed-reveal" aria-labelledby="residents-heading"><div className="mk-ed-container">
-    <p className="mk-ed-kicker">For residents</p><h2 id="residents-heading" className="mk-ed-heading">A connected journey from search to home</h2><p className="mk-ed-lead">Explore a sample resident journey, from comparing properties to payments and support. Demonstration data only.</p><ConsumerJourneyShowcase />
-  </div></section>;
+  const [Journey, setJourney] = useState<ComponentType | null>(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || Journey) return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          observer.disconnect();
+          void import("../ConsumerJourneyShowcase").then((mod) => setJourney(() => mod.ConsumerJourneyShowcase));
+        }
+      },
+      { rootMargin: "240px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [Journey, ref]);
+
+  return (
+    <section id="residents" ref={ref} className="mk-ed-section mk-ed-section--surface mk-ed-reveal" aria-labelledby="residents-heading">
+      <div className="mk-ed-container">
+        <p className="mk-ed-kicker">For residents</p>
+        <h2 id="residents-heading" className="mk-ed-heading">A connected journey from search to home</h2>
+        <p className="mk-ed-lead">Explore a sample resident journey, from comparing properties to payments and support. Demonstration data only.</p>
+        {Journey ? (
+          <Suspense fallback={<p className="mk-ed-note">Loading journey preview…</p>}>
+            <Journey />
+          </Suspense>
+        ) : (
+          <div className="mk-ed-journey-placeholder" aria-busy="true">
+            <p className="mk-ed-note">Journey preview loads as you scroll.</p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }
 
 // Implemented connections only. Availability depends on workspace configuration;

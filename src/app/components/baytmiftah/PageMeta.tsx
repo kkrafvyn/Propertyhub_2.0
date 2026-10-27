@@ -46,6 +46,9 @@ export function PageMeta({
   ogTitle,
   ogDescription,
   ogImage,
+  ogImageWidth = 1280,
+  ogImageHeight = 800,
+  themeColor,
 }: {
   title: string;
   description?: string;
@@ -53,6 +56,9 @@ export function PageMeta({
   ogTitle?: string;
   ogDescription?: string;
   ogImage?: string;
+  ogImageWidth?: number;
+  ogImageHeight?: number;
+  themeColor?: string;
 }) {
   useEffect(() => {
     const fullTitle = title.includes("BaytMiftah") ? title : `${title} · BaytMiftah`;
@@ -87,9 +93,21 @@ export function PageMeta({
     if (ogImage) {
       const imageUrl = absoluteOgImage(ogImage);
       upsertMeta('meta[property="og:image"]', { property: "og:image", content: imageUrl });
+      upsertMeta('meta[property="og:image:width"]', { property: "og:image:width", content: String(ogImageWidth) });
+      upsertMeta('meta[property="og:image:height"]', { property: "og:image:height", content: String(ogImageHeight) });
+      upsertMeta('meta[name="twitter:card"]', { name: "twitter:card", content: "summary_large_image" });
+      upsertMeta('meta[name="twitter:title"]', { name: "twitter:title", content: ogTitle || fullTitle });
       upsertMeta('meta[name="twitter:image"]', { name: "twitter:image", content: imageUrl });
+      const twitterDesc = ogDescription || description;
+      if (twitterDesc) {
+        upsertMeta('meta[name="twitter:description"]', { name: "twitter:description", content: twitterDesc });
+      }
     }
-  }, [title, description, canonicalPath, ogTitle, ogDescription, ogImage]);
+
+    if (themeColor) {
+      upsertMeta('meta[name="theme-color"]', { name: "theme-color", content: themeColor });
+    }
+  }, [title, description, canonicalPath, ogTitle, ogDescription, ogImage, ogImageWidth, ogImageHeight, themeColor]);
 
   return null;
 }

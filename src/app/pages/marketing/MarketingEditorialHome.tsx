@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { DEFAULT_MARKETING_DOCUMENT, type MarketingPageDocument } from "../../../lib/marketing-page-document";
+import { readMarketingHomeCache, writeMarketingHomeCache } from "../../../lib/marketing-home-cache";
 import { marketingContentService } from "../../../lib/marketing-content.service";
+import { MarketingStructuredData } from "../../components/marketing/editorial/MarketingStructuredData";
 import { MarketingContentProvider } from "../../components/marketing/editorial/MarketingContentContext";
 import { EditorialRolesSection, EditorialResidentSection, EditorialIntegrationsSection } from "../../components/marketing/editorial/EditorialSupportingSections";
 import { PageMeta } from "../../components/baytmiftah/PageMeta";
@@ -45,9 +47,11 @@ function MarketingHeroSkeleton() {
 
 /** Public marketing homepage — editorial layout (replaces scroll-cinematic composition). */
 export function MarketingEditorialHome({ document: suppliedDocument, preview = false }: { document?: MarketingPageDocument; preview?: boolean } = {}) {
-  const [published, setPublished] = useState<MarketingPageDocument | null>(
-    suppliedDocument ?? (preview ? DEFAULT_MARKETING_DOCUMENT : null),
-  );
+  const [published, setPublished] = useState<MarketingPageDocument | null>(() => {
+    if (suppliedDocument) return suppliedDocument;
+    if (preview) return DEFAULT_MARKETING_DOCUMENT;
+    return readMarketingHomeCache();
+  });
 
   useEffect(() => {
     if (suppliedDocument || preview) return;
@@ -61,7 +65,10 @@ export function MarketingEditorialHome({ document: suppliedDocument, preview = f
     void marketingContentService
       .loadPublished()
       .then((value) => {
-        if (active) setPublished(value);
+        if (active) {
+          writeMarketingHomeCache(value);
+          setPublished(value);
+        }
       })
       .catch(() => {
         if (active) setPublished(DEFAULT_MARKETING_DOCUMENT);
@@ -88,7 +95,11 @@ export function MarketingEditorialHome({ document: suppliedDocument, preview = f
           ogTitle={DEFAULT_MARKETING_DOCUMENT.seo.title}
           ogDescription={DEFAULT_MARKETING_DOCUMENT.seo.description}
           ogImage={heroOgImage(DEFAULT_MARKETING_DOCUMENT)}
+          ogImageWidth={2200}
+          ogImageHeight={1375}
+          themeColor="#0d1913"
         />
+        <MarketingStructuredData document={DEFAULT_MARKETING_DOCUMENT} />
         <div id="mk-main-content" className="mk-ed-page" tabIndex={-1}>
           <MarketingHeroSkeleton />
         </div>
@@ -106,8 +117,12 @@ export function MarketingEditorialHome({ document: suppliedDocument, preview = f
           ogTitle={content.seo.title}
           ogDescription={content.seo.description}
           ogImage={heroOgImage(content)}
+          ogImageWidth={2200}
+          ogImageHeight={1375}
+          themeColor="#0d1913"
         />
       )}
+      {!preview && <MarketingStructuredData document={content} />}
       <div id="mk-main-content" className="mk-ed-page" tabIndex={-1}>
         <EditorialHero />
         <EditorialOutcomeSection />

@@ -1,3 +1,4 @@
+/** Not routed in production — see ALTERNATE_HOMES.md */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import {

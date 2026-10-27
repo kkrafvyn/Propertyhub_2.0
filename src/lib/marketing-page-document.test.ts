@@ -16,6 +16,13 @@ describe('marketing content and app management permissions', () => {
     document.hero.images=[...DEFAULT_MARKETING_DOCUMENT.hero.images];document.hero.description='';
     expect(()=>validateMarketingDocument(document)).toThrow(/Hero description/);
   });
+  it('fills default proof outcomes when older published documents omit them', () => {
+    const legacy = structuredClone(DEFAULT_MARKETING_DOCUMENT) as Record<string, unknown>;
+    delete legacy.proofOutcomes;
+    const document = validateMarketingDocument(legacy);
+    expect(document.proofOutcomes).toHaveLength(3);
+    expect(document.proofOutcomes[0].title).toMatch(/connected record/i);
+  });
   it('limits FAQ and new section content and disallows empty answers', () => {
     const document=structuredClone(DEFAULT_MARKETING_DOCUMENT);document.faq[0].a='';
     expect(()=>validateMarketingDocument(document)).toThrow(/FAQ answer/);
