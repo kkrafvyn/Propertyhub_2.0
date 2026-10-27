@@ -26,6 +26,11 @@ function isMarketingHostname(host: string): boolean {
     return true;
   }
 
+  // Primary Vercel preview URL — public marketing homepage at /
+  if (host === "propertyhub-2-0.vercel.app") {
+    return true;
+  }
+
   return false;
 }
 

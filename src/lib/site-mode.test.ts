@@ -24,8 +24,13 @@ describe("site-mode", () => {
     expect(isMarketingSite("baytmiftah-marketing.vercel.app")).toBe(true);
   });
 
-  it("keeps the app Vercel project on consumer mode", () => {
-    expect(resolveSiteMode("propertyhub-2-0.vercel.app")).toBe("app");
+  it("treats the primary Vercel preview host as marketing", () => {
+    expect(resolveSiteMode("propertyhub-2-0.vercel.app")).toBe("marketing");
+    expect(isMarketingSite("propertyhub-2-0.vercel.app")).toBe(true);
+  });
+
+  it("keeps the product app Vercel hosts on consumer mode", () => {
+    expect(resolveSiteMode("propertyhub-2-0-ecru.vercel.app")).toBe("app");
     expect(resolveSiteMode("baytmiftah-phjg2gys9-krafvyn.vercel.app")).toBe("app");
   });
 });
