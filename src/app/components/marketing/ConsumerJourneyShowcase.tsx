@@ -252,10 +252,10 @@ export function ConsumerJourneyShowcase() {
   const [activeStep, setActiveStep] = useState<StepId>("discover");
 
   return (
-    <div className="mk-showcase-split">
+    <div className="mk-showcase-split mk-consumer-showcase">
       <div className="mk-showcase-copy">
         <p className="mk-eyebrow">For consumers</p>
-        <h2 className="mk-section-title">Find a property without the friction.</h2>
+        <h2 id="consumers-heading" className="mk-section-title">Find a property without the friction.</h2>
         <p className="mk-section-copy mk-showcase-intro">
           Discover, compare, view, and move forward from one place. Renters, buyers, hosts, and guests
           use BaytMiftah alongside the business operating system — connected to the same platform,

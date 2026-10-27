@@ -100,7 +100,7 @@ export function MarketingEditorialHome({ document: suppliedDocument, preview = f
           themeColor="#0d1913"
         />
         <MarketingStructuredData document={DEFAULT_MARKETING_DOCUMENT} />
-        <div id="mk-main-content" className="mk-ed-page" tabIndex={-1}>
+        <div id="mk-main-content" className="mk-ed-page mk-ed-page--carousel" tabIndex={-1}>
           <MarketingHeroSkeleton />
         </div>
       </>
@@ -123,7 +123,7 @@ export function MarketingEditorialHome({ document: suppliedDocument, preview = f
         />
       )}
       {!preview && <MarketingStructuredData document={content} />}
-      <div id="mk-main-content" className="mk-ed-page" tabIndex={-1}>
+      <div id="mk-main-content" className="mk-ed-page mk-ed-page--carousel" tabIndex={-1}>
         <EditorialHero />
         <EditorialOutcomeSection />
         <EditorialProductTour />

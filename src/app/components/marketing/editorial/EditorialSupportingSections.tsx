@@ -104,11 +104,8 @@ export function EditorialResidentSection() {
   }, [Journey, ref]);
 
   return (
-    <section id="residents" ref={ref} className="mk-ed-section mk-ed-section--surface mk-ed-reveal" aria-labelledby="residents-heading">
+    <section id="consumers" ref={ref} className="mk-ed-section mk-ed-section--surface mk-ed-reveal" aria-labelledby="consumers-heading">
       <div className="mk-ed-container">
-        <p className="mk-ed-kicker">For residents</p>
-        <h2 id="residents-heading" className="mk-ed-heading">A connected journey from search to home</h2>
-        <p className="mk-ed-lead">Explore a sample resident journey, from comparing properties to payments and support. Demonstration data only.</p>
         {Journey ? (
           <Suspense fallback={<p className="mk-ed-note">Loading journey preview…</p>}>
             <Journey />

@@ -50,7 +50,7 @@ for (const width of [1440, 768, 390]) {
     await expect(page.locator('#tour-panel-payments')).toBeVisible();
     await page.getByRole('button', { name: 'Finance', exact: true }).click();
     await expect(page.locator('#teams')).toContainText('Know where the money stands');
-    for (const id of ['workflow', 'residents', 'getting-started', 'integrations', 'trust', 'pricing', 'ai']) {
+    for (const id of ['workflow', 'consumers', 'getting-started', 'integrations', 'trust', 'pricing', 'ai']) {
       await expect(page.locator(`#${id}`)).toBeAttached();
     }
     await expect(page.locator('.mk-ed-ai-grid')).toBeAttached();
