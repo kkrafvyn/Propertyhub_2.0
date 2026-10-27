@@ -23,6 +23,21 @@ describe('marketing content and app management permissions', () => {
     expect(document.proofOutcomes).toHaveLength(3);
     expect(document.proofOutcomes[0].title).toMatch(/connected record/i);
   });
+  it('fills default section intros when older published documents omit them', () => {
+    const legacy = structuredClone(DEFAULT_MARKETING_DOCUMENT) as Record<string, unknown>;
+    delete legacy.intros;
+    const document = validateMarketingDocument(legacy);
+    expect(document.intros.productTour.title).toMatch(/sample portfolio/i);
+    expect(document.intros.faqTitle.length).toBeGreaterThan(3);
+    expect(document.intros.proofNote.length).toBeGreaterThan(3);
+  });
+  it('backfills individual intro fields left blank', () => {
+    const partial = structuredClone(DEFAULT_MARKETING_DOCUMENT) as any;
+    partial.intros.workflow = { kicker: 'Custom kicker', title: '', lead: '' };
+    const document = validateMarketingDocument(partial);
+    expect(document.intros.workflow.kicker).toBe('Custom kicker');
+    expect(document.intros.workflow.title).toMatch(/linked records/i);
+  });
   it('limits FAQ and new section content and disallows empty answers', () => {
     const document=structuredClone(DEFAULT_MARKETING_DOCUMENT);document.faq[0].a='';
     expect(()=>validateMarketingDocument(document)).toThrow(/FAQ answer/);

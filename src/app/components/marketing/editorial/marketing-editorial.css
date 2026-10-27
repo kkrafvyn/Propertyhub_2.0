@@ -277,10 +277,33 @@
   color: var(--mk-ed-terra);
   margin: 0 0 0.75rem;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Recurring BaytMiftah brand rule — a short terra stroke before every section label. */
+.mk-ed-kicker::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.85;
 }
 
 .mk-ed-kicker--dark {
   color: var(--mk-ed-dark-accent);
+}
+
+/* The hero already carries strong brand chrome; keep its eyebrow clean. */
+.marketing-page--editorial .mk-ed-hero__copy .mk-ed-kicker {
+  display: block;
+}
+
+.marketing-page--editorial .mk-ed-hero__copy .mk-ed-kicker::before {
+  display: none;
 }
 
 .mk-ed-heading {
@@ -1099,5 +1122,23 @@
 }
 
 .mk-ed-journey-placeholder {
-  min-height: 4rem;
+  min-height: 12rem;
+  border-radius: 16px;
+  border: 1px solid var(--mk-ed-border);
+  background:
+    linear-gradient(100deg, transparent 20%, rgba(182, 79, 58, 0.06) 40%, transparent 60%),
+    var(--mk-ed-muted-bg);
+  background-size: 200% 100%, 100% 100%;
+  animation: mk-ed-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes mk-ed-shimmer {
+  from { background-position: 150% 0, 0 0; }
+  to { background-position: -50% 0, 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-ed-journey-placeholder {
+    animation: none;
+  }
 }

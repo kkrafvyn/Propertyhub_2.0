@@ -14,13 +14,13 @@ function resolveHref(href: string) {
 }
 
 export function EditorialOutcomeSection() {
-  const { proofOutcomes } = useMarketingContent();
+  const { proofOutcomes, intros } = useMarketingContent();
   const ref = useEditorialReveal<HTMLElement>();
 
   return (
     <section ref={ref} className="mk-ed-proof mk-ed-reveal" aria-label="Product outcomes">
       <div className="mk-ed-container">
-        <p className="mk-ed-note">Built around connected property workflows. Product previews use illustrative data.</p>
+        <p className="mk-ed-note">{intros.proofNote}</p>
         <div className="mk-ed-proof__grid">
           {proofOutcomes.map((outcome) => <article key={outcome.title}><h2>{outcome.title}</h2><p>{outcome.detail}</p></article>)}
         </div>
@@ -30,6 +30,7 @@ export function EditorialOutcomeSection() {
 }
 
 export function EditorialWorkflowSection() {
+  const { intros } = useMarketingContent();
   const [stage, setStage] = useState<(typeof WORKFLOW_STAGES)[number]["id"]>("listing");
   const current = WORKFLOW_STAGES.find((item) => item.id === stage)!;
   const ref = useEditorialReveal<HTMLElement>();
@@ -38,9 +39,9 @@ export function EditorialWorkflowSection() {
     <section id="workflow" ref={ref} className="mk-ed-section mk-ed-section--muted mk-ed-reveal" aria-labelledby="workflow-heading">
       <div className="mk-ed-container mk-ed-split">
         <div>
-          <p className="mk-ed-kicker">Connected workflow</p>
-          <h2 id="workflow-heading" className="mk-ed-heading">From fragmented follow-ups to linked records</h2>
-          <p className="mk-ed-lead">BaytMiftah links listings, applications, leases, collections, and maintenance so every update stays in context.</p>
+          <p className="mk-ed-kicker">{intros.workflow.kicker}</p>
+          <h2 id="workflow-heading" className="mk-ed-heading">{intros.workflow.title}</h2>
+          <p className="mk-ed-lead">{intros.workflow.lead}</p>
           <div className="mk-ed-compare">
             <div><h3 className="mk-ed-compare__title">Before</h3><ul><li>Separate spreadsheets and messages</li><li>Manual record matching</li><li>Updates scattered across tools</li></ul></div>
             <div><h3 className="mk-ed-compare__title">With BaytMiftah</h3><ul><li>Shared property and unit context</li><li>Collections aligned to leases</li><li>Tracked tasks with clear status</li></ul></div>
@@ -63,6 +64,7 @@ export function EditorialWorkflowSection() {
 }
 
 export function EditorialPortfolioSection() {
+  const { intros } = useMarketingContent();
   const ref = useEditorialReveal<HTMLElement>();
   return (
     <section id="features" ref={ref} className="mk-ed-section mk-ed-reveal" aria-labelledby="portfolio-ops-heading">
@@ -72,9 +74,9 @@ export function EditorialPortfolioSection() {
           <ul><li>Leasing pipeline across properties</li><li>Maintenance queue with priority context</li><li>Collections and statements</li><li>Tasks, documents, and approvals</li></ul>
         </div>
         <div>
-          <p className="mk-ed-kicker">Connected modules</p>
-          <h2 id="portfolio-ops-heading" className="mk-ed-heading">Every module stays in context</h2>
-          <p className="mk-ed-lead">Move from a portfolio overview into the exact property, lease, collection, document, or task that needs attention.</p>
+          <p className="mk-ed-kicker">{intros.portfolio.kicker}</p>
+          <h2 id="portfolio-ops-heading" className="mk-ed-heading">{intros.portfolio.title}</h2>
+          <p className="mk-ed-lead">{intros.portfolio.lead}</p>
         </div>
       </div>
     </section>
@@ -82,6 +84,7 @@ export function EditorialPortfolioSection() {
 }
 
 export function EditorialAiSection() {
+  const { intros } = useMarketingContent();
   const ref = useEditorialReveal<HTMLElement>();
   const examples = [
     { prompt: "Summarize open maintenance by property", output: "Illustrative: 6 tickets across 3 properties; 2 need attention." },
@@ -91,9 +94,9 @@ export function EditorialAiSection() {
   return (
     <section id="ai" ref={ref} className="mk-ed-section mk-ed-reveal" aria-labelledby="ai-heading">
       <div className="mk-ed-container">
-        <p className="mk-ed-kicker">AI with context</p>
-        <h2 id="ai-heading" className="mk-ed-heading">Assistance grounded in your operation</h2>
-        <p className="mk-ed-lead">Workspace AI uses limited tools, action logs, and approval controls. Examples below are sample outputs, not live account data.</p>
+        <p className="mk-ed-kicker">{intros.ai.kicker}</p>
+        <h2 id="ai-heading" className="mk-ed-heading">{intros.ai.title}</h2>
+        <p className="mk-ed-lead">{intros.ai.lead}</p>
         <div className="mk-ed-ai-grid">{examples.map((example) => <article key={example.prompt} className="mk-ed-ai-card"><p className="mk-ed-ai-card__in">{example.prompt}</p><p className="mk-ed-ai-card__out">{example.output}</p></article>)}</div>
       </div>
     </section>
@@ -120,12 +123,14 @@ export function EditorialGettingStartedSection() {
 }
 
 export function EditorialTrustSection() {
+  const { intros } = useMarketingContent();
   const ref = useEditorialReveal<HTMLElement>();
   return (
     <section id="trust" ref={ref} className="mk-ed-section mk-ed-section--surface mk-ed-reveal" aria-labelledby="trust-heading">
       <div className="mk-ed-container mk-ed-split mk-ed-split--trust">
         <div>
-          <p className="mk-ed-kicker">Trust and safeguards</p><h2 id="trust-heading" className="mk-ed-heading">Permissions, approvals, and auditability</h2>
+          <p className="mk-ed-kicker">{intros.trust.kicker}</p><h2 id="trust-heading" className="mk-ed-heading">{intros.trust.title}</h2>
+          <p className="mk-ed-lead">{intros.trust.lead}</p>
           <ul className="mk-ed-bullets"><li>Role-based workspace access</li><li>Human approval for sensitive actions</li><li>Action logs and operational history</li><li>Privacy and cookie controls</li></ul>
           <div className="mk-ed-inline-actions"><Link to="/privacy" className="mk-ed-link">Privacy policy</Link><Link to="/legal/trust-verification" className="mk-ed-link">Trust and verification</Link></div>
         </div>
@@ -136,6 +141,7 @@ export function EditorialTrustSection() {
 }
 
 export function EditorialSalesSection() {
+  const { intros } = useMarketingContent();
   const ref = useEditorialReveal<HTMLElement>();
   const plans = [
     { name: "Starter", fit: "Core workspace", detail: "Property records, leasing, maintenance, and essential controls." },
@@ -145,8 +151,9 @@ export function EditorialSalesSection() {
   return (
     <section id="pricing" ref={ref} className="mk-ed-section mk-ed-reveal" aria-labelledby="sales-heading">
       <div className="mk-ed-container mk-ed-callout mk-ed-callout--accent">
-        <h2 id="sales-heading" className="mk-ed-heading">Choose the workspace you need</h2>
-        <p className="mk-ed-lead">Plan fit depends on portfolio size, enabled modules, governance needs, and rollout support. Published platform fees and regional availability are confirmed during onboarding—not on this marketing page.</p>
+        <p className="mk-ed-kicker">{intros.pricing.kicker}</p>
+        <h2 id="sales-heading" className="mk-ed-heading">{intros.pricing.title}</h2>
+        <p className="mk-ed-lead">{intros.pricing.lead}</p>
         <div className="mk-ed-plan-grid">{plans.map((plan) => <article key={plan.name} className="mk-ed-plan-card"><p className="mk-ed-kicker">{plan.name}</p><h3>{plan.fit}</h3><p>{plan.detail}</p></article>)}</div>
         <div className="mk-ed-inline-actions"><a href={appPath("/signup")} className="mk-ed-btn mk-ed-btn--primary" onClick={() => trackMarketingEvent("marketing_cta_click", { placement: "sales_signup" })}>Start free</a><Link to="/contact" className="mk-ed-btn mk-ed-btn--secondary">Book a demo</Link></div>
       </div>
@@ -155,10 +162,10 @@ export function EditorialSalesSection() {
 }
 
 export function EditorialFaqSection() {
-  const { faq } = useMarketingContent();
+  const { faq, intros } = useMarketingContent();
   const ref = useEditorialReveal<HTMLElement>();
   return (
-    <section ref={ref} className="mk-ed-section mk-ed-section--muted mk-ed-reveal" aria-labelledby="faq-heading"><div className="mk-ed-container mk-ed-faq"><h2 id="faq-heading" className="mk-ed-heading">Practical questions</h2>{faq.map((item, index) => <details key={index} className="mk-ed-details"><summary>{item.q}</summary><p>{item.a}</p></details>)}</div></section>
+    <section ref={ref} className="mk-ed-section mk-ed-section--muted mk-ed-reveal" aria-labelledby="faq-heading"><div className="mk-ed-container mk-ed-faq"><h2 id="faq-heading" className="mk-ed-heading">{intros.faqTitle}</h2>{faq.map((item, index) => <details key={index} className="mk-ed-details"><summary>{item.q}</summary><p>{item.a}</p></details>)}</div></section>
   );
 }
 

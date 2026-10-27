@@ -251,7 +251,7 @@ function MarketingFooter({ darkChrome }: { darkChrome: boolean }) {
       <div className="mk-container mk-footer-grid">
         <div className="mk-footer-brand">
           <Logo to="/" size="sm" inverted={darkChrome} />
-          <p>One connected app for modern property operations.</p>
+          <p>One home for your entire property operation.</p>
         </div>
 
         <div className="mk-footer-col">
@@ -265,6 +265,9 @@ function MarketingFooter({ darkChrome }: { darkChrome: boolean }) {
             </li>
             <li>
               <a href="/#features">Features</a>
+            </li>
+            <li>
+              <a href="/#ai">AI</a>
             </li>
             <li>
               <a href="/#trust">Trust</a>

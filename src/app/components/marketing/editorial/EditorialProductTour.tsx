@@ -8,6 +8,7 @@ import {
 } from "./marketing-editorial-data";
 import { trackMarketingEvent } from "./marketing-editorial-analytics";
 import { useEditorialReveal } from "./useEditorialReveal";
+import { useMarketingContent } from "./MarketingContentContext";
 
 type TourStep = "portfolio" | "property" | "payments" | "maintenance";
 
@@ -19,6 +20,7 @@ const STEPS: { id: TourStep; label: string }[] = [
 ];
 
 export function EditorialProductTour() {
+  const { intros } = useMarketingContent();
   const ref = useEditorialReveal<HTMLElement>();
   const [step, setStep] = useState<TourStep>("portfolio");
   const [started, setStarted] = useState(false);
@@ -41,12 +43,12 @@ export function EditorialProductTour() {
   return (
     <section id="product-tour" ref={ref} className="mk-ed-section mk-ed-section--surface mk-ed-reveal" aria-labelledby="product-tour-heading">
       <div className="mk-ed-container">
-        <p className="mk-ed-kicker">Interactive preview</p>
+        <p className="mk-ed-kicker">{intros.productTour.kicker}</p>
         <h2 id="product-tour-heading" className="mk-ed-heading">
-          Walk through a sample portfolio
+          {intros.productTour.title}
         </h2>
         <p className="mk-ed-lead">
-          Explore illustrative records based on workspace modules. Nothing here connects to production data or processes real payments.
+          {intros.productTour.lead}
         </p>
 
         <div className="mk-ed-tour" role="region" aria-label="Product tour">

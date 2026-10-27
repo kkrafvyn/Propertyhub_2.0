@@ -23,7 +23,7 @@ import {
 
 function heroOgImage(document: MarketingPageDocument) {
   const first = document.hero.images[0] ?? "residences";
-  return `/marketing/hero/${first}-1280.webp`;
+  return `/marketing/hero/${first}-2200.webp`;
 }
 
 function MarketingHeroSkeleton() {
