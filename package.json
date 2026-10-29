@@ -252,7 +252,7 @@
     "electron": "^43.4.0",
     "electron-builder": "^26.15.3",
     "google-translate-api-x": "^10.7.3",
-    "happy-dom": "^20.11.0",
+    "happy-dom": "^21.0.4",
     "jsdom": "^26.1.0",
     "pg": "^8.22.0",
     "png-to-ico": "^3.0.2",

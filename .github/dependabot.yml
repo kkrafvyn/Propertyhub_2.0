@@ -4,13 +4,45 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+      time: "09:00"
+      timezone: "Africa/Accra"
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - npm
+    commit-message:
+      prefix: deps
     groups:
-      security-minor:
+      production-minor:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@capacitor/*"
+          - "electron"
+      security:
         applies-to: security-updates
         patterns:
           - "*"
+  - package-ecosystem: npm
+    directory: /blockchain
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - blockchain
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
