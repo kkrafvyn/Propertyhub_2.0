@@ -11,13 +11,23 @@ import {
   type DesktopWorkspaceId,
 } from "../lib/desktop-workspaces";
 import { getWorkspaceRoute } from "../../lib/workspace";
+import { WorkspaceOrgSwitcher } from "../components/workspace/WorkspaceOrgSwitcher";
 
 export interface BusinessDesktopShellProps {
   children: ReactNode;
   organizationName?: string;
+  organizationId?: string;
+  organizationOptions?: Array<{ id: string; slug: string; name: string }>;
+  onOrganizationChange?: (organizationId: string) => void;
 }
 
-export function BusinessDesktopShell({ children, organizationName }: BusinessDesktopShellProps) {
+export function BusinessDesktopShell({
+  children,
+  organizationName,
+  organizationId,
+  organizationOptions = [],
+  onOrganizationChange,
+}: BusinessDesktopShellProps) {
   const { organizationSlug = "" } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -61,9 +71,20 @@ export function BusinessDesktopShell({ children, organizationName }: BusinessDes
           <span className="font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/20 dark:border-emerald-800/60 shrink-0 text-[10px] tracking-wide">
             REOS WORKSTATION v{version}
           </span>
-          <span className="text-muted-foreground font-mono text-[11px] truncate">
+          <span className="hidden text-muted-foreground font-mono text-[11px] truncate md:inline">
             {organizationName || organizationSlug}
           </span>
+          {organizationId && onOrganizationChange ? (
+            <WorkspaceOrgSwitcher
+              organizations={organizationOptions.map((organization) => ({
+                id: organization.id,
+                name: organization.name,
+              }))}
+              activeOrganizationId={organizationId}
+              onOrganizationChange={onOrganizationChange}
+              selectClassName="max-w-[11rem] rounded-lg border border-border bg-background px-2 py-1 text-[11px] text-foreground outline-none focus:border-primary"
+            />
+          ) : null}
         </div>
 
         <button

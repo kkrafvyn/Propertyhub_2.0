@@ -1,4 +1,4 @@
-import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
+import { WorkspaceOrgSwitcher } from "../../components/workspace/WorkspaceOrgSwitcher";
 import { lazy, Suspense, useEffect, useMemo, useState, type ComponentType } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
@@ -1495,7 +1495,16 @@ export function WorkspaceLayout() {
   if (isDesktopWorkspaceApp()) {
     return (
       <WorkspaceMfaGate role={mfaGateRole} permissions={navPermissions}>
-        <BusinessDesktopShell organizationName={organization.name}>
+        <BusinessDesktopShell
+          organizationName={organization.name}
+          organizationId={organization.id}
+          organizationOptions={memberships.map((membership) => ({
+            id: membership.organization.id,
+            slug: membership.organization.slug,
+            name: membership.organization.name,
+          }))}
+          onOrganizationChange={handleOrganizationChange}
+        >
           <div className="max-w-full">{workspacePageContent}</div>
         </BusinessDesktopShell>
         {workspaceModals}
@@ -1547,6 +1556,20 @@ export function WorkspaceLayout() {
                 >
                   <X className="h-4 w-4" />
                 </button>
+              </div>
+              <div className="border-b border-surface-border px-4 py-3">
+                <WorkspaceOrgSwitcher
+                  organizations={memberships.map((membership) => ({
+                    id: membership.organization.id,
+                    name: membership.organization.name,
+                  }))}
+                  activeOrganizationId={organization.id}
+                  onOrganizationChange={(organizationId) => {
+                    handleOrganizationChange(organizationId);
+                    setMobileDrawerOpen(false);
+                  }}
+                  selectClassName="w-full max-w-none px-2.5 py-2 rounded-lg border border-surface-border bg-surface text-xs text-ink outline-none transition focus:border-primary"
+                />
               </div>
               <div className="flex-1 overflow-y-auto px-3 py-4">
                 {visibleCoreNavGroups.map((group) =>
@@ -1632,21 +1655,14 @@ export function WorkspaceLayout() {
 
               {/* Right: actions */}
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:gap-2">
-                {/* Org switcher */}
-                {memberships.length > 1 && (
-                  <NativeSelectControl
-                    className="hidden sm:block px-2.5 py-1.5 rounded-lg border border-surface-border bg-surface text-xs text-ink outline-none transition focus:border-primary max-w-[9rem]"
-                    value={organization.id}
-                    onChange={(event) => handleOrganizationChange(event.target.value)}
-                    aria-label="Switch organization"
-                  >
-                    {memberships.map((membership) => (
-                      <option key={membership.organization.id} value={membership.organization.id}>
-                        {membership.organization.name}
-                      </option>
-                    ))}
-                  </NativeSelectControl>
-                )}
+                <WorkspaceOrgSwitcher
+                  organizations={memberships.map((membership) => ({
+                    id: membership.organization.id,
+                    name: membership.organization.name,
+                  }))}
+                  activeOrganizationId={organization.id}
+                  onOrganizationChange={handleOrganizationChange}
+                />
 
                 {/* Sandbox toggle – mobile uses icon-only */}
                 <button

@@ -62,13 +62,50 @@ export const organizationService = {
   },
 
   async getUserOrganizations(userId: string) {
-    const { data, error } = await supabase
-      .from('organization_members')
-      .select('organization:organizations(*), role, permissions, department_id')
-      .eq('user_id', userId)
+    const [memberResult, ownedResult] = await Promise.all([
+      supabase
+        .from('organization_members')
+        .select('organization:organizations(*), role, permissions, department_id')
+        .eq('user_id', userId),
+      supabase.from('organizations').select('*').eq('owner_id', userId),
+    ])
 
-    if (error) throw error
-    return data
+    if (memberResult.error) throw memberResult.error
+    if (ownedResult.error) throw ownedResult.error
+
+    const rows = [...(memberResult.data ?? [])]
+    const memberOrgIds = new Set<string>()
+
+    for (const row of rows) {
+      const organization = Array.isArray(row.organization)
+        ? row.organization[0]
+        : row.organization
+      if (organization?.id) memberOrgIds.add(organization.id)
+    }
+
+    for (const organization of ownedResult.data ?? []) {
+      if (memberOrgIds.has(organization.id)) continue
+      rows.push({
+        organization,
+        role: 'owner',
+        permissions: null,
+        department_id: null,
+      })
+    }
+
+    rows.sort((left, right) => {
+      const leftOrg = Array.isArray(left.organization)
+        ? left.organization[0]
+        : left.organization
+      const rightOrg = Array.isArray(right.organization)
+        ? right.organization[0]
+        : right.organization
+      return (leftOrg?.name || '').localeCompare(rightOrg?.name || '', undefined, {
+        sensitivity: 'base',
+      })
+    })
+
+    return rows
   },
 
   async createOrganization(org: OrganizationInsert) {
