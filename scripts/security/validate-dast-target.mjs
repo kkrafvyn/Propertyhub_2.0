@@ -7,6 +7,7 @@ const target = process.env.DAST_TARGET_URL?.trim();
 
 const PRODUCTION_PATTERNS = [
   /^https?:\/\/(www\.)?baytmiftah\.com(\/|$)/i,
+  /^https?:\/\/app\.baytmiftah\.com(\/|$)/i,
   /^https?:\/\/propertyhub-2-0(-ecru)?\.vercel\.app(\/|$)/i,
   /^https?:\/\/propertyhub-2-0\.vercel\.app(\/|$)/i,
   /^https?:\/\/(www\.)?propertyhub.*\.vercel\.app(\/|$)/i,
