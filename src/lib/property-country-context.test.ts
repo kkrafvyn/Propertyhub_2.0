@@ -54,7 +54,7 @@ describe("property-country-context", () => {
     );
     expect(snapshot.subdivisionLabel).toBe("Greater Accra");
     expect(snapshot.leaseHighlights.some((h) => h.includes("deposit"))).toBe(true);
-    expect(snapshot.paymentLabel).toContain("PayAngels");
+    expect(snapshot.paymentLabel).toBe("GHS");
   });
 
   it("property override beats org for resolvePropertyCountryContext", () => {

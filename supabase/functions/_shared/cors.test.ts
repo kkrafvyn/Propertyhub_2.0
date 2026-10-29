@@ -13,9 +13,9 @@ beforeEach(() => env.clear());
 describe("Edge Function CORS origin policy", () => {
   it("does not allow arbitrary Vercel preview origins", () => {
     env.set("ENVIRONMENT", "production");
-    const allowed = ["https://propertyhub-2-0-ecru.vercel.app"];
+    const allowed = ["https://app.baytmiftah.com"];
     expect(cors.isOriginAllowed("https://attacker.vercel.app", allowed)).toBe(false);
-    expect(cors.isOriginAllowed("https://propertyhub-2-0-ecru.vercel.app", allowed)).toBe(true);
+    expect(cors.isOriginAllowed("https://app.baytmiftah.com", allowed)).toBe(true);
   });
 
   it("requires exact scheme and port matches", () => {

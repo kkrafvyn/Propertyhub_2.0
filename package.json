@@ -9,10 +9,10 @@
   "scripts": {
     "build": "vite build",
     "build:vercel": "node scripts/vercel-build.mjs",
-    "build:marketing": "cross-env VITE_SITE_MODE=marketing VITE_SITE_URL=https://baytmiftah.com VITE_APP_ORIGIN=https://propertyhub-2-0-ecru.vercel.app vite build",
+    "build:marketing": "cross-env VITE_SITE_MODE=marketing VITE_SITE_URL=https://baytmiftah.com VITE_APP_ORIGIN=https://app.baytmiftah.com vite build",
     "build:web": "vite build",
     "dev": "vite",
-    "dev:marketing": "cross-env VITE_SITE_MODE=marketing VITE_SITE_URL=https://baytmiftah.com VITE_APP_ORIGIN=https://propertyhub-2-0-ecru.vercel.app vite",
+    "dev:marketing": "cross-env VITE_SITE_MODE=marketing VITE_SITE_URL=https://baytmiftah.com VITE_APP_ORIGIN=https://app.baytmiftah.com vite",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "workspace:audit:shell": "node scripts/audit-workspace-shell.mjs",

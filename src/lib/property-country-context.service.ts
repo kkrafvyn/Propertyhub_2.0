@@ -140,7 +140,7 @@ export function buildPropertyComplianceSnapshot(
     governingLaw: rules.governingLaw,
     leaseHighlights,
     taxComponents: context.effectiveTaxProfile.filter((t) => t.rateBasisPoints > 0 || t.notes),
-    paymentLabel: `PayAngels · ${context.currency}`,
+    paymentLabel: context.currency,
   };
 }
 

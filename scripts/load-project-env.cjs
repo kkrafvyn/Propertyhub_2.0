@@ -95,8 +95,7 @@ function buildServerSecrets(env = loadProjectEnv()) {
   }
 
   if (!secrets.ALLOWED_ORIGINS) {
-    const vercelPublic =
-      env.VERCEL_PUBLIC_APP_URL || "https://propertyhub-2-0-ecru.vercel.app";
+    const vercelPublic = env.VERCEL_PUBLIC_APP_URL || appUrl.replace(/\/+$/, "");
     const origins = new Set([
       "http://localhost:5173",
       "http://127.0.0.1:5173",

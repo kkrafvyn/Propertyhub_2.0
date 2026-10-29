@@ -55,7 +55,7 @@ export function MarketPanel() {
           {market.city}, {market.country}
         </p>
         <p className="mt-1 text-ink-secondary">
-          {summary.paymentProvider} · {summary.currency} · {summary.jurisdictionLabel}
+          {summary.currency} · {summary.jurisdictionLabel}
         </p>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">

@@ -7,7 +7,7 @@ import {
 } from "./user-market.service";
 
 describe("user-market.service", () => {
-  it("builds a Ghana market with PayAngels currency", () => {
+  it("builds a Ghana market with local currency", () => {
     const market = buildUserMarket("GH", 0);
     expect(market.country).toBe("Ghana");
     expect(market.city).toBe("Accra");
@@ -15,7 +15,7 @@ describe("user-market.service", () => {
     expect(market.currency).toBe("GHS");
   });
 
-  it("builds a US market with PayAngels currency", () => {
+  it("builds a US market with local currency", () => {
     const market = buildUserMarket("US", 0);
     expect(market.currency).toBe("USD");
     expect(getDisplayCurrencyForMarket(market)).toBe("USD");

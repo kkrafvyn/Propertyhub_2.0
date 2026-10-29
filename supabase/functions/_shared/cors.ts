@@ -30,7 +30,6 @@ const DEFAULT_ALLOWED_ORIGINS = [
   "https://app.baytmiftah.com",
   "https://baytmiftah.com",
   "https://www.baytmiftah.com",
-  "https://propertyhub-2-0-ecru.vercel.app",
 ];
 
 export function getAllowedOrigins(): string[] {

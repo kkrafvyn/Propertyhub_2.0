@@ -9,9 +9,9 @@ import { loadProjectEnv } from "../load-project-env.mjs";
 
 const env = loadProjectEnv();
 const appUrl = (
-  env.VERCEL_PUBLIC_APP_URL ||
   env.VITE_PUBLIC_APP_URL ||
-  "https://propertyhub-2-0-ecru.vercel.app"
+  env.VERCEL_PUBLIC_APP_URL ||
+  "https://app.baytmiftah.com"
 ).replace(/\/+$/, "");
 const supabaseUrl = env.VITE_SUPABASE_URL?.replace(/\/+$/, "");
 const anonKey = env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY;
