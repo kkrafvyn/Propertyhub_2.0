@@ -91,6 +91,22 @@ export const listingService = {
     return resolveListingsPropertyMedia(data || []);
   },
 
+  async getPublicListingByPropertyId(propertyId: string) {
+    const { data, error } = await supabase
+      .from("listings")
+      .select(LISTING_SELECT)
+      .eq("property_id", propertyId)
+      .eq("status", "listed")
+      .eq("visibility", "public")
+      .order("published_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+    return resolveListingPropertyMedia(data);
+  },
+
   async searchListings(
     filters: {
       location?: string;

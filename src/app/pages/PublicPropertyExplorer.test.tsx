@@ -65,7 +65,7 @@ describe("PublicPropertyExplorer", () => {
     });
 
     expect(screen.getByText(/Unit: BM-UNIT-/i)).toBeInTheDocument();
-    expect(screen.getByText(/Property: Example Heights/i)).toBeInTheDocument();
+    expect(screen.getByText(/Property: 5 Independence Ave/i)).toBeInTheDocument();
     expect(screen.getByText(/Buyer Public ID:/i)).toBeInTheDocument();
     expect(screen.getByText(/Verified identity/i)).toBeInTheDocument();
   });

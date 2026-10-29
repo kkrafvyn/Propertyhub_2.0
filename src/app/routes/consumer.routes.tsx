@@ -72,15 +72,15 @@ export const consumerRoutes: RouteObject[] = [
   {
     path: 'explorer/unit/:id',
     lazy: async () => {
-      const { PublicEventLedger } = await import('../pages/PublicEventLedger');
-      return { Component: PublicEventLedger };
+      const { PublicPropertyExplorer } = await import('../pages/PublicPropertyExplorer');
+      return { Component: PublicPropertyExplorer };
     },
   },
   {
     path: 'explorer/property/:id',
     lazy: async () => {
-      const { PublicEventLedger } = await import('../pages/PublicEventLedger');
-      return { Component: PublicEventLedger };
+      const { PublicPropertyExplorer } = await import('../pages/PublicPropertyExplorer');
+      return { Component: PublicPropertyExplorer };
     },
   },
   {

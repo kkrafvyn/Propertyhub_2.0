@@ -1,14 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router";
-import { ArrowRight, Bath, BedDouble, MapPin, Ruler, ShieldCheck, Building2, Eye, Lock, Sparkles, CheckCircle2 } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Link, useLocation, useParams } from "react-router";
+import { ArrowRight, Bath, BedDouble, MapPin, Ruler, ShieldCheck, Building2, Eye, Lock } from "lucide-react";
 import { listingService } from "../../lib/listing.service";
+import { formatPublicUnitId } from "../../lib/public-explorer";
+import { isMarketingSite } from "../../lib/site-mode";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
-import { Badge } from "../components/ui/badge";
 import { AppLoadingScreen, EmptyState, StandalonePageShell } from "../components/ux";
+import { MarketingSubpage } from "../components/marketing/MarketingSubpage";
+import { PageMeta } from "../components/baytmiftah/PageMeta";
 
 export function PublicPropertyExplorer() {
   const { id } = useParams();
+  const location = useLocation();
+  const resolveByProperty = location.pathname.includes("/explorer/property/");
   const [listing, setListing] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,7 +28,9 @@ export function PublicPropertyExplorer() {
     const load = async () => {
       try {
         setLoading(true);
-        const data = await listingService.getListingById(id);
+        const data = resolveByProperty
+          ? await listingService.getPublicListingByPropertyId(id)
+          : await listingService.getListingById(id);
         if (active) setListing(data);
       } catch (error) {
         console.error("Failed to load public property explorer", error);
@@ -37,16 +44,17 @@ export function PublicPropertyExplorer() {
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, resolveByProperty]);
 
   const publicUnitId = useMemo(() => {
     if (!listing?.id) return "BM-UNIT-LOADING";
-    return `BM-UNIT-${String(listing.id).slice(-6).toUpperCase()}`;
+    return formatPublicUnitId(listing.id);
   }, [listing?.id]);
 
   const propertyName = useMemo(() => {
-    if (!listing?.property) return "Example Heights";
-    return listing.property.name || "Example Heights";
+    const property = listing?.property;
+    if (!property) return "Property";
+    return property.name || property.address || "Property";
   }, [listing?.property]);
 
   const buyerPublicId = useMemo(() => {
@@ -61,23 +69,33 @@ export function PublicPropertyExplorer() {
     return <AppLoadingScreen label="Loading property explorer…" />;
   }
 
+  const wrapShell = (content: ReactNode, maxWidth = "max-w-4xl") => {
+    if (isMarketingSite()) {
+      return <MarketingSubpage>{content}</MarketingSubpage>;
+    }
+    return <StandalonePageShell maxWidthClassName={maxWidth}>{content}</StandalonePageShell>;
+  };
+
   if (!listing) {
-    return (
-      <StandalonePageShell maxWidthClassName="max-w-2xl">
-        <EmptyState
-          icon={Eye}
-          title="No property matches this preview link"
-          description="The listing may have been removed or the link is incorrect. Search BaytMiftah for active inventory."
-          actionLabel="Browse properties"
-          actionHref="/search"
-        />
-      </StandalonePageShell>
+    return wrapShell(
+      <EmptyState
+        icon={Eye}
+        title="No property matches this preview link"
+        description="The listing may have been removed or the link is incorrect. Search BaytMiftah for active inventory."
+        actionLabel="Browse properties"
+        actionHref="/search"
+      />,
+      "max-w-2xl",
     );
   }
 
-  return (
-    <StandalonePageShell maxWidthClassName="max-w-4xl">
+  const pageBody = (
       <div className="py-8 space-y-8">
+        <PageMeta
+          title={`${propertyName} — public preview`}
+          description="Privacy-safe public listing preview on BaytMiftah."
+          canonicalPath={location.pathname}
+        />
         {/* ── Editorial Header with Ambient Glowing Orbs ── */}
         <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-emerald-500/10 via-primary/5 to-surface/80 border border-emerald-500/20 shadow-lg backdrop-blur-md">
           <div className="absolute -top-12 -right-12 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -205,16 +223,19 @@ export function PublicPropertyExplorer() {
                 </div>
               </div>
 
-              <div className="pt-8">
-                <Button
-                  className="w-full h-12 rounded-xl font-semibold shadow-md shadow-emerald-500/15"
+              <div className="pt-8 space-y-2">
+                <Link to={`/property/${listing.id}`} className="block">
+                  <Button className="w-full h-12 rounded-xl font-semibold shadow-md shadow-emerald-500/15">
+                    <span>View full listing</span>
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link
+                  to="/explorer"
+                  className="block text-center text-xs font-medium text-primary hover:underline"
                 >
-                  <span>Request Private Viewing Access</span>
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <p className="text-xs text-center text-ink-muted mt-2.5">
-                  Requires certified BaytMiftah tenant credentials
-                </p>
+                  Back to explorer
+                </Link>
               </div>
             </div>
           </div>
@@ -225,7 +246,8 @@ export function PublicPropertyExplorer() {
           <span className="font-semibold text-ink font-display">BaytMiftah REOS</span> · Verified Property Network
         </p>
       </div>
-    </StandalonePageShell>
   );
+
+  return wrapShell(pageBody);
 }
 

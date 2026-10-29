@@ -1,7 +1,10 @@
 import { NativeSelectControl } from "@/app/components/ui/NativeSelect";
-import { useState } from "react";
-import { useLocation, useParams } from "react-router";
-import { Search, ShieldCheck, Clock, FileText, Sparkles, CheckCircle2, Shield, ArrowRight } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useLocation, useParams } from "react-router";
+import { Search, ShieldCheck, Clock, FileText, Sparkles, CheckCircle2, Shield, ArrowRight, Building2 } from "lucide-react";
+import { listingService } from "../../lib/listing.service";
+import { formatPublicUnitId } from "../../lib/public-explorer";
+import { PageMeta } from "../components/baytmiftah/PageMeta";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Card } from "../components/ui/Card";
@@ -28,26 +31,69 @@ export function PublicEventLedger() {
   const [record, setRecord] = useState<PublicLedgerRecord | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [featuredListings, setFeaturedListings] = useState<
+    Awaited<ReturnType<typeof listingService.getPublicListings>>
+  >([]);
+  const [listingsLoading, setListingsLoading] = useState(false);
+  const showBrowse = !id && (location.pathname === "/explorer" || location.pathname.endsWith("/explorer"));
 
-  const lookup = async (event?: React.FormEvent) => {
-    event?.preventDefault();
-    if (!identifier.trim()) return;
+  const runLookup = useCallback(async (lookupKind: PublicLedgerKind, lookupId: string) => {
+    if (!lookupId.trim()) return;
     try {
       setLoading(true);
       setError("");
-      const result = await publicEventLedgerService.lookup(kind, identifier.trim());
+      const result = await publicEventLedgerService.lookup(lookupKind, lookupId.trim());
       setRecord(result);
       if (!result) setError("No public record matched that identifier.");
-    } catch (failure: any) {
-      setError(failure?.message || "Lookup failed.");
+    } catch (failure: unknown) {
+      const message = failure instanceof Error ? failure.message : "Lookup failed.";
+      setError(message);
       setRecord(null);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const lookup = async (event?: React.FormEvent) => {
+    event?.preventDefault();
+    await runLookup(kind, identifier);
   };
+
+  useEffect(() => {
+    if (id?.trim()) {
+      setIdentifier(id);
+      setKind(pathKind);
+      void runLookup(pathKind, id.trim());
+    }
+  }, [id, pathKind, runLookup]);
+
+  useEffect(() => {
+    if (!showBrowse) return;
+    let active = true;
+    setListingsLoading(true);
+    void listingService
+      .getPublicListings(12)
+      .then((rows) => {
+        if (active) setFeaturedListings(rows);
+      })
+      .catch(() => {
+        if (active) setFeaturedListings([]);
+      })
+      .finally(() => {
+        if (active) setListingsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [showBrowse]);
 
   const body = (
     <div className="space-y-8">
+      <PageMeta
+        title="Property explorer — BaytMiftah"
+        description="Browse public listing previews and verify pseudonymous payment and unit records."
+        canonicalPath="/explorer"
+      />
       {/* ── Editorial Header with Ambient Glowing Orbs ── */}
       <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-emerald-500/10 via-primary/5 to-surface/80 border border-emerald-500/20 shadow-lg backdrop-blur-md">
         <div className="absolute -top-12 -right-12 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -64,13 +110,68 @@ export function PublicEventLedger() {
             </span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-serif font-bold tracking-tight text-ink font-display">
-            Public Event Ledger
+            Property explorer
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-secondary">
-            Pseudonymous verification of units, listings, and payment references. Occupant and owner identities are <strong className="text-ink font-semibold">strictly protected</strong>.
+            Browse public listing previews and verify pseudonymous unit codes and payment references. Occupant and owner identities are <strong className="text-ink font-semibold">strictly protected</strong>.
           </p>
         </div>
       </div>
+
+      {showBrowse && (
+        <Card variant="glass" className="rounded-3xl border border-surface-border/80 p-6 sm:p-7 shadow-md backdrop-blur-md">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-ink">Public listings</p>
+              <p className="text-xs text-ink-secondary">Open a privacy-safe preview or the full listing page.</p>
+            </div>
+            <Link
+              to="/search"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+            >
+              Full marketplace
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          {listingsLoading ? (
+            <p className="text-sm text-ink-secondary py-6 text-center">Loading public listings…</p>
+          ) : featuredListings.length === 0 ? (
+            <p className="text-sm text-ink-secondary py-6 text-center">
+              No public listings yet. Published inventory from workspace will appear here.
+            </p>
+          ) : (
+            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {featuredListings.map((listing) => {
+                const property = listing.property as { city?: string; address?: string; name?: string } | null;
+                const unitCode = formatPublicUnitId(listing.id);
+                return (
+                  <li key={listing.id}>
+                    <Link
+                      to={`/explorer/unit/${listing.id}`}
+                      className="flex h-full flex-col rounded-2xl border border-surface-border/80 bg-surface-subtle/50 p-4 transition hover:border-emerald-500/40 hover:bg-emerald-500/5"
+                    >
+                      <span className="inline-flex w-fit items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                        <Building2 className="h-3 w-3" />
+                        {unitCode}
+                      </span>
+                      <p className="mt-2 font-semibold text-ink line-clamp-2">
+                        {property?.name || property?.address || "Listing"}
+                      </p>
+                      <p className="mt-1 text-xs text-ink-secondary line-clamp-1">
+                        {[property?.city, listing.listing_type, listing.currency && listing.price != null
+                          ? `${listing.currency} ${listing.price}`
+                          : null]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
+      )}
 
       {/* ── Search Card ── */}
       <Card variant="glass" className="rounded-3xl border border-surface-border/80 p-6 sm:p-7 shadow-md backdrop-blur-md">
@@ -181,6 +282,10 @@ export function PublicEventLedger() {
     return <MarketingSubpage>{body}</MarketingSubpage>;
   }
 
-  return <StandalonePageShell maxWidthClassName="max-w-2xl">{body}</StandalonePageShell>;
+  return (
+    <StandalonePageShell maxWidthClassName={showBrowse ? "max-w-5xl" : "max-w-2xl"}>
+      {body}
+    </StandalonePageShell>
+  );
 }
 

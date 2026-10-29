@@ -79,6 +79,7 @@ function isConsumerRoute(pathname: string) {
     pathname.startsWith("/search") ||
     pathname.startsWith("/property/") ||
     pathname.startsWith("/compare") ||
+    pathname.startsWith("/explorer") ||
     pathname.startsWith("/app")
   );
 }
@@ -110,7 +111,8 @@ function shouldSkipOnboarding(pathname: string) {
     pathname.startsWith("/checkout") ||
     pathname.startsWith("/search") ||
     pathname.startsWith("/property/") ||
-    pathname.startsWith("/compare")
+    pathname.startsWith("/compare") ||
+    pathname.startsWith("/explorer")
   );
 }
 

@@ -11,7 +11,7 @@ const NAV_LINKS_DEFAULT = [
   { label: "AI", href: "#ai" },
   { label: "For Businesses", href: "#business" },
   { label: "For Consumers", href: "#consumers" },
-  { label: "Resources", href: "#explorer" },
+  { label: "Explorer", href: "/explorer" },
 ] as const;
 
 export type MarketingNavLink = { label: string; href: string };
