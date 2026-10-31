@@ -10,7 +10,9 @@ export function calculateWithholdingTax(amountMinor: number, ratePercent: number
 
 export function getInvoiceAging(dueDate: string | null | undefined, asOf = new Date()) {
 	if (!dueDate) return 0;
-	return Math.max(0, Math.floor((asOf.getTime() - new Date(`${dueDate}T00:00:00`).getTime()) / 86400000));
+	const dueMs = Date.parse(/^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? `${dueDate}T00:00:00Z` : dueDate);
+	if (Number.isNaN(dueMs)) return 0;
+	return Math.max(0, Math.floor((asOf.getTime() - dueMs) / 86400000));
 }
 
 function assertBillTransition(current: VendorBillStatus, next: VendorBillStatus) {

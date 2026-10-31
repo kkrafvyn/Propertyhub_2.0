@@ -141,6 +141,7 @@ export default defineConfig({
       '**/node_modules/**',
       '**/dist/**',
       'e2e/**',
+      'scripts/supabase-migration-manifest.test.mjs',
       ...(process.env.RUN_TENANT_ISOLATION_TESTS
         ? []
         : [
