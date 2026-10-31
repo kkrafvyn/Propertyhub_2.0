@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0d1913; font-family: "Segoe UI", system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; width: 1080px; height: 1920px; }
+      .display { font-family: Georgia, serif; font-weight: 700; }
+      .pad { padding: 100px 72px; display: flex; flex-direction: column; justify-content: center; height: 100%; }
+      #s1 { background: #0d1913; color: #f5f1e8; }
+      #s1 h1 { font-size: 88px; line-height: 1.05; }
+      #s1 h2 { font-size: 88px; color: #f0a18b; margin-top: 16px; }
+      #s2 { background: #faf8f5; color: #14251d; }
+      #s2 .kicker { font-size: 20px; letter-spacing: 0.2em; text-transform: uppercase; color: #123b2a; font-weight: 700; margin-bottom: 24px; }
+      #s2 p { font-size: 40px; line-height: 1.35; font-weight: 500; }
+      #s3 { background: #f0f3ee; color: #14251d; gap: 24px; }
+      #s3 h2 { font-size: 52px; color: #123b2a; margin-bottom: 32px; }
+      .card { background: #fff; border-left: 8px solid #123b2a; border-radius: 16px; padding: 36px; font-size: 34px; font-weight: 600; margin-bottom: 20px; }
+      #s4 { background: #17291e; color: #f5f1e8; }
+      #s4 h2 { font-size: 64px; margin: 12px 0 20px; }
+      #s4 p { font-size: 32px; color: #bdc9c0; line-height: 1.4; }
+      #s5 { background: #123b2a; color: #f5f1e8; text-align: center; align-items: center; }
+      #s5 h2 { font-size: 72px; }
+      #s5 p { font-size: 32px; margin: 20px 0 40px; }
+      #s5 .cta { background: #f5f1e8; color: #123b2a; padding: 22px 40px; border-radius: 999px; font-size: 28px; font-weight: 700; display: inline-block; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="20" data-width="1080" data-height="1920">
+      <div id="s1" class="clip pad" data-start="0" data-duration="3" data-track-index="1">
+        <h1 class="display">Every property.</h1>
+        <h1 class="display">One clear picture.</h1>
+      </div>
+      <div id="s2" class="clip pad" data-start="3" data-duration="4" data-track-index="1">
+        <p class="kicker">One app for property operations</p>
+        <p>Bring listings, leasing, payments and maintenance together.</p>
+      </div>
+      <div id="s3" class="clip pad" data-start="7" data-duration="6" data-track-index="1">
+        <h2 class="display">Run the portfolio</h2>
+        <div id="c1" class="card">Listings &amp; leasing</div>
+        <div id="c2" class="card">Collections &amp; ledger</div>
+        <div id="c3" class="card">Maintenance dispatch</div>
+      </div>
+      <div id="s4" class="clip pad" data-start="13" data-duration="4" data-track-index="1">
+        <p style="letter-spacing:0.16em;text-transform:uppercase;font-size:18px;color:#f0a18b;font-weight:700">Platform owner</p>
+        <h2 class="display">Command Center</h2>
+        <p>Whole-platform KPIs and integration health in one place.</p>
+      </div>
+      <div id="s5" class="clip pad" data-start="17" data-duration="3" data-track-index="1">
+        <h2 class="display">BaytMiftah</h2>
+        <p>The operating system for real estate.</p>
+        <span id="cta" class="cta">Get started · baytmiftah.com</span>
+      </div>
+      <audio id="music" src="assets/music/track.mp3" data-start="0" data-duration="20" data-track-index="2" data-volume="0.5" data-fade-in="0.5" data-fade-out="1"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#s1 h1", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.7, stagger: 0.15 }, 0.3);
+      tl.fromTo("#s2 p", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.2 }, 3.3);
+      tl.fromTo("#c1", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45 }, 7.5);
+      tl.fromTo("#c2", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45 }, 8.3);
+      tl.fromTo("#c3", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45 }, 9.1);
+      tl.fromTo("#s4 h2", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, 13.2);
+      tl.fromTo("#s5", { opacity: 0, scale: 0.98 }, { opacity: 1, scale: 1, duration: 0.5 }, 17.2);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: radial-gradient(ellipse at 50% 0%, #243d32 0%, #0d1913 55%); font-family: "Segoe UI", system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; width: 1080px; height: 1920px; }
+      .stage { display: flex; flex-direction: column; align-items: center; padding-top: 88px; height: 100%; }
+      .tag { color: #f0a18b; font-size: 22px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; margin-bottom: 20px; }
+      .headline { color: #f5f1e8; font-family: Georgia, serif; font-size: 48px; text-align: center; line-height: 1.15; max-width: 920px; margin-bottom: 44px; }
+      .iphone16 {
+        position: relative;
+        width: 420px;
+        height: 910px;
+        border-radius: 58px;
+        background: linear-gradient(145deg, #3a3a3c, #1c1c1e);
+        padding: 14px;
+        box-shadow: 0 40px 80px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(255,255,255,0.08);
+      }
+      .iphone16::before {
+        content: "";
+        position: absolute;
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 126px;
+        height: 36px;
+        background: #0a0a0a;
+        border-radius: 20px;
+        z-index: 20;
+      }
+      .screen { position: relative; width: 100%; height: 100%; border-radius: 46px; overflow: hidden; background: #17291e; color: #f5f1e8; }
+      .status { height: 44px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-size: 14px; font-weight: 600; background: #17291e; }
+      .app-header { padding: 10px 16px; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: #f0a18b; font-weight: 700; }
+      .app-title { padding: 0 16px 12px; font-size: 26px; font-weight: 700; font-family: Georgia, serif; }
+      .kpi-row { display: flex; gap: 10px; padding: 0 16px 16px; flex-wrap: wrap; }
+      .kpi { flex: 1 1 45%; background: #0d1913; border: 1px solid #344a3b; border-radius: 12px; padding: 14px; min-width: 160px; }
+      .kpi span { display: block; font-size: 11px; color: #bdc9c0; text-transform: uppercase; letter-spacing: 0.08em; }
+      .kpi strong { font-size: 22px; margin-top: 6px; display: block; }
+      .row { margin: 0 16px 10px; background: #0d1913; border: 1px solid #344a3b; border-radius: 12px; padding: 14px 16px; font-size: 15px; }
+      .row small { display: block; color: #bdc9c0; font-size: 12px; margin-top: 4px; }
+      .tabs { position: absolute; bottom: 0; left: 0; right: 0; height: 72px; background: #0d1913; border-top: 1px solid #344a3b; display: flex; justify-content: space-around; align-items: center; font-size: 10px; color: #bdc9c0; padding-bottom: 8px; text-align: center; }
+      .tabs .on { color: #f0a18b; font-weight: 700; }
+      .outro { background: #123b2a; color: #f5f1e8; justify-content: center; text-align: center; padding: 120px 64px; display: flex; flex-direction: column; align-items: center; }
+      .outro h2 { font-family: Georgia, serif; font-size: 64px; margin-bottom: 16px; }
+      .outro p { font-size: 28px; margin-bottom: 36px; max-width: 800px; }
+      .outro .cta { background: #f5f1e8; color: #123b2a; padding: 18px 32px; border-radius: 999px; font-weight: 700; font-size: 24px; }
+      .label-iphone { margin-top: 28px; color: #bdc9c0; font-size: 18px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="20" data-width="1080" data-height="1920">
+      <div id="scene-intro" class="clip stage" data-start="0" data-duration="5" data-track-index="1">
+        <p class="tag">Workspace app · iPhone</p>
+        <h1 id="ws-h" class="headline">Run the portfolio from your pocket.</h1>
+        <div class="iphone16">
+          <div class="screen">
+            <div class="status">9:41</div>
+            <div class="app-header">Property manager</div>
+            <div class="app-title">Overview</div>
+            <div class="kpi-row">
+              <div class="kpi"><span>Portfolio</span><strong>Live KPIs</strong></div>
+              <div class="kpi"><span>Maintenance</span><strong>Dispatch</strong></div>
+              <div class="kpi"><span>Collections</span><strong>Ledger</strong></div>
+              <div class="kpi"><span>Leads</span><strong>Pipeline</strong></div>
+            </div>
+            <div id="row1" class="row">Maintenance dispatch<small>Work orders &amp; contractor MoMo</small></div>
+            <div class="row">Lease renewals<small>Applications · KYC · signatures</small></div>
+            <div class="tabs"><span class="on">Overview</span><span>Leases</span><span>Maintenance</span><span>Leads</span></div>
+          </div>
+        </div>
+        <p class="label-iphone">iPhone 16 · BaytMiftah Workspace</p>
+      </div>
+
+      <div id="scene-cc" class="clip stage" data-start="5" data-duration="5" data-track-index="1">
+        <p class="tag">Command Center</p>
+        <h1 class="headline" style="font-size:42px">Whole-platform KPIs on mobile.</h1>
+        <div class="iphone16">
+          <div class="screen">
+            <div class="status">9:41</div>
+            <div class="app-header">Platform owner</div>
+            <div class="app-title">Command Center</div>
+            <p style="padding:0 16px 16px;font-size:14px;color:#bdc9c0;line-height:1.45">Team workload, integration health, and owner controls in one place.</p>
+            <div class="kpi-row">
+              <div class="kpi"><span>Integrations</span><strong id="int-kpi">Health</strong></div>
+              <div class="kpi"><span>Estates</span><strong>Roster</strong></div>
+            </div>
+            <div id="row-cc" class="row">Staff roster &amp; grants<small>Cross-tenant read · audited access</small></div>
+            <div class="tabs"><span class="on">Overview</span><span>Team</span><span>AI</span><span>Payments</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene-ops" class="clip stage" data-start="10" data-duration="5" data-track-index="1">
+        <p class="tag">Operations</p>
+        <h1 class="headline" style="font-size:40px">Leasing · Finance · Maintenance</h1>
+        <div class="iphone16">
+          <div class="screen">
+            <div class="status">9:41</div>
+            <div class="app-header">Finance</div>
+            <div class="app-title">Collections</div>
+            <div id="fin1" class="row">Rent &amp; collections<small>Deterministic sub-ledger · pay in app</small></div>
+            <div id="fin2" class="row">Ledger &amp; disbursements<small>Owner statements ready</small></div>
+            <div id="fin3" class="row">WhatsApp &amp; SMS notices<small>Hubtel · Arkesel · Cloud API</small></div>
+            <div class="tabs"><span>Overview</span><span class="on">Finance</span><span>Payments</span><span>Tasks</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene-outro" class="clip outro" data-start="15" data-duration="5" data-track-index="1">
+        <h2>BaytMiftah Workspace</h2>
+        <p>REOS for teams — same platform on web, desktop, and mobile.</p>
+        <span id="ws-cta" class="cta">Open workspace · baytmiftah.com</span>
+      </div>
+
+      <audio src="assets/music/track.mp3" data-start="0" data-duration="20" data-track-index="2" data-volume="0.48" data-fade-in="0.5" data-fade-out="1"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#ws-h", { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.7 }, 0.3);
+      tl.fromTo("#row1", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.45 }, 1.2);
+      tl.fromTo("#int-kpi", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 5.8);
+      tl.fromTo("#row-cc", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45 }, 6.2);
+      tl.fromTo("#fin1", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.35 }, 10.5);
+      tl.fromTo("#fin2", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.35 }, 11.1);
+      tl.fromTo("#fin3", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.35 }, 11.7);
+      tl.fromTo("#ws-cta", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5 }, 16);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -14,6 +14,8 @@ They are not native iPhone, iPad, or Mac screenshots and must not be described
 as native captures. Native screenshots still need to be captured from the
 correct app and device. Do not resize browser references to imply native use.
 
-Both listing drafts use https://baytmiftah.com, with `/help` for support and
-`/legal/privacy` for the privacy policy, as requested by the owner. DNS checking
-is deferred at the owner's request. External listing saves remain unverified.
+Listing URLs: **https://www.baytmiftah.com** (marketing/legal), **https://app.baytmiftah.com** (web app), privacy at `/legal/privacy`, support `support@baytmiftah.com`.
+
+**6.7" screenshots + app preview** from brag: run `npm run brag:export-store-assets` → `screenshots/iphone-6.7/` and `app-preview.mp4`. See [STORE_SUBMISSION_ASSETS.md](../../docs/deployment/STORE_SUBMISSION_ASSETS.md).
+
+Legacy JPGs in `screenshots/` are browser references; prefer brag `iphone-6.7/` or native TestFlight captures for App Store Connect.

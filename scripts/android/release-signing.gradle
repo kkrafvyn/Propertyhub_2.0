@@ -2,22 +2,22 @@
  * Release signing for CI and local Play uploads.
  * Set ANDROID_KEYSTORE_FILE, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD.
  */
-def storePath = System.getenv("ANDROID_KEYSTORE_FILE")
-def storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
-def keyAlias = System.getenv("ANDROID_KEY_ALIAS")
-def keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+def keystoreFilePath = System.getenv("ANDROID_KEYSTORE_FILE")
+def keystoreStorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+def keystoreKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+def keystoreKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
 
-def signingReady = storePath != null && storePassword != null && keyAlias != null && keyPassword != null &&
-        new File(storePath).exists()
+def signingReady = keystoreFilePath != null && keystoreStorePassword != null && keystoreKeyAlias != null &&
+        keystoreKeyPassword != null && new File(keystoreFilePath).exists()
 
 if (signingReady) {
     android {
         signingConfigs {
             release {
-                storeFile file(storePath)
-                storePassword storePassword
-                keyAlias keyAlias
-                keyPassword keyPassword
+                storeFile file(keystoreFilePath)
+                storePassword keystoreStorePassword
+                keyAlias keystoreKeyAlias
+                keyPassword keystoreKeyPassword
             }
         }
         buildTypes {

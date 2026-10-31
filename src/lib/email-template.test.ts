@@ -22,6 +22,16 @@ describe("BaytMiftah email template", () => {
     expect(source).toContain('variant: "transactional"');
   });
 
+  it("routes all Resend sends through the branded mail helper", () => {
+    const resendMailPath = path.resolve(
+      process.cwd(),
+      "supabase/functions/_shared/resend-mail.ts",
+    );
+    const source = readFileSync(resendMailPath, "utf8");
+    expect(source).toContain("buildTransactionalEmail");
+    expect(source).toContain("sendBrandedTransactionalEmail");
+  });
+
   it("includes a local HTML preview file", () => {
     const preview = readFileSync(path.join(brandDir, "email-template.html"), "utf8");
     expect(preview).toContain("email-logo.svg");

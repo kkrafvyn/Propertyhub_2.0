@@ -9,10 +9,21 @@ import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+
+const require = createRequire(import.meta.url);
+const { loadProjectEnv } = require("./load-project-env.cjs");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
+
+const loadedEnv = loadProjectEnv();
+for (const [key, value] of Object.entries(loadedEnv)) {
+  if (value != null && String(value).trim() && process.env[key] == null) {
+    process.env[key] = String(value);
+  }
+}
 
 const variant = process.argv[2] || "consumer";
 const playVariant = variant === "business" ? "workspace" : "consumer";
@@ -30,6 +41,11 @@ if (!fs.existsSync(gradlew)) {
 }
 
 process.env.PLAY_VARIANT = playVariant;
+execFileSync(process.execPath, ["scripts/play/ensure-local-upload-keystores.mjs"], {
+  cwd: ROOT,
+  stdio: "inherit",
+  env: process.env,
+});
 const signingExports = execFileSync(process.execPath, ["scripts/play/prepare-android-signing.mjs"], {
   cwd: ROOT,
   encoding: "utf8",
@@ -47,12 +63,15 @@ const versionCode = process.env.BUILD_NUMBER || "1";
 process.env.MOBILE_SYNC_SKIP_PROVISION = "1";
 execFileSync(process.execPath, ["scripts/mobile-sync.mjs", variant], { cwd: ROOT, stdio: "inherit", env: process.env });
 
-const gradleArgs = ["bundleRelease", `-PplayVersionCode=${versionCode}`, `-PplayVersionName=${versionName}`];
-const result = spawnSync(gradlew, gradleArgs, {
+const gradleCmd =
+  process.platform === "win32"
+    ? `"${gradlew}" bundleRelease -PplayVersionCode=${versionCode} "-PplayVersionName=${versionName}"`
+    : `"${gradlew}" bundleRelease -PplayVersionCode=${versionCode} -PplayVersionName=${versionName}`;
+const result = spawnSync(gradleCmd, {
   cwd: path.join(ROOT, androidDir),
   stdio: "inherit",
   env: process.env,
-  shell: process.platform === "win32",
+  shell: true,
 });
 
 if (result.status !== 0) process.exit(result.status ?? 1);

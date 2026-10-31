@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #0d1913;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+      }
+      .scene {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 120px 140px;
+      }
+      .display {
+        font-family: Georgia, "Times New Roman", serif;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+      }
+      #scene-hook {
+        background: #0d1913;
+        color: #f5f1e8;
+      }
+      #hook-line1 {
+        font-size: 112px;
+        line-height: 1.05;
+      }
+      #hook-line2 {
+        font-size: 112px;
+        line-height: 1.05;
+        margin-top: 12px;
+        color: #f0a18b;
+      }
+      #scene-reveal {
+        background: #faf8f5;
+        color: #14251d;
+      }
+      #reveal-kicker {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: #123b2a;
+        margin-bottom: 28px;
+      }
+      #reveal-lead {
+        font-size: 44px;
+        line-height: 1.35;
+        max-width: 1200px;
+        font-weight: 500;
+      }
+      #scene-hero-img {
+        background: #0d1913;
+        overflow: hidden;
+      }
+      #hero-photo {
+        position: absolute;
+        inset: -8%;
+        width: 116%;
+        height: 116%;
+        object-fit: cover;
+        opacity: 0.55;
+      }
+      #hero-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, rgba(13, 25, 19, 0.92) 0%, rgba(13, 25, 19, 0.55) 55%, rgba(13, 25, 19, 0.25) 100%);
+      }
+      #hero-copy {
+        position: relative;
+        z-index: 2;
+        padding: 120px 140px;
+        max-width: 980px;
+        color: #f5f1e8;
+      }
+      #hero-copy h2 {
+        font-size: 64px;
+        line-height: 1.1;
+        margin-bottom: 24px;
+      }
+      #hero-copy p {
+        font-size: 28px;
+        line-height: 1.45;
+        color: #bdc9c0;
+      }
+      #scene-cards {
+        background: #f0f3ee;
+        color: #14251d;
+        gap: 28px;
+      }
+      #scene-cards h2 {
+        font-size: 48px;
+        margin-bottom: 36px;
+        color: #123b2a;
+      }
+      .card-row {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        max-width: 1100px;
+      }
+      .card {
+        background: #ffffff;
+        border: 2px solid #dce3de;
+        border-left: 8px solid #123b2a;
+        border-radius: 16px;
+        padding: 32px 40px;
+        font-size: 36px;
+        font-weight: 600;
+      }
+      #scene-workspace {
+        background: #17291e;
+        color: #f5f1e8;
+      }
+      #scene-workspace .eyebrow {
+        font-size: 20px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #f0a18b;
+        margin-bottom: 16px;
+        font-weight: 700;
+      }
+      #scene-workspace h2 {
+        font-size: 72px;
+        margin-bottom: 20px;
+      }
+      #scene-workspace p {
+        font-size: 30px;
+        line-height: 1.45;
+        max-width: 980px;
+        color: #bdc9c0;
+      }
+      #flow-strip {
+        margin-top: 48px;
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .pill {
+        background: #0d1913;
+        border: 1px solid #344a3b;
+        border-radius: 999px;
+        padding: 14px 28px;
+        font-size: 22px;
+        font-weight: 600;
+      }
+      #scene-outro {
+        background: #123b2a;
+        color: #f5f1e8;
+        align-items: center;
+        text-align: center;
+      }
+      #scene-outro h2 {
+        font-size: 88px;
+        margin-bottom: 16px;
+      }
+      #scene-outro p {
+        font-size: 34px;
+        margin-bottom: 40px;
+        color: #f5f1e8;
+      }
+      #cta {
+        display: inline-block;
+        background: #f5f1e8;
+        color: #123b2a;
+        font-size: 26px;
+        font-weight: 700;
+        padding: 18px 36px;
+        border-radius: 999px;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="20"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div id="scene-hook" class="clip scene body" data-start="0" data-duration="3" data-track-index="1">
+        <h1 id="hook-line1" class="display">Every property.</h1>
+        <h1 id="hook-line2" class="display">One clear picture.</h1>
+      </div>
+
+      <div id="scene-reveal" class="clip scene body" data-start="3" data-duration="4" data-track-index="1">
+        <p id="reveal-kicker">One app for property operations</p>
+        <p id="reveal-lead">
+          Bring listings, leasing, payments and maintenance together—so your team can run the portfolio with clarity.
+        </p>
+      </div>
+
+      <div id="scene-hero-img" class="clip" data-start="7" data-duration="4" data-track-index="1">
+        <img id="hero-photo" src="assets/hero.webp" alt="" />
+        <div id="hero-overlay"></div>
+        <div id="hero-copy" class="body">
+          <h2 class="display">Every property.<br />One clear picture.</h2>
+          <p>Listings, leasing, collections, and maintenance in one workspace.</p>
+        </div>
+      </div>
+
+      <div id="scene-cards" class="clip scene body" data-start="11" data-duration="5" data-track-index="1">
+        <h2 class="display">Run the whole operation</h2>
+        <div class="card-row">
+          <div id="card-1" class="card">Listings &amp; leasing</div>
+          <div id="card-2" class="card">Collections &amp; ledger</div>
+          <div id="card-3" class="card">Maintenance dispatch</div>
+        </div>
+      </div>
+
+      <div id="scene-workspace" class="clip scene body" data-start="16" data-duration="3" data-track-index="1">
+        <p class="eyebrow">Platform owner</p>
+        <h2 class="display">Command Center</h2>
+        <p>Whole-platform KPIs, team workload, integration health, and owner controls in one place.</p>
+        <div id="flow-strip">
+          <span id="pill-1" class="pill">Discover</span>
+          <span id="pill-2" class="pill">Apply</span>
+          <span id="pill-3" class="pill">Pay</span>
+          <span id="pill-4" class="pill">Lease</span>
+        </div>
+      </div>
+
+      <div id="scene-outro" class="clip scene body" data-start="19" data-duration="1" data-track-index="1">
+        <h2 class="display">BaytMiftah</h2>
+        <p>The operating system for real estate.</p>
+        <span id="cta">Get started · baytmiftah.com</span>
+      </div>
+
+      <audio
+        id="music"
+        src="assets/music/track.mp3"
+        data-start="0"
+        data-duration="20"
+        data-track-index="2"
+        data-volume="0.55"
+        data-fade-in="0.5"
+        data-fade-out="1"
+      ></audio>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      tl.fromTo("#hook-line1", { opacity: 0, y: 36 }, { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" }, 0.2);
+      tl.fromTo("#hook-line2", { opacity: 0, y: 36 }, { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" }, 1.2);
+
+      tl.fromTo("#reveal-kicker", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, 3.2);
+      tl.fromTo("#reveal-lead", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.8 }, 3.6);
+
+      tl.fromTo("#hero-photo", { scale: 1.08 }, { scale: 1, duration: 4, ease: "none" }, 7);
+      tl.fromTo("#hero-copy", { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.9, ease: "power2.out" }, 7.3);
+
+      tl.fromTo("#scene-cards h2", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, 11.2);
+      tl.fromTo("#card-1", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, 11.7);
+      tl.fromTo("#card-2", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, 12.5);
+      tl.fromTo("#card-3", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, 13.3);
+
+      tl.fromTo("#scene-workspace h2", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6 }, 16.2);
+      tl.fromTo("#scene-workspace p", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6 }, 16.5);
+      tl.fromTo("#pill-1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25 }, 16.9);
+      tl.fromTo("#pill-2", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25 }, 17.15);
+      tl.fromTo("#pill-3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25 }, 17.4);
+      tl.fromTo("#pill-4", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25 }, 17.65);
+
+      tl.fromTo("#scene-outro h2", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.35, ease: "power2.out" }, 19.05);
+      tl.fromTo("#scene-outro p", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.25 }, 19.15);
+      tl.fromTo("#cta", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.25 }, 19.25);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -36,9 +36,9 @@ if (env.SUPABASE_ACCESS_TOKEN) {
 const secretsFile = path.join(projectRoot, "supabase", ".env.payments");
 writeServerSecretsFile(secretsFile, env);
 
+const secretsFileQuoted = JSON.stringify(secretsFile);
 const result = spawnSync(
-  "npx",
-  ["supabase", "secrets", "set", "--env-file", secretsFile, "--project-ref", projectRef],
+  `npx --yes supabase secrets set --env-file ${secretsFileQuoted} --project-ref ${JSON.stringify(projectRef)}`,
   { cwd: projectRoot, stdio: "inherit", shell: true },
 );
 

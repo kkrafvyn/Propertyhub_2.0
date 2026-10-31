@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: radial-gradient(ellipse at 50% 0%, #1a3328 0%, #0d1913 55%); font-family: "Segoe UI", system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; width: 1080px; height: 1920px; }
+      .stage { display: flex; flex-direction: column; align-items: center; padding-top: 88px; height: 100%; }
+      .tag { color: #f0a18b; font-size: 22px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; margin-bottom: 20px; }
+      .headline { color: #f5f1e8; font-family: Georgia, serif; font-size: 52px; text-align: center; line-height: 1.15; max-width: 920px; margin-bottom: 48px; }
+      .iphone16 {
+        position: relative;
+        width: 420px;
+        height: 910px;
+        border-radius: 58px;
+        background: linear-gradient(145deg, #3a3a3c, #1c1c1e);
+        padding: 14px;
+        box-shadow: 0 40px 80px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(255,255,255,0.08);
+      }
+      .iphone16::before {
+        content: "";
+        position: absolute;
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 126px;
+        height: 36px;
+        background: #0a0a0a;
+        border-radius: 20px;
+        z-index: 20;
+      }
+      .screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 46px;
+        overflow: hidden;
+        background: #faf8f5;
+      }
+      .status { height: 44px; background: #fff; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-size: 14px; font-weight: 600; color: #14251d; }
+      .app-header { display: flex; align-items: center; justify-content: center; padding: 8px 16px 12px; background: #fff; border-bottom: 1px solid #ece8e3; font-weight: 700; color: #123b2a; font-size: 18px; }
+      .hero-img { height: 160px; background: url("assets/hero.webp") center/cover; position: relative; }
+      .hero-img::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.65), transparent); }
+      .hero-txt { position: absolute; left: 16px; right: 16px; bottom: 14px; color: #fff; z-index: 1; }
+      .hero-txt h3 { font-size: 20px; line-height: 1.2; font-weight: 700; }
+      .hero-txt p { font-size: 13px; opacity: 0.92; margin-top: 4px; }
+      .search { margin: 14px 16px; background: #f0f3ee; border-radius: 12px; padding: 14px 16px; color: #637269; font-size: 15px; }
+      .listing { margin: 0 16px 12px; background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid #dce3de; }
+      .listing .thumb { height: 100px; background: url("assets/hero.webp") center/cover; }
+      .listing .meta { padding: 12px 14px; }
+      .listing .meta strong { display: block; font-size: 16px; color: #14251d; }
+      .listing .meta span { font-size: 13px; color: #637269; }
+      .tabs { position: absolute; bottom: 0; left: 0; right: 0; height: 72px; background: #fff; border-top: 1px solid #ece8e3; display: flex; justify-content: space-around; align-items: center; font-size: 11px; color: #637269; padding-bottom: 8px; }
+      .tabs .on { color: #123b2a; font-weight: 700; }
+      .detail { padding: 16px; }
+      .detail h3 { font-size: 22px; color: #14251d; margin-bottom: 8px; }
+      .detail p { font-size: 14px; color: #48584f; line-height: 1.45; margin-bottom: 16px; }
+      .btn { display: block; text-align: center; background: #123b2a; color: #fff; padding: 14px; border-radius: 12px; font-weight: 600; font-size: 15px; margin: 0 16px; }
+      .outro { background: #123b2a; color: #f5f1e8; justify-content: center; text-align: center; padding: 120px 64px; }
+      .outro h2 { font-family: Georgia, serif; font-size: 64px; margin-bottom: 16px; }
+      .outro p { font-size: 28px; margin-bottom: 36px; }
+      .outro .cta { background: #f5f1e8; color: #123b2a; padding: 18px 32px; border-radius: 999px; font-weight: 700; font-size: 24px; display: inline-block; }
+      .label-iphone { margin-top: 28px; color: #bdc9c0; font-size: 18px; letter-spacing: 0.06em; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="20" data-width="1080" data-height="1920">
+      <div id="scene-intro" class="clip stage" data-start="0" data-duration="4" data-track-index="1">
+        <p class="tag">Consumer app · iPhone</p>
+        <h1 id="intro-h" class="headline">Find a place that feels like home.</h1>
+        <div class="iphone16">
+          <div class="screen">
+            <div class="status">9:41</div>
+            <div class="app-header">BaytMiftah</div>
+            <div class="hero-img">
+              <div class="hero-txt">
+                <h3>Find a place that feels like home</h3>
+                <p>Search, compare, and apply with confidence.</p>
+              </div>
+            </div>
+            <div class="search">Search city, neighborhood, or building…</div>
+            <div class="listing">
+              <div class="thumb"></div>
+              <div class="meta"><strong>East Legon residences</strong><span>Verified listing · Schedule a viewing</span></div>
+            </div>
+            <div class="tabs"><span class="on">Home</span><span>Explore</span><span>Saved</span><span>Messages</span><span>Profile</span></div>
+          </div>
+        </div>
+        <p class="label-iphone">iPhone 16 · BaytMiftah consumer</p>
+      </div>
+
+      <div id="scene-detail" class="clip stage" data-start="4" data-duration="5" data-track-index="1">
+        <p class="tag">Discover → Apply</p>
+        <h1 class="headline" style="font-size:44px;margin-bottom:36px">Book viewings. Send offers. Track your lease.</h1>
+        <div class="iphone16">
+          <div class="screen">
+            <div class="status">9:41</div>
+            <div class="app-header">Property</div>
+            <div class="hero-img" style="height:200px"></div>
+            <div class="detail">
+              <h3>East Legon residences</h3>
+              <p>Verified listing · KYC-ready applications · Secure payments in app.</p>
+            </div>
+            <div id="apply-btn" class="btn">Apply &amp; schedule viewing</div>
+            <div class="tabs"><span>Home</span><span class="on">Explore</span><span>Saved</span><span>Messages</span><span>Profile</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene-flow" class="clip stage" data-start="9" data-duration="6" data-track-index="1">
+        <p class="tag">Your journey</p>
+        <h1 class="headline" style="font-size:42px">Discover · Apply · Pay · Lease</h1>
+        <div class="iphone16">
+          <div class="screen" style="background:#f0f3ee;padding:24px 16px 80px">
+            <div class="status" style="background:#f0f3ee">9:41</div>
+            <div id="step1" class="listing" style="margin-top:8px"><div class="meta"><strong>1 · Discover listings</strong><span>Search &amp; compare on mobile</span></div></div>
+            <div id="step2" class="listing"><div class="meta"><strong>2 · Apply with KYC</strong><span>Documents &amp; viewings in one flow</span></div></div>
+            <div id="step3" class="listing"><div class="meta"><strong>3 · Pay &amp; sign lease</strong><span>Collections you can trust</span></div></div>
+            <div class="tabs"><span class="on">Home</span><span>Explore</span><span>Saved</span><span>Messages</span><span>Profile</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="scene-outro" class="clip outro" data-start="15" data-duration="5" data-track-index="1">
+        <h2>BaytMiftah</h2>
+        <p>Consumer app for web, iOS &amp; Android.</p>
+        <span id="out-cta" class="cta">Get the app · baytmiftah.com</span>
+      </div>
+
+      <audio src="assets/music/track.mp3" data-start="0" data-duration="20" data-track-index="2" data-volume="0.48" data-fade-in="0.5" data-fade-out="1"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#intro-h", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7 }, 0.3);
+      tl.fromTo(".iphone16", { opacity: 0, y: 40, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "power2.out" }, 0.5);
+      tl.fromTo("#apply-btn", { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.5 }, 5);
+      tl.fromTo("#step1", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4 }, 9.5);
+      tl.fromTo("#step2", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4 }, 10.2);
+      tl.fromTo("#step3", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4 }, 10.9);
+      tl.fromTo("#out-cta", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5 }, 16);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

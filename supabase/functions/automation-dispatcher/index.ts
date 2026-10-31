@@ -1,4 +1,4 @@
-import { buildTransactionalEmail } from "../_shared/email-template.ts";
+import { sendBrandedTransactionalEmail } from "../_shared/resend-mail.ts";
 import { corsHeaders, HttpError, jsonResponse } from "../_shared/http.ts";
 import { createAdminClient } from "../_shared/supabase.ts";
 import { resolveWhatsAppCredentialsForOrg, sendWhatsAppTextMessage } from "../_shared/whatsapp-cloud.ts";
@@ -83,35 +83,6 @@ function matchesSavedAlert(alert: any, listing: any) {
   if (locationNeedle && !locationHaystack.includes(locationNeedle)) return false;
 
   return true;
-}
-
-async function sendEmail(params: {
-  to: string;
-  subject: string;
-  text: string;
-  html: string;
-}) {
-  const resendApiKey = Deno.env.get("RESEND_API_KEY");
-  const from = Deno.env.get("NOTIFICATION_EMAIL_FROM");
-  if (!resendApiKey || !from || !params.to) return false;
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: [params.to],
-      subject: params.subject,
-      text: params.text,
-      html: params.html,
-      reply_to: Deno.env.get("NOTIFICATION_EMAIL_REPLY_TO") || undefined,
-    }),
-  });
-
-  return response.ok;
 }
 
 async function sendSms(params: { to: string; body: string }) {
@@ -215,17 +186,15 @@ async function notifyUser(
   });
 
   if (input.sendEmailCopy && input.email) {
-    const emailContent = buildTransactionalEmail({
-      title: input.subject,
-      body: input.content,
-      actionUrl: input.actionUrl,
-    });
-    const delivered = await sendEmail({
-      to: input.email,
-      subject: input.subject,
-      text: emailContent.text,
-      html: emailContent.html,
-    });
+    const delivered = (
+      await sendBrandedTransactionalEmail({
+        to: input.email,
+        subject: input.subject,
+        title: input.subject,
+        body: input.content,
+        actionUrl: input.actionUrl,
+      })
+    ).success;
 
     await createNotification(admin, {
       userId: input.userId,

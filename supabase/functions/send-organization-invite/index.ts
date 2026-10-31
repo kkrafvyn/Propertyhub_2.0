@@ -3,6 +3,7 @@ import { getAllowedOrigins } from "../_shared/cors.ts";
 import { isAllowedAppUrl } from "../_shared/security.ts";
 import { getCorsHeaders, HttpError } from "../_shared/http.ts";
 import { requireOrgWorkspacePermission } from "../_shared/workspace-role-permissions.ts";
+import { sendBrandedTransactionalEmail } from "../_shared/resend-mail.ts";
 
 type InviteRole = string;
 
@@ -177,24 +178,54 @@ Deno.serve(async (req) => {
     return jsonResponse(400, { error: "Invalid application URL" }, req);
   }
   const redirectTo = `${baseAppUrl}/workspace/accept?invitation=${invitation.id}`;
+  const orgName = invitation.organization.name || "your organization";
+  const inviteMetadata = {
+    organization_id: organizationId,
+    organization_slug: invitation.organization.slug,
+    organization_name: orgName,
+    invited_role: role,
+    invitation_id: invitation.id,
+  };
 
-  const { error: authInviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    redirectTo,
-    data: {
-      organization_id: organizationId,
-      organization_slug: invitation.organization.slug,
-      organization_name: invitation.organization.name,
-      invited_role: role,
-      invitation_id: invitation.id,
+  const { data: inviteLink, error: linkError } = await adminClient.auth.admin.generateLink({
+    type: "invite",
+    email,
+    options: {
+      redirectTo,
+      data: inviteMetadata,
     },
   });
 
   const manualSignInRequired =
-    authInviteError &&
-    /registered|exists|already/i.test(authInviteError.message || "");
+    Boolean(linkError) && /registered|exists|already/i.test(linkError.message || "");
 
-  if (authInviteError && !manualSignInRequired) {
-    return jsonResponse(500, { error: "Unable to send invitation email" }, req);
+  if (linkError && !manualSignInRequired) {
+    return jsonResponse(500, { error: "Unable to prepare invitation" }, req);
+  }
+
+  const acceptUrl =
+    inviteLink?.properties?.action_link ||
+    `${baseAppUrl}/auth/sign-in?redirect=${encodeURIComponent(redirectTo)}`;
+
+  const emailSubject = `You're invited to ${orgName} on BaytMiftah`;
+  const emailBody = manualSignInRequired
+    ? `You have been invited to join ${orgName} as ${role.replace(/_/g, " ")}.\n\nSign in with this email address, then open the link below to accept the invitation.`
+    : `You have been invited to join ${orgName} as ${role.replace(/_/g, " ")} on BaytMiftah.\n\nUse the button below to accept your invitation and set up workspace access.`;
+
+  const emailDelivery = await sendBrandedTransactionalEmail({
+    to: email,
+    subject: emailSubject,
+    title: manualSignInRequired ? "Accept your workspace invitation" : "Join your BaytMiftah workspace",
+    body: emailBody,
+    siteUrl: baseAppUrl,
+    ctaUrl: acceptUrl,
+    ctaLabel: manualSignInRequired ? "SIGN IN & ACCEPT" : "ACCEPT INVITATION",
+  });
+
+  if (!emailDelivery.success) {
+    return jsonResponse(500, {
+      error: emailDelivery.error || "Unable to send invitation email",
+    }, req);
   }
 
   return jsonResponse(200, {

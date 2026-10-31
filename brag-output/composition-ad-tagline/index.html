@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0d1913; font-family: Georgia, serif; }
+      .clip { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px; }
+      .line { font-size: 88px; color: #f5f1e8; line-height: 1.15; overflow: hidden; }
+      .line span { display: inline-block; transform: translateY(120%); }
+      .accent { color: #f0a18b; }
+      .logo { margin-top: 56px; height: 48px; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="8" data-width="1920" data-height="1080">
+      <div class="clip" data-start="0" data-duration="8" data-track-index="1">
+        <p class="line"><span id="a">Every property.</span></p>
+        <p class="line"><span id="b">One <span class="accent">clear</span> picture.</span></p>
+        <img id="logo" class="logo" src="assets/brand/logo-primary.svg" alt="BaytMiftah" />
+      </div>
+      <audio id="music" src="assets/music/track.mp3" data-start="0" data-duration="8" data-track-index="2" data-volume="0.4" data-fade-in="0.3" data-fade-out="0.5"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      gsap.set("#a, #b", { yPercent: 120 });
+      tl.to("#a", { yPercent: 0, duration: 0.65, ease: "power3.out" }, 0.3);
+      tl.to("#b", { yPercent: 0, duration: 0.65, ease: "power3.out" }, 0.85);
+      tl.to("#logo", { opacity: 1, duration: 0.6 }, 2.2);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

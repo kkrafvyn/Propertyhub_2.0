@@ -47,5 +47,5 @@ Ghana property, rent, buy, short stay, real estate, Accra, listings
 ## Contact
 
 - Email: support@baytmiftah.com  
-- Privacy: https://YOUR_PRODUCTION_DOMAIN/legal/privacy  
-- Website: https://YOUR_PRODUCTION_DOMAIN  
+- Privacy: https://www.baytmiftah.com/legal/privacy  
+- Website: https://www.baytmiftah.com (app: https://app.baytmiftah.com)  

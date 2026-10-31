@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "historyId": "6b1513c7-fe7f-4848-897b-c8999647d285",
+  "currentRevision": null,
+  "pendingChanges": false,
+  "files": {
+    "assets/brand/logo-primary.svg": {
+      "hash": "a74ac76b72f8275d0bcf36ba7902c673719d16d343da822f64ce77b784625956",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\6b1513c7-fe7f-4848-897b-c8999647d285\\blobs\\a7\\a74ac76b72f8275d0bcf36ba7902c673719d16d343da822f64ce77b784625956"
+    },
+    "assets/brand/symbol.svg": {
+      "hash": "850937de5fde9a467d9a3a5bb3e5dbba6ce3b865e8f65081405033c2230625bd",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\6b1513c7-fe7f-4848-897b-c8999647d285\\blobs\\85\\850937de5fde9a467d9a3a5bb3e5dbba6ce3b865e8f65081405033c2230625bd"
+    },
+    "assets/listings/commercial-1280.webp": {
+      "hash": "030937d562a203b0276764f05f7ea016258051df929bbbbe18a3cc1591f4d47f",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\6b1513c7-fe7f-4848-897b-c8999647d285\\blobs\\03\\030937d562a203b0276764f05f7ea016258051df929bbbbe18a3cc1591f4d47f"
+    },
+    "assets/listings/community-1280.webp": {
+      "hash": "870922ea713d8f1d6e3b3a4d68569c3ef5137478bce4e89e55835fbade332c6f",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\6b1513c7-fe7f-4848-897b-c8999647d285\\blobs\\87\\870922ea713d8f1d6e3b3a4d68569c3ef5137478bce4e89e55835fbade332c6f"
+    },
+    "assets/listings/interior-1280.webp": {
+      "hash": "e600408675494e912570a58ccb7072e0e1af4b4de95a81776c27154aee58e41a",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\6b1513c7-fe7f-4848-897b-c8999647d285\\blobs\\e6\\e600408675494e912570a58ccb7072e0e1af4b4de95a81776c27154aee58e41a"
+    },
+    "assets/listings/residences-1280.webp": {
+      "hash": "2ba4748765e935bc423e3ddef5fff0263e8780e2e6fe72eb3b29699e4ac75d65",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\6b1513c7-fe7f-4848-897b-c8999647d285\\blobs\\2b\\2ba4748765e935bc423e3ddef5fff0263e8780e2e6fe72eb3b29699e4ac75d65"
+    },
+    "index.html": {
+      "hash": "d2e3fb6338f79ec4e43019001091158ce255ef8cf265d036026d62cee886107a",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\6b1513c7-fe7f-4848-897b-c8999647d285\\blobs\\d2\\d2e3fb6338f79ec4e43019001091158ce255ef8cf265d036026d62cee886107a"
+    },
+    "assets/music/track.mp3": {
+      "hash": "f5793597e520aa8fa9cce91086816fc1e15e3aac0128bcf375df51ba70c0dc63",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\6b1513c7-fe7f-4848-897b-c8999647d285\\blobs\\f5\\f5793597e520aa8fa9cce91086816fc1e15e3aac0128bcf375df51ba70c0dc63"
+    }
+  },
+  "revisions": {},
+  "checks": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "renders": {
+    "latest": {
+      "id": "24561f28-7350-486c-b5e1-f614fc56008b",
+      "completedAt": 1791974223433,
+      "output": "c:\\Users\\ponk3\\Desktop\\property hub\\Propertyhub_2.0\\brag-output\\ad-compare.mp4",
+      "status": "completed",
+      "revision": null
+    },
+    "retainedRevisions": []
+  },
+  "pendingArtifactCleanup": []
+}

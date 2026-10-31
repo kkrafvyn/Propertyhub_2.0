@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #faf8f5; font-family: "Segoe UI", system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; padding: 80px 48px; display: flex; flex-direction: column; }
+      h1 { font-family: Georgia, serif; font-size: 52px; color: #123b2a; line-height: 1.1; margin-bottom: 12px; }
+      .lead { font-size: 26px; color: #637269; margin-bottom: 48px; }
+      .row { display: flex; gap: 24px; flex: 1; align-items: center; }
+      .card {
+        flex: 1;
+        border-radius: 24px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 12px 40px rgba(20,37,29,0.12);
+      }
+      .card img { width: 100%; aspect-ratio: 4/5; object-fit: cover; display: block; }
+      .card h3 { padding: 20px 20px 8px; font-size: 22px; color: #14251d; }
+      .card p { padding: 0 20px 24px; font-size: 18px; color: #123b2a; font-weight: 600; }
+      .vs {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #123b2a;
+        color: #f5f1e8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 18px;
+        flex-shrink: 0;
+      }
+      .footer { text-align: center; padding-top: 40px; }
+      .footer img { height: 36px; margin-bottom: 16px; }
+      .footer span { display: block; font-size: 24px; font-weight: 700; color: #123b2a; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="10" data-width="1080" data-height="1920">
+      <div class="clip" data-start="0" data-duration="10" data-track-index="1">
+        <h1 id="t">Compare homes side by side</h1>
+        <p class="lead">Same photos. Same facts. Decide faster.</p>
+        <div class="row">
+          <div id="c1" class="card">
+            <img src="assets/listings/residences-1280.webp" alt="" />
+            <h3>Residences</h3>
+            <p>Verified · For rent</p>
+          </div>
+          <div class="vs">vs</div>
+          <div id="c2" class="card">
+            <img src="assets/listings/interior-1280.webp" alt="" />
+            <h3>Interior-led</h3>
+            <p>Verified · For rent</p>
+          </div>
+        </div>
+        <div id="foot" class="footer">
+          <img src="assets/brand/logo-primary.svg" alt="" />
+          <span>baytmiftah.com</span>
+        </div>
+      </div>
+      <audio id="music" src="assets/music/track.mp3" data-start="0" data-duration="10" data-track-index="2" data-volume="0.45" data-fade-in="0.3" data-fade-out="0.6"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#t", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, 0.2);
+      tl.fromTo("#c1", { x: -80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7, ease: "power2.out" }, 0.6);
+      tl.fromTo("#c2", { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7, ease: "power2.out" }, 0.75);
+      tl.fromTo(".vs", { scale: 0 }, { scale: 1, duration: 0.4, ease: "back.out(2)" }, 1.1);
+      tl.fromTo("#foot", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 2);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

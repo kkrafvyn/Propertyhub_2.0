@@ -37,6 +37,7 @@ public/downloads/*.yml
 
 # Local release bundles (never commit)
 release/
+play-keystores/
 
 # Native build output
 android/.gradle/

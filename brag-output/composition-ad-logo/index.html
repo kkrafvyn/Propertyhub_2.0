@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0d1913; }
+      .clip { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+      .glow {
+        position: absolute;
+        width: 900px;
+        height: 900px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(240,161,139,0.18) 0%, transparent 70%);
+        opacity: 0;
+      }
+      .lockup { display: flex; align-items: center; gap: 36px; transform: scale(0.92); opacity: 0; }
+      #mark { width: 160px; height: 160px; }
+      #mark rect { transform-origin: 32px 32px; }
+      #mark circle { transform-origin: 32px 21px; }
+      #mark path {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 3.2;
+        stroke-linecap: round;
+        stroke-dasharray: 60;
+        stroke-dashoffset: 60;
+      }
+      .wordmark {
+        font-family: Georgia, serif;
+        font-size: 72px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        color: #f5f1e8;
+      }
+      .tagline {
+        position: absolute;
+        bottom: 120px;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        font-size: 28px;
+        color: #bdc9c0;
+        letter-spacing: 0.06em;
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="6" data-width="1920" data-height="1080">
+      <div class="clip" data-start="0" data-duration="6" data-track-index="1">
+        <div id="glow" class="glow"></div>
+        <div id="lockup" class="lockup">
+          <svg id="mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+            <rect id="mark-bg" width="64" height="64" rx="18" fill="#0F2922" />
+            <circle id="mark-dot" cx="32" cy="21" r="0" fill="#FFFFFF" />
+            <path id="mark-arc" d="M12 42C20 34 28 31 32 31C36 31 44 34 52 42" />
+          </svg>
+          <div id="word" class="wordmark">BAYTMIFTAH</div>
+        </div>
+        <p id="tag" class="tagline">The operating system for real estate.</p>
+      </div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.to("#glow", { opacity: 1, duration: 1.2, ease: "power2.out" }, 0);
+      tl.to("#lockup", { opacity: 1, scale: 1, duration: 0.8, ease: "power2.out" }, 0.15);
+      tl.fromTo("#mark-bg", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.55, ease: "back.out(1.4)" }, 0.25);
+      tl.to("#mark-dot", { attr: { r: 7 }, duration: 0.35, ease: "power2.out" }, 0.55);
+      tl.to("#mark-arc", { strokeDashoffset: 0, duration: 0.65, ease: "power2.inOut" }, 0.65);
+      tl.fromTo("#word", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.7, ease: "power2.out" }, 0.95);
+      tl.to("#tag", { opacity: 1, duration: 0.6 }, 1.5);
+      tl.to("#lockup", { scale: 1.03, duration: 0.4, yoyo: true, repeat: 1 }, 2.2);
+      tl.to(["#glow", "#tag"], { opacity: 0.85, duration: 0.8 }, 4.5);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

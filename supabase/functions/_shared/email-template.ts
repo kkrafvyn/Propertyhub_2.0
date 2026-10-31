@@ -42,6 +42,14 @@ export type BaytMiftahEmailInput = {
   preheader?: string;
 };
 
+function readEnv(key: string): string | undefined {
+  if (typeof Deno !== "undefined" && Deno.env?.get) {
+    return Deno.env.get(key);
+  }
+  const proc = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
+  return proc?.env?.[key];
+}
+
 const BRAND_FOREST = "#0F2922";
 const BRAND_MUTED = "#64748b";
 const BRAND_BG = "#ecebe6";
@@ -62,14 +70,15 @@ function nl2br(value: string) {
 export function resolveSiteUrl(siteUrl?: string) {
   const configured =
     siteUrl ||
-    Deno.env.get("PUBLIC_APP_URL") ||
-    Deno.env.get("SITE_URL") ||
+    readEnv("PUBLIC_APP_URL") ||
+    readEnv("SITE_URL") ||
+    readEnv("VITE_PUBLIC_APP_URL") ||
     "https://app.baytmiftah.com";
   return configured.replace(/\/+$/, "");
 }
 
 export function resolveEmailLogoUrl(siteUrl: string) {
-  const override = Deno.env.get("EMAIL_LOGO_URL")?.trim();
+  const override = readEnv("EMAIL_LOGO_URL")?.trim();
   if (override) return override;
   return `${siteUrl}/brand/email-logo.svg`;
 }
@@ -322,7 +331,8 @@ export function renderBaytMiftahEmail(input: BaytMiftahEmailInput) {
       : "");
   const ctaUrl = input.ctaUrl || siteUrl;
   const ctaLabel = input.ctaLabel || "OPEN BAYTMIFTAH";
-  const supportEmail = input.supportEmail || Deno.env.get("NOTIFICATION_EMAIL_REPLY_TO") || "support@baytmiftah.com";
+  const supportEmail =
+    input.supportEmail || readEnv("NOTIFICATION_EMAIL_REPLY_TO") || "support@baytmiftah.com";
   const supportPhone = input.supportPhone || "+233 30 000 0000";
   const unsubscribeUrl = input.unsubscribeUrl || `${siteUrl}/app/settings`;
   const year = input.year || new Date().getFullYear();

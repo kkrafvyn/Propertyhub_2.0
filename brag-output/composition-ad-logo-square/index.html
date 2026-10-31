@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      html, body { margin: 0; width: 1080px; height: 1080px; overflow: hidden; background: #123b2a; }
+      .clip { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+      #mark { width: 220px; height: 220px; opacity: 0; transform: scale(0.7); }
+      #mark path { fill: none; stroke: #fff; stroke-width: 3.2; stroke-linecap: round; stroke-dasharray: 60; stroke-dashoffset: 60; }
+      h1 { margin-top: 40px; font-family: Georgia, serif; font-size: 42px; letter-spacing: 0.18em; color: #f5f1e8; opacity: 0; }
+      p { margin-top: 16px; font-family: "Segoe UI", system-ui, sans-serif; font-size: 22px; color: #f0a18b; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="5" data-width="1080" data-height="1080">
+      <div class="clip" data-start="0" data-duration="5" data-track-index="1">
+        <svg id="mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <rect width="64" height="64" rx="18" fill="#0F2922" />
+          <circle id="dot" cx="32" cy="21" r="0" fill="#fff" />
+          <path id="arc" d="M12 42C20 34 28 31 32 31C36 31 44 34 52 42" />
+        </svg>
+        <h1 id="name">BAYTMIFTAH</h1>
+        <p id="sub">Property operations · One app</p>
+      </div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.to("#mark", { opacity: 1, scale: 1, duration: 0.7, ease: "back.out(1.6)" }, 0.2);
+      tl.to("#dot", { attr: { r: 7 }, duration: 0.3 }, 0.5);
+      tl.to("#arc", { strokeDashoffset: 0, duration: 0.55 }, 0.55);
+      tl.to("#name", { opacity: 1, duration: 0.5 }, 0.85);
+      tl.to("#sub", { opacity: 1, duration: 0.45 }, 1.15);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

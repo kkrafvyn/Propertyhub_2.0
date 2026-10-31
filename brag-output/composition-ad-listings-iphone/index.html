@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0d1913; font-family: "Segoe UI", system-ui, sans-serif; }
+      .clip { position: absolute; inset: 0; width: 1080px; height: 1920px; }
+      .scene { display: flex; flex-direction: column; align-items: center; padding-top: 72px; }
+      .eyebrow { color: #f0a18b; font-size: 20px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; margin-bottom: 16px; }
+      .title { color: #f5f1e8; font-family: Georgia, serif; font-size: 46px; text-align: center; line-height: 1.12; max-width: 880px; margin-bottom: 36px; }
+      .iphone16 {
+        position: relative;
+        width: 440px;
+        height: 920px;
+        border-radius: 58px;
+        background: linear-gradient(160deg, #48484a, #1c1c1e);
+        padding: 14px;
+        box-shadow: 0 48px 96px rgba(0,0,0,0.55);
+      }
+      .iphone16::before {
+        content: "";
+        position: absolute;
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 126px;
+        height: 36px;
+        background: #000;
+        border-radius: 20px;
+        z-index: 30;
+      }
+      .screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 46px;
+        overflow: hidden;
+        background: #faf8f5;
+      }
+      .app-top {
+        padding: 52px 16px 10px;
+        background: #fff;
+        border-bottom: 1px solid #ece8e3;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .app-top img { height: 28px; }
+      .app-top span { font-size: 15px; font-weight: 700; color: #123b2a; }
+      .search-bar {
+        margin: 12px 16px;
+        background: #f0f3ee;
+        border-radius: 14px;
+        padding: 14px 16px;
+        color: #637269;
+        font-size: 15px;
+      }
+      .feed-wrap { height: 720px; overflow: hidden; position: relative; z-index: 1; }
+      #feed { padding: 0 16px 120px; will-change: transform; }
+      .listing {
+        margin-bottom: 20px;
+        border-radius: 20px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 4px 18px rgba(20,37,29,0.08);
+      }
+      .listing .photo { position: relative; aspect-ratio: 1; overflow: hidden; }
+      .listing .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .listing .photo::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.45), transparent 45%);
+      }
+      .badge-rent {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        background: rgba(255,255,255,0.92);
+        color: #14251d;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 6px 12px;
+        border-radius: 999px;
+      }
+      .heart {
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(0,0,0,0.45);
+        border: 1px solid rgba(255,255,255,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 18px;
+      }
+      .heart.on { color: #b64f3a; }
+      .meta { padding: 14px 16px 16px; }
+      .meta h3 { font-size: 17px; font-weight: 700; color: #14251d; line-height: 1.25; }
+      .meta p { margin-top: 6px; font-size: 14px; color: #123b2a; font-weight: 600; }
+      .meta small { display: block; margin-top: 4px; font-size: 13px; color: #637269; }
+      .tabbar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 40;
+        height: 74px;
+        background: #fff;
+        border-top: 1px solid #ece8e3;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        font-size: 11px;
+        color: #637269;
+        padding-bottom: 10px;
+      }
+      .tabbar .on { color: #123b2a; font-weight: 700; }
+      .outro {
+        background: linear-gradient(180deg, #123b2a, #0d1913);
+        color: #f5f1e8;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 80px 64px;
+      }
+      .outro img { width: 280px; margin-bottom: 28px; }
+      .outro h2 { font-family: Georgia, serif; font-size: 56px; margin-bottom: 12px; }
+      .outro p { font-size: 28px; margin-bottom: 36px; color: #bdc9c0; }
+      .cta { background: #f5f1e8; color: #123b2a; padding: 18px 36px; border-radius: 999px; font-weight: 700; font-size: 24px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="18" data-width="1080" data-height="1920">
+      <div id="s1" class="clip scene" data-start="0" data-duration="14" data-track-index="1">
+        <p class="eyebrow">BaytMiftah · Consumer app</p>
+        <h1 id="headline" class="title">Real listings. Scroll. Save. Apply.</h1>
+        <div class="iphone16">
+          <div class="screen">
+            <div class="app-top">
+              <img id="app-logo" src="assets/brand/logo-primary.svg" alt="BaytMiftah" />
+              <span>Explore</span>
+            </div>
+            <div class="search-bar">Search city, neighborhood, or building…</div>
+            <div class="feed-wrap">
+              <div id="feed">
+                <article class="listing" id="l1">
+                  <div class="photo">
+                    <img src="assets/listings/residences-1280.webp" alt="" />
+                    <span class="badge-rent">For rent</span>
+                    <span class="heart" id="heart1">♡</span>
+                  </div>
+                  <div class="meta">
+                    <h3>Residences · Accra</h3>
+                    <p>Verified listing</p>
+                    <small>Photos, floor plan &amp; viewing in app</small>
+                  </div>
+                </article>
+                <article class="listing" id="l2">
+                  <div class="photo">
+                    <img src="assets/listings/interior-1280.webp" alt="" />
+                    <span class="badge-rent">For rent</span>
+                    <span class="heart">♡</span>
+                  </div>
+                  <div class="meta">
+                    <h3>Interior-led homes</h3>
+                    <p>Compare on mobile</p>
+                    <small>Save &amp; share with your agent</small>
+                  </div>
+                </article>
+                <article class="listing" id="l3">
+                  <div class="photo">
+                    <img src="assets/listings/commercial-1280.webp" alt="" />
+                    <span class="badge-rent">For lease</span>
+                    <span class="heart">♡</span>
+                  </div>
+                  <div class="meta">
+                    <h3>Commercial spaces</h3>
+                    <p>Lease workflow in one app</p>
+                    <small>Apply · KYC · pay · sign</small>
+                  </div>
+                </article>
+                <article class="listing" id="l4">
+                  <div class="photo">
+                    <img src="assets/listings/community-1280.webp" alt="" />
+                    <span class="badge-rent">For rent</span>
+                    <span class="heart">♡</span>
+                  </div>
+                  <div class="meta">
+                    <h3>Community living</h3>
+                    <p>Discover on iPhone &amp; Android</p>
+                    <small>Same BaytMiftah marketplace</small>
+                  </div>
+                </article>
+              </div>
+            </div>
+            <div class="tabbar">
+              <span>Home</span><span class="on">Explore</span><span>Saved</span><span>Messages</span><span>Profile</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="s2" class="clip outro" data-start="14" data-duration="4" data-track-index="1">
+        <img id="outro-logo" src="assets/brand/logo-primary.svg" alt="" data-start="14" data-duration="4" />
+        <h2>Listings that move</h2>
+        <p>Find a place that feels like home.</p>
+        <span id="cta" class="cta">Get the app · baytmiftah.com</span>
+      </div>
+
+      <audio id="music" src="assets/music/track.mp3" data-start="0" data-duration="18" data-track-index="2" data-volume="0.5" data-fade-in="0.4" data-fade-out="0.8"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#headline", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.7 }, 0.2);
+      tl.fromTo(".iphone16", { opacity: 0, y: 50, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.9, ease: "power2.out" }, 0.5);
+      tl.fromTo("#feed", { y: 0 }, { y: -540, duration: 8, ease: "power1.inOut" }, 2.2);
+      tl.to("#heart1", { scale: 1.2, duration: 0.15, yoyo: true, repeat: 1 }, 4.5);
+      tl.add(() => { document.getElementById("heart1").textContent = "♥"; document.getElementById("heart1").classList.add("on"); }, 4.65);
+      tl.fromTo("#l2", { boxShadow: "0 4px 18px rgba(20,37,29,0.08)" }, { boxShadow: "0 12px 32px rgba(18,59,42,0.25)", duration: 0.4 }, 6);
+      tl.fromTo("#cta", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55 }, 14.4);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

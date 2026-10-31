@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "historyId": "7f45e1a7-452d-439c-8eae-d41ddcb7e291",
+  "currentRevision": null,
+  "pendingChanges": false,
+  "files": {
+    "assets/hero.webp": {
+      "hash": "4ed165aa64f80a4adcfd7a268083639d6da019bac68a918b3541e89cf9a15546",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\7f45e1a7-452d-439c-8eae-d41ddcb7e291\\blobs\\4e\\4ed165aa64f80a4adcfd7a268083639d6da019bac68a918b3541e89cf9a15546"
+    },
+    "index.html": {
+      "hash": "278da88e85773704eba331a6d789c18c5e726fe65615aba7e7363e65e73a023d",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\7f45e1a7-452d-439c-8eae-d41ddcb7e291\\blobs\\27\\278da88e85773704eba331a6d789c18c5e726fe65615aba7e7363e65e73a023d"
+    },
+    "assets/music/track.mp3": {
+      "hash": "f5793597e520aa8fa9cce91086816fc1e15e3aac0128bcf375df51ba70c0dc63",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\7f45e1a7-452d-439c-8eae-d41ddcb7e291\\blobs\\f5\\f5793597e520aa8fa9cce91086816fc1e15e3aac0128bcf375df51ba70c0dc63"
+    }
+  },
+  "revisions": {},
+  "checks": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "renders": {
+    "latest": {
+      "id": "5a304c66-a8d3-46ea-8d12-a382933b9f81",
+      "completedAt": 1791971375653,
+      "output": "C:\\Users\\ponk3\\Desktop\\property hub\\Propertyhub_2.0\\brag-output\\brag-consumer-iphone.mp4",
+      "status": "completed",
+      "revision": null
+    },
+    "retainedRevisions": []
+  },
+  "pendingArtifactCleanup": []
+}

@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "historyId": "46f48e00-3a40-4a77-9a9d-97cbfc62b667",
+  "currentRevision": null,
+  "pendingChanges": false,
+  "files": {
+    "assets/brand/logo-primary.svg": {
+      "hash": "a74ac76b72f8275d0bcf36ba7902c673719d16d343da822f64ce77b784625956",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\46f48e00-3a40-4a77-9a9d-97cbfc62b667\\blobs\\a7\\a74ac76b72f8275d0bcf36ba7902c673719d16d343da822f64ce77b784625956"
+    },
+    "assets/brand/symbol.svg": {
+      "hash": "850937de5fde9a467d9a3a5bb3e5dbba6ce3b865e8f65081405033c2230625bd",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\46f48e00-3a40-4a77-9a9d-97cbfc62b667\\blobs\\85\\850937de5fde9a467d9a3a5bb3e5dbba6ce3b865e8f65081405033c2230625bd"
+    },
+    "index.html": {
+      "hash": "81376a5159dfaaf5c8a4dac1eb2381c3cca93de6e030dce1623485396c0f6754",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\46f48e00-3a40-4a77-9a9d-97cbfc62b667\\blobs\\81\\81376a5159dfaaf5c8a4dac1eb2381c3cca93de6e030dce1623485396c0f6754"
+    },
+    "assets/music/track.mp3": {
+      "hash": "f5793597e520aa8fa9cce91086816fc1e15e3aac0128bcf375df51ba70c0dc63",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\46f48e00-3a40-4a77-9a9d-97cbfc62b667\\blobs\\f5\\f5793597e520aa8fa9cce91086816fc1e15e3aac0128bcf375df51ba70c0dc63"
+    }
+  },
+  "revisions": {},
+  "checks": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "renders": {
+    "latest": {
+      "id": "e5fa4d59-6b8a-460a-94fd-e7c51f4dd7f4",
+      "completedAt": 1791974149492,
+      "output": "c:\\Users\\ponk3\\Desktop\\property hub\\Propertyhub_2.0\\brag-output\\ad-logo-square.mp4",
+      "status": "completed",
+      "revision": null
+    },
+    "retainedRevisions": []
+  },
+  "pendingArtifactCleanup": []
+}

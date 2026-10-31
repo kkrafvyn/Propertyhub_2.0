@@ -1,6 +1,6 @@
 import { createClient } from "supabase";
 import webpush from "web-push";
-import { buildTransactionalEmail } from "../_shared/email-template.ts";
+import { sendBrandedTransactionalEmail } from "../_shared/resend-mail.ts";
 import { writeServerAuditLog } from "../_shared/audit-log.ts";
 import { getCorsHeaders } from "../_shared/http.ts";
 import { enforceRateLimit, rateLimitKey } from "../_shared/rate-limit.ts";
@@ -51,46 +51,6 @@ function getRequestBodyValue(body: unknown, key: string) {
   if (!body || typeof body !== "object") return undefined;
   const value = (body as Record<string, unknown>)[key];
   return typeof value === "string" ? value : undefined;
-}
-
-async function sendEmail(params: {
-  to: string;
-  subject: string;
-  text: string;
-  html: string;
-}) {
-  const resendApiKey = Deno.env.get("RESEND_API_KEY");
-  const from = Deno.env.get("NOTIFICATION_EMAIL_FROM");
-  const replyTo = Deno.env.get("NOTIFICATION_EMAIL_REPLY_TO");
-
-  if (!resendApiKey || !from) {
-    return { success: false, error: "Email provider is not configured" };
-  }
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: [params.to],
-      subject: params.subject,
-      text: params.text,
-      html: params.html,
-      reply_to: replyTo || undefined,
-    }),
-  });
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: await response.text(),
-    };
-  }
-
-  return { success: true };
 }
 
 async function sendTwilioMessage(params: {
@@ -338,15 +298,11 @@ Deno.serve(async (req) => {
       windowSeconds: 3_600,
     });
 
-    const emailContent = buildTransactionalEmail({
-      title: outboundSubject,
-      body: outboundContent,
-    });
-    const deliveryResult = await sendEmail({
+    const deliveryResult = await sendBrandedTransactionalEmail({
       to: outboundTo,
       subject: outboundSubject,
-      text: emailContent.text,
-      html: emailContent.html,
+      title: outboundSubject,
+      body: outboundContent,
     });
 
     if (!deliveryResult.success) {
@@ -457,16 +413,12 @@ Deno.serve(async (req) => {
         deliveryResult = { success: false, error: "Recipient has no email address" };
         break;
       }
-      const emailContent = buildTransactionalEmail({
+      deliveryResult = await sendBrandedTransactionalEmail({
+        to: recipient.email,
+        subject,
         title: subject,
         body: content,
         actionUrl: notification.action_url,
-      });
-      deliveryResult = await sendEmail({
-        to: recipient.email,
-        subject,
-        text: emailContent.text,
-        html: emailContent.html,
       });
       break;
     case "sms": {

@@ -1,0 +1,198 @@
+{
+  "version": 1,
+  "historyId": "fb8ea7d3-5540-4296-96d6-9ec92f40c8ad",
+  "currentRevision": "54f30840-8445-4385-86ae-9b7890275c98",
+  "pendingChanges": false,
+  "files": {
+    "assets/brand/logo-primary.svg": {
+      "hash": "a74ac76b72f8275d0bcf36ba7902c673719d16d343da822f64ce77b784625956",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\a7\\a74ac76b72f8275d0bcf36ba7902c673719d16d343da822f64ce77b784625956"
+    },
+    "assets/brand/symbol.svg": {
+      "hash": "850937de5fde9a467d9a3a5bb3e5dbba6ce3b865e8f65081405033c2230625bd",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\85\\850937de5fde9a467d9a3a5bb3e5dbba6ce3b865e8f65081405033c2230625bd"
+    },
+    "assets/listings/architecture-1280.webp": {
+      "hash": "80a27f0bf183e24826c4f60c6eea91e3e310d6091667db4dbd446d0575bb2a9f",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\80\\80a27f0bf183e24826c4f60c6eea91e3e310d6091667db4dbd446d0575bb2a9f"
+    },
+    "assets/listings/architecture-2200.webp": {
+      "hash": "25cefe33aad18b4d5dbe85cdd374dd154647a7a969699185a801a31919485143",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\25\\25cefe33aad18b4d5dbe85cdd374dd154647a7a969699185a801a31919485143"
+    },
+    "assets/listings/architecture-mobile.webp": {
+      "hash": "20e8f7eb70a52a7ffc998c34cfa01c634be3269e750b6c9adcbadaf6cd61d4ed",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\20\\20e8f7eb70a52a7ffc998c34cfa01c634be3269e750b6c9adcbadaf6cd61d4ed"
+    },
+    "assets/listings/commercial-1280.webp": {
+      "hash": "030937d562a203b0276764f05f7ea016258051df929bbbbe18a3cc1591f4d47f",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\03\\030937d562a203b0276764f05f7ea016258051df929bbbbe18a3cc1591f4d47f"
+    },
+    "assets/listings/commercial-2200.webp": {
+      "hash": "77479578a714b05b67ae38afe69ac976d39d622d3cd7c72dd87b8e07984c81d2",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\77\\77479578a714b05b67ae38afe69ac976d39d622d3cd7c72dd87b8e07984c81d2"
+    },
+    "assets/listings/commercial-mobile.webp": {
+      "hash": "faaa166ea565102b0de7aa355dbf3af3413a508086239a70e31328ac116c4c40",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\fa\\faaa166ea565102b0de7aa355dbf3af3413a508086239a70e31328ac116c4c40"
+    },
+    "assets/listings/community-1280.webp": {
+      "hash": "870922ea713d8f1d6e3b3a4d68569c3ef5137478bce4e89e55835fbade332c6f",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\87\\870922ea713d8f1d6e3b3a4d68569c3ef5137478bce4e89e55835fbade332c6f"
+    },
+    "assets/listings/community-2200.webp": {
+      "hash": "27f495890bccf907db72ed409daf966f2f04e6e046b05313d3256b06e78ef804",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\27\\27f495890bccf907db72ed409daf966f2f04e6e046b05313d3256b06e78ef804"
+    },
+    "assets/listings/community-mobile.webp": {
+      "hash": "59e482888a621060f5cefc09db1fa707b2f8b44a27c73e296fa6b17a924cc8b2",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\59\\59e482888a621060f5cefc09db1fa707b2f8b44a27c73e296fa6b17a924cc8b2"
+    },
+    "assets/listings/interior-1280.webp": {
+      "hash": "e600408675494e912570a58ccb7072e0e1af4b4de95a81776c27154aee58e41a",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\e6\\e600408675494e912570a58ccb7072e0e1af4b4de95a81776c27154aee58e41a"
+    },
+    "assets/listings/interior-2200.webp": {
+      "hash": "92b4ab41ca22c48b9899ff8aaac6c298a7813203d71278574608f4b17e667a68",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\92\\92b4ab41ca22c48b9899ff8aaac6c298a7813203d71278574608f4b17e667a68"
+    },
+    "assets/listings/interior-mobile.webp": {
+      "hash": "d278091528fafecc0dbc851cbeeade55ee6d30f03798ed2a3d4f78864a7d0316",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\d2\\d278091528fafecc0dbc851cbeeade55ee6d30f03798ed2a3d4f78864a7d0316"
+    },
+    "assets/listings/residences-1280.webp": {
+      "hash": "2ba4748765e935bc423e3ddef5fff0263e8780e2e6fe72eb3b29699e4ac75d65",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\2b\\2ba4748765e935bc423e3ddef5fff0263e8780e2e6fe72eb3b29699e4ac75d65"
+    },
+    "assets/listings/residences-2200.webp": {
+      "hash": "4ed165aa64f80a4adcfd7a268083639d6da019bac68a918b3541e89cf9a15546",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\4e\\4ed165aa64f80a4adcfd7a268083639d6da019bac68a918b3541e89cf9a15546"
+    },
+    "assets/listings/residences-mobile.webp": {
+      "hash": "8595fd8432b733a1e02c7021c83e219a49997b3e45e26556ded148acdc7833ef",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\85\\8595fd8432b733a1e02c7021c83e219a49997b3e45e26556ded148acdc7833ef"
+    },
+    "index.html": {
+      "hash": "994f84584b8144f3577e28891a4e154b5d01a246e806b8398e2df2f41e615ba0",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\99\\994f84584b8144f3577e28891a4e154b5d01a246e806b8398e2df2f41e615ba0"
+    },
+    "assets/music/track.mp3": {
+      "hash": "f5793597e520aa8fa9cce91086816fc1e15e3aac0128bcf375df51ba70c0dc63",
+      "content": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\f5\\f5793597e520aa8fa9cce91086816fc1e15e3aac0128bcf375df51ba70c0dc63"
+    }
+  },
+  "revisions": {
+    "4d6f7fa9-18d3-46d7-bd28-6e00b253b941": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1791973923731,
+      "endedAt": 1791973923734,
+      "files": {
+        "index.html": {
+          "before": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\84\\840d213cd3a8ccf695d3097cf934623658a26f2fee3d96262d19fd382d3e934e",
+          "after": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\a7\\a791919db2be5b43c4f6c5ca2a282181940b8d996e4151ba7fe75d12df62b038"
+        }
+      }
+    },
+    "54f30840-8445-4385-86ae-9b7890275c98": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1791973976931,
+      "endedAt": 1791973976933,
+      "files": {
+        "index.html": {
+          "before": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\a7\\a791919db2be5b43c4f6c5ca2a282181940b8d996e4151ba7fe75d12df62b038",
+          "after": "C:\\Users\\ponk3\\.cache\\hyperframes\\history\\fb8ea7d3-5540-4296-96d6-9ec92f40c8ad\\blobs\\99\\994f84584b8144f3577e28891a4e154b5d01a246e806b8398e2df2f41e615ba0"
+        }
+      }
+    }
+  },
+  "checks": {
+    "latest": {
+      "revision": "4d6f7fa9-18d3-46d7-bd28-6e00b253b941",
+      "id": "7a7e4ba6-797b-4064-aef5-fafe45cdfea9"
+    },
+    "revisions": {
+      "4d6f7fa9-18d3-46d7-bd28-6e00b253b941": [
+        {
+          "id": "7a7e4ba6-797b-4064-aef5-fafe45cdfea9",
+          "scope": "project",
+          "report": "C:\\Users\\ponk3\\Desktop\\property hub\\Propertyhub_2.0\\brag-output\\composition-ad-listings-iphone\\.hyperframes\\artifacts\\checks\\7a7e4ba6-797b-4064-aef5-fafe45cdfea9.json",
+          "metadata": {
+            "ok": false,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 60000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1791973953112,
+          "contentHash": "b1d55e27e9a10d346497ba32b4b0b9fa90440dc30899f431581018ba2cd280db",
+          "revision": "4d6f7fa9-18d3-46d7-bd28-6e00b253b941",
+          "inputFingerprint": "1c384537de58fab74c3ed25f5551375f13aa757ebd4090382d175e7bf2302548",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ]
+    },
+    "unversioned": [
+      {
+        "id": "ac3faea7-1c44-463c-a66d-6a12ea9f890c",
+        "scope": "project",
+        "report": "C:\\Users\\ponk3\\Desktop\\property hub\\Propertyhub_2.0\\brag-output\\composition-ad-listings-iphone\\.hyperframes\\artifacts\\checks\\ac3faea7-1c44-463c-a66d-6a12ea9f890c.json",
+        "metadata": {
+          "ok": false,
+          "browserSkipped": true,
+          "options": {
+            "samples": 9,
+            "atTransitions": false,
+            "maxIssues": 80,
+            "collapseStatic": true,
+            "tolerance": 2,
+            "timeout": 60000,
+            "contrast": true,
+            "strict": false,
+            "snapshots": false,
+            "browserGpuMode": "auto"
+          }
+        },
+        "createdAt": 1791973815086,
+        "contentHash": "573a02ce1ed411d38d0734f94bbe5dfe80c6cf15ad2bd17e8cb7df6f703d7156",
+        "revision": null,
+        "inputFingerprint": "d9dec26818cde4245d6839a8bc5a8cc731b093534b458a36c133bfce3e69c951",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      }
+    ]
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "renders": {
+    "latest": {
+      "id": "653e796e-7737-40d8-9ea7-9aae79a8a9c5",
+      "completedAt": 1791974045596,
+      "output": "c:\\Users\\ponk3\\Desktop\\property hub\\Propertyhub_2.0\\brag-output\\ad-listings-iphone.mp4",
+      "status": "completed",
+      "revision": null
+    },
+    "retainedRevisions": []
+  },
+  "pendingArtifactCleanup": []
+}

@@ -1,5 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { buildTransactionalEmail } from "../_shared/email-template.ts";
+import { sendBrandedTransactionalEmail } from "../_shared/resend-mail.ts";
 import { getCorsHeaders } from "../_shared/http.ts";
 import { getEnrollmentReviewStaffEmails } from "../_shared/platform-staff.ts";
 
@@ -24,43 +24,6 @@ function getAppUrl(req: Request, explicitAppUrl?: string) {
   if (configured) return configured.replace(/\/+$/, "");
   const requestUrl = new URL(req.url);
   return `${requestUrl.protocol}//${requestUrl.host}`;
-}
-
-async function sendEmail(params: {
-  to: string | string[];
-  subject: string;
-  text: string;
-  html: string;
-}) {
-  const resendApiKey = Deno.env.get("RESEND_API_KEY");
-  const from = Deno.env.get("NOTIFICATION_EMAIL_FROM");
-  const replyTo = Deno.env.get("NOTIFICATION_EMAIL_REPLY_TO");
-
-  if (!resendApiKey || !from) {
-    return { success: false, error: "Email provider is not configured" };
-  }
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: Array.isArray(params.to) ? params.to : [params.to],
-      subject: params.subject,
-      text: params.text,
-      html: params.html,
-      reply_to: replyTo || undefined,
-    }),
-  });
-
-  if (!response.ok) {
-    return { success: false, error: await response.text() };
-  }
-
-  return { success: true };
 }
 
 function buildEnrollmentCopy(
@@ -244,18 +207,14 @@ Deno.serve(async (req) => {
     appUrl: getAppUrl(req, appUrl),
   });
 
-  const emailContent = buildTransactionalEmail({
+  const delivery = await sendBrandedTransactionalEmail({
+    to: recipientEmail,
+    subject: copy.subject,
     title: copy.subject,
     body: copy.body,
     actionUrl: copy.actionUrl,
     ctaLabel: copy.actionLabel,
-  });
-
-  const delivery = await sendEmail({
-    to: recipientEmail,
-    subject: copy.subject,
-    text: emailContent.text,
-    html: emailContent.html,
+    siteUrl: getAppUrl(req, appUrl),
   });
 
   if (!delivery.success) {
@@ -284,18 +243,14 @@ Deno.serve(async (req) => {
         appUrl: getAppUrl(req, appUrl),
       });
 
-      const adminEmailContent = buildTransactionalEmail({
+      const adminDelivery = await sendBrandedTransactionalEmail({
+        to: staffEmails,
+        subject: adminCopy.subject,
         title: adminCopy.subject,
         body: adminCopy.body,
         actionUrl: adminCopy.actionUrl,
         ctaLabel: adminCopy.actionLabel,
-      });
-
-      const adminDelivery = await sendEmail({
-        to: staffEmails,
-        subject: adminCopy.subject,
-        text: adminEmailContent.text,
-        html: adminEmailContent.html,
+        siteUrl: getAppUrl(req, appUrl),
       });
 
       adminNotification = adminDelivery.success

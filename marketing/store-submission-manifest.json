@@ -1,0 +1,68 @@
+{
+  "generatedAt": "2026-10-30T13:09:50.714Z",
+  "source": "brag-output (Hyperframes compositions)",
+  "specs": {
+    "googlePlayPhone": "1080x1920 JPEG",
+    "appleIphone67": "1290x2796 JPEG (padded from 9:16 brag)",
+    "featureGraphic": "1024x500 JPEG",
+    "appPreview": "H.264 MP4, max 30s, no audio"
+  },
+  "variants": {
+    "consumer": {
+      "videos": {
+        "primary": "brag-output\\brag-consumer-iphone.mp4"
+      },
+      "googlePlay": {
+        "phoneScreenshots": [
+          "marketing\\google-play\\consumer\\screenshots\\phone\\01-brag-t1-5.jpg",
+          "marketing\\google-play\\consumer\\screenshots\\phone\\02-brag-t4-5.jpg",
+          "marketing\\google-play\\consumer\\screenshots\\phone\\03-brag-t7-5.jpg",
+          "marketing\\google-play\\consumer\\screenshots\\phone\\04-brag-t10-5.jpg",
+          "marketing\\google-play\\consumer\\screenshots\\phone\\05-brag-t13-5.jpg",
+          "marketing\\google-play\\consumer\\screenshots\\phone\\06-brag-t16.jpg"
+        ],
+        "featureGraphic": "marketing\\google-play\\consumer\\feature-graphic.jpg",
+        "appPreview": "marketing\\google-play\\consumer\\app-preview.mp4"
+      },
+      "apple": {
+        "iphone67Screenshots": [
+          "marketing\\apple\\consumer\\screenshots\\iphone-6.7\\01-brag-t1-5.jpg",
+          "marketing\\apple\\consumer\\screenshots\\iphone-6.7\\02-brag-t4-5.jpg",
+          "marketing\\apple\\consumer\\screenshots\\iphone-6.7\\03-brag-t7-5.jpg",
+          "marketing\\apple\\consumer\\screenshots\\iphone-6.7\\04-brag-t10-5.jpg",
+          "marketing\\apple\\consumer\\screenshots\\iphone-6.7\\05-brag-t13-5.jpg",
+          "marketing\\apple\\consumer\\screenshots\\iphone-6.7\\06-brag-t16.jpg"
+        ],
+        "appPreview": "marketing\\apple\\consumer\\app-preview.mp4"
+      }
+    },
+    "workspace": {
+      "videos": {
+        "primary": "brag-output\\brag-workspace-iphone.mp4"
+      },
+      "googlePlay": {
+        "phoneScreenshots": [
+          "marketing\\google-play\\workspace\\screenshots\\phone\\01-brag-t1-5.jpg",
+          "marketing\\google-play\\workspace\\screenshots\\phone\\02-brag-t4-5.jpg",
+          "marketing\\google-play\\workspace\\screenshots\\phone\\03-brag-t7-5.jpg",
+          "marketing\\google-play\\workspace\\screenshots\\phone\\04-brag-t10-5.jpg",
+          "marketing\\google-play\\workspace\\screenshots\\phone\\05-brag-t13-5.jpg",
+          "marketing\\google-play\\workspace\\screenshots\\phone\\06-brag-t16.jpg"
+        ],
+        "featureGraphic": "marketing\\google-play\\workspace\\feature-graphic.jpg",
+        "appPreview": "marketing\\google-play\\workspace\\app-preview.mp4"
+      },
+      "apple": {
+        "iphone67Screenshots": [
+          "marketing\\apple\\workspace\\screenshots\\iphone-6.7\\01-brag-t1-5.jpg",
+          "marketing\\apple\\workspace\\screenshots\\iphone-6.7\\02-brag-t4-5.jpg",
+          "marketing\\apple\\workspace\\screenshots\\iphone-6.7\\03-brag-t7-5.jpg",
+          "marketing\\apple\\workspace\\screenshots\\iphone-6.7\\04-brag-t10-5.jpg",
+          "marketing\\apple\\workspace\\screenshots\\iphone-6.7\\05-brag-t13-5.jpg",
+          "marketing\\apple\\workspace\\screenshots\\iphone-6.7\\06-brag-t16.jpg"
+        ],
+        "appPreview": "marketing\\apple\\workspace\\app-preview.mp4"
+      }
+    }
+  }
+}

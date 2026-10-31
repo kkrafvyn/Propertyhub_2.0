@@ -23,8 +23,9 @@ In-app launcher PNGs: `android/.../mipmap-*` and `android-business/.../mipmap-*`
 | Asset | Spec | Where to put it |
 |-------|------|-----------------|
 | **App icon** | 512×512 PNG, 32-bit, max 1 MB | `consumer/play-store-icon-512.png` (generated) |
-| **Feature graphic** | 1024×500 PNG or JPG | Add `feature-graphic.png` per variant (not auto-generated) |
-| **Phone screenshots** | 2–8 shots; min 320px short side; max 3840px long side; 16:9 or 9:16 | `consumer/screenshots/phone/` (capture from device or emulator) |
+| **Feature graphic** | 1024×500 PNG or JPG | `consumer/feature-graphic.jpg` via `npm run brag:export-store-assets` |
+| **Phone screenshots** | 2–8 shots; min 320px short side; max 3840px long side; 16:9 or 9:16 | `consumer/screenshots/phone/` — brag export or device capture |
+| **Promo video** | Optional MP4 | `consumer/app-preview.mp4` (brag iPhone composition, ≤30s) |
 | **7-inch tablet** | Optional | `*/screenshots/tablet-7/` |
 | **10-inch tablet** | Optional | `*/screenshots/tablet-10/` |
 
@@ -58,14 +59,15 @@ Edit and paste from:
 
 ## URLs (production)
 
-Replace `https://YOUR_PRODUCTION_DOMAIN` with your live site (e.g. Vercel):
-
-| Field | Path |
-|-------|------|
-| Privacy policy | `https://YOUR_PRODUCTION_DOMAIN/legal/privacy` |
-| Terms | `https://YOUR_PRODUCTION_DOMAIN/legal/terms` |
+| Field | URL |
+|-------|-----|
+| Privacy policy | `https://www.baytmiftah.com/legal/privacy` |
+| Terms | `https://www.baytmiftah.com/legal/terms` |
 | Support email | `support@baytmiftah.com` (see `src/lib/legal-config.ts`) |
-| Marketing / website | Same production domain |
+| Marketing site | `https://www.baytmiftah.com` |
+| Web app | `https://app.baytmiftah.com` |
+
+Brag → store JPEGs/MP4s: [STORE_SUBMISSION_ASSETS.md](../../docs/deployment/STORE_SUBMISSION_ASSETS.md).
 
 ## Auth (required for login)
 
