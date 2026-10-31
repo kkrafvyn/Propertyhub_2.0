@@ -1,8 +1,12 @@
-const CACHE_NAME = "baytmiftah-v4-brand";
+const CACHE_NAME = "baytmiftah-v5-favicon";
 
 /** Static shell only — never cache Vite hashed bundles under /assets/. */
 const APP_SHELL = [
   "/manifest.webmanifest",
+  "/favicon.ico",
+  "/favicon.svg",
+  "/icons/favicon-32.png",
+  "/icons/favicon-48.png",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/icon-512-maskable.png",
