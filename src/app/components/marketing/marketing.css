@@ -2094,6 +2094,26 @@ html.dark .marketing-page .mk-cta .mk-btn-on-dark {
   max-width: 18rem;
 }
 
+.mk-footer-social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mk-footer-social a {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--mk-muted);
+  text-decoration: none;
+}
+
+.mk-footer-social a:hover {
+  color: var(--mk-ink);
+}
+
 .mk-footer-col h4 {
   margin: 0 0 0.85rem;
   font-size: 0.72rem;

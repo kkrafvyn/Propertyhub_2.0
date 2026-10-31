@@ -1,0 +1,448 @@
+================================================================================
+BAYTMIFTAH (REOS) — FULL APPLICATION DESCRIPTION
+================================================================================
+Document version: October 2026
+Product: BaytMiftah Real Estate Operating System (REOS)
+Primary markets: Ghana (with international rules and multi-currency support)
+Public website: https://www.baytmiftah.com
+Web application: https://app.baytmiftah.com
+Support: support@baytmiftah.com
+
+Social profiles:
+  Facebook:  https://www.facebook.com/baytmiftah/
+  Instagram: https://www.instagram.com/bayt_miftah/
+  TikTok:    https://www.tiktok.com/@baytmiftah
+
+================================================================================
+1. WHAT BAYTMIFTAH IS
+================================================================================
+
+BaytMiftah is an end-to-end real estate platform. It connects people who want
+to rent, buy, or book short stays with property professionals (agents, landlords,
+operators, and enterprise portfolios). One codebase powers multiple experiences:
+
+  • Consumer — marketplace and personal portal (web + native mobile app)
+  • Business Workspace — CRM, operations, finance, and compliance (web,
+    Windows desktop app, and native workspace mobile app)
+  • Platform Admin — internal staff console for users, orgs, trust, fraud,
+    revenue, and platform configuration (web; not a separate admin mobile app)
+
+The platform is built on React, TypeScript, Vite, and Supabase (PostgreSQL,
+Auth, Realtime, Storage, Edge Functions). Native Android and iOS shells use
+Capacitor. The Windows desktop product packages the workspace experience in
+Electron with hash routing for offline-capable field use.
+
+================================================================================
+2. CONSUMER PRODUCT (com.baymiftah.app)
+================================================================================
+
+2.1 Marketing and discovery (no login required)
+--------------------------------------------------------------------------------
+  • Home / marketplace index — entry to search and featured inventory
+  • Marketing site — product story, tours, AI positioning, proof points
+  • Property search — filters by location, price, property type, listing type
+    (rental, sale, short stay), maps, and list views
+  • Property detail — photos, amenities, pricing, enquiry and booking actions
+  • Compare — side-by-side comparison of saved listings
+  • Public property explorer — browse units and properties without an account
+  • Public event / transaction explorer — transparency views on ledger events
+  • Shared shortlist — shareable curated property lists
+  • Referral program page
+
+2.2 Public workflows (token or link based)
+--------------------------------------------------------------------------------
+  • Public lease application — apply to a specific estate/listing via link
+  • Public e-sign — sign documents from email/SMS links
+  • Owner / board portals — tokenized access for owners and HOA-style boards
+  • Contractor access — limited portal for external contractors via token
+
+2.3 Authentication and account
+--------------------------------------------------------------------------------
+  • Sign up, login, forgot password, email verification
+  • OAuth providers where configured (alongside email/password)
+  • Security settings — password, sessions, MFA where enabled
+  • Profile and preferences under My BaytMiftah (/app)
+
+2.4 My BaytMiftah — consumer portal sections
+--------------------------------------------------------------------------------
+After sign-in, users manage their property life in one hub:
+
+  Overview (Home)
+    Dashboard of saved items, viewings, recommendations, activity, and
+    pending e-signatures.
+
+  Saved properties
+    Bookmark listings from search; build a shortlist.
+
+  Messages
+    Conversations with agents, hosts, and property teams (realtime where
+    connected).
+
+  Offers and applications
+    Rental, lease, and purchase deal cases; status of each workflow.
+
+  Property journey
+    Per-deal timeline: stage, next actions, documents (/app/journey/...).
+
+  Viewings
+    Requested and confirmed property visits.
+
+  Saved search alerts
+    Notifications when new listings match saved criteria.
+
+  Payments and wallet
+    Payment confirmation, receipts, and history (provider-confirmed records).
+
+  Transactions
+    Deposits, installments, and purchase-related payment activity.
+
+  Leases
+    Active tenancies, rent context, and lease-linked tools.
+
+  Trips and reservations
+    Short-stay bookings — upcoming trips and full reservation history.
+
+  Documents
+    IDs, leases, agreements, receipts, and shared files.
+
+  Maintenance
+    Submit and track maintenance requests; link to vendor marketplace.
+
+  My Home (resident)
+    Smart-building style tools when on an active lease (access, utilities,
+    announcements — as enabled for the property).
+
+  Mortgage marketplace
+    Compare lenders, estimate payments, request introductions (buyers).
+
+  Insurance marketplace
+    Home and contents quotes from partner insurers.
+
+  Vendor marketplace
+    Verified maintenance and property service providers.
+
+  Notifications
+    Central feed for bookings, payments, messages, and system updates.
+
+  Identity verification (KYC)
+    Government ID, liveness, and AML compliance when required for offers,
+    bookings, or high-trust actions.
+
+  Profile and settings
+    Account, legal acceptances, notification preferences, workspace access.
+
+  Contextual messages portal
+    Deep-linked messaging contexts outside the main dashboard layout.
+
+  Workspace access
+    Switch or request access to business workspaces tied to the user account.
+
+2.5 Checkout and commerce
+--------------------------------------------------------------------------------
+  • In-app checkout — short-stay and other payable flows (verified email
+    required); integrates with configured payment providers (e.g. mobile money
+    and card rails where enabled).
+
+2.6 Legal, trust, and support content
+--------------------------------------------------------------------------------
+  • Privacy policy, terms of service, legal hub with document slugs
+  • Complaint form, public status page, sitemap
+  • Static pages: help, cancellation, host resources, workspace roles, about,
+    careers, contact
+
+2.7 Global consumer UX
+--------------------------------------------------------------------------------
+  • Mobile bottom navigation on consumer routes
+  • Cookie consent and policy update banners
+  • Location onboarding where relevant
+  • New user tutorial and getting-started checklist
+  • BaytMiftah AI panel (contextual assistant on supported surfaces)
+  • Voice/video calling UI — WebRTC calls with agents/teams when enabled
+    (incoming call banner, active call bar, call modal)
+
+================================================================================
+3. BUSINESS WORKSPACE (com.baymiftah.workspace + web/desktop)
+================================================================================
+
+3.1 Getting into a workspace
+--------------------------------------------------------------------------------
+  • Workspace entry — pick organization; role-aware landing
+  • Accept invite — join org from invitation link
+  • Enrollment status — company onboarding pipeline
+  • Desktop gateway — web path for desktop app users
+  • Company setup wizard — first-time org configuration for owners
+  • Multi-organization switching — users can belong to many orgs
+
+Access is organization-scoped with role-based permissions (owner, admin, agent,
+finance, maintenance, custom roles, and platform admin viewer modes). Members
+may be scoped to subsets of properties. Navigation is customizable per org
+(terminology presets, hidden modules, default home page).
+
+3.2 Core workspace modules (primary navigation)
+--------------------------------------------------------------------------------
+  Dashboard
+    Executive and role dashboards; KPIs and work queues.
+
+  Listings
+    Create, edit, publish portfolio; media; compliance before go-live;
+    new listing wizard.
+
+  Leads
+    Enquiries vs applications; pipeline and assignment.
+
+  Contacts
+    Clients, tenants, owners, and CRM records.
+
+  Tasks
+    Operational task lists tied to deals and properties.
+
+  Calendar
+    Viewings, inspections, and operational scheduling.
+
+  Payments
+    Collect rent, fees, and charges; reconciliation with finance modules.
+
+  Team
+    Members, roles, invites, permissions.
+
+  Documents
+    Org document library and sharing.
+
+  Leases
+    Lease lifecycle, terms, renewals, commercial escalations.
+
+  Maintenance
+    Work orders, vendors, resident requests.
+
+  Inspections
+    Move-in/move-out and periodic inspections.
+
+  My Work
+    Personal queue of approvals and tasks (desktop emphasizes My Work home).
+
+  Estate operations
+    Day-to-day property and estate management operations.
+
+  Estate finance
+    Property-level finance, payables, owner statements, disbursements.
+
+  Company launchpad
+    Guided setup and go-live checklist for new businesses.
+
+3.3 Tools and intelligence
+--------------------------------------------------------------------------------
+  Analytics / market intelligence
+    Portfolio and market dashboards.
+
+  Trust (Ghana Trust Center)
+    Local trust signals and verification workflows.
+
+  Compliance center
+    Regulatory and policy compliance tracking.
+
+  International markets / rules hub
+    Cross-border listing and transaction rules.
+
+  Automation / automation workflows
+    Event-driven rules and notifications.
+
+  Module marketplace
+    Enable optional workspace modules.
+
+  AI assistant
+    Natural-language help and actions in workspace context.
+
+  AI lease analyzer
+    Review and summarize lease documents.
+
+  AI rent yield predictor
+    Yield and pricing insights.
+
+  AI operations / AI command center (desktop-heavy)
+    Orchestrated AI workflows across the org.
+
+  Settings and customize workspace
+    Branding, nav layout, terminology, feature visibility.
+
+  White-label configuration
+    Partner branding where enabled.
+
+  Integrations hub
+    Connect external systems and APIs.
+
+  Blockchain verification
+    Optional on-chain attestation of selected transactions.
+
+  Notifications settings
+    Channel preferences for workspace users.
+
+  Location intelligence
+    Geo and neighborhood insights.
+
+  Organization insights
+    Health and usage analytics for the org.
+
+3.4 Enterprise, finance, and ERP-style modules
+--------------------------------------------------------------------------------
+Many of these are emphasized on Windows desktop but available in web workspace
+when entitled:
+
+  General ledger, chart of accounts, journal entries
+  Financial statements viewer
+  Bank reconciliation
+  Procurement center
+  Portfolio analytics
+  Collections cases
+  Leasing applications (back-office)
+  Tenant screening center
+  HOA management, CAM billing
+  Contractor 1099 reporting
+  Trust accounting
+  Commercial lease escalations
+  Owner disbursements and owner oversight
+  Opening balance import, payment import
+  Estate payables
+  Utility submetering
+  Multi-currency / FX hedging hub
+  Automation builder, custom workflows, workflow approval hub
+  Bulk operations, data import/export, data migration
+  Approval center, exception center, evidence center
+  Customer health center, customer 360, property 360, unit 360
+  Service desk, stakeholder portals, contextual inbox
+  Estate communications (broadcast and targeted notices)
+  WhatsApp automation hub
+  Team collaboration hub, team chat, staff time tracking
+  Contractor portal, contractor work orders, gate clearance kiosk
+  Vendor management
+  E-signature center
+  Fraud alerts (org-level)
+  Data retention center, company knowledge hub
+  Productivity workspace, advanced search, predictive analytics,
+  recommendation engine
+  Enterprise operations, command center
+  Host tools (short-stay hosting workflows where enabled)
+  Smart property / IoT-style property controls where integrated
+  Technician jobs queue
+  Integration marketplace (routes into finance integrations)
+
+3.5 Workspace collaboration and communications
+--------------------------------------------------------------------------------
+  • Realtime messaging and team chat
+  • Omnichannel routing: in-app realtime, push (FCM), SMS (Ghana gateways
+    Hubtel/Arkesel), WhatsApp Business where configured
+  • HD voice/video calling and screen share (WebRTC)
+  • WhatsApp automation for leads and alerts
+  • Email via branded transactional templates (Resend) for invites and notices
+
+3.6 Desktop-only emphasis
+--------------------------------------------------------------------------------
+The packaged Windows app (BaytMiftah Workspace) focuses on field and back-office
+power users: hash routing, workspace-only entry, My Work home, and full ERP
+module set without consumer marketplace routes.
+
+================================================================================
+4. PLATFORM ADMIN (/admin)
+================================================================================
+
+Restricted to platform staff with granular console grants.
+
+  Overview — platform KPIs and staff dashboard
+  App and API health — operations monitoring
+  Marketing CMS — edit public marketing page content and sections
+  App roles — platform role assignments
+  Team roster — internal staff directory
+  Integrations — platform-level integration config
+  Feature flags — toggle platform capabilities (AI, WhatsApp, etc.)
+  Payments — platform payment configuration
+  Communications — platform messaging settings
+  AI — platform AI policies and tools
+  Users — search, support actions, account management
+  Organizations — enrollments, detail, access dialogs
+  Listings — moderation and platform-wide listing tools
+  Moderation — content and listing moderation queue
+  Fraud radar — fraud detection dashboard
+  Trust and KYC — identity and trust review
+  Revenue — revenue management console
+  Support — support tooling
+  Settings — platform settings, backups, enrollment requests
+
+Legacy admin sections remain reachable under catch-all admin routing for
+compatibility.
+
+================================================================================
+5. CROSS-CUTTING CAPABILITIES
+================================================================================
+
+5.1 Identity and security
+--------------------------------------------------------------------------------
+  Supabase Auth; email verification gates for sensitive flows; organization
+  invites; optional biometric unlock on mobile (Capacitor native biometric);
+  platform and org role models; RLS-backed data access on Supabase.
+
+5.2 Payments
+--------------------------------------------------------------------------------
+  Consumer checkout and workspace payment recording; mobile money and other
+  providers via integrated services; installments and deposits on purchase
+  journeys; reconciliation in finance modules.
+
+5.3 KYC and trust
+--------------------------------------------------------------------------------
+  Consumer KYC (e.g. Prembly and related providers when configured); workspace
+  trust center; admin trust review; fraud scoring and alerts.
+
+5.4 Documents and e-sign
+--------------------------------------------------------------------------------
+  Consumer and workspace document stores; public sign links; lease e-signature
+  workflows; PDF viewing in app.
+
+5.5 Maps and location
+--------------------------------------------------------------------------------
+  Map-based search (OpenStreetMap and related services); geolocation on mobile;
+  neighborhood and location intelligence in workspace.
+
+5.6 AI
+--------------------------------------------------------------------------------
+  Marketing and in-app AI panel; workspace AI assistant; lease analyzer; rent
+  yield predictor; AI command center; agentic orchestration services for
+  complex operational queries (REOS-QL / database-aware copilot patterns).
+
+5.7 Mobile native features (Capacitor)
+--------------------------------------------------------------------------------
+  Push notifications, camera, geolocation, haptics, in-app browser, app deep
+  links; separate Android packages for consumer and workspace apps.
+
+5.8 Internationalization
+--------------------------------------------------------------------------------
+  Multi-language bundles in the web app for UI strings across many locales.
+
+5.9 Legal and compliance UX
+--------------------------------------------------------------------------------
+  In-app legal hub, cookie consent, complaint intake, marketplace disclaimers,
+  enrollment and B2B terms for workspace orgs.
+
+================================================================================
+6. BACKEND AND AUTOMATION (SUMMARY)
+================================================================================
+
+Supabase Edge Functions handle webhooks, notifications, SMS, email (Resend),
+organization invites, enrollment notifications, automation dispatch, payment
+hooks, and other server-side workflows. PostgreSQL holds multi-tenant org data,
+listings, deal cases, leases, ledger entries, communications, and audit trails.
+Realtime channels power live messaging and presence where enabled.
+
+================================================================================
+7. WHAT THIS DOCUMENT IS FOR
+================================================================================
+
+Use this text for internal onboarding, investor or partner briefings, app store
+long-form context, or compliance questionnaires that ask "describe all features
+of the application." For short Play Store / App Store copy, see:
+
+  marketing/google-play/consumer/store-listing.md
+  marketing/google-play/workspace/store-listing.md
+
+For deployment, signing, and asset paths, see docs/deployment/.
+
+================================================================================
+END OF DOCUMENT
+================================================================================

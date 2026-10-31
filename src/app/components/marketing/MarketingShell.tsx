@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Menu, X } from "lucide-react";
 import { Logo } from "../baytmiftah/Logo";
 import { appPath } from "../../../lib/marketing-urls";
+import { BAYTMIFTAH_SOCIAL_LINKS } from "../../../lib/social-links";
 import "./marketing.css";
 
 const NAV_LINKS_DEFAULT = [
@@ -252,6 +253,15 @@ function MarketingFooter({ darkChrome }: { darkChrome: boolean }) {
         <div className="mk-footer-brand">
           <Logo to="/" size="sm" inverted={darkChrome} />
           <p>One home for your entire property operation.</p>
+          <ul className="mk-footer-social">
+            {BAYTMIFTAH_SOCIAL_LINKS.map((item) => (
+              <li key={item.id}>
+                <a href={item.href} target="_blank" rel="noopener noreferrer">
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <div className="mk-footer-col">

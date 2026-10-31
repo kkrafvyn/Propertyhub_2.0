@@ -1,0 +1,53 @@
+BAYTMIFTAH — SITEMAP SUBMISSION (Google Search Console / Bing)
+==============================================================
+
+You have TWO public sites. Each needs its own Search Console property and sitemap
+(Google requires sitemap URLs to use the same host as the sitemap file).
+
+----------------------------------------------------------------------
+1) MARKETING SITE — baytmiftah.com (and www if you use it)
+----------------------------------------------------------------------
+Human-readable sitemap page:
+  https://baytmiftah.com/sitemap
+
+XML sitemap (paste this in "Sitemaps" → Add a new sitemap):
+  https://baytmiftah.com/sitemap.xml
+
+Covers: home, about, careers, contact, help, legal policies, explorer, etc.
+
+If your canonical host is www.baytmiftah.com, add BOTH www and non-www as
+properties in Search Console, or pick one canonical and redirect the other.
+
+----------------------------------------------------------------------
+2) WEB APP — app.baytmiftah.com
+----------------------------------------------------------------------
+XML sitemap:
+  https://app.baytmiftah.com/sitemap-app.xml
+
+Covers: marketplace home, search (main listing types), compare, explorer,
+        login/signup, workspace entry, enrollment, referral.
+
+Individual listing URLs (/property/:id) are not listed here; add a dynamic
+sitemap later if you need every listing indexed.
+
+----------------------------------------------------------------------
+3) robots.txt (already in repo: public/robots.txt)
+----------------------------------------------------------------------
+  Sitemap: https://baytmiftah.com/sitemap.xml
+  Sitemap: https://app.baytmiftah.com/sitemap-app.xml
+
+Deploy the latest build so these files are live before you submit.
+
+----------------------------------------------------------------------
+4) Quick steps (Google Search Console)
+----------------------------------------------------------------------
+  A. Add property https://baytmiftah.com → verify → Sitemaps → submit sitemap.xml
+  B. Add property https://app.baytmiftah.com → verify → Sitemaps → submit sitemap-app.xml
+  C. Optional: URL Inspection on https://baytmiftah.com/sitemap and fix any errors
+
+----------------------------------------------------------------------
+5) Bing Webmaster Tools
+----------------------------------------------------------------------
+  Same two sitemap URLs under each site added in Bing.
+
+======================================================================
