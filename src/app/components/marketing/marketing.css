@@ -825,8 +825,15 @@ html[data-marketing-theme="locked"] .marketing-page {
 
 .mk-showcase-split {
   display: grid;
-  gap: 1.75rem;
+  gap: clamp(1.25rem, 3vw, 1.75rem);
   align-items: start;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mk-showcase-split > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 @media (max-width: 959px) {
@@ -894,6 +901,13 @@ html[data-marketing-theme="locked"] .marketing-page {
   flex-direction: column;
   gap: 0.35rem;
   margin-top: 1.35rem;
+  max-width: 100%;
+}
+
+.marketing-page--editorial .mk-consumer-showcase .mk-showcase-copy,
+.marketing-page--editorial .mk-consumer-showcase .mk-showcase-stage {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .mk-journey-item {
