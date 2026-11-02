@@ -10,12 +10,12 @@ PLAY_STATUS="${PLAY_STATUS:-completed}"
 
 case "$VARIANT" in
   consumer)
-    PACKAGE_NAME="com.baymiftah.app"
+    PACKAGE_NAME="com.baytmiftah.app"
     ANDROID_DIR="android"
     SYNC_VARIANT="consumer"
     ;;
   workspace)
-    PACKAGE_NAME="com.baymiftah.workspace"
+    PACKAGE_NAME="com.baytmiftah.workspace"
     ANDROID_DIR="android-business"
     SYNC_VARIANT="business"
     ;;

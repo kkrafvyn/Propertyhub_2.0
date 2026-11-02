@@ -41,6 +41,11 @@ const PLAY_W = 1080;
 const PLAY_H = 1920;
 const APPLE_W = 1290;
 const APPLE_H = 2796;
+/** App Store Connect accepted preview size (large iPhone class), not native 1290×2796. */
+const APPLE_PREVIEW_W = 886;
+const APPLE_PREVIEW_H = 1920;
+const APPLE_PREVIEW_MIN_S = 15;
+const APPLE_PREVIEW_MAX_S = 30;
 const FEATURE_W = 1024;
 const FEATURE_H = 500;
 const PAD_COLOR = "0x0d1913";
@@ -99,15 +104,65 @@ function exportFeatureGraphic(video, out) {
 
 /**
  * @param {string} video
+ * @returns {number}
+ */
+function probeDurationSeconds(video) {
+  try {
+    const raw = execFileSync(
+      `ffprobe -v error -show_entries format=duration -of csv=p=0 ${JSON.stringify(video)}`,
+      { cwd: ROOT, encoding: "utf8", shell: true },
+    ).trim();
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Google Play promo / generic preview (9:16, no audio).
+ * @param {string} video
  * @param {string} out
  */
-function exportAppPreview(video, out) {
+function exportPlayAppPreview(video, out) {
   if (!existsSync(video)) return null;
   mkdirSync(path.dirname(out), { recursive: true });
   if (existsSync(out) && !force) return out;
+  const vf = `scale=${PLAY_W}:${PLAY_H}:force_original_aspect_ratio=decrease,pad=${PLAY_W}:${PLAY_H}:(ow-iw)/2:(oh-ih)/2:color=${PAD_COLOR}`;
   run(
-    `ffmpeg -y -i ${JSON.stringify(video)} -t 30 -an -c:v libx264 -profile:v high -level 4.0 -pix_fmt yuv420p -movflags +faststart ${JSON.stringify(out)}`,
+    `ffmpeg -y -i ${JSON.stringify(video)} -t ${APPLE_PREVIEW_MAX_S} -vf ${JSON.stringify(vf)} -an -c:v libx264 -profile:v high -level 4.0 -pix_fmt yuv420p -movflags +faststart ${JSON.stringify(out)}`,
   );
+  return out;
+}
+
+/**
+ * App Store Connect app preview: 886×1920, 15–30s, H.264 ~10–12 Mbps (Apple accepted resolution).
+ * @param {string} video
+ * @param {string} out
+ */
+function exportAppleAppPreview(video, out) {
+  if (!existsSync(video)) return null;
+  mkdirSync(path.dirname(out), { recursive: true });
+  if (existsSync(out) && !force) return out;
+
+  const dur = probeDurationSeconds(video);
+  const loopInput =
+    dur > 0 && dur < APPLE_PREVIEW_MIN_S
+      ? `-stream_loop 3 -i ${JSON.stringify(video)}`
+      : `-i ${JSON.stringify(video)}`;
+
+  const vf = `scale=${APPLE_PREVIEW_W}:${APPLE_PREVIEW_H}:force_original_aspect_ratio=decrease,pad=${APPLE_PREVIEW_W}:${APPLE_PREVIEW_H}:(ow-iw)/2:(oh-ih)/2:color=${PAD_COLOR}`;
+
+  run(
+    `ffmpeg -y ${loopInput} -t ${APPLE_PREVIEW_MAX_S} -vf ${JSON.stringify(vf)} -an -c:v libx264 -profile:v high -level 4.0 -b:v 11M -maxrate 12M -bufsize 24M -pix_fmt yuv420p -r 30 -movflags +faststart ${JSON.stringify(out)}`,
+  );
+
+  const outDur = probeDurationSeconds(out);
+  if (outDur > 0 && outDur < APPLE_PREVIEW_MIN_S - 0.05) {
+    console.warn(
+      `Warning: ${path.relative(ROOT, out)} is ${outDur.toFixed(1)}s; Apple requires 15–30s.`,
+    );
+  }
   return out;
 }
 
@@ -143,7 +198,8 @@ function main() {
       googlePlayPhone: `${PLAY_W}x${PLAY_H} JPEG`,
       appleIphone67: `${APPLE_W}x${APPLE_H} JPEG (padded from 9:16 brag)`,
       featureGraphic: `${FEATURE_W}x${FEATURE_H} JPEG`,
-      appPreview: "H.264 MP4, max 30s, no audio",
+      appPreviewPlay: "H.264 MP4, max 30s, 1080×1920, no audio",
+      appPreviewApple: `${APPLE_PREVIEW_W}x${APPLE_PREVIEW_H} H.264, 15–30s, 10–12 Mbps, no audio`,
     },
     variants: {},
   };
@@ -229,9 +285,33 @@ function main() {
       copyFileSync(feature, playCopyFeature);
     }
 
-    const preview = exportAppPreview(v.primary, playPreview);
-    if (preview && existsSync(preview)) {
-      copyFileSync(preview, applePreview);
+    exportPlayAppPreview(v.primary, playPreview);
+
+    const inAppRaw = path.join(MARKETING, "apple", v.key, "source", "in-app-preview.webm");
+    if (existsSync(inAppRaw)) {
+      exportAppleAppPreview(inAppRaw, applePreview);
+    } else {
+      console.warn(
+        `Skip Apple app preview for ${v.key}: no in-app recording at ${path.relative(ROOT, inAppRaw)}. Run: npm run apple:record-app-preview -- ${v.key}`,
+      );
+    }
+
+    const connectDir = path.join(MARKETING, "apple", v.key, "connect-upload");
+    mkdirSync(connectDir, { recursive: true });
+    const submissionShots = appleFrames
+      .filter((f) => path.basename(f).includes("-brag-"))
+      .sort();
+    const inAppCapture = path.join(MARKETING, "apple", v.key, "source", "in-app-preview.webm");
+    if (!existsSync(inAppCapture)) {
+      submissionShots.forEach((src, i) => {
+        const dest = path.join(connectDir, `${String(i + 1).padStart(2, "0")}-screenshot.jpg`);
+        copyFileSync(src, dest);
+      });
+    }
+    if (existsSync(applePreview)) {
+      copyFileSync(applePreview, path.join(connectDir, "app-preview.mp4"));
+    } else {
+      console.warn(`${v.key}: connect-upload/ will have screenshots only until in-app app-preview.mp4 exists.`);
     }
 
     manifest.variants[v.key] = {
@@ -243,7 +323,12 @@ function main() {
       },
       apple: {
         iphone67Screenshots: appleFrames.map((f) => path.relative(ROOT, f)),
+        connectUploadDir: path.relative(ROOT, connectDir),
+        connectUploadScreenshots: submissionShots.map((_, i) =>
+          path.relative(ROOT, path.join(connectDir, `${String(i + 1).padStart(2, "0")}-screenshot.jpg`)),
+        ),
         appPreview: path.relative(ROOT, applePreview),
+        connectUploadPreview: path.relative(ROOT, path.join(connectDir, "app-preview.mp4")),
       },
     };
   }
@@ -255,7 +340,10 @@ function main() {
     "\nUpload phone/iphone-6.7 JPEGs in Play Console and App Store Connect.",
   );
   console.log(
-    "App previews: optional on Play (YouTube or file); recommended on Apple for 6.7\" display.",
+    "Apple: upload marketing/apple/*/connect-upload/ (6 screenshots + app-preview.mp4).",
+  );
+  console.log(
+    "Validate: npm run apple:validate-store-assets",
   );
 }
 

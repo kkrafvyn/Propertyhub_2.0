@@ -46,7 +46,7 @@ export function consumeNativeOAuthState(
 function getNativeOAuthCallbackBaseUrl() {
   return getMobileAppId() === "business"
     ? "com.baymiftah.workspace://auth/callback"
-    : "com.baymiftah.app://auth/callback";
+    : "com.baytmiftah.app://auth/callback";
 }
 
 export function getNativeOAuthRedirectUrl() {

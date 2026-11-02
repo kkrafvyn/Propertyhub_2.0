@@ -1,21 +1,25 @@
 # Apple listing assets
 
-Run `node scripts/apple/export-store-icons.mjs` from the repository root to
-export the existing brand artwork as opaque 1024 x 1024 PNG icons and update
-both iOS app icon catalogs. Consumer uses green; Workspace uses navy.
+**Start here:** [`APP_STORE_CONNECT.md`](APP_STORE_CONNECT.md) — Apple sizes, generate commands, upload steps.
 
-The App Store icon comes from the uploaded native build. These PNGs must be
-included in a new archive to update the listing icon; uploading a screenshot
-does not update the app icon.
+## Quick commands
 
-Screenshots and listing drafts are collected in the sibling workspace folder
-`../apple-store-assets`. Browser captures there are labeled as references.
-They are not native iPhone, iPad, or Mac screenshots and must not be described
-as native captures. Native screenshots still need to be captured from the
-correct app and device. Do not resize browser references to imply native use.
+```bash
+npm run apple:export-store-assets -- --force
+node scripts/apple/export-store-icons.mjs
+npm run apple:validate-store-assets
+```
 
-Listing URLs: **https://www.baytmiftah.com** (marketing/legal), **https://app.baytmiftah.com** (web app), privacy at `/legal/privacy`, support `support@baytmiftah.com`.
+**App preview video:** in-app UI only — `npm run apple:record-app-preview -- consumer|workspace` (not brag).
 
-**6.7" screenshots + app preview** from brag: run `npm run brag:export-store-assets` → `screenshots/iphone-6.7/` and `app-preview.mp4`. See [STORE_SUBMISSION_ASSETS.md](../../docs/deployment/STORE_SUBMISSION_ASSETS.md).
+**Upload to App Store Connect:** `consumer/connect-upload/` and `workspace/connect-upload/` (6 × 1290×2796 JPEGs + 886×1920 in-app app preview MP4).
 
-Legacy JPGs in `screenshots/` are browser references; prefer brag `iphone-6.7/` or native TestFlight captures for App Store Connect.
+Store copy: [`consumer/store-listing.md`](consumer/store-listing.md), [`workspace/store-listing.md`](workspace/store-listing.md).
+
+Icons: `export-store-icons.mjs` writes opaque **1024×1024** PNGs and updates iOS asset catalogs (consumer green, workspace navy). The listing icon comes from the **uploaded binary**, not from screenshot wells.
+
+Legacy JPGs in `screenshots/` are old browser references. Prefer `screenshots/iphone-6.7/` or native TestFlight captures for review-sensitive flows.
+
+URLs: **https://www.baytmiftah.com**, **https://app.baytmiftah.com**, privacy `/legal/privacy`, **support@baytmiftah.com**.
+
+See also [STORE_SUBMISSION_ASSETS.md](../../docs/deployment/STORE_SUBMISSION_ASSETS.md), [APPLE_STORE_UPLOAD.md](../../docs/deployment/APPLE_STORE_UPLOAD.md).

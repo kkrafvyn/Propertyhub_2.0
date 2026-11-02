@@ -1,11 +1,12 @@
 {
-  "generatedAt": "2026-10-30T13:09:50.714Z",
+  "generatedAt": "2026-11-02T14:30:21.609Z",
   "source": "brag-output (Hyperframes compositions)",
   "specs": {
     "googlePlayPhone": "1080x1920 JPEG",
     "appleIphone67": "1290x2796 JPEG (padded from 9:16 brag)",
     "featureGraphic": "1024x500 JPEG",
-    "appPreview": "H.264 MP4, max 30s, no audio"
+    "appPreviewPlay": "H.264 MP4, max 30s, 1080×1920, no audio",
+    "appPreviewApple": "886x1920 H.264, 15–30s, 10–12 Mbps, no audio"
   },
   "variants": {
     "consumer": {
@@ -33,7 +34,17 @@
           "marketing\\apple\\consumer\\screenshots\\iphone-6.7\\05-brag-t13-5.jpg",
           "marketing\\apple\\consumer\\screenshots\\iphone-6.7\\06-brag-t16.jpg"
         ],
-        "appPreview": "marketing\\apple\\consumer\\app-preview.mp4"
+        "connectUploadDir": "marketing\\apple\\consumer\\connect-upload",
+        "connectUploadScreenshots": [
+          "marketing\\apple\\consumer\\connect-upload\\01-screenshot.jpg",
+          "marketing\\apple\\consumer\\connect-upload\\02-screenshot.jpg",
+          "marketing\\apple\\consumer\\connect-upload\\03-screenshot.jpg",
+          "marketing\\apple\\consumer\\connect-upload\\04-screenshot.jpg",
+          "marketing\\apple\\consumer\\connect-upload\\05-screenshot.jpg",
+          "marketing\\apple\\consumer\\connect-upload\\06-screenshot.jpg"
+        ],
+        "appPreview": "marketing\\apple\\consumer\\app-preview.mp4",
+        "connectUploadPreview": "marketing\\apple\\consumer\\connect-upload\\app-preview.mp4"
       }
     },
     "workspace": {
@@ -61,7 +72,17 @@
           "marketing\\apple\\workspace\\screenshots\\iphone-6.7\\05-brag-t13-5.jpg",
           "marketing\\apple\\workspace\\screenshots\\iphone-6.7\\06-brag-t16.jpg"
         ],
-        "appPreview": "marketing\\apple\\workspace\\app-preview.mp4"
+        "connectUploadDir": "marketing\\apple\\workspace\\connect-upload",
+        "connectUploadScreenshots": [
+          "marketing\\apple\\workspace\\connect-upload\\01-screenshot.jpg",
+          "marketing\\apple\\workspace\\connect-upload\\02-screenshot.jpg",
+          "marketing\\apple\\workspace\\connect-upload\\03-screenshot.jpg",
+          "marketing\\apple\\workspace\\connect-upload\\04-screenshot.jpg",
+          "marketing\\apple\\workspace\\connect-upload\\05-screenshot.jpg",
+          "marketing\\apple\\workspace\\connect-upload\\06-screenshot.jpg"
+        ],
+        "appPreview": "marketing\\apple\\workspace\\app-preview.mp4",
+        "connectUploadPreview": "marketing\\apple\\workspace\\connect-upload\\app-preview.mp4"
       }
     }
   }

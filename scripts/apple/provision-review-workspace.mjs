@@ -14,11 +14,25 @@ try { fixture=JSON.parse(await fs.readFile(file,'utf8')); } catch(e) { if(e.code
 const checked=({data,error})=>{if(error)throw error;return data;};
 if(!fixture){
  const email='app-review-workspace@baytmiftah.com';
+ const slug='app-review-demo';
  const existing=checked(await admin.from('users').select('id').eq('email',email).maybeSingle());
- if(existing)throw Error('Review email already exists without locally saved credentials; refusing to reset it');
  const password='Review!'+crypto.randomBytes(18).toString('base64url');
- const {user}=checked(await admin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name:'App Review Demo',purpose:'Isolated fictional App Review data'}}));
- fixture={email,password,userId:user.id,organizationId:crypto.randomUUID(),slug:'app-review-demo',properties:Array.from({length:3},()=>crypto.randomUUID()),listings:Array.from({length:3},()=>crypto.randomUUID()),leads:Array.from({length:4},()=>crypto.randomUUID())};
+ if(existing){
+  if(process.env.APP_REVIEW_RECOVER!=='1')throw Error('Review email already exists without locally saved credentials; set APP_REVIEW_RECOVER=1 to recover');
+  checked(await admin.auth.admin.updateUserById(existing.id,{password,email_confirm:true}));
+  const org=checked(await admin.from('organizations').select('id').eq('slug',slug).maybeSingle());
+  if(!org)throw Error('Workspace review user exists but org app-review-demo missing; run without recover on a clean project or fix data manually');
+  const properties=checked(await admin.from('properties').select('id').eq('organization_id',org.id)).map(r=>r.id);
+  const listings=checked(await admin.from('listings').select('id').eq('organization_id',org.id)).map(r=>r.id);
+  let leads=checked(await admin.from('deal_cases').select('id').eq('organization_id',org.id)).map(r=>r.id);
+  while(leads.length<4)leads.push(crypto.randomUUID());
+  while(properties.length<3)properties.push(crypto.randomUUID());
+  while(listings.length<3)listings.push(crypto.randomUUID());
+  fixture={email,password,userId:existing.id,organizationId:org.id,slug,properties,listings,leads:leads.slice(0,4)};
+ }else{
+  const {user}=checked(await admin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name:'App Review Demo',purpose:'Isolated fictional App Review data'}}));
+  fixture={email,password,userId:user.id,organizationId:crypto.randomUUID(),slug,properties:Array.from({length:3},()=>crypto.randomUUID()),listings:Array.from({length:3},()=>crypto.randomUUID()),leads:Array.from({length:4},()=>crypto.randomUUID())};
+ }
  await fs.mkdir('secrets/app-review',{recursive:true});
  await fs.writeFile(file,JSON.stringify(fixture,null,2),{mode:0o600});
 }
@@ -33,7 +47,7 @@ else checked(await admin.from('organization_members').update({role:'agent'}).eq(
 const homes=[['Demo Cantonments Apartment','apartment','Cantonments',2,2,110,4500,'rental'],['Demo East Legon Family Home','house','East Legon',4,3,240,1850000,'sale'],['Demo Osu Studio','apartment','Osu',1,1,55,650,'short_stay']];
 checked(await admin.from('properties').upsert(homes.map(([name,category,neighborhood,bedrooms,bathrooms,square_meters],i)=>({id:fixture.properties[i],organization_id:fixture.organizationId,address:name+' — fictional sample',city:'Accra',region:'Greater Accra',country:'Ghana',category,neighborhood,bedrooms,bathrooms,square_meters,description:'FICTIONAL APP REVIEW SAMPLE. This property is not available for rent or purchase. Used to demonstrate listing management.',amenities:['Parking','Security','Air conditioning']}))));
 checked(await admin.from('listings').upsert(homes.map((h,i)=>({id:fixture.listings[i],organization_id:fixture.organizationId,property_id:fixture.properties[i],listing_type:h[7],price:h[6],currency:'GHS',status:'draft',visibility:'private',whatsapp_enabled:false}))));
-checked(await admin.from('aggregated_leads').upsert(['Ama Demo','Kojo Demo','Akua Demo','Kofi Demo'].map((lead_name,i)=>({id:fixture.leads[i],organization_id:fixture.organizationId,listing_id:fixture.listings[i%3],source:'internal',lead_name,lead_phone:`+1202555010${i+1}`,lead_email:`review-sample-${i+1}@example.invalid`,message:'Fictional review enquiry. Demonstrates the property enquiry workflow; no real customer.',status:['new','contacted','qualified','viewing_scheduled'][i],assigned_to:fixture.userId,tags:['App Review','Fictional']}))));
+checked(await admin.from('aggregated_leads').upsert(['Ama Demo','Kojo Demo','Akua Demo','Kofi Demo'].map((lead_name,i)=>({id:fixture.leads[i]||crypto.randomUUID(),organization_id:fixture.organizationId,listing_id:fixture.listings[i%3],source:'internal',lead_name,lead_phone:`+1202555010${i+1}`,lead_email:`review-sample-${i+1}@example.invalid`,message:'Fictional review enquiry. Demonstrates the property enquiry workflow; no real customer.',status:['new','contacted','qualified','viewing_scheduled'][i],assigned_to:fixture.userId,tags:['App Review','Fictional']}))));
 // The main lead board reads deal cases rather than imported lead records.
 checked(await admin.from('deal_cases').upsert(fixture.listings.map((listing_id,i)=>({id:fixture.leads[i],organization_id:fixture.organizationId,listing_id,user_id:fixture.userId,assigned_to:fixture.userId,case_type:'property_inquiry',status:'pending',pipeline_stage:['new_inquiry','contacted','qualified'][i],priority:['medium','high','low'][i],message:'FICTIONAL APP REVIEW ENQUIRY: '+homes[i][0]+'. Demonstration only; no real transaction or customer.'}))));
 // Use existing project marketing photography only inside private sample listings.
@@ -51,5 +65,7 @@ checked(await client.auth.signInWithPassword({email:fixture.email,password:fixtu
 const orgs=checked(await client.from('organization_members').select('organization_id').eq('user_id',fixture.userId));
 if(orgs.length!==1||orgs[0].organization_id!==fixture.organizationId)throw Error('Review account organization isolation verification failed');
 const listings=checked(await client.from('listings').select('id,status,visibility').eq('organization_id',fixture.organizationId));
-if(listings.length!==3||listings.some(x=>x.status!=='draft'||x.visibility!=='private'))throw Error('Review listings must remain private drafts');
+if(!fixture.storeCapturePublished){
+ if(listings.length!==3||listings.some(x=>x.status!=='draft'||x.visibility!=='private'))throw Error('Review listings must remain private drafts (or run provision-store-demo for public capture copies)');
+}
 console.log(JSON.stringify({email:fixture.email,workspace:fixture.slug,properties:3,privateDraftListings:3,fictionalLeads:4,loginVerified:true,credentialsFile:file}));

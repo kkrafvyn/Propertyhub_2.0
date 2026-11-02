@@ -33,10 +33,10 @@ const redirectUrlSet = new Set([
   "https://*.vercel.app/**",
   "baytmiftah://auth/callback",
   "baytmiftah://auth/callback/**",
-  "com.baymiftah.app://auth/callback",
-  "com.baymiftah.app://auth/callback/**",
-  "com.baymiftah.workspace://auth/callback",
-  "com.baymiftah.workspace://auth/callback/**",
+  "com.baytmiftah.app://auth/callback",
+  "com.baytmiftah.app://auth/callback/**",
+  "com.baytmiftah.workspace://auth/callback",
+  "com.baytmiftah.workspace://auth/callback/**",
   ...extraRedirects.map((url) => `${url}/**`),
 ]);
 

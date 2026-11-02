@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.baymiftah.app"
+    namespace = "com.baytmiftah.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.baymiftah.app"
+        applicationId "com.baytmiftah.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode Integer.parseInt((findProperty("playVersionCode") ?: "1").toString().trim() ?: "1")

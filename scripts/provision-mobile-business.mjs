@@ -12,8 +12,8 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 
-const CONSUMER_PACKAGE = 'com.baymiftah.app';
-const BUSINESS_PACKAGE = 'com.baymiftah.workspace';
+const CONSUMER_PACKAGE = 'com.baytmiftah.app';
+const BUSINESS_PACKAGE = 'com.baytmiftah.workspace';
 const BUSINESS_ICON_BG = '#0B2545';
 
 const SKIP_DIRS = new Set(['.gradle', 'build', '.idea', 'local.properties']);

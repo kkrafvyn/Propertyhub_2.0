@@ -10,7 +10,8 @@ node scripts/render-brag-variants.mjs --quality high
 node scripts/render-brag-ads.mjs --quality high --only listings
 
 # 2) Export JPEG screenshots, feature graphics, app preview MP4s
-npm run brag:export-store-assets
+npm run apple:export-store-assets -- --force
+npm run apple:validate-store-assets
 ```
 
 Requires **ffmpeg** on your PATH.
@@ -23,7 +24,8 @@ Requires **ffmpeg** on your PATH.
 | Play feature graphic | 1024×500 JPEG | `marketing/google-play/{consumer,workspace}/feature-graphic.jpg` |
 | Play promo video | H.264 MP4 ≤30s (optional) | `marketing/google-play/{consumer,workspace}/app-preview.mp4` |
 | App Store 6.7" screenshots | 1290×2796 JPEG (padded from 9:16 brag) | `marketing/apple/{consumer,workspace}/screenshots/iphone-6.7/` |
-| App Store app preview | H.264 MP4 ≤30s (optional) | `marketing/apple/{consumer,workspace}/app-preview.mp4` |
+| App Store upload bundle | 6 screenshots + preview (recommended) | `marketing/apple/{consumer,workspace}/connect-upload/` |
+| App Store app preview | **886×1920** H.264, **15–30s**, ≤500MB | `marketing/apple/{consumer,workspace}/connect-upload/app-preview.mp4` |
 | Icons | Play 512×512; Apple 1024×1024 | `npm run play:export-assets` + `node scripts/apple/export-store-icons.mjs` |
 | Manifest | Machine-readable index | `marketing/store-submission-manifest.json` |
 
@@ -45,8 +47,8 @@ See [GOOGLE_PLAY_UPLOAD.md](./GOOGLE_PLAY_UPLOAD.md) and [marketing/google-play/
 ### App Store Connect (both apps)
 
 - [ ] **App icon** from build (1024×1024 in repo for reference)
-- [ ] **6.7" display** screenshot set (1290×2796) — brag export folder `iphone-6.7/`
-- [ ] **App preview** (optional): 15–30s, H.264; same aspect as supported preview size for your primary locale
+- [ ] **6.7" display** screenshot set (1290×2796) — upload from `connect-upload/01-screenshot.jpg` … `06-screenshot.jpg`
+- [ ] **App preview**: **886×1920**, 15–30s, H.264 10–12 Mbps — `connect-upload/app-preview.mp4` (see `marketing/apple/APP_STORE_CONNECT.md`)
 - [ ] **Privacy policy URL**, support URL, marketing URL
 - [ ] Bundle IDs: `com.baymiftah.app` (consumer), `com.baymiftah.workspace` (workspace)
 

@@ -8,8 +8,8 @@ Builds signed **AAB** files and uploads them with the Play Developer API. You st
 
 | Variant | Package name | Android tree |
 |---------|--------------|--------------|
-| Consumer (BaytMiftah) | `com.baymiftah.app` | `android/` |
-| Workspace | `com.baymiftah.workspace` | `android-business/` |
+| Consumer (BaytMiftah) | `com.baytmiftah.app` | `android/` |
+| Workspace | `com.baytmiftah.workspace` | `android-business/` |
 
 ## One-time Play Console setup
 
@@ -46,11 +46,11 @@ Add under **Settings → Secrets and variables → Actions**:
 | Secret | Purpose |
 |--------|---------|
 | `PLAY_SERVICE_ACCOUNT_JSON` | Full JSON contents of the Play API service account key |
-| `PLAY_CONSUMER_KEYSTORE_B64` | Base64 upload keystore for `com.baymiftah.app` |
+| `PLAY_CONSUMER_KEYSTORE_B64` | Base64 upload keystore for `com.baytmiftah.app` |
 | `PLAY_CONSUMER_KEYSTORE_PASSWORD` | Keystore password |
 | `PLAY_CONSUMER_KEY_ALIAS` | Key alias |
 | `PLAY_CONSUMER_KEY_PASSWORD` | Key password |
-| `PLAY_WORKSPACE_KEYSTORE_B64` | Base64 upload keystore for `com.baymiftah.workspace` |
+| `PLAY_WORKSPACE_KEYSTORE_B64` | Base64 upload keystore for `com.baytmiftah.workspace` |
 | `PLAY_WORKSPACE_KEYSTORE_PASSWORD` | Keystore password |
 | `PLAY_WORKSPACE_KEY_ALIAS` | Key alias |
 | `PLAY_WORKSPACE_KEY_PASSWORD` | Key password |
@@ -90,7 +90,7 @@ Output: `android/app/build/outputs/bundle/release/app-release.aab` or `android-b
 Redirect URLs for native auth must include:
 
 - Consumer: `com.baymiftah.app` scheme / `baytmiftah://auth/callback` (see [MOBILE_SETUP.md](./MOBILE_SETUP.md))
-- Workspace: `com.baymiftah.workspace://auth/callback`
+- Workspace: `com.baytmiftah.workspace://auth/callback`
 
 Configure matching entries in Supabase Auth → Redirect URLs.
 

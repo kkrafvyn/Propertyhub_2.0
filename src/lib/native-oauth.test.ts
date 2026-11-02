@@ -35,7 +35,7 @@ describe("native-oauth", () => {
 
   it("uses a consumer-specific callback URL with one-time state", () => {
     const url = new URL(getNativeOAuthRedirectUrl());
-    expect(url.protocol).toBe("com.baymiftah.app:");
+    expect(url.protocol).toBe("com.baytmiftah.app:");
     expect(url.hostname).toBe("auth");
     expect(url.searchParams.get("bm_state")).toHaveLength(64);
   });
@@ -47,7 +47,7 @@ describe("native-oauth", () => {
   });
 
   it("parses a state-bound authorization code from query string", () => {
-    expect(parseNativeOAuthCallbackUrl("com.baymiftah.app://auth/callback?code=abc123&bm_state=state")).toEqual({
+    expect(parseNativeOAuthCallbackUrl("com.baytmiftah.app://auth/callback?code=abc123&bm_state=state")).toEqual({
       type: "code",
       code: "abc123",
       state: "state",
@@ -64,12 +64,12 @@ describe("native-oauth", () => {
     const state = createNativeOAuthState(storage, 1_000);
     expect(consumeNativeOAuthState(state, storage, 1_001)).toBe(true);
     expect(consumeNativeOAuthState(state, storage, 1_002)).toBe(false);
-    expect(parseNativeOAuthCallbackUrl("com.baymiftah.app://auth/callback?access_token=at&refresh_token=rt")).toBeNull();
+    expect(parseNativeOAuthCallbackUrl("com.baytmiftah.app://auth/callback?access_token=at&refresh_token=rt")).toBeNull();
   });
 
   it("rejects non-auth or incomplete callbacks", () => {
     expect(parseNativeOAuthCallbackUrl("https://example.com/callback?code=x")).toBeNull();
     expect(parseNativeOAuthCallbackUrl("com.baymiftah.workspace://auth/callback?code=x&bm_state=s")).toBeNull();
-    expect(parseNativeOAuthCallbackUrl("com.baymiftah.app://auth/callback?access_token=only")).toBeNull();
+    expect(parseNativeOAuthCallbackUrl("com.baytmiftah.app://auth/callback?access_token=only")).toBeNull();
   });
 });

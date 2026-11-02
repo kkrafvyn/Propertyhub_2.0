@@ -15,10 +15,16 @@ let fixture;
 try{fixture=JSON.parse(await fs.readFile(file,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
 if(!fixture){
  const email='app-review-consumer@baytmiftah.com';
- if(checked(await admin.from('users').select('id').eq('email',email).maybeSingle()))throw Error('Existing review email has no saved credentials; refusing password reset');
+ const existing=checked(await admin.from('users').select('id').eq('email',email).maybeSingle());
  const password='Review!'+crypto.randomBytes(18).toString('base64url');
- const {user}=checked(await admin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name:'Consumer Review Demo',role:'consumer',account_type:'consumer',purpose:'Isolated App Review account'}}));
- fixture={email,password,userId:user.id};
+ if(existing){
+  if(process.env.APP_REVIEW_RECOVER!=='1')throw Error('Existing review email has no saved credentials; set APP_REVIEW_RECOVER=1 to rotate password and rewrite secrets/app-review/consumer.json');
+  checked(await admin.auth.admin.updateUserById(existing.id,{password,email_confirm:true}));
+  fixture={email,password,userId:existing.id};
+ }else{
+  const {user}=checked(await admin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name:'Consumer Review Demo',role:'consumer',account_type:'consumer',purpose:'Isolated App Review account'}}));
+  fixture={email,password,userId:user.id};
+ }
  await fs.mkdir('secrets/app-review',{recursive:true});
  await fs.writeFile(file,JSON.stringify(fixture,null,2),{mode:0o600});
 }
