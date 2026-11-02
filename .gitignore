@@ -55,6 +55,8 @@ backups/
 
 # Apple Sign in with Apple private keys (never commit)
 secrets/
+public/marketing/previews/*.mp4
+public/marketing/previews/*.jpg
 *.p8
 
 supabase/.temp/

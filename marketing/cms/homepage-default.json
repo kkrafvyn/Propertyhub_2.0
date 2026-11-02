@@ -1,0 +1,312 @@
+{
+  "hero": {
+    "eyebrow": "Real Estate Operating System",
+    "title": "Your property life.",
+    "secondLine": "Your property business.",
+    "description": "Stop running properties, payments, maintenance, leasing, and teams across disconnected tools. BaytMiftah connects discovery, workspace operations, and trust — built for Ghana with cedis, SMS, and WhatsApp norms.",
+    "images": [
+      "residences",
+      "interior",
+      "community",
+      "architecture",
+      "commercial"
+    ]
+  },
+  "seo": {
+    "title": "BaytMiftah — Real Estate Operating System for property teams and consumers",
+    "description": "Connect listings, leasing, collections, maintenance, documents, and consumer journeys in one REOS. Web and mobile apps for workspace and marketplace."
+  },
+  "proofOutcomes": [
+    {
+      "title": "One connected record",
+      "detail": "Property, unit, lease, collection, document, and work-order context stay linked across consumer and workspace surfaces."
+    },
+    {
+      "title": "Eight surfaces, one OS",
+      "detail": "Consumer and workspace on web and mobile — plus admin and desktop workspace — share auth, org data, and operational history."
+    },
+    {
+      "title": "Work that moves visibly",
+      "detail": "Enquiries, applications, maintenance, and approvals progress through trackable stages instead of scattered follow-ups."
+    }
+  ],
+  "intros": {
+    "productTour": {
+      "kicker": "Interactive preview",
+      "title": "Walk through a sample portfolio",
+      "lead": "Explore illustrative workspace records based on real modules. Nothing here connects to production data or processes live payments."
+    },
+    "workflow": {
+      "kicker": "One operating system",
+      "title": "From fragmented follow-ups to linked records",
+      "lead": "BaytMiftah connects listings, people, leases, money, maintenance, and messaging so every update stays in context."
+    },
+    "portfolio": {
+      "kicker": "Connected modules",
+      "title": "Every module stays in context",
+      "lead": "Move from portfolio overview into the property, lease, collection, document, or task that needs attention."
+    },
+    "ai": {
+      "kicker": "AI with context",
+      "title": "Assistance grounded in your operation",
+      "lead": "Workspace AI uses limited tools, action logs, and human approval. Examples below are samples — not live account data."
+    },
+    "trust": {
+      "kicker": "Trust and safeguards",
+      "title": "Know who did what, when, and why",
+      "lead": "Role-based access, human approval for sensitive actions, and operational history keep every change accountable."
+    },
+    "pricing": {
+      "kicker": "Plans",
+      "title": "Choose the workspace you need",
+      "lead": "Plan fit depends on portfolio size, enabled modules, and rollout support. Fees and regional availability are confirmed during onboarding."
+    },
+    "faqTitle": "Practical questions",
+    "proofNote": "Real Estate Operating System for Ghana-first operations — with international rules where enabled. Previews use illustrative data."
+  },
+  "faq": [
+    {
+      "q": "What is BaytMiftah?",
+      "a": "BaytMiftah is a Real Estate Operating System (REOS): one platform for property discovery and consumer journeys, plus a workspace for listings, leasing, collections, maintenance, and reporting."
+    },
+    {
+      "q": "How is this different from a listings website?",
+      "a": "Listings are one module. BaytMiftah connects people, properties, money, and operations — from enquiry and application through lease, payment, and maintenance — with role-based workspace controls."
+    },
+    {
+      "q": "What is the difference between the consumer app and workspace?",
+      "a": "The consumer app (com.baymiftah.app) is for search, applications, payments, and stays. Workspace (com.baymiftah.workspace) is for operators: CRM, listings, leases, finance, and field ops. Both use the same account and org model where applicable."
+    },
+    {
+      "q": "Is BaytMiftah built for Ghana?",
+      "a": "Yes. The product supports cedis, local trust and KYC workflows, and SMS/WhatsApp omnichannel patterns common in Ghana, with international rules and multi-currency options where enabled in your workspace."
+    },
+    {
+      "q": "How do payments work?",
+      "a": "BaytMiftah is a technology platform — not a bank. Payment checkout connects to configured providers (including mobile money where supported). Availability depends on workspace setup and verified provider credentials."
+    },
+    {
+      "q": "How do I get started?",
+      "a": "Create an account, explore properties, or set up a workspace and add properties and units. Import tools and module configuration depend on your rollout plan."
+    },
+    {
+      "q": "Are the mobile apps available?",
+      "a": "Native apps are rolling out via Google Play closed testing and Apple App Store review. Use Contact to request tester access until public store links are published on this page."
+    },
+    {
+      "q": "How does AI work?",
+      "a": "Workspace AI uses limited tools, action logs, and human approval. Marketing examples are illustrative samples — not live account data or autonomous decisions."
+    }
+  ],
+  "finalCta": {
+    "title": "Run real estate differently",
+    "description": "Start a workspace, explore properties, or request a demo — one platform for operators and consumers."
+  },
+  "sections": [
+    {
+      "title": "Mobile apps in store review",
+      "body": "BaytMiftah consumer and workspace apps are rolling out on Google Play closed testing and Apple App Store review. Join the tester program via Contact while public store links go live."
+    },
+    {
+      "title": "Ghana-first, globally ready",
+      "body": "Cedis pricing, local trust workflows, SMS and WhatsApp omnichannel, and KYC paths reflect how property business runs in Ghana — with multi-currency and cross-border listing logic where your workspace enables it."
+    }
+  ],
+  "extras": {
+    "teams": {
+      "kicker": "One platform, many teams",
+      "title": "Built for the people behind real estate",
+      "lead": "Owners, managers, agencies, developers, and enterprise operators work from role-aware workspace views — consumers use the same platform for discovery and journeys."
+    },
+    "consumers": {
+      "kicker": "For consumers",
+      "title": "Find a property without the friction",
+      "lead": "Discover, compare, apply, pay, sign, and book stays from the consumer app — connected to the same records professionals use in workspace, without operational complexity on your side."
+    },
+    "integrations": {
+      "kicker": "Connected services",
+      "title": "Connections built into the workflows",
+      "lead": "Payments, SMS, WhatsApp, and email tie into leases and operations when your workspace is configured. Confirm regional availability during onboarding."
+    },
+    "integrationItems": [
+      {
+        "name": "Payment checkout",
+        "detail": "Connect payment collection to property and lease records. Requires configured payment credentials and supported methods such as mobile money where enabled."
+      },
+      {
+        "name": "SMS and WhatsApp",
+        "detail": "Route operational messages through configured omnichannel channels. Availability depends on workspace setup and regional provider configuration."
+      },
+      {
+        "name": "Email notifications",
+        "detail": "Send operational email through the configured delivery service. Availability depends on workspace notification settings."
+      }
+    ],
+    "workflowCompare": {
+      "before": {
+        "title": "Before",
+        "items": [
+          "Separate spreadsheets and message threads",
+          "Manual record matching across tools",
+          "Updates scattered with no shared context"
+        ]
+      },
+      "after": {
+        "title": "With BaytMiftah",
+        "items": [
+          "Shared property and unit context",
+          "Collections aligned to leases",
+          "Tracked tasks with clear status"
+        ]
+      }
+    },
+    "roles": [
+      {
+        "id": "executive",
+        "label": "Executive",
+        "title": "Portfolio visibility without the status meeting.",
+        "copy": "See collections, occupancy, maintenance risk, and operational exceptions from one command view — connected to the same data your teams work in every day.",
+        "metrics": [
+          {
+            "label": "Collection rate",
+            "value": "96.4%"
+          },
+          {
+            "label": "Occupancy",
+            "value": "94.1%"
+          },
+          {
+            "label": "Open exceptions",
+            "value": "3"
+          }
+        ]
+      },
+      {
+        "id": "property-management",
+        "label": "Property management",
+        "title": "Run estates from one operational workspace.",
+        "copy": "Manage properties, units, leases, occupancies, inspections, and daily tasks without switching between spreadsheets, chats, and separate maintenance tools.",
+        "metrics": [
+          {
+            "label": "Active leases",
+            "value": "Live roster"
+          },
+          {
+            "label": "Inspections due",
+            "value": "Field queue"
+          },
+          {
+            "label": "Pending approvals",
+            "value": "Workflow"
+          }
+        ]
+      },
+      {
+        "id": "finance",
+        "label": "Finance",
+        "title": "Know where the money stands.",
+        "copy": "Track receivables, journal entries, bank reconciliation, owner statements, and collections workflows in the operational layer around your finances.",
+        "metrics": [
+          {
+            "label": "Receivables",
+            "value": "Ledger"
+          },
+          {
+            "label": "Overdue",
+            "value": "Aging"
+          },
+          {
+            "label": "Reconciled",
+            "value": "Bank match"
+          }
+        ]
+      },
+      {
+        "id": "leasing",
+        "label": "Leasing / sales",
+        "title": "Turn property interest into organized business.",
+        "copy": "Manage leads, viewings, applications, offers, and leasing pipelines from one system — with the same property and contact records the rest of the operation uses.",
+        "metrics": [
+          {
+            "label": "Active leads",
+            "value": "CRM"
+          },
+          {
+            "label": "Viewings",
+            "value": "Calendar"
+          },
+          {
+            "label": "Applications",
+            "value": "Pipeline"
+          }
+        ]
+      },
+      {
+        "id": "maintenance",
+        "label": "Maintenance",
+        "title": "Turn problems into tracked work.",
+        "copy": "Convert resident requests into tickets, assign contractors, track SLAs, escalate delays, and capture field evidence — instead of losing requests in message threads.",
+        "metrics": [
+          {
+            "label": "Open tickets",
+            "value": "7"
+          },
+          {
+            "label": "SLA compliance",
+            "value": "91%"
+          },
+          {
+            "label": "Avg. close time",
+            "value": "1.8 days"
+          }
+        ]
+      },
+      {
+        "id": "customer-service",
+        "label": "Customer service",
+        "title": "Messages become work.",
+        "copy": "Route resident inquiries into governed tickets and workflows, track SLAs, and keep communication tied to the property, lease, and operational record.",
+        "metrics": [
+          {
+            "label": "Open conversations",
+            "value": "18"
+          },
+          {
+            "label": "Avg. response",
+            "value": "< 4 hrs"
+          },
+          {
+            "label": "CSAT score",
+            "value": "4.7 / 5"
+          }
+        ]
+      }
+    ],
+    "footerTagline": "Your property life and your property business — in one Real Estate Operating System.",
+    "resourceLinks": {
+      "docsLabel": "Documentation",
+      "docsHref": "/help",
+      "statusLabel": "System status",
+      "statusHref": "/status"
+    },
+    "storeLinks": {
+      "showStrip": true,
+      "headline": "Take BaytMiftah with you",
+      "lead": "Consumer and workspace native apps complement the web experience. Store availability varies by platform and release track.",
+      "consumerPlayUrl": "",
+      "consumerAppleUrl": "",
+      "workspacePlayUrl": "",
+      "workspaceAppleUrl": "",
+      "fallbackHref": "/contact",
+      "fallbackLabel": "Request tester access"
+    },
+    "appPreviews": {
+      "showConsumer": true,
+      "showWorkspace": true,
+      "consumerVideoSrc": "/marketing/previews/consumer-app-preview.mp4",
+      "workspaceVideoSrc": "/marketing/previews/workspace-app-preview.mp4",
+      "consumerPosterSrc": "/marketing/previews/consumer-poster.jpg",
+      "workspacePosterSrc": "/marketing/previews/workspace-poster.jpg"
+    }
+  }
+}

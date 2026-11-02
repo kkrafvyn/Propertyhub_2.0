@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 
 async function open(page: import('@playwright/test').Page) {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Every property.One clear picture.', { timeout: 30000 });
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Your property life.Your property business.', { timeout: 30000 });
 }
 
 const activeHeroSrc = (page: import('@playwright/test').Page) =>
@@ -21,7 +21,8 @@ for (const width of [1440, 768, 390]) {
     await expect(page.locator('canvas')).toHaveCount(0);
     const hero = page.locator('.mk-photo-hero');
     await expect(hero.getByRole('link', { name: 'Get Started' })).toHaveAttribute('href', /\/signup$/);
-    await expect(hero.getByRole('link', { name: 'Explore the Platform' })).toHaveAttribute('href', '#product-tour');
+    await expect(hero.getByRole('link', { name: 'Explore Properties' })).toHaveAttribute('href', /\/search$/);
+    await expect(hero.getByRole('link', { name: 'Product tour' })).toHaveAttribute('href', '#product-tour');
     await expect(page.locator('header .mk-nav-login')).toHaveAttribute('href', /\/login$/);
     await expect(hero.locator('.mk-photo-controls')).toHaveCount(0);
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -34,6 +35,8 @@ for (const width of [1440, 768, 390]) {
     expect(next?.height).toBeCloseTo(title!.height, 0);
     if (width === 390) {
       expect(await activeHeroSrc(page)).toContain('-mobile.webp');
+      await page.getByRole('link', { name: 'For Businesses', exact: true }).click();
+      await expect(page.locator('#teams')).toBeInViewport();
     }
     if (width === 390) {
       const banner = page.getByRole('dialog', { name: 'Cookie preferences' });
@@ -44,17 +47,17 @@ for (const width of [1440, 768, 390]) {
       expect(footerBox!.y + footerBox!.height).toBeLessThanOrEqual(bannerBox!.y);
     }
     await page.screenshot({ path: `test-results/marketing-${width}.png` });
-    await hero.getByRole('link', { name: 'Explore the Platform' }).click();
+    await hero.getByRole('link', { name: 'Product tour' }).click();
     await expect(page.getByRole('region', { name: 'Product tour', exact: true })).toBeInViewport();
     await page.getByRole('tab', { name: 'Payments', exact: true }).click();
     await expect(page.locator('#tour-panel-payments')).toBeVisible();
     await page.getByRole('button', { name: 'Finance', exact: true }).click();
     await expect(page.locator('#teams')).toContainText('Know where the money stands');
-    for (const id of ['workflow', 'consumers', 'getting-started', 'integrations', 'trust', 'pricing', 'ai']) {
+    for (const id of ['app-previews', 'apps', 'workflow', 'consumers', 'getting-started', 'integrations', 'trust', 'pricing', 'ai']) {
       await expect(page.locator(`#${id}`)).toBeAttached();
     }
     await expect(page.locator('.mk-ed-ai-grid')).toBeAttached();
-    await expect(page.locator('.mk-ed-details')).toHaveCount(6);
+    await expect(page.locator('.mk-ed-details')).toHaveCount(8);
     for (const href of await page.locator('header nav a[href^="#"]').evaluateAll((links) => links.map((link) => link.getAttribute('href')!))) {
       await expect(page.locator(href)).toBeAttached();
     }
@@ -118,6 +121,6 @@ test('published marketing content replaces defaults while preserving the product
   await expect(page.getByRole('heading', { name: 'A simpler operating day' })).toBeAttached();
   await expect(page.locator('.mk-ed-details')).toHaveCount(1);
   await expect(page.locator('.mk-photo-hero').getByRole('link', { name: 'Get Started' })).toHaveAttribute('href', /\/signup$/);
-  await page.locator('.mk-photo-hero').getByRole('link', { name: 'Explore the Platform' }).click();
+  await page.locator('.mk-photo-hero').getByRole('link', { name: 'Product tour' }).click();
   await expect(page.getByRole('region', { name: 'Product tour', exact: true })).toBeInViewport();
 });

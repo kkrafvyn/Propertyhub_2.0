@@ -1472,3 +1472,36 @@
     animation: none;
   }
 }
+
+.mk-ed-app-preview-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  margin-top: 1.25rem;
+}
+
+.mk-ed-app-preview {
+  margin: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--mk-ed-border);
+  background: var(--mk-ed-surface);
+}
+
+.mk-ed-app-preview video {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  background: #0d1913;
+}
+
+.mk-ed-app-preview figcaption {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--mk-ed-ink-muted);
+}
+
+.mk-ed-store-actions {
+  flex-wrap: wrap;
+}

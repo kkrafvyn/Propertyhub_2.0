@@ -1,11 +1,20 @@
-﻿import { describe, expect, it } from 'vitest';
+﻿import fs from 'node:fs';
+import path from 'node:path';
+import { describe, expect, it } from 'vitest';
 import { DEFAULT_MARKETING_DOCUMENT, validateMarketingDocument } from './marketing-page-document';
 import { canAccessAdminSection } from './platform-access';
 import { PLATFORM_CONSOLE_GRANTS } from './platform-console-grants';
 describe('marketing content and app management permissions', () => {
   it('keeps defaults valid and returns an independent copy', () => {
     const document=validateMarketingDocument(DEFAULT_MARKETING_DOCUMENT);
-    document.hero.title='Changed'; expect(DEFAULT_MARKETING_DOCUMENT.hero.title).toBe('Every property.');
+    document.hero.title='Changed'; expect(DEFAULT_MARKETING_DOCUMENT.hero.title).toBe('Your property life.');
+  });
+  it('exports homepage-default.json when EXPORT_MARKETING_CMS=1', () => {
+    if (process.env.EXPORT_MARKETING_CMS !== '1') return;
+    const document = validateMarketingDocument(DEFAULT_MARKETING_DOCUMENT);
+    const out = path.join(process.cwd(), 'marketing', 'cms', 'homepage-default.json');
+    fs.mkdirSync(path.dirname(out), { recursive: true });
+    fs.writeFileSync(out, `${JSON.stringify(document, null, 2)}\n`);
   });
   it('rejects injected photo sources, missing text, and duplicate photos', () => {
     const document=structuredClone(DEFAULT_MARKETING_DOCUMENT);
@@ -28,6 +37,7 @@ describe('marketing content and app management permissions', () => {
     delete legacy.intros;
     const document = validateMarketingDocument(legacy);
     expect(document.intros.productTour.title).toMatch(/sample portfolio/i);
+    expect(document.extras.teams.title.length).toBeGreaterThan(3);
     expect(document.intros.faqTitle.length).toBeGreaterThan(3);
     expect(document.intros.proofNote.length).toBeGreaterThan(3);
   });

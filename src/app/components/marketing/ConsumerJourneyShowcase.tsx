@@ -11,6 +11,7 @@ import {
   Search,
 } from "lucide-react";
 import { appPath } from "../../../lib/marketing-urls";
+import { useMarketingContent } from "./editorial/MarketingContentContext";
 
 const PROPERTY_A =
   "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80";
@@ -250,17 +251,14 @@ function JourneyVisual({ stepId }: { stepId: StepId }) {
 
 export function ConsumerJourneyShowcase() {
   const [activeStep, setActiveStep] = useState<StepId>("discover");
+  const { extras } = useMarketingContent();
 
   return (
     <div className="mk-showcase-split mk-consumer-showcase">
       <div className="mk-showcase-copy">
-        <p className="mk-eyebrow">For consumers</p>
-        <h2 id="consumers-heading" className="mk-section-title">Find a property without the friction.</h2>
-        <p className="mk-section-copy mk-showcase-intro">
-          Discover, compare, view, and move forward from one place. Renters, buyers, hosts, and guests
-          use BaytMiftah alongside the business operating system — connected to the same platform,
-          without the operational complexity.
-        </p>
+        <p className="mk-eyebrow">{extras.consumers.kicker}</p>
+        <h2 id="consumers-heading" className="mk-section-title">{extras.consumers.title}</h2>
+        <p className="mk-section-copy mk-showcase-intro">{extras.consumers.lead}</p>
         <p className="text-xs text-ink-muted mt-2 max-w-prose">
           Illustrative preview — screens are simplified for marketing. Live product flows (search, offers,
           and your property journey timeline) may differ in layout and copy.

@@ -9,8 +9,17 @@ Server-side mutations use the existing admin guard and require MFA/AAL2.
 
 Admins can edit hero copy, select and order four or five photos from the licensed
 library, change search/sharing metadata, maintain FAQs, add plain-text sections,
-and update the final conversion heading/copy. Product tours and existing
-conversion destinations remain connected to the application.
+and update the final conversion heading/copy. Extended fields cover teams,
+consumers, workflow compare bullets, mobile store links, app preview toggles,
+and footer tagline. Product tours and existing conversion destinations remain
+connected to the application.
+
+Repo default content lives in `src/lib/marketing-page-document.ts` and
+`marketing/cms/homepage-default.json`. Ops can sync production CMS with:
+
+- `npm run marketing:export-default`
+- `npm run marketing:publish-default` (requires `SUPABASE_SERVICE_ROLE_KEY`)
+- `npm run marketing:copy-previews` (copies App Store preview MP4s into `public/marketing/previews/` for the marketing build)
 
 Save draft -> Preview draft -> Publish saved draft -> Confirm publication.
 Drafts and public content are stored separately. Anonymous visitors can read only

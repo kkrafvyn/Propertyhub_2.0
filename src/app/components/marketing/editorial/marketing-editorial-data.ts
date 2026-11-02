@@ -43,27 +43,35 @@ export const WORKFLOW_STAGES = [
 
 export const MARKETING_FAQ = [
   {
-    q: "What does BaytMiftah bring together?",
-    a: "The app connects property records, listings, applications, leases, collections, maintenance, documents, reporting, and workspace controls.",
+    q: "What is BaytMiftah?",
+    a: "BaytMiftah is a Real Estate Operating System (REOS): one platform for property discovery and consumer journeys, plus a workspace for listings, leasing, collections, maintenance, and reporting.",
+  },
+  {
+    q: "How is this different from a listings website?",
+    a: "Listings are one module. BaytMiftah connects people, properties, money, and operations — from enquiry and application through lease, payment, and maintenance — with role-based workspace controls.",
+  },
+  {
+    q: "What is the difference between the consumer app and workspace?",
+    a: "The consumer app (com.baymiftah.app) is for search, applications, payments, and stays. Workspace (com.baymiftah.workspace) is for operators: CRM, listings, leases, finance, and field ops. Both use the same account and org model where applicable.",
+  },
+  {
+    q: "Is BaytMiftah built for Ghana?",
+    a: "Yes. The product supports cedis, local trust and KYC workflows, and SMS/WhatsApp omnichannel patterns common in Ghana, with international rules and multi-currency options where enabled in your workspace.",
+  },
+  {
+    q: "How do payments work?",
+    a: "BaytMiftah is a technology platform — not a bank. Payment checkout connects to configured providers (including mobile money where supported). Availability depends on workspace setup and verified provider credentials.",
   },
   {
     q: "How do I get started?",
-    a: "Create an account, set up a workspace, add properties and units, configure the modules you need, and import existing records when ready.",
+    a: "Create an account, explore properties, or set up a workspace and add properties and units. Import tools and module configuration depend on your rollout plan.",
   },
   {
-    q: "Can we import existing data?",
-    a: "Yes. Workspace import and export tools support structured migration. Available formats and timing depend on the records being moved.",
-  },
-  {
-    q: "Can I use the app on mobile?",
-    a: "The web experience is responsive, and mobile app availability is shown only when official store releases are configured.",
-  },
-  {
-    q: "How is pricing determined?",
-    a: "Plans are based on workspace needs, portfolio size, enabled modules, and rollout support. Start free or book a demo to choose the right setup.",
+    q: "Are the mobile apps available?",
+    a: "Native apps are rolling out via Google Play closed testing and Apple App Store review. Use Contact to request tester access until public store links are published on this page.",
   },
   {
     q: "How does AI work?",
-    a: "AI features use limited tools, action logs, and human approval paths. Marketing examples are illustrative and never represent live account data.",
+    a: "Workspace AI uses limited tools, action logs, and human approval. Marketing examples are illustrative samples — not live account data or autonomous decisions.",
   },
 ];

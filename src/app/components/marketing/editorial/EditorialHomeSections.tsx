@@ -30,7 +30,7 @@ export function EditorialOutcomeSection() {
 }
 
 export function EditorialWorkflowSection() {
-  const { intros } = useMarketingContent();
+  const { intros, extras } = useMarketingContent();
   const [stage, setStage] = useState<(typeof WORKFLOW_STAGES)[number]["id"]>("listing");
   const current = WORKFLOW_STAGES.find((item) => item.id === stage)!;
   const ref = useEditorialReveal<HTMLElement>();
@@ -43,8 +43,8 @@ export function EditorialWorkflowSection() {
           <h2 id="workflow-heading" className="mk-ed-heading">{intros.workflow.title}</h2>
           <p className="mk-ed-lead">{intros.workflow.lead}</p>
           <div className="mk-ed-compare">
-            <div><h3 className="mk-ed-compare__title">Before</h3><ul><li>Separate spreadsheets and messages</li><li>Manual record matching</li><li>Updates scattered across tools</li></ul></div>
-            <div><h3 className="mk-ed-compare__title">With BaytMiftah</h3><ul><li>Shared property and unit context</li><li>Collections aligned to leases</li><li>Tracked tasks with clear status</li></ul></div>
+            <div><h3 className="mk-ed-compare__title">{extras.workflowCompare.before.title}</h3><ul>{extras.workflowCompare.before.items.map((item) => <li key={item}>{item}</li>)}</ul></div>
+            <div><h3 className="mk-ed-compare__title">{extras.workflowCompare.after.title}</h3><ul>{extras.workflowCompare.after.items.map((item) => <li key={item}>{item}</li>)}</ul></div>
           </div>
         </div>
         <div className="mk-ed-journey">

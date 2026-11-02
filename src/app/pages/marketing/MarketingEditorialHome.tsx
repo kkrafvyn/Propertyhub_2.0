@@ -20,6 +20,7 @@ import {
   EditorialTrustSection,
   EditorialWorkflowSection,
 } from "../../components/marketing/editorial/EditorialHomeSections";
+import { EditorialAppPreviewSection, EditorialStoreStripSection } from "../../components/marketing/editorial/EditorialConversionSections";
 
 function heroOgImage(document: MarketingPageDocument) {
   const first = document.hero.images[0] ?? "residences";
@@ -127,6 +128,8 @@ export function MarketingEditorialHome({ document: suppliedDocument, preview = f
         <EditorialHero />
         <EditorialOutcomeSection />
         <EditorialProductTour />
+        <EditorialAppPreviewSection />
+        <EditorialStoreStripSection />
         <EditorialWorkflowSection />
         <EditorialRolesSection />
         <EditorialResidentSection />

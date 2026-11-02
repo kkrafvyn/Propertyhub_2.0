@@ -75,6 +75,40 @@ export function MarketingEditor() {
         </Card>
         <Card className="p-6 space-y-4"><h2 className="text-xl font-semibold">Outcome band</h2><p className="text-sm text-muted-foreground">Three short outcome cards below the hero.</p><TextField label="Outcome band note" value={document.intros.proofNote} maxLength={200} onChange={v => update(d => { d.intros.proofNote = v; })} />{document.proofOutcomes.map((outcome, index) => <div key={index} className="space-y-3 border rounded-lg p-4"><TextField label={`Outcome ${index + 1} title`} value={outcome.title} maxLength={120} onChange={v => update(d => { d.proofOutcomes[index].title = v; })} /><TextField label={`Outcome ${index + 1} detail`} value={outcome.detail} maxLength={400} multiline onChange={v => update(d => { d.proofOutcomes[index].detail = v; })} /></div>)}</Card>
         <Card className="p-6 space-y-4"><h2 className="text-xl font-semibold">Section messaging</h2><p className="text-sm text-muted-foreground">Edit the kicker, headline, and intro copy for each homepage section without a deploy.</p>{INTRO_SECTION_FIELDS.map(({ key, label }) => <div key={key} className="space-y-3 border rounded-lg p-4"><p className="font-medium">{label}</p><TextField label="Kicker" value={document.intros[key].kicker} maxLength={80} onChange={v => update(d => { d.intros[key].kicker = v; })} /><TextField label="Headline" value={document.intros[key].title} maxLength={150} onChange={v => update(d => { d.intros[key].title = v; })} /><TextField label="Intro copy" value={document.intros[key].lead} maxLength={500} multiline onChange={v => update(d => { d.intros[key].lead = v; })} /></div>)}<TextField label="FAQ section title" value={document.intros.faqTitle} maxLength={150} onChange={v => update(d => { d.intros.faqTitle = v; })} /></Card>
+        <Card className="p-6 space-y-4"><h2 className="text-xl font-semibold">Teams, consumers, and workflow compare</h2>
+          {(['teams', 'consumers', 'integrations'] as const).map((key) => (
+            <div key={key} className="space-y-3 border rounded-lg p-4">
+              <p className="font-medium capitalize">{key}</p>
+              <TextField label="Kicker" value={document.extras[key].kicker} maxLength={80} onChange={v => update(d => { d.extras[key].kicker = v; })} />
+              <TextField label="Headline" value={document.extras[key].title} maxLength={150} onChange={v => update(d => { d.extras[key].title = v; })} />
+              <TextField label="Intro copy" value={document.extras[key].lead} maxLength={500} multiline onChange={v => update(d => { d.extras[key].lead = v; })} />
+            </div>
+          ))}
+          <div className="grid gap-4 md:grid-cols-2">
+            {(['before', 'after'] as const).map((side) => (
+              <div key={side} className="space-y-3 border rounded-lg p-4">
+                <TextField label={`Workflow ${side} title`} value={document.extras.workflowCompare[side].title} maxLength={80} onChange={v => update(d => { d.extras.workflowCompare[side].title = v; })} />
+                {document.extras.workflowCompare[side].items.map((bullet, index) => (
+                  <TextField key={index} label={`Bullet ${index + 1}`} value={bullet} maxLength={200} onChange={v => update(d => { d.extras.workflowCompare[side].items[index] = v; })} />
+                ))}
+              </div>
+            ))}
+          </div>
+          <TextField label="Footer tagline" value={document.extras.footerTagline} maxLength={200} onChange={v => update(d => { d.extras.footerTagline = v; })} />
+        </Card>
+        <Card className="p-6 space-y-4"><h2 className="text-xl font-semibold">Mobile apps and store links</h2>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={document.extras.storeLinks.showStrip} onChange={e => update(d => { d.extras.storeLinks.showStrip = e.target.checked; })} />Show mobile apps section</label>
+          <TextField label="Apps headline" value={document.extras.storeLinks.headline} maxLength={120} onChange={v => update(d => { d.extras.storeLinks.headline = v; })} />
+          <TextField label="Apps lead" value={document.extras.storeLinks.lead} maxLength={400} multiline onChange={v => update(d => { d.extras.storeLinks.lead = v; })} />
+          <TextField label="Consumer Google Play URL" value={document.extras.storeLinks.consumerPlayUrl} maxLength={300} onChange={v => update(d => { d.extras.storeLinks.consumerPlayUrl = v; })} />
+          <TextField label="Consumer App Store URL" value={document.extras.storeLinks.consumerAppleUrl} maxLength={300} onChange={v => update(d => { d.extras.storeLinks.consumerAppleUrl = v; })} />
+          <TextField label="Workspace Google Play URL" value={document.extras.storeLinks.workspacePlayUrl} maxLength={300} onChange={v => update(d => { d.extras.storeLinks.workspacePlayUrl = v; })} />
+          <TextField label="Workspace App Store URL" value={document.extras.storeLinks.workspaceAppleUrl} maxLength={300} onChange={v => update(d => { d.extras.storeLinks.workspaceAppleUrl = v; })} />
+          <TextField label="Fallback link (no store URLs)" value={document.extras.storeLinks.fallbackHref} maxLength={300} onChange={v => update(d => { d.extras.storeLinks.fallbackHref = v; })} />
+          <TextField label="Fallback button label" value={document.extras.storeLinks.fallbackLabel} maxLength={80} onChange={v => update(d => { d.extras.storeLinks.fallbackLabel = v; })} />
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={document.extras.appPreviews.showConsumer} onChange={e => update(d => { d.extras.appPreviews.showConsumer = e.target.checked; })} />Show consumer app preview video</label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={document.extras.appPreviews.showWorkspace} onChange={e => update(d => { d.extras.appPreviews.showWorkspace = e.target.checked; })} />Show workspace app preview video</label>
+        </Card>
         <Card className="p-6 space-y-4"><h2 className="text-xl font-semibold">Search and sharing</h2><TextField label="Page title" value={document.seo.title} maxLength={150} onChange={v => update(d => {d.seo.title=v;})} /><TextField label="Page description" value={document.seo.description} maxLength={500} multiline onChange={v => update(d => {d.seo.description=v;})} /></Card>
         <Card className="p-6 space-y-4"><h2 className="text-xl font-semibold">FAQs</h2>{document.faq.map((item,index) => <div key={index} className="space-y-3 border rounded-lg p-4"><TextField label={`Question ${index+1}`} value={item.q} maxLength={200} onChange={v => update(d => {d.faq[index].q=v;})} /><TextField label={`Answer ${index+1}`} value={item.a} maxLength={1500} multiline onChange={v => update(d => {d.faq[index].a=v;})} /><Button variant="outline" disabled={document.faq.length===1} onClick={() => update(d => {d.faq.splice(index,1);})}>Remove FAQ {index+1}</Button></div>)}<Button variant="outline" disabled={document.faq.length>=12} onClick={() => update(d => {d.faq.push({q:'New question',a:'Add the answer.'});})}>Add FAQ</Button></Card>
         <Card className="p-6 space-y-4"><h2 className="text-xl font-semibold">Additional content sections</h2>{document.sections.map((section,index) => <div key={index} className="border rounded-lg p-4 space-y-3"><TextField label={`Section ${index+1} heading`} value={section.title} maxLength={150} onChange={v => update(d => {d.sections[index].title=v;})} /><TextField label={`Section ${index+1} text`} value={section.body} maxLength={2000} multiline onChange={v => update(d => {d.sections[index].body=v;})} /><Button variant="outline" onClick={() => update(d => {d.sections.splice(index,1);})}>Remove section {index+1}</Button></div>)}<Button variant="outline" disabled={document.sections.length>=8} onClick={() => update(d => {d.sections.push({title:'New section',body:'Add your content.'});})}>Add content section</Button></Card>

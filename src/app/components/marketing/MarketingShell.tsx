@@ -7,10 +7,10 @@ import { BAYTMIFTAH_SOCIAL_LINKS } from "../../../lib/social-links";
 import "./marketing.css";
 
 const NAV_LINKS_DEFAULT = [
-  { label: "Product", href: "#product" },
+  { label: "Product", href: "#product-tour" },
   { label: "Solutions", href: "#workflow" },
   { label: "AI", href: "#ai" },
-  { label: "For Businesses", href: "#business" },
+  { label: "For Businesses", href: "#teams" },
   { label: "For Consumers", href: "#consumers" },
   { label: "Explorer", href: "/explorer" },
 ] as const;
@@ -246,13 +246,21 @@ export function MarketingShell({
   );
 }
 
+function marketingDocsHref(): string {
+  const fromEnv = import.meta.env.VITE_MARKETING_DOCS_URL;
+  if (typeof fromEnv === "string" && fromEnv.trim()) return fromEnv.trim();
+  return "/help";
+}
+
 function MarketingFooter({ darkChrome }: { darkChrome: boolean }) {
+  const docsHref = marketingDocsHref();
+  const docsExternal = docsHref.startsWith("http");
   return (
     <footer className={`mk-footer${darkChrome ? " mk-footer--editorial" : ""}`}>
       <div className="mk-container mk-footer-grid">
         <div className="mk-footer-brand">
           <Logo to="/" size="sm" inverted={darkChrome} />
-          <p>One home for your entire property operation.</p>
+          <p>Your property life and your property business — in one Real Estate Operating System.</p>
           <ul className="mk-footer-social">
             {BAYTMIFTAH_SOCIAL_LINKS.map((item) => (
               <li key={item.id}>
@@ -274,7 +282,10 @@ function MarketingFooter({ darkChrome }: { darkChrome: boolean }) {
               <a href="/#workflow">Workflow</a>
             </li>
             <li>
-              <a href="/#features">Features</a>
+              <a href="/#features">Modules</a>
+            </li>
+            <li>
+              <a href="/#apps">Mobile apps</a>
             </li>
             <li>
               <a href="/#ai">AI</a>
@@ -293,6 +304,15 @@ function MarketingFooter({ darkChrome }: { darkChrome: boolean }) {
           <ul>
             <li>
               <Link to="/help">Help Centre</Link>
+            </li>
+            <li>
+              {docsExternal ? (
+                <a href={docsHref} target="_blank" rel="noopener noreferrer">
+                  Documentation
+                </a>
+              ) : (
+                <Link to={docsHref}>Documentation</Link>
+              )}
             </li>
             <li>
               <Link to="/status">System status</Link>
