@@ -1,12 +1,12 @@
 ﻿# Hero photography
 
-Five self-hosted Unsplash stock photographs, licensed for commercial use under
+Eight self-hosted Unsplash stock photographs, licensed for commercial use under
 https://unsplash.com/license (checked 2026-10-05). These are illustrative property
 types, not BaytMiftah customers, managed inventory, or claims about where a photo
 was taken. Apartment buildings, interiors, residential communities, contemporary
-residences, and commercial architecture match the product's residential and
-commercial portfolio positioning. The sample portfolio uses Ghana locations;
-photographs are deliberately not represented as Ghana locations.
+residences, commercial architecture, townhouses, urban towers, and amenities match
+the product's residential and commercial portfolio positioning. The sample portfolio
+uses Ghana locations; photographs are deliberately not represented as Ghana locations.
 
 | Asset | Original source |
 | --- | --- |
@@ -15,6 +15,9 @@ photographs are deliberately not represented as Ghana locations.
 | community | https://images.unsplash.com/photo-1545324418-cc1a3fa10c00 |
 | architecture | https://images.unsplash.com/photo-1613490493576-7fde63acd811 |
 | commercial | https://images.unsplash.com/photo-1486406146926-c627a92ad1ab |
+| townhouse | https://images.unsplash.com/photo-1600585154340-be6161a56a0c |
+| skyline | https://images.unsplash.com/photo-1764722870631-877f5c694b76 |
+| amenities | https://images.unsplash.com/photo-1571896349842-33c89424de2d |
 
 Rebuild with `node scripts/prepare-marketing-hero.mjs` (requires network).
 Desktop variants: 1280 and 2200 pixels wide. Mobile: 780 × 1080 deliberate

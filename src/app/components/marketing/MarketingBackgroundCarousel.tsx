@@ -7,6 +7,9 @@ export const HERO_SLIDES = [
   { id: "community", label: "Residential communities", overlay: 0.76 },
   { id: "architecture", label: "Contemporary residences", overlay: 0.78 },
   { id: "commercial", label: "Commercial architecture", overlay: 0.72 },
+  { id: "townhouse", label: "Modern home exteriors", overlay: 0.74 },
+  { id: "skyline", label: "Urban residential towers", overlay: 0.7 },
+  { id: "amenities", label: "Residence amenities", overlay: 0.72 },
 ] as const;
 
 /** Only decoded photographs can replace the current slide. Failed assets are skipped. */
@@ -110,9 +113,6 @@ export function MarketingBackgroundCarousel({ children, imageIds }: { children: 
         ) : null)}
       </div>
       <div className="mk-photo-hero__content">{children}</div>
-      <div className="mk-ed-container mk-photo-hero__footer">
-        <p>Illustrative properties. Stock photography.</p>
-      </div>
     </section>
   );
 }

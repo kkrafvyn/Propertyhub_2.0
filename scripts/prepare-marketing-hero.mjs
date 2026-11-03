@@ -5,6 +5,9 @@ const photos = [
  ['community','1545324418-cc1a3fa10c00',0.5],
  ['architecture','1613490493576-7fde63acd811',0.58],
  ['commercial','1486406146926-c627a92ad1ab',0.55],
+ ['townhouse','1600585154340-be6161a56a0c',0.52],
+ ['skyline','1764722870631-877f5c694b76',0.5],
+ ['amenities','1571896349842-33c89424de2d',0.48],
 ];
 for (const [name,id,x] of photos) {
  const url = `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=2200&q=90`;

@@ -13,7 +13,7 @@ for (const width of [1440, 768, 390]) {
   test(`hero and preserved content at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
     await open(page);
-    await expect(page.locator('.mk-photo-hero img')).toHaveCount(5);
+    await expect(page.locator('.mk-photo-hero img')).toHaveCount(8);
     await expect.poll(() =>
       page.locator('.mk-photo-hero img').evaluateAll((imgs) => imgs.every((img) => (img as HTMLImageElement).naturalWidth > 0)),
     ).toBe(true);
@@ -38,14 +38,6 @@ for (const width of [1440, 768, 390]) {
       await page.getByRole('link', { name: 'For Businesses', exact: true }).click();
       await expect(page.locator('#teams')).toBeInViewport();
     }
-    if (width === 390) {
-      const banner = page.getByRole('dialog', { name: 'Cookie preferences' });
-      await expect(banner).toBeVisible();
-      const footer = hero.locator('.mk-photo-hero__footer');
-      const bannerBox = await banner.boundingBox();
-      const footerBox = await footer.boundingBox();
-      expect(footerBox!.y + footerBox!.height).toBeLessThanOrEqual(bannerBox!.y);
-    }
     await page.screenshot({ path: `test-results/marketing-${width}.png` });
     await hero.getByRole('link', { name: 'Product tour' }).click();
     await expect(page.getByRole('region', { name: 'Product tour', exact: true })).toBeInViewport();
@@ -68,7 +60,7 @@ test('keyboard focus and automatic rotation with reduced motion', async ({ page 
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.clock.install();
   await open(page);
-  await expect(page.locator('.mk-photo-hero img')).toHaveCount(5);
+  await expect(page.locator('.mk-photo-hero img')).toHaveCount(8);
   await page.getByRole('link', { name: 'Get Started' }).focus();
   const focus = await page.locator(':focus').evaluate((el) => getComputedStyle(el).outlineColor);
   expect(focus).toBe('rgb(240, 161, 139)');

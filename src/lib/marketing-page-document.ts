@@ -7,7 +7,16 @@ import {
   type MarketingPageExtras,
 } from './marketing-editorial-static';
 
-export const MARKETING_IMAGE_IDS = ['residences', 'interior', 'community', 'architecture', 'commercial'] as const;
+export const MARKETING_IMAGE_IDS = [
+  'residences',
+  'interior',
+  'community',
+  'architecture',
+  'commercial',
+  'townhouse',
+  'skyline',
+  'amenities',
+] as const;
 export type MarketingImageId = typeof MARKETING_IMAGE_IDS[number];
 export type MarketingOutcome = { title: string; detail: string };
 export type MarketingIntro = { kicker: string; title: string; lead: string };
@@ -297,7 +306,7 @@ export function validateMarketingDocument(input: unknown): MarketingPageDocument
   intros.proofNote = typeof introSource.proofNote === 'string' && introSource.proofNote.trim() ? introSource.proofNote : DEFAULT_MARKETING_INTROS.proofNote;
   text(intros.faqTitle, 'FAQ section title', 150);
   text(intros.proofNote, 'Outcome band note', 200);
-  if (!Array.isArray(value.hero.images) || value.hero.images.length < 4 || value.hero.images.length > 5 || new Set(value.hero.images).size !== value.hero.images.length || value.hero.images.some(id => !MARKETING_IMAGE_IDS.includes(id))) throw new Error('Choose four or five different photographs from the licensed image library.');
+  if (!Array.isArray(value.hero.images) || value.hero.images.length < 4 || value.hero.images.length > MARKETING_IMAGE_IDS.length || new Set(value.hero.images).size !== value.hero.images.length || value.hero.images.some(id => !MARKETING_IMAGE_IDS.includes(id))) throw new Error('Choose four to eight different photographs from the licensed image library.');
   if (!Array.isArray(value.faq) || value.faq.length < 1 || value.faq.length > 12) throw new Error('Provide 1–12 FAQs.');
   value.faq.forEach(item => { text(item.q, 'FAQ question', 200); text(item.a, 'FAQ answer', 1500); });
   if (!Array.isArray(value.sections) || value.sections.length > 8) throw new Error('Add at most eight content sections.');

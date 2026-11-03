@@ -7,7 +7,7 @@ Server-side mutations use the existing admin guard and require MFA/AAL2.
 
 ## Marketing
 
-Admins can edit hero copy, select and order four or five photos from the licensed
+Admins can edit hero copy, select and order four to eight photos from the licensed
 library, change search/sharing metadata, maintain FAQs, add plain-text sections,
 and update the final conversion heading/copy. Extended fields cover teams,
 consumers, workflow compare bullets, mobile store links, app preview toggles,
